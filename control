@@ -1,0 +1,206 @@
+#!/bin/bash
+
+CWD=$(cd $(dirname $0)/; pwd)
+cd $CWD
+
+usage()
+{
+	echo $"Usage: $0 {start|stop|restart|status|build|pack} <module>"
+	exit 0
+}
+
+start_all()
+{
+	# http: 5800
+	test -x n9e-monapi && start monapi
+	# http: 5810 ; rpc: 5811
+	test -x n9e-transfer && start transfer
+	# http: 5820 ; rpc: 5821
+	test -x n9e-tsdb && start tsdb
+	# http: 5830 ; rpc: 5831
+	test -x n9e-index && start index
+	# http: 5840 ; rpc: 5841
+	test -x n9e-judge && start judge
+	# http: 2058
+	test -x n9e-collector && start collector
+}
+
+start()
+{
+	mod=$1
+	if [ "x${mod}" = "x" ]; then
+		usage
+		return
+	fi
+
+	if [ "x${mod}" = "xall" ]; then
+		start_all
+		return
+	fi
+
+	binfile=n9e-${mod}
+
+	if [ ! -f $binfile ]; then
+		echo "file[$binfile] not found"
+		exit 1
+	fi
+
+	if [ $(ps aux|grep -v grep|grep -v control|grep "$binfile" -c) -gt 0 ]; then
+		echo "${mod} already started"
+		return
+	fi
+
+	mkdir -p logs/$mod
+	nohup $CWD/$binfile &> logs/${mod}/stdout.log &
+
+	for((i=1;i<=15;i++)); do
+		if [ $(ps aux|grep -v grep|grep -v control|grep "$binfile" -c) -gt 0 ]; then
+			echo "${mod} started"
+			return
+		fi
+		sleep 0.2
+	done
+
+	echo "cannot start ${mod}"
+	exit 1
+}
+
+stop_all()
+{
+	test -x n9e-monapi && stop monapi
+	test -x n9e-transfer && stop transfer
+	test -x n9e-tsdb && stop tsdb
+	test -x n9e-index && stop index
+	test -x n9e-judge && stop judge
+	test -x n9e-collector && stop collector
+}
+
+stop()
+{
+	mod=$1
+	if [ "x${mod}" = "x" ]; then
+		usage
+		return
+	fi
+
+	if [ "x${mod}" = "xall" ]; then
+		stop_all
+		return
+	fi
+
+	binfile=n9e-${mod}
+
+	if [ $(ps aux|grep -v grep|grep -v control|grep "$binfile" -c) -eq 0 ]; then
+		echo "${mod} already stopped"
+		return
+	fi
+
+	ps aux|grep -v grep|grep -v control|grep "$binfile"|awk '{print $2}'|xargs kill
+	for((i=1;i<=15;i++)); do
+		if [ $(ps aux|grep -v grep|grep -v control|grep "$binfile" -c) -eq 0 ]; then
+			echo "${mod} stopped"
+			return
+		fi
+		sleep 0.2
+	done
+
+	echo "cannot stop $mod"
+	exit 1
+}
+
+restart()
+{
+	mod=$1
+	if [ "x${mod}" = "x" ]; then
+		usage
+		return
+	fi
+
+	if [ "x${mod}" = "xall" ]; then
+		stop_all
+		start_all
+		return
+	fi
+
+	stop $mod
+	start $mod
+
+	status
+}
+
+status()
+{
+	ps aux|grep -v grep|grep "n9e"
+}
+
+build_one()
+{
+	mod=$1
+	go build -o n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
+}
+
+build()
+{
+	mod=$1
+	if [ "x${mod}" = "x" ]; then
+		build_one monapi
+		build_one transfer
+		build_one index
+		build_one judge
+		build_one collector
+		build_one tsdb
+		return
+	fi
+
+	build_one $mod 
+}
+
+reload()
+{
+	mod=$1
+	if [ "x${mod}" = "x" ]; then
+		echo "arg: <mod> is necessary"
+		return
+	fi
+	
+	build_one $mod
+	restart $mod
+}
+
+pack()
+{
+	v=$(date +%Y-%m-%d-%H-%M-%S)
+	tar zcvf n9e-$v.tar.gz control sql plugin pub etc/log etc/port etc/service etc/nginx.conf etc/mysql.yml etc/address.yml \
+	n9e-collector etc/collector.yml \
+	n9e-tsdb etc/tsdb.yml \
+	n9e-index etc/index.yml \
+	n9e-judge etc/judge.yml \
+	n9e-transfer etc/transfer.yml \
+	n9e-monapi etc/monapi.yml
+}
+
+case "$1" in
+	start)
+		start $2
+		;;
+	stop)
+		stop $2
+		;;
+	restart)
+		restart $2
+		;;
+	status)
+		status
+		;;
+	build)
+		build $2
+		;;
+	reload)
+		reload $2
+		;;
+	pack)
+		pack
+		;;
+	*)
+		usage
+esac

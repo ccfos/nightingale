@@ -1,0 +1,7 @@
+logger:
+  dir: logs/index
+  level: WARNING
+  keepHours: 2
+identity:
+  specify: ""
+  shell: /usr/sbin/ifconfig `/usr/sbin/route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|head -n 1

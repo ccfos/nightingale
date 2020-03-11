@@ -1,0 +1,12 @@
+{
+    "name": "log.sys.oom",
+    "file_path": "/var/log/messages",
+    "time_format": "mmm dd HH:MM:SS",
+    "pattern": "Out of memory",
+    "interval": 10,
+    "tags": {},
+    "func": "cnt",
+    "degree": 6,
+    "unit": "次数",
+    "comment": "有进程oom了"
+}

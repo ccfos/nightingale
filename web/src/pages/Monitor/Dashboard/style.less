@@ -1,0 +1,166 @@
+@import "../../../assets/style.less";
+@dashboard-prefix-cls: ~"@{prefix-cls}-monitor-dashboard";
+
+.@{dashboard-prefix-cls} {
+  .nstree-container {
+    min-width: auto !important;
+  }
+  .@{dashboard-prefix-cls}-nstree-switch {
+    position: absolute;
+    top: 0;
+    right: -14px;
+    width: 15px;
+    height: 37px;
+    line-height: 33px;
+    background: #fff;
+    border: 1px solid #e7e9ed;
+    cursor: pointer;
+  }
+  .@{dashboard-prefix-cls}-ns-flotage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 37px;
+    line-height: 37px;
+    border: 1px solid #e7e9ed;
+    background: #fff;
+    box-shadow: 1px 1px 2px #efefef;
+    z-index: 1;
+    cursor: pointer;
+    span {
+      display: inline-block;
+      width: 185px;
+      padding: 0 10px;
+    }
+  }
+  .layout-splitter-handle {
+    height: 100%;
+    position: absolute;
+    top: 0;
+    right: -6px;
+    width: 11px;
+    z-index: 1;
+    cursor: col-resize;
+  }
+  .layout-splitter-handle-highlight {
+    position: absolute;
+    top: 0;
+    left: 4px;
+    bottom: 0;
+    width: 6px;
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAAMCAYAAABIvGxUAAADHmlDQ1BJQ0MgUHJvZmlsZQAAeAGFVN9r01AU/tplnbDhizpnEQk+aJFuZFN0Q5y2a1e6zVrqNrchSJumbVyaxiTtfrAH2YtvOsV38Qc++QcM2YNve5INxhRh+KyIIkz2IrOemzRNJ1MDufe73/nuOSfn5F6g+XFa0xQvDxRVU0/FwvzE5BTf8gFeHEMr/GhNi4YWSiZHQA/Tsnnvs/MOHsZsdO5v36v+Y9WalQwR8BwgvpQ1xCLhWaBpXNR0E+DWie+dMTXCzUxzWKcECR9nOG9jgeGMjSOWZjQ1QJoJwgfFQjpLuEA4mGng8w3YzoEU5CcmqZIuizyrRVIv5WRFsgz28B9zg/JfsKiU6Zut5xCNbZoZTtF8it4fOX1wjOYA1cE/Xxi9QbidcFg246M1fkLNJK4RJr3n7nRpmO1lmpdZKRIlHCS8YlSuM2xp5gsDiZrm0+30UJKwnzS/NDNZ8+PtUJUE6zHF9fZLRvS6vdfbkZMH4zU+pynWf0D+vff1corleZLw67QejdX0W5I6Vtvb5M2mI8PEd1E/A0hCgo4cZCjgkUIMYZpjxKr4TBYZIkqk0ml0VHmyONY7KJOW7RxHeMlfDrheFvVbsrj24Pue3SXXjrwVhcW3o9hR7bWB6bqyE5obf3VhpaNu4Te55ZsbbasLCFH+iuWxSF5lyk+CUdd1NuaQU5f8dQvPMpTuJXYSWAy6rPBe+CpsCk+FF8KXv9TIzt6tEcuAcSw+q55TzcbsJdJM0utkuL+K9ULGGPmQMUNanb4kTZyKOfLaUAsnBneC6+biXC/XB567zF3h+rkIrS5yI47CF/VFfCHwvjO+Pl+3b4hhp9u+02TrozFa67vTkbqisXqUj9sn9j2OqhMZsrG+sX5WCCu0omNqSrN0TwADJW1Ol/MFk+8RhAt8iK4tiY+rYleQTysKb5kMXpcMSa9I2S6wO4/tA7ZT1l3maV9zOfMqcOkb/cPrLjdVBl4ZwNFzLhegM3XkCbB8XizrFdsfPJ63gJE722OtPW1huos+VqvbdC5bHgG7D6vVn8+q1d3n5H8LeKP8BqkjCtbCoV8yAAAACXBIWXMAAAsSAAALEgHS3X78AAABZ2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNC40LjAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iPgogICAgICAgICA8eG1wOkNyZWF0b3JUb29sPkFkb2JlIEZpcmV3b3JrcyBDUzY8L3htcDpDcmVhdG9yVG9vbD4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+CsO3s+UAAAAsSURBVAgdY7x69ep/BgaGRpZNmzYBaQYGxv//QQIMDExgEpnBcu3aNQoUAwChKRhfrNwRnQAAAABJRU5ErkJggg==);
+    background-position: 100%;
+    background-repeat: no-repeat;
+  }
+  // fix multipicker
+  .multipicker-selected-list-box > div {
+    height: 38px;
+    line-height: 38px;
+    padding: 0 8px;
+  }
+  .multipicker-selected-list {
+    .ant-tag { margin-bottom: 5px; }
+  }
+  .ant-select-selection--multiple {
+    padding-bottom: 0;
+  }
+  .ant-layout {
+    background: none;
+  }
+  .ant-divider {
+    margin: 0 4px;
+    color: #999;
+    display: inline-block;
+    height: 8px;
+    width: 1px;
+    background: #ccc;
+  }
+  .ant-tabs-bar {
+    margin-bottom: 5px;
+  }
+  .ant-menu-vertical > .ant-menu-item, .ant-menu-inline > .ant-menu-item, .ant-menu-item-group-list > .ant-menu-item, .ant-menu-vertical > .ant-menu-submenu > .ant-menu-submenu-title, .ant-menu-inline > .ant-menu-submenu > .ant-menu-submenu-title, .ant-menu-item-group-list > .ant-menu-submenu > .ant-menu-submenu-title {
+    line-height: 28px;
+    height: 28px;
+    margin-bottom: 0;
+  }
+  .tabPane {
+    height: 273px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    .ant-tooltip-inner {
+      max-width: max-content;
+    }
+  }
+  .ant-tabs-mini .ant-tabs-tab .ant-tabs-tab-inner {
+    padding: 8px 8px;
+  }
+  /**
+   * Tabs card 模式 样式改成 line 的展示方式，为了避免 line 模式切换的动画
+   */
+  .ant-tabs.ant-tabs-card > .ant-tabs-bar .ant-tabs-tab {
+    border: 0 none;
+    background: none;
+    margin-right: 1px;
+  }
+  .ant-tabs.ant-tabs-card > .ant-tabs-bar .ant-tabs-ink-bar {
+    visibility: inherit;
+  }
+  .ant-tabs.ant-tabs-card > .ant-tabs-bar .ant-tabs-nav-container {
+    height: auto;
+  }
+  .ant-card-head {
+    min-height: auto;
+    height: 36px;
+    line-height: 36px;
+    padding: 0 14px;
+  }
+  .ant-card-head-wrapper {
+    display: unset;
+  }
+  .ant-card-head-title {
+    padding: 0;
+    font-size: 14px;
+  }
+  .ant-card-extra {
+    padding: 0;
+    font-size: 12px;
+  }
+  .ant-card-body {
+    padding: 5px;
+    position: relative;
+  }
+}
+
+.@{dashboard-prefix-cls}-metrics-title {
+  .ant-input {
+    border: 0 none;
+    width: 200px;
+    font-weight: normal;
+    display: inline-block;
+    margin-left: 10px;
+  }
+  .ant-input:focus {
+    box-shadow: unset;
+  }
+}
+
+.@{dashboard-prefix-cls}-graph {
+  margin-bottom: 10px;
+  background: #fff;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  border-color: #e9e9e9;
+  font-size: 12px;
+  position: relative;
+  overflow: hidden;
+  -webkit-transition: all .3s;
+  transition: all .3s;
+}
+
+.@{dashboard-prefix-cls}-graph-add {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px;
+}

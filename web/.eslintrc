@@ -1,0 +1,65 @@
+{
+  "extends": [
+    "airbnb"
+  ],
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "generators": true,
+      "classes": true
+    }
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "mocha": true,
+    "jest": true
+  },
+  "rules": {
+    "arrow-body-style": 1,
+    "function-paren-newline": [
+      2,
+      "consistent"
+    ],
+    "newline-per-chained-call": 1,
+    "object-curly-newline": 1,
+    "operator-linebreak": 1,
+    "global-require": 1,
+    "max-len": [
+      1,
+      100,
+      2,
+      {
+        "ignoreUrls": true,
+        "ignoreComments": false,
+        "ignoreRegExpLiterals": true,
+        "ignoreStrings": true,
+        "ignoreTemplateLiterals": true
+      }
+    ],
+    "no-param-reassign": 1,
+    "import/no-unresolved": 0,
+    "import/extensions": "ignorePackages",
+    "jsx-a11y/anchor-is-valid": 0,
+    "jsx-a11y/click-events-have-key-events": 0,
+    "jsx-a11y/no-static-element-interactions": 0,
+    "jsx-a11y/no-noninteractive-element-interactions": 0,
+    "react/jsx-first-prop-new-line": 0,
+    "react/jsx-max-props-per-line": [
+      2,
+      {
+        "maximum": 3
+      }
+    ],
+    "react/jsx-closing-bracket-location": [
+      0,
+      "after-props"
+    ],
+    "react/jsx-no-target-blank": 1,
+    "react/forbid-prop-types": 1,
+    "react/destructuring-assignment": 1,
+    "react/prop-types": 1,
+    "react/jsx-one-expression-per-line": 1,
+    "react/jsx-wrap-multilines": 0
+  }
+}

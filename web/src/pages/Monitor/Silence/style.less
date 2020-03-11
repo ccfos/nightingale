@@ -1,0 +1,19 @@
+@import "../../../assets/style.less";
+@strategy-prefix-cls: ~"@{prefix-cls}-monitor-silence";
+
+.@{strategy-prefix-cls} {
+  .noMarginBottom {
+    margin-bottom: 0;
+  }
+  .readOnly {
+    .ant-radio-disabled .ant-radio-inner:after {
+      background-color: #666;
+    }
+    .ant-select-disabled .ant-select-selection--multiple .ant-select-selection__choice {
+      color: #666;
+    }
+    .ant-input-number-input[disabled], .ant-input[disabled], fieldset[disabled] .ant-input {
+      color: #666;
+    }
+  }
+}

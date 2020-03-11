@@ -1,0 +1,203 @@
+/**
+ * fix antd
+ */
+.largeTooltip {
+  .ant-tooltip-inner {
+    max-width: 600px;
+  }
+}
+
+/**
+ * highcharts
+ */
+.highcharts-container {
+  position: inherit !important;
+}
+.highcharts-tooltip {
+  z-index: 9998;
+  width: 100%;
+}
+.highcharts-tooltip > span {
+  background: rgba(255,255,255,0.85);
+  border: 1px solid silver;
+  border-radius: 3px;
+  box-shadow: 1px 1px 2px #888;
+  padding: 8px;
+}
+
+.highcharts-plot-line-label {
+  width: 100%;
+  transform: unset !important;
+  white-space: normal !important;
+  // position: unset !important;
+}
+
+/**
+ * graph
+ */
+.graph-container {
+  background-color: #fff;
+  position: relative;
+  overflow: hidden;
+  // border: 1px solid #efefef;
+  .ant-table-middle .ant-table-thead > tr > th, .ant-table-middle .ant-table-tbody > tr > td {
+    padding: 5px;
+  }
+  li { list-style: none; }
+}
+.graph-legend {
+  display: none;
+}
+.graph-container-hasLegend .graph-legend {
+  display: block;
+}
+.graph-header {
+  padding: 0 10px;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #efefef;
+  overflow: hidden;
+}
+.graph-title {
+  margin-right: 150px;
+  float: unset;
+}
+.graph-extra {
+  float: right;
+}
+.graph-extra-item {
+  color: #999;
+  display: inline-block;
+  margin-left: 10px;
+  cursor: pointer;
+}
+.graph-config-inner {
+  padding: 8px;
+  .ant-btn {
+    font-weight: normal;
+  }
+}
+.graph-config-inner-item {
+  display: inline-block;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+.graph-errorText {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 14px;
+}
+
+.graph-info {
+  font-size: 12px;
+  max-width: 500px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  &:last-child {
+    border-bottom: 0 none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  li {
+    margin-bottom: 5px;
+    list-style: none;
+  }
+  .graph-info-key {
+    display: inline-block;
+    text-align: right;
+    width: 60px;
+    float: left;
+  }
+  .graph-info-value {
+    display: inline-block;
+    margin-left: 10px;
+    max-width: 400px;
+  }
+}
+
+.tagkvModal {
+  .ant-modal-header {
+    padding: 5px 16px;
+  }
+  .ant-modal-title {
+    font-weight: normal;
+    font-weight: 12px;
+  }
+  .ant-modal-footer {
+    padding: 0;
+    border: 0 none;
+  }
+}
+
+.selectNs-selection {
+  border: 1px solid #d9d9d9;
+  background-color: #fff;
+  border-radius: 6px;
+}
+
+.selectNs-selection-rendered {
+  padding-left: 4px;
+  line-height: 1;
+  .ant-tag {
+    background-color: #f3f3f3;
+    margin-right: 4px;
+  }
+}
+
+.selectedNs-content {
+  border: 1px solid #e7e9ed;
+  overflow-y: auto;
+  .ant-tag { height: auto; }
+  .ant-tag-text { word-break: break-all; }
+}
+
+.graph-config-inner-comparison {
+  display: inline-block;
+  .select-addon {
+    display: inline-block;
+    width: 30px;
+    vertical-align: middle;
+    padding: 5px;
+    position: relative;
+    z-index: 1;
+    left: -2px;
+    border-top-right-radius: 3px !important;
+    border-bottom-right-radius: 3px !important;
+  }
+}
+
+// 兼容大盘等地方老的方式
+.graph-operationbar-item {
+  color: #999;
+  display: inline-block;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+// global-operationbar
+.global-operationbar-warp {
+  display: inline-block;
+  text-align: left;
+  // fix height
+  .ant-select-selection--multiple .ant-select-selection__rendered {
+    padding-bottom: 2px;
+  }
+  .ant-select-selection--multiple .ant-select-selection__rendered > ul > li {
+    margin-top: 3px;
+  }
+}
+
+.custom-filter-dropdown {
+  padding: 8px;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,.2);
+
+  input {
+    width: 130px;
+    margin-right: 8px;
+  }
+}

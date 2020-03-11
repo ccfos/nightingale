@@ -1,0 +1,47 @@
+@import "../../assets/style";
+
+@login-width: 360px;
+@login-height: 315px;
+@login-prefix-cls: ~"@{prefix-cls}-login";
+@register-width: 360px;
+@register-height: 465px;
+@register-prefix-cls:  ~"@{prefix-cls}-register";
+
+.title() {
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 400;
+  margin-bottom: 20px;
+}
+
+.@{login-prefix-cls} {
+  .single-page-wrap(@login-width);
+}
+
+.@{login-prefix-cls}-main {
+  .single-page-main(@login-height)
+}
+
+.@{login-prefix-cls}-title {
+  .title();
+}
+
+.@{login-prefix-cls}-submitBtn {
+  width: 100%;
+}
+
+.@{register-prefix-cls} {
+  .single-page-wrap(@register-width);
+}
+
+.@{register-prefix-cls}-main {
+  .single-page-main(@register-height)
+}
+
+.@{register-prefix-cls}-title {
+  .title()
+}
+
+.@{register-prefix-cls}-submitBtn {
+  width: 100%;
+}
