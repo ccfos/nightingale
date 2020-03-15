@@ -63,17 +63,14 @@ func (m *MetricValue) CheckValidity() (err error) {
 		return
 	}
 
-	//将保留字替换
-	var illegal bool
-	m.Metric, illegal = ReplaceReservedWords(m.Metric)
-	if illegal {
-		err = fmt.Errorf("Metric contains reserved word")
+	//检测保留字
+	if HasReservedWords(m.Metric) {
+		err = fmt.Errorf("metric:%s contains reserved words:[\\t] [\\r] [\\n] [,] [ ] [=]", m.Metric)
 		return
 	}
 
-	m.Endpoint, illegal = ReplaceReservedWords(m.Endpoint)
-	if illegal {
-		err = fmt.Errorf("Endpoint contains reserved word:%s", m.Endpoint)
+	if HasReservedWords(m.Endpoint) {
+		err = fmt.Errorf("endpoint:%s contains reserved words:[\\t] [\\r] [\\n] [,] [ ] [=]", m.Endpoint)
 		return
 	}
 
@@ -151,7 +148,7 @@ func (m *MetricValue) CheckValidity() (err error) {
 	return
 }
 
-func ReplaceReservedWords(str string) (string, bool) {
+func HasReservedWords(str string) bool {
 	if -1 == strings.IndexFunc(str,
 		func(r rune) bool {
 			return r == '\t' ||
@@ -159,27 +156,13 @@ func ReplaceReservedWords(str string) (string, bool) {
 				r == '\n' ||
 				r == ',' ||
 				r == ' ' ||
-				r == ':' ||
 				r == '='
 		}) {
 
-		return str, false
+		return false
 	}
 
-	return strings.Map(func(r rune) rune {
-		if r == '\t' ||
-			r == '\r' ||
-			r == '\n' ||
-			r == ',' ||
-			r == ' ' ||
-			r == ':' ||
-			r == '=' {
-			return '_'
-		}
-		return r
-	}, str), true
-
-	return str, false
+	return true
 }
 
 func SortedTags(tags map[string]string) string {
