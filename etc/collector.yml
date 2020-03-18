@@ -1,4 +1,3 @@
-# use shell if specify is blank
 logger:
   dir: logs/collector
   level: WARNING
