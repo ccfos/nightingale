@@ -184,7 +184,7 @@ class index extends Component<null, State> {
             <div className="mt10 mb10" style={{ wordBreak: 'break-word' }}>
               {_.get(selectedNode, 'path')}
             </div>
-            <Popconfirm title="确定要删除这个节点吗？" onConfirm={this.handleDelNode}>
+            <Popconfirm disabled={isPdlNode} title="确定要删除这个节点吗？" onConfirm={this.handleDelNode}>
               <Button disabled={isPdlNode}>删除</Button>
             </Popconfirm>
             {
