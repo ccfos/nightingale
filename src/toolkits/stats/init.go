@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/src/dataobj"
-	"github.com/didi/nightingale/src/toolkits/identity"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -42,7 +41,6 @@ func Push() {
 func NewMetricValue(metric string, value int64) *dataobj.MetricValue {
 	item := &dataobj.MetricValue{
 		Metric:       metric,
-		Endpoint:     identity.Identity,
 		Timestamp:    time.Now().Unix(),
 		ValueUntyped: value,
 		CounterType:  "GAUGE",

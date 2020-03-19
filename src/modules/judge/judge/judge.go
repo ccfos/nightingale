@@ -110,14 +110,14 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 	}()
 
 	leftValue, isTriggered = judgeItemWithStrategy(stra, historyData, exps[0], firstItem, now)
-	if !isTriggered {
-		return
-	}
-
 	if value == "" {
 		value = fmt.Sprintf("%s: %v", exp.Metric, leftValue)
 	} else {
 		value += fmt.Sprintf("; %s: %v", exp.Metric, leftValue)
+	}
+
+	if !isTriggered {
+		return
 	}
 
 	//与条件情况下执行

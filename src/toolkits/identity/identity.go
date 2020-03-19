@@ -18,11 +18,12 @@ type IdentitySection struct {
 func Init(identity IdentitySection) {
 	if identity.Specify != "" {
 		Identity = identity.Specify
+		return
 	}
 
 	var err error
 	Identity, err = sys.CmdOutTrim("bash", "-c", identity.Shell)
 	if err != nil {
-		log.Fatalln("[F] cannot get hostname")
+		log.Fatalln("[F] cannot get identity")
 	}
 }
