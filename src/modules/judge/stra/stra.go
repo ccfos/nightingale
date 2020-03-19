@@ -56,11 +56,13 @@ func getStrategy(opts StrategySection) {
 
 		if err != nil {
 			logger.Warningf("get strategy from remote failed, error:%v", err)
+			stats.Counter.Set("stra.get.err", 1)
 			continue
 		}
 
 		if resp.Err != "" {
 			logger.Warningf("get strategy from remote failed, error:%v", resp.Err)
+			stats.Counter.Set("stra.get.err", 1)
 			continue
 		}
 

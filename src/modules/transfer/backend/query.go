@@ -12,6 +12,7 @@ import (
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/modules/transfer/calc"
 	"github.com/didi/nightingale/src/toolkits/address"
+	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/httplib"
@@ -161,10 +162,12 @@ func fetchDataSync(start, end int64, consolFun, endpoint, counter string, step i
 	defer func() {
 		<-worker
 	}()
+	stats.Counter.Set("query.tsdb", 1)
 
 	data, err := fetchData(start, end, consolFun, endpoint, counter, step)
 	if err != nil {
 		logger.Warning(err)
+		stats.Counter.Set("query.data.err", 1)
 	}
 	dataChan <- data
 	return

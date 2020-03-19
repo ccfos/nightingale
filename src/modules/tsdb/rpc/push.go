@@ -58,7 +58,6 @@ func handleItems(items []*dataobj.TsdbItem) {
 		//todo hash冲突问题需要解决
 		if err := cache.Caches.Push(item.Key, item.Timestamp, item.Value); err != nil {
 			stats.Counter.Set("points.in.err", 1)
-
 			logger.Warningf("push obj error, obj: %v, error: %v\n", items[i], err)
 			fail++
 		}

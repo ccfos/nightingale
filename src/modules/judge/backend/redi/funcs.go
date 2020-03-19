@@ -42,6 +42,5 @@ func Push(event *dataobj.Event) error {
 		return nil
 	}
 
-	stats.Counter.Set("redis.failed", 1)
 	return fmt.Errorf("redis publish failed finally:%v", err)
 }

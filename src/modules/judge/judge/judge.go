@@ -65,7 +65,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 	stats.Counter.Set("running", 1)
 
 	if len(exps) < 1 {
-		stats.Counter.Set("stra.err", 1)
+		stats.Counter.Set("stra.illegal", 1)
 		logger.Warningf("stra:%v exp is null", stra)
 		return
 	}
@@ -421,6 +421,7 @@ func sendEvent(event *dataobj.Event) {
 
 	err := redi.Push(event)
 	if err != nil {
+		stats.Counter.Set("redis.push.failed", 1)
 		logger.Errorf("push event:%v err:%v", event, err)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/didi/nightingale/src/toolkits/stats"
 	"github.com/garyburd/redigo/redis"
 	"github.com/toolkits/pkg/logger"
 )
@@ -44,6 +45,7 @@ func Init(cfg RedisSection) {
 				c, err := redis.Dial("tcp", addr, redis.DialConnectTimeout(connTimeout), redis.DialReadTimeout(readTimeout), redis.DialWriteTimeout(writeTimeout))
 				if err != nil {
 					logger.Errorf("conn redis err:%v", err)
+					stats.Counter.Set("redis.conn.failed", 1)
 					return nil, err
 				}
 
@@ -51,6 +53,8 @@ func Init(cfg RedisSection) {
 					if _, err := c.Do("AUTH", pass); err != nil {
 						c.Close()
 						logger.Errorf("ERR: redis auth fail:%v", err)
+						stats.Counter.Set("redis.conn.failed", 1)
+
 						return nil, err
 					}
 				}

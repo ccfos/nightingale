@@ -48,7 +48,9 @@ func Push(items []*dataobj.MetricValue) {
 				logger.Error(err)
 				continue
 			} else {
-				logger.Info("push succ, reply: ", reply)
+				if reply.Msg != "ok" {
+					logger.Error("some item push err", reply)
+				}
 				return
 			}
 		}

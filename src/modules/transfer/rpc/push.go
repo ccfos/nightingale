@@ -27,9 +27,10 @@ func (t *Transfer) Push(args []*dataobj.MetricValue, reply *dataobj.TransferResp
 		err := v.CheckValidity()
 		if err != nil {
 			stats.Counter.Set("points.in.err", 1)
-			logger.Warningf("item is illegal item:%s err:%v", v, err)
+			msg := fmt.Sprintf("item is illegal item:%s err:%v", v, err)
+			logger.Warningf(msg)
 			reply.Invalid += 1
-			reply.Msg += fmt.Sprintf("%v\n", err)
+			reply.Msg += msg
 			continue
 		}
 
