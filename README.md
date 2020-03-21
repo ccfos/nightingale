@@ -15,7 +15,7 @@ Nightingale user manual: [https://n9e.didiyun.com/](https://n9e.didiyun.com/)
 mkdir -p $GOPATH/src/github.com/didi
 cd $GOPATH/src/github.com/didi
 git clone https://github.com/didi/nightingale.git
-cd nightingale && ./control build
+cd nightingale && export GO111MODULE=on && ./control build
 ```
 
 ## Team
