@@ -65,7 +65,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 	stats.Counter.Set("running", 1)
 
 	if len(exps) < 1 {
-		stats.Counter.Set("stra.err", 1)
+		stats.Counter.Set("stra.illegal", 1)
 		logger.Warningf("stra:%v exp is null", stra)
 		return
 	}
@@ -110,14 +110,14 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 	}()
 
 	leftValue, isTriggered = judgeItemWithStrategy(stra, historyData, exps[0], firstItem, now)
-	if !isTriggered {
-		return
-	}
-
 	if value == "" {
 		value = fmt.Sprintf("%s: %v", exp.Metric, leftValue)
 	} else {
 		value += fmt.Sprintf("; %s: %v", exp.Metric, leftValue)
+	}
+
+	if !isTriggered {
+		return
 	}
 
 	//与条件情况下执行
@@ -421,6 +421,7 @@ func sendEvent(event *dataobj.Event) {
 
 	err := redi.Push(event)
 	if err != nil {
+		stats.Counter.Set("redis.push.failed", 1)
 		logger.Errorf("push event:%v err:%v", event, err)
 	}
 }

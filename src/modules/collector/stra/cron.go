@@ -74,7 +74,7 @@ func getCollects() (CollectResp, error) {
 	url := fmt.Sprintf("http://%s%s%s", addr, StraConfig.Api, identity.Identity)
 	err = httplib.Get(url).SetTimeout(time.Duration(StraConfig.Timeout) * time.Millisecond).ToJSON(&res)
 	if err != nil {
-		err = fmt.Errorf("get collects from remote failed, error:%v", err)
+		err = fmt.Errorf("get collects from remote:%s failed, error:%v", url, err)
 	}
 
 	return res, err

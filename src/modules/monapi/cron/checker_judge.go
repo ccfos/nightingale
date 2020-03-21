@@ -11,6 +11,7 @@ import (
 	"github.com/didi/nightingale/src/model"
 	"github.com/didi/nightingale/src/modules/monapi/config"
 	"github.com/didi/nightingale/src/modules/monapi/scache"
+	"github.com/didi/nightingale/src/toolkits/stats"
 )
 
 func CheckJudgeLoop() {
@@ -19,6 +20,7 @@ func CheckJudgeLoop() {
 		time.Sleep(duration)
 		err := CheckJudge()
 		if err != nil {
+			stats.Counter.Set("get.judge.err", 1)
 			logger.Error("check judge fail: ", err)
 		}
 	}

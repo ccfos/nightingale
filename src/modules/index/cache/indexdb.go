@@ -19,6 +19,7 @@ import (
 	"github.com/didi/nightingale/src/toolkits/compress"
 	"github.com/didi/nightingale/src/toolkits/identity"
 	"github.com/didi/nightingale/src/toolkits/report"
+	"github.com/didi/nightingale/src/toolkits/stats"
 )
 
 type CacheSection struct {
@@ -72,8 +73,8 @@ func StartPersist(interval int) {
 		err := Persist("normal")
 		if err != nil {
 			logger.Error("Persist err:", err)
+			stats.Counter.Set("persist.err", 1)
 		}
-		//logger.Infof("clean %+v, took %.2f ms\n", cleanRet, float64(time.Since(start).Nanoseconds())*1e-6)
 	}
 }
 

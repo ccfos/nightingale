@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/src/toolkits/address"
+	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/logger"
@@ -49,11 +50,12 @@ func reportEndpoint(endpoints []interface{}) {
 			err := httplib.Post(url).JSONBodyQuiet(m).SetTimeout(3*time.Second).Header("x-srv-token", "monapi-builtin-token").ToJSON(&body)
 			if err != nil {
 				logger.Warningf("curl %s fail: %v. retry", url, err)
+				stats.Counter.Set("report.endpoint.err", 1)
 				continue
 			}
-
-			if body.Err != "" {
+			if body.Err != "" { //数据库连接出错会出现此情况
 				logger.Warningf("curl %s fail: %s. retry", url, body.Err)
+				stats.Counter.Set("report.endpoint.err", 1)
 				continue
 			}
 

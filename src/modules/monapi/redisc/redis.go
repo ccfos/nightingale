@@ -7,6 +7,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/src/modules/monapi/config"
+	"github.com/didi/nightingale/src/toolkits/stats"
 )
 
 var RedisConnPool *redis.Pool
@@ -29,6 +30,8 @@ func InitRedis() {
 		Dial: func() (redis.Conn, error) {
 			c, err := redis.Dial("tcp", addr, redis.DialConnectTimeout(connTimeout), redis.DialReadTimeout(readTimeout), redis.DialWriteTimeout(writeTimeout))
 			if err != nil {
+				logger.Errorf("conn redis err:%v", err)
+				stats.Counter.Set("redis.conn.failed", 1)
 				return nil, err
 			}
 
@@ -36,6 +39,7 @@ func InitRedis() {
 				if _, err := c.Do("AUTH", pass); err != nil {
 					c.Close()
 					logger.Error("redis auth fail, pass: ", pass)
+					stats.Counter.Set("redis.conn.failed", 1)
 					return nil, err
 				}
 			}
