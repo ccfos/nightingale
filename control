@@ -141,6 +141,9 @@ build_one()
 
 build()
 {
+  export GO111MODULE=on
+  export GOPROXY=https://mirrors.aliyun.com/goproxy/
+
 	mod=$1
 	if [ "x${mod}" = "x" ]; then
 		build_one monapi
