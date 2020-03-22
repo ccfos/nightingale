@@ -1,0 +1,38 @@
+version: "3"
+volumes: 
+  mysql-data:
+services: 
+  api:
+    build: .
+    image: api
+
+  monapi:
+    image: api
+    restart: always
+    command: monapi
+  
+  web:
+    build:
+      context: web
+    restart: always
+    ports: 
+      - 8010:8010
+
+  redis:
+    image: redis
+    restart: always
+    ports: 
+      - 6379:6379
+
+  mysql:
+    image: mysql:5.7
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
+    ports: 
+      - 3306:3306
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+      - mysql-data:/var/lib/mysql
+  
+    
