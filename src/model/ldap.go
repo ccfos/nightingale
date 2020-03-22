@@ -45,15 +45,16 @@ func ldapReq(user, pass string) (*ldap.SearchResult, error) {
 	defer conn.Close()
 
 	if !lc.TLS && lc.StartTLS {
-		err = conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
-		if err != nil {
+		if err := conn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
 			return nil, fmt.Errorf("ldap.conn startTLS fail: %v", err)
 		}
 	}
-
-	err = conn.Bind(lc.BindUser, lc.BindPass)
-	if err != nil {
-		return nil, fmt.Errorf("bind ldap fail: %v, use %s", err, lc.BindUser)
+	//if bindUser is empty, anonymousSearch mode
+	if lc.BindUser != "" {
+		//BindSearch mode
+		if err := conn.Bind(lc.BindUser, lc.BindPass); err != nil {
+			return nil, fmt.Errorf("bind ldap fail: %v, use %s", err, lc.BindUser)
+		}
 	}
 
 	searchRequest := ldap.NewSearchRequest(
