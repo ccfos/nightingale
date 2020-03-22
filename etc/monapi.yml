@@ -14,11 +14,19 @@ ldap:
   host: "ldap.example.org"
   port: 389
   baseDn: "dc=example,dc=org"
+  # AD: manange@example.org
   bindUser: "cn=manager,dc=example,dc=org"
   bindPass: "*******"
   # openldap: (&(uid=%s))
   # AD: (&(sAMAccountName=%s))
   authFilter: "(&(uid=%s))"
+  attributes:
+    dispname: "cn"
+    email: "mail"
+    phone: "mobile"
+    im: ""
+  coverAttributes: false
+  autoRegist: false
   tls: false
   startTLS: false
 
