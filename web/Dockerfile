@@ -1,5 +1,7 @@
 FROM node:lts-alpine AS builder
 
-WORKDIR /home/app
+WORKDIR /app
 
 COPY . .
+
+RUN npm install

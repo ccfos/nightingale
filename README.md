@@ -18,6 +18,13 @@ git clone https://github.com/didi/nightingale.git
 cd nightingale && ./control build
 ```
 
+## Quick Start (need install docker for [mac](https://docs.docker.com/docker-for-mac/install/)/[win](https://docs.docker.com/docker-for-windows/install/))
+
+```bash
+docker-compose up -d
+# open http://localhost in web browser
+```
+
 ## Team
 
 [ulricqin](https://github.com/ulricqin) [710leo](https://github.com/710leo) [jsers](https://github.com/jsers) [hujter](https://github.com/hujter) [n4mine](https://github.com/n4mine) [heli567](https://github.com/heli567)

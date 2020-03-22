@@ -1,7 +1,15 @@
 version: "3"
 volumes: 
   mysql-data:
-services: 
+services:
+  nginx:
+    image: nginx:stable-alpine
+    ports: 
+      - 80:80
+    volumes: 
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./pub:/home/n9e/pub
   api:
     build: .
     image: api
@@ -10,13 +18,18 @@ services:
     image: api
     restart: always
     command: monapi
-  
-  web:
-    build:
-      context: web
-    restart: always
+    volumes: 
+      - ./docker/etc:/app/etc
     ports: 
-      - 8010:8010
+      - 5800:5800
+  
+  # web:
+  #   build:
+  #     context: web
+  #   restart: always
+  #   command: npm run dev
+  #   ports: 
+  #     - 8010:8010
 
   redis:
     image: redis
