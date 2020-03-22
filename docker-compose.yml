@@ -22,7 +22,27 @@ services:
       - ./docker/etc:/app/etc
     ports: 
       - 5800:5800
-  
+
+  index:
+    image: api
+    restart: always
+    command: index
+    volumes: 
+      - ./docker/etc:/app/etc
+    ports: 
+      - 5830:5830
+      - 5831:5831
+
+  transfer:
+    image: api
+    restart: always
+    command: transfer
+    volumes: 
+      - ./docker/etc:/app/etc
+    ports: 
+      - 5810:5810
+      - 5811:5811
+      
   # web:
   #   build:
   #     context: web

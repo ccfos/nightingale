@@ -9,11 +9,13 @@ WORKDIR /app
 
 COPY . .
 ENV GOPROXY=https://mod.gokit.info
-RUN go build -o ./bin/monapi src/modules/monapi/monapi.go
+RUN go build -mod vendor -o ./bin/monapi src/modules/monapi/monapi.go \
+  && go build -mod vendor -o ./bin/index src/modules/index/index.go \
+  && go build -mod vendor -o ./bin/transfer src/modules/transfer/transfer.go
 
 FROM alpine:3.10
 LABEL maintainer="llitfkitfk@gmail.com"
-RUN apk add --no-cache tzdata ca-certificates
+RUN apk add --no-cache tzdata ca-certificates bash
 
 WORKDIR /app
 
