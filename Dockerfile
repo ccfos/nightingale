@@ -8,6 +8,7 @@ WORKDIR /app
 # RUN go mod download
 
 COPY . .
+ENV GOPROXY=https://mod.gokit.info
 RUN ./control build
 
 FROM buildpack-deps:buster-curl
