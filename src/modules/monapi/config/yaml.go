@@ -64,14 +64,24 @@ type httpSection struct {
 }
 
 type ldapSection struct {
-	Host       string `yaml:"host"`
-	Port       int    `yaml:"port"`
-	BaseDn     string `yaml:"baseDn"`
-	BindUser   string `yaml:"bindUser"`
-	BindPass   string `yaml:"bindPass"`
-	AuthFilter string `yaml:"authFilter"`
-	TLS        bool   `yaml:"tls"`
-	StartTLS   bool   `yaml:"startTLS"`
+	Host            string         `yaml:"host"`
+	Port            int            `yaml:"port"`
+	BaseDn          string         `yaml:"baseDn"`
+	BindUser        string         `yaml:"bindUser"`
+	BindPass        string         `yaml:"bindPass"`
+	AuthFilter      string         `yaml:"authFilter"`
+	Attributes      ldapAttributes `yaml:"attributes"`
+	CoverAttributes bool           `yaml:"coverAttributes"`
+	AutoRegist      bool           `yaml:"autoRegist"`
+	TLS             bool           `yaml:"tls"`
+	StartTLS        bool           `yaml:"startTLS"`
+}
+
+type ldapAttributes struct {
+	Dispname string `yaml:"dispname"`
+	Phone    string `yaml:"phone"`
+	Email    string `yaml:"email"`
+	Im       string `yaml:"im"`
 }
 
 var (
