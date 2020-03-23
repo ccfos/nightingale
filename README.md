@@ -15,7 +15,10 @@ Nightingale user manual: [https://n9e.didiyun.com/](https://n9e.didiyun.com/)
 mkdir -p $GOPATH/src/github.com/didi
 cd $GOPATH/src/github.com/didi
 git clone https://github.com/didi/nightingale.git
-cd nightingale && ./control build
+cd nightingale
+# export env[GOPROXY] if your network is not good
+# export GOPROXY=https://mirrors.aliyun.com/goproxy/
+./control build
 ```
 
 ## Team
