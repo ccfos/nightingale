@@ -10,9 +10,8 @@ WORKDIR /app
 COPY . .
 RUN ./control build
 
-FROM alpine:3.10
+FROM buildpack-deps:buster-curl
 LABEL maintainer="llitfkitfk@gmail.com"
-RUN apk add --no-cache tzdata ca-certificates bash
 
 WORKDIR /app
 
