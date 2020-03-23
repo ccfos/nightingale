@@ -3,12 +3,17 @@ package stats
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"path"
 	"time"
 
 	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/toolkits/address"
 
+	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/runner"
 )
 
 var (
@@ -16,7 +21,13 @@ var (
 )
 
 func Init(prefix string, addr ...string) {
-	if len(addr) > 0 {
+
+	if file.IsExist(path.Join(runner.Cwd, "etc", "address.yml")) {
+		//address.yml 存在，使用配置文件的地址
+		port := address.GetHTTPPort("collector")
+		PushUrl = fmt.Sprintf("http://127.0.0.1:%d/api/collector/push", port)
+	} else if len(addr) > 0 && addr[0] != "" {
+		// address.yml 不存在，使用 addr 参数
 		PushUrl = addr[0]
 	}
 
