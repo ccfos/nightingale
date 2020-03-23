@@ -136,13 +136,13 @@ status()
 build_one()
 {
 	mod=$1
-	go build -o n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
+	go build -o bin/n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
 }
 
 build()
 {
   export GO111MODULE=on
-  export GOPROXY=https://mirrors.aliyun.com/goproxy/
+  export GOPROXY=https://mod.gokit.info
 
 	mod=$1
 	if [ "x${mod}" = "x" ]; then
