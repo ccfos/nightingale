@@ -22,7 +22,27 @@ services:
       - ./docker/etc:/app/etc
     ports: 
       - 5800:5800
+      
+  transfer:
+    image: api
+    restart: always
+    command: transfer
+    volumes: 
+      - ./docker/etc:/app/etc
+    ports: 
+      - 5810:5810
+      - 5811:5811
 
+  tsdb:
+    image: api
+    restart: always
+    command: tsdb
+    volumes: 
+      - ./docker/etc:/app/etc
+    ports: 
+      - 5820:5820
+      - 5821:5821
+      
   index:
     image: api
     restart: always
@@ -33,16 +53,25 @@ services:
       - 5830:5830
       - 5831:5831
 
-  transfer:
+  judge:
     image: api
     restart: always
-    command: transfer
+    command: judge
     volumes: 
       - ./docker/etc:/app/etc
     ports: 
-      - 5810:5810
-      - 5811:5811
-      
+      - 5840:5840
+      - 5841:5841
+
+  collector:
+    image: api
+    restart: always
+    command: collector
+    volumes: 
+      - ./docker/etc:/app/etc
+    ports: 
+      - 2058:2058
+
   # web:
   #   build:
   #     context: web
