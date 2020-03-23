@@ -46,18 +46,50 @@ func QueryData(c *gin.Context) {
 func QueryDataForUI(c *gin.Context) {
 	stats.Counter.Set("data.ui.qp10s", 1)
 	var input dataobj.QueryDataForUI
-
+	var respData []*dataobj.QueryDataForUIResp
 	errors.Dangerous(c.ShouldBindJSON(&input))
+	start := input.Start
+	end := input.End
 
 	resp := backend.FetchDataForUI(input)
+	for _, d := range resp {
+		data := &dataobj.QueryDataForUIResp{
+			Start:    d.Start,
+			End:      d.End,
+			Endpoint: d.Endpoint,
+			Counter:  d.Counter,
+			DsType:   d.DsType,
+			Step:     d.Step,
+			Values:   d.Values,
+		}
+		respData = append(respData, data)
+	}
+
 	if len(input.Comparisons) > 1 {
 		for i := 1; i < len(input.Comparisons); i++ {
-			input.Start = input.Start - input.Comparisons[i]
-			input.End = input.End - input.Comparisons[i]
+			comparison := input.Comparisons[i]
+			input.Start = start - comparison
+			input.End = end - comparison
 			res := backend.FetchDataForUI(input)
-			resp = append(resp, res...)
+			for _, d := range res {
+				for j := range d.Values {
+					d.Values[j].Timestamp += comparison
+				}
+
+				data := &dataobj.QueryDataForUIResp{
+					Start:      d.Start,
+					End:        d.End,
+					Endpoint:   d.Endpoint,
+					Counter:    d.Counter,
+					DsType:     d.DsType,
+					Step:       d.Step,
+					Values:     d.Values,
+					Comparison: comparison,
+				}
+				respData = append(respData, data)
+			}
 		}
 	}
 
-	render.Data(c, resp, nil)
+	render.Data(c, respData, nil)
 }
