@@ -4,4 +4,4 @@ logger:
   keepHours: 2
 identity:
   specify: ""
-  shell: hostname -i
+  shell: ifconfig `route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|awk -F ':' '{print $NF}'|head -n 1
