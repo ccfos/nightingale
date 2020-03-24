@@ -4,7 +4,7 @@ logger:
   keepHours: 2
 identity:
   specify: ""
-  shell: /usr/sbin/ifconfig `/usr/sbin/route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|head -n 1
+  shell: hostname -i
 sys:
   # timeout in ms
   # interval in second
