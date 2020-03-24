@@ -58,7 +58,7 @@ func consume(event *model.Event) {
 			SetEventStatus(event, model.STATUS_UPGRADE)
 
 			if needNotify {
-				if event.EventType == config.ALERT && NeedCallback(event.Sid) {
+				if NeedCallback(event.Sid) {
 					if err := PushCallbackEvent(event); err != nil {
 						logger.Errorf("push event to callback queue failed, callbackEvent: %+v", event)
 					}
@@ -82,7 +82,7 @@ func consume(event *model.Event) {
 		return
 	}
 
-	if event.EventType == config.ALERT && NeedCallback(event.Sid) {
+	if NeedCallback(event.Sid) {
 		if err := PushCallbackEvent(event); err != nil {
 			logger.Errorf("push event to callback queue failed, callbackEvent: %+v", event)
 		}
