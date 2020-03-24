@@ -62,16 +62,16 @@ func Parse(conf string) error {
 		"enable":   true,
 		"timeout":  1000,
 		"interval": 10, //采集策略更新时间
-		"portPath": "/home/n9e/etc/port",
-		"procPath": "/home/n9e/etc/proc",
-		"logPath":  "/home/n9e/etc/log",
+		"portPath": "./etc/port",
+		"procPath": "./etc/proc",
+		"logPath":  "./etc/log",
 		"api":      "/api/portal/collects/",
 	})
 
 	viper.SetDefault("sys", map[string]interface{}{
 		"timeout":  1000, //请求超时时间
 		"interval": 10,   //基础指标上报周期
-		"plugin":   "/home/n9e/plugin",
+		"plugin":   "./plugin",
 	})
 
 	err = viper.Unmarshal(&Config)
