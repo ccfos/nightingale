@@ -18,8 +18,6 @@ services:
     image: api
     restart: always
     command: n9e-monapi
-    volumes: 
-      - ./docker/etc:/app/etc
     ports: 
       - 5800:5800
       
@@ -27,8 +25,6 @@ services:
     image: api
     restart: always
     command: n9e-transfer
-    volumes: 
-      - ./docker/etc:/app/etc
     ports: 
       - 5810:5810
       - 5811:5811
@@ -37,8 +33,6 @@ services:
     image: api
     restart: always
     command: n9e-tsdb
-    volumes: 
-      - ./docker/etc:/app/etc
     ports: 
       - 5820:5820
       - 5821:5821
@@ -47,8 +41,6 @@ services:
     image: api
     restart: always
     command: n9e-index
-    volumes: 
-      - ./docker/etc:/app/etc
     ports: 
       - 5830:5830
       - 5831:5831
@@ -57,8 +49,6 @@ services:
     image: api
     restart: always
     command: n9e-judge
-    volumes: 
-      - ./docker/etc:/app/etc
     ports: 
       - 5840:5840
       - 5841:5841
@@ -67,8 +57,6 @@ services:
     image: api
     restart: always
     command: n9e-collector
-    volumes: 
-      - ./docker/etc:/app/etc
     ports: 
       - 2058:2058
 
