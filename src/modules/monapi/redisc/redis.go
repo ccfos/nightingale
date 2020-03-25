@@ -49,7 +49,7 @@ func InitRedis() {
 				if _, err := c.Do("SELECT", db); err != nil {
 					c.Close()
 					logger.Error("redis select db fail, db: ", db)
-					stats.Counter.Set("redis.conn.failed", 1)
+					stats.Counter.Set("redis.select.failed", 1)
 					return nil, err
 				}
 			}
