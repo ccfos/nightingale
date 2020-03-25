@@ -20,6 +20,6 @@ func loopDetect() {
 
 func detect() {
 	ps := stra.GetProcCollects()
-	DelNoPorcCollect(ps)
-	AddNewPorcCollect(ps)
+	DelNoProcCollect(ps)
+	AddNewProcCollect(ps)
 }

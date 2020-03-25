@@ -79,7 +79,7 @@ func NodeQueryPath(query string, limit int) (nodes []Node, err error) {
 
 func TreeSearchByPath(query string) (nodes []Node, err error) {
 	session := DB["mon"].NewSession()
-	defer session.Clone()
+	defer session.Close()
 
 	if strings.Contains(query, " ") {
 		arr := strings.Fields(query)

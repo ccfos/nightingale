@@ -9,7 +9,7 @@ var (
 	ProcsWithScheduler = make(map[string]*ProcScheduler)
 )
 
-func DelNoPorcCollect(newCollect map[string]*model.ProcCollect) {
+func DelNoProcCollect(newCollect map[string]*model.ProcCollect) {
 	for currKey, currProc := range Procs {
 		newProc, ok := newCollect[currKey]
 		if !ok || currProc.LastUpdated != newProc.LastUpdated {
@@ -18,7 +18,7 @@ func DelNoPorcCollect(newCollect map[string]*model.ProcCollect) {
 	}
 }
 
-func AddNewPorcCollect(newCollect map[string]*model.ProcCollect) {
+func AddNewProcCollect(newCollect map[string]*model.ProcCollect) {
 	for target, newProc := range newCollect {
 		if _, ok := Procs[target]; ok && newProc.LastUpdated == Procs[target].LastUpdated {
 			continue
