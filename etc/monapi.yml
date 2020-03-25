@@ -52,6 +52,7 @@ link:
 # for alarm event and message queue
 redis:
   addr: "127.0.0.1:6379"
+  db: 0
   pass: ""
   # in ms
   # timeout:
