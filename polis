@@ -1,0 +1,17 @@
+- isim: Hakemlik görevlisi
+  kullanır: abinoda/assignee-to-reviewer-action@v1.0.4
+"https://api.hackerone.com/v1/reports?filter\[program\]\[\]=john_doe_example_company" \
+  -u "api_example_company:Ke+2jinhe5jM87P95aAVOz7L3ZWrtSiERtyOkkh5tEQ=""https://api.hackerone.com/v1/reports/172932/bounties" \
+  -X POST \
+  -u "api_example_company:Ke+2jinhe5jM87P95aAVOz7L3ZWrtSiERtyOkkh5tEQ=" \
+  -H "Content-Type: application/json" \
+  -d @- <<EOD
+    {
+      "data": {
+        "message": "Thanks for the great report. Here's your bounty!",
+        "amount": "500",
+        "bonus_amount": "250"
+      }
+    }
+EOD
+finish
