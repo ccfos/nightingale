@@ -50,8 +50,7 @@ func PluginRun(plugin *Plugin) {
 
 	timeout := plugin.Cycle*1000 - 500 //比运行周期少500毫秒
 
-	fpath := filepath.Join(file.SelfDir(), plugin.FilePath)
-
+	fpath := plugin.FilePath
 	if !file.IsExist(fpath) {
 		logger.Error("no such plugin:", fpath)
 		return
