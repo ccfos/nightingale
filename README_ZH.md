@@ -15,7 +15,10 @@ Nightingale是一套衍生自Open-Falcon的互联网监控解决方案，融入�
 mkdir -p $GOPATH/src/github.com/didi
 cd $GOPATH/src/github.com/didi
 git clone https://github.com/didi/nightingale.git
-cd nightingale && ./control build
+cd nightingale
+# 如果网络环境不好可以尝试aliyun的mirror
+# export GOPROXY=https://mirrors.aliyun.com/goproxy/
+./control build
 ```
 
 ## 团队

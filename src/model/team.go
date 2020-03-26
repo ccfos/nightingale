@@ -20,7 +20,7 @@ type Team struct {
 
 func (t *Team) Del() error {
 	session := DB["uic"].NewSession()
-	defer session.Clone()
+	defer session.Close()
 
 	if err := session.Begin(); err != nil {
 		return err

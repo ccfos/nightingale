@@ -231,6 +231,7 @@ func FlushRRD(flushChunks map[interface{}][]*cache.Chunk) {
 
 				err := FlushFile(seriesID, items)
 				if err != nil {
+					stats.Counter.Set("flush.rrd.err", 1)
 					logger.Errorf("flush %v data to rrd err:%v", seriesID, err)
 					continue
 				}

@@ -76,7 +76,10 @@ class index extends Component<Props, State> {
   processData = async (endpoints: Endpoint[]) => {
     if (this.state.displayBindNode && endpoints) {
       const idents = _.map(endpoints, item => item.ident);
-      const endpointNodes = await request(`${api.endpoint}s/bindings?idents=${_.join(idents, ',')}`);
+      let endpointNodes: any[] = [];
+      if (idents.length) {
+        endpointNodes = await request(`${api.endpoint}s/bindings?idents=${_.join(idents, ',')}`);
+      }
       const newEndpoints = _.map(endpoints, (item) => {
         const current = _.find(endpointNodes, { ident: item.ident });
         const nodes = _.get(current, 'nodes', []);

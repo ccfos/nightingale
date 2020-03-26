@@ -65,7 +65,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 	stats.Counter.Set("running", 1)
 
 	if len(exps) < 1 {
-		stats.Counter.Set("stra.err", 1)
+		stats.Counter.Set("stra.illegal", 1)
 		logger.Warningf("stra:%v exp is null", stra)
 		return
 	}
@@ -105,19 +105,19 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				Hashid:    getHashId(stra.Id, firstItem),
 			}
 
-			sendEventIfNeed(historyData, isTriggered, now, event)
+			sendEventIfNeed(historyData, isTriggered, event)
 		}
 	}()
 
 	leftValue, isTriggered = judgeItemWithStrategy(stra, historyData, exps[0], firstItem, now)
-	if !isTriggered {
-		return
-	}
-
 	if value == "" {
 		value = fmt.Sprintf("%s: %v", exp.Metric, leftValue)
 	} else {
 		value += fmt.Sprintf("; %s: %v", exp.Metric, leftValue)
+	}
+
+	if !isTriggered {
+		return
 	}
 
 	//与条件情况下执行
@@ -387,7 +387,7 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 	return reqs, nil
 }
 
-func sendEventIfNeed(historyData []*dataobj.RRDData, isTriggered bool, now int64, event *dataobj.Event) {
+func sendEventIfNeed(historyData []*dataobj.RRDData, isTriggered bool, event *dataobj.Event) {
 	lastEvent, exists := cache.LastEvents.Get(event.ID)
 	if isTriggered {
 		event.EventType = EVENT_ALERT
@@ -421,6 +421,7 @@ func sendEvent(event *dataobj.Event) {
 
 	err := redi.Push(event)
 	if err != nil {
+		stats.Counter.Set("redis.push.failed", 1)
 		logger.Errorf("push event:%v err:%v", event, err)
 	}
 }

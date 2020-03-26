@@ -1,11 +1,10 @@
-# use shell if specify is blank
 logger:
   dir: logs/collector
   level: WARNING
   keepHours: 2
 identity:
   specify: ""
-  shell: /usr/sbin/ifconfig `/usr/sbin/route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|head -n 1
+  shell: ifconfig `route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|awk -F ':' '{print $NF}'|head -n 1
 sys:
   # timeout in ms
   # interval in second

@@ -6,6 +6,7 @@ query:
 redis:
   addrs: 
     - 127.0.0.1:6379
+  db: 0
   pass: ""
   # timeout:
   #   conn: 500
@@ -14,7 +15,7 @@ redis:
 
 identity:
   specify: ""
-  shell: /usr/sbin/ifconfig `/usr/sbin/route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|head -n 1
+  shell: ifconfig `route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|awk -F ':' '{print $NF}'|head -n 1
 
 logger:
   dir: logs/judge

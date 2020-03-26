@@ -15,7 +15,17 @@ Nightingale user manual: [https://n9e.didiyun.com/](https://n9e.didiyun.com/)
 mkdir -p $GOPATH/src/github.com/didi
 cd $GOPATH/src/github.com/didi
 git clone https://github.com/didi/nightingale.git
-cd nightingale && ./control build
+cd nightingale
+# export env[GOPROXY] if your network is not good
+# export GOPROXY=https://mirrors.aliyun.com/goproxy/
+./control build
+```
+
+## Quick Start (need install docker for [mac](https://docs.docker.com/docker-for-mac/install/)/[win](https://docs.docker.com/docker-for-windows/install/))
+
+```bash
+docker-compose up -d
+# open http://localhost in web browser
 ```
 
 ## Team

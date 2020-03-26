@@ -12,6 +12,7 @@ import (
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/modules/transfer/calc"
 	"github.com/didi/nightingale/src/toolkits/address"
+	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/httplib"
@@ -95,15 +96,15 @@ func FetchDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 	//进行数据计算
 	aggrDatas := []*dataobj.TsdbQueryResponse{}
 	if input.AggrFunc != "" && len(resp) > 1 {
-		aggrData := &dataobj.TsdbQueryResponse{
-			Start: input.Start,
-			End:   input.End,
-		}
 
 		aggrCounter := make(map[string][]*dataobj.TsdbQueryResponse)
 		if len(input.GroupKey) == 0 || getTags(resp[0].Counter) == "" {
+			aggrData := &dataobj.TsdbQueryResponse{
+				Start:  input.Start,
+				End:    input.End,
+				Values: calc.Compute(input.AggrFunc, resp),
+			}
 			//没有聚合 tag, 或者曲线没有其他 tags, 直接所有曲线进行计算
-			aggrData.Values = calc.Compute(input.AggrFunc, resp)
 			aggrDatas = append(aggrDatas, aggrData)
 		} else {
 			for _, data := range resp {
@@ -132,9 +133,12 @@ func FetchDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 			}
 
 			for counter, datas := range aggrCounter {
-				aggrData.Counter = counter
-				aggrData.Values = calc.Compute(input.AggrFunc, datas)
-
+				aggrData := &dataobj.TsdbQueryResponse{
+					Start:   input.Start,
+					End:     input.End,
+					Counter: counter,
+					Values:  calc.Compute(input.AggrFunc, datas),
+				}
 				aggrDatas = append(aggrDatas, aggrData)
 			}
 		}
@@ -161,10 +165,12 @@ func fetchDataSync(start, end int64, consolFun, endpoint, counter string, step i
 	defer func() {
 		<-worker
 	}()
+	stats.Counter.Set("query.tsdb", 1)
 
 	data, err := fetchData(start, end, consolFun, endpoint, counter, step)
 	if err != nil {
 		logger.Warning(err)
+		stats.Counter.Set("query.data.err", 1)
 	}
 	dataChan <- data
 	return

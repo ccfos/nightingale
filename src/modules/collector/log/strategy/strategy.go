@@ -18,9 +18,9 @@ func init() {
 }
 
 func Update() error {
-	strategys := stra.GetLogCollects()
+	strategies := stra.GetLogCollects()
 
-	err := UpdateGlobalStrategy(strategys)
+	err := UpdateGlobalStrategy(strategies)
 	if err != nil {
 		logger.Errorf("Update Strategy cache error ! [msg:%v]", err)
 		return err

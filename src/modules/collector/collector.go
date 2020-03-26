@@ -63,6 +63,8 @@ func main() {
 	identity.Init(cfg.Identity)
 	if identity.Identity == "127.0.0.1" {
 		log.Fatalln("endpoint: 127.0.0.1, cannot work")
+	} else {
+		log.Println("endpoint:", identity.Identity)
 	}
 
 	sys.Init(cfg.Sys)
@@ -70,7 +72,6 @@ func main() {
 
 	funcs.BuildMappers()
 	funcs.Collect()
-	stra.GetCollects()
 
 	//插件采集
 	plugins.Detect()
@@ -137,6 +138,5 @@ func ending() {
 func start() {
 	runner.Init()
 	fmt.Println("collector start, use configuration file:", *conf)
-	fmt.Println("runner.Cwd:", runner.Cwd)
-	fmt.Println("runner.Endpoint:", runner.Hostname)
+	fmt.Println("runner.cwd:", runner.Cwd)
 }

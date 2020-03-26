@@ -3,13 +3,17 @@ package stats
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"path"
 	"time"
 
 	"github.com/didi/nightingale/src/dataobj"
-	"github.com/didi/nightingale/src/toolkits/identity"
+	"github.com/didi/nightingale/src/toolkits/address"
 
+	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/runner"
 )
 
 var (
@@ -17,8 +21,14 @@ var (
 )
 
 func Init(prefix string, addr ...string) {
-	if len(addr) > 0 {
+	if len(addr) > 0 && addr[0] != "" {
+		//如果配置了 addr，使用 addr 参数
 		PushUrl = addr[0]
+
+	} else if file.IsExist(path.Join(runner.Cwd, "etc", "address.yml")) {
+		//address.yml 存在，则使用配置文件的地址
+		port := address.GetHTTPPort("collector")
+		PushUrl = fmt.Sprintf("http://127.0.0.1:%d/api/collector/push", port)
 	}
 
 	Counter = NewCounter(prefix)
@@ -42,7 +52,6 @@ func Push() {
 func NewMetricValue(metric string, value int64) *dataobj.MetricValue {
 	item := &dataobj.MetricValue{
 		Metric:       metric,
-		Endpoint:     identity.Identity,
 		Timestamp:    time.Now().Unix(),
 		ValueUntyped: value,
 		CounterType:  "GAUGE",

@@ -24,6 +24,17 @@ type QueryDataForUI struct {
 	Comparisons []int64  `json:"comparisons"` //环比多少时间
 }
 
+type QueryDataForUIResp struct {
+	Start      int64      `json:"start"`
+	End        int64      `json:"end"`
+	Endpoint   string     `json:"endpoint"`
+	Counter    string     `json:"counter"`
+	DsType     string     `json:"dstype"`
+	Step       int        `json:"step"`
+	Values     []*RRDData `json:"values"`
+	Comparison int64      `json:"comparison"`
+}
+
 type QueryDataResp struct {
 	Data []*TsdbQueryResponse
 	Msg  string

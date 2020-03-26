@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/didi/nightingale/src/toolkits/stats"
 	"github.com/garyburd/redigo/redis"
 	"github.com/toolkits/pkg/logger"
 )
@@ -14,6 +15,7 @@ var Config RedisSection
 type RedisSection struct {
 	Addrs   []string       `yaml:"addrs"`
 	Pass    string         `yaml:"pass"`
+	DB      int            `yaml:"db"`
 	Idle    int            `yaml:"idle"`
 	Timeout TimeoutSection `yaml:"timeout"`
 	Prefix  string         `yaml:"prefix"`
@@ -30,6 +32,7 @@ func Init(cfg RedisSection) {
 
 	addrs := cfg.Addrs
 	pass := cfg.Pass
+	db := cfg.DB
 	maxIdle := cfg.Idle
 	idleTimeout := 240 * time.Second
 
@@ -44,6 +47,7 @@ func Init(cfg RedisSection) {
 				c, err := redis.Dial("tcp", addr, redis.DialConnectTimeout(connTimeout), redis.DialReadTimeout(readTimeout), redis.DialWriteTimeout(writeTimeout))
 				if err != nil {
 					logger.Errorf("conn redis err:%v", err)
+					stats.Counter.Set("redis.conn.failed", 1)
 					return nil, err
 				}
 
@@ -51,6 +55,17 @@ func Init(cfg RedisSection) {
 					if _, err := c.Do("AUTH", pass); err != nil {
 						c.Close()
 						logger.Errorf("ERR: redis auth fail:%v", err)
+						stats.Counter.Set("redis.conn.failed", 1)
+
+						return nil, err
+					}
+				}
+
+				if db != 0 {
+					if _, err := c.Do("SELECT", db); err != nil {
+						c.Close()
+						logger.Error("redis select db fail, db: ", db)
+						stats.Counter.Set("redis.conn.failed", 1)
 						return nil, err
 					}
 				}
