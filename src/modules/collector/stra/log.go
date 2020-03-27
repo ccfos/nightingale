@@ -146,8 +146,8 @@ func DeepCopyStringMap(p map[string]string) map[string]string {
 
 const PATTERN_EXCLUDE_PARTITION = "```EXCLUDE```"
 
-func parsePattern(strategys []*Strategy) {
-	for _, st := range strategys {
+func parsePattern(strategies []*Strategy) {
+	for _, st := range strategies {
 		patList := strings.Split(st.Pattern, PATTERN_EXCLUDE_PARTITION)
 
 		if len(patList) == 1 {
@@ -163,8 +163,8 @@ func parsePattern(strategys []*Strategy) {
 	}
 }
 
-func updateRegs(strategys []*Strategy) {
-	for _, st := range strategys {
+func updateRegs(strategies []*Strategy) {
+	for _, st := range strategies {
 		st.TagRegs = make(map[string]*regexp.Regexp, 0)
 		st.ParseSucc = false
 

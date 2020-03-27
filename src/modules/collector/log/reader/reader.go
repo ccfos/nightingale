@@ -1,6 +1,7 @@
 package reader
 
 import (
+	"io"
 	"os"
 	"time"
 
@@ -25,7 +26,7 @@ func NewReader(filepath string, stream chan string) (*Reader, error) {
 		Close:    make(chan struct{}),
 	}
 	path := GetCurrentPath(filepath)
-	err := r.openFile(os.SEEK_END, path) //默认打开seek_end
+	err := r.openFile(io.SeekEnd, path) //默认打开SeekEnd
 
 	return r, err
 }
@@ -122,7 +123,7 @@ func (r *Reader) check() {
 			return
 		}
 		r.t.StopAtEOF()
-		if err := r.openFile(os.SEEK_SET, nextpath); err == nil { //从文件开始打开
+		if err := r.openFile(io.SeekStart, nextpath); err == nil { //从文件开始打开
 			go r.StartRead()
 		} else {
 			logger.Warningf("openFile err @check, err: %v\n", err.Error())
@@ -143,7 +144,7 @@ func (r *Reader) check() {
 	logger.Warningf("inode changed, reopen file %v\n", r.CurrentPath)
 
 	r.t.StopAtEOF()
-	if err := r.openFile(os.SEEK_SET, nextpath); err == nil { //从文件开始打开
+	if err := r.openFile(io.SeekStart, nextpath); err == nil { //从文件开始打开
 		go r.StartRead()
 	} else {
 		logger.Warningf("openFile err @check, err: %v\n", err.Error())

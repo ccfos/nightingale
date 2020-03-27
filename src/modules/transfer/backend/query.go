@@ -96,15 +96,15 @@ func FetchDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 	//进行数据计算
 	aggrDatas := []*dataobj.TsdbQueryResponse{}
 	if input.AggrFunc != "" && len(resp) > 1 {
-		aggrData := &dataobj.TsdbQueryResponse{
-			Start: input.Start,
-			End:   input.End,
-		}
 
 		aggrCounter := make(map[string][]*dataobj.TsdbQueryResponse)
 		if len(input.GroupKey) == 0 || getTags(resp[0].Counter) == "" {
+			aggrData := &dataobj.TsdbQueryResponse{
+				Start:  input.Start,
+				End:    input.End,
+				Values: calc.Compute(input.AggrFunc, resp),
+			}
 			//没有聚合 tag, 或者曲线没有其他 tags, 直接所有曲线进行计算
-			aggrData.Values = calc.Compute(input.AggrFunc, resp)
 			aggrDatas = append(aggrDatas, aggrData)
 		} else {
 			for _, data := range resp {
@@ -133,9 +133,12 @@ func FetchDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 			}
 
 			for counter, datas := range aggrCounter {
-				aggrData.Counter = counter
-				aggrData.Values = calc.Compute(input.AggrFunc, datas)
-
+				aggrData := &dataobj.TsdbQueryResponse{
+					Start:   input.Start,
+					End:     input.End,
+					Counter: counter,
+					Values:  calc.Compute(input.AggrFunc, datas),
+				}
 				aggrDatas = append(aggrDatas, aggrData)
 			}
 		}

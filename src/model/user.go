@@ -1,7 +1,6 @@
 package model
 
 import (
-	"crypto/tls"
 	"fmt"
 	"log"
 	"strings"
@@ -118,6 +117,23 @@ func (u *User) CanModifyTeam(t *Team) (bool, error) {
 	return cnt > 0, err
 }
 
+func (u *User) CopyLdapAttr(sr *ldap.SearchResult) {
+	attrs := config.Get().LDAP.Attributes
+	if attrs.Dispname != "" {
+		u.Dispname = sr.Entries[0].GetAttributeValue(attrs.Dispname)
+	}
+	if attrs.Email != "" {
+		u.Email = sr.Entries[0].GetAttributeValue(attrs.Email)
+	}
+	if attrs.Phone != "" {
+		u.Phone = sr.Entries[0].GetAttributeValue(attrs.Phone)
+	}
+	if attrs.Im != "" {
+		u.Im = sr.Entries[0].GetAttributeValue(attrs.Im)
+	}
+	return
+}
+
 func InitRoot() {
 	var u User
 	has, err := DB["uic"].Where("username=?", "root").Get(&u)
@@ -147,78 +163,31 @@ func InitRoot() {
 }
 
 func LdapLogin(user, pass string) error {
-	var conn *ldap.Conn
-	var err error
-
-	lc := config.Get().LDAP
-	addr := fmt.Sprintf("%s:%d", lc.Host, lc.Port)
-
-	if lc.TLS {
-		conn, err = ldap.DialTLS("tcp", addr, &tls.Config{InsecureSkipVerify: true})
-	} else {
-		conn, err = ldap.Dial("tcp", addr)
-	}
-
-	if err != nil {
-		return fmt.Errorf("cannot dial ldap: %v", err)
-	}
-
-	defer conn.Close()
-
-	if !lc.TLS && lc.StartTLS {
-		err = conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
-		if err != nil {
-			return fmt.Errorf("ldap.conn startTLS fail: %v", err)
-		}
-	}
-
-	err = conn.Bind(lc.BindUser, lc.BindPass)
-	if err != nil {
-		return fmt.Errorf("bind ldap fail: %v, use %s", err, lc.BindUser)
-	}
-
-	searchRequest := ldap.NewSearchRequest(
-		lc.BaseDn, // The base dn to search
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf(lc.AuthFilter, user), // The filter to apply
-		[]string{},                       // A list attributes to retrieve
-		nil,
-	)
-
-	sr, err := conn.Search(searchRequest)
-	if err != nil {
-		return fmt.Errorf("ldap search fail: %v", err)
-	}
-
-	if len(sr.Entries) == 0 {
-		return fmt.Errorf("cannot find such user: %v", user)
-	}
-
-	if len(sr.Entries) > 1 {
-		return fmt.Errorf("multi users is search, query user: %v", user)
-	}
-
-	err = conn.Bind(sr.Entries[0].DN, pass)
-	if err != nil {
-		return fmt.Errorf("password error")
-	}
-
-	cnt, err := DB["uic"].Where("username=?", user).Count(new(User))
+	sr, err := ldapReq(user, pass)
 	if err != nil {
 		return err
 	}
 
-	if cnt > 0 {
-		return nil
+	var u User
+	has, err := DB["uic"].Where("username=?", user).Get(&u)
+	if err != nil {
+		return err
+	}
+	u.CopyLdapAttr(sr)
+	if has {
+		if config.Get().LDAP.CoverAttributes {
+			_, err := DB["uic"].Where("id=?", u.Id).Update(u)
+			return err
+		} else {
+			return nil
+		}
+	}
+	if !config.Get().LDAP.AutoRegist {
+		return fmt.Errorf("user has not be created, may be you should enable auto regist: %v", user)
 	}
 
-	u := &User{
-		Username: user,
-		Password: "******",
-		Dispname: "",
-		Email:    "",
-	}
-
+	u.Username = user
+	u.Password = "******"
 	_, err = DB["uic"].Insert(u)
 	return err
 }

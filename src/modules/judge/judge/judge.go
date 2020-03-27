@@ -105,7 +105,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				Hashid:    getHashId(stra.Id, firstItem),
 			}
 
-			sendEventIfNeed(historyData, isTriggered, now, event)
+			sendEventIfNeed(historyData, isTriggered, event)
 		}
 	}()
 
@@ -387,7 +387,7 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 	return reqs, nil
 }
 
-func sendEventIfNeed(historyData []*dataobj.RRDData, isTriggered bool, now int64, event *dataobj.Event) {
+func sendEventIfNeed(historyData []*dataobj.RRDData, isTriggered bool, event *dataobj.Event) {
 	lastEvent, exists := cache.LastEvents.Get(event.ID)
 	if isTriggered {
 		event.EventType = EVENT_ALERT

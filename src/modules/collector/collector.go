@@ -72,7 +72,6 @@ func main() {
 
 	funcs.BuildMappers()
 	funcs.Collect()
-	stra.GetCollects()
 
 	//插件采集
 	plugins.Detect()
