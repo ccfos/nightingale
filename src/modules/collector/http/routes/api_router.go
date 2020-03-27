@@ -38,7 +38,7 @@ func pushData(c *gin.Context) {
 	recvMetricValues := []*dataobj.MetricValue{}
 	metricValues := []*dataobj.MetricValue{}
 
-	errors.Dangerous(c.ShouldBind(&recvMetricValues))
+	errors.Dangerous(c.ShouldBindJSON(&recvMetricValues))
 
 	var msg string
 	for _, v := range recvMetricValues {
