@@ -16,8 +16,6 @@ mkdir -p $GOPATH/src/github.com/didi
 cd $GOPATH/src/github.com/didi
 git clone https://github.com/didi/nightingale.git
 cd nightingale
-# 如果网络环境不好可以尝试aliyun的mirror
-# export GOPROXY=https://mirrors.aliyun.com/goproxy/
 ./control build
 ```
 

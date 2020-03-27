@@ -2,13 +2,7 @@ FROM golang AS builder
 # RUN apk add --no-cache git gcc
 WORKDIR /app
 
-# comment this if using vendor
-# ENV GOPROXY=https://mod.gokit.info
-# COPY go.mod go.sum ./
-# RUN go mod download
-
 COPY . .
-ENV GOPROXY=https://mod.gokit.info
 RUN ./control build docker
 
 FROM buildpack-deps:buster-curl

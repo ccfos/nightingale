@@ -136,13 +136,13 @@ status()
 build_one()
 {
 	mod=$1
-	go build -o n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
+	go build -mod=vendor -o n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
 }
 
 build_docker()
 {
 	mod=$1
-	go build -o bin/n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
+	go build -mod=vendor -o bin/n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
 }
 
 build()
