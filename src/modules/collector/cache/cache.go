@@ -56,7 +56,7 @@ func (h *History) clean() {
 	defer h.Unlock()
 	now := time.Now().Unix()
 	for key, item := range h.Data {
-		if now-item.Timestamp > 60 {
+		if now-item.Timestamp > 2*item.Step {
 			delete(h.Data, key)
 		}
 	}
