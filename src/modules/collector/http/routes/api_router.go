@@ -10,11 +10,9 @@ import (
 	"github.com/didi/nightingale/src/modules/collector/stra"
 	"github.com/didi/nightingale/src/modules/collector/sys/funcs"
 	"github.com/didi/nightingale/src/toolkits/http/render"
-	"github.com/didi/nightingale/src/toolkits/identity"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errors"
-	"github.com/toolkits/pkg/logger"
 )
 
 func ping(c *gin.Context) {
@@ -36,34 +34,12 @@ func pushData(c *gin.Context) {
 	}
 
 	recvMetricValues := []*dataobj.MetricValue{}
-	metricValues := []*dataobj.MetricValue{}
-
 	errors.Dangerous(c.ShouldBindJSON(&recvMetricValues))
 
-	var msg string
-	for _, v := range recvMetricValues {
-		logger.Debug("->recv: ", v)
-		if v.Endpoint == "" {
-			v.Endpoint = identity.Identity
-		}
-		err := v.CheckValidity()
-		if err != nil {
-			msg += fmt.Sprintf("recv metric %v err:%v\n", v, err)
-			logger.Warningf(msg)
-			continue
-		}
-		metricValues = append(metricValues, v)
-	}
-
-	funcs.Push(metricValues)
-
-	if msg != "" {
-		render.Message(c, msg)
-		return
-	}
-
-	render.Data(c, "ok", nil)
+	err := funcs.Push(recvMetricValues)
+	render.Message(c, err)
 	return
+
 }
 
 func getStrategy(c *gin.Context) {
