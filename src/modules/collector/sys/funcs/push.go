@@ -108,7 +108,7 @@ func CounterToGauge(item *dataobj.MetricValue) error {
 		return fmt.Errorf("item:%v old value:%v greater than new value:%v", item, old.Value, item.Value)
 	}
 
-	if old.Timestamp > item.Timestamp {
+	if old.Timestamp >= item.Timestamp {
 		return fmt.Errorf("item:%v old timestamp:%v greater than new timestamp:%v", item, old.Timestamp, item.Timestamp)
 	}
 
