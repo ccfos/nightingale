@@ -96,17 +96,23 @@ func Push(metricItems []*dataobj.MetricValue) error {
 
 func CounterToGauge(item *dataobj.MetricValue) error {
 	key := item.PK()
+
 	old, exists := cache.MetricHistory.Get(key)
+	cache.MetricHistory.Set(key, *item)
+
 	if !exists {
-		cache.MetricHistory.Set(key, *item)
 		return fmt.Errorf("not found old item:%v", item)
 	}
 
-	cache.MetricHistory.Set(key, *item)
 	if old.Value > item.Value {
 		return fmt.Errorf("item:%v old value:%v greater than new value:%v", item, old.Value, item.Value)
 	}
-	item.ValueUntyped = item.Value - old.Value
+
+	if old.Timestamp > item.Timestamp {
+		return fmt.Errorf("item:%v old timestamp:%v greater than new timestamp:%v", item, old.Timestamp, item.Timestamp)
+	}
+
+	item.ValueUntyped = (item.Value - old.Value) / float64(item.Timestamp-old.Timestamp)
 	item.CounterType = dataobj.GAUGE
 	return nil
 }
