@@ -16,7 +16,7 @@ sys:
   mountPoint: []
   mountIgnorePrefix:
     - /var/lib
- 
+
   ignoreMetrics:
     - cpu.core.idle
     - cpu.core.util

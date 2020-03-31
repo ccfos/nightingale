@@ -27,31 +27,6 @@ type Message struct {
 	IsUpgrade        bool         `json:"is_upgrade"`
 }
 
-func getUserIds(users, groups string) ([]int64, error) {
-	var userIds []int64
-
-	if err := json.Unmarshal([]byte(users), &userIds); err != nil {
-		logger.Errorf("unmarshal users failed, users: %s, err: %v", users, err)
-		return nil, nil
-	}
-
-	var groupIds []int64
-	if err := json.Unmarshal([]byte(groups), &groupIds); err != nil {
-		logger.Errorf("unmarshal groups failed, groups: %s, err: %v", groups, err)
-		return nil, nil
-	}
-
-	teamUsers, err := model.UserIdGetByTeamIds(groupIds)
-	if err != nil {
-		logger.Errorf("get user id by team id failed, err: %v", err)
-		return nil, err
-	}
-
-	userIds = append(userIds, teamUsers...)
-
-	return userIds, nil
-}
-
 func genClaimLink(event *model.Event) string {
 	eventCur, err := model.EventCurGet("hashid", event.HashId)
 	if err != nil {
@@ -121,43 +96,8 @@ func genEndpoint(event *model.Event) string {
 }
 
 // DoNotify 除了原始event信息之外，再附加一些通过查库才能得到的信息交给下游处理
-func DoNotify(isUpgrade bool, event *model.Event) {
+func DoNotify(event *model.Event) {
 	if event == nil {
-		return
-	}
-
-	userIds, err := getUserIds(event.Users, event.Groups)
-	if err != nil {
-		logger.Errorf("notify failed, get users id failed, event: %+v, err: %v", event, err)
-		return
-	}
-
-	prio := fmt.Sprintf("p%v", event.Priority)
-
-	if isUpgrade {
-		// 如果是触发了告警升级，就需要把要升级的人的信息也拿到
-		alertUpgradeString := event.AlertUpgrade
-		var alertUpgrade model.EventAlertUpgrade
-		if err = json.Unmarshal([]byte(alertUpgradeString), &alertUpgrade); err != nil {
-			logger.Errorf("")
-		}
-
-		upgradeUserIds, err := getUserIds(alertUpgrade.Users, alertUpgrade.Groups)
-		if err != nil {
-			logger.Errorf("upgrade notify failed, get upgrade users id failed, event: %+v, err: %v", event, err)
-		}
-
-		if upgradeUserIds != nil {
-			userIds = append(userIds, upgradeUserIds...)
-		}
-
-		// 升级了，告警级别也要相应变成升级策略里配置的级别
-		prio = fmt.Sprintf("p%v", alertUpgrade.Level)
-	}
-
-	users, err := model.UserGetByIds(userIds)
-	if err != nil {
-		logger.Errorf("notify failed, get user by id failed, event: %+v, err: %v", event, err)
 		return
 	}
 
@@ -170,10 +110,11 @@ func DoNotify(isUpgrade bool, event *model.Event) {
 		Metrics:          genMetrics(event),
 		ReadableTags:     genTags(event),
 		ReadableEndpoint: genEndpoint(event),
-		IsUpgrade:        isUpgrade,
+		IsUpgrade:        event.RealUpgrade,
 	}
 
-	notifyTypes := config.Get().Notify[prio]
+	notifyTypes := config.Get().Notify[fmt.Sprintf("p%v", event.Priority)]
+	users := event.RecvUserObjs
 
 	for i := 0; i < len(notifyTypes); i++ {
 		switch notifyTypes[i] {

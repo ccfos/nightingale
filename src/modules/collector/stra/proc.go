@@ -56,7 +56,7 @@ func GetProcCollects() map[string]*model.ProcCollect {
 
 		tags := fmt.Sprintf("target=%s,service=%s", name, service)
 		p := NewProcCollect(method, name, tags, step)
-		procs[p.Name] = p
+		procs[name] = p
 	}
 
 	return procs
