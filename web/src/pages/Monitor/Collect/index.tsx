@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Row, Col, Input, Divider, Dropdown, Button, Icon, Menu, Select, Popconfirm, Modal, Table, message } from 'antd';
@@ -10,7 +11,7 @@ import api from '@common/api';
 import { typeMap } from './config';
 import BatchCloneToNidModal from './BatchCloneToNidModal';
 
-class Collect extends Component {
+class Collect extends Component<WrappedComponentProps> {
   static contextTypes = {
     getNodes: PropTypes.func,
     getSelectedNode: PropTypes.func,
@@ -18,7 +19,7 @@ class Collect extends Component {
   selectedNodeId: number | undefined = undefined;
   state = {
     loading: false,
-    data: [],
+    data: [] as any[],
     collectType: undefined,
     searchValue: '',
     selectedRowKeys: [],
@@ -65,7 +66,7 @@ class Collect extends Component {
         ids: [record.id],
       }]),
     }).then(() => {
-      message.success('删除成功！');
+      message.success(this.props.intl.formatMessage({ id: 'msg.delete.success' }));
       this.fetchData();
     });
   }
@@ -73,8 +74,8 @@ class Collect extends Component {
   handleBatchDelete = () => {
     const { selectedRows } = this.state;
     Modal.confirm({
-      title: '批量删除',
-      content: '确定要删除所选的策略吗？',
+      title: this.props.intl.formatMessage({ id: 'table.delete.batch' }),
+      content: this.props.intl.formatMessage({ id: 'table.delete.there.sure' }),
       onOk: () => {
         const typeGroup = _.groupBy(selectedRows, 'collect_type');
         const reqBody = _.map(typeGroup, (value, key) => {
@@ -87,7 +88,7 @@ class Collect extends Component {
           method: 'DELETE',
           body: JSON.stringify(reqBody),
         }).then(() => {
-          message.success('批量删除成功！');
+          message.success(this.props.intl.formatMessage({ id: 'msg.delete.success' }));
           this.fetchData();
         });
       },
@@ -101,7 +102,7 @@ class Collect extends Component {
     BatchCloneToNidModal({
       treeNodes,
       onOk: (nid: number) => {
-        const reqBody = _.map(selectedRows, (item) => {
+        const reqBody = _.map(selectedRows, (item: any) => {
           const pureItem = _.pickBy(item, (v, k) => {
             return !_.includes(['id', 'creator', 'created', 'last_updator', 'last_updated', 'tags'], k);
           });
@@ -117,7 +118,7 @@ class Collect extends Component {
           method: 'POST',
           body: JSON.stringify(reqBody),
         }).then(() => {
-          message.success('批量克隆到节点成功!');
+          message.success(this.props.intl.formatMessage({ id: 'clone.to.other.node.success' }));
           this.fetchData();
         });
       },
@@ -128,12 +129,12 @@ class Collect extends Component {
     const { searchValue, collectType } = this.state;
     let { data } = this.state;
     if (searchValue) {
-      data = _.filter(data, (item) => {
+      data = _.filter(data, (item: any) => {
         return item.name.indexOf(searchValue) > -1;
       });
     }
     if (collectType) {
-      data = _.filter(data, (item) => {
+      data = _.filter(data, (item: any) => {
         return item.collect_type === collectType;
       });
     }
@@ -152,7 +153,7 @@ class Collect extends Component {
               allowClear
               style={{ width: 100, marginRight: 8 }}
               className="mr10"
-              placeholder="类型"
+              placeholder={this.props.intl.formatMessage({ id: 'collect.common.type' })}
               value={this.state.collectType}
               onChange={(value: string) => {
                 this.setState({ collectType: value });
@@ -160,14 +161,13 @@ class Collect extends Component {
             >
               {
                 _.map(typeMap, (value, key) => {
-                  return <Select.Option key={key} value={key}>{value}</Select.Option>;
+                  return <Select.Option key={key} value={key}><FormattedMessage id={`collect.${key}`} /></Select.Option>;
                 })
               }
             </Select>
             <Input.Search
               style={{ width: 200 }}
               onSearch={this.handleSearchChange}
-              placeholder="搜索名称"
             />
           </Col>
           <Col span={12} style={{ textAlign: 'right' }}>
@@ -178,7 +178,7 @@ class Collect extends Component {
                     _.map(typeMap, (value, key) => {
                       return (
                         <Menu.Item key={key}>
-                          <Link to={{ pathname: `/monitor/collect/add/${key}` }}>{value}</Link>
+                          <Link to={{ pathname: `/monitor/collect/add/${key}` }}><FormattedMessage id={`collect.${key}`} /></Link>
                         </Menu.Item>
                       );
                     })
@@ -187,29 +187,33 @@ class Collect extends Component {
               }
             >
               <Button style={{ marginRight: 8 }}>
-                新增采集 <Icon type="down" />
+                <FormattedMessage id="table.create" /> <Icon type="down" />
               </Button>
             </Dropdown>
             <Dropdown
               overlay={
                 <Menu>
                   <Menu.Item>
-                    <Button type="link" disabled={!canBatchOper} onClick={this.handleBatchDelete}>删除配置</Button>
+                    <Button type="link" disabled={!canBatchOper} onClick={this.handleBatchDelete}>
+                      <FormattedMessage id="table.delete" />
+                    </Button>
                   </Menu.Item>
                   <Menu.Item>
-                    <Button type="link" disabled={!canBatchOper} onClick={this.handleBatchCloneToOtherNid}>克隆到其他节点</Button>
+                    <Button type="link" disabled={!canBatchOper} onClick={this.handleBatchCloneToOtherNid}>
+                      <FormattedMessage id="clone.to.other.node" />
+                    </Button>
                   </Menu.Item>
                 </Menu>
               }
             >
               <Button>
-                批量操作 <Icon type="down" />
+                <FormattedMessage id="table.batch.operations" /> <Icon type="down" />
               </Button>
             </Dropdown>
           </Col>
         </Row>
         <Table
-          rowKey={record => record.id + record.collect_type}
+          rowKey={(record: any) => record.id + record.collect_type}
           rowSelection={{
             selectedRowKeys: this.state.selectedRowKeys,
             onChange: (selectedRowKeys, selectedRows) => {
@@ -222,37 +226,41 @@ class Collect extends Component {
           dataSource={data}
           columns= {[
             {
-              title: '名称',
+              title: <FormattedMessage id="collect.common.name" />,
               dataIndex: 'name',
             }, {
-              title: '类型',
+              title: <FormattedMessage id="collect.common.type" />,
               dataIndex: 'collect_type',
               render: (text) => {
-                return typeMap[text];
+                return <FormattedMessage id={`collect.${text}`} />;
               },
             }, {
-              title: '创建者',
+              title: <FormattedMessage id="collect.common.creator" />,
               dataIndex: 'creator',
             }, {
-              title: '修改时间',
+              title: <FormattedMessage id="collect.common.last_updated" />,
               dataIndex: 'last_updated',
               render: (text) => {
                 return moment(text).format('YYYY-MM-DD HH:mm:ss');
               },
             }, {
-              title: '操作',
-              render: (text, record) => {
+              title: <FormattedMessage id="table.operations" />,
+              render: (_text, record: any) => {
                 return (
                   <span>
-                    <Link to={{ pathname: `/monitor/collect/modify/${_.lowerCase(record.collect_type)}/${record.id}` }}>修改</Link>
+                    <Link to={{ pathname: `/monitor/collect/modify/${_.lowerCase(record.collect_type)}/${record.id}` }}>
+                      <FormattedMessage id="table.modify" />
+                    </Link>
                     <Divider type="vertical" />
-                    <Link to={{ pathname: `/monitor/collect/clone/${_.lowerCase(record.collect_type)}/${record.id}` }}>克隆</Link>
+                    <Link to={{ pathname: `/monitor/collect/clone/${_.lowerCase(record.collect_type)}/${record.id}` }}>
+                      <FormattedMessage id="table.clone" />
+                    </Link>
                     <Divider type="vertical" />
                     <Popconfirm
-                      title="确认删除这条配置吗?"
+                      title={<FormattedMessage id="table.delete.sure" />}
                       onConfirm={() => { this.handleDelete(record); }}
                     >
-                      <a>删除</a>
+                      <a><FormattedMessage id="table.delete" /></a>
                     </Popconfirm>
                   </span>
                 );
@@ -265,4 +273,4 @@ class Collect extends Component {
   }
 }
 
-export default CreateIncludeNsTree(Collect, { visible: true });
+export default CreateIncludeNsTree(injectIntl(Collect), { visible: true });

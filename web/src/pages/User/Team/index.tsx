@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { Row, Col, Input, Divider, Popconfirm, Button, message } from 'antd';
 import _ from 'lodash';
 import CreateIncludeNsTree from '@cpts/Layout/CreateIncludeNsTree';
@@ -13,13 +14,15 @@ interface State {
   searchValue: string,
 }
 
-class UserTeam extends Component<null, State> {
+class UserTeam extends Component<WrappedComponentProps, State> {
   fetchtable: any;
 
   state = {} as State;
 
   handleAddBtnClick = () => {
     AddTeam({
+      title: <FormattedMessage id="table.create" />,
+      language: this.props.intl.locale,
       onOk: () => {
         this.fetchtable.reload();
       },
@@ -28,6 +31,8 @@ class UserTeam extends Component<null, State> {
 
   handlePutBtnClick = (record: Team) => {
     PutTeam({
+      title: <FormattedMessage id="table.modify" />,
+      language: this.props.intl.locale,
       data: {
         ...record,
         admins: _.map(record.admin_objs, n => n.id),
@@ -44,7 +49,7 @@ class UserTeam extends Component<null, State> {
       method: 'DELETE',
     }).then(() => {
       this.fetchtable.reload();
-      message.success('团队删除成功！');
+      message.success(this.props.intl.formatMessage({ id: 'msg.delete.success' }));
     });
   }
 
@@ -61,7 +66,9 @@ class UserTeam extends Component<null, State> {
             />
           </Col>
           <Col span={16} className="textAlignRight">
-            <Button onClick={this.handleAddBtnClick} icon="plus">新建团队</Button>
+            <Button onClick={this.handleAddBtnClick} icon="plus">
+              <FormattedMessage id="table.create" />
+            </Button>
           </Col>
         </Row>
         <FetchTable
@@ -72,37 +79,37 @@ class UserTeam extends Component<null, State> {
           tableProps={{
             columns: [
               {
-                title: '英文标识',
+                title: <FormattedMessage id="team.ident" />,
                 dataIndex: 'ident',
                 width: 130,
               }, {
-                title: '中文名称',
+                title: <FormattedMessage id="team.name" />,
                 dataIndex: 'name',
                 width: 130,
               }, {
-                title: '管理员',
+                title: <FormattedMessage id="team.admins" />,
                 dataIndex: 'admin_objs',
                 render(text) {
                   const users = _.map(text, item => item.username);
                   return _.join(users, ', ');
                 },
               }, {
-                title: '普通成员',
+                title: <FormattedMessage id="team.members" />,
                 dataIndex: 'member_objs',
                 render(text) {
                   const users = _.map(text, item => item.username);
                   return _.join(users, ', ');
                 },
               }, {
-                title: '操作',
-                width: 100,
-                render: (text, record) => {
+                title: <FormattedMessage id="table.operations" />,
+                width: this.props.intl.locale === 'zh' ? 100 : 150,
+                render: (_text, record) => {
                   return (
                     <span>
-                      <a onClick={() => { this.handlePutBtnClick(record); }}>编辑</a>
+                      <a onClick={() => { this.handlePutBtnClick(record); }}><FormattedMessage id="table.modify" /></a>
                       <Divider type="vertical" />
-                      <Popconfirm title="确认要删除这个团队吗？" onConfirm={() => { this.handleDelBtnClick(record.id); }}>
-                        <a>删除</a>
+                      <Popconfirm title={<FormattedMessage id="table.delete.sure" />} onConfirm={() => { this.handleDelBtnClick(record.id); }}>
+                        <a><FormattedMessage id="table.delete" /></a>
                       </Popconfirm>
                     </span>
                   );
@@ -115,4 +122,4 @@ class UserTeam extends Component<null, State> {
     );
   }
 }
-export default CreateIncludeNsTree(UserTeam);
+export default CreateIncludeNsTree(injectIntl(UserTeam));

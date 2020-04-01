@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import { InputNumber, Select, Input, Tag, Spin } from 'antd';
+import { FormattedMessage } from 'react-intl';
+import { InputNumber, Select, Input, Spin } from 'antd';
 import _ from 'lodash';
 
 interface Props {
@@ -75,23 +76,10 @@ export default class Actions extends Component<Props> {
     const { converge } = value;
     const errors = checkActions(null, this.props.value, _.noop) || {} as any;
 
-    if (readOnly) {
-      return (
-        <div className="strategy-actions">
-          <div> 在 {converge[0]} 分钟内, 最多报警 {converge[1]} 次 </div>
-          <div>
-            报警接收组: {_.map(value.notify_group, o => <Tag key={o}>{o}</Tag>)}
-          </div>
-          {
-            value.callback ? <div>回调地址: {value.callback}</div> : null
-          }
-        </div>
-      );
-    }
     return (
       <div className="strategy-actions">
         <div className={!_.isEmpty(errors.converge) ? 'has-error' : undefined}>
-          在
+          <FormattedMessage id="stra.action.d1" />
           <InputNumber
             style={{ marginLeft: 8 }}
             size="default"
@@ -99,8 +87,7 @@ export default class Actions extends Component<Props> {
             value={converge[0] / 60}
             onChange={(val) => { this.handleConvergeChange(0, val); }}
           />
-          分钟内,
-          最多报警
+          <FormattedMessage id="stra.action.d2" />, <FormattedMessage id="stra.action.d3" />
           <InputNumber
             style={{ marginLeft: 8 }}
             size="default"
@@ -108,11 +95,11 @@ export default class Actions extends Component<Props> {
             value={converge[1]}
             onChange={(val) => { this.handleConvergeChange(1, val); }}
             />
-          次
+          <FormattedMessage id="stra.action.d4" />
           <div className="ant-form-explain">{errors.converge}</div>
         </div>
         <div>
-          报警接收团队
+          <FormattedMessage id="stra.notify.team" />
         </div>
         <div className={errors.notifyGroup ? 'has-error' : undefined}>
           <Select
@@ -122,7 +109,7 @@ export default class Actions extends Component<Props> {
             notFoundContent={this.props.notifyGroupLoading ? <Spin size="small" /> : null}
             defaultActiveFirstOption={false}
             filterOption={false}
-            placeholder="报警接收团队"
+            // placeholder="报警接收团队"
             value={value.notify_group}
             onChange={this.handleNotifyGroupChange}
             onSearch={(val) => {
@@ -140,7 +127,7 @@ export default class Actions extends Component<Props> {
           <div className="ant-form-explain">{errors.notifyGroup}</div>
         </div>
         <div>
-          报警接收人
+          <FormattedMessage id="stra.notify.user" />
         </div>
         <div className={errors.notifyGroup ? 'has-error' : undefined}>
           <Select
@@ -150,7 +137,7 @@ export default class Actions extends Component<Props> {
             notFoundContent={this.props.notifyUserLoading ? <Spin size="small" /> : null}
             defaultActiveFirstOption={false}
             filterOption={false}
-            placeholder="报警接收人"
+            // placeholder="报警接收人"
             value={value.notify_user}
             onChange={this.handleNotifyUserChange}
             onSearch={(val) => {
@@ -168,7 +155,7 @@ export default class Actions extends Component<Props> {
           <div className="ant-form-explain">{errors.notifyUser}</div>
         </div>
         <div>
-          通知我自己开发的系统（报警回调, 请确认是 IDC 内可访问的地址）
+          <FormattedMessage id="stra.notify.callback" />
         </div>
         <div className={errors.callback ? 'has-error' : undefined}>
           <Input
@@ -185,7 +172,7 @@ export default class Actions extends Component<Props> {
 }
 
 function checkActions(rule: any, value: any, callbackFunc: any) {
-  const emptyErrorText = '不能为空';
+  const emptyErrorText = 'is required';
   const { converge } = value;
   const errors: any = {
     converge: '',

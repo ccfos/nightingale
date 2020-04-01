@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage, WrappedComponentProps, injectIntl } from 'react-intl';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Button, Input, Divider, Popconfirm, Table, message } from 'antd';
@@ -89,7 +90,7 @@ const DragableBodyRow = DropTarget(
   )(BodyRow),
 );
 
-class Screen extends Component {
+class Screen extends Component<WrappedComponentProps> {
   static contextTypes = {
     getSelectedNode: PropTypes.func,
   };
@@ -137,7 +138,8 @@ class Screen extends Component {
 
   handleAdd = () => {
     AddModal({
-      title: '新增大盘',
+      language: this.props.intl.locale,
+      title: this.props.intl.formatMessage({ id: 'table.create' }),
       onOk: (values: any) => {
         request(`${api.node}/${this.selectedNodeId}/screen`, {
           method: 'POST',
@@ -155,8 +157,9 @@ class Screen extends Component {
 
   handleModify = (record: any) => {
     ModifyModal({
+      language: this.props.intl.locale,
       name: record.name,
-      title: '修改大盘',
+      title: this.props.intl.formatMessage({ id: 'table.modify' }),
       onOk: (values: any) => {
         request(`${api.screen}/${record.id}`, {
           method: 'PUT',
@@ -165,7 +168,7 @@ class Screen extends Component {
             node_id: record.node_id,
           }),
         }).then(() => {
-          message.success('修改大盘成功！');
+          message.success(this.props.intl.formatMessage({ id: 'msg.modify.success' }));
           this.fetchData();
         });
       },
@@ -176,7 +179,7 @@ class Screen extends Component {
     request(`${api.screen}/${id}`, {
       method: 'DELETE',
     }).then(() => {
-      message.success('删除大盘成功！');
+      message.success(this.props.intl.formatMessage({ id: 'msg.delete.success' }));
       this.fetchData();
     });
   }
@@ -193,7 +196,7 @@ class Screen extends Component {
         },
       }),
       () => {
-        const reqBody = _.map(this.state.data, (item, i) => {
+        const reqBody = _.map(this.state.data, (item: any, i) => {
           return {
             id: item.id,
             weight: i,
@@ -203,7 +206,7 @@ class Screen extends Component {
           method: 'PUT',
           body: JSON.stringify(reqBody),
         }).then(() => {
-          message.success('大盘排序成功！');
+          message.success(this.props.intl.formatMessage({ id: 'msg.sort.success' }));
         });
       },
     );
@@ -212,7 +215,7 @@ class Screen extends Component {
   filterData() {
     const { data, search } = this.state;
     if (search) {
-      return _.filter(data, (item) => {
+      return _.filter(data, (item: any) => {
         return item.name.indexOf(search) > -1;
       });
     }
@@ -226,10 +229,10 @@ class Screen extends Component {
     return (
       <div className={prefixCls}>
         <div className="mb10">
-          <Button className="mr10" onClick={this.handleAdd}>新增大盘</Button>
+          <Button className="mr10" onClick={this.handleAdd}><FormattedMessage id="screen.create" /></Button>
           <Input
             style={{ width: 200 }}
-            placeholder="搜索"
+            placeholder="Search"
             value={search}
             onChange={(e) => {
               this.setState({ search: e.target.value });
@@ -251,25 +254,25 @@ class Screen extends Component {
           })}
           columns={[
             {
-              title: '名称',
+              title: <FormattedMessage id="table.name" />,
               dataIndex: 'name',
               render: (text, record) => {
                 return <Link to={{ pathname: `/monitor/screen/${record.id}` }}>{text}</Link>;
               },
             }, {
-              title: '创建人',
+              title: <FormattedMessage id="table.creator" />,
               width: 200,
               dataIndex: 'last_updator',
             }, {
-              title: '操作',
+              title: <FormattedMessage id="table.operations" />,
               width: 200,
-              render: (text, record) => {
+              render: (text, record: any) => {
                 return (
                   <span>
-                    <a onClick={() => this.handleModify(record)}>修改</a>
+                    <a onClick={() => this.handleModify(record)}><FormattedMessage id="table.modify" /></a>
                     <Divider type="vertical" />
-                    <Popconfirm title="确定要删除这个大盘吗?" onConfirm={() => this.handleDel(record.id)}>
-                      <a>删除</a>
+                    <Popconfirm title={<FormattedMessage id="table.delete.sure" />} onConfirm={() => this.handleDel(record.id)}>
+                      <a><FormattedMessage id="table.delete" /></a>
                     </Popconfirm>
                   </span>
                 );
@@ -282,4 +285,4 @@ class Screen extends Component {
   }
 }
 
-export default CreateIncludeNsTree(DragDropContext(HTML5Backend)(Screen), { visible: true });
+export default CreateIncludeNsTree(DragDropContext(HTML5Backend)(injectIntl(Screen)), { visible: true });

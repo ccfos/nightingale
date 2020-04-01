@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Modal, Form, Input, message } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
+import { injectIntl, FormattedMessage, WrappedComponentProps } from 'react-intl';
 import ModalControl from '@cpts/ModalControl';
 import { Endpoint } from '@interface';
 import request from '@common/request';
@@ -19,7 +20,7 @@ interface Props {
 
 const FormItem = Form.Item;
 
-class SingleEdit extends Component<FormProps & Props> {
+class SingleEdit extends Component<FormProps & Props & WrappedComponentProps> {
   static defaultProps = {
     title: '',
     visible: true,
@@ -29,7 +30,6 @@ class SingleEdit extends Component<FormProps & Props> {
   };
 
   handleOk = () => {
-    const { title } = this.props;
     this.props.form!.validateFields((err, values) => {
       if (!err) {
         request(`${api.endpoint}/${values.id}`, {
@@ -38,7 +38,7 @@ class SingleEdit extends Component<FormProps & Props> {
             alias: values.alias,
           }),
         }).then(() => {
-          message.success(`${title}成功`);
+          message.success(this.props.intl.formatMessage({ id: 'msg.modify.success' }));
           this.props.onOk();
           this.props.destroy();
         });
@@ -68,10 +68,10 @@ class SingleEdit extends Component<FormProps & Props> {
           e.preventDefault();
           this.handleOk();
         }}>
-          <FormItem label="标识">
+          <FormItem label={<FormattedMessage id="endpoints.ident" />}>
             <span className="ant-form-text">{data.ident}</span>
           </FormItem>
-          <FormItem label="别名">
+          <FormItem label={<FormattedMessage id="endpoints.alias" />}>
             {getFieldDecorator('alias', {
               initialValue: data.alias,
             })(
@@ -84,4 +84,4 @@ class SingleEdit extends Component<FormProps & Props> {
   }
 }
 
-export default ModalControl(Form.create()(SingleEdit));
+export default ModalControl(Form.create()(injectIntl(SingleEdit)));

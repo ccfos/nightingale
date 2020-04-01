@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import { Modal, message } from 'antd';
 import _ from 'lodash';
 import ModalControl from '@cpts/ModalControl';
@@ -17,7 +18,7 @@ interface Props {
   destroy: () => void,
 }
 
-class PutProfile extends Component<Props> {
+class PutProfile extends Component<Props & WrappedComponentProps> {
   profileForm: any;
 
   static defaultProps = {
@@ -38,7 +39,7 @@ class PutProfile extends Component<Props> {
             is_root: values.is_root ? 1 : 0,
           }),
         }).then(() => {
-          message.success('用户信息修改成功！');
+          message.success(this.props.intl.formatMessage({ id: 'msg.modify.success' }));
           this.props.onOk();
           this.props.destroy();
         });
@@ -72,4 +73,4 @@ class PutProfile extends Component<Props> {
   }
 }
 
-export default ModalControl(PutProfile);
+export default ModalControl(injectIntl(PutProfile));

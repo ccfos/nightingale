@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import ReactDOM from 'react-dom';
 import { Modal } from 'antd';
 import { FormProps } from 'antd/lib/form';
@@ -17,7 +18,7 @@ interface Props extends FormProps {
 
 class DetailModal extends Component<Props> {
   static defaultProps = {
-    title: '屏蔽详情',
+    title: '',
     visible: true,
     onOk: _.noop,
     onCancel: _.noop,
@@ -48,7 +49,7 @@ class DetailModal extends Component<Props> {
       <div>
         <Modal
           width={900}
-          title={title}
+          title={<FormattedMessage id="silence.detail.title" />}
           visible={visible}
           onOk={this.handleOk}
           onCancel={this.handleCancel}

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import { Row, Col, Icon, Dropdown, Menu } from 'antd';
 import _ from 'lodash';
 import Graph, { GraphConfig, Info } from '@cpts/Graph';
@@ -63,7 +64,7 @@ export default class Graphs extends Component<Props> {
                       onChange={onChange}
                       extraRender={(graph: GraphData) => {
                         return [
-                          <span className="graph-operationbar-item" key="info" title="详情">
+                          <span className="graph-operationbar-item" key="info">
                             <Info
                               graphConfig={graph.getGraphConfig(graph.props.data)}
                               counterList={graph.counterList}
@@ -71,24 +72,24 @@ export default class Graphs extends Component<Props> {
                               <Icon type="info-circle-o" />
                             </Info>
                           </span>,
-                          <span className="graph-operationbar-item" key="setting" title="编辑">
+                          <span className="graph-operationbar-item" key="setting">
                             <Icon type="setting" onClick={() => {
-                              this.graphConfigForm.showModal('update', '保存', o);
+                              this.graphConfigForm.showModal('update', <FormattedMessage id="graph.save" />, o);
                             }} />
                           </span>,
-                          <span className="graph-operationbar-item" key="close" title="关闭">
+                          <span className="graph-operationbar-item" key="close">
                             <Icon type="close-circle-o" onClick={() => {
                               this.props.onChange('delete', o.id);
                             }} />
                           </span>,
-                          <span className="graph-extra-item" key="more" title="更多">
+                          <span className="graph-extra-item" key="more">
                             <Dropdown trigger={['click']} overlay={
                               <Menu>
                                 <Menu.Item>
-                                  <a onClick={() => { this.handleSubscribeGraph(o); }}>订阅图表</a>
+                                  <a onClick={() => { this.handleSubscribeGraph(o); }}><FormattedMessage id="graph.subscribe" /></a>
                                 </Menu.Item>
                                 <Menu.Item>
-                                  <a onClick={() => { this.handleShareGraph(o); }}>分享图表</a>
+                                  <a onClick={() => { this.handleShareGraph(o); }}><FormattedMessage id="graph.share" /></a>
                                 </Menu.Item>
                               </Menu>
                             }>
@@ -109,12 +110,12 @@ export default class Graphs extends Component<Props> {
             <div
               className={`${prefixCls}-graph ${prefixCls}-graph-add`}
               onClick={() => {
-                this.graphConfigForm.showModal('push', '看图');
+                this.graphConfigForm.showModal('push', <FormattedMessage id="graph.view" />);
               }}
               style={{ height: 350, cursor: 'pointer' }}
             >
               <div style={{ textAlign: 'center', width: '100%' }}>
-                <Icon type="plus" /> 查看
+                <Icon type="plus" /> <FormattedMessage id="graph.view" />
               </div>
             </div>
           </Col>

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { RouteComponentProps } from 'react-router-dom';
 import { Card, Table, Divider, Popconfirm, Icon, message } from 'antd';
 import { Link } from 'react-router-dom';
@@ -22,7 +23,7 @@ export function normalizeGraphData(data: any) {
   });
   return cloneData;
 }
-class Detail extends Component<RouteComponentProps> {
+class Detail extends Component<RouteComponentProps & WrappedComponentProps> {
   state: {
     loading: boolean,
     data: any,
@@ -176,7 +177,7 @@ class Detail extends Component<RouteComponentProps> {
         </div>
         <div className={`${nPrefixCls}-detail mt10`}>
           <Card
-            title="报警事件详情"
+            title={<FormattedMessage id="event.table.detail.title" />}
             bodyStyle={{
               padding: '10px 16px',
             }}
@@ -186,14 +187,14 @@ class Detail extends Component<RouteComponentProps> {
                   pathname: '/monitor/silence/add',
                   search: `${historyType}=${historyId}&nid=${nid}`,
                 }}>
-                  屏蔽
+                  <FormattedMessage id="event.table.shield" />
                 </Link>
                 {
                   historyType === 'cur' ?
                     <span>
                       <Divider type="vertical" />
-                      <Popconfirm title="确定要认领这条报警吗?" onConfirm={() => this.handleClaim(historyId)}>
-                        <a>认领</a>
+                      <Popconfirm title={<FormattedMessage id="event.table.claim.sure" />} onConfirm={() => this.handleClaim(historyId)}>
+                        <a><FormattedMessage id="event.table.claim" /></a>
                       </Popconfirm>
                     </span> : null
                 }
@@ -202,47 +203,47 @@ class Detail extends Component<RouteComponentProps> {
           >
             <div className={`${nPrefixCls}-detail-list`}>
               <div>
-                <span className="label">策略名称：</span>
+                <span className="label"><FormattedMessage id="event.table.stra" />：</span>
                 <Link target="_blank" to={{ pathname: `/monitor/strategy/${data.sid}` }}>{data.sname}</Link>
               </div>
               <div>
-                <span className="label">报警状态：</span>
+                <span className="label"><FormattedMessage id="event.table.status" />：</span>
                 {_.get(_.find(priorityOptions, { value: data.priority }), 'label')}
                 <span style={{ paddingLeft: 8 }}>{_.get(_.find(eventTypeOptions, { value: data.event_type }), 'label')}</span>
               </div>
               <div>
-                <span className="label">通知结果：</span>
+                <span className="label"><FormattedMessage id="event.table.notify" />：</span>
                 {_.join(data.status, ', ')}
               </div>
               <div>
-                <span className="label">发生时间：</span>
+                <span className="label"><FormattedMessage id="event.table.time" />：</span>
                 {moment.unix(data.etime).format('YYYY-MM-DD HH:mm:ss')}
               </div>
               <div>
-                <span className="label">节点：</span>
+                <span className="label"><FormattedMessage id="event.table.node" />：</span>
                 {data.node_path}
               </div>
               <div>
-                <span className="label">endpoint：</span>
+                <span className="label">Endpoint：</span>
                 {data.endpoint}
               </div>
               <div>
-                <span className="label">指标：</span>
+                <span className="label"><FormattedMessage id="event.table.metric" />：</span>
                 {_.get(data.detail, '[0].metric')}
               </div>
               <div>
-                <span className="label">tags：</span>
+                <span className="label">Tags：</span>
                 {data.tags}
               </div>
               <div>
-                <span className="label">表达式：</span>
+                <span className="label"><FormattedMessage id="event.table.expression" />：</span>
                 {data.info}
               </div>
               {
                 _.map(points, (item) => {
                   return (
                     <div>
-                      <div className="label">现场值：</div>
+                      <div className="label"><FormattedMessage id="event.table.scene" />：</div>
                       {item.metric}
                       <Table
                         style={{
@@ -254,14 +255,14 @@ class Detail extends Component<RouteComponentProps> {
                         dataSource={item.points}
                         columns={[
                           {
-                            title: '时间',
+                            title: <FormattedMessage id="event.table.scene.time" />,
                             dataIndex: 'timestamp',
                             width: 200,
                             render(text) {
                               return <span>{moment.unix(text).format('YYYY-MM-DD HH:mm:ss')}</span>;
                             },
                           }, {
-                            title: '数值',
+                            title: <FormattedMessage id="event.table.scene.value" />,
                             dataIndex: 'value',
                           },
                         ]}
@@ -279,4 +280,4 @@ class Detail extends Component<RouteComponentProps> {
   }
 }
 
-export default CreateIncludeNsTree(Detail as any);
+export default CreateIncludeNsTree(injectIntl(Detail));

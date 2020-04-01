@@ -1,29 +1,27 @@
+/* eslint-disable no-template-curly-in-string */
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Card, Select, InputNumber } from 'antd';
 import _ from 'lodash';
-import { funcMap, defaultExpressionValue, commonPropDefaultValue } from './config';
-
-interface Props {
-  metricError: string,
-  value: any,
-  alertDuration: number,
-  readOnly: boolean,
-  metrics: any[],
-  onChange: (values: any) => void,
-  renderHeader: (value: any) => React.ReactNode,
-  renderFooter: (value: any) => React.ReactNode,
-}
+import { FormattedMessage, injectIntl } from 'react-intl';
+import { funcMap, defaultExpressionValue, commonPropTypes, commonPropDefaultValue } from './config';
 
 const { Option } = Select;
 
-export default class Expression extends Component<Props> {
+class Expression extends Component {
+  static propTypes = {
+    ...commonPropTypes,
+    value: PropTypes.object,
+    metricError: PropTypes.string,
+  };
+
   static defaultProps = {
     ...commonPropDefaultValue,
     value: defaultExpressionValue,
     metricError: '',
   };
 
-  handleMetricChange = (val: string) => {
+  handleMetricChange = (val) => {
     const { value, onChange } = this.props;
 
     onChange({
@@ -32,7 +30,7 @@ export default class Expression extends Component<Props> {
     });
   }
 
-  handleFuncChange = (val: string) => {
+  handleFuncChange = (val) => {
     const { value, onChange } = this.props;
     const currentFuncDefaultValue = _.get(funcMap[val], 'defaultValue', []);
 
@@ -43,7 +41,7 @@ export default class Expression extends Component<Props> {
     });
   }
 
-  handleParamsChange = (index: number, val: any) => {
+  handleParamsChange = (index, val) => {
     const { value, onChange } = this.props;
     const currentFuncDefaultValue = _.get(funcMap[value.func], 'defaultValue', []);
     const { params = [] } = value;
@@ -60,7 +58,7 @@ export default class Expression extends Component<Props> {
     });
   }
 
-  handleEoptChange = (val: string) => {
+  handleEoptChange = (val) => {
     const { value, onChange } = this.props;
 
     onChange({
@@ -69,7 +67,7 @@ export default class Expression extends Component<Props> {
     });
   }
 
-  handleThresholdChange = (val: any) => {
+  handleThresholdChange = (val) => {
     const { value, onChange } = this.props;
     let newVal = val;
 
@@ -83,21 +81,24 @@ export default class Expression extends Component<Props> {
     });
   }
 
-  renderPreview(readOnly?: boolean) {
+  renderPreview(readOnly: boolean) {
     const { value, alertDuration } = this.props;
     const { metric, func, eopt, threshold } = value;
-
-    if (func === 'canary') return '智能报警 - canary';
-
     const { params = [] } = value;
-    const str = _.get(funcMap[func], 'meaning', '');
-    const index1 = str.indexOf('n');
-    const index2 = str.indexOf('m');
-    const index3 = _.lastIndexOf(str, 'v');
+    const meaningKey = this.props.intl.locale === 'en' ? 'meaningEn' : 'meaning';
+    const str = _.get(funcMap[func], meaningKey, '');
+    const index1 = str.indexOf('$n');
+    const index2 = str.indexOf('$m');
+    const index3 = str.lastIndexOf('$v');
     const nPrefix = str.substring(0, index1);
-    const vPostfix = str.substring(index3 + 1);
+    const vPostfix = str.substring(index3 + 2);
     let mVal;
-    if (func === 'c_avg_rate_abs' || func === 'c_avg_rate') {
+    if (
+      func === 'c_avg_rate_abs'
+      || func === 'c_avg_rate'
+      || func === 'c_avg_abs'
+      || func === 'c_avg'
+    ) {
       mVal = params[0] !== 1 ? params[0] / 86400 : 1;
     } else {
       mVal = params[0] || 1;
@@ -119,7 +120,7 @@ export default class Expression extends Component<Props> {
     );
 
     if (index2 > -1) {
-      const mPrefix = str.substring(index1 + 1, index2);
+      const mPrefix = str.substring(index1 + 2, index2);
       previewNode = (
         <span>
           {previewNode}
@@ -132,7 +133,7 @@ export default class Expression extends Component<Props> {
     if (func !== 'nodata') {
       // eslint-disable-next-line no-underscore-dangle
       const _index = index2 > -1 ? index2 : index1;
-      const vPrefix = str.substring(_index + 1, index3);
+      const vPrefix = str.substring(_index + 2, index3);
       previewNode = (
         <span>
           {previewNode}
@@ -142,7 +143,7 @@ export default class Expression extends Component<Props> {
         </span>
       );
     } else {
-      const nPostfix = str.substring(index1 + 1);
+      const nPostfix = str.substring(index1 + 2);
       previewNode = (
         <span>
           {previewNode}
@@ -152,45 +153,54 @@ export default class Expression extends Component<Props> {
     }
     return (
       <div>
-        { !readOnly && <span style={{ color: '#999' }}>预览：</span> }
+        { !readOnly && <span style={{ color: '#999' }}><FormattedMessage id="stra.preview" />：</span> }
         <span style={{ paddingRight: 5 }}>{metric || '${metric}' }</span>
         { previewNode }
       </div>
     );
   }
 
-  renderFuncParams(i: number) {
+  renderFuncParams(i) {
     const { value } = this.props;
     const { func, params = [] } = value;
     const minnum = ['diff', 'pdiff'].indexOf(func) > -1 ? 2 : 1;
-    let val = _.toNumber(params[i]) as any;
+    // const maxnum = func === 'nodata' ? 7200 : 60;
+    let val = _.toNumber(params[i]);
 
-    if (func === 'c_avg_rate_abs' || func === 'c_avg_rate') {
-      // 相对天数
-      val = _.toString(params[i] !== 1 ? params[i] : 86400);
-      return (
-        <Select
-          style={{ display: 'inline-block', width: 80, marginRight: 8 }}
-          value={val}
-          onChange={(newVal: string) => { this.handleParamsChange(i, _.toNumber(newVal)); }}
-        >
-          <Option value="86400">1</Option>
-          <Option value="604800">7</Option>
-        </Select>
-      );
-    }
-    if (func === 'happen' || func === 'ndiff') {
-      // 发生次数
-      return (
-        <InputNumber
-          key={i}
-          value={val}
-          min={minnum}
-          max={_.toNumber(params[0])}
-          style={{ display: 'inline-block' }}
-          onChange={(newVal) => { this.handleParamsChange(i, newVal); }}
-        />
-      );
+    if (i === 0) {
+      if (
+        func === 'c_avg_rate_abs'
+        || func === 'c_avg_rate'
+        || func === 'c_avg_abs'
+        || func === 'c_avg'
+      ) {
+        // 相对天数
+        val = _.toString(params[i] !== 1 ? params[i] : 86400);
+        return (
+          <Select
+            style={{ display: 'inline-block', width: 80, marginRight: 8 }}
+            value={val}
+            onChange={(newVal) => { this.handleParamsChange(i, _.toNumber(newVal)); }}
+          >
+            <Option value="86400">1</Option>
+            <Option value="604800">7</Option>
+          </Select>
+        );
+      }
+      if (func === 'happen' || func === 'ndiff') {
+        // 发生次数
+        return (
+          <InputNumber
+            key={i}
+            value={val}
+            min={minnum}
+            max={_.toNumber(params[0])}
+            style={{ display: 'inline-block' }}
+            onChange={(newVal) => { this.handleParamsChange(i, newVal); }}
+          />
+        );
+      }
+      return <span>不是合法的 param</span>;
     }
     return <span>不是合法的 param</span>;
   }
@@ -205,7 +215,7 @@ export default class Expression extends Component<Props> {
       <div style={{ marginTop: 5 }}>
         {
           // render params
-          _.map(_.get(funcMap[value.func], 'params', []), (o, i: number) => {
+          _.map(_.get(funcMap[value.func], 'params', []), (o, i) => {
             return (
               <div key={o} style={{ display: 'inline-block', verticalAlign: 'top' }}>
                 <span style={{ color: i === 0 ? '#2DB7F5' : '#FFB727' }}>{o}</span>
@@ -250,18 +260,8 @@ export default class Expression extends Component<Props> {
   }
 
   render() {
-    const { value, readOnly, metrics, renderHeader, renderFooter, metricError } = this.props;
+    const { value, metrics, renderHeader, renderFooter, metricError } = this.props;
 
-    if (readOnly) {
-      return (
-        <Card
-          bodyStyle={{ padding: 10 }}
-          style={{ marginTop: 10 }}
-        >
-          { this.renderPreview(readOnly) }
-        </Card>
-      );
-    }
     return (
       <Card
         bodyStyle={{ padding: 10 }}
@@ -278,7 +278,7 @@ export default class Expression extends Component<Props> {
                 notFoundContent=""
                 size="default"
                 style={{ width: 250 }}
-                placeholder="指标名称"
+                placeholder="Metric name"
                 defaultActiveFirstOption={false}
                 dropdownMatchSelectWidth={false}
                 showSearch
@@ -304,12 +304,10 @@ export default class Expression extends Component<Props> {
           </div>
           {this.renderParams()}
         </div>
-        {
-          value.func !== 'canary' ? this.renderPreview() : null
-        }
+        { this.renderPreview() }
         {
           value.func === 'all' ?
-            <div style={{ color: '#f50', lineHeight: 1 }}>断线情况，即为不连续。若要增加容错，可选择happen</div> : null
+            <div style={{ color: '#f50', lineHeight: 1 }}><FormattedMessage id="stra.preview.all.help" /></div> : null
         }
         <div className="expression-footerExtra">
           {renderFooter(value)}
@@ -318,3 +316,5 @@ export default class Expression extends Component<Props> {
     );
   }
 }
+
+export default injectIntl(Expression);

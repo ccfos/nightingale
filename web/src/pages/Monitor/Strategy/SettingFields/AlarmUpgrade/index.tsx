@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import { InputNumber, Select, Spin, Checkbox } from 'antd';
 import _ from 'lodash';
 
@@ -51,11 +52,11 @@ export default class AlarmUpgrade extends Component<Props> {
               });
             }}
           >
-            是否启动报警升级
+            <FormattedMessage id="stra.alert.upgrade.checkbox" />
           </Checkbox>
         </div>
         <div>
-          持续
+          <FormattedMessage id="stra.alert.upgrade.d1" />
           <InputNumber
             min={0}
             style={{ margin: '0 8px' }}
@@ -67,7 +68,7 @@ export default class AlarmUpgrade extends Component<Props> {
               });
             }}
           />
-          分钟，未处理或者未恢复的持续报警，将以
+          <FormattedMessage id="stra.minutes" />, <FormattedMessage id="stra.alert.upgrade.d2" />, <FormattedMessage id="stra.alert.upgrade.d3" />
           <Select
             style={{ width: 100, margin: '0 8px' }}
             value={value.level}
@@ -78,14 +79,14 @@ export default class AlarmUpgrade extends Component<Props> {
               });
             }}
           >
-            <Option key="1" value={1}>一级报警</Option>
-            <Option key="2" value={2}>二级报警</Option>
-            <Option key="3" value={3}>三级报警</Option>
+            <Option key="1" value={1}><FormattedMessage id="stra.priority.1" /></Option>
+            <Option key="2" value={2}><FormattedMessage id="stra.priority.2" /></Option>
+            <Option key="3" value={3}><FormattedMessage id="stra.priority.3" /></Option>
           </Select>
-          发送给
+          <FormattedMessage id="stra.alert.upgrade.d4" />
         </div>
         <div>
-          报警接收团队
+          <FormattedMessage id="stra.notify.team" />
         </div>
         <div className={errors.notify ? 'has-error' : undefined}>
           <Select
@@ -95,7 +96,7 @@ export default class AlarmUpgrade extends Component<Props> {
             notFoundContent={this.props.notifyGroupLoading ? <Spin size="small" /> : null}
             defaultActiveFirstOption={false}
             filterOption={false}
-            placeholder="报警接收团队"
+            // placeholder="报警接收团队"
             value={value.groups}
             onChange={(val: any) => {
               this.props.onChange({
@@ -118,7 +119,7 @@ export default class AlarmUpgrade extends Component<Props> {
           <div className="ant-form-explain">{errors.notify}</div>
         </div>
         <div>
-          报警接收人
+          <FormattedMessage id="stra.notify.user" />
         </div>
         <div className={errors.notify ? 'has-error' : undefined}>
           <Select
@@ -128,7 +129,7 @@ export default class AlarmUpgrade extends Component<Props> {
             notFoundContent={this.props.notifyUserLoading ? <Spin size="small" /> : null}
             defaultActiveFirstOption={false}
             filterOption={false}
-            placeholder="报警接收人"
+            // placeholder="报警接收人"
             value={value.users}
             onChange={(val: any) => {
               this.props.onChange({
@@ -163,7 +164,7 @@ function checkAlarmUpgrade(rule: any, value: any, callbackFunc: any) {
 
   if (value.enabled && _.isEmpty(value.users) && _.isEmpty(value.groups)) {
     hasError = true;
-    errors.notify = '必须存在一个报警接收人或接收组';
+    errors.notify = 'Must be an alarm receiver or receiving group';
   }
 
   if (hasError) {

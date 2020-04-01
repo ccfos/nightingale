@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import PropTypes from 'prop-types';
@@ -9,14 +10,14 @@ import request from '@common/request';
 import api from '@common/api';
 import CollectForm from './CollectForm';
 
-class CollectFormMain extends Component<RouteComponentProps> {
+class CollectFormMain extends Component<RouteComponentProps & WrappedComponentProps> {
   static contextTypes = {
     getSelectedNode: PropTypes.func,
   };
   selectedNodeId: number | undefined = undefined;
   state = {
     loading: false,
-    data: {},
+    data: {} as any,
     selectedTreeNode: {},
     treeData: [],
   };
@@ -53,7 +54,7 @@ class CollectFormMain extends Component<RouteComponentProps> {
   }
 
   handleSubmit = (values: any) => {
-    const { action, type } = this.props.match.params;
+    const { action, type } = this.props.match.params as any;
     let reqBody;
 
     if (action === 'add' || action === 'clone') {
@@ -75,7 +76,7 @@ class CollectFormMain extends Component<RouteComponentProps> {
       method: action === 'modify' ? 'PUT' : 'POST',
       body: JSON.stringify(reqBody),
     }).then(() => {
-      message.success('提交成功!');
+      message.success(this.props.intl.formatMessage({ id: 'msg.submit.success' }));
       this.props.history.push({
         pathname: '/monitor/collect',
       });
@@ -83,7 +84,7 @@ class CollectFormMain extends Component<RouteComponentProps> {
   }
 
   render() {
-    const { action, type } = this.props.match.params;
+    const { action, type } = this.props.match.params as any;
     const { treeData, data, loading } = this.state;
     const ActiveForm = CollectForm[type];
     if (action === 'add') {
@@ -103,4 +104,4 @@ class CollectFormMain extends Component<RouteComponentProps> {
   }
 }
 
-export default CreateIncludeNsTree(withRouter(CollectFormMain));
+export default CreateIncludeNsTree(withRouter(injectIntl(CollectFormMain)));

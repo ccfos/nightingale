@@ -1,20 +1,9 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
 import { Modal, Form, Select, Radio } from 'antd';
 import _ from 'lodash';
-
-interface Props {
-  title: string,
-  visible: boolean,
-  data: any,
-  tags: any,
-  onOk: (values: any) => void | boolean,
-  destroy: () => void,
-}
-
-interface State {
-  data: any;
-}
+import { FormattedMessage } from 'react-intl';
+import ModalControl from '@cpts/ModalControl';
 
 const FormItem = Form.Item;
 const { Option } = Select;
@@ -24,11 +13,20 @@ const formItemLayout = {
   wrapperCol: { span: 16 },
 };
 const toptMap = {
-  '=': '包含',
-  '!=': '排除',
+  '=': 'stra.tag.include',
+  '!=': 'stra.tag.exclude',
 };
 
-class FilterFormModal extends Component<Props, State> {
+class FilterFormModal extends Component {
+  static propTypes = {
+    title: PropTypes.string,
+    visible: PropTypes.bool,
+    data: PropTypes.object,
+    tags: PropTypes.object,
+    onOk: PropTypes.func,
+    destroy: PropTypes.func,
+  };
+
   static defaultProps = {
     title: '',
     visible: false,
@@ -38,18 +36,18 @@ class FilterFormModal extends Component<Props, State> {
     destroy: _.noop,
   };
 
-  formId = _.uniqueId('tagFilterConditionForm');
-  constructor(props: Props) {
+  constructor(props) {
     super(props);
+    this.formId = _.uniqueId('tagFilterConditionForm');
     this.state = {
       data: {
         topt: '=',
         ...props.data,
       },
-    } as State;
+    };
   }
 
-  componentWillReceiveProps(nextProps: Props) {
+  componentWillReceiveProps(nextProps) {
     if (!_.isEqual(nextProps.data, this.props.data)) {
       this.setState({
         data: {
@@ -63,10 +61,10 @@ class FilterFormModal extends Component<Props, State> {
   getTvalOptions() {
     const { tags } = this.props;
     const { data } = this.state;
-    let tvalOptions: any[] = [];
+    let tvalOptions = [];
 
     if (!_.isEmpty(tags) && data.tkey) {
-      const tval = _.filter(tags[data.tkey], (item, i: number) => i < 500);
+      const tval = _.filter(tags[data.tkey], (item, i) => i < 500);
       tvalOptions = _.map(tval, item => <Option key={item} value={item}>{item}</Option>);
     }
     return tvalOptions;
@@ -88,7 +86,7 @@ class FilterFormModal extends Component<Props, State> {
     this.props.destroy();
   }
 
-  handleFieldChange = (field: string, val: any) => {
+  handleFieldChange = (field, val) => {
     const { data } = this.state;
     this.setState({
       data: {
@@ -117,18 +115,18 @@ class FilterFormModal extends Component<Props, State> {
         >
           <FormItem
             {...formItemLayout}
-            label="Tag 名称"
+            label="Tag name"
             validateStatus={_.isEmpty(data.tkey) ? 'error' : ''}
-            help={_.isEmpty(data.tkey) && '不能为空'}
+            help={_.isEmpty(data.tkey) && 'is required'}
           >
             <Select
               mode="combobox"
               notFoundContent=""
-              placeholder="支持自定义，非叶子节点或者'与'条件时没有自动补全功能"
+              // placeholder="支持自定义，非叶子节点或者'与'条件时没有自动补全功能"
               defaultActiveFirstOption={false}
               // getPopupContainer={() => document.getElementById(this.formId)}
               value={data.tkey}
-              onChange={(val: any) => this.handleFieldChange('tkey', val)}
+              onChange={val => this.handleFieldChange('tkey', val)}
             >
               {
                 _.map(tags, (tval, tkey) => <Option key={tkey} value={tkey}>{tkey}</Option>)
@@ -141,24 +139,24 @@ class FilterFormModal extends Component<Props, State> {
               onChange={e => this.handleFieldChange('topt', e.target.value)}
             >
               {
-                _.map(toptMap, (val, key) => <Radio key={key} value={key}>{val}</Radio>)
+                _.map(toptMap, (val, key) => <Radio key={key} value={key}><FormattedMessage id={val} /></Radio>)
               }
             </RadioGroup>
           </FormItem>
           <FormItem
             {...formItemLayout}
-            label="Tag 取值"
+            label="Tag value"
             validateStatus={_.isEmpty(data.tval) ? 'error' : ''}
-            help={_.isEmpty(data.tval) && '不能为空'}
+            help={_.isEmpty(data.tval) && 'is required'}
           >
             <Select
               mode="tags"
               showSearch
               notFoundContent=""
-              placeholder="支持自定义，必须完全匹配不支持正则"
+              // placeholder="支持自定义，必须完全匹配不支持正则"
               // getPopupContainer={() => document.getElementById(this.formId)}
               value={data.tval}
-              onChange={(val: any) => this.handleFieldChange('tval', val)}
+              onChange={val => this.handleFieldChange('tval', val)}
             >
               {tvalOptions}
             </Select>
@@ -169,24 +167,4 @@ class FilterFormModal extends Component<Props, State> {
   }
 }
 
-export default function filterFormModal(config: any) {
-  const div = document.createElement('div');
-  document.body.appendChild(div);
-
-  function destroy() {
-    const unmountResult = ReactDOM.unmountComponentAtNode(div);
-    if (unmountResult && div.parentNode) {
-      div.parentNode.removeChild(div);
-    }
-  }
-
-  function render(props: any) {
-    ReactDOM.render(<FilterFormModal {...props} />, div);
-  }
-
-  render({ ...config, visible: true, destroy });
-
-  return {
-    destroy,
-  };
-}
+export default ModalControl(FilterFormModal);

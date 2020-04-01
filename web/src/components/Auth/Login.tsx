@@ -4,13 +4,14 @@ import { Card, Form, Input, Icon, Button, Checkbox } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import queryString from 'query-string';
 import _ from 'lodash';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import { appname } from '@common/config';
 import auth from './auth';
 import './style.less';
 
 const FormItem = Form.Item;
 
-class Login extends Component<RouteComponentProps & FormProps> {
+class Login extends Component<RouteComponentProps & FormProps & WrappedComponentProps> {
   handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const { history, location } = this.props;
@@ -47,6 +48,7 @@ class Login extends Component<RouteComponentProps & FormProps> {
     const { history } = this.props;
     const { getFieldDecorator } = this.props.form!;
     const isAuthenticated = auth.getIsAuthenticated();
+    const { formatMessage } = this.props.intl;
 
     if (isAuthenticated) {
       history.push({
@@ -58,20 +60,20 @@ class Login extends Component<RouteComponentProps & FormProps> {
       <div className={prefixCls}>
         <div className={`${prefixCls}-main`}>
           <Card>
-            <div className={`${prefixCls}-title`}>账户登录</div>
+            <div className={`${prefixCls}-title`}>{formatMessage({ id: 'login.title' })}</div>
             <Form onSubmit={this.handleSubmit}>
               <FormItem>
                 {getFieldDecorator('username', {
-                  rules: [{ required: true, message: '请输入你的用户名!' }],
+                  rules: [{ required: true }],
                 })(
-                  <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="用户名" />,
+                  <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder={formatMessage({ id: 'user.username' })} />,
                 )}
               </FormItem>
               <FormItem>
                 {getFieldDecorator('password', {
-                  rules: [{ required: true, message: '请输入你的密码!' }],
+                  rules: [{ required: true }],
                 })(
-                  <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} type="password" placeholder="密码" />,
+                  <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} type="password" placeholder={formatMessage({ id: 'user.password' })} />,
                 )}
               </FormItem>
               <FormItem>
@@ -79,10 +81,10 @@ class Login extends Component<RouteComponentProps & FormProps> {
                   valuePropName: 'checked',
                   initialValue: false,
                 })(
-                  <Checkbox>使用LDAP账号登录</Checkbox>,
+                  <Checkbox>{formatMessage({ id: 'login.ldap' })}</Checkbox>,
                 )}
                 <Button type="primary" htmlType="submit" className={`${prefixCls}-submitBtn`}>
-                  登 录
+                  {formatMessage({ id: 'form.login' })}
                 </Button>
               </FormItem>
             </Form>
@@ -93,4 +95,4 @@ class Login extends Component<RouteComponentProps & FormProps> {
   }
 }
 
-export default Form.create()(Login);
+export default injectIntl(Form.create()(Login));

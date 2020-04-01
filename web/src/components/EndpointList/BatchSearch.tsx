@@ -3,6 +3,7 @@ import { Modal, Form, Input, Radio } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
 import ModalControl from '@cpts/ModalControl';
+import { FormattedMessage } from 'react-intl';
 
 interface Props {
   field: string,
@@ -18,7 +19,7 @@ const FormItem = Form.Item;
 const RadioGroup = Radio.Group;
 
 class BatchSearch extends Component<Props & FormProps> {
-  static defaultProps = {
+  static defaultProps: any = {
     field: 'ident',
     batch: '',
     title: '',
@@ -54,17 +55,17 @@ class BatchSearch extends Component<Props & FormProps> {
         onCancel={this.handleCancel}
       >
         <Form layout="vertical">
-          <FormItem label="过滤字段">
+          <FormItem label={<FormattedMessage id="endpoints.batch.filter.key" />}>
             {getFieldDecorator('field', {
               initialValue: field,
             })(
               <RadioGroup>
-                <Radio value="ident">标识</Radio>
-                <Radio value="alias">别名</Radio>
+                <Radio value="ident"><FormattedMessage id="endpoints.ident" /></Radio>
+                <Radio value="alias"><FormattedMessage id="endpoints.alias" /></Radio>
               </RadioGroup>,
             )}
           </FormItem>
-          <FormItem label="过滤值">
+          <FormItem label={<FormattedMessage id="endpoints.batch.filter.value" />}>
             {getFieldDecorator('batch', {
               initialValue: _.replace(batch, /,/g, '\n'),
             })(

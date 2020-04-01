@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { Link } from 'react-router-dom';
 import _ from 'lodash';
 import { Button, Form, Select, Input, Modal, message, Icon, Tooltip, Row, Col, TreeSelect } from 'antd';
@@ -47,8 +48,8 @@ function getPureName(name: string) {
   return name;
 }
 
-class CollectForm extends Component<Props, State> {
-  constructor(props: Props) {
+class CollectForm extends Component<Props & WrappedComponentProps, State> {
+  constructor(props: Props & WrappedComponentProps) {
     super(props);
     const { params } = this.props;
     this.state = {
@@ -98,7 +99,7 @@ class CollectForm extends Component<Props, State> {
         tags,
       });
     } else {
-      message.error('tags 上限三个');
+      message.error(this.props.intl.formatMessage({ id: 'collect.log.msg.tag.maximum' }));
     }
   }
 
@@ -136,9 +137,9 @@ class CollectForm extends Component<Props, State> {
     });
 
     if (pattern === '') {
-      message.error('匹配正则不能为空');
+      message.error(this.props.intl.formatMessage({ id: 'collect.log.msg.pattern.empty' }));
     } else if (log === '') {
-      message.error('log不能为空');
+      message.error(this.props.intl.formatMessage({ id: 'collect.log.msg.log.empty' }));
     } else {
       this.setState({ logChecked: true, logCheckLoading: true });
       request(`${api.collect}/check`, {
@@ -181,7 +182,7 @@ class CollectForm extends Component<Props, State> {
       const dynamicLogReg = /\$\{[^{]+\}/;
       const dynamicLogRegMatch = filePath.match(dynamicLogReg);
       if (dynamicLogRegMatch && dynamicLogRegMatch.length && _.some(dynamicLogRegMatch, n => _.includes(n, '/'))) {
-        message.error('动态日志 ${}中不能包含/');
+        message.error('/ cannot be included in ${}');
         return;
       }
       // tags 数据转换成接口需要的格式，以及验证是否包含括号
@@ -190,15 +191,15 @@ class CollectForm extends Component<Props, State> {
       if (tags.length) {
         const TagValidateStatus = _.every(tags, (o) => {
           if (o.name === '' || o.value === '') {
-            message.error('tagName、tagValue 值不能为空');
+            message.error('tagName or tagValue is required');
             return false;
           }
           if (_.includes(reservedKws, o.name)) {
-            message.error('tagName 不能包含 host、trigger、include 这些是odin系统保留关键字');
+            message.error('Can not include the host trigger include these are the reserved keywords for the Odin');
             return false;
           }
           if (!bracketsReg.test(o.value)) {
-            message.error('tagValue 必须包含括号');
+            message.error('tagValue must include parentheses');
             return false;
           }
           return true;
@@ -217,7 +218,7 @@ class CollectForm extends Component<Props, State> {
       const { params = {} } = this.props;
       if (params.action === 'add') {
         if (!this.state.logChecked) {
-          message.error('添加采集配置的时候，请验证配置');
+          message.error('Verify the configuration when adding the collection configuration');
           return;
         }
       }
@@ -257,13 +258,13 @@ class CollectForm extends Component<Props, State> {
         <Form layout="horizontal" onSubmit={this.handleSubmit}>
           <FormItem
             {...formItemLayout}
-            label="归属节点"
+            label={<FormattedMessage id="collect.common.node" />}
           >
             {
               getFieldDecorator('nid', {
                 initialValue: initialValues.nid,
                 rules: [
-                  { required: true, message: '不能为空' },
+                  { required: true },
                 ],
               })(
                 <TreeSelect
@@ -280,16 +281,13 @@ class CollectForm extends Component<Props, State> {
               )
             }
           </FormItem>
-          <FormItem {...formItemLayout} label="监控指标名称">
+          <FormItem {...formItemLayout} label={<FormattedMessage id="collect.log.name" />}>
             <Input
               addonBefore={params.action === 'add' || initialValues.name.indexOf('log.') === 0 ? 'log.' : null}
               {...getFieldProps('name', {
                 initialValue: getPureName(initialValues.name),
                 rules: [
-                  {
-                    required: true,
-                    message: '不能为空',
-                  },
+                  { required: true },
                   nameRule,
                 ],
               })}
@@ -297,7 +295,7 @@ class CollectForm extends Component<Props, State> {
               style={{ width: params.action === 'add' || initialValues.name.indexOf('log.') === 0 ? 500 : 500 }}
             />
           </FormItem>
-          <FormItem {...formItemLayout} label="计算方法">
+          <FormItem {...formItemLayout} label={<FormattedMessage id="collect.log.func" />}>
             <Select
               {...getFieldProps('func', {
                 initialValue: initialValues.func,
@@ -305,28 +303,26 @@ class CollectForm extends Component<Props, State> {
                 rules: [
                   {
                     required: true,
-                    message: '不能为空',
                   },
                 ],
               })}
               size="default"
               style={{ width: 500 }}
             >
-              <Option value="cnt">计数：对符合规则的日志进行计数</Option>
-              <Option value="avg">平均：对符合规则的日志抓取出的数字进行平均</Option>
-              <Option value="sum">求和：对符合规则的日志抓取出的数字进行求和</Option>
-              <Option value="max">最大值：对符合规则的日志抓取出的数字取最大值</Option>
-              <Option value="min">最小值：对符合规则的日志抓取出的数字进最小值</Option>
+              <Option value="cnt"><FormattedMessage id="collect.log.func.cnt" /></Option>
+              <Option value="avg"><FormattedMessage id="collect.log.func.avg" /></Option>
+              <Option value="sum"><FormattedMessage id="collect.log.func.sum" /></Option>
+              <Option value="max"><FormattedMessage id="collect.log.func.max" /></Option>
+              <Option value="min"><FormattedMessage id="collect.log.func.min" /></Option>
             </Select>
           </FormItem>
-          <FormItem {...formItemLayout} label="日志路径">
+          <FormItem {...formItemLayout} label={<FormattedMessage id="collect.log.path" />}>
             <Input
               {...getFieldProps('file_path', {
                 initialValue: initialValues.file_path,
                 rules: [
                   {
                     required: true,
-                    message: '不能为空',
                   },
                 ],
               })}
@@ -338,16 +334,16 @@ class CollectForm extends Component<Props, State> {
                 overlayClassName="largeTooltip"
                 title={
                   <div style={{ wordBreak: 'break-all', wordWrap: 'break-word' }}>
-                    日志末尾自带时间格式，例如 {'/path/access.log.${%Y%m%d%H}'}<br />
-                    {'${}中不能包含/'}
+                    <FormattedMessage id="collect.log.path.dynamic.tip.1" /> {'/path/access.log.${%Y%m%d%H}'}<br />
+                    <FormattedMessage id="collect.log.path.dynamic.tip.2" />
                   </div>
                 }
               >
-                <span>动态日志 <Icon type="info-circle-o" /></span>
+                <span><FormattedMessage id="collect.log.path.dynamic" /> <Icon type="info-circle-o" /></span>
               </Tooltip>
             </span>
           </FormItem>
-          <FormItem {...formItemLayout} label="时间格式">
+          <FormItem {...formItemLayout} label={<FormattedMessage id="collect.log.timeFmt" />}>
             <div
               style={{
                 width: 500, float: 'left', position: 'relative', zIndex: 1,
@@ -359,7 +355,6 @@ class CollectForm extends Component<Props, State> {
                   rules: [
                     {
                       required: true,
-                      message: '不能为空',
                     },
                   ],
                 })}
@@ -378,25 +373,25 @@ class CollectForm extends Component<Props, State> {
               </Select>
             </div>
             <div style={{ marginLeft: 510, lineHeight: '20px' }}>
-              时间格式必须和日志中的格式一样, 否则无法采集到数据。<br />
-              如日志中出现多段符合时间正则的, 只使用第一个匹配结果。
+              <FormattedMessage id="collect.log.timeFmt.help.1" /><br />
+              <FormattedMessage id="collect.log.timeFmt.help.2" />
             </div>
           </FormItem>
-          <FormItem {...formItemLayout} label="采集周期">
+          <FormItem {...formItemLayout} label={<FormattedMessage id="collect.log.step" />}>
             <Select
               size="default"
               style={{ width: 100 }}
               {...getFieldProps('step', {
                 initialValue: initialValues.step,
                 rules: [
-                  { required: true, message: '不能为空' },
+                  { required: true },
                 ],
               })}
             >
               {
                 _.map(interval, item => <Option key={item} value={item}>{item}</Option>)
               }
-            </Select> 秒
+            </Select> <FormattedMessage id="collect.log.step.unit" />
           </FormItem>
           <FormItem
             {...formItemLayout}
@@ -404,13 +399,13 @@ class CollectForm extends Component<Props, State> {
               <Tooltip
                 title={
                   <div>
-                    请填写正则表达式<br />
-                    如计算方式选择了耗时: 必须包含括号( )<br />
-                    例如 cost=(\d+) , 则取\d+的部分（默认以第一个括号为准）
+                    <FormattedMessage id="collect.log.pattern.tip.1" /><br />
+                    <FormattedMessage id="collect.log.pattern.tip.2" /><br />
+                    <FormattedMessage id="collect.log.pattern.tip.3" />
                   </div>
                 }
               >
-                <span>匹配正则 <Icon type="info-circle-o" /></span>
+                <span><FormattedMessage id="collect.log.pattern" /> <Icon type="info-circle-o" /></span>
               </Tooltip>
             }
           >
@@ -420,13 +415,11 @@ class CollectForm extends Component<Props, State> {
                 rules: [
                   {
                     required: true,
-                    message: '不能为空',
                   },
                 ],
               })}
               size="default"
               style={{ width: 500 }}
-              placeholder="耗时计算：正则( )中的数值会用于计算曲线值；流量计数：每匹配到该正则，曲线值+1"
             />
           </FormItem>
           <FormItem {...formItemLayout} label="tags">
@@ -451,7 +444,7 @@ class CollectForm extends Component<Props, State> {
                       <Col span={13}>
                         <Input
                           addonBefore="tagValue"
-                          placeholder="不是曲线值! 匹配结果必须可枚举!"
+                          placeholder={this.props.intl.formatMessage({ id: 'collect.log.tagval.placeholder' })}
                           value={value}
                           onChange={(e) => {
                             this.changeTag(e, index, 'value');
@@ -474,25 +467,25 @@ class CollectForm extends Component<Props, State> {
                 size="default"
                 onClick={this.addTag}
               >
-                <Icon type="plus" />新增tag
+                <Icon type="plus" /><FormattedMessage id="collect.log.tags.add" />
               </Button>
             </div>
             <div style={{ marginLeft: 510, lineHeight: '20px' }}>
-              <h4>tagName填写说明</h4>
-              <div>1. 不允许使用host、trigger、include</div>
-              <div>2. 不允许包含如下4个特殊字符= , : @</div>
-              <h4>tagValue填写说明</h4>
-              <div>1. 必须包含<span style={{ color: '#B03A5B' }}>括号</span>。括号中的正则内容被用作tagValue的取值，必须可枚举。</div>
-              <div>2. 不允许包含如下4个特殊字符= , : @</div>
+              <h4><FormattedMessage id="collect.log.tagName.help.title" /></h4>
+              <div><FormattedMessage id="collect.log.tagName.help.1" /></div>
+              <div><FormattedMessage id="collect.log.tagName.help.2" /></div>
+              <h4><FormattedMessage id="collect.log.tagValue.help.title" /></h4>
+              <div><FormattedMessage id="collect.log.tagValue.help.1" /></div>
+              <div><FormattedMessage id="collect.log.tagValue.help.2" /></div>
             </div>
           </FormItem>
-          <FormItem {...formItemLayout} label="配置验证" required={this.state.logCheckVisible}>
+          <FormItem {...formItemLayout} label={<FormattedMessage id="collect.log.check" />} required={this.state.logCheckVisible}>
             {
               this.state.logCheckVisible ?
                 <div>
                   <Input
                     type="textarea"
-                    placeholder="01/Jan/2006:15:04:05 输入一段日志内容验证配置..."
+                    placeholder="01/Jan/2006:15:04:05"
                     style={{ width: 500 }}
                     value={this.state.log}
                     onChange={(e) => {
@@ -502,12 +495,12 @@ class CollectForm extends Component<Props, State> {
                     }}
                   />
                   <span style={{ paddingLeft: 10 }}>
-                    请输入一行待监控的完整日志，包括时间。
+                    <FormattedMessage id="collect.log.check.help" />
                     <Tooltip title={
                       <div style={{ wordBreak: 'break-all', wordWrap: 'break-word' }}>
-                        正确匹配：<br />输出正则匹配结果完整式及子项，输出tag正则匹配结果完整式及子项，以及时间匹配结果
-                        <br />错误匹配：
-                        <br />输出错误信息
+                        <FormattedMessage id="collect.log.check.help.tip.1" /><br /><FormattedMessage id="collect.log.check.help.tip.2" />
+                        <br /><FormattedMessage id="collect.log.check.help.tip.3" />
+                        <br /><FormattedMessage id="collect.log.check.help.tip.4" />
                       </div>
                     }
                     >
@@ -520,7 +513,7 @@ class CollectForm extends Component<Props, State> {
                       onClick={this.checkLog}
                       loading={this.state.logCheckLoading}
                     >
-                      验证
+                      <FormattedMessage id="collect.log.check.btn" />
                     </Button>
                   </div>
                 </div> :
@@ -533,11 +526,11 @@ class CollectForm extends Component<Props, State> {
                     });
                   }}
                 >
-                  我的配置是否有问题?
+                  <FormattedMessage id="collect.log.check.btn2" />
                 </Button>
             }
           </FormItem>
-          <FormItem {...formItemLayout} label="备注">
+          <FormItem {...formItemLayout} label={<FormattedMessage id="collect.log.note" />}>
             <Input
               type="textarea"
               placeholder=""
@@ -548,22 +541,22 @@ class CollectForm extends Component<Props, State> {
             />
           </FormItem>
           <FormItem wrapperCol={{ offset: 6 }} style={{ marginTop: 24 }}>
-            <Button type="primary" htmlType="submit" loading={this.state.submitLoading}>提交</Button>
+            <Button type="primary" htmlType="submit" loading={this.state.submitLoading}><FormattedMessage id="form.submit" /></Button>
             <Button
               style={{ marginLeft: 8 }}
             >
-              <Link to={{ pathname: '/monitor/collect' }}>返回</Link>
+              <Link to={{ pathname: '/monitor/collect' }}><FormattedMessage id="form.goback" /></Link>
             </Button>
           </FormItem>
         </Form>
         <Modal
           title={
             <span>
-              验证结果：
+              Result：
               {
                 this.state.logCheckedResultsSuccess ?
-                  <span style={{ color: '#87d068' }}>成功</span> :
-                  <span style={{ color: '#f50' }}>失败</span>
+                  <span style={{ color: '#87d068' }}>success</span> :
+                  <span style={{ color: '#f50' }}>error</span>
               }
             </span>
           }
@@ -577,7 +570,7 @@ class CollectForm extends Component<Props, State> {
               size="large"
               onClick={this.closeLogCheckedResults}
             >
-              关闭
+              close
             </Button>,
           ]}
         >
@@ -608,4 +601,4 @@ class CollectForm extends Component<Props, State> {
   }
 }
 
-export default Form.create()(CollectForm);
+export default Form.create()(injectIntl(CollectForm));

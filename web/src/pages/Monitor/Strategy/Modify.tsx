@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import { RouteComponentProps } from 'react-router-dom';
 import { message } from 'antd';
 import _ from 'lodash';
@@ -9,7 +10,7 @@ import SettingFields from './SettingFields';
 import { normalizeFormData } from './utils';
 import './style.less';
 
-class Modify extends Component<RouteComponentProps> {
+class Modify extends Component<RouteComponentProps & WrappedComponentProps> {
   state = {
     values: undefined,
   } as { values: any };
@@ -39,7 +40,7 @@ class Modify extends Component<RouteComponentProps> {
         id: values.id,
       }),
     }).then(() => {
-      message.success('修改报警策略成功!');
+      message.success(this.props.intl.formatMessage({ id: 'msg.modify.success' }));
       history.push({
         pathname: '/monitor/strategy',
       });
@@ -62,4 +63,4 @@ class Modify extends Component<RouteComponentProps> {
   }
 }
 
-export default CreateIncludeNsTree(Modify as any);
+export default CreateIncludeNsTree(injectIntl(Modify));

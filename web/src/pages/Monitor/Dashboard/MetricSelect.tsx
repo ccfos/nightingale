@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { Card, Input, Tabs, Tooltip, Spin } from 'antd';
 import _ from 'lodash';
 import moment from 'moment';
@@ -51,7 +52,7 @@ function getSelectedMetricsLen(metric: string, graphs: GraphData[]) {
   return null;
 }
 
-export default class MetricSelect extends Component<Props, State> {
+class MetricSelect extends Component<Props & WrappedComponentProps, State> {
   static defaultProps = {
     nid: undefined,
     hosts: [],
@@ -152,18 +153,18 @@ export default class MetricSelect extends Component<Props, State> {
                         key={`${metricTabKey}_${metric}`}
                         placement="right"
                         visible={this.state.metricTipVisible[`${metricTabKey}_${metric}`]}
-                        title={() => {
-                          const currentMetricMeta = getCurrentMetricMeta(metric);
-                          if (currentMetricMeta) {
-                            return (
-                              <div>
-                                <p>含义：{currentMetricMeta.meaning}</p>
-                                <p>单位：{currentMetricMeta.unit}</p>
-                              </div>
-                            );
-                          }
-                          return '';
-                        }}
+                        // title={() => {
+                        //   const currentMetricMeta = getCurrentMetricMeta(metric);
+                        //   if (currentMetricMeta) {
+                        //     return (
+                        //       <div>
+                        //         <p>含义：{currentMetricMeta.meaning}</p>
+                        //         <p>单位：{currentMetricMeta.unit}</p>
+                        //       </div>
+                        //     );
+                        //   }
+                        //   return '';
+                        // }}
                         onVisibleChange={(visible) => {
                           const key = `${metricTabKey}_${metric}`;
                           const currentMetricMeta = getCurrentMetricMeta(metric);
@@ -186,7 +187,7 @@ export default class MetricSelect extends Component<Props, State> {
                 })
               }
             </ul> :
-            <div style={{ textAlign: 'center' }}>暂无数据</div>
+            <div style={{ textAlign: 'center' }}>No data</div>
         }
       </div>
     );
@@ -209,14 +210,15 @@ export default class MetricSelect extends Component<Props, State> {
 
     const newMetricMap = this.dynamicMetricMaps();
     const tabPanes = _.map(newMetricMap, (val) => {
+      const tabName = this.props.intl.locale == 'zh' ? val.alias : val.key;
       return (
-        <TabPane tab={val.alias} key={val.key}>
+        <TabPane tab={tabName} key={val.key}>
           { this.renderMetricList(newMetrics, val.key) }
         </TabPane>
       );
     });
     tabPanes.unshift(
-      <TabPane tab="全部" key="ALL">
+      <TabPane tab={<FormattedMessage id="graph.metric.list.all" />} key="ALL">
         { this.renderMetricList(newMetrics, 'ALL') }
       </TabPane>,
     );
@@ -239,10 +241,10 @@ export default class MetricSelect extends Component<Props, State> {
           className={`${prefixCls}-card`}
           title={
             <span className={`${prefixCls}-metrics-title`}>
-              <span>指标列表</span>
+              <span><FormattedMessage id="graph.metric.list.title" /></span>
               <Input
                 size="small"
-                placeholder="搜索指标"
+                placeholder="Search"
                 onChange={this.handleMetricsSearch}
               />
             </span>
@@ -254,3 +256,5 @@ export default class MetricSelect extends Component<Props, State> {
     );
   }
 }
+
+export default injectIntl(MetricSelect);

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import { Modal, message } from 'antd';
 import _ from 'lodash';
 import ModalControl from '@cpts/ModalControl';
@@ -15,10 +16,10 @@ interface Props {
   destroy: () => void,
 }
 
-class CreateUser extends Component<Props> {
+class CreateUser extends Component<Props & WrappedComponentProps> {
   profileFormRef: any;
   static defaultProps = {
-    title: '新建用户',
+    title: '',
     visible: true,
     onOk: _.noop,
     onCancel: _.noop,
@@ -35,7 +36,7 @@ class CreateUser extends Component<Props> {
             is_root: values.is_root ? 1 : 0,
           }),
         }).then(() => {
-          message.success('新建用户成功！');
+          message.success(this.props.intl.formatMessage({ id: 'msg.create.success' }));
           this.props.onOk();
           this.props.destroy();
         });
@@ -66,4 +67,4 @@ class CreateUser extends Component<Props> {
   }
 }
 
-export default ModalControl(CreateUser);
+export default ModalControl(injectIntl(CreateUser));

@@ -1,4 +1,5 @@
 import React, { Component }from 'react';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import { Modal, Form, Input, message } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
@@ -17,10 +18,10 @@ interface Props {
 
 const FormItem = Form.Item;
 
-class BatchDel extends Component<Props & FormProps> {
+class BatchDel extends Component<Props & FormProps & WrappedComponentProps> {
   static defaultProps = {
     selectedIps: [],
-    title: '批量删除',
+    title: '',
     visible: true,
     onOk: _.noop,
     onCancel: _.noop,
@@ -28,7 +29,6 @@ class BatchDel extends Component<Props & FormProps> {
   };
 
   handleOk = () => {
-    const { title } = this.props;
     this.props.form!.validateFields((err, values) => {
       if (!err) {
         const idents = _.split(values.idents, '\n');
@@ -39,7 +39,7 @@ class BatchDel extends Component<Props & FormProps> {
           method: 'DELETE',
           body: JSON.stringify(reqBody),
         }).then(() => {
-          message.success(`${title}成功`);
+          message.success(this.props.intl.formatMessage({ id: 'msg.delete.success' }));
           this.props.onOk();
           this.props.destroy();
         });
@@ -63,10 +63,10 @@ class BatchDel extends Component<Props & FormProps> {
         onCancel={this.handleCancel}
       >
         <Form layout="vertical">
-          <FormItem label="已选 endpoints">
+          <FormItem label="Endpoints">
             {getFieldDecorator('idents', {
               initialValue: _.join(selectedIdents, '\n'),
-              rules: [{ required: true, message: '请填写批量操作的 endpoints!' }],
+              rules: [{ required: true }],
             })(
               <Input.TextArea
                 autosize={{ minRows: 2, maxRows: 10 }}
@@ -79,4 +79,4 @@ class BatchDel extends Component<Props & FormProps> {
   }
 }
 
-export default ModalControl(Form.create()(BatchDel));
+export default ModalControl(Form.create()(injectIntl(BatchDel)));
