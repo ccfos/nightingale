@@ -53,6 +53,7 @@ func getStrategy() {
 			logger.Warningf("get strategy from remote failed, error:%v", stras.Err)
 			continue
 		}
+		break
 	}
 	if err != nil {
 		logger.Error("get stra err:", err)
