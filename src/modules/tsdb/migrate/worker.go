@@ -48,6 +48,7 @@ func pullRRD(node string, addr string, concurrent int) {
 			time.Sleep(10 * time.Millisecond)
 			continue
 		}
+		stats.Counter.Set("pull.rrd", count)
 
 		filenames := make([]dataobj.RRDFile, count)
 		for i := 0; i < count; i++ {
@@ -78,11 +79,13 @@ func pullRRD(node string, addr string, concurrent int) {
 				paths := strings.Split(f.Filename, "/")
 				if len(paths) != 2 {
 					logger.Errorf("write rrd file err %v filename:%s", err, f.Filename)
+					stats.Counter.Set("pull.rrd.err", count)
 					continue
 				}
 				file.EnsureDir(rrdtool.Config.Storage + "/" + paths[0])
 				err = utils.WriteFile(filePath, f.Body, 0644)
 				if err != nil {
+					stats.Counter.Set("pull.rrd.err", count)
 					logger.Errorf("write rrd file err %v filename:%s", err, f.Filename)
 				}
 
