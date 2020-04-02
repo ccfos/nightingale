@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import PropTypes from 'prop-types';
 import { Form, Button, Input, Radio, Tooltip, Icon, InputNumber, TreeSelect, Checkbox, Row, Col } from 'antd';
 import { FormProps } from 'antd/lib/form';
@@ -20,7 +21,7 @@ interface Props extends FormProps{
 const FormItem = Form.Item;
 const RadioGroup = Radio.Group;
 
-class SettingFields extends Component<Props> {
+class SettingFields extends Component<Props & WrappedComponentProps> {
   static contextTypes = {
     habitsId: PropTypes.string,
   };
@@ -42,7 +43,7 @@ class SettingFields extends Component<Props> {
     advanced: false,
   };
 
-  constructor(props: Props) {
+  constructor(props: Props & WrappedComponentProps) {
     super(props);
     this.fetchNotifyData = _.debounce(this.fetchNotifyData, 500);
   }
@@ -180,13 +181,13 @@ class SettingFields extends Component<Props> {
       <Form className={`${prefixCls}-strategy-form`} layout="horizontal" onSubmit={this.handleSubmit}>
         <FormItem
           {...formItemLayout}
-          label="策略名称："
+          label={<FormattedMessage id="stra.name" />}
         >
           {
             getFieldDecorator('name', {
               initialValue: this.props.initialValues.name,
               rules: [{
-                required: true, message: '请输入策略名称!',
+                required: true
               }],
             })(
               <Input />,
@@ -195,7 +196,7 @@ class SettingFields extends Component<Props> {
         </FormItem>
         <FormItem
           {...formItemLayout}
-          label="生效节点："
+          label={<FormattedMessage id="stra.node" />}
         >
           {
             getFieldDecorator('nid', {
@@ -222,7 +223,7 @@ class SettingFields extends Component<Props> {
         </FormItem>
         <FormItem
           {...formItemLayout}
-          label="排除节点："
+          label={<FormattedMessage id="stra.node.exclude" />}
         >
           {
             getFieldDecorator('excl_nid', {
@@ -247,12 +248,12 @@ class SettingFields extends Component<Props> {
           label={
             <Tooltip title={
               <div>
-                一级报警：发送语音, 短信, IM, 邮件<br />
-                二级报警：发送短信, IM, 邮件<br />
-                三级报警：发送IM，邮件
+                <FormattedMessage id="stra.priority.1.tip" /><br />
+                <FormattedMessage id="stra.priority.2.tip" /><br />
+                <FormattedMessage id="stra.priority.3.tip" />
               </div>
             }>
-              <span>报警级别 <Icon type="info-circle-o" /></span>
+              <span><FormattedMessage id="stra.priority" /> <Icon type="info-circle-o" /></span>
             </Tooltip>
           }
           required
@@ -265,15 +266,15 @@ class SettingFields extends Component<Props> {
                 {
                   _.map({
                     1: {
-                      alias: '一级报警',
+                      alias: <FormattedMessage id="stra.priority.1" />,
                       color: 'red',
                     },
                     2: {
-                      alias: '二级报警',
+                      alias: <FormattedMessage id="stra.priority.2" />,
                       color: 'yellow',
                     },
                     3: {
-                      alias: '三级报警',
+                      alias: <FormattedMessage id="stra.priority.3" />,
                       color: 'blue',
                     },
                   }, (val, key) => {
@@ -286,7 +287,7 @@ class SettingFields extends Component<Props> {
         </FormItem>
         <FormItem
           {...formItemLayout}
-          label="统计周期："
+          label={<FormattedMessage id="stra.alertDur" />}
         >
           {
             getFieldDecorator('alert_dur', {
@@ -295,11 +296,11 @@ class SettingFields extends Component<Props> {
               <InputNumber min={0} />,
             )
           }
-          秒
+          <FormattedMessage id="stra.seconds" />
         </FormItem>
         <FormItem
           {...formItemLayout}
-          label="触发条件："
+          label={<FormattedMessage id="stra.trigger" />}
           validateStatus="success" // 兼容
           help="" // 兼容
         >
@@ -321,7 +322,7 @@ class SettingFields extends Component<Props> {
         </FormItem>
         <FormItem
           {...formItemLayout}
-          label="Tag 过滤："
+          label={<FormattedMessage id="stra.tag" />}
         >
           {
             getFieldDecorator('tags', {
@@ -335,7 +336,7 @@ class SettingFields extends Component<Props> {
         </FormItem>
         <FormItem
           {...formItemLayout}
-          label="执行动作："
+          label={<FormattedMessage id="stra.action" />}
           validateStatus="success" // 兼容
           help="" // 兼容
         >
@@ -362,14 +363,14 @@ class SettingFields extends Component<Props> {
               onClick={() => {
                 this.setState({ advanced: !this.state.advanced });
               }}
-            >高级 <Icon type={this.state.advanced ? 'up' : 'down'} />
+            ><FormattedMessage id="stra.advanced" /> <Icon type={this.state.advanced ? 'up' : 'down'} />
             </a>
           </Col>
         </Row>
         <div style={{ display: this.state.advanced ? 'block' : 'none' }}>
           <FormItem
             {...formItemLayout}
-            label="留观时长："
+            label={<FormattedMessage id="stra.recovery.dur" />}
           >
             {
               getFieldDecorator('recovery_dur', {
@@ -378,11 +379,12 @@ class SettingFields extends Component<Props> {
                 <InputNumber min={0} />,
               )
             }
-            秒（告警恢复后持续观察{getFieldValue('recovery_dur')}秒，未再触发阈值才发送恢复通知）
+            <FormattedMessage id="stra.seconds" /> (
+            <FormattedMessage id="stra.recovery.dur.help.1" /> {getFieldValue('recovery_dur')} <FormattedMessage id="stra.recovery.dur.help.2" /> )
           </FormItem>
           <FormItem
             {...formItemLayout}
-            label="静默恢复："
+            label={<FormattedMessage id="stra.recovery.notify" />}
           >
             {
               getFieldDecorator('recovery_notify', {
@@ -390,14 +392,14 @@ class SettingFields extends Component<Props> {
                 valuePropName: 'checked',
               })(
                 <Checkbox>
-                  不发送恢复通知
+                  <FormattedMessage id="stra.recovery.notify.checkbox" />
                 </Checkbox>,
               )
             }
           </FormItem>
           <FormItem
             {...formItemLayout}
-            label="生效时间："
+            label={<FormattedMessage id="stra.period.time" />}
           >
             {
               getFieldDecorator('period_time', {
@@ -409,7 +411,7 @@ class SettingFields extends Component<Props> {
           </FormItem>
           <FormItem
             {...formItemLayout}
-            label="报警升级："
+            label={<FormattedMessage id="stra.alert.upgrade" />}
             validateStatus="success" // 兼容
             help="" // 兼容
           >
@@ -432,11 +434,11 @@ class SettingFields extends Component<Props> {
           </FormItem>
         </div>
         <FormItem wrapperCol={{ span: 16, offset: 4 }} style={{ marginTop: 24 }}>
-          <Button type="primary" htmlType="submit">确定</Button>
+          <Button type="primary" htmlType="submit"><FormattedMessage id="form.submit" /></Button>
         </FormItem>
       </Form>
     );
   }
 }
 
-export default Form.create()(SettingFields);
+export default Form.create()(injectIntl(SettingFields));

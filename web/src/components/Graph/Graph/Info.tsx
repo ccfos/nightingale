@@ -28,15 +28,15 @@ export default class Info extends Component<Props> {
         return (
           <ul className="graph-info" key={groupName}>
             <li>
-              <span className="graph-info-key">指标:</span>
+              <span className="graph-info-key">Metric:</span>
               <span className="graph-info-value">{groupName}</span>
             </li>
             <li>
-              <span className="graph-info-key">采集周期:</span>
+              <span className="graph-info-key">Step:</span>
               <span className="graph-info-value">{firstItem.step ? `${firstItem.step} s` : '无'}</span>
             </li>
             <li>
-              <span className="graph-info-key">时间范围:</span>
+              <span className="graph-info-key">Time:</span>
               <span className="graph-info-value">
                 {moment(Number(start)).format(config.timeFormatMap.moment)}
                 <span> - </span>
@@ -46,7 +46,7 @@ export default class Info extends Component<Props> {
             {
               unit ?
                 <li>
-                  <span className="graph-info-key">单位:</span>
+                  <span className="graph-info-key">Unit:</span>
                   <span className="graph-info-value">{unit}</span>
                 </li> : null
             }
@@ -61,7 +61,6 @@ export default class Info extends Component<Props> {
       <Popover
         trigger="click"
         content={this.getContent()}
-        title="详情"
         placement="topLeft"
       >
         {this.props.children}

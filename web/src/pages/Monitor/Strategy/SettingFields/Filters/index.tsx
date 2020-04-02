@@ -1,23 +1,28 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Row, Col, Button, Icon, message, Popconfirm } from 'antd';
 import _ from 'lodash';
+import { FormattedMessage, injectIntl } from 'react-intl';
 import Filter from './Filter';
 import filterFormModal from './FilterFormModal';
 import './style.less';
 
-interface Props {
-  value: any[],
-  onChange: (values: any) => void,
-  readOnly: boolean,
-  tags: any,
-}
+const commonPropTypes = {
+  value: PropTypes.array,
+  onChange: PropTypes.func,
+  readOnly: PropTypes.bool,
+  tags: PropTypes.object,
+};
 
 const commonPropDefaultValue = {
   readOnly: false,
   tags: {},
 };
 
-export default class Filters extends Component<Props> {
+class Filters extends Component {
+  static propTypes = {
+    ...commonPropTypes,
+  };
 
   static defaultProps = {
     ...commonPropDefaultValue,
@@ -28,9 +33,10 @@ export default class Filters extends Component<Props> {
     const valueClone = _.cloneDeep(value);
 
     filterFormModal({
-      title: '添加 Tag 条件',
+      language: this.props.intl.locale,
+      title: <FormattedMessage id="stra.tag.add" />,
       tags,
-      onOk: (data: any) => {
+      onOk: (data) => {
         if (!_.find(value, { tkey: data.tkey })) {
           valueClone.push(data);
           onChange(valueClone);
@@ -41,15 +47,16 @@ export default class Filters extends Component<Props> {
     });
   }
 
-  updateFilter = (val: any) => {
+  updateFilter = (val) => {
     const { tags, value, onChange } = this.props;
     const valueClone = _.cloneDeep(value);
 
     filterFormModal({
-      title: '修改 Tag 条件',
+      language: this.props.intl.locale,
+      title: <FormattedMessage id="stra.tag.modify" />,
       tags,
       data: val,
-      onOk: (data: any) => {
+      onOk: (data) => {
         if (!_.find(value, { tkey: data.tkey }) || val.tkey === data.tkey) {
           _.remove(valueClone, o => o.tkey === val.tkey);
           valueClone.push(data);
@@ -61,7 +68,7 @@ export default class Filters extends Component<Props> {
     });
   }
 
-  deleteFilter = (val: any) => {
+  deleteFilter = (val) => {
     const { value, onChange } = this.props;
     const valueClone = _.cloneDeep(value);
 
@@ -80,7 +87,7 @@ export default class Filters extends Component<Props> {
               !readOnly &&
               <span className="strategy-filter-operation">
                 <Icon type="edit" onClick={() => this.updateFilter(item)} />
-                <Popconfirm title="确定要删除该 Tag 条件吗？" onConfirm={() => this.deleteFilter(item)}>
+                <Popconfirm title={<FormattedMessage id="table.delete.sure" />} onConfirm={() => this.deleteFilter(item)}>
                   <Icon type="cross" />
                 </Popconfirm>
               </span>
@@ -110,7 +117,7 @@ export default class Filters extends Component<Props> {
           size="default"
           onClick={this.addFilter}
         >
-          添加筛选条件
+          <FormattedMessage id="stra.tag.add" />
         </Button>
         {
           value.length ? this.renderFilters() : null
@@ -119,3 +126,5 @@ export default class Filters extends Component<Props> {
     );
   }
 }
+
+export default injectIntl(Filters);

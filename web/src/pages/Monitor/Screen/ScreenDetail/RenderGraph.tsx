@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import { Popconfirm, Menu, Col } from 'antd';
 import { SortableElement } from 'react-sortable-hoc';
 import _ from 'lodash';
@@ -57,14 +58,14 @@ class RenderGraph extends Component<any> {
           }}
           extraMoreList={[
             <Menu.Item key="share">
-              <a onClick={() => { this.handleShareGraph(data.configs); }}>分享图表</a>
+              <a onClick={() => { this.handleShareGraph(data.configs); }}><FormattedMessage id="screen.graph.extraMoreList.share" /></a>
             </Menu.Item>,
             <Menu.Item key="clone">
-            <a onClick={() => { this.handleCloneGraph(data.configs); }}>克隆图表</a>
+            <a onClick={() => { this.handleCloneGraph(data.configs); }}><FormattedMessage id="screen.graph.extraMoreList.clone" /></a>
           </Menu.Item>,
             <Menu.Item key="del">
-              <Popconfirm title="确定要删除这个图表吗？" onConfirm={() => { this.props.onDelChart(data.id); }}>
-                <a>删除图表</a>
+              <Popconfirm title={<FormattedMessage id="screen.graph.extraMoreList.delete.sure" />} onConfirm={() => { this.props.onDelChart(data.id); }}>
+                <a><FormattedMessage id="screen.graph.extraMoreList.delete" /></a>
               </Popconfirm>
             </Menu.Item>,
           ]}

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { Row, Col, Input, Button, Divider, Popover, Popconfirm, message, Tooltip, Alert } from 'antd';
 import { ColumnProps } from 'antd/lib/table';
 import { UserProfile } from '@interface';
@@ -22,7 +23,7 @@ interface State {
 
 const ButtonGroup = Button.Group;
 
-class User extends Component<null, State> {
+class User extends Component<WrappedComponentProps, State> {
   fetchtable: any;
   state = {
     inviteTooltipVisible: false,
@@ -48,6 +49,8 @@ class User extends Component<null, State> {
 
   handleAddBtnClick = () => {
     CreateUser({
+      title: this.props.intl.formatMessage({ id: 'user.create' }),
+      language: this.props.intl.locale,
       onOk: () => {
         this.fetchtable.reload();
       },
@@ -56,6 +59,8 @@ class User extends Component<null, State> {
 
   handlePutBtnClick = (record: UserProfile) => {
     PutProfile({
+      title: this.props.intl.formatMessage({ id: 'user.modify' }),
+      language: this.props.intl.locale,
       data: record,
       onOk: () => {
         this.fetchtable.reload();
@@ -65,6 +70,8 @@ class User extends Component<null, State> {
 
   handlePutPassBtnClick = (id: number) => {
     PutPassword({
+      title: this.props.intl.formatMessage({ id: 'user.reset.password' }),
+      language: this.props.intl.locale,
       id,
       onOk: () => {
         this.fetchtable.reload();
@@ -77,7 +84,7 @@ class User extends Component<null, State> {
       method: 'DELETE',
     }).then(() => {
       this.fetchtable.reload();
-      message.success('用户删除成功！');
+      message.success(this.props.intl.formatMessage({ id: 'msg.delete.success' }));
     });
   }
 
@@ -91,44 +98,47 @@ class User extends Component<null, State> {
     const { isroot } = auth.getSelftProfile();
     const columns: ColumnProps<UserProfile>[] = [
       {
-        title: '登录名',
+        title: <FormattedMessage id="user.username" />,
         dataIndex: 'username',
       }, {
-        title: '显示名',
+        title: <FormattedMessage id="user.dispname" />,
         dataIndex: 'dispname',
       }, {
-        title: '邮箱',
+        title: <FormattedMessage id="user.email" />,
         dataIndex: 'email',
       }, {
-        title: '手机',
+        title: <FormattedMessage id="user.phone" />,
         dataIndex: 'phone',
       }, {
         title: 'im',
         dataIndex: 'im',
       }, {
-        title: '是否超管',
+        title: <FormattedMessage id="user.isroot" />,
         dataIndex: 'is_root',
         width: 70,
         className: 'textAlignCenter',
         render: (text) => {
-          return text === 1 ? '是' : '否';
+          if (this.props.intl.locale === 'zh') {
+            return text === 1 ? '是' : '否';
+          }
+          return text === 1 ? 'Y' : 'N';
         },
       },
     ];
     if (isroot) {
       columns.push({
-        title: '操作',
+        title: <FormattedMessage id="table.operations" />,
         className: 'textAlignCenter',
-        width: 200,
-        render: (text, record) => {
+        width: this.props.intl.locale === 'zh' ? 200 : 250,
+        render: (_text, record) => {
           return (
             <span>
-              <a onClick={() => { this.handlePutPassBtnClick(record.id); }}>重置密码</a>
+              <a onClick={() => { this.handlePutPassBtnClick(record.id); }}><FormattedMessage id="user.reset.password" /></a>
               <Divider type="vertical" />
-              <a onClick={() => { this.handlePutBtnClick(record); }}>修改信息</a>
+              <a onClick={() => { this.handlePutBtnClick(record); }}><FormattedMessage id="table.modify" /></a>
               <Divider type="vertical" />
-              <Popconfirm title="确认要删除这个用户吗？" onConfirm={() => { this.handleDelBtnClick(record.id); }}>
-                <a>删除</a>
+              <Popconfirm title={<FormattedMessage id="table.delete.sure" />} onConfirm={() => { this.handleDelBtnClick(record.id); }}>
+                <a><FormattedMessage id="table.delete" /></a>
               </Popconfirm>
             </span>
           );
@@ -149,7 +159,7 @@ class User extends Component<null, State> {
           <Col span={16} className="textAlignRight">
             <ButtonGroup>
               {
-                isroot ? <Button onClick={this.handleAddBtnClick}>新建用户</Button> : null
+                isroot ? <Button onClick={this.handleAddBtnClick}><FormattedMessage id="user.create" /></Button> : null
               }
               <Popover
                 trigger="click"
@@ -162,10 +172,10 @@ class User extends Component<null, State> {
                 }}
                 content={
                   copySucceeded ?
-                    <Alert message="邀请用户的链接复制成功" type="success" /> :
+                    <Alert message={<FormattedMessage id="invite.user.copy.success" />} type="success" /> :
                     <Alert message={
                       <div>
-                        <p>复制失败，请手动复制</p>
+                        <p><FormattedMessage id="invite.user.copy.faile" /></p>
                         <span>{inviteLink}</span>
                       </div>
                     } type="warning" />
@@ -175,9 +185,9 @@ class User extends Component<null, State> {
                   placement="topRight"
                   visible={inviteTooltipVisible}
                   onVisibleChange={(visible) => { this.setState({ inviteTooltipVisible: visible }); }}
-                  title="点击生成一个邀请用户的链接"
+                  title={<FormattedMessage id="user.invite.tips" />}
                 >
-                  <Button className="ml10" onClick={this.handleInviteBtnClick}>邀请用户</Button>
+                  <Button className="ml10" onClick={this.handleInviteBtnClick}><FormattedMessage id="user.invite" /></Button>
                 </Tooltip>
               </Popover>
             </ButtonGroup>
@@ -196,4 +206,4 @@ class User extends Component<null, State> {
     );
   }
 }
-export default CreateIncludeNsTree(User);
+export default CreateIncludeNsTree(injectIntl(User));

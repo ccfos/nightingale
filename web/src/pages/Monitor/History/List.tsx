@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { Link } from 'react-router-dom';
 import { Row, Col, Select, Input, DatePicker, Tag, Divider, message, Popconfirm, Badge, Button } from 'antd';
 import { ColumnProps } from 'antd/lib/table';
@@ -33,14 +34,14 @@ const nPrefixCls = `${prefixCls}-history`;
 const { Option } = Select;
 const { Search } = Input;
 
-export default class index extends Component<Props, State> {
+class index extends Component<Props & WrappedComponentProps, State> {
   static defaultProps = {
     nodepath: undefined,
     nid: undefined,
   };
   fetchTable: any;
   otherParamsKey: string[];
-  constructor(props: Props) {
+  constructor(props: Props & WrappedComponentProps) {
     super(props);
     const now = moment();
     if (props.type === 'alert') {
@@ -138,7 +139,7 @@ export default class index extends Component<Props, State> {
   getColumns() {
     const columns: ColumnProps<DataItem>[] = [
       {
-        title: '发生时间',
+        title: <FormattedMessage id="event.table.time" />,
         dataIndex: 'etime',
         fixed: 'left',
         width: 100,
@@ -146,12 +147,12 @@ export default class index extends Component<Props, State> {
           return moment.unix(text).format('YYYY-MM-DD HH:mm:ss');
         },
       }, {
-        title: '策略名称',
+        title: <FormattedMessage id="event.table.stra" />,
         dataIndex: 'sname',
         width: 100,
         fixed: 'left',
       }, {
-        title: '级别',
+        title: <FormattedMessage id="event.table.priority" />,
         dataIndex: 'priority',
         width: 50,
         render: (text) => {
@@ -169,7 +170,7 @@ export default class index extends Component<Props, State> {
         title: 'tags',
         dataIndex: 'tags',
       }, {
-        title: '通知结果',
+        title: <FormattedMessage id="event.table.notify" />,
         dataIndex: 'status',
         fixed: 'right',
         width: 70,
@@ -177,9 +178,10 @@ export default class index extends Component<Props, State> {
           return _.join(text, ', ');
         },
       }, {
-        title: '操作',
+        title: <FormattedMessage id="table.operations" />,
         fixed: 'right',
-        width: this.props.type === 'alert' ? 165 : 90,
+        // width: this.props.type === 'alert' ? 100 : 90,
+        width: this.props.intl.locale === 'zh' ? 100 : 130,
         render: (text, record) => {
           return (
             <span>
@@ -189,18 +191,18 @@ export default class index extends Component<Props, State> {
                 }}
                 target="_blank"
               >
-                详情
+                <FormattedMessage id="table.detail" />
               </Link>
               {
                 this.props.type === 'alert' ?
                   <span>
                     <Divider type="vertical" />
-                    <Popconfirm title="确定要忽略这条报警吗?" onConfirm={() => this.handleDelete(record.id)}>
-                      <a>忽略</a>
+                    <Popconfirm title={<FormattedMessage id="event.table.ignore.sure" />} onConfirm={() => this.handleDelete(record.id)}>
+                      <a><FormattedMessage id="event.table.ignore" /></a>
                     </Popconfirm>
                     <Divider type="vertical" />
-                    <Popconfirm title="确定要认领这条报警吗?" onConfirm={() => this.handleClaim(record.id)}>
-                      <a>认领</a>
+                    <Popconfirm title={<FormattedMessage id="event.table.claim.sure" />} onConfirm={() => this.handleClaim(record.id)}>
+                      <a><FormattedMessage id="event.table.claim" /></a>
                     </Popconfirm>
                   </span> : null
               }
@@ -212,7 +214,7 @@ export default class index extends Component<Props, State> {
                 }}
                 target="_blank"
               >
-                屏蔽
+                <FormattedMessage id="event.table.shield" />
               </Link>
             </span>
           );
@@ -221,7 +223,7 @@ export default class index extends Component<Props, State> {
     ];
     if (this.props.type === 'alert') {
       columns.splice(5, 0, {
-        title: '认领人',
+        title: <FormattedMessage id="event.table.assignees" />,
         dataIndex: 'claimants',
         width: 50,
         fixed: 'right',
@@ -232,7 +234,7 @@ export default class index extends Component<Props, State> {
     }
     if (this.props.type === 'all') {
       columns.splice(3, 0, {
-        title: '状态',
+        title: <FormattedMessage id="event.table.status" />,
         dataIndex: 'event_type',
         width: 70,
         render: (text) => {
@@ -240,7 +242,7 @@ export default class index extends Component<Props, State> {
           return (
             <span style={{ color: eventTypeObj.color }}>
               <Badge status={eventTypeObj.status} />
-              {eventTypeObj.label}
+              <FormattedMessage id={`event.table.status.${eventTypeObj.value}`} />
             </span>
           );
         },
@@ -276,7 +278,7 @@ export default class index extends Component<Props, State> {
               >
                 {
                   _.map(timeOptions, (option) => {
-                    return <Option key={option.value} value={option.value}>{option.label}</Option>;
+                    return <Option key={option.value} value={option.value}><FormattedMessage id={option.label} /></Option>;
                   })
                 }
               </Select>
@@ -317,7 +319,7 @@ export default class index extends Component<Props, State> {
                 this.props.type === 'all' ?
                   <Select
                     style={{ minWidth: 90, marginRight: 8 }}
-                    placeholder="报警状态"
+                    placeholder={this.props.intl.formatMessage({ id: 'event.table.status' })}
                     allowClear
                     value={type}
                     onChange={(value: string) => {
@@ -330,14 +332,14 @@ export default class index extends Component<Props, State> {
                   >
                     {
                       _.map(eventTypeOptions, (option) => {
-                        return <Option key={option.value} value={option.value}>{option.label}</Option>;
+                        return <Option key={option.value} value={option.value}><FormattedMessage id={`event.table.status.${option.value}`} /></Option>;
                       })
                     }
                   </Select> : null
               }
               <Select
                 style={{ minWidth: 90, marginRight: 8 }}
-                placeholder="报警级别"
+                placeholder={this.props.intl.formatMessage({ id: 'event.table.priority' })}
                 allowClear
                 mode="multiple"
                 value={priorities ? _.map(_.split(priorities, ','), _.toNumber) : []}
@@ -366,8 +368,8 @@ export default class index extends Component<Props, State> {
             <Col span={6} style={{ textAlign: 'right' }}>
               {
                 this.props.type === 'alert' ?
-                  <Popconfirm title="确定认领该节点下所有未恢复的报警吗?" onConfirm={() => this.handleClaimAll()}>
-                    <Button>一健认领</Button>
+                  <Popconfirm title={<FormattedMessage id="event.table.claim.all.sure" />} onConfirm={() => this.handleClaimAll()}>
+                    <Button><FormattedMessage id="event.table.claim.all" /></Button>
                   </Popconfirm> : null
               }
             </Col>
@@ -388,3 +390,5 @@ export default class index extends Component<Props, State> {
     );
   }
 }
+
+export default injectIntl(index);

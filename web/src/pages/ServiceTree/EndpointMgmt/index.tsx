@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Menu, Divider, Popconfirm, message } from 'antd';
 import _ from 'lodash';
+import { FormattedMessage } from 'react-intl';
 import CreateIncludeNsTree from '@cpts/Layout/CreateIncludeNsTree';
 import exportXlsx from '@common/exportXlsx';
 import request from '@common/request';
@@ -15,6 +17,10 @@ class index extends Component {
   endpointList: any;
   state = {};
 
+  static contextTypes = {
+    intl: PropTypes.any,
+  };
+
   async exportEndpoints(endpoints: Endpoint[]) {
     const data = _.map(endpoints, (item) => {
       return {
@@ -27,7 +33,8 @@ class index extends Component {
 
   handleModifyBtnClick(record: Endpoint) {
     EditEndpoint({
-      title: '修改信息',
+      title: this.context.intl.formatMessage({ id: 'table.modify' }),
+      language: this.context.intl.locale,
       type: 'admin',
       data: record,
       onOk: () => {
@@ -50,6 +57,8 @@ class index extends Component {
 
   handleBatchImport() {
     BatchImport({
+      title: this.context.intl.formatMessage({ id: 'endpoints.import' }),
+      language: this.context.intl.locale,
       onOk: () => {
         this.endpointList.reload();
       },
@@ -58,6 +67,7 @@ class index extends Component {
 
   handleBatchDel(selectedIdents: string[]) {
     BatchDel({
+      language: this.context.intl.locale,
       selectedIdents,
       onOk: () => {
         this.endpointList.reload();
@@ -81,10 +91,12 @@ class index extends Component {
           renderOper={(record) => {
             return (
               <span>
-                <a onClick={() => { this.handleModifyBtnClick(record); }}>修改</a>
+                <a onClick={() => { this.handleModifyBtnClick(record); }}>
+                  <FormattedMessage id="table.modify" />
+                </a>
                 <Divider type="vertical" />
-                <Popconfirm title="确认要删除吗？" onConfirm={() => { this.handleDeleteBtnClick(record.ident); }}>
-                  <a>删除</a>
+                <Popconfirm title={<FormattedMessage id="table.delete.sure" />} onConfirm={() => { this.handleDeleteBtnClick(record.ident); }}>
+                  <a><FormattedMessage id="table.delete" /></a>
                 </Popconfirm>
               </span>
             );
@@ -92,10 +104,10 @@ class index extends Component {
           renderBatchOper={(selectedIdents) => {
             return [
               <Menu.Item key="batch-import">
-                <a onClick={() => { this.handleBatchImport(); }}>导入 endpoints</a>
+                <a onClick={() => { this.handleBatchImport(); }}><FormattedMessage id="endpoints.import" /></a>
               </Menu.Item>,
               <Menu.Item key="batch-delete">
-                <a onClick={() => { this.handleBatchDel(selectedIdents); }}>删除 endpoints</a>
+                <a onClick={() => { this.handleBatchDel(selectedIdents); }}><FormattedMessage id="endpoints.delete" /></a>
               </Menu.Item>,
             ];
           }}

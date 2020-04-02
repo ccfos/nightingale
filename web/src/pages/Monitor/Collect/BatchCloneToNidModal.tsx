@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import { Modal, Form, TreeSelect } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
@@ -63,7 +64,7 @@ class BatchCloneToNidModal extends Component<Props & FormProps> {
       >
         <Form layout="vertical">
           <FormItem
-            label="生效节点"
+            label={<FormattedMessage id="collect.common.node" />}
           >
             {
               getFieldDecorator('nid', {

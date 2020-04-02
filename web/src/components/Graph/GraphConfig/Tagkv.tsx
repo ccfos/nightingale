@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import update from 'react-addons-update';
 import _ from 'lodash';
 import { Input, Button, Modal, Popover, Switch } from 'antd';
@@ -185,12 +186,12 @@ export default class Tagkv extends Component<Props, State> {
                 />
                 <div style={{ marginTop: 10, textAlign: 'center' }}>
                   <Button.Group>
-                    <Button onClick={() => this.hide(tagk)}>取消</Button>
+                    <Button onClick={() => this.hide(tagk)}>Cancel</Button>
                     <Button
                       type="primary"
                       onClick={() => this.submit(tagk)}
                       >
-                      确认
+                      Ok
                     </Button>
                   </Button.Group>
                 </div>
@@ -198,14 +199,14 @@ export default class Tagkv extends Component<Props, State> {
                   {
                     dynamicSwitch ?
                       <span>
-                        <span>动态值： </span>
-                        <a onClick={() => this.dynamicSelect(tagk, '=all')}>全选</a>
+                        <span><FormattedMessage id="select.dynamic" />： </span>
+                        <a onClick={() => this.dynamicSelect(tagk, '=all')}><FormattedMessage id="select.all" /></a>
                         <span className="ant-divider" />
                         <Popover
                           trigger="click"
                           content={
                             <div style={{ width: 200 }}>
-                              <Input placeholder="请输入关键词，Enter键提交" onKeyDown={
+                              <Input placeholder="Press enter to submit" onKeyDown={
                                 (e: any) => {
                                   if (e.keyCode === 13) {
                                     this.dynamicSelect(tagk, '=+', e.target.value);
@@ -213,10 +214,9 @@ export default class Tagkv extends Component<Props, State> {
                                 }} />
                             </div>
                           }
-                          title="包含"
                           getTooltipContainer={() => this.refs[`${tagk}dynamic`]}
                         >
-                          <a>包含</a>
+                          <a><FormattedMessage id="select.include" /></a>
                         </Popover>
                         <span className="ant-divider" />
                         <Popover
@@ -232,14 +232,13 @@ export default class Tagkv extends Component<Props, State> {
 
                             </div>
                           }
-                          title="排除"
                           getTooltipContainer={() => this.refs[`${tagk}dynamic`]}
                         >
-                          <a>排除</a>
+                          <a><FormattedMessage id="select.exclude" /></a>
                         </Popover>
                       </span> :
                       <div>
-                        动态值 <Switch onChange={this.dynamicSwitchChange} size="small" />
+                        <FormattedMessage id="select.dynamic" /> <Switch onChange={this.dynamicSwitchChange} size="small" />
                       </div>
                   }
                 </div>

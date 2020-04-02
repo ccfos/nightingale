@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import { Modal, message } from 'antd';
 import _ from 'lodash';
 import ModalControl from '@cpts/ModalControl';
@@ -14,10 +15,10 @@ interface Props {
   destroy: () => void,
 }
 
-class AddTeam extends Component<Props> {
+class AddTeam extends Component<Props & WrappedComponentProps> {
   teamFormRef: any;
-  static defaultProps = {
-    title: '编辑团队',
+  static defaultProps: any = {
+    title: '',
     visible: true,
     onOk: _.noop,
     onCancel: _.noop,
@@ -31,7 +32,7 @@ class AddTeam extends Component<Props> {
           method: 'POST',
           body: JSON.stringify(values),
         }).then(() => {
-          message.success('团队创建成功！');
+          message.success(this.props.intl.formatMessage({ id: 'msg.create.success' }));
           this.props.onOk();
           this.props.destroy();
         });
@@ -61,4 +62,4 @@ class AddTeam extends Component<Props> {
   }
 }
 
-export default ModalControl(AddTeam);
+export default ModalControl(injectIntl(AddTeam));

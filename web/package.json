@@ -38,6 +38,7 @@
     "react-dom": "^16.8.6",
     "react-highlight": "^0.12.0",
     "react-hot-loader": "^4.8.7",
+    "react-intl": "^4.2.2",
     "react-router-dom": "4.x",
     "react-sortable-hoc": "^1.8.3",
     "react-syntax-highlighter": "^7.0.4",

@@ -1,4 +1,4 @@
-export const typeMap = {
+export const typeMap: any = {
   log: '日志',
   port: '端口',
   proc: '进程',

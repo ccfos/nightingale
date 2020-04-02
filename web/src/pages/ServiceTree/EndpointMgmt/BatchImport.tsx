@@ -1,7 +1,9 @@
 import React, { Component }from 'react';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import { Modal, Form, Input, message } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
+import { FormattedMessage } from 'react-intl';
 import ModalControl from '@cpts/ModalControl';
 import request from '@common/request';
 import api from '@common/api';
@@ -16,9 +18,9 @@ interface Props {
 
 const FormItem = Form.Item;
 
-class BatchImport extends Component<Props & FormProps> {
+class BatchImport extends Component<Props & FormProps & WrappedComponentProps> {
   static defaultProps = {
-    title: '批量导入',
+    title: '',
     visible: true,
     onOk: _.noop,
     onCancel: _.noop,
@@ -26,7 +28,6 @@ class BatchImport extends Component<Props & FormProps> {
   };
 
   handleOk = () => {
-    const { title } = this.props;
     this.props.form!.validateFields((err, values) => {
       if (!err) {
         request(api.endpoint, {
@@ -35,7 +36,7 @@ class BatchImport extends Component<Props & FormProps> {
             endpoints: _.split(values.endpoints, '\n'),
           }),
         }).then(() => {
-          message.success(`${title}成功`);
+          message.success(this.props.intl.formatMessage({ id: 'msg.submit.success' }));
           this.props.onOk();
           this.props.destroy();
         });
@@ -60,11 +61,11 @@ class BatchImport extends Component<Props & FormProps> {
       >
         <Form layout="vertical">
           <FormItem
-            label="导入的 endpoints"
-            help="每一条是 ident::alias 拼接在一起"
+            label="Endpoints"
+            help={<FormattedMessage id="endpoints.import.batch.help" />}
           >
             {getFieldDecorator('endpoints', {
-              rules: [{ required: true, message: '请填写导入的机器 endpoints!' }],
+              rules: [{ required: true }],
             })(
               <Input.TextArea
                 autosize={{ minRows: 2, maxRows: 10 }}
@@ -77,4 +78,4 @@ class BatchImport extends Component<Props & FormProps> {
   }
 }
 
-export default ModalControl(Form.create()(BatchImport));
+export default ModalControl(Form.create()(injectIntl(BatchImport)));

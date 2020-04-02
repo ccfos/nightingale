@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 
-export default function CreateIncludeNsTree(WrappedComponent: React.ComponentType, opts?: any) {
+export default function CreateIncludeNsTree(WrappedComponent: any, opts?: any) {
   return class HOC extends React.Component {
     static contextTypes = {
       nsTreeVisibleChange: PropTypes.func,

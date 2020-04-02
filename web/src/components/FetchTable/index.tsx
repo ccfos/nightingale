@@ -166,7 +166,7 @@ export default class FetchTable extends Component<Props, State> {
         pagination={{
           ...this.state.pagination,
           showTotal: (total) => {
-            return `共 ${total} 条数据`;
+            return `Total ${total} items`;
           },
           pageSizeOptions: config.defaultPageSizeOptions,
         }}
