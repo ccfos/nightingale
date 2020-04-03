@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Menu } from 'antd';
 import _ from 'lodash';
+import { FormattedMessage } from 'react-intl';
 import CreateIncludeNsTree from '@cpts/Layout/CreateIncludeNsTree';
 import exportXlsx from '@common/exportXlsx';
 import api from '@common/api';
@@ -16,6 +17,7 @@ class index extends Component {
   selectedNodeId: number | undefined = undefined;
   static contextTypes = {
     getSelectedNode: PropTypes.func,
+    intl: PropTypes.any,
   };
 
   componentWillMount = () => {
@@ -53,6 +55,8 @@ class index extends Component {
     const { getSelectedNode } = this.context;
     const selectedNode = getSelectedNode();
     BatchBind({
+      title: this.context.intl.formatMessage({ id: 'endpoints.bind' }),
+      language: this.context.intl.locale,
       selectedNode,
       onOk: () => {
         this.endpointList.reload();
@@ -64,6 +68,8 @@ class index extends Component {
     const { getSelectedNode } = this.context;
     const selectedNode = getSelectedNode();
     BatchUnbind({
+      title: this.context.intl.formatMessage({ id: 'endpoints.unbind' }),
+      language: this.context.intl.locale,
       selectedNode,
       selectedIdents,
       onOk: () => {
@@ -74,7 +80,8 @@ class index extends Component {
 
   handleModifyAliasBtnClick = (record: Endpoint) => {
     EditEndpoint({
-      title: '修改别名',
+      title: this.context.intl.formatMessage({ id: 'table.modify' }),
+      language: this.context.intl.locale,
       data: record,
       onOk: () => {
         this.endpointList.reload();
@@ -86,7 +93,7 @@ class index extends Component {
     if (!this.selectedNodeId) {
       return (
         <div>
-          请先选择左侧服务节点
+          <FormattedMessage id="please.select.node" />
         </div>
       );
     }
@@ -100,17 +107,23 @@ class index extends Component {
           renderOper={(record) => {
             return (
               <span>
-                <a onClick={() => { this.handleModifyAliasBtnClick(record); }}>改别名</a>
+                <a onClick={() => { this.handleModifyAliasBtnClick(record); }}>
+                  <FormattedMessage id="endpoints.modify.alias" />
+                </a>
               </span>
             );
           }}
           renderBatchOper={(selectedIdents) => {
             return [
               <Menu.Item key="batch-bind">
-                <a onClick={() => { this.handleHostBindBtnClick(); }}>挂载 endpoint</a>
+                <a onClick={() => { this.handleHostBindBtnClick(); }}>
+                  <FormattedMessage id="endpoints.bind" />
+                </a>
               </Menu.Item>,
               <Menu.Item key="batch-unbind">
-                <a onClick={() => { this.handleHostUnbindBtnClick(selectedIdents); }}>解挂 endpoint</a>
+                <a onClick={() => { this.handleHostUnbindBtnClick(selectedIdents); }}>
+                  <FormattedMessage id="endpoints.unbind" />
+                </a>
               </Menu.Item>,
             ];
           }}

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import _ from 'lodash';
 import moment from 'moment';
 import { Button, Select, DatePicker } from 'antd';
@@ -102,19 +103,22 @@ export default class GlobalOperationbar extends Component<Props> {
       <div className="global-operationbar-warp">
         {
           this.props.refreshVisible ?
-            <Button onClick={this.handleRefresh} style={{ marginRight: 8 }}>刷新</Button> : null
+            <Button onClick={this.handleRefresh} style={{ marginRight: 8 }}>
+              <FormattedMessage id="graph.refresh" />
+            </Button> : null
         }
         <span>
           <Select
             style={{ width: 80 }}
             value={timeVal}
             onChange={this.handleTimeOptionChange}
-            placeholder="无"
           >
             {
               _.map(config.time, (o) => {
                 return (
-                  <Select.Option key={o.value} value={o.value}>{o.label}</Select.Option>
+                  <Select.Option key={o.value} value={o.value}>
+                    <FormattedMessage id={o.label} />
+                  </Select.Option>
                 );
               })
             }

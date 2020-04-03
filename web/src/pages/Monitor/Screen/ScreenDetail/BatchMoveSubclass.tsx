@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import { Modal, Form, TreeSelect, Select } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
@@ -22,7 +23,7 @@ const { Option } = Select;
 
 class BatchMoveSubclass extends Component<Props> {
   static defaultProps = {
-    title: '批量移动分类',
+    title: '',
     visible: true,
     onOk: _.noop,
     onCancel: _.noop,
@@ -58,7 +59,7 @@ class BatchMoveSubclass extends Component<Props> {
 
     return (
       <Modal
-        title={title}
+        title={<FormattedMessage id="screen.tag.batch.modify" />}
         visible={visible}
         onOk={this.handleOk}
         onCancel={this.handleCancel}
@@ -67,9 +68,9 @@ class BatchMoveSubclass extends Component<Props> {
           e.preventDefault();
           this.handleOk();
         }}>
-          <FormItem label="需要移动的分类">
+          <FormItem label={<FormattedMessage id="screen.tag.batch.modify.tag" />}>
             {getFieldDecorator('subclasses', {
-              rules: [{ required: true, message: '请选择分类!' }],
+              rules: [{ required: true }],
             })(
               <Select mode="multiple">
                 {
@@ -80,9 +81,9 @@ class BatchMoveSubclass extends Component<Props> {
               </Select>,
             )}
           </FormItem>
-          <FormItem label="将要移动到的节点">
+          <FormItem label={<FormattedMessage id="screen.tag.batch.modify.target.node" />}>
             {getFieldDecorator('nid', {
-              rules: [{ required: true, message: '请选择节点!' }],
+              rules: [{ required: true }],
               onChange: this.handleSelectedTreeNodeIdChange,
             })(
               <TreeSelect
@@ -96,9 +97,9 @@ class BatchMoveSubclass extends Component<Props> {
               </TreeSelect>,
             )}
           </FormItem>
-          <FormItem label="将要移动到的大盘">
+          <FormItem label={<FormattedMessage id="screen.tag.batch.modify.target.screen" />}>
             {getFieldDecorator('screenId', {
-              rules: [{ required: true, message: '请选择大盘!' }],
+              rules: [{ required: true }],
             })(
               <Select>
                 {

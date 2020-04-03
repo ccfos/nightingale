@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Button, Popconfirm, Input, Table, message } from 'antd';
@@ -16,7 +17,7 @@ const timeFormatMap = {
   moment: 'YYYY-MM-DD HH:mm:ss',
 };
 
-class index extends Component {
+class index extends Component<WrappedComponentProps> {
   static contextTypes = {
     getSelectedNode: PropTypes.func,
   };
@@ -66,27 +67,12 @@ class index extends Component {
     }
   }
 
-  handleBatchDelConfirm = () => {
-    const { selectedRowKeys } = this.state;
-    request(`${api.maskconf}/${selectedRowKeys}`, {
-      method: 'DELETE',
-    }).then(() => {
-      this.setState({ selectedRowKeys: [] });
-      message.success('批量解除成功！');
-      this.fetchData();
-    }).catch(() => {
-      message.error('批量解除失败！');
-    });
-  }
-
   handleDelConfirm = (id: number) => {
     request(`${api.maskconf}/${id}`, {
       method: 'DELETE',
     }).then(() => {
-      message.success('解除成功！');
+      message.success(this.props.intl.formatMessage({ id: 'msg.delete.success' }));
       this.fetchData();
-    }).catch(() => {
-      message.error('解除失败！');
     });
   }
 
@@ -118,11 +104,13 @@ class index extends Component {
           <Button
             style={{ marginRight: 8 }}
           >
-            <Link to={{ pathname: '/monitor/silence/add', search: `nid=${this.selectedNodeId}` }}>新增屏蔽</Link>
+            <Link to={{ pathname: '/monitor/silence/add', search: `nid=${this.selectedNodeId}` }}>
+              <FormattedMessage id="silence.add" />
+            </Link>
           </Button>
           <Input.Search
             style={{ width: 200, marginLeft: 8 }}
-            placeholder="搜索"
+            placeholder="Search"
             value={filterValue.search}
             onChange={(e) => {
               this.setState({
@@ -140,7 +128,7 @@ class index extends Component {
             dataSource={data}
             columns={[
               {
-                title: '指标',
+                title: <FormattedMessage id="silence.metric" />,
                 dataIndex: 'metric',
                 width: 150,
                 render: (text, record) => {
@@ -160,10 +148,10 @@ class index extends Component {
                   });
                 },
               }, {
-                title: '关联节点',
+                title: <FormattedMessage id="silence.bindNode" />,
                 dataIndex: 'node_path',
               }, {
-                title: '屏蔽时间',
+                title: <FormattedMessage id="silence.time" />,
                 width: 180,
                 render(text, record) {
                   const beginTs = record.btime;
@@ -178,19 +166,19 @@ class index extends Component {
                   return <span>unknown</span>;
                 },
               }, {
-                title: '屏蔽原因',
+                title: <FormattedMessage id="silence.cause" />,
                 dataIndex: 'cause',
                 width: 120,
               }, {
-                title: '操作者',
+                title: <FormattedMessage id="silence.user" />,
                 dataIndex: 'user',
               }, {
-                title: '操作',
+                title: <FormattedMessage id="table.operations" />,
                 width: 60,
                 render: (text, record) => (
                   <span>
-                    <Popconfirm title="确定要解除这个策略吗？" onConfirm={() => { this.handleDelConfirm(record.id); }}>
-                      <a>解除</a>
+                    <Popconfirm title={<FormattedMessage id="table.delete.sure" />} onConfirm={() => { this.handleDelConfirm(record.id); }}>
+                      <a><FormattedMessage id="table.delete" /></a>
                     </Popconfirm>
                   </span>
                 ),
@@ -203,4 +191,4 @@ class index extends Component {
   }
 }
 
-export default CreateIncludeNsTree(index, { visible: true });
+export default CreateIncludeNsTree(injectIntl(index), { visible: true });

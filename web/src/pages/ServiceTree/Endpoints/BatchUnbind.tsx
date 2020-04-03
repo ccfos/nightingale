@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import { Modal, Form, Input, message } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
+import { FormattedMessage } from 'react-intl';
 import ModalControl from '@cpts/ModalControl';
 import { TreeNode } from '@interface';
 import request from '@common/request';
@@ -19,9 +21,9 @@ interface Props {
 
 const FormItem = Form.Item;
 
-class BatchHostUnbind extends Component<Props & FormProps> {
+class BatchHostUnbind extends Component<Props & FormProps & WrappedComponentProps> {
   static defaultProps = {
-    title: '解挂 endpoints',
+    title: '',
     visible: true,
     onOk: _.noop,
     onCancel: _.noop,
@@ -39,7 +41,7 @@ class BatchHostUnbind extends Component<Props & FormProps> {
           method: 'POST',
           body: JSON.stringify(reqBody),
         }).then(() => {
-          message.success('解除挂载成功！');
+          message.success(this.props.intl.formatMessage({ id: 'msg.submit.success' }));
           this.props.onOk();
           this.props.destroy();
         });
@@ -63,13 +65,13 @@ class BatchHostUnbind extends Component<Props & FormProps> {
         onCancel={this.handleCancel}
       >
         <Form layout="vertical">
-          <FormItem label="解除挂载的节点">
+          <FormItem label={<FormattedMessage id="endpoints.unbind.node" />}>
             <span className="ant-form-text" style={{ wordBreak: 'break-word' }}>{_.get(selectedNode, 'path')}</span>
           </FormItem>
-          <FormItem label="待解除挂载的 endpoints">
+          <FormItem label={<span>Endpoints <FormattedMessage id="endpoints.ident" /></span>}>
             {getFieldDecorator('idents', {
               initialValue: _.join(selectedIdents, '\n'),
-              rules: [{ required: true, message: '请填写需要解除挂载的机器列表!' }],
+              rules: [{ required: true }],
             })(
               <Input.TextArea
                 autosize={{ minRows: 2, maxRows: 10 }}
@@ -82,4 +84,4 @@ class BatchHostUnbind extends Component<Props & FormProps> {
   }
 }
 
-export default ModalControl(Form.create()(BatchHostUnbind));
+export default ModalControl(Form.create()(injectIntl(BatchHostUnbind)));

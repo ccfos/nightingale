@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import { RouteComponentProps } from 'react-router-dom';
 import { message } from 'antd';
 import queryString from 'query-string';
@@ -9,14 +10,14 @@ import api from '@common/api';
 import SettingFields from './SettingFields';
 import './style.less';
 
-class Add extends Component<RouteComponentProps> {
+class Add extends Component<RouteComponentProps & WrappedComponentProps> {
   handleSubmit = (values: any) => {
     const { history } = this.props;
     request(api.stra, {
       method: 'POST',
       body: JSON.stringify(values),
     }).then(() => {
-      message.success('添加报警策略成功!');
+      message.success(this.props.intl.formatMessage({ id: 'msg.add.success' }));
       history.push({
         pathname: '/monitor/strategy',
       });
@@ -40,4 +41,4 @@ class Add extends Component<RouteComponentProps> {
   }
 }
 
-export default CreateIncludeNsTree(Add as any);
+export default CreateIncludeNsTree(injectIntl(Add));

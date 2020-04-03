@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import { Switch, Popover, Input, Button, Card, Spin } from 'antd';
 import _ from 'lodash';
 import Multipicker from '@cpts/Multipicker';
@@ -92,7 +93,7 @@ export default class HostSelect extends Component<Props, State> {
     const { dynamicSwitch, reloadBtnVisible } = this.state;
     return (
       <Spin spinning={loading}>
-        <Card title="机器列表" className={`${prefixCls}-card`}>
+        <Card title={<FormattedMessage id="graph.machine.list.title" />} className={`${prefixCls}-card`}>
           <Multipicker
             width="100%"
             manualEntry
@@ -104,14 +105,14 @@ export default class HostSelect extends Component<Props, State> {
             {
               dynamicSwitch ?
                 <span>
-                  <a onClick={() => { this.handleDynamicSelect('=all'); }}>全选</a>
+                  <a onClick={() => { this.handleDynamicSelect('=all'); }}><FormattedMessage id="select.all" /></a>
                   <span className="ant-divider" />
                   <Popover
                     trigger="click"
                     content={
                       <div style={{ width: 200 }}>
                         <Input
-                          placeholder="请输入关键词，Enter键提交"
+                          placeholder="Press enter to submit"
                           onKeyDown={(e: any) => {
                             if (e.keyCode === 13) {
                               this.handleDynamicSelect('=+', e.target.value);
@@ -120,9 +121,8 @@ export default class HostSelect extends Component<Props, State> {
                         />
                       </div>
                     }
-                    title="包含"
                   >
-                    <a>包含</a>
+                    <a><FormattedMessage id="select.include" /></a>
                   </Popover>
                   <span className="ant-divider" />
                   <Popover
@@ -130,7 +130,7 @@ export default class HostSelect extends Component<Props, State> {
                     content={
                       <div style={{ width: 200 }}>
                         <Input
-                          placeholder="请输入关键词，Enter键提交"
+                          placeholder="Press enter to submit"
                           onKeyDown={(e: any) => {
                             if (e.keyCode === 13) {
                               this.handleDynamicSelect('=-', e.target.value);
@@ -139,20 +139,19 @@ export default class HostSelect extends Component<Props, State> {
                         />
                       </div>
                     }
-                    title="排除"
                   >
-                    <a>排除</a>
+                    <a><FormattedMessage id="select.exclude" /></a>
                   </Popover>
                 </span> :
                 <div>
-                  动态值 <Switch onChange={this.handleDynamicSwitchChange} size="small" />
+                  <FormattedMessage id="select.dynamic" /> <Switch onChange={this.handleDynamicSwitchChange} size="small" />
                 </div>
             }
           </div>
           {
             reloadBtnVisible ?
               <div style={{ position: 'absolute', bottom: 3, right: 5 }}>
-                <Button type="primary" onClick={this.handleReloadBtnClick}>更新图表</Button>
+                <Button type="primary" onClick={this.handleReloadBtnClick}><FormattedMessage id="graph.machine.list.update" /></Button>
               </div> : null
           }
         </Card>

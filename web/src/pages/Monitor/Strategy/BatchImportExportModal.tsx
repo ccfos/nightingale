@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import { Modal, Form, Input, message } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
@@ -20,7 +21,7 @@ interface Props extends FormProps{
 const FormItem = Form.Item;
 const { TextArea } = Input;
 
-class BatchImportExportModal extends Component<Props> {
+class BatchImportExportModal extends Component<Props & WrappedComponentProps> {
   static defaultProps = {
     data: undefined,
     selectedNid: undefined,
@@ -55,7 +56,7 @@ class BatchImportExportModal extends Component<Props> {
         });
       });
       Promise.all(promises).then(() => {
-        message.success('批量导入成功!');
+        message.success(this.props.intl.formatMessage({ id: 'stra.batch.import.success' }));
         this.props.onOk();
         this.props.destroy();
       });
@@ -102,4 +103,4 @@ class BatchImportExportModal extends Component<Props> {
   }
 }
 
-export default ModalControl(Form.create()(BatchImportExportModal));
+export default ModalControl(Form.create()(injectIntl(BatchImportExportModal)));

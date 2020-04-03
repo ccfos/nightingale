@@ -207,7 +207,7 @@ export const time: { [index: string]: string }[] = [
     label: '30天',
     value: '2592000000',
   }, {
-    label: '其它 ',
+    label: '其它',
     value: 'custom',
   },
 ];

@@ -2,11 +2,12 @@ import React, { Component } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Link, withRouter } from 'react-router-dom';
-import { Layout, Dropdown, Menu, Icon } from 'antd';
+import { Layout, Dropdown, Menu, Icon, Button } from 'antd';
 import classNames from 'classnames';
 import PubSub from 'pubsub-js';
 import _ from 'lodash';
 import queryString from 'query-string';
+import { WrappedComponentProps, injectIntl } from 'react-intl';
 import { auth } from '@cpts/Auth';
 import { MenuConfItem, TreeNode } from '@interface';
 import request from '@common/request';
@@ -22,6 +23,8 @@ interface Props {
   appName: string,
   menuConf: MenuConfItem[],
   children: React.ReactNode,
+  language: string,
+  onLanguageChange: (language: string) => void,
 }
 
 interface State {
@@ -38,7 +41,7 @@ interface State {
 
 const { Header, Content, Sider } = Layout;
 
-class NILayout extends Component<Props & RouteComponentProps, State> {
+class NILayout extends Component<Props & RouteComponentProps & WrappedComponentProps, State> {
   static childContextTypes = {
     nsTreeVisibleChange: PropTypes.func.isRequired,
     getNodes: PropTypes.func.isRequired,
@@ -48,9 +51,10 @@ class NILayout extends Component<Props & RouteComponentProps, State> {
     deleteSelectedNode: PropTypes.func.isRequired,
     reloadNsTree: PropTypes.func.isRequired,
     habitsId: PropTypes.string.isRequired,
+    intl: PropTypes.any.isRequired,
   };
 
-  constructor(props: Props & RouteComponentProps) {
+  constructor(props: Props & RouteComponentProps & WrappedComponentProps) {
     super(props);
     let selectedNode;
     try {
@@ -177,6 +181,7 @@ class NILayout extends Component<Props & RouteComponentProps, State> {
         this.fetchTreeData();
       },
       habitsId: this.props.habitsId,
+      intl: this.props.intl,
     };
   }
 
@@ -201,7 +206,7 @@ class NILayout extends Component<Props & RouteComponentProps, State> {
     });
 
     return (
-      <Layout className={layoutCls} style={{ height: '100%' }}>
+      <Layout className={layoutCls}>
         <Sider
           className={`${prefixCls}-sider-nstree`}
           width={nsTreeVisible ? 200 : 0}
@@ -233,7 +238,7 @@ class NILayout extends Component<Props & RouteComponentProps, State> {
   }
 
   render() {
-    const { menuConf } = this.props;
+    const { menuConf, language, onLanguageChange } = this.props;
     const { checkAuthenticateLoading, collapsed, selectedNode, nsTreeVisible } = this.state;
     const prefixCls = `${appname}-layout`;
     const { dispname, isroot } = auth.getSelftProfile();
@@ -296,6 +301,17 @@ class NILayout extends Component<Props & RouteComponentProps, State> {
               {nsTreeVisible ? _.get(selectedNode, 'path') : null}
             </div>
             <div className={`${prefixCls}-headRight`}>
+              <Button
+                style={{ margin: '0 20px' }}
+                size="small"
+                onClick={() => {
+                  const newLanguage = language === 'zh' ? 'en' : 'zh';
+                  onLanguageChange(newLanguage);
+                }}
+              >
+                {language === 'zh' ? 'English' : ''}
+                {language === 'en' ? '中文' : ''}
+              </Button>
               <Dropdown placement="bottomRight" overlay={
                 <Menu style={{ width: 110 }}>
                   <Menu.Item>
@@ -326,4 +342,4 @@ class NILayout extends Component<Props & RouteComponentProps, State> {
   }
 }
 
-export default withRouter(NILayout);
+export default injectIntl(withRouter(NILayout));

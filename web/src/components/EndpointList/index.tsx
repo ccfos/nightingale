@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Row, Col, Input, Button, Dropdown, Menu, Checkbox, Icon } from 'antd';
 import { ColumnProps } from 'antd/lib/table';
 import _ from 'lodash';
+import { FormattedMessage } from 'react-intl';
 import FetchTable from '@cpts/FetchTable';
 import request from '@common/request';
 import api from '@common/api';
@@ -35,6 +36,7 @@ interface State {
 class index extends Component<Props, State> {
   static contextTypes = {
     habitsId: PropTypes.string,
+    intl: PropTypes.any,
   };
 
   static defaultProps = {
@@ -55,7 +57,8 @@ class index extends Component<Props, State> {
 
   handelBatchSearchBtnClick = () => {
     BatchSearch({
-      title: '批量过滤',
+      title: this.context.intl.formatMessage({ id: 'endpoints.batch.filter' }),
+      language: this.context.intl.locale,
       field: this.state.field,
       batch: this.state.batch,
       onOk: (field: string, batch: string) => {
@@ -127,7 +130,7 @@ class index extends Component<Props, State> {
             data={_.get(this.fetchtable, 'state.data')}
             selected={this.state.selectedRows}
           >
-            标识
+            <FormattedMessage id="endpoints.ident" />
           </CopyTitle>
         ),
         dataIndex: 'ident',
@@ -149,11 +152,11 @@ class index extends Component<Props, State> {
           );
         },
       }, {
-        title: '别名',
+        title: <FormattedMessage id="endpoints.alias" />,
         dataIndex: 'alias',
       }, {
-        title: '操作',
-        width: 100,
+        title: <FormattedMessage id="table.operations" />,
+        width: 150,
         render: (_text, record) => {
           return this.props.renderOper(record);
         },
@@ -161,7 +164,7 @@ class index extends Component<Props, State> {
     ];
     if (displayBindNode) {
       fullColumns.splice(2, 0, {
-        title: '挂载节点',
+        title: <FormattedMessage id="endpoints.nodes" />,
         dataIndex: 'nodes',
         render(text) {
           return (
@@ -195,7 +198,7 @@ class index extends Component<Props, State> {
                   searchValue: value,
                 });
               }}
-              placeholder="快速过滤"
+              placeholder="Search"
             />
             <Button
               className="ml10"
@@ -203,7 +206,7 @@ class index extends Component<Props, State> {
               icon={batch ? 'check-circle' : ''}
               onClick={this.handelBatchSearchBtnClick}
             >
-              批量过滤
+              <FormattedMessage id="endpoints.batch.filter" />
             </Button>
             <Checkbox
               className="ml10"
@@ -215,7 +218,7 @@ class index extends Component<Props, State> {
                 });
               }}
             >
-              显示挂载节点
+              <FormattedMessage id="node.display.path" />
             </Checkbox>
           </Col>
           <Col span={8} className="textAlignRight">
@@ -223,13 +226,15 @@ class index extends Component<Props, State> {
               overlay={
                 <Menu>
                   <Menu.Item>
-                    <a onClick={() => { this.props.exportEndpoints(_.get(this.fetchtable, 'state.data')); }}>导出 Excel</a>
+                    <a onClick={() => { this.props.exportEndpoints(_.get(this.fetchtable, 'state.data')); }}>
+                      <FormattedMessage id="endpoints.export.excel" />
+                    </a>
                   </Menu.Item>
                   {this.props.renderBatchOper(this.state.selectedIdents)}
                 </Menu>
               }
             >
-              <Button icon="down">批量操作</Button>
+              <Button icon="down"><FormattedMessage id="table.batch.operations" /></Button>
             </Dropdown>
           </Col>
         </Row>

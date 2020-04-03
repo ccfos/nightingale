@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import { Button, Form, Input, DatePicker } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import moment from 'moment';
@@ -88,7 +89,7 @@ class CustomForm extends Component<Props> {
               key={o.value}
               type={o.value === timeSpan ? 'primary' : undefined}
             >
-              {o.label}
+              <FormattedMessage id={o.label} />
             </Button>
           ))
         }
@@ -105,12 +106,12 @@ class CustomForm extends Component<Props> {
         <Form className={readOnly ? 'readOnly' : ''}>
           <FormItem
             {...formItemLayout}
-            label="屏蔽指标"
+            label={<FormattedMessage id="silence.form.metric" />}
           >
             {getFieldDecorator('metric', {
               initialValue: initialValues.metric,
               rules: [
-                { required: true, message: '不能为空' },
+                { required: true },
               ],
             })(
               <Input />,
@@ -118,12 +119,12 @@ class CustomForm extends Component<Props> {
           </FormItem>
           <FormItem
             {...formItemLayout}
-            label="屏蔽 endpoints"
+            label={<FormattedMessage id="silence.form.endpoints" />}
           >
             {getFieldDecorator('endpoints', {
               initialValue: _.isArray(initialValues.endpoints) ? _.join(initialValues.endpoints, '\n') : initialValues.endpoints,
               rules: [
-                { required: true, message: '不能为空' },
+                { required: true },
               ],
             })(
               <TextArea
@@ -134,14 +135,11 @@ class CustomForm extends Component<Props> {
           </FormItem>
           <FormItem
             {...formItemLayout}
-            label="屏蔽 tags"
-            help="示例：key1=value1,key2=value2"
+            label={<FormattedMessage id="silence.form.tags" />}
+            help="eg. key1=value1,key2=value2"
           >
             {getFieldDecorator('tags', {
               initialValue: initialValues.tags,
-              rules: [
-                // { required: true, message: '不能为空' },
-              ],
             })(
               <TextArea
                 autosize={{ minRows: 2, maxRows: 6 }}
@@ -156,12 +154,12 @@ class CustomForm extends Component<Props> {
           </FormItem>
           <FormItem
             {...formItemLayout}
-            label="开始时间"
+            label={<FormattedMessage id="silence.form.stime" />}
           >
             {getFieldDecorator('btime', {
               initialValue: moment.unix(initialValues.btime),
               rules: [
-                { required: true, message: '不能为空' },
+                { required: true },
               ],
             })(
               <DatePicker
@@ -173,12 +171,12 @@ class CustomForm extends Component<Props> {
           </FormItem>
           <FormItem
             {...formItemLayout}
-            label="结束时间"
+            label={<FormattedMessage id="silence.form.etime" />}
           >
             {getFieldDecorator('etime', {
               initialValue: moment.unix(initialValues.etime),
               rules: [
-                { required: true, message: '不能为空' },
+                { required: true },
               ],
             })(
               <DatePicker
@@ -190,12 +188,12 @@ class CustomForm extends Component<Props> {
           </FormItem>
           <FormItem
             {...formItemLayout}
-            label="屏蔽原因"
+            label={<FormattedMessage id="silence.cause" />}
           >
             {getFieldDecorator('cause', {
               initialValue: initialValues.cause,
               rules: [
-                { required: true, message: '不能为空' },
+                { required: true },
               ],
             })(
               <TextArea

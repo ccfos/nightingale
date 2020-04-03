@@ -91,7 +91,7 @@ export default class Legend extends Component<Props, State> {
     const copySucceeded = clipboard(currentCounter);
     if (!copySucceeded) {
       Modal.info({
-        title: '复制失败，请手动选择复制',
+        title: 'Copy failed, please manually select copy',
         content: (
           <p>{currentCounter}</p>
         ),
@@ -132,17 +132,17 @@ export default class Legend extends Component<Props, State> {
     const firstData = data[0];
     const columns: ColumnProps<LegendDataItem>[] = [
       {
-        title: <span> 曲线({data.length}) </span>,
+        title: <span> Series({data.length}) </span>,
         dataIndex: 'tags',
         filterDropdown: (
           <div className="custom-filter-dropdown">
             <Input
-              placeholder="请输入曲线名称"
+              placeholder="Input serie name"
               value={searchText}
               onChange={this.handleInputChange}
               onPressEnter={this.handleSearch}
             />
-            <Button type="primary" onClick={this.handleSearch}>搜索</Button>
+            <Button type="primary" onClick={this.handleSearch}>Search</Button>
           </div>
         ),
         filterDropdownVisible: this.state.filterDropdownVisible,
@@ -224,7 +224,7 @@ export default class Legend extends Component<Props, State> {
 
     if (_.get(firstData, 'isSameMetric') === false) {
       columns.unshift({
-        title: '指标',
+        title: 'Metric',
         dataIndex: 'metric',
         width: 60,
       });
@@ -247,7 +247,7 @@ export default class Legend extends Component<Props, State> {
         <ContextMenu visible={this.state.contextMenuVisiable} left={this.state.contextMenuLeft} top={this.state.contextMenuTop}>
           <ul className="ant-dropdown-menu ant-dropdown-menu-vertical ant-dropdown-menu-light ant-dropdown-menu-root">
             <li className="ant-dropdown-menu-item">
-              <a onClick={this.handleCopyCounter}>复制 counter</a>
+              <a onClick={this.handleCopyCounter}>copy counter</a>
             </li>
           </ul>
         </ContextMenu>

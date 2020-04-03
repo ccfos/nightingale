@@ -191,19 +191,19 @@ export default class Graph extends Component<Props, State> {
       let errorText = e.err;
 
       if (e.statusText === 'error') {
-        errorText = '网络已断开，请检查网络';
+        errorText = 'The network has been disconnected, please check the network';
       } else if (e.statusText === 'Not Found') {
-        errorText = '404 Not Found，请联系管理员';
+        errorText = '404 Not Found';
       } else if (e.responseJSON) {
         errorText = _.get(e.responseJSON, 'msg', e.responseText);
 
         if (!errorText || e.status === 500) {
-          errorText = '数据加载异常，请刷新重新加载';
+          errorText = 'Data loading exception, please refresh and reload';
         }
 
         // request entity too large
         if (e.status === 413) {
-          errorText = '请求条件过大，请减少条件';
+          errorText = 'Request condition is too large, please reduce the condition';
         }
       }
 
@@ -215,17 +215,17 @@ export default class Graph extends Component<Props, State> {
   checkEndpointCounters(endpointCounters: CounterInterface[], countersMaxLength: number) {
     let errorText: any = '';
     if (!_.get(endpointCounters, 'length', 0)) {
-      errorText = '暂无数据';
+      errorText = 'No data';
     }
 
     if (endpointCounters.length > countersMaxLength) {
       errorText = (
         <span className="counters-maxLength">
-          曲线过多，当前
+          Too many series，Current
           {endpointCounters.length}
-          上限
+          cap
           {countersMaxLength}
-          ，请减少曲线
+          ，Please reduce the number of series
         </span>
       );
     }

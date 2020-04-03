@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { Modal, Form, TreeSelect, Select, message } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
@@ -27,9 +28,9 @@ interface State {
 
 const FormItem = Form.Item;
 const { Option } = Select;
-class SubscribeModal extends Component<Props & FormProps, State> {
-  static defaultProps = {
-    title: '订阅到大盘',
+class SubscribeModal extends Component<Props & FormProps & WrappedComponentProps, State> {
+  static defaultProps: any = {
+    title: '',
     visible: true,
     onOk: _.noop,
     onCancel: _.noop,
@@ -95,7 +96,7 @@ class SubscribeModal extends Component<Props & FormProps, State> {
               });
             }),
           );
-          message.success('图表订阅成功！');
+          message.success(this.props.intl.formatMessage({ id: 'graph.subscribe.success' }));
           this.props.onOk();
           this.props.destroy();
         } catch (e) {
@@ -121,15 +122,15 @@ class SubscribeModal extends Component<Props & FormProps, State> {
         onOk={this.handleOk}
         onCancel={this.handleCancel}
         bodyStyle={{ padding: 14 }}
-        okText="订阅"
+        okText={<FormattedMessage id="graph.subscribe" />}
       >
         <Form layout="vertical" onSubmit={(e) => {
           e.preventDefault();
           this.handleOk();
         }}>
-          <FormItem label="所属节点">
+          <FormItem label={<FormattedMessage id="graph.subscribe.node" />}>
             {getFieldDecorator('nid', {
-              rules: [{ required: true, message: '请选择所属节点!' }],
+              rules: [{ required: true }],
             })(
               <TreeSelect
                 showSearch
@@ -143,9 +144,9 @@ class SubscribeModal extends Component<Props & FormProps, State> {
               </TreeSelect>,
             )}
           </FormItem>
-          <FormItem label="选择大盘">
+          <FormItem label={<FormattedMessage id="graph.subscribe.screen" />}>
             {getFieldDecorator('scrrenId', {
-              rules: [{ required: true, message: '请选择所属大盘!' }],
+              rules: [{ required: true }],
             })(
               <Select
                 onDropdownVisibleChange={(dropdownVisible) => {
@@ -162,9 +163,9 @@ class SubscribeModal extends Component<Props & FormProps, State> {
               </Select>,
             )}
           </FormItem>
-          <FormItem label="选择分类">
+          <FormItem label={<FormattedMessage id="graph.subscribe.tag" />}>
             {getFieldDecorator('subclassId', {
-              rules: [{ required: true, message: '请选择所属分类!' }],
+              rules: [{ required: true }],
             })(
               <Select
                 onDropdownVisibleChange={(dropdownVisible) => {
@@ -187,4 +188,4 @@ class SubscribeModal extends Component<Props & FormProps, State> {
   }
 }
 
-export default ModalControl(Form.create()(SubscribeModal));
+export default ModalControl(Form.create()(injectIntl(SubscribeModal)));

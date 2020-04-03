@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { Modal, Form, Select, TreeSelect, message } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
@@ -22,7 +23,7 @@ interface Props extends FormProps{
 const FormItem = Form.Item;
 const { Option } = Select;
 
-class BatchModModal extends Component<Props> {
+class BatchModModal extends Component<Props & WrappedComponentProps> {
   static defaultProps = {
     selectedNid: undefined,
     treeNodes: [],
@@ -84,9 +85,9 @@ class BatchModModal extends Component<Props> {
             });
           });
           await Promise.all(requests).then(() => {
-            message.success('批量操作成功！');
+            message.success(this.props.intl.formatMessage({ id: 'msg.modify.success' }));
           }).catch(() => {
-            message.error('批量操作失败！');
+            // message.error('批量操作失败！');
           });
         } catch (e) {
           console.log(e);
@@ -118,7 +119,7 @@ class BatchModModal extends Component<Props> {
           {
             this.props.type === 'exclNid' ?
               <FormItem
-                label="排除节点"
+                label={<FormattedMessage id="stra.node.exclude" />}
               >
                 {
                   getFieldDecorator('excl_nid', {
@@ -144,7 +145,7 @@ class BatchModModal extends Component<Props> {
               [
                 <FormItem
                   key="group"
-                  label="报警接收团队"
+                  label={<FormattedMessage id="stra.notify.team" />}
                 >
                   {
                     getFieldDecorator('notify_group', {
@@ -155,7 +156,6 @@ class BatchModModal extends Component<Props> {
                         size="default"
                         defaultActiveFirstOption={false}
                         filterOption={false}
-                        placeholder="报警接收团队"
                       >
                         {
                           _.map(this.state.notifyGroupData, (item: any, i) => {
@@ -170,7 +170,7 @@ class BatchModModal extends Component<Props> {
                 </FormItem>,
                 <FormItem
                   key="user"
-                  label="报警接收人"
+                  label={<FormattedMessage id="stra.notify.user" />}
                 >
                   {
                     getFieldDecorator('notify_user', {
@@ -181,7 +181,6 @@ class BatchModModal extends Component<Props> {
                         size="default"
                         defaultActiveFirstOption={false}
                         filterOption={false}
-                        placeholder="报警接收人"
                       >
                         {
                           _.map(this.state.notifyUserData, (item: any, i) => {
@@ -199,7 +198,7 @@ class BatchModModal extends Component<Props> {
           {
             this.props.type === 'clone' ?
               <FormItem
-                label="生效节点"
+                label={<FormattedMessage id="stra.node" />}
               >
                 {
                   getFieldDecorator('nid', {
@@ -224,4 +223,4 @@ class BatchModModal extends Component<Props> {
   }
 }
 
-export default ModalControl(Form.create()(BatchModModal));
+export default ModalControl(Form.create()(injectIntl(BatchModModal)));

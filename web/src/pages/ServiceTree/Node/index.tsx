@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import PropTypes from 'prop-types';
 import { Row, Col, Input, Button, Checkbox, Popconfirm, message } from 'antd';
 import _ from 'lodash';
+import { FormattedMessage } from 'react-intl';
 import CreateIncludeNsTree from '@cpts/Layout/CreateIncludeNsTree';
 import request from '@common/request';
 import api from '@common/api';
@@ -24,7 +26,7 @@ function updatePathByName(path: string, name: string) {
   return path;
 }
 
-class index extends Component<null, State> {
+class index extends Component<WrappedComponentProps, State> {
   static contextTypes = {
     getSelectedNode: PropTypes.func,
     updateSelectedNode: PropTypes.func,
@@ -86,7 +88,7 @@ class index extends Component<null, State> {
           name: selectedNodeName,
           path: updatePathByName(selectedNode.path, selectedNodeName),
         });
-        message.success('节点重命名成功！');
+        message.success(this.props.intl.formatMessage({ id: 'node.rename.success' }));
       });
     }
   }
@@ -109,7 +111,7 @@ class index extends Component<null, State> {
         }),
       }).then(() => {
         reloadNsTree();
-        message.success('创建子节点成功！');
+        message.success(this.props.intl.formatMessage({ id: 'node.child.create.success' }));
       });
     }
   }
@@ -123,7 +125,7 @@ class index extends Component<null, State> {
       }).then(() => {
         reloadNsTree();
         deleteSelectedNode();
-        message.success('节点删除成功！');
+        message.success(this.props.intl.formatMessage({ id: 'node.delete.success' }));
       });
     }
   }
@@ -135,7 +137,7 @@ class index extends Component<null, State> {
     if (!selectedNode) {
       return (
         <div>
-          请先选择左侧服务节点
+          <FormattedMessage id="please.select.node" />
         </div>
       );
     }
@@ -143,25 +145,25 @@ class index extends Component<null, State> {
       <div>
         <Row gutter={20}>
           <Col span={8} className="mb10">
-            节点重命名：
+            <FormattedMessage id="node.rename" />：
             <div className="mt10 mb10">
               <Input
                 style={{ width: 200 }}
                 value={selectedNodeName}
                 onChange={this.handlePutNodeChange}
-                placeholder="新节点名称"
+                placeholder={this.props.intl.formatMessage({ id: 'node.rename.newname' })}
               />
             </div>
-            <Button onClick={this.handlePutNode}>保存</Button>
+            <Button onClick={this.handlePutNode}><FormattedMessage id="form.save" /></Button>
           </Col>
           <Col span={8} className="mb10">
-            创建子节点：
+            <FormattedMessage id="node.child.create" />：
             <div className="mt10 mb10">
               <Input
                 style={{ width: 200 }}
                 value={newNodeName}
                 onChange={this.handleNewNodeNameChange}
-                placeholder="子节点名称"
+                placeholder={this.props.intl.formatMessage({ id: 'node.child.newname' })}
                 disabled={isLeafNode}
               />
             </div>
@@ -171,24 +173,26 @@ class index extends Component<null, State> {
                 onChange={this.handleNewNodeLeafChange}
                 disabled={isLeafNode}
               >
-                是否叶子节点
+                <FormattedMessage id="node.isLeaf" />
               </Checkbox>
             </div>
-            <Button disabled={isLeafNode} onClick={this.handlePostNode}>创建</Button>
+            <Button disabled={isLeafNode} onClick={this.handlePostNode}>
+              <FormattedMessage id="form.create" />
+            </Button>
             {
-              isLeafNode ? <p className="fc50 mt10">叶子节点无法继续创建子节点</p> : null
+              isLeafNode ? <p className="fc50 mt10"><FormattedMessage id="node.leaf.cannot.create" /></p> : null
             }
           </Col>
           <Col span={8} className="mb10">
-            删除该节点：
+            <FormattedMessage id="node.delete" />：
             <div className="mt10 mb10" style={{ wordBreak: 'break-word' }}>
               {_.get(selectedNode, 'path')}
             </div>
-            <Popconfirm disabled={isPdlNode} title="确定要删除这个节点吗？" onConfirm={this.handleDelNode}>
-              <Button disabled={isPdlNode}>删除</Button>
+            <Popconfirm disabled={isPdlNode} title={<FormattedMessage id="table.delete.sure" />} onConfirm={this.handleDelNode}>
+              <Button disabled={isPdlNode}><FormattedMessage id="form.delete" /></Button>
             </Popconfirm>
             {
-              isPdlNode ? <p className="fc50 mt10">{config.aliasMap.dept}节点不能删除</p> : null
+              isPdlNode ? <p className="fc50 mt10"><FormattedMessage id={`${config.aliasMap.dept}节点不能删除`} /></p> : null
             }
           </Col>
         </Row>
@@ -197,4 +201,4 @@ class index extends Component<null, State> {
   }
 }
 
-export default CreateIncludeNsTree(index, { visible: true });
+export default CreateIncludeNsTree(injectIntl(index), { visible: true });

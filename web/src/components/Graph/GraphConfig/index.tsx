@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import PropTypes from 'prop-types';
 import { Modal, Button, message } from 'antd';
 import _ from 'lodash';
@@ -113,7 +114,7 @@ export default class GraphConfig extends Component {
       <Modal
         key={key}
         width={750}
-        title={title}
+        title={<FormattedMessage id="graph.config.title" />}
         destroyOnClose
         visible={visible}
         maskClosable={false}

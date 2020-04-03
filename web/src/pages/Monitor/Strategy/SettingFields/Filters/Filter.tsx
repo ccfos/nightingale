@@ -1,13 +1,14 @@
 import React from 'react';
 import { Card, Tag } from 'antd';
 import _ from 'lodash';
+import { FormattedMessage } from 'react-intl';
 
-const toptMap: any = {
-  '=': '包含',
-  '!=': '排除',
+const toptMap = {
+  '=': 'stra.tag.include',
+  '!=': 'stra.tag.exclude',
 };
 
-export default function Filter(props: any) {
+export default function Filter(props) {
   const { data, extra } = props;
   const { tkey, topt, tval } = data;
 
@@ -17,7 +18,7 @@ export default function Filter(props: any) {
       title={
         <span>
           {tkey}
-          <span style={{ paddingLeft: 10 }}>{toptMap[topt]}</span>
+          <span style={{ paddingLeft: 10 }}>{<FormattedMessage id={toptMap[topt]} />}</span>
         </span>
       }
       extra={extra}

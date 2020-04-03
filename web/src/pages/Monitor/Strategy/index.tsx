@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Row, Col, Table, Button, Input, Select, Tag, Divider, message, Popconfirm, Dropdown, Menu, Modal } from 'antd';
@@ -13,7 +14,7 @@ import BatchImportExportModal from './BatchImportExportModal';
 
 const { Option } = Select;
 
-class index extends Component {
+class index extends Component<WrappedComponentProps> {
   static contextTypes = {
     getNodes: PropTypes.func,
     getSelectedNode: PropTypes.func,
@@ -86,7 +87,7 @@ class index extends Component {
         ids: [id],
       }),
     }).then(() => {
-      message.success('删除成功!');
+      message.success(this.props.intl.formatMessage({ id: 'msg.delete.success' }));
       this.fetchData();
     });
   }
@@ -96,6 +97,7 @@ class index extends Component {
     const { getNodes } = this.context;
     const treeNodes = getNodes();
     BatchModModal({
+      language: this.props.intl.locale,
       type: 'exclNid',
       selectedNid: this.selectedNodeId,
       treeNodes,
@@ -109,6 +111,7 @@ class index extends Component {
   handleBatchModNotifyBtnClick = () => {
     const { selectedRows } = this.state;
     BatchModModal({
+      language: this.props.intl.locale,
       type: 'notify',
       data: selectedRows,
       onOk: () => {
@@ -122,6 +125,7 @@ class index extends Component {
     const { getNodes } = this.context;
     const treeNodes = getNodes();
     BatchModModal({
+      language: this.props.intl.locale,
       type: 'clone',
       data: selectedRows,
       treeNodes,
@@ -137,8 +141,8 @@ class index extends Component {
 
     if (ids.length) {
       Modal.confirm({
-        title: '批量删除',
-        content: '确定要删除所选的策略吗？',
+        title: this.props.intl.formatMessage({ id: 'stra.batch.delete' }),
+        content: this.props.intl.formatMessage({ id: 'table.delete.sure' }),
         onOk: () => {
           request(api.stra, {
             method: 'DELETE',
@@ -146,7 +150,7 @@ class index extends Component {
               ids,
             }),
           }).then(() => {
-            message.success('批量删除成功!');
+            message.success(this.props.intl.formatMessage({ id: 'msg.delete.success' }));
             this.fetchData();
           });
         },
@@ -157,7 +161,8 @@ class index extends Component {
   handleBatchImportBtnClick = () => {
     BatchImportExportModal({
       type: 'import',
-      title: '批量导入策略',
+      title: this.props.intl.formatMessage({ id: 'stra.batch.import' }),
+      language: this.props.intl.locale,
       selectedNid: this.selectedNodeId,
       onOk: () => {
         this.fetchData();
@@ -187,7 +192,8 @@ class index extends Component {
     BatchImportExportModal({
       data: newSelectedRows,
       type: 'export',
-      title: '批量导出策略',
+      title: this.props.intl.formatMessage({ id: 'stra.batch.export' }),
+      language: this.props.intl.locale,
     });
   }
 
@@ -243,13 +249,15 @@ class index extends Component {
         <Row className="mb10">
           <Col span={18}>
             <Button className="mr10">
-              <Link to={{ pathname: '/monitor/strategy/add', search: `nid=${this.selectedNodeId}` }}>新增报警策略</Link>
+              <Link to={{ pathname: '/monitor/strategy/add', search: `nid=${this.selectedNodeId}` }}>
+                <FormattedMessage id="stra.add" />
+              </Link>
             </Button>
             <Select
               allowClear
               style={{ width: 100 }}
               className="mr10"
-              placeholder="策略级别"
+              placeholder={this.props.intl.formatMessage({ id: 'stra.priority' })}
               value={this.state.priority}
               onChange={(value: number) => {
                 this.setState({ priority: value });
@@ -264,7 +272,7 @@ class index extends Component {
             <Input
               style={{ width: 300 }}
               className="mr10"
-              placeholder="策略名称、指标、报警接受组、人员关键词搜索"
+              placeholder="Search"
               value={this.state.search}
               onChange={(e) => {
                 this.setState({ search: e.target.value });
@@ -276,27 +284,27 @@ class index extends Component {
               overlay={
                 <Menu>
                   <Menu.Item>
-                    <Button type="link" disabled={!canBatchOper} onClick={() => { this.handleBatchModExclNidBtnClick(); }}>修改排除节点</Button>
+                    <Button type="link" disabled={!canBatchOper} onClick={() => { this.handleBatchModExclNidBtnClick(); }}><FormattedMessage id="stra.batch.modify.excludeNs" /></Button>
                   </Menu.Item>
                   <Menu.Item>
-                    <Button type="link" disabled={!canBatchOper} onClick={() => { this.handleBatchModNotifyBtnClick(); }}>修改报警接收组</Button>
+                    <Button type="link" disabled={!canBatchOper} onClick={() => { this.handleBatchModNotifyBtnClick(); }}><FormattedMessage id="stra.batch.modify.notify" /></Button>
                   </Menu.Item>
                   <Menu.Item>
-                    <Button type="link" disabled={!canBatchOper} onClick={() => { this.handleBatchCloneToOtherNidBtnClick(); }}>克隆到其他节点</Button>
+                    <Button type="link" disabled={!canBatchOper} onClick={() => { this.handleBatchCloneToOtherNidBtnClick(); }}><FormattedMessage id="stra.batch.cloneTo.otherNode" /></Button>
                   </Menu.Item>
                   <Menu.Item>
-                    <Button type="link" disabled={!canBatchOper} onClick={() => { this.handleBatchDelBtnClick(); }}>删除策略</Button>
+                    <Button type="link" disabled={!canBatchOper} onClick={() => { this.handleBatchDelBtnClick(); }}><FormattedMessage id="stra.batch.delete" /></Button>
                   </Menu.Item>
                   <Menu.Item>
-                    <Button type="link" onClick={() => { this.handleBatchImportBtnClick(); }}>导入策略</Button>
+                    <Button type="link" onClick={() => { this.handleBatchImportBtnClick(); }}><FormattedMessage id="stra.batch.import" /></Button>
                   </Menu.Item>
                   <Menu.Item>
-                    <Button type="link" disabled={!canBatchOper} onClick={() => { this.handleBatchExportBtnClick(); }}>导出策略</Button>
+                    <Button type="link" disabled={!canBatchOper} onClick={() => { this.handleBatchExportBtnClick(); }}><FormattedMessage id="stra.batch.export" /></Button>
                   </Menu.Item>
                 </Menu>
               }
             >
-              <Button icon="down">批量操作</Button>
+              <Button icon="down"><FormattedMessage id="table.batch.operations" /></Button>
             </Dropdown>
           </Col>
         </Row>
@@ -316,14 +324,14 @@ class index extends Component {
           }}
           columns={[
             {
-              title: '策略名称',
+              title: <FormattedMessage id="stra.name" />,
               dataIndex: 'name',
               width: 150,
               render: (text, record) => {
                 return <Link to={{ pathname: `/monitor/strategy/${record.id}` }}>{text}</Link>;
               },
             }, {
-              title: '级别',
+              title: <FormattedMessage id="stra.priority" />,
               width: 40,
               dataIndex: 'priority',
               render: (text) => {
@@ -331,7 +339,7 @@ class index extends Component {
                 return <Tag color={currentPriority.color}>{currentPriority.label}</Tag>;
               },
             }, {
-              title: '指标',
+              title: <FormattedMessage id="stra.metric" />,
               width: 100,
               render: (text, record) => {
                 const { exprs } = record;
@@ -342,7 +350,7 @@ class index extends Component {
                 });
               },
             }, {
-              title: '报警接收',
+              title: <FormattedMessage id="stra.notify" />,
               render: (text, record) => {
                 const { userData, teamData } = this.state;
                 const team = _.map(record.notify_group, (item) => {
@@ -357,7 +365,7 @@ class index extends Component {
               },
             }, {
               width: 90,
-              title: '更新时间',
+              title: <FormattedMessage id="table.lastupdated" />,
               render: (text, record) => {
                 return (
                   <div>
@@ -367,16 +375,16 @@ class index extends Component {
               },
             }, {
               width: 140,
-              title: '操作',
+              title: <FormattedMessage id="table.operations" />,
               render: (text, record) => {
                 return (
                   <span className="operation-btns">
-                    <Link to={{ pathname: `/monitor/strategy/${record.id}` }}>修改</Link>
+                    <Link to={{ pathname: `/monitor/strategy/${record.id}` }}><FormattedMessage id="table.modify" /></Link>
                     <Divider type="vertical" />
-                    <Link to={{ pathname: `/monitor/strategy/${record.id}/clone` }}>克隆</Link>
+                    <Link to={{ pathname: `/monitor/strategy/${record.id}/clone` }}><FormattedMessage id="table.clone" /></Link>
                     <Divider type="vertical" />
-                    <Popconfirm title="是否删除这条策略?" onConfirm={() => { this.handleDel(record.id); }}>
-                      <a>删除</a>
+                    <Popconfirm title={<FormattedMessage id="table.delete.sure" />} onConfirm={() => { this.handleDel(record.id); }}>
+                      <a><FormattedMessage id="table.delete" /></a>
                     </Popconfirm>
                   </span>
                 );
@@ -389,4 +397,4 @@ class index extends Component {
   }
 }
 
-export default CreateIncludeNsTree(index, { visible: true });
+export default CreateIncludeNsTree(injectIntl(index), { visible: true });

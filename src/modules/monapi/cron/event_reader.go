@@ -79,7 +79,7 @@ func popEvent(queues []interface{}) (*model.Event, bool) {
 	// 可能endpoint挪了节点
 	endpoint, err := model.EndpointGet("ident", event.Endpoint)
 	if err != nil {
-		logger.Errorf("get host_id failed, event: %+v, err: %v", event, err)
+		logger.Errorf("model.EndpointGet fail, event: %+v, err: %v", event, err)
 		return nil, true
 	}
 
