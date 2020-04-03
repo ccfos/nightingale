@@ -49,10 +49,10 @@ func nodataJudge() {
 				}
 
 				nodataJob.Acquire()
-				go func(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string) {
+				go func(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, status []bool) {
 					defer nodataJob.Release()
-					Judge(stra, exps, historyData, firstItem, now, history, info, value)
-				}(stra, stra.Exprs, []*dataobj.RRDData{}, judgeItem, now, []dataobj.History{}, "", "")
+					Judge(stra, exps, historyData, firstItem, now, history, info, value, status)
+				}(stra, stra.Exprs, []*dataobj.RRDData{}, judgeItem, now, []dataobj.History{}, "", "", []bool{})
 			}
 			return
 		}
@@ -79,10 +79,10 @@ func nodataJudge() {
 			}
 
 			nodataJob.Acquire()
-			go func(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string) {
+			go func(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, status []bool) {
 				defer nodataJob.Release()
-				Judge(stra, exps, historyData, firstItem, now, history, info, value)
-			}(stra, stra.Exprs, data.Values, judgeItem, now, []dataobj.History{}, "", "")
+				Judge(stra, exps, historyData, firstItem, now, history, info, value, status)
+			}(stra, stra.Exprs, data.Values, judgeItem, now, []dataobj.History{}, "", "", []bool{})
 		}
 	}
 }

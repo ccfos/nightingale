@@ -32,11 +32,13 @@ func consume(event *model.Event) {
 		return
 	}
 
+	// 配置了升级策略，但不代表每个事件都要升级，比如判断时间是否到了升级条件
 	if event.NeedUpgrade == 1 {
 		event.RealUpgrade = needUpgrade(event)
 	}
 
 	if event.RealUpgrade {
+		// 确实需要升级的话，事件级别要改成升级之后的级别
 		if err := updatePriority(event); err != nil {
 			return
 		}
@@ -57,6 +59,7 @@ func consume(event *model.Event) {
 		SetEventStatus(event, model.STATUS_CALLBACK)
 	}
 
+	// 如果需要升级，需要在这个方法里把升级策略里配置的升级人员也解析出来
 	if err := fillRecvs(event); err != nil {
 		return
 	}
@@ -210,7 +213,7 @@ func isInConverge(event *model.Event) bool {
 	}
 
 	if cnt >= convergeMaxCounts {
-		logger.Infof("converge max counts: %c reached, current: %v, event hashid: %v", convergeMaxCounts, cnt, event.HashId)
+		logger.Infof("converge max counts: %d reached, current: %v, event hashid: %v", convergeMaxCounts, cnt, event.HashId)
 		return true
 	}
 
@@ -220,7 +223,7 @@ func isInConverge(event *model.Event) bool {
 // 三种情况，不需要升级报警
 // 1，认领的报警不需要升级
 // 2，忽略的报警不需要升级
-// 3，屏蔽的报警不需要升级
+// 3，屏蔽的报警不需要升级，屏蔽判断在前面已经有了处理，这个方法不用关注
 func needUpgrade(event *model.Event) bool {
 	alertUpgradeKey := PrefixAlertUpgrade + fmt.Sprint(event.HashId)
 	eventAlertKey := PrefixAlertTime + fmt.Sprint(event.HashId)

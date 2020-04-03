@@ -109,7 +109,7 @@ export default {
 
   'menu.endpoints': '监控对象',
   'menu.endpoints.all': '全部对象',
-  'menu.endpoints.node': '全部对象',
+  'menu.endpoints.node': '节点对象',
   'menu.endpoints.node.manage': '节点管理',
   'menu.monitor': '监控报警',
   'menu.monitor.dashboard': '监控看图',
