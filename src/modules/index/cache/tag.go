@@ -16,8 +16,9 @@ func (t TagPairs) Len() int {
 }
 
 func (t TagPairs) Less(i, j int) bool {
-	return t[i].Key > t[i].Key
+	return t[i].Key > t[j].Key
 }
+
 func (t TagPairs) Swap(i, j int) {
 	t[i], t[j] = t[j], t[i]
 }
@@ -135,7 +136,7 @@ func TagPairToMap(tagPairs []*TagPair) map[string][]string {
 
 func GetSortTags(tagMap map[string][]string) []*TagPair {
 	var keys []string
-	for key, _ := range tagMap {
+	for key := range tagMap {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)

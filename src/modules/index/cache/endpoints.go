@@ -69,6 +69,4 @@ func reportEndpoint(endpoints []interface{}) {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-
-	return
 }
