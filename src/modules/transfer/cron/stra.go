@@ -73,7 +73,7 @@ func getStrategy() {
 
 		//var metric string
 		if len(stra.Exprs) < 1 {
-			logger.Warning("stra:%v exprs illegal", stra)
+			logger.Warningf("stra:%v exprs illegal", stra)
 			continue
 		}
 		if stra.Exprs[0].Func == "nodata" {

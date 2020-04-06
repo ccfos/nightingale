@@ -83,7 +83,7 @@ func (cp *ConnPools) Update(cluster []string) {
 		cp.M[address] = createOnePool(address, address, ct, maxConns, maxIdle)
 	}
 
-	for address, _ := range cp.M {
+	for address := range cp.M {
 		if _, exists := newCluster[address]; !exists {
 			delete(cp.M, address)
 		}

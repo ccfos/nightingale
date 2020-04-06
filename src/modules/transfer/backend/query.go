@@ -178,7 +178,6 @@ func fetchDataSync(start, end int64, consolFun, endpoint, counter string, step i
 		stats.Counter.Set("query.data.err", 1)
 	}
 	dataChan <- data
-	return
 }
 
 func fetchData(start, end int64, consolFun, endpoint, counter string, step int) (*dataobj.TsdbQueryResponse, error) {

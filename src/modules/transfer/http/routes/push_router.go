@@ -52,5 +52,4 @@ func PushData(c *gin.Context) {
 	}
 
 	render.Data(c, "ok", nil)
-	return
 }

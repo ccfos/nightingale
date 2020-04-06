@@ -46,7 +46,7 @@ var (
 )
 
 func NewClusterNode(addrs []string) *backend.ClusterNode {
-	return &backend.ClusterNode{addrs}
+	return &backend.ClusterNode{Addrs: addrs}
 }
 
 // map["node"]="host1,host2" --> map["node"]=["host1", "host2"]
