@@ -37,8 +37,6 @@ func (e *EndpointIndexMap) Push(item dataobj.IndexModel, now int64) {
 		return
 	}
 	metricIndex.Set(item, counter, now)
-
-	return
 }
 
 func (e *EndpointIndexMap) Clean(timeDuration int64) {
@@ -123,7 +121,7 @@ func (e *EndpointIndexMap) GetEndpoints() []string {
 	length := len(e.M)
 	ret := make([]string, length)
 	i := 0
-	for endpoint, _ := range e.M {
+	for endpoint := range e.M {
 		ret[i] = endpoint
 		i++
 	}

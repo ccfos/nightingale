@@ -41,7 +41,7 @@ var semaPermanence = semaphore.NewSemaphore(1)
 func InitDB(cfg CacheSection) {
 	Config = cfg
 
-	IndexDB = &EndpointIndexMap{M: make(map[string]*MetricIndexMap, 0)}
+	IndexDB = &EndpointIndexMap{M: make(map[string]*MetricIndexMap)}
 	NewEndpoints = list.NewSafeListLimited(100000)
 
 	Rebuild(Config.PersistDir, Config.RebuildWorker)

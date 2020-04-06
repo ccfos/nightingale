@@ -14,7 +14,7 @@ type CounterTsMap struct {
 }
 
 func NewCounterTsMap() *CounterTsMap {
-	return &CounterTsMap{M: make(map[string]int64, 0)}
+	return &CounterTsMap{M: make(map[string]int64)}
 }
 
 func (c *CounterTsMap) Set(counter string, ts int64) {

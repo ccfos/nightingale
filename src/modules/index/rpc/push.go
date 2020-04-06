@@ -42,5 +42,4 @@ func push(args []*dataobj.IndexModel, reply *dataobj.IndexResp) {
 
 	reply.Total = len(args)
 	reply.Latency = (time.Now().UnixNano() - start.UnixNano()) / 1000000
-	return
 }

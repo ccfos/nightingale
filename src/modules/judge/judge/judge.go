@@ -89,7 +89,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 
 	defer func() {
 		if len(exps) == 1 {
-			bytes, err := json.Marshal(history)
+			bs, err := json.Marshal(history)
 			if err != nil {
 				logger.Error("Marshal history:%v err:%v", history, err)
 			}
@@ -98,7 +98,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				Etime:     now,
 				Endpoint:  firstItem.Endpoint,
 				Info:      info,
-				Detail:    string(bytes),
+				Detail:    string(bs),
 				Value:     value,
 				Partition: redi.Config.Prefix + "/event/p" + strconv.Itoa(stra.Priority),
 				Sid:       stra.Id,
@@ -134,7 +134,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				return
 			}
 
-			for i, _ := range respData {
+			for i := range respData {
 				firstItem.Endpoint = respData[i].Endpoint
 				firstItem.Tags = getTags(respData[i].Counter)
 				firstItem.Step = respData[i].Step
@@ -153,7 +153,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				logger.Errorf("stra:%v get query data err:%v", stra, err)
 				return
 			}
-			for i, _ := range respData {
+			for i := range respData {
 				firstItem.Endpoint = respData[i].Endpoint
 				firstItem.Tags = getTags(respData[i].Counter)
 				firstItem.Step = respData[i].Step
@@ -204,7 +204,7 @@ func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.RRDData, exp
 
 		var sum float64
 		data := respItems[0]
-		for i, _ := range data.Values {
+		for i := range data.Values {
 			sum += float64(data.Values[i].Value)
 		}
 
