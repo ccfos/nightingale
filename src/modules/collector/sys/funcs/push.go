@@ -78,14 +78,19 @@ func rpcCall(addr string, items []*dataobj.MetricValue) (dataobj.TransferResp, e
 	var reply dataobj.TransferResp
 	var err error
 
-	affected := false
 	client := rpcClients.Get(addr)
 	if client == nil {
 		client, err = rpcClient(addr)
 		if err != nil {
 			return reply, err
 		} else {
-			affected = rpcClients.Put(addr, client)
+			affected := rpcClients.Put(addr, client)
+			if !affected {
+				defer func() {
+					// 我尝试把自己这个client塞进map失败，说明已经有一个client塞进去了，那我自己用完了就关闭
+					client.Close()
+				}()
+			}
 		}
 	}
 
@@ -109,11 +114,6 @@ func rpcCall(addr string, items []*dataobj.MetricValue) (dataobj.TransferResp, e
 			client.Close()
 			return reply, fmt.Errorf("%s rpc call done, but fail: %v", addr, err)
 		}
-	}
-
-	if !affected {
-		// 我尝试把自己这个client塞进map失败，说明已经有一个client塞进去了，那我自己用完了就关闭
-		client.Close()
 	}
 
 	return reply, nil
