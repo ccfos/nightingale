@@ -33,7 +33,7 @@ func (t *TagkvIndex) GetTagkv() []*TagPair {
 
 	for k, vm := range t.Tagkv {
 		var vs []string
-		for v, _ := range vm {
+		for v := range vm {
 			vs = append(vs, v)
 		}
 		tagkv := TagPair{
@@ -53,7 +53,7 @@ func (t *TagkvIndex) GetTagkvMap() map[string][]string {
 
 	for k, vm := range t.Tagkv {
 		var vs []string
-		for v, _ := range vm {
+		for v := range vm {
 			vs = append(vs, v)
 		}
 

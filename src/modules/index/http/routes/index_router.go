@@ -125,7 +125,7 @@ func GetTagPairs(c *gin.Context) {
 
 		for tagk, tagvFilter := range tagkvFilter {
 			tagvs := []string{}
-			for v, _ := range tagvFilter {
+			for v := range tagvFilter {
 				tagvs = append(tagvs, v)
 			}
 			tagkv := &cache.TagPair{
@@ -305,7 +305,7 @@ func GetIndexByClude(c *gin.Context) {
 			var err error
 			var tags []string
 			if len(includeList) == 0 && len(excludeList) == 0 {
-				for counter, _ := range counterMap {
+				for counter := range counterMap {
 					tagList = append(tagList, counter)
 				}
 				resp = append(resp, XcludeResp{

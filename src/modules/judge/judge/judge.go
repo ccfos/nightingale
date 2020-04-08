@@ -58,10 +58,10 @@ func ToJudge(historyMap *cache.JudgeItemMap, key string, val *dataobj.JudgeItem,
 	}
 	history := []dataobj.History{}
 
-	Judge(stra, stra.Exprs, historyData, val, now, history, "", "")
+	Judge(stra, stra.Exprs, historyData, val, now, history, "", "", []bool{})
 }
 
-func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string) {
+func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, status []bool) {
 	stats.Counter.Set("running", 1)
 
 	if len(exps) < 1 {
@@ -89,7 +89,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 
 	defer func() {
 		if len(exps) == 1 {
-			bytes, err := json.Marshal(history)
+			bs, err := json.Marshal(history)
 			if err != nil {
 				logger.Error("Marshal history:%v err:%v", history, err)
 			}
@@ -98,14 +98,14 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				Etime:     now,
 				Endpoint:  firstItem.Endpoint,
 				Info:      info,
-				Detail:    string(bytes),
+				Detail:    string(bs),
 				Value:     value,
 				Partition: redi.Config.Prefix + "/event/p" + strconv.Itoa(stra.Priority),
 				Sid:       stra.Id,
 				Hashid:    getHashId(stra.Id, firstItem),
 			}
 
-			sendEventIfNeed(historyData, isTriggered, event)
+			sendEventIfNeed(historyData, status, event)
 		}
 	}()
 
@@ -115,10 +115,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 	} else {
 		value += fmt.Sprintf("; %s: %v", exp.Metric, leftValue)
 	}
-
-	if !isTriggered {
-		return
-	}
+	status = append(status, isTriggered)
 
 	//与条件情况下执行
 	if len(exps) > 1 {
@@ -133,15 +130,15 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 					Tags:     "",
 					DsType:   "GAUGE",
 				}
-				Judge(stra, exps[1:], []*dataobj.RRDData{}, judgeItem, now, history, info, value)
+				Judge(stra, exps[1:], []*dataobj.RRDData{}, judgeItem, now, history, info, value, status)
 				return
 			}
 
-			for i, _ := range respData {
+			for i := range respData {
 				firstItem.Endpoint = respData[i].Endpoint
 				firstItem.Tags = getTags(respData[i].Counter)
 				firstItem.Step = respData[i].Step
-				Judge(stra, exps[1:], respData[i].Values, firstItem, now, history, info, value)
+				Judge(stra, exps[1:], respData[i].Values, firstItem, now, history, info, value, status)
 			}
 
 		} else {
@@ -156,11 +153,11 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				logger.Errorf("stra:%v get query data err:%v", stra, err)
 				return
 			}
-			for i, _ := range respData {
+			for i := range respData {
 				firstItem.Endpoint = respData[i].Endpoint
 				firstItem.Tags = getTags(respData[i].Counter)
 				firstItem.Step = respData[i].Step
-				Judge(stra, exps[1:], respData[i].Values, firstItem, now, history, info, value)
+				Judge(stra, exps[1:], respData[i].Values, firstItem, now, history, info, value, status)
 			}
 		}
 	}
@@ -207,7 +204,7 @@ func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.RRDData, exp
 
 		var sum float64
 		data := respItems[0]
-		for i, _ := range data.Values {
+		for i := range data.Values {
 			sum += float64(data.Values[i].Value)
 		}
 
@@ -387,7 +384,12 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 	return reqs, nil
 }
 
-func sendEventIfNeed(historyData []*dataobj.RRDData, isTriggered bool, event *dataobj.Event) {
+func sendEventIfNeed(historyData []*dataobj.RRDData, status []bool, event *dataobj.Event) {
+	isTriggered := true
+	for _, s := range status {
+		isTriggered = isTriggered && s
+	}
+
 	lastEvent, exists := cache.LastEvents.Get(event.ID)
 	if isTriggered {
 		event.EventType = EVENT_ALERT
