@@ -93,9 +93,8 @@ func GetTagPairs(c *gin.Context) {
 
 	resp := []*IndexTagkvResp{}
 
-	tagkvFilter := make(map[string]map[string]struct{})
-
 	for _, metric := range recv.Metrics {
+		tagkvFilter := make(map[string]map[string]struct{})
 		tagkvs := []*cache.TagPair{}
 
 		for _, endpoint := range recv.Endpoints {
@@ -107,6 +106,7 @@ func GetTagPairs(c *gin.Context) {
 			}
 
 			tagkvMap := metricIndex.TagkvMap.GetTagkvMap()
+
 			for tagk, tagvs := range tagkvMap {
 				tagvFilter, exists := tagkvFilter[tagk]
 				if !exists {
@@ -125,7 +125,7 @@ func GetTagPairs(c *gin.Context) {
 
 		for tagk, tagvFilter := range tagkvFilter {
 			tagvs := []string{}
-			for v, _ := range tagvFilter {
+			for v := range tagvFilter {
 				tagvs = append(tagvs, v)
 			}
 			tagkv := &cache.TagPair{
@@ -305,7 +305,7 @@ func GetIndexByClude(c *gin.Context) {
 			var err error
 			var tags []string
 			if len(includeList) == 0 && len(excludeList) == 0 {
-				for counter, _ := range counterMap {
+				for counter := range counterMap {
 					tagList = append(tagList, counter)
 				}
 				resp = append(resp, XcludeResp{

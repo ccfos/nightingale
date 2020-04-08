@@ -32,6 +32,7 @@ func ListPlugins(dir string) map[string]*Plugin {
 		filename := f.Name()
 		arr := strings.Split(filename, "_")
 		if len(arr) < 2 {
+			logger.Warningf("plugin:%s name illegal, should be: $cycle_$xx", filename)
 			continue
 		}
 
@@ -39,10 +40,16 @@ func ListPlugins(dir string) map[string]*Plugin {
 		var cycle int
 		cycle, err = strconv.Atoi(arr[0])
 		if err != nil {
+			logger.Warningf("plugin:%s name illegal, should be: $cycle_$xx %v", filename, err)
 			continue
 		}
 
-		fpath := filepath.Join(dir, filename)
+		fpath, err := filepath.Abs(filepath.Join(dir, filename))
+		if err != nil {
+			logger.Warningf("plugin:%s absolute path get err:%v", filename, err)
+			continue
+		}
+
 		plugin := &Plugin{FilePath: fpath, MTime: f.ModTime().Unix(), Cycle: cycle}
 		ret[fpath] = plugin
 	}

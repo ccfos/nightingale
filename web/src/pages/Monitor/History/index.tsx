@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import PropTypes from 'prop-types';
 import { Tabs } from 'antd';
 import _ from 'lodash';
@@ -36,10 +37,10 @@ class index extends Component {
           this.setState({ activeKey });
         }}
       >
-        <TabPane tab="未恢复报警" key="alert">
+        <TabPane tab={<FormattedMessage id="event.tab.alert" />} key="alert">
           <List nodepath={this.state.nodepath} nid={this.state.nid} type="alert" activeKey={this.state.activeKey} />
         </TabPane>
-        <TabPane tab="所有历史报警" key="all">
+        <TabPane tab={<FormattedMessage id="event.tab.all" />} key="all">
           <List nodepath={this.state.nodepath} nid={this.state.nid} type="all" activeKey={this.state.activeKey} />
         </TabPane>
       </Tabs>

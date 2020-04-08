@@ -30,9 +30,10 @@ func (t *TagkvIndex) GetTagkv() []*TagPair {
 	t.RLock()
 	defer t.RUnlock()
 	tagkvs := []*TagPair{}
-	var vs []string
+
 	for k, vm := range t.Tagkv {
-		for v, _ := range vm {
+		var vs []string
+		for v := range vm {
 			vs = append(vs, v)
 		}
 		tagkv := TagPair{
@@ -50,9 +51,9 @@ func (t *TagkvIndex) GetTagkvMap() map[string][]string {
 	defer t.RUnlock()
 	tagkvs := make(map[string][]string)
 
-	var vs []string
 	for k, vm := range t.Tagkv {
-		for v, _ := range vm {
+		var vs []string
+		for v := range vm {
 			vs = append(vs, v)
 		}
 

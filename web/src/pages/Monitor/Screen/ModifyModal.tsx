@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import { Modal, Form, Input } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
@@ -52,10 +53,10 @@ class ModifyModal extends Component<Props & FormProps> {
           e.preventDefault();
           this.handleOk();
         }}>
-          <FormItem label="名称">
+          <FormItem label={<FormattedMessage id="table.name" />}>
             {getFieldDecorator('name', {
               initialValue: this.props.name,
-              rules: [{ required: true, message: '请填写大盘名称!' }],
+              rules: [{ required: true }],
             })(
               <Input />,
             )}

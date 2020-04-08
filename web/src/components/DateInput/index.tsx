@@ -134,17 +134,14 @@ export default class DateInput extends Component<any, any> {
                 ...locale,
               }}
               selectedValue={selectedValue}
-              onOk={(mDate) => {
+              onOk={(mDate: any) => {
                 onChange(mDate.toDate());
                 this.closePopover();
               }}
               onClear={() => {
                 this.closePopover();
               }}
-              // onChange={(mDate) => {
-              //   this.setState({ tempSelectedValue: mDate.format(momentFormat) });
-              // }}
-              onSelect={(mDate) => {
+              onSelect={(mDate: any) => {
                 if (mDate && mDate.format() !== 'Invalid date') {
                   this.setState({ tempSelectedValue: mDate.format(momentFormat) });
                 }

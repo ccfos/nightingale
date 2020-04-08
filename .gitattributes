@@ -1,0 +1,5 @@
+*.css  linguist-language=go
+*.less linguist-language=go
+*.js   linguist-language=go
+*.tsx  linguist-language=go
+*.html linguist-language=go

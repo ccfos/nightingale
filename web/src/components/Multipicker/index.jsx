@@ -21,6 +21,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Row, Col, Input, Button, Pagination, Checkbox, Popover, Tag, message } from 'antd';
 import _ from 'lodash';
+import { FormattedMessage } from 'react-intl';
 import './style.less';
 
 const TextArea = Input.TextArea ? Input.TextArea : Input;
@@ -134,7 +135,7 @@ class Multipicker extends Component {
 
     if (data.length > 500) {
       selectedList = selectedList.splice(0, 500);
-      message.warning('最多只能全选500个');
+      message.warning('Can only select a maximum of 500');
     }
     if (searchVal) {
       selectedList = _.uniq(selected.concat(this.filterData()));
@@ -249,12 +250,12 @@ class Multipicker extends Component {
         <div className="multipicker-selected-list-box">
           <Row>
             <Col span={14}>
-              <strong>已选({selected.length})：</strong>
+              <strong><FormattedMessage id="select.selected" />({selected.length})：</strong>
               <a
                 className="remove-all"
                 onClick={this.removeAll}
               >
-                清除已选项
+                <FormattedMessage id="select.selected.clear" />
               </a>
               {
                 manualEntry &&
@@ -278,7 +279,7 @@ class Multipicker extends Component {
                         }}
                       />
                       <div style={{ marginTop: 5 }}>
-                        <Button size="small" onClick={this.handleManualEntry}>确定</Button>
+                        <Button size="small" onClick={this.handleManualEntry}>Ok</Button>
                       </div>
                     </div>
                   }
@@ -290,7 +291,7 @@ class Multipicker extends Component {
                       this.setState({ manualVisible: !this.state.manualVisible });
                     }}
                   >
-                    手动输入
+                    <FormattedMessage id="select.manual.input" />
                   </a>
                 </Popover>
               }
@@ -301,15 +302,15 @@ class Multipicker extends Component {
         <div className="multipicker-option-list-box">
           <Row>
             <Col span={16}>
-              <strong>选项({data.length})：</strong>
+              <strong><FormattedMessage id="select.total" />({data.length})：</strong>
               <a
                 className="select-all-currentPage"
                 onClick={this.currentPageSelectAll}
                 style={{ paddingRight: 10 }}
               >
-                全选当前页
+                <FormattedMessage id="select.current.page" />
               </a>
-              <a className="select-all" onClick={this.selectAll}>全选</a>
+              <a className="select-all" onClick={this.selectAll}><FormattedMessage id="select.all" /></a>
             </Col>
             <Col span={8}>
               <div className="multipicker-search">
@@ -317,7 +318,7 @@ class Multipicker extends Component {
                   size="small"
                   type="text"
                   className="keyword"
-                  placeholder="搜索，支持正则"
+                  placeholder="support regular"
                   onChange={this.search} />
               </div>
             </Col>

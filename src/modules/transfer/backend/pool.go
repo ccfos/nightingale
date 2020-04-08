@@ -83,7 +83,7 @@ func (cp *ConnPools) Update(cluster []string) {
 		cp.M[address] = createOnePool(address, address, ct, maxConns, maxIdle)
 	}
 
-	for address, _ := range cp.M {
+	for address := range cp.M {
 		if _, exists := newCluster[address]; !exists {
 			delete(cp.M, address)
 		}
@@ -91,8 +91,8 @@ func (cp *ConnPools) Update(cluster []string) {
 }
 
 // 同步发送, 完成发送或超时后 才能返回
-func (this *ConnPools) Call(addr, method string, args interface{}, resp interface{}) error {
-	connPool, exists := this.Get(addr)
+func (cp *ConnPools) Call(addr, method string, args interface{}, resp interface{}) error {
+	connPool, exists := cp.Get(addr)
 	if !exists {
 		return fmt.Errorf("%s has no connection pool", addr)
 	}
@@ -103,7 +103,7 @@ func (this *ConnPools) Call(addr, method string, args interface{}, resp interfac
 	}
 
 	rpcClient := conn.(RpcClient)
-	callTimeout := time.Duration(this.CallTimeout) * time.Millisecond
+	callTimeout := time.Duration(cp.CallTimeout) * time.Millisecond
 
 	done := make(chan error, 1)
 	go func() {
@@ -125,10 +125,10 @@ func (this *ConnPools) Call(addr, method string, args interface{}, resp interfac
 	}
 }
 
-func (this *ConnPools) Get(address string) (*pool.ConnPool, bool) {
-	this.RLock()
-	defer this.RUnlock()
-	p, exists := this.M[address]
+func (cp *ConnPools) Get(address string) (*pool.ConnPool, bool) {
+	cp.RLock()
+	defer cp.RUnlock()
+	p, exists := cp.M[address]
 	return p, exists
 }
 
@@ -138,23 +138,23 @@ type RpcClient struct {
 	name string
 }
 
-func (this RpcClient) Name() string {
-	return this.name
+func (rc RpcClient) Name() string {
+	return rc.name
 }
 
-func (this RpcClient) Closed() bool {
-	return this.cli == nil
+func (rc RpcClient) Closed() bool {
+	return rc.cli == nil
 }
 
-func (this RpcClient) Close() error {
-	if this.cli != nil {
-		err := this.cli.Close()
-		this.cli = nil
+func (rc RpcClient) Close() error {
+	if rc.cli != nil {
+		err := rc.cli.Close()
+		rc.cli = nil
 		return err
 	}
 	return nil
 }
 
-func (this RpcClient) Call(method string, args interface{}, reply interface{}) error {
-	return this.cli.Call(method, args, reply)
+func (rc RpcClient) Call(method string, args interface{}, reply interface{}) error {
+	return rc.cli.Call(method, args, reply)
 }

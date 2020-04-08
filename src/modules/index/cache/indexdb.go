@@ -41,7 +41,7 @@ var semaPermanence = semaphore.NewSemaphore(1)
 func InitDB(cfg CacheSection) {
 	Config = cfg
 
-	IndexDB = &EndpointIndexMap{M: make(map[string]*MetricIndexMap, 0)}
+	IndexDB = &EndpointIndexMap{M: make(map[string]*MetricIndexMap)}
 	NewEndpoints = list.NewSafeListLimited(100000)
 
 	Rebuild(Config.PersistDir, Config.RebuildWorker)
@@ -248,24 +248,35 @@ func getIndexFromRemote(instances []*model.Instance) error {
 	filepath := fmt.Sprintf("db.tar.gz")
 	var err error
 	// Get the data
-
 	perm := rand.Perm(len(instances))
 	for i := range perm {
 		url := fmt.Sprintf("http://%s:%s/api/index/idxfile", instances[perm[i]].Identity, instances[perm[i]].HTTPPort)
-		resp, err := http.Get(url)
-		if err != nil {
-			return err
+		resp, e := http.Get(url)
+		if e != nil {
+			err = fmt.Errorf("get index from:%s err:%v", url, e)
+			logger.Warning(err)
+			continue
 		}
 		defer resp.Body.Close()
 
 		// Create the file
-		out, err := os.Create(filepath)
-		if err != nil {
-			return err
+		out, e := os.Create(filepath)
+		if e != nil {
+			err = fmt.Errorf("create file:%s err:%v", filepath, e)
+			logger.Warning(err)
+			continue
 		}
 		defer out.Close()
 		// Write the body to file
 		_, err = io.Copy(out, resp.Body)
+		if err != nil {
+			logger.Warning(err)
+			continue
+		}
+		break
+	}
+	if err != nil {
+		return err
 	}
 
 	compress.UnTarGz(filepath, ".")
@@ -273,9 +284,7 @@ func getIndexFromRemote(instances []*model.Instance) error {
 		return err
 	}
 	//清空db目录
-	if err = os.Remove(filepath); err != nil {
-		return err
-	}
+	err = os.Remove(filepath)
 
 	return err
 }

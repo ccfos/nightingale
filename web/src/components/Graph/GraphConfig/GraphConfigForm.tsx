@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import PropTypes from 'prop-types';
 import update from 'react-addons-update';
 import { Row, Col, Spin, Table, Form, Select, Input, InputNumber, Icon, TreeSelect, DatePicker } from 'antd';
@@ -75,7 +76,7 @@ export default class GraphConfigForm extends Component<Props, State> {
         metrics,
       },
       loading: false,
-      tableEmptyText: '暂无数据',
+      tableEmptyText: 'No data',
       nsSearchVal: '', // 节点搜索值
       counterListVisible: false,
       advancedVisible: false,
@@ -525,7 +526,7 @@ export default class GraphConfigForm extends Component<Props, State> {
         <FormItem
           labelCol={{ span: 3 }}
           wrapperCol={{ span: 21 }}
-          label="节点"
+          label={<FormattedMessage id="graph.config.node" />}
           style={{ marginBottom: 5 }}
           required
         >
@@ -559,7 +560,7 @@ export default class GraphConfigForm extends Component<Props, State> {
                 readOnly
                 value={_.join(_.slice(selectedTagv, 0, 40), ', ')}
                 size="default"
-                placeholder="若无此tag，请留空"
+                // placeholder="若无此tag，请留空"
                 onClick={() => {
                   show(tagk);
                 }}
@@ -585,7 +586,7 @@ export default class GraphConfigForm extends Component<Props, State> {
         <FormItem
           labelCol={{ span: 3 }}
           wrapperCol={{ span: 21 }}
-          label="指标"
+          label={<FormattedMessage id="graph.config.metric" />}
           style={{ marginBottom: 5 }}
           required
         >
@@ -593,8 +594,8 @@ export default class GraphConfigForm extends Component<Props, State> {
             showSearch
             size="default"
             style={{ width: '100%' }}
-            placeholder="监控项指标名, 如cpu.idle"
-            notFoundContent="请输入关键词过滤"
+            // placeholder="监控项指标名, 如cpu.idle"
+            // notFoundContent="请输入关键词过滤"
             className="select-metric"
             value={metricObj.selectedMetric}
             onChange={(value: string) => this.handleMetricChange(value, currentMetric)}
@@ -609,21 +610,21 @@ export default class GraphConfigForm extends Component<Props, State> {
             <FormItem
               labelCol={{ span: 6 }}
               wrapperCol={{ span: 18 }}
-              label="聚合"
+              label={<FormattedMessage id="graph.config.aggr" />}
               style={{ marginBottom: 0 }}
             >
               <Select
                 allowClear
                 size="default"
                 style={{ width: '100%' }}
-                placeholder="无"
+                // placeholder="无"
                 value={metricObj.aggrFunc}
                 onChange={(val: string) => this.handleAggregateChange(currentMetric, val)}
               >
-                <Option value="sum">求和</Option>
-                <Option value="avg">均值</Option>
-                <Option value="max">最大值</Option>
-                <Option value="min">最小值</Option>
+                <Option value="sum"><FormattedMessage id="graph.config.aggr.sum" /></Option>
+                <Option value="avg"><FormattedMessage id="graph.config.aggr.avg" /></Option>
+                <Option value="max"><FormattedMessage id="graph.config.aggr.max" /></Option>
+                <Option value="min"><FormattedMessage id="graph.config.aggr.min" /></Option>
               </Select>
             </FormItem>
           </Col>
@@ -631,7 +632,7 @@ export default class GraphConfigForm extends Component<Props, State> {
             <FormItem
               labelCol={{ span: 5 }}
               wrapperCol={{ span: 19 }}
-              label="聚合维度"
+              label={<FormattedMessage id="graph.config.aggr.group" />}
               style={{ marginBottom: 0 }}
             >
               <Select
@@ -639,7 +640,7 @@ export default class GraphConfigForm extends Component<Props, State> {
                 size="default"
                 style={{ width: '100%' }}
                 disabled={!metricObj.aggrFunc}
-                placeholder="无"
+                // placeholder="无"
                 value={metricObj.aggrGroup || []}
                 onChange={(val: string[]) => this.handleAggregateDimensionChange(currentMetric, val)}
               >
@@ -650,7 +651,7 @@ export default class GraphConfigForm extends Component<Props, State> {
             </FormItem>
           </Col>
         </Row>
-        <FormItem
+        {/* <FormItem
           labelCol={{ span: 3 }}
           wrapperCol={{ span: 21 }}
           label="采样函数"
@@ -668,7 +669,7 @@ export default class GraphConfigForm extends Component<Props, State> {
             <Option value="MAX">最大值</Option>
             <Option value="MIN">最小值</Option>
           </Select>
-        </FormItem>
+        </FormItem> */}
         <Tagkv
           type="modal"
           data={withoutEndpointTagkv}
@@ -680,7 +681,7 @@ export default class GraphConfigForm extends Component<Props, State> {
                 readOnly
                 value={_.join(_.slice(selectedTagv, 0, 40), ', ')}
                 size="default"
-                placeholder="若无此tag，请留空"
+                // placeholder="若无此tag，请留空"
                 onClick={() => {
                   show(tagk);
                 }}
@@ -706,12 +707,12 @@ export default class GraphConfigForm extends Component<Props, State> {
         <FormItem
           labelCol={{ span: 3 }}
           wrapperCol={{ span: 21 }}
-          label="曲线"
+          label={<FormattedMessage id="graph.config.series" />}
           style={{ marginBottom: 5 }}
         >
           <span style={{ color: '#ff7f00', paddingRight: 5 }}>
             {_.get(metricObj.counterList, 'length')}
-            条
+            <FormattedMessage id="graph.config.series.unit" />
           </span>
           <a onClick={() => {
             this.setState({ counterListVisible: !this.state.counterListVisible });
@@ -752,7 +753,7 @@ export default class GraphConfigForm extends Component<Props, State> {
               <FormItem
                 labelCol={{ span: 3 }}
                 wrapperCol={{ span: 21 }}
-                label="分类"
+                label={<FormattedMessage id="graph.config.cate" />}
                 style={{ marginBottom: 5 }}
                 required
               >
@@ -772,24 +773,24 @@ export default class GraphConfigForm extends Component<Props, State> {
           <FormItem
             labelCol={{ span: 3 }}
             wrapperCol={{ span: 21 }}
-            label="标题"
+            label={<FormattedMessage id="graph.config.graph.title" />}
             style={{ marginBottom: 5 }}
           >
             <Input
               style={{ width: '100%' }}
               value={graphConfig.title}
               onChange={this.handleTitleChange}
-              placeholder="如果留空将会用指标名称做为标题"
+              placeholder="The metric name as the default title"
             />
           </FormItem>
           <FormItem
             labelCol={{ span: 3 }}
             wrapperCol={{ span: 21 }}
-            label="时间"
+            label={<FormattedMessage id="graph.config.time" />}
             style={{ marginTop: 5, marginBottom: 0 }}
             required
             >
-            <Select placeholder="时间选择" size="default" style={
+            <Select size="default" style={
               timeVal === 'custom' ?
                 {
                   width: 198,
@@ -802,7 +803,7 @@ export default class GraphConfigForm extends Component<Props, State> {
               onChange={this.handleTimeOptionChange}
             >
               {
-                _.map(config.time, o => <Option key={o.value} value={o.value}>{o.label}</Option>)
+                _.map(config.time, o => <Option key={o.value} value={o.value}><FormattedMessage id={o.label} /></Option>)
               }
             </Select>
             {
@@ -838,7 +839,7 @@ export default class GraphConfigForm extends Component<Props, State> {
           <FormItem
             labelCol={{ span: 3 }}
             wrapperCol={{ span: 21 }}
-            label="阈值"
+            label={<FormattedMessage id="graph.config.threshold" />}
             style={{ marginBottom: 5 }}
           >
             <InputNumber

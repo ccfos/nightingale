@@ -43,6 +43,7 @@ type cleanerSection struct {
 type redisSection struct {
 	Addr    string         `yaml:"addr"`
 	Pass    string         `yaml:"pass"`
+	DB      int            `yaml:"db"`
 	Idle    int            `yaml:"idle"`
 	Timeout timeoutSection `yaml:"timeout"`
 }

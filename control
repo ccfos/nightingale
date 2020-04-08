@@ -136,13 +136,18 @@ status()
 build_one()
 {
 	mod=$1
-	go build -o n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
+	go build -mod=vendor -o n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
+}
+
+build_docker()
+{
+	mod=$1
+	go build -mod=vendor -o bin/n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
 }
 
 build()
 {
   export GO111MODULE=on
-  export GOPROXY=https://mirrors.aliyun.com/goproxy/
 
 	mod=$1
 	if [ "x${mod}" = "x" ]; then
@@ -152,6 +157,16 @@ build()
 		build_one judge
 		build_one collector
 		build_one tsdb
+		return
+	fi
+	
+	if [ "x${mod}" = "xdocker" ]; then
+		build_docker monapi
+		build_docker transfer
+		build_docker index
+		build_docker judge
+		build_docker collector
+		build_docker tsdb
 		return
 	fi
 

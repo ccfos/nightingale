@@ -29,6 +29,9 @@ type Event struct {
 	Nid           int64     `json:"nid"`
 	NeedUpgrade   int       `json:"need_upgrade"`
 	AlertUpgrade  string    `json:"alert_upgrade"`
+	RecvUserIDs   []int64   `json:"recv_user_ids" xorm:"-"`
+	RecvUserObjs  []User    `json:"recv_user_objs" xorm:"-"`
+	RealUpgrade   bool      `json:"real_upgrade" xorm:"-"`
 }
 
 type EventDetail struct {

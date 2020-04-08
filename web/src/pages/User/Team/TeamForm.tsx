@@ -1,4 +1,5 @@
 import React, { Component }from 'react';
+import { FormattedMessage } from 'react-intl';
 import { Form, Input, Radio, Select, Spin } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
@@ -21,13 +22,13 @@ const RadioGroup = Radio.Group;
 const { Option } = Select;
 
 class TeamForm extends Component<Props & FormProps, State> {
-  static defaultProps = {
-    initialValue: {},
+  static defaultProps: any = {
+    initialValue: {} as any,
   };
 
   lastFetchId = 0;
 
-  constructor(props: Props) {
+  constructor(props: Props & FormProps) {
     super(props);
     this.fetchUser = _.debounce(this.fetchUser, 500);
   }
@@ -89,48 +90,48 @@ class TeamForm extends Component<Props & FormProps, State> {
     const { getFieldDecorator, getFieldValue } = this.props.form!;
     return (
       <Form layout="vertical">
-        <FormItem label="英文标识" required>
+        <FormItem label={<FormattedMessage id="team.ident" />} required>
           {getFieldDecorator('ident', {
             initialValue: initialValue.ident,
-            rules: [{ required: true, message: '请填写英文标识!' }],
+            rules: [{ required: true }],
           })(
             <Input />,
           )}
         </FormItem>
-        <FormItem label="中文名称" required>
+        <FormItem label={<FormattedMessage id="team.name" />} required>
           {getFieldDecorator('name', {
             initialValue: initialValue.name,
-            rules: [{ required: true, message: '请填写中文名称!' }],
+            rules: [{ required: true }],
           })(
             <Input />,
           )}
         </FormItem>
-        <FormItem label="管理方式" required>
+        <FormItem label={<FormattedMessage id="team.mgmt" />} required>
           {getFieldDecorator('mgmt', {
             initialValue: initialValue.mgmt || 0,
-            rules: [{ required: true, message: '请选择管理方式!' }],
+            rules: [{ required: true }],
           })(
             <RadioGroup>
-              <Radio value={0}>成员管理制</Radio>
-              <Radio value={1}>管理员管理制</Radio>
+              <Radio value={0}><FormattedMessage id="team.mgmt.member" /></Radio>
+              <Radio value={1}><FormattedMessage id="team.mgmt.admin" /></Radio>
             </RadioGroup>,
           )}
         </FormItem>
         {
           getFieldValue('mgmt') === 1 ?
-            <FormItem label="管理员">
+            <FormItem label={<FormattedMessage id="team.admins" />}>
               {getFieldDecorator('admins', {
                 initialValue: initialValue.admins,
                 rules: [{
                   required: getFieldValue('mgmt') === 1,
-                  message: '管理员管理制必须选择管理员!',
+                  // message: '管理员管理制必须选择管理员!',
                 }],
               })(
                 this.renderUserSelect(),
               )}
             </FormItem> : null
         }
-        <FormItem label="普通组员">
+        <FormItem label={<FormattedMessage id="team.members" />}>
           {getFieldDecorator('members', {
             initialValue: initialValue.members,
           })(
@@ -142,4 +143,4 @@ class TeamForm extends Component<Props & FormProps, State> {
   }
 }
 
-export default Form.create()(TeamForm as any);
+export default Form.create()(TeamForm);

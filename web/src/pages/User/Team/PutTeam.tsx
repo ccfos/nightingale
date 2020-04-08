@@ -1,5 +1,5 @@
 import React, { Component }from 'react';
-import PropTypes from 'prop-types';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import { Modal, message } from 'antd';
 import _ from 'lodash';
 import ModalControl from '@cpts/ModalControl';
@@ -17,19 +17,10 @@ interface Props {
   destroy: () => void,
 }
 
-class PutTeam extends Component<Props> {
+class PutTeam extends Component<Props & WrappedComponentProps> {
   teamFormRef: any;
-  static propTypes = {
-    data: PropTypes.object.isRequired,
-    title: PropTypes.string,
-    visible: PropTypes.bool,
-    onOk: PropTypes.func,
-    onCancel: PropTypes.func,
-    destroy: PropTypes.func,
-  };
-
-  static defaultProps = {
-    title: '编辑团队',
+  static defaultProps: any = {
+    title: '',
     visible: true,
     onOk: _.noop,
     onCancel: _.noop,
@@ -46,7 +37,7 @@ class PutTeam extends Component<Props> {
             ...values,
           }),
         }).then(() => {
-          message.success('团队信息修改成功！');
+          message.success(this.props.intl.formatMessage({ id: 'msg.modify.success' }));
           this.props.onOk();
           this.props.destroy();
         });
@@ -77,4 +68,4 @@ class PutTeam extends Component<Props> {
   }
 }
 
-export default ModalControl(PutTeam);
+export default ModalControl(injectIntl(PutTeam));

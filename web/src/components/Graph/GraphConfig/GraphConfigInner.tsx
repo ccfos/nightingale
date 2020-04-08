@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FormattedMessage } from 'react-intl';
 import update from 'react-addons-update';
 import _ from 'lodash';
 import moment from 'moment';
@@ -188,19 +189,19 @@ export default class GraphConfigInner extends Component<Props> {
       <div className="graph-config-inner">
         <div className="graph-config-inner-item">
           <Button size="small" type="ghost" onClick={this.refresh}>
-            刷新
+            <FormattedMessage id="graph.refresh" />
           </Button>
         </div>
         <div className="graph-config-inner-item">
           <Select
             size="small"
             style={{ width: 70 }}
-            value={timeLabel}
+            value={<FormattedMessage id={timeLabel} />}
             onChange={this.timeOptionChange}
           >
             {
               _.map(config.time, (o) => {
-                return <Option key={o.value} value={o.value}>{o.label}</Option>;
+                return <Option key={o.value} value={o.value}><FormattedMessage id={o.label} /></Option>;
               })
             }
           </Select>
@@ -241,7 +242,7 @@ export default class GraphConfigInner extends Component<Props> {
           }
         </div>
         <div className="graph-config-inner-item">
-          聚合：
+          <FormattedMessage id="graph.config.aggr" />：
           <Select
             allowClear
             size="small"
@@ -250,17 +251,17 @@ export default class GraphConfigInner extends Component<Props> {
             value={_.get(data.metrics, '[0].aggrFunc')}
             onChange={this.handleAggrFuncChange}
           >
-            <Option value="sum">求和</Option>
-            <Option value="avg">均值</Option>
-            <Option value="max">最大值</Option>
-            <Option value="min">最小值</Option>
+            <Option value="sum"><FormattedMessage id="graph.config.aggr.sum" /></Option>
+            <Option value="avg"><FormattedMessage id="graph.config.aggr.avg" /></Option>
+            <Option value="max"><FormattedMessage id="graph.config.aggr.max" /></Option>
+            <Option value="min"><FormattedMessage id="graph.config.aggr.min" /></Option>
           </Select>
         </div>
         {
           _.get(data.metrics, '[0].aggrFunc') ?
             <div className="graph-config-inner-item">
               <Tooltip title="按照某个 tag 聚合出多条曲线">
-                <span>聚合维度：</span>
+                <span><FormattedMessage id="graph.config.aggr.group" />：</span>
               </Tooltip>
               <Select
                 mode="multiple"
@@ -276,7 +277,6 @@ export default class GraphConfigInner extends Component<Props> {
                     }],
                   });
                 }}
-                placeholder="无"
               >
                 {
                   _.map(aggrGroupOptions, o => <Option key={o.value} value={o.value}>{o.label}</Option>)
@@ -284,7 +284,7 @@ export default class GraphConfigInner extends Component<Props> {
               </Select>
             </div> : null
         }
-        <div className="graph-config-inner-item">
+        {/* <div className="graph-config-inner-item">
           采样函数：
           <Select
             allowClear
@@ -298,7 +298,7 @@ export default class GraphConfigInner extends Component<Props> {
             <Option value="MAX">最大值</Option>
             <Option value="MIN">最小值</Option>
           </Select>
-        </div>
+        </div> */}
         <div className="graph-config-inner-item">
           <Checkbox checked={!!data.legend} onChange={this.legendChange}>
             Legend

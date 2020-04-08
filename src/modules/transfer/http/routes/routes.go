@@ -18,7 +18,7 @@ func Config(r *gin.Engine) {
 		sys.GET("/alive-judges", judges)
 
 		sys.POST("/push", PushData)
-		sys.POST("/data", QueryDataForJudge)
+		sys.POST("/data", QueryData)
 		sys.POST("/data/ui", QueryDataForUI)
 	}
 

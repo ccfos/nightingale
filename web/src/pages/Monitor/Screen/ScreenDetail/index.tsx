@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { Button, Card, Divider, Popconfirm, message, Row, Col, Select, Checkbox } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import moment from 'moment';
@@ -37,7 +38,7 @@ function updateTime(nowMoment: moment.Moment, graphConfig: any) {
 
 const COUNTDOWN = 9; // 0 ~ 9
 
-class ScreenDetail extends Component<FormProps> {
+class ScreenDetail extends Component<FormProps & WrappedComponentProps> {
   timer: NodeJS.Timeout | undefined = undefined;
   state = {
     subclassLoading: false,
@@ -398,30 +399,30 @@ class ScreenDetail extends Component<FormProps> {
             <a onClick={() => {
               if (this.graphConfigForm) {
                 this.currentSubclassId = subclassObj.id;
-                this.graphConfigForm.showModal('push', '新增');
+                this.graphConfigForm.showModal('push', this.props.intl.formatMessage({ id: 'table.create' }));
               }
             }}>
-              新增图表
+              <FormattedMessage id="screen.tag.graph.add" />
             </a>
             <Divider type="vertical" />
-            <a onClick={() => this.handleModSubclass(subclassObj)}>修改</a>
+            <a onClick={() => this.handleModSubclass(subclassObj)}><FormattedMessage id="table.modify" /></a>
             <Divider type="vertical" />
-            <Popconfirm title="确认要删除这个分类吗?" onConfirm={() => this.handleDelSubclass(subclassObj.id)}>
-              <a>删除</a>
+            <Popconfirm title={<FormattedMessage id="table.delete.sure" />} onConfirm={() => this.handleDelSubclass(subclassObj.id)}>
+              <a><FormattedMessage id="table.delete" /></a>
             </Popconfirm>
             <Divider type="vertical" />
             <a
               disabled={idx === 0}
               onClick={() => this.handleMoveSubclass('up', idx)}
             >
-              上移
+              <FormattedMessage id="screen.tag.up" />
             </a>
             <Divider type="vertical" />
             <a
               disabled={idx === subclassData.length - 1}
               onClick={() => this.handleMoveSubclass('down', idx)}
             >
-              下移
+              <FormattedMessage id="screen.tag.down" />
             </a>
           </span>
         }
@@ -481,7 +482,7 @@ class ScreenDetail extends Component<FormProps> {
           }}
           onCloneGraph={(configs: any) => {
             this.currentSubclassId = subclassObj.id;
-            this.graphConfigForm.showModal('push', '克隆图表', {
+            this.graphConfigForm.showModal('push', this.props.intl.formatMessage({ id: 'table.create' }), {
               ...configs,
             });
           }}
@@ -502,12 +503,12 @@ class ScreenDetail extends Component<FormProps> {
       <div>
         <Row className="mb10">
           <Col span={6}>
-            <Button onClick={this.handleAddSubclass} style={{ marginRight: 8 }}>新增分类</Button>
-            <Button onClick={this.handleBatchMoveSubclass}>批量移动分类</Button>
+            <Button onClick={this.handleAddSubclass} style={{ marginRight: 8 }}><FormattedMessage id="screen.tag.add" /></Button>
+            <Button onClick={this.handleBatchMoveSubclass}><FormattedMessage id="screen.tag.batch.modify" /></Button>
           </Col>
           <Col span={18} className="textAlignRight">
           <span style={{ paddingRight: 10 }}>
-            时间：
+          <FormattedMessage id="graph.config.time" />：
             <Select size="default" style={
               timeVal === 'custom' ?
                 {
@@ -517,12 +518,12 @@ class ScreenDetail extends Component<FormProps> {
                   width: 80,
                 }
             }
-              placeholder="无"
+              // placeholder="无"
               value={timeVal}
               onChange={this.handleTimeOptionChange}
             >
               {
-                _.map(graphcConfig.time, o => <Option key={o.value} value={o.value}>{o.label}</Option>)
+                _.map(graphcConfig.time, o => <Option key={o.value} value={o.value}><FormattedMessage id={o.label} /></Option>)
               }
             </Select>
             {
@@ -566,7 +567,7 @@ class ScreenDetail extends Component<FormProps> {
                 });
               }}
             >
-              自动刷新 { this.state.autoRefresh ? `(${this.state.countdown})` : '' }
+              <FormattedMessage id="screen.auto.refresh" /> { this.state.autoRefresh ? `(${this.state.countdown})` : '' }
             </Checkbox>
             <Select
               style={{ width: 70 }}
@@ -577,10 +578,10 @@ class ScreenDetail extends Component<FormProps> {
                 });
               }}
             >
-              <Option key="1" value={1}>1列</Option>
-              <Option key="2" value={2}>2列</Option>
-              <Option key="3" value={3}>3列</Option>
-              <Option key="4" value={4}>4列</Option>
+              <Option key="1" value={1}>1 <FormattedMessage id="screen.col" /></Option>
+              <Option key="2" value={2}>2 <FormattedMessage id="screen.col" /></Option>
+              <Option key="3" value={3}>3 <FormattedMessage id="screen.col" /></Option>
+              <Option key="4" value={4}>4 <FormattedMessage id="screen.col" /></Option>
             </Select>
           </Col>
         </Row>
@@ -600,4 +601,4 @@ class ScreenDetail extends Component<FormProps> {
   }
 }
 
-export default CreateIncludeNsTree(ScreenDetail);
+export default CreateIncludeNsTree(injectIntl(ScreenDetail));

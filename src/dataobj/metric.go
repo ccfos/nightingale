@@ -33,8 +33,8 @@ const SPLIT = "/"
 var bufferPool = sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
 
 func (m *MetricValue) String() string {
-	return fmt.Sprintf("<MetaData Endpoint:%s, Metric:%s, Timestamp:%d, Step:%d, Value:%v, Tags:%v(%v)>",
-		m.Endpoint, m.Metric, m.Timestamp, m.Step, m.ValueUntyped, m.Tags, m.TagsMap)
+	return fmt.Sprintf("<MetaData Endpoint:%s, Metric:%s, CounterType:%s Timestamp:%d, Step:%d, Value:%v, Tags:%v(%v)>",
+		m.Endpoint, m.Metric, m.CounterType, m.Timestamp, m.Step, m.ValueUntyped, m.Tags, m.TagsMap)
 }
 
 func (m *MetricValue) PK() string {

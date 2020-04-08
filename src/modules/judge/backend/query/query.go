@@ -30,7 +30,7 @@ type IndexRequest struct {
 type Counter struct {
 	Counter string `json:"counter"`
 	Step    int    `json:"step"`
-	Dstype  string `json:"dstype`
+	Dstype  string `json:"dstype"`
 }
 
 // 执行Query操作

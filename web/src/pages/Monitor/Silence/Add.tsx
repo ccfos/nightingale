@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { Button, Row, Col, message } from 'antd';
 import _ from 'lodash';
 import moment from 'moment';
@@ -9,7 +10,7 @@ import api from '@common/api';
 import CustomForm from './CustomForm';
 import { normalizReqData } from './utils';
 
-class Add extends Component<any> {
+class Add extends Component<WrappedComponentProps> {
   customForm: any;
   state = {
     nid: undefined,
@@ -55,12 +56,12 @@ class Add extends Component<any> {
           method: 'POST',
           body: JSON.stringify(reqData),
         }).then(() => {
-          message.success('新增屏蔽成功!');
+          message.success(this.props.intl.formatMessage({ id: 'msg.create.success' }));
           history.push({
             pathname: '/monitor/silence',
           });
         }).catch(() => {
-          message.error('新增屏蔽失败！');
+          // message.error('新增屏蔽失败！');
         }).finally(() => {
           this.setState({ submitLoading: false });
         });
@@ -79,13 +80,15 @@ class Add extends Component<any> {
           initialValues={{
             btime: now.clone().unix(),
             etime: now.clone().add(1, 'hours').unix(),
-            cause: '快速屏蔽',
+            cause: this.props.intl.formatMessage({ id: 'silence.cause.default' }),
             ...initialValues,
           }}
         />
         <Row>
           <Col offset={6}>
-            <Button onClick={this.handleSubmit} loading={submitLoading} type="primary">保存</Button>
+            <Button onClick={this.handleSubmit} loading={submitLoading} type="primary">
+              <FormattedMessage id="form.submit" />
+            </Button>
           </Col>
         </Row>
       </div>
@@ -93,4 +96,4 @@ class Add extends Component<any> {
   }
 }
 
-export default CreateIncludeNsTree(Add);
+export default CreateIncludeNsTree(injectIntl(Add));

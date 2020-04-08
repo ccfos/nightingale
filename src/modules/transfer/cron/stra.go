@@ -53,7 +53,11 @@ func getStrategy() {
 			logger.Warningf("get strategy from remote failed, error:%v", stras.Err)
 			continue
 		}
+		if len(stras.Data) > 0 {
+			break
+		}
 	}
+
 	if err != nil {
 		logger.Error("get stra err:", err)
 		stats.Counter.Set("stra.err", 1)
@@ -69,7 +73,7 @@ func getStrategy() {
 
 		//var metric string
 		if len(stra.Exprs) < 1 {
-			logger.Warning("stra:%v exprs illegal", stra)
+			logger.Warningf("stra:%v exprs illegal", stra)
 			continue
 		}
 		if stra.Exprs[0].Func == "nodata" {

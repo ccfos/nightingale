@@ -78,7 +78,6 @@ func (m *MetricIndexMap) DelMetric(metric string) {
 	m.Lock()
 	defer m.Unlock()
 	delete(m.Data, metric)
-	return
 }
 
 func (m *MetricIndexMap) Len() int {
@@ -106,7 +105,7 @@ func (m *MetricIndexMap) GetMetrics() []string {
 	m.RLock()
 	defer m.RUnlock()
 	var metrics []string
-	for k, _ := range m.Data {
+	for k := range m.Data {
 		metrics = append(metrics, k)
 	}
 	return metrics

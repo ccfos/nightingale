@@ -22,7 +22,6 @@ func (this *ConsistentHashRing) Set(r *consistent.Consistent) {
 	this.Lock()
 	defer this.Unlock()
 	this.ring = r
-	return
 }
 
 func (this *ConsistentHashRing) GetRing() *consistent.Consistent {

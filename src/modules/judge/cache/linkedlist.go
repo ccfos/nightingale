@@ -12,32 +12,32 @@ type SafeLinkedList struct {
 	L *list.List
 }
 
-func (this *SafeLinkedList) Front() *list.Element {
-	this.RLock()
-	defer this.RUnlock()
-	return this.L.Front()
+func (ll *SafeLinkedList) Front() *list.Element {
+	ll.RLock()
+	defer ll.RUnlock()
+	return ll.L.Front()
 }
 
-func (this *SafeLinkedList) Len() int {
-	this.RLock()
-	defer this.RUnlock()
-	return this.L.Len()
+func (ll *SafeLinkedList) Len() int {
+	ll.RLock()
+	defer ll.RUnlock()
+	return ll.L.Len()
 }
 
 // @return needJudge 如果是false不需要做judge，因为新上来的数据不合法
-func (this *SafeLinkedList) PushFrontAndMaintain(v *dataobj.JudgeItem, maxCount int) bool {
-	this.Lock()
-	defer this.Unlock()
+func (ll *SafeLinkedList) PushFrontAndMaintain(v *dataobj.JudgeItem, maxCount int) bool {
+	ll.Lock()
+	defer ll.Unlock()
 
-	sz := this.L.Len()
+	sz := ll.L.Len()
 	if sz > 0 {
 		// 新push上来的数据有可能重复了，或者timestamp不对，这种数据要丢掉
-		if v.Timestamp <= this.L.Front().Value.(*dataobj.JudgeItem).Timestamp || v.Timestamp <= 0 {
+		if v.Timestamp <= ll.L.Front().Value.(*dataobj.JudgeItem).Timestamp || v.Timestamp <= 0 {
 			return false
 		}
 	}
 
-	this.L.PushFront(v)
+	ll.L.PushFront(v)
 
 	sz++
 	if sz <= maxCount {
@@ -46,7 +46,7 @@ func (this *SafeLinkedList) PushFrontAndMaintain(v *dataobj.JudgeItem, maxCount 
 
 	del := sz - maxCount
 	for i := 0; i < del; i++ {
-		this.L.Remove(this.L.Back())
+		ll.L.Remove(ll.L.Back())
 	}
 
 	return true
@@ -54,19 +54,19 @@ func (this *SafeLinkedList) PushFrontAndMaintain(v *dataobj.JudgeItem, maxCount 
 
 // @param limit 至多返回这些，如果不够，有多少返回多少
 // @return bool isEnough
-func (this *SafeLinkedList) HistoryData(limit int) ([]*dataobj.RRDData, bool) {
+func (ll *SafeLinkedList) HistoryData(limit int) ([]*dataobj.RRDData, bool) {
 	if limit < 1 {
 		// 其实limit不合法，此处也返回false吧，上层代码要注意
 		// 因为false通常使上层代码进入异常分支，这样就统一了
 		return []*dataobj.RRDData{}, false
 	}
 
-	size := this.Len()
+	size := ll.Len()
 	if size == 0 {
 		return []*dataobj.RRDData{}, false
 	}
 
-	firstElement := this.Front()
+	firstElement := ll.Front()
 	firstItem := firstElement.Value.(*dataobj.JudgeItem)
 
 	var vs []*dataobj.RRDData

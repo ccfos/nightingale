@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { RouteComponentProps } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import update from 'react-addons-update';
@@ -39,7 +40,7 @@ interface State {
 
 const { Content } = Layout;
 
-class MonitorDashboard extends Component<Props, State> {
+class MonitorDashboard extends Component<Props & WrappedComponentProps, State> {
   metricSelect: any;
   static contextTypes = {
     nsTreeVisibleChange: PropTypes.func,
@@ -52,7 +53,7 @@ class MonitorDashboard extends Component<Props, State> {
   onceLoad = false;
   sidebarWidth = 200;
 
-  constructor(props: Props) {
+  constructor(props: Props & WrappedComponentProps) {
     super(props);
     const now = moment();
     this.state = {
@@ -264,6 +265,8 @@ class MonitorDashboard extends Component<Props, State> {
       return JSON.stringify(data);
     });
     SubscribeModal({
+      title: <FormattedMessage id="graph.subscribe" />,
+      language: this.props.intl.locale,
       configsList,
     });
   }
@@ -301,7 +304,7 @@ class MonitorDashboard extends Component<Props, State> {
     if (!this.allHostsMode && !selectedTreeNode) {
       return (
         <div>
-          请选择节点
+          <FormattedMessage id="please.select.node" />
         </div>
       );
     }
@@ -364,21 +367,21 @@ class MonitorDashboard extends Component<Props, State> {
                   disabled={!graphs.length}
                   style={{ background: '#fff', marginRight: 8 }}
                 >
-                  订阅图表
+                  <FormattedMessage id="graph.subscribe" />
                 </Button>
                 <Button
                   onClick={this.handleShareGraphs}
                   disabled={!graphs.length}
                   style={{ background: '#fff', marginRight: 8 }}
                 >
-                  分享图表
+                  <FormattedMessage id="graph.share" />
                 </Button>
                 <Button
                   onClick={this.handleRemoveGraphs}
                   disabled={!graphs.length}
                   style={{ background: '#fff' }}
                 >
-                  清空图表
+                  <FormattedMessage id="graph.clear" />
                 </Button>
               </Col>
             </Row>
@@ -394,4 +397,4 @@ class MonitorDashboard extends Component<Props, State> {
   }
 }
 
-export default CreateIncludeNsTree(MonitorDashboard as any, { visible: true });
+export default CreateIncludeNsTree(injectIntl(MonitorDashboard), { visible: true });

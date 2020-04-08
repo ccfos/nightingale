@@ -15,6 +15,7 @@ var Config RedisSection
 type RedisSection struct {
 	Addrs   []string       `yaml:"addrs"`
 	Pass    string         `yaml:"pass"`
+	DB      int            `yaml:"db"`
 	Idle    int            `yaml:"idle"`
 	Timeout TimeoutSection `yaml:"timeout"`
 	Prefix  string         `yaml:"prefix"`
@@ -31,6 +32,7 @@ func Init(cfg RedisSection) {
 
 	addrs := cfg.Addrs
 	pass := cfg.Pass
+	db := cfg.DB
 	maxIdle := cfg.Idle
 	idleTimeout := 240 * time.Second
 
@@ -55,6 +57,15 @@ func Init(cfg RedisSection) {
 						logger.Errorf("ERR: redis auth fail:%v", err)
 						stats.Counter.Set("redis.conn.failed", 1)
 
+						return nil, err
+					}
+				}
+
+				if db != 0 {
+					if _, err := c.Do("SELECT", db); err != nil {
+						c.Close()
+						logger.Error("redis select db fail, db: ", db)
+						stats.Counter.Set("redis.conn.failed", 1)
 						return nil, err
 					}
 				}

@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/didi/nightingale/src/modules/collector/cache"
 	"github.com/didi/nightingale/src/modules/collector/config"
 	"github.com/didi/nightingale/src/modules/collector/http/routes"
 	"github.com/didi/nightingale/src/modules/collector/log/worker"
@@ -72,7 +73,7 @@ func main() {
 
 	funcs.BuildMappers()
 	funcs.Collect()
-	stra.GetCollects()
+	funcs.InitRpcClients()
 
 	//插件采集
 	plugins.Detect()
@@ -82,6 +83,9 @@ func main() {
 
 	//端口采集
 	ports.Detect()
+
+	//初始化缓存，用作保存COUNTER类型数据
+	cache.Init()
 
 	//日志采集
 	worker.Init(config.Config.Worker)

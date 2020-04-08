@@ -53,4 +53,3 @@ type AlertUpgrade struct {
 	Duration int     `json:"duration"`
 	Level    int     `json:"level"`
 }
-

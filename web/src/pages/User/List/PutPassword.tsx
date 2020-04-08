@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { Modal, Form, Input, Icon, message } from 'antd';
 import { FormProps } from 'antd/lib/form';
 import _ from 'lodash';
@@ -17,9 +18,9 @@ interface Props {
 
 const FormItem = Form.Item;
 
-class PutPassword extends Component<Props & FormProps> {
+class PutPassword extends Component<Props & FormProps & WrappedComponentProps> {
   static defaultProps = {
-    title: '修改密码',
+    title: '',
     visible: true,
     onOk: _.noop,
     onCancel: _.noop,
@@ -33,7 +34,7 @@ class PutPassword extends Component<Props & FormProps> {
           method: 'PUT',
           body: JSON.stringify(values),
         }).then(() => {
-          message.success('密码修改成功！');
+          message.success(this.props.intl.formatMessage({ id: 'user.reset.password.success' }));
           this.props.onOk();
           this.props.destroy();
         });
@@ -57,9 +58,9 @@ class PutPassword extends Component<Props & FormProps> {
         onCancel={this.handleCancel}
       >
         <Form layout="vertical">
-          <FormItem label="新密码" required>
+          <FormItem label={<FormattedMessage id="password.new" />} required>
             {getFieldDecorator('password', {
-              rules: [{ required: true, message: '请输入新密码!' }],
+              rules: [{ required: true }],
             })(
               <Input
                 prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
@@ -73,4 +74,4 @@ class PutPassword extends Component<Props & FormProps> {
   }
 }
 
-export default ModalControl(Form.create()(PutPassword as any));
+export default ModalControl(Form.create()(injectIntl(PutPassword)));

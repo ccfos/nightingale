@@ -40,6 +40,9 @@ func (i *IndexMap) Set(id int64, hash string, s Series) {
 }
 
 func (i *IndexMap) Get(id int64) []Series {
+	i.RLock()
+	defer i.RUnlock()
+
 	seriess := []Series{}
 	if ss, exists := i.Data[id]; exists {
 		for _, s := range ss {

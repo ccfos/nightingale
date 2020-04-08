@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import { Link } from 'react-router-dom';
 import _ from 'lodash';
 import { Button, Form, Select, Input, TreeSelect } from 'antd';
@@ -25,7 +26,7 @@ const defaultFormData = {
   step: 10,
 };
 
-class CollectForm extends Component<Props> {
+class CollectForm extends Component<Props & WrappedComponentProps> {
   state = {
     submitLoading: false,
   };
@@ -70,20 +71,20 @@ class CollectForm extends Component<Props> {
         <Form layout="horizontal" onSubmit={this.handleSubmit}>
           <FormItem
             {...formItemLayout}
-            label="进程采集指标"
+            label={<FormattedMessage id="collect.proc.title" />}
           >
             <span className="ant-form-text">proc.num</span>
           </FormItem>
           <FormItem
             {...formItemLayout}
-            label="归属节点"
+            label={<FormattedMessage id="collect.common.node" />}
             required
           >
             {
               getFieldDecorator('nid', {
                 initialValue: initialValues.nid,
                 rules: [
-                  { required: true, message: '不能为空' },
+                  { required: true },
                 ],
               })(
                 <TreeSelect
@@ -100,21 +101,20 @@ class CollectForm extends Component<Props> {
               )
             }
           </FormItem>
-          <FormItem {...formItemLayout} label="采集名称">
+          <FormItem {...formItemLayout} label={<FormattedMessage id="collect.common.name" />}>
             <Input
               {...getFieldProps('name', {
                 initialValue: initialValues.name,
                 rules: [
                   {
                     required: true,
-                    message: '不能为空',
                   },
                   nameRule,
                 ],
               })}
               size="default"
               style={{ width: 500 }}
-              placeholder="对采集配置的说明，例如 nginx进程采集"
+              placeholder={this.props.intl.formatMessage({ id: 'collect.proc.name.placeholder' })}
             />
           </FormItem>
           <FormItem {...formItemLayout} label="service">
@@ -122,34 +122,34 @@ class CollectForm extends Component<Props> {
               {...getFieldProps('service', {
                 initialValue: service,
                 rules: [
-                  { required: true, message: '不能为空!' },
-                  { pattern: /^[a-zA-Z0-9-]+$/, message: '只能允许填写英文、数字、中划线!' },
+                  { required: true },
+                  { pattern: /^[a-zA-Z0-9-]+$/, message: this.props.intl.formatMessage({ id: 'collect.proc.service.pattern.msg' }) },
                 ],
               })}
               size="default"
               style={{ width: 500 }}
-              placeholder="全局唯一的进程英文名"
+              // placeholder="全局唯一的进程英文名"
             />
           </FormItem>
-          <FormItem {...formItemLayout} label="采集方式" required>
+          <FormItem {...formItemLayout} label={<FormattedMessage id="collect.proc.type" />} required>
             <Select
               {...getFieldProps('collect_method', {
                 initialValue: initialValues.collect_method,
                 rules: [
-                  { required: true, message: '不能为空' },
+                  { required: true },
                 ],
               })}
               size="default"
               style={{ width: 500 }}
             >
-              <Select.Option value="cmd">命令行</Select.Option>
-              <Select.Option value="name">进程名</Select.Option>
+              <Select.Option value="cmd"><FormattedMessage id="collect.proc.type.cmd" /></Select.Option>
+              <Select.Option value="name"><FormattedMessage id="collect.proc.type.name" /></Select.Option>
             </Select>
           </FormItem>
           <FormItem
             {...formItemLayout}
             label={
-              getFieldValue('collect_method') === 'cmd' ? '命令行' : '进程名'
+              getFieldValue('collect_method') === 'cmd' ? <FormattedMessage id="collect.proc.type.cmd" /> : <FormattedMessage id="collect.proc.type.name" />
             }
             required
           >
@@ -157,31 +157,31 @@ class CollectForm extends Component<Props> {
               {...getFieldProps('target', {
                 initialValue: initialValues.target,
                 rules: [
-                  { required: true, message: '不能为空' },
-                  { pattern: /^[^\u4e00-\u9fa5]+$/, message: '不能包含中文!' },
+                  { required: true },
+                  { pattern: /^[^\u4e00-\u9fa5]+$/, message: this.props.intl.formatMessage({ id: 'collect.proc.type.input.pattern.msg' }) },
                 ],
               })}
               size="default"
               style={{ width: 500 }}
             />
           </FormItem>
-          <FormItem {...formItemLayout} label="采集周期">
+          <FormItem {...formItemLayout} label={<FormattedMessage id="collect.common.step" />}>
             <Select
               size="default"
               style={{ width: 100 }}
               {...getFieldProps('step', {
                 initialValue: initialValues.step,
                 rules: [
-                  { required: true, message: '不能为空' },
+                  { required: true },
                 ],
               })}
             >
               {
                 _.map(interval, item => <Option key={item} value={item}>{item}</Option>)
               }
-            </Select> 秒
+            </Select> <FormattedMessage id="collect.common.step.unit" />
           </FormItem>
-          <FormItem {...formItemLayout} label="备注">
+          <FormItem {...formItemLayout} label={<FormattedMessage id="collect.common.note" />}>
             <Input
               type="textarea"
               placeholder=""
@@ -192,11 +192,11 @@ class CollectForm extends Component<Props> {
             />
           </FormItem>
           <FormItem wrapperCol={{ offset: 6 }} style={{ marginTop: 24 }}>
-            <Button type="primary" htmlType="submit" loading={this.state.submitLoading}>提交</Button>
+            <Button type="primary" htmlType="submit" loading={this.state.submitLoading}><FormattedMessage id="form.submit" /></Button>
             <Button
               style={{ marginLeft: 8 }}
             >
-              <Link to={{ pathname: '/monitor/collect' }}>返回</Link>
+              <Link to={{ pathname: '/monitor/collect' }}><FormattedMessage id="form.goback" /></Link>
             </Button>
           </FormItem>
         </Form>
@@ -205,4 +205,4 @@ class CollectForm extends Component<Props> {
   }
 }
 
-export default Form.create()(CollectForm);
+export default Form.create()(injectIntl(CollectForm));
