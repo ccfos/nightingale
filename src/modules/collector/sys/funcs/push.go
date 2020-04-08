@@ -107,7 +107,7 @@ func rpcCall(addr string, items []*dataobj.MetricValue) (dataobj.TransferResp, e
 		if err != nil {
 			rpcClients.Put(addr, nil)
 			client.Close()
-			return reply, err
+			return reply, fmt.Errorf("%s rpc call done, but fail: %v", addr, err)
 		}
 	}
 
