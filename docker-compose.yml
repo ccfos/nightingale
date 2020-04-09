@@ -14,12 +14,12 @@ services:
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
       - ./pub:/home/n9e/pub
 
-  nightngale:
+  nightingale:
     build: .
-    image: nightngale
+    image: nightingale
 
   monapi:
-    image: nightngale
+    image: nightingale
     network_mode: host
     restart: always
     command: n9e-monapi
@@ -27,7 +27,7 @@ services:
       - 5800:5800
       
   transfer:
-    image: nightngale
+    image: nightingale
     network_mode: host
     restart: always
     command: n9e-transfer
@@ -36,7 +36,7 @@ services:
       - 5811:5811
 
   tsdb:
-    image: nightngale
+    image: nightingale
     network_mode: host
     restart: always
     command: n9e-tsdb
@@ -45,7 +45,7 @@ services:
       - 5821:5821
       
   index:
-    image: nightngale
+    image: nightingale
     network_mode: host
     restart: always
     command: n9e-index
@@ -54,7 +54,7 @@ services:
       - 5831:5831
 
   judge:
-    image: nightngale
+    image: nightingale
     network_mode: host
     restart: always
     command: n9e-judge
@@ -63,7 +63,7 @@ services:
       - 5841:5841
 
   collector:
-    image: nightngale
+    image: nightingale
     network_mode: host
     restart: always
     command: n9e-collector
