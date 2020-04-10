@@ -1,4 +1,4 @@
-<img src="https://s3-gz01.didistatic.com/n9e-pub/image/n9e-logo-bg-white.png" width="150" alt="Nightingale"/>
+<img src="https://s3-gz01.didistatic.com/n9e-pub/image/n9e-logo-bg-white.png" width="200" alt="Nightingale"/>
 <br>
 
 [中文简介](README_ZH.md)
