@@ -19,12 +19,21 @@ cd nightingale
 ./control build
 ```
 
-## Quick Start (need install docker for [mac](https://docs.docker.com/docker-for-mac/install/)/[win](https://docs.docker.com/docker-for-windows/install/))
+## Quickstart with Docker
 
+We has offered a Docker demo for the users who want to give it a try. Before you get started, make sure you have installed **Docker** & **docker-compose** and there are some details you should know.
+
+* We highly recommend users prepare a new VM environment to use it.
+* All the core components will be installed on your OS according to the `docker-compose.yaml`.
+* Nightingale will use the following ports, `80`, `5800`, `5810`, `5811`, `5820`, `5821`, `5830`, `5831`, `5840`, `5841`, `6379`, `2058`, `3306`.
+
+Okay. Run it! Once the docker finish its jobs, visits http://your-env-ip in your broswer. Default username and password is `root:root`.
 ```bash
-docker-compose up -d
-# open http://localhost in web browser
+$ docker-compose up -d
 ```
+
+![dashboard](https://user-images.githubusercontent.com/19553554/78956965-8b9c6180-7b16-11ea-9747-6ed5e62b068d.png)
+
 
 ## Team
 
