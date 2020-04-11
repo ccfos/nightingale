@@ -34,12 +34,12 @@ func NewRRDData(ts int64, val float64) *RRDData {
 	return &RRDData{Timestamp: ts, Value: JsonFloat(val)}
 }
 
-func (this *RRDData) String() string {
+func (rrd *RRDData) String() string {
 	return fmt.Sprintf(
 		"<RRDData:Value:%v TS:%d %v>",
-		this.Value,
-		this.Timestamp,
-		time.Unix(this.Timestamp, 0).Format("2006-01-02 15:04:05"),
+		rrd.Value,
+		rrd.Timestamp,
+		time.Unix(rrd.Timestamp, 0).Format("2006-01-02 15:04:05"),
 	)
 }
 
@@ -70,34 +70,34 @@ type TsdbItem struct {
 
 const GRAPH = 1
 
-func (this *TsdbItem) String() string {
+func (t *TsdbItem) String() string {
 	return fmt.Sprintf(
 		"<Endpoint:%s, Metric:%s, Tags:%v, TagsMap:%v, Value:%v, TS:%d %v DsType:%s, Step:%d, Heartbeat:%d, Min:%s, Max:%s>",
-		this.Endpoint,
-		this.Metric,
-		this.Tags,
-		this.TagsMap,
-		this.Value,
-		this.Timestamp,
-		str.UnixTsFormat(this.Timestamp),
-		this.DsType,
-		this.Step,
-		this.Heartbeat,
-		this.Min,
-		this.Max,
+		t.Endpoint,
+		t.Metric,
+		t.Tags,
+		t.TagsMap,
+		t.Value,
+		t.Timestamp,
+		str.UnixTsFormat(t.Timestamp),
+		t.DsType,
+		t.Step,
+		t.Heartbeat,
+		t.Min,
+		t.Max,
 	)
 }
 
-func (g *TsdbItem) PrimaryKey() string {
-	return str.PK(g.Endpoint, g.Metric, g.Tags)
+func (t *TsdbItem) PrimaryKey() string {
+	return str.PK(t.Endpoint, t.Metric, t.Tags)
 }
 
-func (g *TsdbItem) MD5() string {
-	return str.MD5(g.Endpoint, g.Metric, str.SortedTags(g.TagsMap))
+func (t *TsdbItem) MD5() string {
+	return str.MD5(t.Endpoint, t.Metric, str.SortedTags(t.TagsMap))
 }
 
-func (this *TsdbItem) UUID() string {
-	return str.UUID(this.Endpoint, this.Metric, this.Tags, this.DsType, this.Step)
+func (t *TsdbItem) UUID() string {
+	return str.UUID(t.Endpoint, t.Metric, t.Tags, t.DsType, t.Step)
 }
 
 // ConsolFunc 是RRD中的概念，比如：MIN|MAX|AVERAGE

@@ -14,6 +14,7 @@ const (
 	GAUGE   = "GAUGE"
 	COUNTER = "COUNTER"
 	DERIVE  = "DERIVE"
+	SPLIT   = "/"
 )
 
 type MetricValue struct {
@@ -28,9 +29,11 @@ type MetricValue struct {
 	TagsMap      map[string]string `json:"tagsMap"` //保留2种格式，方便后端组件使用
 }
 
-const SPLIT = "/"
-
-var bufferPool = sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
+var bufferPool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
+}
 
 func (m *MetricValue) String() string {
 	return fmt.Sprintf("<MetaData Endpoint:%s, Metric:%s, CounterType:%s Timestamp:%d, Step:%d, Value:%v, Tags:%v(%v)>",
@@ -63,38 +66,37 @@ func (m *MetricValue) CheckValidity() (err error) {
 		return
 	}
 
-	//检测保留字
-	if HasReservedWords(m.Metric) {
-		err = fmt.Errorf("metric:%s contains reserved words:[\\t] [\\r] [\\n] [,] [ ] [=]", m.Metric)
-		return
-	}
-
-	if HasReservedWords(m.Endpoint) {
-		err = fmt.Errorf("endpoint:%s contains reserved words:[\\t] [\\r] [\\n] [,] [ ] [=]", m.Endpoint)
-		return
-	}
-
 	if m.Metric == "" || m.Endpoint == "" {
-		err = fmt.Errorf("Metric|Endpoint is nil")
+		err = fmt.Errorf("metric or endpoint should not be empty")
+		return
+	}
+
+	// 检测保留字
+	reservedWords := "[\\t] [\\r] [\\n] [,] [ ] [=]"
+	if HasReservedWords(m.Metric) {
+		err = fmt.Errorf("metric:%s contains reserved words: %s", m.Metric, reservedWords)
+		return
+	}
+	if HasReservedWords(m.Endpoint) {
+		err = fmt.Errorf("endpoint:%s contains reserved words: %s", m.Endpoint, reservedWords)
 		return
 	}
 
 	if m.CounterType == "" {
 		m.CounterType = GAUGE
 	}
-
 	if m.CounterType != COUNTER && m.CounterType != GAUGE && m.CounterType != DERIVE {
-		err = fmt.Errorf("CounterType error")
+		err = fmt.Errorf("wrong counter type")
 		return
 	}
 
 	if m.ValueUntyped == "" {
-		err = fmt.Errorf("Value is nil")
+		err = fmt.Errorf("value is nil")
 		return
 	}
 
 	if m.Step <= 0 {
-		err = fmt.Errorf("step < 0")
+		err = fmt.Errorf("step sholud larger than 0")
 		return
 	}
 
@@ -106,9 +108,9 @@ func (m *MetricValue) CheckValidity() (err error) {
 	}
 
 	m.Tags = SortedTags(m.TagsMap)
-
+	// TODO(): why 510?
 	if len(m.Metric)+len(m.Tags) > 510 {
-		err = fmt.Errorf("metrc+tag > 510 is not illegal:")
+		err = fmt.Errorf("len(m.Metric)+len(m.Tags) is too large")
 		return
 	}
 
@@ -140,7 +142,7 @@ func (m *MetricValue) CheckValidity() (err error) {
 	}
 
 	if !valid {
-		err = fmt.Errorf("value is not illegal:%v", m)
+		err = fmt.Errorf("value [%v] is illegal", m.Value)
 		return
 	}
 
@@ -149,20 +151,15 @@ func (m *MetricValue) CheckValidity() (err error) {
 }
 
 func HasReservedWords(str string) bool {
-	if -1 == strings.IndexFunc(str,
-		func(r rune) bool {
-			return r == '\t' ||
-				r == '\r' ||
-				r == '\n' ||
-				r == ',' ||
-				r == ' ' ||
-				r == '='
-		}) {
-
-		return false
-	}
-
-	return true
+	idx := strings.IndexFunc(str, func(r rune) bool {
+		return r == '\t' ||
+			r == '\r' ||
+			r == '\n' ||
+			r == ',' ||
+			r == ' ' ||
+			r == '='
+	})
+	return idx != -1
 }
 
 func SortedTags(tags map[string]string) string {
@@ -171,7 +168,6 @@ func SortedTags(tags map[string]string) string {
 	}
 
 	size := len(tags)
-
 	if size == 0 {
 		return ""
 	}
@@ -195,7 +191,6 @@ func SortedTags(tags map[string]string) string {
 		keys[i] = k
 		i++
 	}
-
 	sort.Strings(keys)
 
 	for j, key := range keys {
@@ -211,7 +206,6 @@ func SortedTags(tags map[string]string) string {
 }
 
 func SplitTagsString(s string) (tags map[string]string, err error) {
-	err = nil
 	tags = make(map[string]string)
 
 	s = strings.Replace(s, " ", "", -1)
@@ -239,15 +233,16 @@ func DictedTagstring(s string) map[string]string {
 	}
 	s = strings.Replace(s, " ", "", -1)
 
-	tag_dict := make(map[string]string)
+	result := make(map[string]string)
 	tags := strings.Split(s, ",")
 	for _, tag := range tags {
-		tag_pair := strings.SplitN(tag, "=", 2)
-		if len(tag_pair) == 2 {
-			tag_dict[tag_pair[0]] = tag_pair[1]
+		pair := strings.SplitN(tag, "=", 2)
+		if len(pair) == 2 {
+			result[pair[0]] = pair[1]
 		}
 	}
-	return tag_dict
+
+	return result
 }
 
 func PKWithCounter(endpoint, counter string) string {
@@ -303,12 +298,8 @@ type BuiltinMetric struct {
 	Tags   string
 }
 
-func (this *BuiltinMetric) String() string {
-	return fmt.Sprintf(
-		"%s/%s",
-		this.Metric,
-		this.Tags,
-	)
+func (bm *BuiltinMetric) String() string {
+	return fmt.Sprintf("%s/%s", bm.Metric, bm.Tags)
 }
 
 type BuiltinMetricRequest struct {
@@ -324,23 +315,23 @@ type BuiltinMetricResponse struct {
 	ErrCode   int
 }
 
-func (this *BuiltinMetricResponse) String() string {
+func (br *BuiltinMetricResponse) String() string {
 	return fmt.Sprintf(
 		"<Metrics:%v, Checksum:%s, Timestamp:%v>",
-		this.Metrics,
-		this.Checksum,
-		this.Timestamp,
+		br.Metrics,
+		br.Checksum,
+		br.Timestamp,
 	)
 }
 
 type BuiltinMetricSlice []*BuiltinMetric
 
-func (this BuiltinMetricSlice) Len() int {
-	return len(this)
+func (bm BuiltinMetricSlice) Len() int {
+	return len(bm)
 }
-func (this BuiltinMetricSlice) Swap(i, j int) {
-	this[i], this[j] = this[j], this[i]
+func (bm BuiltinMetricSlice) Swap(i, j int) {
+	bm[i], bm[j] = bm[j], bm[i]
 }
-func (this BuiltinMetricSlice) Less(i, j int) bool {
-	return this[i].String() < this[j].String()
+func (bm BuiltinMetricSlice) Less(i, j int) bool {
+	return bm[i].String() < bm[j].String()
 }
