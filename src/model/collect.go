@@ -346,7 +346,7 @@ func GetCollectByNid(collectType string, nids []int64) ([]interface{}, error) {
 		return res, err
 
 	default:
-		return nil, fmt.Errorf("illeage collectType")
+		return nil, fmt.Errorf("illegal collectType")
 	}
 
 }
@@ -368,7 +368,7 @@ func GetCollectById(collectType string, cid int64) (interface{}, error) {
 		return collect, err
 
 	default:
-		return nil, fmt.Errorf("illeage collectType")
+		return nil, fmt.Errorf("illegal collectType")
 	}
 }
 
@@ -416,15 +416,14 @@ func saveHist(id int64, tp string, action, username, body string, session *xorm.
 }
 
 func GetCollectsModel(t string) (interface{}, error) {
+	collects := make([]*PortCollect, 0)
 	switch t {
 	case "port":
-		collects := []*PortCollect{}
 		return collects, nil
 	case "proc":
-		collects := []*ProcCollect{}
 		return collects, nil
 
 	default:
-		return nil, fmt.Errorf("illeage collectType")
+		return nil, fmt.Errorf("illegal collectType")
 	}
 }
