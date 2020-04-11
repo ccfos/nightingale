@@ -44,7 +44,7 @@ func updateIndexIncr() int {
 	ret := 0
 	aggrNum := 200
 
-	for idx, _ := range UnIndexedItemCacheBigMap {
+	for idx := range UnIndexedItemCacheBigMap {
 		if UnIndexedItemCacheBigMap[idx] == nil || UnIndexedItemCacheBigMap[idx].Size() <= 0 {
 			continue
 		}

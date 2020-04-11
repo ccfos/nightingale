@@ -49,7 +49,7 @@ func UpdateConfigsLoop() {
 			}
 		}
 
-		for id, _ := range ManagerConfig {
+		for id := range ManagerConfig {
 			if _, ok := strategyMap[id]; !ok { //如果策略中不存在，说明用户已删除
 				cfg := &ConfigInfo{
 					Id:       id,
