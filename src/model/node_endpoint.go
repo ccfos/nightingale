@@ -24,7 +24,7 @@ func NodeIdsGetByEndpointId(endpointId int64) ([]int64, error) {
 }
 
 func EndpointIdsByNodeIds(nodeIds []int64) ([]int64, error) {
-	if nodeIds == nil || len(nodeIds) == 0 {
+	if len(nodeIds) == 0 {
 		return []int64{}, nil
 	}
 
@@ -34,7 +34,7 @@ func EndpointIdsByNodeIds(nodeIds []int64) ([]int64, error) {
 }
 
 func NodeEndpointGetByEndpointIds(endpointsIds []int64) ([]NodeEndpoint, error) {
-	if endpointsIds == nil || len(endpointsIds) == 0 {
+	if len(endpointsIds) == 0 {
 		return []NodeEndpoint{}, nil
 	}
 
@@ -71,7 +71,7 @@ func EndpointBindingsForMail(endpoints []string) []string {
 }
 
 func NodeEndpointGetByNodeIds(nodeIds []int64) ([]NodeEndpoint, error) {
-	if nodeIds == nil || len(nodeIds) == 0 {
+	if len(nodeIds) == 0 {
 		return []NodeEndpoint{}, nil
 	}
 
