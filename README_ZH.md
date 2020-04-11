@@ -27,7 +27,7 @@ cd nightingale
 * 系统组件占用了以下端口，`80`, `5800`, `5810`, `5811`, `5820`, `5821`, `5830`, `5831`, `5840`, `5841`, `6379`, `2058`, `3306`，部署前请确保这些端口没有被使用。
 
 
-使用 docker-compose 一键构建部署，完成以后可以使用浏览器打开 http://your-env-ip。默认的登录账号密码均为 `root`。
+使用 docker-compose 一键构建部署，完成以后可以使用浏览器打开 http://your-env-ip。 默认的登录账号密码均为 `root`。
 ```bash
 $ docker-compose up -d
 ```
@@ -38,9 +38,12 @@ $ docker-compose up -d
 
 [ulricqin](https://github.com/ulricqin) [710leo](https://github.com/710leo) [jsers](https://github.com/jsers) [hujter](https://github.com/hujter) [n4mine](https://github.com/n4mine) [heli567](https://github.com/heli567)
 
-## 协议
+## 社区
+
+[github.com/n9e](https://github.com/n9e) 是为夜莺所创建的 Organization，用于收集和开发夜莺周边项目。
+
+## License
 
 <img alt="Apache-2.0 license" src="https://s3-gz01.didistatic.com/n9e-pub/image/apache.jpeg" width="128">
 
-Nightingale 基于 Apache-2.0 协议进行分发和使用，更多信息参见 [协议文件](LICENSE)。
-
+Nightingale 基于 Apache-2.0 许可证进行分发和使用，更多信息参见 [LICENSE](LICENSE)。

@@ -34,10 +34,13 @@ $ docker-compose up -d
 
 ![dashboard](https://user-images.githubusercontent.com/19553554/78956965-8b9c6180-7b16-11ea-9747-6ed5e62b068d.png)
 
-
 ## Team
 
 [ulricqin](https://github.com/ulricqin) [710leo](https://github.com/710leo) [jsers](https://github.com/jsers) [hujter](https://github.com/hujter) [n4mine](https://github.com/n4mine) [heli567](https://github.com/heli567)
+
+## Community
+
+Nightingale is developed in open. Here we set up an organization, [github.com/n9e](https://github.com/n9e), which is used to communicate and contribute. We sincerely hope more developers can use their creativity to make lots of related projects for the Nightingale ecosystem.
 
 ## License
 
