@@ -219,7 +219,7 @@ func WriteIndexToFile(indexDir, endpoint string) error {
 	body, err := json.Marshal(metricIndexMap)
 	metricIndexMap.Unlock()
 	if err != nil {
-		return fmt.Errorf("marshal struct to json failed:%v\n", err)
+		return fmt.Errorf("marshal struct to json failed:%v", err)
 	}
 
 	err = ioutil.WriteFile(fmt.Sprintf("%s/%s", indexDir, endpoint), body, 0666)
