@@ -91,11 +91,10 @@ func GetTagPairs(c *gin.Context) {
 	recv := EndpointMetricRecv{}
 	errors.Dangerous(c.ShouldBindJSON(&recv))
 
-	resp := []*IndexTagkvResp{}
-
+	resp := make([]*IndexTagkvResp, 0)
 	for _, metric := range recv.Metrics {
 		tagkvFilter := make(map[string]map[string]struct{})
-		tagkvs := []*cache.TagPair{}
+		tagkvs := make([]*cache.TagPair, 0)
 
 		for _, endpoint := range recv.Endpoints {
 			metricIndex, exists := cache.IndexDB.GetMetricIndex(endpoint, metric)
@@ -124,7 +123,7 @@ func GetTagPairs(c *gin.Context) {
 		}
 
 		for tagk, tagvFilter := range tagkvFilter {
-			tagvs := []string{}
+			tagvs := make([]string, len(tagvFilter))
 			for v := range tagvFilter {
 				tagvs = append(tagvs, v)
 			}
@@ -161,15 +160,13 @@ type GetIndexByFullTagsResp struct {
 
 func GetIndexByFullTags(c *gin.Context) {
 	stats.Counter.Set("counter.qp10s", 1)
-
-	recv := []GetIndexByFullTagsRecv{}
+	recv := make([]GetIndexByFullTagsRecv, 0)
 	errors.Dangerous(c.ShouldBindJSON(&recv))
 
 	tagFilter := make(map[string]struct{})
-	tagsList := []string{}
+	tagsList := make([]string, 0)
 
 	var resp []GetIndexByFullTagsResp
-
 	for _, r := range recv {
 		metric := r.Metric
 		tagkv := r.Tagkv
@@ -178,20 +175,19 @@ func GetIndexByFullTags(c *gin.Context) {
 
 		for _, endpoint := range r.Endpoints {
 			if endpoint == "" {
-				logger.Debugf("非法请求: endpoint字段缺失:%v", r)
+				logger.Debugf("invalid request: lack of endpoint param:%v\n", r)
 				stats.Counter.Set("query.counter.miss", 1)
-
 				continue
 			}
 			if metric == "" {
-				logger.Debugf("非法请求: metric字段缺失:%v", r)
+				logger.Debugf("invalid request: lack of metric param:%v\n", r)
 				stats.Counter.Set("query.counter.miss", 1)
 				continue
 			}
 
 			metricIndex, exists := cache.IndexDB.GetMetricIndex(endpoint, metric)
 			if !exists {
-				logger.Debugf("not found index by endpoint:%s metric:%v", endpoint, metric)
+				logger.Debugf("can't found index by endpoint:%s metric:%v\n", endpoint, metric)
 				stats.Counter.Set("query.counter.miss", 1)
 				continue
 			}
@@ -207,10 +203,11 @@ func GetIndexByFullTags(c *gin.Context) {
 			tags := cache.GetAllCounter(tagPairs)
 
 			for _, tag := range tags {
-				//校验和tag有关的counter是否存在，如果一个指标，比如port.listen有name=uic,port=8056和name=hsp,port=8002。避免产生4个曲线
+				// 校验和 tag 有关的 counter 是否存在
+				// 如果一个指标，比如 port.listen 有 name=uic,port=8056 和 name=hsp,port=8002。避免产生 4 个曲线
 				if _, exists := countersMap[tag]; !exists {
 					stats.Counter.Set("query.counter.miss", 1)
-					logger.Debugf("not found counters byendpoint:%s metric:%v tags:%v\n", endpoint, metric, tag)
+					logger.Debugf("can't found counters by endpoint:%s metric:%v tags:%v\n", endpoint, metric, tag)
 					continue
 				}
 
@@ -251,7 +248,7 @@ type XcludeResp struct {
 func GetIndexByClude(c *gin.Context) {
 	stats.Counter.Set("xclude.qp10s", 1)
 
-	recv := []CludeRecv{}
+	recv := make([]CludeRecv, 0)
 	errors.Dangerous(c.ShouldBindJSON(&recv))
 
 	var resp []XcludeResp
@@ -262,19 +259,18 @@ func GetIndexByClude(c *gin.Context) {
 		excludeList := r.Exclude
 		step := 0
 		dsType := ""
-		tagList := []string{}
+		tagList := make([]string, 0)
 		tagFilter := make(map[string]struct{})
 
 		for _, endpoint := range r.Endpoints {
 			if endpoint == "" {
-				logger.Debugf("非法请求: endpoint字段缺失:%v", r)
+				logger.Debugf("invalid request: lack of endpoint param:%v\n", r)
 				stats.Counter.Set("xclude.miss", 1)
 				continue
 			}
 			if metric == "" {
-				logger.Debugf("非法请求: metric字段缺失:%v", r)
+				logger.Debugf("invalid request: lack of metric param:%v\n", r)
 				stats.Counter.Set("xclude.miss", 1)
-
 				continue
 			}
 
@@ -288,7 +284,7 @@ func GetIndexByClude(c *gin.Context) {
 					Step:     step,
 					DsType:   dsType,
 				})
-				logger.Debugf("not found index by endpoint:%s metric:%v\n", endpoint, metric)
+				logger.Debugf("can't found index by endpoint:%s metric:%v\n", endpoint, metric)
 				stats.Counter.Set("xclude.miss", 1)
 
 				continue
@@ -299,7 +295,8 @@ func GetIndexByClude(c *gin.Context) {
 				dsType = metricIndex.DsType
 			}
 
-			//校验实际tag组合成的counter是否存在，如果一个指标，比如port.listen有name=uic,port=8056和name=hsp,port=8002。避免产生4个曲线
+			// 校验和 tag 有关的 counter 是否存在
+			// 如果一个指标，比如 port.listen 有 name=uic,port=8056 和 name=hsp,port=8002。避免产生 4 个曲线
 			counterMap := metricIndex.CounterMap.GetCounters()
 
 			var err error
@@ -325,13 +322,15 @@ func GetIndexByClude(c *gin.Context) {
 			}
 
 			for _, tag := range tags {
-				if tag == "" { //过滤掉空字符串
+				//过滤掉空字符串
+				if tag == "" {
 					continue
 				}
 
-				//校验实际tag组合成的counter是否存在，如果一个指标，比如port.listen有name=uic,port=8056和name=hsp,port=8002。避免产生4个曲线
+				// 校验和 tag 有关的 counter 是否存在
+				// 如果一个指标，比如 port.listen 有 name=uic,port=8056 和 name=hsp,port=8002。避免产生 4 个曲线
 				if _, exists := counterMap[tag]; !exists {
-					logger.Debugf("not found counters by endpoint:%s metric:%v tags:%v\n", endpoint, metric, tag)
+					logger.Debugf("can't found counters by endpoint:%s metric:%v tags:%v\n", endpoint, metric, tag)
 					stats.Counter.Set("xclude.miss", 1)
 					continue
 				}
