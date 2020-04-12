@@ -8,6 +8,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+// Counter: ordered tags
 type CounterTsMap struct {
 	sync.RWMutex
 	M map[string]int64 `json:"counters"` // map[counter]ts

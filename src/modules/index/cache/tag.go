@@ -5,7 +5,7 @@ import (
 )
 
 type TagPair struct {
-	Key    string   `json:"tagk"` //json和变量不一致为了兼容前端
+	Key    string   `json:"tagk"` // json 和变量不一致为了兼容前端
 	Values []string `json:"tagv"`
 }
 
@@ -85,33 +85,35 @@ func getMatchedTags(tagsMap map[string][]string, include, exclude []*TagPair) ma
 	return fullMatch
 }
 
-// TODO(need to discuss): 算法的正确性？
+// GetAllCounter returns all possible tags combination.
+// But not all of them will in the CounterMaps.
 func GetAllCounter(tags []*TagPair) []string {
 	if len(tags) == 0 {
 		return []string{}
 	}
-	firstStruct := tags[0]
-	firstList := make([]string, len(firstStruct.Values))
 
-	for i, v := range firstStruct.Values {
-		firstList[i] = firstStruct.Key + "=" + v
+	head := tags[0]
+	firstList := make([]string, len(head.Values))
+
+	for i, v := range head.Values {
+		firstList[i] = head.Key + "=" + v
 	}
 
 	otherList := GetAllCounter(tags[1:])
 	if len(otherList) == 0 {
 		return firstList
-	} else {
-		retList := make([]string, len(otherList)*len(firstList))
-		i := 0
-		for _, firstV := range firstList {
-			for _, otherV := range otherList {
-				retList[i] = firstV + "," + otherV
-				i++
-			}
-		}
-
-		return retList
 	}
+
+	rest := make([]string, len(otherList)*len(firstList))
+	i := 0
+	for _, firstV := range firstList {
+		for _, otherV := range otherList {
+			rest[i] = firstV + "," + otherV
+			i++
+		}
+	}
+
+	return rest
 }
 
 // OverMaxLimit check whether it can over limit or not.

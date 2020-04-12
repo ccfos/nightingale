@@ -51,9 +51,15 @@ func reportEndpoint(endpoints []interface{}) {
 				SetTimeout(3*time.Second).
 				Header("x-srv-token", "monapi-builtin-token").
 				ToJSON(&body)
-			// HTTP 请求错误或者数据库连接出错会出现此情况
-			if err != nil || body.Err != "" {
+			if err != nil {
 				logger.Warningf("curl [%s] fail: %v. retry", url, err)
+				stats.Counter.Set("report.endpoint.err", 1)
+				continue
+			}
+
+			// 数据库连接出错会出现此情况
+			if body.Err != "" {
+				logger.Warningf("curl [%s] fail: %v. retry", url, body.Err)
 				stats.Counter.Set("report.endpoint.err", 1)
 				continue
 			}
