@@ -77,6 +77,6 @@ func parseProcName(fname string) (method string, name string, step int, err erro
 
 	method = arr[1]
 
-	name = strings.Join(arr[2:len(arr)], "_")
+	name = strings.Join(arr[2:], "_")
 	return
 }

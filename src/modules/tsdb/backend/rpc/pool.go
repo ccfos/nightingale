@@ -132,7 +132,7 @@ func (c *ConnPools) UpdatePools(addrs []string) []string {
 		c.M[addr] = createOnePool(addr, addr, ct, c.MaxConns, c.MaxIdle)
 	}
 
-	for addr, _ := range c.M { //删除旧的地址
+	for addr := range c.M { //删除旧的地址
 		if _, exists := addrMap[addr]; !exists {
 			delete(c.M, addr)
 		}

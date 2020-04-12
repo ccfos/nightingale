@@ -9,10 +9,10 @@ import (
 
 var (
 	validFuncName = map[string]struct{}{
-		"sum": struct{}{},
-		"avg": struct{}{},
-		"max": struct{}{},
-		"min": struct{}{},
+		"sum": {},
+		"avg": {},
+		"max": {},
+		"min": {},
 	}
 )
 

@@ -131,7 +131,7 @@ func (s *Stra) Update() error {
 		return err
 	}
 
-	exists, err := session.Id(s.Id).Get(&obj)
+	exists, err := session.ID(s.Id).Get(&obj)
 	if err != nil {
 		session.Rollback()
 		return err
@@ -142,7 +142,7 @@ func (s *Stra) Update() error {
 		return fmt.Errorf("%d not exists", s.Id)
 	}
 
-	_, err = session.Id(s.Id).AllCols().Update(s)
+	_, err = session.ID(s.Id).AllCols().Update(s)
 	if err != nil {
 		session.Rollback()
 		return err
@@ -187,7 +187,7 @@ func StraDel(id int64) error {
 		return err
 	}
 
-	exists, err := session.Id(id).Get(&obj)
+	exists, err := session.ID(id).Get(&obj)
 	if err != nil {
 		session.Rollback()
 		return err
@@ -198,7 +198,7 @@ func StraDel(id int64) error {
 		return fmt.Errorf("%d not exists", obj.Id)
 	}
 
-	if _, err := session.Id(id).Delete(new(Stra)); err != nil {
+	if _, err := session.ID(id).Delete(new(Stra)); err != nil {
 		session.Rollback()
 		return err
 	}
@@ -349,12 +349,16 @@ func (s *Stra) Encode() error {
 	}
 	s.ExprsStr = string(exprs)
 
-	//校验exprs
+	// 校验 exprs
 	var exprsTmp []Exp
 	err = json.Unmarshal(exprs, &exprsTmp)
+	if err != nil {
+		return fmt.Errorf("unmarshal exprs err:%v", err)
+	}
+
 	for _, exp := range exprsTmp {
 		if _, found := MathOperators[exp.Eopt]; !found {
-			return fmt.Errorf("unknown exp.eopt:%s", exp)
+			return fmt.Errorf("unknown exp.eopt:%v", exp)
 		}
 	}
 
@@ -364,9 +368,13 @@ func (s *Stra) Encode() error {
 	}
 	s.TagsStr = string(tags)
 
-	//校验tags
+	// 校验 tags
 	var tagsTmp []Tag
 	err = json.Unmarshal(tags, &tagsTmp)
+	if err != nil {
+		return fmt.Errorf("unmarshal Tags err:%v", err)
+	}
+
 	for _, tag := range tagsTmp {
 		if tag.Topt != "=" && tag.Topt != "!=" {
 			return fmt.Errorf("unknown tag.topt")
@@ -470,22 +478,22 @@ func (s *Stra) Decode() error {
 func checkDurationString(str string) error {
 	slice := strings.Split(str, ":")
 	if len(slice) != 2 {
-		return fmt.Errorf("illegal duration", str)
+		return fmt.Errorf("illegal duration: %s", str)
 	}
 
 	hour, err := strconv.Atoi(slice[0])
 	if err != nil {
-		return fmt.Errorf("illegal duration", str)
+		return fmt.Errorf("illegal duration: %s", str)
 	}
 	if hour < 0 || hour > 23 {
-		return fmt.Errorf("illegal duration", str)
+		return fmt.Errorf("illegal duration: %s", str)
 	}
 	minute, err := strconv.Atoi(slice[1])
 	if err != nil {
-		return fmt.Errorf("illegal duration", str)
+		return fmt.Errorf("illegal duration: %s", str)
 	}
 	if minute < 0 || minute > 59 {
-		return fmt.Errorf("illegal duration", str)
+		return fmt.Errorf("illegal duration: %s", str)
 	}
 
 	return nil

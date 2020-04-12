@@ -65,7 +65,7 @@ func GetCachedAll() string {
 func (this *counterCache) GetKeys() []string {
 	this.RLock()
 	retList := make([]string, 0)
-	for k, _ := range this.Points {
+	for k := range this.Points {
 		retList = append(retList, k)
 	}
 	this.RUnlock()
@@ -89,7 +89,7 @@ func (this *pushPointsCache) AddCounter(counter string) {
 func (this *pushPointsCache) GetCounters() []string {
 	ret := make([]string, 0)
 	this.RLock()
-	for k, _ := range this.Counters {
+	for k := range this.Counters {
 		ret = append(ret, k)
 	}
 	this.RUnlock()

@@ -49,7 +49,7 @@ func RebuildAllIndex(params ...[]string) error {
 		defer UpdateIndexLock.Release()
 		var pushCnt = 0
 		var oldCnt = 0
-		for idx, _ := range IndexedItemCacheBigMap {
+		for idx := range IndexedItemCacheBigMap {
 			keys := IndexedItemCacheBigMap[idx].Keys()
 
 			i := 0

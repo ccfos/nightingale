@@ -224,7 +224,7 @@ func addFloat64(val *float64, delta float64) (new float64) {
 func (this *StrategyCounter) GetTmsList() []int64 {
 	tmsList := []int64{}
 	this.RLock()
-	for tms, _ := range this.TmsPoints {
+	for tms := range this.TmsPoints {
 		tmsList = append(tmsList, tms)
 	}
 	this.RUnlock()
@@ -328,7 +328,7 @@ func (this *GlobalCounter) GetStrategyCountByID(id int64) (*StrategyCounter, err
 func (this *GlobalCounter) GetIDs() []int64 {
 	this.RLock()
 	rList := make([]int64, 0)
-	for k, _ := range this.StrategyCounts {
+	for k := range this.StrategyCounts {
 		rList = append(rList, k)
 	}
 	this.RUnlock()
