@@ -16,27 +16,29 @@ type EndpointIndexMap struct {
 	M map[string]*MetricIndexMap `json:"endpoint_index"` //map[endpoint]metricMap{map[metric]Index}
 }
 
-//push 索引数据
+// Push 索引数据
 func (e *EndpointIndexMap) Push(item dataobj.IndexModel, now int64) {
-	counter := dataobj.SortedTags(item.Tags)
+	tags := dataobj.SortedTags(item.Tags)
 	metric := item.Metric
 
+	// 先判断 endpoint 是否已经被记录，不存在则直接初始化
 	metricIndexMap, exists := e.GetMetricIndexMap(item.Endpoint)
 	if !exists {
 		metricIndexMap = &MetricIndexMap{Data: make(map[string]*MetricIndex)}
-		metricIndexMap.SetMetricIndex(metric, NewMetricIndex(item, counter, now))
+		metricIndexMap.SetMetricIndex(metric, NewMetricIndex(item, tags, now))
 		e.SetMetricIndexMap(item.Endpoint, metricIndexMap)
 
-		NewEndpoints.PushFront(item.Endpoint) //必须在metricIndexMap成功之后在push
+		NewEndpoints.PushFront(item.Endpoint) //必须在 metricIndexMap 成功之后再 push
 		return
 	}
 
+	// 再判断该 endpoint 下的具体某个 metric 是否存在
 	metricIndex, exists := metricIndexMap.GetMetricIndex(metric)
 	if !exists {
-		metricIndexMap.SetMetricIndex(metric, NewMetricIndex(item, counter, now))
+		metricIndexMap.SetMetricIndex(metric, NewMetricIndex(item, tags, now))
 		return
 	}
-	metricIndex.Set(item, counter, now)
+	metricIndex.Set(item, tags, now)
 }
 
 func (e *EndpointIndexMap) Clean(timeDuration int64) {
@@ -49,13 +51,12 @@ func (e *EndpointIndexMap) Clean(timeDuration int64) {
 		}
 
 		metricIndexMap.Clean(now, timeDuration, endpoint)
-
 		if metricIndexMap.Len() < 1 {
 			e.Lock()
 			delete(e.M, endpoint)
 			stats.Counter.Set("endpoint.clean", 1)
 			e.Unlock()
-			logger.Debug("clean index endpoint: ", endpoint)
+			logger.Debug("clean index endpoint:", endpoint)
 		}
 	}
 }
@@ -63,6 +64,7 @@ func (e *EndpointIndexMap) Clean(timeDuration int64) {
 func (e *EndpointIndexMap) GetMetricIndex(endpoint, metric string) (*MetricIndex, bool) {
 	e.RLock()
 	defer e.RUnlock()
+
 	metricIndexMap, exists := e.M[endpoint]
 	if !exists {
 		return nil, false
@@ -73,6 +75,7 @@ func (e *EndpointIndexMap) GetMetricIndex(endpoint, metric string) (*MetricIndex
 func (e *EndpointIndexMap) GetMetricIndexMap(endpoint string) (*MetricIndexMap, bool) {
 	e.RLock()
 	defer e.RUnlock()
+
 	metricIndexMap, exists := e.M[endpoint]
 	return metricIndexMap, exists
 }
@@ -80,12 +83,14 @@ func (e *EndpointIndexMap) GetMetricIndexMap(endpoint string) (*MetricIndexMap, 
 func (e *EndpointIndexMap) SetMetricIndexMap(endpoint string, metricIndex *MetricIndexMap) {
 	e.Lock()
 	defer e.Unlock()
+
 	e.M[endpoint] = metricIndex
 }
 
 func (e *EndpointIndexMap) GetMetricsBy(endpoint string) []string {
 	e.RLock()
 	defer e.RUnlock()
+
 	if _, exists := e.M[endpoint]; !exists {
 		return []string{}
 	}
@@ -97,29 +102,28 @@ func (e *EndpointIndexMap) GetIndexByClude(endpoint, metric string, include, exc
 	if !exists {
 		return []string{}, nil
 	}
-	tagkvs := metricIndex.TagkvMap.GetTagkvMap()
 
-	fullmatch := getMatchedTags(tagkvs, include, exclude)
-	// 部分tagk的tagv全部被exclude 或者 完全没有匹配的
-	if len(fullmatch) != len(tagkvs) || len(fullmatch) == 0 {
+	tagkvs := metricIndex.TagkvMap.GetTagkvMap()
+	tags := getMatchedTags(tagkvs, include, exclude)
+	// 部分 tagk 的 tagv 全部被 exclude 或者 完全没有匹配的
+	if len(tags) != len(tagkvs) || len(tags) == 0 {
 		return []string{}, nil
 	}
 
-	if OverMaxLimit(fullmatch, Config.MaxQueryCount) {
-		err := fmt.Errorf("xclude fullmatch get too much counters,  endpoint:%s metric:%s, "+
+	if OverMaxLimit(tags, Config.MaxQueryCount) {
+		err := fmt.Errorf("xclude fullmatch get too much counters, endpoint:%s metric:%s, "+
 			"include:%v, exclude:%v\n", endpoint, metric, include, exclude)
 		return []string{}, err
 	}
 
-	return GetAllCounter(GetSortTags(fullmatch)), nil
+	return GetAllCounter(GetSortTags(tags)), nil
 }
 
 func (e *EndpointIndexMap) GetEndpoints() []string {
 	e.RLock()
 	defer e.RUnlock()
 
-	length := len(e.M)
-	ret := make([]string, length)
+	ret := make([]string, len(e.M))
 	i := 0
 	for endpoint := range e.M {
 		ret[i] = endpoint

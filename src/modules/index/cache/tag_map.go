@@ -4,10 +4,10 @@ import (
 	"sync"
 )
 
-//TagKeys
+// TagKeys
 type TagkvIndex struct {
 	sync.RWMutex
-	Tagkv map[string]map[string]int64 `json:"tagkv"` //map[tagk]map[tagv]ts
+	Tagkv map[string]map[string]int64 `json:"tagkv"` // map[tagk]map[tagv]ts
 }
 
 func NewTagkvIndex() *TagkvIndex {
@@ -29,10 +29,10 @@ func (t *TagkvIndex) Set(tagk, tagv string, now int64) {
 func (t *TagkvIndex) GetTagkv() []*TagPair {
 	t.RLock()
 	defer t.RUnlock()
-	tagkvs := []*TagPair{}
 
+	tagkvs := make([]*TagPair, len(t.Tagkv))
 	for k, vm := range t.Tagkv {
-		var vs []string
+		vs := make([]string, len(vm))
 		for v := range vm {
 			vs = append(vs, v)
 		}
@@ -49,14 +49,13 @@ func (t *TagkvIndex) GetTagkv() []*TagPair {
 func (t *TagkvIndex) GetTagkvMap() map[string][]string {
 	t.RLock()
 	defer t.RUnlock()
-	tagkvs := make(map[string][]string)
 
+	tagkvs := make(map[string][]string)
 	for k, vm := range t.Tagkv {
-		var vs []string
+		vs := make([]string, len(vm))
 		for v := range vm {
 			vs = append(vs, v)
 		}
-
 		tagkvs[k] = vs
 	}
 
