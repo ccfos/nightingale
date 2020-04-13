@@ -6,8 +6,6 @@ import (
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/modules/collector/sys"
 	"github.com/didi/nightingale/src/toolkits/identity"
-
-	"github.com/toolkits/pkg/logger"
 )
 
 func Collect() {
