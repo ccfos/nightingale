@@ -179,7 +179,7 @@ func Persist(mode string) error {
 	logger.Infof("save index data to disk[num:%d][mode:%s]\n", epLength, mode)
 
 	for i, endpoint := range endpoints {
-		logger.Infof("sync [%s] to disk, [%d] complete\n", endpoint, int((float64(i)/float64(epLength))*100))
+		logger.Infof("sync [%s] to disk, [%d]% complete\n", endpoint, int((float64(i)/float64(epLength))*100))
 
 		if err := WriteIndexToFile(tmpDir, endpoint); err != nil {
 			logger.Errorf("write %s index to file err:%v\n", endpoint, err)
