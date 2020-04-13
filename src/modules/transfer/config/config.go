@@ -82,9 +82,9 @@ func Parse(conf string) error {
 	viper.SetDefault("backend", map[string]interface{}{
 		"enabled":      true,
 		"batch":        200, //每次拉取文件的个数
-		"replicas":     500, //一致性has虚拟节点
+		"replicas":     500, //一致性hash虚拟节点
 		"workerNum":    32,
-		"maxConns":     32,   //查询和推送数据的并发个数
+		"maxConns":     2000, //查询和推送数据的并发个数
 		"maxIdle":      32,   //建立的连接池的最大空闲数
 		"connTimeout":  1000, //链接超时时间，单位毫秒
 		"callTimeout":  3000, //访问超时时间，单位毫秒

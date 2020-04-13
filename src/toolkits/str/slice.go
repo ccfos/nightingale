@@ -28,7 +28,7 @@ func SplitN(m, n int) [][]int {
 	var res [][]int
 
 	if n <= 0 {
-		return [][]int{[]int{0, m}}
+		return [][]int{{0, m}}
 	}
 
 	for i := 0; i < m; i = i + n {

@@ -60,7 +60,7 @@ func genMetrics(event *model.Event) []string {
 		logger.Errorf("[genMetric] get event detail failed, event: %+v, err: %v", event, err)
 	} else {
 		for i := 0; i < len(detail); i++ {
-			metricList = append(metricList, detail[0].Metric)
+			metricList = append(metricList, detail[i].Metric)
 		}
 	}
 	return metricList

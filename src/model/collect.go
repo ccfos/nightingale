@@ -168,9 +168,7 @@ func (l *LogCollect) Encode() error {
 }
 
 func (l *LogCollect) Decode() error {
-	var err error
-
-	err = json.Unmarshal([]byte(l.TagsStr), &l.Tags)
+	err := json.Unmarshal([]byte(l.TagsStr), &l.Tags)
 	if err != nil {
 		return err
 	}
@@ -192,7 +190,7 @@ func (p *PortCollect) Update() error {
 		return err
 	}
 
-	if _, err = session.Id(p.Id).AllCols().Update(p); err != nil {
+	if _, err = session.ID(p.Id).AllCols().Update(p); err != nil {
 		session.Rollback()
 		return err
 	}
@@ -230,7 +228,7 @@ func (p *ProcCollect) Update() error {
 		return err
 	}
 
-	if _, err = session.Id(p.Id).AllCols().Update(p); err != nil {
+	if _, err = session.ID(p.Id).AllCols().Update(p); err != nil {
 		session.Rollback()
 		return err
 	}
@@ -259,7 +257,7 @@ func GetLogCollects() ([]*LogCollect, error) {
 	return collects, err
 }
 
-func (p *LogCollect) Update() error {
+func (l *LogCollect) Update() error {
 	session := DB["mon"].NewSession()
 	defer session.Close()
 
@@ -268,18 +266,18 @@ func (p *LogCollect) Update() error {
 		return err
 	}
 
-	if _, err = session.Id(p.Id).AllCols().Update(p); err != nil {
+	if _, err = session.ID(l.Id).AllCols().Update(l); err != nil {
 		session.Rollback()
 		return err
 	}
 
-	b, err := json.Marshal(p)
+	b, err := json.Marshal(l)
 	if err != nil {
 		session.Rollback()
 		return err
 	}
 
-	if err := saveHist(p.Id, "log", "update", p.Creator, string(b), session); err != nil {
+	if err := saveHist(l.Id, "log", "update", l.Creator, string(b), session); err != nil {
 		session.Rollback()
 		return err
 	}
@@ -348,7 +346,7 @@ func GetCollectByNid(collectType string, nids []int64) ([]interface{}, error) {
 		return res, err
 
 	default:
-		return nil, fmt.Errorf("采集类型不合法")
+		return nil, fmt.Errorf("illegal collectType")
 	}
 
 }
@@ -370,10 +368,8 @@ func GetCollectById(collectType string, cid int64) (interface{}, error) {
 		return collect, err
 
 	default:
-		return nil, fmt.Errorf("采集类型不合法")
+		return nil, fmt.Errorf("illegal collectType")
 	}
-
-	return nil, nil
 }
 
 func GetCollectByName(collectType string, name string) (interface{}, error) {
@@ -420,15 +416,14 @@ func saveHist(id int64, tp string, action, username, body string, session *xorm.
 }
 
 func GetCollectsModel(t string) (interface{}, error) {
+	collects := make([]*PortCollect, 0)
 	switch t {
 	case "port":
-		collects := []*PortCollect{}
 		return collects, nil
 	case "proc":
-		collects := []*ProcCollect{}
 		return collects, nil
 
 	default:
-		return nil, fmt.Errorf("采集类型不合法")
+		return nil, fmt.Errorf("illegal collectType")
 	}
 }

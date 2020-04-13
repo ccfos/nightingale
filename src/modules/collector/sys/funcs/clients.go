@@ -43,3 +43,9 @@ func (rcc *RpcClientContainer) Put(addr string, client *rpc.Client) bool {
 	rcc.M[addr] = client
 	return true
 }
+
+func (rcc *RpcClientContainer) Del(addr string) {
+	rcc.Lock()
+	defer rcc.Unlock()
+	delete(rcc.M, addr)
+}

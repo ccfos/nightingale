@@ -221,7 +221,7 @@ func EndpointBindings(endpointIds []int64) ([]EndpointBinding, error) {
 	ret := make([]EndpointBinding, 0, cnt)
 	for i := 0; i < cnt; i++ {
 		nodeids := h2n[endpoints[i].Id]
-		if nodeids == nil || len(nodeids) == 0 {
+		if len(nodeids) == 0 {
 			continue
 		}
 

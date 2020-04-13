@@ -55,7 +55,7 @@ func NodeGets(where string, args ...interface{}) (nodes []Node, err error) {
 }
 
 func NodeGetsByPaths(paths []string) ([]Node, error) {
-	if paths == nil || len(paths) == 0 {
+	if len(paths) == 0 {
 		return []Node{}, nil
 	}
 
@@ -210,7 +210,7 @@ func (n *Node) Bind(endpointIds []int64, delOld int) error {
 }
 
 func (n *Node) Unbind(hostIds []int64) error {
-	if hostIds == nil || len(hostIds) == 0 {
+	if len(hostIds) == 0 {
 		return nil
 	}
 

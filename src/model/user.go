@@ -131,7 +131,6 @@ func (u *User) CopyLdapAttr(sr *ldap.SearchResult) {
 	if attrs.Im != "" {
 		u.Im = sr.Entries[0].GetAttributeValue(attrs.Im)
 	}
-	return
 }
 
 func InitRoot() {

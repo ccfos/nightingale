@@ -5,7 +5,7 @@ import (
 )
 
 type TagPair struct {
-	Key    string   `json:"tagk"` //json和变量不一致为了兼容前端
+	Key    string   `json:"tagk"` // json 和变量不一致为了兼容前端
 	Values []string `json:"tagv"`
 }
 
@@ -29,14 +29,15 @@ func getMatchedTags(tagsMap map[string][]string, include, exclude []*TagPair) ma
 
 	if len(include) > 0 {
 		for _, tagPair := range include {
+			// include 中的 tagKey 在 tags 列表中不存在
 			if _, exists := tagsMap[tagPair.Key]; !exists {
-				// include中的tag key在tags列表中不存在
 				return nil
 			}
-
+			// tagKey 存在，初始化 map
 			if _, found := inMap[tagPair.Key]; !found {
 				inMap[tagPair.Key] = make(map[string]bool)
 			}
+			// 对存在的值进行标记
 			for _, tagv := range tagPair.Values {
 				inMap[tagPair.Key][tagv] = true
 			}
@@ -54,10 +55,10 @@ func getMatchedTags(tagsMap map[string][]string, include, exclude []*TagPair) ma
 		}
 	}
 
-	fullmatch := make(map[string][]string)
+	fullMatch := make(map[string][]string)
 	for tagk, tagvs := range tagsMap {
 		for _, tagv := range tagvs {
-			// 排除必须排除的, exclude的优先级高于include
+			// 排除必须排除的, exclude 的优先级高于 include
 			if _, tagkExists := exMap[tagk]; tagkExists {
 				if _, tagvExists := exMap[tagk][tagv]; tagvExists {
 					continue
@@ -66,53 +67,56 @@ func getMatchedTags(tagsMap map[string][]string, include, exclude []*TagPair) ma
 			// 包含必须包含的
 			if _, tagkExists := inMap[tagk]; tagkExists {
 				if _, tagvExists := inMap[tagk][tagv]; tagvExists {
-					if _, found := fullmatch[tagk]; !found {
-						fullmatch[tagk] = make([]string, 0)
+					if _, found := fullMatch[tagk]; !found {
+						fullMatch[tagk] = make([]string, 0)
 					}
-					fullmatch[tagk] = append(fullmatch[tagk], tagv)
+					fullMatch[tagk] = append(fullMatch[tagk], tagv)
 				}
 				continue
 			}
 			// 除此之外全都包含
-			if _, found := fullmatch[tagk]; !found {
-				fullmatch[tagk] = make([]string, 0)
+			if _, found := fullMatch[tagk]; !found {
+				fullMatch[tagk] = make([]string, 0)
 			}
-			fullmatch[tagk] = append(fullmatch[tagk], tagv)
+			fullMatch[tagk] = append(fullMatch[tagk], tagv)
 		}
 	}
 
-	return fullmatch
+	return fullMatch
 }
 
+// GetAllCounter returns all possible tags combination.
+// But not all of them will be in the CounterMaps.
 func GetAllCounter(tags []*TagPair) []string {
 	if len(tags) == 0 {
 		return []string{}
 	}
-	firstStruct := tags[0]
-	firstList := make([]string, len(firstStruct.Values))
 
-	for i, v := range firstStruct.Values {
-		firstList[i] = firstStruct.Key + "=" + v
+	head := tags[0]
+	firstList := make([]string, len(head.Values))
+
+	for i, v := range head.Values {
+		firstList[i] = head.Key + "=" + v
 	}
 
 	otherList := GetAllCounter(tags[1:])
 	if len(otherList) == 0 {
 		return firstList
-	} else {
-		retList := make([]string, len(otherList)*len(firstList))
-		i := 0
-		for _, firstV := range firstList {
-			for _, otherV := range otherList {
-				retList[i] = firstV + "," + otherV
-				i++
-			}
-		}
-
-		return retList
 	}
+
+	rest := make([]string, len(otherList)*len(firstList))
+	i := 0
+	for _, firstV := range firstList {
+		for _, otherV := range otherList {
+			rest[i] = firstV + "," + otherV
+			i++
+		}
+	}
+
+	return rest
 }
 
-//Check if can over limit
+// OverMaxLimit check whether it can over limit or not.
 func OverMaxLimit(tagMap map[string][]string, limit int) bool {
 	multiRes := 1
 
