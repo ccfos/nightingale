@@ -39,7 +39,7 @@ func Push(metricItems []*dataobj.MetricValue) error {
 				continue
 			}
 		}
-
+		logger.Debug("push item: ", item)
 		items = append(items, item)
 	}
 

@@ -56,9 +56,19 @@ func PortCollect(p *model.PortCollect) {
 }
 
 func isListening(port int, timeout int) bool {
+	if isListen(port, timeout, "127.0.0.1") {
+		return true
+	}
+	if isListen(port, timeout, identity.Identity) {
+		return true
+	}
+	return false
+}
+
+func isListen(port, timeout int, ip string) bool {
 	var conn net.Conn
 	var err error
-	addr := fmt.Sprintf("127.0.0.1:%d", port)
+	addr := fmt.Sprintf("%s:%d", ip, port)
 	if timeout <= 0 {
 		// default timeout 3 second
 		timeout = 3
