@@ -196,6 +196,7 @@ func Push2JudgeSendQueue(items []*dataobj.MetricValue) {
 				TagsMap:   item.TagsMap,
 				Step:      int(item.Step),
 				Sid:       stra.Id,
+				Extra:     item.Extra,
 			}
 
 			q, exists := JudgeQueues.Get(stra.JudgeInstance)

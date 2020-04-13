@@ -24,22 +24,22 @@ func NewPortScheduler(p *model.PortCollect) *PortScheduler {
 	return &scheduler
 }
 
-func (this *PortScheduler) Schedule() {
+func (p *PortScheduler) Schedule() {
 	go func() {
 		for {
 			select {
-			case <-this.Ticker.C:
-				PortCollect(this.Port)
-			case <-this.Quit:
-				this.Ticker.Stop()
+			case <-p.Ticker.C:
+				PortCollect(p.Port)
+			case <-p.Quit:
+				p.Ticker.Stop()
 				return
 			}
 		}
 	}()
 }
 
-func (this *PortScheduler) Stop() {
-	close(this.Quit)
+func (p *PortScheduler) Stop() {
+	close(p.Quit)
 }
 
 func PortCollect(p *model.PortCollect) {

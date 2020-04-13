@@ -66,8 +66,8 @@ func createOnePool(name string, address string, connTimeout time.Duration, maxCo
 }
 
 // 同步发送, 完成发送或超时后 才能返回
-func (this *ConnPools) Call(method string, args interface{}, resp interface{}) error {
-	connPool := this.Get()
+func (cp *ConnPools) Call(method string, args interface{}, resp interface{}) error {
+	connPool := cp.Get()
 
 	conn, err := connPool.Fetch()
 	if err != nil {
@@ -75,7 +75,7 @@ func (this *ConnPools) Call(method string, args interface{}, resp interface{}) e
 	}
 
 	rpcClient := conn.(RpcClient)
-	callTimeout := time.Duration(this.CallTimeout) * time.Millisecond
+	callTimeout := time.Duration(cp.CallTimeout) * time.Millisecond
 
 	done := make(chan error, 1)
 	go func() {
@@ -97,12 +97,12 @@ func (this *ConnPools) Call(method string, args interface{}, resp interface{}) e
 	}
 }
 
-func (this *ConnPools) Get() *pool.ConnPool {
-	this.RLock()
-	defer this.RUnlock()
-	i := rand.Intn(len(this.Pools))
+func (cp *ConnPools) Get() *pool.ConnPool {
+	cp.RLock()
+	defer cp.RUnlock()
+	i := rand.Intn(len(cp.Pools))
 
-	return this.Pools[i]
+	return cp.Pools[i]
 }
 
 // RpcCient, 要实现io.Closer接口
@@ -111,23 +111,23 @@ type RpcClient struct {
 	name string
 }
 
-func (this RpcClient) Name() string {
-	return this.name
+func (r RpcClient) Name() string {
+	return r.name
 }
 
-func (this RpcClient) Closed() bool {
-	return this.cli == nil
+func (r RpcClient) Closed() bool {
+	return r.cli == nil
 }
 
-func (this RpcClient) Close() error {
-	if this.cli != nil {
-		err := this.cli.Close()
-		this.cli = nil
+func (r RpcClient) Close() error {
+	if r.cli != nil {
+		err := r.cli.Close()
+		r.cli = nil
 		return err
 	}
 	return nil
 }
 
-func (this RpcClient) Call(method string, args interface{}, reply interface{}) error {
-	return this.cli.Call(method, args, reply)
+func (r RpcClient) Call(method string, args interface{}, reply interface{}) error {
+	return r.cli.Call(method, args, reply)
 }

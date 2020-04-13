@@ -39,6 +39,7 @@ type EventDetail struct {
 	Tags       map[string]string   `json:"tags"`
 	Points     []*EventDetailPoint `json:"points"`
 	PredPoints []*EventDetailPoint `json:"pred_points,omitempty"` // 预测值, 预测值不为空时, 现场值对应的是实际值
+	Extra      string              `json:"extra"`
 }
 
 type EventDetailPoint struct {

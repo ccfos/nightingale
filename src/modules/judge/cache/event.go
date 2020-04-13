@@ -15,15 +15,15 @@ var (
 	LastEvents = &SafeEventMap{M: make(map[string]*dataobj.Event)}
 )
 
-func (this *SafeEventMap) Get(key string) (*dataobj.Event, bool) {
-	this.RLock()
-	defer this.RUnlock()
-	event, exists := this.M[key]
+func (s *SafeEventMap) Get(key string) (*dataobj.Event, bool) {
+	s.RLock()
+	defer s.RUnlock()
+	event, exists := s.M[key]
 	return event, exists
 }
 
-func (this *SafeEventMap) Set(key string, event *dataobj.Event) {
-	this.Lock()
-	defer this.Unlock()
-	this.M[key] = event
+func (s *SafeEventMap) Set(key string, event *dataobj.Event) {
+	s.Lock()
+	defer s.Unlock()
+	s.M[key] = event
 }
