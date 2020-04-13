@@ -86,7 +86,7 @@ func getMatchedTags(tagsMap map[string][]string, include, exclude []*TagPair) ma
 }
 
 // GetAllCounter returns all possible tags combination.
-// But not all of them will in the CounterMaps.
+// But not all of them will be in the CounterMaps.
 func GetAllCounter(tags []*TagPair) []string {
 	if len(tags) == 0 {
 		return []string{}
