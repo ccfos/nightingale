@@ -46,7 +46,6 @@ func collect(sec int64, fn func() []*dataobj.MetricValue) {
 			item.Step = sec
 			item.Endpoint = identity.Identity
 			item.Timestamp = now
-			logger.Debug("push item: ", item)
 			metricValues = append(metricValues, item)
 		}
 		Push(metricValues)
