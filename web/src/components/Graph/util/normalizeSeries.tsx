@@ -4,7 +4,7 @@ import { SerieInterface } from '../interface';
 
 export default function normalizeSeries(data: any[]) {
   const series = [] as SerieInterface[];
-  _.each(data, (o, i) => {
+  _.each(_.sortBy(data, ['counter', 'endpoint']), (o, i) => {
     const { endpoint } = o;
     const color = getSerieColor(o, i);
     const separatorIdx = o.counter.indexOf('/');
