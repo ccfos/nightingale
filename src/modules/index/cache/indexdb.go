@@ -244,7 +244,7 @@ func IndexList() []*model.Instance {
 		return []*model.Instance{}
 	}
 
-	instances := make([]*model.Instance, len(activeIndexes))
+	var instances []*model.Instance
 	for _, instance := range activeIndexes {
 		if instance.Identity != identity.Identity {
 			instances = append(instances, instance)

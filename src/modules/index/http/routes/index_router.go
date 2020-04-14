@@ -123,7 +123,7 @@ func GetTagPairs(c *gin.Context) {
 		}
 
 		for tagk, tagvFilter := range tagkvFilter {
-			tagvs := make([]string, len(tagvFilter))
+			var tagvs []string
 			for v := range tagvFilter {
 				tagvs = append(tagvs, v)
 			}

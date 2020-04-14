@@ -107,7 +107,7 @@ func (m *MetricIndexMap) GetMetrics() []string {
 	m.RLock()
 	defer m.RUnlock()
 
-	metrics := make([]string, len(m.Data))
+	var metrics []string
 	for k := range m.Data {
 		metrics = append(metrics, k)
 	}
