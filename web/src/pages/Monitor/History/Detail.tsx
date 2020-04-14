@@ -239,6 +239,10 @@ class Detail extends Component<RouteComponentProps & WrappedComponentProps> {
                 <span className="label"><FormattedMessage id="event.table.expression" />：</span>
                 {data.info}
               </div>
+              <div>
+                <span className="label">Extra：</span>
+                {data.extra}
+              </div>
               {
                 _.map(points, (item) => {
                   return (
