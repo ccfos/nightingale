@@ -7,6 +7,7 @@ import { Icon, Button, Select, Checkbox, Tooltip, DatePicker } from 'antd';
 import * as config from '../config';
 import * as util from '../util';
 import Tagkv from './Tagkv';
+import Comparison from './Comparison';
 import { GraphDataInterface, GraphDataChangeFunc } from '../interface';
 
 interface Props {
@@ -74,6 +75,18 @@ export default class GraphConfigInner extends Component<Props> {
         ...data.metrics[0],
         aggrFunc: val,
       }],
+    });
+  }
+
+  handleComparisonChange = (values: any) => {
+    const { data, onChange } = this.props;
+    onChange('update', data.id, {
+      start: values.start,
+      end: values.end,
+      now: values.now,
+      comparison: values.comparison,
+      relativeTimeComparison: values.relativeTimeComparison,
+      comparisonOptions: values.comparisonOptions,
     });
   }
 
@@ -178,7 +191,7 @@ export default class GraphConfigInner extends Component<Props> {
 
   render() {
     const { data, onChange } = this.props;
-    const { now, start, end } = data;
+    const { now, start, end, comparison } = data;
     const timeLabel = now === end ? util.getTimeLabelVal(start, end, 'label') : '其他';
     const timeVal = now === end ? util.getTimeLabelVal(start, end, 'value') : 'custom';
     const datePickerStartVal = moment(Number(start)).format(config.timeFormatMap.moment);
@@ -284,21 +297,23 @@ export default class GraphConfigInner extends Component<Props> {
               </Select>
             </div> : null
         }
-        {/* <div className="graph-config-inner-item">
-          采样函数：
-          <Select
-            allowClear
-            size="small"
-            style={{ width: 85 }}
-            placeholder="无"
-            value={_.get(data.metrics, '[0].consolFunc')}
-            onChange={this.handleconsolFuncChange}
-          >
-            <Option value="AVERAGE">均值</Option>
-            <Option value="MAX">最大值</Option>
-            <Option value="MIN">最小值</Option>
-          </Select>
-        </div> */}
+        <div className="graph-config-inner-item">
+          <FormattedMessage id="graph.config.comparison" />：
+          <Comparison
+            comparison={comparison}
+            relativeTimeComparison={data.relativeTimeComparison}
+            comparisonOptions={data.comparisonOptions}
+            graphConfig={data}
+            onChange={this.handleComparisonChange}
+          />
+          <input
+            style={{
+              position: 'fixed',
+              left: -10000,
+            }}
+            id={`hiddenInput${data.id}`}
+          />
+        </div>
         <div className="graph-config-inner-item">
           <Checkbox checked={!!data.legend} onChange={this.legendChange}>
             Legend

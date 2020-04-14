@@ -93,6 +93,7 @@ export default class Graph extends Component<Props, State> {
       || aggrFuncChanged
       || aggrGroupChanged
       || consolFuncChanged
+      || !_.isEqual(nextData.comparison, thisData.comparison)
     ) {
       const isFetchCounter = selectedNsChanged || selectedMetricChanged || selectedTagkvChanged;
       this.fetchData(nextProps.data, isFetchCounter, (series: SerieInterface[]) => {
@@ -256,6 +257,8 @@ export default class Graph extends Component<Props, State> {
           return util.getTooltipsContent({
             points,
             chartWidth: this.graphWrapEle.offsetWidth - 40,
+            comparison: graphConfig.comparison,
+            isComparison: !!_.get(graphConfig.comparison, 'length'),
           });
         },
       },
@@ -292,6 +295,8 @@ export default class Graph extends Component<Props, State> {
           return util.getTooltipsContent({
             points,
             chartWidth: this.graphWrapEle.offsetWidth - 40,
+            comparison: graphConfig.comparison,
+            isComparison: !!_.get(graphConfig.comparison, 'length'),
           });
         },
       },
@@ -391,6 +396,7 @@ export default class Graph extends Component<Props, State> {
           style={{ display: graphConfig.legend ? 'block' : 'none' }}
           series={this.getZoomedSeries()}
           onSelectedChange={this.handleLegendRowSelectedChange}
+          comparisonOptions={graphConfig.comparisonOptions}
         />
       </div>
     );

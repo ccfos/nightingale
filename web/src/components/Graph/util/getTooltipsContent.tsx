@@ -32,20 +32,38 @@ export default function getTooltipsContent(activeTooltipData: ActiveTooltipData)
   tooltipContent += getHeaderStr(activeTooltipData);
 
   _.each(sortedPoints, (point) => {
-    tooltipContent += singlePoint(point);
+    tooltipContent += singlePoint(point, activeTooltipData);
   });
 
   return `<div style="table-layout: fixed;max-width: ${chartWidth}px;word-wrap: break-word;white-space: normal;">${tooltipContent}</div>`;
 }
 
-function singlePoint(pointData = {} as PointInterface) {
-  const { color, filledNull, serieOptions = {} } = pointData;
-  const { tags } = serieOptions as any;
+function singlePoint(pointData = {}, activeTooltipData) {
+  const { color, filledNull, serieOptions = {}, timestamp } = pointData;
+  const { comparison: comparisons, isComparison } = activeTooltipData;
+  const { tags } = serieOptions;
   const value = numeral(pointData.value).format('0,0[.]000');
+  let name = tags;
+
+  // 对比情况下 name 特殊处理
+  if (isComparison) {
+    const mDate = serieOptions.comparison && typeof serieOptions.comparison === 'number' ? moment(timestamp).subtract(serieOptions.comparison, 'seconds') : moment(timestamp);
+    const isAllDayLevelComparison = _.every(comparisons, (o) => {
+      return _.isInteger(Number(o) / 86400000);
+    });
+
+    if (isAllDayLevelComparison) {
+      const dateStr = mDate.format('YYYY-MM-DD');
+      name = `${dateStr}`;
+    } else {
+      const dateStr = mDate.format(fmt);
+      name = `${dateStr} ${name}`;
+    }
+  }
 
   return (
     `<span style="color:${color}">● </span>
-    ${_.escape(tags)}：<strong>${value}${filledNull ? '(空值填补,仅限看图使用)' : ''}</strong><br />`
+    ${name}：<strong>${value}${filledNull ? '(空值填补,仅限看图使用)' : ''}</strong><br />`
   );
 }
 

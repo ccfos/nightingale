@@ -260,6 +260,7 @@ export default {
   'graph.config.aggr.max': 'max',
   'graph.config.aggr.min': 'min',
   'graph.config.aggr.group': 'groupBy',
+  'graph.config.comparison': 'comparison',
   'graph.config.series': 'series',
   'graph.config.series.unit': 'pcs',
   'graph.config.cate': 'cate',

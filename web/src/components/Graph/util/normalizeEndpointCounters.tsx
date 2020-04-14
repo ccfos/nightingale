@@ -5,7 +5,7 @@ export function transformMsToS(ts: string) {
   return Number(ts.substring(0, ts.length - 3));
 }
 
-export function processComparison(comparison: number[]) {
+export function processComparison(comparison: string[]) {
   const newComparison = [0];
   _.each(comparison, (o) => {
     newComparison.push(transformMsToS(String(o)));
@@ -14,6 +14,7 @@ export function processComparison(comparison: number[]) {
 }
 
 export default function normalizeEndpointCounters(graphConfig: GraphDataInterface, counterList: CounterInterface[]) {
+  const newComparison = processComparison(graphConfig.comparison);
   const firstMetric = _.get(graphConfig, 'metrics[0]', {});
   const { aggrFunc, aggrGroup: groupKey, consolFunc } = firstMetric;
   const start = transformMsToS(_.toString(graphConfig.start));
@@ -27,6 +28,7 @@ export default function normalizeEndpointCounters(graphConfig: GraphDataInterfac
       aggrFunc,
       groupKey,
       consolFunc,
+      comparisons: newComparison,
     };
   });
 
