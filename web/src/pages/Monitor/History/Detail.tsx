@@ -241,7 +241,7 @@ class Detail extends Component<RouteComponentProps & WrappedComponentProps> {
               </div>
               <div>
                 <span className="label">Extra：</span>
-                {data.extra}
+                {detail.extra}
               </div>
               {
                 _.map(points, (item) => {
