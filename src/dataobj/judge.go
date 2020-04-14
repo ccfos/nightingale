@@ -18,6 +18,7 @@ type JudgeItem struct {
 	DsType    string            `json:"dstype"`
 	Step      int               `json:"step"`
 	Sid       int64             `json:"sid"`
+	Extra     string            `json:"extra"`
 }
 
 func (j *JudgeItem) PrimaryKey() string {

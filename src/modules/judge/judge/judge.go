@@ -58,10 +58,10 @@ func ToJudge(historyMap *cache.JudgeItemMap, key string, val *dataobj.JudgeItem,
 	}
 	history := []dataobj.History{}
 
-	Judge(stra, stra.Exprs, historyData, val, now, history, "", "", []bool{})
+	Judge(stra, stra.Exprs, historyData, val, now, history, "", "", "", []bool{})
 }
 
-func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, status []bool) {
+func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, extra string, status []bool) {
 	stats.Counter.Set("running", 1)
 
 	if len(exps) < 1 {
@@ -84,6 +84,10 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 		Tags:        firstItem.TagsMap,
 		Granularity: int(firstItem.Step),
 		Points:      historyData,
+	}
+	if len(history) == 0 {
+		//只有第一个指标是push的模式，可以获取到extra字段
+		h.Extra = firstItem.Extra
 	}
 	history = append(history, h)
 
@@ -130,7 +134,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 					Tags:     "",
 					DsType:   "GAUGE",
 				}
-				Judge(stra, exps[1:], []*dataobj.RRDData{}, judgeItem, now, history, info, value, status)
+				Judge(stra, exps[1:], []*dataobj.RRDData{}, judgeItem, now, history, info, value, extra, status)
 				return
 			}
 
@@ -138,7 +142,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				firstItem.Endpoint = respData[i].Endpoint
 				firstItem.Tags = getTags(respData[i].Counter)
 				firstItem.Step = respData[i].Step
-				Judge(stra, exps[1:], respData[i].Values, firstItem, now, history, info, value, status)
+				Judge(stra, exps[1:], respData[i].Values, firstItem, now, history, info, value, extra, status)
 			}
 
 		} else {
@@ -157,7 +161,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				firstItem.Endpoint = respData[i].Endpoint
 				firstItem.Tags = getTags(respData[i].Counter)
 				firstItem.Step = respData[i].Step
-				Judge(stra, exps[1:], respData[i].Values, firstItem, now, history, info, value, status)
+				Judge(stra, exps[1:], respData[i].Values, firstItem, now, history, info, value, extra, status)
 			}
 		}
 	}

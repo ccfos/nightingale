@@ -26,22 +26,22 @@ func NewProcScheduler(p *model.ProcCollect) *ProcScheduler {
 	return &scheduler
 }
 
-func (this *ProcScheduler) Schedule() {
+func (p *ProcScheduler) Schedule() {
 	go func() {
 		for {
 			select {
-			case <-this.Ticker.C:
-				ProcCollect(this.Proc)
-			case <-this.Quit:
-				this.Ticker.Stop()
+			case <-p.Ticker.C:
+				ProcCollect(p.Proc)
+			case <-p.Quit:
+				p.Ticker.Stop()
 				return
 			}
 		}
 	}()
 }
 
-func (this *ProcScheduler) Stop() {
-	close(this.Quit)
+func (p *ProcScheduler) Stop() {
+	close(p.Quit)
 }
 
 func ProcCollect(p *model.ProcCollect) {

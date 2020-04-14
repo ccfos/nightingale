@@ -15,30 +15,30 @@ func NewJudgeItemMap() *JudgeItemMap {
 	return &JudgeItemMap{M: make(map[string]*SafeLinkedList)}
 }
 
-func (this *JudgeItemMap) Get(key string) (*SafeLinkedList, bool) {
-	this.RLock()
-	defer this.RUnlock()
-	val, ok := this.M[key]
+func (j *JudgeItemMap) Get(key string) (*SafeLinkedList, bool) {
+	j.RLock()
+	defer j.RUnlock()
+	val, ok := j.M[key]
 	return val, ok
 }
 
-func (this *JudgeItemMap) Set(key string, val *SafeLinkedList) {
-	this.Lock()
-	defer this.Unlock()
-	this.M[key] = val
+func (j *JudgeItemMap) Set(key string, val *SafeLinkedList) {
+	j.Lock()
+	defer j.Unlock()
+	j.M[key] = val
 }
 
-func (this *JudgeItemMap) Len() int {
-	this.RLock()
-	defer this.RUnlock()
-	return len(this.M)
+func (j *JudgeItemMap) Len() int {
+	j.RLock()
+	defer j.RUnlock()
+	return len(j.M)
 }
 
-func (this *JudgeItemMap) CleanStale(before int64) {
+func (j *JudgeItemMap) CleanStale(before int64) {
 	keys := []string{}
 
-	this.RLock()
-	for key, L := range this.M {
+	j.RLock()
+	for key, L := range j.M {
 		front := L.Front()
 		if front == nil {
 			continue
@@ -48,21 +48,21 @@ func (this *JudgeItemMap) CleanStale(before int64) {
 			keys = append(keys, key)
 		}
 	}
-	this.RUnlock()
+	j.RUnlock()
 
-	this.BatchDelete(keys)
+	j.BatchDelete(keys)
 }
 
-func (this *JudgeItemMap) BatchDelete(keys []string) {
+func (j *JudgeItemMap) BatchDelete(keys []string) {
 	count := len(keys)
 	if count == 0 {
 		return
 	}
 
-	this.Lock()
-	defer this.Unlock()
+	j.Lock()
+	defer j.Unlock()
 	for i := 0; i < count; i++ {
-		delete(this.M, keys[i])
+		delete(j.M, keys[i])
 	}
 }
 

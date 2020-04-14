@@ -49,10 +49,7 @@ func nodataJudge() {
 				}
 
 				nodataJob.Acquire()
-				go func(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, status []bool) {
-					defer nodataJob.Release()
-					Judge(stra, exps, historyData, firstItem, now, history, info, value, status)
-				}(stra, stra.Exprs, []*dataobj.RRDData{}, judgeItem, now, []dataobj.History{}, "", "", []bool{})
+				go AsyncJudge(nodataJob, stra, stra.Exprs, []*dataobj.RRDData{}, judgeItem, now, []dataobj.History{}, "", "", "", []bool{})
 			}
 			return
 		}
@@ -79,10 +76,12 @@ func nodataJudge() {
 			}
 
 			nodataJob.Acquire()
-			go func(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, status []bool) {
-				defer nodataJob.Release()
-				Judge(stra, exps, historyData, firstItem, now, history, info, value, status)
-			}(stra, stra.Exprs, data.Values, judgeItem, now, []dataobj.History{}, "", "", []bool{})
+			go AsyncJudge(nodataJob, stra, stra.Exprs, data.Values, judgeItem, now, []dataobj.History{}, "", "", "", []bool{})
 		}
 	}
+}
+
+func AsyncJudge(sema *semaphore.Semaphore, stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, extra string, status []bool) {
+	defer sema.Release()
+	Judge(stra, exps, historyData, firstItem, now, history, info, value, extra, status)
 }

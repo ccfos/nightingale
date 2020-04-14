@@ -21,4 +21,5 @@ type History struct {
 	Tags        map[string]string `json:"tags,omitempty"` // endpoint/counter
 	Granularity int               `json:"-"`              // alarm补齐数据时需要
 	Points      []*RRDData        `json:"points"`         // 现场值
+	Extra       string            `json:"extra"`
 }

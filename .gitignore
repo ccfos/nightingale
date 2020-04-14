@@ -29,6 +29,7 @@ _test
 /build
 /dist
 /etc/*.local.yml
+/etc/log/log.test.json
 /data*
 
 .idea

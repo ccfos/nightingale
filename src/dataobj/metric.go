@@ -27,6 +27,7 @@ type MetricValue struct {
 	CounterType  string            `json:"counterType"`
 	Tags         string            `json:"tags"`
 	TagsMap      map[string]string `json:"tagsMap"` //保留2种格式，方便后端组件使用
+	Extra        string            `json:"extra"`
 }
 
 var bufferPool = sync.Pool{
