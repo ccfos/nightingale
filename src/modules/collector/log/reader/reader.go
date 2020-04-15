@@ -114,7 +114,7 @@ func (r *Reader) Start() {
 
 }
 func (r *Reader) check() {
-	nextpath := GetNowPath(r.FilePath)
+	nextpath := GetNextPath(r.FilePath)
 
 	// 文件名发生变化, 一般发生在配置了动态日志场景
 	if r.CurrentPath != nextpath {

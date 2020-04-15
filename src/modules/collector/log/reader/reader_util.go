@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func GetNowPath(path string) string {
+func GetNextPath(path string) string {
 	return getLogPath(path, true)
 }
 
@@ -29,6 +29,7 @@ func getLogPath(path string, isnext bool) string {
 		})
 		name := strings.Split(strings.TrimLeft(stringv, "%"), "%")
 		now := time.Now()
+		// TODO(need to discuss): `next` for what? why `now` need to assign again?
 		if isnext {
 			switch name[len(name)-1] {
 			case "Y", "m", "d":

@@ -6,8 +6,6 @@ import (
 
 	"github.com/didi/nightingale/src/modules/collector/log/reader"
 	"github.com/didi/nightingale/src/modules/collector/log/strategy"
-	"github.com/didi/nightingale/src/modules/collector/stra"
-
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -44,7 +42,7 @@ func UpdateConfigsLoop() {
 				FilePath: st.FilePath,
 			}
 			cache := make(chan string, WorkerConfig.QueueSize)
-			if err := createJob(cfg, cache, st); err != nil {
+			if err := createJob(cfg, cache); err != nil {
 				logger.Errorf("create job fail [id:%d][filePath:%s][err:%v]", cfg.Id, cfg.FilePath, err)
 			}
 		}
@@ -79,7 +77,7 @@ func GetLatestTmsAndDelay(filepath string) (int64, int64, bool) {
 }
 
 //添加任务到管理map( managerjob managerconfig) 启动reader和worker
-func createJob(config *ConfigInfo, cache chan string, st *stra.Strategy) error {
+func createJob(config *ConfigInfo, cache chan string) error {
 	if _, ok := ManagerJob[config.FilePath]; ok {
 		if _, ok := ManagerConfig[config.Id]; !ok {
 			ManagerConfig[config.Id] = config
@@ -97,7 +95,7 @@ func createJob(config *ConfigInfo, cache chan string, st *stra.Strategy) error {
 	}
 	//metric.MetricReadAddReaderNum(config.FilePath)
 	//启动worker
-	w := NewWorkerGroup(config.FilePath, cache, st)
+	w := NewWorkerGroup(config.FilePath, cache)
 	ManagerJob[config.FilePath] = &Job{
 		r: r,
 		w: w,
