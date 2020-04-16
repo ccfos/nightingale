@@ -215,9 +215,11 @@ func WriteIndexToFile(indexDir, endpoint string) error {
 		return fmt.Errorf("endpoint index doesn't found")
 	}
 
-	metricIndexMap.Lock()
+	metricIndexMap.RLock()
 	body, err := json.Marshal(metricIndexMap)
-	metricIndexMap.Unlock()
+	stats.Counter.Set("write.file", 1)
+	metricIndexMap.RUnlock()
+
 	if err != nil {
 		return fmt.Errorf("marshal struct to json failed:%v", err)
 	}
