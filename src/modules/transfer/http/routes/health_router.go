@@ -56,8 +56,8 @@ func tsdbInstance(c *gin.Context) {
 	pk := dataobj.PKWithCounter(input.Endpoint, counter)
 	pools, err := backend.SelectPoolByPK(pk)
 	addrs := make([]string, len(pools))
-	for _, pool := range pools {
-		addrs = append(addrs, pool.Addr)
+	for i, pool := range pools {
+		addrs[i] = pool.Addr
 	}
 
 	render.Data(c, addrs, nil)
