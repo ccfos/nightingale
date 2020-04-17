@@ -6,8 +6,9 @@ import (
 	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/container/set"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/pool"
 	"github.com/toolkits/pkg/str"
+
+	"github.com/didi/nightingale/src/toolkits/pools"
 )
 
 type MigrateSection struct {
@@ -39,8 +40,8 @@ var (
 	NewTsdbNodeRing *ConsistentHashRing
 
 	// 连接池 node_address -> connection_pool
-	TsdbConnPools    *ConnPools = &ConnPools{M: make(map[string]*pool.ConnPool)}
-	NewTsdbConnPools *ConnPools = &ConnPools{M: make(map[string]*pool.ConnPool)}
+	TsdbConnPools    = pools.NewCoonPools()
+	NewTsdbConnPools = pools.NewCoonPools()
 )
 
 type QueueFilter struct {
@@ -87,16 +88,18 @@ func initConnPools() {
 	for _, addr := range Config.OldCluster {
 		tsdbInstances.Add(addr)
 	}
-	TsdbConnPools = CreateConnPools(Config.MaxConns, Config.MaxIdle,
-		Config.ConnTimeout, Config.CallTimeout, tsdbInstances.ToSlice())
+	TsdbConnPools = pools.CreateConnPools(
+		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, tsdbInstances.ToSlice(),
+	)
 
 	// tsdb
 	newTsdbInstances := set.NewSafeSet()
 	for _, addr := range Config.NewCluster {
 		newTsdbInstances.Add(addr)
 	}
-	NewTsdbConnPools = CreateConnPools(Config.MaxConns, Config.MaxIdle,
-		Config.ConnTimeout, Config.CallTimeout, newTsdbInstances.ToSlice())
+	NewTsdbConnPools = pools.CreateConnPools(
+		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, newTsdbInstances.ToSlice(),
+	)
 }
 
 func initQueues() {

@@ -1,12 +1,12 @@
 package rpc
 
 import (
-	"github.com/toolkits/pkg/pool"
+	"github.com/didi/nightingale/src/toolkits/pools"
 )
 
 var (
 	// 连接池 node_address -> connection_pool
-	IndexConnPools *ConnPools = &ConnPools{M: make(map[string]*pool.ConnPool)}
+	IndexConnPools = pools.NewCoonPools()
 	Config         RpcClientSection
 )
 
@@ -19,8 +19,7 @@ type RpcClientSection struct {
 
 func Init(cfg RpcClientSection, indexs []string) {
 	Config = cfg
-	IndexConnPools = CreateConnPools(cfg.MaxConns, cfg.MaxIdle,
-		cfg.ConnTimeout, cfg.CallTimeout, indexs)
+	IndexConnPools = pools.CreateConnPools(cfg.MaxConns, cfg.MaxIdle, cfg.ConnTimeout, cfg.CallTimeout, indexs)
 }
 
 func ReNewPools(indexs []string) []string {

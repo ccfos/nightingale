@@ -1,4 +1,4 @@
-package backend
+package pools
 
 import (
 	"bufio"
@@ -11,38 +11,47 @@ import (
 	"time"
 
 	"github.com/toolkits/pkg/pool"
+
 	"github.com/ugorji/go/codec"
 )
 
-// backend -> ConnPool
+// ConnPools is responsible for the Connection Pool lifecycle management.
 type ConnPools struct {
 	sync.RWMutex
-	M           map[string]*pool.ConnPool
+	P           map[string]*pool.ConnPool
 	MaxConns    int
 	MaxIdle     int
 	ConnTimeout int
 	CallTimeout int
 }
 
+func NewCoonPools() *ConnPools {
+	return &ConnPools{P: make(map[string]*pool.ConnPool)}
+}
+
 func CreateConnPools(maxConns, maxIdle, connTimeout, callTimeout int, cluster []string) *ConnPools {
-	cp := &ConnPools{M: make(map[string]*pool.ConnPool), MaxConns: maxConns, MaxIdle: maxIdle,
-		ConnTimeout: connTimeout, CallTimeout: callTimeout}
+	cp := &ConnPools{
+		P:           make(map[string]*pool.ConnPool),
+		MaxConns:    maxConns,
+		MaxIdle:     maxIdle,
+		ConnTimeout: connTimeout,
+		CallTimeout: callTimeout,
+	}
 
 	ct := time.Duration(cp.ConnTimeout) * time.Millisecond
 	for _, address := range cluster {
-		if _, exist := cp.M[address]; exist {
+		if _, exist := cp.P[address]; exist {
 			continue
 		}
-		cp.M[address] = createOnePool(address, address, ct, maxConns, maxIdle)
+		cp.P[address] = createOnePool(address, address, ct, maxConns, maxIdle)
 	}
-
 	return cp
 }
 
 func createOnePool(name, address string, connTimeout time.Duration, maxConns, maxIdle int) *pool.ConnPool {
 	p := pool.NewConnPool(name, address, maxConns, maxIdle)
 	p.New = func(connName string) (pool.NConn, error) {
-		// check address
+		// valid address
 		_, err := net.ResolveTCPAddr("tcp", p.Address)
 		if err != nil {
 			return nil, err
@@ -55,11 +64,12 @@ func createOnePool(name, address string, connTimeout time.Duration, maxConns, ma
 		var mh codec.MsgpackHandle
 		mh.MapType = reflect.TypeOf(map[string]interface{}(nil))
 
-		var bufconn = struct { // bufconn here is a buffered io.ReadWriteCloser
+		// bufconn here is a buffered io.ReadWriteCloser
+		var bufconn = struct {
 			io.Closer
 			*bufio.Reader
 			*bufio.Writer
-		}{conn, bufio.NewReader(conn), bufio.NewWriter(conn)}
+		}{Closer: conn, Reader: bufio.NewReader(conn), Writer: bufio.NewWriter(conn)}
 
 		rpcCodec := codec.MsgpackSpecRpc.ClientCodec(bufconn, &mh)
 		return RpcClient{cli: rpc.NewClientWithCodec(rpcCodec), name: connName}, nil
@@ -67,32 +77,8 @@ func createOnePool(name, address string, connTimeout time.Duration, maxConns, ma
 	return p
 }
 
-func (cp *ConnPools) Update(cluster []string) {
-	cp.Lock()
-	defer cp.Unlock()
-
-	maxConns := Config.MaxConns
-	maxIdle := Config.MaxIdle
-	ct := time.Duration(cp.ConnTimeout) * time.Millisecond
-	newCluster := make(map[string]struct{})
-	for _, address := range cluster {
-		newCluster[address] = struct{}{}
-		if _, exist := cp.M[address]; exist {
-			continue
-		}
-		cp.M[address] = createOnePool(address, address, ct, maxConns, maxIdle)
-	}
-
-	// delete invalid address from cp.M
-	for address := range cp.M {
-		if _, exists := newCluster[address]; !exists {
-			delete(cp.M, address)
-		}
-	}
-}
-
-// Call will block until the request failed or timeout
-func (cp *ConnPools) Call(addr, method string, args, resp interface{}) error {
+// Call will block until request failed or timeout.
+func (cp *ConnPools) Call(addr, method string, args interface{}, resp interface{}) error {
 	connPool, exists := cp.Get(addr)
 	if !exists {
 		return fmt.Errorf("%s has no connection pool", addr)
@@ -129,11 +115,44 @@ func (cp *ConnPools) Call(addr, method string, args, resp interface{}) error {
 func (cp *ConnPools) Get(address string) (*pool.ConnPool, bool) {
 	cp.RLock()
 	defer cp.RUnlock()
-	p, exists := cp.M[address]
+
+	p, exists := cp.P[address]
 	return p, exists
 }
 
-// RpcClient implements the io.Closer interface
+func (cp *ConnPools) UpdatePools(addrs []string) []string {
+	cp.Lock()
+	defer cp.Unlock()
+
+	newAddrs := make([]string, 0)
+	if len(addrs) == 0 {
+		cp.P = make(map[string]*pool.ConnPool)
+		return newAddrs
+	}
+	addrMap := make(map[string]struct{})
+
+	ct := time.Duration(cp.ConnTimeout) * time.Millisecond
+	for _, addr := range addrs {
+		addrMap[addr] = struct{}{}
+		_, exists := cp.P[addr]
+		if exists {
+			continue
+		}
+		newAddrs = append(newAddrs, addr)
+		cp.P[addr] = createOnePool(addr, addr, ct, cp.MaxConns, cp.MaxIdle)
+	}
+
+	// remove a pool from cp.P
+	for addr := range cp.P {
+		if _, exists := addrMap[addr]; !exists {
+			delete(cp.P, addr)
+		}
+	}
+
+	return newAddrs
+}
+
+// RpcCient implements the io.Closer interface
 type RpcClient struct {
 	cli  *rpc.Client
 	name string
@@ -156,6 +175,6 @@ func (rc RpcClient) Close() error {
 	return nil
 }
 
-func (rc RpcClient) Call(method string, args, reply interface{}) error {
+func (rc RpcClient) Call(method string, args interface{}, reply interface{}) error {
 	return rc.cli.Call(method, args, reply)
 }

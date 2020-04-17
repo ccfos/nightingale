@@ -2,10 +2,11 @@ package query
 
 import (
 	"github.com/didi/nightingale/src/toolkits/address"
+	"github.com/didi/nightingale/src/toolkits/pools"
 )
 
 var (
-	TransferConnPools *ConnPools = &ConnPools{}
+	TransferConnPools = pools.NewCoonPools()
 
 	connTimeout int32
 	callTimeout int32
@@ -24,6 +25,7 @@ type SeriesQuerySection struct {
 
 func Init(cfg SeriesQuerySection) {
 	Config = cfg
-	TransferConnPools = CreateConnPools(Config.MaxConn, Config.MaxIdle,
-		Config.ConnTimeout, Config.CallTimeout, address.GetRPCAddresses("transfer"))
+	TransferConnPools = pools.CreateConnPools(
+		Config.MaxConn, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, address.GetRPCAddresses("transfer"),
+	)
 }
