@@ -79,11 +79,31 @@ func createOnePool(name, address string, connTimeout time.Duration, maxConns, ma
 
 // Call will block until request failed or timeout.
 func (cp *ConnPools) Call(addr, method string, args interface{}, resp interface{}) error {
-	connPool, exists := cp.Get(addr)
-	if !exists {
-		return fmt.Errorf("%s has no connection pool", addr)
+	var selectedPool *pool.ConnPool
+	var exists bool
+
+	// if address is empty, we will select a available pool from cp.P randomly.
+	// map-range function gets random keys order every time.
+	if addr == "" {
+		for _, p := range cp.P {
+			if p != nil {
+				selectedPool = p
+				break
+			}
+		}
+	} else {
+		selectedPool, exists = cp.Get(addr)
+		if !exists {
+			return fmt.Errorf("%s has no connection pool", addr)
+		}
 	}
 
+	// make sure the selected pool alive.
+	if selectedPool == nil {
+		return fmt.Errorf("no connection pool available")
+	}
+
+	connPool := selectedPool
 	conn, err := connPool.Fetch()
 	if err != nil {
 		return fmt.Errorf("%s get connection fail: conn %v, err %v. proc: %s", addr, conn, err, connPool.Proc())
