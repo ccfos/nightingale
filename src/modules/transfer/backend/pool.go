@@ -14,7 +14,7 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
-// 每个后端backend对应一个ConnPool
+// backend -> ConnPool
 type ConnPools struct {
 	sync.RWMutex
 	M           map[string]*pool.ConnPool
@@ -39,10 +39,10 @@ func CreateConnPools(maxConns, maxIdle, connTimeout, callTimeout int, cluster []
 	return cp
 }
 
-func createOnePool(name string, address string, connTimeout time.Duration, maxConns int, maxIdle int) *pool.ConnPool {
+func createOnePool(name, address string, connTimeout time.Duration, maxConns, maxIdle int) *pool.ConnPool {
 	p := pool.NewConnPool(name, address, maxConns, maxIdle)
 	p.New = func(connName string) (pool.NConn, error) {
-		//校验地址是否正确
+		// check address
 		_, err := net.ResolveTCPAddr("tcp", p.Address)
 		if err != nil {
 			return nil, err
@@ -83,6 +83,7 @@ func (cp *ConnPools) Update(cluster []string) {
 		cp.M[address] = createOnePool(address, address, ct, maxConns, maxIdle)
 	}
 
+	// delete invalid address from cp.M
 	for address := range cp.M {
 		if _, exists := newCluster[address]; !exists {
 			delete(cp.M, address)
@@ -90,8 +91,8 @@ func (cp *ConnPools) Update(cluster []string) {
 	}
 }
 
-// 同步发送, 完成发送或超时后 才能返回
-func (cp *ConnPools) Call(addr, method string, args interface{}, resp interface{}) error {
+// Call will block until the request failed or timeout
+func (cp *ConnPools) Call(addr, method string, args, resp interface{}) error {
 	connPool, exists := cp.Get(addr)
 	if !exists {
 		return fmt.Errorf("%s has no connection pool", addr)
@@ -132,7 +133,7 @@ func (cp *ConnPools) Get(address string) (*pool.ConnPool, bool) {
 	return p, exists
 }
 
-// RpcCient, 要实现io.Closer接口
+// RpcClient implements the io.Closer interface
 type RpcClient struct {
 	cli  *rpc.Client
 	name string
@@ -155,6 +156,6 @@ func (rc RpcClient) Close() error {
 	return nil
 }
 
-func (rc RpcClient) Call(method string, args interface{}, reply interface{}) error {
+func (rc RpcClient) Call(method string, args, reply interface{}) error {
 	return rc.cli.Call(method, args, reply)
 }

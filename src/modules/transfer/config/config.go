@@ -95,7 +95,7 @@ func Parse(conf string) error {
 
 	err = viper.Unmarshal(&Config)
 	if err != nil {
-		return fmt.Errorf("cannot read yml[%s]: %v\n", conf, err)
+		return fmt.Errorf("cannot read yml[%s]: %v", conf, err)
 	}
 
 	Config.Backend.ClusterList = formatClusterItems(Config.Backend.Cluster)

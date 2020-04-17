@@ -7,15 +7,6 @@ import (
 	"github.com/didi/nightingale/src/dataobj"
 )
 
-var (
-	validFuncName = map[string]struct{}{
-		"sum": {},
-		"avg": {},
-		"max": {},
-		"min": {},
-	}
-)
-
 type AggrTsValue struct {
 	Value dataobj.JsonFloat
 	Count int
@@ -65,10 +56,7 @@ func sum(datas []*dataobj.TsdbQueryResponse) map[int64]*AggrTsValue {
 			if _, exists := dataMap[datas[i].Values[j].Timestamp]; exists {
 				dataMap[datas[i].Values[j].Timestamp].Value += value
 			} else {
-				v := AggrTsValue{
-					Value: value,
-				}
-				dataMap[datas[i].Values[j].Timestamp] = &v
+				dataMap[datas[i].Values[j].Timestamp] = &AggrTsValue{Value: value}
 			}
 		}
 	}
@@ -87,13 +75,32 @@ func avg(datas []*dataobj.TsdbQueryResponse) map[int64]*AggrTsValue {
 
 			if _, exists := dataMap[datas[i].Values[j].Timestamp]; exists {
 				dataMap[datas[i].Values[j].Timestamp].Count += 1
-				dataMap[datas[i].Values[j].Timestamp].Value += (datas[i].Values[j].Value - dataMap[datas[i].Values[j].Timestamp].Value) / dataobj.JsonFloat(dataMap[datas[i].Values[j].Timestamp].Count)
+				dataMap[datas[i].Values[j].Timestamp].Value += (datas[i].Values[j].Value - dataMap[datas[i].Values[j].Timestamp].Value) /
+					dataobj.JsonFloat(dataMap[datas[i].Values[j].Timestamp].Count)
 			} else {
-				v := AggrTsValue{
-					Value: value,
-					Count: 1,
+				dataMap[datas[i].Values[j].Timestamp] = &AggrTsValue{Value: value, Count: 1}
+			}
+		}
+	}
+	return dataMap
+}
+
+func minOrMax(datas []*dataobj.TsdbQueryResponse, fn func(a, b dataobj.JsonFloat) bool) map[int64]*AggrTsValue {
+	dataMap := make(map[int64]*AggrTsValue)
+	datasLen := len(datas)
+	for i := 0; i < datasLen; i++ {
+		for j := 0; j < len(datas[i].Values); j++ {
+			value := datas[i].Values[j].Value
+			if math.IsNaN(float64(value)) {
+				continue
+			}
+
+			if _, exists := dataMap[datas[i].Values[j].Timestamp]; exists {
+				if fn(value, dataMap[datas[i].Values[j].Timestamp].Value) {
+					dataMap[datas[i].Values[j].Timestamp].Value = value
 				}
-				dataMap[datas[i].Values[j].Timestamp] = &v
+			} else {
+				dataMap[datas[i].Values[j].Timestamp] = &AggrTsValue{Value: value}
 			}
 		}
 	}
@@ -101,51 +108,9 @@ func avg(datas []*dataobj.TsdbQueryResponse) map[int64]*AggrTsValue {
 }
 
 func max(datas []*dataobj.TsdbQueryResponse) map[int64]*AggrTsValue {
-	dataMap := make(map[int64]*AggrTsValue)
-	datasLen := len(datas)
-	for i := 0; i < datasLen; i++ {
-		for j := 0; j < len(datas[i].Values); j++ {
-			value := datas[i].Values[j].Value
-			if math.IsNaN(float64(value)) {
-				continue
-			}
-
-			if _, exists := dataMap[datas[i].Values[j].Timestamp]; exists {
-				if value > dataMap[datas[i].Values[j].Timestamp].Value {
-					dataMap[datas[i].Values[j].Timestamp].Value = value
-				}
-			} else {
-				v := AggrTsValue{
-					Value: value,
-				}
-				dataMap[datas[i].Values[j].Timestamp] = &v
-			}
-		}
-	}
-	return dataMap
+	return minOrMax(datas, func(a, b dataobj.JsonFloat) bool { return a > b })
 }
 
 func min(datas []*dataobj.TsdbQueryResponse) map[int64]*AggrTsValue {
-	dataMap := make(map[int64]*AggrTsValue)
-	datasLen := len(datas)
-	for i := 0; i < datasLen; i++ {
-		for j := 0; j < len(datas[i].Values); j++ {
-			value := datas[i].Values[j].Value
-			if math.IsNaN(float64(value)) {
-				continue
-			}
-
-			if _, exists := dataMap[datas[i].Values[j].Timestamp]; exists {
-				if value < dataMap[datas[i].Values[j].Timestamp].Value {
-					dataMap[datas[i].Values[j].Timestamp].Value = value
-				}
-			} else {
-				v := AggrTsValue{
-					Value: value,
-				}
-				dataMap[datas[i].Values[j].Timestamp] = &v
-			}
-		}
-	}
-	return dataMap
+	return minOrMax(datas, func(a, b dataobj.JsonFloat) bool { return a < b })
 }

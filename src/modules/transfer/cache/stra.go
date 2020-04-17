@@ -35,7 +35,7 @@ func (s *SafeStraMap) GetByKey(key string) []*model.Stra {
 func (s *SafeStraMap) GetAll() []*model.Stra {
 	s.RLock()
 	defer s.RUnlock()
-	stras := []*model.Stra{}
+	stras := make([]*model.Stra, 0)
 	for _, m := range s.M {
 		for _, stra := range m {
 			stras = append(stras, stra...)
