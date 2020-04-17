@@ -67,7 +67,7 @@ func (this *WorkerGroup) SetLatestTmsAndDelay(tms int64, delay int64) {
 /*
  * filepath和stream依赖外部，其他的都自己创建
  */
-func NewWorkerGroup(filePath string, stream chan string, st *stra.Strategy) *WorkerGroup {
+func NewWorkerGroup(filePath string, stream chan string) *WorkerGroup {
 	wokerNum := WorkerConfig.WorkerNum
 	wg := &WorkerGroup{
 		WorkerNum: wokerNum,
