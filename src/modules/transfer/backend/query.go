@@ -194,7 +194,6 @@ func fetchData(start, end int64, consolFun, endpoint, counter string, step int) 
 	if len(resp.Values) < 1 {
 		ts := start - start%int64(60)
 		count := (end - start) / 60
-		// TODO(mark): threshold
 		if count > 730 {
 			count = 730
 		}
