@@ -16,6 +16,6 @@ func RebuildJudgePool() {
 			continue
 		}
 
-		backend.JudgeConnPools.Update(judges)
+		backend.JudgeConnPools.UpdatePools(judges)
 	}
 }

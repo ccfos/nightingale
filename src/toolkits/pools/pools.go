@@ -195,6 +195,6 @@ func (rc RpcClient) Close() error {
 	return nil
 }
 
-func (rc RpcClient) Call(method string, args interface{}, reply interface{}) error {
+func (rc RpcClient) Call(method string, args, reply interface{}) error {
 	return rc.cli.Call(method, args, reply)
 }
