@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/toolkits/pools"
 	"github.com/didi/nightingale/src/toolkits/str"
 
 	"github.com/toolkits/pkg/pool"
@@ -68,19 +69,19 @@ func QueryOne(para dataobj.TsdbQueryParam) (resp *dataobj.TsdbQueryResponse, err
 	resp = &dataobj.TsdbQueryResponse{}
 
 	pk := str.PK(para.Endpoint, para.Counter)
-	pool, addr, err := selectPoolByPK(pk)
+	onePool, addr, err := selectPoolByPK(pk)
 	if err != nil {
 		return resp, err
 	}
 
-	conn, err := pool.Fetch()
+	conn, err := onePool.Fetch()
 	if err != nil {
 		return resp, err
 	}
 
-	rpcConn := conn.(RpcClient)
+	rpcConn := conn.(pools.RpcClient)
 	if rpcConn.Closed() {
-		pool.ForceClose(conn)
+		onePool.ForceClose(conn)
 		return resp, errors.New("conn closed")
 	}
 
@@ -98,20 +99,20 @@ func QueryOne(para dataobj.TsdbQueryParam) (resp *dataobj.TsdbQueryResponse, err
 
 	select {
 	case <-time.After(time.Duration(Config.CallTimeout) * time.Millisecond):
-		pool.ForceClose(conn)
-		return nil, fmt.Errorf("%s, call timeout. proc: %s", addr, pool.Proc())
+		onePool.ForceClose(conn)
+		return nil, fmt.Errorf("%s, call timeout. proc: %s", addr, onePool.Proc())
 	case r := <-ch:
 		if r.Err != nil {
-			pool.ForceClose(conn)
-			return r.Resp, fmt.Errorf("%s, call failed, err %v. proc: %s", addr, r.Err, pool.Proc())
+			onePool.ForceClose(conn)
+			return r.Resp, fmt.Errorf("%s, call failed, err %v. proc: %s", addr, r.Err, onePool.Proc())
 		} else {
-			pool.Release(conn)
+			onePool.Release(conn)
 			if len(r.Resp.Values) < 1 {
 				r.Resp.Values = []*dataobj.RRDData{}
 				return r.Resp, nil
 			}
 
-			fixed := []*dataobj.RRDData{}
+			fixed := make([]*dataobj.RRDData, 0)
 			for _, v := range r.Resp.Values {
 				if v == nil || !(v.Timestamp >= start && v.Timestamp <= end) {
 					continue
@@ -136,11 +137,10 @@ func selectPoolByPK(pk string) (*pool.ConnPool, string, error) {
 		return nil, "", errors.New("node not found")
 	}
 
-	pool, found := TsdbConnPools.Get(addr)
+	onePool, found := TsdbConnPools.Get(addr)
 	if !found {
 		return nil, "", errors.New("addr not found")
 	}
 
-	return pool, addr, nil
-
+	return onePool, addr, nil
 }
