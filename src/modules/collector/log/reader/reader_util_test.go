@@ -20,12 +20,3 @@ func TestGetCurrentPath(t *testing.T) {
 	expected := fmt.Sprintf("/home/%s/log/%s/application.log.%s", dir1, dir2, suffix)
 	assert.Equal(t, expected, GetCurrentPath(path))
 }
-
-func TestGetNextPath(t *testing.T) {
-	now := time.Now().Add(time.Hour)
-	dir1 := now.Format("200601")
-	dir2 := now.Format("20060102")
-	suffix := now.Format("2006-01-02-15")
-	expected := fmt.Sprintf("/home/%s/log/%s/application.log.%s", dir1, dir2, suffix)
-	assert.Equal(t, expected, GetNextPath(path))
-}
