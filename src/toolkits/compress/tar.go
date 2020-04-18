@@ -93,6 +93,9 @@ func UnTarGz(srcFilePath string, destDirPath string) error {
 
 	// Gzip reader
 	gr, err := gzip.NewReader(fr)
+	if err != nil {
+		return err
+	}
 
 	// Tar reader
 	tr := tar.NewReader(gr)

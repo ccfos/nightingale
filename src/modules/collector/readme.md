@@ -9,7 +9,7 @@ linux 服务器基础资源采集agent
 #### 上报数据
 
 ```
-POST /api/push
+POST /api/collector/push
 
 request body:
 // endpoint 可以填ip或者hostname, 如果ip是在运维平台是唯一表示, 那就填ip, hostname类同
@@ -38,7 +38,7 @@ response body:
 #### 获取已生效的采集策略
 
 ```
-GET /api/stra
+GET /api/collector/stra
 
 response body:
 {
