@@ -17,11 +17,11 @@ type RpcClientSection struct {
 	CallTimeout int `yaml:"callTimeout"`
 }
 
-func Init(cfg RpcClientSection, indexs []string) {
+func Init(cfg RpcClientSection, indexes []string) {
 	Config = cfg
-	IndexConnPools = pools.NewConnPools(cfg.MaxConns, cfg.MaxIdle, cfg.ConnTimeout, cfg.CallTimeout, indexs)
+	IndexConnPools = pools.NewConnPools(cfg.MaxConns, cfg.MaxIdle, cfg.ConnTimeout, cfg.CallTimeout, indexes)
 }
 
-func ReNewPools(indexs []string) []string {
-	return IndexConnPools.UpdatePools(indexs)
+func ReNewPools(indexes []string) []string {
+	return IndexConnPools.UpdatePools(indexes)
 }
