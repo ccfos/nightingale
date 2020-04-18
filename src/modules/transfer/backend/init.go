@@ -3,10 +3,10 @@ package backend
 import (
 	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/container/set"
-	"github.com/toolkits/pkg/pool"
 	"github.com/toolkits/pkg/str"
 
 	"github.com/didi/nightingale/src/modules/transfer/cache"
+	"github.com/didi/nightingale/src/toolkits/pools"
 	"github.com/didi/nightingale/src/toolkits/report"
 	"github.com/didi/nightingale/src/toolkits/stats"
 )
@@ -44,8 +44,8 @@ var (
 	JudgeQueues = cache.SafeJudgeQueue{}
 
 	// 连接池 node_address -> connection_pool
-	TsdbConnPools  = &ConnPools{M: make(map[string]*pool.ConnPool)}
-	JudgeConnPools = &ConnPools{M: make(map[string]*pool.ConnPool)}
+	TsdbConnPools  *pools.ConnPools
+	JudgeConnPools *pools.ConnPools
 
 	connTimeout int32
 	callTimeout int32
@@ -75,11 +75,13 @@ func initConnPools() {
 			tsdbInstances.Add(addr)
 		}
 	}
-	TsdbConnPools = CreateConnPools(Config.MaxConns, Config.MaxIdle,
-		Config.ConnTimeout, Config.CallTimeout, tsdbInstances.ToSlice())
+	TsdbConnPools = pools.NewConnPools(
+		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, tsdbInstances.ToSlice(),
+	)
 
-	JudgeConnPools = CreateConnPools(Config.MaxConns, Config.MaxIdle,
-		Config.ConnTimeout, Config.CallTimeout, GetJudges())
+	JudgeConnPools = pools.NewConnPools(
+		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, GetJudges(),
+	)
 }
 
 func initSendQueues() {

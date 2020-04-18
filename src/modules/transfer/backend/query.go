@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"math"
 	"math/rand"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/modules/transfer/calc"
 	"github.com/didi/nightingale/src/toolkits/address"
+	"github.com/didi/nightingale/src/toolkits/pools"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/toolkits/pkg/logger"
@@ -235,15 +237,15 @@ func QueryOne(para dataobj.TsdbQueryParam) (resp *dataobj.TsdbQueryResponse, err
 	resp = &dataobj.TsdbQueryResponse{}
 
 	pk := dataobj.PKWithCounter(para.Endpoint, para.Counter)
-	pools, err := SelectPoolByPK(pk)
+	ps, err := SelectPoolByPK(pk)
 	if err != nil {
 		return resp, err
 	}
 
-	count := len(pools)
+	count := len(ps)
 	for _, i := range rand.Perm(count) {
-		onePool := pools[i].Pool
-		addr := pools[i].Addr
+		onePool := ps[i].Pool
+		addr := ps[i].Addr
 
 		conn, err := onePool.Fetch()
 		if err != nil {
@@ -251,7 +253,7 @@ func QueryOne(para dataobj.TsdbQueryParam) (resp *dataobj.TsdbQueryResponse, err
 			continue
 		}
 
-		rpcConn := conn.(RpcClient)
+		rpcConn := conn.(pools.RpcClient)
 		if rpcConn.Closed() {
 			onePool.ForceClose(conn)
 
@@ -322,21 +324,21 @@ func SelectPoolByPK(pk string) ([]Pool, error) {
 		return []Pool{}, errors.New("node not found")
 	}
 
-	var pools []Pool
+	var ps []Pool
 	for _, addr := range nodeAddrs.Addrs {
 		onePool, found := TsdbConnPools.Get(addr)
 		if !found {
 			logger.Errorf("addr %s not found", addr)
 			continue
 		}
-		pools = append(pools, Pool{Pool: onePool, Addr: addr})
+		ps = append(ps, Pool{Pool: onePool, Addr: addr})
 	}
 
-	if len(pools) < 1 {
-		return pools, errors.New("addr not found")
+	if len(ps) < 1 {
+		return ps, errors.New("addr not found")
 	}
 
-	return pools, nil
+	return ps, nil
 }
 
 func getTags(counter string) (tags string) {
