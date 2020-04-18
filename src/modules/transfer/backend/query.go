@@ -324,21 +324,21 @@ func SelectPoolByPK(pk string) ([]Pool, error) {
 		return []Pool{}, errors.New("node not found")
 	}
 
-	var pools []Pool
+	var ps []Pool
 	for _, addr := range nodeAddrs.Addrs {
 		onePool, found := TsdbConnPools.Get(addr)
 		if !found {
 			logger.Errorf("addr %s not found", addr)
 			continue
 		}
-		pools = append(pools, Pool{Pool: onePool, Addr: addr})
+		ps = append(ps, Pool{Pool: onePool, Addr: addr})
 	}
 
-	if len(pools) < 1 {
-		return pools, errors.New("addr not found")
+	if len(ps) < 1 {
+		return ps, errors.New("addr not found")
 	}
 
-	return pools, nil
+	return ps, nil
 }
 
 func getTags(counter string) (tags string) {
