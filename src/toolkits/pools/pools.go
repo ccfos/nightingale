@@ -168,7 +168,7 @@ func (cp *ConnPools) UpdatePools(addrs []string) []string {
 	return newAddrs
 }
 
-// RpcCient implements the io.Closer interface
+// RpcClient implements the io.Closer interface
 type RpcClient struct {
 	cli  *rpc.Client
 	name string
