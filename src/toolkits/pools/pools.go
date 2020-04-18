@@ -25,11 +25,7 @@ type ConnPools struct {
 	CallTimeout int
 }
 
-func NewCoonPools() *ConnPools {
-	return &ConnPools{P: make(map[string]*pool.ConnPool)}
-}
-
-func CreateConnPools(maxConns, maxIdle, connTimeout, callTimeout int, cluster []string) *ConnPools {
+func NewConnPools(maxConns, maxIdle, connTimeout, callTimeout int, cluster []string) *ConnPools {
 	cp := &ConnPools{
 		P:           make(map[string]*pool.ConnPool),
 		MaxConns:    maxConns,

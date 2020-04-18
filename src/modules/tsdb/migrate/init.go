@@ -40,8 +40,8 @@ var (
 	NewTsdbNodeRing *ConsistentHashRing
 
 	// 连接池 node_address -> connection_pool
-	TsdbConnPools    = pools.NewCoonPools()
-	NewTsdbConnPools = pools.NewCoonPools()
+	TsdbConnPools    *pools.ConnPools
+	NewTsdbConnPools *pools.ConnPools
 )
 
 type QueueFilter struct {
@@ -88,7 +88,7 @@ func initConnPools() {
 	for _, addr := range Config.OldCluster {
 		tsdbInstances.Add(addr)
 	}
-	TsdbConnPools = pools.CreateConnPools(
+	TsdbConnPools = pools.NewConnPools(
 		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, tsdbInstances.ToSlice(),
 	)
 
@@ -97,7 +97,7 @@ func initConnPools() {
 	for _, addr := range Config.NewCluster {
 		newTsdbInstances.Add(addr)
 	}
-	NewTsdbConnPools = pools.CreateConnPools(
+	NewTsdbConnPools = pools.NewConnPools(
 		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, newTsdbInstances.ToSlice(),
 	)
 }

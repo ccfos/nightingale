@@ -44,8 +44,8 @@ var (
 	JudgeQueues = cache.SafeJudgeQueue{}
 
 	// 连接池 node_address -> connection_pool
-	TsdbConnPools  = pools.NewCoonPools()
-	JudgeConnPools = pools.NewCoonPools()
+	TsdbConnPools  *pools.ConnPools
+	JudgeConnPools *pools.ConnPools
 
 	connTimeout int32
 	callTimeout int32
@@ -75,11 +75,11 @@ func initConnPools() {
 			tsdbInstances.Add(addr)
 		}
 	}
-	TsdbConnPools = pools.CreateConnPools(
+	TsdbConnPools = pools.NewConnPools(
 		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, tsdbInstances.ToSlice(),
 	)
 
-	JudgeConnPools = pools.CreateConnPools(
+	JudgeConnPools = pools.NewConnPools(
 		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, GetJudges(),
 	)
 }

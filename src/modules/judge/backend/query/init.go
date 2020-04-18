@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	TransferConnPools = pools.NewCoonPools()
+	TransferConnPools *pools.ConnPools
 
 	connTimeout int32
 	callTimeout int32
@@ -25,7 +25,7 @@ type SeriesQuerySection struct {
 
 func Init(cfg SeriesQuerySection) {
 	Config = cfg
-	TransferConnPools = pools.CreateConnPools(
+	TransferConnPools = pools.NewConnPools(
 		Config.MaxConn, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, address.GetRPCAddresses("transfer"),
 	)
 }

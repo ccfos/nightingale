@@ -6,7 +6,7 @@ import (
 
 var (
 	// 连接池 node_address -> connection_pool
-	IndexConnPools = pools.NewCoonPools()
+	IndexConnPools *pools.ConnPools
 	Config         RpcClientSection
 )
 
@@ -19,7 +19,7 @@ type RpcClientSection struct {
 
 func Init(cfg RpcClientSection, indexs []string) {
 	Config = cfg
-	IndexConnPools = pools.CreateConnPools(cfg.MaxConns, cfg.MaxIdle, cfg.ConnTimeout, cfg.CallTimeout, indexs)
+	IndexConnPools = pools.NewConnPools(cfg.MaxConns, cfg.MaxIdle, cfg.ConnTimeout, cfg.CallTimeout, indexs)
 }
 
 func ReNewPools(indexs []string) []string {
