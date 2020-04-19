@@ -95,7 +95,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 		if len(exps) == 1 {
 			bs, err := json.Marshal(history)
 			if err != nil {
-				logger.Error("Marshal history:%v err:%v", history, err)
+				logger.Errorf("Marshal history:%v err:%v", history, err)
 			}
 			event := &dataobj.Event{
 				ID:        fmt.Sprintf("s_%d_%s", stra.Id, firstItem.PrimaryKey()),

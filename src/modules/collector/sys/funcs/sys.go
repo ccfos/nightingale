@@ -69,19 +69,19 @@ func EntityNumMetrics() []*dataobj.MetricValue {
 
 	L := strings.Fields(data)
 	if len(L) < 5 {
-		logger.Errorf("get entity num err:", data)
+		logger.Errorf("get entity num err: %v", data)
 		return nil
 	}
 
 	arr := strings.Split(L[3], "/")
 	if len(arr) != 2 {
-		logger.Errorf("get entity num err:", data)
+		logger.Errorf("get entity num err: %v", data)
 		return nil
 	}
 
 	num, err := strconv.ParseFloat(arr[1], 64)
 	if err != nil {
-		logger.Errorf("get entity num err:", err)
+		logger.Errorf("get entity num err: %v", err)
 		return nil
 	}
 
