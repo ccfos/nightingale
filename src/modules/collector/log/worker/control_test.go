@@ -2,6 +2,7 @@ package worker
 
 import (
 	"fmt"
+	"log"
 	"testing"
 	"time"
 )
@@ -22,6 +23,6 @@ func TestCreatejobAndDeletejob(t *testing.T) {
 			fmt.Println(line)
 		}
 	} else {
-		fmt.Println("create job failed : %v", err)
+		log.Printf("create job failed : %v", err)
 	}
 }

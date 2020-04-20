@@ -78,7 +78,9 @@ func DelCounter(c *gin.Context) {
 
 		for _, tagPair := range recv.Tagkv {
 			for _, v := range tagPair.Values {
+				metricIndex.Lock()
 				metricIndex.TagkvMap.DelTag(tagPair.Key, v)
+				metricIndex.Unlock()
 			}
 		}
 	}
@@ -104,7 +106,9 @@ func GetTagPairs(c *gin.Context) {
 				continue
 			}
 
+			metricIndex.RLock()
 			tagkvMap := metricIndex.TagkvMap.GetTagkvMap()
+			metricIndex.RUnlock()
 
 			for tagk, tagvs := range tagkvMap {
 				tagvFilter, exists := tagkvFilter[tagk]
@@ -192,12 +196,14 @@ func GetIndexByFullTags(c *gin.Context) {
 				continue
 			}
 
+			metricIndex.RLock()
 			if step == 0 || dsType == "" {
 				step = metricIndex.Step
 				dsType = metricIndex.DsType
 			}
 
 			countersMap := metricIndex.CounterMap.GetCounters()
+			metricIndex.RUnlock()
 
 			tagPairs := cache.GetSortTags(cache.TagPairToMap(tagkv))
 			tags := cache.GetAllCounter(tagPairs)
@@ -290,6 +296,7 @@ func GetIndexByClude(c *gin.Context) {
 				continue
 			}
 
+			metricIndex.RLock()
 			if step == 0 || dsType == "" {
 				step = metricIndex.Step
 				dsType = metricIndex.DsType
@@ -298,6 +305,7 @@ func GetIndexByClude(c *gin.Context) {
 			// 校验和 tag 有关的 counter 是否存在
 			// 如果一个指标，比如 port.listen 有 name=uic,port=8056 和 name=hsp,port=8002。避免产生 4 个曲线
 			counterMap := metricIndex.CounterMap.GetCounters()
+			metricIndex.RUnlock()
 
 			var err error
 			var tags []string
