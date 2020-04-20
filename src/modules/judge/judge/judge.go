@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/model"
@@ -109,7 +110,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				Hashid:    getHashId(stra.Id, firstItem),
 			}
 
-			sendEventIfNeed(historyData, status, event)
+			sendEventIfNeed(historyData, status, event, stra.RecoveryDur)
 		}
 	}()
 
@@ -388,7 +389,7 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 	return reqs, nil
 }
 
-func sendEventIfNeed(historyData []*dataobj.RRDData, status []bool, event *dataobj.Event) {
+func sendEventIfNeed(historyData []*dataobj.RRDData, status []bool, event *dataobj.Event, recoveryDur int) {
 	isTriggered := true
 	for _, s := range status {
 		isTriggered = isTriggered && s
@@ -414,6 +415,11 @@ func sendEventIfNeed(historyData []*dataobj.RRDData, status []bool, event *datao
 	} else {
 		// 如果LastEvent是Problem，报OK，否则啥都不做
 		if exists && lastEvent.EventType[0] == 'a' {
+			// 如果配置了留观时长，则距离上一次故障时间要大于等于recoveryDur，才产生恢复事件
+			if time.Now().Unix()-lastEvent.Etime < int64(recoveryDur) {
+				return
+			}
+
 			event.EventType = EVENT_RECOVER
 			sendEvent(event)
 			stats.Counter.Set("event.recover", 1)
