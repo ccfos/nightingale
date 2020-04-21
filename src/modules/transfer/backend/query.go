@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"math"
 	"math/rand"
 	"strings"
 	"time"
@@ -192,24 +191,6 @@ func fetchData(start, end int64, consolFun, endpoint, counter string, step int) 
 		return resp, err
 	}
 
-	// 没有获取到数据 做标记处理 math.NaN()
-	if len(resp.Values) < 1 {
-		ts := start - start%int64(60)
-		count := (end - start) / 60
-		if count > 730 {
-			count = 730
-		}
-
-		if count <= 0 {
-			return resp, nil
-		}
-
-		step := (end - start) / count
-		for i := 0; i < int(count); i++ {
-			resp.Values = append(resp.Values, &dataobj.RRDData{Timestamp: ts, Value: dataobj.JsonFloat(math.NaN())})
-			ts += step
-		}
-	}
 	resp.Start = start
 	resp.End = end
 

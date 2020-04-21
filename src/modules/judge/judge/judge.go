@@ -110,7 +110,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				Hashid:    getHashId(stra.Id, firstItem),
 			}
 
-			sendEventIfNeed(historyData, status, event, stra.RecoveryDur)
+			sendEventIfNeed(historyData, status, event, stra)
 		}
 	}()
 
@@ -389,12 +389,12 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 	return reqs, nil
 }
 
-func sendEventIfNeed(historyData []*dataobj.RRDData, status []bool, event *dataobj.Event, recoveryDur int) {
+func sendEventIfNeed(historyData []*dataobj.RRDData, status []bool, event *dataobj.Event, stra *model.Stra) {
 	isTriggered := true
 	for _, s := range status {
 		isTriggered = isTriggered && s
 	}
-
+	now := time.Now().Unix()
 	lastEvent, exists := cache.LastEvents.Get(event.ID)
 	if isTriggered {
 		event.EventType = EVENT_ALERT
@@ -404,9 +404,8 @@ func sendEventIfNeed(historyData []*dataobj.RRDData, status []bool, event *datao
 			return
 		}
 
-		if len(historyData) > 0 && historyData[len(historyData)-1].Timestamp <= lastEvent.Etime {
-			// 产生过报警的点，就不能再使用来判断了，否则容易出现一分钟报一次的情况
-			// 只需要拿最后一个historyData来做判断即可，因为它的时间最老
+		if now-lastEvent.Etime < int64(stra.AlertDur) {
+			//距离上次告警的时间小于告警统计周期，不再进行告警判断
 			return
 		}
 
@@ -416,7 +415,7 @@ func sendEventIfNeed(historyData []*dataobj.RRDData, status []bool, event *datao
 		// 如果LastEvent是Problem，报OK，否则啥都不做
 		if exists && lastEvent.EventType[0] == 'a' {
 			// 如果配置了留观时长，则距离上一次故障时间要大于等于recoveryDur，才产生恢复事件
-			if time.Now().Unix()-lastEvent.Etime < int64(recoveryDur) {
+			if now-lastEvent.Etime < int64(stra.RecoveryDur) {
 				return
 			}
 
