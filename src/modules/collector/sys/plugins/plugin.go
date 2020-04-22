@@ -2,6 +2,7 @@ package plugins
 
 type Plugin struct {
 	FilePath string
+	Params   string
 	MTime    int64
 	Cycle    int
 }

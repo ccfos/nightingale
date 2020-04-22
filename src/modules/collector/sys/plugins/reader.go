@@ -2,16 +2,57 @@ package plugins
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/didi/nightingale/src/modules/collector/stra"
+	"github.com/didi/nightingale/src/modules/collector/sys"
 
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 )
 
 // key: 60_ntp.py
-func ListPlugins(dir string) map[string]*Plugin {
+func ListPlugins() map[string]*Plugin {
+	plugins := make(map[string]*Plugin)
+	if sys.Config.PluginRemote {
+		plugins = ListPluginsFromMonapi()
+	} else {
+		plugins = ListPluginsFromLocal()
+	}
+	return plugins
+}
+
+func ListPluginsFromMonapi() map[string]*Plugin {
+	ret := make(map[string]*Plugin)
+
+	plugins := stra.Collect.GetPlugin()
+
+	for _, p := range plugins {
+		fpath := p.FilePath
+		fileInfo, err := os.Stat(fpath)
+		if err != nil {
+			logger.Warningf("plugin:%s get info err:%v", p.FilePath, err)
+			continue
+		}
+
+		plugin := &Plugin{
+			FilePath: fpath,
+			MTime:    fileInfo.ModTime().Unix(),
+			Cycle:    p.Step,
+			Params:   p.Params,
+		}
+
+		ret[fpath] = plugin
+	}
+
+	return ret
+}
+
+func ListPluginsFromLocal() map[string]*Plugin {
+	dir := sys.Config.Plugin
 	ret := make(map[string]*Plugin)
 
 	if dir == "" || !file.IsExist(dir) || file.IsFile(dir) {
