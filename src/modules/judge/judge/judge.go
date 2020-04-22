@@ -309,8 +309,8 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 				Endpoint: index.Endpoint,
 				Metric:   index.Metric,
 				Tag:      "",
-				Step:     index.Step,
-				Dstype:   index.Dstype,
+				Step:     10,
+				Dstype:   "GAUGE",
 				TS:       now,
 			}
 			lostSeries = append(lostSeries, s)
