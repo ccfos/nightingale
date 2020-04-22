@@ -178,6 +178,9 @@ func fetchDataSync(start, end int64, consolFun, endpoint, counter string, step i
 	if err != nil {
 		logger.Warningf("fetch tsdb data error: %+v", err)
 		stats.Counter.Set("query.data.err", 1)
+		data.Endpoint = endpoint
+		data.Counter = counter
+		data.Step = step
 	}
 	dataChan <- data
 }

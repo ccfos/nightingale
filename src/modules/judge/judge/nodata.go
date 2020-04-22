@@ -47,6 +47,7 @@ func nodataJudge() {
 					Tags:     "",
 					TagsMap:  map[string]string{},
 					DsType:   "GAUGE",
+					Step:     10,
 				}
 
 				nodataJob.Acquire()
