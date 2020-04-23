@@ -2,6 +2,7 @@ package funcs
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"math/rand"
@@ -79,43 +80,38 @@ func rpcCall(addr string, items []*dataobj.MetricValue) (dataobj.TransferResp, e
 
 	client := rpcClients.Get(addr)
 	if client == nil {
-		client, err = rpcClient(addr)
-		if err != nil {
+		if client, err = rpcClient(addr); err != nil {
 			return reply, err
-		} else {
-			affected := rpcClients.Put(addr, client)
-			if !affected {
-				defer func() {
-					// 我尝试把自己这个client塞进map失败，说明已经有一个client塞进去了，那我自己用完了就关闭
-					client.Close()
-				}()
-			}
+		}
+
+		// reuses the rpcClient if possible.
+		if affected := rpcClients.Put(addr, client); !affected {
+			defer func() {
+				client.Close()
+			}()
 		}
 	}
 
+	ch := make(chan error, 1)
 	timeout := time.Duration(8) * time.Second
-	done := make(chan error, 1)
+
+	// use context to ensure the goroutine will exit if rpc call timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
 	go func() {
-		err := client.Call("Transfer.Push", items, &reply)
-		done <- err
+		done := make(chan error, 1)
+		done <- client.Call("Transfer.Push", items, &reply)
+
+		select {
+		case <-ctx.Done():
+			ch <- fmt.Errorf("rpc call timeout or request canceled")
+		case <-done:
+			ch <- nil
+		}
 	}()
 
-	select {
-	case <-time.After(timeout):
-		logger.Warningf("rpc call timeout, transfer addr: %s", addr)
-		rpcClients.Put(addr, nil)
-		client.Close()
-		return reply, fmt.Errorf("%s rpc call timeout", addr)
-	case err := <-done:
-		if err != nil {
-			rpcClients.Del(addr)
-			client.Close()
-			return reply, fmt.Errorf("%s rpc call done, but fail: %v", addr, err)
-		}
-	}
-
-	return reply, nil
+	return reply, <-ch
 }
 
 func rpcClient(addr string) (*rpc.Client, error) {
