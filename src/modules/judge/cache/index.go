@@ -71,7 +71,7 @@ func (i *IndexMap) Clean() {
 		}
 
 		for key, series := range index {
-			if now-series.TS > 3600 {
+			if now-series.TS > 300 {
 				delete(i.Data[id], key)
 			}
 		}

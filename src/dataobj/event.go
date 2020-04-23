@@ -20,6 +20,24 @@ type History struct {
 	Metric      string            `json:"metric"`         // 指标名
 	Tags        map[string]string `json:"tags,omitempty"` // endpoint/counter
 	Granularity int               `json:"-"`              // alarm补齐数据时需要
-	Points      []*RRDData        `json:"points"`         // 现场值
-	Extra       string            `json:"extra"`
+	Points      []*HistoryData    `json:"points"`         // 现场值
+}
+
+type HistoryData struct {
+	Timestamp int64     `json:"timestamp"`
+	Value     JsonFloat `json:"value"`
+	Extra     string    `json:"extra"`
+}
+
+func RRDData2HistoryData(datas []*RRDData) []*HistoryData {
+	historyDatas := make([]*HistoryData, len(datas))
+
+	for i := range datas {
+		historyData := &HistoryData{
+			Timestamp: datas[i].Timestamp,
+			Value:     datas[i].Value,
+		}
+		historyDatas[i] = historyData
+	}
+	return historyDatas
 }
