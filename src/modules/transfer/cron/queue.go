@@ -9,9 +9,9 @@ import (
 )
 
 func UpdateJudgeQueue() {
-	t1 := time.NewTicker(time.Duration(8) * time.Second)
+	ticker := time.NewTicker(time.Duration(8) * time.Second)
 	for {
-		<-t1.C
+		<-ticker.C
 		updateJudgeQueue()
 	}
 }

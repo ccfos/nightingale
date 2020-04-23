@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/toolkits/pkg/file"
@@ -57,7 +58,8 @@ func PluginRun(plugin *Plugin) {
 	}
 
 	logger.Debug(fpath, " running")
-	cmd := exec.Command(fpath)
+	params := strings.Split(plugin.Params, " ")
+	cmd := exec.Command(fpath, params...)
 	cmd.Dir = filepath.Dir(fpath)
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout

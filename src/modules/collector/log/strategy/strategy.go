@@ -66,7 +66,7 @@ func GetByID(id int64) (*stra.Strategy, error) {
 	st, ok := globalStrategy[id]
 
 	if !ok {
-		return nil, fmt.Errorf("ID : %d is not exists in global Cache")
+		return nil, fmt.Errorf("ID : %d is not exists in global Cache", id)
 	}
 	return st, nil
 

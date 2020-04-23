@@ -358,7 +358,7 @@ class index extends Component<Props & WrappedComponentProps, State> {
                 }
               </Select>
               <Search
-                placeholder="搜索"
+                placeholder="Search"
                 style={{ width: 200 }}
                 onSearch={(value) => {
                   this.setState({ searchValue: value });

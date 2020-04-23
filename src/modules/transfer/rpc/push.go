@@ -20,14 +20,13 @@ func (t *Transfer) Push(args []*dataobj.MetricValue, reply *dataobj.TransferResp
 	start := time.Now()
 	reply.Invalid = 0
 
-	items := []*dataobj.MetricValue{}
+	items := make([]*dataobj.MetricValue, 0)
 	for _, v := range args {
 		logger.Debug("->recv: ", v)
 		stats.Counter.Set("points.in", 1)
-		err := v.CheckValidity()
-		if err != nil {
+		if err := v.CheckValidity(); err != nil {
 			stats.Counter.Set("points.in.err", 1)
-			msg := fmt.Sprintf("item is illegal item:%s err:%v", v, err)
+			msg := fmt.Sprintf("illegal item:%s err:%v", v, err)
 			logger.Warningf(msg)
 			reply.Invalid += 1
 			reply.Msg += msg
@@ -44,10 +43,10 @@ func (t *Transfer) Push(args []*dataobj.MetricValue, reply *dataobj.TransferResp
 	if backend.Config.Enabled {
 		backend.Push2JudgeSendQueue(items)
 	}
+
 	if reply.Invalid == 0 {
 		reply.Msg = "ok"
 	}
-
 	reply.Total = len(args)
 	reply.Latency = (time.Now().UnixNano() - start.UnixNano()) / 1000000
 	return nil

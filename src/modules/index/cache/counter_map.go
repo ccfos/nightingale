@@ -40,7 +40,11 @@ func (c *CounterTsMap) Clean(now, timeDuration int64, endpoint, metric string) {
 func (c *CounterTsMap) GetCounters() map[string]int64 {
 	c.RLock()
 	defer c.RUnlock()
-	return c.M
+	m := make(map[string]int64)
+	for k, v := range c.M {
+		m[k] = v
+	}
+	return m
 }
 
 func (c *CounterTsMap) Len() int {

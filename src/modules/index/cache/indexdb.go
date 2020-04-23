@@ -215,9 +215,11 @@ func WriteIndexToFile(indexDir, endpoint string) error {
 		return fmt.Errorf("endpoint index doesn't found")
 	}
 
-	metricIndexMap.Lock()
+	metricIndexMap.RLock()
 	body, err := json.Marshal(metricIndexMap)
-	metricIndexMap.Unlock()
+	stats.Counter.Set("write.file", 1)
+	metricIndexMap.RUnlock()
+
 	if err != nil {
 		return fmt.Errorf("marshal struct to json failed:%v", err)
 	}
@@ -244,7 +246,7 @@ func IndexList() []*model.Instance {
 		return []*model.Instance{}
 	}
 
-	instances := make([]*model.Instance, len(activeIndexes))
+	var instances []*model.Instance
 	for _, instance := range activeIndexes {
 		if instance.Identity != identity.Identity {
 			instances = append(instances, instance)

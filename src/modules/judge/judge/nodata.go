@@ -45,6 +45,7 @@ func nodataJudge() {
 					Endpoint: endpoint,
 					Metric:   stra.Exprs[0].Metric,
 					Tags:     "",
+					TagsMap:  map[string]string{},
 					DsType:   "GAUGE",
 				}
 
@@ -56,7 +57,8 @@ func nodataJudge() {
 
 		for _, data := range respData {
 			var metric, tag string
-			arr := strings.Split(data.Counter, "/")
+			// 兼容格式disk.bytes.free/mount=/data/docker/overlay2/xxx/merged
+			arr := strings.SplitN(data.Counter, "/", 2)
 			if len(arr) == 2 {
 				metric = arr[0]
 				tag = arr[1]
@@ -71,6 +73,7 @@ func nodataJudge() {
 				Endpoint: data.Endpoint,
 				Metric:   metric,
 				Tags:     tag,
+				TagsMap:  dataobj.DictedTagstring(tag),
 				DsType:   data.DsType,
 				Step:     data.Step,
 			}

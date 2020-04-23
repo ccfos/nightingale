@@ -261,6 +261,7 @@ export default {
   'graph.config.aggr.max': '最大值',
   'graph.config.aggr.min': '最小值',
   'graph.config.aggr.group': '聚合维度',
+  'graph.config.comparison': '环比',
   'graph.config.series': '曲线',
   'graph.config.series.unit': '条',
   'graph.config.cate': '分类',

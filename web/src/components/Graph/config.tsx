@@ -2,21 +2,26 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 
 const now = moment();
-export const comparison = [
+export const comparisonOptions = [
   {
     label: '1小时',
+    labelEn: '1 hour',
     value: '3600000',
   }, {
     label: '2小时',
+    labelEn: '2 hours',
     value: '7200000',
   }, {
     label: '1天',
+    labelEn: '1 day',
     value: '86400000',
   }, {
     label: '2天',
+    labelEn: '2 days',
     value: '172800000',
   }, {
     label: '7天',
+    labelEn: '7 days',
     value: '604800000',
   },
 ];
@@ -74,6 +79,7 @@ export const graphDefaultConfig = {
   now: now.clone().format('x'),
   start: now.clone().subtract(3600000, 'ms').format('x'),
   end: now.clone().format('x'),
+  comparisonOptions,
   threshold: undefined,
   legend: false,
   shared: false,

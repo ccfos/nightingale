@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Tree, Spin, Input } from 'antd';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import * as config from '@common/config';
 import { TreeNode } from '@interface';
 import { renderTreeNodes } from './utils';
@@ -15,7 +16,7 @@ interface Props {
   onExpandedKeys: (expandedKeys: string[]) => void,
 }
 
-export default class NsTree extends Component<Props> {
+class NsTree extends Component<Props & WrappedComponentProps> {
   static defaultProps = {
     treeData: [],
     originTreeData: [],
@@ -42,7 +43,10 @@ export default class NsTree extends Component<Props> {
     return (
       <div className={`${prefixCls}-nsTree`}>
         <div className={`${prefixCls}-nsTree-header`}>
-          <Input.Search onSearch={this.props.onSearchValue} placeholder="搜节点(空格分割)" />
+          <Input.Search
+            onSearch={this.props.onSearchValue}
+            placeholder={this.props.intl.formatMessage({ id: 'tree.search' })}
+          />
         </div>
         <Spin spinning={loading}>
           <div>
@@ -77,3 +81,5 @@ export default class NsTree extends Component<Props> {
     );
   }
 }
+
+export default injectIntl(NsTree);

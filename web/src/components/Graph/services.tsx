@@ -46,7 +46,7 @@ export function fetchMetrics(selectedEndpoint: Endpoints, endpoints: Endpoints) 
       endpoints: selectedEndpoint,
     }),
   }, false).then((data) => {
-    return _.chain(data.metrics).flattenDeep().union().sortBy((o) => {
+    return _.chain(data.metrics).compact().flattenDeep().union().sortBy((o) => {
       return _.lowerCase(o);
     }).value();
   });

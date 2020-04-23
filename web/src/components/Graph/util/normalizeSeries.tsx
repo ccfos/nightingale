@@ -4,8 +4,8 @@ import { SerieInterface } from '../interface';
 
 export default function normalizeSeries(data: any[]) {
   const series = [] as SerieInterface[];
-  _.each(data, (o, i) => {
-    const { endpoint } = o;
+  _.each(_.sortBy(data, ['counter', 'endpoint']), (o, i) => {
+    const { endpoint, comparison } = o;
     const color = getSerieColor(o, i);
     const separatorIdx = o.counter.indexOf('/');
 
@@ -23,6 +23,7 @@ export default function normalizeSeries(data: any[]) {
       lineWidth: 2,
       color,
       oldColor: color,
+      comparison,
     } as SerieInterface;
     series.push(serie);
   });
