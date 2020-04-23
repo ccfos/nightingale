@@ -20,7 +20,7 @@ func NodataJudge(concurrency int) {
 	}
 	nodataJob = semaphore.NewSemaphore(concurrency)
 
-	t1 := time.NewTicker(time.Duration(9000) * time.Millisecond)
+	t1 := time.NewTicker(time.Duration(10) * time.Second)
 	nodataJudge()
 	for {
 		<-t1.C
