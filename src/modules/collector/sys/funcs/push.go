@@ -111,7 +111,8 @@ func rpcCall(addr string, items []*dataobj.MetricValue) (dataobj.TransferResp, e
 		}
 	}()
 
-	return reply, <-ch
+	err = <-ch
+	return reply, err
 }
 
 func rpcClient(addr string) (*rpc.Client, error) {
