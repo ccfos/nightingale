@@ -118,9 +118,7 @@ func rpcCall(addr string, items []*dataobj.MetricValue) (dataobj.TransferResp, e
 func rpcClient(addr string) (*rpc.Client, error) {
 	conn, err := net.DialTimeout("tcp", addr, time.Second*3)
 	if err != nil {
-		err = fmt.Errorf("dial transfer %s fail: %v", addr, err)
-		logger.Error(err)
-		return nil, err
+		return nil, fmt.Errorf("dial transfer %s fail: %v", addr, err)
 	}
 
 	var bufConn = struct {
