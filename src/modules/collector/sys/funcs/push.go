@@ -54,13 +54,11 @@ func Push(metricItems []*dataobj.MetricValue) error {
 			if err != nil {
 				logger.Error(err)
 				continue
-			} else {
-				if reply.Msg != "ok" {
-					err = fmt.Errorf("some item push err: %s", reply.Msg)
-					logger.Error(err)
-				}
-				return err
 			}
+			if reply.Msg != "ok" {
+				err = fmt.Errorf("some item push err: %s", reply.Msg)
+			}
+			return err
 		}
 
 		time.Sleep(time.Millisecond * 500)
