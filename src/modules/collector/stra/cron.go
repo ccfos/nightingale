@@ -23,9 +23,7 @@ func GetCollects() {
 }
 
 func loopDetect() {
-	t1 := time.NewTicker(time.Duration(StraConfig.Interval) * time.Second)
-	for {
-		<-t1.C
+	for range time.Tick(time.Duration(StraConfig.Interval) * time.Second) {
 		detect()
 	}
 }
@@ -72,7 +70,9 @@ func getCollects() (CollectResp, error) {
 	var err error
 
 	url := fmt.Sprintf("http://%s%s%s", addr, StraConfig.Api, identity.Identity)
-	err = httplib.Get(url).SetTimeout(time.Duration(StraConfig.Timeout) * time.Millisecond).ToJSON(&res)
+	err = httplib.Get(url).
+		SetTimeout(time.Duration(StraConfig.Timeout) * time.Millisecond).
+		ToJSON(&res)
 	if err != nil {
 		err = fmt.Errorf("get collects from remote:%s failed, error:%v", url, err)
 	}

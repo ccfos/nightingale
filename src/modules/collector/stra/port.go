@@ -42,7 +42,7 @@ func GetPortCollects() map[int]*model.PortCollect {
 	}
 	//扫描文件采集配置
 	for _, f := range files {
-		port, step, err := parseName(f)
+		port, step, err := parsePorFile(f)
 		if err != nil {
 			logger.Warning(err)
 			continue
@@ -62,23 +62,22 @@ func GetPortCollects() map[int]*model.PortCollect {
 	return ports
 }
 
-func parseName(name string) (port, step int, err error) {
-	arr := strings.Split(name, "_")
+func parsePorFile(fname string) (port, step int, err error) {
+	arr := strings.Split(fname, "_")
 	if len(arr) < 2 {
-		err = fmt.Errorf("name is illegal %s, split _ < 2", name)
-
+		err = fmt.Errorf("illegal filename:%s, split _ < 2", fname)
 		return
 	}
 
 	step, err = strconv.Atoi(arr[0])
 	if err != nil {
-		err = fmt.Errorf("name is illegal %s %v", name, err)
+		err = fmt.Errorf("illegal filename:%s, error:%v", fname, err)
 		return
 	}
 
 	port, err = strconv.Atoi(arr[1])
 	if err != nil {
-		err = fmt.Errorf("name is illegal %s %v", name, err)
+		err = fmt.Errorf("illegal filename:%s, error:%v", fname, err)
 		return
 	}
 	return

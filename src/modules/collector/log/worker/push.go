@@ -140,7 +140,7 @@ func tmsNeedPush(tms int64, filePath string, step int64, waitPush int) bool {
 // pointMap的key，是打平了的tagkv
 func ToPushQueue(strategy *stra.Strategy, tms int64, pointMap map[string]*PointCounter) error {
 	for tagstring, PointCounter := range pointMap {
-		var value float64 = 0
+		var value float64
 		switch strategy.Func {
 		case "cnt":
 			value = float64(PointCounter.Count)
@@ -165,7 +165,7 @@ func ToPushQueue(strategy *stra.Strategy, tms int64, pointMap map[string]*PointC
 
 		var tags map[string]string
 		if tagstring == "null" {
-			tags = make(map[string]string, 0)
+			tags = make(map[string]string)
 		} else {
 			tags = dataobj.DictedTagstring(tagstring)
 		}
@@ -217,9 +217,9 @@ func postToCollector(paramPoints []*dataobj.MetricValue) {
 }
 
 func getPrecision(num float64, degree int64) float64 {
-	tmpFloat := num * float64(math.Pow10(int(degree)))
+	tmpFloat := num * math.Pow10(int(degree))
 	tmpInt := int(tmpFloat + 0.5)
-	return float64(tmpInt) / float64(math.Pow10(int(degree)))
+	return float64(tmpInt) / math.Pow10(int(degree))
 }
 
 type _tsPs struct {

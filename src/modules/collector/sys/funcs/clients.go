@@ -5,24 +5,25 @@ import (
 	"sync"
 )
 
-type RpcClientContainer struct {
-	M map[string]*rpc.Client
+type RpcClients struct {
+	Clients map[string]*rpc.Client
 	sync.RWMutex
 }
 
-var rpcClients *RpcClientContainer
+var rpcClients *RpcClients
 
 func InitRpcClients() {
-	rpcClients = &RpcClientContainer{
-		M: make(map[string]*rpc.Client),
+	rpcClients = &RpcClients{
+		Clients: make(map[string]*rpc.Client),
 	}
 }
 
-func (rcc *RpcClientContainer) Get(addr string) *rpc.Client {
-	rcc.RLock()
-	defer rcc.RUnlock()
+// Get returns a Client from rc.Clients if existed.
+func (rc *RpcClients) Get(addr string) *rpc.Client {
+	rc.RLock()
+	defer rc.RUnlock()
 
-	client, has := rcc.M[addr]
+	client, has := rc.Clients[addr]
 	if !has {
 		return nil
 	}
@@ -30,22 +31,23 @@ func (rcc *RpcClientContainer) Get(addr string) *rpc.Client {
 	return client
 }
 
-// Put 返回的bool表示affected，确实把自己塞进去了
-func (rcc *RpcClientContainer) Put(addr string, client *rpc.Client) bool {
-	rcc.Lock()
-	defer rcc.Unlock()
+// Put returns true if the client is placed into rcc.Clients.
+func (rc *RpcClients) Put(addr string, client *rpc.Client) bool {
+	rc.Lock()
+	defer rc.Unlock()
 
-	oc, has := rcc.M[addr]
+	oc, has := rc.Clients[addr]
 	if has && oc != nil {
 		return false
 	}
 
-	rcc.M[addr] = client
+	rc.Clients[addr] = client
 	return true
 }
 
-func (rcc *RpcClientContainer) Del(addr string) {
-	rcc.Lock()
-	defer rcc.Unlock()
-	delete(rcc.M, addr)
+// Delete deletes a client from rcc.Clients.
+func (rc *RpcClients) Del(addr string) {
+	rc.Lock()
+	defer rc.Unlock()
+	delete(rc.Clients, addr)
 }

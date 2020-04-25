@@ -14,8 +14,8 @@ func NfMetrics() []*dataobj.MetricValue {
 	if !file.IsExist(connMaxFile) {
 		return []*dataobj.MetricValue{}
 	}
-	res := []*dataobj.MetricValue{}
 
+	var res []*dataobj.MetricValue
 	nfConntrackMax, err := file.ToInt64(connMaxFile)
 	if err != nil {
 		logger.Error("read file err:", connMaxFile, err)

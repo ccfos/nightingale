@@ -12,7 +12,7 @@ func Collect() {
 	go PrepareCpuStat()
 	go PrepareDiskStats()
 
-	for _, v := range Mappers {
+	for _, v := range Tasks {
 		for _, f := range v.Fs {
 			go collect(int64(v.Interval), f)
 		}
@@ -28,11 +28,11 @@ func collect(sec int64, fn func() []*dataobj.MetricValue) {
 	for {
 		<-t.C
 
-		metricValues := []*dataobj.MetricValue{}
+		var metricValues []*dataobj.MetricValue
 		now := time.Now().Unix()
 
 		items := fn()
-		if items == nil || len(items) == 0 {
+		if items == nil {
 			continue
 		}
 

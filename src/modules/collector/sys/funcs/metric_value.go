@@ -14,7 +14,6 @@ func NewMetricValue(metric string, val interface{}, dataType string, tags ...str
 	}
 
 	size := len(tags)
-
 	if size > 0 {
 		mv.Tags = strings.Join(tags, ",")
 	}

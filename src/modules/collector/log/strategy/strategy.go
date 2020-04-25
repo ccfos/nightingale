@@ -14,7 +14,7 @@ var (
 )
 
 func init() {
-	globalStrategy = make(map[int64]*stra.Strategy, 0)
+	globalStrategy = make(map[int64]*stra.Strategy)
 }
 
 func Update() error {
@@ -22,7 +22,6 @@ func Update() error {
 
 	err := UpdateGlobalStrategy(strategies)
 	if err != nil {
-		logger.Errorf("Update Strategy cache error ! [msg:%v]", err)
 		return err
 	}
 	logger.Infof("Update Strategy end")
@@ -30,7 +29,7 @@ func Update() error {
 }
 
 func UpdateGlobalStrategy(sts []*stra.Strategy) error {
-	tmpStrategyMap := make(map[int64]*stra.Strategy, 0)
+	tmpStrategyMap := make(map[int64]*stra.Strategy)
 	for _, st := range sts {
 		if st.Degree == 0 {
 			st.Degree = 6
@@ -66,29 +65,30 @@ func GetByID(id int64) (*stra.Strategy, error) {
 	st, ok := globalStrategy[id]
 
 	if !ok {
-		return nil, fmt.Errorf("ID : %d is not exists in global Cache", id)
+		return nil, fmt.Errorf("I : %d is not exists in global Cache", id)
 	}
 	return st, nil
 
 }
 
 func DeepCopyStrategy(p *stra.Strategy) *stra.Strategy {
-	s := stra.Strategy{}
-	s.ID = p.ID
-	s.Name = p.Name
-	s.FilePath = p.FilePath
-	s.TimeFormat = p.TimeFormat
-	s.Pattern = p.Pattern
-	s.MeasurementType = p.MeasurementType
-	s.Interval = p.Interval
-	s.Tags = stra.DeepCopyStringMap(p.Tags)
-	s.Func = p.Func
-	s.Degree = p.Degree
-	s.Unit = p.Unit
-	s.Comment = p.Comment
-	s.Creator = p.Creator
-	s.SrvUpdated = p.SrvUpdated
-	s.LocalUpdated = p.LocalUpdated
+	s := stra.Strategy{
+		ID:              p.ID,
+		Name:            p.Name,
+		FilePath:        p.FilePath,
+		TimeFormat:      p.TimeFormat,
+		Pattern:         p.Pattern,
+		MeasurementType: p.MeasurementType,
+		Interval:        p.Interval,
+		Tags:            stra.DeepCopyStringMap(p.Tags),
+		Func:            p.Func,
+		Degree:          p.Degree,
+		Unit:            p.Unit,
+		Comment:         p.Comment,
+		Creator:         p.Creator,
+		SrvUpdated:      p.SrvUpdated,
+		LocalUpdated:    p.LocalUpdated,
+	}
 
 	return &s
 }

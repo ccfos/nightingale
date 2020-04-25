@@ -38,7 +38,17 @@ func NetMetrics() (ret []*dataobj.MetricValue) {
 	now := time.Now()
 	newIfStat := make(map[string]CumIfStat)
 	for _, netIf := range netIfs {
-		newIfStat[netIf.Iface] = CumIfStat{netIf.InBytes, netIf.OutBytes, netIf.InPackages, netIf.OutPackages, netIf.InDropped, netIf.OutDropped, netIf.InErrors, netIf.OutErrors, netIf.SpeedBits}
+		newIfStat[netIf.Iface] = CumIfStat{
+			inBytes:    netIf.InBytes,
+			outBytes:   netIf.OutBytes,
+			inPackets:  netIf.InPackages,
+			outPackets: netIf.OutPackages,
+			inDrop:     netIf.InDropped,
+			outDrop:    netIf.OutDropped,
+			inErr:      netIf.InErrors,
+			outErr:     netIf.OutErrors,
+			speed:      netIf.SpeedBits,
+		}
 	}
 	interval := now.Unix() - lastTime.Unix()
 	lastTime = now
@@ -111,7 +121,7 @@ func NetMetrics() (ret []*dataobj.MetricValue) {
 
 		inTotalUsed += inbits
 
-		inPercent := float64(inbits) * 100 / float64(stat.speed*1000000)
+		inPercent := inbits * 100 / float64(stat.speed*1000000)
 
 		if inPercent < 0 || stat.speed <= 0 {
 			ret = append(ret, GaugeValue("net.in.percent", 0, tags))
@@ -120,7 +130,7 @@ func NetMetrics() (ret []*dataobj.MetricValue) {
 		}
 
 		outTotalUsed += outbits
-		outPercent := float64(outbits) * 100 / float64(stat.speed*1000000)
+		outPercent := outbits * 100 / float64(stat.speed*1000000)
 		if outPercent < 0 || stat.speed <= 0 {
 			ret = append(ret, GaugeValue("net.out.percent", 0, tags))
 		} else {
@@ -139,10 +149,10 @@ func NetMetrics() (ret []*dataobj.MetricValue) {
 		ret = append(ret, GaugeValue("net.in.bits.total.percent", 0))
 		ret = append(ret, GaugeValue("net.out.bits.total.percent", 0))
 	} else {
-		inTotalPercent := float64(inTotalUsed) / float64(totalBandwidth*1000000) * 100
+		inTotalPercent := inTotalUsed / float64(totalBandwidth*1000000) * 100
 		ret = append(ret, GaugeValue("net.in.bits.total.percent", inTotalPercent))
 
-		outTotalPercent := float64(outTotalUsed) / float64(totalBandwidth*1000000) * 100
+		outTotalPercent := outTotalUsed / float64(totalBandwidth*1000000) * 100
 		ret = append(ret, GaugeValue("net.out.bits.total.percent", outTotalPercent))
 	}
 

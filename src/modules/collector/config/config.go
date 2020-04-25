@@ -10,6 +10,7 @@ import (
 	"github.com/didi/nightingale/src/modules/collector/sys"
 	"github.com/didi/nightingale/src/toolkits/identity"
 	"github.com/didi/nightingale/src/toolkits/logger"
+
 	"github.com/spf13/viper"
 	"github.com/toolkits/pkg/file"
 )
@@ -29,7 +30,7 @@ var (
 	Cwd      string
 )
 
-// Get configuration file
+// Get returns configuration of collector
 func Get() *ConfYaml {
 	lock.RLock()
 	defer lock.RUnlock()
@@ -76,7 +77,7 @@ func Parse(conf string) error {
 
 	err = viper.Unmarshal(&Config)
 	if err != nil {
-		return fmt.Errorf("Unmarshal %v", err)
+		return fmt.Errorf("unmarshal config error: %v", err)
 	}
 
 	return nil

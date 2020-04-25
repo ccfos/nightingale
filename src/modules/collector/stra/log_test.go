@@ -1,20 +1,26 @@
 package stra
 
 import (
-	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestPatternParse(t *testing.T) {
-	fmt.Println("Now Test PatternParse:")
-	var a Strategy
-	a.Pattern = "test"
-	parsePattern([]*Strategy{&a})
-	fmt.Printf("a.pat:[%s], a.ex[%s]\n", a.Pattern, a.Exclude)
-	a.Pattern = "```EXCLUDE```test"
-	parsePattern([]*Strategy{&a})
-	fmt.Printf("a.pat:[%s], a.ex[%s]\n", a.Pattern, a.Exclude)
-	a.Pattern = "test```EXCLUDE```"
-	parsePattern([]*Strategy{&a})
-	fmt.Printf("a.pat:[%s], a.ex[%s]\n", a.Pattern, a.Exclude)
+	s := Strategy{
+		Pattern: "test-stra",
+	}
+
+	parsePattern([]*Strategy{&s})
+	assert.Equal(t, s.Pattern, "test-stra")
+	assert.Equal(t, s.Exclude, "")
+
+	s.Pattern = "```EXCLUDE```test"
+	parsePattern([]*Strategy{&s})
+	assert.Equal(t, s.Pattern, "")
+	assert.Equal(t, s.Exclude, "test")
+
+	s.Pattern = "test```EXCLUDE```"
+	parsePattern([]*Strategy{&s})
+	assert.Equal(t, s.Pattern, "test")
+	assert.Equal(t, s.Exclude, "")
 }

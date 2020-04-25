@@ -42,7 +42,7 @@ func GetProcCollects() map[string]*model.ProcCollect {
 
 	//扫描文件采集配置
 	for _, f := range files {
-		method, name, step, err := parseProcName(f)
+		method, name, step, err := parseProcFile(f)
 		if err != nil {
 			logger.Warning(err)
 			continue
@@ -62,7 +62,7 @@ func GetProcCollects() map[string]*model.ProcCollect {
 	return procs
 }
 
-func parseProcName(fname string) (method string, name string, step int, err error) {
+func parseProcFile(fname string) (method, name string, step int, err error) {
 	arr := strings.Split(fname, "_")
 	if len(arr) < 3 {
 		err = fmt.Errorf("name is illegal %s, split _ < 3", fname)

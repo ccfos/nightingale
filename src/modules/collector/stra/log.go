@@ -57,9 +57,9 @@ func GetLogCollects() []*Strategy {
 }
 
 func GetCollectFromFile(logPath string) []*Strategy {
-	logger.Info("get collects from local file")
-	var stras []*Strategy
+	logger.Infof("get collects from local file: %s", logPath)
 
+	var stras []*Strategy
 	files, err := file.FilesUnder(logPath)
 	if err != nil {
 		logger.Error(err)
@@ -68,13 +68,10 @@ func GetCollectFromFile(logPath string) []*Strategy {
 
 	//扫描文件采集配置
 	for _, f := range files {
-		err := checkName(f)
-		if err != nil {
+		if err := checkName(f); err != nil {
 			logger.Warningf("read file name err:%s %v", f, err)
 			continue
 		}
-
-		stra := Strategy{}
 
 		b, err := file.ToBytes(logPath + "/" + f)
 		if err != nil {
@@ -82,6 +79,7 @@ func GetCollectFromFile(logPath string) []*Strategy {
 			continue
 		}
 
+		stra := Strategy{}
 		err = json.Unmarshal(b, &stra)
 		if err != nil {
 			logger.Warningf("read file name err:%s %v", f, err)
@@ -89,7 +87,6 @@ func GetCollectFromFile(logPath string) []*Strategy {
 		}
 
 		//todo 配置校验
-
 		stra.ID = genStraID(stra.Name, string(b))
 		stras = append(stras, &stra)
 	}
@@ -116,23 +113,23 @@ func genStraID(name, body string) int64 {
 }
 
 func ToStrategy(p *model.LogCollect) *Strategy {
-	s := Strategy{}
-	s.ID = p.Id
-	s.Name = p.Name
-	s.FilePath = p.FilePath
-	s.TimeFormat = p.TimeFormat
-	s.Pattern = p.Pattern
-	s.MeasurementType = p.CollectType
-	s.Interval = int64(p.Step)
-	s.Tags = DeepCopyStringMap(p.Tags)
-	s.Func = p.Func
-	s.Degree = int64(p.Degree)
-	s.Unit = p.Unit
-	s.Comment = p.Comment
-	s.Creator = p.Creator
-	s.SrvUpdated = p.LastUpdated.String()
-	s.LocalUpdated = p.LocalUpdated
-
+	s := Strategy{
+		ID:           p.Id,
+		Name:         p.Name,
+		FilePath:     p.FilePath,
+		TimeFormat:   p.TimeFormat,
+		Pattern:      p.Pattern,
+		Exclude:      p.CollectType,
+		Interval:     int64(p.Step),
+		Tags:         DeepCopyStringMap(p.Tags),
+		Func:         p.Func,
+		Degree:       int64(p.Degree),
+		Unit:         p.Unit,
+		Comment:      p.Comment,
+		Creator:      p.Creator,
+		SrvUpdated:   p.LastUpdated.String(),
+		LocalUpdated: p.LocalUpdated,
+	}
 	return &s
 }
 
@@ -144,11 +141,11 @@ func DeepCopyStringMap(p map[string]string) map[string]string {
 	return r
 }
 
-const PATTERN_EXCLUDE_PARTITION = "```EXCLUDE```"
+const patternExcludePartition = "```EXCLUDE```"
 
 func parsePattern(strategies []*Strategy) {
 	for _, st := range strategies {
-		patList := strings.Split(st.Pattern, PATTERN_EXCLUDE_PARTITION)
+		patList := strings.Split(st.Pattern, patternExcludePartition)
 
 		if len(patList) == 1 {
 			st.Pattern = strings.TrimSpace(st.Pattern)
@@ -165,24 +162,24 @@ func parsePattern(strategies []*Strategy) {
 
 func updateRegs(strategies []*Strategy) {
 	for _, st := range strategies {
-		st.TagRegs = make(map[string]*regexp.Regexp, 0)
+		st.TagRegs = make(map[string]*regexp.Regexp)
 		st.ParseSucc = false
 
-		//更新时间正则
+		// update regex pattern of time-format
 		pat, _ := GetPatAndTimeFormat(st.TimeFormat)
 		reg, err := regexp.Compile(pat)
 		if err != nil {
 			logger.Errorf("compile time regexp failed:[sid:%d][format:%s][pat:%s][err:%v]", st.ID, st.TimeFormat, pat, err)
 			continue
 		}
-		st.TimeReg = reg //拿到时间正则
+		st.TimeReg = reg
 
 		if len(st.Pattern) == 0 && len(st.Exclude) == 0 {
 			logger.Errorf("pattern and exclude are all empty, sid:[%d]", st.ID)
 			continue
 		}
 
-		//更新pattern
+		// update pattern
 		if len(st.Pattern) != 0 {
 			reg, err = regexp.Compile(st.Pattern)
 			if err != nil {
@@ -192,7 +189,7 @@ func updateRegs(strategies []*Strategy) {
 			st.PatternReg = reg
 		}
 
-		//更新exclude
+		// update exclude
 		if len(st.Exclude) != 0 {
 			reg, err = regexp.Compile(st.Exclude)
 			if err != nil {
@@ -202,7 +199,7 @@ func updateRegs(strategies []*Strategy) {
 			st.ExcludeReg = reg
 		}
 
-		//更新tags
+		// update tags
 		for tagk, tagv := range st.Tags {
 			reg, err = regexp.Compile(tagv)
 			if err != nil {

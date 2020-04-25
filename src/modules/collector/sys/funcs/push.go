@@ -53,20 +53,18 @@ func Push(metricItems []*dataobj.MetricValue) error {
 			if err != nil {
 				logger.Error(err)
 				continue
-			} else {
-				if reply.Msg != "ok" {
-					err = fmt.Errorf("some item push err: %s", reply.Msg)
-					logger.Error(err)
-				}
-				return err
 			}
+			if reply.Msg != "ok" {
+				err = fmt.Errorf("some item push err: %s", reply.Msg)
+				logger.Error(err)
+			}
+			return err
 		}
 
 		time.Sleep(time.Millisecond * 500)
 
 		retry += 1
 		if retry == 3 {
-			retry = 0
 			break
 		}
 	}
@@ -82,14 +80,14 @@ func rpcCall(addr string, items []*dataobj.MetricValue) (dataobj.TransferResp, e
 		client, err = rpcClient(addr)
 		if err != nil {
 			return reply, err
-		} else {
-			affected := rpcClients.Put(addr, client)
-			if !affected {
-				defer func() {
-					// 我尝试把自己这个client塞进map失败，说明已经有一个client塞进去了，那我自己用完了就关闭
-					client.Close()
-				}()
-			}
+		}
+
+		affected := rpcClients.Put(addr, client)
+		// reuse client if possible
+		if !affected {
+			defer func() {
+				client.Close()
+			}()
 		}
 	}
 
@@ -101,6 +99,9 @@ func rpcCall(addr string, items []*dataobj.MetricValue) (dataobj.TransferResp, e
 		done <- err
 	}()
 
+	// notice:
+	// It's important to mention that when timeout happens, the goroutine
+	// will continue to run in the background, possibly holding on to OS resources.
 	select {
 	case <-time.After(timeout):
 		logger.Warningf("rpc call timeout, transfer addr: %s", addr)
@@ -143,8 +144,8 @@ func rpcClient(addr string) (*rpc.Client, error) {
 func CounterToGauge(item *dataobj.MetricValue) error {
 	key := item.PK()
 
-	old, exists := cache.MetricHistory.Get(key)
-	cache.MetricHistory.Set(key, *item)
+	old, exists := cache.MetricCached.Get(key)
+	cache.MetricCached.Set(key, *item)
 
 	if !exists {
 		return fmt.Errorf("not found old item:%v", item)

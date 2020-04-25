@@ -31,12 +31,14 @@ func init() {
 
 func UpdateConfigsLoop() {
 	for {
-		strategy.Update()
-		strategyMap := strategy.GetAll() //最新策略
+		if err := strategy.Update(); err != nil {
+			logger.Errorf("Update Strategy cache error ! [msg:%v]", err)
+		}
 
+		strategies := strategy.GetAll() //最新策略
 		ManagerJobLock.Lock()
 		//metric.MetricJobNum(len(ManagerJob))
-		for id, st := range strategyMap {
+		for id, st := range strategies {
 			cfg := &ConfigInfo{
 				Id:       id,
 				FilePath: st.FilePath,
@@ -48,7 +50,7 @@ func UpdateConfigsLoop() {
 		}
 
 		for id := range ManagerConfig {
-			if _, ok := strategyMap[id]; !ok { //如果策略中不存在，说明用户已删除
+			if _, ok := strategies[id]; !ok { //如果策略中不存在，说明用户已删除
 				cfg := &ConfigInfo{
 					Id:       id,
 					FilePath: ManagerConfig[id].FilePath,
@@ -58,8 +60,8 @@ func UpdateConfigsLoop() {
 		}
 		ManagerJobLock.Unlock()
 
-		//更新counter
-		GlobalCount.UpdateByStrategy(strategyMap)
+		//更新 counter
+		GlobalCount.UpdateByStrategy(strategies)
 		time.Sleep(time.Second * 10)
 	}
 }
@@ -76,7 +78,7 @@ func GetLatestTmsAndDelay(filepath string) (int64, int64, bool) {
 	return latest, delay, true
 }
 
-//添加任务到管理map( managerjob managerconfig) 启动reader和worker
+// 添加任务到管理 managerjob，managerconfig 并启动 reader 和 worker
 func createJob(config *ConfigInfo, cache chan string) error {
 	if _, ok := ManagerJob[config.FilePath]; ok {
 		if _, ok := ManagerConfig[config.Id]; !ok {
@@ -128,16 +130,13 @@ func deleteJob(config *ConfigInfo) {
 	logger.Infof("Stop reader & worker success [filePath:%s][sid:%d]", config.FilePath, config.Id)
 
 	//删除config
-	if _, ok := ManagerConfig[config.Id]; ok {
-		delete(ManagerConfig, config.Id)
-	}
+	delete(ManagerConfig, config.Id)
 }
 
 func Zeroize() {
-
-	t1 := time.NewTicker(time.Duration(10) * time.Second)
+	ticker := time.NewTicker(time.Duration(10) * time.Second)
 	for {
-		<-t1.C
+		<-ticker.C
 		stras := strategy.GetListAll()
 		for _, stra := range stras {
 			if stra.Func == "cnt" && len(stra.Tags) < 1 {
@@ -153,5 +152,4 @@ func Zeroize() {
 			}
 		}
 	}
-
 }

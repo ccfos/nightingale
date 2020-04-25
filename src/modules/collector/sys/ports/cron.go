@@ -11,15 +11,15 @@ func Detect() {
 	go loopDetect()
 }
 
+func detect() {
+	ps := stra.GetPortCollects()
+	DelNoPortCollect(ps)
+	AddNewPortCollect(ps)
+}
+
 func loopDetect() {
 	for {
 		time.Sleep(time.Second * 10)
 		detect()
 	}
-}
-
-func detect() {
-	ps := stra.GetPortCollects()
-	DelNoPortCollect(ps)
-	AddNewPortCollect(ps)
 }

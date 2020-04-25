@@ -5,8 +5,8 @@ import (
 )
 
 var (
-	Ports              = make(map[int]*model.PortCollect)
-	PortsWithScheduler = make(map[int]*PortScheduler)
+	Ports      = make(map[int]*model.PortCollect)
+	Schedulers = make(map[int]*PortScheduler)
 )
 
 func DelNoPortCollect(newCollect map[int]*model.PortCollect) {
@@ -26,25 +26,15 @@ func AddNewPortCollect(newCollect map[int]*model.PortCollect) {
 
 		Ports[target] = newPort
 		sch := NewPortScheduler(newPort)
-		PortsWithScheduler[target] = sch
+		Schedulers[target] = sch
 		sch.Schedule()
 	}
 }
 
 func deletePort(key int) {
-	v, ok := PortsWithScheduler[key]
-	if ok {
+	if v, ok := Schedulers[key]; ok {
 		v.Stop()
-		delete(PortsWithScheduler, key)
+		delete(Schedulers, key)
 	}
 	delete(Ports, key)
-}
-
-func NewPortCollect(port, step int, tags string) *model.PortCollect {
-	return &model.PortCollect{
-		CollectType: "port",
-		Port:        port,
-		Step:        step,
-		Tags:        tags,
-	}
 }

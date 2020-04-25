@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Config routes
+// Config sets up HTTP routes
 func Config(r *gin.Engine) {
 	sys := r.Group("/api/collector")
 	{

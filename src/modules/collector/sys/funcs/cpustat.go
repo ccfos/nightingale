@@ -17,7 +17,7 @@ const (
 
 var (
 	psHistory [historyCount]*nux.ProcStat
-	psLock    = new(sync.RWMutex)
+	psLock    = sync.RWMutex{}
 )
 
 type CpuStats struct {
@@ -34,13 +34,12 @@ type CpuStats struct {
 }
 
 func PrepareCpuStat() {
-	d := time.Duration(3) * time.Second
 	for {
 		err := UpdateCpuStat()
 		if err != nil {
 			logger.Error("update cpu stat fail", err)
 		}
-		time.Sleep(d)
+		time.Sleep(time.Duration(3) * time.Second)
 	}
 }
 
@@ -202,7 +201,7 @@ func CpuContentSwitches() float64 {
 	return float64(psHistory[0].Ctxt - psHistory[1].Ctxt)
 }
 
-func CurrentCpuSwitches() uint64 {
+func CpuCurrentSwitches() uint64 {
 	psLock.Lock()
 	defer psLock.Unlock()
 	return psHistory[0].Ctxt

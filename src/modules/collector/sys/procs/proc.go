@@ -5,8 +5,8 @@ import (
 )
 
 var (
-	Procs              = make(map[string]*model.ProcCollect)
-	ProcsWithScheduler = make(map[string]*ProcScheduler)
+	Procs      = make(map[string]*model.ProcCollect)
+	Schedulers = make(map[string]*ProcScheduler)
 )
 
 func DelNoProcCollect(newCollect map[string]*model.ProcCollect) {
@@ -26,16 +26,15 @@ func AddNewProcCollect(newCollect map[string]*model.ProcCollect) {
 
 		Procs[target] = newProc
 		sch := NewProcScheduler(newProc)
-		ProcsWithScheduler[target] = sch
+		Schedulers[target] = sch
 		sch.Schedule()
 	}
 }
 
 func deleteProc(key string) {
-	v, ok := ProcsWithScheduler[key]
-	if ok {
+	if v, ok := Schedulers[key]; ok {
 		v.Stop()
-		delete(ProcsWithScheduler, key)
+		delete(Schedulers, key)
 	}
 	delete(Procs, key)
 }

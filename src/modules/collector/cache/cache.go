@@ -7,14 +7,19 @@ import (
 	"github.com/didi/nightingale/src/dataobj"
 )
 
-var MetricHistory *History
+var MetricCached *Cached
 
 func Init() {
-	MetricHistory = NewHistory()
+	MetricCached = NewCached()
 }
 
-func NewHistory() *History {
-	h := History{
+type Cached struct {
+	sync.RWMutex
+	Data map[string]dataobj.MetricValue
+}
+
+func NewCached() *Cached {
+	h := Cached{
 		Data: make(map[string]dataobj.MetricValue),
 	}
 
@@ -22,42 +27,35 @@ func NewHistory() *History {
 	return &h
 }
 
-type History struct {
-	sync.RWMutex
-	Data map[string]dataobj.MetricValue
+func (c *Cached) Set(key string, item dataobj.MetricValue) {
+	c.Lock()
+	defer c.Unlock()
+
+	c.Data[key] = item
 }
 
-func (h *History) Set(key string, item dataobj.MetricValue) {
-	h.Lock()
-	defer h.Unlock()
-	h.Data[key] = item
-}
+func (c *Cached) Get(key string) (dataobj.MetricValue, bool) {
+	c.RLock()
+	defer c.RUnlock()
 
-func (h *History) Get(key string) (dataobj.MetricValue, bool) {
-	h.RLock()
-	defer h.RUnlock()
-
-	item, exists := h.Data[key]
+	item, exists := c.Data[key]
 	return item, exists
 }
 
-func (h *History) Clean() {
-	ticker := time.NewTicker(10 * time.Minute)
-	for {
-		select {
-		case <-ticker.C:
-			h.clean()
-		}
+func (c *Cached) Clean() {
+	for range time.Tick(10 * time.Minute) {
+		c.clean()
 	}
 }
 
-func (h *History) clean() {
-	h.Lock()
-	defer h.Unlock()
+func (c *Cached) clean() {
+	c.Lock()
+	defer c.Unlock()
+
 	now := time.Now().Unix()
-	for key, item := range h.Data {
+	for key, item := range c.Data {
 		if now-item.Timestamp > 10*item.Step {
-			delete(h.Data, key)
+			delete(c.Data, key)
 		}
 	}
 }

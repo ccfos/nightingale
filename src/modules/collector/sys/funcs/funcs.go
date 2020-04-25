@@ -5,19 +5,19 @@ import (
 	"github.com/didi/nightingale/src/modules/collector/sys"
 )
 
-type FuncsAndInterval struct {
+type Task struct {
 	Fs       []func() []*dataobj.MetricValue
 	Interval int
 }
 
-var Mappers []FuncsAndInterval
+var Tasks []Task
 
-func BuildMappers() {
+func CreateTasks() {
 	interval := sys.Config.Interval
-	Mappers = []FuncsAndInterval{
+	Tasks = []Task{
 		{
 			Fs: []func() []*dataobj.MetricValue{
-				CollectorMetrics,
+				AliveMetrics,
 				CpuMetrics,
 				MemMetrics,
 				NetMetrics,

@@ -72,7 +72,7 @@ func main() {
 	stra.Init(cfg.Stra)
 
 	funcs.InitRpcClients()
-	funcs.BuildMappers()
+	funcs.CreateTasks()
 	funcs.Collect()
 
 	//插件采集
