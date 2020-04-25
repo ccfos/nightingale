@@ -6,6 +6,7 @@ import (
 
 	"github.com/didi/nightingale/src/modules/collector/log/reader"
 	"github.com/didi/nightingale/src/modules/collector/log/strategy"
+
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -20,19 +21,19 @@ type Job struct {
 }
 
 var ManagerJob map[string]*Job //管理job,文件路径为key
-var ManagerJobLock *sync.RWMutex
+var ManagerJobLock sync.RWMutex
 var ManagerConfig map[int64]*ConfigInfo
 
 func init() {
 	ManagerJob = make(map[string]*Job)
-	ManagerJobLock = new(sync.RWMutex)
+	ManagerJobLock = sync.RWMutex{}
 	ManagerConfig = make(map[int64]*ConfigInfo)
 }
 
 func UpdateConfigsLoop() {
 	for {
 		if err := strategy.Update(); err != nil {
-			logger.Errorf("Update Strategy cache error ! [msg:%v]", err)
+			logger.Errorf("Update Strategy cache error:%v\n", err)
 		}
 
 		strategies := strategy.GetAll() //最新策略
@@ -45,7 +46,7 @@ func UpdateConfigsLoop() {
 			}
 			cache := make(chan string, WorkerConfig.QueueSize)
 			if err := createJob(cfg, cache); err != nil {
-				logger.Errorf("create job fail [id:%d][filePath:%s][err:%v]", cfg.Id, cfg.FilePath, err)
+				logger.Errorf("create job fail [id:%d][filePath:%s][err:%v]\n", cfg.Id, cfg.FilePath, err)
 			}
 		}
 
@@ -106,7 +107,7 @@ func createJob(config *ConfigInfo, cache chan string) error {
 	//启动reader
 	go r.Start()
 
-	logger.Infof("Create job success [filePath:%s][sid:%d]", config.FilePath, config.Id)
+	logger.Infof("Create job success [filePath:%s][sid:%d]\n", config.FilePath, config.Id)
 	return nil
 }
 
@@ -127,7 +128,7 @@ func deleteJob(config *ConfigInfo) {
 			delete(ManagerJob, config.FilePath)
 		}
 	}
-	logger.Infof("Stop reader & worker success [filePath:%s][sid:%d]", config.FilePath, config.Id)
+	logger.Infof("Stop reader & worker success [filePath:%s][sid:%d]\n", config.FilePath, config.Id)
 
 	//删除config
 	delete(ManagerConfig, config.Id)

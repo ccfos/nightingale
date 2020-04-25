@@ -11,12 +11,12 @@ import (
 )
 
 type Reader struct {
-	FilePath    string //配置的路径 正则路径
-	t           *tail.Tail
-	Stream      chan string
-	CurrentPath string //当前的路径
-	Close       chan struct{}
-	FD          uint64 // 文件的inode
+	FilePath    string        // 配置的路径 正则路径
+	t           *tail.Tail    // tail 捕获输出
+	Stream      chan string   // 存储日志流
+	CurrentPath string        // 当前的路径
+	Close       chan struct{} // 关闭通道
+	FD          uint64        // 文件的 inode
 }
 
 func NewReader(filepath string, stream chan string) (*Reader, error) {
@@ -57,21 +57,20 @@ func (r *Reader) StartRead() {
 	var readCnt, readSwp int64
 	var dropCnt, dropSwp int64
 
-	analysClose := make(chan int)
+	done := make(chan struct{})
 	go func() {
 		for {
-			// 十秒钟统计一次
 			select {
-			case <-analysClose:
+			case <-done:
 				return
 			case <-time.After(time.Second * 10):
 			}
-			a := readCnt
-			b := dropCnt
-			logger.Debugf("read [%d] line in last 10s\n", a-readSwp)
-			logger.Debugf("drop [%d] line in last 10s\n", b-dropSwp)
-			readSwp = a
-			dropSwp = b
+			rc := readCnt
+			dc := dropCnt
+			logger.Debugf("read [%d] line in last 10s\n", rc-readSwp)
+			logger.Debugf("drop [%d] line in last 10s\n", dc-dropSwp)
+			readSwp = rc
+			dropSwp = dc
 		}
 	}()
 
@@ -88,7 +87,7 @@ func (r *Reader) StartRead() {
 			// 结论，暂且不做，后人注意
 		}
 	}
-	analysClose <- 0
+	done <- struct{}{}
 }
 
 func (r *Reader) StopRead() error {
@@ -96,7 +95,9 @@ func (r *Reader) StopRead() error {
 }
 
 func (r *Reader) Stop() {
-	r.StopRead()
+	if err := r.StopRead(); err != nil {
+		logger.Warningf("stop reader error:%v", err)
+	}
 	close(r.Close)
 
 }
@@ -111,30 +112,35 @@ func (r *Reader) Start() {
 			return
 		}
 	}
-
 }
+
+func (r *Reader) openAndStart(path string) {
+	if err := r.t.StopAtEOF(); err != nil {
+		logger.Warningf("file stopAtEOF error:%v\n", err)
+	}
+
+	if err := r.openFile(io.SeekStart, path); err == nil { //从文件开始打开
+		go r.StartRead()
+	} else {
+		logger.Warningf("openFile err @check, err: %v\n", err.Error())
+	}
+}
+
 func (r *Reader) check() {
-	nextpath := GetCurrentPath(r.FilePath)
+	nextPath := GetCurrentPath(r.FilePath)
 
 	// 文件名发生变化, 一般发生在配置了动态日志场景
-	if r.CurrentPath != nextpath {
-		if _, err := os.Stat(nextpath); err != nil {
+	if r.CurrentPath != nextPath {
+		if _, err := os.Stat(nextPath); err != nil {
 			logger.Warningf("stat nextpath err: %v\n", err.Error())
 			return
 		}
-		r.t.StopAtEOF()
-		if err := r.openFile(io.SeekStart, nextpath); err == nil { //从文件开始打开
-			go r.StartRead()
-		} else {
-			logger.Warningf("openFile err @check, err: %v\n", err.Error())
-		}
-
+		r.openAndStart(nextPath)
 		// 执行到这里, 动态日志已经reopen, 无需再进行下面同名文件的inode变化check
 		return
 	}
 
-	// 同名文件inode变化check
-	// 重新打开文件, 从头开始读取
+	// 同名文件 inode 变化 check，重新打开文件从头开始读取
 	// TODO hpcloud/tail 应该感知到这种场景
 	newFD := GetFileInodeNum(r.CurrentPath)
 	if r.FD == newFD {
@@ -142,11 +148,5 @@ func (r *Reader) check() {
 	}
 	r.FD = newFD
 	logger.Warningf("inode changed, reopen file %v\n", r.CurrentPath)
-
-	r.t.StopAtEOF()
-	if err := r.openFile(io.SeekStart, nextpath); err == nil { //从文件开始打开
-		go r.StartRead()
-	} else {
-		logger.Warningf("openFile err @check, err: %v\n", err.Error())
-	}
+	r.openAndStart(nextPath)
 }

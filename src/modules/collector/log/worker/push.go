@@ -23,7 +23,7 @@ func (p SortByTms) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 func (p SortByTms) Less(i, j int) bool { return p[i].Timestamp < p[j].Timestamp }
 
 func init() {
-	//拍一个队列大小,10s一清，理论上肯定够用
+	//队列大小为 1024*100，10s 一清，理论上肯定够用
 	pushQueue = make(chan *dataobj.MetricValue, 1024*100)
 }
 
@@ -84,7 +84,7 @@ func PusherLoop() {
 					if err == nil {
 						ToPushQueue(stCount.Strategy, tms, pointsCount.TagstringMap)
 					} else {
-						logger.Errorf("get by tms [%d] error : %v", tms, err)
+						logger.Errorf("get by tms [%d] error: %v\n", tms, err)
 					}
 					stCount.DeleteTms(tms)
 				}
@@ -95,7 +95,6 @@ func PusherLoop() {
 }
 
 func tmsNeedPush(tms int64, filePath string, step int64, waitPush int) bool {
-
 	latest, delay, found := GetLatestTmsAndDelay(filePath)
 	logger.Debugf("filepath:%s tms:%d latest tms:%d delay:%d", filePath, tms, latest, delay)
 
@@ -148,10 +147,9 @@ func ToPushQueue(strategy *stra.Strategy, tms int64, pointMap map[string]*PointC
 			if PointCounter.Count == 0 {
 				//这种就不用往监控推了
 				continue
-			} else {
-				avg := PointCounter.Sum / float64(PointCounter.Count)
-				value = getPrecision(avg, strategy.Degree)
 			}
+			avg := PointCounter.Sum / float64(PointCounter.Count)
+			value = getPrecision(avg, strategy.Degree)
 		case "sum":
 			value = PointCounter.Sum
 		case "max":
@@ -159,7 +157,7 @@ func ToPushQueue(strategy *stra.Strategy, tms int64, pointMap map[string]*PointC
 		case "min":
 			value = PointCounter.Min
 		default:
-			logger.Errorf("Strategy Func Error: %s ", strategy.Func)
+			logger.Errorf("Strategy Func Error: %s\n", strategy.Func)
 			return fmt.Errorf("Strategy Func Error: %s ", strategy.Func)
 		}
 

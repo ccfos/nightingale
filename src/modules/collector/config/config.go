@@ -25,7 +25,7 @@ type ConfYaml struct {
 
 var (
 	Config   *ConfYaml
-	lock     = new(sync.RWMutex)
+	lock     = sync.RWMutex{}
 	Endpoint string
 	Cwd      string
 )
