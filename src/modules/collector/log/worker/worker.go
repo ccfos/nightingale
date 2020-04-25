@@ -161,7 +161,7 @@ func (w *Worker) Work() {
 func (w *Worker) analyze(line string) {
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Infof("%s[analysis panic]: %v", w.Mark, err)
+			logger.Infof("%s[analysis panic]: %v\n", w.Mark, err)
 		}
 	}()
 
@@ -171,7 +171,7 @@ func (w *Worker) analyze(line string) {
 			points, err := w.producer(line, s)
 
 			if err != nil {
-				logger.Errorf("%s: sid:[%d]; producer error: %v", w.Mark, s.ID, err)
+				logger.Errorf("%s: sid:[%d]; producer error: %v\n", w.Mark, s.ID, err)
 				continue
 			}
 			if points != nil {
@@ -184,7 +184,7 @@ func (w *Worker) analyze(line string) {
 func (w *Worker) producer(line string, strategy *stra.Strategy) (*AnalysPoint, error) {
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Errorf("%s[producer panic]: %v", w.Mark, err)
+			logger.Errorf("%s[producer panic]: %v\n", w.Mark, err)
 		}
 	}()
 
@@ -218,7 +218,7 @@ func (w *Worker) producer(line string, strategy *stra.Strategy) (*AnalysPoint, e
 
 	tmsUnix := tms.Unix()
 	if tmsUnix > time.Now().Unix() {
-		logger.Debugf("%s[illegal timestamp][id:%d][tmsUnix:%d][current:%d]",
+		logger.Debugf("%s[illegal timestamp][id:%d][tmsUnix:%d][current:%d]\n",
 			w.Mark, strategy.ID, tmsUnix, time.Now().Unix())
 		return nil, errors.New("illegal timestamp, greater than current")
 	}
@@ -232,7 +232,7 @@ func (w *Worker) producer(line string, strategy *stra.Strategy) (*AnalysPoint, e
 		w.LatestTms = tmsUnix
 
 	} else if w.LatestTms > tmsUnix {
-		logger.Debugf("%s[timestamp disorder][id:%d][latest:%d][producing:%d]",
+		logger.Debugf("%s[timestamp disorder][id:%d][latest:%d][producing:%d]\n",
 			w.Mark, strategy.ID, w.LatestTms, tmsUnix)
 
 		delay = w.LatestTms - tmsUnix
@@ -284,7 +284,7 @@ func (w *Worker) producer(line string, strategy *stra.Strategy) (*AnalysPoint, e
 		var regTag *regexp.Regexp
 		regTag, ok := strategy.TagRegs[tagk]
 		if !ok {
-			logger.Errorf("%s[get tag reg error][sid:%d][tagk:%s][tagv:%s]", w.Mark, strategy.ID, tagk, tagv)
+			logger.Errorf("%s[get tag reg error][sid:%d][tagk:%s][tagv:%s]\n", w.Mark, strategy.ID, tagk, tagv)
 			return nil, nil
 		}
 		t := regTag.FindStringSubmatch(line)
@@ -308,6 +308,6 @@ func (w *Worker) producer(line string, strategy *stra.Strategy) (*AnalysPoint, e
 // toCounter 将解析数据给 counter
 func toCounter(points *AnalysPoint, mark string) {
 	if err := PushToCount(points); err != nil {
-		logger.Errorf("%s push to counter error: %v", mark, err)
+		logger.Errorf("%s push to counter error: %v\n", mark, err)
 	}
 }

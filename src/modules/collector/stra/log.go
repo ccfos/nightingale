@@ -57,7 +57,7 @@ func GetLogCollects() []*Strategy {
 }
 
 func GetCollectFromFile(logPath string) []*Strategy {
-	logger.Infof("get collects from local file: %s", logPath)
+	logger.Infof("get collects from local file: %s\n", logPath)
 
 	var stras []*Strategy
 	files, err := file.FilesUnder(logPath)

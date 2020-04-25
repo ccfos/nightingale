@@ -24,7 +24,7 @@ func Update() error {
 	if err != nil {
 		return err
 	}
-	logger.Infof("Update Strategy end")
+	logger.Info("Update Strategy end")
 	return nil
 }
 
@@ -65,7 +65,7 @@ func GetByID(id int64) (*stra.Strategy, error) {
 	st, ok := globalStrategy[id]
 
 	if !ok {
-		return nil, fmt.Errorf("I : %d is not exists in global Cache", id)
+		return nil, fmt.Errorf("ID: %d is not exists in global Cache", id)
 	}
 	return st, nil
 

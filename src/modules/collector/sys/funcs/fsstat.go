@@ -20,7 +20,7 @@ func FsRWMetrics() []*dataobj.MetricValue {
 
 	mountPoints, err := nux.ListMountPoint()
 	if err != nil {
-		logger.Errorf("failed to call ListMountPoint: %v", err)
+		logger.Errorf("failed to call ListMountPoint: %v\n", err)
 		return ret
 	}
 
@@ -32,7 +32,7 @@ func FsRWMetrics() []*dataobj.MetricValue {
 		var du *nux.DeviceUsage
 		du, err = nux.BuildDeviceUsage(mountPoints[idx][0], mountPoints[idx][1], mountPoints[idx][2])
 		if err != nil {
-			logger.Warningf("failed to call BuildDeviceUsage: idx[%d], error:%v", idx, err)
+			logger.Warningf("failed to call BuildDeviceUsage: idx[%d], error:%v\n", idx, err)
 			continue
 		}
 
@@ -51,14 +51,14 @@ func FsRWMetrics() []*dataobj.MetricValue {
 
 		f, err := os.Open(du.FsFile)
 		if err != nil {
-			logger.Errorf("target mount point open failed: %v", err)
+			logger.Errorf("target mount point open failed: %v\n", err)
 			ret = append(ret, GaugeValue("disk.rw.error", 1, tags))
 			continue
 		}
 
 		fs, err := f.Stat()
 		if err != nil {
-			logger.Errorf("get target mount point status failed: %v", err)
+			logger.Errorf("get target mount point status failed: %v\n", err)
 			ret = append(ret, GaugeValue("disk.rw.error", 2, tags))
 			continue
 		}
@@ -85,7 +85,7 @@ func CheckFS(file, content string) error {
 	//write test
 	fd, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
-		logger.Error("Open file failed: ", err)
+		logger.Errorf("Open file failed: %v\n", err)
 		return err
 	}
 	defer fd.Close()
@@ -93,25 +93,25 @@ func CheckFS(file, content string) error {
 	buf := []byte(content)
 	count, err := fd.Write(buf)
 	if err != nil || count != len(buf) {
-		logger.Errorf("Write file failed: %v", err)
+		logger.Errorf("Write file failed: %v\n", err)
 		return err
 	}
 
 	//read test
 	read, err := ioutil.ReadFile(file)
 	if err != nil {
-		logger.Errorf("Read file failed: %v", err)
+		logger.Errorf("Read file failed: %v\n", err)
 		return err
 	}
 	if string(read) != content {
-		logger.Errorf("Read content failed: %s", string(read))
+		logger.Errorf("Read content failed: %s\n", string(read))
 		return errors.New("read content failed")
 	}
 
 	//clean the file
 	err = os.Remove(file)
 	if err != nil {
-		logger.Error("Remove file filed: ", err)
+		logger.Errorf("Remove file filed: %v\n", err)
 		return err
 	}
 	return nil

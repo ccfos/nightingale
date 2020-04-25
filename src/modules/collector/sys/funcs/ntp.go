@@ -23,11 +23,11 @@ func NtpOffsetMetrics() (L []*dataobj.MetricValue) {
 			ntpServer = server
 		}
 		orgTime := time.Now()
-		logger.Debugf("ntp server:[%s]", ntpServer)
-		logger.Debugf("ntp updated time:[%v]", orgTime)
+		logger.Debugf("ntp server:[%s]\n", ntpServer)
+		logger.Debugf("ntp updated time:[%v]\n", orgTime)
 		serverReciveTime, serverTransmitTime, err := nux.NtpTwoTime(ntpServer)
 		if err != nil {
-			logger.Warningf("ntp server:[%s] update error: %v", ntpServer, err)
+			logger.Warningf("ntp server:[%s] update error: %v\n", ntpServer, err)
 			ntpServer = ""
 			time.Sleep(time.Second * time.Duration(idx+1))
 			continue
@@ -37,9 +37,9 @@ func NtpOffsetMetrics() (L []*dataobj.MetricValue) {
 		dstTime := time.Now()
 		// 算法见https://en.wikipedia.org/wiki/Network_Time_Protocol
 		duration := ((serverReciveTime.UnixNano() - orgTime.UnixNano()) + (serverTransmitTime.UnixNano() - dstTime.UnixNano())) / 2
-		logger.Debugf("ntp server receive time:[%v]", serverReciveTime)
-		logger.Debugf("ntp server reply time:[%v]", serverTransmitTime)
-		logger.Debugf("ntp client receive time:[%v]", dstTime)
+		logger.Debugf("ntp server receive time:[%v]\n", serverReciveTime)
+		logger.Debugf("ntp server reply time:[%v]\n", serverTransmitTime)
+		logger.Debugf("ntp client receive time:[%v]\n", dstTime)
 
 		delta := duration / 1e6 // 转换成 ms
 		L = append(L, GaugeValue("sys.ntp.offset.ms", delta))
