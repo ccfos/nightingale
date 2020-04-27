@@ -45,6 +45,7 @@ func Query(reqs []*dataobj.QueryData) ([]*dataobj.TsdbQueryResponse, error) {
 		if err == nil {
 			break
 		}
+		time.Sleep(500 * time.Millisecond)
 	}
 	if err != nil {
 		return nil, err

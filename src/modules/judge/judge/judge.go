@@ -67,7 +67,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryDat
 
 	if len(exps) < 1 {
 		stats.Counter.Set("stra.illegal", 1)
-		logger.Warningf("stra:%v exp is null", stra)
+		logger.Warningf("stra:%+v exp is null", stra)
 		return
 	}
 	exp := exps[0]
@@ -92,7 +92,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryDat
 		if len(exps) == 1 {
 			bs, err := json.Marshal(history)
 			if err != nil {
-				logger.Errorf("Marshal history:%v err:%v", history, err)
+				logger.Errorf("Marshal history:%+v err:%v", history, err)
 			}
 			event := &dataobj.Event{
 				ID:        fmt.Sprintf("s_%d_%s", stra.Id, firstItem.PrimaryKey()),
@@ -151,7 +151,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryDat
 				respData, err = GetData(stra, exps[1], firstItem, now, false)
 			}
 			if err != nil {
-				logger.Errorf("stra:%v get query data err:%v", stra, err)
+				logger.Errorf("stra:%+v get query data err:%v", stra, err)
 				return
 			}
 			for i := range respData {
@@ -169,7 +169,7 @@ func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.HistoryData,
 
 	straParam := []interface{}{}
 	if firstItem.Step == 0 {
-		logger.Errorf("wrong step:%v", firstItem)
+		logger.Errorf("wrong step:%+v", firstItem)
 		return
 	}
 	straParam = append(straParam, stra.AlertDur/int(firstItem.Step))
@@ -177,13 +177,13 @@ func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.HistoryData,
 	switch straFunc {
 	case "happen":
 		if len(exp.Params) < 1 {
-			logger.Errorf("stra:%d exp:%v stra param is null", stra.Id, exp)
+			logger.Errorf("stra:%d exp:%+v stra param is null", stra.Id, exp)
 			return
 		}
 		straParam = append(straParam, exp.Params[0])
 	case "c_avg", "c_avg_abs", "c_avg_rate", "c_avg_rate_abs":
 		if len(exp.Params) < 1 {
-			logger.Errorf("stra:%d exp:%v stra param is null", stra.Id, exp)
+			logger.Errorf("stra:%d exp:%+v stra param is null", stra.Id, exp)
 			return
 		}
 
@@ -194,12 +194,12 @@ func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.HistoryData,
 
 		respItems, err := GetData(stra, exp, firstItem, now-int64(exp.Params[0]), true)
 		if err != nil {
-			logger.Errorf("stra:%v %v get compare data err:%v", stra.Id, exp, err)
+			logger.Errorf("stra:%v %+v get compare data err:%v", stra.Id, exp, err)
 			return
 		}
 
 		if len(respItems) != 1 || len(respItems[0].Values) < 1 {
-			logger.Errorf("stra:%d %v get compare data err, respItems:%v", stra.Id, exp, respItems)
+			logger.Errorf("stra:%d %+v get compare data err, respItems:%v", stra.Id, exp, respItems)
 			return
 		}
 
@@ -215,7 +215,7 @@ func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.HistoryData,
 
 	fn, err := ParseFuncFromString(straFunc, straParam, exp.Eopt, exp.Threshold)
 	if err != nil {
-		logger.Errorf("stra:%d %v parse func fail: %v", stra.Id, exp, err)
+		logger.Errorf("stra:%d %+v parse func fail: %v", stra.Id, exp, err)
 		return
 	}
 
@@ -265,7 +265,7 @@ func GetData(stra *model.Stra, exp model.Exp, firstItem *dataobj.JudgeItem, now 
 
 	if len(respData) < 1 {
 		stats.Counter.Set("get.data.null", 1)
-		err = fmt.Errorf("stra:%v get query data is null", stra)
+		err = fmt.Errorf("get query data is null")
 	}
 	return respData, err
 }
