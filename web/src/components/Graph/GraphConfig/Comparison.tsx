@@ -139,7 +139,6 @@ class Comparison extends Component<Props, State> {
   render() {
     const { size, comparison, comparisonOptions } = this.props;
     const { customValue, customType, errorText } = this.state;
-    console.log(this.props.intl.locale);
     const addonUid = _.uniqueId('inputNumber-addon-');
     return (
       <div className="graph-config-inner-comparison">
