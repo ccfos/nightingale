@@ -106,6 +106,7 @@ export default {
   '7天': '7天',
   '30天': '30天',
   '其它': '其它',
+  '自定义': '自定义',
 
   'menu.endpoints': '监控对象',
   'menu.endpoints.all': '全部对象',
