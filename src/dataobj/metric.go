@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 )
 
 const (
@@ -61,7 +60,7 @@ func (m *MetricValue) PK() string {
 	return ret.String()
 }
 
-func (m *MetricValue) CheckValidity() (err error) {
+func (m *MetricValue) CheckValidity(now int64) (err error) {
 	if m == nil {
 		err = fmt.Errorf("item is nil")
 		return
@@ -86,7 +85,7 @@ func (m *MetricValue) CheckValidity() (err error) {
 	if m.CounterType == "" {
 		m.CounterType = GAUGE
 	}
-	if m.CounterType != COUNTER && m.CounterType != GAUGE && m.CounterType != DERIVE {
+	if m.CounterType != GAUGE {
 		err = fmt.Errorf("wrong counter type")
 		return
 	}
@@ -108,16 +107,24 @@ func (m *MetricValue) CheckValidity() (err error) {
 		}
 	}
 
-	m.Tags = SortedTags(m.TagsMap)
-	// TODO(): why 510?
-	if len(m.Metric)+len(m.Tags) > 510 {
-		err = fmt.Errorf("len(m.Metric)+len(m.Tags) is too large")
+	if len(m.Metric) > 255 {
+		err = fmt.Errorf("len(m.Metric) is too large")
 		return
 	}
 
-	//规范时间戳
-	now := time.Now().Unix()
-	if m.Timestamp <= 0 || m.Timestamp > now*2 {
+	m.Tags = SortedTags(m.TagsMap)
+	if len(m.Tags) > 255 {
+		err = fmt.Errorf("len(m.Tags) is too large")
+		return
+	}
+
+	//时间超前5分钟则报错
+	if m.Timestamp-now > 300 {
+		err = fmt.Errorf("point timestamp:%d is ahead of now:%d")
+		return
+	}
+
+	if m.Timestamp <= 0 {
 		m.Timestamp = now
 	}
 

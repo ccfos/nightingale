@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/modules/transfer/backend"
@@ -14,6 +15,7 @@ import (
 )
 
 func PushData(c *gin.Context) {
+	now := time.Now().Unix()
 	if c.Request.ContentLength == 0 {
 		render.Message(c, "blank body")
 		return
@@ -28,7 +30,7 @@ func PushData(c *gin.Context) {
 		logger.Debug("->recv: ", v)
 		stats.Counter.Set("points.in", 1)
 
-		err := v.CheckValidity()
+		err := v.CheckValidity(now)
 		if err != nil {
 			stats.Counter.Set("points.in.err", 1)
 			msg += fmt.Sprintf("recv metric %v err:%v\n", v, err)
