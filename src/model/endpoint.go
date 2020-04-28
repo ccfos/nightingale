@@ -102,8 +102,10 @@ func endpointImport(session *xorm.Session, ident, alias string) error {
 	}
 
 	if has {
-		endpoint.Alias = alias
-		_, err = session.Where("ident=?", ident).Cols("alias").Update(endpoint)
+		if alias != "" {
+			endpoint.Alias = alias
+			_, err = session.Where("ident=?", ident).Cols("alias").Update(endpoint)
+		}
 	} else {
 		_, err = session.Insert(Endpoint{Ident: ident, Alias: alias})
 	}

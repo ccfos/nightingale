@@ -232,7 +232,7 @@ func EventCurGet(col string, value interface{}) (*EventCur, error) {
 }
 
 func (e *EventCur) EventIgnore() error {
-	_, err := DB["mon"].Exec("update event_cur set ignore_alert=1 where id=?", e.Id)
+	_, err := DB["mon"].Where("id=?", e.Id).Delete(new(EventCur))
 	return err
 }
 

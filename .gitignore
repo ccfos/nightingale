@@ -48,5 +48,6 @@ _test
 
 /web/node_modules
 /web/.cache-loader
+/web/yarn.lock
 
 

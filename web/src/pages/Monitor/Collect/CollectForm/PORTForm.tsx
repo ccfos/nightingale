@@ -121,7 +121,7 @@ class CollectForm extends Component<Props & WrappedComponentProps> {
               initialValue: service,
               rules: [
                 { required: true },
-                { pattern: /^[a-zA-Z0-9-]+$/, message: this.props.intl.formatMessage({ id: 'collect.port.pattern.msg' }) },
+                { pattern: /^[a-zA-Z0-9-_.]+$/, message: this.props.intl.formatMessage({ id: 'collect.port.pattern.msg' }) },
               ],
             })}
             size="default"

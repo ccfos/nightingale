@@ -94,7 +94,7 @@ func Rebuild(persistenceDir string, concurrency int) {
 	}
 
 	if err := RebuildFromDisk(dbDir, concurrency); err != nil {
-		logger.Errorf("rebuild index from local disk error:%+v", err)
+		logger.Warningf("rebuild index from local disk error:%+v", err)
 	}
 }
 

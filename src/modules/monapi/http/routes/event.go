@@ -9,6 +9,7 @@ import (
 
 	"github.com/toolkits/pkg/errors"
 
+	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/model"
 	jsoniter "github.com/json-iterator/go"
 )
@@ -79,9 +80,9 @@ func eventCurGets(c *gin.Context) {
 		err = json.Unmarshal([]byte(events[i].Detail), &detail)
 		errors.Dangerous(err)
 
-		tagsList := []string{}
-		for k, v := range detail[0].Tags {
-			tagsList = append(tagsList, fmt.Sprintf("%s=%s", k, v))
+		var tags string
+		if len(detail) > 0 {
+			tags = dataobj.SortedTags(detail[0].Tags)
 		}
 
 		alertUpgrade, err := model.EventAlertUpgradeUnMarshal(events[i].AlertUpgrade)
@@ -106,7 +107,7 @@ func eventCurGets(c *gin.Context) {
 			Etime:       events[i].Etime,
 			Value:       events[i].Value,
 			Info:        events[i].Info,
-			Tags:        strings.Join(tagsList, ","),
+			Tags:        tags,
 			Created:     events[i].Created,
 			Nid:         events[i].Nid,
 			Users:       users,
@@ -164,9 +165,9 @@ func eventHisGets(c *gin.Context) {
 		err = json.Unmarshal([]byte(events[i].Detail), &detail)
 		errors.Dangerous(err)
 
-		tagsList := []string{}
-		for k, v := range detail[0].Tags {
-			tagsList = append(tagsList, fmt.Sprintf("%s=%s", k, v))
+		var tags string
+		if len(detail) > 0 {
+			tags = dataobj.SortedTags(detail[0].Tags)
 		}
 
 		alertUpgrade, err := model.EventAlertUpgradeUnMarshal(events[i].AlertUpgrade)
@@ -191,7 +192,7 @@ func eventHisGets(c *gin.Context) {
 			Etime:       events[i].Etime,
 			Value:       events[i].Value,
 			Info:        events[i].Info,
-			Tags:        strings.Join(tagsList, ","),
+			Tags:        tags,
 			Created:     events[i].Created,
 			Nid:         events[i].Nid,
 			Users:       users,

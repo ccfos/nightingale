@@ -62,7 +62,7 @@ func ToJudge(historyMap *cache.JudgeItemMap, key string, val *dataobj.JudgeItem,
 	Judge(stra, stra.Exprs, historyData, val, now, history, "", "", "", []bool{})
 }
 
-func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, extra string, status []bool) {
+func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, extra string, status []bool) {
 	stats.Counter.Set("running", 1)
 
 	if len(exps) < 1 {
@@ -85,10 +85,6 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 		Tags:        firstItem.TagsMap,
 		Granularity: int(firstItem.Step),
 		Points:      historyData,
-	}
-	if len(history) == 0 {
-		//只有第一个指标是push的模式，可以获取到extra字段
-		h.Extra = firstItem.Extra
 	}
 	history = append(history, h)
 
@@ -135,7 +131,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 					Tags:     "",
 					DsType:   "GAUGE",
 				}
-				Judge(stra, exps[1:], []*dataobj.RRDData{}, judgeItem, now, history, info, value, extra, status)
+				Judge(stra, exps[1:], []*dataobj.HistoryData{}, judgeItem, now, history, info, value, extra, status)
 				return
 			}
 
@@ -143,7 +139,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				firstItem.Endpoint = respData[i].Endpoint
 				firstItem.Tags = getTags(respData[i].Counter)
 				firstItem.Step = respData[i].Step
-				Judge(stra, exps[1:], respData[i].Values, firstItem, now, history, info, value, extra, status)
+				Judge(stra, exps[1:], dataobj.RRDData2HistoryData(respData[i].Values), firstItem, now, history, info, value, extra, status)
 			}
 
 		} else {
@@ -162,13 +158,13 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.RRDData, f
 				firstItem.Endpoint = respData[i].Endpoint
 				firstItem.Tags = getTags(respData[i].Counter)
 				firstItem.Step = respData[i].Step
-				Judge(stra, exps[1:], respData[i].Values, firstItem, now, history, info, value, extra, status)
+				Judge(stra, exps[1:], dataobj.RRDData2HistoryData(respData[i].Values), firstItem, now, history, info, value, extra, status)
 			}
 		}
 	}
 }
 
-func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.RRDData, exp model.Exp, firstItem *dataobj.JudgeItem, now int64) (leftValue dataobj.JsonFloat, isTriggered bool) {
+func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.HistoryData, exp model.Exp, firstItem *dataobj.JudgeItem, now int64) (leftValue dataobj.JsonFloat, isTriggered bool) {
 	straFunc := exp.Func
 
 	straParam := []interface{}{}
@@ -298,7 +294,7 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 	stats.Counter.Set("get.index", 1)
 	indexsData, err := query.Xclude(req)
 	if err != nil {
-		return reqs, err
+		logger.Warning("get index err:", err)
 	}
 
 	lostSeries := []cache.Series{}
@@ -309,8 +305,8 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 				Endpoint: index.Endpoint,
 				Metric:   index.Metric,
 				Tag:      "",
-				Step:     index.Step,
-				Dstype:   index.Dstype,
+				Step:     10,
+				Dstype:   "GAUGE",
 				TS:       now,
 			}
 			lostSeries = append(lostSeries, s)
@@ -345,6 +341,10 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 	}
 
 	seriess := cache.SeriesMap.Get(stra.Id)
+	if len(seriess) == 0 && err != nil {
+		return reqs, err
+	}
+
 	step := 0
 	if len(seriess) > 1 {
 		step = seriess[0].Step
@@ -389,7 +389,7 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 	return reqs, nil
 }
 
-func sendEventIfNeed(historyData []*dataobj.RRDData, status []bool, event *dataobj.Event, stra *model.Stra) {
+func sendEventIfNeed(historyData []*dataobj.HistoryData, status []bool, event *dataobj.Event, stra *model.Stra) {
 	isTriggered := true
 	for _, s := range status {
 		isTriggered = isTriggered && s
