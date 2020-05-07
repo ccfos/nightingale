@@ -40,6 +40,21 @@ func GetMetrics(c *gin.Context) {
 	render.Data(c, resp, nil)
 }
 
+type EndpointRecv struct {
+	Endpoints []string `json:"endpoints"`
+}
+
+func DelIdxByEndpoint(c *gin.Context) {
+	recv := EndpointRecv{}
+	errors.Dangerous(c.ShouldBindJSON(&recv))
+
+	for _, endpoint := range recv.Endpoints {
+		cache.IndexDB.DelByEndpoint(endpoint)
+	}
+
+	render.Data(c, "ok", nil)
+}
+
 type EndpointMetricRecv struct {
 	Endpoints []string `json:"endpoints"`
 	Metrics   []string `json:"metrics"`

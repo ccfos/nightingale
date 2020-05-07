@@ -133,3 +133,10 @@ func (e *EndpointIndexMap) GetEndpoints() []string {
 	}
 	return ret
 }
+
+func (e *EndpointIndexMap) DelByEndpoint(endpoint string) {
+	e.Lock()
+	defer e.Unlock()
+
+	delete(e.M, endpoint)
+}
