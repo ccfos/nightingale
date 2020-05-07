@@ -76,7 +76,7 @@ func Parse(conf string) error {
 
 	err = viper.Unmarshal(&Config)
 	if err != nil {
-		return fmt.Errorf("Unmarshal %v", err)
+		return fmt.Errorf("unmarshal config error:%v", err)
 	}
 
 	return nil
