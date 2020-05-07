@@ -40,30 +40,6 @@ type WorkerGroup struct {
 	TimeFormatStrategy string
 }
 
-func (this WorkerGroup) GetLatestTmsAndDelay() (tms int64, delay int64) {
-	return this.LatestTms, this.MaxDelay
-}
-
-func (this *WorkerGroup) SetLatestTmsAndDelay(tms int64, delay int64) {
-	latest := atomic.LoadInt64(&this.LatestTms)
-
-	if latest < tms {
-		swapped := atomic.CompareAndSwapInt64(&this.LatestTms, latest, tms)
-		if swapped {
-			logger.Debugf("[work group:%s][set latestTms:%d]", this.Workers[0].Mark, tms)
-		}
-	}
-
-	if delay == 0 {
-		return
-	}
-
-	newest := atomic.LoadInt64(&this.MaxDelay)
-	if newest < delay {
-		atomic.CompareAndSwapInt64(&this.MaxDelay, newest, delay)
-	}
-}
-
 /*
  * filepath和stream依赖外部，其他的都自己创建
  */
@@ -92,6 +68,30 @@ func NewWorkerGroup(filePath string, stream chan string) *WorkerGroup {
 	}
 
 	return wg
+}
+
+func (wg WorkerGroup) GetLatestTmsAndDelay() (tms int64, delay int64) {
+	return wg.LatestTms, wg.MaxDelay
+}
+
+func (wg *WorkerGroup) SetLatestTmsAndDelay(tms int64, delay int64) {
+	latest := atomic.LoadInt64(&wg.LatestTms)
+
+	if latest < tms {
+		swapped := atomic.CompareAndSwapInt64(&wg.LatestTms, latest, tms)
+		if swapped {
+			logger.Debugf("[work group:%s][set latestTms:%d]", wg.Workers[0].Mark, tms)
+		}
+	}
+
+	if delay == 0 {
+		return
+	}
+
+	newest := atomic.LoadInt64(&wg.MaxDelay)
+	if newest < delay {
+		atomic.CompareAndSwapInt64(&wg.MaxDelay, newest, delay)
+	}
 }
 
 func (wg *WorkerGroup) Start() {
