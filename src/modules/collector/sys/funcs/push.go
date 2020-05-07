@@ -22,12 +22,14 @@ import (
 func Push(metricItems []*dataobj.MetricValue) error {
 	var err error
 	var items []*dataobj.MetricValue
+	now := time.Now().Unix()
+
 	for _, item := range metricItems {
 		logger.Debug("->recv: ", item)
 		if item.Endpoint == "" {
 			item.Endpoint = identity.Identity
 		}
-		err = item.CheckValidity()
+		err = item.CheckValidity(now)
 		if err != nil {
 			msg := fmt.Errorf("metric:%v err:%v", item, err)
 			logger.Warning(msg)

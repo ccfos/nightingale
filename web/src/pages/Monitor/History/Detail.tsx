@@ -239,10 +239,6 @@ class Detail extends Component<RouteComponentProps & WrappedComponentProps> {
                 <span className="label"><FormattedMessage id="event.table.expression" />：</span>
                 {data.info}
               </div>
-              <div>
-                <span className="label">Extra：</span>
-                {detail.extra}
-              </div>
               {
                 _.map(points, (item) => {
                   return (
@@ -268,6 +264,9 @@ class Detail extends Component<RouteComponentProps & WrappedComponentProps> {
                           }, {
                             title: <FormattedMessage id="event.table.scene.value" />,
                             dataIndex: 'value',
+                          }, {
+                            title: 'Extra',
+                            dataIndex: 'extra',
                           },
                         ]}
                         pagination={false}

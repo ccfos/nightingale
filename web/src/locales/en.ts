@@ -106,6 +106,7 @@ export default {
   '7天': '7days',
   '30天': '30days',
   '其它': 'other',
+  '自定义': 'custom',
 
   'menu.endpoints': 'Endpoints',
   'menu.endpoints.all': 'All endpoints',

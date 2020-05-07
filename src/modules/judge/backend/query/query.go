@@ -45,6 +45,7 @@ func Query(reqs []*dataobj.QueryData) ([]*dataobj.TsdbQueryResponse, error) {
 		if err == nil {
 			break
 		}
+		time.Sleep(500 * time.Millisecond)
 	}
 	if err != nil {
 		return nil, err
@@ -109,25 +110,20 @@ func Xclude(request *IndexReq) ([]IndexData, error) {
 		return nil, errors.New("empty index addr")
 	}
 
-	var (
-		result IndexResp
-		succ   bool = false
-	)
+	var result IndexResp
 	perm := rand.Perm(len(addrs))
+	var err error
 	for i := range perm {
 		url := fmt.Sprintf("http://%s%s", addrs[perm[i]], Config.IndexPath)
-		err := httplib.Post(url).JSONBodyQuiet([]IndexReq{*request}).SetTimeout(time.Duration(Config.IndexCallTimeout) * time.Millisecond).ToJSON(&result)
-		if err != nil {
-			logger.Warningf("index xclude failed, error:%v, req:%v", err, request)
-			continue
-		} else {
-			succ = true
+		err = httplib.Post(url).JSONBodyQuiet([]IndexReq{*request}).SetTimeout(time.Duration(Config.IndexCallTimeout) * time.Millisecond).ToJSON(&result)
+		if err == nil {
 			break
 		}
+		logger.Warningf("index xclude failed, error:%v, req:%+v", err, request)
 	}
 
-	if !succ {
-		return nil, errors.New("index xclude failed")
+	if err != nil {
+		return nil, fmt.Errorf("index xclude failed, error:%v, req:%+v", err, request)
 	}
 
 	if result.Err != "" {

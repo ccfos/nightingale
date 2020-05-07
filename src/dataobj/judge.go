@@ -28,9 +28,3 @@ func (j *JudgeItem) PrimaryKey() string {
 func (j *JudgeItem) MD5() string {
 	return gstr.MD5(str.PK(strconv.FormatInt(j.Sid, 16), j.Endpoint, j.Metric, str.SortedTags(j.TagsMap)))
 }
-
-//告警现场的值
-type HistoryData struct {
-	Timestamp int64   `json:"timestamp"`
-	Value     float64 `json:"value"`
-}

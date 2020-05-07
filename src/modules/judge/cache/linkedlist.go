@@ -54,22 +54,22 @@ func (ll *SafeLinkedList) PushFrontAndMaintain(v *dataobj.JudgeItem, maxCount in
 
 // @param limit 至多返回这些，如果不够，有多少返回多少
 // @return bool isEnough
-func (ll *SafeLinkedList) HistoryData(limit int) ([]*dataobj.RRDData, bool) {
+func (ll *SafeLinkedList) HistoryData(limit int) ([]*dataobj.HistoryData, bool) {
 	if limit < 1 {
 		// 其实limit不合法，此处也返回false吧，上层代码要注意
 		// 因为false通常使上层代码进入异常分支，这样就统一了
-		return []*dataobj.RRDData{}, false
+		return []*dataobj.HistoryData{}, false
 	}
 
 	size := ll.Len()
 	if size == 0 {
-		return []*dataobj.RRDData{}, false
+		return []*dataobj.HistoryData{}, false
 	}
 
 	firstElement := ll.Front()
 	firstItem := firstElement.Value.(*dataobj.JudgeItem)
 
-	var vs []*dataobj.RRDData
+	var vs []*dataobj.HistoryData
 	isEnough := true
 
 	judgeType := firstItem.DsType[0]
@@ -79,15 +79,21 @@ func (ll *SafeLinkedList) HistoryData(limit int) ([]*dataobj.RRDData, bool) {
 			limit = size
 			isEnough = false
 		}
-		vs = make([]*dataobj.RRDData, limit)
-		vs[0] = &dataobj.RRDData{Timestamp: firstItem.Timestamp, Value: dataobj.JsonFloat(firstItem.Value)}
+		vs = make([]*dataobj.HistoryData, limit)
+		vs[0] = &dataobj.HistoryData{
+			Timestamp: firstItem.Timestamp,
+			Value:     dataobj.JsonFloat(firstItem.Value),
+			Extra:     firstItem.Extra,
+		}
+
 		i := 1
 		currentElement := firstElement
 		for i < limit {
 			nextElement := currentElement.Next()
-			vs[i] = &dataobj.RRDData{
+			vs[i] = &dataobj.HistoryData{
 				Timestamp: nextElement.Value.(*dataobj.JudgeItem).Timestamp,
 				Value:     dataobj.JsonFloat(nextElement.Value.(*dataobj.JudgeItem).Value),
+				Extra:     nextElement.Value.(*dataobj.JudgeItem).Extra,
 			}
 			i++
 			currentElement = nextElement
