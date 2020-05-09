@@ -136,7 +136,7 @@ func (w *Worker) Work() {
 	logger.Infof("worker starting...[%s]", w.Mark)
 
 	var anaCnt, anaSwp int64
-	analysClose := make(chan int, 0)
+	analysClose := make(chan int)
 
 	go func() {
 		for {

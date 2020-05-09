@@ -57,7 +57,7 @@ func (r *Reader) StartRead() {
 	var readCnt, readSwp int64
 	var dropCnt, dropSwp int64
 
-	analysClose := make(chan int, 0)
+	analysClose := make(chan int)
 	go func() {
 		for {
 			// 十秒钟统计一次
