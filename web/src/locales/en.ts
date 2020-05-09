@@ -236,6 +236,12 @@ export default {
   'collect.proc.type.name': 'Process Name',
   'collect.proc.type.input.pattern.msg': 'Cannot contain Chinese',
 
+  'collect.plugin': 'Plugin',
+  'collect.plugin.name.placeholder': 'Description of the collection',
+  'collect.plugin.filepath': 'FilePath',
+  'collect.plugin.params': 'Params',
+  'collect.plugin.filepath.placeholder': 'The absolute path of the plugin',
+
   'graph.subscribe': 'Subscribe',
   'graph.subscribe.node': 'Node',
   'graph.subscribe.screen': 'Screen',

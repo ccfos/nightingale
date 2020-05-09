@@ -237,6 +237,12 @@ export default {
   'collect.proc.type.name': '进程名',
   'collect.proc.type.input.pattern.msg': '不能包含中文',
 
+  'collect.plugin': '插件',
+  'collect.plugin.name.placeholder': '对采集配置的说明',
+  'collect.plugin.filepath': '文件路径',
+  'collect.plugin.params': '参数',
+  'collect.plugin.filepath.placeholder': '待执行插件所在的绝对路径',
+
   'graph.subscribe': '订阅图表',
   'graph.subscribe.node': '所属节点',
   'graph.subscribe.screen': '选择大盘',
