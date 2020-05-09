@@ -14,7 +14,7 @@
     "lint": "fetk run lint"
   },
   "dependencies": {
-    "@d3-charts/ts-graph": "~0.1.2",
+    "@d3-charts/ts-graph": "~0.1.15",
     "@hot-loader/react-dom": "^16.8.6",
     "antd": "^3.19.2",
     "classnames": "^2.2.6",
