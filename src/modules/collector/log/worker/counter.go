@@ -349,7 +349,6 @@ func (gc *GlobalCounter) cleanStrategyData(id int64) {
 		return
 	}
 	sCount.TmsPoints = make(map[int64]*PointsCounter)
-	return
 }
 
 // countEqual意味着不会对统计的结构产生影响
