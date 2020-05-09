@@ -97,7 +97,9 @@ func IODelta(device string, f func([2]*nux.DiskStats) uint64) uint64 {
 	return f(val)
 }
 
-func IOStatsMetrics() (L []*dataobj.MetricValue) {
+func IOStatsMetrics() []*dataobj.MetricValue {
+	ret := make([]*dataobj.MetricValue, 0)
+
 	dsLock.RLock()
 	defer dsLock.RUnlock()
 
@@ -109,38 +111,38 @@ func IOStatsMetrics() (L []*dataobj.MetricValue) {
 		tags := "device=" + device
 		rio := IODelta(device, IOReadRequests)
 		wio := IODelta(device, IOWriteRequests)
-		delta_rsec := IODelta(device, IOReadSectors)
-		delta_wsec := IODelta(device, IOWriteSectors)
+		deltaRsec := IODelta(device, IOReadSectors)
+		deltaWsec := IODelta(device, IOWriteSectors)
 		ruse := IODelta(device, IOMsecRead)
 		wuse := IODelta(device, IOMsecWrite)
 		use := IODelta(device, IOMsecTotal)
-		n_io := rio + wio
-		avgrq_sz := 0.0
+		nio := rio + wio
+		avgrqSz := 0.0
 		await := 0.0
 		svctm := 0.0
-		if n_io != 0 {
-			avgrq_sz = float64(delta_rsec+delta_wsec) / float64(n_io)
-			await = float64(ruse+wuse) / float64(n_io)
-			svctm = float64(use) / float64(n_io)
+		if nio != 0 {
+			avgrqSz = float64(deltaRsec+deltaWsec) / float64(nio)
+			await = float64(ruse+wuse) / float64(nio)
+			svctm = float64(use) / float64(nio)
 		}
 
 		duration := IODelta(device, TS)
-		L = append(L, GaugeValue("disk.io.read.request", float64(rio), tags))
-		L = append(L, GaugeValue("disk.io.write.request", float64(wio), tags))
-		L = append(L, GaugeValue("disk.io.read.bytes", float64(delta_rsec)*512.0, tags))
-		L = append(L, GaugeValue("disk.io.write.bytes", float64(delta_wsec)*512.0, tags))
-		L = append(L, GaugeValue("disk.io.avgrq_sz", avgrq_sz, tags))
-		L = append(L, GaugeValue("disk.io.avgqu_sz", float64(IODelta(device, IOMsecWeightedTotal))/1000.0, tags))
-		L = append(L, GaugeValue("disk.io.await", await, tags))
-		L = append(L, GaugeValue("disk.io.svctm", svctm, tags))
+		ret = append(ret, GaugeValue("disk.io.read.request", float64(rio), tags))
+		ret = append(ret, GaugeValue("disk.io.write.request", float64(wio), tags))
+		ret = append(ret, GaugeValue("disk.io.read.bytes", float64(deltaRsec)*512.0, tags))
+		ret = append(ret, GaugeValue("disk.io.write.bytes", float64(deltaWsec)*512.0, tags))
+		ret = append(ret, GaugeValue("disk.io.avgrq_sz", avgrqSz, tags))
+		ret = append(ret, GaugeValue("disk.io.avgqu_sz", float64(IODelta(device, IOMsecWeightedTotal))/1000.0, tags))
+		ret = append(ret, GaugeValue("disk.io.await", await, tags))
+		ret = append(ret, GaugeValue("disk.io.svctm", svctm, tags))
 		tmp := float64(use) * 100.0 / float64(duration)
 		if tmp > 100.0 {
 			tmp = 100.0
 		}
-		L = append(L, GaugeValue("disk.io.util", tmp, tags))
+		ret = append(ret, GaugeValue("disk.io.util", tmp, tags))
 	}
 
-	return
+	return ret
 }
 
 func ShouldHandleDevice(device string) bool {
