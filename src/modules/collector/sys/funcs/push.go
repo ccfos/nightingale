@@ -33,7 +33,8 @@ func Push(metricItems []*dataobj.MetricValue) error {
 		if err != nil {
 			msg := fmt.Errorf("metric:%v err:%v", item, err)
 			logger.Warning(msg)
-			return msg
+			// 如果数据有问题，直接跳过吧，比如mymon采集的到的数据，其实只有一个有问题，剩下的都没问题
+			continue
 		}
 		if item.CounterType == dataobj.COUNTER {
 			if err := CounterToGauge(item); err != nil {
