@@ -13,6 +13,7 @@ import (
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/nux"
+	"github.com/toolkits/pkg/slice"
 )
 
 func FsRWMetrics() []*dataobj.MetricValue {
@@ -26,8 +27,6 @@ func FsRWMetrics() []*dataobj.MetricValue {
 
 	fsFileFilter := make(map[string]struct{}) //过滤 /proc/mounts 出现重复的fsFile
 
-	ignoreMountPointsPrefix := sys.Config.MountIgnorePrefix
-
 	for idx := range mountPoints {
 		var du *nux.DeviceUsage
 		du, err = nux.BuildDeviceUsage(mountPoints[idx][0], mountPoints[idx][1], mountPoints[idx][2])
@@ -36,7 +35,8 @@ func FsRWMetrics() []*dataobj.MetricValue {
 			continue
 		}
 
-		if hasIgnorePrefix(mountPoints[idx][1], ignoreMountPointsPrefix) {
+		if hasIgnorePrefix(du.FsFile, sys.Config.MountIgnore.Prefix) &&
+			!slice.ContainsString(sys.Config.MountIgnore.Exclude, du.FsFile) {
 			continue
 		}
 

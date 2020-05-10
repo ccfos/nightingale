@@ -9,6 +9,7 @@ import (
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/nux"
+	"github.com/toolkits/pkg/slice"
 )
 
 func DeviceMetrics() []*dataobj.MetricValue {
@@ -21,26 +22,11 @@ func DeviceMetrics() []*dataobj.MetricValue {
 		return ret
 	}
 
-	var myMountPoints = make(map[string]bool)
-	if len(sys.Config.MountPoint) > 0 {
-		for _, mp := range sys.Config.MountPoint {
-			myMountPoints[mp] = true
-		}
-	}
-
-	ignoreMountPointsPrefix := sys.Config.MountIgnorePrefix
-
 	var diskTotal uint64 = 0
 	var diskUsed uint64 = 0
 
 	for idx := range mountPoints {
 		fsSpec, fsFile, fsVfstype := mountPoints[idx][0], mountPoints[idx][1], mountPoints[idx][2]
-		if len(myMountPoints) > 0 {
-			if _, ok := myMountPoints[fsFile]; !ok {
-				logger.Debug("mount point not matched with config", fsFile, "ignored.")
-				continue
-			}
-		}
 
 		if _, exists := fsFileFilter[fsFile]; exists {
 			logger.Debugf("mount point %s was collected", fsFile)
@@ -49,7 +35,9 @@ func DeviceMetrics() []*dataobj.MetricValue {
 			fsFileFilter[fsFile] = struct{}{}
 		}
 
-		if hasIgnorePrefix(fsFile, ignoreMountPointsPrefix) {
+		// 注意: 虽然前缀被忽略了，但是被忽略的这部分分区里边有些仍然是需要采集的
+		if hasIgnorePrefix(fsFile, sys.Config.MountIgnore.Prefix) &&
+			!slice.ContainsString(sys.Config.MountIgnore.Exclude, fsFile) {
 			continue
 		}
 

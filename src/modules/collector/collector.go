@@ -28,7 +28,10 @@ import (
 	"github.com/toolkits/pkg/runner"
 )
 
-const version = 1
+// changelog:
+// 1: init project
+// 2: mount ignore refactor
+const version = 2
 
 var (
 	vers *bool
