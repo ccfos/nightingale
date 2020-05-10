@@ -24,6 +24,7 @@ sys:
   ifacePrefix:
     - eth
     - em
+    - ens
 
   # ignore disk mount point
   mountIgnore:
