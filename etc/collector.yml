@@ -29,6 +29,7 @@ sys:
   mountIgnore:
     prefix:
       - /var/lib
+      - /run
     # collect anyway
     exclude: []
 
