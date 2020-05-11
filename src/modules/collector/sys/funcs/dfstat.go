@@ -9,36 +9,25 @@ import (
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/nux"
+	"github.com/toolkits/pkg/slice"
 )
 
-func DeviceMetrics() (L []*dataobj.MetricValue) {
+func DeviceMetrics() []*dataobj.MetricValue {
+	ret := make([]*dataobj.MetricValue, 0)
+
 	mountPoints, err := nux.ListMountPoint()
 	fsFileFilter := make(map[string]struct{}) //过滤 /proc/mounts 出现重复的fsFile
 	if err != nil {
 		logger.Error("collect device metrics fail:", err)
-		return
+		return ret
 	}
-
-	var myMountPoints map[string]bool = make(map[string]bool)
-	if len(sys.Config.MountPoint) > 0 {
-		for _, mp := range sys.Config.MountPoint {
-			myMountPoints[mp] = true
-		}
-	}
-
-	ignoreMountPointsPrefix := sys.Config.MountIgnorePrefix
 
 	var diskTotal uint64 = 0
 	var diskUsed uint64 = 0
 
 	for idx := range mountPoints {
 		fsSpec, fsFile, fsVfstype := mountPoints[idx][0], mountPoints[idx][1], mountPoints[idx][2]
-		if len(myMountPoints) > 0 {
-			if _, ok := myMountPoints[fsFile]; !ok {
-				logger.Debug("mount point not matched with config", fsFile, "ignored.")
-				continue
-			}
-		}
+
 		if _, exists := fsFileFilter[fsFile]; exists {
 			logger.Debugf("mount point %s was collected", fsFile)
 			continue
@@ -46,7 +35,9 @@ func DeviceMetrics() (L []*dataobj.MetricValue) {
 			fsFileFilter[fsFile] = struct{}{}
 		}
 
-		if hasIgnorePrefix(fsFile, ignoreMountPointsPrefix) {
+		// 注意: 虽然前缀被忽略了，但是被忽略的这部分分区里边有些仍然是需要采集的
+		if hasIgnorePrefix(fsFile, sys.Config.MountIgnore.Prefix) &&
+			!slice.ContainsString(sys.Config.MountIgnore.Exclude, fsFile) {
 			continue
 		}
 
@@ -65,29 +56,29 @@ func DeviceMetrics() (L []*dataobj.MetricValue) {
 		diskUsed += du.BlocksUsed
 
 		tags := fmt.Sprintf("mount=%s", du.FsFile)
-		L = append(L, GaugeValue("disk.bytes.total", du.BlocksAll, tags))
-		L = append(L, GaugeValue("disk.bytes.free", du.BlocksFree, tags))
-		L = append(L, GaugeValue("disk.bytes.used", du.BlocksUsed, tags))
-		L = append(L, GaugeValue("disk.bytes.used.percent", du.BlocksUsedPercent, tags))
+		ret = append(ret, GaugeValue("disk.bytes.total", du.BlocksAll, tags))
+		ret = append(ret, GaugeValue("disk.bytes.free", du.BlocksFree, tags))
+		ret = append(ret, GaugeValue("disk.bytes.used", du.BlocksUsed, tags))
+		ret = append(ret, GaugeValue("disk.bytes.used.percent", du.BlocksUsedPercent, tags))
 
 		if du.InodesAll == 0 {
 			continue
 		}
 
-		L = append(L, GaugeValue("disk.inodes.total", du.InodesAll, tags))
-		L = append(L, GaugeValue("disk.inodes.free", du.InodesFree, tags))
-		L = append(L, GaugeValue("disk.inodes.used", du.InodesUsed, tags))
-		L = append(L, GaugeValue("disk.inodes.used.percent", du.InodesUsedPercent, tags))
+		ret = append(ret, GaugeValue("disk.inodes.total", du.InodesAll, tags))
+		ret = append(ret, GaugeValue("disk.inodes.free", du.InodesFree, tags))
+		ret = append(ret, GaugeValue("disk.inodes.used", du.InodesUsed, tags))
+		ret = append(ret, GaugeValue("disk.inodes.used.percent", du.InodesUsedPercent, tags))
 	}
 
-	if len(L) > 0 && diskTotal > 0 {
-		L = append(L, GaugeValue("disk.cap.bytes.total", float64(diskTotal)))
-		L = append(L, GaugeValue("disk.cap.bytes.used", float64(diskUsed)))
-		L = append(L, GaugeValue("disk.cap.bytes.free", float64(diskTotal-diskUsed)))
-		L = append(L, GaugeValue("disk.cap.bytes.used.percent", float64(diskUsed)*100.0/float64(diskTotal)))
+	if len(ret) > 0 && diskTotal > 0 {
+		ret = append(ret, GaugeValue("disk.cap.bytes.total", float64(diskTotal)))
+		ret = append(ret, GaugeValue("disk.cap.bytes.used", float64(diskUsed)))
+		ret = append(ret, GaugeValue("disk.cap.bytes.free", float64(diskTotal-diskUsed)))
+		ret = append(ret, GaugeValue("disk.cap.bytes.used.percent", float64(diskUsed)*100.0/float64(diskTotal)))
 	}
 
-	return
+	return ret
 }
 
 func hasIgnorePrefix(fsFile string, ignoreMountPointsPrefix []string) bool {

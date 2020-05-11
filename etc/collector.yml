@@ -2,6 +2,7 @@ logger:
   dir: logs/collector
   level: WARNING
   keepHours: 2
+
 identity:
   specify: ""
   shell: ifconfig `route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|awk -F ':' '{print $NF}'|head -n 1
@@ -18,12 +19,20 @@ sys:
   timeout: 1000
   interval: 20
   plugin: ./plugin
+
+  # monitor nic which filtered by prefix
   ifacePrefix:
     - eth
     - em
-  mountPoint: []
-  mountIgnorePrefix:
-    - /var/lib
+    - ens
+
+  # ignore disk mount point
+  mountIgnore:
+    prefix:
+      - /var/lib
+      - /run
+    # collect anyway
+    exclude: []
 
   ignoreMetrics:
     - cpu.core.idle

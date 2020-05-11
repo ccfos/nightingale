@@ -136,7 +136,7 @@ func (w *Worker) Work() {
 	logger.Infof("worker starting...[%s]", w.Mark)
 
 	var anaCnt, anaSwp int64
-	analysClose := make(chan int, 0)
+	analysClose := make(chan int)
 
 	go func() {
 		for {
@@ -211,7 +211,7 @@ func (w *Worker) producer(line string, strategy *stra.Strategy) (*AnalysPoint, e
 
 	t := reg.FindString(line)
 	if len(t) <= 0 {
-		return nil, errors.New(fmt.Sprintf("cannot get timestamp:[sname:%s][sid:%d][timeFormat:%v]", strategy.Name, strategy.ID, timeFormat))
+		return nil, fmt.Errorf("cannot get timestamp:[sname:%s][sid:%d][timeFormat:%v]", strategy.Name, strategy.ID, timeFormat)
 	}
 
 	// 如果没有年，需添加当前年

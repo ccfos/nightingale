@@ -33,31 +33,29 @@ func pushData(c *gin.Context) {
 		return
 	}
 
-	recvMetricValues := []*dataobj.MetricValue{}
+	var recvMetricValues []*dataobj.MetricValue
 	errors.Dangerous(c.ShouldBindJSON(&recvMetricValues))
 
 	err := funcs.Push(recvMetricValues)
 	render.Message(c, err)
-	return
-
 }
 
 func getStrategy(c *gin.Context) {
 	var resp []interface{}
 
 	port := stra.GetPortCollects()
-	for _, stra := range port {
-		resp = append(resp, stra)
+	for _, s := range port {
+		resp = append(resp, s)
 	}
 
 	proc := stra.GetProcCollects()
-	for _, stra := range proc {
-		resp = append(resp, stra)
+	for _, s := range proc {
+		resp = append(resp, s)
 	}
 
 	logStras := strategy.GetListAll()
-	for _, stra := range logStras {
-		resp = append(resp, stra)
+	for _, s := range logStras {
+		resp = append(resp, s)
 	}
 
 	render.Data(c, resp, nil)

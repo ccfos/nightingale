@@ -25,7 +25,7 @@ type pushPointsCache struct {
 	Counters map[string]*counterCache `json:"counters"`
 }
 
-var globalPushPoints = pushPointsCache{Counters: make(map[string]*counterCache, 0)}
+var globalPushPoints = pushPointsCache{Counters: make(map[string]*counterCache)}
 
 func init() {
 	go CleanLoop()

@@ -253,7 +253,7 @@ func (sc *StrategyCounter) AddTms(tms int64) error {
 	_, ok := sc.TmsPoints[tms]
 	if !ok {
 		tmp := new(PointsCounter)
-		tmp.TagstringMap = make(map[string]*PointCounter, 0)
+		tmp.TagstringMap = make(map[string]*PointCounter)
 		sc.TmsPoints[tms] = tmp
 	}
 	sc.Unlock()
@@ -300,7 +300,7 @@ func (gc *GlobalCounter) AddStrategyCount(st *stra.Strategy) {
 	if _, ok := gc.StrategyCounts[st.ID]; !ok {
 		tmp := new(StrategyCounter)
 		tmp.Strategy = st
-		tmp.TmsPoints = make(map[int64]*PointsCounter, 0)
+		tmp.TmsPoints = make(map[int64]*PointsCounter)
 		gc.StrategyCounts[st.ID] = tmp
 	}
 	gc.Unlock()
@@ -348,8 +348,7 @@ func (gc *GlobalCounter) cleanStrategyData(id int64) {
 	if !ok || sCount == nil {
 		return
 	}
-	sCount.TmsPoints = make(map[int64]*PointsCounter, 0)
-	return
+	sCount.TmsPoints = make(map[int64]*PointsCounter)
 }
 
 // countEqual意味着不会对统计的结构产生影响
