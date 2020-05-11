@@ -165,7 +165,7 @@ func parsePattern(strategies []*Strategy) {
 
 func updateRegs(strategies []*Strategy) {
 	for _, st := range strategies {
-		st.TagRegs = make(map[string]*regexp.Regexp, 0)
+		st.TagRegs = make(map[string]*regexp.Regexp)
 		st.ParseSucc = false
 
 		//更新时间正则

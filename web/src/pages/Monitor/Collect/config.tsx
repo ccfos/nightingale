@@ -2,6 +2,7 @@ export const typeMap: any = {
   log: '日志',
   port: '端口',
   proc: '进程',
+  // plugin: '插件',
 };
 export const interval = [10, 30, 60, 120, 300, 600, 1800, 3600];
 export const nameRule = {

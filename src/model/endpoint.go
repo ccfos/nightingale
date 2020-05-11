@@ -49,8 +49,11 @@ func buildEndpointWhere(query, batch, field string) *xorm.Session {
 	session := DB["mon"].Table(new(Endpoint))
 
 	if batch == "" && query != "" {
-		q := "%" + query + "%"
-		session = session.Where("ident like ? or alias like ?", q, q)
+		arr := strings.Fields(query)
+		for i := 0; i < len(arr); i++ {
+			q := "%" + arr[i] + "%"
+			session = session.Where("ident like ? or alias like ?", q, q)
+		}
 	}
 
 	if batch != "" {
@@ -141,8 +144,11 @@ func buildEndpointUnderNodeWhere(leafids []int64, query, batch, field string) *x
 	session := DB["mon"].Where("id in (select endpoint_id from node_endpoint where node_id in (" + str.IdsString(leafids) + "))")
 
 	if batch == "" && query != "" {
-		q := "%" + query + "%"
-		session = session.Where("ident like ? or alias like ?", q, q)
+		arr := strings.Fields(query)
+		for i := 0; i < len(arr); i++ {
+			q := "%" + arr[i] + "%"
+			session = session.Where("ident like ? or alias like ?", q, q)
+		}
 	}
 
 	if batch != "" {
