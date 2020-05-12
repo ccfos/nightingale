@@ -99,9 +99,11 @@ func PluginRun(plugin *Plugin) {
 	// exec successfully
 	data := stdout.Bytes()
 	if len(data) == 0 {
-		logger.Debug("stdout of", fpath, "is blank")
+		logger.Debug("stdout of ", fpath, " is blank")
 		return
 	}
+
+	logger.Debug(fpath, " stdout: ", string(data))
 
 	var items []*dataobj.MetricValue
 	err = json.Unmarshal(data, &items)
