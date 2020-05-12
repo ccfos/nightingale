@@ -103,6 +103,9 @@ func PluginRun(plugin *Plugin) {
 		return
 	}
 
+	logger.Debug(fpath, "stdout:")
+	logger.Debug(string(data))
+
 	var items []*dataobj.MetricValue
 	err = json.Unmarshal(data, &items)
 	if err != nil {
