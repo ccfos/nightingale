@@ -2,8 +2,10 @@ package stra
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/didi/nightingale/src/model"
 	"github.com/didi/nightingale/src/toolkits/str"
@@ -12,13 +14,14 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func NewProcCollect(method, name, tags string, step int) *model.ProcCollect {
+func NewProcCollect(method, name, tags string, step int, modTime time.Time) *model.ProcCollect {
 	return &model.ProcCollect{
 		CollectType:   "proc",
 		CollectMethod: method,
 		Target:        name,
 		Step:          step,
 		Tags:          tags,
+		LastUpdated:   modTime,
 	}
 }
 
@@ -54,8 +57,14 @@ func GetProcCollects() map[string]*model.ProcCollect {
 			continue
 		}
 
+		info, err := os.Stat(f)
+		if err != nil {
+			logger.Warning(err)
+			continue
+		}
+
 		tags := fmt.Sprintf("target=%s,service=%s", name, service)
-		p := NewProcCollect(method, name, tags, step)
+		p := NewProcCollect(method, name, tags, step, info.ModTime())
 		procs[name] = p
 	}
 

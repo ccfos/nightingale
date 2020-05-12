@@ -2,8 +2,10 @@ package stra
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/didi/nightingale/src/model"
 	"github.com/didi/nightingale/src/toolkits/str"
@@ -12,12 +14,13 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func NewPortCollect(port, step int, tags string) *model.PortCollect {
+func NewPortCollect(port, step int, tags string, modTime time.Time) *model.PortCollect {
 	return &model.PortCollect{
 		CollectType: "port",
 		Port:        port,
 		Step:        step,
 		Tags:        tags,
+		LastUpdated: modTime,
 	}
 }
 
@@ -54,8 +57,14 @@ func GetPortCollects() map[int]*model.PortCollect {
 			continue
 		}
 
+		info, err := os.Stat(f)
+		if err != nil {
+			logger.Warning(err)
+			continue
+		}
+
 		tags := fmt.Sprintf("port=%s,service=%s", strconv.Itoa(port), service)
-		p := NewPortCollect(port, step, tags)
+		p := NewPortCollect(port, step, tags, info.ModTime())
 		ports[p.Port] = p
 	}
 
