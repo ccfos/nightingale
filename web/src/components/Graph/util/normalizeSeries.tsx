@@ -33,7 +33,7 @@ export default function normalizeSeries(data: any[], graphConfig: GraphDataInter
   return series;
 }
 
-function getSerieColor(serie: SerieInterface, serieIndex: number, isComparison?: boolean): string {
+function getSerieColor(serie: SerieInterface, serieIndex: number, isComparison: boolean): string {
   const { comparison } = serie;
   let color;
   // 同环比固定曲线颜色
