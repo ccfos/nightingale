@@ -3,6 +3,7 @@ package stra
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -37,7 +38,8 @@ func GetProcCollects() map[string]*model.ProcCollect {
 		}
 	}
 
-	files, err := file.FilesUnder(StraConfig.ProcPath)
+	procPath := StraConfig.ProcPath
+	files, err := file.FilesUnder(procPath)
 	if err != nil {
 		logger.Error(err)
 		return procs
@@ -51,13 +53,14 @@ func GetProcCollects() map[string]*model.ProcCollect {
 			continue
 		}
 
-		service, err := file.ToTrimString(StraConfig.ProcPath + "/" + f)
+		filePath := filepath.Join(procPath, f)
+		service, err := file.ToTrimString(filePath)
 		if err != nil {
 			logger.Warning(err)
 			continue
 		}
 
-		info, err := os.Stat(f)
+		info, err := os.Stat(filePath)
 		if err != nil {
 			logger.Warning(err)
 			continue

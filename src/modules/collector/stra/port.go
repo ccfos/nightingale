@@ -3,6 +3,7 @@ package stra
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -51,13 +52,15 @@ func GetPortCollects() map[int]*model.PortCollect {
 			continue
 		}
 
-		service, err := file.ToTrimString(StraConfig.PortPath + "/" + f)
+		filePath := filepath.Join(portPath, f)
+
+		service, err := file.ToTrimString(filePath)
 		if err != nil {
 			logger.Warning(err)
 			continue
 		}
 
-		info, err := os.Stat(f)
+		info, err := os.Stat(filePath)
 		if err != nil {
 			logger.Warning(err)
 			continue
