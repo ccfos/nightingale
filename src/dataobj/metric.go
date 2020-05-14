@@ -121,7 +121,7 @@ func (m *MetricValue) CheckValidity(now int64) (err error) {
 
 	//时间超前5分钟则报错
 	if m.Timestamp-now > 300 {
-		err = fmt.Errorf("point timestamp:%d is ahead of now:%d")
+		err = fmt.Errorf("point timestamp:%d is ahead of now:%d", m.Timestamp, now)
 		return
 	}
 
