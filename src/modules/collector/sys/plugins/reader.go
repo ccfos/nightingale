@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -32,15 +31,9 @@ func ListPluginsFromMonapi() map[string]*Plugin {
 
 	for _, p := range plugins {
 		fpath := p.FilePath
-		fileInfo, err := os.Stat(fpath)
-		if err != nil {
-			logger.Warningf("plugin:%s get info err:%v", p.FilePath, err)
-			continue
-		}
-
 		plugin := &Plugin{
 			FilePath: fpath,
-			MTime:    fileInfo.ModTime().Unix(),
+			MTime:    p.LastUpdated.Unix(),
 			Cycle:    p.Step,
 			Params:   p.Params,
 		}

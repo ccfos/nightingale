@@ -117,5 +117,9 @@ func PluginRun(plugin *Plugin) {
 		return
 	}
 
+	for i := 0; i < len(items); i++ {
+		items[i].Step = int64(plugin.Cycle)
+	}
+
 	funcs.Push(items)
 }

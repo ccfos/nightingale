@@ -217,7 +217,7 @@ func (f NodataFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.Js
 			return value.Value, false
 		}
 	}
-	return 0, true
+	return dataobj.JsonFloat(math.NaN()), true
 }
 
 type CAvgAbsFunction struct {
