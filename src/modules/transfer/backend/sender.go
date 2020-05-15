@@ -9,8 +9,8 @@ import (
 	"github.com/didi/nightingale/src/modules/transfer/cache"
 	"github.com/didi/nightingale/src/toolkits/stats"
 	"github.com/didi/nightingale/src/toolkits/str"
-	"github.com/influxdata/influxdb/client/v2"
 
+	client "github.com/influxdata/influxdb/client/v2"
 	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/logger"
@@ -320,14 +320,14 @@ func (c *InfluxClient) Send(items []*dataobj.InfluxdbItem) error {
 		Precision: c.Precision,
 	})
 	if err != nil {
-		logger.Errorf("create batch points error: ", err)
+		logger.Error("create batch points error: ", err)
 		return err
 	}
 
 	for _, item := range items {
 		pt, err := client.NewPoint(item.Measurement, item.Tags, item.Fields, time.Unix(item.Timestamp, 0))
 		if err != nil {
-			logger.Errorf("create new points error: ", err)
+			logger.Error("create new points error: ", err)
 			continue
 		}
 		bp.AddPoint(pt)
