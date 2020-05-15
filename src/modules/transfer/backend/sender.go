@@ -8,6 +8,7 @@ import (
 	"github.com/didi/nightingale/src/modules/transfer/cache"
 	"github.com/didi/nightingale/src/toolkits/stats"
 	"github.com/didi/nightingale/src/toolkits/str"
+	"github.com/influxdata/influxdb/client/v2"
 
 	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/container/list"
@@ -36,6 +37,11 @@ func startSendTasks() {
 		judgeConcurrent = 1
 	}
 
+	influxdbConcurrent := Config.Influxdb.WorkerNum
+	if influxdbConcurrent < 1 {
+		influxdbConcurrent = 1
+	}
+
 	if Config.Enabled {
 		for node, item := range Config.ClusterList {
 			for _, addr := range item.Addrs {
@@ -50,6 +56,11 @@ func startSendTasks() {
 		for instance, queue := range judgeQueue {
 			go Send2JudgeTask(queue, instance, judgeConcurrent)
 		}
+	}
+
+	if Config.Influxdb.Enabled {
+		go send2InfluxdbTask(influxdbConcurrent)
+
 	}
 }
 
@@ -264,4 +275,135 @@ func TagMatch(straTags []model.Tag, tag map[string]string) bool {
 		}
 	}
 	return true
+}
+
+type InfluxClient struct {
+	Client    client.Client
+	Database  string
+	Precision string
+}
+
+func NewInfluxdbClient() (*InfluxClient, error) {
+	c, err := client.NewHTTPClient(client.HTTPConfig{
+		Addr:     Config.Influxdb.Address,
+		Username: Config.Influxdb.Username,
+		Password: Config.Influxdb.Password,
+		Timeout:  time.Millisecond * time.Duration(Config.Influxdb.Timeout),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &InfluxClient{
+		Client:    c,
+		Database:  Config.Influxdb.Database,
+		Precision: Config.Influxdb.Precision,
+	}, nil
+}
+
+func (c *InfluxClient) Send(items []*dataobj.InfluxdbItem) error {
+	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
+		Database:  c.Database,
+		Precision: c.Precision,
+	})
+	if err != nil {
+		logger.Errorf("create batch points error: ", err)
+		return err
+	}
+
+	for _, item := range items {
+		pt, err := client.NewPoint(item.Measurement, item.Tags, item.Fields, time.Unix(item.Timestamp, 0))
+		if err != nil {
+			logger.Errorf("create new points error: ", err)
+			continue
+		}
+		bp.AddPoint(pt)
+	}
+
+	return c.Client.Write(bp)
+}
+
+// 将原始数据插入到influxdb缓存队列
+func Push2InfluxdbSendQueue(items []*dataobj.MetricValue) {
+	errCnt := 0
+	for _, item := range items {
+		influxdbItem := convert2InfluxdbItem(item)
+		isSuccess := InfluxdbQueue.PushFront(influxdbItem)
+
+		if !isSuccess {
+			errCnt += 1
+		}
+	}
+	stats.Counter.Set("influxdb.queue.err", errCnt)
+}
+
+func convert2InfluxdbItem(d *dataobj.MetricValue) *dataobj.InfluxdbItem {
+	t := dataobj.InfluxdbItem{Tags: make(map[string]string), Fields: make(map[string]interface{})}
+
+	for k, v := range d.TagsMap {
+		t.Tags[k] = v
+	}
+	t.Tags["endpoint"] = d.Endpoint
+	t.Measurement = d.Metric
+	t.Fields["value"] = d.Value
+	t.Timestamp = d.Timestamp
+
+	return &t
+}
+
+func send2InfluxdbTask(concurrent int) {
+	batch := Config.Influxdb.Batch // 一次发送,最多batch条数据
+	retry := Config.Influxdb.MaxRetry
+	addr := Config.Influxdb.Address
+	sema := semaphore.NewSemaphore(concurrent)
+
+	var err error
+	c, err := NewInfluxdbClient()
+	defer c.Client.Close()
+
+	if err != nil {
+		logger.Errorf("init influxdb client fail: %v", err)
+		return
+	}
+
+	for {
+		items := InfluxdbQueue.PopBackBy(batch)
+		count := len(items)
+		if count == 0 {
+			time.Sleep(DefaultSendTaskSleepInterval)
+			continue
+		}
+
+		influxdbItems := make([]*dataobj.InfluxdbItem, count)
+		for i := 0; i < count; i++ {
+			influxdbItems[i] = items[i].(*dataobj.InfluxdbItem)
+			stats.Counter.Set("points.out.influxdb", 1)
+			logger.Debug("send to influxdb: ", influxdbItems[i])
+		}
+
+		//  同步Call + 有限并发 进行发送
+		sema.Acquire()
+		go func(addr string, influxdbItems []*dataobj.InfluxdbItem, count int) {
+			defer sema.Release()
+			sendOk := false
+
+			for i := 0; i < retry; i++ {
+				err = c.Send(influxdbItems)
+				if err == nil {
+					sendOk = true
+					break
+				}
+				logger.Warningf("send influxdb fail: %v", err)
+				time.Sleep(time.Millisecond * 10)
+			}
+
+			if !sendOk {
+				stats.Counter.Set("points.out.influxdb.err", count)
+				logger.Errorf("send %v to influxdb %s fail: %v", influxdbItems, addr, err)
+			} else {
+				logger.Debugf("send to influxdb %s ok", addr)
+			}
+		}(addr, influxdbItems, count)
+	}
 }
