@@ -1,7 +1,6 @@
 import React from 'react';
 import _ from 'lodash';
 import { Tree } from 'antd';
-import LTT from 'list-to-tree';
 import { MenuConfItem, TreeNode } from '@interface';
 
 export function isAbsolutePath(url: string) {
