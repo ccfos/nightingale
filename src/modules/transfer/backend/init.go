@@ -11,6 +11,20 @@ import (
 	"github.com/didi/nightingale/src/toolkits/stats"
 )
 
+type InfluxdbSection struct {
+	Enabled   bool   `yaml:"enabled"`
+	Batch     int    `yaml:"batch"`
+	MaxRetry  int    `yaml:"retry"`
+	MaxConns  int    `yaml:"maxConns"`
+	WorkerNum int    `yaml:"workerNum"`
+	Timeout   int    `yaml:"timeout"`
+	Address   string `yaml:"address"`
+	Database  string `yaml:"db"`
+	Username  string `yaml:"username"`
+	Password  string `yaml:"password"`
+	Precision string `yaml:"precision"`
+}
+
 type BackendSection struct {
 	Enabled      bool   `yaml:"enabled"`
 	Batch        int    `yaml:"batch"`
@@ -26,6 +40,7 @@ type BackendSection struct {
 	Replicas    int                     `yaml:"replicas"`
 	Cluster     map[string]string       `yaml:"cluster"`
 	ClusterList map[string]*ClusterNode `json:"clusterList"`
+	Influxdb    InfluxdbSection         `yaml:"influxdb"`
 }
 
 const DefaultSendQueueMaxSize = 102400 //10.24w
@@ -40,8 +55,9 @@ var (
 	TsdbNodeRing *ConsistentHashRing
 
 	// 发送缓存队列 node -> queue_of_data
-	TsdbQueues  = make(map[string]*list.SafeListLimited)
-	JudgeQueues = cache.SafeJudgeQueue{}
+	TsdbQueues    = make(map[string]*list.SafeListLimited)
+	JudgeQueues   = cache.SafeJudgeQueue{}
+	InfluxdbQueue *list.SafeListLimited
 
 	// 连接池 node_address -> connection_pool
 	TsdbConnPools  *pools.ConnPools
@@ -95,6 +111,10 @@ func initSendQueues() {
 	judges := GetJudges()
 	for _, judge := range judges {
 		JudgeQueues.Set(judge, list.NewSafeListLimited(DefaultSendQueueMaxSize))
+	}
+
+	if Config.Influxdb.Enabled {
+		InfluxdbQueue = list.NewSafeListLimited(DefaultSendQueueMaxSize)
 	}
 }
 

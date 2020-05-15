@@ -44,6 +44,10 @@ func (t *Transfer) Push(args []*dataobj.MetricValue, reply *dataobj.TransferResp
 		backend.Push2JudgeSendQueue(items)
 	}
 
+	if backend.Config.Influxdb.Enabled {
+		backend.Push2InfluxdbSendQueue(items)
+	}
+
 	if reply.Invalid == 0 {
 		reply.Msg = "ok"
 	}

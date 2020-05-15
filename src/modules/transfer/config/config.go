@@ -93,6 +93,15 @@ func Parse(conf string) error {
 		"hbsMod":       "monapi",
 	})
 
+	viper.SetDefault("backend.influxdb", map[string]interface{}{
+		"enabled":   true,
+		"batch":     200, //每次拉取文件的个数
+		"maxRetry":  3,   //重试次数
+		"workerNum": 32,
+		"maxConns":  2000, //查询和推送数据的并发个数
+		"timeout":   3000, //访问超时时间，单位毫秒
+	})
+
 	err = viper.Unmarshal(&Config)
 	if err != nil {
 		return fmt.Errorf("cannot read yml[%s]: %v", conf, err)
