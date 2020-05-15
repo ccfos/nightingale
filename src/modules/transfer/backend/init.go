@@ -15,7 +15,6 @@ type InfluxdbSection struct {
 	Enabled   bool   `yaml:"enabled"`
 	Batch     int    `yaml:"batch"`
 	MaxRetry  int    `yaml:"maxRetry"`
-	MaxConns  int    `yaml:"maxConns"`
 	WorkerNum int    `yaml:"workerNum"`
 	Timeout   int    `yaml:"timeout"`
 	Address   string `yaml:"address"`
