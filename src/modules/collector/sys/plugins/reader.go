@@ -29,7 +29,7 @@ func ListPluginsFromMonapi() map[string]*Plugin {
 
 	plugins := stra.Collect.GetPlugin()
 
-	for _, p := range plugins {
+	for key, p := range plugins {
 		fpath := p.FilePath
 		plugin := &Plugin{
 			FilePath: fpath,
@@ -38,7 +38,7 @@ func ListPluginsFromMonapi() map[string]*Plugin {
 			Params:   p.Params,
 		}
 
-		ret[fpath] = plugin
+		ret[key] = plugin
 	}
 
 	return ret
