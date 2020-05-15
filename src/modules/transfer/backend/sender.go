@@ -277,7 +277,6 @@ func TagMatch(straTags []model.Tag, tag map[string]string) bool {
 	return true
 }
 
-// infludbConn
 type InfluxClient struct {
 	Client    client.Client
 	Database  string
@@ -314,7 +313,7 @@ func (c *InfluxClient) Send(items []*dataobj.InfluxdbItem) error {
 	}
 
 	for _, item := range items {
-		pt, err := client.NewPoint(item.Measurement, item.Tags, item.Fileds, time.Unix(item.Timestamp, 0))
+		pt, err := client.NewPoint(item.Measurement, item.Tags, item.Fields, time.Unix(item.Timestamp, 0))
 		if err != nil {
 			logger.Errorf("create new points error: ", err)
 			continue
@@ -340,14 +339,14 @@ func Push2InfluxdbSendQueue(items []*dataobj.MetricValue) {
 }
 
 func convert2InfluxdbItem(d *dataobj.MetricValue) *dataobj.InfluxdbItem {
-	t := dataobj.InfluxdbItem{Tags: make(map[string]string), Fileds: make(map[string]interface{})}
+	t := dataobj.InfluxdbItem{Tags: make(map[string]string), Fields: make(map[string]interface{})}
 
 	for k, v := range d.TagsMap {
 		t.Tags[k] = v
 	}
 	t.Tags["endpoint"] = d.Endpoint
 	t.Measurement = d.Metric
-	t.Fileds["value"] = d.Value
+	t.Fields["value"] = d.Value
 	t.Timestamp = d.Timestamp
 
 	return &t
