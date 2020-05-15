@@ -14,12 +14,12 @@ import (
 type InfluxdbSection struct {
 	Enabled   bool   `yaml:"enabled"`
 	Batch     int    `yaml:"batch"`
-	MaxRetry  int    `yaml:"retry"`
+	MaxRetry  int    `yaml:"maxRetry"`
 	MaxConns  int    `yaml:"maxConns"`
 	WorkerNum int    `yaml:"workerNum"`
 	Timeout   int    `yaml:"timeout"`
 	Address   string `yaml:"address"`
-	Database  string `yaml:"db"`
+	Database  string `yaml:"database"`
 	Username  string `yaml:"username"`
 	Password  string `yaml:"password"`
 	Precision string `yaml:"precision"`
