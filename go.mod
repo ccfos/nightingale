@@ -13,6 +13,7 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gorilla/mux v1.6.2
 	github.com/hpcloud/tail v1.0.0
+	github.com/influxdata/influxdb v1.8.0
 	github.com/json-iterator/go v1.1.9
 	github.com/mattn/go-isatty v0.0.12
 	github.com/open-falcon/rrdlite v0.0.0-20200214140804-bf5829f786ad
