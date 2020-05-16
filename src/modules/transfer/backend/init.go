@@ -52,7 +52,7 @@ type BackendSection struct {
 	Cluster     map[string]string       `yaml:"cluster"`
 	ClusterList map[string]*ClusterNode `json:"clusterList"`
 	Influxdb    InfluxdbSection         `yaml:"influxdb"`
-	OpenTsdb    OpenTsdbSection         `yaml:"influxdb"`
+	OpenTsdb    OpenTsdbSection         `yaml:"opentsdb"`
 }
 
 const DefaultSendQueueMaxSize = 102400 //10.24w

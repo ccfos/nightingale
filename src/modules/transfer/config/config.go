@@ -94,7 +94,7 @@ func Parse(conf string) error {
 	})
 
 	viper.SetDefault("backend.influxdb", map[string]interface{}{
-		"enabled":   true,
+		"enabled":   false,
 		"batch":     200, //每次拉取文件的个数
 		"maxRetry":  3,   //重试次数
 		"workerNum": 32,
@@ -103,7 +103,7 @@ func Parse(conf string) error {
 	})
 
 	viper.SetDefault("backend.opentsdb", map[string]interface{}{
-		"enabled":     true,
+		"enabled":     false,
 		"batch":       200, //每次拉取文件的个数
 		"maxRetry":    3,   //重试次数
 		"workerNum":   32,

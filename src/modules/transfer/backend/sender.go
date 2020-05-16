@@ -43,9 +43,9 @@ func startSendTasks() {
 		influxdbConcurrent = 1
 	}
 
-	OpenTsdbConcurrent := Config.OpenTsdb.WorkerNum
-	if OpenTsdbConcurrent < 1 {
-		OpenTsdbConcurrent = 1
+	openTsdbConcurrent := Config.OpenTsdb.WorkerNum
+	if openTsdbConcurrent < 1 {
+		openTsdbConcurrent = 1
 	}
 
 	if Config.Enabled {
@@ -70,7 +70,7 @@ func startSendTasks() {
 	}
 
 	if Config.OpenTsdb.Enabled {
-		go send2OpenTsdbTask(OpenTsdbConcurrent)
+		go send2OpenTsdbTask(openTsdbConcurrent)
 
 	}
 
