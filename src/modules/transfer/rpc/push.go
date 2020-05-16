@@ -48,6 +48,10 @@ func (t *Transfer) Push(args []*dataobj.MetricValue, reply *dataobj.TransferResp
 		backend.Push2InfluxdbSendQueue(items)
 	}
 
+	if backend.Config.OpenTsdb.Enabled {
+		backend.Push2OpenTsdbSendQueue(items)
+	}
+
 	if reply.Invalid == 0 {
 		reply.Msg = "ok"
 	}

@@ -24,6 +24,18 @@ type InfluxdbSection struct {
 	Precision string `yaml:"precision"`
 }
 
+type OpenTsdbSection struct {
+	Enabled     bool   `yaml:"enabled"`
+	Batch       int    `yaml:"batch"`
+	ConnTimeout int    `yaml:"connTimeout"`
+	CallTimeout int    `yaml:"callTimeout"`
+	WorkerNum   int    `yaml:"workerNum"`
+	MaxConns    int    `yaml:"maxConns"`
+	MaxIdle     int    `yaml:"maxIdle"`
+	MaxRetry    int    `yaml:"maxRetry"`
+	Address     string `yaml:"address"`
+}
+
 type BackendSection struct {
 	Enabled      bool   `yaml:"enabled"`
 	Batch        int    `yaml:"batch"`
@@ -40,6 +52,7 @@ type BackendSection struct {
 	Cluster     map[string]string       `yaml:"cluster"`
 	ClusterList map[string]*ClusterNode `json:"clusterList"`
 	Influxdb    InfluxdbSection         `yaml:"influxdb"`
+	OpenTsdb    OpenTsdbSection         `yaml:"opentsdb"`
 }
 
 const DefaultSendQueueMaxSize = 102400 //10.24w
@@ -57,10 +70,12 @@ var (
 	TsdbQueues    = make(map[string]*list.SafeListLimited)
 	JudgeQueues   = cache.SafeJudgeQueue{}
 	InfluxdbQueue *list.SafeListLimited
+	OpenTsdbQueue *list.SafeListLimited
 
 	// 连接池 node_address -> connection_pool
-	TsdbConnPools  *pools.ConnPools
-	JudgeConnPools *pools.ConnPools
+	TsdbConnPools          *pools.ConnPools
+	JudgeConnPools         *pools.ConnPools
+	OpenTsdbConnPoolHelper *pools.OpenTsdbConnPoolHelper
 
 	connTimeout int32
 	callTimeout int32
@@ -97,6 +112,9 @@ func initConnPools() {
 	JudgeConnPools = pools.NewConnPools(
 		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, GetJudges(),
 	)
+	if Config.OpenTsdb.Enabled {
+		OpenTsdbConnPoolHelper = pools.NewOpenTsdbConnPoolHelper(Config.OpenTsdb.Address, Config.OpenTsdb.MaxConns, Config.OpenTsdb.MaxIdle, Config.OpenTsdb.ConnTimeout, Config.OpenTsdb.CallTimeout)
+	}
 }
 
 func initSendQueues() {
@@ -114,6 +132,10 @@ func initSendQueues() {
 
 	if Config.Influxdb.Enabled {
 		InfluxdbQueue = list.NewSafeListLimited(DefaultSendQueueMaxSize)
+	}
+
+	if Config.OpenTsdb.Enabled {
+		OpenTsdbQueue = list.NewSafeListLimited(DefaultSendQueueMaxSize)
 	}
 }
 
