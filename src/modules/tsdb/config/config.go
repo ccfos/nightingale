@@ -3,8 +3,6 @@ package config
 import (
 	"bytes"
 	"fmt"
-	"sync"
-
 	"github.com/didi/nightingale/src/modules/tsdb/backend/rpc"
 	"github.com/didi/nightingale/src/modules/tsdb/cache"
 	"github.com/didi/nightingale/src/modules/tsdb/index"
@@ -45,12 +43,9 @@ type RpcSection struct {
 
 var (
 	Config *ConfYaml
-	lock   = new(sync.RWMutex)
 )
 
 func GetCfgYml() *ConfYaml {
-	lock.RLock()
-	defer lock.RUnlock()
 	return Config
 }
 
@@ -59,9 +54,6 @@ func Parse(conf string) error {
 	if err != nil {
 		return fmt.Errorf("cannot read yml[%s]: %v", conf, err)
 	}
-
-	lock.Lock()
-	defer lock.Unlock()
 
 	viper.SetConfigType("yaml")
 	err = viper.ReadConfig(bytes.NewBuffer(bs))

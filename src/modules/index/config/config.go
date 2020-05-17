@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
-	"sync"
 
 	"github.com/didi/nightingale/src/modules/index/cache"
 	"github.com/didi/nightingale/src/toolkits/address"
@@ -35,12 +34,9 @@ type RPCSection struct {
 
 var (
 	Config *ConfYaml
-	lock   = new(sync.RWMutex)
 )
 
 func GetCfgYml() *ConfYaml {
-	lock.RLock()
-	defer lock.RUnlock()
 	return Config
 }
 
@@ -49,9 +45,6 @@ func Parse(conf string) error {
 	if err != nil {
 		return fmt.Errorf("cannot read yml[%s]: %v", conf, err)
 	}
-
-	lock.Lock()
-	defer lock.Unlock()
 
 	viper.SetConfigType("yaml")
 	err = viper.ReadConfig(bytes.NewBuffer(bs))

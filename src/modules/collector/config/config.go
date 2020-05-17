@@ -3,8 +3,6 @@ package config
 import (
 	"bytes"
 	"fmt"
-	"sync"
-
 	"github.com/didi/nightingale/src/modules/collector/log/worker"
 	"github.com/didi/nightingale/src/modules/collector/stra"
 	"github.com/didi/nightingale/src/modules/collector/sys"
@@ -24,15 +22,12 @@ type ConfYaml struct {
 
 var (
 	Config   *ConfYaml
-	lock     = new(sync.RWMutex)
 	Endpoint string
 	Cwd      string
 )
 
 // Get configuration file
 func Get() *ConfYaml {
-	lock.RLock()
-	defer lock.RUnlock()
 	return Config
 }
 
@@ -41,9 +36,6 @@ func Parse(conf string) error {
 	if err != nil {
 		return fmt.Errorf("cannot read yml[%s]: %v", conf, err)
 	}
-
-	lock.Lock()
-	defer lock.Unlock()
 
 	viper.SetConfigType("yaml")
 	err = viper.ReadConfig(bytes.NewBuffer(bs))

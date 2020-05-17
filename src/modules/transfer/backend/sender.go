@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"bytes"
 	"time"
 
 	"github.com/didi/nightingale/src/dataobj"
@@ -42,6 +43,11 @@ func startSendTasks() {
 		influxdbConcurrent = 1
 	}
 
+	openTsdbConcurrent := Config.OpenTsdb.WorkerNum
+	if openTsdbConcurrent < 1 {
+		openTsdbConcurrent = 1
+	}
+
 	if Config.Enabled {
 		for node, item := range Config.ClusterList {
 			for _, addr := range item.Addrs {
@@ -62,6 +68,12 @@ func startSendTasks() {
 		go send2InfluxdbTask(influxdbConcurrent)
 
 	}
+
+	if Config.OpenTsdb.Enabled {
+		go send2OpenTsdbTask(openTsdbConcurrent)
+
+	}
+
 }
 
 func Send2TsdbTask(Q *list.SafeListLimited, node, addr string, concurrent int) {
@@ -406,4 +418,82 @@ func send2InfluxdbTask(concurrent int) {
 			}
 		}(addr, influxdbItems, count)
 	}
+}
+
+// 将原始数据入到tsdb发送缓存队列
+func Push2OpenTsdbSendQueue(items []*dataobj.MetricValue) {
+	errCnt := 0
+	for _, item := range items {
+		tsdbItem := convert2OpenTsdbItem(item)
+		isSuccess := OpenTsdbQueue.PushFront(tsdbItem)
+
+		if !isSuccess {
+			errCnt += 1
+		}
+	}
+	stats.Counter.Set("opentsdb.queue.err", errCnt)
+}
+
+func send2OpenTsdbTask(concurrent int) {
+	batch := Config.OpenTsdb.Batch // 一次发送,最多batch条数据
+	retry := Config.OpenTsdb.MaxRetry
+	addr := Config.OpenTsdb.Address
+	sema := semaphore.NewSemaphore(concurrent)
+
+	for {
+		items := OpenTsdbQueue.PopBackBy(batch)
+		count := len(items)
+		if count == 0 {
+			time.Sleep(DefaultSendTaskSleepInterval)
+			continue
+		}
+		var openTsdbBuffer bytes.Buffer
+
+		for i := 0; i < count; i++ {
+			tsdbItem := items[i].(*dataobj.OpenTsdbItem)
+			openTsdbBuffer.WriteString(tsdbItem.OpenTsdbString())
+			openTsdbBuffer.WriteString("\n")
+			stats.Counter.Set("points.out.opentsdb", 1)
+			logger.Debug("send to opentsdb: ", tsdbItem)
+		}
+		//  同步Call + 有限并发 进行发送
+		sema.Acquire()
+		go func(addr string, openTsdbBuffer bytes.Buffer, count int) {
+			defer sema.Release()
+
+			var err error
+			sendOk := false
+			for i := 0; i < retry; i++ {
+				err = OpenTsdbConnPoolHelper.Send(openTsdbBuffer.Bytes())
+				if err == nil {
+					sendOk = true
+					break
+				}
+				logger.Warningf("send opentsdb %s fail: %v", addr, err)
+				time.Sleep(100 * time.Millisecond)
+			}
+
+			if !sendOk {
+				stats.Counter.Set("points.out.opentsdb.err", count)
+				for _, item := range items {
+					logger.Errorf("send %v to opentsdb %s fail: %v", item, addr, err)
+				}
+			} else {
+				logger.Debugf("send to opentsdb %s ok", addr)
+			}
+		}(addr, openTsdbBuffer, count)
+	}
+}
+
+func convert2OpenTsdbItem(d *dataobj.MetricValue) *dataobj.OpenTsdbItem {
+	t := dataobj.OpenTsdbItem{Tags: make(map[string]string)}
+
+	for k, v := range d.TagsMap {
+		t.Tags[k] = v
+	}
+	t.Tags["endpoint"] = d.Endpoint
+	t.Metric = d.Metric
+	t.Timestamp = d.Timestamp
+	t.Value = d.Value
+	return &t
 }
