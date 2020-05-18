@@ -91,9 +91,10 @@ func ProcCollect(p *model.ProcCollect) {
 	memUtilItem := funcs.GaugeValue("proc.mem.util", memUtilTotal, p.Tags)
 	cpuUtilItem := funcs.GaugeValue("proc.cpu.util", cpuUtilTotal, p.Tags)
 	items = []*dataobj.MetricValue{procNumItem, memUsedItem, memUtilItem, cpuUtilItem}
+	now := time.Now().Unix()
 	for _, item := range items{
 		item.Step = int64(p.Step)
-		item.Timestamp = time.Now().Unix()
+		item.Timestamp = now
 		item.Endpoint = identity.Identity
 	}
 
