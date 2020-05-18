@@ -66,19 +66,19 @@ func ProcCollect(p *model.ProcCollect) {
 			mem, err := procCache.MemoryInfo()
 			if err != nil {
 				logger.Error(err)
-				return
+				continue
 			}
 			memUsedTotal += mem.RSS
 			memUtil, err := procCache.MemoryPercent()
 			if err != nil {
 				logger.Error(err)
-				return
+				continue
 			}
 			memUtilTotal += float64(memUtil)
 			cpuUtil, err := procCache.Percent(0)
 			if err != nil {
 				logger.Error(err)
-				return
+				continue
 			}
 			cpuUtilTotal += cpuUtil
 		}
