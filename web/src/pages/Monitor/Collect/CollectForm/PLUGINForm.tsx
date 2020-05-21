@@ -135,7 +135,7 @@ const CollectForm = (props: any) => {
         <Button
           style={{ marginLeft: 8 }}
         >
-          <Link to={{ pathname: '/collect' }}>{<FormattedMessage id="form.goback" />}</Link>
+          <Link to={{ pathname: '/monitor/collect' }}>{<FormattedMessage id="form.goback" />}</Link>
         </Button>
       </FormItem>
     </Form>

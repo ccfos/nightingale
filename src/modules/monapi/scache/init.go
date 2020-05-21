@@ -177,6 +177,37 @@ func syncCollects() {
 		}
 	}
 
+	pluginConfigs, err := model.GetPluginCollects()
+	if err != nil {
+		logger.Warningf("get log collects err:%v", err)
+	}
+
+	for _, p := range pluginConfigs {
+		leafNids, err := GetLeafNids(p.Nid, []int64{})
+		if err != nil {
+			logger.Warningf("get LeafNids err:%v %v", err, p)
+			continue
+		}
+
+		Endpoints, err := model.EndpointUnderLeafs(leafNids)
+		if err != nil {
+			logger.Warningf("get endpoints err:%v %v", err, p)
+			continue
+		}
+
+		for _, endpoint := range Endpoints {
+			name := endpoint.Ident
+			c, exists := collectMap[name]
+			if !exists {
+				c = model.NewCollect()
+			}
+
+			key := fmt.Sprintf("%s-%d", p.Name, p.Nid)
+			c.Plugins[key] = p
+			collectMap[name] = c
+		}
+	}
+
 	CollectCache.SetAll(collectMap)
 }
 

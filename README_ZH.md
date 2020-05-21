@@ -34,6 +34,9 @@ $ docker-compose up -d
 
 ![dashboard](https://user-images.githubusercontent.com/19553554/78956965-8b9c6180-7b16-11ea-9747-6ed5e62b068d.png)
 
+## 版本升级
+如果需要从 `v1.4.0` 之前的版本升级到 `v1.4.0` , 按照 [v1.4.0](https://github.com/didi/nightingale/releases/tag/V1.4.0) release 说明操作即可
+
 ## 团队
 
 [ulricqin](https://github.com/ulricqin) [710leo](https://github.com/710leo) [jsers](https://github.com/jsers) [hujter](https://github.com/hujter) [n4mine](https://github.com/n4mine) [heli567](https://github.com/heli567)

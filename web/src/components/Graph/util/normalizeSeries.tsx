@@ -1,12 +1,14 @@
 import _ from 'lodash';
 import { hexPalette } from '../config';
-import { SerieInterface } from '../interface';
+import { SerieInterface, GraphDataInterface } from '../interface';
 
-export default function normalizeSeries(data: any[]) {
+export default function normalizeSeries(data: any[], graphConfig: GraphDataInterface): SerieInterface[] {
+  const { comparison } = graphConfig;
+  const isComparison = !!_.get(comparison, 'length', 0);
   const series = [] as SerieInterface[];
   _.each(_.sortBy(data, ['counter', 'endpoint']), (o, i) => {
     const { endpoint, comparison } = o;
-    const color = getSerieColor(o, i);
+    const color = getSerieColor(o, i, isComparison);
     const separatorIdx = o.counter.indexOf('/');
 
     let counter = endpoint ? '' : o.counter;
@@ -31,7 +33,7 @@ export default function normalizeSeries(data: any[]) {
   return series;
 }
 
-function getSerieColor(serie: SerieInterface, serieIndex: number, isComparison?: boolean): string {
+function getSerieColor(serie: SerieInterface, serieIndex: number, isComparison: boolean): string {
   const { comparison } = serie;
   let color;
   // 同环比固定曲线颜色

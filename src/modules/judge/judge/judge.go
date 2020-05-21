@@ -5,6 +5,7 @@ import (
 	"container/list"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -111,10 +112,14 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryDat
 	}()
 
 	leftValue, isTriggered = judgeItemWithStrategy(stra, historyData, exps[0], firstItem, now)
+	lastValue := "null"
+	if !math.IsNaN(float64(leftValue)) {
+		lastValue = strconv.FormatFloat(float64(leftValue), 'f', -1, 64)
+	}
 	if value == "" {
-		value = fmt.Sprintf("%s: %v", exp.Metric, leftValue)
+		value = fmt.Sprintf("%s: %s", exp.Metric, lastValue)
 	} else {
-		value += fmt.Sprintf("; %s: %v", exp.Metric, leftValue)
+		value += fmt.Sprintf("; %s: %s", exp.Metric, lastValue)
 	}
 	status = append(status, isTriggered)
 

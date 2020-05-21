@@ -323,6 +323,44 @@ func (l *LogCollect) Update() error {
 	return err
 }
 
+func GetPluginCollects() ([]*PluginCollect, error) {
+	collects := []*PluginCollect{}
+	err := DB["mon"].Find(&collects)
+	return collects, err
+}
+
+func (p *PluginCollect) Update() error {
+	session := DB["mon"].NewSession()
+	defer session.Close()
+
+	err := session.Begin()
+	if err != nil {
+		return err
+	}
+
+	if _, err = session.Id(p.Id).AllCols().Update(p); err != nil {
+		session.Rollback()
+		return err
+	}
+
+	b, err := json.Marshal(p)
+	if err != nil {
+		session.Rollback()
+		return err
+	}
+
+	if err := saveHist(p.Id, "plugin", "update", p.Creator, string(b), session); err != nil {
+		session.Rollback()
+		return err
+	}
+
+	if err = session.Commit(); err != nil {
+		return err
+	}
+
+	return err
+}
+
 func CreateCollect(collectType, creator string, collect interface{}) error {
 	session := DB["mon"].NewSession()
 	defer session.Close()
@@ -379,6 +417,14 @@ func GetCollectByNid(collectType string, nids []int64) ([]interface{}, error) {
 		}
 		return res, err
 
+	case "plugin":
+		collects := []PluginCollect{}
+		err := DB["mon"].In("nid", nids).Find(&collects)
+		for _, c := range collects {
+			res = append(res, c)
+		}
+		return res, err
+
 	default:
 		return nil, fmt.Errorf("illegal collectType")
 	}
@@ -399,6 +445,10 @@ func GetCollectById(collectType string, cid int64) (interface{}, error) {
 		collect := new(LogCollect)
 		_, err := DB["mon"].Where("id = ?", cid).Get(collect)
 		collect.Decode()
+		return collect, err
+	case "plugin":
+		collect := new(PluginCollect)
+		_, err := DB["mon"].Where("id = ?", cid).Get(collect)
 		return collect, err
 
 	default:
@@ -447,17 +497,4 @@ func saveHist(id int64, tp string, action, username, body string, session *xorm.
 	}
 
 	return err
-}
-
-func GetCollectsModel(t string) (interface{}, error) {
-	collects := make([]*PortCollect, 0)
-	switch t {
-	case "port":
-		return collects, nil
-	case "proc":
-		return collects, nil
-
-	default:
-		return nil, fmt.Errorf("illegal collectType")
-	}
 }

@@ -4,6 +4,17 @@ backend:
   # callTimeout: 3000
   cluster:
     tsdb01: 127.0.0.1:5821
+  influxdb:
+    enabled: false
+    username: "influx"
+    password: "admin123"
+    precision: "s"
+    database: "n9e"
+    address: "http://127.0.0.1:8086"
+
+  opentsdb:
+    enabled: false
+    address: "127.0.0.1:4242"
 
 logger:
   dir: logs/transfer

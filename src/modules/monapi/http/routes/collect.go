@@ -104,6 +104,31 @@ func collectPost(c *gin.Context) {
 			}
 			errors.Dangerous(model.CreateCollect(obj.Type, creator, collect))
 
+		case "plugin":
+			collect := new(model.PluginCollect)
+
+			b, err := json.Marshal(obj.Data)
+			if err != nil {
+				errors.Bomb("marshal body %s err:%v", obj, err)
+			}
+
+			err = json.Unmarshal(b, collect)
+			if err != nil {
+				errors.Bomb("unmarshal body %s err:%v", string(b), err)
+			}
+
+			collect.Creator = creator
+			collect.LastUpdator = creator
+
+			nid := collect.Nid
+			name := collect.Name
+
+			old, _ := model.GetCollectByName(obj.Type, name)
+			if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid {
+				errors.Bomb("同节点下策略名称 %s 已存在", name)
+			}
+			errors.Dangerous(model.CreateCollect(obj.Type, creator, collect))
+
 		default:
 			errors.Bomb("采集类型不合法")
 		}
@@ -131,7 +156,7 @@ func collectsGet(c *gin.Context) {
 	var resp []interface{}
 
 	nids := []int64{nid}
-	types := []string{"port", "proc", "log"}
+	types := []string{"port", "proc", "log", "plugin"}
 
 	for _, t := range types {
 		collects, err := model.GetCollectByNid(t, nids)
@@ -255,6 +280,45 @@ func collectPut(c *gin.Context) {
 		}
 
 		tmpId := obj.(*model.LogCollect).Id
+		if tmpId == 0 {
+			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+		}
+
+		collect.Creator = creator
+		collect.LastUpdator = creator
+
+		old, _ := model.GetCollectByName(recv.Type, name)
+		if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid &&
+			tmpId != collect.Id {
+			errors.Bomb("同节点下策略名称 %s 已存在", name)
+		}
+
+		errors.Dangerous(collect.Update())
+		renderData(c, "ok", nil)
+		return
+	case "plugin":
+		collect := new(model.PluginCollect)
+
+		b, err := json.Marshal(recv.Data)
+		if err != nil {
+			errors.Bomb("marshal body %s err:%v", recv, err)
+		}
+
+		err = json.Unmarshal(b, collect)
+		if err != nil {
+			errors.Bomb("unmarshal body %s err:%v", string(b), err)
+		}
+
+		nid := collect.Nid
+		name := collect.Name
+
+		//校验采集是否存在
+		obj, err := model.GetCollectById(recv.Type, collect.Id) //id找不到的情况
+		if err != nil {
+			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+		}
+
+		tmpId := obj.(*model.PluginCollect).Id
 		if tmpId == 0 {
 			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
 		}

@@ -60,7 +60,7 @@ export default class Graph extends Component<Props, State> {
   chartOptions = config.chart;
   headerHeight = 35;
   counterList = [];
-  series = [];
+  series = [] as any[];
   state = {
     spinning: false,
     errorText: '',

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# release version
+version=2.2.0
+
 CWD=$(cd $(dirname $0)/; pwd)
 cd $CWD
 
@@ -136,13 +139,13 @@ status()
 build_one()
 {
 	mod=$1
-	go build -mod=vendor -o n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
+	go build -ldflags "-X main.version=${version} -X main.buildTime=`date -u '+%Y-%m-%d_%I:%M:%S%p'` -X main.gitHash=`git rev-parse HEAD`" -mod=vendor -o n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
 }
 
 build_docker()
 {
 	mod=$1
-	go build -mod=vendor -o bin/n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
+	go build -ldflags "-X main.version=${version} -X main.buildTime=`date -u '+%Y-%m-%d_%I:%M:%S%p'` -X main.gitHash=`git rev-parse HEAD`" -mod=vendor -o bin/n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
 }
 
 build()
@@ -187,7 +190,11 @@ reload()
 
 pack()
 {
-	v=$(date +%Y-%m-%d-%H-%M-%S)
+	v=$1
+	if [ "x${v}" = "x" ]; then
+		v=$(date +%Y-%m-%d-%H-%M-%S)
+	fi
+
 	tar zcvf n9e-$v.tar.gz control sql plugin pub etc/log etc/port etc/service etc/nginx.conf etc/mysql.yml etc/address.yml \
 	n9e-collector etc/collector.yml \
 	n9e-tsdb etc/tsdb.yml \
@@ -217,7 +224,7 @@ case "$1" in
 		reload $2
 		;;
 	pack)
-		pack
+		pack $2
 		;;
 	*)
 		usage

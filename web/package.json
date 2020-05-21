@@ -16,7 +16,7 @@
   "dependencies": {
     "@d3-charts/ts-graph": "~0.1.15",
     "@hot-loader/react-dom": "^16.8.6",
-    "antd": "^3.19.2",
+    "antd": "^3.24.0",
     "classnames": "^2.2.6",
     "color": "^3.1.0",
     "d3": "^4.13.0",
