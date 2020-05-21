@@ -25,7 +25,7 @@ func (j *Judge) Send(items []*dataobj.JudgeItem, resp *dataobj.SimpleRpcResponse
 		logger.Debug("recv-->", item)
 		stats.Counter.Set("push.in", 1)
 
-		judge.ToJudge(cache.HistoryBigMap[pk[0:2]], pk, item, now)
+		go judge.ToJudge(cache.HistoryBigMap[pk[0:2]], pk, item, now)
 	}
 
 	return nil
