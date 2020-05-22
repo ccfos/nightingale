@@ -231,13 +231,14 @@ class Legend extends Component<Props, State> {
       });
     }
 
+
     return (
       <div className="graph-legend" style={{
         ...this.props.style,
         margin: '0 5px 5px 5px',
       }}>
         <Table
-          rowKey={record => record.id}
+          rowKey={record => `${record.id}-${record.comparison}`}
           size="middle"
           rowSelection={newRowSelection}
           columns={columns}
