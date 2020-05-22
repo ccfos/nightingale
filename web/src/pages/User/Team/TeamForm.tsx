@@ -43,11 +43,11 @@ class TeamForm extends Component<Props & FormProps, State> {
     this.fetchUser();
   }
 
-  fetchUser = () => {
+  fetchUser = (query = '') => {
     this.lastFetchId += 1;
     const fetchId = this.lastFetchId;
     this.setState({ users: [], fetching: true });
-    request(`${api.user}?limit=1000`).then((res) => {
+    request(`${api.user}?limit=1000&query=${query}`).then((res) => {
       if (fetchId !== this.lastFetchId) {
         // for fetch callback order
         return;
