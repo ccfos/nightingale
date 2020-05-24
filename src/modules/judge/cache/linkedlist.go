@@ -90,6 +90,12 @@ func (ll *SafeLinkedList) HistoryData(limit int) ([]*dataobj.HistoryData, bool) 
 		currentElement := firstElement
 		for i < limit {
 			nextElement := currentElement.Next()
+
+			if nextElement == nil {
+				isEnough = false
+				return vs, isEnough
+			}
+
 			vs[i] = &dataobj.HistoryData{
 				Timestamp: nextElement.Value.(*dataobj.JudgeItem).Timestamp,
 				Value:     dataobj.JsonFloat(nextElement.Value.(*dataobj.JudgeItem).Value),

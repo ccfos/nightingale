@@ -47,7 +47,7 @@ func update(filename string, items []*dataobj.TsdbItem) error {
 		if v > 1e+300 || (v < 1e-300 && v > 0) {
 			continue
 		}
-		u.Cache(item.Timestamp, int(item.Value))
+		u.Cache(item.Timestamp, item.Value)
 	}
 
 	return u.Update()
