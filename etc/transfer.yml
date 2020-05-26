@@ -1,4 +1,5 @@
 backend:
+  maxConns: 20000
   # in ms
   # connTimeout: 1000
   # callTimeout: 3000

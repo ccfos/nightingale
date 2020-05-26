@@ -177,7 +177,13 @@ func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.HistoryData,
 		logger.Errorf("wrong step:%+v", firstItem)
 		return
 	}
-	straParam = append(straParam, stra.AlertDur/int(firstItem.Step))
+
+	limit := stra.AlertDur / int(firstItem.Step)
+	if limit <= 0 {
+		limit = 1
+	}
+
+	straParam = append(straParam, limit)
 
 	switch straFunc {
 	case "happen":
