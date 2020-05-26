@@ -58,7 +58,7 @@ func nodataJudge() {
 				nodataJob.Acquire()
 				go AsyncJudge(nodataJob, stra, stra.Exprs, []*dataobj.HistoryData{}, judgeItem, now, []dataobj.History{}, "", "", "", []bool{})
 			}
-			return
+			continue
 		}
 
 		for _, data := range respData {
