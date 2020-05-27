@@ -3,6 +3,8 @@ package plugins
 type Plugin struct {
 	FilePath string
 	Params   string
+	Env      string
+	Stdin    string
 	MTime    int64
 	Cycle    int
 }
