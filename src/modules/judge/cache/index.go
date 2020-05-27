@@ -53,7 +53,7 @@ func (i *IndexMap) Get(id int64) []Series {
 }
 
 func (i *IndexMap) CleanLoop() {
-	t1 := time.NewTicker(time.Duration(60) * time.Second)
+	t1 := time.NewTicker(time.Duration(600) * time.Second)
 	for {
 		<-t1.C
 		i.Clean()

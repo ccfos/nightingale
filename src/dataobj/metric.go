@@ -129,6 +129,8 @@ func (m *MetricValue) CheckValidity(now int64) (err error) {
 		m.Timestamp = now
 	}
 
+	m.Timestamp = alignTs(m.Timestamp, int64(m.Step))
+
 	valid := true
 	var vv float64
 
@@ -343,4 +345,8 @@ func (bm BuiltinMetricSlice) Swap(i, j int) {
 }
 func (bm BuiltinMetricSlice) Less(i, j int) bool {
 	return bm[i].String() < bm[j].String()
+}
+
+func alignTs(ts int64, period int64) int64 {
+	return ts - ts%period
 }

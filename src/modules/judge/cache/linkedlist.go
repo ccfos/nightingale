@@ -108,3 +108,59 @@ func (ll *SafeLinkedList) HistoryData(limit int) ([]*dataobj.HistoryData, bool) 
 
 	return vs, isEnough
 }
+
+func (ll *SafeLinkedList) QueryDataByTS(start, end int64) []*dataobj.HistoryData {
+	size := ll.Len()
+	if size == 0 {
+		return []*dataobj.HistoryData{}
+	}
+
+	firstElement := ll.Front()
+	firstItem := firstElement.Value.(*dataobj.JudgeItem)
+
+	var vs []*dataobj.HistoryData
+	judgeType := firstItem.DsType[0]
+
+	if judgeType == 'G' || judgeType == 'g' {
+		if firstItem.Timestamp < start {
+			//最新的点也比起始时间旧，直接返回
+			return vs
+		}
+
+		v := &dataobj.HistoryData{
+			Timestamp: firstItem.Timestamp,
+			Value:     dataobj.JsonFloat(firstItem.Value),
+			Extra:     firstItem.Extra,
+		}
+
+		vs = append(vs, v)
+		currentElement := firstElement
+
+		for {
+			nextElement := currentElement.Next()
+			if nextElement == nil {
+				return vs
+			}
+
+			if nextElement.Value.(*dataobj.JudgeItem).Timestamp < start {
+				return vs
+			}
+
+			if nextElement.Value.(*dataobj.JudgeItem).Timestamp > end {
+				currentElement = nextElement
+				continue
+			}
+
+			v := &dataobj.HistoryData{
+				Timestamp: nextElement.Value.(*dataobj.JudgeItem).Timestamp,
+				Value:     dataobj.JsonFloat(nextElement.Value.(*dataobj.JudgeItem).Value),
+				Extra:     nextElement.Value.(*dataobj.JudgeItem).Extra,
+			}
+
+			vs = append(vs, v)
+			currentElement = nextElement
+		}
+	}
+
+	return vs
+}

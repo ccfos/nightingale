@@ -30,8 +30,18 @@ var (
 	EVENT_RECOVER = "recovery"
 )
 
+func GetStra(sid int64) (*model.Stra, bool) {
+	if stra, exists := cache.Strategy.Get(sid); exists {
+		return stra, exists
+	}
+	if stra, exists := cache.NodataStra.Get(sid); exists {
+		return stra, exists
+	}
+	return nil, false
+}
+
 func ToJudge(historyMap *cache.JudgeItemMap, key string, val *dataobj.JudgeItem, now int64) {
-	stra, exists := cache.Strategy.Get(val.Sid)
+	stra, exists := GetStra(val.Sid)
 	if !exists {
 		stats.Counter.Set("point.miss", 1)
 		return
@@ -237,42 +247,30 @@ func GetData(stra *model.Stra, exp model.Exp, firstItem *dataobj.JudgeItem, now 
 	var reqs []*dataobj.QueryData
 	var respData []*dataobj.TsdbQueryResponse
 	var err error
-	stats.Counter.Set("get.data", 1)
-
-	if sameTag {
+	if sameTag { //与条件要求是相同tag的场景，不需要查询索引
 		if firstItem.Tags != "" && len(firstItem.TagsMap) == 0 {
 			firstItem.TagsMap = str.DictedTagstring(firstItem.Tags)
 		}
 		//+1 防止由于查询不到最新点，导致点数不够
 		start := now - int64(stra.AlertDur) - int64(firstItem.Step) + 1
 
-		queryParam, err := query.NewQueryRequest(firstItem.Endpoint, exp.Metric, firstItem.TagsMap, start, now)
+		queryParam, err := query.NewQueryRequest(firstItem.Endpoint, exp.Metric, firstItem.TagsMap, firstItem.Step, start, now)
 		if err != nil {
 			return respData, err
 		}
 
 		reqs = append(reqs, queryParam)
-	} else if firstItem != nil {
-		reqs, err = GetReqs(stra, exp.Metric, []string{firstItem.Endpoint}, now)
-		if err != nil {
-			stats.Counter.Set("get.index.err", 1)
-
-			return respData, err
-		}
-	} else {
-		reqs, err = GetReqs(stra, exp.Metric, stra.Endpoints, now)
-		if err != nil {
-			stats.Counter.Set("get.index.err", 1)
-
-			return respData, err
-		}
+	} else if firstItem != nil { //点驱动告警策略的场景
+		reqs = GetReqs(stra, exp.Metric, []string{firstItem.Endpoint}, now)
+	} else { //nodata的场景
+		reqs = GetReqs(stra, exp.Metric, stra.Endpoints, now)
 	}
 
-	respData, err = query.Query(reqs)
-	if err != nil {
-		stats.Counter.Set("get.data.err", 1)
+	if len(reqs) == 0 {
 		return respData, err
 	}
+
+	respData = query.Query(reqs, stra.Id, exp.Func)
 
 	if len(respData) < 1 {
 		stats.Counter.Set("get.data.null", 1)
@@ -281,8 +279,9 @@ func GetData(stra *model.Stra, exp model.Exp, firstItem *dataobj.JudgeItem, now 
 	return respData, err
 }
 
-func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]*dataobj.QueryData, error) {
+func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) []*dataobj.QueryData {
 	var reqs []*dataobj.QueryData
+	stats.Counter.Set("query.index", 1)
 
 	req := &query.IndexReq{
 		Endpoints: endpoints,
@@ -302,10 +301,10 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 		}
 	}
 
-	stats.Counter.Set("get.index", 1)
 	indexsData, err := query.Xclude(req)
 	if err != nil {
-		logger.Warning("get index err:", err)
+		stats.Counter.Set("query.index.err", 1)
+		logger.Warning("query index err:", err)
 	}
 
 	lostSeries := []cache.Series{}
@@ -353,7 +352,7 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 
 	seriess := cache.SeriesMap.Get(stra.Id)
 	if len(seriess) == 0 && err != nil {
-		return reqs, err
+		return reqs
 	}
 
 	step := 0
@@ -361,7 +360,7 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 		step = seriess[0].Step
 	}
 
-	//防止由于差不到最新点，导致点数不够
+	//防止由于查询不到最新点，导致点数不够
 	start := now - int64(stra.AlertDur) - int64(step) + 1
 	for _, series := range seriess {
 		counter := series.Metric
@@ -397,7 +396,7 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) ([]
 		reqs = append(reqs, queryParam)
 	}
 
-	return reqs, nil
+	return reqs
 }
 
 func sendEventIfNeed(historyData []*dataobj.HistoryData, status []bool, event *dataobj.Event, stra *model.Stra) {

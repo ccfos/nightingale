@@ -250,8 +250,6 @@ func convert2TsdbItem(d *dataobj.MetricValue) *dataobj.TsdbItem {
 		Max:       "U",
 	}
 
-	item.Timestamp = alignTs(item.Timestamp, int64(item.Step))
-
 	return item
 }
 
