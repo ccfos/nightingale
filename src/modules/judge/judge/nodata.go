@@ -19,6 +19,12 @@ func NodataJudge(concurrency int) {
 		concurrency = 1000
 	}
 	nodataJob = semaphore.NewSemaphore(concurrency)
+	for {
+		if time.Now().Unix()%10 == 0 {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
 
 	t1 := time.NewTicker(time.Duration(10) * time.Second)
 	nodataJudge()
@@ -41,23 +47,6 @@ func nodataJudge() {
 		respData, err := GetData(stra, stra.Exprs[0], nil, now, false)
 		if err != nil {
 			logger.Errorf("stra:%+v get query data err:%v", stra, err)
-			//获取数据报错，直接出发nodata
-			for _, endpoint := range stra.Endpoints {
-				if endpoint == "" {
-					continue
-				}
-				judgeItem := &dataobj.JudgeItem{
-					Endpoint: endpoint,
-					Metric:   stra.Exprs[0].Metric,
-					Tags:     "",
-					TagsMap:  map[string]string{},
-					DsType:   "GAUGE",
-					Step:     10,
-				}
-
-				nodataJob.Acquire()
-				go AsyncJudge(nodataJob, stra, stra.Exprs, []*dataobj.HistoryData{}, judgeItem, now, []dataobj.History{}, "", "", "", []bool{})
-			}
 			continue
 		}
 

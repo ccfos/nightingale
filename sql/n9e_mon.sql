@@ -263,6 +263,8 @@ CREATE TABLE `plugin_collect` (
   `step` int(11) NOT NULL DEFAULT '0' COMMENT '采集周期',
   `file_path` varchar(255) NOT NULL COMMENT 'file_path',
   `params` varchar(255) NOT NULL COMMENT 'params',
+  `stdin` text NOT NULL COMMENT 'stdin',
+  `env` text NOT NULL COMMENT 'env',
   `comment` varchar(512) NOT NULL DEFAULT '' COMMENT 'comment',
   `creator` varchar(255) NOT NULL DEFAULT '' COMMENT 'creator',
   `created` datetime NOT NULL  COMMENT 'created',

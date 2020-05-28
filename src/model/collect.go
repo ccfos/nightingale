@@ -141,6 +141,8 @@ type PluginCollect struct {
 	Step        int       `json:"step"`
 	FilePath    string    `json:"file_path"`
 	Params      string    `json:"params"`
+	Stdin       string    `json:"stdin"`
+	Env         string    `json:"env"`
 	Comment     string    `json:"comment"`
 	Creator     string    `json:"creator"`
 	Created     time.Time `xorm:"updated" json:"created"`

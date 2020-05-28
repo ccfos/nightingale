@@ -127,6 +127,8 @@ func Config(r *gin.Engine) {
 	v1 := r.Group("/v1/portal").Use(middleware.CheckHeaderToken())
 	{
 		v1.POST("/endpoint", endpointImport)
+		v1.GET("/tree", treeGet)
+		v1.GET("/endpoints/bynodeids", endpointByNodeIdsGets)
 	}
 
 	transferProxy := r.Group("/api/transfer")

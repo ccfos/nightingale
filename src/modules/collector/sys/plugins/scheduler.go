@@ -62,9 +62,27 @@ func PluginRun(plugin *Plugin) {
 	cmd := exec.Command(fpath, params...)
 	cmd.Dir = filepath.Dir(fpath)
 	var stdout bytes.Buffer
+
 	cmd.Stdout = &stdout
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
+
+	if plugin.Stdin != "" {
+		cmd.Stdin = bytes.NewReader([]byte(plugin.Stdin))
+	}
+
+	if plugin.Env != "" {
+		envs := []string{}
+		err := json.Unmarshal([]byte(plugin.Env), &envs)
+		if err != nil {
+			logger.Errorf("plugin:%+v %v", plugin, err)
+			return
+		}
+		for _, env := range envs {
+			cmd.Env = append(cmd.Env, env)
+		}
+	}
+
 	err := cmd.Start()
 	if err != nil {
 		logger.Error(err)

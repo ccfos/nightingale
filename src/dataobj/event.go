@@ -41,3 +41,16 @@ func RRDData2HistoryData(datas []*RRDData) []*HistoryData {
 	}
 	return historyDatas
 }
+
+func HistoryData2RRDData(datas []*HistoryData) []*RRDData {
+	rrdDatas := make([]*RRDData, len(datas))
+
+	for i := range datas {
+		data := &RRDData{
+			Timestamp: datas[i].Timestamp,
+			Value:     datas[i].Value,
+		}
+		rrdDatas[i] = data
+	}
+	return rrdDatas
+}
