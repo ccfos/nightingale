@@ -5,10 +5,12 @@ import (
 	"strings"
 
 	"github.com/didi/nightingale/src/model"
+	"github.com/didi/nightingale/src/modules/monapi/config"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errors"
+	"github.com/toolkits/pkg/slice"
 )
 
 func Logined() gin.HandlerFunc {
@@ -74,7 +76,7 @@ const internalToken = "monapi-builtin-token"
 func CheckHeaderToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("x-srv-token")
-		if token != internalToken {
+		if token != internalToken && !slice.ContainsString(config.Get().Tokens, token) {
 			errors.Bomb("token[%s] invalid", token)
 		}
 		c.Next()

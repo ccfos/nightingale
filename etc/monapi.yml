@@ -59,3 +59,7 @@ redis:
   #   conn: 500
   #   read: 3000
   #   write: 3000
+
+tokens:
+  - 7dcd606e0462f9df2fea0bf505c9e622
+
