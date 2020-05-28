@@ -70,13 +70,11 @@ func headerUser(c *gin.Context) string {
 	return pair[0]
 }
 
-const internalToken = "monapi-builtin-token"
-
 // CheckHeaderToken check thirdparty x-srv-token
 func CheckHeaderToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("x-srv-token")
-		if token != internalToken && !slice.ContainsString(config.Get().Tokens, token) {
+		if !slice.ContainsString(config.Get().Tokens, token) {
 			errors.Bomb("token[%s] invalid", token)
 		}
 		c.Next()
