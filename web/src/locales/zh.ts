@@ -242,6 +242,7 @@ export default {
   'collect.plugin.filepath': '文件路径',
   'collect.plugin.params': '参数',
   'collect.plugin.filepath.placeholder': '待执行插件所在的绝对路径',
+  'collect.plugin.env': '环境变量',
 
   'graph.subscribe': '订阅图表',
   'graph.subscribe.node': '所属节点',

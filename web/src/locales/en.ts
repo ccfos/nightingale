@@ -241,6 +241,7 @@ export default {
   'collect.plugin.filepath': 'FilePath',
   'collect.plugin.params': 'Params',
   'collect.plugin.filepath.placeholder': 'The absolute path of the plugin',
+  'collect.plugin.env': 'ENV',
 
   'graph.subscribe': 'Subscribe',
   'graph.subscribe.node': 'Node',
