@@ -3,6 +3,7 @@ package plugins
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -72,14 +73,14 @@ func PluginRun(plugin *Plugin) {
 	}
 
 	if plugin.Env != "" {
-		envs := []string{}
+		envs := make(map[string]string)
 		err := json.Unmarshal([]byte(plugin.Env), &envs)
 		if err != nil {
 			logger.Errorf("plugin:%+v %v", plugin, err)
 			return
 		}
-		for _, env := range envs {
-			cmd.Env = append(cmd.Env, env)
+		for k, v := range envs {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 		}
 	}
 
