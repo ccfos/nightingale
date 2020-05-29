@@ -19,6 +19,7 @@ type Config struct {
 	Cleaner cleanerSection      `yaml:"cleaner"`
 	Link    linkSection         `yaml:"link"`
 	Notify  map[string][]string `yaml:"notify"`
+	Tokens  []string            `yaml:"tokens"`
 }
 
 type linkSection struct {
