@@ -27,10 +27,10 @@ func FsKernelMetrics() []*dataobj.MetricValue {
 
 	v := math.Ceil(float64(allocateFiles) * 100 / float64(maxFiles))
 	return []*dataobj.MetricValue{
-		GaugeValue("sys.fs.files.max", maxFiles),
-		GaugeValue("sys.fs.files.free", maxFiles-allocateFiles),
-		GaugeValue("sys.fs.files.used", allocateFiles),
-		GaugeValue("sys.fs.files.used.percent", v),
+		GaugeValue("sys.fs.files.max", maxFiles,"允许使用的最大句柄量"),
+		GaugeValue("sys.fs.files.free", maxFiles-allocateFiles,"文件句柄剩余量"),
+		GaugeValue("sys.fs.files.used", allocateFiles,"文件句柄使用量"),
+		GaugeValue("sys.fs.files.used.percent", v,"文件句柄使用占比"),
 	}
 }
 
@@ -58,7 +58,7 @@ func ProcsNumMetrics() []*dataobj.MetricValue {
 	}
 
 	return []*dataobj.MetricValue{
-		GaugeValue("sys.ps.process.total", num),
+		GaugeValue("sys.ps.process.total", num,"系统进程数"),
 	}
 }
 
@@ -87,6 +87,6 @@ func EntityNumMetrics() []*dataobj.MetricValue {
 	}
 
 	return []*dataobj.MetricValue{
-		GaugeValue("sys.ps.entity.total", num),
+		GaugeValue("sys.ps.entity.total", num,"系统调度单元总数"),
 	}
 }
