@@ -52,14 +52,14 @@ func FsRWMetrics() []*dataobj.MetricValue {
 		f, err := os.Open(du.FsFile)
 		if err != nil {
 			logger.Error("target mount point open failed:", err)
-			ret = append(ret, GaugeValue("disk.rw.error", 1, tags))
+			ret = append(ret, GaugeValue("disk.rw.error", 1, "硬盘分区读写是否有错",tags))
 			continue
 		}
 
 		fs, err := f.Stat()
 		if err != nil {
 			logger.Error("get target mount point status failed:", err)
-			ret = append(ret, GaugeValue("disk.rw.error", 2, tags))
+			ret = append(ret, GaugeValue("disk.rw.error", 2,"硬盘分区读写是否有错", tags))
 			continue
 		}
 
@@ -72,9 +72,9 @@ func FsRWMetrics() []*dataobj.MetricValue {
 		content := "FS-RW" + now
 		err = CheckFS(file, content)
 		if err != nil {
-			ret = append(ret, GaugeValue("disk.rw.error", 3, tags))
+			ret = append(ret, GaugeValue("disk.rw.error", 3,"硬盘分区读写是否有错", tags))
 		} else {
-			ret = append(ret, GaugeValue("disk.rw.error", 0, tags))
+			ret = append(ret, GaugeValue("disk.rw.error", 0,"硬盘分区读写是否有错", tags))
 		}
 	}
 
