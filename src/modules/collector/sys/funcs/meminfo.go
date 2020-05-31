@@ -32,15 +32,15 @@ func MemMetrics() []*dataobj.MetricValue {
 	}
 
 	return []*dataobj.MetricValue{
-		GaugeValue("mem.bytes.total", m.MemTotal),
-		GaugeValue("mem.bytes.used", memUsed),
-		GaugeValue("mem.bytes.free", memFree),
-		GaugeValue("mem.bytes.used.percent", pmemUsed),
-		GaugeValue("mem.bytes.buffers", m.Buffers),
-		GaugeValue("mem.bytes.cached", m.Cached),
-		GaugeValue("mem.swap.bytes.total", m.SwapTotal),
-		GaugeValue("mem.swap.bytes.used", m.SwapUsed),
-		GaugeValue("mem.swap.bytes.free", m.SwapFree),
-		GaugeValue("mem.swap.bytes.used.percent", pswapUsed),
+		GaugeValue("mem.bytes.total", m.MemTotal,"内存总大小"),
+		GaugeValue("mem.bytes.used", memUsed,"已用内存大小"),
+		GaugeValue("mem.bytes.free", memFree,"空闲内存大小"),
+		GaugeValue("mem.bytes.used.percent", pmemUsed,"已用内存占比"),
+		GaugeValue("mem.bytes.buffers", m.Buffers,"内存缓冲区总大小"),
+		GaugeValue("mem.bytes.cached", m.Cached,"内存缓冲区使用大小"),
+		GaugeValue("mem.swap.bytes.total", m.SwapTotal,"swap总大小"),
+		GaugeValue("mem.swap.bytes.used", m.SwapUsed,"已用swap大小"),
+		GaugeValue("mem.swap.bytes.free", m.SwapFree,"空闲swap大小"),
+		GaugeValue("mem.swap.bytes.used.percent", pswapUsed,"已用swap占比"),
 	}
 }
