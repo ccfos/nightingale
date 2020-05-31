@@ -86,10 +86,10 @@ func ProcCollect(p *model.ProcCollect) {
 
 	}
 
-	procNumItem := funcs.GaugeValue("proc.num", cnt, p.Tags)
-	memUsedItem := funcs.GaugeValue("proc.mem.used", memUsedTotal, p.Tags)
-	memUtilItem := funcs.GaugeValue("proc.mem.util", memUtilTotal, p.Tags)
-	cpuUtilItem := funcs.GaugeValue("proc.cpu.util", cpuUtilTotal, p.Tags)
+	procNumItem := funcs.GaugeValue("proc.num", cnt,"进程个数", p.Tags)
+	memUsedItem := funcs.GaugeValue("proc.mem.used", memUsedTotal,"进程使用内存", p.Tags)
+	memUtilItem := funcs.GaugeValue("proc.mem.util", memUtilTotal, "进程内存使用率",p.Tags)
+	cpuUtilItem := funcs.GaugeValue("proc.cpu.util", cpuUtilTotal, "进程CPU使用率",p.Tags)
 	items = []*dataobj.MetricValue{procNumItem, memUsedItem, memUtilItem, cpuUtilItem}
 	now := time.Now().Unix()
 	for _, item := range items{
