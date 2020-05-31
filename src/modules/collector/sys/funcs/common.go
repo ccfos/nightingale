@@ -6,11 +6,13 @@ import (
 	"github.com/didi/nightingale/src/dataobj"
 )
 
-func NewMetricValue(metric string, val interface{}, dataType string, tags ...string) *dataobj.MetricValue {
+func NewMetricValue(metric string, val interface{}, dataType string, extra string, tags ...string) *dataobj.MetricValue {
 	mv := dataobj.MetricValue{
 		Metric:       metric,
 		ValueUntyped: val,
 		CounterType:  dataType,
+		Extra: extra,
+
 	}
 
 	size := len(tags)
@@ -19,13 +21,15 @@ func NewMetricValue(metric string, val interface{}, dataType string, tags ...str
 		mv.Tags = strings.Join(tags, ",")
 	}
 
+
+
 	return &mv
 }
 
-func GaugeValue(metric string, val interface{}, tags ...string) *dataobj.MetricValue {
-	return NewMetricValue(metric, val, "GAUGE", tags...)
+func GaugeValue(metric string, val interface{}, extra string, tags ...string) *dataobj.MetricValue {
+	return NewMetricValue(metric, val, "GAUGE",extra, tags... )
 }
 
-func CounterValue(metric string, val interface{}, tags ...string) *dataobj.MetricValue {
-	return NewMetricValue(metric, val, "COUNTER", tags...)
+func CounterValue(metric string, val interface{}, extra string, tags ...string,) *dataobj.MetricValue {
+	return NewMetricValue(metric, val, "COUNTER",extra, tags...)
 }
