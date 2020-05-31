@@ -16,7 +16,7 @@ func SocketStatSummaryMetrics() []*dataobj.MetricValue {
 	}
 
 	for k, v := range ssMap {
-		ret = append(ret, GaugeValue("net."+k, v))
+		ret = append(ret, GaugeValue("net."+k,v,"套接字（socket）使用概况"))
 	}
 
 	return ret
