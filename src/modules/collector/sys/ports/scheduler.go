@@ -48,7 +48,7 @@ func PortCollect(p *model.PortCollect) {
 		value = 1
 	}
 
-	item := funcs.GaugeValue("proc.port.listen", value, p.Tags)
+	item := funcs.GaugeValue("proc.port.listen", value,"端口监听状态", p.Tags)
 	item.Step = int64(p.Step)
 	item.Timestamp = time.Now().Unix()
 	item.Endpoint = identity.Identity
