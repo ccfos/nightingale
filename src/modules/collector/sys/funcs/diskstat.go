@@ -127,19 +127,19 @@ func IOStatsMetrics() []*dataobj.MetricValue {
 		}
 
 		duration := IODelta(device, TS)
-		ret = append(ret, GaugeValue("disk.io.read.request", float64(rio), tags))
-		ret = append(ret, GaugeValue("disk.io.write.request", float64(wio), tags))
-		ret = append(ret, GaugeValue("disk.io.read.bytes", float64(deltaRsec)*512.0, tags))
-		ret = append(ret, GaugeValue("disk.io.write.bytes", float64(deltaWsec)*512.0, tags))
-		ret = append(ret, GaugeValue("disk.io.avgrq_sz", avgrqSz, tags))
-		ret = append(ret, GaugeValue("disk.io.avgqu_sz", float64(IODelta(device, IOMsecWeightedTotal))/1000.0, tags))
-		ret = append(ret, GaugeValue("disk.io.await", await, tags))
-		ret = append(ret, GaugeValue("disk.io.svctm", svctm, tags))
+		ret = append(ret, GaugeValue("disk.io.read.request", float64(rio),"每秒读请求数量", tags))
+		ret = append(ret, GaugeValue("disk.io.write.request", float64(wio),"每秒写请求数量", tags))
+		ret = append(ret, GaugeValue("disk.io.read.bytes", float64(deltaRsec)*512.0,"每秒读取字节数", tags))
+		ret = append(ret, GaugeValue("disk.io.write.bytes", float64(deltaWsec)*512.0,"每秒写入字节数", tags))
+		ret = append(ret, GaugeValue("disk.io.avgrq_sz", avgrqSz,"平均请求大小", tags))
+		ret = append(ret, GaugeValue("disk.io.avgqu_sz", float64(IODelta(device, IOMsecWeightedTotal))/1000.0,"平均队列长度", tags))
+		ret = append(ret, GaugeValue("disk.io.await", await,"每次IO处理时间，单位毫秒", tags))
+		ret = append(ret, GaugeValue("disk.io.svctm", svctm,"每次IO服务时间，单位毫秒", tags))
 		tmp := float64(use) * 100.0 / float64(duration)
 		if tmp > 100.0 {
 			tmp = 100.0
 		}
-		ret = append(ret, GaugeValue("disk.io.util", tmp, tags))
+		ret = append(ret, GaugeValue("disk.io.util", tmp,"IO利用率", tags))
 	}
 
 	return ret
