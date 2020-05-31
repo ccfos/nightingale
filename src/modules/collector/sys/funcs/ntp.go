@@ -44,7 +44,7 @@ func NtpOffsetMetrics() []*dataobj.MetricValue {
 		logger.Debug("ntp: client receive time, ", dstTime)
 
 		delta := duration / 1e6 // 转换成 ms
-		ret = append(ret, GaugeValue("sys.ntp.offset.ms", delta))
+		ret = append(ret, GaugeValue("sys.ntp.offset.ms", delta,"本地时间与ntp服务器时间相差毫秒"))
 
 		//one ntp server's response is enough
 		break
