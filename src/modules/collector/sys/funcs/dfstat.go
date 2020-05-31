@@ -56,26 +56,26 @@ func DeviceMetrics() []*dataobj.MetricValue {
 		diskUsed += du.BlocksUsed
 
 		tags := fmt.Sprintf("mount=%s", du.FsFile)
-		ret = append(ret, GaugeValue("disk.bytes.total", du.BlocksAll, tags))
-		ret = append(ret, GaugeValue("disk.bytes.free", du.BlocksFree, tags))
-		ret = append(ret, GaugeValue("disk.bytes.used", du.BlocksUsed, tags))
-		ret = append(ret, GaugeValue("disk.bytes.used.percent", du.BlocksUsedPercent, tags))
+		ret = append(ret, GaugeValue("disk.bytes.total", du.BlocksAll, "某分区大小",tags))
+		ret = append(ret, GaugeValue("disk.bytes.free", du.BlocksFree,"某分区余量大小", tags))
+		ret = append(ret, GaugeValue("disk.bytes.used", du.BlocksUsed,"某分区用量大小", tags))
+		ret = append(ret, GaugeValue("disk.bytes.used.percent", du.BlocksUsedPercent,"某分区用量占比", tags))
 
 		if du.InodesAll == 0 {
 			continue
 		}
 
-		ret = append(ret, GaugeValue("disk.inodes.total", du.InodesAll, tags))
-		ret = append(ret, GaugeValue("disk.inodes.free", du.InodesFree, tags))
-		ret = append(ret, GaugeValue("disk.inodes.used", du.InodesUsed, tags))
-		ret = append(ret, GaugeValue("disk.inodes.used.percent", du.InodesUsedPercent, tags))
+		ret = append(ret, GaugeValue("disk.inodes.total", du.InodesAll,"某分区inode总数量", tags))
+		ret = append(ret, GaugeValue("disk.inodes.free", du.InodesFree,"某分区空闲inode数量", tags))
+		ret = append(ret, GaugeValue("disk.inodes.used", du.InodesUsed,"某分区已用inode数量", tags))
+		ret = append(ret, GaugeValue("disk.inodes.used.percent", du.InodesUsedPercent,"某分区已用inode占比", tags))
 	}
 
 	if len(ret) > 0 && diskTotal > 0 {
-		ret = append(ret, GaugeValue("disk.cap.bytes.total", float64(diskTotal)))
-		ret = append(ret, GaugeValue("disk.cap.bytes.used", float64(diskUsed)))
-		ret = append(ret, GaugeValue("disk.cap.bytes.free", float64(diskTotal-diskUsed)))
-		ret = append(ret, GaugeValue("disk.cap.bytes.used.percent", float64(diskUsed)*100.0/float64(diskTotal)))
+		ret = append(ret, GaugeValue("disk.cap.bytes.total", float64(diskTotal),"所有分区大小之和"))
+		ret = append(ret, GaugeValue("disk.cap.bytes.used", float64(diskUsed),"所有分区空闲大小之和"))
+		ret = append(ret, GaugeValue("disk.cap.bytes.free", float64(diskTotal-diskUsed),"所有分区用量大小之和"))
+		ret = append(ret, GaugeValue("disk.cap.bytes.used.percent", float64(diskUsed)*100.0/float64(diskTotal),"所有分区总用量占比"))
 	}
 
 	return ret
