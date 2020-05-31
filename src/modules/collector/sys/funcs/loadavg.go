@@ -15,8 +15,8 @@ func LoadAvgMetrics() []*dataobj.MetricValue {
 	}
 
 	return []*dataobj.MetricValue{
-		GaugeValue("cpu.loadavg.1", load.Avg1min),
-		GaugeValue("cpu.loadavg.5", load.Avg5min),
-		GaugeValue("cpu.loadavg.15", load.Avg15min),
+		GaugeValue("cpu.loadavg.1", load.Avg1min,"近1分钟平均负载"),
+		GaugeValue("cpu.loadavg.5", load.Avg5min,"近5分钟平均负载"),
+		GaugeValue("cpu.loadavg.15", load.Avg15min,"近15分钟平均负载"),
 	}
 }
