@@ -45,6 +45,8 @@ function singlePoint(pointData = {}, activeTooltipData) {
   const value = numeral(pointData.value).format('0,0[.]000');
   let name = tags;
 
+  name = _.chain(name).replace('<', '&lt;').replace('>', '&gt;').value();
+
   // 对比情况下 name 特殊处理
   if (isComparison) {
     const mDate = serieOptions.comparison && typeof serieOptions.comparison === 'number' ? moment(timestamp).subtract(serieOptions.comparison, 'seconds') : moment(timestamp);
