@@ -11,26 +11,12 @@ import (
 
 const RRDDIRS uint64 = 1000
 
-func QueryRrdFile(seriesID interface{}, dsType string, step int) string {
-	switch seriesID.(type) {
-	case uint64:
-		return strconv.FormatUint(seriesID.(uint64)%RRDDIRS, 10) + "/" +
-			strconv.FormatUint(seriesID.(uint64), 10) + "_" + dsType + "_" + strconv.Itoa(step) + ".rrd"
-	case string:
-		return seriesID.(string)[0:2] + "/" + seriesID.(string) + "_" + dsType + "_" + strconv.Itoa(step) + ".rrd"
-	}
-	return ""
+func QueryRrdFile(seriesID string, dsType string, step int) string {
+	return seriesID[0:2] + "/" + seriesID + "_" + dsType + "_" + strconv.Itoa(step) + ".rrd"
 }
 
-func RrdFileName(baseDir string, seriesID interface{}, dsType string, step int) string {
-	switch seriesID.(type) {
-	case uint64:
-		return baseDir + "/" + strconv.FormatUint(seriesID.(uint64)%RRDDIRS, 10) + "/" +
-			strconv.FormatUint(seriesID.(uint64), 10) + "_" + dsType + "_" + strconv.Itoa(step) + ".rrd"
-	case string:
-		return baseDir + "/" + seriesID.(string)[0:2] + "/" + seriesID.(string) + "_" + dsType + "_" + strconv.Itoa(step) + ".rrd"
-	}
-	return ""
+func RrdFileName(baseDir string, seriesID string, dsType string, step int) string {
+	return baseDir + "/" + seriesID[0:2] + "/" + seriesID + "_" + dsType + "_" + strconv.Itoa(step) + ".rrd"
 }
 
 // WriteFile writes data to a file named by filename.

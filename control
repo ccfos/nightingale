@@ -139,13 +139,13 @@ status()
 build_one()
 {
 	mod=$1
-	go build -ldflags "-X main.version=${version} -X main.buildTime=`date -u '+%Y-%m-%d_%I:%M:%S%p'` -X main.gitHash=`git rev-parse HEAD`" -mod=vendor -o n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
+	go build -ldflags "-X main.version=${version} -X main.buildTime=`date -u '+%Y-%m-%d_%I:%M:%S%p'` -X main.gitHash=`git rev-parse HEAD`" -mod=vendor -o n9e-${mod} src/modules/${mod}/${mod}.go
 }
 
 build_docker()
 {
 	mod=$1
-	go build -ldflags "-X main.version=${version} -X main.buildTime=`date -u '+%Y-%m-%d_%I:%M:%S%p'` -X main.gitHash=`git rev-parse HEAD`" -mod=vendor -o bin/n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
+	go build -ldflags "-X main.version=${version} -X main.buildTime=`date -u '+%Y-%m-%d_%I:%M:%S%p'` -X main.gitHash=`git rev-parse HEAD`" -mod=vendor -o bin/n9e-${mod}  src/modules/${mod}/${mod}.go
 }
 
 build()

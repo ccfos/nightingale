@@ -30,7 +30,7 @@ const (
 
 var (
 	Config     MigrateSection
-	QueueCheck = QueueFilter{Data: make(map[interface{}]struct{})}
+	QueueCheck = QueueFilter{Data: make(map[string]struct{})}
 
 	TsdbQueues    = make(map[string]*list.SafeListLimited)
 	NewTsdbQueues = make(map[string]*list.SafeListLimited)
@@ -45,11 +45,11 @@ var (
 )
 
 type QueueFilter struct {
-	Data map[interface{}]struct{}
+	Data map[string]struct{}
 	sync.RWMutex
 }
 
-func (q *QueueFilter) Exists(key interface{}) bool {
+func (q *QueueFilter) Exists(key string) bool {
 	q.RLock()
 	defer q.RUnlock()
 
@@ -57,7 +57,7 @@ func (q *QueueFilter) Exists(key interface{}) bool {
 	return exsits
 }
 
-func (q *QueueFilter) Set(key interface{}) {
+func (q *QueueFilter) Set(key string) {
 	q.Lock()
 	defer q.Unlock()
 

@@ -55,7 +55,7 @@ func update(filename string, items []*dataobj.TsdbItem) error {
 
 // flush to disk from memory
 // 最新的数据在列表的最后面
-func Flushrrd(seriesID interface{}, items []*dataobj.TsdbItem) error {
+func Flushrrd(seriesID string, items []*dataobj.TsdbItem) error {
 	item := index.GetItemFronIndex(seriesID)
 	if items == nil || len(items) == 0 || item == nil {
 		return errors.New("empty items")

@@ -410,7 +410,7 @@ func getRRD(f dataobj.RRDFile, worker chan struct{}, dataChan chan *dataobj.File
 
 	chunks, exists := cache.ChunksSlots.GetChunks(key)
 	if exists {
-		m := make(map[interface{}][]*cache.Chunk)
+		m := make(map[string][]*cache.Chunk)
 		m[key] = chunks
 		rrdtool.FlushRRD(m)
 	}
