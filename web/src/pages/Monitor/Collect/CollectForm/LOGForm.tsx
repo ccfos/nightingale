@@ -370,6 +370,7 @@ class CollectForm extends Component<Props & WrappedComponentProps, State> {
                 <Option value="yyyymmdd HH:MM:SS">20060102 15:04:05</Option>
                 <Option value="mmm dd HH:MM:SS">Jan 2 15:04:05</Option>
                 <Option value="mmdd HH:MM:SS">0102 15:04:05</Option>
+                <Option value="dd/mm/yyyy:HH:MM:SS">02/01/2006:15:04:05</Option>
               </Select>
             </div>
             <div style={{ marginLeft: 510, lineHeight: '20px' }}>
