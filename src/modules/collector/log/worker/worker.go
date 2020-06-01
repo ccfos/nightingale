@@ -224,7 +224,8 @@ func (w *Worker) producer(line string, strategy *stra.Strategy) (*AnalysPoint, e
 		t = reg.ReplaceAllString(t, rep)
 	}
 
-	tms, err := time.Parse(timeFormat, t)
+	loc, err := time.LoadLocation("Local")
+	tms, err := time.ParseInLocation(timeFormat, t, loc)
 	if err != nil {
 		return nil, err
 	}
