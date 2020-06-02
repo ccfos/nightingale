@@ -1,5 +1,3 @@
-// +build md5
-
 package str
 
 import (

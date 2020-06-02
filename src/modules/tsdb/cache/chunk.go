@@ -54,7 +54,7 @@ var ChunksSlots *ChunksSlot
 
 type ChunksSlot struct {
 	sync.RWMutex
-	Data []map[interface{}][]*Chunk
+	Data []map[string][]*Chunk
 	Size int
 }
 
@@ -65,21 +65,21 @@ func (c *ChunksSlot) Len(idx int) int {
 	return len(c.Data[idx])
 }
 
-func (c *ChunksSlot) Get(idx int) map[interface{}][]*Chunk {
+func (c *ChunksSlot) Get(idx int) map[string][]*Chunk {
 	c.Lock()
 	defer c.Unlock()
 
 	items := c.Data[idx]
-	ret := make(map[interface{}][]*Chunk)
+	ret := make(map[string][]*Chunk)
 	for k, v := range items {
 		ret[k] = v
 	}
-	c.Data[idx] = make(map[interface{}][]*Chunk)
+	c.Data[idx] = make(map[string][]*Chunk)
 
 	return ret
 }
 
-func (c *ChunksSlot) GetChunks(key interface{}) ([]*Chunk, bool) {
+func (c *ChunksSlot) GetChunks(key string) ([]*Chunk, bool) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -96,7 +96,7 @@ func (c *ChunksSlot) GetChunks(key interface{}) ([]*Chunk, bool) {
 	return val, ok
 }
 
-func (c *ChunksSlot) PushChunks(key interface{}, vals []*Chunk) {
+func (c *ChunksSlot) PushChunks(key string, vals []*Chunk) {
 	c.Lock()
 	defer c.Unlock()
 	idx, err := GetChunkIndex(key, c.Size)
@@ -115,7 +115,7 @@ func (c *ChunksSlot) PushChunks(key interface{}, vals []*Chunk) {
 	c.Data[idx][key] = vals
 }
 
-func (c *ChunksSlot) Push(key interface{}, val *Chunk) {
+func (c *ChunksSlot) Push(key string, val *Chunk) {
 	c.Lock()
 	defer c.Unlock()
 	idx, err := GetChunkIndex(key, c.Size)
@@ -130,13 +130,6 @@ func (c *ChunksSlot) Push(key interface{}, val *Chunk) {
 	c.Data[idx][key] = append(c.Data[idx][key], val)
 }
 
-func GetChunkIndex(key interface{}, size int) (uint32, error) {
-	switch key.(type) {
-	case uint64:
-		return uint32(key.(uint64)) % uint32(size), nil
-	case string:
-		return utils.HashKey(key.(string)) % uint32(size), nil
-	default:
-		return 0, fmt.Errorf("undefined hashType:%v", key)
-	}
+func GetChunkIndex(key string, size int) (uint32, error) {
+	return utils.HashKey(key) % uint32(size), nil
 }

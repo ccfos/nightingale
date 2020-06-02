@@ -16,6 +16,8 @@
   "dependencies": {
     "@d3-charts/ts-graph": "~0.1.15",
     "@hot-loader/react-dom": "^16.8.6",
+    "@umijs/hooks": "^1.9.2",
+    "ace-builds": "^1.4.11",
     "antd": "^3.24.0",
     "classnames": "^2.2.6",
     "color": "^3.1.0",
@@ -31,6 +33,7 @@
     "query-string": "^5.0.1",
     "rc-notification": "^3.3.1",
     "react": "16.x",
+    "react-ace": "^8.1.0",
     "react-addons-update": "^15.6.2",
     "react-copy-to-clipboard": "^5.0.1",
     "react-dnd": "^7.4.5",

@@ -17,11 +17,11 @@ type DsTypeAndStep struct {
 
 // 索引缓存的元素数据结构
 type IndexCacheItem struct {
-	UUID interface{}
+	UUID string
 	Item *dataobj.TsdbItem
 }
 
-func NewIndexCacheItem(uuid interface{}, item *dataobj.TsdbItem) *IndexCacheItem {
+func NewIndexCacheItem(uuid string, item *dataobj.TsdbItem) *IndexCacheItem {
 	return &IndexCacheItem{UUID: uuid, Item: item}
 }
 
@@ -29,26 +29,26 @@ func NewIndexCacheItem(uuid interface{}, item *dataobj.TsdbItem) *IndexCacheItem
 type IndexCacheBase struct {
 	sync.RWMutex
 	maxSize int
-	data    map[interface{}]*dataobj.TsdbItem
+	data    map[string]*dataobj.TsdbItem
 }
 
 func NewIndexCacheBase(max int) *IndexCacheBase {
-	return &IndexCacheBase{maxSize: max, data: make(map[interface{}]*dataobj.TsdbItem)}
+	return &IndexCacheBase{maxSize: max, data: make(map[string]*dataobj.TsdbItem)}
 }
 
-func (i *IndexCacheBase) Put(key interface{}, item *dataobj.TsdbItem) {
+func (i *IndexCacheBase) Put(key string, item *dataobj.TsdbItem) {
 	i.Lock()
 	defer i.Unlock()
 	i.data[key] = item
 }
 
-func (i *IndexCacheBase) Get(key interface{}) *dataobj.TsdbItem {
+func (i *IndexCacheBase) Get(key string) *dataobj.TsdbItem {
 	i.RLock()
 	defer i.RUnlock()
 	return i.data[key]
 }
 
-func (i *IndexCacheBase) ContainsKey(key interface{}) bool {
+func (i *IndexCacheBase) ContainsKey(key string) bool {
 	i.RLock()
 	defer i.RUnlock()
 	return i.data[key] != nil
@@ -60,16 +60,16 @@ func (i *IndexCacheBase) Size() int {
 	return len(i.data)
 }
 
-func (i *IndexCacheBase) Keys() []interface{} {
+func (i *IndexCacheBase) Keys() []string {
 	i.RLock()
 	defer i.RUnlock()
 
 	count := len(i.data)
 	if count == 0 {
-		return []interface{}{}
+		return []string{}
 	}
 
-	keys := make([]interface{}, 0, count)
+	keys := make([]string, 0, count)
 	for key := range i.data {
 		keys = append(keys, key)
 	}
@@ -77,7 +77,7 @@ func (i *IndexCacheBase) Keys() []interface{} {
 	return keys
 }
 
-func (i *IndexCacheBase) Remove(key interface{}) {
+func (i *IndexCacheBase) Remove(key string) {
 	i.Lock()
 	defer i.Unlock()
 	delete(i.data, key)

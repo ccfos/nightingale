@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import _ from 'lodash';
-import { Button, Form, Select, Input, TreeSelect } from 'antd';
+import { Button, Form, Select, Input, TreeSelect, Icon, Row, Col} from 'antd';
+import { useDynamicList } from '@umijs/hooks'
 import { injectIntl, FormattedMessage } from 'react-intl';
 import { renderTreeNodes } from '@cpts/Layout/utils';
+import AceEditor from '@cpts/AceEditor';
 import { nameRule, interval } from '../config';
 
 
@@ -27,6 +29,26 @@ const CollectForm = (props: any) => {
   const initialValues = getInitialValues(props.initialValues);
   const { getFieldProps, getFieldDecorator } = props.form;
 
+  if (initialValues.env) {
+    try {
+      const env = JSON.parse(initialValues.env);
+      initialValues.env = _.map(env, (value, name) => {
+        return {
+          name, value,
+        };
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  const { list, remove, getKey, push, resetList } = useDynamicList(initialValues.env);
+
+
+  useEffect(() => {
+    resetList(initialValues.env);
+  }, [JSON.stringify(initialValues.env)]);
+
   getFieldDecorator('collect_type', {
     initialValue: initialValues.collect_type,
   });
@@ -41,6 +63,14 @@ const CollectForm = (props: any) => {
         return;
       }
       setSubmitLoading(true);
+      if (values.env) {
+        const { env } = values;
+        const newEnv: any = {};
+        _.forEach(env, (item) => {
+          newEnv[item.name] = item.value;
+        });
+        values.env = JSON.stringify(newEnv);
+      }
       props.onSubmit(values).catch(() => {
         setSubmitLoading(false);
       });
@@ -102,6 +132,57 @@ const CollectForm = (props: any) => {
             initialValue: initialValues.params,
           })}
           style={{ width: 500 }}
+        />
+      </FormItem>
+      <FormItem {...formItemLayout} label={<FormattedMessage id="collect.plugin.env"/>}>
+        {
+          _.map(list, (item: any, index: number) => {
+            return (
+              <Row key={getKey(index)} gutter={10}>
+                <Col span={9}>
+                  <FormItem>
+                    {getFieldDecorator(`env[${getKey(index)}].name`, { initialValue: item.name, rules: [{ required: true }] })(
+                      <Input placeholder="field name" style={{ width: '100%' }} />,
+                    )}
+                  </FormItem>
+                </Col>
+                <Col span={10}>
+                  <FormItem>
+                    {getFieldDecorator(`env[${getKey(index)}].value`, { initialValue: item.value, rules: [{ required: true }] })(
+                      <Input placeholder="field value" style={{ width: '100%' }} />,
+                    )}
+                  </FormItem>
+                </Col>
+                <Col span={5}>
+                  {list.length > 0 && (
+                    <Icon
+                      type="minus-circle-o"
+                      style={{ marginLeft: 8 }}
+                      onClick={() => {
+                        remove(index);
+                      }}
+                    />
+                  )}
+                </Col>
+              </Row>
+            );
+          })
+        }
+        <Icon
+          type="plus-circle-o"
+          style={{ marginLeft: 8 }}
+          onClick={() => {
+            push({ name: '', value: '' });
+          }}
+        />
+      </FormItem>
+      <FormItem {...formItemLayout} label="Stdin">
+        <AceEditor
+          placeholder=""
+          {...getFieldProps('stdin', {
+            initialValue: initialValues.stdin,
+          })}
+          style={{ width: 500, height: 200 }}
         />
       </FormItem>
       <FormItem {...formItemLayout} label={<FormattedMessage id="collect.common.step" />}>
