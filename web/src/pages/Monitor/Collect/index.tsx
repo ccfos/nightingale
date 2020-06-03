@@ -104,7 +104,7 @@ class Collect extends Component<WrappedComponentProps> {
       onOk: (nid: number) => {
         const reqBody = _.map(selectedRows, (item: any) => {
           const pureItem = _.pickBy(item, (v, k) => {
-            return !_.includes(['id', 'creator', 'created', 'last_updator', 'last_updated', 'tags'], k);
+            return !_.includes(['id', 'creator', 'created', 'last_updator', 'last_updated'], k);
           });
           return {
             type: item.collect_type,
