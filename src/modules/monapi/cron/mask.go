@@ -49,7 +49,11 @@ func SyncMaskconf() error {
 		}
 
 		for j := 0; j < len(mcs[i].Endpoints); j++ {
-			key := mcs[i].Metric + "#" + mcs[i].Endpoints[j]
+			key := "#" + mcs[i].Endpoints[j]
+			if len(mcs[i].Metric) != 0 {
+				key = mcs[i].Metric + "#" + mcs[i].Endpoints[j]
+			}
+
 			maskMap[key] = append(maskMap[key], mcs[i].Tags)
 		}
 	}
@@ -74,9 +78,13 @@ func IsMaskEvent(event *model.Event) bool {
 			eventTagsList = append(eventTagsList, fmt.Sprintf("%s=%s", strings.TrimSpace(k), strings.TrimSpace(v)))
 		}
 		key := eventMetric + "#" + event.Endpoint
-		maskTagsList, exists := mcache.MaskCache.GetByKey(key)
+		endpointKey := "#" + event.Endpoint
+		maskTagsList, exists := mcache.MaskCache.GetByKey(endpointKey)
 		if !exists {
-			continue
+			maskTagsList, exists = mcache.MaskCache.GetByKey(key)
+			if !exists {
+				continue
+			}
 		}
 
 		for i := 0; i < len(maskTagsList); i++ {
