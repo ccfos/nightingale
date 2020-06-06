@@ -49,11 +49,7 @@ func SyncMaskconf() error {
 		}
 
 		for j := 0; j < len(mcs[i].Endpoints); j++ {
-			key := "#" + mcs[i].Endpoints[j]
-			if len(mcs[i].Metric) != 0 {
-				key = mcs[i].Metric + "#" + mcs[i].Endpoints[j]
-			}
-
+			key := mcs[i].Metric + "#" + mcs[i].Endpoints[j]
 			maskMap[key] = append(maskMap[key], mcs[i].Tags)
 		}
 	}
