@@ -1,4 +1,4 @@
-module github.com/didi/nightingale
+module github.com/didi/nightingale/v2
 
 go 1.12
 
