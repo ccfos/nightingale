@@ -127,6 +127,34 @@ func (f AvgFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonF
 	return
 }
 
+type StddevFunction struct {
+	Function
+	Limit      int
+	Operator   string
+	RightValue float64
+}
+
+func (f StddevFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
+	if len(vs) < f.Limit {
+		return
+	}
+
+	var sum float64
+	for i := 0; i < f.Limit; i++ {
+		sum += float64(vs[i].Value)
+	}
+	mean := sum / float64(f.Limit)
+
+	var num float64
+	for i := 0; i < f.Limit; i++ {
+		num += math.Pow(float64(vs[i].Value)-mean, 2)
+	}
+
+	leftValue = dataobj.JsonFloat(math.Sqrt(num / float64(f.Limit)))
+	isTriggered = checkIsTriggered(leftValue, f.Operator, f.RightValue)
+	return
+}
+
 type DiffFunction struct {
 	Function
 	Limit      int
@@ -321,7 +349,7 @@ func (f CAvgRateFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.
 
 func ParseFuncFromString(str string, span []interface{}, operator string, rightValue float64) (fn Function, err error) {
 	if str == "" {
-		return nil, fmt.Errorf("func can not be null!")
+		return nil, fmt.Errorf("func can not be null")
 	}
 	limit := span[0].(int)
 
@@ -336,6 +364,8 @@ func ParseFuncFromString(str string, span []interface{}, operator string, rightV
 		fn = &SumFunction{Limit: limit, Operator: operator, RightValue: rightValue}
 	case "avg":
 		fn = &AvgFunction{Limit: limit, Operator: operator, RightValue: rightValue}
+	case "stddev":
+		fn = &StddevFunction{Limit: limit, Operator: operator, RightValue: rightValue}
 	case "diff":
 		fn = &DiffFunction{Limit: limit, Operator: operator, RightValue: rightValue}
 	case "pdiff":
