@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/nux"
-
+	process "github.com/shirou/gopsutil/process"
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/model"
 	"github.com/didi/nightingale/src/modules/collector/sys/funcs"
+	"github.com/didi/nightingale/src/modules/collector/cache"
 	"github.com/didi/nightingale/src/toolkits/identity"
 )
 
@@ -45,32 +45,74 @@ func (p *ProcScheduler) Stop() {
 }
 
 func ProcCollect(p *model.ProcCollect) {
-	ps, err := nux.AllProcs()
+	ps, err := process.Processes()
 	if err != nil {
 		logger.Error(err)
 		return
 	}
-
-	pslen := len(ps)
+	var memUsedTotal uint64 = 0
+	var memUtilTotal = 0.0
+	var cpuUtilTotal = 0.0
+	var items [] *dataobj.MetricValue
 	cnt := 0
-	for i := 0; i < pslen; i++ {
-		if isProc(ps[i], p.CollectMethod, p.Target) {
+	for _, procs := range ps {
+		if isProc(procs, p.CollectMethod, p.Target) {
 			cnt++
+			procCache, exists := cache.ProcsCache.Get(procs.Pid)
+			if !exists{
+				cache.ProcsCache.Set(procs.Pid, procs)
+				procCache = procs
+			}
+			mem, err := procCache.MemoryInfo()
+			if err != nil {
+				logger.Error(err)
+				continue
+			}
+			memUsedTotal += mem.RSS
+			memUtil, err := procCache.MemoryPercent()
+			if err != nil {
+				logger.Error(err)
+				continue
+			}
+			memUtilTotal += float64(memUtil)
+			cpuUtil, err := procCache.Percent(0)
+			if err != nil {
+				logger.Error(err)
+				continue
+			}
+			cpuUtilTotal += cpuUtil
 		}
+
+
 	}
 
-	item := funcs.GaugeValue("proc.num", cnt, p.Tags)
-	item.Step = int64(p.Step)
-	item.Timestamp = time.Now().Unix()
-	item.Endpoint = identity.Identity
+	procNumItem := funcs.GaugeValue("proc.num", cnt, p.Tags)
+	memUsedItem := funcs.GaugeValue("proc.mem.used", memUsedTotal, p.Tags)
+	memUtilItem := funcs.GaugeValue("proc.mem.util", memUtilTotal, p.Tags)
+	cpuUtilItem := funcs.GaugeValue("proc.cpu.util", cpuUtilTotal, p.Tags)
+	items = []*dataobj.MetricValue{procNumItem, memUsedItem, memUtilItem, cpuUtilItem}
+	now := time.Now().Unix()
+	for _, item := range items{
+		item.Step = int64(p.Step)
+		item.Timestamp = now
+		item.Endpoint = identity.Identity
+	}
 
-	funcs.Push([]*dataobj.MetricValue{item})
+	funcs.Push(items)
 }
 
-func isProc(p *nux.Proc, method, target string) bool {
-	if method == "name" && target == p.Name {
+func isProc(p *process.Process, method, target string) bool {
+	name, err := p.Name()
+	if err != nil {
+		return false
+	}
+	cmdlines, err := p.Cmdline()
+	if err != nil {
+		return false
+	}
+	if method == "name" && target == name {
 		return true
-	} else if (method == "cmdline" || method == "cmd") && strings.Contains(p.Cmdline, target) {
+	} else if (method == "cmdline" || method == "cmd") && strings.Contains(cmdlines, target) {
 		return true
 	}
 	return false

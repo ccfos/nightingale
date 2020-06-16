@@ -2,8 +2,11 @@ package stra
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/didi/nightingale/src/model"
 	"github.com/didi/nightingale/src/toolkits/str"
@@ -12,13 +15,14 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func NewProcCollect(method, name, tags string, step int) *model.ProcCollect {
+func NewProcCollect(method, name, tags string, step int, modTime time.Time) *model.ProcCollect {
 	return &model.ProcCollect{
 		CollectType:   "proc",
 		CollectMethod: method,
 		Target:        name,
 		Step:          step,
 		Tags:          tags,
+		LastUpdated:   modTime,
 	}
 }
 
@@ -34,7 +38,8 @@ func GetProcCollects() map[string]*model.ProcCollect {
 		}
 	}
 
-	files, err := file.FilesUnder(StraConfig.ProcPath)
+	procPath := StraConfig.ProcPath
+	files, err := file.FilesUnder(procPath)
 	if err != nil {
 		logger.Error(err)
 		return procs
@@ -48,14 +53,21 @@ func GetProcCollects() map[string]*model.ProcCollect {
 			continue
 		}
 
-		service, err := file.ToTrimString(StraConfig.ProcPath + "/" + f)
+		filePath := filepath.Join(procPath, f)
+		service, err := file.ToTrimString(filePath)
+		if err != nil {
+			logger.Warning(err)
+			continue
+		}
+
+		info, err := os.Stat(filePath)
 		if err != nil {
 			logger.Warning(err)
 			continue
 		}
 
 		tags := fmt.Sprintf("target=%s,service=%s", name, service)
-		p := NewProcCollect(method, name, tags, step)
+		p := NewProcCollect(method, name, tags, step, info.ModTime())
 		procs[name] = p
 	}
 

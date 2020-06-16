@@ -39,12 +39,3 @@ func deletePort(key int) {
 	}
 	delete(Ports, key)
 }
-
-func NewPortCollect(port, step int, tags string) *model.PortCollect {
-	return &model.PortCollect{
-		CollectType: "port",
-		Port:        port,
-		Step:        step,
-		Tags:        tags,
-	}
-}

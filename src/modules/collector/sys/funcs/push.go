@@ -22,16 +22,19 @@ import (
 func Push(metricItems []*dataobj.MetricValue) error {
 	var err error
 	var items []*dataobj.MetricValue
+	now := time.Now().Unix()
+
 	for _, item := range metricItems {
 		logger.Debug("->recv: ", item)
 		if item.Endpoint == "" {
 			item.Endpoint = identity.Identity
 		}
-		err = item.CheckValidity()
+		err = item.CheckValidity(now)
 		if err != nil {
 			msg := fmt.Errorf("metric:%v err:%v", item, err)
 			logger.Warning(msg)
-			return msg
+			// 如果数据有问题，直接跳过吧，比如mymon采集的到的数据，其实只有一个有问题，剩下的都没问题
+			continue
 		}
 		if item.CounterType == dataobj.COUNTER {
 			if err := CounterToGauge(item); err != nil {
@@ -66,10 +69,10 @@ func Push(metricItems []*dataobj.MetricValue) error {
 
 		retry += 1
 		if retry == 3 {
-			retry = 0
 			break
 		}
 	}
+
 	return err
 }
 
@@ -82,14 +85,14 @@ func rpcCall(addr string, items []*dataobj.MetricValue) (dataobj.TransferResp, e
 		client, err = rpcClient(addr)
 		if err != nil {
 			return reply, err
-		} else {
-			affected := rpcClients.Put(addr, client)
-			if !affected {
-				defer func() {
-					// 我尝试把自己这个client塞进map失败，说明已经有一个client塞进去了，那我自己用完了就关闭
-					client.Close()
-				}()
-			}
+		}
+		affected := rpcClients.Put(addr, client)
+		if !affected {
+			defer func() {
+				// 我尝试把自己这个client塞进map失败，说明已经有一个client塞进去了，那我自己用完了就关闭
+				client.Close()
+			}()
+
 		}
 	}
 
@@ -103,7 +106,7 @@ func rpcCall(addr string, items []*dataobj.MetricValue) (dataobj.TransferResp, e
 
 	select {
 	case <-time.After(timeout):
-		logger.Warningf("rpc call timeout, transfer addr: %s", addr)
+		logger.Warningf("rpc call timeout, transfer addr: %s\n", addr)
 		rpcClients.Put(addr, nil)
 		client.Close()
 		return reply, fmt.Errorf("%s rpc call timeout", addr)

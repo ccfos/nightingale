@@ -163,7 +163,7 @@ func SaveEventCurStatus(hashid uint64, status string) error {
 }
 
 func EventCurTotal(stime, etime int64, nodePath, query string, priorities, sendTypes []string) (int64, error) {
-	session := DB["mon"].Where("etime > ? and etime < ? and node_path = ? and ignore_alert=0", stime, etime, nodePath)
+	session := DB["mon"].Where("etime > ? and etime < ? and (node_path = ? or node_path like ?) and ignore_alert=0", stime, etime, nodePath, nodePath+".%")
 	if len(priorities) > 0 && priorities[0] != "" {
 		session = session.In("priority", priorities)
 	}
@@ -180,7 +180,7 @@ func EventCurTotal(stime, etime int64, nodePath, query string, priorities, sendT
 			}
 
 			q := "%" + fields[i] + "%"
-			session = session.Where("sname like ? or endpoint like ? or node_path like ?", q, q, q)
+			session = session.Where("sname like ? or endpoint like ?", q, q)
 		}
 	}
 
@@ -191,7 +191,7 @@ func EventCurTotal(stime, etime int64, nodePath, query string, priorities, sendT
 func EventCurGets(stime, etime int64, nodePath, query string, priorities, sendTypes []string, limit, offset int) ([]EventCur, error) {
 	var obj []EventCur
 
-	session := DB["mon"].Where("etime > ? and etime < ? and node_path = ? and ignore_alert=0", stime, etime, nodePath)
+	session := DB["mon"].Where("etime > ? and etime < ? and (node_path = ? or node_path like ?) and ignore_alert=0", stime, etime, nodePath, nodePath+".%")
 	if len(priorities) > 0 && priorities[0] != "" {
 		session = session.In("priority", priorities)
 	}
@@ -208,7 +208,7 @@ func EventCurGets(stime, etime int64, nodePath, query string, priorities, sendTy
 			}
 
 			q := "%" + fields[i] + "%"
-			session = session.Where("sname like ? or endpoint like ? or node_path like ? ", q, q, q)
+			session = session.Where("sname like ? or endpoint like ?", q, q)
 		}
 	}
 

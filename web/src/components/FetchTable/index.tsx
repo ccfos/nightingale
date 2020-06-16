@@ -27,6 +27,8 @@ interface State {
   data?: any[],
 }
 
+const defaultPageSize = window.localStorage.getItem('pagination-pageSize');
+
 export default class FetchTable extends Component<Props, State> {
   static defaultProps = {
     backendPagingEnabled: true,
@@ -36,7 +38,7 @@ export default class FetchTable extends Component<Props, State> {
     loading: false,
     pagination: {
       current: 1,
-      pageSize: 10,
+      pageSize: defaultPageSize ? _.toNumber(defaultPageSize) : 10,
       showSizeChanger: true,
     },
   } as State;
@@ -153,6 +155,9 @@ export default class FetchTable extends Component<Props, State> {
         pageSize: pagination.pageSize,
       },
     }, () => {
+      if (pagination.pageSize) {
+        window.localStorage.setItem('pagination-pageSize', _.toString(pagination.pageSize));
+      }
       this.fetchAndSetState();
     });
   }
@@ -162,6 +167,7 @@ export default class FetchTable extends Component<Props, State> {
       <Table
         size="small"
         rowKey="id"
+        tableLayout="fixed"
         loading={this.state.loading}
         pagination={{
           ...this.state.pagination,

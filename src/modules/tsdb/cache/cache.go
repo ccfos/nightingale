@@ -38,7 +38,7 @@ type (
 )
 
 type cache struct {
-	Items map[interface{}]*CS // [counter]ts,value
+	Items map[string]*CS // [counter]ts,value
 	sync.RWMutex
 }
 
@@ -64,18 +64,18 @@ func InitChunkSlot() {
 	}
 
 	ChunksSlots = &ChunksSlot{
-		Data: make([]map[interface{}][]*Chunk, size),
+		Data: make([]map[string][]*Chunk, size),
 		Size: size,
 	}
 	for i := 0; i < size; i++ {
-		ChunksSlots.Data[i] = make(map[interface{}][]*Chunk)
+		ChunksSlots.Data[i] = make(map[string][]*Chunk)
 	}
 }
 
 func NewCaches() caches {
 	c := make(caches, SHARD_COUNT)
 	for i := 0; i < SHARD_COUNT; i++ {
-		c[i] = &cache{Items: make(map[interface{}]*CS)}
+		c[i] = &cache{Items: make(map[string]*CS)}
 	}
 	return c
 }
@@ -97,7 +97,7 @@ func StartCleanup() {
 	}
 }
 
-func (c *caches) Push(seriesID interface{}, ts int64, value float64) error {
+func (c *caches) Push(seriesID string, ts int64, value float64) error {
 	shard := c.getShard(seriesID)
 	existC, exist := Caches.exist(seriesID)
 	if exist {
@@ -114,7 +114,7 @@ func (c *caches) Push(seriesID interface{}, ts int64, value float64) error {
 	return err
 }
 
-func (c *caches) Get(seriesID interface{}, from, to int64) ([]Iter, error) {
+func (c *caches) Get(seriesID string, from, to int64) ([]Iter, error) {
 	existC, exist := Caches.exist(seriesID)
 
 	if !exist {
@@ -129,7 +129,7 @@ func (c *caches) Get(seriesID interface{}, from, to int64) ([]Iter, error) {
 	return res, nil
 }
 
-func (c *caches) SetFlag(seriesID interface{}, flag uint32) error {
+func (c *caches) SetFlag(seriesID string, flag uint32) error {
 	existC, exist := Caches.exist(seriesID)
 	if !exist {
 		return fmt.Errorf("non series exist")
@@ -138,7 +138,7 @@ func (c *caches) SetFlag(seriesID interface{}, flag uint32) error {
 	return nil
 }
 
-func (c *caches) GetFlag(seriesID interface{}) uint32 {
+func (c *caches) GetFlag(seriesID string) uint32 {
 	existC, exist := Caches.exist(seriesID)
 	if !exist {
 		return 0
@@ -146,7 +146,7 @@ func (c *caches) GetFlag(seriesID interface{}) uint32 {
 	return existC.GetFlag()
 }
 
-func (c *caches) create(seriesID interface{}) *CS {
+func (c *caches) create(seriesID string) *CS {
 	atomic.AddInt64(&TotalCount, 1)
 	shard := c.getShard(seriesID)
 	shard.Lock()
@@ -157,7 +157,7 @@ func (c *caches) create(seriesID interface{}) *CS {
 	return newC
 }
 
-func (c *caches) exist(seriesID interface{}) (*CS, bool) {
+func (c *caches) exist(seriesID string) (*CS, bool) {
 	shard := c.getShard(seriesID)
 	shard.RLock()
 	existC, exist := shard.Items[seriesID]
@@ -166,7 +166,7 @@ func (c *caches) exist(seriesID interface{}) (*CS, bool) {
 	return existC, exist
 }
 
-func (c *caches) GetCurrentChunk(seriesID interface{}) (*Chunk, bool) {
+func (c *caches) GetCurrentChunk(seriesID string) (*Chunk, bool) {
 	shard := c.getShard(seriesID)
 	if shard == nil {
 		return nil, false
@@ -185,7 +185,7 @@ func (c caches) Count() int64 {
 	return atomic.LoadInt64(&TotalCount)
 }
 
-func (c caches) Remove(seriesID interface{}) {
+func (c caches) Remove(seriesID string) {
 	atomic.AddInt64(&TotalCount, -1)
 	shard := c.getShard(seriesID)
 	shard.Lock()
@@ -229,14 +229,6 @@ func (c caches) Cleanup(expiresInMinutes int) {
 	logger.Infof("cleanup %v Items, took %.2f ms\n", count, float64(time.Since(now).Nanoseconds())*1e-6)
 }
 
-func (c caches) getShard(key interface{}) *cache {
-	switch key.(type) {
-	case uint64:
-		return c[int(key.(uint64)%SHARD_COUNT)]
-	case string:
-		return c[utils.HashKey(key.(string))%SHARD_COUNT]
-	default: //不会出现此种情况
-		return nil
-	}
-	return nil
+func (c caches) getShard(key string) *cache {
+	return c[utils.HashKey(key)%SHARD_COUNT]
 }

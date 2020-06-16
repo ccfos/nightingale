@@ -11,6 +11,31 @@ import (
 	"github.com/didi/nightingale/src/toolkits/stats"
 )
 
+type InfluxdbSection struct {
+	Enabled   bool   `yaml:"enabled"`
+	Batch     int    `yaml:"batch"`
+	MaxRetry  int    `yaml:"maxRetry"`
+	WorkerNum int    `yaml:"workerNum"`
+	Timeout   int    `yaml:"timeout"`
+	Address   string `yaml:"address"`
+	Database  string `yaml:"database"`
+	Username  string `yaml:"username"`
+	Password  string `yaml:"password"`
+	Precision string `yaml:"precision"`
+}
+
+type OpenTsdbSection struct {
+	Enabled     bool   `yaml:"enabled"`
+	Batch       int    `yaml:"batch"`
+	ConnTimeout int    `yaml:"connTimeout"`
+	CallTimeout int    `yaml:"callTimeout"`
+	WorkerNum   int    `yaml:"workerNum"`
+	MaxConns    int    `yaml:"maxConns"`
+	MaxIdle     int    `yaml:"maxIdle"`
+	MaxRetry    int    `yaml:"maxRetry"`
+	Address     string `yaml:"address"`
+}
+
 type BackendSection struct {
 	Enabled      bool   `yaml:"enabled"`
 	Batch        int    `yaml:"batch"`
@@ -26,6 +51,8 @@ type BackendSection struct {
 	Replicas    int                     `yaml:"replicas"`
 	Cluster     map[string]string       `yaml:"cluster"`
 	ClusterList map[string]*ClusterNode `json:"clusterList"`
+	Influxdb    InfluxdbSection         `yaml:"influxdb"`
+	OpenTsdb    OpenTsdbSection         `yaml:"opentsdb"`
 }
 
 const DefaultSendQueueMaxSize = 102400 //10.24w
@@ -40,12 +67,15 @@ var (
 	TsdbNodeRing *ConsistentHashRing
 
 	// 发送缓存队列 node -> queue_of_data
-	TsdbQueues  = make(map[string]*list.SafeListLimited)
-	JudgeQueues = cache.SafeJudgeQueue{}
+	TsdbQueues    = make(map[string]*list.SafeListLimited)
+	JudgeQueues   = cache.SafeJudgeQueue{}
+	InfluxdbQueue *list.SafeListLimited
+	OpenTsdbQueue *list.SafeListLimited
 
 	// 连接池 node_address -> connection_pool
-	TsdbConnPools  *pools.ConnPools
-	JudgeConnPools *pools.ConnPools
+	TsdbConnPools          *pools.ConnPools
+	JudgeConnPools         *pools.ConnPools
+	OpenTsdbConnPoolHelper *pools.OpenTsdbConnPoolHelper
 
 	connTimeout int32
 	callTimeout int32
@@ -82,6 +112,9 @@ func initConnPools() {
 	JudgeConnPools = pools.NewConnPools(
 		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, GetJudges(),
 	)
+	if Config.OpenTsdb.Enabled {
+		OpenTsdbConnPoolHelper = pools.NewOpenTsdbConnPoolHelper(Config.OpenTsdb.Address, Config.OpenTsdb.MaxConns, Config.OpenTsdb.MaxIdle, Config.OpenTsdb.ConnTimeout, Config.OpenTsdb.CallTimeout)
+	}
 }
 
 func initSendQueues() {
@@ -95,6 +128,14 @@ func initSendQueues() {
 	judges := GetJudges()
 	for _, judge := range judges {
 		JudgeQueues.Set(judge, list.NewSafeListLimited(DefaultSendQueueMaxSize))
+	}
+
+	if Config.Influxdb.Enabled {
+		InfluxdbQueue = list.NewSafeListLimited(DefaultSendQueueMaxSize)
+	}
+
+	if Config.OpenTsdb.Enabled {
+		OpenTsdbQueue = list.NewSafeListLimited(DefaultSendQueueMaxSize)
 	}
 }
 

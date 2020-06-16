@@ -41,4 +41,6 @@ def main():
 
 
 if __name__ == "__main__":
+    sys.stdout.flush()
     main()
+    sys.stdout.flush()

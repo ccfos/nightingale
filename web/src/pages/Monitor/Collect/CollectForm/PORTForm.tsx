@@ -61,7 +61,7 @@ class CollectForm extends Component<Props & WrappedComponentProps> {
   render() {
     const { form } = this.props;
     const initialValues = this.getInitialValues();
-    const { getFieldDecorator, getFieldProps } = form!;
+    const { getFieldDecorator, getFieldProps } = form! as any;
     const service = _.chain(initialValues.tags).split(',').filter(item => item.indexOf('service=') === 0).head().split('service=').last().value();
     getFieldProps('collect_type', {
       initialValue: initialValues.collect_type,

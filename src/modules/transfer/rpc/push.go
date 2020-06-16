@@ -24,7 +24,7 @@ func (t *Transfer) Push(args []*dataobj.MetricValue, reply *dataobj.TransferResp
 	for _, v := range args {
 		logger.Debug("->recv: ", v)
 		stats.Counter.Set("points.in", 1)
-		if err := v.CheckValidity(); err != nil {
+		if err := v.CheckValidity(start.Unix()); err != nil {
 			stats.Counter.Set("points.in.err", 1)
 			msg := fmt.Sprintf("illegal item:%s err:%v", v, err)
 			logger.Warningf(msg)
@@ -42,6 +42,14 @@ func (t *Transfer) Push(args []*dataobj.MetricValue, reply *dataobj.TransferResp
 
 	if backend.Config.Enabled {
 		backend.Push2JudgeSendQueue(items)
+	}
+
+	if backend.Config.Influxdb.Enabled {
+		backend.Push2InfluxdbSendQueue(items)
+	}
+
+	if backend.Config.OpenTsdb.Enabled {
+		backend.Push2OpenTsdbSendQueue(items)
 	}
 
 	if reply.Invalid == 0 {

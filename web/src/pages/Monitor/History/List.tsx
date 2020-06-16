@@ -89,9 +89,9 @@ class index extends Component<Props & WrappedComponentProps, State> {
 
   getQuery() {
     const { nodepath } = this.props;
-    const { stime, etime, priorities } = this.state;
+    const { stime, etime, priorities, type, searchValue } = this.state;
 
-    return { stime, etime, priorities, nodepath };
+    return { stime, etime, priorities, nodepath, type, query: searchValue };
   }
 
   updateTime = (cbk?: () => void) => {
@@ -268,9 +268,7 @@ class index extends Component<Props & WrappedComponentProps, State> {
                     const now = moment();
                     const nStime = now.clone().subtract(val, 'hours').unix();
                     const nEtime = now.clone().unix();
-                    this.setState({ customTime: false, stime: nStime, etime: nEtime }, () => {
-                      this.fetchTable.reload();
-                    });
+                    this.setState({ customTime: false, stime: nStime, etime: nEtime });
                   } else {
                     this.setState({ customTime: true });
                   }
@@ -293,9 +291,7 @@ class index extends Component<Props & WrappedComponentProps, State> {
                       placeholder="Start"
                       onChange={(val) => {
                         if (val) {
-                          this.setState({ stime: val.unix() }, () => {
-                            this.fetchTable.reload();
-                          });
+                          this.setState({ stime: val.unix() });
                         }
                       }}
                     />
@@ -307,9 +303,7 @@ class index extends Component<Props & WrappedComponentProps, State> {
                       placeholder="End"
                       onChange={(val) => {
                         if (val) {
-                          this.setState({ etime: val.unix() }, () => {
-                            this.fetchTable.reload();
-                          });
+                          this.setState({ etime: val.unix() });
                         }
                       }}
                     />
@@ -324,9 +318,7 @@ class index extends Component<Props & WrappedComponentProps, State> {
                     value={type}
                     onChange={(value: string) => {
                       this.updateTime(() => {
-                        this.setState({ type: value }, () => {
-                          this.fetchTable.reload();
-                        });
+                        this.setState({ type: value });
                       });
                     }}
                   >
@@ -345,9 +337,7 @@ class index extends Component<Props & WrappedComponentProps, State> {
                 value={priorities ? _.map(_.split(priorities, ','), _.toNumber) : []}
                 onChange={(value: number) => {
                   this.updateTime(() => {
-                    this.setState({ priorities: !_.isEmpty(value) ? _.join(value, ',') : undefined }, () => {
-                      this.fetchTable.reload();
-                    });
+                    this.setState({ priorities: !_.isEmpty(value) ? _.join(value, ',') : undefined });
                   });
                 }}
               >
