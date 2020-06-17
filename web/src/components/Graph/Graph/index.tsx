@@ -15,11 +15,11 @@ import GraphConfigInner from '../GraphConfig/GraphConfigInner';
 import { GraphDataInterface, SerieInterface, GraphDataChangeFunc, CounterInterface, ChartOptionsInterface } from '../interface';
 
 interface Props {
-  useDragHandle: boolean,
+  useDragHandle?: boolean,
   data: GraphDataInterface, // 图表数据配置
   height: number, // 图表高度
   graphConfigInnerVisible: boolean, // 内置图表配置栏是否显示
-  extraRender: () => void, // 图表右侧工具栏扩展
+  extraRender: (graph: any) => void, // 图表右侧工具栏扩展
   extraMoreList: React.ReactNode, // 图表右侧工具栏更多选项扩展
   metricMap: any, // 指标信息表，用于设置图表名称
   onChange: GraphDataChangeFunc, // 图表配置修改回调
@@ -115,10 +115,6 @@ export default class Graph extends Component<Props, State> {
     // this.abortFetchData();
     if (this.chart) this.chart.destroy();
   }
-
-  static setOptions = (options: any) => {
-    window.OdinGraphOptions = options;
-  };
 
   getGraphConfig(graphConfig: GraphDataInterface) {
     return {
@@ -328,7 +324,7 @@ export default class Graph extends Component<Props, State> {
   }
 
   render() {
-    const { spinning, errorText, isOrigin } = this.state;
+    const { spinning, errorText } = this.state;
     const { height, onChange, extraRender, data } = this.props;
     const graphConfig = this.getGraphConfig(data);
 
@@ -360,15 +356,12 @@ export default class Graph extends Component<Props, State> {
           </div>
           <Title
             title={data.title}
-            selectedNs={_.reduce(graphConfig.metrics, (result, metricObj) => _.concat(result, metricObj.selectedNs), [])}
-            selectedMetric={_.reduce(graphConfig.metrics, (result, metricObj) => _.concat(result, metricObj.selectedMetric), [])}
-            metricMap={this.props.metricMap}
+            selectedMetric={_.get(graphConfig.metrics, '[0].selectedMetric')}
           />
         </div>
         {
           this.props.graphConfigInnerVisible
             ? <GraphConfigInner
-              isOrigin={isOrigin}
               data={graphConfig}
               onChange={onChange}
             /> : null

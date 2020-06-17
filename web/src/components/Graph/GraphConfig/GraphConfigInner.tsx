@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { FormattedMessage } from 'react-intl';
+import { injectIntl, WrappedComponentProps, FormattedMessage } from 'react-intl';
 import update from 'react-addons-update';
 import _ from 'lodash';
 import moment from 'moment';
@@ -17,7 +17,7 @@ interface Props {
 
 const { Option } = Select;
 
-export default class GraphConfigInner extends Component<Props> {
+class GraphConfigInner extends Component<Props & WrappedComponentProps> {
   refresh = () => {
     // TODO 如果用户选择的是 "自定义" 时间，然后再点击 "刷新" 按钮，这时候 end 就会被强制更新到 now 了，这块有待考虑下怎么处理
     const { data, onChange } = this.props;
@@ -48,7 +48,7 @@ export default class GraphConfigInner extends Component<Props> {
     });
   }
 
-  dateChange(key: string, d: moment.Moment) {
+  dateChange(key: string, d: moment.Moment | null) {
     const { data, onChange } = this.props;
     let { start, end } = data;
 
@@ -209,12 +209,12 @@ export default class GraphConfigInner extends Component<Props> {
           <Select
             size="small"
             style={{ width: 70 }}
-            value={<FormattedMessage id={timeLabel} />}
+            value={this.props.intl.formatMessage({ id: timeLabel })}
             onChange={this.timeOptionChange}
           >
             {
               _.map(config.time, (o) => {
-                return <Option key={o.value} value={o.value}><FormattedMessage id={o.label} /></Option>;
+                return <Option key={o.value} value={o.value}>{this.props.intl.formatMessage({ id: o.label })}</Option>;
               })
             }
           </Select>
@@ -329,3 +329,5 @@ export default class GraphConfigInner extends Component<Props> {
     );
   }
 }
+
+export default injectIntl(GraphConfigInner);
