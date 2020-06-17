@@ -305,9 +305,9 @@ export default class Graph extends Component<Props, State> {
   }
 
   handleLegendRowSelectedChange = (selectedKeys: string[], highlightedKeys: string[]) => {
-    const { series } = this.state;
+    const series = this.getZoomedSeries()
 
-    const newSeries = _.map(series, (serie, i) => {
+    this.series = _.map(series, (serie, i) => {
       const oldColor = _.get(serie, 'oldColor', serie.color);
       return {
         ...serie,
@@ -318,9 +318,7 @@ export default class Graph extends Component<Props, State> {
       };
     });
 
-    this.setState({ series: newSeries }, () => {
-      this.updateHighcharts();
-    });
+    this.updateHighcharts();
   }
 
   render() {
