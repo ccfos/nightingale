@@ -70,6 +70,7 @@ export function normalizeGraphData(data: GraphData) {
     delete item.metrics;
     delete item.tagkv;
     delete item.counterList;
+    delete item.endpoints;
   });
   return cloneData;
 }
