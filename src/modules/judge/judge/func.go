@@ -129,9 +129,8 @@ func (f AvgFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonF
 
 type StddevFunction struct {
 	Function
-	Limit      int
-	Operator   string
-	RightValue float64
+	Num   int
+	Limit int
 }
 
 func (f StddevFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
@@ -150,8 +149,13 @@ func (f StddevFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.Js
 		num += math.Pow(float64(vs[i].Value)-mean, 2)
 	}
 
-	leftValue = dataobj.JsonFloat(math.Sqrt(num / float64(f.Limit)))
-	isTriggered = checkIsTriggered(leftValue, f.Operator, f.RightValue)
+	std := dataobj.JsonFloat(math.Sqrt(num / float64(f.Limit)))
+	upperBound := dataobj.JsonFloat(mean) + std*dataobj.JsonFloat(f.Num)
+	lowerBound := dataobj.JsonFloat(mean) - std*dataobj.JsonFloat(f.Num)
+
+	leftValue = vs[0].Value
+	isTriggered = checkIsTriggered(leftValue, "<", float64(lowerBound)) ||
+		checkIsTriggered(leftValue, ">", float64(upperBound))
 	return
 }
 
