@@ -182,13 +182,13 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryDat
 func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.HistoryData, exp model.Exp, firstItem *dataobj.JudgeItem, now int64) (leftValue dataobj.JsonFloat, isTriggered bool) {
 	straFunc := exp.Func
 
-	straParam := []interface{}{}
+	var straParam []interface{}
 	if firstItem.Step == 0 {
 		logger.Errorf("wrong step:%+v", firstItem)
 		return
 	}
 
-	limit := stra.AlertDur / int(firstItem.Step)
+	limit := stra.AlertDur / firstItem.Step
 	if limit <= 0 {
 		limit = 1
 	}
@@ -196,7 +196,7 @@ func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.HistoryData,
 	straParam = append(straParam, limit)
 
 	switch straFunc {
-	case "happen":
+	case "happen", "stddev":
 		if len(exp.Params) < 1 {
 			logger.Errorf("stra:%d exp:%+v stra param is null", stra.Id, exp)
 			return

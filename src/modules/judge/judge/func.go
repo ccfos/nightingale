@@ -129,9 +129,8 @@ func (f AvgFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonF
 
 type StddevFunction struct {
 	Function
-	Limit      int
-	Operator   string
-	RightValue float64
+	Num   int
+	Limit int
 }
 
 func (f StddevFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
@@ -150,8 +149,12 @@ func (f StddevFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.Js
 		num += math.Pow(float64(vs[i].Value)-mean, 2)
 	}
 
-	leftValue = dataobj.JsonFloat(math.Sqrt(num / float64(f.Limit)))
-	isTriggered = checkIsTriggered(leftValue, f.Operator, f.RightValue)
+	std := math.Sqrt(num / float64(f.Limit))
+	upperBound := mean + std*float64(f.Num)
+	lowerBound := mean - std*float64(f.Num)
+
+	leftValue = vs[0].Value
+	isTriggered = checkIsTriggered(leftValue, "<", lowerBound) || checkIsTriggered(leftValue, ">", upperBound)
 	return
 }
 
@@ -365,7 +368,7 @@ func ParseFuncFromString(str string, span []interface{}, operator string, rightV
 	case "avg":
 		fn = &AvgFunction{Limit: limit, Operator: operator, RightValue: rightValue}
 	case "stddev":
-		fn = &StddevFunction{Limit: limit, Operator: operator, RightValue: rightValue}
+		fn = &StddevFunction{Limit: limit, Num: span[1].(int)}
 	case "diff":
 		fn = &DiffFunction{Limit: limit, Operator: operator, RightValue: rightValue}
 	case "pdiff":
