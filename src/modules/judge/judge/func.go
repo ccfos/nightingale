@@ -368,7 +368,7 @@ func ParseFuncFromString(str string, span []interface{}, operator string, rightV
 	case "avg":
 		fn = &AvgFunction{Limit: limit, Operator: operator, RightValue: rightValue}
 	case "stddev":
-		fn = &StddevFunction{Limit: limit, Operator: operator, RightValue: rightValue}
+		fn = &StddevFunction{Limit: limit, Num: span[1].(int)}
 	case "diff":
 		fn = &DiffFunction{Limit: limit, Operator: operator, RightValue: rightValue}
 	case "pdiff":
