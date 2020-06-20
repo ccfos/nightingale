@@ -186,11 +186,6 @@ func SubtractToGauge(item *dataobj.MetricValue) *dataobj.MetricValue {
 		return nil
 	}
 
-	if old.Value > item.Value {
-		logger.Warningf("item:%v old value:%v greater than new value:%v", item, old.Value, item.Value)
-		return nil
-	}
-
 	if old.Timestamp >= item.Timestamp {
 		logger.Warningf("item:%v old timestamp:%v greater than new timestamp:%v", item, old.Timestamp, item.Timestamp)
 		return nil
