@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	GAUGE   = "GAUGE"
-	COUNTER = "COUNTER"
-	DERIVE  = "DERIVE"
-	SPLIT   = "/"
+	GAUGE    = "GAUGE"
+	COUNTER  = "COUNTER"
+	SUBTRACT = "SUBTRACT"
+	DERIVE   = "DERIVE"
+	SPLIT    = "/"
 )
 
 type MetricValue struct {
