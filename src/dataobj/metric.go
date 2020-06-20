@@ -87,7 +87,7 @@ func (m *MetricValue) CheckValidity(now int64) (err error) {
 		m.CounterType = GAUGE
 	}
 
-	if m.CounterType != GAUGE && m.CounterType != COUNTER {
+	if m.CounterType != GAUGE && m.CounterType != COUNTER && m.CounterType != SUBTRACT {
 		err = fmt.Errorf("wrong counter type")
 		return
 	}
