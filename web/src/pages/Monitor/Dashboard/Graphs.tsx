@@ -16,10 +16,6 @@ interface Props {
   onGraphConfigSubmit: (type: UpdateType, data: GraphData, id: GraphId) => void,
 }
 
-Graph.setOptions({
-  apiPrefix: '',
-});
-
 export default class Graphs extends Component<Props> {
   graphConfigForm: any;
   static defaultProps = {

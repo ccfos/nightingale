@@ -5,6 +5,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/toolkits/pkg/logger"
+
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/model"
 	"github.com/didi/nightingale/src/modules/collector/sys/funcs"
@@ -44,7 +46,7 @@ func (p *PortScheduler) Stop() {
 
 func PortCollect(p *model.PortCollect) {
 	value := 0
-	if isListening(p.Port, p.Timeout) {
+	if isListening(p.Port) {
 		value = 1
 	}
 
@@ -55,13 +57,20 @@ func PortCollect(p *model.PortCollect) {
 	funcs.Push([]*dataobj.MetricValue{item})
 }
 
-func isListening(port int, timeout int) bool {
-	if isListen(port, timeout, "127.0.0.1") {
+func isListening(port int) bool {
+	tcpAddress, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf(":%v", port))
+	if err != nil {
+		logger.Errorf("net.ResolveTCPAddr(tcp4, :%v) fail: %v", port, err)
+		return false
+	}
+
+	listener, err := net.ListenTCP("tcp", tcpAddress)
+	if err != nil {
+		logger.Debugf("cannot listen :%v(%v), so we think :%v is already listening", port, err, port)
 		return true
 	}
-	if isListen(port, timeout, identity.Identity) {
-		return true
-	}
+	listener.Close()
+
 	return false
 }
 

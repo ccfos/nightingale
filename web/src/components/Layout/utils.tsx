@@ -107,7 +107,7 @@ export function normalizeTreeData(data: TreeNode[]) {
   return treeData;
 }
 
-export function renderTreeNodes(nodes: TreeNode[]) {
+export function renderTreeNodes(nodes?: TreeNode[]) {
   return _.map(nodes, (node) => {
     if (_.isArray(node.children)) {
       return (

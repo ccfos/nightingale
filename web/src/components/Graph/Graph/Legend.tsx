@@ -3,7 +3,7 @@ import { Table, Input, Button, Modal } from 'antd';
 import { ColumnProps, TableRowSelection } from 'antd/es/table';
 import Color from 'color';
 import _ from 'lodash';
-import { injectIntl } from 'react-intl';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import clipboard from '@common/clipboard';
 import ContextMenu from '@cpts/ContextMenu';
 import { SerieInterface, PointInterface } from '../interface';
@@ -13,7 +13,8 @@ type SelectedKeys = 'normal' | string[];
 interface Props {
   style: any,
   series: SerieInterface[],
-  onSelectedChange: (selectedKeys: string | string[], highlightedKeysClone: string[]) => void,
+  comparisonOptions: any[],
+  onSelectedChange: (selectedKeys: string[], highlightedKeysClone: string[]) => void,
 }
 
 interface State {
@@ -36,7 +37,7 @@ interface LegendDataItem extends SerieInterface {
   last: number | null,
 }
 
-class Legend extends Component<Props, State> {
+class Legend extends Component<Props & WrappedComponentProps, State> {
   static defaultProps = {
     style: {},
     series: [],
@@ -111,7 +112,7 @@ class Legend extends Component<Props, State> {
     }
 
     this.setState({ highlightedKeys: highlightedKeysClone }, () => {
-      this.props.onSelectedChange(selectedKeys, highlightedKeysClone);
+      this.props.onSelectedChange(selectedKeys as string[], highlightedKeysClone);
     });
   }
 
@@ -129,7 +130,7 @@ class Legend extends Component<Props, State> {
     const { comparisonOptions, onSelectedChange } = this.props;
     const { searchText, selectedKeys, highlightedKeys } = this.state;
     const counterSelectedKeys = highlightedKeys;
-    const data = this.filterData();
+    const data = this.filterData() as any;
     const firstData = data[0];
     const columns: ColumnProps<LegendDataItem>[] = [
       {
@@ -216,9 +217,9 @@ class Legend extends Component<Props, State> {
 
     const newRowSelection: TableRowSelection<LegendDataItem> = {
       selectedRowKeys: selectedKeys === 'normal' ? _.map(data, o => o.id) : selectedKeys,
-      onChange: (selectedRowKeys: string[]) => {
-        this.setState({ selectedKeys: selectedRowKeys }, () => {
-          onSelectedChange(selectedRowKeys, highlightedKeys);
+      onChange: (selectedRowKeys: (string | number)[]) => {
+        this.setState({ selectedKeys: selectedRowKeys as string[] }, () => {
+          onSelectedChange(selectedRowKeys as string[], highlightedKeys);
         });
       },
     };
@@ -238,11 +239,11 @@ class Legend extends Component<Props, State> {
         margin: '0 5px 5px 5px',
       }}>
         <Table
-          rowKey={record => `${record.id}-${record.comparison}`}
+          rowKey={record => record.id}
           size="middle"
           rowSelection={newRowSelection}
           columns={columns}
-          dataSource={data}
+          dataSource={data as any}
           pagination={false}
           scroll={{ y: 220 }}
         />

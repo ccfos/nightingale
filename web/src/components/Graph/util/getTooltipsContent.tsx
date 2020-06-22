@@ -8,11 +8,11 @@ interface ActiveTooltipData {
   chartWidth: number,
   isComparison: boolean,
   points: PointInterface[],
-  originalPoints: PointInterface[],
-  sharedSortDirection: 'desc' | 'asc',
+  originalPoints?: PointInterface[],
+  sharedSortDirection?: 'desc' | 'asc',
   comparison: string[],
-  relativeTimeComparison: boolean,
-  timezoneOffset: string | number,
+  relativeTimeComparison?: boolean,
+  timezoneOffset?: string | number,
 }
 
 const fmt = 'YYYY-MM-DD HH:mm:ss';
@@ -38,7 +38,7 @@ export default function getTooltipsContent(activeTooltipData: ActiveTooltipData)
   return `<div style="table-layout: fixed;max-width: ${chartWidth}px;word-wrap: break-word;white-space: normal;">${tooltipContent}</div>`;
 }
 
-function singlePoint(pointData = {}, activeTooltipData) {
+function singlePoint(pointData: any = {}, activeTooltipData: any) {
   const { color, filledNull, serieOptions = {}, timestamp } = pointData;
   const { comparison: comparisons, isComparison } = activeTooltipData;
   const { tags } = serieOptions;
