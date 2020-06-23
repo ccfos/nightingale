@@ -52,6 +52,9 @@ func (t *Transfer) Push(args []*dataobj.MetricValue, reply *dataobj.TransferResp
 		backend.Push2OpenTsdbSendQueue(items)
 	}
 
+	if backend.Config.Kafka.Enabled {
+		backend.Push2KafkaSendQueue(items)
+	}
 	if reply.Invalid == 0 {
 		reply.Msg = "ok"
 	}
