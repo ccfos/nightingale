@@ -510,9 +510,9 @@ func convert2KafkaItem(d *dataobj.MetricValue) KafkaData {
 	m["value"] = d.Value
 	m["timestamp"] = d.Timestamp
 	m["value"] = d.Value
-	for k, v := range d.TagsMap {
-		m[k] = v
-	}
+	m["step"] = d.Step
+	m["endpoint"] = d.Endpoint
+	m["tag"] = d.Tags
 	return m
 }
 
