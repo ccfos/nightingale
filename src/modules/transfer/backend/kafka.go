@@ -66,7 +66,7 @@ func newSender(brokers []string, topic string, cfg *sarama.Config, producer sara
 		producer:     producer,
 		Topic:        topic,
 		BrokersPeers: brokers,
-		ticker:       time.NewTicker(time.Second * time.Duration(callTimeout)),
+		ticker:       time.NewTicker(time.Millisecond * time.Duration(callTimeout)),
 	}
 	go kf.readMessageToErrorChan()
 	return
