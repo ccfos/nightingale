@@ -49,10 +49,10 @@ func NewKfClient(c KafkaSection) (kafkaSender *KfClient, err error) {
 		cfg.Producer.Retry.Max = c.Retry
 	}
 
-	cfg.Net.DialTimeout = time.Duration(connTimeout) * time.Second
+	cfg.Net.DialTimeout = time.Duration(connTimeout) * time.Millisecond
 
 	if c.KeepAlive > 0 {
-		cfg.Net.KeepAlive = time.Duration(c.KeepAlive) * time.Second
+		cfg.Net.KeepAlive = time.Duration(c.KeepAlive) * time.Millisecond
 	}
 	producer, err := sarama.NewAsyncProducer(brokers, cfg)
 	if err != nil {
