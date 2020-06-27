@@ -28,4 +28,6 @@ func Init(cfg SeriesQuerySection) {
 	TransferConnPools = pools.NewConnPools(
 		Config.MaxConn, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, address.GetRPCAddresses("transfer"),
 	)
+
+	go GetIndexLoop()
 }

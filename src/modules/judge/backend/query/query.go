@@ -9,7 +9,6 @@ import (
 
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/modules/judge/cache"
-	"github.com/didi/nightingale/src/toolkits/address"
 	"github.com/didi/nightingale/src/toolkits/stats"
 	"github.com/didi/nightingale/src/toolkits/str"
 
@@ -186,7 +185,7 @@ type IndexResp struct {
 
 // index的xclude 不支持批量查询, 暂时不做
 func Xclude(request *IndexReq) ([]IndexData, error) {
-	addrs := address.GetHTTPAddresses("index")
+	addrs := IndexList.Get()
 	if len(addrs) == 0 {
 		return nil, errors.New("empty index addr")
 	}
