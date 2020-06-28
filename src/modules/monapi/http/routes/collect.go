@@ -48,10 +48,12 @@ func collectPost(c *gin.Context) {
 			nid := collect.Nid
 			name := collect.Name
 
-			old, _ := model.GetCollectByName(obj.Type, name)
-			if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid {
+			old, err := model.GetCollectByNameAndNid(obj.Type, name, nid)
+			errors.Dangerous(err)
+			if old != nil {
 				errors.Bomb("同节点下策略名称 %s 已存在", name)
 			}
+
 			errors.Dangerous(model.CreateCollect(obj.Type, creator, collect))
 
 		case "proc":
@@ -73,8 +75,9 @@ func collectPost(c *gin.Context) {
 			nid := collect.Nid
 			name := collect.Name
 
-			old, _ := model.GetCollectByName(obj.Type, name)
-			if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid {
+			old, err := model.GetCollectByNameAndNid(obj.Type, name, nid)
+			errors.Dangerous(err)
+			if old != nil {
 				errors.Bomb("同节点下策略名称 %s 已存在", name)
 			}
 			errors.Dangerous(model.CreateCollect(obj.Type, creator, collect))
@@ -98,10 +101,12 @@ func collectPost(c *gin.Context) {
 			nid := collect.Nid
 			name := collect.Name
 
-			old, _ := model.GetCollectByName(obj.Type, name)
-			if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid {
+			old, err := model.GetCollectByNameAndNid(obj.Type, name, nid)
+			errors.Dangerous(err)
+			if old != nil {
 				errors.Bomb("同节点下策略名称 %s 已存在", name)
 			}
+
 			errors.Dangerous(model.CreateCollect(obj.Type, creator, collect))
 
 		case "plugin":
@@ -123,10 +128,12 @@ func collectPost(c *gin.Context) {
 			nid := collect.Nid
 			name := collect.Name
 
-			old, _ := model.GetCollectByName(obj.Type, name)
-			if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid {
+			old, err := model.GetCollectByNameAndNid(obj.Type, name, nid)
+			errors.Dangerous(err)
+			if old != nil {
 				errors.Bomb("同节点下策略名称 %s 已存在", name)
 			}
+
 			errors.Dangerous(model.CreateCollect(obj.Type, creator, collect))
 
 		default:
@@ -208,9 +215,9 @@ func collectPut(c *gin.Context) {
 		collect.Creator = creator
 		collect.LastUpdator = creator
 
-		old, _ := model.GetCollectByName(recv.Type, name)
-		if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid &&
-			tmpId != collect.Id {
+		old, err := model.GetCollectByNameAndNid(recv.Type, name, nid)
+		errors.Dangerous(err)
+		if old != nil && old.(*model.PortCollect).Id != tmpId {
 			errors.Bomb("同节点下策略名称 %s 已存在", name)
 		}
 
@@ -247,9 +254,9 @@ func collectPut(c *gin.Context) {
 		collect.Creator = creator
 		collect.LastUpdator = creator
 
-		old, _ := model.GetCollectByName(recv.Type, name)
-		if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid &&
-			tmpId != collect.Id {
+		old, err := model.GetCollectByNameAndNid(recv.Type, name, nid)
+		errors.Dangerous(err)
+		if old != nil && old.(*model.ProcCollect).Id != tmpId {
 			errors.Bomb("同节点下策略名称 %s 已存在", name)
 		}
 
@@ -287,9 +294,9 @@ func collectPut(c *gin.Context) {
 		collect.Creator = creator
 		collect.LastUpdator = creator
 
-		old, _ := model.GetCollectByName(recv.Type, name)
-		if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid &&
-			tmpId != collect.Id {
+		old, err := model.GetCollectByNameAndNid(recv.Type, name, nid)
+		errors.Dangerous(err)
+		if old != nil && old.(*model.LogCollect).Id != tmpId {
 			errors.Bomb("同节点下策略名称 %s 已存在", name)
 		}
 
@@ -326,9 +333,9 @@ func collectPut(c *gin.Context) {
 		collect.Creator = creator
 		collect.LastUpdator = creator
 
-		old, _ := model.GetCollectByName(recv.Type, name)
-		if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid &&
-			tmpId != collect.Id {
+		old, err := model.GetCollectByNameAndNid(recv.Type, name, nid)
+		errors.Dangerous(err)
+		if old != nil && old.(*model.PluginCollect).Id != tmpId {
 			errors.Bomb("同节点下策略名称 %s 已存在", name)
 		}
 

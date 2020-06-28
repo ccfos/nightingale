@@ -36,6 +36,16 @@ type OpenTsdbSection struct {
 	Address     string `yaml:"address"`
 }
 
+type KafkaSection struct {
+	Enabled      bool   `yaml:"enabled"`
+	Topic        string `yaml:"topic"`
+	BrokersPeers string `yaml:"brokersPeers"`
+	SaslUser     string `yaml:"saslUser"`
+	SaslPasswd   string `yaml:"saslPasswd"`
+	Retry        int    `yaml:"retry"`
+	KeepAlive    int64  `yaml:"keepAlive"`
+}
+
 type BackendSection struct {
 	Enabled      bool   `yaml:"enabled"`
 	Batch        int    `yaml:"batch"`
@@ -53,6 +63,7 @@ type BackendSection struct {
 	ClusterList map[string]*ClusterNode `json:"clusterList"`
 	Influxdb    InfluxdbSection         `yaml:"influxdb"`
 	OpenTsdb    OpenTsdbSection         `yaml:"opentsdb"`
+	Kafka       KafkaSection            `yaml:"kafka"`
 }
 
 const DefaultSendQueueMaxSize = 102400 //10.24w
@@ -71,6 +82,7 @@ var (
 	JudgeQueues   = cache.SafeJudgeQueue{}
 	InfluxdbQueue *list.SafeListLimited
 	OpenTsdbQueue *list.SafeListLimited
+	KafkaQueue    = make(chan KafkaData, 10)
 
 	// 连接池 node_address -> connection_pool
 	TsdbConnPools          *pools.ConnPools

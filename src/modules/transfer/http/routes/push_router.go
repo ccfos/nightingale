@@ -48,6 +48,18 @@ func PushData(c *gin.Context) {
 		backend.Push2JudgeSendQueue(metricValues)
 	}
 
+	if backend.Config.Influxdb.Enabled {
+		backend.Push2InfluxdbSendQueue(metricValues)
+	}
+
+	if backend.Config.OpenTsdb.Enabled {
+		backend.Push2OpenTsdbSendQueue(metricValues)
+	}
+
+	if backend.Config.Kafka.Enabled {
+		backend.Push2KafkaSendQueue(metricValues)
+	}
+
 	if msg != "" {
 		render.Message(c, msg)
 		return
