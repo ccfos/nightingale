@@ -55,6 +55,7 @@ func updateIndexIncr() int {
 			i = i + 1
 			if i == aggrNum {
 				rpc.Push2Index(rpc.INCRINDEX, tmpList, IndexList.Get())
+				i = 0
 			}
 		}
 
