@@ -458,10 +458,42 @@ func GetCollectById(collectType string, cid int64) (interface{}, error) {
 	}
 }
 
-func GetCollectByName(collectType string, name string) (interface{}, error) {
-	var collect interface{}
-	_, err := DB["mon"].Table(collectType+"_collect").Where("name = ?", name).Get(&collect)
-	return collect, err
+func GetCollectByNameAndNid(collectType string, name string, nid int64) (interface{}, error) {
+	switch collectType {
+	case "port":
+		collect := new(PortCollect)
+		has, err := DB["mon"].Where("name = ? and nid = ?", name, nid).Get(collect)
+		if !has {
+			return nil, err
+		}
+		return collect, err
+	case "proc":
+		collect := new(ProcCollect)
+		has, err := DB["mon"].Where("name = ? and nid = ?", name, nid).Get(collect)
+		if !has {
+			return nil, err
+		}
+		return collect, err
+	case "log":
+		collect := new(LogCollect)
+		has, err := DB["mon"].Where("name = ? and nid = ?", name, nid).Get(collect)
+		if !has {
+			return nil, err
+		}
+		collect.Decode()
+		return collect, err
+	case "plugin":
+		collect := new(PluginCollect)
+		has, err := DB["mon"].Where("name = ? and nid = ?", name, nid).Get(collect)
+		if !has {
+			return nil, err
+		}
+		return collect, err
+
+	default:
+		return nil, fmt.Errorf("采集类型不合法")
+	}
+	return nil, nil
 }
 
 func DeleteCollectById(collectType, creator string, cid int64) error {
