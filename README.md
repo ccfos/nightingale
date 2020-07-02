@@ -35,7 +35,7 @@ $ docker-compose up -d
 ![dashboard](https://user-images.githubusercontent.com/19553554/78956965-8b9c6180-7b16-11ea-9747-6ed5e62b068d.png)
 
 ## Upgrading
-- If upgrade `version<1.4.0` to `v1.4.0`, follow the operating instructions in [v1.4.0](https://github.com/didi/nightingale/releases/tag/V1.4.0) release
+- If upgrade `version<1.4.0` to `v1.4.0`, follow the operating instructions in [v1.4.0](https://github.com/didi/nightingale/releases/tag/v1.4.0) release
 - If upgrade from `version>1.4.0 & version<2.3.0` to `v2.3.0`, need import this [sql](https://github.com/didi/nightingale/blob/master/sql/upgrade_2.3.0.sql) 
 
 
