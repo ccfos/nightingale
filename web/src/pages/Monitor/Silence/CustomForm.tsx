@@ -111,7 +111,7 @@ class CustomForm extends Component<Props> {
             {getFieldDecorator('metric', {
               initialValue: initialValues.metric,
               rules: [
-                { required: true },
+                { required: false },
               ],
             })(
               <Input />,

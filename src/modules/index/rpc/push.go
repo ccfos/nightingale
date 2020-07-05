@@ -7,24 +7,21 @@ import (
 	"github.com/didi/nightingale/src/modules/index/cache"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
-	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/logger"
 )
 
-var nsemaPush *semaphore.Semaphore
-
-func (this *Index) Ping(args string, reply *string) error {
+func (idx *Index) Ping(args string, reply *string) error {
 	*reply = args
 	return nil
 }
 
-func (this *Index) IncrPush(args []*dataobj.IndexModel, reply *dataobj.IndexResp) error {
+func (idx *Index) IncrPush(args []*dataobj.IndexModel, reply *dataobj.IndexResp) error {
 	push(args, reply)
 	stats.Counter.Set("index.incr.in", len(args))
 	return nil
 }
 
-func (this *Index) Push(args []*dataobj.IndexModel, reply *dataobj.IndexResp) error {
+func (idx *Index) Push(args []*dataobj.IndexModel, reply *dataobj.IndexResp) error {
 	push(args, reply)
 	stats.Counter.Set("index.all.in", len(args))
 
@@ -42,5 +39,4 @@ func push(args []*dataobj.IndexModel, reply *dataobj.IndexResp) {
 
 	reply.Total = len(args)
 	reply.Latency = (time.Now().UnixNano() - start.UnixNano()) / 1000000
-	return
 }

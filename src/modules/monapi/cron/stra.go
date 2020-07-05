@@ -29,7 +29,7 @@ func SyncStra() error {
 	list, err := model.StrasAll()
 	if err != nil {
 		stats.Counter.Set("mcache.stra.sync.err", 1)
-		return fmt.Errorf("model.StrasAll fail: %v", err)
+		return fmt.Errorf("get stras fail: %v", err)
 	}
 
 	smap := make(map[int64]*model.Stra)
@@ -41,4 +41,36 @@ func SyncStra() error {
 
 	mcache.StraCache.SetAll(smap)
 	return nil
+}
+
+func CleanStraLoop() {
+	duration := time.Second * time.Duration(300)
+	for {
+		time.Sleep(duration)
+		CleanStra()
+	}
+}
+
+//定期清理没有找到nid的策略
+func CleanStra() {
+	list, err := model.StrasAll()
+	if err != nil {
+		logger.Errorf("get stras fail: %v", err)
+		return
+	}
+
+	for _, stra := range list {
+		node, err := model.NodeGet("id", stra.Nid)
+		if err != nil {
+			logger.Warningf("get node failed, node id: %d, err: %v", stra.Nid, err)
+			continue
+		}
+
+		if node == nil {
+			logger.Infof("delete stra:%d", stra.Id)
+			if err := model.StraDel(stra.Id); err != nil {
+				logger.Warningf("delete stra: %d, err: %v", stra.Id, err)
+			}
+		}
+	}
 }

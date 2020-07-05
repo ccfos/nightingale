@@ -143,7 +143,7 @@ func popEvent(queues []interface{}) (*model.Event, bool) {
 
 	groups, err := json.Marshal(stra.NotifyGroup)
 	if err != nil {
-		logger.Errorf("users marshal failed, err: %v, event: %+v", err, event)
+		logger.Errorf("groups marshal failed, err: %v, event: %+v", err, event)
 		return nil, false
 	}
 

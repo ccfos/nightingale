@@ -12,10 +12,12 @@ import (
 
 var ntpServer string
 
-func NtpOffsetMetrics() (L []*dataobj.MetricValue) {
+func NtpOffsetMetrics() []*dataobj.MetricValue {
+	ret := make([]*dataobj.MetricValue, 0)
+
 	ntpServers := sys.Config.NtpServers
-	if len(ntpServers) <= 0 {
-		return
+	if len(ntpServers) == 0 {
+		return ret
 	}
 
 	for idx, server := range ntpServers {
@@ -42,15 +44,11 @@ func NtpOffsetMetrics() (L []*dataobj.MetricValue) {
 		logger.Debug("ntp: client receive time, ", dstTime)
 
 		delta := duration / 1e6 // 转换成 ms
-		L = append(L, GaugeValue("sys.ntp.offset.ms", delta))
+		ret = append(ret, GaugeValue("sys.ntp.offset.ms", delta))
+
 		//one ntp server's response is enough
-
-		return
+		break
 	}
 
-	//keep silence when no config ntp server
-	if len(ntpServers) > 0 {
-		logger.Error("sys.ntp.offset error. all ntp servers response failed.")
-	}
-	return
+	return ret
 }

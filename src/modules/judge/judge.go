@@ -27,12 +27,14 @@ import (
 	"github.com/didi/nightingale/src/toolkits/stats"
 )
 
-const version = 1
-
 var (
 	vers *bool
 	help *bool
 	conf *string
+
+	version   = "No Version Provided"
+	gitHash   = "No GitHash Provided"
+	buildTime = "No BuildTime Provided"
 )
 
 func init() {
@@ -42,7 +44,9 @@ func init() {
 	flag.Parse()
 
 	if *vers {
-		fmt.Println("version:", version)
+		fmt.Println("Version:", version)
+		fmt.Println("Git Commit Hash:", gitHash)
+		fmt.Println("UTC Build Time:", buildTime)
 		os.Exit(0)
 	}
 
@@ -75,6 +79,10 @@ func main() {
 	go stra.GetStrategy(cfg.Strategy)
 	go judge.NodataJudge(cfg.NodataConcurrency)
 	go report.Init(cfg.Report, "monapi")
+
+	if cfg.Logger.Level != "DEBUG" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	r := gin.New()
 	routes.Config(r)

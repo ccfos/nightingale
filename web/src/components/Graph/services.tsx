@@ -1,6 +1,7 @@
 /* eslint-disable no-plusplus */
 import _ from 'lodash';
 import request from '@common/request';
+import api from '@common/api';
 import commonApi from '@common/api';
 import hasDtag from './util/hasDtag';
 import getDTagV, { dFilter } from './util/getDTagV';
@@ -46,7 +47,7 @@ export function fetchMetrics(selectedEndpoint: Endpoints, endpoints: Endpoints) 
       endpoints: selectedEndpoint,
     }),
   }, false).then((data) => {
-    return _.chain(data.metrics).flattenDeep().union().sortBy((o) => {
+    return _.chain(data.metrics).compact().flattenDeep().union().sortBy((o) => {
       return _.lowerCase(o);
     }).value();
   });
@@ -95,7 +96,8 @@ export async function normalizeMetrics(metrics: any[], graphConfigInnerVisible: 
   let canUpdate = false;
 
   for (let m = 0; m < metricsClone.length; m++) {
-    const { selectedEndpoint, selectedMetric, selectedTagkv, tagkv, endpoints } = metricsClone[m];
+    const { selectedEndpoint, selectedNid, selectedMetric, selectedTagkv, tagkv } = metricsClone[m];
+    let { endpoints } = metricsClone[m];
     // 加载 tagkv 规则，满足
     // 开启行级配置 或者 包含动态tag 或者 没有选择tag
     if (
@@ -103,9 +105,12 @@ export async function normalizeMetrics(metrics: any[], graphConfigInnerVisible: 
       (!!graphConfigInnerVisible || hasDtag(selectedTagkv) || _.isEmpty(selectedTagkv))
     ) {
       canUpdate = true;
-      // eslint-disable-next-line no-await-in-loop
+      if (hasDtag(selectedEndpoint)) {
+        endpoints = await fetchEndPoints(selectedNid);
+      }
       const newTagkv = await fetchTagkv(selectedEndpoint, selectedMetric, endpoints);
       metricsClone[m].tagkv = newTagkv;
+      metricsClone[m].endpoints = endpoints;
       if (_.isEmpty(selectedTagkv)) {
         metricsClone[m].selectedTagkv = newTagkv;
       }

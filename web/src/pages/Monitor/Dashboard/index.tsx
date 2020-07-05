@@ -120,7 +120,7 @@ class MonitorDashboard extends Component<Props & WrappedComponentProps, State> {
         const res = await request(`${api.endpoint}?limit=1000`);
         hosts = _.map(res.list, 'ident');
       } else {
-        hosts = await services.fetchEndPoints(nid, this.context.habitsId);
+        hosts = await services.fetchEndPoints(nid);
       }
       this.setState({ hostsLoading: false });
     } catch (e) {
@@ -178,7 +178,7 @@ class MonitorDashboard extends Component<Props & WrappedComponentProps, State> {
     }
   }
 
-  handleGraphConfigSubmit = (type: UpdateType, data: GraphData, id: GraphId) => {
+  handleGraphConfigSubmit = (type: UpdateType, data: GraphData, id?: GraphId) => {
     const { graphs } = this.state;
     const graphsClone = _.cloneDeep(graphs);
     const ldata = _.cloneDeep(data) || {};
@@ -204,7 +204,7 @@ class MonitorDashboard extends Component<Props & WrappedComponentProps, State> {
           }],
         }),
       });
-    } else if (type === 'update') {
+    } else if (type === 'update' && id) {
       this.handleUpdateGraph('update', id, {
         ...ldata,
       });
@@ -330,14 +330,12 @@ class MonitorDashboard extends Component<Props & WrappedComponentProps, State> {
               </Col>
               <Col span={12}>
                 <MetricSelect
-                  ref={(ref) => { this.metricSelect = ref; }}
                   nid={_.get(selectedTreeNode, 'id')}
                   loading={metricsLoading}
                   hosts={hosts}
                   selectedHosts={selectedHosts}
                   metrics={metrics}
                   graphs={graphs}
-                  globalOptions={globalOptions}
                   onSelect={(data) => {
                     this.handleGraphConfigSubmit('unshift', data);
                   }}
@@ -351,10 +349,9 @@ class MonitorDashboard extends Component<Props & WrappedComponentProps, State> {
                   onChange={(obj) => {
                     this.setState({
                       globalOptions: {
-                        // eslint-disable-next-line react/no-access-state-in-setstate
                         ...this.state.globalOptions,
                         ...obj,
-                      },
+                      } as any,
                     }, () => {
                       this.handleBatchUpdateGraphs(obj);
                     });

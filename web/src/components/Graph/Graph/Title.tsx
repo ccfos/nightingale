@@ -14,7 +14,7 @@ export default class Title extends Component<Props> {
 
   render() {
     const { title, selectedMetric } = this.props;
-    const styleObj = {
+    const styleObj: React.CSSProperties = {
       width: '100%',
       overflow: 'hidden',
       whiteSpace: 'nowrap',

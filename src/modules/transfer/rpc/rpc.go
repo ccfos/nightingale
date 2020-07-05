@@ -23,12 +23,12 @@ func Start() {
 	server := rpc.NewServer()
 	server.Register(new(Transfer))
 
-	l, e := net.Listen("tcp", addr)
-	if e != nil {
-		logger.Fatal("cannot listen ", addr, e)
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		logger.Fatalf("fail to connect address: [%s], error: %v", addr, err)
 		os.Exit(1)
 	}
-	logger.Info("listening ", addr)
+	logger.Infof("server is available at:[%s]", addr)
 
 	var mh codec.MsgpackHandle
 	mh.MapType = reflect.TypeOf(map[string]interface{}(nil))
@@ -36,7 +36,7 @@ func Start() {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			logger.Warning("listener accept error: ", err)
+			logger.Warningf("listener accept error: %v", err)
 			time.Sleep(time.Duration(100) * time.Millisecond)
 			continue
 		}

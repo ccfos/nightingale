@@ -22,12 +22,14 @@ import (
 	"github.com/toolkits/pkg/runner"
 )
 
-const version = 1
-
 var (
 	vers *bool
 	help *bool
 	conf *string
+
+	version   = "No Version Provided"
+	gitHash   = "No GitHash Provided"
+	buildTime = "No BuildTime Provided"
 )
 
 func init() {
@@ -37,7 +39,9 @@ func init() {
 	flag.Parse()
 
 	if *vers {
-		fmt.Println("version:", version)
+		fmt.Println("Version:", version)
+		fmt.Println("Git Commit Hash:", gitHash)
+		fmt.Println("UTC Build Time:", buildTime)
 		os.Exit(0)
 	}
 
@@ -66,7 +70,7 @@ func main() {
 	routes.Config(r)
 	go http.Start(r, "transfer", cfg.Logger.Level)
 
-	ending()
+	cleanup()
 }
 
 // auto detect configuration file
@@ -97,12 +101,12 @@ func pconf() {
 	}
 }
 
-func ending() {
+func cleanup() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	select {
 	case <-c:
-		fmt.Printf("stop signal caught, stopping... pid=%d\n", os.Getpid())
+		fmt.Println("stop signal caught, stopping... pid=", os.Getpid())
 	}
 
 	logger.Close()
@@ -112,7 +116,7 @@ func ending() {
 
 func start() {
 	runner.Init()
-	fmt.Println("transfer start, use configuration file:", *conf)
+	fmt.Println("transfer started, use configuration file:", *conf)
 	fmt.Println("runner.Cwd:", runner.Cwd)
 	fmt.Println("runner.Hostname:", runner.Hostname)
 }

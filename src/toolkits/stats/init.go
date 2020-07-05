@@ -76,5 +76,4 @@ func push(items []*dataobj.MetricValue) {
 	}
 
 	defer resp.Body.Close()
-	return
 }

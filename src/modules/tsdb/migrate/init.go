@@ -6,8 +6,9 @@ import (
 	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/container/set"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/pool"
 	"github.com/toolkits/pkg/str"
+
+	"github.com/didi/nightingale/src/toolkits/pools"
 )
 
 type MigrateSection struct {
@@ -29,7 +30,7 @@ const (
 
 var (
 	Config     MigrateSection
-	QueueCheck = QueueFilter{Data: make(map[interface{}]struct{})}
+	QueueCheck = QueueFilter{Data: make(map[string]struct{})}
 
 	TsdbQueues    = make(map[string]*list.SafeListLimited)
 	NewTsdbQueues = make(map[string]*list.SafeListLimited)
@@ -39,16 +40,16 @@ var (
 	NewTsdbNodeRing *ConsistentHashRing
 
 	// 连接池 node_address -> connection_pool
-	TsdbConnPools    *ConnPools = &ConnPools{M: make(map[string]*pool.ConnPool)}
-	NewTsdbConnPools *ConnPools = &ConnPools{M: make(map[string]*pool.ConnPool)}
+	TsdbConnPools    *pools.ConnPools
+	NewTsdbConnPools *pools.ConnPools
 )
 
 type QueueFilter struct {
-	Data map[interface{}]struct{}
+	Data map[string]struct{}
 	sync.RWMutex
 }
 
-func (q *QueueFilter) Exists(key interface{}) bool {
+func (q *QueueFilter) Exists(key string) bool {
 	q.RLock()
 	defer q.RUnlock()
 
@@ -56,7 +57,7 @@ func (q *QueueFilter) Exists(key interface{}) bool {
 	return exsits
 }
 
-func (q *QueueFilter) Set(key interface{}) {
+func (q *QueueFilter) Set(key string) {
 	q.Lock()
 	defer q.Unlock()
 
@@ -87,16 +88,18 @@ func initConnPools() {
 	for _, addr := range Config.OldCluster {
 		tsdbInstances.Add(addr)
 	}
-	TsdbConnPools = CreateConnPools(Config.MaxConns, Config.MaxIdle,
-		Config.ConnTimeout, Config.CallTimeout, tsdbInstances.ToSlice())
+	TsdbConnPools = pools.NewConnPools(
+		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, tsdbInstances.ToSlice(),
+	)
 
 	// tsdb
 	newTsdbInstances := set.NewSafeSet()
 	for _, addr := range Config.NewCluster {
 		newTsdbInstances.Add(addr)
 	}
-	NewTsdbConnPools = CreateConnPools(Config.MaxConns, Config.MaxIdle,
-		Config.ConnTimeout, Config.CallTimeout, newTsdbInstances.ToSlice())
+	NewTsdbConnPools = pools.NewConnPools(
+		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, newTsdbInstances.ToSlice(),
+	)
 }
 
 func initQueues() {

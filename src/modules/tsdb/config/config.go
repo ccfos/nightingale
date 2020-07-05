@@ -3,8 +3,6 @@ package config
 import (
 	"bytes"
 	"fmt"
-	"sync"
-
 	"github.com/didi/nightingale/src/modules/tsdb/backend/rpc"
 	"github.com/didi/nightingale/src/modules/tsdb/cache"
 	"github.com/didi/nightingale/src/modules/tsdb/index"
@@ -45,12 +43,9 @@ type RpcSection struct {
 
 var (
 	Config *ConfYaml
-	lock   = new(sync.RWMutex)
 )
 
 func GetCfgYml() *ConfYaml {
-	lock.RLock()
-	defer lock.RUnlock()
 	return Config
 }
 
@@ -59,9 +54,6 @@ func Parse(conf string) error {
 	if err != nil {
 		return fmt.Errorf("cannot read yml[%s]: %v", conf, err)
 	}
-
-	lock.Lock()
-	defer lock.Unlock()
 
 	viper.SetConfigType("yaml")
 	err = viper.ReadConfig(bytes.NewBuffer(bs))
@@ -101,7 +93,7 @@ func Parse(conf string) error {
 	viper.SetDefault("migrate.maxIdle", 32)
 
 	viper.SetDefault("index.activeDuration", 90000)  //索引最大的保留时间，超过此数值，索引不会被重建，默认是1天+1小时
-	viper.SetDefault("index.rebuildInterval", 86400) //重建索引的周期，单位为秒，默认是1天
+	viper.SetDefault("index.rebuildInterval", 21600) //重建索引的周期，单位为秒，默认是6h
 	viper.SetDefault("index.hbsMod", "monapi")       //获取index心跳的模块
 
 	viper.SetDefault("rpcClient", map[string]int{

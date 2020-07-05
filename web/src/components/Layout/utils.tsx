@@ -73,24 +73,41 @@ export function findNode(treeData: TreeNode[], node: TreeNode) {
 
 export function normalizeTreeData(data: TreeNode[]) {
   const treeData: TreeNode[] = [];
-  _.each(data, (node) => {
-    node = _.cloneDeep(node);
-    if (node.pid === 0) {
-      treeData.splice(_.sortedIndexBy(treeData, node, 'name'), 0, node);
-    } else {
-      const findedNode = findNode(treeData, node);
-      if (!findedNode) return;
-      if (_.isArray(findedNode.children)) {
-        findedNode.children.splice(_.sortedIndexBy(findedNode.children, node, 'name'), 0, node);
+  let tag = 0;
+
+  function fn(_cache?: TreeNode[]) {
+    const cache: TreeNode[] = [];
+    _.each(data, (node) => {
+      node = _.cloneDeep(node);
+      if (node.pid === 0) {
+        if (tag === 0) {
+          treeData.splice(_.sortedIndexBy(treeData, node, 'name'), 0, node);
+        }
       } else {
-        findedNode.children = [node];
+        const findedNode = findNode(treeData, node); // find parent node
+        if (!findedNode) {
+          cache.push(node);
+          return;
+        };
+        if (_.isArray(findedNode.children)) {
+          if (!_.find(findedNode.children, { id: node.id })) {
+            findedNode.children.splice(_.sortedIndexBy(findedNode.children, node, 'name'), 0, node);
+          }
+        } else {
+          findedNode.children = [node];
+        }
       }
+    });
+    tag += 1;
+    if (cache.length && !_.isEqual(_cache, cache)) {
+      fn(cache);
     }
-  });
+  }
+  fn();
   return treeData;
 }
 
-export function renderTreeNodes(nodes: TreeNode[]) {
+export function renderTreeNodes(nodes?: TreeNode[]) {
   return _.map(nodes, (node) => {
     if (_.isArray(node.children)) {
       return (

@@ -57,7 +57,7 @@ func (r *Reader) StartRead() {
 	var readCnt, readSwp int64
 	var dropCnt, dropSwp int64
 
-	analysClose := make(chan int, 0)
+	analysClose := make(chan int)
 	go func() {
 		for {
 			// 十秒钟统计一次
@@ -114,7 +114,7 @@ func (r *Reader) Start() {
 
 }
 func (r *Reader) check() {
-	nextpath := GetNowPath(r.FilePath)
+	nextpath := GetCurrentPath(r.FilePath)
 
 	// 文件名发生变化, 一般发生在配置了动态日志场景
 	if r.CurrentPath != nextpath {

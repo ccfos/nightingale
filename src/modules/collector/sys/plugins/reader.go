@@ -6,12 +6,47 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/didi/nightingale/src/modules/collector/stra"
+	"github.com/didi/nightingale/src/modules/collector/sys"
+
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 )
 
 // key: 60_ntp.py
-func ListPlugins(dir string) map[string]*Plugin {
+func ListPlugins() map[string]*Plugin {
+	plugins := make(map[string]*Plugin)
+	if sys.Config.PluginRemote {
+		plugins = ListPluginsFromMonapi()
+	} else {
+		plugins = ListPluginsFromLocal()
+	}
+	return plugins
+}
+
+func ListPluginsFromMonapi() map[string]*Plugin {
+	ret := make(map[string]*Plugin)
+
+	plugins := stra.Collect.GetPlugin()
+
+	for key, p := range plugins {
+		plugin := &Plugin{
+			FilePath: p.FilePath,
+			MTime:    p.LastUpdated.Unix(),
+			Cycle:    p.Step,
+			Params:   p.Params,
+			Env:      p.Env,
+			Stdin:    p.Stdin,
+		}
+
+		ret[key] = plugin
+	}
+
+	return ret
+}
+
+func ListPluginsFromLocal() map[string]*Plugin {
+	dir := sys.Config.Plugin
 	ret := make(map[string]*Plugin)
 
 	if dir == "" || !file.IsExist(dir) || file.IsFile(dir) {
@@ -32,7 +67,7 @@ func ListPlugins(dir string) map[string]*Plugin {
 		filename := f.Name()
 		arr := strings.Split(filename, "_")
 		if len(arr) < 2 {
-			logger.Warningf("plugin:%s name illegal, should be: $cycle_$xx", filename)
+			logger.Debugf("plugin:%s name illegal, should be: $cycle_$xx", filename)
 			continue
 		}
 
@@ -40,13 +75,13 @@ func ListPlugins(dir string) map[string]*Plugin {
 		var cycle int
 		cycle, err = strconv.Atoi(arr[0])
 		if err != nil {
-			logger.Warningf("plugin:%s name illegal, should be: $cycle_$xx %v", filename, err)
+			logger.Debugf("plugin:%s name illegal, should be: $cycle_$xx %v", filename, err)
 			continue
 		}
 
 		fpath, err := filepath.Abs(filepath.Join(dir, filename))
 		if err != nil {
-			logger.Warningf("plugin:%s absolute path get err:%v", filename, err)
+			logger.Debugf("plugin:%s absolute path get err:%v", filename, err)
 			continue
 		}
 

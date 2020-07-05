@@ -16,6 +16,7 @@ func Config(r *gin.Engine) {
 
 		sys.POST("/metrics", GetMetrics)
 		sys.DELETE("/metrics", DelMetrics)
+		sys.DELETE("/endpoints", DelIdxByEndpoint)
 		sys.DELETE("/counter", DelCounter)
 		sys.POST("/tagkv", GetTagPairs)
 		sys.POST("/counter/fullmatch", GetIndexByFullTags)

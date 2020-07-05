@@ -6,7 +6,7 @@ const DtagKws = ['=all', '=+', '=-'];
 /**
  * 是否包含动态tag
  */
-export default function hasDtag(data: TagkvInterface[] = []) {
+export default function hasDtag(data: (TagkvInterface | string)[] = []) {
   return _.some(data, (item) => {
     if (_.isObject(item) && _.isArray(item.tagv)) {
       return _.some(item.tagv, (subItem) => {

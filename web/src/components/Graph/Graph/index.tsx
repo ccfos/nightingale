@@ -15,11 +15,11 @@ import GraphConfigInner from '../GraphConfig/GraphConfigInner';
 import { GraphDataInterface, SerieInterface, GraphDataChangeFunc, CounterInterface, ChartOptionsInterface } from '../interface';
 
 interface Props {
-  useDragHandle: boolean,
+  useDragHandle?: boolean,
   data: GraphDataInterface, // 图表数据配置
   height: number, // 图表高度
   graphConfigInnerVisible: boolean, // 内置图表配置栏是否显示
-  extraRender: () => void, // 图表右侧工具栏扩展
+  extraRender: (graph: any) => void, // 图表右侧工具栏扩展
   extraMoreList: React.ReactNode, // 图表右侧工具栏更多选项扩展
   metricMap: any, // 指标信息表，用于设置图表名称
   onChange: GraphDataChangeFunc, // 图表配置修改回调
@@ -60,7 +60,7 @@ export default class Graph extends Component<Props, State> {
   chartOptions = config.chart;
   headerHeight = 35;
   counterList = [];
-  series = [];
+  series = [] as any[];
   state = {
     spinning: false,
     errorText: '',
@@ -93,6 +93,7 @@ export default class Graph extends Component<Props, State> {
       || aggrFuncChanged
       || aggrGroupChanged
       || consolFuncChanged
+      || !_.isEqual(nextData.comparison, thisData.comparison)
     ) {
       const isFetchCounter = selectedNsChanged || selectedMetricChanged || selectedTagkvChanged;
       this.fetchData(nextProps.data, isFetchCounter, (series: SerieInterface[]) => {
@@ -114,10 +115,6 @@ export default class Graph extends Component<Props, State> {
     // this.abortFetchData();
     if (this.chart) this.chart.destroy();
   }
-
-  static setOptions = (options: any) => {
-    window.OdinGraphOptions = options;
-  };
 
   getGraphConfig(graphConfig: GraphDataInterface) {
     return {
@@ -256,6 +253,8 @@ export default class Graph extends Component<Props, State> {
           return util.getTooltipsContent({
             points,
             chartWidth: this.graphWrapEle.offsetWidth - 40,
+            comparison: graphConfig.comparison,
+            isComparison: !!_.get(graphConfig.comparison, 'length'),
           });
         },
       },
@@ -292,6 +291,8 @@ export default class Graph extends Component<Props, State> {
           return util.getTooltipsContent({
             points,
             chartWidth: this.graphWrapEle.offsetWidth - 40,
+            comparison: graphConfig.comparison,
+            isComparison: !!_.get(graphConfig.comparison, 'length'),
           });
         },
       },
@@ -304,9 +305,9 @@ export default class Graph extends Component<Props, State> {
   }
 
   handleLegendRowSelectedChange = (selectedKeys: string[], highlightedKeys: string[]) => {
-    const { series } = this.state;
+    const series = this.getZoomedSeries()
 
-    const newSeries = _.map(series, (serie, i) => {
+    this.series = _.map(series, (serie, i) => {
       const oldColor = _.get(serie, 'oldColor', serie.color);
       return {
         ...serie,
@@ -317,13 +318,11 @@ export default class Graph extends Component<Props, State> {
       };
     });
 
-    this.setState({ series: newSeries }, () => {
-      this.updateHighcharts();
-    });
+    this.updateHighcharts();
   }
 
   render() {
-    const { spinning, errorText, isOrigin } = this.state;
+    const { spinning, errorText } = this.state;
     const { height, onChange, extraRender, data } = this.props;
     const graphConfig = this.getGraphConfig(data);
 
@@ -355,15 +354,12 @@ export default class Graph extends Component<Props, State> {
           </div>
           <Title
             title={data.title}
-            selectedNs={_.reduce(graphConfig.metrics, (result, metricObj) => _.concat(result, metricObj.selectedNs), [])}
-            selectedMetric={_.reduce(graphConfig.metrics, (result, metricObj) => _.concat(result, metricObj.selectedMetric), [])}
-            metricMap={this.props.metricMap}
+            selectedMetric={_.get(graphConfig.metrics, '[0].selectedMetric')}
           />
         </div>
         {
           this.props.graphConfigInnerVisible
             ? <GraphConfigInner
-              isOrigin={isOrigin}
               data={graphConfig}
               onChange={onChange}
             /> : null
@@ -391,6 +387,7 @@ export default class Graph extends Component<Props, State> {
           style={{ display: graphConfig.legend ? 'block' : 'none' }}
           series={this.getZoomedSeries()}
           onSelectedChange={this.handleLegendRowSelectedChange}
+          comparisonOptions={graphConfig.comparisonOptions}
         />
       </div>
     );

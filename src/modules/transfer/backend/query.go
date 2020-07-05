@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
+
 	"math/rand"
 	"strings"
 	"time"
@@ -12,6 +12,7 @@ import (
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/modules/transfer/calc"
 	"github.com/didi/nightingale/src/toolkits/address"
+	"github.com/didi/nightingale/src/toolkits/pools"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/toolkits/pkg/logger"
@@ -20,10 +21,18 @@ import (
 )
 
 func FetchData(inputs []dataobj.QueryData) []*dataobj.TsdbQueryResponse {
-	resp := []*dataobj.TsdbQueryResponse{}
 	workerNum := 100
-	worker := make(chan struct{}, workerNum) //控制goroutine并发数
+	worker := make(chan struct{}, workerNum) // 控制 goroutine 并发数
 	dataChan := make(chan *dataobj.TsdbQueryResponse, 20000)
+
+	done := make(chan struct{}, 1)
+	resp := make([]*dataobj.TsdbQueryResponse, 0)
+	go func() {
+		defer func() { done <- struct{}{} }()
+		for d := range dataChan {
+			resp = append(resp, d)
+		}
+	}()
 
 	for _, input := range inputs {
 		for _, endpoint := range input.Endpoints {
@@ -34,34 +43,37 @@ func FetchData(inputs []dataobj.QueryData) []*dataobj.TsdbQueryResponse {
 		}
 	}
 
-	//等待所有goroutine执行完成
+	// 等待所有 goroutine 执行完成
 	for i := 0; i < workerNum; i++ {
 		worker <- struct{}{}
 	}
-
 	close(dataChan)
-	for {
-		d, ok := <-dataChan
-		if !ok {
-			break
-		}
-		resp = append(resp, d)
-	}
+
+	// 等待所有 dataChan 被消费完
+	<-done
 
 	return resp
 }
 
 func FetchDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
-	resp := []*dataobj.TsdbQueryResponse{}
 	workerNum := 100
-	worker := make(chan struct{}, workerNum) //控制goroutine并发数
+	worker := make(chan struct{}, workerNum) // 控制 goroutine 并发数
 	dataChan := make(chan *dataobj.TsdbQueryResponse, 20000)
+
+	done := make(chan struct{}, 1)
+	resp := make([]*dataobj.TsdbQueryResponse, 0)
+	go func() {
+		defer func() { done <- struct{}{} }()
+		for d := range dataChan {
+			resp = append(resp, d)
+		}
+	}()
 
 	for _, endpoint := range input.Endpoints {
 		if len(input.Tags) == 0 {
 			counter, err := GetCounter(input.Metric, "", nil)
 			if err != nil {
-				logger.Warning(err)
+				logger.Warningf("get counter error: %+v", err)
 				continue
 			}
 			worker <- struct{}{}
@@ -70,7 +82,7 @@ func FetchDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 			for _, tag := range input.Tags {
 				counter, err := GetCounter(input.Metric, tag, nil)
 				if err != nil {
-					logger.Warning(err)
+					logger.Warningf("get counter error: %+v", err)
 					continue
 				}
 				worker <- struct{}{}
@@ -79,32 +91,26 @@ func FetchDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 		}
 	}
 
-	//等待所有goroutine执行完成
+	// 等待所有 goroutine 执行完成
 	for i := 0; i < workerNum; i++ {
 		worker <- struct{}{}
 	}
 
 	close(dataChan)
-	for {
-		d, ok := <-dataChan
-		if !ok {
-			break
-		}
-		resp = append(resp, d)
-	}
+	<-done
 
 	//进行数据计算
-	aggrDatas := []*dataobj.TsdbQueryResponse{}
+	aggrDatas := make([]*dataobj.TsdbQueryResponse, 0)
 	if input.AggrFunc != "" && len(resp) > 1 {
-
 		aggrCounter := make(map[string][]*dataobj.TsdbQueryResponse)
+
+		// 没有聚合 tag, 或者曲线没有其他 tags, 直接所有曲线进行计算
 		if len(input.GroupKey) == 0 || getTags(resp[0].Counter) == "" {
 			aggrData := &dataobj.TsdbQueryResponse{
 				Start:  input.Start,
 				End:    input.End,
 				Values: calc.Compute(input.AggrFunc, resp),
 			}
-			//没有聚合 tag, 或者曲线没有其他 tags, 直接所有曲线进行计算
 			aggrDatas = append(aggrDatas, aggrData)
 		} else {
 			for _, data := range resp {
@@ -112,14 +118,14 @@ func FetchDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 
 				tagsMap, err := dataobj.SplitTagsString(getTags(data.Counter))
 				if err != nil {
-					logger.Warning(err)
+					logger.Warningf("split tag string error: %+v", err)
 					continue
 				}
 				tagsMap["endpoint"] = data.Endpoint
 
+				// 校验 GroupKey 是否在 tags 中
 				for _, key := range input.GroupKey {
-					value, exists := tagsMap[key]
-					if exists {
+					if value, exists := tagsMap[key]; exists {
 						counterMap[key] = value
 					}
 				}
@@ -132,6 +138,7 @@ func FetchDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 				}
 			}
 
+			// 有需要聚合的 tag 需要将 counter 带上
 			for counter, datas := range aggrCounter {
 				aggrData := &dataobj.TsdbQueryResponse{
 					Start:   input.Start,
@@ -151,7 +158,7 @@ func GetCounter(metric, tag string, tagMap map[string]string) (counter string, e
 	if tagMap == nil {
 		tagMap, err = dataobj.SplitTagsString(tag)
 		if err != nil {
-			logger.Warning(err, tag)
+			logger.Warningf("split tag string error: %+v", err)
 			return
 		}
 	}
@@ -169,11 +176,13 @@ func fetchDataSync(start, end int64, consolFun, endpoint, counter string, step i
 
 	data, err := fetchData(start, end, consolFun, endpoint, counter, step)
 	if err != nil {
-		logger.Warning(err)
+		logger.Warningf("fetch tsdb data error: %+v", err)
 		stats.Counter.Set("query.data.err", 1)
+		data.Endpoint = endpoint
+		data.Counter = counter
+		data.Step = step
 	}
 	dataChan <- data
-	return
 }
 
 func fetchData(start, end int64, consolFun, endpoint, counter string, step int) (*dataobj.TsdbQueryResponse, error) {
@@ -185,23 +194,6 @@ func fetchData(start, end int64, consolFun, endpoint, counter string, step int) 
 		return resp, err
 	}
 
-	if len(resp.Values) < 1 {
-		ts := start - start%int64(60)
-		count := (end - start) / 60
-		if count > 730 {
-			count = 730
-		}
-
-		if count <= 0 {
-			return resp, nil
-		}
-
-		step := (end - start) / count // integer divide by zero
-		for i := 0; i < int(count); i++ {
-			resp.Values = append(resp.Values, &dataobj.RRDData{Timestamp: ts, Value: dataobj.JsonFloat(math.NaN())})
-			ts += int64(step)
-		}
-	}
 	resp.Start = start
 	resp.End = end
 
@@ -229,25 +221,25 @@ func QueryOne(para dataobj.TsdbQueryParam) (resp *dataobj.TsdbQueryResponse, err
 	resp = &dataobj.TsdbQueryResponse{}
 
 	pk := dataobj.PKWithCounter(para.Endpoint, para.Counter)
-	pools, err := SelectPoolByPK(pk)
+	ps, err := SelectPoolByPK(pk)
 	if err != nil {
 		return resp, err
 	}
 
-	count := len(pools)
+	count := len(ps)
 	for _, i := range rand.Perm(count) {
-		pool := pools[i].Pool
-		addr := pools[i].Addr
+		onePool := ps[i].Pool
+		addr := ps[i].Addr
 
-		conn, err := pool.Fetch()
+		conn, err := onePool.Fetch()
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("fetch pool error: %+v", err)
 			continue
 		}
 
-		rpcConn := conn.(RpcClient)
+		rpcConn := conn.(pools.RpcClient)
 		if rpcConn.Closed() {
-			pool.ForceClose(conn)
+			onePool.ForceClose(conn)
 
 			err = errors.New("conn closed")
 			logger.Error(err)
@@ -268,28 +260,26 @@ func QueryOne(para dataobj.TsdbQueryParam) (resp *dataobj.TsdbQueryResponse, err
 
 		select {
 		case <-time.After(time.Duration(callTimeout) * time.Millisecond):
-			pool.ForceClose(conn)
-			logger.Errorf("%s, call timeout. proc: %s", addr, pool.Proc())
+			onePool.ForceClose(conn)
+			logger.Errorf("%s, call timeout. proc: %s", addr, onePool.Proc())
 			break
 		case r := <-ch:
 			if r.Err != nil {
-				pool.ForceClose(conn)
-				logger.Errorf("%s, call failed, err %v. proc: %s", addr, r.Err, pool.Proc())
+				onePool.ForceClose(conn)
+				logger.Errorf("%s, call failed, err %v. proc: %s", addr, r.Err, onePool.Proc())
 				break
-
 			} else {
-				pool.Release(conn)
+				onePool.Release(conn)
 				if len(r.Resp.Values) < 1 {
 					r.Resp.Values = []*dataobj.RRDData{}
 					return r.Resp, nil
 				}
 
-				fixed := []*dataobj.RRDData{}
+				fixed := make([]*dataobj.RRDData, 0)
 				for _, v := range r.Resp.Values {
 					if v == nil || !(v.Timestamp >= start && v.Timestamp <= end) {
 						continue
 					}
-
 					fixed = append(fixed, v)
 				}
 				r.Resp.Values = fixed
@@ -318,26 +308,21 @@ func SelectPoolByPK(pk string) ([]Pool, error) {
 		return []Pool{}, errors.New("node not found")
 	}
 
-	var pools []Pool
+	var ps []Pool
 	for _, addr := range nodeAddrs.Addrs {
-		pool, found := TsdbConnPools.Get(addr)
+		onePool, found := TsdbConnPools.Get(addr)
 		if !found {
 			logger.Errorf("addr %s not found", addr)
 			continue
 		}
-		p := Pool{
-			Pool: pool,
-			Addr: addr,
-		}
-		pools = append(pools, p)
+		ps = append(ps, Pool{Pool: onePool, Addr: addr})
 	}
 
-	if len(pools) < 1 {
-		return pools, errors.New("addr not found")
+	if len(ps) < 1 {
+		return ps, errors.New("addr not found")
 	}
 
-	return pools, nil
-
+	return ps, nil
 }
 
 func getTags(counter string) (tags string) {
@@ -377,7 +362,7 @@ func GetSeries(start, end int64, req []SeriesReq) ([]dataobj.QueryData, error) {
 	var queryDatas []dataobj.QueryData
 
 	if len(req) < 1 {
-		return queryDatas, fmt.Errorf("req err")
+		return queryDatas, fmt.Errorf("req length < 1")
 	}
 
 	addrs := address.GetHTTPAddresses("index")
@@ -398,14 +383,13 @@ func GetSeries(start, end int64, req []SeriesReq) ([]dataobj.QueryData, error) {
 		return nil, fmt.Errorf("index response status code != 200")
 	}
 
-	err = json.Unmarshal(resp, &res)
-	if err != nil {
+	if err = json.Unmarshal(resp, &res); err != nil {
 		logger.Error(string(resp))
 		return queryDatas, err
 	}
 
 	for _, item := range res.Dat {
-		counters := []string{}
+		counters := make([]string, 0)
 		if len(item.Tags) == 0 {
 			counters = append(counters, item.Metric)
 		} else {

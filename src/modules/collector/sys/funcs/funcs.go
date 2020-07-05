@@ -30,6 +30,8 @@ func BuildMappers() {
 				EntityNumMetrics,
 				NtpOffsetMetrics,
 				SocketStatSummaryMetrics,
+				UdpMetrics,
+				TcpMetrics,
 			},
 			Interval: interval,
 		},

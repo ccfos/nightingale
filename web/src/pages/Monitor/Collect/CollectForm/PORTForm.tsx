@@ -61,7 +61,7 @@ class CollectForm extends Component<Props & WrappedComponentProps> {
   render() {
     const { form } = this.props;
     const initialValues = this.getInitialValues();
-    const { getFieldDecorator, getFieldProps } = form!;
+    const { getFieldDecorator, getFieldProps } = form! as any;
     const service = _.chain(initialValues.tags).split(',').filter(item => item.indexOf('service=') === 0).head().split('service=').last().value();
     getFieldProps('collect_type', {
       initialValue: initialValues.collect_type,
@@ -121,7 +121,7 @@ class CollectForm extends Component<Props & WrappedComponentProps> {
               initialValue: service,
               rules: [
                 { required: true },
-                { pattern: /^[a-zA-Z0-9-]+$/, message: this.props.intl.formatMessage({ id: 'collect.port.pattern.msg' }) },
+                { pattern: /^[a-zA-Z0-9-_.]+$/, message: this.props.intl.formatMessage({ id: 'collect.port.pattern.msg' }) },
               ],
             })}
             size="default"

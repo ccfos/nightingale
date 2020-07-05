@@ -220,10 +220,9 @@ func isInConverge(event *model.Event) bool {
 	return false
 }
 
-// 三种情况，不需要升级报警
+// 两种情况，不需要升级报警
 // 1，认领的报警不需要升级
-// 2，忽略的报警不需要升级
-// 3，屏蔽的报警不需要升级，屏蔽判断在前面已经有了处理，这个方法不用关注
+// 2，屏蔽的报警不需要升级，屏蔽判断在前面已经有了处理，这个方法不用关注
 func needUpgrade(event *model.Event) bool {
 	alertUpgradeKey := PrefixAlertUpgrade + fmt.Sprint(event.HashId)
 	eventAlertKey := PrefixAlertTime + fmt.Sprint(event.HashId)
@@ -279,11 +278,6 @@ func needUpgrade(event *model.Event) bool {
 	// 说明告警已经被认领
 	claimants := strings.TrimSpace(eventCur.Claimants)
 	if claimants != "[]" && claimants != "" {
-		return false
-	}
-
-	// 告警已经忽略了
-	if eventCur.IgnoreAlert == 1 {
 		return false
 	}
 

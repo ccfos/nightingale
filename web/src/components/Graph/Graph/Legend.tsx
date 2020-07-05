@@ -3,6 +3,7 @@ import { Table, Input, Button, Modal } from 'antd';
 import { ColumnProps, TableRowSelection } from 'antd/es/table';
 import Color from 'color';
 import _ from 'lodash';
+import { injectIntl, WrappedComponentProps } from 'react-intl';
 import clipboard from '@common/clipboard';
 import ContextMenu from '@cpts/ContextMenu';
 import { SerieInterface, PointInterface } from '../interface';
@@ -12,7 +13,8 @@ type SelectedKeys = 'normal' | string[];
 interface Props {
   style: any,
   series: SerieInterface[],
-  onSelectedChange: (selectedKeys: string | string[], highlightedKeysClone: string[]) => void,
+  comparisonOptions: any[],
+  onSelectedChange: (selectedKeys: string[], highlightedKeysClone: string[]) => void,
 }
 
 interface State {
@@ -35,7 +37,7 @@ interface LegendDataItem extends SerieInterface {
   last: number | null,
 }
 
-export default class Legend extends Component<Props, State> {
+class Legend extends Component<Props & WrappedComponentProps, State> {
   static defaultProps = {
     style: {},
     series: [],
@@ -110,7 +112,7 @@ export default class Legend extends Component<Props, State> {
     }
 
     this.setState({ highlightedKeys: highlightedKeysClone }, () => {
-      this.props.onSelectedChange(selectedKeys, highlightedKeysClone);
+      this.props.onSelectedChange(selectedKeys as string[], highlightedKeysClone);
     });
   }
 
@@ -125,10 +127,10 @@ export default class Legend extends Component<Props, State> {
   }
 
   render() {
-    const { onSelectedChange } = this.props;
+    const { comparisonOptions, onSelectedChange } = this.props;
     const { searchText, selectedKeys, highlightedKeys } = this.state;
     const counterSelectedKeys = highlightedKeys;
-    const data = this.filterData();
+    const data = this.filterData() as any;
     const firstData = data[0];
     const columns: ColumnProps<LegendDataItem>[] = [
       {
@@ -148,7 +150,7 @@ export default class Legend extends Component<Props, State> {
         filterDropdownVisible: this.state.filterDropdownVisible,
         onFilterDropdownVisibleChange: (visible: boolean) => this.setState({ filterDropdownVisible: visible }),
         render: (text, record) => {
-          const legendName = getLengendName(record);
+          const legendName = getLengendName(record, comparisonOptions, this.props.intl);
           return (
             <span
               title={text}
@@ -215,9 +217,9 @@ export default class Legend extends Component<Props, State> {
 
     const newRowSelection: TableRowSelection<LegendDataItem> = {
       selectedRowKeys: selectedKeys === 'normal' ? _.map(data, o => o.id) : selectedKeys,
-      onChange: (selectedRowKeys: string[]) => {
-        this.setState({ selectedKeys: selectedRowKeys }, () => {
-          onSelectedChange(selectedRowKeys, highlightedKeys);
+      onChange: (selectedRowKeys: (string | number)[]) => {
+        this.setState({ selectedKeys: selectedRowKeys as string[] }, () => {
+          onSelectedChange(selectedRowKeys as string[], highlightedKeys);
         });
       },
     };
@@ -230,6 +232,7 @@ export default class Legend extends Component<Props, State> {
       });
     }
 
+
     return (
       <div className="graph-legend" style={{
         ...this.props.style,
@@ -240,7 +243,7 @@ export default class Legend extends Component<Props, State> {
           size="middle"
           rowSelection={newRowSelection}
           columns={columns}
-          dataSource={data}
+          dataSource={data as any}
           pagination={false}
           scroll={{ y: 220 }}
         />
@@ -258,12 +261,13 @@ export default class Legend extends Component<Props, State> {
 
 export function normalizeLegendData(series: SerieInterface[] = []) {
   const tableData = _.map(series, (serie) => {
-    const { id, metric, tags, data } = serie;
+    const { id, metric, tags, data, comparison } = serie;
     const { last, avg, max, min, sum } = getLegendNums(data);
     return {
       id,
       metric,
       tags,
+      comparison,
       last,
       avg,
       max,
@@ -348,9 +352,17 @@ function getLegendNums(points: PointInterface[]) {
   return { last, avg, max, min, sum };
 }
 
-function getLengendName(serie: SerieInterface) {
-  const { tags } = serie;
+function getLengendName(serie: SerieInterface, comparisonOptions: any, intl: any) {
+  const { tags, comparison } = serie;
   let lname = tags;
+  // display comparison
+  if (comparison && typeof comparison === 'number') {
+    const currentComparison = _.find(comparisonOptions, { value: `${comparison}000` });
+    if (currentComparison && currentComparison.label) {
+      const postfix = intl.locale === 'en' ? currentComparison.labelEn : `环比${currentComparison.label}`;
+      lname += ` ${postfix}`;
+    }
+  }
   // shorten name
   if (lname.length > 80) {
     const leftStr = lname.substr(0, 40);
@@ -369,3 +381,5 @@ function isEqualSeries(series: SerieInterface[], nextSeries: SerieInterface[]) {
   });
   return _.isEqual(pureSeries, pureNextSeries);
 }
+
+export default injectIntl(Legend);

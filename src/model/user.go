@@ -38,15 +38,15 @@ func (u *User) CheckFields() {
 	if str.Dangerous(u.Dispname) {
 		errors.Bomb("dispname is dangerous")
 	}
+	/*
+		if u.Phone != "" && !str.IsPhone(u.Phone) {
+			errors.Bomb("%s format error", u.Phone)
+		}
 
-	if u.Phone != "" && !str.IsPhone(u.Phone) {
-		errors.Bomb("%s format error", u.Phone)
-	}
-
-	if u.Email != "" && !str.IsMail(u.Email) {
-		errors.Bomb("%s format error", u.Email)
-	}
-
+		if u.Email != "" && !str.IsMail(u.Email) {
+			errors.Bomb("%s format error", u.Email)
+		}
+	*/
 	if len(u.Username) > 32 {
 		errors.Bomb("username too long")
 	}
@@ -131,7 +131,6 @@ func (u *User) CopyLdapAttr(sr *ldap.SearchResult) {
 	if attrs.Im != "" {
 		u.Im = sr.Entries[0].GetAttributeValue(attrs.Im)
 	}
-	return
 }
 
 func InitRoot() {

@@ -22,10 +22,10 @@ type StraResp struct {
 }
 
 func GetStrategy() {
-	t1 := time.NewTicker(time.Duration(8) * time.Second)
+	ticker := time.NewTicker(time.Duration(8) * time.Second)
 	getStrategy()
 	for {
-		<-t1.C
+		<-ticker.C
 		getStrategy()
 	}
 }
@@ -33,7 +33,7 @@ func GetStrategy() {
 func getStrategy() {
 	addrs := address.GetHTTPAddresses("monapi")
 	if len(addrs) == 0 {
-		logger.Error("empty addr")
+		logger.Error("find no monapi address")
 		return
 	}
 
@@ -59,7 +59,7 @@ func getStrategy() {
 	}
 
 	if err != nil {
-		logger.Error("get stra err:", err)
+		logger.Errorf("get stra err: %v", err)
 		stats.Counter.Set("stra.err", 1)
 	}
 
@@ -71,31 +71,28 @@ func getStrategy() {
 	for _, stra := range stras.Data {
 		stats.Counter.Set("stra.count", 1)
 
-		//var metric string
 		if len(stra.Exprs) < 1 {
-			logger.Warning("stra:%v exprs illegal", stra)
-			continue
-		}
-		if stra.Exprs[0].Func == "nodata" {
-			//nodata策略 不使用push模式
+			logger.Warningf("illegal stra:%v exprs", stra)
 			continue
 		}
 
-		metric := stra.Exprs[0].Metric
-		for _, endpoint := range stra.Endpoints {
-			key := str.PK(metric, endpoint) //TODO get straMap key， 此处需要优化
-			k1 := key[0:2]                  //为了加快查找，增加一层map，key为计算出来的hash的前2位
+		for _, exp := range stra.Exprs {
+			metric := exp.Metric
+			for _, endpoint := range stra.Endpoints {
+				key := str.PK(metric, endpoint) //TODO get straMap key， 此处需要优化
+				k1 := key[0:2]                  //为了加快查找，增加一层 map，key 为计算出来的 hash 的前 2 位
 
-			if _, exists := straMap[k1]; !exists {
-				straMap[k1] = make(map[string][]*model.Stra)
-			}
+				if _, exists := straMap[k1]; !exists {
+					straMap[k1] = make(map[string][]*model.Stra)
+				}
 
-			if _, exists := straMap[k1][key]; !exists {
-				straMap[k1][key] = []*model.Stra{stra}
-				stats.Counter.Set("stra.key", 1)
+				if _, exists := straMap[k1][key]; !exists {
+					straMap[k1][key] = []*model.Stra{stra}
+					stats.Counter.Set("stra.key", 1)
 
-			} else {
-				straMap[k1][key] = append(straMap[k1][key], stra)
+				} else {
+					straMap[k1][key] = append(straMap[k1][key], stra)
+				}
 			}
 		}
 	}

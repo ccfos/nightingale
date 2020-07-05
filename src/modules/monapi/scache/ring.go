@@ -82,7 +82,7 @@ func (n *NodeMap) GetNodes() []string {
 	n.RLock()
 	defer n.RUnlock()
 	var nodes []string
-	for node, _ := range n.data {
+	for node := range n.data {
 		nodes = append(nodes, node)
 	}
 	return nodes

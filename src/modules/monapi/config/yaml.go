@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
-	"sync"
 
 	"github.com/spf13/viper"
 	"github.com/toolkits/pkg/file"
@@ -20,6 +19,7 @@ type Config struct {
 	Cleaner cleanerSection      `yaml:"cleaner"`
 	Link    linkSection         `yaml:"link"`
 	Notify  map[string][]string `yaml:"notify"`
+	Tokens  []string            `yaml:"tokens"`
 }
 
 type linkSection struct {
@@ -87,13 +87,10 @@ type ldapAttributes struct {
 
 var (
 	yaml *Config
-	lock = new(sync.RWMutex)
 )
 
 // Get configuration file
 func Get() *Config {
-	lock.RLock()
-	defer lock.RUnlock()
 	return yaml
 }
 
@@ -153,9 +150,7 @@ func Parse(ymlfile string) error {
 		c.Queue.EventQueues = append(c.Queue.EventQueues, prefix+prios[i])
 	}
 
-	lock.Lock()
 	yaml = &c
-	lock.Unlock()
 
 	return nil
 }

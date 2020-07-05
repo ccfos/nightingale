@@ -1,28 +1,34 @@
 version: "3"
+
 volumes: 
   mysql-data:
+
 services:
   nginx:
     image: nginx:stable-alpine
+    network_mode: host
     ports: 
       - 80:80
     volumes: 
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
       - ./pub:/home/n9e/pub
-  api:
+
+  nightingale:
     build: .
-    image: api
+    image: nightingale
 
   monapi:
-    image: api
+    image: nightingale
+    network_mode: host
     restart: always
     command: n9e-monapi
     ports: 
       - 5800:5800
       
   transfer:
-    image: api
+    image: nightingale
+    network_mode: host
     restart: always
     command: n9e-transfer
     ports: 
@@ -30,7 +36,8 @@ services:
       - 5811:5811
 
   tsdb:
-    image: api
+    image: nightingale
+    network_mode: host
     restart: always
     command: n9e-tsdb
     ports: 
@@ -38,7 +45,8 @@ services:
       - 5821:5821
       
   index:
-    image: api
+    image: nightingale
+    network_mode: host
     restart: always
     command: n9e-index
     ports: 
@@ -46,7 +54,8 @@ services:
       - 5831:5831
 
   judge:
-    image: api
+    image: nightingale
+    network_mode: host
     restart: always
     command: n9e-judge
     ports: 
@@ -54,28 +63,23 @@ services:
       - 5841:5841
 
   collector:
-    image: api
+    image: nightingale
+    network_mode: host
     restart: always
     command: n9e-collector
     ports: 
       - 2058:2058
 
-  # web:
-  #   build:
-  #     context: web
-  #   restart: always
-  #   command: npm run dev
-  #   ports: 
-  #     - 8010:8010
-
   redis:
     image: redis
+    network_mode: host
     restart: always
     ports: 
       - 6379:6379
 
   mysql:
     image: mysql:5.7
+    network_mode: host
     restart: always
     environment:
       - MYSQL_ROOT_PASSWORD=1234
@@ -84,5 +88,3 @@ services:
     volumes:
       - ./sql:/docker-entrypoint-initdb.d
       - mysql-data:/var/lib/mysql
-  
-    

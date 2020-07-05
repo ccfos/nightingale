@@ -106,6 +106,7 @@ export default {
   '7天': '7days',
   '30天': '30days',
   '其它': 'other',
+  '自定义': 'custom',
 
   'menu.endpoints': 'Endpoints',
   'menu.endpoints.all': 'All endpoints',
@@ -235,6 +236,13 @@ export default {
   'collect.proc.type.name': 'Process Name',
   'collect.proc.type.input.pattern.msg': 'Cannot contain Chinese',
 
+  'collect.plugin': 'Plugin',
+  'collect.plugin.name.placeholder': 'Description of the collection',
+  'collect.plugin.filepath': 'FilePath',
+  'collect.plugin.params': 'Params',
+  'collect.plugin.filepath.placeholder': 'The absolute path of the plugin',
+  'collect.plugin.env': 'ENV',
+
   'graph.subscribe': 'Subscribe',
   'graph.subscribe.node': 'Node',
   'graph.subscribe.screen': 'Screen',
@@ -260,6 +268,7 @@ export default {
   'graph.config.aggr.max': 'max',
   'graph.config.aggr.min': 'min',
   'graph.config.aggr.group': 'groupBy',
+  'graph.config.comparison': 'comparison',
   'graph.config.series': 'series',
   'graph.config.series.unit': 'pcs',
   'graph.config.cate': 'cate',

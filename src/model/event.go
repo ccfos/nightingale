@@ -44,6 +44,7 @@ type EventDetail struct {
 type EventDetailPoint struct {
 	Timestamp int64   `json:"timestamp"`
 	Value     float64 `json:"value"`
+	Extra     string  `json:"extra"`
 }
 
 type EventAlertUpgrade struct {
@@ -97,7 +98,7 @@ func (e *Event) GetEventDetail() ([]EventDetail, error) {
 }
 
 func EventTotal(stime, etime int64, nodePath, query, eventType string, priorities, sendTypes []string) (int64, error) {
-	session := DB["mon"].Where("etime > ? and etime < ? and node_path = ?", stime, etime, nodePath)
+	session := DB["mon"].Where("etime > ? and etime < ? and (node_path = ? or node_path like ?)", stime, etime, nodePath, nodePath+".%")
 	if len(priorities) > 0 && priorities[0] != "" {
 		session = session.In("priority", priorities)
 	}
@@ -118,7 +119,7 @@ func EventTotal(stime, etime int64, nodePath, query, eventType string, prioritie
 			}
 
 			q := "%" + fields[i] + "%"
-			session = session.Where("sname like ? or endpoint like ? or node_path like ?", q, q, q)
+			session = session.Where("sname like ? or endpoint like ?", q, q)
 		}
 	}
 
@@ -129,7 +130,7 @@ func EventTotal(stime, etime int64, nodePath, query, eventType string, prioritie
 func EventGets(stime, etime int64, nodePath, query, eventType string, priorities, sendTypes []string, limit, offset int) ([]Event, error) {
 	var objs []Event
 
-	session := DB["mon"].Where("etime > ? and etime < ? and node_path = ?", stime, etime, nodePath)
+	session := DB["mon"].Where("etime > ? and etime < ? and (node_path = ? or node_path like ?)", stime, etime, nodePath, nodePath+".%")
 	if len(priorities) > 0 && priorities[0] != "" {
 		session = session.In("priority", priorities)
 	}
@@ -150,7 +151,7 @@ func EventGets(stime, etime int64, nodePath, query, eventType string, priorities
 			}
 
 			q := "%" + fields[i] + "%"
-			session = session.Where("sname like ? or endpoint like ? or node_path like ?", q, q, q)
+			session = session.Where("sname like ? or endpoint like ?", q, q)
 		}
 	}
 

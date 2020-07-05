@@ -54,21 +54,21 @@ func (m *MetricIndex) Set(item dataobj.IndexModel, counter string, now int64) {
 
 type MetricIndexMap struct {
 	sync.RWMutex
-	Reported bool //用途：判断endpoint是否已成功上报给monapi
+	Reported bool // 用于判断 endpoint 是否已成功上报给 monapi
 	Data     map[string]*MetricIndex
 }
 
 func (m *MetricIndexMap) Clean(now, timeDuration int64, endpoint string) {
 	m.Lock()
 	defer m.Unlock()
+
 	for metric, metricIndex := range m.Data {
-		//清理tagkv
+		// 删除过期 tagkv
 		if now-metricIndex.Ts > timeDuration {
 			stats.Counter.Set("metric.clean", 1)
 			delete(m.Data, metric)
 			continue
 		}
-
 		metricIndex.TagkvMap.Clean(now, timeDuration)
 		metricIndex.CounterMap.Clean(now, timeDuration, endpoint, metric)
 	}
@@ -77,8 +77,8 @@ func (m *MetricIndexMap) Clean(now, timeDuration int64, endpoint string) {
 func (m *MetricIndexMap) DelMetric(metric string) {
 	m.Lock()
 	defer m.Unlock()
+
 	delete(m.Data, metric)
-	return
 }
 
 func (m *MetricIndexMap) Len() int {
@@ -99,14 +99,16 @@ func (m *MetricIndexMap) GetMetricIndex(metric string) (*MetricIndex, bool) {
 func (m *MetricIndexMap) SetMetricIndex(metric string, metricIndex *MetricIndex) {
 	m.Lock()
 	defer m.Unlock()
+
 	m.Data[metric] = metricIndex
 }
 
 func (m *MetricIndexMap) GetMetrics() []string {
 	m.RLock()
 	defer m.RUnlock()
+
 	var metrics []string
-	for k, _ := range m.Data {
+	for k := range m.Data {
 		metrics = append(metrics, k)
 	}
 	return metrics
@@ -115,11 +117,13 @@ func (m *MetricIndexMap) GetMetrics() []string {
 func (m *MetricIndexMap) SetReported() {
 	m.Lock()
 	defer m.Unlock()
+
 	m.Reported = true
 }
 
 func (m *MetricIndexMap) IsReported() bool {
 	m.RLock()
 	defer m.RUnlock()
+
 	return m.Reported
 }

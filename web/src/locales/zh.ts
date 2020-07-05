@@ -106,6 +106,7 @@ export default {
   '7天': '7天',
   '30天': '30天',
   '其它': '其它',
+  '自定义': '自定义',
 
   'menu.endpoints': '监控对象',
   'menu.endpoints.all': '全部对象',
@@ -236,6 +237,13 @@ export default {
   'collect.proc.type.name': '进程名',
   'collect.proc.type.input.pattern.msg': '不能包含中文',
 
+  'collect.plugin': '插件',
+  'collect.plugin.name.placeholder': '对采集配置的说明',
+  'collect.plugin.filepath': '文件路径',
+  'collect.plugin.params': '参数',
+  'collect.plugin.filepath.placeholder': '待执行插件所在的绝对路径',
+  'collect.plugin.env': '环境变量',
+
   'graph.subscribe': '订阅图表',
   'graph.subscribe.node': '所属节点',
   'graph.subscribe.screen': '选择大盘',
@@ -261,6 +269,7 @@ export default {
   'graph.config.aggr.max': '最大值',
   'graph.config.aggr.min': '最小值',
   'graph.config.aggr.group': '聚合维度',
+  'graph.config.comparison': '环比',
   'graph.config.series': '曲线',
   'graph.config.series.unit': '条',
   'graph.config.cate': '分类',

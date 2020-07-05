@@ -41,25 +41,30 @@ func reportEndpoint(endpoints []interface{}) {
 		perm := rand.Perm(len(addrs))
 		for i := range perm {
 			url := fmt.Sprintf("http://%s/v1/portal/endpoint", addrs[perm[i]])
-
 			m := map[string][]interface{}{
 				"endpoints": endpoints,
 			}
 
 			var body reportRes
-			err := httplib.Post(url).JSONBodyQuiet(m).SetTimeout(3*time.Second).Header("x-srv-token", "monapi-builtin-token").ToJSON(&body)
+			err := httplib.Post(url).
+				JSONBodyQuiet(m).
+				SetTimeout(3*time.Second).
+				Header("x-srv-token", "monapi-builtin-token").
+				ToJSON(&body)
 			if err != nil {
-				logger.Warningf("curl %s fail: %v. retry", url, err)
-				stats.Counter.Set("report.endpoint.err", 1)
-				continue
-			}
-			if body.Err != "" { //数据库连接出错会出现此情况
-				logger.Warningf("curl %s fail: %s. retry", url, body.Err)
+				logger.Warningf("curl [%s] fail: %v. retry", url, err)
 				stats.Counter.Set("report.endpoint.err", 1)
 				continue
 			}
 
-			//推送成功，将endpoint状态标记为已上报，避免下次index重启时再重新上报
+			// 数据库连接出错会出现此情况
+			if body.Err != "" {
+				logger.Warningf("curl [%s] fail: %v. retry", url, body.Err)
+				stats.Counter.Set("report.endpoint.err", 1)
+				continue
+			}
+
+			// 推送成功，将 endpoint 状态标记为已上报，避免下次 index 重启时再重新上报
 			for _, endpoint := range endpoints {
 				metricIndexMap, _ := IndexDB.GetMetricIndexMap(endpoint.(string))
 				metricIndexMap.SetReported()
@@ -69,6 +74,4 @@ func reportEndpoint(endpoints []interface{}) {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-
-	return
 }

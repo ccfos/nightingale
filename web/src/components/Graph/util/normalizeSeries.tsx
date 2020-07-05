@@ -1,12 +1,14 @@
 import _ from 'lodash';
 import { hexPalette } from '../config';
-import { SerieInterface } from '../interface';
+import { SerieInterface, GraphDataInterface } from '../interface';
 
-export default function normalizeSeries(data: any[]) {
+export default function normalizeSeries(data: any[], graphConfig: GraphDataInterface): SerieInterface[] {
+  const { comparison } = graphConfig;
+  const isComparison = !!_.get(comparison, 'length', 0);
   const series = [] as SerieInterface[];
-  _.each(data, (o, i) => {
-    const { endpoint } = o;
-    const color = getSerieColor(o, i);
+  _.each(_.sortBy(data, ['counter', 'endpoint']), (o, i) => {
+    const { endpoint, comparison } = o;
+    const color = getSerieColor(o, i, isComparison);
     const separatorIdx = o.counter.indexOf('/');
 
     let counter = endpoint ? '' : o.counter;
@@ -14,15 +16,17 @@ export default function normalizeSeries(data: any[]) {
       counter = `,${o.counter.substring(o.counter.indexOf('/') + 1)}`;
     }
 
-    const id = `${endpoint}${counter}`;
+    const id = `${endpoint}${counter}-${comparison}`;
+    const name = `${endpoint}${counter}`;
     const serie = {
       id,
-      name: id,
-      tags: id,
+      name: name,
+      tags: name,
       data: o.values,
       lineWidth: 2,
       color,
       oldColor: color,
+      comparison,
     } as SerieInterface;
     series.push(serie);
   });
@@ -30,7 +34,7 @@ export default function normalizeSeries(data: any[]) {
   return series;
 }
 
-function getSerieColor(serie: SerieInterface, serieIndex: number, isComparison?: boolean): string {
+function getSerieColor(serie: SerieInterface, serieIndex: number, isComparison: boolean): string {
   const { comparison } = serie;
   let color;
   // 同环比固定曲线颜色

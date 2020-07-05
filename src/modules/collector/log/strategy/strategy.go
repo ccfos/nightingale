@@ -14,7 +14,7 @@ var (
 )
 
 func init() {
-	globalStrategy = make(map[int64]*stra.Strategy, 0)
+	globalStrategy = make(map[int64]*stra.Strategy)
 }
 
 func Update() error {
@@ -22,7 +22,7 @@ func Update() error {
 
 	err := UpdateGlobalStrategy(strategies)
 	if err != nil {
-		logger.Errorf("Update Strategy cache error ! [msg:%v]", err)
+		logger.Errorf("Update Strategy cache error:%v\n", err)
 		return err
 	}
 	logger.Infof("Update Strategy end")
@@ -30,7 +30,7 @@ func Update() error {
 }
 
 func UpdateGlobalStrategy(sts []*stra.Strategy) error {
-	tmpStrategyMap := make(map[int64]*stra.Strategy, 0)
+	tmpStrategyMap := make(map[int64]*stra.Strategy)
 	for _, st := range sts {
 		if st.Degree == 0 {
 			st.Degree = 6
@@ -66,7 +66,7 @@ func GetByID(id int64) (*stra.Strategy, error) {
 	st, ok := globalStrategy[id]
 
 	if !ok {
-		return nil, fmt.Errorf("ID : %d is not exists in global Cache")
+		return nil, fmt.Errorf("ID : %d is not exists in global Cache", id)
 	}
 	return st, nil
 

@@ -71,8 +71,6 @@ func (g *Tsdb) Query(param dataobj.TsdbQueryParam, resp *dataobj.TsdbQueryRespon
 		if err != nil {
 			logger.Debug("get %v cache by %v err:%v", seriesID, param, err)
 			stats.Counter.Set("query.miss", 1)
-
-			return nil
 		}
 		for _, iter := range iters {
 			for iter.Next() {
@@ -410,7 +408,7 @@ func getRRD(f dataobj.RRDFile, worker chan struct{}, dataChan chan *dataobj.File
 
 	chunks, exists := cache.ChunksSlots.GetChunks(key)
 	if exists {
-		m := make(map[interface{}][]*cache.Chunk)
+		m := make(map[string][]*cache.Chunk)
 		m[key] = chunks
 		rrdtool.FlushRRD(m)
 	}

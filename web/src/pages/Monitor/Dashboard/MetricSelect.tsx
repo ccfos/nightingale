@@ -9,7 +9,7 @@ import { prefixCls, metricMap, metricsMeta } from './config';
 import { filterMetrics, matchMetrics } from './utils';
 
 interface Props {
-  nid: number,
+  nid?: number,
   hosts: Hosts,
   selectedHosts: Hosts,
   metrics: string[],

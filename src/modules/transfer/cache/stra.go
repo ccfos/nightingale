@@ -15,16 +15,16 @@ var (
 	StraMap = &SafeStraMap{M: make(map[string]map[string][]*model.Stra)}
 )
 
-func (this *SafeStraMap) ReInit(m map[string]map[string][]*model.Stra) {
-	this.Lock()
-	defer this.Unlock()
-	this.M = m
+func (s *SafeStraMap) ReInit(m map[string]map[string][]*model.Stra) {
+	s.Lock()
+	defer s.Unlock()
+	s.M = m
 }
 
-func (this *SafeStraMap) GetByKey(key string) []*model.Stra {
-	this.RLock()
-	defer this.RUnlock()
-	m, exists := this.M[key[0:2]]
+func (s *SafeStraMap) GetByKey(key string) []*model.Stra {
+	s.RLock()
+	defer s.RUnlock()
+	m, exists := s.M[key[0:2]]
 	if !exists {
 		return []*model.Stra{}
 	}
@@ -32,11 +32,11 @@ func (this *SafeStraMap) GetByKey(key string) []*model.Stra {
 	return m[key]
 }
 
-func (this *SafeStraMap) GetAll() []*model.Stra {
-	this.RLock()
-	defer this.RUnlock()
-	stras := []*model.Stra{}
-	for _, m := range this.M {
+func (s *SafeStraMap) GetAll() []*model.Stra {
+	s.RLock()
+	defer s.RUnlock()
+	stras := make([]*model.Stra, 0)
+	for _, m := range s.M {
 		for _, stra := range m {
 			stras = append(stras, stra...)
 		}

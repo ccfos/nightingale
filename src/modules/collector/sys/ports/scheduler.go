@@ -5,6 +5,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/toolkits/pkg/logger"
+
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/model"
 	"github.com/didi/nightingale/src/modules/collector/sys/funcs"
@@ -24,27 +26,27 @@ func NewPortScheduler(p *model.PortCollect) *PortScheduler {
 	return &scheduler
 }
 
-func (this *PortScheduler) Schedule() {
+func (p *PortScheduler) Schedule() {
 	go func() {
 		for {
 			select {
-			case <-this.Ticker.C:
-				PortCollect(this.Port)
-			case <-this.Quit:
-				this.Ticker.Stop()
+			case <-p.Ticker.C:
+				PortCollect(p.Port)
+			case <-p.Quit:
+				p.Ticker.Stop()
 				return
 			}
 		}
 	}()
 }
 
-func (this *PortScheduler) Stop() {
-	close(this.Quit)
+func (p *PortScheduler) Stop() {
+	close(p.Quit)
 }
 
 func PortCollect(p *model.PortCollect) {
 	value := 0
-	if isListening(p.Port, p.Timeout) {
+	if isListening(p.Port) {
 		value = 1
 	}
 
@@ -55,10 +57,27 @@ func PortCollect(p *model.PortCollect) {
 	funcs.Push([]*dataobj.MetricValue{item})
 }
 
-func isListening(port int, timeout int) bool {
+func isListening(port int) bool {
+	tcpAddress, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf(":%v", port))
+	if err != nil {
+		logger.Errorf("net.ResolveTCPAddr(tcp4, :%v) fail: %v", port, err)
+		return false
+	}
+
+	listener, err := net.ListenTCP("tcp", tcpAddress)
+	if err != nil {
+		logger.Debugf("cannot listen :%v(%v), so we think :%v is already listening", port, err, port)
+		return true
+	}
+	listener.Close()
+
+	return false
+}
+
+func isListen(port, timeout int, ip string) bool {
 	var conn net.Conn
 	var err error
-	addr := fmt.Sprintf("127.0.0.1:%d", port)
+	addr := fmt.Sprintf("%s:%d", ip, port)
 	if timeout <= 0 {
 		// default timeout 3 second
 		timeout = 3

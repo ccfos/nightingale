@@ -8,13 +8,14 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+// Counter: sorted tags
 type CounterTsMap struct {
 	sync.RWMutex
 	M map[string]int64 `json:"counters"` // map[counter]ts
 }
 
 func NewCounterTsMap() *CounterTsMap {
-	return &CounterTsMap{M: make(map[string]int64, 0)}
+	return &CounterTsMap{M: make(map[string]int64)}
 }
 
 func (c *CounterTsMap) Set(counter string, ts int64) {
@@ -31,7 +32,7 @@ func (c *CounterTsMap) Clean(now, timeDuration int64, endpoint, metric string) {
 			delete(c.M, counter)
 			stats.Counter.Set("counter.clean", 1)
 
-			logger.Debugf("clean index endpoint:%s metric:%s counter:%s", endpoint, metric, counter)
+			logger.Debugf("clean endpoint index:%s metric:%s counter:%s", endpoint, metric, counter)
 		}
 	}
 }
@@ -39,7 +40,11 @@ func (c *CounterTsMap) Clean(now, timeDuration int64, endpoint, metric string) {
 func (c *CounterTsMap) GetCounters() map[string]int64 {
 	c.RLock()
 	defer c.RUnlock()
-	return c.M
+	m := make(map[string]int64)
+	for k, v := range c.M {
+		m[k] = v
+	}
+	return m
 }
 
 func (c *CounterTsMap) Len() int {

@@ -317,11 +317,13 @@ class NILayout extends Component<Props & RouteComponentProps & WrappedComponentP
                   <Menu.Item>
                     <Link to={{ pathname: '/profile' }}>
                       <Icon type="setting" className="mr10" />
-                      个人设置
+                      {language === 'zh' ? '个人设置' : 'setting'}
                     </Link>
                   </Menu.Item>
                   <Menu.Item>
-                    <a onClick={this.handleLogoutLinkClick}><Icon type="logout" className="mr10" />退出登录</a>
+                    <a onClick={this.handleLogoutLinkClick}><Icon type="logout" className="mr10" />
+                      {language === 'zh' ? '退出登录' : 'logout'}
+                    </a>
                   </Menu.Item>
                 </Menu>
               }>

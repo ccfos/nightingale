@@ -9,15 +9,11 @@ import (
 	"time"
 )
 
-func GetNowPath(path string) string {
-	return getLogPath(path, true)
-}
-
 func GetCurrentPath(path string) string {
-	return getLogPath(path, false)
+	return getLogPath(path)
 }
 
-func getLogPath(path string, isnext bool) string {
+func getLogPath(path string) string {
 	pat := `(\$\{(%[YmdH][^\/]*)+\})`
 	reg := regexp.MustCompile(pat)
 	return reg.ReplaceAllStringFunc(path, func(s string) string {
@@ -29,16 +25,6 @@ func getLogPath(path string, isnext bool) string {
 		})
 		name := strings.Split(strings.TrimLeft(stringv, "%"), "%")
 		now := time.Now()
-		if isnext {
-			switch name[len(name)-1] {
-			case "Y", "m", "d":
-				if now.Hour() == 23 {
-					now = time.Now() //.Add(time.Hour)
-				}
-			case "H":
-				now = time.Now() //.Add(time.Hour)
-			}
-		}
 		for k, v := range name {
 			if strings.Contains(v, "Y") {
 				if strings.HasPrefix(v, "Y") {

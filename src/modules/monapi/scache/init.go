@@ -90,7 +90,7 @@ func syncCollects() {
 
 	ports, err := model.GetPortCollects()
 	if err != nil {
-		logger.Warningf("get port collects err:%v %v", err)
+		logger.Warningf("get port collects err:%v", err)
 	}
 
 	for _, p := range ports {
@@ -120,7 +120,7 @@ func syncCollects() {
 
 	procs, err := model.GetProcCollects()
 	if err != nil {
-		logger.Warningf("get port collects err:%v %v", err)
+		logger.Warningf("get port collects err:%v", err)
 	}
 
 	for _, p := range procs {
@@ -149,7 +149,7 @@ func syncCollects() {
 
 	logConfigs, err := model.GetLogCollects()
 	if err != nil {
-		logger.Warningf("get log collects err:%v %v", err)
+		logger.Warningf("get log collects err:%v", err)
 	}
 
 	for _, l := range logConfigs {
@@ -173,6 +173,37 @@ func syncCollects() {
 				c = model.NewCollect()
 			}
 			c.Logs[l.Name] = l
+			collectMap[name] = c
+		}
+	}
+
+	pluginConfigs, err := model.GetPluginCollects()
+	if err != nil {
+		logger.Warningf("get log collects err:%v", err)
+	}
+
+	for _, p := range pluginConfigs {
+		leafNids, err := GetLeafNids(p.Nid, []int64{})
+		if err != nil {
+			logger.Warningf("get LeafNids err:%v %v", err, p)
+			continue
+		}
+
+		Endpoints, err := model.EndpointUnderLeafs(leafNids)
+		if err != nil {
+			logger.Warningf("get endpoints err:%v %v", err, p)
+			continue
+		}
+
+		for _, endpoint := range Endpoints {
+			name := endpoint.Ident
+			c, exists := collectMap[name]
+			if !exists {
+				c = model.NewCollect()
+			}
+
+			key := fmt.Sprintf("%s-%d", p.Name, p.Nid)
+			c.Plugins[key] = p
 			collectMap[name] = c
 		}
 	}

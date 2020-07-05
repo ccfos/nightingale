@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/modules/transfer/backend"
@@ -14,13 +15,14 @@ import (
 )
 
 func PushData(c *gin.Context) {
+	now := time.Now().Unix()
 	if c.Request.ContentLength == 0 {
 		render.Message(c, "blank body")
 		return
 	}
 
-	recvMetricValues := []*dataobj.MetricValue{}
-	metricValues := []*dataobj.MetricValue{}
+	recvMetricValues := make([]*dataobj.MetricValue, 0)
+	metricValues := make([]*dataobj.MetricValue, 0)
 	errors.Dangerous(c.ShouldBindJSON(&recvMetricValues))
 
 	var msg string
@@ -28,7 +30,7 @@ func PushData(c *gin.Context) {
 		logger.Debug("->recv: ", v)
 		stats.Counter.Set("points.in", 1)
 
-		err := v.CheckValidity()
+		err := v.CheckValidity(now)
 		if err != nil {
 			stats.Counter.Set("points.in.err", 1)
 			msg += fmt.Sprintf("recv metric %v err:%v\n", v, err)
@@ -46,11 +48,22 @@ func PushData(c *gin.Context) {
 		backend.Push2JudgeSendQueue(metricValues)
 	}
 
+	if backend.Config.Influxdb.Enabled {
+		backend.Push2InfluxdbSendQueue(metricValues)
+	}
+
+	if backend.Config.OpenTsdb.Enabled {
+		backend.Push2OpenTsdbSendQueue(metricValues)
+	}
+
+	if backend.Config.Kafka.Enabled {
+		backend.Push2KafkaSendQueue(metricValues)
+	}
+
 	if msg != "" {
 		render.Message(c, msg)
 		return
 	}
 
 	render.Data(c, "ok", nil)
-	return
 }

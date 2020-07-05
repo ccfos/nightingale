@@ -248,7 +248,7 @@ class Detail extends Component<RouteComponentProps & WrappedComponentProps> {
                       <Table
                         style={{
                           display: 'block',
-                          marginLeft: 80,
+                          marginLeft: 100,
                         }}
                         size="small"
                         rowKey="timestamp"
@@ -264,6 +264,10 @@ class Detail extends Component<RouteComponentProps & WrappedComponentProps> {
                           }, {
                             title: <FormattedMessage id="event.table.scene.value" />,
                             dataIndex: 'value',
+                            width: 100,
+                          }, {
+                            title: 'Extra',
+                            dataIndex: 'extra',
                           },
                         ]}
                         pagination={false}

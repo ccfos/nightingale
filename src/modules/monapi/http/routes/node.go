@@ -35,10 +35,6 @@ func nodePost(c *gin.Context) {
 		errors.Bomb("leaf invalid")
 	}
 
-	if !str.IsMatch(f.Name, `^[a-zA-Z0-9\-]+$`) {
-		errors.Bomb("name valid characters: [a-zA-Z0-9] and -")
-	}
-
 	parent, err := model.NodeGet("id", f.Pid)
 	errors.Dangerous(err)
 
@@ -72,10 +68,6 @@ type nodeNameForm struct {
 func nodeNamePut(c *gin.Context) {
 	var f nodeNameForm
 	errors.Dangerous(c.ShouldBind(&f))
-
-	if !str.IsMatch(f.Name, `^[a-zA-Z0-9\-]+$`) {
-		errors.Bomb("name valid characters: [a-zA-Z0-9] and -")
-	}
 
 	node, err := model.NodeGet("id", urlParamInt64(c, "id"))
 	errors.Dangerous(err)

@@ -255,6 +255,26 @@ CREATE TABLE `log_collect` (
   KEY `idx_collect_type` (`collect_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT 'log collect';
 
+CREATE TABLE `plugin_collect` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `nid` bigint(20) unsigned NOT NULL DEFAULT '0' COMMENT 'nid',
+  `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'name',
+  `collect_type` varchar(64) NOT NULL DEFAULT 'PROC' COMMENT 'type',
+  `step` int(11) NOT NULL DEFAULT '0' COMMENT '采集周期',
+  `file_path` varchar(255) NOT NULL COMMENT 'file_path',
+  `params` varchar(255) NOT NULL COMMENT 'params',
+  `stdin` text NOT NULL COMMENT 'stdin',
+  `env` text NOT NULL COMMENT 'env',
+  `comment` varchar(512) NOT NULL DEFAULT '' COMMENT 'comment',
+  `creator` varchar(255) NOT NULL DEFAULT '' COMMENT 'creator',
+  `created` datetime NOT NULL  COMMENT 'created',
+  `last_updator` varchar(128) NOT NULL DEFAULT '' COMMENT 'last_updator',
+  `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_nid` (`nid`),
+  KEY `idx_collect_type` (`collect_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT 'plugin collect';
+
 CREATE TABLE `collect_hist` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
   `cid` bigint(20) NOT NULL DEFAULT '0' COMMENT 'collect id',

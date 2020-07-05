@@ -165,7 +165,7 @@ func ToPushQueue(strategy *stra.Strategy, tms int64, pointMap map[string]*PointC
 
 		var tags map[string]string
 		if tagstring == "null" {
-			tags = make(map[string]string, 0)
+			tags = make(map[string]string)
 		} else {
 			tags = dataobj.DictedTagstring(tagstring)
 		}

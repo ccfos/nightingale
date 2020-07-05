@@ -9,6 +9,7 @@ import { normalizeTreeData, renderTreeNodes } from '@cpts/Layout/utils';
 import request from '@common/request';
 import api from '@common/api';
 import Tagkv from './Tagkv';
+import Comparison from './Comparison';
 import * as config from '../config';
 import { getTimeLabelVal } from '../util';
 import hasDtag from '../util/hasDtag';
@@ -159,7 +160,7 @@ export default class GraphConfigForm extends Component<Props, State> {
 
   async fetchEndpoints(metricObj: MetricInterface) {
     try {
-      const endpoints = await services.fetchEndPoints(metricObj.selectedNid, this.context.habitsId);
+      const endpoints = await services.fetchEndPoints(metricObj.selectedNid as any);
       let selectedEndpoint = metricObj.selectedEndpoint || ['=all'];
       if (!hasDtag(selectedEndpoint)) {
         selectedEndpoint = _.intersection(endpoints, metricObj.selectedEndpoint);
@@ -211,6 +212,18 @@ export default class GraphConfigForm extends Component<Props, State> {
     } catch (e) {
       return e;
     }
+  }
+
+  handleCommonFieldChange = (changedObj: any) => {
+    const newChangedObj: any = {};
+    _.each(changedObj, (val, key) => {
+      newChangedObj[key] = {
+        $set: val,
+      };
+    });
+    this.setState(update(this.state, {
+      graphConfig: newChangedObj,
+    }));
   }
 
   handleNsChange = async (selectedNid: number[], currentMetricObj: MetricInterface) => {
@@ -346,7 +359,7 @@ export default class GraphConfigForm extends Component<Props, State> {
     }
   }
 
-  handleTagkvChange = async (currentMetric: string, tagk: string, tagv: string) => {
+  handleTagkvChange = async (currentMetric: string, tagk: string, tagv: string[]) => {
     const { metrics } = this.state.graphConfig;
     const currentMetricObj = _.cloneDeep(_.find(metrics, { selectedMetric: currentMetric }));
     const currentMetricObjIndex = _.findIndex(metrics, { selectedMetric: currentMetric });
@@ -491,7 +504,7 @@ export default class GraphConfigForm extends Component<Props, State> {
     }));
   }
 
-  handleDateChange = (key: string, d: moment.Moment) => {
+  handleDateChange = (key: string, d: moment.Moment | null) => {
     const val = moment.isMoment(d) ? d.format('x') : null;
     this.setState(update(this.state, {
       graphConfig: {
@@ -834,6 +847,30 @@ export default class GraphConfigForm extends Component<Props, State> {
                   />,
                 ] : false
             }
+          </FormItem>
+          <FormItem
+            labelCol={{ span: 3 }}
+            wrapperCol={{ span: 21 }}
+            label={<FormattedMessage id="graph.config.comparison" />}
+            style={{ marginBottom: 0 }}
+            >
+            <Comparison
+              size="default"
+              comparison={graphConfig.comparison}
+              relativeTimeComparison={graphConfig.relativeTimeComparison}
+              comparisonOptions={graphConfig.comparisonOptions}
+              graphConfig={graphConfig}
+              onChange={(values: any) => {
+                this.handleCommonFieldChange({
+                  start: values.start,
+                  end: values.end,
+                  now: values.now,
+                  comparison: values.comparison,
+                  relativeTimeComparison: values.relativeTimeComparison,
+                  comparisonOptions: values.comparisonOptions,
+                });
+              }}
+            />
           </FormItem>
           {this.renderMetrics()}
           <FormItem

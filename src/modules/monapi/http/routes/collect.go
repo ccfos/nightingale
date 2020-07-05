@@ -48,10 +48,12 @@ func collectPost(c *gin.Context) {
 			nid := collect.Nid
 			name := collect.Name
 
-			old, _ := model.GetCollectByName(obj.Type, name)
-			if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid {
+			old, err := model.GetCollectByNameAndNid(obj.Type, name, nid)
+			errors.Dangerous(err)
+			if old != nil {
 				errors.Bomb("同节点下策略名称 %s 已存在", name)
 			}
+
 			errors.Dangerous(model.CreateCollect(obj.Type, creator, collect))
 
 		case "proc":
@@ -73,8 +75,9 @@ func collectPost(c *gin.Context) {
 			nid := collect.Nid
 			name := collect.Name
 
-			old, _ := model.GetCollectByName(obj.Type, name)
-			if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid {
+			old, err := model.GetCollectByNameAndNid(obj.Type, name, nid)
+			errors.Dangerous(err)
+			if old != nil {
 				errors.Bomb("同节点下策略名称 %s 已存在", name)
 			}
 			errors.Dangerous(model.CreateCollect(obj.Type, creator, collect))
@@ -98,10 +101,39 @@ func collectPost(c *gin.Context) {
 			nid := collect.Nid
 			name := collect.Name
 
-			old, _ := model.GetCollectByName(obj.Type, name)
-			if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid {
+			old, err := model.GetCollectByNameAndNid(obj.Type, name, nid)
+			errors.Dangerous(err)
+			if old != nil {
 				errors.Bomb("同节点下策略名称 %s 已存在", name)
 			}
+
+			errors.Dangerous(model.CreateCollect(obj.Type, creator, collect))
+
+		case "plugin":
+			collect := new(model.PluginCollect)
+
+			b, err := json.Marshal(obj.Data)
+			if err != nil {
+				errors.Bomb("marshal body %s err:%v", obj, err)
+			}
+
+			err = json.Unmarshal(b, collect)
+			if err != nil {
+				errors.Bomb("unmarshal body %s err:%v", string(b), err)
+			}
+
+			collect.Creator = creator
+			collect.LastUpdator = creator
+
+			nid := collect.Nid
+			name := collect.Name
+
+			old, err := model.GetCollectByNameAndNid(obj.Type, name, nid)
+			errors.Dangerous(err)
+			if old != nil {
+				errors.Bomb("同节点下策略名称 %s 已存在", name)
+			}
+
 			errors.Dangerous(model.CreateCollect(obj.Type, creator, collect))
 
 		default:
@@ -131,7 +163,7 @@ func collectsGet(c *gin.Context) {
 	var resp []interface{}
 
 	nids := []int64{nid}
-	types := []string{"port", "proc", "log"}
+	types := []string{"port", "proc", "log", "plugin"}
 
 	for _, t := range types {
 		collects, err := model.GetCollectByNid(t, nids)
@@ -183,9 +215,9 @@ func collectPut(c *gin.Context) {
 		collect.Creator = creator
 		collect.LastUpdator = creator
 
-		old, _ := model.GetCollectByName(recv.Type, name)
-		if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid &&
-			tmpId != collect.Id {
+		old, err := model.GetCollectByNameAndNid(recv.Type, name, nid)
+		errors.Dangerous(err)
+		if old != nil && old.(*model.PortCollect).Id != tmpId {
 			errors.Bomb("同节点下策略名称 %s 已存在", name)
 		}
 
@@ -222,9 +254,9 @@ func collectPut(c *gin.Context) {
 		collect.Creator = creator
 		collect.LastUpdator = creator
 
-		old, _ := model.GetCollectByName(recv.Type, name)
-		if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid &&
-			tmpId != collect.Id {
+		old, err := model.GetCollectByNameAndNid(recv.Type, name, nid)
+		errors.Dangerous(err)
+		if old != nil && old.(*model.ProcCollect).Id != tmpId {
 			errors.Bomb("同节点下策略名称 %s 已存在", name)
 		}
 
@@ -262,9 +294,48 @@ func collectPut(c *gin.Context) {
 		collect.Creator = creator
 		collect.LastUpdator = creator
 
-		old, _ := model.GetCollectByName(recv.Type, name)
-		if old != nil && int64(old.(map[string]interface{})["nid"].(float64)) == nid &&
-			tmpId != collect.Id {
+		old, err := model.GetCollectByNameAndNid(recv.Type, name, nid)
+		errors.Dangerous(err)
+		if old != nil && old.(*model.LogCollect).Id != tmpId {
+			errors.Bomb("同节点下策略名称 %s 已存在", name)
+		}
+
+		errors.Dangerous(collect.Update())
+		renderData(c, "ok", nil)
+		return
+	case "plugin":
+		collect := new(model.PluginCollect)
+
+		b, err := json.Marshal(recv.Data)
+		if err != nil {
+			errors.Bomb("marshal body %s err:%v", recv, err)
+		}
+
+		err = json.Unmarshal(b, collect)
+		if err != nil {
+			errors.Bomb("unmarshal body %s err:%v", string(b), err)
+		}
+
+		nid := collect.Nid
+		name := collect.Name
+
+		//校验采集是否存在
+		obj, err := model.GetCollectById(recv.Type, collect.Id) //id找不到的情况
+		if err != nil {
+			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+		}
+
+		tmpId := obj.(*model.PluginCollect).Id
+		if tmpId == 0 {
+			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+		}
+
+		collect.Creator = creator
+		collect.LastUpdator = creator
+
+		old, err := model.GetCollectByNameAndNid(recv.Type, name, nid)
+		errors.Dangerous(err)
+		if old != nil && old.(*model.PluginCollect).Id != tmpId {
 			errors.Bomb("同节点下策略名称 %s 已存在", name)
 		}
 
@@ -444,6 +515,9 @@ func GetPatAndTimeFormat(tf string) (string, string) {
 	case "mmdd HH:MM:SS":
 		pat = `(0[1-9]|1[012])([012][0-9]|3[01])\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
 		timeFormat = "0102 15:04:05"
+	case "dd/mm/yyyy:HH:MM:SS":
+		pat = `([012][0-9]|3[01])/(0[1-9]|1[012])/(2[0-9]{3}):([01][0-9]|2[0-4])(:[012345][0-9]){2}`
+		timeFormat = "02/01/2006:15:04:05"
 	default:
 		logger.Errorf("match time pac failed : [timeFormat:%s]", tf)
 		return "", ""

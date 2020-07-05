@@ -29,6 +29,7 @@ _test
 /build
 /dist
 /etc/*.local.yml
+/etc/log/log.test.json
 /data*
 
 .idea
@@ -47,5 +48,6 @@ _test
 
 /web/node_modules
 /web/.cache-loader
+/web/yarn.lock
 
 
