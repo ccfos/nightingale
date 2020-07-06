@@ -97,6 +97,10 @@ func main() {
 	go worker.PusherStart()
 	go worker.Zeroize()
 
+	if cfg.Logger.Level != "DEBUG" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	r := gin.New()
 	routes.Config(r)
 	http.Start(r, "collector", cfg.Logger.Level)
