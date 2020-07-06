@@ -74,6 +74,9 @@ func startSendTasks() {
 
 	}
 
+	if Config.Kafka.Enabled {
+		go send2KafkaTask()
+	}
 }
 
 func Send2TsdbTask(Q *list.SafeListLimited, node, addr string, concurrent int) {
@@ -494,4 +497,39 @@ func convert2OpenTsdbItem(d *dataobj.MetricValue) *dataobj.OpenTsdbItem {
 	t.Timestamp = d.Timestamp
 	t.Value = d.Value
 	return &t
+}
+
+func Push2KafkaSendQueue(items []*dataobj.MetricValue) {
+	for _, item := range items {
+		KafkaQueue <- convert2KafkaItem(item)
+	}
+}
+func convert2KafkaItem(d *dataobj.MetricValue) KafkaData {
+	m := make(KafkaData)
+	m["metric"] = d.Metric
+	m["value"] = d.Value
+	m["timestamp"] = d.Timestamp
+	m["value"] = d.Value
+	m["step"] = d.Step
+	m["endpoint"] = d.Endpoint
+	m["tags"] = d.Tags
+	return m
+}
+
+func send2KafkaTask() {
+	kf, err := NewKfClient(Config.Kafka)
+	if err != nil {
+		logger.Errorf("init kafka client fail: %v", err)
+		return
+	}
+	defer kf.Close()
+	for {
+		kafkaItem := <-KafkaQueue
+		stats.Counter.Set("points.out.kafka", 1)
+		err = kf.Send(kafkaItem)
+		if err != nil {
+			stats.Counter.Set("points.out.kafka.err", 1)
+			logger.Errorf("send %v to kafka %s fail: %v", kafkaItem, Config.Kafka.BrokersPeers, err)
+		}
+	}
 }

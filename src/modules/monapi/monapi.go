@@ -88,6 +88,7 @@ func main() {
 	go cron.SyncMaskconfLoop()
 	go cron.SyncStraLoop()
 	go cron.CleanStraLoop()
+	go cron.CleanCollectLoop()
 	go cron.EventConsumer()
 	go cron.CallbackConsumer()
 	go cron.CleanEventLoop()

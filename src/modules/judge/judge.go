@@ -80,6 +80,10 @@ func main() {
 	go judge.NodataJudge(cfg.NodataConcurrency)
 	go report.Init(cfg.Report, "monapi")
 
+	if cfg.Logger.Level != "DEBUG" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	r := gin.New()
 	routes.Config(r)
 	go http.Start(r, "judge", cfg.Logger.Level)

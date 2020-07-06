@@ -160,7 +160,7 @@ export default class GraphConfigForm extends Component<Props, State> {
 
   async fetchEndpoints(metricObj: MetricInterface) {
     try {
-      const endpoints = await services.fetchEndPoints(metricObj.selectedNid, this.context.habitsId);
+      const endpoints = await services.fetchEndPoints(metricObj.selectedNid as any);
       let selectedEndpoint = metricObj.selectedEndpoint || ['=all'];
       if (!hasDtag(selectedEndpoint)) {
         selectedEndpoint = _.intersection(endpoints, metricObj.selectedEndpoint);
@@ -214,8 +214,8 @@ export default class GraphConfigForm extends Component<Props, State> {
     }
   }
 
-  handleCommonFieldChange = (changedObj) => {
-    const newChangedObj = {};
+  handleCommonFieldChange = (changedObj: any) => {
+    const newChangedObj: any = {};
     _.each(changedObj, (val, key) => {
       newChangedObj[key] = {
         $set: val,
@@ -359,7 +359,7 @@ export default class GraphConfigForm extends Component<Props, State> {
     }
   }
 
-  handleTagkvChange = async (currentMetric: string, tagk: string, tagv: string) => {
+  handleTagkvChange = async (currentMetric: string, tagk: string, tagv: string[]) => {
     const { metrics } = this.state.graphConfig;
     const currentMetricObj = _.cloneDeep(_.find(metrics, { selectedMetric: currentMetric }));
     const currentMetricObjIndex = _.findIndex(metrics, { selectedMetric: currentMetric });
@@ -504,7 +504,7 @@ export default class GraphConfigForm extends Component<Props, State> {
     }));
   }
 
-  handleDateChange = (key: string, d: moment.Moment) => {
+  handleDateChange = (key: string, d: moment.Moment | null) => {
     const val = moment.isMoment(d) ? d.format('x') : null;
     this.setState(update(this.state, {
       graphConfig: {
@@ -860,7 +860,7 @@ export default class GraphConfigForm extends Component<Props, State> {
               relativeTimeComparison={graphConfig.relativeTimeComparison}
               comparisonOptions={graphConfig.comparisonOptions}
               graphConfig={graphConfig}
-              onChange={(values) => {
+              onChange={(values: any) => {
                 this.handleCommonFieldChange({
                   start: values.start,
                   end: values.end,

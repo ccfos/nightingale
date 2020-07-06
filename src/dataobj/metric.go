@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	GAUGE   = "GAUGE"
-	COUNTER = "COUNTER"
-	DERIVE  = "DERIVE"
-	SPLIT   = "/"
+	GAUGE    = "GAUGE"
+	COUNTER  = "COUNTER"
+	SUBTRACT = "SUBTRACT"
+	DERIVE   = "DERIVE"
+	SPLIT    = "/"
 )
 
 type MetricValue struct {
@@ -86,7 +87,7 @@ func (m *MetricValue) CheckValidity(now int64) (err error) {
 		m.CounterType = GAUGE
 	}
 
-	if m.CounterType != GAUGE && m.CounterType != COUNTER {
+	if m.CounterType != GAUGE && m.CounterType != COUNTER && m.CounterType != SUBTRACT {
 		err = fmt.Errorf("wrong counter type")
 		return
 	}
@@ -108,13 +109,29 @@ func (m *MetricValue) CheckValidity(now int64) (err error) {
 		}
 	}
 
-	if len(m.Metric) > 255 {
+	if len(m.TagsMap) > 12 {
+		err = fmt.Errorf("tagkv count is too large > 12")
+	}
+
+	if len(m.Metric) > 128 {
 		err = fmt.Errorf("len(m.Metric) is too large")
 		return
 	}
 
+	for k, v := range m.TagsMap {
+		delete(m.TagsMap, k)
+		k = filterString(k)
+		v = filterString(v)
+		if len(k) == 0 || len(v) == 0 {
+			err = fmt.Errorf("tag key and value should not be empty")
+			return
+		}
+
+		m.TagsMap[k] = v
+	}
+
 	m.Tags = SortedTags(m.TagsMap)
-	if len(m.Tags) > 255 {
+	if len(m.Tags) > 512 {
 		err = fmt.Errorf("len(m.Tags) is too large")
 		return
 	}
@@ -171,6 +188,37 @@ func HasReservedWords(str string) bool {
 			r == '='
 	})
 	return idx != -1
+}
+
+func filterString(str string) string {
+	if -1 == strings.IndexFunc(str,
+		func(r rune) bool {
+			return r == '\t' ||
+				r == '\r' ||
+				r == '\n' ||
+				r == ',' ||
+				r == ' ' ||
+				r == ':' ||
+				r == '='
+		}) {
+
+		return str
+	}
+
+	return strings.Map(func(r rune) rune {
+		if r == '\t' ||
+			r == '\r' ||
+			r == '\n' ||
+			r == ',' ||
+			r == ' ' ||
+			r == ':' ||
+			r == '=' {
+			return '_'
+		}
+		return r
+	}, str)
+
+	return str
 }
 
 func SortedTags(tags map[string]string) string {

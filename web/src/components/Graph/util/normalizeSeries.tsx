@@ -16,11 +16,12 @@ export default function normalizeSeries(data: any[], graphConfig: GraphDataInter
       counter = `,${o.counter.substring(o.counter.indexOf('/') + 1)}`;
     }
 
-    const id = `${endpoint}${counter}`;
+    const id = `${endpoint}${counter}-${comparison}`;
+    const name = `${endpoint}${counter}`;
     const serie = {
       id,
-      name: id,
-      tags: id,
+      name: name,
+      tags: name,
       data: o.values,
       lineWidth: 2,
       color,
