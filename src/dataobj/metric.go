@@ -198,7 +198,6 @@ func filterString(str string) string {
 				r == '\n' ||
 				r == ',' ||
 				r == ' ' ||
-				r == ':' ||
 				r == '='
 		}) {
 
@@ -211,7 +210,6 @@ func filterString(str string) string {
 			r == '\n' ||
 			r == ',' ||
 			r == ' ' ||
-			r == ':' ||
 			r == '=' {
 			return '_'
 		}
