@@ -25,7 +25,6 @@ func Start(r *gin.Engine, mod string, level string) {
 	recoveryMid := middleware.Recovery()
 
 	if level != "DEBUG" {
-		gin.SetMode(gin.ReleaseMode)
 		middleware.DisableConsoleColor()
 	} else {
 		srv.WriteTimeout = 120 * time.Second
