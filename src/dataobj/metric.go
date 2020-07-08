@@ -109,8 +109,8 @@ func (m *MetricValue) CheckValidity(now int64) (err error) {
 		}
 	}
 
-	if len(m.TagsMap) > 12 {
-		err = fmt.Errorf("tagkv count is too large > 12")
+	if len(m.TagsMap) > 20 {
+		err = fmt.Errorf("tagkv count is too large > 20")
 	}
 
 	if len(m.Metric) > 128 {
