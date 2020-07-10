@@ -40,24 +40,19 @@ func PushData(c *gin.Context) {
 		metricValues = append(metricValues, v)
 	}
 
-	if backend.Config.Enabled {
-		backend.Push2TsdbSendQueue(metricValues)
-	}
+	// send to judge
+	backend.Push2JudgeQueue(metricValues)
 
-	if backend.Config.Enabled {
-		backend.Push2JudgeSendQueue(metricValues)
-	}
-
-	if backend.Config.Influxdb.Enabled {
-		backend.Push2InfluxdbSendQueue(metricValues)
-	}
-
-	if backend.Config.OpenTsdb.Enabled {
-		backend.Push2OpenTsdbSendQueue(metricValues)
-	}
-
-	if backend.Config.Kafka.Enabled {
-		backend.Push2KafkaSendQueue(metricValues)
+	// send to push endpoints
+	pushEndpoints, err := backend.GetPushEndpoints()
+	if err != nil {
+		logger.Errorf("Could not find PushEndpoint ")
+		render.Data(c, "error", err)
+		return
+	} else {
+		for _, pushendpoint := range pushEndpoints {
+			pushendpoint.Push2Queue(metricValues)
+		}
 	}
 
 	if msg != "" {

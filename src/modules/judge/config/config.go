@@ -49,6 +49,7 @@ func Parse(conf string) error {
 		"connTimeout":      1000,
 		"callTimeout":      2000,
 		"indexCallTimeout": 2000,
+		"indexMod":         "index",
 		"indexPath":        "/api/index/counter/clude",
 	})
 

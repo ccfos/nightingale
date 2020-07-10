@@ -41,7 +41,7 @@ func getStrategy() {
 	perm := rand.Perm(len(addrs))
 	var err error
 	for i := range perm {
-		url := fmt.Sprintf("http://%s%s", addrs[perm[i]], backend.Config.StraPath)
+		url := fmt.Sprintf("http://%s%s", addrs[perm[i]], backend.StraPath)
 		err = httplib.Get(url).SetTimeout(time.Duration(3000) * time.Millisecond).ToJSON(&stras)
 
 		if err != nil {

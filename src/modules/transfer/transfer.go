@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/didi/nightingale/src/toolkits/identity"
+	"github.com/didi/nightingale/src/toolkits/report"
 	"os"
 	"os/signal"
 	"syscall"
@@ -61,9 +63,11 @@ func main() {
 	tlogger.Init(cfg.Logger)
 	go stats.Init("n9e.transfer")
 
+	identity.Init(cfg.Identity)
 	backend.Init(cfg.Backend)
 	cron.Init()
 
+	go report.Init(cfg.Report, "monapi")
 	go rpc.Start()
 
 	r := gin.New()

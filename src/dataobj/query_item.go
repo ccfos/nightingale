@@ -48,3 +48,56 @@ func (req *QueryData) Key() string {
 func (resp *TsdbQueryResponse) Key() string {
 	return resp.Endpoint + "/" + resp.Counter
 }
+
+type EndpointsRecv struct {
+	Endpoints []string `json:"endpoints"`
+}
+
+type MetricResp struct {
+	Metrics []string `json:"metrics"`
+}
+
+type EndpointMetricRecv struct {
+	Endpoints []string `json:"endpoints"`
+	Metrics   []string `json:"metrics"`
+}
+
+type IndexTagkvResp struct {
+	Endpoints []string   `json:"endpoints"`
+	Metric    string     `json:"metric"`
+	Tagkv     []*TagPair `json:"tagkv"`
+}
+
+type TagPair struct {
+	Key    string   `json:"tagk"` // json 和变量不一致为了兼容前端
+	Values []string `json:"tagv"`
+}
+
+type CludeRecv struct {
+	Endpoints []string   `json:"endpoints"`
+	Metric    string     `json:"metric"`
+	Include   []*TagPair `json:"include"`
+	Exclude   []*TagPair `json:"exclude"`
+}
+
+type XcludeResp struct {
+	Endpoints []string `json:"endpoints"`
+	Metric    string   `json:"metric"`
+	Tags      []string `json:"tags"`
+	Step      int      `json:"step"`
+	DsType    string   `json:"dstype"`
+}
+
+type IndexByFullTagsRecv struct {
+	Endpoints []string  `json:"endpoints"`
+	Metric    string    `json:"metric"`
+	Tagkv     []TagPair `json:"tagkv"`
+}
+
+type IndexByFullTagsResp struct {
+	Endpoints []string `json:"endpoints"`
+	Metric    string   `json:"metric"`
+	Tags      []string `json:"tags"`
+	Step      int      `json:"step"`
+	DsType    string   `json:"dstype"`
+}
