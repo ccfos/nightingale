@@ -40,7 +40,11 @@ func GetRPCPort(mod string) int {
 }
 
 func convPort(module, listen, portType string) int {
-	port, err := strconv.Atoi(strings.Split(listen, ":")[1])
+	splitChar = ":"
+	if IsIPv6(listen) {
+		splitChar = "]:"
+	}
+	port, err := strconv.Atoi(strings.Split(listen, splitChar)[1])
 	if err != nil {
 		fmt.Printf("%s.%s invalid", module, portType)
 		os.Exit(1)
@@ -126,4 +130,8 @@ func getConf() string {
 	fmt.Println("configuration file address.[local.]yml not found")
 	os.Exit(1)
 	return ""
+}
+
+function IsIPv6(address string) bool {
+	return string.Count(address,":") >= 2
 }
