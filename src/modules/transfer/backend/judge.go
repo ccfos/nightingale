@@ -3,12 +3,11 @@ package backend
 import (
 	"time"
 
-	"github.com/didi/nightingale/src/toolkits/report"
-
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/model"
 	"github.com/didi/nightingale/src/modules/transfer/cache"
 	"github.com/didi/nightingale/src/toolkits/pools"
+	"github.com/didi/nightingale/src/toolkits/report"
 	"github.com/didi/nightingale/src/toolkits/stats"
 	"github.com/didi/nightingale/src/toolkits/str"
 	"github.com/toolkits/pkg/concurrent/semaphore"

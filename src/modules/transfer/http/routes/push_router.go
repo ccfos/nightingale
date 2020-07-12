@@ -46,7 +46,7 @@ func PushData(c *gin.Context) {
 	// send to push endpoints
 	pushEndpoints, err := backend.GetPushEndpoints()
 	if err != nil {
-		logger.Errorf("Could not find PushEndpoint ")
+		logger.Errorf("could not find pushendpoint")
 		render.Data(c, "error", err)
 		return
 	} else {

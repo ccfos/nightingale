@@ -55,7 +55,6 @@ func (opentsdb *OpenTsdbPushEndpoint) Init() {
 	}
 	go opentsdb.send2OpenTsdbTask(openTsdbConcurrent)
 
-	RegisterPushEndpoint(opentsdb.Section.Name, opentsdb)
 }
 
 // 将原始数据入到tsdb发送缓存队列

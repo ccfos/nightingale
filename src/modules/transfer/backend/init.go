@@ -39,7 +39,7 @@ func Init(cfg BackendSection) {
 			SendQueueMaxSize:      DefaultSendQueueMaxSize,
 			SendTaskSleepInterval: DefaultSendTaskSleepInterval,
 		}
-		tsdbDataSource.Init()
+		tsdbDataSource.Init() // register
 		RegisterDataSource(tsdbDataSource.Section.Name, tsdbDataSource)
 	}
 
@@ -51,6 +51,7 @@ func Init(cfg BackendSection) {
 			SendTaskSleepInterval: DefaultSendTaskSleepInterval,
 		}
 		influxdbDataSource.Init()
+		// register
 		RegisterDataSource(influxdbDataSource.Section.Name, influxdbDataSource)
 
 	}
@@ -60,6 +61,8 @@ func Init(cfg BackendSection) {
 			Section: cfg.OpenTsdb,
 		}
 		openTSDBPushEndpoint.Init()
+		// register
+		RegisterPushEndpoint(openTSDBPushEndpoint.Section.Name, openTSDBPushEndpoint)
 	}
 	// init kafka
 	if cfg.Kafka.Enabled {
@@ -67,5 +70,7 @@ func Init(cfg BackendSection) {
 			Section: cfg.Kafka,
 		}
 		kafkaPushEndpoint.Init()
+		// register
+		RegisterPushEndpoint(kafkaPushEndpoint.Section.Name, kafkaPushEndpoint)
 	}
 }

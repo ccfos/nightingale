@@ -58,7 +58,7 @@ func GetDataSourceFor(pluginId string) (DataSource, error) {
 	if source, exists := registryDataSources[pluginId]; exists {
 		return source, nil
 	}
-	return nil, fmt.Errorf("Could not find source for plugin: %s ", pluginId)
+	return nil, fmt.Errorf("could not find datasource for plugin: %s", pluginId)
 }
 
 // get all push endpoints
@@ -70,7 +70,7 @@ func GetPushEndpoints() ([]PushEndpoint, error) {
 		}
 		return items, nil
 	}
-	return nil, fmt.Errorf("Could not find pushendpoint ")
+	return nil, fmt.Errorf("could not find any pushendpoint")
 }
 
 func RegisterDataSource(pluginId string, datasource DataSource) {

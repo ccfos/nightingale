@@ -51,10 +51,10 @@ func tsdbInstance(c *gin.Context) {
 	var input tsdbInstanceRecv
 	errors.Dangerous(c.ShouldBindJSON(&input))
 
-	dataSource, error := backend.GetDataSourceFor("tsdb")
-	if error != nil {
-		logger.Warningf("Could not find dataSource ")
-		render.Message(c, error)
+	dataSource, err := backend.GetDataSourceFor("tsdb")
+	if err != nil {
+		logger.Warningf("could not find datasource")
+		render.Message(c, err)
 		return
 	}
 

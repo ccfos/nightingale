@@ -20,7 +20,7 @@ func QueryData(c *gin.Context) {
 
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("Could not find dataSource ")
+		logger.Warningf("could not find datasource")
 		render.Message(c, err)
 		return
 	}
@@ -41,7 +41,7 @@ func QueryDataForUI(c *gin.Context) {
 
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("Could not find dataSource ")
+		logger.Warningf("could not find datasource")
 		render.Message(c, err)
 		return
 	}
@@ -95,7 +95,7 @@ func GetMetrics(c *gin.Context) {
 
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("Could not find dataSource ")
+		logger.Warningf("could not find datasource")
 		render.Message(c, err)
 		return
 	}
@@ -112,7 +112,7 @@ func GetTagPairs(c *gin.Context) {
 
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("Could not find dataSource ")
+		logger.Warningf("could not find datasource")
 		render.Message(c, err)
 		return
 	}
@@ -128,7 +128,7 @@ func GetIndexByClude(c *gin.Context) {
 
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("Could not find dataSource ")
+		logger.Warningf("could not find datasource")
 		render.Message(c, err)
 		return
 	}
@@ -144,7 +144,7 @@ func GetIndexByFullTags(c *gin.Context) {
 
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("Could not find dataSource ")
+		logger.Warningf("could not find datasource")
 		render.Message(c, err)
 		return
 	}

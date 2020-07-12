@@ -41,9 +41,6 @@ func (kafka *KafkaPushEndpoint) Init() {
 
 	// start task
 	go kafka.send2KafkaTask()
-
-	// register
-	RegisterPushEndpoint(kafka.Section.Name, kafka)
 }
 
 func (kafka *KafkaPushEndpoint) Push2Queue(items []*dataobj.MetricValue) {

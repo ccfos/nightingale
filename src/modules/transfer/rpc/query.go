@@ -9,7 +9,7 @@ import (
 func (t *Transfer) Query(args []dataobj.QueryData, reply *dataobj.QueryDataResp) error {
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("Could not find dataSource ")
+		logger.Warningf("could not find datasource")
 		return err
 	}
 	reply.Data = dataSource.QueryData(args)
