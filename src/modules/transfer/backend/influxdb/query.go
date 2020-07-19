@@ -30,7 +30,10 @@ func (influxdb *InfluxdbDataSource) QueryData(inputs []dataobj.QueryData) []*dat
 		for _, counter := range input.Counters {
 			items := strings.Split(counter, "/")
 			metric := items[0]
-			tags := strings.Split(items[1], ",")
+			var tags = make([]string, 0)
+			if len(items) > 1 && len(items[1]) > 0 {
+				tags = strings.Split(items[1], ",")
+			}
 			influxdbQuery := QueryData{
 				Start:     input.Start,
 				End:       input.End,
@@ -40,6 +43,10 @@ func (influxdb *InfluxdbDataSource) QueryData(inputs []dataobj.QueryData) []*dat
 				Step:      input.Step,
 				DsType:    input.DsType,
 			}
+			influxdbQuery.renderSelect()
+			influxdbQuery.renderEndpoints()
+			influxdbQuery.renderTags()
+			influxdbQuery.renderTimeRange()
 			logger.Debugf("query influxql %s", influxdbQuery.RawQuery)
 
 			query := client.NewQuery(influxdbQuery.RawQuery, c.Database, c.Precision)
