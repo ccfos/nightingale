@@ -314,6 +314,19 @@ func PKWithCounter(endpoint, counter string) string {
 	return ret.String()
 }
 
+func GetCounter(metric, tag string, tagMap map[string]string) (counter string, err error) {
+	if tagMap == nil {
+		tagMap, err = SplitTagsString(tag)
+		if err != nil {
+			return
+		}
+	}
+
+	tagStr := SortedTags(tagMap)
+	counter = PKWithTags(metric, tagStr)
+	return
+}
+
 func PKWithTags(metric, tags string) string {
 	ret := bufferPool.Get().(*bytes.Buffer)
 	ret.Reset()

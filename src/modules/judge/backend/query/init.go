@@ -19,6 +19,7 @@ type SeriesQuerySection struct {
 	MaxIdle          int    `json:"maxIdle"`     //
 	ConnTimeout      int    `json:"connTimeout"` // 连接超时
 	CallTimeout      int    `json:"callTimeout"` // 请求超时
+	IndexMod         string `json:"indexMod"`
 	IndexPath        string `json:"indexPath"`
 	IndexCallTimeout int    `json:"indexCallTimeout"` // 请求超时
 }
