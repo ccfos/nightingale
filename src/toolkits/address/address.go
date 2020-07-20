@@ -40,7 +40,11 @@ func GetRPCPort(mod string) int {
 }
 
 func convPort(module, listen, portType string) int {
-	port, err := strconv.Atoi(strings.Split(listen, ":")[1])
+	splitChar := ":"
+	if IsIPv6(listen) {
+		splitChar = "]:"
+	}
+	port, err := strconv.Atoi(strings.Split(listen, splitChar)[1])
 	if err != nil {
 		fmt.Printf("%s.%s invalid", module, portType)
 		os.Exit(1)
@@ -127,3 +131,8 @@ func getConf() string {
 	os.Exit(1)
 	return ""
 }
+
+func IsIPv6(address string)  bool {
+	return strings.Count(address,":") >=2
+}
+
