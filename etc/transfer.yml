@@ -12,7 +12,6 @@ backend:
     precision: "s"
     database: "n9e"
     address: "http://127.0.0.1:8086"
-
   opentsdb:
     enabled: false
     address: "127.0.0.1:4242"
