@@ -76,23 +76,21 @@ func getStrategy() {
 			continue
 		}
 
-		for _, exp := range stra.Exprs {
-			metric := exp.Metric
-			for _, endpoint := range stra.Endpoints {
-				key := str.PK(metric, endpoint) //TODO get straMap key， 此处需要优化
-				k1 := key[0:2]                  //为了加快查找，增加一层 map，key 为计算出来的 hash 的前 2 位
+		metric := stra.Exprs[0].Metric
+		for _, endpoint := range stra.Endpoints {
+			key := str.PK(metric, endpoint) //TODO get straMap key， 此处需要优化
+			k1 := key[0:2]                  //为了加快查找，增加一层 map，key 为计算出来的 hash 的前 2 位
 
-				if _, exists := straMap[k1]; !exists {
-					straMap[k1] = make(map[string][]*model.Stra)
-				}
+			if _, exists := straMap[k1]; !exists {
+				straMap[k1] = make(map[string][]*model.Stra)
+			}
 
-				if _, exists := straMap[k1][key]; !exists {
-					straMap[k1][key] = []*model.Stra{stra}
-					stats.Counter.Set("stra.key", 1)
+			if _, exists := straMap[k1][key]; !exists {
+				straMap[k1][key] = []*model.Stra{stra}
+				stats.Counter.Set("stra.key", 1)
 
-				} else {
-					straMap[k1][key] = append(straMap[k1][key], stra)
-				}
+			} else {
+				straMap[k1][key] = append(straMap[k1][key], stra)
 			}
 		}
 	}
