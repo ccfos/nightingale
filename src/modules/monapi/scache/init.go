@@ -269,6 +269,12 @@ func GetExclLeafIds(exclNid []int64) (leafIds []int64, err error) {
 		if err != nil {
 			return leafIds, err
 		}
+
+		if node == nil {
+			logger.Warningf("no such node[%d]", nid)
+			continue
+		}
+
 		ids, err := node.LeafIds()
 		if err != nil {
 			return leafIds, err
