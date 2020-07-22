@@ -232,10 +232,15 @@ func GetLeafNids(nid int64, exclNid []int64) ([]int64, error) {
 		return ids, nil
 	}
 
+	exclLeafIds, err := GetExclLeafIds(exclNid)
+	if err != nil {
+		return leafIds, err
+	}
+
 	for _, id := range ids {
 		idsMap[id] = true
 	}
-	for _, id := range exclNid {
+	for _, id := range exclLeafIds {
 		delete(idsMap, id)
 	}
 
@@ -255,4 +260,20 @@ func removeDuplicateElement(addrs []string) []string {
 		}
 	}
 	return result
+}
+
+// GetExclLeafIds 获取排除节点下的叶子节点
+func GetExclLeafIds(exclNid []int64) (leafIds []int64, err error) {
+	for _, nid := range exclNid {
+		node, err := model.NodeGet("id", nid)
+		if err != nil {
+			return leafIds, err
+		}
+		ids, err := node.LeafIds()
+		if err != nil {
+			return leafIds, err
+		}
+		leafIds = append(leafIds, ids...)
+	}
+	return leafIds, nil
 }
