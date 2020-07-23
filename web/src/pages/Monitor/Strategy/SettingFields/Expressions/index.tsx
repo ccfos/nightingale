@@ -114,10 +114,6 @@ function checkExpressions(rule, value, callback) {
         error1 = emptyErrorText;
         hasError = true;
       }
-    } else if (i === 1 && item.metric === value[0].metric) {
-      error0 = samenameErrorText;
-      error1 = samenameErrorText;
-      hasError = true;
     }
   });
 
