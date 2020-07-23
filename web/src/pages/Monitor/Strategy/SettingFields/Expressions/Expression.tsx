@@ -119,6 +119,7 @@ class Expression extends Component {
       </span>
     );
 
+    let nPostfix = str.substring(index1 + 2);
     if (index2 > -1) {
       const mPrefix = str.substring(index1 + 2, index2);
       previewNode = (
@@ -128,9 +129,10 @@ class Expression extends Component {
           {m}
         </span>
       );
+      nPostfix = str.substring(index2 + 2);
     }
 
-    if (func !== 'nodata') {
+    if (func !== 'nodata' && func !== 'stddev') {
       // eslint-disable-next-line no-underscore-dangle
       const _index = index2 > -1 ? index2 : index1;
       const vPrefix = str.substring(_index + 2, index3);
@@ -143,7 +145,7 @@ class Expression extends Component {
         </span>
       );
     } else {
-      const nPostfix = str.substring(index1 + 2);
+      // const nPostfix = str.substring(index1 + 2);
       previewNode = (
         <span>
           {previewNode}
@@ -187,7 +189,7 @@ class Expression extends Component {
           </Select>
         );
       }
-      if (func === 'happen' || func === 'ndiff') {
+      if (func === 'happen' || func === 'ndiff' || func === 'stddev') {
         // 发生次数
         return (
           <InputNumber
@@ -195,7 +197,7 @@ class Expression extends Component {
             value={val}
             min={minnum}
             max={_.toNumber(params[0])}
-            style={{ display: 'inline-block' }}
+            style={{ display: 'inline-block', marginRight: 8 }}
             onChange={(newVal) => { this.handleParamsChange(i, newVal); }}
           />
         );
@@ -218,7 +220,7 @@ class Expression extends Component {
           _.map(_.get(funcMap[value.func], 'params', []), (o, i) => {
             return (
               <div key={o} style={{ display: 'inline-block', verticalAlign: 'top' }}>
-                <span style={{ color: i === 0 ? '#2DB7F5' : '#FFB727' }}>{o}</span>
+                <span style={{ color: i === 0 ? '#FFB727' : '#FFB727' }}>{o}</span>
                 <span style={{ marginRight: 8, marginLeft: 2 }}>:</span>
                 { this.renderFuncParams(i) }
               </div>
@@ -227,7 +229,7 @@ class Expression extends Component {
         }
         {
           // render value
-          value.func !== 'nodata' && // nodata 不需要填值
+          value.func !== 'nodata' && value.func !== 'stddev' && // nodata 不需要填值
           <div style={{ display: 'inline-block' }}>
             <div style={{ display: 'inline-block', verticalAlign: 'top' }}>
               <span style={{ color: '#FF6F27' }}>v</span>
