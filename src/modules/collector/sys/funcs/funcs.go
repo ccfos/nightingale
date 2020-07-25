@@ -1,6 +1,8 @@
 package funcs
 
 import (
+	"log"
+
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/modules/collector/sys"
 )
@@ -14,32 +16,45 @@ var Mappers []FuncsAndInterval
 
 func BuildMappers() {
 	interval := sys.Config.Interval
-	Mappers = []FuncsAndInterval{
-		{
-			Fs: []func() []*dataobj.MetricValue{
-				CollectorMetrics,
-				CpuMetrics,
-				MemMetrics,
-				NetMetrics,
-				LoadAvgMetrics,
-				IOStatsMetrics,
-				NfMetrics,
-				FsKernelMetrics,
-				FsRWMetrics,
-				ProcsNumMetrics,
-				EntityNumMetrics,
-				NtpOffsetMetrics,
-				SocketStatSummaryMetrics,
-				UdpMetrics,
-				TcpMetrics,
+	if sys.Config.Enable {
+		log.Println("sys collect enable is true.")
+		Mappers = []FuncsAndInterval{
+			{
+				Fs: []func() []*dataobj.MetricValue{
+					CollectorMetrics,
+					CpuMetrics,
+					MemMetrics,
+					NetMetrics,
+					LoadAvgMetrics,
+					IOStatsMetrics,
+					NfMetrics,
+					FsKernelMetrics,
+					FsRWMetrics,
+					ProcsNumMetrics,
+					EntityNumMetrics,
+					NtpOffsetMetrics,
+					SocketStatSummaryMetrics,
+					UdpMetrics,
+					TcpMetrics,
+				},
+				Interval: interval,
 			},
-			Interval: interval,
-		},
-		{
-			Fs: []func() []*dataobj.MetricValue{
-				DeviceMetrics,
+			{
+				Fs: []func() []*dataobj.MetricValue{
+					DeviceMetrics,
+				},
+				Interval: interval,
 			},
-			Interval: interval,
-		},
+		}
+	} else {
+		log.Println("sys collect enable is false.")
+		Mappers = []FuncsAndInterval{
+			{
+				Fs: []func() []*dataobj.MetricValue{
+					CollectorMetrics,
+				},
+				Interval: interval,
+			},
+		}
 	}
 }
