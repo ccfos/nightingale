@@ -9,6 +9,7 @@ import (
 	"github.com/toolkits/pkg/nux"
 
 	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/modules/collector/core"
 )
 
 const (
@@ -222,32 +223,32 @@ func CpuMetrics() []*dataobj.MetricValue {
 	var ret []*dataobj.MetricValue
 
 	cpuIdleVal := CpuIdle()
-	idle := GaugeValue("cpu.idle", cpuIdleVal)
-	util := GaugeValue("cpu.util", 100.0-cpuIdleVal)
-	user := GaugeValue("cpu.user", CpuUser())
-	system := GaugeValue("cpu.sys", CpuSystem())
-	nice := GaugeValue("cpu.nice", CpuNice())
-	iowait := GaugeValue("cpu.iowait", CpuIowait())
-	irq := GaugeValue("cpu.irq", CpuIrq())
-	softirq := GaugeValue("cpu.softirq", CpuSoftIrq())
-	steal := GaugeValue("cpu.steal", CpuSteal())
-	guest := GaugeValue("cpu.guest", CpuGuest())
-	switches := GaugeValue("cpu.switches", CpuContentSwitches())
+	idle := core.GaugeValue("cpu.idle", cpuIdleVal)
+	util := core.GaugeValue("cpu.util", 100.0-cpuIdleVal)
+	user := core.GaugeValue("cpu.user", CpuUser())
+	system := core.GaugeValue("cpu.sys", CpuSystem())
+	nice := core.GaugeValue("cpu.nice", CpuNice())
+	iowait := core.GaugeValue("cpu.iowait", CpuIowait())
+	irq := core.GaugeValue("cpu.irq", CpuIrq())
+	softirq := core.GaugeValue("cpu.softirq", CpuSoftIrq())
+	steal := core.GaugeValue("cpu.steal", CpuSteal())
+	guest := core.GaugeValue("cpu.guest", CpuGuest())
+	switches := core.GaugeValue("cpu.switches", CpuContentSwitches())
 	ret = []*dataobj.MetricValue{idle, util, user, nice, system, iowait, irq, softirq, steal, guest, switches}
 
 	idles := CpuIdles()
 	for i, stats := range idles {
 		tags := fmt.Sprintf("core=%d", i)
-		ret = append(ret, GaugeValue("cpu.core.idle", stats.Idle, tags))
-		ret = append(ret, GaugeValue("cpu.core.util", 100.0-stats.Idle, tags))
-		ret = append(ret, GaugeValue("cpu.core.user", stats.User, tags))
-		ret = append(ret, GaugeValue("cpu.core.sys", stats.System, tags))
-		ret = append(ret, GaugeValue("cpu.core.irq", stats.Irq, tags))
-		ret = append(ret, GaugeValue("cpu.core.softirq", stats.SoftIrq, tags))
-		ret = append(ret, GaugeValue("cpu.core.steal", stats.Steal, tags))
-		ret = append(ret, GaugeValue("cpu.core.iowait", stats.Iowait, tags))
-		ret = append(ret, GaugeValue("cpu.core.nice", stats.Nice, tags))
-		ret = append(ret, GaugeValue("cpu.core.guest", stats.Guest, tags))
+		ret = append(ret, core.GaugeValue("cpu.core.idle", stats.Idle, tags))
+		ret = append(ret, core.GaugeValue("cpu.core.util", 100.0-stats.Idle, tags))
+		ret = append(ret, core.GaugeValue("cpu.core.user", stats.User, tags))
+		ret = append(ret, core.GaugeValue("cpu.core.sys", stats.System, tags))
+		ret = append(ret, core.GaugeValue("cpu.core.irq", stats.Irq, tags))
+		ret = append(ret, core.GaugeValue("cpu.core.softirq", stats.SoftIrq, tags))
+		ret = append(ret, core.GaugeValue("cpu.core.steal", stats.Steal, tags))
+		ret = append(ret, core.GaugeValue("cpu.core.iowait", stats.Iowait, tags))
+		ret = append(ret, core.GaugeValue("cpu.core.nice", stats.Nice, tags))
+		ret = append(ret, core.GaugeValue("cpu.core.guest", stats.Guest, tags))
 	}
 
 	return ret

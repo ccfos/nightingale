@@ -4,13 +4,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/toolkits/pkg/logger"
-	process "github.com/shirou/gopsutil/process"
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/model"
-	"github.com/didi/nightingale/src/modules/collector/sys/funcs"
 	"github.com/didi/nightingale/src/modules/collector/cache"
+	"github.com/didi/nightingale/src/modules/collector/core"
 	"github.com/didi/nightingale/src/toolkits/identity"
+	process "github.com/shirou/gopsutil/process"
+	"github.com/toolkits/pkg/logger"
 )
 
 type ProcScheduler struct {
@@ -53,13 +53,13 @@ func ProcCollect(p *model.ProcCollect) {
 	var memUsedTotal uint64 = 0
 	var memUtilTotal = 0.0
 	var cpuUtilTotal = 0.0
-	var items [] *dataobj.MetricValue
+	var items []*dataobj.MetricValue
 	cnt := 0
 	for _, procs := range ps {
 		if isProc(procs, p.CollectMethod, p.Target) {
 			cnt++
 			procCache, exists := cache.ProcsCache.Get(procs.Pid)
-			if !exists{
+			if !exists {
 				cache.ProcsCache.Set(procs.Pid, procs)
 				procCache = procs
 			}
@@ -83,22 +83,21 @@ func ProcCollect(p *model.ProcCollect) {
 			cpuUtilTotal += cpuUtil
 		}
 
-
 	}
 
-	procNumItem := funcs.GaugeValue("proc.num", cnt, p.Tags)
-	memUsedItem := funcs.GaugeValue("proc.mem.used", memUsedTotal, p.Tags)
-	memUtilItem := funcs.GaugeValue("proc.mem.util", memUtilTotal, p.Tags)
-	cpuUtilItem := funcs.GaugeValue("proc.cpu.util", cpuUtilTotal, p.Tags)
+	procNumItem := core.GaugeValue("proc.num", cnt, p.Tags)
+	memUsedItem := core.GaugeValue("proc.mem.used", memUsedTotal, p.Tags)
+	memUtilItem := core.GaugeValue("proc.mem.util", memUtilTotal, p.Tags)
+	cpuUtilItem := core.GaugeValue("proc.cpu.util", cpuUtilTotal, p.Tags)
 	items = []*dataobj.MetricValue{procNumItem, memUsedItem, memUtilItem, cpuUtilItem}
 	now := time.Now().Unix()
-	for _, item := range items{
+	for _, item := range items {
 		item.Step = int64(p.Step)
 		item.Timestamp = now
 		item.Endpoint = identity.Identity
 	}
 
-	funcs.Push(items)
+	core.Push(items)
 }
 
 func isProc(p *process.Process, method, target string) bool {

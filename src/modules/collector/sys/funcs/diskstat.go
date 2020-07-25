@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/modules/collector/core"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/nux"
@@ -127,19 +128,19 @@ func IOStatsMetrics() []*dataobj.MetricValue {
 		}
 
 		duration := IODelta(device, TS)
-		ret = append(ret, GaugeValue("disk.io.read.request", float64(rio), tags))
-		ret = append(ret, GaugeValue("disk.io.write.request", float64(wio), tags))
-		ret = append(ret, GaugeValue("disk.io.read.bytes", float64(deltaRsec)*512.0, tags))
-		ret = append(ret, GaugeValue("disk.io.write.bytes", float64(deltaWsec)*512.0, tags))
-		ret = append(ret, GaugeValue("disk.io.avgrq_sz", avgrqSz, tags))
-		ret = append(ret, GaugeValue("disk.io.avgqu_sz", float64(IODelta(device, IOMsecWeightedTotal))/1000.0, tags))
-		ret = append(ret, GaugeValue("disk.io.await", await, tags))
-		ret = append(ret, GaugeValue("disk.io.svctm", svctm, tags))
+		ret = append(ret, core.GaugeValue("disk.io.read.request", float64(rio), tags))
+		ret = append(ret, core.GaugeValue("disk.io.write.request", float64(wio), tags))
+		ret = append(ret, core.GaugeValue("disk.io.read.bytes", float64(deltaRsec)*512.0, tags))
+		ret = append(ret, core.GaugeValue("disk.io.write.bytes", float64(deltaWsec)*512.0, tags))
+		ret = append(ret, core.GaugeValue("disk.io.avgrq_sz", avgrqSz, tags))
+		ret = append(ret, core.GaugeValue("disk.io.avgqu_sz", float64(IODelta(device, IOMsecWeightedTotal))/1000.0, tags))
+		ret = append(ret, core.GaugeValue("disk.io.await", await, tags))
+		ret = append(ret, core.GaugeValue("disk.io.svctm", svctm, tags))
 		tmp := float64(use) * 100.0 / float64(duration)
 		if tmp > 100.0 {
 			tmp = 100.0
 		}
-		ret = append(ret, GaugeValue("disk.io.util", tmp, tags))
+		ret = append(ret, core.GaugeValue("disk.io.util", tmp, tags))
 	}
 
 	return ret

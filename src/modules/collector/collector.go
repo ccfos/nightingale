@@ -10,6 +10,7 @@ import (
 
 	"github.com/didi/nightingale/src/modules/collector/cache"
 	"github.com/didi/nightingale/src/modules/collector/config"
+	"github.com/didi/nightingale/src/modules/collector/core"
 	"github.com/didi/nightingale/src/modules/collector/http/routes"
 	"github.com/didi/nightingale/src/modules/collector/log/worker"
 	"github.com/didi/nightingale/src/modules/collector/stra"
@@ -75,7 +76,7 @@ func main() {
 	sys.Init(cfg.Sys)
 	stra.Init(cfg.Stra)
 
-	funcs.InitRpcClients()
+	core.InitRpcClients()
 	funcs.BuildMappers()
 	funcs.Collect()
 
