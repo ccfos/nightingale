@@ -5,6 +5,7 @@ import (
 	"github.com/toolkits/pkg/nux"
 
 	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/modules/collector/core"
 )
 
 func LoadAvgMetrics() []*dataobj.MetricValue {
@@ -15,8 +16,8 @@ func LoadAvgMetrics() []*dataobj.MetricValue {
 	}
 
 	return []*dataobj.MetricValue{
-		GaugeValue("cpu.loadavg.1", load.Avg1min),
-		GaugeValue("cpu.loadavg.5", load.Avg5min),
-		GaugeValue("cpu.loadavg.15", load.Avg15min),
+		core.GaugeValue("cpu.loadavg.1", load.Avg1min),
+		core.GaugeValue("cpu.loadavg.5", load.Avg5min),
+		core.GaugeValue("cpu.loadavg.15", load.Avg15min),
 	}
 }

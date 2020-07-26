@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/modules/collector/core"
 	"github.com/didi/nightingale/src/modules/collector/sys"
 
 	"github.com/toolkits/pkg/logger"
@@ -60,50 +61,50 @@ func NetMetrics() (ret []*dataobj.MetricValue) {
 		}
 
 		inbits := inbytes * 8
-		ret = append(ret, GaugeValue("net.in.bits", inbits, tags))
+		ret = append(ret, core.GaugeValue("net.in.bits", inbits, tags))
 
 		outbytes := float64(stat.outBytes-oldStat.outBytes) / float64(interval)
 		if outbytes < 0 {
 			outbytes = 0
 		}
 		outbits := outbytes * 8
-		ret = append(ret, GaugeValue("net.out.bits", outbits, tags))
+		ret = append(ret, core.GaugeValue("net.out.bits", outbits, tags))
 
 		v := float64(stat.inDrop-oldStat.inDrop) / float64(interval)
 		if v < 0 {
 			v = 0
 		}
-		ret = append(ret, GaugeValue("net.in.dropped", v, tags))
+		ret = append(ret, core.GaugeValue("net.in.dropped", v, tags))
 
 		v = float64(stat.outDrop-oldStat.outDrop) / float64(interval)
 		if v < 0 {
 			v = 0
 		}
-		ret = append(ret, GaugeValue("net.out.dropped", v, tags))
+		ret = append(ret, core.GaugeValue("net.out.dropped", v, tags))
 
 		v = float64(stat.inPackets-oldStat.inPackets) / float64(interval)
 		if v < 0 {
 			v = 0
 		}
-		ret = append(ret, GaugeValue("net.in.pps", v, tags))
+		ret = append(ret, core.GaugeValue("net.in.pps", v, tags))
 
 		v = float64(stat.outPackets-oldStat.outPackets) / float64(interval)
 		if v < 0 {
 			v = 0
 		}
-		ret = append(ret, GaugeValue("net.out.pps", v, tags))
+		ret = append(ret, core.GaugeValue("net.out.pps", v, tags))
 
 		v = float64(stat.inErr-oldStat.inErr) / float64(interval)
 		if v < 0 {
 			v = 0
 		}
-		ret = append(ret, GaugeValue("net.in.errs", v, tags))
+		ret = append(ret, core.GaugeValue("net.in.errs", v, tags))
 
 		v = float64(stat.outErr-oldStat.outErr) / float64(interval)
 		if v < 0 {
 			v = 0
 		}
-		ret = append(ret, GaugeValue("net.out.errs", v, tags))
+		ret = append(ret, core.GaugeValue("net.out.errs", v, tags))
 
 		if strings.HasPrefix(iface, "vnet") { //vnet采集到的stat.speed不准确，不计算percent
 			continue
@@ -114,36 +115,36 @@ func NetMetrics() (ret []*dataobj.MetricValue) {
 		inPercent := float64(inbits) * 100 / float64(stat.speed*1000000)
 
 		if inPercent < 0 || stat.speed <= 0 {
-			ret = append(ret, GaugeValue("net.in.percent", 0, tags))
+			ret = append(ret, core.GaugeValue("net.in.percent", 0, tags))
 		} else {
-			ret = append(ret, GaugeValue("net.in.percent", inPercent, tags))
+			ret = append(ret, core.GaugeValue("net.in.percent", inPercent, tags))
 		}
 
 		outTotalUsed += outbits
 		outPercent := float64(outbits) * 100 / float64(stat.speed*1000000)
 		if outPercent < 0 || stat.speed <= 0 {
-			ret = append(ret, GaugeValue("net.out.percent", 0, tags))
+			ret = append(ret, core.GaugeValue("net.out.percent", 0, tags))
 		} else {
-			ret = append(ret, GaugeValue("net.out.percent", outPercent, tags))
+			ret = append(ret, core.GaugeValue("net.out.percent", outPercent, tags))
 		}
 
-		ret = append(ret, GaugeValue("net.bandwidth.mbits", stat.speed, tags))
+		ret = append(ret, core.GaugeValue("net.bandwidth.mbits", stat.speed, tags))
 		totalBandwidth += stat.speed
 	}
 
-	ret = append(ret, GaugeValue("net.bandwidth.mbits.total", totalBandwidth))
-	ret = append(ret, GaugeValue("net.in.bits.total", inTotalUsed))
-	ret = append(ret, GaugeValue("net.out.bits.total", outTotalUsed))
+	ret = append(ret, core.GaugeValue("net.bandwidth.mbits.total", totalBandwidth))
+	ret = append(ret, core.GaugeValue("net.in.bits.total", inTotalUsed))
+	ret = append(ret, core.GaugeValue("net.out.bits.total", outTotalUsed))
 
 	if totalBandwidth <= 0 {
-		ret = append(ret, GaugeValue("net.in.bits.total.percent", 0))
-		ret = append(ret, GaugeValue("net.out.bits.total.percent", 0))
+		ret = append(ret, core.GaugeValue("net.in.bits.total.percent", 0))
+		ret = append(ret, core.GaugeValue("net.out.bits.total.percent", 0))
 	} else {
 		inTotalPercent := float64(inTotalUsed) / float64(totalBandwidth*1000000) * 100
-		ret = append(ret, GaugeValue("net.in.bits.total.percent", inTotalPercent))
+		ret = append(ret, core.GaugeValue("net.in.bits.total.percent", inTotalPercent))
 
 		outTotalPercent := float64(outTotalUsed) / float64(totalBandwidth*1000000) * 100
-		ret = append(ret, GaugeValue("net.out.bits.total.percent", outTotalPercent))
+		ret = append(ret, core.GaugeValue("net.out.bits.total.percent", outTotalPercent))
 	}
 
 	historyIfStat = newIfStat

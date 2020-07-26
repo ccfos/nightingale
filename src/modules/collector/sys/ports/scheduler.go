@@ -9,7 +9,7 @@ import (
 
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/model"
-	"github.com/didi/nightingale/src/modules/collector/sys/funcs"
+	"github.com/didi/nightingale/src/modules/collector/core"
 	"github.com/didi/nightingale/src/toolkits/identity"
 )
 
@@ -50,11 +50,11 @@ func PortCollect(p *model.PortCollect) {
 		value = 1
 	}
 
-	item := funcs.GaugeValue("proc.port.listen", value, p.Tags)
+	item := core.GaugeValue("proc.port.listen", value, p.Tags)
 	item.Step = int64(p.Step)
 	item.Timestamp = time.Now().Unix()
 	item.Endpoint = identity.Identity
-	funcs.Push([]*dataobj.MetricValue{item})
+	core.Push([]*dataobj.MetricValue{item})
 }
 
 func isListening(port int) bool {
