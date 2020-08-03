@@ -25,15 +25,34 @@ func (influxdb *InfluxdbDataSource) QueryData(inputs []dataobj.QueryData) []*dat
 		return nil
 	}
 
+	respMap := make(map[string]*dataobj.TsdbQueryResponse)
 	queryResponse := make([]*dataobj.TsdbQueryResponse, 0)
 	for _, input := range inputs {
 		for _, counter := range input.Counters {
-			items := strings.Split(counter, "/")
+			items := strings.SplitN(counter, "/", 2)
 			metric := items[0]
-			var tags = make([]string, 0)
-			if len(items) > 1 && len(items[1]) > 0 {
+			tags := make([]string, 0)
+			if len(items) > 1 {
 				tags = strings.Split(items[1], ",")
+				tagMap := dataobj.DictedTagstring(items[1])
+				if counter, err = dataobj.GetCounter(metric, "", tagMap); err != nil {
+					logger.Warningf("get counter error: %+v", err)
+					continue
+				}
 			}
+
+			for _, endpoint := range input.Endpoints {
+				key := fmt.Sprintf("%s%s", endpoint, counter)
+				respMap[key] = &dataobj.TsdbQueryResponse{
+					Start:    input.Start,
+					End:      input.End,
+					Endpoint: endpoint,
+					Counter:  counter,
+					DsType:   input.DsType,
+					Step:     input.Step,
+				}
+			}
+
 			influxdbQuery := QueryData{
 				Start:     input.Start,
 				End:       input.End,
@@ -42,11 +61,13 @@ func (influxdb *InfluxdbDataSource) QueryData(inputs []dataobj.QueryData) []*dat
 				Tags:      tags,
 				Step:      input.Step,
 				DsType:    input.DsType,
+				GroupKey:  []string{"*"},
 			}
 			influxdbQuery.renderSelect()
 			influxdbQuery.renderEndpoints()
 			influxdbQuery.renderTags()
 			influxdbQuery.renderTimeRange()
+			influxdbQuery.renderGroupBy()
 			logger.Debugf("query influxql %s", influxdbQuery.RawQuery)
 
 			query := client.NewQuery(influxdbQuery.RawQuery, c.Database, c.Precision)
@@ -54,30 +75,27 @@ func (influxdb *InfluxdbDataSource) QueryData(inputs []dataobj.QueryData) []*dat
 				for _, result := range response.Results {
 					for _, series := range result.Series {
 
-						// fixme : influx client get series.Tags is nil
 						endpoint := series.Tags["endpoint"]
-						delete(series.Tags, endpoint)
-						counter, err := dataobj.GetCounter(series.Name, "", series.Tags)
+						delete(series.Tags, "endpoint")
+
+						influxCounter, err := dataobj.GetCounter(series.Name, "", series.Tags)
 						if err != nil {
 							logger.Warningf("get counter error: %+v", err)
 							continue
 						}
-						values := convertValues(series)
 
-						resp := &dataobj.TsdbQueryResponse{
-							Start:    influxdbQuery.Start,
-							End:      influxdbQuery.End,
-							Endpoint: endpoint,
-							Counter:  counter,
-							DsType:   influxdbQuery.DsType,
-							Step:     influxdbQuery.Step,
-							Values:   values,
+						key := fmt.Sprintf("%s%s", endpoint, influxCounter)
+						if _, exists := respMap[key]; exists {
+							respMap[key].Values = convertValues(series)
 						}
-						queryResponse = append(queryResponse, resp)
+
 					}
 				}
 			}
 		}
+	}
+	for _, resp := range respMap {
+		queryResponse = append(queryResponse, resp)
 	}
 	return queryResponse
 }
@@ -275,17 +293,21 @@ func (influxdb *InfluxdbDataSource) QueryIndexByClude(recvs []dataobj.CludeRecv)
 	}
 	resp := make([]dataobj.XcludeResp, 0)
 	for _, recv := range recvs {
-		xcludeResp := dataobj.XcludeResp{
-			Endpoints: recv.Endpoints,
-			Metric:    recv.Metric,
-			Tags:      make([]string, 0),
-			Step:      -1, // fixme
-			DsType:    "GAUGE",
-		}
 
 		if len(recv.Endpoints) == 0 {
-			resp = append(resp, xcludeResp)
 			continue
+		}
+
+		xcludeRespMap := make(map[string]*dataobj.XcludeResp)
+		for _, endpoint := range recv.Endpoints {
+			key := fmt.Sprintf("endpoint=%s", endpoint)
+			xcludeRespMap[key] = &dataobj.XcludeResp{
+				Endpoint: endpoint,
+				Metric:   recv.Metric,
+				Tags:     make([]string, 0),
+				Step:     60,
+				DsType:   "GAUGE",
+			}
 		}
 
 		showSeries := ShowSeries{
@@ -307,7 +329,7 @@ func (influxdb *InfluxdbDataSource) QueryIndexByClude(recvs []dataobj.CludeRecv)
 			for _, result := range response.Results {
 				for _, series := range result.Series {
 					for _, valuePair := range series.Values {
-
+						var curItem string
 						// proc.port.listen,endpoint=localhost,port=22,service=sshd
 						tagKey := valuePair[0].(string)
 
@@ -315,21 +337,31 @@ func (influxdb *InfluxdbDataSource) QueryIndexByClude(recvs []dataobj.CludeRecv)
 						items := strings.Split(tagKey, ",")
 						newItems := make([]string, 0)
 						for _, item := range items {
-							if item != recv.Metric && !strings.Contains(item, "endpoint") {
+							if strings.HasPrefix(item, "endpoint=") {
+								curItem = item
+								continue
+							}
+							if item != recv.Metric {
 								newItems = append(newItems, item)
 							}
 						}
 
+						if curItem == "" {
+							continue
+						}
+
 						if len(newItems) > 0 {
 							if tags, err := dataobj.SplitTagsString(strings.Join(newItems, ",")); err == nil {
-								xcludeResp.Tags = append(xcludeResp.Tags, dataobj.SortedTags(tags))
+								xcludeRespMap[curItem].Tags = append(xcludeRespMap[curItem].Tags, dataobj.SortedTags(tags))
 							}
 						}
 					}
 				}
 			}
 		}
-		resp = append(resp, xcludeResp)
+		for _, xcludeResp := range xcludeRespMap {
+			resp = append(resp, *xcludeResp)
+		}
 	}
 
 	return resp
@@ -354,7 +386,7 @@ func (influxdb *InfluxdbDataSource) QueryIndexByFullTags(recvs []dataobj.IndexBy
 			Endpoints: recv.Endpoints,
 			Metric:    recv.Metric,
 			Tags:      make([]string, 0),
-			Step:      -1, // FIXME
+			Step:      60,
 			DsType:    "GAUGE",
 		}
 

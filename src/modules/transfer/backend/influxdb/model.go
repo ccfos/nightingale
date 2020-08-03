@@ -35,7 +35,7 @@ func (query *ShowSeries) renderEndpoints() {
 		}
 		endpointPart = endpointPart[:len(endpointPart)-len("OR")]
 		endpointPart += ")"
-		query.RawQuery = fmt.Sprintf("\"%s\" WHERE \"%s\"", query.RawQuery, endpointPart)
+		query.RawQuery = fmt.Sprintf("%s WHERE %s", query.RawQuery, endpointPart)
 	}
 }
 

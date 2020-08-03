@@ -12,7 +12,7 @@ import (
 )
 
 type QueryDataReq struct {
-	queryData []dataobj.QueryData
+	QueryData []dataobj.QueryData `json:"series"`
 }
 
 func QueryData(c *gin.Context) {
@@ -20,14 +20,14 @@ func QueryData(c *gin.Context) {
 
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("could not find datasource")
+		logger.Warningf("Could not find dataSource ")
 		render.Message(c, err)
 		return
 	}
 
 	var queryDataReq QueryDataReq
 	errors.Dangerous(c.ShouldBindJSON(&queryDataReq))
-	resp := dataSource.QueryData(queryDataReq.queryData)
+	resp := dataSource.QueryData(queryDataReq.QueryData)
 	render.Data(c, resp, nil)
 }
 
@@ -41,7 +41,7 @@ func QueryDataForUI(c *gin.Context) {
 
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("could not find datasource")
+		logger.Warningf("Could not find dataSource ")
 		render.Message(c, err)
 		return
 	}
