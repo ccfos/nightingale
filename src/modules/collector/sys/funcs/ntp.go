@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/modules/collector/core"
 	"github.com/didi/nightingale/src/modules/collector/sys"
 
 	"github.com/toolkits/pkg/logger"
@@ -44,7 +45,7 @@ func NtpOffsetMetrics() []*dataobj.MetricValue {
 		logger.Debug("ntp: client receive time, ", dstTime)
 
 		delta := duration / 1e6 // 转换成 ms
-		ret = append(ret, GaugeValue("sys.ntp.offset.ms", delta))
+		ret = append(ret, core.GaugeValue("sys.ntp.offset.ms", delta))
 
 		//one ntp server's response is enough
 		break

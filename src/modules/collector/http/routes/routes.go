@@ -18,5 +18,17 @@ func Config(r *gin.Engine) {
 		sys.POST("/push", pushData)
 	}
 
+	// compatible with open-falcon
+	v1 := r.Group("/v1")
+	{
+		v1.GET("/ping", ping)
+		v1.GET("/pid", pid)
+		v1.GET("/addr", addr)
+
+		v1.GET("/stra", getStrategy)
+		v1.GET("/cached", getLogCached)
+		v1.POST("/push", pushData)
+	}
+
 	pprof.Register(r, "/api/collector/debug/pprof")
 }

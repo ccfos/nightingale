@@ -5,6 +5,7 @@ import (
 	"github.com/toolkits/pkg/nux"
 
 	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/modules/collector/core"
 )
 
 func MemMetrics() []*dataobj.MetricValue {
@@ -32,15 +33,15 @@ func MemMetrics() []*dataobj.MetricValue {
 	}
 
 	return []*dataobj.MetricValue{
-		GaugeValue("mem.bytes.total", m.MemTotal),
-		GaugeValue("mem.bytes.used", memUsed),
-		GaugeValue("mem.bytes.free", memFree),
-		GaugeValue("mem.bytes.used.percent", pmemUsed),
-		GaugeValue("mem.bytes.buffers", m.Buffers),
-		GaugeValue("mem.bytes.cached", m.Cached),
-		GaugeValue("mem.swap.bytes.total", m.SwapTotal),
-		GaugeValue("mem.swap.bytes.used", m.SwapUsed),
-		GaugeValue("mem.swap.bytes.free", m.SwapFree),
-		GaugeValue("mem.swap.bytes.used.percent", pswapUsed),
+		core.GaugeValue("mem.bytes.total", m.MemTotal),
+		core.GaugeValue("mem.bytes.used", memUsed),
+		core.GaugeValue("mem.bytes.free", memFree),
+		core.GaugeValue("mem.bytes.used.percent", pmemUsed),
+		core.GaugeValue("mem.bytes.buffers", m.Buffers),
+		core.GaugeValue("mem.bytes.cached", m.Cached),
+		core.GaugeValue("mem.swap.bytes.total", m.SwapTotal),
+		core.GaugeValue("mem.swap.bytes.used", m.SwapUsed),
+		core.GaugeValue("mem.swap.bytes.free", m.SwapFree),
+		core.GaugeValue("mem.swap.bytes.used.percent", pswapUsed),
 	}
 }

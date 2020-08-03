@@ -44,11 +44,12 @@ func Parse(conf string) error {
 	}
 
 	viper.SetDefault("query", map[string]interface{}{
-		"maxConn":          10,
+		"maxConn":          100,
 		"maxIdle":          10,
 		"connTimeout":      1000,
 		"callTimeout":      2000,
 		"indexCallTimeout": 2000,
+		"indexMod":         "index",
 		"indexPath":        "/api/index/counter/clude",
 	})
 

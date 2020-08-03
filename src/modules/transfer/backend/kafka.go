@@ -4,12 +4,80 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Shopify/sarama"
-	"github.com/toolkits/pkg/logger"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/Shopify/sarama"
+	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/toolkits/stats"
+	"github.com/toolkits/pkg/logger"
 )
+
+type KafkaSection struct {
+	Enabled      bool   `yaml:"enabled"`
+	Name         string `yaml:"name"`
+	Topic        string `yaml:"topic"`
+	BrokersPeers string `yaml:"brokersPeers"`
+	ConnTimeout  int    `yaml:"connTimeout"`
+	CallTimeout  int    `yaml:"callTimeout"`
+	MaxRetry     int    `yaml:"maxRetry"`
+	KeepAlive    int64  `yaml:"keepAlive"`
+	SaslUser     string `yaml:"saslUser"`
+	SaslPasswd   string `yaml:"saslPasswd"`
+}
+type KafkaPushEndpoint struct {
+	// config
+	Section KafkaSection
+
+	// 发送缓存队列 node -> queue_of_data
+	KafkaQueue chan KafkaData
+}
+
+func (kafka *KafkaPushEndpoint) Init() {
+
+	// init queue
+	kafka.KafkaQueue = make(chan KafkaData, 10)
+
+	// start task
+	go kafka.send2KafkaTask()
+}
+
+func (kafka *KafkaPushEndpoint) Push2Queue(items []*dataobj.MetricValue) {
+	for _, item := range items {
+		kafka.KafkaQueue <- kafka.convert2KafkaItem(item)
+	}
+}
+
+func (kafka *KafkaPushEndpoint) convert2KafkaItem(d *dataobj.MetricValue) KafkaData {
+	m := make(KafkaData)
+	m["metric"] = d.Metric
+	m["value"] = d.Value
+	m["timestamp"] = d.Timestamp
+	m["value"] = d.Value
+	m["step"] = d.Step
+	m["endpoint"] = d.Endpoint
+	m["tags"] = d.Tags
+	return m
+}
+
+func (kafka *KafkaPushEndpoint) send2KafkaTask() {
+	kf, err := NewKfClient(kafka.Section)
+	if err != nil {
+		logger.Errorf("init kafka client fail: %v", err)
+		return
+	}
+	defer kf.Close()
+	for {
+		kafkaItem := <-kafka.KafkaQueue
+		stats.Counter.Set("points.out.kafka", 1)
+		err = kf.Send(kafkaItem)
+		if err != nil {
+			stats.Counter.Set("points.out.kafka.err", 1)
+			logger.Errorf("send %v to kafka %s fail: %v", kafkaItem, kafka.Section.BrokersPeers, err)
+		}
+	}
+}
 
 type KafkaData map[string]interface{}
 type KfClient struct {
@@ -45,11 +113,11 @@ func NewKfClient(c KafkaSection) (kafkaSender *KfClient, err error) {
 		cfg.Net.SASL.User = c.SaslUser
 		cfg.Net.SASL.Password = c.SaslPasswd
 	}
-	if c.Retry > 0 {
-		cfg.Producer.Retry.Max = c.Retry
+	if c.MaxRetry > 0 {
+		cfg.Producer.Retry.Max = c.MaxRetry
 	}
 
-	cfg.Net.DialTimeout = time.Duration(connTimeout) * time.Millisecond
+	cfg.Net.DialTimeout = time.Duration(c.ConnTimeout) * time.Millisecond
 
 	if c.KeepAlive > 0 {
 		cfg.Net.KeepAlive = time.Duration(c.KeepAlive) * time.Millisecond
@@ -58,10 +126,11 @@ func NewKfClient(c KafkaSection) (kafkaSender *KfClient, err error) {
 	if err != nil {
 		return
 	}
-	kafkaSender = newSender(brokers, topic, cfg, producer)
+	kafkaSender = newSender(brokers, topic, cfg, producer, c.CallTimeout)
 	return
 }
-func newSender(brokers []string, topic string, cfg *sarama.Config, producer sarama.AsyncProducer) (kf *KfClient) {
+func newSender(brokers []string, topic string, cfg *sarama.Config, producer sarama.AsyncProducer,
+	callTimeout int) (kf *KfClient) {
 	kf = &KfClient{
 		producer:     producer,
 		Topic:        topic,

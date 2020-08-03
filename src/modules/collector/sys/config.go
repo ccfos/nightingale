@@ -1,6 +1,7 @@
 package sys
 
 type SysSection struct {
+	Enable           bool                `yaml:"enable"`
 	IfacePrefix      []string            `yaml:"ifacePrefix"`
 	MountIgnore      MountIgnoreSection  `yaml:"mountIgnore"`
 	IgnoreMetrics    []string            `yaml:"ignoreMetrics"`

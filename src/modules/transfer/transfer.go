@@ -13,7 +13,9 @@ import (
 	"github.com/didi/nightingale/src/modules/transfer/http/routes"
 	"github.com/didi/nightingale/src/modules/transfer/rpc"
 	"github.com/didi/nightingale/src/toolkits/http"
+	"github.com/didi/nightingale/src/toolkits/identity"
 	tlogger "github.com/didi/nightingale/src/toolkits/logger"
+	"github.com/didi/nightingale/src/toolkits/report"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/gin-gonic/gin"
@@ -61,9 +63,11 @@ func main() {
 	tlogger.Init(cfg.Logger)
 	go stats.Init("n9e.transfer")
 
+	identity.Init(cfg.Identity)
 	backend.Init(cfg.Backend)
 	cron.Init()
 
+	go report.Init(cfg.Report, "monapi")
 	go rpc.Start()
 
 	r := gin.New()

@@ -5,6 +5,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/modules/collector/core"
 )
 
 func NfMetrics() []*dataobj.MetricValue {
@@ -20,19 +21,19 @@ func NfMetrics() []*dataobj.MetricValue {
 	if err != nil {
 		logger.Error("read file err:", connMaxFile, err)
 	} else {
-		res = append(res, GaugeValue("sys.net.netfilter.nf_conntrack_max", nfConntrackMax))
+		res = append(res, core.GaugeValue("sys.net.netfilter.nf_conntrack_max", nfConntrackMax))
 	}
 
 	nfConntrackCount, err := file.ToInt64(connCountFile)
 	if err != nil {
 		logger.Error("read file err:", connMaxFile, err)
 	} else {
-		res = append(res, GaugeValue("sys.net.netfilter.nf_conntrack_count", nfConntrackCount))
+		res = append(res, core.GaugeValue("sys.net.netfilter.nf_conntrack_count", nfConntrackCount))
 	}
 
 	if nfConntrackMax != 0 {
 		percent := float64(nfConntrackCount) / float64(nfConntrackMax) * 100
-		res = append(res, GaugeValue("sys.net.netfilter.nf_conntrack_count.percent", percent))
+		res = append(res, core.GaugeValue("sys.net.netfilter.nf_conntrack_count.percent", percent))
 	}
 
 	return res

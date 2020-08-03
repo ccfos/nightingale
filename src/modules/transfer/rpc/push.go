@@ -36,25 +36,20 @@ func (t *Transfer) Push(args []*dataobj.MetricValue, reply *dataobj.TransferResp
 		items = append(items, v)
 	}
 
-	if backend.Config.Enabled {
-		backend.Push2TsdbSendQueue(items)
+	// send to judge
+	backend.Push2JudgeQueue(items)
+
+	// send to push endpoints
+	pushEndpoints, err := backend.GetPushEndpoints()
+	if err != nil {
+		logger.Errorf("could not find pushendpoint")
+		return err
+	} else {
+		for _, pushendpoint := range pushEndpoints {
+			pushendpoint.Push2Queue(items)
+		}
 	}
 
-	if backend.Config.Enabled {
-		backend.Push2JudgeSendQueue(items)
-	}
-
-	if backend.Config.Influxdb.Enabled {
-		backend.Push2InfluxdbSendQueue(items)
-	}
-
-	if backend.Config.OpenTsdb.Enabled {
-		backend.Push2OpenTsdbSendQueue(items)
-	}
-
-	if backend.Config.Kafka.Enabled {
-		backend.Push2KafkaSendQueue(items)
-	}
 	if reply.Invalid == 0 {
 		reply.Msg = "ok"
 	}

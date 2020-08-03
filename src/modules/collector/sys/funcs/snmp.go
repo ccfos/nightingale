@@ -1,6 +1,7 @@
 package funcs
 
 import (
+	"github.com/didi/nightingale/src/modules/collector/core"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/nux"
 
@@ -18,7 +19,7 @@ func UdpMetrics() []*dataobj.MetricValue {
 	ret := make([]*dataobj.MetricValue, count)
 	i := 0
 	for key, val := range udp {
-		ret[i] = GaugeValue("snmp.Udp."+key,val)
+		ret[i] = core.GaugeValue("snmp.Udp."+key, val)
 		i++
 	}
 
@@ -35,7 +36,7 @@ func TcpMetrics() []*dataobj.MetricValue {
 	ret := make([]*dataobj.MetricValue, count)
 	i := 0
 	for key, val := range tcp {
-		ret[i] = GaugeValue("snmp.Tcp."+key,val)
+		ret[i] = core.GaugeValue("snmp.Tcp."+key, val)
 		i++
 	}
 

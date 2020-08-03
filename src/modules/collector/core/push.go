@@ -1,4 +1,4 @@
-package funcs
+package core
 
 import (
 	"bufio"

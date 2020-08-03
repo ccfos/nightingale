@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/toolkits/pkg/logger"
+
 	"github.com/didi/nightingale/src/modules/transfer/backend"
 	"github.com/didi/nightingale/src/modules/transfer/cache"
 	"github.com/didi/nightingale/src/toolkits/http/render"
@@ -50,16 +51,14 @@ func tsdbInstance(c *gin.Context) {
 	var input tsdbInstanceRecv
 	errors.Dangerous(c.ShouldBindJSON(&input))
 
-	counter, err := backend.GetCounter(input.Metric, "", input.TagMap)
-	errors.Dangerous(err)
-
-	pk := dataobj.PKWithCounter(input.Endpoint, counter)
-	pools, err := backend.SelectPoolByPK(pk)
-	addrs := make([]string, len(pools))
-	for i, pool := range pools {
-		addrs[i] = pool.Addr
+	dataSource, err := backend.GetDataSourceFor("tsdb")
+	if err != nil {
+		logger.Warningf("could not find datasource")
+		render.Message(c, err)
+		return
 	}
 
+	addrs := dataSource.GetInstance(input.Metric, input.Endpoint, input.TagMap)
 	render.Data(c, addrs, nil)
 }
 

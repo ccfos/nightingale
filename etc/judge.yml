@@ -1,7 +1,9 @@
 query:
+  maxConn: 100
   connTimeout: 1000
   callTimeout: 2000
   indexCallTimeout: 2000
+  indexMod: "index"
 
 redis:
   addrs: 

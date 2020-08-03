@@ -1,26 +1,24 @@
-package backend
+package tsdb
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-
 	"math/rand"
-	"strings"
 	"time"
+
+	"github.com/toolkits/pkg/net/httplib"
 
 	"github.com/didi/nightingale/src/dataobj"
 	"github.com/didi/nightingale/src/modules/transfer/calc"
-	"github.com/didi/nightingale/src/toolkits/address"
 	"github.com/didi/nightingale/src/toolkits/pools"
 	"github.com/didi/nightingale/src/toolkits/stats"
-
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/pool"
 )
 
-func FetchData(inputs []dataobj.QueryData) []*dataobj.TsdbQueryResponse {
+func (tsdb *TsdbDataSource) QueryData(inputs []dataobj.QueryData) []*dataobj.TsdbQueryResponse {
+	logger.Debugf("query data, inputs: %+v", inputs)
+
 	workerNum := 100
 	worker := make(chan struct{}, workerNum) // 控制 goroutine 并发数
 	dataChan := make(chan *dataobj.TsdbQueryResponse, 20000)
@@ -38,7 +36,8 @@ func FetchData(inputs []dataobj.QueryData) []*dataobj.TsdbQueryResponse {
 		for _, endpoint := range input.Endpoints {
 			for _, counter := range input.Counters {
 				worker <- struct{}{}
-				go fetchDataSync(input.Start, input.End, input.ConsolFunc, endpoint, counter, input.Step, worker, dataChan)
+				go tsdb.fetchDataSync(input.Start, input.End, input.ConsolFunc, endpoint, counter, input.Step, worker,
+					dataChan)
 			}
 		}
 	}
@@ -55,7 +54,10 @@ func FetchData(inputs []dataobj.QueryData) []*dataobj.TsdbQueryResponse {
 	return resp
 }
 
-func FetchDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
+func (tsdb *TsdbDataSource) QueryDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
+
+	logger.Debugf("query data for ui, input: %+v", input)
+
 	workerNum := 100
 	worker := make(chan struct{}, workerNum) // 控制 goroutine 并发数
 	dataChan := make(chan *dataobj.TsdbQueryResponse, 20000)
@@ -71,22 +73,24 @@ func FetchDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 
 	for _, endpoint := range input.Endpoints {
 		if len(input.Tags) == 0 {
-			counter, err := GetCounter(input.Metric, "", nil)
+			counter, err := dataobj.GetCounter(input.Metric, "", nil)
 			if err != nil {
 				logger.Warningf("get counter error: %+v", err)
 				continue
 			}
 			worker <- struct{}{}
-			go fetchDataSync(input.Start, input.End, input.ConsolFunc, endpoint, counter, input.Step, worker, dataChan)
+			go tsdb.fetchDataSync(input.Start, input.End, input.ConsolFunc, endpoint, counter, input.Step, worker,
+				dataChan)
 		} else {
 			for _, tag := range input.Tags {
-				counter, err := GetCounter(input.Metric, tag, nil)
+				counter, err := dataobj.GetCounter(input.Metric, tag, nil)
 				if err != nil {
 					logger.Warningf("get counter error: %+v", err)
 					continue
 				}
 				worker <- struct{}{}
-				go fetchDataSync(input.Start, input.End, input.ConsolFunc, endpoint, counter, input.Step, worker, dataChan)
+				go tsdb.fetchDataSync(input.Start, input.End, input.ConsolFunc, endpoint, counter, input.Step, worker,
+					dataChan)
 			}
 		}
 	}
@@ -154,30 +158,16 @@ func FetchDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 	return resp
 }
 
-func GetCounter(metric, tag string, tagMap map[string]string) (counter string, err error) {
-	if tagMap == nil {
-		tagMap, err = dataobj.SplitTagsString(tag)
-		if err != nil {
-			logger.Warningf("split tag string error: %+v", err)
-			return
-		}
-	}
-
-	tagStr := dataobj.SortedTags(tagMap)
-	counter = dataobj.PKWithTags(metric, tagStr)
-	return
-}
-
-func fetchDataSync(start, end int64, consolFun, endpoint, counter string, step int, worker chan struct{}, dataChan chan *dataobj.TsdbQueryResponse) {
+func (tsdb *TsdbDataSource) fetchDataSync(start, end int64, consolFun, endpoint, counter string, step int, worker chan struct{}, dataChan chan *dataobj.TsdbQueryResponse) {
 	defer func() {
 		<-worker
 	}()
 	stats.Counter.Set("query.tsdb", 1)
 
-	data, err := fetchData(start, end, consolFun, endpoint, counter, step)
+	data, err := tsdb.fetchData(start, end, consolFun, endpoint, counter, step)
 	if err != nil {
 		logger.Warningf("fetch tsdb data error: %+v", err)
-		stats.Counter.Set("query.data.err", 1)
+		stats.Counter.Set("query.tsdb.err", 1)
 		data.Endpoint = endpoint
 		data.Counter = counter
 		data.Step = step
@@ -185,11 +175,11 @@ func fetchDataSync(start, end int64, consolFun, endpoint, counter string, step i
 	dataChan <- data
 }
 
-func fetchData(start, end int64, consolFun, endpoint, counter string, step int) (*dataobj.TsdbQueryResponse, error) {
+func (tsdb *TsdbDataSource) fetchData(start, end int64, consolFun, endpoint, counter string, step int) (*dataobj.TsdbQueryResponse, error) {
 	var resp *dataobj.TsdbQueryResponse
 
-	qparm := GenQParam(start, end, consolFun, endpoint, counter, step)
-	resp, err := QueryOne(qparm)
+	qparm := genQParam(start, end, consolFun, endpoint, counter, step)
+	resp, err := tsdb.QueryOne(qparm)
 	if err != nil {
 		return resp, err
 	}
@@ -200,12 +190,7 @@ func fetchData(start, end int64, consolFun, endpoint, counter string, step int) 
 	return resp, nil
 }
 
-func getCounterStep(endpoint, counter string) (step int, err error) {
-	//从内存中获取
-	return
-}
-
-func GenQParam(start, end int64, consolFunc, endpoint, counter string, step int) dataobj.TsdbQueryParam {
+func genQParam(start, end int64, consolFunc, endpoint, counter string, step int) dataobj.TsdbQueryParam {
 	return dataobj.TsdbQueryParam{
 		Start:      start,
 		End:        end,
@@ -216,12 +201,12 @@ func GenQParam(start, end int64, consolFunc, endpoint, counter string, step int)
 	}
 }
 
-func QueryOne(para dataobj.TsdbQueryParam) (resp *dataobj.TsdbQueryResponse, err error) {
+func (tsdb *TsdbDataSource) QueryOne(para dataobj.TsdbQueryParam) (resp *dataobj.TsdbQueryResponse, err error) {
 	start, end := para.Start, para.End
 	resp = &dataobj.TsdbQueryResponse{}
 
 	pk := dataobj.PKWithCounter(para.Endpoint, para.Counter)
-	ps, err := SelectPoolByPK(pk)
+	ps, err := tsdb.SelectPoolByPK(pk)
 	if err != nil {
 		return resp, err
 	}
@@ -259,7 +244,7 @@ func QueryOne(para dataobj.TsdbQueryParam) (resp *dataobj.TsdbQueryResponse, err
 		}()
 
 		select {
-		case <-time.After(time.Duration(callTimeout) * time.Millisecond):
+		case <-time.After(time.Duration(tsdb.Section.CallTimeout) * time.Millisecond):
 			onePool.ForceClose(conn)
 			logger.Errorf("%s, call timeout. proc: %s", addr, onePool.Proc())
 			break
@@ -297,20 +282,20 @@ type Pool struct {
 	Addr string
 }
 
-func SelectPoolByPK(pk string) ([]Pool, error) {
-	node, err := TsdbNodeRing.GetNode(pk)
+func (tsdb *TsdbDataSource) SelectPoolByPK(pk string) ([]Pool, error) {
+	node, err := tsdb.TsdbNodeRing.GetNode(pk)
 	if err != nil {
 		return []Pool{}, err
 	}
 
-	nodeAddrs, found := Config.ClusterList[node]
+	nodeAddrs, found := tsdb.Section.ClusterList[node]
 	if !found {
 		return []Pool{}, errors.New("node not found")
 	}
 
 	var ps []Pool
 	for _, addr := range nodeAddrs.Addrs {
-		onePool, found := TsdbConnPools.Get(addr)
+		onePool, found := tsdb.TsdbConnPools.Get(addr)
 		if !found {
 			logger.Errorf("addr %s not found", addr)
 			continue
@@ -325,97 +310,113 @@ func SelectPoolByPK(pk string) ([]Pool, error) {
 	return ps, nil
 }
 
-func getTags(counter string) (tags string) {
-	idx := strings.IndexAny(counter, "/")
-	if idx == -1 {
-		return ""
-	}
-	return counter[idx+1:]
+type IndexMetricsResp struct {
+	Data *dataobj.MetricResp `json:"dat"`
+	Err  string              `json:"err"`
 }
 
-type Tagkv struct {
-	TagK string   `json:"tagk"`
-	TagV []string `json:"tagv"`
-}
-
-type SeriesReq struct {
-	Endpoints []string `json:"endpoints"`
-	Metric    string   `json:"metric"`
-	Tagkv     []*Tagkv `json:"tagkv"`
-}
-
-type SeriesResp struct {
-	Dat []Series `json:"dat"`
-	Err string   `json:"err"`
-}
-
-type Series struct {
-	Endpoints []string `json:"endpoints"`
-	Metric    string   `json:"metric"`
-	Tags      []string `json:"tags"`
-	Step      int      `json:"step"`
-	DsType    string   `json:"dstype"`
-}
-
-func GetSeries(start, end int64, req []SeriesReq) ([]dataobj.QueryData, error) {
-	var res SeriesResp
-	var queryDatas []dataobj.QueryData
-
-	if len(req) < 1 {
-		return queryDatas, fmt.Errorf("req length < 1")
-	}
-
-	addrs := address.GetHTTPAddresses("index")
-
-	if len(addrs) < 1 {
-		return queryDatas, fmt.Errorf("index addr is nil")
-	}
-
-	i := rand.Intn(len(addrs))
-	addr := fmt.Sprintf("http://%s/api/index/counter/fullmatch", addrs[i])
-
-	resp, code, err := httplib.PostJSON(addr, time.Duration(Config.IndexTimeout)*time.Millisecond, req, nil)
+func (tsdb *TsdbDataSource) QueryMetrics(recv dataobj.EndpointsRecv) *dataobj.MetricResp {
+	var result IndexMetricsResp
+	err := PostIndex("/api/index/metrics", int64(tsdb.Section.CallTimeout), recv, &result)
 	if err != nil {
-		return queryDatas, err
+		logger.Errorf("post index failed, %+v", err)
+		return nil
 	}
 
-	if code != 200 {
-		return nil, fmt.Errorf("index response status code != 200")
+	if result.Err != "" {
+		logger.Errorf("index xclude failed, %+v", result.Err)
+		return nil
 	}
 
-	if err = json.Unmarshal(resp, &res); err != nil {
-		logger.Error(string(resp))
-		return queryDatas, err
+	return result.Data
+}
+
+type IndexTagPairsResp struct {
+	Data []dataobj.IndexTagkvResp `json:"dat"`
+	Err  string                   `json:"err"`
+}
+
+func (tsdb *TsdbDataSource) QueryTagPairs(recv dataobj.EndpointMetricRecv) []dataobj.IndexTagkvResp {
+	var result IndexTagPairsResp
+	err := PostIndex("/api/index/tagkv", int64(tsdb.Section.CallTimeout), recv, &result)
+	if err != nil {
+		logger.Errorf("post index failed, %+v", err)
+		return nil
 	}
 
-	for _, item := range res.Dat {
-		counters := make([]string, 0)
-		if len(item.Tags) == 0 {
-			counters = append(counters, item.Metric)
-		} else {
-			for _, tag := range item.Tags {
-				tagMap, err := dataobj.SplitTagsString(tag)
-				if err != nil {
-					logger.Warning(err, tag)
-					continue
-				}
-				tagStr := dataobj.SortedTags(tagMap)
-				counter := dataobj.PKWithTags(item.Metric, tagStr)
-				counters = append(counters, counter)
-			}
+	if result.Err != "" || len(result.Data) == 0 {
+		logger.Errorf("index xclude failed, %+v", result.Err)
+		return nil
+	}
+
+	return result.Data
+}
+
+type IndexCludeResp struct {
+	Data []dataobj.XcludeResp `json:"dat"`
+	Err  string               `json:"err"`
+}
+
+func (tsdb *TsdbDataSource) QueryIndexByClude(recv []dataobj.CludeRecv) []dataobj.XcludeResp {
+	var result IndexCludeResp
+	err := PostIndex("/api/index/counter/clude", int64(tsdb.Section.CallTimeout), recv, &result)
+	if err != nil {
+		logger.Errorf("post index failed, %+v", err)
+		return nil
+	}
+
+	if result.Err != "" || len(result.Data) == 0 {
+		logger.Errorf("index xclude failed, %+v", result.Err)
+		return nil
+	}
+
+	return result.Data
+}
+
+type IndexByFullTagsResp struct {
+	Data []dataobj.IndexByFullTagsResp `json:"dat"`
+	Err  string                        `json:"err"`
+}
+
+func (tsdb *TsdbDataSource) QueryIndexByFullTags(recv []dataobj.IndexByFullTagsRecv) []dataobj.IndexByFullTagsResp {
+	var result IndexByFullTagsResp
+	err := PostIndex("/api/index/counter/fullmatch", int64(tsdb.Section.CallTimeout),
+		recv, &result)
+	if err != nil {
+		logger.Errorf("post index failed, %+v", err)
+		return nil
+	}
+
+	if result.Err != "" || len(result.Data) == 0 {
+		logger.Errorf("index fullTags failed, %+v", result.Err)
+		return nil
+	}
+
+	return result.Data
+}
+
+func PostIndex(url string, calltimeout int64, recv interface{}, resp interface{}) error {
+	addrs := IndexList.Get()
+	if len(addrs) == 0 {
+		logger.Errorf("empty index addr")
+		return errors.New("empty index addr")
+	}
+
+	perm := rand.Perm(len(addrs))
+	var err error
+	for i := range perm {
+		url := fmt.Sprintf("http://%s%s", addrs[perm[i]], url)
+		err = httplib.Post(url).JSONBodyQuiet(recv).SetTimeout(
+			time.Duration(calltimeout) * time.Millisecond).ToJSON(&resp)
+		if err == nil {
+			break
 		}
-
-		queryData := dataobj.QueryData{
-			Start:      start,
-			End:        end,
-			Endpoints:  item.Endpoints,
-			Counters:   counters,
-			ConsolFunc: "AVERAGE",
-			DsType:     item.DsType,
-			Step:       item.Step,
-		}
-		queryDatas = append(queryDatas, queryData)
+		logger.Warningf("index %s failed, error:%v, req:%+v", url, err, recv)
 	}
 
-	return queryDatas, err
+	if err != nil {
+		logger.Errorf("index %s failed, error:%v, req:%+v", url, err, recv)
+		return err
+	}
+	return nil
 }
