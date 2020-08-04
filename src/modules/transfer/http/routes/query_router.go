@@ -20,7 +20,7 @@ func QueryData(c *gin.Context) {
 
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("Could not find dataSource ")
+		logger.Warningf("could not find dataSource")
 		render.Message(c, err)
 		return
 	}
@@ -41,7 +41,7 @@ func QueryDataForUI(c *gin.Context) {
 
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("Could not find dataSource ")
+		logger.Warningf("could not find dataSource")
 		render.Message(c, err)
 		return
 	}
