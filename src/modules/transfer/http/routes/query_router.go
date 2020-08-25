@@ -12,10 +12,6 @@ import (
 )
 
 func QueryData(c *gin.Context) {
-	// TODO 这里要改成老版本的实现
-}
-
-func QueryDataV2(c *gin.Context) {
 	stats.Counter.Set("data.api.qp10s", 1)
 
 	dataSource, err := backend.GetDataSourceFor("")
