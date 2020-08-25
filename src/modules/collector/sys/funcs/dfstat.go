@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/modules/collector/core"
 	"github.com/didi/nightingale/src/modules/collector/sys"
 
 	"github.com/toolkits/pkg/logger"
@@ -56,26 +57,26 @@ func DeviceMetrics() []*dataobj.MetricValue {
 		diskUsed += du.BlocksUsed
 
 		tags := fmt.Sprintf("mount=%s", du.FsFile)
-		ret = append(ret, GaugeValue("disk.bytes.total", du.BlocksAll, tags))
-		ret = append(ret, GaugeValue("disk.bytes.free", du.BlocksFree, tags))
-		ret = append(ret, GaugeValue("disk.bytes.used", du.BlocksUsed, tags))
-		ret = append(ret, GaugeValue("disk.bytes.used.percent", du.BlocksUsedPercent, tags))
+		ret = append(ret, core.GaugeValue("disk.bytes.total", du.BlocksAll, tags))
+		ret = append(ret, core.GaugeValue("disk.bytes.free", du.BlocksFree, tags))
+		ret = append(ret, core.GaugeValue("disk.bytes.used", du.BlocksUsed, tags))
+		ret = append(ret, core.GaugeValue("disk.bytes.used.percent", du.BlocksUsedPercent, tags))
 
 		if du.InodesAll == 0 {
 			continue
 		}
 
-		ret = append(ret, GaugeValue("disk.inodes.total", du.InodesAll, tags))
-		ret = append(ret, GaugeValue("disk.inodes.free", du.InodesFree, tags))
-		ret = append(ret, GaugeValue("disk.inodes.used", du.InodesUsed, tags))
-		ret = append(ret, GaugeValue("disk.inodes.used.percent", du.InodesUsedPercent, tags))
+		ret = append(ret, core.GaugeValue("disk.inodes.total", du.InodesAll, tags))
+		ret = append(ret, core.GaugeValue("disk.inodes.free", du.InodesFree, tags))
+		ret = append(ret, core.GaugeValue("disk.inodes.used", du.InodesUsed, tags))
+		ret = append(ret, core.GaugeValue("disk.inodes.used.percent", du.InodesUsedPercent, tags))
 	}
 
 	if len(ret) > 0 && diskTotal > 0 {
-		ret = append(ret, GaugeValue("disk.cap.bytes.total", float64(diskTotal)))
-		ret = append(ret, GaugeValue("disk.cap.bytes.used", float64(diskUsed)))
-		ret = append(ret, GaugeValue("disk.cap.bytes.free", float64(diskTotal-diskUsed)))
-		ret = append(ret, GaugeValue("disk.cap.bytes.used.percent", float64(diskUsed)*100.0/float64(diskTotal)))
+		ret = append(ret, core.GaugeValue("disk.cap.bytes.total", float64(diskTotal)))
+		ret = append(ret, core.GaugeValue("disk.cap.bytes.used", float64(diskUsed)))
+		ret = append(ret, core.GaugeValue("disk.cap.bytes.free", float64(diskTotal-diskUsed)))
+		ret = append(ret, core.GaugeValue("disk.cap.bytes.used.percent", float64(diskUsed)*100.0/float64(diskTotal)))
 	}
 
 	return ret

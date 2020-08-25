@@ -64,6 +64,13 @@ export const funcMap = {
     params: [],
     defaultValue: [],
   },
+  stddev: {
+    label: '3-sigma离群点检测',
+    meaning: '持续 $n 秒内波动值过大，超过了 $m 个标准差范围',
+    meaningEn: 'within $n seconds, the fluctuation value exceeds the $m standard deviation range',
+    params: ['m'],
+    defaultValue: [3],
+  }
 };
 
 export const defaultExpressionValue = {

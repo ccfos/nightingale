@@ -5,6 +5,7 @@ import (
 	"github.com/toolkits/pkg/nux"
 
 	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/modules/collector/core"
 )
 
 func SocketStatSummaryMetrics() []*dataobj.MetricValue {
@@ -16,7 +17,7 @@ func SocketStatSummaryMetrics() []*dataobj.MetricValue {
 	}
 
 	for k, v := range ssMap {
-		ret = append(ret, GaugeValue("net."+k, v))
+		ret = append(ret, core.GaugeValue("net."+k, v))
 	}
 
 	return ret

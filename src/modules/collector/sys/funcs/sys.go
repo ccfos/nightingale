@@ -10,6 +10,7 @@ import (
 	"github.com/toolkits/pkg/nux"
 
 	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/modules/collector/core"
 )
 
 func FsKernelMetrics() []*dataobj.MetricValue {
@@ -27,10 +28,10 @@ func FsKernelMetrics() []*dataobj.MetricValue {
 
 	v := math.Ceil(float64(allocateFiles) * 100 / float64(maxFiles))
 	return []*dataobj.MetricValue{
-		GaugeValue("sys.fs.files.max", maxFiles),
-		GaugeValue("sys.fs.files.free", maxFiles-allocateFiles),
-		GaugeValue("sys.fs.files.used", allocateFiles),
-		GaugeValue("sys.fs.files.used.percent", v),
+		core.GaugeValue("sys.fs.files.max", maxFiles),
+		core.GaugeValue("sys.fs.files.free", maxFiles-allocateFiles),
+		core.GaugeValue("sys.fs.files.used", allocateFiles),
+		core.GaugeValue("sys.fs.files.used.percent", v),
 	}
 }
 
@@ -58,7 +59,7 @@ func ProcsNumMetrics() []*dataobj.MetricValue {
 	}
 
 	return []*dataobj.MetricValue{
-		GaugeValue("sys.ps.process.total", num),
+		core.GaugeValue("sys.ps.process.total", num),
 	}
 }
 
@@ -87,6 +88,6 @@ func EntityNumMetrics() []*dataobj.MetricValue {
 	}
 
 	return []*dataobj.MetricValue{
-		GaugeValue("sys.ps.entity.total", num),
+		core.GaugeValue("sys.ps.entity.total", num),
 	}
 }

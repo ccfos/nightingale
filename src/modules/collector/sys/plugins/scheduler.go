@@ -14,7 +14,7 @@ import (
 	"github.com/toolkits/pkg/sys"
 
 	"github.com/didi/nightingale/src/dataobj"
-	"github.com/didi/nightingale/src/modules/collector/sys/funcs"
+	"github.com/didi/nightingale/src/modules/collector/core"
 )
 
 type PluginScheduler struct {
@@ -140,5 +140,5 @@ func PluginRun(plugin *Plugin) {
 		items[i].Step = int64(plugin.Cycle)
 	}
 
-	funcs.Push(items)
+	core.Push(items)
 }

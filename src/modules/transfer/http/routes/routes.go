@@ -22,6 +22,14 @@ func Config(r *gin.Engine) {
 		sys.POST("/data/ui", QueryDataForUI)
 	}
 
+	index := r.Group("/api/index")
+	{
+		index.POST("/metrics", GetMetrics)
+		index.POST("/tagkv", GetTagPairs)
+		index.POST("/counter/clude", GetIndexByClude)
+		index.POST("/counter/fullmatch", GetIndexByFullTags)
+	}
+
 	v2 := r.Group("/api/transfer/v2")
 	{
 		v2.POST("/data", QueryData)

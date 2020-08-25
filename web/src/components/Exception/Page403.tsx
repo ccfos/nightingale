@@ -3,7 +3,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import { Button } from 'antd';
 import { appname } from '@common/config';
 
-export default function Page404({ history }: RouteComponentProps) {
+export default function Page403({ history }: RouteComponentProps) {
   const prefixCls = `${appname}-exception`;
   return (
     <div className={prefixCls}>

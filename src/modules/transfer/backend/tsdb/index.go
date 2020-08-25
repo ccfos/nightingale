@@ -1,4 +1,4 @@
-package query
+package tsdb
 
 import (
 	"fmt"
@@ -40,7 +40,7 @@ func GetIndexLoop() {
 }
 
 func GetIndex() {
-	instances, err := report.GetAlive(Config.IndexMod, "monapi")
+	instances, err := report.GetAlive("index", "monapi")
 	if err != nil {
 		stats.Counter.Set("get.index.err", 1)
 		logger.Warningf("get index list err:%v", err)
