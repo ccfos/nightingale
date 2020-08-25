@@ -32,7 +32,7 @@ func Config(r *gin.Engine) {
 
 	v2 := r.Group("/api/transfer/v2")
 	{
-		v2.POST("/data", QueryData)
+		v2.POST("/data", QueryDataV2)
 	}
 
 	pprof.Register(r, "/api/transfer/debug/pprof")

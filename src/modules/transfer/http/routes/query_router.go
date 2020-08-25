@@ -11,11 +11,11 @@ import (
 	"github.com/didi/nightingale/src/toolkits/stats"
 )
 
-type QueryDataReq struct {
-	queryData []dataobj.QueryData
+func QueryData(c *gin.Context) {
+	// TODO 这里要改成老版本的实现
 }
 
-func QueryData(c *gin.Context) {
+func QueryDataV2(c *gin.Context) {
 	stats.Counter.Set("data.api.qp10s", 1)
 
 	dataSource, err := backend.GetDataSourceFor("")
@@ -25,9 +25,9 @@ func QueryData(c *gin.Context) {
 		return
 	}
 
-	var queryDataReq QueryDataReq
-	errors.Dangerous(c.ShouldBindJSON(&queryDataReq))
-	resp := dataSource.QueryData(queryDataReq.queryData)
+	var input []dataobj.QueryData
+	errors.Dangerous(c.ShouldBindJSON(&input))
+	resp := dataSource.QueryData(input)
 	render.Data(c, resp, nil)
 }
 
