@@ -79,15 +79,14 @@ func EndpointImport(endpoints []string) error {
 		arr := strings.Split(endpoints[i], "::")
 
 		ident := strings.TrimSpace(arr[0])
-		alias := ""
-		if len(arr) == 2 {
-			alias = strings.TrimSpace(arr[1])
-		}
-
 		if ident == "" {
 			continue
 		}
 
+		alias := ""
+		if len(arr) == 2 {
+			alias = strings.TrimSpace(arr[1])
+		}
 		err := endpointImport(session, ident, alias)
 		if err != nil {
 			return err
