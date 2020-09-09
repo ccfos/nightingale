@@ -98,7 +98,7 @@ func (m *MetricValue) CheckValidity(now int64) (err error) {
 	}
 
 	if m.Step <= 0 {
-		err = fmt.Errorf("step sholud larger than 0")
+		err = fmt.Errorf("step should larger than 0")
 		return
 	}
 
