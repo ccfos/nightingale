@@ -301,36 +301,12 @@ func resourceUnderNodeNotePut(c *gin.Context) {
 	renderMessage(c, nil)
 }
 
-type v1ResourcesRegisterItem struct {
-	UUID   string `json:"uuid"`
-	Ident  string `json:"ident"`
-	Name   string `json:"name"`
-	Labels string `json:"labels"`
-	Extend string `json:"extend"`
-	Cate   string `json:"cate"`
-	NID    int64  `json:"nid"`
-}
-
-func (f v1ResourcesRegisterItem) Validate() {
-	if f.Cate == "" {
-		bomb("cate is blank")
-	}
-
-	if f.UUID == "" {
-		bomb("uuid is blank")
-	}
-
-	if f.Ident == "" {
-		bomb("ident is blank")
-	}
-}
-
 // 资源挂在两个地方，一个是所在项目节点下的${cate}节点，一个是inner.${cate}.default节点
 // 这俩节点如果不存在则自动创建，并且设置proxy=1，不允许普通用户在这样的节点上挂载/解挂资源
 // 资源注册后面要用MQ的方式，不能用HTTP接口，RDB可能挂，数据库可能挂，如果RDB或数据库挂了，子系统就会注册资源失败
 // MQ的方式就不怕RDB挂掉了，使用MQ的手工ack方式，只有确认资源正常入库了才发送ack给MQ
 func v1ResourcesRegisterPost(c *gin.Context) {
-	var items []v1ResourcesRegisterItem
+	var items []models.ResourceRegisterItem
 	bind(c, &items)
 
 	count := len(items)
@@ -339,66 +315,10 @@ func v1ResourcesRegisterPost(c *gin.Context) {
 	}
 
 	for i := 0; i < count; i++ {
-		items[i].Validate()
-
-		node := Node(items[i].NID)
-		if node.Cate != "project" {
-			bomb("node not project")
-		}
-
-		res, err := models.ResourceGet("uuid=?", items[i].UUID)
-		dangerous(err)
-
-		if res != nil {
-			// 这个资源之前就已经存在过了，这次可能是更新了部分字段
-			res.Name = items[i].Name
-			res.Labels = items[i].Labels
-			res.Extend = items[i].Extend
-			dangerous(res.Update("name", "labels", "extend"))
-		} else {
-			// 之前没有过这个资源，在RDB注册这个资源
-			res = new(models.Resource)
-			res.UUID = items[i].UUID
-			res.Ident = items[i].Ident
-			res.Name = items[i].Name
-			res.Labels = items[i].Labels
-			res.Extend = items[i].Extend
-			res.Cate = items[i].Cate
-			res.Tenant = node.Tenant()
-			dangerous(res.Save())
-		}
-
-		// 检查这个资源是否有挂载过，没有的话就补齐挂载关系，这个动作是幂等的
-		leafPath := node.Path + "." + items[i].Cate
-		leafNode, err := models.NodeGet("path=?", leafPath)
-		dangerous(err)
-
-		// 第一个挂载位置：项目下面的${cate}节点
-		if leafNode == nil {
-			leafNode, err = node.CreateChild(items[i].Cate, items[i].Cate, "", "resource", "system", 1, 1, []int64{})
+		errCode, err := models.ResourceRegisterFor3rd(items[i])
+		if errCode != 0 {
 			dangerous(err)
 		}
-
-		dangerous(leafNode.Bind([]int64{res.Id}))
-
-		// 第二个挂载位置：inner.${cate}
-		innerCatePath := "inner." + items[i].Cate
-		innerCateNode, err := models.NodeGet("path=?", innerCatePath)
-		dangerous(err)
-
-		if innerCateNode == nil {
-			innerNode, err := models.NodeGet("path=?", "inner")
-			dangerous(err)
-
-			if innerNode == nil {
-				bomb("inner node not exists")
-			}
-
-			innerCateNode, err = innerNode.CreateChild(items[i].Cate, items[i].Cate, "", "resource", "system", 1, 1, []int64{})
-			dangerous(err)
-		}
-
-		dangerous(innerCateNode.Bind([]int64{res.Id}))
 	}
 
 	renderMessage(c, nil)

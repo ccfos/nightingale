@@ -1,9 +1,10 @@
 package http
 
 import (
+	"strings"
+
 	"github.com/didi/nightingale/src/models"
 	"github.com/gin-gonic/gin"
-	"strings"
 )
 
 func v1CandoGlobalOp(c *gin.Context) {

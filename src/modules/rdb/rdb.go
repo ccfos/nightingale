@@ -17,6 +17,7 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/didi/nightingale/src/modules/rdb/cron"
 	"github.com/didi/nightingale/src/modules/rdb/http"
+	"github.com/didi/nightingale/src/modules/rdb/rabbitmq"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
 	"github.com/didi/nightingale/src/modules/rdb/ssoc"
 )
@@ -62,9 +63,13 @@ func main() {
 
 	ssoc.InitSSO()
 
-	// 初始化redis用来发送邮件短信等
+	// 初始化 redis 用来发送邮件短信等
 	redisc.InitRedis()
 	cron.InitWorker()
+
+	// 初始化 rabbitmq 处理部分异步逻辑
+	rabbitmq.Init(config.Config.RabbitMQ.Addr)
+	rabbitmq.Consume(config.Config.RabbitMQ.Queue)
 
 	go cron.ConsumeMail()
 	go cron.ConsumeSms()
@@ -94,5 +99,6 @@ func endingProc() {
 	logger.Close()
 	http.Shutdown()
 	redisc.CloseRedis()
+	rabbitmq.Shutdown()
 	fmt.Println("portal stopped successfully")
 }

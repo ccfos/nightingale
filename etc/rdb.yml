@@ -53,6 +53,11 @@ redis:
     read: 3000
     write: 3000
 
+# rdb rabbitmq  
+rabbitmq:
+  addr: amqp://root:1234@127.0.0.1:5672/
+  queue: rdb_op_message
+
 sender:
   mail:
     # three choice: smtp|shell|api
