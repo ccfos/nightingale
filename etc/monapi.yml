@@ -1,0 +1,28 @@
+---
+tokens:
+  - monapi-internal-third-module-pass-fjsdi
+logger:
+  dir: logs/monapi
+  level: WARNING
+  keepHours: 2
+region:
+  - default
+# read alert from redis
+redis:
+  addr: 127.0.0.1:6379
+  pass: 1234
+  # timeout:
+  #   conn: 500
+  #   read: 3000
+  #   write: 3000
+
+notify:
+  p1: ["voice", "sms", "mail", "im"]
+  p2: ["sms", "mail", "im"]
+  p3: ["mail", "im"]
+
+# addresses accessible using browser
+link:
+  stra: http://ecmc.com/mon/strategy/%v
+  event: http://ecmc.com/mon/history/his/%v
+  claim: http://ecmc.com/mon/history/cur/%v

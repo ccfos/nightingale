@@ -1,0 +1,15 @@
+logger:
+  dir: logs/job
+  level: INFO
+  keepHours: 24
+
+http:
+  mode: release
+  cookieDomain: ""
+  cookieName: ecmc-user
+
+output:
+  # database | remote
+  comeFrom: database
+  remotePort: 2080
+

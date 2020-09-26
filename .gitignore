@@ -45,9 +45,11 @@ _test
 /src/modules/transfer/transfer
 /src/modules/tsdb/tsdb
 /src/modules/monapi/monapi
+/src/modules/rdb/rdb
 
 /web/node_modules
 /web/.cache-loader
 /web/yarn.lock
+Makefile
 
 
