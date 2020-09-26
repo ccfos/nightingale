@@ -1,4 +1,0 @@
-nux
-===
-
-*nux metric collector
