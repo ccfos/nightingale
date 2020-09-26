@@ -63,15 +63,8 @@ func operationLogResGets(c *gin.Context) {
 	}, nil)
 }
 
-type oplogForm struct {
-	Username string `json:"username"`
-	ResCl    string `json:"rescl"`
-	ResID    string `json:"resid"`
-	Detail   string `json:"detail"`
-}
-
 func v1OperationLogResPost(c *gin.Context) {
-	var f oplogForm
+	var f models.OperationLog
 	bind(c, &f)
-	renderMessage(c, models.OperationLogNew(f.Username, f.ResCl, f.ResID, f.Detail))
+	renderMessage(c, f.New())
 }

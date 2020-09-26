@@ -14,6 +14,13 @@ type OperationLog struct {
 	Detail   string `json:"detail"`
 }
 
+func (ol *OperationLog) New() error {
+	ol.Clock = time.Now().Unix()
+	ol.Id = 0
+	_, err := DB["rdb"].Insert(ol)
+	return err
+}
+
 func OperationLogNew(username, rescl string, resid interface{}, detail string) error {
 	now := time.Now().Unix()
 	obj := OperationLog{
