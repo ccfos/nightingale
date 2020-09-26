@@ -40,16 +40,14 @@ _test
 
 /n9e-*
 
+/src/modules/agent/agent
+/src/modules/ams/ams
 /src/modules/index/index
-/src/modules/collector/collector
-/src/modules/transfer/transfer
-/src/modules/tsdb/tsdb
+/src/modules/job/job
+/src/modules/judge/judge
 /src/modules/monapi/monapi
 /src/modules/rdb/rdb
-
-/web/node_modules
-/web/.cache-loader
-/web/yarn.lock
-Makefile
+/src/modules/transfer/transfer
+/src/modules/tsdb/tsdb
 
 
