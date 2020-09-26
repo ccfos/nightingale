@@ -8,9 +8,3 @@
           cn: 主机设备删除
         - en: ams_host_modify
           cn: 主机设备信息修改
-    - title: 网络设备
-      ops:
-        - en: ams_netware_mgr_menu
-          cn: 网络设备管理菜单
-        - en: ams_netware_modify
-          cn: 网络设备信息修改

@@ -9,16 +9,14 @@ http:
   cookieName: ecmc-user
 
 sso:
-  enable: true
-  ssoAddr: "http://10.86.76.13:8071"
-  redirectURL: "http://10.86.76.13:8072/api/rdb/auth/callback"
+  enable: false
+  ssoAddr: "http://10.1.2.3:8071"
+  redirectURL: "http://10.1.2.3:8072/api/rdb/auth/callback"
   clientId: ""
   clientSecret: ""
   apiKey: ""
 
 tokens:
-  - uic-builtin-token
-  - hsp-builtin-token
   - rdb-builtin-token
 
 # for ldap authorization
@@ -44,7 +42,7 @@ ldap:
 
 # as queue for sender
 redis:
-  enable: false
+  enable: true
   addr: 127.0.0.1:6379
   pass: ""
   idle: 5

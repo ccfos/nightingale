@@ -4,9 +4,9 @@ logger:
   keepHours: 24
 
 enable:
-  mon: false
-  job: false
-  report: false
+  mon: true
+  job: true
+  report: true
 
 job:
   metadir: ./meta
@@ -22,11 +22,11 @@ report:
   # physical：物理机，virtual：虚拟机，container：容器，switch：交换机
   cate: physical
 
-  # 使用哪个字段作为唯一KEY，即作为where条件更新对应记录
-  # 一般使用sn，虚机的话把uuid当做sn即可，不同IaaS平台获取方式可能不同
-  uniqkey: sn
+  # 使用哪个字段作为唯一KEY，即作为where条件更新对应记录，一般使用sn或ip
+  uniqkey: ip
 
   # 如果是虚拟机，应该是获取uuid
+  # curl -s http://169.254.169.254/a/meta-data/instance-id
   sn: dmidecode -s system-serial-number | tail -n 1
 
   fields:
@@ -37,8 +37,8 @@ report:
 sys:
   # timeout in ms
   # interval in second
-  timeout: 1000
-  interval: 20
+  timeout: 5000
+  interval: 30
   ifacePrefix:
     - eth
     - em
