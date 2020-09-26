@@ -14,5 +14,5 @@ redis:
 
 logger:
   dir: logs/judge
-  level: WARNING
-  keepHours: 2
+  level: INFO
+  keepHours: 24

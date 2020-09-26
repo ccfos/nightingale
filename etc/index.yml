@@ -1,4 +1,4 @@
 logger:
   dir: logs/index
-  level: WARNING
-  keepHours: 2
+  level: INFO
+  keepHours: 24
