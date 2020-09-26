@@ -9,13 +9,14 @@ import (
 )
 
 type ConfigT struct {
-	Logger loggeri.Config           `yaml:"logger"`
-	HTTP   httpSection              `yaml:"http"`
-	LDAP   ldapSection              `yaml:"ldap"`
-	SSO    ssoSection               `yaml:"sso"`
-	Tokens []string                 `yaml:"tokens"`
-	Redis  redisSection             `yaml:"redis"`
-	Sender map[string]senderSection `yaml:"sender"`
+	Logger   loggeri.Config           `yaml:"logger"`
+	HTTP     httpSection              `yaml:"http"`
+	LDAP     ldapSection              `yaml:"ldap"`
+	SSO      ssoSection               `yaml:"sso"`
+	Tokens   []string                 `yaml:"tokens"`
+	Redis    redisSection             `yaml:"redis"`
+	Sender   map[string]senderSection `yaml:"sender"`
+	RabbitMQ rabbitmqSection          `yaml:"rabbitmq"`
 }
 
 type ssoSection struct {
@@ -72,6 +73,11 @@ type timeoutSection struct {
 	Conn  int `yaml:"conn"`
 	Read  int `yaml:"read"`
 	Write int `yaml:"write"`
+}
+
+type rabbitmqSection struct {
+	Addr  string `yaml:"addr"`
+	Queue string `yaml:"queue"`
 }
 
 var Config *ConfigT

@@ -86,6 +86,10 @@ func NodeGet(where string, args ...interface{}) (*Node, error) {
 	return &obj, nil
 }
 
+func NodeGetById(id int64) (*Node, error) {
+	return NodeGet("id=?", id)
+}
+
 // NodeGets 在所有节点范围查询，比如管理员看服务树，就需要load所有数据
 func NodeGets(where string, args ...interface{}) (nodes []Node, err error) {
 	if where != "" {

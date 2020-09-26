@@ -33,6 +33,7 @@ require (
 	github.com/shirou/gopsutil v2.20.7+incompatible
 	github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72
 	github.com/spf13/viper v1.7.1
+	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.6.1
 	github.com/toolkits/pkg v1.1.2
 	github.com/ugorji/go/codec v1.1.7
