@@ -56,10 +56,10 @@
           cn: 监控大屏配置权限
         - en: mon_screen_read
           cn: 监控大屏查看权限
-    - title: 指标计算
-      ops:
-        - en: mon_aggr_write
-          cn: 指标计算配置权限
+    # - title: 指标计算
+    #   ops:
+    #     - en: mon_aggr_write
+    #       cn: 指标计算配置权限
     - title: 告警历史
       ops:
         - en: mon_event_write
