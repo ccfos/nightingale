@@ -177,7 +177,9 @@ reload()
 
 pack()
 {
-	tar zcvf n9e-${version}.tar.gz control sql etc
+	mkdir -p tarball
+	mv *.tar.gz tarball
+	tar zcvf n9e-${version}.tar.gz control sql etc n9e-*
 }
 
 case "$1" in
