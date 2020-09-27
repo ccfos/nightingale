@@ -91,6 +91,12 @@ func (influxdb *InfluxdbDataSource) QueryData(inputs []dataobj.QueryData) []*dat
 
 					}
 				}
+			} else {
+				if err != nil {
+					logger.Warningf("query data point on influxdb error %v.", err)
+				} else if response.Error() != nil {
+					logger.Warningf("query data point on influxdb, resp error: %v.", response.Error())
+				}
 			}
 		}
 	}
@@ -192,6 +198,12 @@ func (influxdb *InfluxdbDataSource) QueryMetrics(recv dataobj.EndpointsRecv) *da
 			}
 		}
 		return resp
+	} else {
+		if err != nil {
+			logger.Warningf("query metrics on influxdb error %v.", err)
+		} else if response.Error() != nil {
+			logger.Warningf("query metrics on influxdb, resp error: %v.", response.Error())
+		}
 	}
 	return nil
 }
@@ -216,7 +228,7 @@ func (influxdb *InfluxdbDataSource) QueryTagPairs(recv dataobj.EndpointMetricRec
 			Tagkv:     make([]*dataobj.TagPair, 0),
 		}
 		// show tag keys
-		keys := showTagKeys(c, metric, influxdb.Section.Database)
+		keys := showTagKeys(c, metric, influxdb.Section.Database, recv.Endpoints)
 		if len(keys) > 0 {
 			// show tag values
 			tagkvResp.Tagkv = showTagValues(c, keys, metric, influxdb.Section.Database)
@@ -229,9 +241,17 @@ func (influxdb *InfluxdbDataSource) QueryTagPairs(recv dataobj.EndpointMetricRec
 
 // show tag keys on n9e from metric where ...
 // (exclude default endpoint tag)
-func showTagKeys(c *InfluxClient, metric, database string) []string {
+func showTagKeys(c *InfluxClient, metric, database string, endpoints []string) []string {
 	keys := make([]string, 0)
 	influxql := fmt.Sprintf("SHOW TAG KEYS ON \"%s\" FROM \"%s\"", database, metric)
+	if len(endpoints) > 0 {
+		endpointPart := ""
+		for _, endpoint := range endpoints {
+			endpointPart += fmt.Sprintf(" \"endpoint\"='%s' OR", endpoint)
+		}
+		endpointPart = endpointPart[:len(endpointPart)-len("OR")]
+		influxql = fmt.Sprintf("%s WHERE %s", influxql, endpointPart)
+	}
 	query := client.NewQuery(influxql, c.Database, c.Precision)
 	if response, err := c.Client.Query(query); err == nil && response.Error() == nil {
 		for _, result := range response.Results {
@@ -244,6 +264,12 @@ func showTagKeys(c *InfluxClient, metric, database string) []string {
 					}
 				}
 			}
+		}
+	} else {
+		if err != nil {
+			logger.Warningf("query tag keys on influxdb error %v.", err)
+		} else if response.Error() != nil {
+			logger.Warningf("query tag keys on influxdb, resp error: %v.", response.Error())
 		}
 	}
 	return keys
@@ -276,6 +302,12 @@ func showTagValues(c *InfluxClient, keys []string, metric, database string) []*d
 				}
 			}
 		}
+	} else {
+		if err != nil {
+			logger.Warningf("query tag values on influxdb error %v.", err)
+		} else if response.Error() != nil {
+			logger.Warningf("query tag values on influxdb, resp error: %v.", response.Error())
+		}
 	}
 	return tagkv
 }
@@ -305,7 +337,7 @@ func (influxdb *InfluxdbDataSource) QueryIndexByClude(recvs []dataobj.CludeRecv)
 				Endpoint: endpoint,
 				Metric:   recv.Metric,
 				Tags:     make([]string, 0),
-				Step:     60,
+				Step:     10,
 				DsType:   "GAUGE",
 			}
 		}
@@ -353,10 +385,17 @@ func (influxdb *InfluxdbDataSource) QueryIndexByClude(recvs []dataobj.CludeRecv)
 						if len(newItems) > 0 {
 							if tags, err := dataobj.SplitTagsString(strings.Join(newItems, ",")); err == nil {
 								xcludeRespMap[curItem].Tags = append(xcludeRespMap[curItem].Tags, dataobj.SortedTags(tags))
+								xcludeRespMap[curItem].Step = 10
 							}
 						}
 					}
 				}
+			}
+		} else {
+			if err != nil {
+				logger.Warningf("query index by clude on influxdb error: %v.", err)
+			} else if response.Error() != nil {
+				logger.Warningf("query index by clude on influxdb, resp error: %v.", response.Error())
 			}
 		}
 		for _, xcludeResp := range xcludeRespMap {
@@ -368,8 +407,7 @@ func (influxdb *InfluxdbDataSource) QueryIndexByClude(recvs []dataobj.CludeRecv)
 }
 
 // show series from metric where ...
-func (influxdb *InfluxdbDataSource) QueryIndexByFullTags(recvs []dataobj.IndexByFullTagsRecv) []dataobj.
-	IndexByFullTagsResp {
+func (influxdb *InfluxdbDataSource) QueryIndexByFullTags(recvs []dataobj.IndexByFullTagsRecv) []dataobj.IndexByFullTagsResp {
 	logger.Debugf("query IndexByFullTags , recv: %+v", recvs)
 
 	c, err := NewInfluxdbClient(influxdb.Section)
@@ -386,7 +424,7 @@ func (influxdb *InfluxdbDataSource) QueryIndexByFullTags(recvs []dataobj.IndexBy
 			Endpoints: recv.Endpoints,
 			Metric:    recv.Metric,
 			Tags:      make([]string, 0),
-			Step:      60,
+			Step:      10,
 			DsType:    "GAUGE",
 		}
 
@@ -434,6 +472,12 @@ func (influxdb *InfluxdbDataSource) QueryIndexByFullTags(recvs []dataobj.IndexBy
 						}
 					}
 				}
+			}
+		} else {
+			if err != nil {
+				logger.Warningf("query index by full tags on influxdb error %v.", err)
+			} else if response.Error() != nil {
+				logger.Warningf("query index by full tags on influxdb error %v.", response.Error())
 			}
 		}
 		resp = append(resp, fullTagResp)
