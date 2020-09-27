@@ -70,7 +70,7 @@ func main() {
 	// 初始化 rabbitmq 处理部分异步逻辑
 	if config.Config.RabbitMQ.Enable {
 		rabbitmq.Init(config.Config.RabbitMQ.Addr)
-		rabbitmq.Consume(config.Config.RabbitMQ.Queue)
+		go rabbitmq.Consume(config.Config.RabbitMQ.Queue)
 	}
 
 	go cron.ConsumeMail()
