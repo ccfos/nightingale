@@ -1,32 +1,50 @@
 package rabbitmq
 
 import (
+	"log"
 	"time"
 
 	"github.com/toolkits/pkg/logger"
 )
 
+// Consume 消费消息
 func Consume(queueName string) {
-	go func(queueName string) {
-		for {
-			sleep := consume(queueName)
-			if sleep {
-				time.Sleep(300 * time.Millisecond)
+	ticker := time.NewTicker(100 * time.Millisecond)
+	for {
+		select {
+		case <-ticker.C:
+			defer func() {
+				if err := recover(); err != nil {
+					conn = nil
+					logger.Error(err)
+				}
+			}()
+			if mqErr := consume(queueName); mqErr != nil {
+				conn = nil
 			}
-
-			if _, ok := <-exit; ok {
-				return
-			}
+		case <-exit:
+			return
 		}
-	}(queueName)
+	}
 }
 
-// 如果操作MQ出现问题，或者没有load到数据，就sleep一下
-func consume(queueName string) bool {
+// consume 如果操作MQ出现问题,连接置为空
+func consume(queueName string) error {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Error(err)
+			log.Fatal(err)
+		}
+	}()
+
+	if conn == nil {
+		return nil
+	}
+
 	ch, err := conn.Channel()
 	if err != nil {
 		logger.Error(err)
-		return true
+		return err
 	}
 
 	defer ch.Close()
@@ -41,17 +59,17 @@ func consume(queueName string) bool {
 	)
 	if err != nil {
 		logger.Error(err)
-		return true
+		return err
 	}
 
 	err = ch.Qos(
-		0,     // prefetch count
+		80,    // prefetch count
 		0,     // prefetch size
 		false, // global
 	)
 	if err != nil {
 		logger.Error(err)
-		return true
+		return err
 	}
 
 	msgs, err := ch.Consume(
@@ -65,26 +83,16 @@ func consume(queueName string) bool {
 	)
 	if err != nil {
 		logger.Error(err)
-		return true
+		return err
 	}
 
-	size := 0
 	for d := range msgs {
-		size++
 		logger.Infof("rabbitmq consume message: %s", d.Body)
 
 		if handleMessage(d.Body) {
 			d.Ack(true)
-		} else {
-			// 底层代码认为不应该ack，说明处理的过程出现问题，可能是DB有问题之类的，sleep一下
-			return true
 		}
 	}
 
-	if size == 0 {
-		// MQ里没有消息，就sleep一下，否则上层代码一直在死循环空转，浪费算力
-		return true
-	}
-
-	return false
+	return nil
 }

@@ -76,8 +76,9 @@ type timeoutSection struct {
 }
 
 type rabbitmqSection struct {
-	Addr  string `yaml:"addr"`
-	Queue string `yaml:"queue"`
+	Enable bool   `yaml:"enable"`
+	Addr   string `yaml:"addr"`
+	Queue  string `yaml:"queue"`
 }
 
 var Config *ConfigT
