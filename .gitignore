@@ -26,6 +26,8 @@ _test
 /log*
 /bin
 /out
+/meta
+/pub
 /build
 /dist
 /etc/*.local.yml
