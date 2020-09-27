@@ -103,7 +103,16 @@ report:
 
 9、启动各个进程，包括mysql、redis、nginx，夜莺的各个组件直接用control脚本启动即可，后续上生产环境，可以用systemd之类的托管
 
-10、登录web，账号root，密码root.2020，进来第一步一定要修改密码，如果nginx报权限类的错误，检查selinux是否关闭了，用`setenforce 0`关闭
+```shell script
+cd /home/n9e
+./control start all
+```
+
+10、登录web，账号root，密码root.2020，进来第一步一定要修改密码，如果nginx报权限类的错误，检查selinux是否关闭了，如下命令可关闭
+
+```shell script
+setenforce 0
+```
 
 
 
