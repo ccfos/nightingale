@@ -1,7 +1,6 @@
 package rabbitmq
 
 import (
-	"log"
 	"time"
 
 	"github.com/toolkits/pkg/logger"
@@ -13,12 +12,6 @@ func Consume(queueName string) {
 	for {
 		select {
 		case <-ticker.C:
-			defer func() {
-				if err := recover(); err != nil {
-					conn = nil
-					logger.Error(err)
-				}
-			}()
 			if mqErr := consume(queueName); mqErr != nil {
 				conn = nil
 			}
@@ -33,7 +26,6 @@ func consume(queueName string) error {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error(err)
-			log.Fatal(err)
 		}
 	}()
 
