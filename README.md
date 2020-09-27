@@ -8,7 +8,22 @@ v3.x的版本和v2.x差别巨大，如果短期没办法迁移，可以继续使
 
 # 新版效果
 
-几张图
+用户资源中心：
+
+![](https://s3-gz01.didistatic.com/n9e-pub/image/snapshot/rdb.png)
+
+资产管理中心：
+
+![](https://s3-gz01.didistatic.com/n9e-pub/image/snapshot/ams.png)
+
+任务执行中心：
+
+![](https://s3-gz01.didistatic.com/n9e-pub/image/snapshot/job.png)
+
+监控告警中心：
+
+![](https://s3-gz01.didistatic.com/n9e-pub/image/snapshot/mon.png)
+
 
 # 安装步骤
 
