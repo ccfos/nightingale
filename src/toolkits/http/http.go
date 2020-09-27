@@ -7,10 +7,10 @@ import (
 	_ "net/http/pprof"
 	"time"
 
-	"github.com/gin-gonic/gin"
-
-	"github.com/didi/nightingale/src/toolkits/address"
+	"github.com/didi/nightingale/src/common/address"
 	"github.com/didi/nightingale/src/toolkits/http/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
 var srv = &http.Server{

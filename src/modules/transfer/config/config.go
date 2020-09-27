@@ -3,27 +3,31 @@ package config
 import (
 	"bytes"
 	"fmt"
-	"github.com/didi/nightingale/src/toolkits/identity"
-	"github.com/didi/nightingale/src/toolkits/report"
+	"strconv"
 	"strings"
 
+	"github.com/didi/nightingale/src/common/address"
+	"github.com/didi/nightingale/src/common/identity"
+	"github.com/didi/nightingale/src/common/loggeri"
+	"github.com/didi/nightingale/src/common/report"
+	"github.com/didi/nightingale/src/modules/transfer/aggr"
 	"github.com/didi/nightingale/src/modules/transfer/backend"
 	"github.com/didi/nightingale/src/modules/transfer/backend/tsdb"
-	"github.com/didi/nightingale/src/toolkits/logger"
 
 	"github.com/spf13/viper"
 	"github.com/toolkits/pkg/file"
 )
 
 type ConfYaml struct {
-	Debug    bool                     `yaml:"debug"`
-	MinStep  int                      `yaml:"minStep"`
-	Logger   logger.LoggerSection     `yaml:"logger"`
-	Backend  backend.BackendSection   `yaml:"backend"`
-	HTTP     HTTPSection              `yaml:"http"`
-	RPC      RPCSection               `yaml:"rpc"`
-	Identity identity.IdentitySection `yaml:"identity"`
-	Report   report.ReportSection     `yaml:"report"`
+	Debug    bool                   `yaml:"debug"`
+	MinStep  int                    `yaml:"minStep"`
+	Logger   loggeri.Config         `yaml:"logger"`
+	Backend  backend.BackendSection `yaml:"backend"`
+	HTTP     HTTPSection            `yaml:"http"`
+	RPC      RPCSection             `yaml:"rpc"`
+	Identity identity.Identity      `yaml:"identity"`
+	Report   report.ReportSection   `yaml:"report"`
+	Aggr     aggr.AggrSection       `yaml:"aggr"`
 }
 
 type IndexSection struct {
@@ -86,7 +90,7 @@ func Parse(conf string) error {
 
 	viper.SetDefault("backend", map[string]interface{}{
 		"datasource": "tsdb",
-		"straPath":   "/api/portal/stras/effective?all=1",
+		"straPath":   "/api/mon/stras/effective?all=1",
 	})
 
 	viper.SetDefault("backend.judge", map[string]interface{}{
@@ -110,6 +114,12 @@ func Parse(conf string) error {
 		"callTimeout":  3000, //访问超时时间，单位毫秒
 		"indexTimeout": 3000, //访问index超时时间，单位毫秒
 		"replicas":     500,  //一致性hash虚拟节点
+	})
+
+	viper.SetDefault("aggr", map[string]interface{}{
+		"enabled":    false,
+		"apiTimeout": 3000,
+		"apiPath":    "/api/mon/aggrs",
 	})
 
 	viper.SetDefault("backend.influxdb", map[string]interface{}{
@@ -158,5 +168,8 @@ func Parse(conf string) error {
 
 	Config.Backend.Tsdb.ClusterList = formatClusterItems(Config.Backend.Tsdb.Cluster)
 
-	return err
+	Config.Report.HTTPPort = strconv.Itoa(address.GetHTTPPort("transfer"))
+	Config.Report.RPCPort = strconv.Itoa(address.GetRPCPort("transfer"))
+
+	return identity.Parse()
 }

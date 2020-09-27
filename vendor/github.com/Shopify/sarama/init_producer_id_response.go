@@ -50,10 +50,6 @@ func (i *InitProducerIDResponse) version() int16 {
 	return 0
 }
 
-func (i *InitProducerIDResponse) headerVersion() int16 {
-	return 0
-}
-
 func (i *InitProducerIDResponse) requiredVersion() KafkaVersion {
 	return V0_11_0_0
 }

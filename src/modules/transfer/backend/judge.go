@@ -3,13 +3,14 @@ package backend
 import (
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
-	"github.com/didi/nightingale/src/model"
+	"github.com/didi/nightingale/src/common/dataobj"
+	"github.com/didi/nightingale/src/common/report"
+	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/transfer/cache"
 	"github.com/didi/nightingale/src/toolkits/pools"
-	"github.com/didi/nightingale/src/toolkits/report"
 	"github.com/didi/nightingale/src/toolkits/stats"
 	"github.com/didi/nightingale/src/toolkits/str"
+
 	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/logger"
@@ -111,7 +112,12 @@ func Send2JudgeTask(Q *list.SafeListLimited, addr string, concurrent int) {
 func Push2JudgeQueue(items []*dataobj.MetricValue) {
 	errCnt := 0
 	for _, item := range items {
-		key := str.PK(item.Metric, item.Endpoint)
+		var key string
+		if item.Nid != "" {
+			key = str.MD5(item.Nid, item.Metric, "")
+		} else {
+			key = str.MD5(item.Endpoint, item.Metric, "")
+		}
 		stras := cache.StraMap.GetByKey(key)
 
 		for _, stra := range stras {
@@ -119,6 +125,7 @@ func Push2JudgeQueue(items []*dataobj.MetricValue) {
 				continue
 			}
 			judgeItem := &dataobj.JudgeItem{
+				Nid:       item.Nid,
 				Endpoint:  item.Endpoint,
 				Metric:    item.Metric,
 				Value:     item.Value,
@@ -146,7 +153,7 @@ func alignTs(ts int64, period int64) int64 {
 	return ts - ts%period
 }
 
-func TagMatch(straTags []model.Tag, tag map[string]string) bool {
+func TagMatch(straTags []models.Tag, tag map[string]string) bool {
 	for _, stag := range straTags {
 		if _, exists := tag[stag.Tkey]; !exists {
 			return false

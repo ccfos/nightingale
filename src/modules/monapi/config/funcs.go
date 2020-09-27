@@ -6,15 +6,9 @@ import (
 	"strings"
 
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/str"
 )
 
-// CryptoPass crypto password use salt
-func CryptoPass(raw string) string {
-	return str.MD5(Get().Salt + "<-*ak47^ak47*->" + raw)
-}
-
-// InitLogger x
+// InitLogger init logger toolkits
 func InitLogger() {
 	c := Get().Logger
 
@@ -41,7 +35,7 @@ func Set(s []string) []string {
 		m[s[i]] = 1
 	}
 
-	var s2 []string
+	s2 := []string{}
 	for k := range m {
 		s2 = append(s2, k)
 	}
@@ -63,7 +57,7 @@ func SplitN(m, n int) [][]int {
 	var res [][]int
 
 	if n <= 0 {
-		return [][]int{{0, m}}
+		return [][]int{[]int{0, m}}
 	}
 
 	for i := 0; i < m; i = i + n {

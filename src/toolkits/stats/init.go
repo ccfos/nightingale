@@ -8,8 +8,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
-	"github.com/didi/nightingale/src/toolkits/address"
+	"github.com/didi/nightingale/src/common/address"
+	"github.com/didi/nightingale/src/common/dataobj"
 
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	PushUrl string = "http://127.0.0.1:2058/api/collector/push"
+	PushUrl string = "http://127.0.0.1:2058/v1/push"
 )
 
 func Init(prefix string, addr ...string) {
@@ -27,8 +27,13 @@ func Init(prefix string, addr ...string) {
 
 	} else if file.IsExist(path.Join(runner.Cwd, "etc", "address.yml")) {
 		//address.yml 存在，则使用配置文件的地址
-		port := address.GetHTTPPort("collector")
-		PushUrl = fmt.Sprintf("http://127.0.0.1:%d/api/collector/push", port)
+		newAddr := address.GetHTTPAddresses("agent")
+		if len(newAddr) == 0 {
+			port := address.GetHTTPPort("agent")
+			PushUrl = fmt.Sprintf("http://127.0.0.1:%d/v1/push", port)
+		} else {
+			PushUrl = fmt.Sprintf("http://%s/v1/push", newAddr[0])
+		}
 	}
 
 	Counter = NewCounter(prefix)

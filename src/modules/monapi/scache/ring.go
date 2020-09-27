@@ -11,23 +11,25 @@ type ConsistentHashRing struct {
 	ring *consistent.Consistent
 }
 
-func (r *ConsistentHashRing) GetNode(pk string) (string, error) {
-	r.RLock()
-	defer r.RUnlock()
+func (this *ConsistentHashRing) GetNode(pk string) (string, error) {
+	this.RLock()
+	defer this.RUnlock()
 
-	return r.ring.Get(pk)
+	return this.ring.Get(pk)
 }
 
-func (r *ConsistentHashRing) Set(ring *consistent.Consistent) {
-	r.Lock()
-	defer r.Unlock()
-	r.ring = ring
+func (this *ConsistentHashRing) Set(r *consistent.Consistent) {
+	this.Lock()
+	defer this.Unlock()
+	this.ring = r
+	return
 }
 
-func (r *ConsistentHashRing) GetRing() *consistent.Consistent {
-	r.RLock()
-	defer r.RUnlock()
-	return r.ring
+func (this *ConsistentHashRing) GetRing() *consistent.Consistent {
+	this.RLock()
+	defer this.RUnlock()
+
+	return this.ring
 }
 
 func NewConsistentHashRing(replicas int32, nodes []string) *ConsistentHashRing {
@@ -81,8 +83,8 @@ func (n *NodeMap) GetNodeBy(instance string) (string, bool) {
 func (n *NodeMap) GetNodes() []string {
 	n.RLock()
 	defer n.RUnlock()
-	var nodes []string
-	for node := range n.data {
+	nodes := []string{}
+	for node, _ := range n.data {
 		nodes = append(nodes, node)
 	}
 	return nodes

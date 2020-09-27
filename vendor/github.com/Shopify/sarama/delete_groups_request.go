@@ -21,10 +21,6 @@ func (r *DeleteGroupsRequest) version() int16 {
 	return 0
 }
 
-func (r *DeleteGroupsRequest) headerVersion() int16 {
-	return 1
-}
-
 func (r *DeleteGroupsRequest) requiredVersion() KafkaVersion {
 	return V1_1_0_0
 }

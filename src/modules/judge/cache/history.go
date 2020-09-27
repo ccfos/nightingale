@@ -3,7 +3,7 @@ package cache
 import (
 	"sync"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 )
 
 type JudgeItemMap struct {

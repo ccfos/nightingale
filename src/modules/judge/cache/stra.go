@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/didi/nightingale/src/model"
+	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/toolkits/stats"
 )
 
@@ -13,26 +13,26 @@ var NodataStra *StrategyMap
 
 type StrategyMap struct {
 	sync.RWMutex
-	Data map[int64]*model.Stra
+	Data map[int64]*models.Stra
 	TS   map[int64]int64
 }
 
 func NewStrategyMap() *StrategyMap {
 	stra := &StrategyMap{
-		Data: make(map[int64]*model.Stra),
+		Data: make(map[int64]*models.Stra),
 		TS:   make(map[int64]int64),
 	}
 	return stra
 }
 
-func (s *StrategyMap) Set(id int64, stra *model.Stra) {
+func (s *StrategyMap) Set(id int64, stra *models.Stra) {
 	s.Lock()
 	defer s.Unlock()
 	s.Data[id] = stra
 	s.TS[id] = time.Now().Unix()
 }
 
-func (s *StrategyMap) Get(id int64) (*model.Stra, bool) {
+func (s *StrategyMap) Get(id int64) (*models.Stra, bool) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -40,10 +40,10 @@ func (s *StrategyMap) Get(id int64) (*model.Stra, bool) {
 	return stra, exists
 }
 
-func (s *StrategyMap) GetAll() []*model.Stra {
+func (s *StrategyMap) GetAll() []*models.Stra {
 	s.RLock()
 	defer s.RUnlock()
-	var stras []*model.Stra
+	var stras []*models.Stra
 	for _, stra := range s.Data {
 		stras = append(stras, stra)
 	}

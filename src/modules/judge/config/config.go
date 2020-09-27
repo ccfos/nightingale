@@ -5,24 +5,24 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/didi/nightingale/src/common/address"
+	"github.com/didi/nightingale/src/common/identity"
+	"github.com/didi/nightingale/src/common/loggeri"
+	"github.com/didi/nightingale/src/common/report"
 	"github.com/didi/nightingale/src/modules/judge/backend/query"
 	"github.com/didi/nightingale/src/modules/judge/backend/redi"
 	"github.com/didi/nightingale/src/modules/judge/stra"
-	"github.com/didi/nightingale/src/toolkits/address"
-	"github.com/didi/nightingale/src/toolkits/identity"
-	"github.com/didi/nightingale/src/toolkits/logger"
-	"github.com/didi/nightingale/src/toolkits/report"
 
 	"github.com/spf13/viper"
 	"github.com/toolkits/pkg/file"
 )
 
 type ConfYaml struct {
-	Logger            logger.LoggerSection     `yaml:"logger"`
+	Logger            loggeri.Config           `yaml:"logger"`
 	Query             query.SeriesQuerySection `yaml:"query"`
 	Redis             redi.RedisSection        `yaml:"redis"`
 	Strategy          stra.StrategySection     `yaml:"strategy"`
-	Identity          identity.IdentitySection `yaml:"identity"`
+	Identity          identity.Identity        `yaml:"identity"`
 	Report            report.ReportSection     `yaml:"report"`
 	NodataConcurrency int                      `yaml:"nodataConcurrency"`
 }
@@ -62,7 +62,7 @@ func Parse(conf string) error {
 	})
 
 	viper.SetDefault("strategy", map[string]interface{}{
-		"partitionApi":   "/api/portal/stras/effective?instance=%s:%s",
+		"partitionApi":   "/api/mon/stras/effective?instance=%s:%s",
 		"updateInterval": 9000,
 		"indexInterval":  60000,
 		"timeout":        5000,
@@ -80,7 +80,7 @@ func Parse(conf string) error {
 	})
 
 	viper.SetDefault("nodataConcurrency", 1000)
-	viper.SetDefault("pushUrl", "http://127.0.0.1:2058/api/collector/push")
+	viper.SetDefault("pushUrl", "http://127.0.0.1:2058/v1/push")
 
 	err = viper.Unmarshal(&Config)
 	if err != nil {

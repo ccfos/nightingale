@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/toolkits/pkg/logger"
-
+	"github.com/didi/nightingale/src/common/report"
 	"github.com/didi/nightingale/src/modules/tsdb/backend/rpc"
-	"github.com/didi/nightingale/src/toolkits/report"
 	"github.com/didi/nightingale/src/toolkits/stats"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 var IndexList IndexAddrs

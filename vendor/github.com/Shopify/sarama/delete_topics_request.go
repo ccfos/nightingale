@@ -38,10 +38,6 @@ func (d *DeleteTopicsRequest) version() int16 {
 	return d.Version
 }
 
-func (d *DeleteTopicsRequest) headerVersion() int16 {
-	return 1
-}
-
 func (d *DeleteTopicsRequest) requiredVersion() KafkaVersion {
 	switch d.Version {
 	case 1:

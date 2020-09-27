@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
-	"github.com/didi/nightingale/src/model"
+	"github.com/didi/nightingale/src/common/dataobj"
+	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/judge/backend/query"
 	"github.com/didi/nightingale/src/modules/judge/backend/redi"
 	"github.com/didi/nightingale/src/modules/judge/cache"
@@ -30,7 +30,7 @@ var (
 	EVENT_RECOVER = "recovery"
 )
 
-func GetStra(sid int64) (*model.Stra, bool) {
+func GetStra(sid int64) (*models.Stra, bool) {
 	if stra, exists := cache.Strategy.Get(sid); exists {
 		return stra, exists
 	}
@@ -73,7 +73,7 @@ func ToJudge(historyMap *cache.JudgeItemMap, key string, val *dataobj.JudgeItem,
 	Judge(stra, stra.Exprs, historyData, val, now, history, "", "", "", []bool{})
 }
 
-func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, extra string, status []bool) {
+func Judge(stra *models.Stra, exps []models.Exp, historyData []*dataobj.HistoryData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, extra string, status []bool) {
 	stats.Counter.Set("running", 1)
 
 	if len(exps) < 1 {
@@ -87,6 +87,8 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryDat
 
 	if exp.Func == "nodata" {
 		info += fmt.Sprintf(" %s (%s,%ds)", exp.Metric, exp.Func, stra.AlertDur)
+	} else if exp.Func == "stddev" {
+		info += fmt.Sprintf(" %s (%s,%ds) %v", exp.Metric, exp.Func, stra.AlertDur, exp.Params)
 	} else {
 		info += fmt.Sprintf(" %s(%s,%ds) %s %v", exp.Metric, exp.Func, stra.AlertDur, exp.Eopt, exp.Threshold)
 	}
@@ -105,10 +107,12 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryDat
 			if err != nil {
 				logger.Errorf("Marshal history:%+v err:%v", history, err)
 			}
+
 			event := &dataobj.Event{
 				ID:        fmt.Sprintf("s_%d_%s", stra.Id, firstItem.PrimaryKey()),
 				Etime:     now,
 				Endpoint:  firstItem.Endpoint,
+				CurNid:    firstItem.Nid,
 				Info:      info,
 				Detail:    string(bs),
 				Value:     value,
@@ -142,6 +146,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryDat
 
 				judgeItem := &dataobj.JudgeItem{
 					Endpoint: firstItem.Endpoint,
+					Nid:      firstItem.Nid,
 					Metric:   stra.Exprs[0].Metric,
 					Tags:     "",
 					DsType:   "GAUGE",
@@ -170,7 +175,11 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryDat
 				return
 			}
 			for i := range respData {
-				firstItem.Endpoint = respData[i].Endpoint
+				if respData[i].Nid != "" {
+					firstItem.Nid = respData[i].Nid
+				} else if respData[i].Endpoint != "" {
+					firstItem.Endpoint = respData[i].Endpoint
+				}
 				firstItem.Tags = getTags(respData[i].Counter)
 				firstItem.Step = respData[i].Step
 				Judge(stra, exps[1:], dataobj.RRDData2HistoryData(respData[i].Values), firstItem, now, history, info, value, extra, status)
@@ -179,7 +188,7 @@ func Judge(stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryDat
 	}
 }
 
-func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.HistoryData, exp model.Exp, firstItem *dataobj.JudgeItem, now int64) (leftValue dataobj.JsonFloat, isTriggered bool) {
+func judgeItemWithStrategy(stra *models.Stra, historyData []*dataobj.HistoryData, exp models.Exp, firstItem *dataobj.JudgeItem, now int64) (leftValue dataobj.JsonFloat, isTriggered bool) {
 	straFunc := exp.Func
 
 	var straParam []interface{}
@@ -243,7 +252,7 @@ func judgeItemWithStrategy(stra *model.Stra, historyData []*dataobj.HistoryData,
 	return fn.Compute(historyData)
 }
 
-func GetData(stra *model.Stra, exp model.Exp, firstItem *dataobj.JudgeItem, now int64, sameTag bool) ([]*dataobj.TsdbQueryResponse, error) {
+func GetData(stra *models.Stra, exp models.Exp, firstItem *dataobj.JudgeItem, now int64, sameTag bool) ([]*dataobj.TsdbQueryResponse, error) {
 	var reqs []*dataobj.QueryData
 	var respData []*dataobj.TsdbQueryResponse
 	var err error
@@ -254,16 +263,22 @@ func GetData(stra *model.Stra, exp model.Exp, firstItem *dataobj.JudgeItem, now 
 		//+1 防止由于查询不到最新点，导致点数不够
 		start := now - int64(stra.AlertDur) - int64(firstItem.Step) + 1
 
-		queryParam, err := query.NewQueryRequest(firstItem.Endpoint, exp.Metric, firstItem.TagsMap, firstItem.Step, start, now)
+		queryParam, err := query.NewQueryRequest(firstItem.Nid, firstItem.Endpoint, exp.Metric, firstItem.TagsMap, firstItem.Step, start, now)
 		if err != nil {
 			return respData, err
 		}
 
 		reqs = append(reqs, queryParam)
 	} else if firstItem != nil { //点驱动告警策略的场景
-		reqs = GetReqs(stra, exp.Metric, []string{firstItem.Endpoint}, now)
+		var nids, endpoints []string
+		if firstItem.Nid != "" {
+			nids = []string{firstItem.Nid}
+		} else if firstItem.Endpoint != "" {
+			endpoints = []string{firstItem.Endpoint}
+		}
+		reqs = GetReqs(stra, exp.Metric, nids, endpoints, now)
 	} else { //nodata的场景
-		reqs = GetReqs(stra, exp.Metric, stra.Endpoints, now)
+		reqs = GetReqs(stra, exp.Metric, stra.Nids, stra.Endpoints, now)
 	}
 
 	if len(reqs) == 0 {
@@ -279,14 +294,16 @@ func GetData(stra *model.Stra, exp model.Exp, firstItem *dataobj.JudgeItem, now 
 	return respData, err
 }
 
-func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) []*dataobj.QueryData {
+func GetReqs(stra *models.Stra, metric string, nids, endpoints []string, now int64) []*dataobj.QueryData {
 	var reqs []*dataobj.QueryData
 	stats.Counter.Set("query.index", 1)
 
 	req := &query.IndexReq{
+		Nids:      nids,
 		Endpoints: endpoints,
 		Metric:    metric,
 	}
+
 	for _, tag := range stra.Tags {
 		if tag.Topt == "=" {
 			req.Include = append(req.Include, query.XCludeStruct{
@@ -312,6 +329,7 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) []*
 		if index.Step == 0 {
 			//没有查到索引的 endpoint+metric 也要记录，给nodata处理
 			s := cache.Series{
+				Nid:      index.Nid,
 				Endpoint: index.Endpoint,
 				Metric:   index.Metric,
 				Tag:      "",
@@ -322,8 +340,9 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) []*
 			lostSeries = append(lostSeries, s)
 		} else {
 			if len(index.Tags) == 0 {
-				hash := str.MD5(index.Endpoint, index.Metric, "")
+				hash := getHash(index, "")
 				s := cache.Series{
+					Nid:      index.Nid,
 					Endpoint: index.Endpoint,
 					Metric:   index.Metric,
 					Tag:      "",
@@ -334,8 +353,9 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) []*
 				cache.SeriesMap.Set(stra.Id, hash, s)
 			} else {
 				for _, tag := range index.Tags {
-					hash := str.MD5(index.Endpoint, index.Metric, tag)
+					hash := getHash(index, tag)
 					s := cache.Series{
+						Nid:      index.Nid,
 						Endpoint: index.Endpoint,
 						Metric:   index.Metric,
 						Tag:      tag,
@@ -371,11 +391,17 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) []*
 			Start:      start,
 			End:        now,
 			ConsolFunc: "AVERAGE", // 硬编码
-			Endpoints:  []string{series.Endpoint},
 			Counters:   []string{counter},
 			Step:       series.Step,
 			DsType:     series.Dstype,
 		}
+
+		if series.Nid != "" {
+			queryParam.Nids = []string{series.Nid}
+		} else {
+			queryParam.Endpoints = []string{series.Endpoint}
+		}
+
 		reqs = append(reqs, queryParam)
 	}
 
@@ -388,18 +414,24 @@ func GetReqs(stra *model.Stra, metric string, endpoints []string, now int64) []*
 			Start:      start,
 			End:        now,
 			ConsolFunc: "AVERAGE", // 硬编码
-			Endpoints:  []string{series.Endpoint},
 			Counters:   []string{counter},
 			Step:       series.Step,
 			DsType:     series.Dstype,
 		}
+
+		if series.Nid != "" {
+			queryParam.Nids = []string{series.Nid}
+		} else {
+			queryParam.Endpoints = []string{series.Endpoint}
+		}
+
 		reqs = append(reqs, queryParam)
 	}
 
 	return reqs
 }
 
-func sendEventIfNeed(historyData []*dataobj.HistoryData, status []bool, event *dataobj.Event, stra *model.Stra) {
+func sendEventIfNeed(historyData []*dataobj.HistoryData, status []bool, event *dataobj.Event, stra *models.Stra) {
 	isTriggered := true
 	for _, s := range status {
 		isTriggered = isTriggered && s
@@ -474,4 +506,12 @@ func getTags(counter string) (tags string) {
 		return ""
 	}
 	return counter[idx+1:]
+}
+
+func getHash(idx query.IndexData, tag string) string {
+	if idx.Nid != "" {
+		return str.MD5(idx.Nid, idx.Metric, tag)
+	}
+
+	return str.MD5(idx.Endpoint, idx.Metric, tag)
 }

@@ -1,14 +1,12 @@
 package sarama
 
 type AclFilter struct {
-	Version                   int
-	ResourceType              AclResourceType
-	ResourceName              *string
-	ResourcePatternTypeFilter AclResourcePatternType
-	Principal                 *string
-	Host                      *string
-	Operation                 AclOperation
-	PermissionType            AclPermissionType
+	ResourceType   AclResourceType
+	ResourceName   *string
+	Principal      *string
+	Host           *string
+	Operation      AclOperation
+	PermissionType AclPermissionType
 }
 
 func (a *AclFilter) encode(pe packetEncoder) error {
@@ -16,11 +14,6 @@ func (a *AclFilter) encode(pe packetEncoder) error {
 	if err := pe.putNullableString(a.ResourceName); err != nil {
 		return err
 	}
-
-	if a.Version == 1 {
-		pe.putInt8(int8(a.ResourcePatternTypeFilter))
-	}
-
 	if err := pe.putNullableString(a.Principal); err != nil {
 		return err
 	}
@@ -42,16 +35,6 @@ func (a *AclFilter) decode(pd packetDecoder, version int16) (err error) {
 
 	if a.ResourceName, err = pd.getNullableString(); err != nil {
 		return err
-	}
-
-	if a.Version == 1 {
-		pattern, err := pd.getInt8()
-
-		if err != nil {
-			return err
-		}
-
-		a.ResourcePatternTypeFilter = AclResourcePatternType(pattern)
 	}
 
 	if a.Principal, err = pd.getNullableString(); err != nil {

@@ -3,8 +3,8 @@ package sarama
 type CoordinatorType int8
 
 const (
-	CoordinatorGroup CoordinatorType = iota
-	CoordinatorTransaction
+	CoordinatorGroup       CoordinatorType = 0
+	CoordinatorTransaction CoordinatorType = 1
 )
 
 type FindCoordinatorRequest struct {
@@ -49,10 +49,6 @@ func (f *FindCoordinatorRequest) key() int16 {
 
 func (f *FindCoordinatorRequest) version() int16 {
 	return f.Version
-}
-
-func (r *FindCoordinatorRequest) headerVersion() int16 {
-	return 1
 }
 
 func (f *FindCoordinatorRequest) requiredVersion() KafkaVersion {

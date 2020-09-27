@@ -6,12 +6,10 @@ import (
 )
 
 const (
-	isTransactionalMask   = 0x10
 	controlMask           = 0x20
 	maximumRecordOverhead = 5*binary.MaxVarintLen32 + binary.MaxVarintLen64 + 1
 )
 
-//RecordHeader stores key and value for a record header
 type RecordHeader struct {
 	Key   []byte
 	Value []byte
@@ -35,16 +33,15 @@ func (h *RecordHeader) decode(pd packetDecoder) (err error) {
 	return nil
 }
 
-//Record is kafka record type
 type Record struct {
-	Headers []*RecordHeader
-
 	Attributes     int8
 	TimestampDelta time.Duration
 	OffsetDelta    int64
 	Key            []byte
 	Value          []byte
-	length         varintLengthField
+	Headers        []*RecordHeader
+
+	length varintLengthField
 }
 
 func (r *Record) encode(pe packetEncoder) error {

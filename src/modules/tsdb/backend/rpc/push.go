@@ -3,7 +3,7 @@ package rpc
 import (
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/toolkits/pkg/logger"
@@ -16,7 +16,6 @@ const (
 
 func Push2Index(mode int, items []*dataobj.TsdbItem, indexAddrs []string) {
 	for _, addr := range indexAddrs {
-		//TODO 改为并发
 		push(mode, addr, items)
 	}
 }
@@ -38,6 +37,7 @@ func push(mode int, addr string, tsdbItems []*dataobj.TsdbItem) {
 
 		var tmp dataobj.IndexModel
 		tmp.Endpoint = item.Endpoint
+		tmp.Nid = item.Nid
 		tmp.Metric = item.Metric
 		tmp.Step = item.Step
 		tmp.DsType = item.DsType

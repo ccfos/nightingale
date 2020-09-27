@@ -7,15 +7,15 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/didi/nightingale/src/common/loggeri"
+	"github.com/didi/nightingale/src/common/report"
+	"github.com/didi/nightingale/src/modules/transfer/aggr"
 	"github.com/didi/nightingale/src/modules/transfer/backend"
 	"github.com/didi/nightingale/src/modules/transfer/config"
 	"github.com/didi/nightingale/src/modules/transfer/cron"
 	"github.com/didi/nightingale/src/modules/transfer/http/routes"
 	"github.com/didi/nightingale/src/modules/transfer/rpc"
 	"github.com/didi/nightingale/src/toolkits/http"
-	"github.com/didi/nightingale/src/toolkits/identity"
-	tlogger "github.com/didi/nightingale/src/toolkits/logger"
-	"github.com/didi/nightingale/src/toolkits/report"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/gin-gonic/gin"
@@ -60,10 +60,10 @@ func main() {
 
 	cfg := config.Config
 
-	tlogger.Init(cfg.Logger)
+	loggeri.Init(cfg.Logger)
 	go stats.Init("n9e.transfer")
 
-	identity.Init(cfg.Identity)
+	aggr.Init(cfg.Aggr)
 	backend.Init(cfg.Backend)
 	cron.Init()
 

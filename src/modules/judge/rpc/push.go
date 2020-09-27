@@ -1,7 +1,7 @@
 package rpc
 
 import (
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/judge/cache"
 	"github.com/didi/nightingale/src/modules/judge/judge"
 	"github.com/didi/nightingale/src/toolkits/stats"

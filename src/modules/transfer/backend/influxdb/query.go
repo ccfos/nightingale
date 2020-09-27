@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/influxdata/influxdb/models"
+	"github.com/didi/nightingale/src/common/dataobj"
 
-	"github.com/didi/nightingale/src/dataobj"
-	"github.com/influxdata/influxdb/client/v2"
+	client "github.com/influxdata/influxdb/client/v2"
+	"github.com/influxdata/influxdb/models"
 	"github.com/toolkits/pkg/logger"
 )
 

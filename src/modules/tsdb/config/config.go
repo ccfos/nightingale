@@ -3,12 +3,13 @@ package config
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/didi/nightingale/src/common/loggeri"
 	"github.com/didi/nightingale/src/modules/tsdb/backend/rpc"
 	"github.com/didi/nightingale/src/modules/tsdb/cache"
 	"github.com/didi/nightingale/src/modules/tsdb/index"
 	"github.com/didi/nightingale/src/modules/tsdb/migrate"
 	"github.com/didi/nightingale/src/modules/tsdb/rrdtool"
-	"github.com/didi/nightingale/src/toolkits/logger"
 
 	"github.com/spf13/viper"
 	"github.com/toolkits/pkg/file"
@@ -23,7 +24,7 @@ type ConfYaml struct {
 	Http           *HttpSection           `yaml:"http"`
 	Rpc            *RpcSection            `yaml:"rpc"`
 	RRD            rrdtool.RRDSection     `yaml:"rrd"`
-	Logger         logger.LoggerSection   `yaml:"logger"`
+	Logger         loggeri.Config         `yaml:"logger"`
 	Migrate        migrate.MigrateSection `yaml:"migrate"`
 	Index          index.IndexSection     `yaml:"index"`
 	RpcClient      rpc.RpcClientSection   `yaml:"rpcClient"`

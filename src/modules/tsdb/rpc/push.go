@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/tsdb/cache"
 	"github.com/didi/nightingale/src/modules/tsdb/index"
 	"github.com/didi/nightingale/src/modules/tsdb/migrate"
@@ -55,7 +55,7 @@ func handleItems(items []*dataobj.TsdbItem) {
 		stats.Counter.Set("points.in", 1)
 
 		item := convert2CacheServerItem(items[i])
-		//todo hash冲突问题需要解决
+
 		if err := cache.Caches.Push(item.Key, item.Timestamp, item.Value); err != nil {
 			stats.Counter.Set("points.in.err", 1)
 			logger.Warningf("push obj error, obj: %v, error: %v\n", items[i], err)
@@ -99,6 +99,9 @@ func handleItems(items []*dataobj.TsdbItem) {
 }
 
 func convert2CacheServerItem(d *dataobj.TsdbItem) cache.Point {
+	if d.Nid != "" {
+		d.Endpoint = dataobj.NidToEndpoint(d.Nid)
+	}
 	p := cache.Point{
 		Key:       str.Checksum(d.Endpoint, d.Metric, str.SortedTags(d.TagsMap)),
 		Timestamp: d.Timestamp,

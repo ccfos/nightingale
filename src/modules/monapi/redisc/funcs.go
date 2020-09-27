@@ -32,7 +32,7 @@ func GET(key string) int64 {
 
 	ret, err := redis.Int64(rc.Do("GET", key))
 	if err != nil {
-		logger.Debugf("get %+v error: %v", key, err)
+		logger.Errorf("get %s error: %v", key, err)
 	}
 
 	return ret

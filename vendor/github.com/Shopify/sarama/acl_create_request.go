@@ -1,8 +1,6 @@
 package sarama
 
-//CreateAclsRequest is an acl creation request
 type CreateAclsRequest struct {
-	Version      int16
 	AclCreations []*AclCreation
 }
 
@@ -12,7 +10,7 @@ func (c *CreateAclsRequest) encode(pe packetEncoder) error {
 	}
 
 	for _, aclCreation := range c.AclCreations {
-		if err := aclCreation.encode(pe, c.Version); err != nil {
+		if err := aclCreation.encode(pe); err != nil {
 			return err
 		}
 	}
@@ -21,7 +19,6 @@ func (c *CreateAclsRequest) encode(pe packetEncoder) error {
 }
 
 func (c *CreateAclsRequest) decode(pd packetDecoder, version int16) (err error) {
-	c.Version = version
 	n, err := pd.getArrayLength()
 	if err != nil {
 		return err
@@ -39,35 +36,25 @@ func (c *CreateAclsRequest) decode(pd packetDecoder, version int16) (err error) 
 	return nil
 }
 
-func (c *CreateAclsRequest) key() int16 {
+func (d *CreateAclsRequest) key() int16 {
 	return 30
 }
 
-func (c *CreateAclsRequest) version() int16 {
-	return c.Version
+func (d *CreateAclsRequest) version() int16 {
+	return 0
 }
 
-func (c *CreateAclsRequest) headerVersion() int16 {
-	return 1
+func (d *CreateAclsRequest) requiredVersion() KafkaVersion {
+	return V0_11_0_0
 }
 
-func (c *CreateAclsRequest) requiredVersion() KafkaVersion {
-	switch c.Version {
-	case 1:
-		return V2_0_0_0
-	default:
-		return V0_11_0_0
-	}
-}
-
-//AclCreation is a wrapper around Resource and Acl type
 type AclCreation struct {
 	Resource
 	Acl
 }
 
-func (a *AclCreation) encode(pe packetEncoder, version int16) error {
-	if err := a.Resource.encode(pe, version); err != nil {
+func (a *AclCreation) encode(pe packetEncoder) error {
+	if err := a.Resource.encode(pe); err != nil {
 		return err
 	}
 	if err := a.Acl.encode(pe); err != nil {

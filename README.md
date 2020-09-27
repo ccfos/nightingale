@@ -1,55 +1,60 @@
-<img src="https://s3-gz01.didistatic.com/n9e-pub/image/n9e-logo-bg-white.png" width="200" alt="Nightingale"/>
-<br>
+v3.x终于来了，文档正在编写中，稍安勿躁...
 
-[中文简介](README_ZH.md)
+---
 
-Nightingale is a fork of Open-Falcon, and all the core modules have been greatly optimized. It integrates the best practices of DiDi. You can think of it as the next generation of Open-Falcon, and use directly in production environment.
+# 升级说明
 
-## Documentation
+v3.x的版本和v2.x差别巨大，如果短期没办法迁移，可以继续使用 [v.2.8.0](https://github.com/didi/nightingale/tree/v2.8.0) ，我们之所以决定升级到v3.x，具体原因 [请看这里](https://mp.weixin.qq.com/s/BoGcqPiIQIuiK7cM3PTvrw) ，简而言之，我们是希望夜莺逐渐演化为一个运维平台
 
-Nightingale user manual: [https://n9e.didiyun.com/](https://n9e.didiyun.com/)
+# 新版效果
 
-## Compile
+几张图
 
-```bash
-mkdir -p $GOPATH/src/github.com/didi
-cd $GOPATH/src/github.com/didi
-git clone https://github.com/didi/nightingale.git
-cd nightingale
-./control build
+# 安装步骤
+
+1、找个干净的CentOS7，准备好mysql、redis、nginx，简单yum安装一下即可，生产环境mysql建议找dba帮忙来搞
+
+```
+yum install -y mariadb* redis nginx
 ```
 
-## Quickstart with Docker
+2、下载我们编译好的二进制到/home/n9e目录，如果要更换目录，要注意修改nginx.conf，建议先用这个目录，玩熟了再说
 
-We has offered a Docker demo for the users who want to give it a try. Before you get started, make sure you have installed **Docker** & **docker-compose** and there are some details you should know.
-
-* We highly recommend users prepare a new VM environment to use it.
-* All the core components will be installed on your OS according to the `docker-compose.yaml`.
-* Nightingale will use the following ports, `80`, `5800`, `5810`, `5811`, `5820`, `5821`, `5830`, `5831`, `5840`, `5841`, `6379`, `2058`, `3306`.
-
-Okay. Run it! Once the docker finish its jobs, visits http://your-env-ip in your broswer. Default username and password is `root:root`.
-```bash
-$ docker-compose up -d
+```
+mkdir -p /home/n9e
+cd /home/n9e
+wget http://116.85.64.82/n9e-3.0.0.tar.gz
+tar zxvf n9e-3.0.0.tar.gz
 ```
 
-![dashboard](https://user-images.githubusercontent.com/19553554/78956965-8b9c6180-7b16-11ea-9747-6ed5e62b068d.png)
+3、初始化数据库，这里假设使用root账号，密码1234，如果不是这个账号密码，注意修改/home/n9e/etc/mysql.yml
 
-## Upgrading
-- If upgrade `version<1.4.0` to `v1.4.0`, follow the operating instructions in [v1.4.0](https://github.com/didi/nightingale/releases/tag/v1.4.0) release
-- If upgrade from `version>1.4.0 & version<2.3.0` to `v2.3.0`, need import this [sql](https://github.com/didi/nightingale/blob/master/sql/upgrade_2.3.0.sql) 
+```
+cd /home/n9e/sql
+mysql -uroot -p1234 < n9e_ams.sql
+mysql -uroot -p1234 < n9e_hbs.sql
+mysql -uroot -p1234 < n9e_job.sql
+mysql -uroot -p1234 < n9e_mon.sql
+mysql -uroot -p1234 < n9e_rdb.sql
+```
+
+4、redis配置修改，默认配置的6379端口，密码为空，如果默认配置不对，可以执行如下命令，看到多个配置文件里有redis相关配置，挨个检查修改下
+
+```
+cd /home/n9e/etc
+grep redis -r .
+```
+
+5、下载前端静态资源文件
 
 
-## Team
 
-[ulricqin](https://github.com/ulricqin) [710leo](https://github.com/710leo) [jsers](https://github.com/jsers) [hujter](https://github.com/hujter) [n4mine](https://github.com/n4mine) [heli567](https://github.com/heli567)
+6、覆盖nginx.conf
 
-## Community
 
-Nightingale is developed in open. Here we set up an organization, [github.com/n9e](https://github.com/n9e), which is used to communicate and contribute. We sincerely hope more developers can use their creativity to make lots of related projects for the Nightingale ecosystem.
+7、检查identity.yml
 
-## License
 
-<img alt="Apache-2.0 license" src="https://s3-gz01.didistatic.com/n9e-pub/image/apache.jpeg" width="128">
+8、检查agent.yml的shell
 
-Nightingale is available under the Apache-2.0 license. See the [LICENSE](LICENSE) file for more info.
 

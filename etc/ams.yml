@@ -1,0 +1,12 @@
+logger:
+  dir: logs/ams
+  level: INFO
+  keepHours: 24
+
+http:
+  mode: release
+  cookieDomain: ""
+  cookieName: ecmc-user
+
+tokens:
+  - ams-builtin-token

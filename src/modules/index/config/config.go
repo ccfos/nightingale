@@ -5,23 +5,23 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/didi/nightingale/src/common/address"
+	"github.com/didi/nightingale/src/common/identity"
+	"github.com/didi/nightingale/src/common/loggeri"
+	"github.com/didi/nightingale/src/common/report"
 	"github.com/didi/nightingale/src/modules/index/cache"
-	"github.com/didi/nightingale/src/toolkits/address"
-	"github.com/didi/nightingale/src/toolkits/identity"
-	"github.com/didi/nightingale/src/toolkits/logger"
-	"github.com/didi/nightingale/src/toolkits/report"
 
 	"github.com/spf13/viper"
 	"github.com/toolkits/pkg/file"
 )
 
 type ConfYaml struct {
-	HTTP     HTTPSection              `yaml:"http"`
-	RPC      RPCSection               `yaml:"rpc"`
-	Cache    cache.CacheSection       `yaml:"cache"`
-	Logger   logger.LoggerSection     `yaml:"logger"`
-	Identity identity.IdentitySection `yaml:"identity"`
-	Report   report.ReportSection     `yaml:"report"`
+	HTTP     HTTPSection          `yaml:"http"`
+	RPC      RPCSection           `yaml:"rpc"`
+	Cache    cache.CacheSection   `yaml:"cache"`
+	Logger   loggeri.Config       `yaml:"logger"`
+	Identity identity.Identity    `yaml:"identity"`
+	Report   report.ReportSection `yaml:"report"`
 }
 
 type HTTPSection struct {
@@ -62,6 +62,7 @@ func Parse(conf string) error {
 	viper.SetDefault("cache.rebuildWorker", 20)      //从磁盘读取所以的数据的并发个数
 	viper.SetDefault("cache.maxQueryCount", 100000)  //clude接口支持查询的最大曲线个数
 	viper.SetDefault("cache.reportEndpoint", true)
+	viper.SetDefault("cache.hbsMod", "monapi")
 
 	viper.SetDefault("report", map[string]interface{}{
 		"mod":      "index",

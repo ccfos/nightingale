@@ -1,33 +1,29 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/errors"
-	"github.com/toolkits/pkg/logger"
-
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/transfer/backend"
 	"github.com/didi/nightingale/src/toolkits/http/render"
 	"github.com/didi/nightingale/src/toolkits/stats"
-)
 
-type QueryDataReq struct {
-	QueryData []dataobj.QueryData `json:"series"`
-}
+	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/errors"
+	"github.com/toolkits/pkg/logger"
+)
 
 func QueryData(c *gin.Context) {
 	stats.Counter.Set("data.api.qp10s", 1)
 
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("could not find dataSource")
+		logger.Warningf("could not find datasource")
 		render.Message(c, err)
 		return
 	}
 
-	var queryDataReq QueryDataReq
-	errors.Dangerous(c.ShouldBindJSON(&queryDataReq))
-	resp := dataSource.QueryData(queryDataReq.QueryData)
+	var input []dataobj.QueryData
+	errors.Dangerous(c.ShouldBindJSON(&input))
+	resp := dataSource.QueryData(input)
 	render.Data(c, resp, nil)
 }
 
@@ -41,7 +37,7 @@ func QueryDataForUI(c *gin.Context) {
 
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Warningf("could not find dataSource")
+		logger.Warningf("could not find datasource")
 		render.Message(c, err)
 		return
 	}
@@ -51,6 +47,7 @@ func QueryDataForUI(c *gin.Context) {
 			Start:    d.Start,
 			End:      d.End,
 			Endpoint: d.Endpoint,
+			Nid:      d.Nid,
 			Counter:  d.Counter,
 			DsType:   d.DsType,
 			Step:     d.Step,
@@ -74,6 +71,7 @@ func QueryDataForUI(c *gin.Context) {
 					Start:      d.Start,
 					End:        d.End,
 					Endpoint:   d.Endpoint,
+					Nid:        d.Nid,
 					Counter:    d.Counter,
 					DsType:     d.DsType,
 					Step:       d.Step,

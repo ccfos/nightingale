@@ -19,10 +19,6 @@ func (r *ListGroupsRequest) version() int16 {
 	return 0
 }
 
-func (r *ListGroupsRequest) headerVersion() int16 {
-	return 1
-}
-
 func (r *ListGroupsRequest) requiredVersion() KafkaVersion {
 	return V0_9_0_0
 }

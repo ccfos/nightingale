@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/judge/cache"
 	"github.com/didi/nightingale/src/toolkits/http/render"
 

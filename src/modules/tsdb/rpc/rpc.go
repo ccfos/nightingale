@@ -10,10 +10,10 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/didi/nightingale/src/common/address"
+
 	"github.com/toolkits/pkg/logger"
 	"github.com/ugorji/go/codec"
-
-	"github.com/didi/nightingale/src/toolkits/address"
 )
 
 var Close_chan, Close_done_chan chan int
