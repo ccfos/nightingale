@@ -3,26 +3,42 @@ package rabbitmq
 import (
 	"time"
 
+	"github.com/streadway/amqp"
 	"github.com/toolkits/pkg/logger"
 )
 
-func Consume(queueName string) {
-	go func(queueName string) {
-		for {
+// Consume 消费消息
+func Consume(url, queueName string) {
+	for {
+		select {
+		case <-exit:
+			return
+		default:
+			if err := ping(); err != nil {
+				logger.Error("rabbitmq conn failed")
+				conn, err = amqp.Dial(url)
+				if err != nil {
+					conn = nil
+					logger.Error(err)
+					time.Sleep(500 * time.Millisecond)
+					continue
+				}
+			}
+
 			sleep := consume(queueName)
 			if sleep {
 				time.Sleep(300 * time.Millisecond)
 			}
-
-			if _, ok := <-exit; ok {
-				return
-			}
 		}
-	}(queueName)
+	}
 }
 
 // 如果操作MQ出现问题，或者没有load到数据，就sleep一下
 func consume(queueName string) bool {
+	if conn == nil {
+		return true
+	}
+
 	ch, err := conn.Channel()
 	if err != nil {
 		logger.Error(err)
@@ -45,7 +61,7 @@ func consume(queueName string) bool {
 	}
 
 	err = ch.Qos(
-		0,     // prefetch count
+		80,    // prefetch count
 		0,     // prefetch size
 		false, // global
 	)

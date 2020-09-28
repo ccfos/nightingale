@@ -51,6 +51,11 @@ redis:
     read: 3000
     write: 3000
 
+rabbitmq:
+  enable: false
+  addr: amqp://root:1234@127.0.0.1:5672/
+  queue: test
+
 sender:
   mail:
     # three choice: smtp|shell|api

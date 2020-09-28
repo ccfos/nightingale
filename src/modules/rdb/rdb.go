@@ -68,9 +68,9 @@ func main() {
 	cron.InitWorker()
 
 	// 初始化 rabbitmq 处理部分异步逻辑
-	if len(config.Config.RabbitMQ.Addr) > 0 {
+	if config.Config.RabbitMQ.Enable {
 		rabbitmq.Init(config.Config.RabbitMQ.Addr)
-		rabbitmq.Consume(config.Config.RabbitMQ.Queue)
+		go rabbitmq.Consume(config.Config.RabbitMQ.Addr, config.Config.RabbitMQ.Queue)
 	}
 
 	go cron.ConsumeMail()
@@ -102,7 +102,7 @@ func endingProc() {
 	http.Shutdown()
 	redisc.CloseRedis()
 
-	if len(config.Config.RabbitMQ.Addr) > 0 {
+	if config.Config.RabbitMQ.Enable {
 		rabbitmq.Shutdown()
 	}
 
