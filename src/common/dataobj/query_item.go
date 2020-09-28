@@ -84,11 +84,11 @@ type CludeRecv struct {
 }
 
 type XcludeResp struct {
-	Endpoints []string `json:"endpoints"`
-	Metric    string   `json:"metric"`
-	Tags      []string `json:"tags"`
-	Step      int      `json:"step"`
-	DsType    string   `json:"dstype"`
+	Endpoint string   `json:"endpoint"`
+	Metric   string   `json:"metric"`
+	Tags     []string `json:"tags"`
+	Step     int      `json:"step"`
+	DsType   string   `json:"dstype"`
 }
 
 type IndexByFullTagsRecv struct {
