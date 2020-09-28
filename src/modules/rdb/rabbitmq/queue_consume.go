@@ -20,10 +20,9 @@ func Consume(url, queueName string) {
 				if err != nil {
 					conn = nil
 					logger.Error(err)
+					time.Sleep(500 * time.Millisecond)
+					continue
 				}
-
-				time.Sleep(500 * time.Millisecond)
-				continue
 			}
 
 			sleep := consume(queueName)
