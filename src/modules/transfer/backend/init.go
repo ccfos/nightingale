@@ -1,113 +1,76 @@
 package backend
 
 import (
-	"github.com/toolkits/pkg/container/list"
-	"github.com/toolkits/pkg/container/set"
-	"github.com/toolkits/pkg/str"
-
-	"github.com/didi/nightingale/src/modules/transfer/cache"
-	"github.com/didi/nightingale/src/toolkits/pools"
-	"github.com/didi/nightingale/src/toolkits/report"
-	"github.com/didi/nightingale/src/toolkits/stats"
+	"github.com/didi/nightingale/src/modules/transfer/backend/influxdb"
+	"github.com/didi/nightingale/src/modules/transfer/backend/tsdb"
 )
 
 type BackendSection struct {
-	Enabled      bool   `yaml:"enabled"`
-	Batch        int    `yaml:"batch"`
-	ConnTimeout  int    `yaml:"connTimeout"`
-	CallTimeout  int    `yaml:"callTimeout"`
-	WorkerNum    int    `yaml:"workerNum"`
-	MaxConns     int    `yaml:"maxConns"`
-	MaxIdle      int    `yaml:"maxIdle"`
-	IndexTimeout int    `yaml:"indexTimeout"`
-	StraPath     string `yaml:"straPath"`
-	HbsMod       string `yaml:"hbsMod"`
+	DataSource string `yaml:"datasource"`
+	StraPath   string `yaml:"straPath"`
 
-	Replicas    int                     `yaml:"replicas"`
-	Cluster     map[string]string       `yaml:"cluster"`
-	ClusterList map[string]*ClusterNode `json:"clusterList"`
-}
-
-const DefaultSendQueueMaxSize = 102400 //10.24w
-
-type ClusterNode struct {
-	Addrs []string `json:"addrs"`
+	Judge    JudgeSection             `yaml:"judge"`
+	Tsdb     tsdb.TsdbSection         `yaml:"tsdb"`
+	Influxdb influxdb.InfluxdbSection `yaml:"influxdb"`
+	OpenTsdb OpenTsdbSection          `yaml:"opentsdb"`
+	Kafka    KafkaSection             `yaml:"kafka"`
 }
 
 var (
-	Config BackendSection
-	// 服务节点的一致性哈希环 pk -> node
-	TsdbNodeRing *ConsistentHashRing
-
-	// 发送缓存队列 node -> queue_of_data
-	TsdbQueues  = make(map[string]*list.SafeListLimited)
-	JudgeQueues = cache.SafeJudgeQueue{}
-
-	// 连接池 node_address -> connection_pool
-	TsdbConnPools  *pools.ConnPools
-	JudgeConnPools *pools.ConnPools
-
-	connTimeout int32
-	callTimeout int32
+	defaultDataSource    string
+	StraPath             string
+	tsdbDataSource       *tsdb.TsdbDataSource
+	openTSDBPushEndpoint *OpenTsdbPushEndpoint
+	influxdbDataSource   *influxdb.InfluxdbDataSource
+	kafkaPushEndpoint    *KafkaPushEndpoint
 )
 
 func Init(cfg BackendSection) {
-	Config = cfg
-	// 初始化默认参数
-	connTimeout = int32(Config.ConnTimeout)
-	callTimeout = int32(Config.CallTimeout)
+	defaultDataSource = cfg.DataSource
+	StraPath = cfg.StraPath
 
-	initHashRing()
-	initConnPools()
-	initSendQueues()
+	// init judge
+	InitJudge(cfg.Judge)
 
-	startSendTasks()
-}
-
-func initHashRing() {
-	TsdbNodeRing = NewConsistentHashRing(int32(Config.Replicas), str.KeysOfMap(Config.Cluster))
-}
-
-func initConnPools() {
-	tsdbInstances := set.NewSafeSet()
-	for _, item := range Config.ClusterList {
-		for _, addr := range item.Addrs {
-			tsdbInstances.Add(addr)
+	// init tsdb
+	if cfg.Tsdb.Enabled {
+		tsdbDataSource = &tsdb.TsdbDataSource{
+			Section:               cfg.Tsdb,
+			SendQueueMaxSize:      DefaultSendQueueMaxSize,
+			SendTaskSleepInterval: DefaultSendTaskSleepInterval,
 		}
+		tsdbDataSource.Init() // register
+		RegisterDataSource(tsdbDataSource.Section.Name, tsdbDataSource)
 	}
-	TsdbConnPools = pools.NewConnPools(
-		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, tsdbInstances.ToSlice(),
-	)
 
-	JudgeConnPools = pools.NewConnPools(
-		Config.MaxConns, Config.MaxIdle, Config.ConnTimeout, Config.CallTimeout, GetJudges(),
-	)
-}
-
-func initSendQueues() {
-	for node, item := range Config.ClusterList {
-		for _, addr := range item.Addrs {
-			TsdbQueues[node+addr] = list.NewSafeListLimited(DefaultSendQueueMaxSize)
+	// init influxdb
+	if cfg.Influxdb.Enabled {
+		influxdbDataSource = &influxdb.InfluxdbDataSource{
+			Section:               cfg.Influxdb,
+			SendQueueMaxSize:      DefaultSendQueueMaxSize,
+			SendTaskSleepInterval: DefaultSendTaskSleepInterval,
 		}
-	}
+		influxdbDataSource.Init()
+		// register
+		RegisterDataSource(influxdbDataSource.Section.Name, influxdbDataSource)
 
-	JudgeQueues = cache.NewJudgeQueue()
-	judges := GetJudges()
-	for _, judge := range judges {
-		JudgeQueues.Set(judge, list.NewSafeListLimited(DefaultSendQueueMaxSize))
 	}
-}
-
-func GetJudges() []string {
-	var judgeInstances []string
-	instances, err := report.GetAlive("judge", Config.HbsMod)
-	if err != nil {
-		stats.Counter.Set("judge.get.err", 1)
-		return judgeInstances
+	// init opentsdb
+	if cfg.OpenTsdb.Enabled {
+		openTSDBPushEndpoint = &OpenTsdbPushEndpoint{
+			Section: cfg.OpenTsdb,
+		}
+		openTSDBPushEndpoint.Init()
+		// register
+		RegisterPushEndpoint(openTSDBPushEndpoint.Section.Name, openTSDBPushEndpoint)
 	}
-	for _, instance := range instances {
-		judgeInstance := instance.Identity + ":" + instance.RPCPort
-		judgeInstances = append(judgeInstances, judgeInstance)
+	// init kafka
+	if cfg.Kafka.Enabled {
+		kafkaPushEndpoint = &KafkaPushEndpoint{
+			Section: cfg.Kafka,
+		}
+		kafkaPushEndpoint.Init()
+		// register
+		RegisterPushEndpoint(kafkaPushEndpoint.Section.Name, kafkaPushEndpoint)
 	}
-	return judgeInstances
 }

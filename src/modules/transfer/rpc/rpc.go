@@ -9,15 +9,16 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/didi/nightingale/src/common/address"
+
 	"github.com/toolkits/pkg/logger"
 	"github.com/ugorji/go/codec"
-
-	"github.com/didi/nightingale/src/toolkits/address"
 )
 
 type Transfer int
 
 func Start() {
+	go consumer()
 	addr := address.GetRPCListen("transfer")
 
 	server := rpc.NewServer()

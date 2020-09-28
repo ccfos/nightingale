@@ -1,45 +1,29 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/errors"
-	"github.com/toolkits/pkg/logger"
-
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/transfer/backend"
 	"github.com/didi/nightingale/src/toolkits/http/render"
 	"github.com/didi/nightingale/src/toolkits/stats"
+
+	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/errors"
+	"github.com/toolkits/pkg/logger"
 )
-
-type QueryDataReq struct {
-	Start  int64               `json:"start"`
-	End    int64               `json:"end"`
-	Series []backend.SeriesReq `json:"series"`
-}
-
-func QueryDataForJudge(c *gin.Context) {
-	var inputs []dataobj.QueryData
-
-	errors.Dangerous(c.ShouldBindJSON(&inputs))
-	resp := backend.FetchData(inputs)
-	render.Data(c, resp, nil)
-}
 
 func QueryData(c *gin.Context) {
 	stats.Counter.Set("data.api.qp10s", 1)
 
-	var input QueryDataReq
-
-	errors.Dangerous(c.ShouldBindJSON(&input))
-
-	queryData, err := backend.GetSeries(input.Start, input.End, input.Series)
+	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		logger.Error(err, input)
-		render.Message(c, "query err")
+		logger.Warningf("could not find datasource")
+		render.Message(c, err)
 		return
 	}
 
-	resp := backend.FetchData(queryData)
+	var input []dataobj.QueryData
+	errors.Dangerous(c.ShouldBindJSON(&input))
+	resp := dataSource.QueryData(input)
 	render.Data(c, resp, nil)
 }
 
@@ -51,12 +35,19 @@ func QueryDataForUI(c *gin.Context) {
 	start := input.Start
 	end := input.End
 
-	resp := backend.FetchDataForUI(input)
+	dataSource, err := backend.GetDataSourceFor("")
+	if err != nil {
+		logger.Warningf("could not find datasource")
+		render.Message(c, err)
+		return
+	}
+	resp := dataSource.QueryDataForUI(input)
 	for _, d := range resp {
 		data := &dataobj.QueryDataForUIResp{
 			Start:    d.Start,
 			End:      d.End,
 			Endpoint: d.Endpoint,
+			Nid:      d.Nid,
 			Counter:  d.Counter,
 			DsType:   d.DsType,
 			Step:     d.Step,
@@ -70,7 +61,7 @@ func QueryDataForUI(c *gin.Context) {
 			comparison := input.Comparisons[i]
 			input.Start = start - comparison
 			input.End = end - comparison
-			res := backend.FetchDataForUI(input)
+			res := dataSource.QueryDataForUI(input)
 			for _, d := range res {
 				for j := range d.Values {
 					d.Values[j].Timestamp += comparison
@@ -80,6 +71,7 @@ func QueryDataForUI(c *gin.Context) {
 					Start:      d.Start,
 					End:        d.End,
 					Endpoint:   d.Endpoint,
+					Nid:        d.Nid,
 					Counter:    d.Counter,
 					DsType:     d.DsType,
 					Step:       d.Step,
@@ -92,4 +84,69 @@ func QueryDataForUI(c *gin.Context) {
 	}
 
 	render.Data(c, respData, nil)
+}
+
+func GetMetrics(c *gin.Context) {
+	stats.Counter.Set("metric.qp10s", 1)
+	recv := dataobj.EndpointsRecv{}
+	errors.Dangerous(c.ShouldBindJSON(&recv))
+
+	dataSource, err := backend.GetDataSourceFor("")
+	if err != nil {
+		logger.Warningf("could not find datasource")
+		render.Message(c, err)
+		return
+	}
+
+	resp := dataSource.QueryMetrics(recv)
+
+	render.Data(c, resp, nil)
+}
+
+func GetTagPairs(c *gin.Context) {
+	stats.Counter.Set("tag.qp10s", 1)
+	recv := dataobj.EndpointMetricRecv{}
+	errors.Dangerous(c.ShouldBindJSON(&recv))
+
+	dataSource, err := backend.GetDataSourceFor("")
+	if err != nil {
+		logger.Warningf("could not find datasource")
+		render.Message(c, err)
+		return
+	}
+
+	resp := dataSource.QueryTagPairs(recv)
+	render.Data(c, resp, nil)
+}
+
+func GetIndexByClude(c *gin.Context) {
+	stats.Counter.Set("xclude.qp10s", 1)
+	recvs := make([]dataobj.CludeRecv, 0)
+	errors.Dangerous(c.ShouldBindJSON(&recvs))
+
+	dataSource, err := backend.GetDataSourceFor("")
+	if err != nil {
+		logger.Warningf("could not find datasource")
+		render.Message(c, err)
+		return
+	}
+
+	resp := dataSource.QueryIndexByClude(recvs)
+	render.Data(c, resp, nil)
+}
+
+func GetIndexByFullTags(c *gin.Context) {
+	stats.Counter.Set("counter.qp10s", 1)
+	recvs := make([]dataobj.IndexByFullTagsRecv, 0)
+	errors.Dangerous(c.ShouldBindJSON(&recvs))
+
+	dataSource, err := backend.GetDataSourceFor("")
+	if err != nil {
+		logger.Warningf("could not find datasource")
+		render.Message(c, err)
+		return
+	}
+
+	resp := dataSource.QueryIndexByFullTags(recvs)
+	render.Data(c, resp, nil)
 }

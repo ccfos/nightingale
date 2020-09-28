@@ -3,7 +3,7 @@ package index
 import (
 	"sync"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 )
 
 const (
@@ -17,11 +17,11 @@ type DsTypeAndStep struct {
 
 // 索引缓存的元素数据结构
 type IndexCacheItem struct {
-	UUID interface{}
+	UUID string
 	Item *dataobj.TsdbItem
 }
 
-func NewIndexCacheItem(uuid interface{}, item *dataobj.TsdbItem) *IndexCacheItem {
+func NewIndexCacheItem(uuid string, item *dataobj.TsdbItem) *IndexCacheItem {
 	return &IndexCacheItem{UUID: uuid, Item: item}
 }
 
@@ -29,56 +29,56 @@ func NewIndexCacheItem(uuid interface{}, item *dataobj.TsdbItem) *IndexCacheItem
 type IndexCacheBase struct {
 	sync.RWMutex
 	maxSize int
-	data    map[interface{}]*dataobj.TsdbItem
+	data    map[string]*dataobj.TsdbItem
 }
 
 func NewIndexCacheBase(max int) *IndexCacheBase {
-	return &IndexCacheBase{maxSize: max, data: make(map[interface{}]*dataobj.TsdbItem)}
+	return &IndexCacheBase{maxSize: max, data: make(map[string]*dataobj.TsdbItem)}
 }
 
-func (this *IndexCacheBase) Put(key interface{}, item *dataobj.TsdbItem) {
-	this.Lock()
-	defer this.Unlock()
-	this.data[key] = item
+func (i *IndexCacheBase) Put(key string, item *dataobj.TsdbItem) {
+	i.Lock()
+	defer i.Unlock()
+	i.data[key] = item
 }
 
-func (this *IndexCacheBase) Get(key interface{}) *dataobj.TsdbItem {
-	this.RLock()
-	defer this.RUnlock()
-	return this.data[key]
+func (i *IndexCacheBase) Get(key string) *dataobj.TsdbItem {
+	i.RLock()
+	defer i.RUnlock()
+	return i.data[key]
 }
 
-func (this *IndexCacheBase) ContainsKey(key interface{}) bool {
-	this.RLock()
-	defer this.RUnlock()
-	return this.data[key] != nil
+func (i *IndexCacheBase) ContainsKey(key string) bool {
+	i.RLock()
+	defer i.RUnlock()
+	return i.data[key] != nil
 }
 
-func (this *IndexCacheBase) Size() int {
-	this.RLock()
-	defer this.RUnlock()
-	return len(this.data)
+func (i *IndexCacheBase) Size() int {
+	i.RLock()
+	defer i.RUnlock()
+	return len(i.data)
 }
 
-func (this *IndexCacheBase) Keys() []interface{} {
-	this.RLock()
-	defer this.RUnlock()
+func (i *IndexCacheBase) Keys() []string {
+	i.RLock()
+	defer i.RUnlock()
 
-	count := len(this.data)
+	count := len(i.data)
 	if count == 0 {
-		return []interface{}{}
+		return []string{}
 	}
 
-	keys := make([]interface{}, 0, count)
-	for key := range this.data {
+	keys := make([]string, 0, count)
+	for key := range i.data {
 		keys = append(keys, key)
 	}
 
 	return keys
 }
 
-func (this *IndexCacheBase) Remove(key interface{}) {
-	this.Lock()
-	defer this.Unlock()
-	delete(this.data, key)
+func (i *IndexCacheBase) Remove(key string) {
+	i.Lock()
+	defer i.Unlock()
+	delete(i.data, key)
 }

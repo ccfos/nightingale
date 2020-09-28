@@ -12,7 +12,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 	"github.com/ugorji/go/codec"
 
-	"github.com/didi/nightingale/src/toolkits/address"
+	"github.com/didi/nightingale/src/common/address"
 )
 
 type Index int

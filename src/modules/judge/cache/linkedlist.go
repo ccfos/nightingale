@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"sync"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 )
 
 type SafeLinkedList struct {
@@ -54,22 +54,22 @@ func (ll *SafeLinkedList) PushFrontAndMaintain(v *dataobj.JudgeItem, maxCount in
 
 // @param limit 至多返回这些，如果不够，有多少返回多少
 // @return bool isEnough
-func (ll *SafeLinkedList) HistoryData(limit int) ([]*dataobj.RRDData, bool) {
+func (ll *SafeLinkedList) HistoryData(limit int) ([]*dataobj.HistoryData, bool) {
 	if limit < 1 {
 		// 其实limit不合法，此处也返回false吧，上层代码要注意
 		// 因为false通常使上层代码进入异常分支，这样就统一了
-		return []*dataobj.RRDData{}, false
+		return []*dataobj.HistoryData{}, false
 	}
 
 	size := ll.Len()
 	if size == 0 {
-		return []*dataobj.RRDData{}, false
+		return []*dataobj.HistoryData{}, false
 	}
 
 	firstElement := ll.Front()
 	firstItem := firstElement.Value.(*dataobj.JudgeItem)
 
-	var vs []*dataobj.RRDData
+	var vs []*dataobj.HistoryData
 	isEnough := true
 
 	judgeType := firstItem.DsType[0]
@@ -79,15 +79,27 @@ func (ll *SafeLinkedList) HistoryData(limit int) ([]*dataobj.RRDData, bool) {
 			limit = size
 			isEnough = false
 		}
-		vs = make([]*dataobj.RRDData, limit)
-		vs[0] = &dataobj.RRDData{Timestamp: firstItem.Timestamp, Value: dataobj.JsonFloat(firstItem.Value)}
+		vs = make([]*dataobj.HistoryData, limit)
+		vs[0] = &dataobj.HistoryData{
+			Timestamp: firstItem.Timestamp,
+			Value:     dataobj.JsonFloat(firstItem.Value),
+			Extra:     firstItem.Extra,
+		}
+
 		i := 1
 		currentElement := firstElement
 		for i < limit {
 			nextElement := currentElement.Next()
-			vs[i] = &dataobj.RRDData{
+
+			if nextElement == nil {
+				isEnough = false
+				return vs, isEnough
+			}
+
+			vs[i] = &dataobj.HistoryData{
 				Timestamp: nextElement.Value.(*dataobj.JudgeItem).Timestamp,
 				Value:     dataobj.JsonFloat(nextElement.Value.(*dataobj.JudgeItem).Value),
+				Extra:     nextElement.Value.(*dataobj.JudgeItem).Extra,
 			}
 			i++
 			currentElement = nextElement
@@ -95,4 +107,60 @@ func (ll *SafeLinkedList) HistoryData(limit int) ([]*dataobj.RRDData, bool) {
 	}
 
 	return vs, isEnough
+}
+
+func (ll *SafeLinkedList) QueryDataByTS(start, end int64) []*dataobj.HistoryData {
+	size := ll.Len()
+	if size == 0 {
+		return []*dataobj.HistoryData{}
+	}
+
+	firstElement := ll.Front()
+	firstItem := firstElement.Value.(*dataobj.JudgeItem)
+
+	var vs []*dataobj.HistoryData
+	judgeType := firstItem.DsType[0]
+
+	if judgeType == 'G' || judgeType == 'g' {
+		if firstItem.Timestamp < start {
+			//最新的点也比起始时间旧，直接返回
+			return vs
+		}
+
+		v := &dataobj.HistoryData{
+			Timestamp: firstItem.Timestamp,
+			Value:     dataobj.JsonFloat(firstItem.Value),
+			Extra:     firstItem.Extra,
+		}
+
+		vs = append(vs, v)
+		currentElement := firstElement
+
+		for {
+			nextElement := currentElement.Next()
+			if nextElement == nil {
+				return vs
+			}
+
+			if nextElement.Value.(*dataobj.JudgeItem).Timestamp < start {
+				return vs
+			}
+
+			if nextElement.Value.(*dataobj.JudgeItem).Timestamp > end {
+				currentElement = nextElement
+				continue
+			}
+
+			v := &dataobj.HistoryData{
+				Timestamp: nextElement.Value.(*dataobj.JudgeItem).Timestamp,
+				Value:     dataobj.JsonFloat(nextElement.Value.(*dataobj.JudgeItem).Value),
+				Extra:     nextElement.Value.(*dataobj.JudgeItem).Extra,
+			}
+
+			vs = append(vs, v)
+			currentElement = nextElement
+		}
+	}
+
+	return vs
 }

@@ -6,7 +6,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/toolkits/pools"
 	"github.com/didi/nightingale/src/toolkits/str"
 

@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/tsdb/cache"
 	"github.com/didi/nightingale/src/modules/tsdb/index"
 	"github.com/didi/nightingale/src/modules/tsdb/migrate"
@@ -32,6 +32,11 @@ func (g *Tsdb) Query(param dataobj.TsdbQueryParam, resp *dataobj.TsdbQueryRespon
 	resp.Values = []*dataobj.RRDData{}
 	resp.Endpoint = param.Endpoint
 	resp.Counter = param.Counter
+	resp.Nid = param.Nid
+	if param.Nid != "" {
+		param.Endpoint = dataobj.NidToEndpoint(param.Nid)
+	}
+
 	needStep := 0
 	dsType := param.DsType
 
@@ -71,8 +76,6 @@ func (g *Tsdb) Query(param dataobj.TsdbQueryParam, resp *dataobj.TsdbQueryRespon
 		if err != nil {
 			logger.Debug("get %v cache by %v err:%v", seriesID, param, err)
 			stats.Counter.Set("query.miss", 1)
-
-			return nil
 		}
 		for _, iter := range iters {
 			for iter.Next() {
@@ -410,7 +413,7 @@ func getRRD(f dataobj.RRDFile, worker chan struct{}, dataChan chan *dataobj.File
 
 	chunks, exists := cache.ChunksSlots.GetChunks(key)
 	if exists {
-		m := make(map[interface{}][]*cache.Chunk)
+		m := make(map[string][]*cache.Chunk)
 		m[key] = chunks
 		rrdtool.FlushRRD(m)
 	}

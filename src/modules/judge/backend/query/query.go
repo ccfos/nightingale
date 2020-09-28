@@ -4,15 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
+
+	"github.com/didi/nightingale/src/common/dataobj"
+	"github.com/didi/nightingale/src/modules/judge/cache"
+	"github.com/didi/nightingale/src/toolkits/stats"
+	"github.com/didi/nightingale/src/toolkits/str"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/httplib"
-
-	"github.com/didi/nightingale/src/dataobj"
-	"github.com/didi/nightingale/src/toolkits/address"
-	"github.com/didi/nightingale/src/toolkits/stats"
-	"github.com/didi/nightingale/src/toolkits/str"
 )
 
 var (
@@ -20,43 +21,135 @@ var (
 	ErrorQueryParamIllegal = errors.New("query param illegal")
 )
 
-type IndexRequest struct {
-	Endpoints []string            `json:"endpoints"`
-	Metric    string              `json:"metric"`
-	Include   map[string][]string `json:"include"`
-	Exclude   map[string][]string `json:"exclude"`
-}
-
-type Counter struct {
-	Counter string `json:"counter"`
-	Step    int    `json:"step"`
-	Dstype  string `json:"dstype"`
-}
-
 // 执行Query操作
 // 默认不重试, 如果要做重试, 在这里完成
-func Query(reqs []*dataobj.QueryData) ([]*dataobj.TsdbQueryResponse, error) {
-	stats.Counter.Set("get.data", 1)
-
+func Query(reqs []*dataobj.QueryData, sid int64, expFunc string) []*dataobj.TsdbQueryResponse {
+	stats.Counter.Set("query.data", 1)
 	var resp *dataobj.QueryDataResp
+	var respData []*dataobj.TsdbQueryResponse
 	var err error
-	for i := 0; i < 3; i++ {
-		err = TransferConnPools.Call("", "Transfer.Query", reqs, &resp)
-		if err == nil {
-			break
+
+	respData, reqs = QueryFromMem(reqs, sid)
+	if len(reqs) > 0 {
+		stats.Counter.Set("query.data.by.transfer", 1)
+		for i := 0; i < 3; i++ {
+			err = TransferConnPools.Call("", "Transfer.Query", reqs, &resp)
+			if err == nil {
+				break
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+		if err != nil {
+			stats.Counter.Set("query.data.transfer.err", 1)
+			logger.Warning("get data err:%v msg:%+v, query data from mem", err, resp)
+		} else {
+			respData = append(respData, resp.Data...)
 		}
 	}
-	if err != nil {
-		return nil, err
-	}
-	if resp.Msg != "" {
-		return nil, errors.New(resp.Msg)
-	}
-	return resp.Data, nil
+
+	return respData
 }
 
-func NewQueryRequest(endpoint, metric string, tagsMap map[string]string,
-	start, end int64) (*dataobj.QueryData, error) {
+func QueryFromMem(reqs []*dataobj.QueryData, sid int64) ([]*dataobj.TsdbQueryResponse, []*dataobj.QueryData) {
+	stats.Counter.Set("query.data.by.mem", 1)
+
+	var resps []*dataobj.TsdbQueryResponse
+	var newReqs []*dataobj.QueryData
+	for _, req := range reqs {
+		newReq := &dataobj.QueryData{
+			Start:      req.Start,
+			End:        req.End,
+			ConsolFunc: req.ConsolFunc,
+			Step:       req.Step,
+			DsType:     req.DsType,
+		}
+
+		if len(req.Nids) > 0 {
+			for _, nid := range req.Nids {
+				for _, counter := range req.Counters {
+					metric, tagsMap := Counter2Metric(counter)
+					resp := &dataobj.TsdbQueryResponse{
+						Nid:     nid,
+						Counter: counter,
+						Step:    req.Step,
+						DsType:  req.DsType,
+					}
+
+					item := &dataobj.JudgeItem{
+						Nid:     nid,
+						Metric:  metric,
+						TagsMap: tagsMap,
+						Sid:     sid,
+					}
+
+					pk := item.MD5()
+					linkedList, exists := cache.HistoryBigMap[pk[0:2]].Get(pk)
+					if exists {
+						historyData := linkedList.QueryDataByTS(req.Start, req.End)
+						resp.Values = dataobj.HistoryData2RRDData(historyData)
+					}
+					if len(resp.Values) > 0 {
+						resps = append(resps, resp)
+					} else {
+						newReq.Nids = append(newReq.Nids, nid)
+						newReq.Counters = append(newReq.Counters, counter)
+					}
+				}
+			}
+
+		} else {
+			for _, endpoint := range req.Endpoints {
+				for _, counter := range req.Counters {
+					metric, tagsMap := Counter2Metric(counter)
+					resp := &dataobj.TsdbQueryResponse{
+						Endpoint: endpoint,
+						Counter:  counter,
+						Step:     req.Step,
+						DsType:   req.DsType,
+					}
+
+					item := &dataobj.JudgeItem{
+						Endpoint: endpoint,
+						Metric:   metric,
+						TagsMap:  tagsMap,
+						Sid:      sid,
+					}
+
+					pk := item.MD5()
+					linkedList, exists := cache.HistoryBigMap[pk[0:2]].Get(pk)
+					if exists {
+						historyData := linkedList.QueryDataByTS(req.Start, req.End)
+						resp.Values = dataobj.HistoryData2RRDData(historyData)
+					}
+					if len(resp.Values) > 0 {
+						resps = append(resps, resp)
+					} else {
+						newReq.Endpoints = append(newReq.Endpoints, endpoint)
+						newReq.Counters = append(newReq.Counters, counter)
+					}
+				}
+			}
+		}
+
+		if len(newReq.Counters) > 0 {
+			newReqs = append(newReqs, newReq)
+		}
+	}
+
+	return resps, newReqs
+}
+
+func Counter2Metric(counter string) (string, map[string]string) {
+	arr := strings.Split(counter, "/")
+	if len(arr) == 1 {
+		return arr[0], nil
+	}
+
+	return arr[0], str.DictedTagstring(arr[1])
+}
+
+func NewQueryRequest(nid, endpoint, metric string, tagsMap map[string]string,
+	step int, start, end int64) (*dataobj.QueryData, error) {
 	if end <= start || start < 0 {
 		return nil, ErrorQueryParamIllegal
 	}
@@ -67,11 +160,20 @@ func NewQueryRequest(endpoint, metric string, tagsMap map[string]string,
 	} else {
 		counter = metric + "/" + str.SortedTags(tagsMap)
 	}
+	var nids, endpoints []string
+	if nid != "" {
+		nids = []string{nid}
+	} else if endpoint != "" {
+		endpoints = []string{endpoint}
+	}
+
 	return &dataobj.QueryData{
 		Start:      start,
 		End:        end,
+		Step:       step,
 		ConsolFunc: "AVERAGE", // 硬编码
-		Endpoints:  []string{endpoint},
+		Nids:       nids,
+		Endpoints:  endpoints,
 		Counters:   []string{counter},
 	}, nil
 }
@@ -83,6 +185,7 @@ type XCludeStruct struct {
 }
 
 type IndexReq struct {
+	Nids      []string       `json:"nids"`
 	Endpoints []string       `json:"endpoints"`
 	Metric    string         `json:"metric"`
 	Include   []XCludeStruct `json:"include,omitempty"`
@@ -90,6 +193,7 @@ type IndexReq struct {
 }
 
 type IndexData struct {
+	Nid      string   `json:"nid"`
 	Endpoint string   `json:"endpoint"`
 	Metric   string   `json:"metric"`
 	Tags     []string `json:"tags"`
@@ -104,30 +208,25 @@ type IndexResp struct {
 
 // index的xclude 不支持批量查询, 暂时不做
 func Xclude(request *IndexReq) ([]IndexData, error) {
-	addrs := address.GetHTTPAddresses("index")
+	addrs := IndexList.Get()
 	if len(addrs) == 0 {
 		return nil, errors.New("empty index addr")
 	}
 
-	var (
-		result IndexResp
-		succ   bool = false
-	)
+	var result IndexResp
 	perm := rand.Perm(len(addrs))
+	var err error
 	for i := range perm {
 		url := fmt.Sprintf("http://%s%s", addrs[perm[i]], Config.IndexPath)
-		err := httplib.Post(url).JSONBodyQuiet([]IndexReq{*request}).SetTimeout(time.Duration(Config.IndexCallTimeout) * time.Millisecond).ToJSON(&result)
-		if err != nil {
-			logger.Warningf("index xclude failed, error:%v, req:%v", err, request)
-			continue
-		} else {
-			succ = true
+		err = httplib.Post(url).JSONBodyQuiet([]IndexReq{*request}).SetTimeout(time.Duration(Config.IndexCallTimeout) * time.Millisecond).ToJSON(&result)
+		if err == nil {
 			break
 		}
+		logger.Warningf("index xclude failed, error:%v, req:%+v", err, request)
 	}
 
-	if !succ {
-		return nil, errors.New("index xclude failed")
+	if err != nil {
+		return nil, fmt.Errorf("index xclude failed, error:%v, req:%+v", err, request)
 	}
 
 	if result.Err != "" {

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/toolkits/pkg/file"
-	_ "go.uber.org/automaxprocs"
+	"go.uber.org/automaxprocs/maxprocs"
 )
 
 var (
@@ -16,7 +16,12 @@ var (
 	Cwd      string
 )
 
+func Noop(string, ...interface{}) {}
+
 func Init() {
+
+	maxprocs.Set(maxprocs.Logger(Noop))
+
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
 	var err error

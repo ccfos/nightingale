@@ -26,11 +26,14 @@ _test
 /log*
 /bin
 /out
+/meta
+/pub
 /build
 /dist
 /etc/*.local.yml
 /etc/log/log.test.json
 /data*
+/tarball
 
 .idea
 .index
@@ -40,14 +43,22 @@ _test
 
 /n9e-*
 
+/src/modules/agent/agent
+/src/modules/ams/ams
 /src/modules/index/index
-/src/modules/collector/collector
+/src/modules/job/job
+/src/modules/judge/judge
+/src/modules/monapi/monapi
+/src/modules/rdb/rdb
 /src/modules/transfer/transfer
 /src/modules/tsdb/tsdb
+<<<<<<< HEAD
 /src/modules/monapi/monapi
 
 /web/node_modules
 /web/.cache-loader
 /web/yarn.lock
+=======
+>>>>>>> upstream/master
 
 

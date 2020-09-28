@@ -10,16 +10,16 @@ import (
 	"os"
 	"time"
 
+	"github.com/didi/nightingale/src/common/identity"
+	"github.com/didi/nightingale/src/common/report"
+	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/toolkits/compress"
+	"github.com/didi/nightingale/src/toolkits/stats"
+
 	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
-
-	"github.com/didi/nightingale/src/model"
-	"github.com/didi/nightingale/src/toolkits/compress"
-	"github.com/didi/nightingale/src/toolkits/identity"
-	"github.com/didi/nightingale/src/toolkits/report"
-	"github.com/didi/nightingale/src/toolkits/stats"
 )
 
 type CacheSection struct {
@@ -30,9 +30,11 @@ type CacheSection struct {
 	RebuildWorker   int    `yaml:"rebuildWorker"`
 	MaxQueryCount   int    `yaml:"maxQueryCount"`
 	ReportEndpoint  bool   `yaml:"reportEndpoint"`
+	HbsMod          string `yaml:"hbsMod"`
 }
 
 var IndexDB *EndpointIndexMap
+var NidIndexDB *EndpointIndexMap
 var Config CacheSection
 var NewEndpoints *list.SafeListLimited
 
@@ -42,6 +44,7 @@ func InitDB(cfg CacheSection) {
 	Config = cfg
 
 	IndexDB = &EndpointIndexMap{M: make(map[string]*MetricIndexMap)}
+	NidIndexDB = &EndpointIndexMap{M: make(map[string]*MetricIndexMap)}
 	NewEndpoints = list.NewSafeListLimited(100000)
 
 	Rebuild(Config.PersistDir, Config.RebuildWorker)
@@ -49,9 +52,6 @@ func InitDB(cfg CacheSection) {
 	go StartCleaner(Config.CleanInterval, Config.CacheDuration)
 	go StartPersist(Config.PersistInterval)
 
-	if Config.ReportEndpoint {
-		go ReportEndpoint()
-	}
 }
 
 func StartCleaner(interval int, cacheDuration int) {
@@ -61,6 +61,7 @@ func StartCleaner(interval int, cacheDuration int) {
 
 		start := time.Now()
 		IndexDB.Clean(int64(cacheDuration))
+		NidIndexDB.Clean(int64(cacheDuration))
 		logger.Infof("clean took %.2f ms\n", float64(time.Since(start).Nanoseconds())*1e-6)
 	}
 }
@@ -93,12 +94,19 @@ func Rebuild(persistenceDir string, concurrency int) {
 		dbDir = fmt.Sprintf("%s/%s", persistenceDir, "db")
 	}
 
-	if err := RebuildFromDisk(dbDir, concurrency); err != nil {
-		logger.Errorf("rebuild index from local disk error:%+v", err)
+	endpointDir := dbDir + "/endpoint"
+	nidDir := dbDir + "/nid"
+
+	if err := RebuildFromDisk(IndexDB, endpointDir, concurrency); err != nil {
+		logger.Warningf("rebuild index from local disk error:%+v", err)
+	}
+
+	if err := RebuildFromDisk(NidIndexDB, nidDir, concurrency); err != nil {
+		logger.Warningf("rebuild index from local disk error:%+v", err)
 	}
 }
 
-func RebuildFromDisk(indexFileDir string, concurrency int) error {
+func RebuildFromDisk(indexDB *EndpointIndexMap, indexFileDir string, concurrency int) error {
 	logger.Info("Try to rebuild index from disk")
 	if !file.IsExist(indexFileDir) {
 		return fmt.Errorf("index persistence dir [%s] don't exist", indexFileDir)
@@ -133,9 +141,9 @@ func RebuildFromDisk(indexFileDir string, concurrency int) error {
 				NewEndpoints.PushFront(endpoint)
 			}
 
-			IndexDB.Lock()
-			IndexDB.M[endpoint] = metricIndexMap
-			IndexDB.Unlock()
+			indexDB.Lock()
+			indexDB.M[endpoint] = metricIndexMap
+			indexDB.Unlock()
 		}(endpoint)
 
 	}
@@ -165,15 +173,17 @@ func Persist(mode string) error {
 	} else {
 		tmpDir = fmt.Sprintf("%s/%s", indexFileDir, "tmp")
 	}
-	if err := os.RemoveAll(tmpDir); err != nil {
+
+	// write endpoint index data to disk
+	endpointDir := tmpDir + "/endpoint"
+	if err := os.RemoveAll(endpointDir); err != nil {
 		return err
 	}
 	// create tmp directory
-	if err := os.MkdirAll(tmpDir, 0777); err != nil {
+	if err := os.MkdirAll(endpointDir, 0777); err != nil {
 		return err
 	}
 
-	// write index data to disk
 	endpoints := IndexDB.GetEndpoints()
 	epLength := len(endpoints)
 	logger.Infof("save index data to disk[num:%d][mode:%s]\n", epLength, mode)
@@ -181,8 +191,29 @@ func Persist(mode string) error {
 	for i, endpoint := range endpoints {
 		logger.Infof("sync [%s] to disk, [%d%%] complete\n", endpoint, int((float64(i)/float64(epLength))*100))
 
-		if err := WriteIndexToFile(tmpDir, endpoint); err != nil {
+		if err := WriteIndexToFile("endpoint", endpointDir, endpoint); err != nil {
 			logger.Errorf("write %s index to file err:%v\n", endpoint, err)
+		}
+	}
+
+	nidDir := tmpDir + "/nid"
+	if err := os.RemoveAll(nidDir); err != nil {
+		return err
+	}
+	// create tmp directory
+	if err := os.MkdirAll(nidDir, 0777); err != nil {
+		return err
+	}
+
+	nids := NidIndexDB.GetEndpoints()
+	nidLength := len(nids)
+	logger.Infof("save index data to disk[num:%d][mode:%s]\n", nidLength, mode)
+
+	for i, nid := range nids {
+		logger.Infof("sync [%s] to disk, [%d%%] complete\n", nid, int((float64(i)/float64(nidLength))*100))
+
+		if err := WriteIndexToFile("nid", nidDir, nid); err != nil {
+			logger.Errorf("write %s index to file err:%v\n", nid, err)
 		}
 	}
 
@@ -209,10 +240,19 @@ func Persist(mode string) error {
 	return nil
 }
 
-func WriteIndexToFile(indexDir, endpoint string) error {
-	metricIndexMap, exists := IndexDB.GetMetricIndexMap(endpoint)
-	if !exists || metricIndexMap == nil {
-		return fmt.Errorf("endpoint index doesn't found")
+func WriteIndexToFile(mod, indexDir, endpoint string) error {
+	var metricIndexMap *MetricIndexMap
+	var exists bool
+	if mod == "endpoint" {
+		metricIndexMap, exists = IndexDB.GetMetricIndexMap(endpoint)
+		if !exists || metricIndexMap == nil {
+			return fmt.Errorf("endpoint index doesn't found")
+		}
+	} else {
+		metricIndexMap, exists = NidIndexDB.GetMetricIndexMap(endpoint)
+		if !exists || metricIndexMap == nil {
+			return fmt.Errorf("endpoint index doesn't found")
+		}
 	}
 
 	metricIndexMap.RLock()
@@ -240,22 +280,23 @@ func ReadIndexFromFile(indexDir, endpoint string) (*MetricIndexMap, error) {
 	return metricIndexMap, err
 }
 
-func IndexList() []*model.Instance {
-	activeIndexes, err := report.GetAlive("index", "monapi")
+func IndexList() []*models.Instance {
+	activeIndexes, err := report.GetAlive("index", Config.HbsMod)
 	if err != nil {
-		return []*model.Instance{}
+		return []*models.Instance{}
 	}
 
-	var instances []*model.Instance
+	var instances []*models.Instance
 	for _, instance := range activeIndexes {
-		if instance.Identity != identity.Identity {
+		ident, _ := identity.GetIdent()
+		if instance.Identity != ident {
 			instances = append(instances, instance)
 		}
 	}
 	return instances
 }
 
-func getIndexFromRemote(instances []*model.Instance) error {
+func getIndexFromRemote(instances []*models.Instance) error {
 	filepath := "db.tar.gz"
 	request := func(idx int) error {
 		url := fmt.Sprintf("http://%s:%s/api/index/idxfile", instances[idx].Identity, instances[idx].HTTPPort)

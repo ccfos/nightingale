@@ -7,10 +7,10 @@ import (
 	_ "net/http/pprof"
 	"time"
 
-	"github.com/gin-gonic/gin"
-
-	"github.com/didi/nightingale/src/toolkits/address"
+	"github.com/didi/nightingale/src/common/address"
 	"github.com/didi/nightingale/src/toolkits/http/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
 var srv = &http.Server{
@@ -25,7 +25,6 @@ func Start(r *gin.Engine, mod string, level string) {
 	recoveryMid := middleware.Recovery()
 
 	if level != "DEBUG" {
-		gin.SetMode(gin.ReleaseMode)
 		middleware.DisableConsoleColor()
 	} else {
 		srv.WriteTimeout = 120 * time.Second

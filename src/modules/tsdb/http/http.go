@@ -7,10 +7,10 @@ import (
 	_ "net/http/pprof"
 	"time"
 
+	"github.com/didi/nightingale/src/common/address"
 	"github.com/didi/nightingale/src/modules/tsdb/http/middleware"
 	"github.com/didi/nightingale/src/modules/tsdb/http/render"
 	"github.com/didi/nightingale/src/modules/tsdb/http/routes"
-	"github.com/didi/nightingale/src/toolkits/address"
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"

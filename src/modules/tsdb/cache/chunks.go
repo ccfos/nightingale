@@ -21,7 +21,7 @@ func NewChunks(numOfChunks int) *CS {
 	return &CS{Chunks: cs}
 }
 
-func (cs *CS) Push(seriesID interface{}, ts int64, value float64) error {
+func (cs *CS) Push(seriesID string, ts int64, value float64) error {
 	//找到当前chunk的起始时间
 	t0 := uint32(ts - (ts % int64(Config.SpanInSeconds)))
 

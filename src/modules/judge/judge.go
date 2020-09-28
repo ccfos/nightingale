@@ -7,11 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/runner"
-
+	"github.com/didi/nightingale/src/common/identity"
+	"github.com/didi/nightingale/src/common/loggeri"
+	"github.com/didi/nightingale/src/common/report"
 	"github.com/didi/nightingale/src/modules/judge/backend/query"
 	"github.com/didi/nightingale/src/modules/judge/backend/redi"
 	"github.com/didi/nightingale/src/modules/judge/cache"
@@ -21,18 +19,22 @@ import (
 	"github.com/didi/nightingale/src/modules/judge/rpc"
 	"github.com/didi/nightingale/src/modules/judge/stra"
 	"github.com/didi/nightingale/src/toolkits/http"
-	"github.com/didi/nightingale/src/toolkits/identity"
-	tlogger "github.com/didi/nightingale/src/toolkits/logger"
-	"github.com/didi/nightingale/src/toolkits/report"
 	"github.com/didi/nightingale/src/toolkits/stats"
-)
 
-const version = 1
+	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/file"
+	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/runner"
+)
 
 var (
 	vers *bool
 	help *bool
 	conf *string
+
+	version   = "No Version Provided"
+	gitHash   = "No GitHash Provided"
+	buildTime = "No BuildTime Provided"
 )
 
 func init() {
@@ -42,7 +44,9 @@ func init() {
 	flag.Parse()
 
 	if *vers {
-		fmt.Println("version:", version)
+		fmt.Println("Version:", version)
+		fmt.Println("Git Commit Hash:", gitHash)
+		fmt.Println("UTC Build Time:", buildTime)
 		os.Exit(0)
 	}
 
@@ -58,11 +62,11 @@ func main() {
 	start()
 
 	cfg := config.Config
-	identity.Init(cfg.Identity)
-	tlogger.Init(cfg.Logger)
+	identity.Parse()
+	loggeri.Init(cfg.Logger)
 	go stats.Init("n9e.judge")
 
-	query.Init(cfg.Query)
+	query.Init(cfg.Query, "monapi")
 	redi.Init(cfg.Redis)
 
 	cache.InitHistoryBigMap()
@@ -75,6 +79,10 @@ func main() {
 	go stra.GetStrategy(cfg.Strategy)
 	go judge.NodataJudge(cfg.NodataConcurrency)
 	go report.Init(cfg.Report, "monapi")
+
+	if cfg.Logger.Level != "DEBUG" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	r := gin.New()
 	routes.Config(r)

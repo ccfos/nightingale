@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/toolkits/pkg/logger"

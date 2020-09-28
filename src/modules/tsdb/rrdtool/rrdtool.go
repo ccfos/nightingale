@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/tsdb/index"
 	"github.com/didi/nightingale/src/modules/tsdb/utils"
 
@@ -47,7 +47,7 @@ func update(filename string, items []*dataobj.TsdbItem) error {
 		if v > 1e+300 || (v < 1e-300 && v > 0) {
 			continue
 		}
-		u.Cache(item.Timestamp, int(item.Value))
+		u.Cache(item.Timestamp, item.Value)
 	}
 
 	return u.Update()
@@ -55,7 +55,7 @@ func update(filename string, items []*dataobj.TsdbItem) error {
 
 // flush to disk from memory
 // 最新的数据在列表的最后面
-func Flushrrd(seriesID interface{}, items []*dataobj.TsdbItem) error {
+func Flushrrd(seriesID string, items []*dataobj.TsdbItem) error {
 	item := index.GetItemFronIndex(seriesID)
 	if items == nil || len(items) == 0 || item == nil {
 		return errors.New("empty items")

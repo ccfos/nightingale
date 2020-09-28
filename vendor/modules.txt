@@ -1,48 +1,64 @@
-# github.com/BurntSushi/toml v0.3.1
-github.com/BurntSushi/toml
+# github.com/Shopify/sarama v1.19.0
+github.com/Shopify/sarama
+# github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d
+github.com/StackExchange/wmi
 # github.com/cespare/xxhash v1.1.0
 github.com/cespare/xxhash
 # github.com/codegangsta/negroni v1.0.0
 github.com/codegangsta/negroni
+# github.com/coreos/go-oidc v2.2.1+incompatible
+github.com/coreos/go-oidc
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/dgryski/go-tsz v0.0.0-20180227144327-03b7d791f4fe
 github.com/dgryski/go-tsz
 github.com/dgryski/go-tsz/testdata
+# github.com/eapache/go-resiliency v1.2.0
+github.com/eapache/go-resiliency/breaker
+# github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21
+github.com/eapache/go-xerial-snappy
+# github.com/eapache/queue v1.1.0
+github.com/eapache/queue
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
-# github.com/garyburd/redigo v1.6.0
+# github.com/garyburd/redigo v1.6.2
 github.com/garyburd/redigo/internal
 github.com/garyburd/redigo/redis
-# github.com/gin-contrib/pprof v1.2.1
+# github.com/gin-contrib/pprof v1.3.0
 github.com/gin-contrib/pprof
-# github.com/gin-contrib/sessions v0.0.3
-github.com/gin-contrib/sessions
-github.com/gin-contrib/sessions/cookie
 # github.com/gin-contrib/sse v0.1.0
 github.com/gin-contrib/sse
-# github.com/gin-gonic/gin v1.5.0
+# github.com/gin-gonic/gin v1.6.3
 github.com/gin-gonic/gin
 github.com/gin-gonic/gin/binding
+github.com/gin-gonic/gin/internal/bytesconv
 github.com/gin-gonic/gin/internal/json
 github.com/gin-gonic/gin/render
-# github.com/go-playground/locales v0.12.1
+# github.com/go-ole/go-ole v1.2.4
+github.com/go-ole/go-ole
+github.com/go-ole/go-ole/oleutil
+# github.com/go-playground/locales v0.13.0
 github.com/go-playground/locales
 github.com/go-playground/locales/currency
-# github.com/go-playground/universal-translator v0.16.0
+# github.com/go-playground/universal-translator v0.17.0
 github.com/go-playground/universal-translator
-# github.com/go-sql-driver/mysql v1.4.1
+# github.com/go-playground/validator/v10 v10.2.0
+github.com/go-playground/validator/v10
+# github.com/go-sql-driver/mysql v1.5.0
 github.com/go-sql-driver/mysql
-# github.com/golang/protobuf v1.3.2
+# github.com/golang/protobuf v1.3.3
 github.com/golang/protobuf/proto
+# github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
+github.com/golang/snappy
+# github.com/google/uuid v1.1.2
+github.com/google/uuid
 # github.com/gorilla/context v1.1.1
 github.com/gorilla/context
 # github.com/gorilla/mux v1.6.2
 github.com/gorilla/mux
-# github.com/gorilla/securecookie v1.1.1
-github.com/gorilla/securecookie
-# github.com/gorilla/sessions v1.1.3
-github.com/gorilla/sessions
+# github.com/hashicorp/golang-lru v0.5.1
+github.com/hashicorp/golang-lru
+github.com/hashicorp/golang-lru/simplelru
 # github.com/hashicorp/hcl v1.0.0
 github.com/hashicorp/hcl
 github.com/hashicorp/hcl/hcl/ast
@@ -60,9 +76,13 @@ github.com/hpcloud/tail/ratelimiter
 github.com/hpcloud/tail/util
 github.com/hpcloud/tail/watch
 github.com/hpcloud/tail/winfile
+# github.com/influxdata/influxdb v1.8.0
+github.com/influxdata/influxdb/client/v2
+github.com/influxdata/influxdb/models
+github.com/influxdata/influxdb/pkg/escape
 # github.com/json-iterator/go v1.1.9
 github.com/json-iterator/go
-# github.com/leodido/go-urn v1.1.0
+# github.com/leodido/go-urn v1.2.0
 github.com/leodido/go-urn
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
@@ -78,8 +98,24 @@ github.com/modern-go/reflect2
 github.com/open-falcon/rrdlite
 # github.com/pelletier/go-toml v1.2.0
 github.com/pelletier/go-toml
+# github.com/pierrec/lz4 v2.0.5+incompatible
+github.com/pierrec/lz4
+github.com/pierrec/lz4/internal/xxh32
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
+# github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f
+github.com/pquerna/cachecontrol
+github.com/pquerna/cachecontrol/cacheobject
+# github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
+github.com/rcrowley/go-metrics
+# github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62
+github.com/robfig/go-cache
+# github.com/shirou/gopsutil v2.20.7+incompatible
+github.com/shirou/gopsutil/cpu
+github.com/shirou/gopsutil/internal/common
+github.com/shirou/gopsutil/mem
+github.com/shirou/gopsutil/net
+github.com/shirou/gopsutil/process
 # github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72
 github.com/spaolacci/murmur3
 # github.com/spf13/afero v1.1.2
@@ -91,13 +127,16 @@ github.com/spf13/cast
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
-# github.com/spf13/viper v1.6.2
+# github.com/spf13/viper v1.7.1
 github.com/spf13/viper
-# github.com/stretchr/testify v1.4.0
+# github.com/streadway/amqp v1.0.0
+github.com/streadway/amqp
+# github.com/stretchr/testify v1.6.1
 github.com/stretchr/testify/assert
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# github.com/toolkits/pkg v1.1.1
+# github.com/toolkits/pkg v1.1.2
+github.com/toolkits/pkg/cache
 github.com/toolkits/pkg/concurrent/semaphore
 github.com/toolkits/pkg/consistent
 github.com/toolkits/pkg/container/list
@@ -105,6 +144,7 @@ github.com/toolkits/pkg/container/set
 github.com/toolkits/pkg/errors
 github.com/toolkits/pkg/file
 github.com/toolkits/pkg/logger
+github.com/toolkits/pkg/net/gobrpc
 github.com/toolkits/pkg/net/httplib
 github.com/toolkits/pkg/nux
 github.com/toolkits/pkg/pool
@@ -114,79 +154,61 @@ github.com/toolkits/pkg/str
 github.com/toolkits/pkg/sys
 # github.com/ugorji/go/codec v1.1.7
 github.com/ugorji/go/codec
-# github.com/unrolled/render v1.0.2
+# github.com/unrolled/render v1.0.3
 github.com/unrolled/render
 # go.uber.org/automaxprocs v1.3.0
-go.uber.org/automaxprocs
 go.uber.org/automaxprocs/internal/cgroups
 go.uber.org/automaxprocs/internal/runtime
 go.uber.org/automaxprocs/maxprocs
-# golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
-golang.org/x/lint
-golang.org/x/lint/golint
-# golang.org/x/sys v0.0.0-20200116001909-b77594299b42
+# golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
+golang.org/x/crypto/ed25519
+golang.org/x/crypto/ed25519/internal/edwards25519
+golang.org/x/crypto/pbkdf2
+# golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc
+golang.org/x/net/context
+golang.org/x/net/context/ctxhttp
+# golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+golang.org/x/oauth2
+golang.org/x/oauth2/internal
+# golang.org/x/sys v0.0.0-20200812155832-6a926be9bd1d
+golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2
+golang.org/x/sys/windows
+# golang.org/x/text v0.3.2
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
-# golang.org/x/tools v0.0.0-20191125144606-a911d9008d1f
-golang.org/x/tools/go/analysis
-golang.org/x/tools/go/analysis/passes/inspect
-golang.org/x/tools/go/ast/astutil
-golang.org/x/tools/go/ast/inspector
-golang.org/x/tools/go/buildutil
-golang.org/x/tools/go/gcexportdata
-golang.org/x/tools/go/internal/gcimporter
-golang.org/x/tools/go/internal/packagesdriver
-golang.org/x/tools/go/packages
-golang.org/x/tools/go/types/objectpath
-golang.org/x/tools/go/types/typeutil
-golang.org/x/tools/internal/fastwalk
-golang.org/x/tools/internal/gopathwalk
-golang.org/x/tools/internal/semver
-golang.org/x/tools/internal/span
-# google.golang.org/appengine v1.6.0
-google.golang.org/appengine/cloudsql
+# google.golang.org/appengine v1.6.5
+google.golang.org/appengine/internal
+google.golang.org/appengine/internal/base
+google.golang.org/appengine/internal/datastore
+google.golang.org/appengine/internal/log
+google.golang.org/appengine/internal/remote_api
+google.golang.org/appengine/internal/urlfetch
+google.golang.org/appengine/urlfetch
+# gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc
+gopkg.in/alexcesaro/quotedprintable.v3
 # gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d
 gopkg.in/asn1-ber.v1
 # gopkg.in/fsnotify.v1 v1.4.7
 gopkg.in/fsnotify.v1
-# gopkg.in/go-playground/validator.v9 v9.29.1
-gopkg.in/go-playground/validator.v9
+# gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
+gopkg.in/gomail.v2
 # gopkg.in/ini.v1 v1.51.0
 gopkg.in/ini.v1
 # gopkg.in/ldap.v3 v3.1.0
 gopkg.in/ldap.v3
+# gopkg.in/square/go-jose.v2 v2.5.1
+gopkg.in/square/go-jose.v2
+gopkg.in/square/go-jose.v2/cipher
+gopkg.in/square/go-jose.v2/json
 # gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
 gopkg.in/tomb.v1
-# gopkg.in/yaml.v2 v2.2.4
+# gopkg.in/yaml.v2 v2.3.0
 gopkg.in/yaml.v2
-# honnef.co/go/tools v0.0.1-2019.2.3
-honnef.co/go/tools/arg
-honnef.co/go/tools/cmd/staticcheck
-honnef.co/go/tools/config
-honnef.co/go/tools/deprecated
-honnef.co/go/tools/facts
-honnef.co/go/tools/functions
-honnef.co/go/tools/go/types/typeutil
-honnef.co/go/tools/internal/cache
-honnef.co/go/tools/internal/passes/buildssa
-honnef.co/go/tools/internal/renameio
-honnef.co/go/tools/internal/sharedcheck
-honnef.co/go/tools/lint
-honnef.co/go/tools/lint/lintdsl
-honnef.co/go/tools/lint/lintutil
-honnef.co/go/tools/lint/lintutil/format
-honnef.co/go/tools/loader
-honnef.co/go/tools/printf
-honnef.co/go/tools/simple
-honnef.co/go/tools/ssa
-honnef.co/go/tools/ssautil
-honnef.co/go/tools/staticcheck
-honnef.co/go/tools/staticcheck/vrp
-honnef.co/go/tools/stylecheck
-honnef.co/go/tools/unused
-honnef.co/go/tools/version
+# gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+gopkg.in/yaml.v3
+# k8s.io/apimachinery v0.0.0-20190817020851-f2f3a405f61d
+k8s.io/apimachinery/pkg/util/cache
 # xorm.io/builder v0.3.6
 xorm.io/builder
 # xorm.io/core v0.7.3

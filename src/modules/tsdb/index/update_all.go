@@ -4,24 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/tsdb/backend/rpc"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
-	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/logger"
 )
 
-var (
-	semaUpdateIndexAll *semaphore.Semaphore
-)
-
 func StartUpdateIndexTask() {
-	if rpc.Config.MaxConns != 0 {
-		semaUpdateIndexAll = semaphore.NewSemaphore(rpc.Config.MaxConns / 2)
-	} else {
-		semaUpdateIndexAll = semaphore.NewSemaphore(10)
-	}
 
 	t1 := time.NewTicker(time.Duration(Config.RebuildInterval) * time.Second)
 	for {
@@ -73,22 +63,13 @@ func RebuildAllIndex(params ...[]string) error {
 				i = i + 1
 
 				if i == aggrNum {
-					semaUpdateIndexAll.Acquire()
-					go func(items []*dataobj.TsdbItem) {
-						defer semaUpdateIndexAll.Release()
-						rpc.Push2Index(rpc.ALLINDEX, items, addrs)
-					}(tmpList)
-
+					rpc.Push2Index(rpc.ALLINDEX, tmpList, addrs)
 					i = 0
 				}
 			}
 
 			if i != 0 {
-				semaUpdateIndexAll.Acquire()
-				go func(items []*dataobj.TsdbItem) {
-					defer semaUpdateIndexAll.Release()
-					rpc.Push2Index(rpc.ALLINDEX, items, addrs)
-				}(tmpList[:i])
+				rpc.Push2Index(rpc.ALLINDEX, tmpList[:i], addrs)
 			}
 		}
 

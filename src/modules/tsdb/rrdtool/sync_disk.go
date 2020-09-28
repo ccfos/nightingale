@@ -1,13 +1,12 @@
 package rrdtool
 
 import (
-	"fmt"
 	"io/ioutil"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/tsdb/cache"
 	"github.com/didi/nightingale/src/modules/tsdb/index"
 	"github.com/didi/nightingale/src/modules/tsdb/utils"
@@ -53,7 +52,7 @@ type fetch_t struct {
 }
 
 type flushfile_t struct {
-	seriesID interface{}
+	seriesID string
 	items    []*dataobj.TsdbItem
 }
 
@@ -164,7 +163,7 @@ func FlushFinishd2Disk() {
 		case <-ticker:
 			idx = idx % slotNum
 			chunks := cache.ChunksSlots.Get(idx)
-			flushChunks := make(map[interface{}][]*cache.Chunk, 0)
+			flushChunks := make(map[string][]*cache.Chunk, 0)
 			for key, cs := range chunks {
 				if Config.Migrate {
 					item := index.GetItemFronIndex(key)
@@ -205,14 +204,14 @@ func Persist() {
 	return
 }
 
-func FlushRRD(flushChunks map[interface{}][]*cache.Chunk) {
+func FlushRRD(flushChunks map[string][]*cache.Chunk) {
 	sema := semaphore.NewSemaphore(Config.Concurrency)
 	var wg sync.WaitGroup
 	for key, chunks := range flushChunks {
 		//控制并发
 		sema.Acquire()
 		wg.Add(1)
-		go func(seriesID interface{}, chunks []*cache.Chunk) {
+		go func(seriesID string, chunks []*cache.Chunk) {
 			defer sema.Release()
 			defer wg.Done()
 			for _, c := range chunks {
@@ -242,11 +241,11 @@ func FlushRRD(flushChunks map[interface{}][]*cache.Chunk) {
 }
 
 //todo items数据结构优化
-func Commit(seriesID interface{}, items []*dataobj.TsdbItem) {
+func Commit(seriesID string, items []*dataobj.TsdbItem) {
 	FlushFile(seriesID, items)
 }
 
-func FlushFile(seriesID interface{}, items []*dataobj.TsdbItem) error {
+func FlushFile(seriesID string, items []*dataobj.TsdbItem) error {
 	done := make(chan error, 1)
 	index, err := getIndex(seriesID)
 	if err != nil {
@@ -265,7 +264,7 @@ func FlushFile(seriesID interface{}, items []*dataobj.TsdbItem) error {
 	return <-done
 }
 
-func Fetch(filename string, seriesID interface{}, cf string, start, end int64, step int) ([]*dataobj.RRDData, error) {
+func Fetch(filename string, seriesID string, cf string, start, end int64, step int) ([]*dataobj.RRDData, error) {
 	done := make(chan error, 1)
 	task := &io_task_t{
 		method: IO_TASK_M_FETCH,
@@ -288,25 +287,17 @@ func Fetch(filename string, seriesID interface{}, cf string, start, end int64, s
 	return task.args.(*fetch_t).data, err
 }
 
-func getIndex(seriesID interface{}) (index int, err error) {
+func getIndex(seriesID string) (index int, err error) {
 	batchNum := Config.IOWorkerNum
 
 	if batchNum <= 1 {
 		return 0, nil
 	}
 
-	switch seriesID.(type) {
-	case uint64:
-		return int(seriesID.(uint64) % uint64(batchNum)), nil
-	case string:
-		return int(utils.HashKey(seriesID.(string)) % uint32(batchNum)), nil
-	default:
-		return 0, fmt.Errorf("undefined hashType:%v", seriesID)
-	}
-	return
+	return int(utils.HashKey(seriesID) % uint32(batchNum)), nil
 }
 
-func ReadFile(filename string, seriesID interface{}) ([]byte, error) {
+func ReadFile(filename string, seriesID string) ([]byte, error) {
 	done := make(chan error, 1)
 	task := &io_task_t{
 		method: IO_TASK_M_READ,
