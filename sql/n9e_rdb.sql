@@ -15,7 +15,7 @@ CREATE TABLE `user`
     `email`       varchar(64)  not null default '',
     `im`          varchar(64)  not null default '',
     `portrait`    varchar(2048) not null default '',
-    `intro`       text not null default '',
+    `intro`       varchar(2048) not null default '',
     `is_root`     tinyint(1)   not null,
     `leader_id`   int unsigned not null default 0,
     `leader_name` varchar(32)  not null default '',
