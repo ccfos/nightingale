@@ -3,7 +3,6 @@ package rabbitmq
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/streadway/amqp"
 	"github.com/toolkits/pkg/logger"
@@ -20,42 +19,10 @@ func Init(url string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	go healthCheck(url)
 }
 
-func healthCheck(url string) {
-	ticker := time.NewTicker(40 * time.Millisecond)
-	for {
-		select {
-		case <-ticker.C:
-			err := ping()
-			if err != nil {
-				defer func() {
-					if err := recover(); err != nil {
-						conn = nil
-						logger.Error(err)
-					}
-				}()
-				conn, err = amqp.Dial(url)
-				if err != nil {
-					logger.Error(err)
-				}
-			}
-		case <-exit:
-			return
-		}
-	}
-}
-
-// ping 测试连接是否正常
+// ping 测试rabbitmq连接是否正常
 func ping() (err error) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error(err)
-		}
-	}()
-
 	if conn == nil {
 		return fmt.Errorf("conn is nil")
 	}
@@ -63,6 +30,7 @@ func ping() (err error) {
 	ch, err := conn.Channel()
 	if err != nil {
 		logger.Error(err)
+		close()
 		return err
 	}
 
@@ -89,6 +57,16 @@ func ping() (err error) {
 	}
 
 	return err
+}
+
+func close() {
+	if conn != nil {
+		err := conn.Close()
+		if err != nil {
+			logger.Error(err)
+		}
+		conn = nil
+	}
 }
 
 func Shutdown() {

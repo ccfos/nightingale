@@ -3,40 +3,47 @@ package rabbitmq
 import (
 	"time"
 
+	"github.com/streadway/amqp"
 	"github.com/toolkits/pkg/logger"
 )
 
 // Consume 消费消息
-func Consume(queueName string) {
-	ticker := time.NewTicker(100 * time.Millisecond)
+func Consume(url, queueName string) {
 	for {
 		select {
-		case <-ticker.C:
-			if mqErr := consume(queueName); mqErr != nil {
-				conn = nil
-			}
 		case <-exit:
 			return
+		default:
+			if err := ping(); err != nil {
+				logger.Error("rabbitmq conn failed")
+				conn, err = amqp.Dial(url)
+				if err != nil {
+					conn = nil
+					logger.Error(err)
+				}
+
+				time.Sleep(500 * time.Millisecond)
+				continue
+			}
+
+			sleep := consume(queueName)
+			if sleep {
+				time.Sleep(300 * time.Millisecond)
+			}
 		}
 	}
 }
 
-// consume 如果操作MQ出现问题,连接置为空
-func consume(queueName string) error {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error(err)
-		}
-	}()
-
+// 如果操作MQ出现问题，或者没有load到数据，就sleep一下
+func consume(queueName string) bool {
 	if conn == nil {
-		return nil
+		return true
 	}
 
 	ch, err := conn.Channel()
 	if err != nil {
 		logger.Error(err)
-		return err
+		return true
 	}
 
 	defer ch.Close()
@@ -51,7 +58,7 @@ func consume(queueName string) error {
 	)
 	if err != nil {
 		logger.Error(err)
-		return err
+		return true
 	}
 
 	err = ch.Qos(
@@ -61,7 +68,7 @@ func consume(queueName string) error {
 	)
 	if err != nil {
 		logger.Error(err)
-		return err
+		return true
 	}
 
 	msgs, err := ch.Consume(
@@ -75,16 +82,26 @@ func consume(queueName string) error {
 	)
 	if err != nil {
 		logger.Error(err)
-		return err
+		return true
 	}
 
+	size := 0
 	for d := range msgs {
+		size++
 		logger.Infof("rabbitmq consume message: %s", d.Body)
 
 		if handleMessage(d.Body) {
 			d.Ack(true)
+		} else {
+			// 底层代码认为不应该ack，说明处理的过程出现问题，可能是DB有问题之类的，sleep一下
+			return true
 		}
 	}
 
-	return nil
+	if size == 0 {
+		// MQ里没有消息，就sleep一下，否则上层代码一直在死循环空转，浪费算力
+		return true
+	}
+
+	return false
 }
