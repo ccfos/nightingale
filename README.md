@@ -4,7 +4,7 @@ v3.x终于来了，文档正在编写中，稍安勿躁...
 
 # 升级说明
 
-v3.x的版本和v2.x差别巨大，如果短期没办法迁移，可以继续使用 [v.2.8.0](https://github.com/didi/nightingale/tree/v2.8.0) ，我们之所以决定升级到v3.x，具体原因 [请看这里](https://mp.weixin.qq.com/s/BoGcqPiIQIuiK7cM3PTvrw) ，简而言之，我们是希望夜莺逐渐演化为一个运维平台
+v3.x的版本和v2.x差别巨大，没办法平滑迁移，可以继续使用 [v.2.8.0](https://github.com/didi/nightingale/tree/v2.8.0) ，我们之所以决定升级到v3.x，具体原因 [请看这里](https://mp.weixin.qq.com/s/BoGcqPiIQIuiK7cM3PTvrw) ，简而言之，我们是希望夜莺逐渐演化为一个运维平台。如果v2.x用着也能满足需求，可以继续用v2.x，毕竟，适合自己的才是最好的
 
 # 新版效果
 
