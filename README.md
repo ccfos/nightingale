@@ -64,8 +64,8 @@ grep redis -r .
 
 ```shell script
 cd /home/n9e
-wget http://116.85.64.82/pub.20200928.tar.gz
-tar zxvf pub.20200928.tar.gz
+wget http://116.85.64.82/pub.tar.gz
+tar zxvf pub.tar.gz
 ```
 
 6、覆盖nginx.conf，建议大家还是看一下这个配置，熟悉一下nginx配置，夜莺不同web侧组件就是通过nginx的不同location区分的。覆盖完了配置记得reload一下或者重启nginx
