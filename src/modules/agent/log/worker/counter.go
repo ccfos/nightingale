@@ -167,7 +167,6 @@ func (psc *PointsCounter) GetBytagstring(tagstring string) (*PointCounter, error
 func (psc *PointsCounter) Update(tagstring string, value float64) error {
 	pointCount, err := psc.GetBytagstring(tagstring)
 	if err != nil {
-		psc.Lock()
 		tmp := new(PointCounter)
 		tmp.Count = 0
 		tmp.Sum = 0
@@ -177,14 +176,15 @@ func (psc *PointsCounter) Update(tagstring string, value float64) error {
 		}
 		tmp.Max = math.NaN()
 		tmp.Min = math.NaN()
-		psc.TagstringMap[tagstring] = tmp
-		psc.Unlock()
 
-		pointCount, err = psc.GetBytagstring(tagstring)
-		// 如果还是拿不到，就出错返回吧
-		if err != nil {
-			return fmt.Errorf("when update, cannot get pointCount after add [tagstring:%s]", tagstring)
+		var has bool
+		psc.Lock()
+		pointCount, has = psc.TagstringMap[tagstring]
+		if !has {
+			psc.TagstringMap[tagstring] = tmp
+			pointCount = tmp
 		}
+		psc.Unlock()
 	}
 
 	pointCount.Lock()
