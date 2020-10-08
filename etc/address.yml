@@ -29,8 +29,6 @@ transfer:
 tsdb:
   http: 0.0.0.0:8010
   rpc: 0.0.0.0:8011
-  addresses:
-    - 127.0.0.1
 
 index:
   http: 0.0.0.0:8012

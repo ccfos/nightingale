@@ -1,0 +1,21 @@
+[Unit]
+Description=n9e judge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# modify when deploy in prod env
+User=root
+Group=root
+
+Type=simple
+Environment="GIN_MODE=release"
+ExecStart=/home/n9e/n9e-judge
+WorkingDirectory=/home/n9e
+
+Restart=always
+RestartSec=1
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target
