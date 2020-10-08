@@ -10,6 +10,8 @@ require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/dgryski/go-tsz v0.0.0-20180227144327-03b7d791f4fe
 	github.com/eapache/go-resiliency v1.2.0 // indirect
+	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
+	github.com/eapache/queue v1.1.0 // indirect
 	github.com/garyburd/redigo v1.6.2
 	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.6.3
@@ -17,6 +19,7 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/go-cmp v0.5.1 // indirect
 	github.com/google/uuid v1.1.2
+	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb v1.8.0
@@ -33,7 +36,7 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.6.1
-	github.com/toolkits/pkg v1.1.2
+	github.com/toolkits/pkg v1.1.3
 	github.com/ugorji/go/codec v1.1.7
 	github.com/unrolled/render v1.0.3
 	go.uber.org/automaxprocs v1.3.0 // indirect

@@ -22,8 +22,8 @@ github.com/eapache/queue
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/garyburd/redigo v1.6.2
-github.com/garyburd/redigo/internal
 github.com/garyburd/redigo/redis
+github.com/garyburd/redigo/internal
 # github.com/gin-contrib/pprof v1.3.0
 github.com/gin-contrib/pprof
 # github.com/gin-contrib/sse v0.1.0
@@ -61,13 +61,13 @@ github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
 # github.com/hashicorp/hcl v1.0.0
 github.com/hashicorp/hcl
+github.com/hashicorp/hcl/hcl/printer
 github.com/hashicorp/hcl/hcl/ast
 github.com/hashicorp/hcl/hcl/parser
-github.com/hashicorp/hcl/hcl/printer
-github.com/hashicorp/hcl/hcl/scanner
-github.com/hashicorp/hcl/hcl/strconv
 github.com/hashicorp/hcl/hcl/token
 github.com/hashicorp/hcl/json/parser
+github.com/hashicorp/hcl/hcl/scanner
+github.com/hashicorp/hcl/hcl/strconv
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
 # github.com/hpcloud/tail v1.0.0
@@ -111,11 +111,11 @@ github.com/rcrowley/go-metrics
 # github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62
 github.com/robfig/go-cache
 # github.com/shirou/gopsutil v2.20.7+incompatible
+github.com/shirou/gopsutil/process
 github.com/shirou/gopsutil/cpu
 github.com/shirou/gopsutil/internal/common
 github.com/shirou/gopsutil/mem
 github.com/shirou/gopsutil/net
-github.com/shirou/gopsutil/process
 # github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72
 github.com/spaolacci/murmur3
 # github.com/spf13/afero v1.1.2
@@ -135,56 +135,56 @@ github.com/streadway/amqp
 github.com/stretchr/testify/assert
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# github.com/toolkits/pkg v1.1.2
-github.com/toolkits/pkg/cache
-github.com/toolkits/pkg/concurrent/semaphore
-github.com/toolkits/pkg/consistent
-github.com/toolkits/pkg/container/list
-github.com/toolkits/pkg/container/set
-github.com/toolkits/pkg/errors
+# github.com/toolkits/pkg v1.1.3
 github.com/toolkits/pkg/file
-github.com/toolkits/pkg/logger
-github.com/toolkits/pkg/net/gobrpc
-github.com/toolkits/pkg/net/httplib
-github.com/toolkits/pkg/nux
-github.com/toolkits/pkg/pool
 github.com/toolkits/pkg/runner
-github.com/toolkits/pkg/slice
 github.com/toolkits/pkg/str
 github.com/toolkits/pkg/sys
+github.com/toolkits/pkg/logger
+github.com/toolkits/pkg/errors
+github.com/toolkits/pkg/net/httplib
+github.com/toolkits/pkg/cache
+github.com/toolkits/pkg/slice
+github.com/toolkits/pkg/net/gobrpc
+github.com/toolkits/pkg/nux
+github.com/toolkits/pkg/concurrent/semaphore
+github.com/toolkits/pkg/container/list
+github.com/toolkits/pkg/consistent
+github.com/toolkits/pkg/container/set
+github.com/toolkits/pkg/pool
 # github.com/ugorji/go/codec v1.1.7
 github.com/ugorji/go/codec
 # github.com/unrolled/render v1.0.3
 github.com/unrolled/render
 # go.uber.org/automaxprocs v1.3.0
-go.uber.org/automaxprocs/internal/cgroups
-go.uber.org/automaxprocs/internal/runtime
 go.uber.org/automaxprocs/maxprocs
+go.uber.org/automaxprocs/internal/runtime
+go.uber.org/automaxprocs/internal/cgroups
 # golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
 golang.org/x/crypto/ed25519
-golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/pbkdf2
+golang.org/x/crypto/ed25519/internal/edwards25519
 # golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc
-golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
+golang.org/x/net/context
 # golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
 # golang.org/x/sys v0.0.0-20200812155832-6a926be9bd1d
-golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
+golang.org/x/sys/internal/unsafeheader
 # golang.org/x/text v0.3.2
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
 # google.golang.org/appengine v1.6.5
+google.golang.org/appengine/urlfetch
 google.golang.org/appengine/internal
+google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
-google.golang.org/appengine/internal/urlfetch
-google.golang.org/appengine/urlfetch
 # gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc
 gopkg.in/alexcesaro/quotedprintable.v3
 # gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d
