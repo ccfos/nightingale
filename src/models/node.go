@@ -576,6 +576,10 @@ func GetLeafNidsForMon(nid int64, exclNid []int64) ([]int64, error) {
 		return nids, err
 	}
 
+	if node == nil {
+		return []int64{}, nil
+	}
+
 	nodeIds, err := node.LeafIds()
 	if err != nil {
 		return nids, err
