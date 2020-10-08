@@ -1,4 +1,4 @@
-v3.x终于来了，文档正在编写中，稍安勿躁...
+国内用户可以访问gitee镜像仓库： https://gitee.com/mirrors/Nightingale 同步非实时，每天一次，不过速度快
 
 ---
 
