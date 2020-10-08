@@ -10,19 +10,19 @@ v3.x的版本和v2.x差别巨大，没办法平滑迁移，可以继续使用 [v
 
 用户资源中心：
 
-![](https://s3-gz01.didistatic.com/n9e-pub/image/snapshot/rdb.png)
+![用户资源中心截图](https://s3-gz01.didistatic.com/n9e-pub/image/snapshot/rdb.png)
 
 资产管理中心：
 
-![](https://s3-gz01.didistatic.com/n9e-pub/image/snapshot/ams.png)
+![资产管理中心截图](https://s3-gz01.didistatic.com/n9e-pub/image/snapshot/ams.png)
 
 任务执行中心：
 
-![](https://s3-gz01.didistatic.com/n9e-pub/image/snapshot/job.png)
+![任务执行中心截图](https://s3-gz01.didistatic.com/n9e-pub/image/snapshot/job.png)
 
 监控告警中心：
 
-![](https://s3-gz01.didistatic.com/n9e-pub/image/snapshot/mon.png)
+![监控告警中心截图](https://s3-gz01.didistatic.com/n9e-pub/image/snapshot/mon.png)
 
 
 # 安装步骤
@@ -114,6 +114,8 @@ cd /home/n9e
 setenforce 0
 ```
 
+上面安装步骤如果走完了仍然没有搭建起来，你可能需要 [使用Docker安装](dockerfiles/README.md) 或者 [查看视频教程](https://mp.weixin.qq.com/s/OAEQ-ec-QM74U0SGoVCXkg)
+
 # 子系统简介
 
 夜莺拆成了四个子系统，分别是：用户资源中心（RDB）、资产管理系统（AMS）、任务执行中心（JOB）、监控告警系统（MON）。下面分别介绍一下这几个子系统的设计初衷
@@ -140,4 +142,9 @@ setenforce 0
 
 这块核心逻辑和v2版本差别不大，监控指标分成了设备相关指标和设备无关指标，因为有些自定义监控数据的场景，endpoint不好定义，或者endpoint经常变化，这种就可以使用设备无关指标的方式来处理。监控大盘做了优化，引入了更多类型的图表，但夜莺毕竟是个metrics监控系统，处理的是数值型时序数据，所以，最有用的图表其实就是折线图，其他类型图表，看看就好，场景较少。夜莺也可以对接Grafana，有个专门的[DataSource插件](https://github.com/n9e/grafana-n9e-datasource)，Grafana会更炫酷一些，只是，在数据量大的时候性能较差。
 
+# 系统架构
+
+![n9e系统架构图](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-v3-arch.png)
+
+监控部分的架构和之前没有差别，collector揉进了一些命令执行的能力，所以改了个名字叫agent。引入了三个新组件：rdb、ams、job，rdb是用户资源中心，ams是资产管理系统，job是任务执行中心。agent除了上报监控数据给transfer，还会上报本机信息给ams，注册本机信息到资产管理系统，另外就是与job模块交互，拉取要执行的任务，上报任务执行结果。
 
