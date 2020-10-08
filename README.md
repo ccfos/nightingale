@@ -38,8 +38,8 @@ yum install -y mariadb* redis nginx
 ```shell script
 mkdir -p /home/n9e
 cd /home/n9e
-wget http://116.85.64.82/n9e-3.0.0.tar.gz
-tar zxvf n9e-3.0.0.tar.gz
+wget http://116.85.64.82/n9e.tar.gz
+tar zxvf n9e.tar.gz
 ```
 
 3、初始化数据库，这里假设使用root账号，密码1234，如果不是这个账号密码，注意修改/home/n9e/etc/mysql.yml
