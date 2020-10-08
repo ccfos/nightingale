@@ -150,7 +150,7 @@ setenforce 0
 
 # 文档手册
 
-v3版本不准备单独建站了，文档全部使用github wiki： https://github.com/didi/nightingale/wiki。欢迎大家一起完善。
+v3版本不准备单独建站了，文档全部使用github wiki： https://github.com/didi/nightingale/wiki 欢迎大家一起完善。
 
 # 交流互助
 
