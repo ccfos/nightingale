@@ -577,6 +577,8 @@ func GetLeafNidsForMon(nid int64, exclNid []int64) ([]int64, error) {
 	}
 
 	if node == nil {
+		// 节点已经被删了，相关的告警策略也删除
+		StraDelByNid(nid)
 		return []int64{}, nil
 	}
 

@@ -230,6 +230,11 @@ func StraDel(id int64) error {
 	return session.Commit()
 }
 
+func StraDelByNid(nid int64) error {
+	_, err := DB["mon"].Where("nid=?", nid).Delete(new(Stra))
+	return err
+}
+
 func StrasList(name string, priority int, nid int64) ([]*Stra, error) {
 	session := DB["mon"].NewSession()
 	defer session.Close()
