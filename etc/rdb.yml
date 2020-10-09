@@ -73,7 +73,12 @@ sender:
     worker: 10
     api: http://127.0.0.1:2008/voice
   im:
-    # two choice: shell|api
+    # three choice: shell|api|wechat
     way: shell
     worker: 10
     api: http://127.0.0.1:2008/im
+
+wechat:
+  corp_id: "xxxxxxxxxxxxx"
+  agent_id: 1000000
+  secret: "xxxxxxxxxxxxxxxxx"
