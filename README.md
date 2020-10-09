@@ -150,7 +150,9 @@ setenforce 0
 
 # 文档手册
 
-v3版本不准备单独建站了，文档全部使用github wiki： https://github.com/didi/nightingale/wiki 欢迎大家一起完善。
+v3版本不准备单独建站了，文档全部使用github wiki： https://github.com/didi/nightingale/wiki 欢迎大家一起完善。另外当前正在录制一套夜莺的教学视频，后续会放到微信公众号，欢迎关注：
+
+![微信公众号ops-soldier](https://s3-gz01.didistatic.com/n9e-pub/image/ops-soldier.png)
 
 # 交流互助
 
