@@ -182,6 +182,7 @@ pack()
 	mv etc/*.local.yml $clock
 	tar zcvf n9e-${version}.tar.gz control sql etc n9e-*
 	mv $clock/* etc/
+	rm -rf $clock
 }
 
 case "$1" in
