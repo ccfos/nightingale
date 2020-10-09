@@ -49,7 +49,7 @@ func sendIm(message *dataobj.Message) {
 	case "shell":
 		sendImByShell(message)
 	case "wechat":
-		sendImByWechat(message)
+		sendImByWeChat(message)
 	default:
 		logger.Errorf("not support %s to send im, im: %+v", config.Config.Sender["im"].Way, message)
 	}
@@ -72,7 +72,7 @@ func sendImByShell(message *dataobj.Message) {
 	logger.Infof("SendImByShell, im:%+v, output:%s, error: %v, isTimeout: %v", message, output, err, isTimeout)
 }
 
-func sendImByWechat(message *dataobj.Message) {
+func sendImByWeChat(message *dataobj.Message) {
 	corpID := config.Config.WeChat.CorpID
 	agentID := config.Config.WeChat.AgentID
 	secret := config.Config.WeChat.Secret
