@@ -177,9 +177,11 @@ reload()
 
 pack()
 {
-	mkdir -p tarball
-	mv *.tar.gz tarball
-	tar zcvf n9e-${version}.tar.gz control sql etc n9e-* --exclude etc/*.local.yml
+	clock=$(date +%s)
+	mkdir $clock
+	mv etc/*.local.yml $clock
+	tar zcvf n9e-${version}.tar.gz control sql etc n9e-*
+	mv $clock/* etc/
 }
 
 case "$1" in
