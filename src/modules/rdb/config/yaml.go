@@ -17,6 +17,13 @@ type ConfigT struct {
 	Redis    redisSection             `yaml:"redis"`
 	Sender   map[string]senderSection `yaml:"sender"`
 	RabbitMQ rabbitmqSection          `yaml:"rabbitmq"`
+	WeChat   wechatSection            `yaml:"wechat"`
+}
+
+type wechatSection struct {
+	CorpID  string `yaml:"corp_id"`
+	AgentID int    `yaml:"agent_id"`
+	Secret  string `yaml:"secret"`
 }
 
 type ssoSection struct {

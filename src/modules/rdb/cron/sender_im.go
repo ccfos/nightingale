@@ -12,6 +12,7 @@ import (
 
 	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/rdb/config"
+	"github.com/didi/nightingale/src/modules/rdb/corp"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
 )
 
@@ -47,6 +48,8 @@ func sendIm(message *dataobj.Message) {
 		sendImByAPI(message)
 	case "shell":
 		sendImByShell(message)
+	case "wechat":
+		sendImByWeChat(message)
 	default:
 		logger.Errorf("not support %s to send im, im: %+v", config.Config.Sender["im"].Way, message)
 	}
@@ -67,4 +70,32 @@ func sendImByShell(message *dataobj.Message) {
 
 	output, err, isTimeout := sys.CmdRunT(time.Second*10, shell, strings.Join(message.Tos, ","), message.Content)
 	logger.Infof("SendImByShell, im:%+v, output:%s, error: %v, isTimeout: %v", message, output, err, isTimeout)
+}
+
+func sendImByWeChat(message *dataobj.Message) {
+	corpID := config.Config.WeChat.CorpID
+	agentID := config.Config.WeChat.AgentID
+	secret := config.Config.WeChat.Secret
+
+	cnt := len(message.Tos)
+	if cnt == 0 {
+		logger.Warningf("im send wechat fail, empty tos, message: %+v", message)
+		return
+	}
+
+	client := corp.New(corpID, agentID, secret)
+	var err error
+	for i := 0; i < cnt; i++ {
+		err = client.Send(corp.Message{
+			ToUser:  message.Tos[i],
+			MsgType: "text",
+			Text:    corp.Content{Content: message.Content},
+		})
+
+		if err != nil {
+			logger.Warningf("im wechat send to %s fail: %v", message.Tos[i], err)
+		} else {
+			logger.Infof("im wechat send to %s succ", message.Tos[i])
+		}
+	}
 }
