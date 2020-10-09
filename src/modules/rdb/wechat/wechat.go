@@ -1,4 +1,4 @@
-package corp
+package wechat
 
 import (
 	"bytes"
@@ -56,11 +56,11 @@ type Message struct {
 }
 
 // New 实例化微信企业号应用
-func New(corpID string, agentID int, AgentSecret string) *Client {
+func New(corpID string, agentID int, agentSecret string) *Client {
 	c := new(Client)
 	c.CorpID = corpID
 	c.AgentID = agentID
-	c.AgentSecret = AgentSecret
+	c.AgentSecret = agentSecret
 	return c
 }
 
