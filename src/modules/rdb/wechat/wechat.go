@@ -179,3 +179,29 @@ func encodeJSON(v interface{}) ([]byte, error) {
 	}
 	return buf.Bytes(), nil
 }
+
+// RobotSend robot发送信息
+func RobotSend(msg Message) error {
+	url := "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=" + msg.ToUser
+
+	resultByte, err := jsonPost(url, msg)
+	if err != nil {
+		return fmt.Errorf("invoke send api fail: %v", err)
+	}
+
+	result := Result{}
+	err = json.Unmarshal(resultByte, &result)
+	if err != nil {
+		return fmt.Errorf("parse send api response fail: %v", err)
+	}
+
+	if result.ErrCode != 0 {
+		err = fmt.Errorf("invoke send api return ErrCode = %d", result.ErrCode)
+	}
+
+	if result.InvalidUser != "" || result.InvalidParty != "" || result.InvalidTag != "" {
+		err = fmt.Errorf("invoke send api partial fail, invalid user: %s, invalid party: %s, invalid tag: %s", result.InvalidUser, result.InvalidParty, result.InvalidTag)
+	}
+
+	return err
+}

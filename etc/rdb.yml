@@ -73,7 +73,7 @@ sender:
     worker: 10
     api: http://127.0.0.1:2008/voice
   im:
-    # three choice: shell|api|wechat
+    # five choice: shell|api|wechat|wechat_robot|dingtalk_robot
     way: shell
     worker: 10
     api: http://127.0.0.1:2008/im
