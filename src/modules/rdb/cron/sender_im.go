@@ -12,8 +12,8 @@ import (
 
 	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/rdb/config"
-	"github.com/didi/nightingale/src/modules/rdb/corp"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
+	"github.com/didi/nightingale/src/modules/rdb/wechat"
 )
 
 func ConsumeIm() {
@@ -83,13 +83,17 @@ func sendImByWeChat(message *dataobj.Message) {
 		return
 	}
 
-	client := corp.New(corpID, agentID, secret)
+	client := wechat.New(corpID, agentID, secret)
 	var err error
 	for i := 0; i < cnt; i++ {
-		err = client.Send(corp.Message{
-			ToUser:  message.Tos[i],
+		toUser := strings.TrimSpace(message.Tos[i])
+		if toUser == "" {
+			continue
+		}
+		err = client.Send(wechat.Message{
+			ToUser:  toUser,
 			MsgType: "text",
-			Text:    corp.Content{Content: message.Content},
+			Text:    wechat.Content{Content: message.Content},
 		})
 
 		if err != nil {
