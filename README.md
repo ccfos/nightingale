@@ -68,6 +68,8 @@ wget http://116.85.64.82/pub.tar.gz
 tar zxvf pub.tar.gz
 ```
 
+前端的源码单独拆了一个repo，地址是： https://github.com/n9e/fe 没有和nightingale放一块
+
 6、覆盖nginx.conf，建议大家还是看一下这个配置，熟悉一下nginx配置，夜莺不同web侧组件就是通过nginx的不同location区分的。覆盖完了配置记得reload一下或者重启nginx
 
 ```shell script
