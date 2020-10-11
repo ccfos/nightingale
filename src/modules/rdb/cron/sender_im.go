@@ -116,23 +116,30 @@ func sendImByWeChatRobot(message *dataobj.Message) {
 		return
 	}
 
+	set := make(map[string]struct{}, cnt)
 	for i := 0; i < cnt; i++ {
 		toUser := strings.TrimSpace(message.Tos[i])
 		if toUser == "" {
 			continue
 		}
 
+		if _, ok := set[toUser]; !ok {
+			set[toUser] = struct{}{}
+		}
+	}
+
+	for tokenUser := range set {
 		mess := wechat.Message{
-			ToUser:  toUser,
+			ToUser:  tokenUser,
 			MsgType: "text",
 			Text:    wechat.Content{Content: message.Content},
 		}
 
 		err := wechat.RobotSend(mess)
 		if err != nil {
-			logger.Warningf("im wechat_robot send to %s fail: %v", message.Tos[i], err)
+			logger.Warningf("im wechat_robot send to %s fail: %v", tokenUser, err)
 		} else {
-			logger.Infof("im wechat_robot send to %s succ", message.Tos[i])
+			logger.Infof("im wechat_robot send to %s succ", tokenUser)
 		}
 	}
 }
@@ -144,26 +151,24 @@ func sendImByDingTalkRobot(message *dataobj.Message) {
 		return
 	}
 
-	nodupDingCluster := make(map[string]bool, cnt)
+	set := make(map[string]struct{}, cnt)
 	for i := 0; i < cnt; i++ {
 		toUser := strings.TrimSpace(message.Tos[i])
 		if toUser == "" {
 			continue
 		}
 
-		if _, ok := nodupDingCluster[toUser]; !ok {
-			nodupDingCluster[toUser] = true
+		if _, ok := set[toUser]; !ok {
+			set[toUser] = struct{}{}
 		}
 	}
 
-	for tokenUser, ok := range nodupDingCluster {
-		if ok {
-			err := dingtalk.RobotSend(tokenUser, message.Content)
-			if err != nil {
-				logger.Warningf("im dingtalk_robot send to %s fail: %v", tokenUser, err)
-			} else {
-				logger.Infof("im dingtalk_robot send to %s succ", tokenUser)
-			}
+	for tokenUser := range set {
+		err := dingtalk.RobotSend(tokenUser, message.Content)
+		if err != nil {
+			logger.Warningf("im dingtalk_robot send to %s fail: %v", tokenUser, err)
+		} else {
+			logger.Infof("im dingtalk_robot send to %s succ", tokenUser)
 		}
 	}
 }
