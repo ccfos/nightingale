@@ -12,6 +12,7 @@ import (
 
 	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/rdb/config"
+	"github.com/didi/nightingale/src/modules/rdb/dingtalk"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
 	"github.com/didi/nightingale/src/modules/rdb/wechat"
 )
@@ -50,6 +51,10 @@ func sendIm(message *dataobj.Message) {
 		sendImByShell(message)
 	case "wechat":
 		sendImByWeChat(message)
+	case "wechat_robot":
+		sendImByWeChatRobot(message)
+	case "dingtalk_robot":
+		sendImByDingTalkRobot(message)
 	default:
 		logger.Errorf("not support %s to send im, im: %+v", config.Config.Sender["im"].Way, message)
 	}
@@ -100,6 +105,65 @@ func sendImByWeChat(message *dataobj.Message) {
 			logger.Warningf("im wechat send to %s fail: %v", message.Tos[i], err)
 		} else {
 			logger.Infof("im wechat send to %s succ", message.Tos[i])
+		}
+	}
+}
+
+func sendImByWeChatRobot(message *dataobj.Message) {
+	cnt := len(message.Tos)
+	if cnt == 0 {
+		logger.Warningf("im send wechat_robot fail, empty tos, message: %+v", message)
+		return
+	}
+
+	for i := 0; i < cnt; i++ {
+		toUser := strings.TrimSpace(message.Tos[i])
+		if toUser == "" {
+			continue
+		}
+
+		mess := wechat.Message{
+			ToUser:  toUser,
+			MsgType: "text",
+			Text:    wechat.Content{Content: message.Content},
+		}
+
+		err := wechat.RobotSend(mess)
+		if err != nil {
+			logger.Warningf("im wechat_robot send to %s fail: %v", message.Tos[i], err)
+		} else {
+			logger.Infof("im wechat_robot send to %s succ", message.Tos[i])
+		}
+	}
+}
+
+func sendImByDingTalkRobot(message *dataobj.Message) {
+	cnt := len(message.Tos)
+	if cnt == 0 {
+		logger.Warningf("im send dingtalk_robot fail, empty tos, message: %+v", message)
+		return
+	}
+
+	nodupDingCluster := make(map[string]bool, cnt)
+	for i := 0; i < cnt; i++ {
+		toUser := strings.TrimSpace(message.Tos[i])
+		if toUser == "" {
+			continue
+		}
+
+		if _, ok := nodupDingCluster[toUser]; !ok {
+			nodupDingCluster[toUser] = true
+		}
+	}
+
+	for tokenUser, ok := range nodupDingCluster {
+		if ok {
+			err := dingtalk.RobotSend(tokenUser, message.Content)
+			if err != nil {
+				logger.Warningf("im dingtalk_robot send to %s fail: %v", tokenUser, err)
+			} else {
+				logger.Infof("im dingtalk_robot send to %s succ", tokenUser)
+			}
 		}
 	}
 }
