@@ -30,8 +30,7 @@ var (
 	help *bool
 	conf *string
 
-	gitHash   = "No GitHash Provided"
-	buildTime = "No BuildTime Provided"
+	version = "No Version Provided"
 )
 
 func init() {
@@ -41,8 +40,7 @@ func init() {
 	flag.Parse()
 
 	if *vers {
-		fmt.Println("Git Commit Hash:", gitHash)
-		fmt.Println("UTC Build Time:", buildTime)
+		fmt.Println("Version:", version)
 		os.Exit(0)
 	}
 

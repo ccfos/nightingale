@@ -59,8 +59,6 @@ func consume(event *models.Event, isHigh bool) {
 
 	fillUserIDs(event)
 
-	go notify.DoNotify(event.RealUpgrade, event)
-
 	// 没有配置报警接收人，修改event状态为无接收人
 	if len(event.RecvUserIDs) == 0 {
 		SetEventStatus(event, models.STATUS_NONEUSER)
@@ -73,6 +71,7 @@ func consume(event *models.Event, isHigh bool) {
 		return
 	}
 
+	go notify.DoNotify(event.RealUpgrade, event)
 	SetEventStatus(event, models.STATUS_SEND)
 }
 
