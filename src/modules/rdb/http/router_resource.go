@@ -245,13 +245,19 @@ func resourceBindNode(c *gin.Context) {
 	var err error
 	if f.Field == "uuid" {
 		ids, err = models.ResourceIdsByUUIDs(f.Items)
+		dangerous(err)
+		if len(ids) == 0 {
+			bomb("resources not found by uuid")
+		}
 	} else if f.Field == "ident" {
 		ids, err = models.ResourceIdsByIdents(f.Items)
+		dangerous(err)
+		if len(ids) == 0 {
+			bomb("resources not found by ident")
+		}
 	} else {
 		bomb("field[%s] not supported", f.Field)
 	}
-
-	dangerous(err)
 
 	loginUser(c).CheckPermByNode(node, "rdb_resource_bind")
 
