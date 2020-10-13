@@ -151,6 +151,10 @@ func nodePut(c *gin.Context) {
 		bomb("cannot modify tenant's node-category")
 	}
 
+	if node.Pid > 0 && f.Cate == "tenant" {
+		bomb("cannot modify node-category to tenant")
+	}
+
 	err := node.Modify(f.Name, f.Cate, f.Note, f.AdminIds)
 	renderData(c, node, err)
 }
