@@ -15,6 +15,12 @@ sso:
   clientId: ""
   clientSecret: ""
   apiKey: ""
+  attributes:
+    dispname: "display_name"
+    email: "email"
+    phone: "phone"
+    im: ""
+  coverAttributes: false
 
 tokens:
   - rdb-builtin-token
