@@ -205,6 +205,10 @@ func (u *User) Save() error {
 		return fmt.Errorf("user.id[%d] not equal 0", u.Id)
 	}
 
+	if u.UUID == "" {
+		u.UUID = GenUUIDForUser(u.Username)
+	}
+
 	cnt, err := DB["rdb"].Where("username=?", u.Username).Count(new(User))
 	if err != nil {
 		return err
