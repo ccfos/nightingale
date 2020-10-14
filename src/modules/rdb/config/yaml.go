@@ -27,12 +27,19 @@ type wechatSection struct {
 }
 
 type ssoSection struct {
-	Enable       bool   `yaml:"enable"`
-	RedirectURL  string `yaml:"redirectURL"`
-	SsoAddr      string `yaml:"ssoAddr"`
-	ClientId     string `yaml:"clientId"`
-	ClientSecret string `yaml:"clientSecret"`
-	ApiKey       string `yaml:"apiKey"`
+	Enable          bool   `yaml:"enable"`
+	RedirectURL     string `yaml:"redirectURL"`
+	SsoAddr         string `yaml:"ssoAddr"`
+	ClientId        string `yaml:"clientId"`
+	ClientSecret    string `yaml:"clientSecret"`
+	ApiKey          string `yaml:"apiKey"`
+	CoverAttributes bool   `yaml:"coverAttributes"`
+	Attributes      struct {
+		Dispname string `yaml:"dispname"`
+		Phone    string `yaml:"phone"`
+		Email    string `yaml:"email"`
+		Im       string `yaml:"im"`
+	} `yaml:"attributes"`
 }
 
 type httpSection struct {

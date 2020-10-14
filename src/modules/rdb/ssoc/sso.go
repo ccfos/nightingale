@@ -20,12 +20,20 @@ import (
 )
 
 type ssoClient struct {
-	verifier     *oidc.IDTokenVerifier
-	config       oauth2.Config
-	apiKey       string
-	cache        *cache.LRUExpireCache
-	ssoAddr      string
-	callbackAddr string
+	verifier        *oidc.IDTokenVerifier
+	config          oauth2.Config
+	apiKey          string
+	cache           *cache.LRUExpireCache
+	ssoAddr         string
+	callbackAddr    string
+	coverAttributes bool
+	attributes      struct {
+		username string
+		dispname string
+		phone    string
+		email    string
+		im       string
+	}
 }
 
 var (
@@ -42,6 +50,12 @@ func InitSSO() {
 	cli.cache = cache.NewLRUExpireCache(1000)
 	cli.ssoAddr = cf.SsoAddr
 	cli.callbackAddr = cf.RedirectURL
+	cli.coverAttributes = cf.CoverAttributes
+	cli.attributes.username = "sub"
+	cli.attributes.dispname = cf.Attributes.Dispname
+	cli.attributes.phone = cf.Attributes.Phone
+	cli.attributes.email = cf.Attributes.Email
+	cli.attributes.im = cf.Attributes.Im
 	provider, err := oidc.NewProvider(context.Background(), cf.SsoAddr)
 	if err != nil {
 		log.Fatal(err)
@@ -70,16 +84,10 @@ func Authorize(redirect string) string {
 
 // LogoutLocation return logout location
 func LogoutLocation(redirect string) string {
-	redirect = fmt.Sprintf("%s?redriect=%s", cli.callbackAddr,
+	redirect = fmt.Sprintf("%s?redirect=%s", cli.callbackAddr,
 		url.QueryEscape(redirect))
-	return fmt.Sprintf("%s/account/logout?redirect=%s", cli.ssoAddr,
+	return fmt.Sprintf("%s/api/v1/account/logout?redirect=%s", cli.ssoAddr,
 		url.QueryEscape(redirect))
-}
-
-type tokenClaims struct {
-	Username    string `json:"sub"`
-	Email       string `json:"email"`
-	DisplayName string `json:"display_name"`
 }
 
 // Callback 用 code 兑换 accessToken 以及 用户信息,
@@ -93,35 +101,67 @@ func Callback(code, state string) (string, *models.User, error) {
 	redirect := s.(string)
 	log.Printf("callback, get state %s redirect %s", state, redirect)
 
+	u, err := exchangeUser(code)
+	if err != nil {
+		return "", nil, err
+	}
+	log.Printf("exchange user %v", u)
+
+	user, err := models.UserGet("username=?", u.Username)
+	if err != nil {
+		return "", nil, err
+	}
+
+	if user == nil {
+		user = u
+		err = user.Save()
+	} else if cli.coverAttributes {
+		user.Email = u.Email
+		user.Dispname = u.Dispname
+		user.Phone = u.Phone
+		user.Im = u.Im
+		err = user.Update("email", "dispname", "phone", "im")
+	}
+
+	return redirect, user, err
+}
+
+func exchangeUser(code string) (*models.User, error) {
 	ctx := context.Background()
 	oauth2Token, err := cli.config.Exchange(ctx, code)
 	if err != nil {
-		return "", nil, fmt.Errorf("Failed to exchange token: %s", err)
+		return nil, fmt.Errorf("Failed to exchange token: %s", err)
 	}
 
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
-		return "", nil, fmt.Errorf("No id_token field in oauth2 token.")
+		return nil, fmt.Errorf("No id_token field in oauth2 token.")
 	}
 	idToken, err := cli.verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		return "", nil, fmt.Errorf("Failed to verify ID Token: %s", err)
+		return nil, fmt.Errorf("Failed to verify ID Token: %s", err)
 	}
 
-	data := &tokenClaims{}
-	if err := idToken.Claims(data); err != nil {
-		return "", nil, err
+	data := map[string]interface{}{}
+	if err := idToken.Claims(&data); err != nil {
+		return nil, err
 	}
 
-	user, err := models.UserGet("username=?", data.Username)
-	if err != nil {
-		return "", nil, err
-	}
-	if user == nil {
-		return "", nil, fmt.Errorf("user %s is not found", data.Username)
+	v := func(k string) string {
+		if in := data[k]; in == nil {
+			return ""
+		} else {
+			return in.(string)
+		}
 	}
 
-	return redirect, user, nil
+	return &models.User{
+		Username: v(cli.attributes.username),
+		Dispname: v(cli.attributes.dispname),
+		Phone:    v(cli.attributes.phone),
+		Email:    v(cli.attributes.email),
+		Im:       v(cli.attributes.im),
+	}, nil
 }
 
 func CreateClient(w http.ResponseWriter, body io.ReadCloser) error {
@@ -141,12 +181,12 @@ func GetClient(w http.ResponseWriter, clientId string) error {
 
 func UpdateClient(w http.ResponseWriter, clientId string, body io.ReadCloser) error {
 	u := mkUrl("/api/v1/clients/"+clientId, nil)
-	return req("GET", u, body, w)
+	return req("PUT", u, body, w)
 }
 
 func DeleteClient(w http.ResponseWriter, clientId string) error {
 	u := mkUrl("/api/v1/clients/"+clientId, nil)
-	return req("GET", u, nil, w)
+	return req("DELETE", u, nil, w)
 }
 
 func mkUrl(api string, query url.Values) string {
