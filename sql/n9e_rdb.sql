@@ -173,7 +173,7 @@ CREATE TABLE `node_trash`
     `creator`      varchar(64)  not null,
     `last_updated` timestamp    not null default CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY (`path`),
+    KEY (`path`),
     KEY (`cate`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
