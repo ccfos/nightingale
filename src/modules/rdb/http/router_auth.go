@@ -1,8 +1,6 @@
 package http
 
 import (
-	"net/url"
-
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/str"
 
@@ -107,15 +105,14 @@ func authAuthorize(c *gin.Context) {
 	if config.Config.SSO.Enable {
 		c.Redirect(302, ssoc.Authorize(redirect))
 	} else {
-		c.Redirect(302, "/login?redirect="+url.QueryEscape(redirect))
+		c.String(200, "sso does not enable")
 	}
 
 }
 
 func authCallback(c *gin.Context) {
-	code := queryStr(c, "code")
-	state := queryStr(c, "state")
-
+	code := queryStr(c, "code", "")
+	state := queryStr(c, "state", "")
 	if code == "" {
 		if redirect := queryStr(c, "redirect"); redirect != "" {
 			c.Redirect(302, redirect)
@@ -128,4 +125,12 @@ func authCallback(c *gin.Context) {
 
 	writeCookieUser(c, user.UUID)
 	c.Redirect(302, redirect)
+}
+
+func authSettings(c *gin.Context) {
+	renderData(c, struct {
+		Sso bool `json:"sso"`
+	}{
+		Sso: config.Config.SSO.Enable,
+	}, nil)
 }
