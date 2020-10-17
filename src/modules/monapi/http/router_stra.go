@@ -13,7 +13,7 @@ func straPost(c *gin.Context) {
 	stra := new(models.Stra)
 	errors.Dangerous(c.ShouldBind(stra))
 
-	can, err := models.UsernameCandoNodeOp(username, "mon_stra_write", stra.Nid)
+	can, err := models.UsernameCandoNodeOp(username, "mon_stra_create", stra.Nid)
 	errors.Dangerous(err)
 	if !can {
 		errors.Bomb("permission deny")
@@ -45,7 +45,7 @@ func straPut(c *gin.Context) {
 	stra := new(models.Stra)
 	errors.Dangerous(c.ShouldBind(stra))
 
-	can, err := models.UsernameCandoNodeOp(username, "mon_stra_write", stra.Nid)
+	can, err := models.UsernameCandoNodeOp(username, "mon_stra_modify", stra.Nid)
 	errors.Dangerous(err)
 	if !can {
 		errors.Bomb("permission deny")
@@ -80,7 +80,7 @@ func strasDel(c *gin.Context) {
 	for _, id := range rev.Ids {
 		stra, err := models.StraGet("id", id)
 		errors.Dangerous(err)
-		can, err := models.UsernameCandoNodeOp(username, "mon_stra_write", stra.Nid)
+		can, err := models.UsernameCandoNodeOp(username, "mon_stra_delete", stra.Nid)
 		errors.Dangerous(err)
 		if !can {
 			errors.Bomb("permission deny")
@@ -136,14 +136,3 @@ func effectiveStrasGet(c *gin.Context) {
 	}
 	renderData(c, stras, nil)
 }
-
-/*
-func GetNodeBy(ip string) (string, error) {
-	cluster := config.Get().Judges
-	for node, ipv := range cluster {
-		if ipv == ip {
-			return node, nil
-		}
-	}
-	return "", fmt.Errorf("node not found by %s", ip)
-}*/
