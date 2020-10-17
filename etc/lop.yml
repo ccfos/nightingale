@@ -44,18 +44,38 @@
   groups:
     - title: 告警策略
       ops:
-        - en: mon_stra_write
-          cn: 告警策略配置权限
+        - en: mon_stra_create
+          cn: 创建告警策略
+        - en: mon_stra_modify
+          cn: 修改告警策略
+        - en: mon_stra_delete
+          cn: 删除告警策略
+    - title: 告警屏蔽
+      ops:
+        - en: mon_maskconf_create
+          cn: 创建告警屏蔽
+        - en: mon_maskconf_modify
+          cn: 修改告警屏蔽
+        - en: mon_maskconf_delete
+          cn: 删除告警屏蔽
     - title: 采集策略
       ops:
-        - en: mon_collect_write
-          cn: 采集策略配置权限
-    - title: 大屏操作
+        - en: mon_collect_create
+          cn: 创建采集策略
+        - en: mon_collect_modify
+          cn: 修改采集策略
+        - en: mon_collect_delete
+          cn: 删除采集策略
+    - title: 大盘操作
       ops:
-        - en: mon_screen_write
-          cn: 监控大屏配置权限
-        - en: mon_screen_read
-          cn: 监控大屏查看权限
+        - en: mon_screen_create
+          cn: 创建监控大盘
+        - en: mon_screen_modify
+          cn: 修改监控大盘
+        - en: mon_screen_delete
+          cn: 删除监控大盘
+        - en: mon_screen_view
+          cn: 查看监控大盘
     # - title: 指标计算
     #   ops:
     #     - en: mon_aggr_write
@@ -63,4 +83,4 @@
     - title: 告警历史
       ops:
         - en: mon_event_write
-          cn: 告警历史屏蔽、认领、忽略
+          cn: 告警历史认领、忽略

@@ -62,7 +62,7 @@ func main() {
 	loggeri.Init(cfg.Logger)
 	go stats.Init("n9e.judge")
 
-	query.Init(cfg.Query, "monapi")
+	query.Init(cfg.Query, "rdb")
 	redi.Init(cfg.Redis)
 
 	cache.InitHistoryBigMap()
@@ -74,7 +74,7 @@ func main() {
 
 	go stra.GetStrategy(cfg.Strategy)
 	go judge.NodataJudge(cfg.NodataConcurrency)
-	go report.Init(cfg.Report, "monapi")
+	go report.Init(cfg.Report, "rdb")
 
 	if cfg.Logger.Level != "DEBUG" {
 		gin.SetMode(gin.ReleaseMode)

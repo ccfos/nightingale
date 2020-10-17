@@ -128,7 +128,7 @@ func Tagkv(request NidMetricRecv) ([]IndexTagkvResp, error) {
 
 func GetIndexes() []string {
 	var indexInstances []string
-	instances, err := report.GetAlive("index", "monapi")
+	instances, err := report.GetAlive("index", "rdb")
 	if err != nil {
 		return indexInstances
 	}

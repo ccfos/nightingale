@@ -39,7 +39,7 @@ func screenPost(c *gin.Context) {
 
 	var f ScreenForm
 	errors.Dangerous(c.ShouldBind(&f))
-	can, err := models.UsernameCandoNodeOp(username, "mon_screen_write", node.Id)
+	can, err := models.UsernameCandoNodeOp(username, "mon_screen_create", node.Id)
 	errors.Dangerous(err)
 	if !can {
 		errors.Bomb("permission deny")
@@ -58,7 +58,16 @@ func screenPost(c *gin.Context) {
 }
 
 func screenGets(c *gin.Context) {
-	objs, err := models.ScreenGets(urlParamInt64(c, "id"))
+	username := loginUsername(c)
+
+	nid := urlParamInt64(c, "id")
+	can, err := models.UsernameCandoNodeOp(username, "mon_screen_view", nid)
+	errors.Dangerous(err)
+	if !can {
+		errors.Bomb("permission deny")
+	}
+
+	objs, err := models.ScreenGets(nid)
 	renderData(c, objs, err)
 }
 
@@ -67,7 +76,7 @@ func screenGet(c *gin.Context) {
 	obj, err := models.ScreenGet("id", urlParamInt64(c, "id"))
 	node := mustNode(obj.NodeId)
 
-	can, err := models.UsernameCandoNodeOp(username, "mon_screen_read", obj.NodeId)
+	can, err := models.UsernameCandoNodeOp(username, "mon_screen_view", obj.NodeId)
 	errors.Dangerous(err)
 	if !can {
 		errors.Bomb("permission deny")
@@ -90,7 +99,7 @@ func screenPut(c *gin.Context) {
 	errors.Dangerous(c.ShouldBind(&f))
 	screenNameValidate(f.Name)
 
-	can, err := models.UsernameCandoNodeOp(username, "mon_screen_write", screen.NodeId)
+	can, err := models.UsernameCandoNodeOp(username, "mon_screen_modify", screen.NodeId)
 	errors.Dangerous(err)
 	if !can {
 		errors.Bomb("permission deny")
@@ -109,7 +118,7 @@ func screenDel(c *gin.Context) {
 	username := loginUsername(c)
 	screen := mustScreen(urlParamInt64(c, "id"))
 
-	can, err := models.UsernameCandoNodeOp(username, "mon_screen_write", screen.NodeId)
+	can, err := models.UsernameCandoNodeOp(username, "mon_screen_delete", screen.NodeId)
 	errors.Dangerous(err)
 	if !can {
 		errors.Bomb("permission deny")
@@ -148,7 +157,7 @@ func screenSubclassPost(c *gin.Context) {
 	errors.Dangerous(c.ShouldBind(&f))
 	f.Validate()
 
-	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_screen_write", screen.NodeId)
+	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_screen_create", screen.NodeId)
 	errors.Dangerous(err)
 	if !can {
 		errors.Bomb("permission deny")
@@ -176,7 +185,7 @@ func screenSubclassPut(c *gin.Context) {
 	//校验权限
 	for i := 0; i < cnt; i++ {
 		screen := mustScreen(arr[i].ScreenId)
-		can, err := models.UsernameCandoNodeOp(username, "mon_screen_write", screen.NodeId)
+		can, err := models.UsernameCandoNodeOp(username, "mon_screen_modify", screen.NodeId)
 		errors.Dangerous(err)
 		if !can {
 			errors.Bomb("permission deny")
@@ -201,7 +210,7 @@ func screenSubclassLocPut(c *gin.Context) {
 	for i := 0; i < cnt; i++ {
 		screen := mustScreen(arr[i].ScreenId)
 
-		can, err := models.UsernameCandoNodeOp(username, "mon_screen_write", screen.NodeId)
+		can, err := models.UsernameCandoNodeOp(username, "mon_screen_modify", screen.NodeId)
 		errors.Dangerous(err)
 		if !can {
 			errors.Bomb("permission deny")
@@ -220,7 +229,7 @@ func screenSubclassDel(c *gin.Context) {
 	errors.Dangerous(err)
 
 	screen := mustScreen(subclass.ScreenId)
-	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_screen_write", screen.NodeId)
+	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_screen_delete", screen.NodeId)
 	errors.Dangerous(err)
 	if !can {
 		errors.Bomb("permission deny")

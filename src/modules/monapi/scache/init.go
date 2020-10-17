@@ -34,7 +34,7 @@ func Init() {
 func InitJudgeHashRing() {
 	JudgeHashRing = NewConsistentHashRing(int32(config.JudgesReplicas), []string{})
 
-	judges, err := report.GetAlive("judge", "monapi")
+	judges, err := report.GetAlive("judge", "rdb")
 	if err != nil {
 		logger.Warning("get judge err:", err)
 	}

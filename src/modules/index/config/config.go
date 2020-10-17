@@ -62,7 +62,7 @@ func Parse(conf string) error {
 	viper.SetDefault("cache.rebuildWorker", 20)      //从磁盘读取所以的数据的并发个数
 	viper.SetDefault("cache.maxQueryCount", 100000)  //clude接口支持查询的最大曲线个数
 	viper.SetDefault("cache.reportEndpoint", true)
-	viper.SetDefault("cache.hbsMod", "monapi")
+	viper.SetDefault("cache.hbsMod", "rdb")
 
 	viper.SetDefault("report", map[string]interface{}{
 		"mod":      "index",

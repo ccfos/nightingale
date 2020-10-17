@@ -95,7 +95,7 @@ func Parse(conf string) error {
 
 	viper.SetDefault("index.activeDuration", 90000)  //索引最大的保留时间，超过此数值，索引不会被重建，默认是1天+1小时
 	viper.SetDefault("index.rebuildInterval", 21600) //重建索引的周期，单位为秒，默认是6h
-	viper.SetDefault("index.hbsMod", "monapi")       //获取index心跳的模块
+	viper.SetDefault("index.hbsMod", "rdb")          //获取index心跳的模块
 
 	viper.SetDefault("rpcClient", map[string]int{
 		"maxConns":    320,  //查询和推送数据的并发个数
