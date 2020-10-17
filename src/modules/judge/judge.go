@@ -74,7 +74,7 @@ func main() {
 
 	go stra.GetStrategy(cfg.Strategy)
 	go judge.NodataJudge(cfg.NodataConcurrency)
-	go report.Init(cfg.Report, "monapi")
+	go report.Init(cfg.Report, "rdb")
 
 	if cfg.Logger.Level != "DEBUG" {
 		gin.SetMode(gin.ReleaseMode)
