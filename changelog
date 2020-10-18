@@ -9,3 +9,8 @@
 3.1.3
 影响模块：monapi
 更新内容：对于P2、P3的告警会发送重复的两条
+
+3.1.4
+影响模块：index judge monapi rdb transfer tsdb
+更新内容：把hbs的逻辑从monapi挪到rdb，拆分监控的权限点
+
