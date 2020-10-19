@@ -1,4 +1,4 @@
-国内用户可以访问gitee镜像仓库： https://gitee.com/mirrors/Nightingale 同步非实时，每天一次，不过速度快
+国内用户可以访问gitee镜像仓库： https://gitee.com/cnperl/Nightingale 同步非实时，每天一次，不过速度快
 
 ---
 
