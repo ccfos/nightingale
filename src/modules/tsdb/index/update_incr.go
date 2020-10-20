@@ -3,7 +3,7 @@ package index
 import (
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/tsdb/backend/rpc"
 	"github.com/didi/nightingale/src/toolkits/str"
 

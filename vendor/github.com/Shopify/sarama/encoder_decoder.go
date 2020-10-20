@@ -12,11 +12,6 @@ type encoder interface {
 	encode(pe packetEncoder) error
 }
 
-type encoderWithHeader interface {
-	encoder
-	headerVersion() int16
-}
-
 // Encode takes an Encoder and turns it into bytes while potentially recording metrics.
 func encode(e encoder, metricRegistry metrics.Registry) ([]byte, error) {
 	if e == nil {

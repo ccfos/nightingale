@@ -11,7 +11,6 @@ type protocolBody interface {
 	versionedDecoder
 	key() int16
 	version() int16
-	headerVersion() int16
 	requiredVersion() KafkaVersion
 }
 
@@ -21,82 +20,51 @@ type request struct {
 	body          protocolBody
 }
 
-func (r *request) encode(pe packetEncoder) error {
+func (r *request) encode(pe packetEncoder) (err error) {
 	pe.push(&lengthField{})
 	pe.putInt16(r.body.key())
 	pe.putInt16(r.body.version())
 	pe.putInt32(r.correlationID)
-
-	if r.body.headerVersion() >= 1 {
-		err := pe.putString(r.clientID)
-		if err != nil {
-			return err
-		}
-	}
-
-	if r.body.headerVersion() >= 2 {
-		// we don't use tag headers at the moment so we just put an array length of 0
-		pe.putUVarint(0)
-	}
-
-	err := r.body.encode(pe)
+	err = pe.putString(r.clientID)
 	if err != nil {
 		return err
 	}
-
+	err = r.body.encode(pe)
+	if err != nil {
+		return err
+	}
 	return pe.pop()
 }
 
 func (r *request) decode(pd packetDecoder) (err error) {
-	key, err := pd.getInt16()
-	if err != nil {
+	var key int16
+	if key, err = pd.getInt16(); err != nil {
 		return err
 	}
-
-	version, err := pd.getInt16()
-	if err != nil {
+	var version int16
+	if version, err = pd.getInt16(); err != nil {
 		return err
 	}
-
-	r.correlationID, err = pd.getInt32()
-	if err != nil {
+	if r.correlationID, err = pd.getInt32(); err != nil {
 		return err
 	}
-
 	r.clientID, err = pd.getString()
-	if err != nil {
-		return err
-	}
 
 	r.body = allocateBody(key, version)
 	if r.body == nil {
 		return PacketDecodingError{fmt.Sprintf("unknown request key (%d)", key)}
 	}
-
-	if r.body.headerVersion() >= 2 {
-		// tagged field
-		_, err = pd.getUVarint()
-		if err != nil {
-			return err
-		}
-	}
-
 	return r.body.decode(pd, version)
 }
 
-func decodeRequest(r io.Reader) (*request, int, error) {
-	var (
-		bytesRead   int
-		lengthBytes = make([]byte, 4)
-	)
-
+func decodeRequest(r io.Reader) (req *request, bytesRead int, err error) {
+	lengthBytes := make([]byte, 4)
 	if _, err := io.ReadFull(r, lengthBytes); err != nil {
 		return nil, bytesRead, err
 	}
-
 	bytesRead += len(lengthBytes)
-	length := int32(binary.BigEndian.Uint32(lengthBytes))
 
+	length := int32(binary.BigEndian.Uint32(lengthBytes))
 	if length <= 4 || length > MaxRequestSize {
 		return nil, bytesRead, PacketDecodingError{fmt.Sprintf("message of length %d too large or too small", length)}
 	}
@@ -105,14 +73,12 @@ func decodeRequest(r io.Reader) (*request, int, error) {
 	if _, err := io.ReadFull(r, encodedReq); err != nil {
 		return nil, bytesRead, err
 	}
-
 	bytesRead += len(encodedReq)
 
-	req := &request{}
+	req = &request{}
 	if err := decode(encodedReq, req); err != nil {
 		return nil, bytesRead, err
 	}
-
 	return req, bytesRead, nil
 }
 
@@ -121,7 +87,7 @@ func allocateBody(key, version int16) protocolBody {
 	case 0:
 		return &ProduceRequest{}
 	case 1:
-		return &FetchRequest{Version: version}
+		return &FetchRequest{}
 	case 2:
 		return &OffsetRequest{Version: version}
 	case 3:
@@ -174,18 +140,10 @@ func allocateBody(key, version int16) protocolBody {
 		return &DescribeConfigsRequest{}
 	case 33:
 		return &AlterConfigsRequest{}
-	case 35:
-		return &DescribeLogDirsRequest{}
-	case 36:
-		return &SaslAuthenticateRequest{}
 	case 37:
 		return &CreatePartitionsRequest{}
 	case 42:
 		return &DeleteGroupsRequest{}
-	case 45:
-		return &AlterPartitionReassignmentsRequest{}
-	case 46:
-		return &ListPartitionReassignmentsRequest{}
 	}
 	return nil
 }

@@ -1,5 +1,5 @@
 rrd:
-  storage: data/5821
+  storage: data/8011
 cache:
   keepMinutes: 120
 logger:

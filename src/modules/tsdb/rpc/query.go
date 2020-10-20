@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/tsdb/cache"
 	"github.com/didi/nightingale/src/modules/tsdb/index"
 	"github.com/didi/nightingale/src/modules/tsdb/migrate"
@@ -32,6 +32,11 @@ func (g *Tsdb) Query(param dataobj.TsdbQueryParam, resp *dataobj.TsdbQueryRespon
 	resp.Values = []*dataobj.RRDData{}
 	resp.Endpoint = param.Endpoint
 	resp.Counter = param.Counter
+	resp.Nid = param.Nid
+	if param.Nid != "" {
+		param.Endpoint = dataobj.NidToEndpoint(param.Nid)
+	}
+
 	needStep := 0
 	dsType := param.DsType
 

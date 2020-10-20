@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/toolkits/pools"
 	"github.com/didi/nightingale/src/toolkits/stats"
+
 	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/logger"

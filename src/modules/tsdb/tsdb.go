@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/didi/nightingale/src/common/loggeri"
 	brpc "github.com/didi/nightingale/src/modules/tsdb/backend/rpc"
 	"github.com/didi/nightingale/src/modules/tsdb/cache"
 	"github.com/didi/nightingale/src/modules/tsdb/config"
@@ -16,7 +17,6 @@ import (
 	"github.com/didi/nightingale/src/modules/tsdb/migrate"
 	"github.com/didi/nightingale/src/modules/tsdb/rpc"
 	"github.com/didi/nightingale/src/modules/tsdb/rrdtool"
-	tlogger "github.com/didi/nightingale/src/toolkits/logger"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/toolkits/pkg/file"
@@ -28,9 +28,7 @@ var (
 	help *bool
 	conf *string
 
-	version   = "No Version Provided"
-	gitHash   = "No GitHash Provided"
-	buildTime = "No BuildTime Provided"
+	version = "No Version Provided"
 )
 
 func init() {
@@ -41,8 +39,6 @@ func init() {
 
 	if *vers {
 		fmt.Println("Version:", version)
-		fmt.Println("Git Commit Hash:", gitHash)
-		fmt.Println("UTC Build Time:", buildTime)
 		os.Exit(0)
 	}
 
@@ -59,7 +55,7 @@ func main() {
 
 	cfg := config.Config
 
-	tlogger.Init(cfg.Logger)
+	loggeri.Init(cfg.Logger)
 	go stats.Init("n9e.tsdb")
 
 	// INIT

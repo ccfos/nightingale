@@ -1,60 +1,126 @@
 package scache
 
 import (
-	"sync"
+	"strconv"
+	"time"
 
-	"github.com/didi/nightingale/src/model"
+	"github.com/didi/nightingale/src/models"
+
+	"github.com/toolkits/pkg/logger"
 )
 
-type StraCacheMap struct {
-	sync.RWMutex
-	Data map[string][]*model.Stra
+func SyncStras() {
+	t1 := time.NewTicker(time.Duration(CHECK_INTERVAL) * time.Second)
+
+	syncStras()
+	logger.Info("[cron] sync stras start...")
+	for {
+		<-t1.C
+		syncStras()
+	}
 }
 
-var StraCache *StraCacheMap
+func syncStras() {
+	stras, err := models.EffectiveStrasList()
+	if err != nil {
+		logger.Error("sync stras err:", err)
+		return
+	}
+	strasMap := make(map[string][]*models.Stra)
+	for _, stra := range stras {
+		if stra.Category == 2 {
+			needChildNids := true
+			for _, e := range stra.Exprs {
+				if e.Metric == "nodata" {
+					needChildNids = false
+					break
+				}
+			}
 
-func NewStraCache() *StraCacheMap {
-	return &StraCacheMap{Data: make(map[string][]*model.Stra)}
-}
+			//只有非nodata的告警策略，才支持告警策略继承，否则nodata会有误报
+			if needChildNids {
+				nids, err := models.GetRelatedNidsForMon(stra.Nid, stra.ExclNid)
+				if err != nil {
+					logger.Warningf("get LeafNids err:%v %v", err, stra)
+					continue
+				}
 
-func (s *StraCacheMap) GetByNode(node string) []*model.Stra {
-	s.RLock()
-	defer s.RUnlock()
+				for _, nid := range nids {
+					stra.Nids = append(stra.Nids, strconv.FormatInt(nid, 10))
+				}
+			}
 
-	return s.Data[node]
-}
+			stra.Nids = append(stra.Nids, strconv.FormatInt(stra.Nid, 10))
+		} else {
+			//增加叶子节点nid
+			stra.LeafNids, err = models.GetLeafNidsForMon(stra.Nid, stra.ExclNid)
+			if err != nil {
+				logger.Warningf("get LeafNids err:%v %v", err, stra)
+				continue
+			}
 
-func (s *StraCacheMap) Set(node string, stras []*model.Stra) {
-	s.Lock()
-	defer s.Unlock()
+			var hosts []string
+			for _, nid := range stra.LeafNids {
+				hs, err := HostUnderNode(nid)
+				if err != nil {
+					logger.Warningf("get hosts err:%v %v", err, stra)
+					continue
+				}
+				hosts = append(hosts, hs...)
+			}
 
-	s.Data[node] = stras
-	return
-}
+			hostFilter := make(map[string]struct{})
+			for _, host := range hosts {
+				if _, exists := hostFilter[host]; exists {
+					continue
+				}
+				hostFilter[host] = struct{}{}
+				stra.Endpoints = append(stra.Endpoints, host)
+			}
+		}
 
-func (s *StraCacheMap) SetAll(strasMap map[string][]*model.Stra) {
-	s.Lock()
-	defer s.Unlock()
-
-	s.Data = strasMap
-	return
-}
-
-func (s *StraCacheMap) GetAll() []*model.Stra {
-	s.Lock()
-	defer s.Unlock()
-
-	data := []*model.Stra{}
-	for node, stras := range s.Data {
-		instance, exists := JudgeActiveNode.GetInstanceBy(node)
-		if !exists {
+		node, err := JudgeHashRing.GetNode(strconv.FormatInt(stra.Id, 10))
+		if err != nil {
+			logger.Warningf("get node err:%v %v", err, stra)
 			continue
 		}
-		for _, s := range stras {
-			s.JudgeInstance = instance
-			data = append(data, s)
+		if _, exists := strasMap[node]; exists {
+			strasMap[node] = append(strasMap[node], stra)
+		} else {
+			strasMap[node] = []*models.Stra{stra}
 		}
 	}
+	StraCache.SetAll(strasMap)
+}
 
-	return data
+func CleanStraLoop() {
+	duration := time.Second * time.Duration(300)
+	for {
+		time.Sleep(duration)
+		cleanStra()
+	}
+}
+
+//定期清理没有找到nid的策略
+func cleanStra() {
+	list, err := models.StrasAll()
+	if err != nil {
+		logger.Errorf("get stras fail: %v", err)
+		return
+	}
+
+	for _, stra := range list {
+		node, err := models.NodeGet("id=?", stra.Nid)
+		if err != nil {
+			logger.Warningf("get node failed, node id: %d, err: %v", stra.Nid, err)
+			continue
+		}
+
+		if node.Id == 0 {
+			logger.Infof("delete stra:%d", stra.Id)
+			if err := models.StraDel(stra.Id); err != nil {
+				logger.Warningf("delete stra: %d, err: %v", stra.Id, err)
+			}
+		}
+	}
 }

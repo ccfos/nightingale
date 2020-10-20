@@ -1,28 +1,11 @@
 package sarama
 
-import (
-	"encoding/binary"
-	"sync"
-)
+import "encoding/binary"
 
 // LengthField implements the PushEncoder and PushDecoder interfaces for calculating 4-byte lengths.
 type lengthField struct {
 	startOffset int
 	length      int32
-}
-
-var lengthFieldPool = sync.Pool{}
-
-func acquireLengthField() *lengthField {
-	val := lengthFieldPool.Get()
-	if val != nil {
-		return val.(*lengthField)
-	}
-	return &lengthField{}
-}
-
-func releaseLengthField(m *lengthField) {
-	lengthFieldPool.Put(m)
 }
 
 func (l *lengthField) decode(pd packetDecoder) error {

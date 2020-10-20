@@ -29,10 +29,7 @@ func (msb *MessageBlock) decode(pd packetDecoder) (err error) {
 		return err
 	}
 
-	lengthDecoder := acquireLengthField()
-	defer releaseLengthField(lengthDecoder)
-
-	if err = pd.push(lengthDecoder); err != nil {
+	if err = pd.push(&lengthField{}); err != nil {
 		return err
 	}
 

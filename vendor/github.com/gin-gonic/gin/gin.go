@@ -13,6 +13,7 @@ import (
 	"path"
 	"sync"
 
+	"github.com/gin-gonic/gin/internal/bytesconv"
 	"github.com/gin-gonic/gin/render"
 )
 
@@ -97,6 +98,10 @@ type Engine struct {
 	// method call.
 	MaxMultipartMemory int64
 
+	// RemoveExtraSlash a parameter can be parsed from the URL even with extra slashes.
+	// See the PR #1817 and issue #1644
+	RemoveExtraSlash bool
+
 	delims           render.Delims
 	secureJsonPrefix string
 	HTMLRender       render.HTMLRender
@@ -134,6 +139,7 @@ func New() *Engine {
 		ForwardedByClientIP:    true,
 		AppEngine:              defaultAppEngine,
 		UseRawPath:             false,
+		RemoveExtraSlash:       false,
 		UnescapePathValues:     true,
 		MaxMultipartMemory:     defaultMultipartMemory,
 		trees:                  make(methodTrees, 0, 9),
@@ -314,16 +320,13 @@ func (engine *Engine) RunUnix(file string) (err error) {
 	debugPrint("Listening and serving HTTP on unix:/%s", file)
 	defer func() { debugPrintError(err) }()
 
-	os.Remove(file)
 	listener, err := net.Listen("unix", file)
 	if err != nil {
 		return
 	}
 	defer listener.Close()
-	err = os.Chmod(file, 0777)
-	if err != nil {
-		return
-	}
+	defer os.Remove(file)
+
 	err = http.Serve(listener, engine)
 	return
 }
@@ -385,7 +388,10 @@ func (engine *Engine) handleHTTPRequest(c *Context) {
 		rPath = c.Request.URL.RawPath
 		unescape = engine.UnescapePathValues
 	}
-	rPath = cleanPath(rPath)
+
+	if engine.RemoveExtraSlash {
+		rPath = cleanPath(rPath)
+	}
 
 	// Find root of the tree for the given HTTP method
 	t := engine.trees
@@ -457,18 +463,11 @@ func redirectTrailingSlash(c *Context) {
 	if prefix := path.Clean(c.Request.Header.Get("X-Forwarded-Prefix")); prefix != "." {
 		p = prefix + "/" + req.URL.Path
 	}
-	code := http.StatusMovedPermanently // Permanent redirect, request with GET method
-	if req.Method != "GET" {
-		code = http.StatusTemporaryRedirect
-	}
-
 	req.URL.Path = p + "/"
 	if length := len(p); length > 1 && p[length-1] == '/' {
 		req.URL.Path = p[:length-1]
 	}
-	debugPrint("redirecting request %d: %s --> %s", code, p, req.URL.String())
-	http.Redirect(c.Writer, req, req.URL.String(), code)
-	c.writermem.WriteHeaderNow()
+	redirectRequest(c)
 }
 
 func redirectFixedPath(c *Context, root *node, trailingSlash bool) bool {
@@ -476,15 +475,23 @@ func redirectFixedPath(c *Context, root *node, trailingSlash bool) bool {
 	rPath := req.URL.Path
 
 	if fixedPath, ok := root.findCaseInsensitivePath(cleanPath(rPath), trailingSlash); ok {
-		code := http.StatusMovedPermanently // Permanent redirect, request with GET method
-		if req.Method != "GET" {
-			code = http.StatusTemporaryRedirect
-		}
-		req.URL.Path = string(fixedPath)
-		debugPrint("redirecting request %d: %s --> %s", code, rPath, req.URL.String())
-		http.Redirect(c.Writer, req, req.URL.String(), code)
-		c.writermem.WriteHeaderNow()
+		req.URL.Path = bytesconv.BytesToString(fixedPath)
+		redirectRequest(c)
 		return true
 	}
 	return false
+}
+
+func redirectRequest(c *Context) {
+	req := c.Request
+	rPath := req.URL.Path
+	rURL := req.URL.String()
+
+	code := http.StatusMovedPermanently // Permanent redirect, request with GET method
+	if req.Method != http.MethodGet {
+		code = http.StatusTemporaryRedirect
+	}
+	debugPrint("redirecting request %d: %s --> %s", code, rPath, rURL)
+	http.Redirect(c.Writer, req, rURL, code)
+	c.writermem.WriteHeaderNow()
 }

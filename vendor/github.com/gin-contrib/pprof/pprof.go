@@ -24,9 +24,16 @@ func getPrefix(prefixOptions ...string) string {
 // the provided gin.Engine. prefixOptions is a optional. If not prefixOptions,
 // the default path prefix is used, otherwise first prefixOptions will be path prefix.
 func Register(r *gin.Engine, prefixOptions ...string) {
+	RouteRegister(&(r.RouterGroup), prefixOptions...)
+}
+
+// RouteRegister the standard HandlerFuncs from the net/http/pprof package with
+// the provided gin.GrouterGroup. prefixOptions is a optional. If not prefixOptions,
+// the default path prefix is used, otherwise first prefixOptions will be path prefix.
+func RouteRegister(rg *gin.RouterGroup, prefixOptions ...string) {
 	prefix := getPrefix(prefixOptions...)
 
-	prefixRouter := r.Group(prefix)
+	prefixRouter := rg.Group(prefix)
 	{
 		prefixRouter.GET("/", pprofHandler(pprof.Index))
 		prefixRouter.GET("/cmdline", pprofHandler(pprof.Cmdline))

@@ -4,8 +4,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
-	"github.com/didi/nightingale/src/model"
+	"github.com/didi/nightingale/src/common/dataobj"
+	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/judge/cache"
 
 	"github.com/toolkits/pkg/concurrent/semaphore"
@@ -38,8 +38,8 @@ func nodataJudge() {
 	stras := cache.NodataStra.GetAll()
 	for _, stra := range stras {
 		//nodata处理
-		if len(stra.Endpoints) == 0 {
-			logger.Warningf("stra:%+v endpoints is null", stra)
+		if len(stra.Endpoints) == 0 && len(stra.Nids) == 0 {
+			logger.Debugf("stra:%+v endpoints or nids is null", stra)
 			continue
 		}
 
@@ -61,10 +61,12 @@ func nodataJudge() {
 				metric = data.Counter
 			}
 
-			if data.Endpoint == "" {
+			if data.Endpoint == "" && data.Nid == "" {
 				continue
 			}
+
 			judgeItem := &dataobj.JudgeItem{
+				Nid:      data.Nid,
 				Endpoint: data.Endpoint,
 				Metric:   metric,
 				Tags:     tag,
@@ -79,7 +81,7 @@ func nodataJudge() {
 	}
 }
 
-func AsyncJudge(sema *semaphore.Semaphore, stra *model.Stra, exps []model.Exp, historyData []*dataobj.HistoryData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, extra string, status []bool) {
+func AsyncJudge(sema *semaphore.Semaphore, stra *models.Stra, exps []models.Exp, historyData []*dataobj.HistoryData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, extra string, status []bool) {
 	defer sema.Release()
 	Judge(stra, exps, historyData, firstItem, now, history, info, value, extra, status)
 }

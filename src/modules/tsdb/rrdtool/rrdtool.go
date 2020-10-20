@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/tsdb/index"
 	"github.com/didi/nightingale/src/modules/tsdb/utils"
 

@@ -30,10 +30,5 @@ func Config(r *gin.Engine) {
 		index.POST("/counter/fullmatch", GetIndexByFullTags)
 	}
 
-	v2 := r.Group("/api/transfer/v2")
-	{
-		v2.POST("/data", QueryData)
-	}
-
 	pprof.Register(r, "/api/transfer/debug/pprof")
 }

@@ -4,14 +4,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/toolkits/pkg/errors"
-
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/toolkits/pools"
 	"github.com/didi/nightingale/src/toolkits/stats"
+
 	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/container/set"
+	"github.com/toolkits/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
@@ -187,6 +187,7 @@ func (tsdb *TsdbDataSource) GetInstance(metric, endpoint string, tags map[string
 // 打到 Tsdb 的数据,要根据 rrdtool 的特定 来限制 step、counterType、timestamp
 func convert2TsdbItem(d *dataobj.MetricValue) *dataobj.TsdbItem {
 	item := &dataobj.TsdbItem{
+		Nid:       d.Nid,
 		Endpoint:  d.Endpoint,
 		Metric:    d.Metric,
 		Value:     d.Value,

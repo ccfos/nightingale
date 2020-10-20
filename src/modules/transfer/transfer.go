@@ -7,15 +7,15 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/didi/nightingale/src/common/loggeri"
+	"github.com/didi/nightingale/src/common/report"
+	"github.com/didi/nightingale/src/modules/transfer/aggr"
 	"github.com/didi/nightingale/src/modules/transfer/backend"
 	"github.com/didi/nightingale/src/modules/transfer/config"
 	"github.com/didi/nightingale/src/modules/transfer/cron"
 	"github.com/didi/nightingale/src/modules/transfer/http/routes"
 	"github.com/didi/nightingale/src/modules/transfer/rpc"
 	"github.com/didi/nightingale/src/toolkits/http"
-	"github.com/didi/nightingale/src/toolkits/identity"
-	tlogger "github.com/didi/nightingale/src/toolkits/logger"
-	"github.com/didi/nightingale/src/toolkits/report"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/gin-gonic/gin"
@@ -29,9 +29,7 @@ var (
 	help *bool
 	conf *string
 
-	version   = "No Version Provided"
-	gitHash   = "No GitHash Provided"
-	buildTime = "No BuildTime Provided"
+	version = "No Version Provided"
 )
 
 func init() {
@@ -42,8 +40,6 @@ func init() {
 
 	if *vers {
 		fmt.Println("Version:", version)
-		fmt.Println("Git Commit Hash:", gitHash)
-		fmt.Println("UTC Build Time:", buildTime)
 		os.Exit(0)
 	}
 
@@ -60,14 +56,14 @@ func main() {
 
 	cfg := config.Config
 
-	tlogger.Init(cfg.Logger)
+	loggeri.Init(cfg.Logger)
 	go stats.Init("n9e.transfer")
 
-	identity.Init(cfg.Identity)
+	aggr.Init(cfg.Aggr)
 	backend.Init(cfg.Backend)
 	cron.Init()
 
-	go report.Init(cfg.Report, "monapi")
+	go report.Init(cfg.Report, "rdb")
 	go rpc.Start()
 
 	r := gin.New()

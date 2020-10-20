@@ -1,8 +1,9 @@
 package rpc
 
 import (
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/transfer/backend"
+
 	"github.com/toolkits/pkg/logger"
 )
 

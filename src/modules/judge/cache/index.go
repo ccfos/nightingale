@@ -7,6 +7,7 @@ import (
 
 type Series struct {
 	Endpoint string
+	Nid      string
 	Metric   string
 	Tag      string
 	Step     int

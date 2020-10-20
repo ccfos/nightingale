@@ -7,14 +7,14 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/didi/nightingale/src/common/identity"
+	"github.com/didi/nightingale/src/common/loggeri"
+	"github.com/didi/nightingale/src/common/report"
 	"github.com/didi/nightingale/src/modules/index/cache"
 	"github.com/didi/nightingale/src/modules/index/config"
 	"github.com/didi/nightingale/src/modules/index/http/routes"
 	"github.com/didi/nightingale/src/modules/index/rpc"
 	"github.com/didi/nightingale/src/toolkits/http"
-	"github.com/didi/nightingale/src/toolkits/identity"
-	tlogger "github.com/didi/nightingale/src/toolkits/logger"
-	"github.com/didi/nightingale/src/toolkits/report"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/gin-gonic/gin"
@@ -28,9 +28,7 @@ var (
 	help *bool
 	conf *string
 
-	version   = "No Version Provided"
-	gitHash   = "No GitHash Provided"
-	buildTime = "No BuildTime Provided"
+	version = "No Version Provided"
 )
 
 func init() {
@@ -41,8 +39,6 @@ func init() {
 
 	if *vers {
 		fmt.Println("Version:", version)
-		fmt.Println("Git Commit Hash:", gitHash)
-		fmt.Println("UTC Build Time:", buildTime)
 		os.Exit(0)
 	}
 
@@ -59,13 +55,13 @@ func main() {
 
 	cfg := config.Config
 
-	tlogger.Init(cfg.Logger)
+	loggeri.Init(cfg.Logger)
 	go stats.Init("n9e.index")
 
-	identity.Init(cfg.Identity)
+	identity.Parse()
 	cache.InitDB(cfg.Cache)
 
-	go report.Init(cfg.Report, "monapi")
+	go report.Init(cfg.Report, "rdb")
 	go rpc.Start()
 
 	r := gin.New()

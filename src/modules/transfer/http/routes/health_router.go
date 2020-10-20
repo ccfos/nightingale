@@ -35,7 +35,7 @@ type getStraReq struct {
 func getStra(c *gin.Context) {
 	var input getStraReq
 	errors.Dangerous(c.ShouldBindJSON(&input))
-	key := str.PK(input.Metric, input.Endpoint)
+	key := str.MD5(input.Endpoint, input.Metric, "")
 	stras := cache.StraMap.GetByKey(key)
 
 	render.Data(c, stras, nil)
@@ -74,7 +74,7 @@ func judgeInstance(c *gin.Context) {
 	var input judgeInstanceRecv
 	errors.Dangerous(c.ShouldBindJSON(&input))
 	var instance string
-	key := str.PK(input.Metric, input.Endpoint)
+	key := str.MD5(input.Endpoint, input.Metric, "")
 	stras := cache.StraMap.GetByKey(key)
 	for _, stra := range stras {
 		if input.Sid != stra.Id || !backend.TagMatch(stra.Tags, input.TagMap) {

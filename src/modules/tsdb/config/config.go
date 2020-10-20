@@ -3,12 +3,13 @@ package config
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/didi/nightingale/src/common/loggeri"
 	"github.com/didi/nightingale/src/modules/tsdb/backend/rpc"
 	"github.com/didi/nightingale/src/modules/tsdb/cache"
 	"github.com/didi/nightingale/src/modules/tsdb/index"
 	"github.com/didi/nightingale/src/modules/tsdb/migrate"
 	"github.com/didi/nightingale/src/modules/tsdb/rrdtool"
-	"github.com/didi/nightingale/src/toolkits/logger"
 
 	"github.com/spf13/viper"
 	"github.com/toolkits/pkg/file"
@@ -23,7 +24,7 @@ type ConfYaml struct {
 	Http           *HttpSection           `yaml:"http"`
 	Rpc            *RpcSection            `yaml:"rpc"`
 	RRD            rrdtool.RRDSection     `yaml:"rrd"`
-	Logger         logger.LoggerSection   `yaml:"logger"`
+	Logger         loggeri.Config         `yaml:"logger"`
 	Migrate        migrate.MigrateSection `yaml:"migrate"`
 	Index          index.IndexSection     `yaml:"index"`
 	RpcClient      rpc.RpcClientSection   `yaml:"rpcClient"`
@@ -94,7 +95,7 @@ func Parse(conf string) error {
 
 	viper.SetDefault("index.activeDuration", 90000)  //索引最大的保留时间，超过此数值，索引不会被重建，默认是1天+1小时
 	viper.SetDefault("index.rebuildInterval", 21600) //重建索引的周期，单位为秒，默认是6h
-	viper.SetDefault("index.hbsMod", "monapi")       //获取index心跳的模块
+	viper.SetDefault("index.hbsMod", "rdb")          //获取index心跳的模块
 
 	viper.SetDefault("rpcClient", map[string]int{
 		"maxConns":    320,  //查询和推送数据的并发个数

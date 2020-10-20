@@ -5,7 +5,6 @@ import (
 	"strconv"
 )
 
-//ConsumerMetadataResponse holds the response for a consumer group meta data requests
 type ConsumerMetadataResponse struct {
 	Err             KError
 	Coordinator     *Broker
@@ -70,10 +69,6 @@ func (r *ConsumerMetadataResponse) key() int16 {
 }
 
 func (r *ConsumerMetadataResponse) version() int16 {
-	return 0
-}
-
-func (r *ConsumerMetadataResponse) headerVersion() int16 {
 	return 0
 }
 

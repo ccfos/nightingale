@@ -5,27 +5,11 @@ import (
 	"time"
 )
 
-// Protocol, http://kafka.apache.org/protocol.html
-// v1
-// v2 = v3 = v4
-// v5 = v6 = v7
-// Produce Response (Version: 7) => [responses] throttle_time_ms
-//   responses => topic [partition_responses]
-//     topic => STRING
-//     partition_responses => partition error_code base_offset log_append_time log_start_offset
-//       partition => INT32
-//       error_code => INT16
-//       base_offset => INT64
-//       log_append_time => INT64
-//       log_start_offset => INT64
-//   throttle_time_ms => INT32
-
-// partition_responses in protocol
 type ProduceResponseBlock struct {
-	Err         KError    // v0, error_code
-	Offset      int64     // v0, base_offset
-	Timestamp   time.Time // v2, log_append_time, and the broker is configured with `LogAppendTime`
-	StartOffset int64     // v5, log_start_offset
+	Err    KError
+	Offset int64
+	// only provided if Version >= 2 and the broker is configured with `LogAppendTime`
+	Timestamp time.Time
 }
 
 func (b *ProduceResponseBlock) decode(pd packetDecoder, version int16) (err error) {
@@ -48,13 +32,6 @@ func (b *ProduceResponseBlock) decode(pd packetDecoder, version int16) (err erro
 		}
 	}
 
-	if version >= 5 {
-		b.StartOffset, err = pd.getInt64()
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -72,17 +49,13 @@ func (b *ProduceResponseBlock) encode(pe packetEncoder, version int16) (err erro
 		pe.putInt64(timestamp)
 	}
 
-	if version >= 5 {
-		pe.putInt64(b.StartOffset)
-	}
-
 	return nil
 }
 
 type ProduceResponse struct {
-	Blocks       map[string]map[int32]*ProduceResponseBlock // v0, responses
+	Blocks       map[string]map[int32]*ProduceResponseBlock
 	Version      int16
-	ThrottleTime time.Duration // v1, throttle_time_ms
+	ThrottleTime time.Duration // only provided if Version >= 1
 }
 
 func (r *ProduceResponse) decode(pd packetDecoder, version int16) (err error) {
@@ -156,7 +129,6 @@ func (r *ProduceResponse) encode(pe packetEncoder) error {
 			}
 		}
 	}
-
 	if r.Version >= 1 {
 		pe.putInt32(int32(r.ThrottleTime / time.Millisecond))
 	}
@@ -171,12 +143,17 @@ func (r *ProduceResponse) version() int16 {
 	return r.Version
 }
 
-func (r *ProduceResponse) headerVersion() int16 {
-	return 0
-}
-
 func (r *ProduceResponse) requiredVersion() KafkaVersion {
-	return MinVersion
+	switch r.Version {
+	case 1:
+		return V0_9_0_0
+	case 2:
+		return V0_10_0_0
+	case 3:
+		return V0_11_0_0
+	default:
+		return MinVersion
+	}
 }
 
 func (r *ProduceResponse) GetBlock(topic string, partition int32) *ProduceResponseBlock {
@@ -202,11 +179,5 @@ func (r *ProduceResponse) AddTopicPartition(topic string, partition int32, err K
 		byTopic = make(map[int32]*ProduceResponseBlock)
 		r.Blocks[topic] = byTopic
 	}
-	block := &ProduceResponseBlock{
-		Err: err,
-	}
-	if r.Version >= 2 {
-		block.Timestamp = time.Now()
-	}
-	byTopic[partition] = block
+	byTopic[partition] = &ProduceResponseBlock{Err: err}
 }

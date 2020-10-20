@@ -62,7 +62,7 @@ var defaultSetting = BeegoHTTPSettings{
 }
 
 var defaultTransport = &http.Transport{
-	MaxIdleConnsPerHost: 8,
+	MaxIdleConnsPerHost: 1,
 }
 
 var defaultCookieJar http.CookieJar

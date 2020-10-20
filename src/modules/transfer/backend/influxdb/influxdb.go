@@ -3,9 +3,10 @@ package influxdb
 import (
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/toolkits/stats"
-	"github.com/influxdata/influxdb/client/v2"
+
+	client "github.com/influxdata/influxdb/client/v2"
 	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/logger"
