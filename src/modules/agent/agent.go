@@ -14,6 +14,7 @@ import (
 	"github.com/didi/nightingale/src/modules/agent/http"
 	"github.com/didi/nightingale/src/modules/agent/log/worker"
 	"github.com/didi/nightingale/src/modules/agent/report"
+	"github.com/didi/nightingale/src/modules/agent/statsd"
 	"github.com/didi/nightingale/src/modules/agent/stra"
 	"github.com/didi/nightingale/src/modules/agent/sys"
 	"github.com/didi/nightingale/src/modules/agent/sys/funcs"
@@ -21,6 +22,7 @@ import (
 	"github.com/didi/nightingale/src/modules/agent/sys/ports"
 	"github.com/didi/nightingale/src/modules/agent/sys/procs"
 	"github.com/didi/nightingale/src/modules/agent/timer"
+	"github.com/didi/nightingale/src/modules/agent/udp"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
@@ -70,6 +72,15 @@ func main() {
 
 	if config.Config.Enable.Report {
 		reportStart()
+	}
+
+	if config.Config.Enable.Metrics {
+
+		// 初始化 statsd服务
+		statsd.Start()
+
+		// 开启 udp监听 和 udp数据包处理进程
+		udp.Start()
 	}
 
 	http.Start()

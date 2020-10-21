@@ -7,6 +7,7 @@ enable:
   mon: true
   job: true
   report: true
+  metrics: true
 
 job:
   metadir: ./meta
