@@ -146,18 +146,7 @@ func v1ResourcesUnderNodeGet(c *gin.Context) {
 	lids, err := Node(urlParamInt64(c, "id")).LeafIds()
 	dangerous(err)
 
-	limit := queryInt(c, "limit", 100000000)
-
-	total, err := models.ResourceUnderNodeTotal(lids, "", "", "")
-	dangerous(err)
-
-	list, err := models.ResourceUnderNodeGets(lids, "", "", "", limit, offset(c, limit))
-	dangerous(err)
-
-	renderData(c, gin.H{
-		"list":  list,
-		"total": total,
-	}, nil)
+	renderResourcesUnderLeafIds(c, lids)
 }
 
 func resourceUnderNodeGet(c *gin.Context) {
