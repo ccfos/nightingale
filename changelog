@@ -14,3 +14,6 @@
 影响模块：index judge monapi rdb transfer tsdb
 更新内容：把hbs的逻辑从monapi挪到rdb，拆分监控的权限点
 
+3.1.5
+影响模块：monapi
+更新内容：清理策略的时候会空指针，node删除了，策略还在，此时会复现
