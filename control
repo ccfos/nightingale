@@ -180,7 +180,7 @@ pack()
 	clock=$(date +%s)
 	mkdir $clock
 	mv etc/*.local.yml $clock
-	tar zcvf n9e-${version}.tar.gz control sql etc n9e-*
+	tar zcvf n9e-${version}.tar.gz script control sql etc n9e-*
 	mv $clock/* etc/
 	rm -rf $clock
 }
