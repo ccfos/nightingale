@@ -349,4 +349,5 @@ func v1ResourcesUnregisterPost(c *gin.Context) {
 	bind(c, &uuids)
 
 	dangerous(models.ResourceUnregister(uuids))
+	renderMessage(c, nil)
 }
