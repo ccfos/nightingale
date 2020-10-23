@@ -391,7 +391,7 @@ func (t *TraceHandler) collectAndIgnore(nsMetric string, traceid string) bool {
 }
 
 // 不需要加锁, 单线程不会并发
-func (t *TraceHandler) dumpOdinPoints(reportTime time.Time) []*Point {
+func (t *TraceHandler) dumpPoints(reportTime time.Time) []*Point {
 	var ret []*Point
 	if len(t.SecurityScanCounter) == 0 {
 		return ret

@@ -23,6 +23,7 @@ import (
 	"github.com/didi/nightingale/src/modules/agent/sys/procs"
 	"github.com/didi/nightingale/src/modules/agent/timer"
 	"github.com/didi/nightingale/src/modules/agent/udp"
+	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
@@ -61,6 +62,7 @@ func main() {
 	parseConf()
 
 	loggeri.Init(config.Config.Logger)
+	stats.Init("agent")
 
 	if config.Config.Enable.Mon {
 		monStart()
@@ -83,6 +85,7 @@ func main() {
 		udp.Start()
 	}
 
+	core.InitRpcClients()
 	http.Start()
 
 	endingProc()
@@ -105,7 +108,6 @@ func monStart() {
 	sys.Init(config.Config.Sys)
 	stra.Init()
 
-	core.InitRpcClients()
 	funcs.BuildMappers()
 	funcs.Collect()
 

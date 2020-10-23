@@ -29,8 +29,8 @@ var (
 	MaxTagsCntConst = 12
 
 	// ns前缀后缀
-	NsPrefixConst = "collect."
-	NsSuffixConst = ".n9e.com"
+	NsPrefixConst = ""
+	NsSuffixConst = ""
 
 	// 需要聚合的metric
 	MetricToBeSummarized_RpcdisfConst     = "rpcdisf"

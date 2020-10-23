@@ -8,6 +8,7 @@ import (
 
 	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/agent/config"
+	"github.com/didi/nightingale/src/modules/agent/core"
 	"github.com/didi/nightingale/src/toolkits/exit"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
@@ -98,13 +99,13 @@ func (self StatsdReporter) handleActions(actions []action) {
 			}
 
 			// report cnt
-			stats.Counter.Set("metric.report.cnt", 1)
 
 			// proc
 			stats.Counter.Set("metric.cache.size", previousState.Size())
 
 			//startTs := time.Now()
-			//cnt := self.translateAndSend(previousState, action.toTime, 10, action.prefix)
+			cnt := self.translateAndSend(previousState, action.toTime, 10, action.prefix)
+			stats.Counter.Set("metric.report.cnt", cnt)
 
 			// proc
 			//latencyMs := int64(time.Now().Sub(startTs).Nanoseconds() / 1000000)
@@ -122,7 +123,43 @@ func (self StatsdReporter) nextTenSeconds(t time.Time) time.Time {
 	return t.Add(time.Duration(diff) * time.Second)
 }
 
-func (self StatsdReporter) translateToN9EPoints(state *state, reportTime time.Time) []*Point {
+func (self StatsdReporter) translateAndSend(state *state, reportTime time.Time,
+	frequency int, prefix string) (cnt int) {
+	cnt = 0
+
+	// 业务上报的点
+	oldPoints := self.translateToPoints(state, reportTime)
+
+	// 和traceid统计/过滤相关的点
+	oldTrace := traceHandler.rollHandler()
+	tracePoints := oldTrace.dumpPoints(reportTime)
+	if len(tracePoints) > 0 {
+		oldPoints = append(oldPoints, tracePoints...)
+	}
+
+	self.setLastPoints(oldPoints)
+	if len(oldPoints) == 0 {
+		return
+	}
+
+	buffer := make([]*dataobj.MetricValue, 0)
+	lastNamespace := oldPoints[0].Namespace
+	for _, point := range oldPoints {
+		n9ePoint := TranslateToN9EPoint(point)
+
+		if len(buffer) >= config.Config.Metrics.ReportPacketSize || point.Namespace != lastNamespace {
+			core.Push(buffer)
+			buffer = make([]*dataobj.MetricValue, 0)
+		}
+		n9ePoint.Step = int64(frequency)
+		buffer = append(buffer, n9ePoint)
+		lastNamespace = point.Namespace
+	}
+	core.Push(buffer)
+	return
+}
+
+func (self StatsdReporter) translateToPoints(state *state, reportTime time.Time) []*Point {
 	ts := reportTime.Unix()
 	allPoints := make([]*Point, 0)
 	for rawMetric, metricState := range state.Metrics {
@@ -170,21 +207,16 @@ func (self StatsdReporter) translateToN9EPoints(state *state, reportTime time.Ti
 	return allPoints
 }
 
-func TranslateToN9EPoints(points []*Point) []*dataobj.MetricValue {
-	objs := []*dataobj.MetricValue{}
-	for _, p := range points {
-		obj := dataobj.MetricValue{
-			Nid:          p.Namespace,
-			Metric:       p.Name,
-			Timestamp:    p.Timestamp,
-			Step:         int64(p.Step),
-			ValueUntyped: p.Value,
-			TagsMap:      p.Tags,
-		}
-		objs = append(objs, &obj)
+func TranslateToN9EPoint(point *Point) *dataobj.MetricValue {
+	obj := &dataobj.MetricValue{
+		Nid:          point.Namespace,
+		Metric:       point.Name,
+		Timestamp:    point.Timestamp,
+		Step:         int64(point.Step),
+		ValueUntyped: point.Value,
+		TagsMap:      point.Tags,
 	}
-
-	return objs
+	return obj
 }
 
 //
