@@ -134,7 +134,8 @@ func renderZeroPage(c *gin.Context) {
 // ------------
 
 type idsForm struct {
-	Ids []int64 `json:"ids"`
+	Ids []int64  `json:"ids"`
+	Ips []string `json:"ip"`
 }
 
 // ------------

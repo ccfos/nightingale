@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -69,22 +70,49 @@ func hostPost(c *gin.Context) {
 // 从某个租户手上回收资源
 func hostBackPut(c *gin.Context) {
 	var f idsForm
+	var status string
 	bind(c, &f)
 
 	loginUser(c).CheckPermGlobal("ams_host_modify")
 
 	count := len(f.Ids)
-	for i := 0; i < count; i++ {
-		host, err := models.HostGet("id=?", f.Ids[i])
-		dangerous(err)
+	if count == 0 {
+		count = len(f.Ips)
+		for i := 0; i < count; i++ {
+			ip := f.Ips[i]
 
-		if host == nil {
-			continue
+			host, err := models.HostGet("ip=?", ip)
+			dangerous(err)
+
+			if host == nil {
+				status += (ip + " is non-existent.")
+				continue
+			}
+
+			status += (ip + " recucle suc.")
+
+			dangerous(host.Update(map[string]interface{}{"tenant": ""}))
+			dangerous(models.ResourceUnregister([]string{fmt.Sprintf("host-%d", host.Id)}))
 		}
+	} else {
+		for i := 0; i < count; i++ {
+			id := f.Ids[i]
 
-		dangerous(host.Update(map[string]interface{}{"tenant": ""}))
-		dangerous(models.ResourceUnregister([]string{fmt.Sprintf("host-%d", f.Ids[i])}))
+			host, err := models.HostGet("id=?", id)
+			dangerous(err)
+
+			if host == nil {
+				status += (strconv.FormatInt(id, 10) + " is non-existent.")
+				continue
+			}
+
+			status += (strconv.FormatInt(id, 10) + " recucle suc.")
+
+			dangerous(host.Update(map[string]interface{}{"tenant": ""}))
+			dangerous(models.ResourceUnregister([]string{fmt.Sprintf("host-%d", host.Id)}))
+		}
 	}
+	bomb(status)
 
 	renderMessage(c, nil)
 }
@@ -167,29 +195,57 @@ func hostCatePut(c *gin.Context) {
 // 管理员可以先点【回收】从业务线回收机器，unregister之后tenant字段为空即可删除
 func hostDel(c *gin.Context) {
 	var f idsForm
+	var status string
 	bind(c, &f)
 
 	loginUser(c).CheckPermGlobal("ams_host_delete")
 
 	count := len(f.Ids)
-	for i := 0; i < count; i++ {
-		id := f.Ids[i]
+	if count == 0 {
+		count = len(f.Ips)
+		for i := 0; i < count; i++ {
+			ip := f.Ips[i]
 
-		host, err := models.HostGet("id=?", id)
-		dangerous(err)
+			host, err := models.HostGet("ip=?", ip)
+			dangerous(err)
 
-		if host == nil {
-			continue
+			if host == nil {
+				status += (ip + " is non-existent.")
+				continue
+			}
+
+			if host.Tenant != "" {
+				bomb("host[ip:%s, name:%s] belongs to tenant[:%s], cannot delete", host.IP, host.Name, host.Tenant)
+			} else {
+				status += (ip + " del suc.")
+			}
+
+			dangerous(models.ResourceUnregister([]string{fmt.Sprintf("host-%d", host.Id)}))
+			dangerous(host.Del())
 		}
+	} else {
+		for i := 0; i < count; i++ {
+			id := f.Ids[i]
 
-		if host.Tenant != "" {
-			bomb("host[ip:%s, name:%s] belongs to tenant[:%s], cannot delete", host.IP, host.Name, host.Tenant)
+			host, err := models.HostGet("id=?", id)
+			dangerous(err)
+
+			if host == nil {
+				status += (strconv.FormatInt(id, 10) + " is non-existent.")
+				continue
+			}
+
+			if host.Tenant != "" {
+				bomb("host[ip:%s, name:%s] belongs to tenant[:%s], cannot delete", host.IP, host.Name, host.Tenant)
+			} else {
+				status += (strconv.FormatInt(id, 10) + " del suc.")
+			}
+
+			dangerous(models.ResourceUnregister([]string{fmt.Sprintf("host-%d", host.Id)}))
+			dangerous(host.Del())
 		}
-
-		dangerous(models.ResourceUnregister([]string{fmt.Sprintf("host-%d", host.Id)}))
-		dangerous(host.Del())
 	}
-
+	bomb(status)
 	renderMessage(c, nil)
 }
 
