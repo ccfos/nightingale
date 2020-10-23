@@ -11,6 +11,7 @@ http:
 sso:
   enable: false
   ssoAddr: "http://10.1.2.3:8071"
+  # TODO: redirectURL: "http://10.1.2.3:8072/auth-callback"
   redirectURL: "http://10.1.2.3:8072/api/rdb/auth/callback"
   clientId: ""
   clientSecret: ""
@@ -21,6 +22,7 @@ sso:
     phone: "phone"
     im: ""
   coverAttributes: false
+  stateExpiresIn: 300
 
 tokens:
   - rdb-builtin-token

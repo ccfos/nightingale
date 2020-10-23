@@ -21,6 +21,9 @@ func Config(r *gin.Engine) {
 		notLogin.GET("/auth/authorize", authAuthorize)
 		notLogin.GET("/auth/callback", authCallback)
 		notLogin.GET("/auth/settings", authSettings)
+
+		notLogin.GET("/auth/v2/authorize", authAuthorizeV2)
+		notLogin.GET("/auth/v2/callback", authCallbackV2)
 	}
 
 	rootLogin := r.Group("/api/rdb").Use(shouldBeRoot())
