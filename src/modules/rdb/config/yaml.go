@@ -33,6 +33,7 @@ type ssoSection struct {
 	ClientId        string `yaml:"clientId"`
 	ClientSecret    string `yaml:"clientSecret"`
 	ApiKey          string `yaml:"apiKey"`
+	StateExpiresIn  int    `yaml:"stateExpiresIn"`
 	CoverAttributes bool   `yaml:"coverAttributes"`
 	Attributes      struct {
 		Dispname string `yaml:"dispname"`

@@ -110,6 +110,28 @@ func authAuthorize(c *gin.Context) {
 
 }
 
+type authRedirect struct {
+	Redirect string `json:"redirect"`
+}
+
+func authAuthorizeV2(c *gin.Context) {
+	redirect := queryStr(c, "redirect", "/")
+	ret := &authRedirect{Redirect: redirect}
+
+	username := cookieUsername(c)
+	if username != "" { // alread login
+		renderData(c, ret, nil)
+		return
+	}
+
+	if config.Config.SSO.Enable {
+		ret.Redirect = ssoc.Authorize(redirect)
+	} else {
+		ret.Redirect = "/login"
+	}
+	renderData(c, ret, nil)
+}
+
 func authCallback(c *gin.Context) {
 	code := queryStr(c, "code", "")
 	state := queryStr(c, "state", "")
@@ -125,6 +147,29 @@ func authCallback(c *gin.Context) {
 
 	writeCookieUser(c, user.UUID)
 	c.Redirect(302, redirect)
+}
+
+func authCallbackV2(c *gin.Context) {
+	code := queryStr(c, "code", "")
+	state := queryStr(c, "state", "")
+	redirect := queryStr(c, "redirect", "")
+
+	ret := &authRedirect{Redirect: redirect}
+	if code == "" && redirect != "" {
+		renderData(c, ret, nil)
+		return
+	}
+
+	var user *models.User
+	var err error
+	ret.Redirect, user, err = ssoc.Callback(code, state)
+	if err != nil {
+		renderData(c, ret, err)
+		return
+	}
+
+	writeCookieUser(c, user.UUID)
+	renderData(c, ret, nil)
 }
 
 func authSettings(c *gin.Context) {
