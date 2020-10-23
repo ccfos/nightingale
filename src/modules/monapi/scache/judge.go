@@ -21,7 +21,7 @@ func CheckJudgeNodes() {
 }
 
 func CheckJudge() error {
-	judges, err := report.GetAlive("judge", "monapi")
+	judges, err := report.GetAlive("judge", "rdb")
 	if err != nil {
 		logger.Warning("get judge err:", err)
 		return fmt.Errorf("report.GetAlive judge fail: %v", err)

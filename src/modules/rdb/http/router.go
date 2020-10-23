@@ -26,6 +26,12 @@ func Config(r *gin.Engine) {
 		notLogin.GET("/auth/v2/callback", authCallbackV2)
 	}
 
+	hbs := r.Group("/api/hbs")
+	{
+		hbs.POST("/heartbeat", heartBeat)
+		hbs.GET("/instances", instanceGets)
+	}
+
 	rootLogin := r.Group("/api/rdb").Use(shouldBeRoot())
 	{
 		rootLogin.GET("/configs/smtp", smtpConfigsGet)

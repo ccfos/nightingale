@@ -20,12 +20,6 @@ func Config(r *gin.Engine) {
 		sys.GET("/addr", addr)
 	}
 
-	hbs := r.Group("/api/hbs")
-	{
-		hbs.POST("/heartbeat", heartBeat)
-		hbs.GET("/instances", instanceGets)
-	}
-
 	node := r.Group("/api/mon/node").Use(GetCookieUser())
 	{
 		node.GET("/:id/maskconf", maskconfGets)
