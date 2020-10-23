@@ -103,7 +103,7 @@ func cleanAggrCalcStra() {
 			continue
 		}
 
-		if node.Id == 0 {
+		if node == nil {
 			logger.Infof("delete aggr_calc stra:%d", stra.Id)
 			if err := models.AggrCalcDel(stra.Id); err != nil {
 				logger.Warningf("delete stra: %d, err: %v", stra.Id, err)
