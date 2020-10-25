@@ -12,6 +12,22 @@ func hostFieldNew(c *gin.Context) {
 	var obj models.HostField
 	bind(c, &obj)
 
+	if obj.FieldIdent == "" {
+		bomb("field_ident is blank")
+	}
+
+	if obj.FieldName == "" {
+		bomb("field_name is blank")
+	}
+
+	if obj.FieldType == "" {
+		bomb("field_type is blank")
+	}
+
+	if obj.FieldCate == "" {
+		obj.FieldCate = "Default"
+	}
+
 	renderMessage(c, models.HostFieldNew(&obj))
 }
 
