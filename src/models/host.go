@@ -117,6 +117,11 @@ func HostByIds(ids []int64) (hosts []Host, err error) {
 	return
 }
 
+func HostIdsByIps(ips []string) (ids []int64, err error) {
+	err = DB["ams"].Table(new(Host)).In("ip", ips).Select("id").Find(&ids)
+	return
+}
+
 func HostSearch(batch, field string) ([]Host, error) {
 	arr := str.ParseLines(strings.Replace(batch, ",", "\n", -1))
 	if len(arr) == 0 {
