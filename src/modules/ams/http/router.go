@@ -19,8 +19,11 @@ func Config(r *gin.Engine) {
 		userLogin.PUT("/hosts/cate", hostCatePut)
 		userLogin.DELETE("/hosts", hostDel)
 		userLogin.GET("/hosts/search", hostSearchGets)
+		userLogin.POST("/hosts/fields", hostFieldNew)
 		userLogin.GET("/hosts/fields", hostFieldsGets)
 		userLogin.GET("/hosts/field/:id", hostFieldGet)
+		userLogin.PUT("/hosts/field/:id", hostFieldPut)
+		userLogin.DELETE("/hosts/field/:id", hostFieldDel)
 		userLogin.GET("/host/:id/fields", hostFieldGets)
 		userLogin.PUT("/host/:id/fields", hostFieldPuts)
 	}
