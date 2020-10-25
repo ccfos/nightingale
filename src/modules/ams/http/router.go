@@ -19,6 +19,10 @@ func Config(r *gin.Engine) {
 		userLogin.PUT("/hosts/cate", hostCatePut)
 		userLogin.DELETE("/hosts", hostDel)
 		userLogin.GET("/hosts/search", hostSearchGets)
+		userLogin.GET("/hosts/fields", hostFieldsGets)
+		userLogin.GET("/hosts/field/:id", hostFieldGet)
+		userLogin.GET("/host/:id/fields", hostFieldGets)
+		userLogin.PUT("/host/:id/fields", hostFieldPuts)
 	}
 
 	v1 := r.Group("/v1/ams-ce").Use(shouldBeService())
