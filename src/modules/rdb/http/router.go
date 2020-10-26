@@ -24,6 +24,7 @@ func Config(r *gin.Engine) {
 
 		notLogin.GET("/auth/v2/authorize", authAuthorizeV2)
 		notLogin.GET("/auth/v2/callback", authCallbackV2)
+		notLogin.GET("/auth/v2/logout", logoutV2)
 	}
 
 	hbs := r.Group("/api/hbs")

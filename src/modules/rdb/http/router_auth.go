@@ -112,6 +112,7 @@ func authAuthorize(c *gin.Context) {
 
 type authRedirect struct {
 	Redirect string `json:"redirect"`
+	Msg      string `json:"msg"`
 }
 
 func authAuthorizeV2(c *gin.Context) {
@@ -178,4 +179,34 @@ func authSettings(c *gin.Context) {
 	}{
 		Sso: config.Config.SSO.Enable,
 	}, nil)
+}
+
+func logoutV2(c *gin.Context) {
+	redirect := queryStr(c, "redirect", "")
+	ret := &authRedirect{Redirect: redirect}
+
+	uuid := readCookieUser(c)
+	if uuid == "" {
+		renderData(c, ret, nil)
+		return
+	}
+
+	username := models.UsernameByUUID(uuid)
+	if username == "" {
+		renderData(c, ret, nil)
+		return
+	}
+
+	writeCookieUser(c, "")
+	ret.Msg = "logout successfully"
+
+	go models.LoginLogNew(username, c.ClientIP(), "out")
+
+	if config.Config.SSO.Enable {
+		if redirect == "" {
+			redirect = "/"
+		}
+		ret.Redirect = ssoc.LogoutLocation(redirect)
+	}
+	renderData(c, ret, nil)
 }
