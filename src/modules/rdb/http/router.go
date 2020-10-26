@@ -171,5 +171,6 @@ func Config(r *gin.Engine) {
 		v1.GET("/users", userListGet)
 
 		v1.POST("/login", v1Login)
+		v1.POST("/send-login-code-by-sms", v1SendLoginCodeBySms)
 	}
 }

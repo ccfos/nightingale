@@ -1,11 +1,19 @@
 package http
 
 import (
+	"fmt"
+	"math/rand"
+	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/cache"
 	"github.com/toolkits/pkg/str"
 
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/rdb/config"
+	"github.com/didi/nightingale/src/modules/rdb/redisc"
 	"github.com/didi/nightingale/src/modules/rdb/ssoc"
 )
 
@@ -43,29 +51,6 @@ func login(c *gin.Context) {
 	writeCookieUser(c, user.UUID)
 
 	renderMessage(c, "")
-}
-
-// v1Login called by sso.rdb module
-func v1Login(c *gin.Context) {
-	var f loginForm
-	bind(c, &f)
-	f.validate()
-
-	if f.IsLDAP == 1 {
-		dangerous(models.LdapLogin(f.Username, f.Password, c.ClientIP()))
-	} else {
-		dangerous(models.PassLogin(f.Username, f.Password, c.ClientIP()))
-	}
-
-	user, err := models.UserGet("username=?", f.Username)
-	dangerous(err)
-
-	writeCookieUser(c, user.UUID)
-
-	// TODO: implement remote address access control
-	go models.LoginLogNew(f.Username, f.RemoteAddr, "in")
-
-	renderData(c, user, nil)
 }
 
 func logout(c *gin.Context) {
@@ -209,4 +194,94 @@ func logoutV2(c *gin.Context) {
 		ret.Redirect = ssoc.LogoutLocation(redirect)
 	}
 	renderData(c, ret, nil)
+}
+
+type loginInput struct {
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	Phone      string `json:"phone"`
+	Code       string `json:"code"`
+	Type       string `json:"type"`
+	RemoteAddr string `json:"remote_addr"`
+}
+
+// v1Login called by sso.rdb module
+func v1Login(c *gin.Context) {
+	var f loginInput
+	bind(c, &f)
+
+	user, err := func() (*models.User, error) {
+		switch strings.ToLower(f.Type) {
+		case "ldap":
+			err := models.LdapLogin(f.Username, f.Password, c.ClientIP())
+			if err != nil {
+				return nil, err
+			}
+			return models.UserGet("username=?", f.Username)
+		case "password":
+			err := models.PassLogin(f.Username, f.Password, c.ClientIP())
+			if err != nil {
+				return nil, err
+			}
+			return models.UserGet("username=?", f.Username)
+		case "sms-code":
+			return smsCodeVerify(f.Phone, f.Code)
+		default:
+			return nil, fmt.Errorf("invalid login type %s", f.Type)
+		}
+	}()
+
+	// TODO: implement remote address access control
+	go models.LoginLogNew(f.Username, f.RemoteAddr, "in")
+
+	renderData(c, user, err)
+}
+
+type v1SendLoginCodeBySmsInput struct {
+	Phone string `json:"phone"`
+}
+
+func v1SendLoginCodeBySms(c *gin.Context) {
+	var f v1SendLoginCodeBySmsInput
+	bind(c, &f)
+
+	msg, err := sendLoginCodeBySms(f.Phone)
+	renderData(c, msg, err)
+}
+
+func sendLoginCodeBySms(phone string) (string, error) {
+	user, _ := models.UserGet("phone=?", phone)
+	if user == nil {
+		return "", fmt.Errorf("phone %s dose not exist", phone)
+	}
+
+	// general a random code and add cache
+	code := fmt.Sprintf("%06d", rand.Intn(1000000))
+	err := cache.Set(fmt.Sprintf("sms.phone.%s.code.%s", phone, code), user.Username, time.Second*300)
+	if err != nil {
+		return "", err
+	}
+
+	// log.Printf("phone %s code %s", phone, code)
+
+	err := redisc.Write(&dataobj.Message{
+		Tos:     []string{phone},
+		Content: fmt.Sprintf("sms code: [%s]", code),
+	}, config.SMS_QUEUE_NAME)
+	return code, err
+}
+
+func smsCodeVerify(phone, code string) (*models.User, error) {
+	var username string
+
+	// log.Printf("phone %s code %s", phone, code)
+	key := fmt.Sprintf("sms.phone.%s.code.%s", phone, code)
+	err := cache.Get(key, &username)
+	if err != nil {
+		return nil, err
+	}
+
+	cache.Delete(key)
+
+	return models.UserGet("username=?", username)
 }
