@@ -1,13 +1,17 @@
 package http
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
+	"log"
 	"math/rand"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/cache"
+	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/str"
 
 	"github.com/didi/nightingale/src/common/dataobj"
@@ -16,6 +20,26 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
 	"github.com/didi/nightingale/src/modules/rdb/ssoc"
 )
+
+var (
+	loginCodeSmsTpl   *template.Template
+	loginCodeEmailTpl *template.Template
+)
+
+func init() {
+	var err error
+	filename := path.Join(file.SelfDir(), "etc", "login-code-sms.tpl")
+	loginCodeSmsTpl, err = template.ParseFiles(filename)
+	if err != nil {
+		log.Fatalf("open %s err: %s", filename, err)
+	}
+
+	filename = path.Join(file.SelfDir(), "etc", "login-code-email.tpl")
+	loginCodeEmailTpl, err = template.ParseFiles(filename)
+	if err != nil {
+		log.Fatalf("open %s err: %s", filename, err)
+	}
+}
 
 type loginForm struct {
 	Username   string `json:"username" binding:"required"`
@@ -200,10 +224,19 @@ type loginInput struct {
 	Username   string `json:"username"`
 	Password   string `json:"password"`
 	Phone      string `json:"phone"`
+	Email      string `json:"email"`
 	Code       string `json:"code"`
 	Type       string `json:"type"`
 	RemoteAddr string `json:"remote_addr"`
 }
+
+const (
+	LOGIN_T_SMS      = "sms-code"
+	LOGIN_T_EMAIL    = "email-code"
+	LOGIN_T_PWD      = "password"
+	LOGIN_T_LDAP     = "ldap"
+	LOGIN_EXPIRES_IN = 300
+)
 
 // v1Login called by sso.rdb module
 func v1Login(c *gin.Context) {
@@ -212,20 +245,22 @@ func v1Login(c *gin.Context) {
 
 	user, err := func() (*models.User, error) {
 		switch strings.ToLower(f.Type) {
-		case "ldap":
+		case LOGIN_T_LDAP:
 			err := models.LdapLogin(f.Username, f.Password, c.ClientIP())
 			if err != nil {
 				return nil, err
 			}
 			return models.UserGet("username=?", f.Username)
-		case "password":
+		case LOGIN_T_PWD:
 			err := models.PassLogin(f.Username, f.Password, c.ClientIP())
 			if err != nil {
 				return nil, err
 			}
 			return models.UserGet("username=?", f.Username)
-		case "sms-code":
+		case LOGIN_T_SMS:
 			return smsCodeVerify(f.Phone, f.Code)
+		case LOGIN_T_EMAIL:
+			return emailCodeVerify(f.Email, f.Code)
 		default:
 			return nil, fmt.Errorf("invalid login type %s", f.Type)
 		}
@@ -245,43 +280,138 @@ func v1SendLoginCodeBySms(c *gin.Context) {
 	var f v1SendLoginCodeBySmsInput
 	bind(c, &f)
 
-	msg, err := sendLoginCodeBySms(f.Phone)
+	msg, err := func() (string, error) {
+		if !config.Config.Redis.Enable {
+			return "", fmt.Errorf("sms sender is disabled")
+		}
+		phone := f.Phone
+		user, _ := models.UserGet("phone=?", phone)
+		if user == nil {
+			return "", fmt.Errorf("phone %s dose not exist", phone)
+		}
+
+		// general a random code and add cache
+		code := fmt.Sprintf("%06d", rand.Intn(1000000))
+
+		loginCode := &models.LoginCode{
+			Username:  user.Username,
+			Code:      code,
+			LoginType: LOGIN_T_SMS,
+			CreatedAt: time.Now().Unix(),
+		}
+
+		if err := loginCode.Save(); err != nil {
+			return "", err
+		}
+
+		var buf bytes.Buffer
+		if err := loginCodeSmsTpl.Execute(&buf, loginCode); err != nil {
+			return "", err
+		}
+
+		if err := redisc.Write(&dataobj.Message{
+			Tos:     []string{phone},
+			Content: buf.String(),
+		}, config.SMS_QUEUE_NAME); err != nil {
+			return "", err
+		}
+
+		// log.Printf("[sms -> %s] %s", phone, buf.String())
+
+		// TODO: remove code from msg
+		return fmt.Sprintf("[debug] msg: %s", buf.String()), nil
+
+	}()
 	renderData(c, msg, err)
 }
 
-func sendLoginCodeBySms(phone string) (string, error) {
+func smsCodeVerify(phone, code string) (*models.User, error) {
 	user, _ := models.UserGet("phone=?", phone)
 	if user == nil {
-		return "", fmt.Errorf("phone %s dose not exist", phone)
+		return nil, fmt.Errorf("phone %s dose not exist", phone)
 	}
 
-	// general a random code and add cache
-	code := fmt.Sprintf("%06d", rand.Intn(1000000))
-	err := cache.Set(fmt.Sprintf("sms.phone.%s.code.%s", phone, code), user.Username, time.Second*300)
+	lc, err := models.LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_SMS)
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("invalid code", phone)
 	}
 
-	// log.Printf("phone %s code %s", phone, code)
+	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
+		return nil, fmt.Errorf("the code has expired", phone)
+	}
 
-	err := redisc.Write(&dataobj.Message{
-		Tos:     []string{phone},
-		Content: fmt.Sprintf("sms code: [%s]", code),
-	}, config.SMS_QUEUE_NAME)
-	return code, err
+	lc.Del()
+
+	return user, nil
 }
 
-func smsCodeVerify(phone, code string) (*models.User, error) {
-	var username string
+type v1SendLoginCodeByEmailInput struct {
+	Email string `json:"email"`
+}
 
-	// log.Printf("phone %s code %s", phone, code)
-	key := fmt.Sprintf("sms.phone.%s.code.%s", phone, code)
-	err := cache.Get(key, &username)
-	if err != nil {
-		return nil, err
+func v1SendLoginCodeByEmail(c *gin.Context) {
+	var f v1SendLoginCodeByEmailInput
+	bind(c, &f)
+
+	msg, err := func() (string, error) {
+		if !config.Config.Redis.Enable {
+			return "", fmt.Errorf("mail sender is disabled")
+		}
+		email := f.Email
+		user, _ := models.UserGet("email=?", email)
+		if user == nil {
+			return "", fmt.Errorf("email %s dose not exist", email)
+		}
+
+		// general a random code and add cache
+		code := fmt.Sprintf("%06d", rand.Intn(1000000))
+
+		loginCode := &models.LoginCode{
+			Username:  user.Username,
+			Code:      code,
+			LoginType: LOGIN_T_EMAIL,
+			CreatedAt: time.Now().Unix(),
+		}
+
+		if err := loginCode.Save(); err != nil {
+			return "", err
+		}
+
+		var buf bytes.Buffer
+		if err := loginCodeEmailTpl.Execute(&buf, loginCode); err != nil {
+			return "", err
+		}
+
+		err := redisc.Write(&dataobj.Message{
+			Tos:     []string{email},
+			Content: buf.String(),
+		}, config.SMS_QUEUE_NAME)
+
+		// log.Printf("[email -> %s] %s", email, buf.String())
+
+		// TODO: remove code from msg
+		return fmt.Sprintf("[debug] msg: %s", buf.String()), err
+
+	}()
+	renderData(c, msg, err)
+}
+
+func emailCodeVerify(email, code string) (*models.User, error) {
+	user, _ := models.UserGet("email=?", email)
+	if user == nil {
+		return nil, fmt.Errorf("email %s dose not exist", email)
 	}
 
-	cache.Delete(key)
+	lc, err := models.LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_EMAIL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid code", email)
+	}
 
-	return models.UserGet("username=?", username)
+	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
+		return nil, fmt.Errorf("the code has expired", email)
+	}
+
+	lc.Del()
+
+	return user, nil
 }
