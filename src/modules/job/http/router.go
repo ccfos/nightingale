@@ -36,5 +36,8 @@ func Config(r *gin.Engine) {
 		userLogin.GET("/task/:id", taskView)
 		userLogin.PUT("/task/:id/action", taskActionPut)
 		userLogin.PUT("/task/:id/host", taskHostPut)
+
+		// 专门针对工单系统开发的接口
+		userLogin.POST("/run/:id", taskRunForTT)
 	}
 }
