@@ -86,6 +86,7 @@ func InitSSO() {
 func Authorize(redirect string) string {
 	state := uuid.New().String()
 	cli.cache.Add(state, redirect, cli.stateExpiresIn)
+	// log.Printf("add state %s", state)
 	return cli.config.AuthCodeURL(state)
 }
 
@@ -104,15 +105,16 @@ func Callback(code, state string) (string, *models.User, error) {
 		return "", nil, fmt.Errorf("invalid state %s", state)
 	}
 	cli.cache.Remove(state)
+	// log.Printf("remove state %s", state)
 
 	redirect := s.(string)
-	log.Printf("callback, get state %s redirect %s", state, redirect)
+	// log.Printf("callback, get state %s redirect %s", state, redirect)
 
 	u, err := exchangeUser(code)
 	if err != nil {
 		return "", nil, err
 	}
-	log.Printf("exchange user %v", u)
+	// log.Printf("exchange user %v", u)
 
 	user, err := models.UserGet("username=?", u.Username)
 	if err != nil {

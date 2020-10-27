@@ -284,3 +284,18 @@ CREATE TABLE `operation_log`
     KEY (`res_cl`, `res_id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
+
+CREATE TABLE `login_code`
+(
+    `username`   varchar(64)  not null comment 'login name, cannot rename',
+    `code`       varchar(32)  not null,
+    `login_type` varchar(32)  not null,
+    `created_at` bigint       not null comment 'created at',
+    KEY (`code`),
+    KEY (`created_at`),
+    UNIQUE KEY (`username`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8;
+
+
+
