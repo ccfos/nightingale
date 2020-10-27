@@ -82,9 +82,9 @@ func (self *rpcEAggregator) dump(points []*Point, timestamp int64,
 	tags["callee"] = Func{}.TrimRpcCallee(callee) // 修改callee字段
 
 	// 带tag的rpc统计, 指标名称调整为 by_tags.$metric
-	if len(tags) > 2 {
-		metric = fmt.Sprintf("by_tags.%s", metric)
-	}
+	//if len(tags) > 2 {
+	//	metric = fmt.Sprintf("by_tags.%s", metric)
+	//}
 
 	totalCount := float64(0)
 	totalErrorCount := float64(0)

@@ -208,6 +208,10 @@ func (self StatsdReporter) translateToPoints(state *state, reportTime time.Time)
 }
 
 func TranslateToN9EPoint(point *Point) *dataobj.MetricValue {
+	if point.Namespace != "" {
+		point.Tags["instance"] = config.Endpoint
+	}
+
 	obj := &dataobj.MetricValue{
 		Nid:          point.Namespace,
 		Metric:       point.Name,
