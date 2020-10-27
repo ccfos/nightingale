@@ -172,5 +172,6 @@ func Config(r *gin.Engine) {
 
 		v1.POST("/login", v1Login)
 		v1.POST("/send-login-code-by-sms", v1SendLoginCodeBySms)
+		v1.POST("/send-login-code-by-email", v1SendLoginCodeByEmail)
 	}
 }
