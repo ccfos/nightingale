@@ -233,6 +233,7 @@ type loginInput struct {
 const (
 	LOGIN_T_SMS      = "sms-code"
 	LOGIN_T_EMAIL    = "email-code"
+	LOGIN_T_RST      = "rst-code"
 	LOGIN_T_PWD      = "password"
 	LOGIN_T_LDAP     = "ldap"
 	LOGIN_EXPIRES_IN = 300
@@ -414,4 +415,104 @@ func emailCodeVerify(email, code string) (*models.User, error) {
 	lc.Del()
 
 	return user, nil
+}
+
+type sendRstCodeBySmsInput struct {
+	Phone string `json:"phone"`
+}
+
+func sendRstCodeBySms(c *gin.Context) {
+	var f sendRstCodeBySmsInput
+	bind(c, &f)
+
+	msg, err := func() (string, error) {
+		if !config.Config.Redis.Enable {
+			return "", fmt.Errorf("sms sender is disabled")
+		}
+		phone := f.Phone
+		user, _ := models.UserGet("phone=?", phone)
+		if user == nil {
+			return "", fmt.Errorf("phone %s dose not exist", phone)
+		}
+
+		// general a random code and add cache
+		code := fmt.Sprintf("%06d", rand.Intn(1000000))
+
+		loginCode := &models.LoginCode{
+			Username:  user.Username,
+			Code:      code,
+			LoginType: LOGIN_T_RST,
+			CreatedAt: time.Now().Unix(),
+		}
+
+		if err := loginCode.Save(); err != nil {
+			return "", err
+		}
+
+		var buf bytes.Buffer
+		if err := loginCodeSmsTpl.Execute(&buf, loginCode); err != nil {
+			return "", err
+		}
+
+		if err := redisc.Write(&dataobj.Message{
+			Tos:     []string{phone},
+			Content: buf.String(),
+		}, config.SMS_QUEUE_NAME); err != nil {
+			return "", err
+		}
+
+		// log.Printf("[sms -> %s] %s", phone, buf.String())
+
+		// TODO: remove code from msg
+		return fmt.Sprintf("[debug] msg: %s", buf.String()), nil
+
+	}()
+	renderData(c, msg, err)
+}
+
+type rstPasswordInput struct {
+	Phone    string `json:"phone"`
+	Code     string `json:"code"`
+	Password string `json:"password"`
+}
+
+func rstPassword(c *gin.Context) {
+	var in loginInput
+	bind(c, &in)
+
+	err := func() error {
+		user, _ := models.UserGet("phone=?", in.Phone)
+		if user == nil {
+			return fmt.Errorf("phone %s dose not exist", in.Phone)
+		}
+
+		lc, err := models.LoginCodeGet("username=? and code=? and login_type=?",
+			user.Username, in.Code, LOGIN_T_RST)
+		if err != nil {
+			return fmt.Errorf("invalid code", in.Phone)
+		}
+
+		if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
+			return fmt.Errorf("the code has expired", in.Phone)
+		}
+
+		// update password
+		if user.Password, err = models.CryptoPass(in.Password); err != nil {
+			return err
+		}
+
+		if err = user.Update("password"); err != nil {
+			return err
+		}
+
+		lc.Del()
+
+		return nil
+	}()
+
+	if err != nil {
+		renderData(c, nil, err)
+	} else {
+		renderData(c, "reset successfully", nil)
+	}
 }
