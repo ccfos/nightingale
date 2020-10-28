@@ -9,6 +9,7 @@ cd $CWD
 usage()
 {
 	echo $"Usage: $0 {start|stop|restart|status|build|pack} <module>"
+	echo $"       $0 initdb [host] [password] (default host is 127.0.0.1 and default password is '1234')"
 	exit 0
 }
 
@@ -185,6 +186,24 @@ pack()
 	rm -rf $clock
 }
 
+dbHost=${2}
+dbHost=${dbHost:=127.0.0.1}
+dbPassword=${3}
+dbPassword=${dbPassword:=1234}
+initdb()
+{
+	init_onedb ams
+	init_onedb hbs
+	init_onedb job
+	init_onedb mon
+	init_onedb rdb
+	
+}
+init_onedb(){
+	echo init db n9e_${1}
+	mysql -uroot -p${dbPassword} -h ${dbHost} < sql/n9e_${1}.sql
+}
+
 case "$1" in
 	start)
 		start $2
@@ -206,6 +225,9 @@ case "$1" in
 		;;
 	pack)
 		pack $2
+		;;
+	initdb)
+		initdb
 		;;
 	*)
 		usage
