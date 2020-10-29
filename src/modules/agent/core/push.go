@@ -25,7 +25,7 @@ func Push(metricItems []*dataobj.MetricValue) error {
 	now := time.Now().Unix()
 
 	for _, item := range metricItems {
-		logger.Debug("->recv: ", item)
+		logger.Debugf("->recv:%+v", item)
 		if item.Endpoint == "" {
 			item.Endpoint = config.Endpoint
 		}
@@ -48,7 +48,7 @@ func Push(metricItems []*dataobj.MetricValue) error {
 				continue
 			}
 		}
-		logger.Debug("push item: ", item)
+		logger.Debugf("push item: %+v", item)
 		items = append(items, item)
 	}
 
