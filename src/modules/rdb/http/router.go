@@ -30,6 +30,11 @@ func Config(r *gin.Engine) {
 		notLogin.POST("/auth/rst-password", rstPassword)
 	}
 
+	notLoginV2 := r.Group("/api/v2/rdb")
+	{
+		notLoginV2.GET("/nodes", nodeGets)
+	}
+
 	hbs := r.Group("/api/hbs")
 	{
 		hbs.POST("/heartbeat", heartBeat)
