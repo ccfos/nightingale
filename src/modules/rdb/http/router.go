@@ -36,12 +36,6 @@ func Config(r *gin.Engine) {
 		hbs.GET("/instances", instanceGets)
 	}
 
-	hbs := r.Group("/api/hbs")
-	{
-		hbs.POST("/heartbeat", heartBeat)
-		hbs.GET("/instances", instanceGets)
-	}
-
 	rootLogin := r.Group("/api/rdb").Use(shouldBeRoot())
 	{
 		rootLogin.GET("/configs/smtp", smtpConfigsGet)
