@@ -34,6 +34,9 @@ func taskPost(c *gin.Context) {
 	var f taskForm
 	bind(c, &f)
 	hosts := cleanHosts(f.Hosts)
+	if len(hosts) == 0 {
+		bomb("arg[hosts] empty")
+	}
 
 	checkTaskPerm(hosts, user, f.Account)
 
@@ -556,4 +559,66 @@ func taskCallback(c *gin.Context) {
 	}
 
 	renderMessage(c, nil)
+}
+
+// 这个数据结构是tt回调的时候使用的通用数据结构，里边既有工单基本信息，也有结构化数据，job这里只需要从中解析出结构化数据
+type ttForm struct {
+
+}
+
+// /api/job-ce/run/:id?hosts=10.3.4.5,10.4.5.6
+func taskRunForTT(c *gin.Context) {
+	var f ttForm
+	bind(c, &f)
+
+	tpl := TaskTpl(urlParamInt64(c, "id"))
+	arr, err := tpl.Hosts()
+	dangerous(err)
+
+	// 如果QueryString里带有hosts参数，就用QueryString里的机器列表
+	// 否则就从结构化数据中解析hosts
+	// 如果结构化数据中也没有，那只能有模板里的，模板里也没有就报错
+	hosts := queryStr(c, "hosts", "")
+
+	if hosts != "" {
+		// 使用QueryString传过来的hosts
+		tmp := cleanHosts(strings.Split(hosts, ","))
+		if len(tmp) > 0 {
+			arr = tmp
+		}
+	} else {
+		// TODO 从结构化数据中取hosts
+		hosts = "xyz"
+		hosts = strings.ReplaceAll(hosts, "\r", ",")
+		hosts = strings.ReplaceAll(hosts, "\n", ",")
+		tmp := cleanHosts(strings.Split(hosts, ","))
+		if len(tmp) > 0 {
+			arr = tmp
+		}
+	}
+
+	if len(arr) == 0 {
+		bomb("hosts empty")
+	}
+
+	// 校验权限
+	user := loginUser(c)
+	checkTaskPerm(arr, user, tpl.Account)
+
+	task := &models.TaskMeta{
+		Title:     tpl.Title,
+		Account:   tpl.Account,
+		Batch:     tpl.Batch,
+		Tolerance: tpl.Tolerance,
+		Timeout:   tpl.Timeout,
+		Pause:     tpl.Pause,
+		Script:    tpl.Script,
+		Creator:   user.Username,
+	}
+
+	// TODO 把结构化数据转换为脚本命令行参数
+	task.Args = ""
+
+	dangerous(task.Save(arr, "start"))
+	renderData(c, task.Id, nil)
 }

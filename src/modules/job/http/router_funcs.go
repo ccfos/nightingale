@@ -256,10 +256,5 @@ func cleanHosts(formHosts []string) []string {
 		arr = append(arr, item)
 	}
 
-	cnt = len(arr)
-	if cnt == 0 {
-		bomb("arg[hosts] empty")
-	}
-
 	return arr
 }
