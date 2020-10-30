@@ -58,8 +58,12 @@ func (f nodeForm) Validate() {
 		bomb("arg[pid] invalid")
 	}
 
-	if !str.IsMatch(f.Ident, `^[a-zA-Z0-9\-_]+$`) {
-		bomb("ident legal characters: [a-zA-Z0-9_-]")
+	if !str.IsMatch(f.Ident, `^[a-z0-9\-_]+$`) {
+		bomb("ident legal characters: [a-z0-9_-]")
+	}
+
+	if len(f.Ident) >= 32 {
+		bomb("ident length should be less than 32")
 	}
 
 	if f.Leaf != 0 && f.Leaf != 1 {
