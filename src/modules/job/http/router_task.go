@@ -2,15 +2,15 @@ package http
 
 import (
 	"fmt"
-	"github.com/didi/nightingale/src/common/address"
-	"github.com/toolkits/pkg/net/httplib"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/didi/nightingale/src/common/address"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/slice"
 
 	"github.com/didi/nightingale/src/models"
@@ -575,7 +575,7 @@ type ttForm struct {
 func taskRunForTT(c *gin.Context) {
 	var f ttForm
 	bind(c, &f)
-	fmt.Println(c.Request.Header)
+
 	action := c.Request.Host + c.Request.URL.Path
 	if f.Approval == 2 {
 		renderMessage(c, "该任务未通过审批")
@@ -752,7 +752,7 @@ func TicketSender(id int64, action, reason, reply string, result int, info inter
 	if !(strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")) {
 		url = "http://" + url
 	}
-	fmt.Println(url)
+
 	res, code, err := httplib.PostJSON(url, time.Second*5, data, map[string]string{"x-srv-token": "ticket-builtin-token"})
 	if err != nil {
 		logger.Errorf("call sender api failed, server: %v, data: %+v, err: %v, resp:%v, status code:%d", url, data, err, string(res), code)
@@ -764,7 +764,6 @@ func TicketSender(id int64, action, reason, reply string, result int, info inter
 		return err
 	}
 
-	fmt.Println(string(res))
 	logger.Debugf("ticket response %s", string(res))
 
 	return nil
