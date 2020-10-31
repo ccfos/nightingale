@@ -12,9 +12,9 @@ import (
 	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/slice"
 
+	"github.com/didi/nightingale/src/common/address"
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/job/config"
-	"github.com/didi/nightingale/src/common/address"
 )
 
 type taskForm struct {
@@ -658,11 +658,16 @@ func taskRunForTT(c *gin.Context) {
 
 	dangerous(task.Save(arr, "start"))
 	go func() {
+		var arr2Map = map[string]int{}
+		for _, a := range arr {
+			arr2Map[a] = 1
+		}
+
 		for {
 			var (
-				restHosts []string
+				restHosts = map[string]int{}
 			)
-			for _, h := range arr {
+			for h, _ := range arr2Map {
 				th, err := models.TaskHostGet(task.Id, h)
 				if err == nil {
 					if th.Status == "killed" {
@@ -702,13 +707,13 @@ func taskRunForTT(c *gin.Context) {
 							logger.Errorf("send callback to ticket, err: %v", err)
 						}
 					} else {
-						restHosts = append(restHosts, h)
+						restHosts[h] = 1
 					}
 				} else {
 					logger.Errorf("get task_host err: %v", err)
 				}
 			}
-			arr = restHosts
+			arr2Map = restHosts
 			time.Sleep(time.Second)
 		}
 	}()
