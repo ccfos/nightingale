@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/didi/nightingale/src/common/address"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/httplib"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/job/config"
+	"github.com/didi/nightingale/src/common/address"
 )
 
 type taskForm struct {
