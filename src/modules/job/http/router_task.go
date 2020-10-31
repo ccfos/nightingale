@@ -713,6 +713,7 @@ func taskRunForTT(c *gin.Context) {
 					logger.Errorf("get task_host err: %v", err)
 				}
 			}
+
 			arr2Map = restHosts
 			time.Sleep(time.Second)
 		}
