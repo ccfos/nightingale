@@ -29,7 +29,7 @@ const (
 
 type User struct {
 	Id         int64  `json:"id"`
-	UUID       string `json:"uuid" xorm:"'uuid'"`
+	UUID       string `json:"-" xorm:"'uuid'"`
 	Username   string `json:"username"`
 	Password   string `json:"-"`
 	Dispname   string `json:"dispname"`
@@ -129,7 +129,8 @@ func PassLogin(user, pass string) (*User, error) {
 	}
 
 	if !has {
-		return nil, fmt.Errorf("user[%s] not found", user)
+		logger.Infof("password auth fail, no such user: %s", user)
+		return nil, fmt.Errorf("login fail, check your username and password")
 	}
 
 	loginPass, err := CryptoPass(pass)
@@ -138,7 +139,8 @@ func PassLogin(user, pass string) (*User, error) {
 	}
 
 	if loginPass != u.Password {
-		return nil, fmt.Errorf("password error")
+		logger.Infof("password auth fail, password error, user: %s", user)
+		return nil, fmt.Errorf("login fail, check your username and password")
 	}
 
 	return &u, nil
@@ -152,11 +154,13 @@ func SmsCodeLogin(phone, code string) (*User, error) {
 
 	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_SMS)
 	if err != nil {
-		return nil, fmt.Errorf("invalid code", phone)
+		logger.Infof("sms-code auth fail, user: %s", user.Username)
+		return nil, fmt.Errorf("login fail, check your sms-code")
 	}
 
 	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
-		return nil, fmt.Errorf("the code has expired", phone)
+		logger.Infof("sms-code auth expired, user: %s", user.Username)
+		return nil, fmt.Errorf("login fail, the code has expired")
 	}
 
 	lc.Del()
@@ -172,11 +176,13 @@ func EmailCodeLogin(email, code string) (*User, error) {
 
 	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_EMAIL)
 	if err != nil {
-		return nil, fmt.Errorf("invalid code", email)
+		logger.Infof("email-code auth fail, user: %s", user.Username)
+		return nil, fmt.Errorf("login fail, check your email-code")
 	}
 
 	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
-		return nil, fmt.Errorf("the code has expired", email)
+		logger.Infof("email-code auth expired, user: %s", user.Username)
+		return nil, fmt.Errorf("login fail, the code has expired")
 	}
 
 	lc.Del()
