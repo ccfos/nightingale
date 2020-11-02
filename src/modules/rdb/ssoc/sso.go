@@ -17,7 +17,6 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
-	"k8s.io/apimachinery/pkg/util/cache"
 )
 
 var (
@@ -29,8 +28,7 @@ type ssoClient struct {
 	verifier        *oidc.IDTokenVerifier
 	config          oauth2.Config
 	apiKey          string
-	cache           *cache.LRUExpireCache
-	stateExpiresIn  time.Duration
+	stateExpiresIn  int64
 	ssoAddr         string
 	callbackAddr    string
 	coverAttributes bool
@@ -54,7 +52,6 @@ func InitSSO() {
 		return
 	}
 
-	cli.cache = cache.NewLRUExpireCache(1000)
 	cli.ssoAddr = cf.SsoAddr
 	cli.callbackAddr = cf.RedirectURL
 	cli.coverAttributes = cf.CoverAttributes
@@ -81,19 +78,26 @@ func InitSSO() {
 	}
 	cli.apiKey = cf.ApiKey
 
-	if cf.StateExpiresIn == 0 {
-		cli.stateExpiresIn = time.Second * 60
-	} else {
-		cli.stateExpiresIn = time.Second * time.Duration(cf.StateExpiresIn)
+	if cli.stateExpiresIn = cf.StateExpiresIn; cli.stateExpiresIn == 0 {
+		cli.stateExpiresIn = 60
 	}
 }
 
 // Authorize return the sso authorize location with state
-func Authorize(redirect string) string {
-	state := uuid.New().String()
-	cli.cache.Add(state, redirect, cli.stateExpiresIn)
+func Authorize(redirect string) (string, error) {
+	state := &models.AuthState{
+		State:     uuid.New().String(),
+		Typ:       "OAuth2.CODE",
+		Redirect:  redirect,
+		ExpiresAt: time.Now().Unix() + cli.stateExpiresIn,
+	}
+
+	if err := state.Save(); err != nil {
+		return "", err
+	}
+
 	// log.Printf("add state %s", state)
-	return cli.config.AuthCodeURL(state)
+	return cli.config.AuthCodeURL(state.State), nil
 }
 
 // LogoutLocation return logout location
@@ -106,15 +110,13 @@ func LogoutLocation(redirect string) string {
 
 // Callback 用 code 兑换 accessToken 以及 用户信息,
 func Callback(code, state string) (string, *models.User, error) {
-	s, ok := cli.cache.Get(state)
-	if !ok {
+	s, err := models.AuthStateGet("state=?", state)
+	if err != nil {
 		return "", nil, errState
 	}
-	cli.cache.Remove(state)
-	// log.Printf("remove state %s", state)
 
-	redirect := s.(string)
-	// log.Printf("callback, get state %s redirect %s", state, redirect)
+	s.Del()
+	// log.Printf("remove state %s", state)
 
 	u, err := exchangeUser(code)
 	if err != nil {
@@ -138,7 +140,7 @@ func Callback(code, state string) (string, *models.User, error) {
 		err = user.Update("email", "dispname", "phone", "im")
 	}
 
-	return redirect, user, err
+	return s.Redirect, user, err
 }
 
 func exchangeUser(code string) (*models.User, error) {

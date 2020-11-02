@@ -130,12 +130,13 @@ func authAuthorizeV2(c *gin.Context) {
 		return
 	}
 
+	var err error
 	if config.Config.SSO.Enable {
-		ret.Redirect = ssoc.Authorize(redirect)
+		ret.Redirect, err = ssoc.Authorize(redirect)
 	} else {
 		ret.Redirect = "/login"
 	}
-	renderData(c, ret, nil)
+	renderData(c, ret, err)
 }
 
 func authCallbackV2(c *gin.Context) {

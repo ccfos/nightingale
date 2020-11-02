@@ -1,6 +1,9 @@
 package models
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 type Captcha struct {
 	CaptchaId string `json:"captchaId"`
@@ -30,5 +33,12 @@ func (p *Captcha) Save() error {
 
 func (p *Captcha) Del() error {
 	_, err := DB["rdb"].Where("captcha_id=?", p.CaptchaId).Delete(new(Captcha))
+	return err
+}
+
+const captchaExpiresIn = 600
+
+func (p Captcha) CleanUp() error {
+	_, err := DB["rdb"].Exec("delete from captcha where created_at < ?", time.Now().Unix()-captchaExpiresIn)
 	return err
 }
