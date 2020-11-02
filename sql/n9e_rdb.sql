@@ -282,8 +282,7 @@ CREATE TABLE `operation_log`
     PRIMARY KEY (`id`),
     KEY (`clock`),
     KEY (`res_cl`, `res_id`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
 CREATE TABLE `login_code`
 (
@@ -297,5 +296,19 @@ CREATE TABLE `login_code`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
 
+CREATE TABLE `auth_state` (
+  `state`		varchar(128)		DEFAULT ''	NOT NULL,
+  `typ`			varchar(32)		DEFAULT ''	NOT NULL COMMENT 'response_type',
+  `redirect`		varchar(1024)		DEFAULT ''	NOT NULL,
+  `expires_at`		bigint 			DEFAULT '0'	NOT NULL,
+  PRIMARY KEY (`state`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
 
+CREATE TABLE `captcha` (
+  `captcha_id`		varchar(128)				NOT NULL,
+  `answer`		varchar(128)		DEFAULT ''	NOT NULL,
+  `created_at`		bigint			DEFAULT '0'	NOT NULL,
+  KEY (`captcha_id`, `answer`),
+  KEY (`created_at`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8;

@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mojocn/base64Captcha"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/str"
 
@@ -22,8 +24,19 @@ import (
 )
 
 var (
-	loginCodeSmsTpl   *template.Template
-	loginCodeEmailTpl *template.Template
+	loginCodeSmsTpl     *template.Template
+	loginCodeEmailTpl   *template.Template
+	errUnsupportCaptcha = errors.New("unsupported captcha")
+
+	// https://captcha.mojotv.cn
+	captchaDirver = base64Captcha.DriverString{
+		Height:          30,
+		Width:           120,
+		ShowLineOptions: 0,
+		Length:          4,
+		Source:          "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+		//ShowLineOptions: 14,
+	}
 )
 
 func init() {
@@ -102,23 +115,6 @@ func logout(c *gin.Context) {
 	}
 }
 
-func authAuthorize(c *gin.Context) {
-	username := cookieUsername(c)
-	if username != "" { // alread login
-		c.String(200, "hi, "+username)
-		return
-	}
-
-	redirect := queryStr(c, "redirect", "/")
-
-	if config.Config.SSO.Enable {
-		c.Redirect(302, ssoc.Authorize(redirect))
-	} else {
-		c.String(200, "sso does not enable")
-	}
-
-}
-
 type authRedirect struct {
 	Redirect string `json:"redirect"`
 	Msg      string `json:"msg"`
@@ -134,29 +130,13 @@ func authAuthorizeV2(c *gin.Context) {
 		return
 	}
 
+	var err error
 	if config.Config.SSO.Enable {
-		ret.Redirect = ssoc.Authorize(redirect)
+		ret.Redirect, err = ssoc.Authorize(redirect)
 	} else {
 		ret.Redirect = "/login"
 	}
-	renderData(c, ret, nil)
-}
-
-func authCallback(c *gin.Context) {
-	code := queryStr(c, "code", "")
-	state := queryStr(c, "state", "")
-	if code == "" {
-		if redirect := queryStr(c, "redirect"); redirect != "" {
-			c.Redirect(302, redirect)
-			return
-		}
-	}
-
-	redirect, user, err := ssoc.Callback(code, state)
-	dangerous(err)
-
-	writeCookieUser(c, user.UUID)
-	c.Redirect(302, redirect)
+	renderData(c, ret, err)
 }
 
 func authCallbackV2(c *gin.Context) {
@@ -180,14 +160,6 @@ func authCallbackV2(c *gin.Context) {
 
 	writeCookieUser(c, user.UUID)
 	renderData(c, ret, nil)
-}
-
-func authSettings(c *gin.Context) {
-	renderData(c, struct {
-		Sso bool `json:"sso"`
-	}{
-		Sso: config.Config.SSO.Enable,
-	}, nil)
 }
 
 func logoutV2(c *gin.Context) {
@@ -515,4 +487,34 @@ func rstPassword(c *gin.Context) {
 	} else {
 		renderData(c, "reset successfully", nil)
 	}
+}
+
+func captchaGet(c *gin.Context) {
+	ret, err := func() (*models.Captcha, error) {
+		if !config.Config.Captcha {
+			return nil, errUnsupportCaptcha
+		}
+
+		driver := captchaDirver.ConvertFonts()
+		id, content, answer := driver.GenerateIdQuestionAnswer()
+		item, err := driver.DrawCaptcha(content)
+		if err != nil {
+			return nil, err
+		}
+
+		ret := &models.Captcha{
+			CaptchaId: id,
+			Answer:    answer,
+			Image:     item.EncodeB64string(),
+			CreatedAt: time.Now().Unix(),
+		}
+
+		if err := ret.Save(); err != nil {
+			return nil, err
+		}
+
+		return ret, nil
+	}()
+
+	renderData(c, ret, err)
 }
