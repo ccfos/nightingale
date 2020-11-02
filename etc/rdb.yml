@@ -92,3 +92,5 @@ wechat:
   corp_id: "xxxxxxxxxxxxx"
   agent_id: 1000000
   secret: "xxxxxxxxxxxxxxxxx"
+
+captcha: false

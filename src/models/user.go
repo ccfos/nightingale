@@ -18,6 +18,15 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/config"
 )
 
+const (
+	LOGIN_T_SMS      = "sms-code"
+	LOGIN_T_EMAIL    = "email-code"
+	LOGIN_T_RST      = "rst-code"
+	LOGIN_T_PWD      = "password"
+	LOGIN_T_LDAP     = "ldap"
+	LOGIN_EXPIRES_IN = 300
+)
+
 type User struct {
 	Id         int64  `json:"id"`
 	UUID       string `json:"-" xorm:"'uuid'"`
@@ -82,18 +91,16 @@ func InitRooter() {
 	log.Println("user root init done")
 }
 
-func LdapLogin(user, pass, clientIP string) error {
+func LdapLogin(user, pass string) (*User, error) {
 	sr, err := ldapReq(user, pass)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	go LoginLogNew(user, clientIP, "in")
 
 	var u User
 	has, err := DB["rdb"].Where("username=?", user).Get(&u)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	u.CopyLdapAttr(sr)
@@ -101,9 +108,9 @@ func LdapLogin(user, pass, clientIP string) error {
 	if has {
 		if config.Config.LDAP.CoverAttributes {
 			_, err := DB["rdb"].Where("id=?", u.Id).Update(u)
-			return err
+			return nil, err
 		} else {
-			return nil
+			return &u, err
 		}
 	}
 
@@ -111,34 +118,76 @@ func LdapLogin(user, pass, clientIP string) error {
 	u.Password = "******"
 	u.UUID = GenUUIDForUser(user)
 	_, err = DB["rdb"].Insert(u)
-	return err
+	return &u, nil
 }
 
-func PassLogin(user, pass, clientIP string) error {
+func PassLogin(user, pass string) (*User, error) {
 	var u User
-	has, err := DB["rdb"].Where("username=?", user).Cols("password").Get(&u)
+	has, err := DB["rdb"].Where("username=?", user).Get(&u)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !has {
 		logger.Infof("password auth fail, no such user: %s", user)
-		return fmt.Errorf("login fail, check your username and password")
+		return nil, fmt.Errorf("login fail, check your username and password")
 	}
 
 	loginPass, err := CryptoPass(pass)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if loginPass != u.Password {
 		logger.Infof("password auth fail, password error, user: %s", user)
-		return fmt.Errorf("login fail, check your username and password")
+		return nil, fmt.Errorf("login fail, check your username and password")
 	}
 
-	go LoginLogNew(user, clientIP, "in")
+	return &u, nil
+}
 
-	return nil
+func SmsCodeLogin(phone, code string) (*User, error) {
+	user, _ := UserGet("phone=?", phone)
+	if user == nil {
+		return nil, fmt.Errorf("phone %s dose not exist", phone)
+	}
+
+	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_SMS)
+	if err != nil {
+		logger.Infof("sms-code auth fail, user: %s", user.Username)
+		return nil, fmt.Errorf("login fail, check your sms-code")
+	}
+
+	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
+		logger.Infof("sms-code auth expired, user: %s", user.Username)
+		return nil, fmt.Errorf("login fail, the code has expired")
+	}
+
+	lc.Del()
+
+	return user, nil
+}
+
+func EmailCodeLogin(email, code string) (*User, error) {
+	user, _ := UserGet("email=?", email)
+	if user == nil {
+		return nil, fmt.Errorf("email %s dose not exist", email)
+	}
+
+	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_EMAIL)
+	if err != nil {
+		logger.Infof("email-code auth fail, user: %s", user.Username)
+		return nil, fmt.Errorf("login fail, check your email-code")
+	}
+
+	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
+		logger.Infof("email-code auth expired, user: %s", user.Username)
+		return nil, fmt.Errorf("login fail, the code has expired")
+	}
+
+	lc.Del()
+
+	return user, nil
 }
 
 func UserGet(where string, args ...interface{}) (*User, error) {
