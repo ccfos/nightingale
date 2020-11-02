@@ -122,7 +122,8 @@ func PassLogin(user, pass, clientIP string) error {
 	}
 
 	if !has {
-		return fmt.Errorf("user[%s] not found", user)
+		logger.Infof("password auth fail, no such user: %s", user)
+		return fmt.Errorf("login fail, check your username and password")
 	}
 
 	loginPass, err := CryptoPass(pass)
@@ -131,7 +132,8 @@ func PassLogin(user, pass, clientIP string) error {
 	}
 
 	if loginPass != u.Password {
-		return fmt.Errorf("password error")
+		logger.Infof("password auth fail, password error, user: %s", user)
+		return fmt.Errorf("login fail, check your username and password")
 	}
 
 	go LoginLogNew(user, clientIP, "in")
