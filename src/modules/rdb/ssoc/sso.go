@@ -3,6 +3,7 @@ package ssoc
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -17,6 +18,11 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 	"k8s.io/apimachinery/pkg/util/cache"
+)
+
+var (
+	errState = errors.New("您的登录信息已过期，请前往首页重新登录..")
+	errUser  = errors.New("用户信息异常")
 )
 
 type ssoClient struct {
@@ -102,7 +108,7 @@ func LogoutLocation(redirect string) string {
 func Callback(code, state string) (string, *models.User, error) {
 	s, ok := cli.cache.Get(state)
 	if !ok {
-		return "", nil, fmt.Errorf("invalid state %s", state)
+		return "", nil, errState
 	}
 	cli.cache.Remove(state)
 	// log.Printf("remove state %s", state)
@@ -112,13 +118,13 @@ func Callback(code, state string) (string, *models.User, error) {
 
 	u, err := exchangeUser(code)
 	if err != nil {
-		return "", nil, err
+		return "", nil, errUser
 	}
 	// log.Printf("exchange user %v", u)
 
 	user, err := models.UserGet("username=?", u.Username)
 	if err != nil {
-		return "", nil, err
+		return "", nil, errUser
 	}
 
 	if user == nil {

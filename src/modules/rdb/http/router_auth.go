@@ -102,23 +102,6 @@ func logout(c *gin.Context) {
 	}
 }
 
-func authAuthorize(c *gin.Context) {
-	username := cookieUsername(c)
-	if username != "" { // alread login
-		c.String(200, "hi, "+username)
-		return
-	}
-
-	redirect := queryStr(c, "redirect", "/")
-
-	if config.Config.SSO.Enable {
-		c.Redirect(302, ssoc.Authorize(redirect))
-	} else {
-		c.String(200, "sso does not enable")
-	}
-
-}
-
 type authRedirect struct {
 	Redirect string `json:"redirect"`
 	Msg      string `json:"msg"`
@@ -142,23 +125,6 @@ func authAuthorizeV2(c *gin.Context) {
 	renderData(c, ret, nil)
 }
 
-func authCallback(c *gin.Context) {
-	code := queryStr(c, "code", "")
-	state := queryStr(c, "state", "")
-	if code == "" {
-		if redirect := queryStr(c, "redirect"); redirect != "" {
-			c.Redirect(302, redirect)
-			return
-		}
-	}
-
-	redirect, user, err := ssoc.Callback(code, state)
-	dangerous(err)
-
-	writeCookieUser(c, user.UUID)
-	c.Redirect(302, redirect)
-}
-
 func authCallbackV2(c *gin.Context) {
 	code := queryStr(c, "code", "")
 	state := queryStr(c, "state", "")
@@ -180,14 +146,6 @@ func authCallbackV2(c *gin.Context) {
 
 	writeCookieUser(c, user.UUID)
 	renderData(c, ret, nil)
-}
-
-func authSettings(c *gin.Context) {
-	renderData(c, struct {
-		Sso bool `json:"sso"`
-	}{
-		Sso: config.Config.SSO.Enable,
-	}, nil)
 }
 
 func logoutV2(c *gin.Context) {

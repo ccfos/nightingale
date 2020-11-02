@@ -18,14 +18,9 @@ func Config(r *gin.Engine) {
 		notLogin.GET("/roles/local", localRoleGet)
 		notLogin.POST("/users/invite", userInvitePost)
 
-		notLogin.GET("/auth/authorize", authAuthorize)
-		notLogin.GET("/auth/callback", authCallback)
-		notLogin.GET("/auth/settings", authSettings)
-
 		notLogin.GET("/auth/v2/authorize", authAuthorizeV2)
 		notLogin.GET("/auth/v2/callback", authCallbackV2)
 		notLogin.GET("/auth/v2/logout", logoutV2)
-
 		notLogin.POST("/auth/send-rst-code-by-sms", sendRstCodeBySms)
 		notLogin.POST("/auth/rst-password", rstPassword)
 
