@@ -270,6 +270,10 @@ func HostBindingsForMon(endpointList []string) ([]string, error) {
 			return list, err
 		}
 
+		if node == nil {
+			continue
+		}
+
 		list = append(list, node.Path)
 	}
 	return list, nil

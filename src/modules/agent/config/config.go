@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 	"github.com/toolkits/pkg/file"
@@ -14,19 +15,35 @@ import (
 )
 
 type ConfigT struct {
-	Logger loggeri.Config `yaml:"logger"`
-	Stra   straSection    `yaml:"stra"`
-	Worker workerSection  `yaml:"worker"`
-	Sys    sys.SysSection `yaml:"sys"`
-	Enable enableSection  `yaml:"enable"`
-	Job    jobSection     `yaml:"job"`
-	Report reportSection  `yaml:"report"`
+	Logger  loggeri.Config `yaml:"logger"`
+	Stra    straSection    `yaml:"stra"`
+	Worker  workerSection  `yaml:"worker"`
+	Sys     sys.SysSection `yaml:"sys"`
+	Enable  enableSection  `yaml:"enable"`
+	Job     jobSection     `yaml:"job"`
+	Report  reportSection  `yaml:"report"`
+	Udp     UdpSection     `yaml:"udp"`
+	Metrics MetricsSection `yaml:"metrics"`
 }
 
+type UdpSection struct {
+	Enable bool   `yaml:"enable"`
+	Listen string `yaml:"listen"`
+}
+
+type MetricsSection struct {
+	MaxProcs         int  `yaml:"maxProcs"`
+	ReportIntervalMs int  `yaml:"reportIntervalMs"`
+	ReportTimeoutMs  int  `yaml:"reportTimeoutMs"`
+	ReportPacketSize int  `yaml:"reportPacketSize"`
+	SendToInfoFile   bool `yaml:"sendToInfoFile"`
+	Interval         time.Duration
+}
 type enableSection struct {
-	Mon    bool `yaml:"mon"`
-	Job    bool `yaml:"job"`
-	Report bool `yaml:"report"`
+	Mon     bool `yaml:"mon"`
+	Job     bool `yaml:"job"`
+	Report  bool `yaml:"report"`
+	Metrics bool `yaml:"metrics"`
 }
 
 type reportSection struct {

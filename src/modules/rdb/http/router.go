@@ -28,6 +28,8 @@ func Config(r *gin.Engine) {
 
 		notLogin.POST("/auth/send-rst-code-by-sms", sendRstCodeBySms)
 		notLogin.POST("/auth/rst-password", rstPassword)
+
+		notLogin.GET("/v2/nodes", nodeGets)
 	}
 
 	hbs := r.Group("/api/hbs")

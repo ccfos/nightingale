@@ -86,7 +86,7 @@ func popEvent(queues []interface{}) (*models.Event, bool) {
 	var curNodePath string
 
 	node, err := models.NodeGet("id=?", stra.Nid)
-	if err != nil {
+	if err != nil || node == nil {
 		logger.Warningf("get node failed, node id: %v, event: %+v, err: %v", stra.Nid, event, err)
 	} else {
 		nodePath = node.Path

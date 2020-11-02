@@ -14,6 +14,7 @@ import (
 	"github.com/didi/nightingale/src/modules/agent/http"
 	"github.com/didi/nightingale/src/modules/agent/log/worker"
 	"github.com/didi/nightingale/src/modules/agent/report"
+	"github.com/didi/nightingale/src/modules/agent/statsd"
 	"github.com/didi/nightingale/src/modules/agent/stra"
 	"github.com/didi/nightingale/src/modules/agent/sys"
 	"github.com/didi/nightingale/src/modules/agent/sys/funcs"
@@ -21,6 +22,8 @@ import (
 	"github.com/didi/nightingale/src/modules/agent/sys/ports"
 	"github.com/didi/nightingale/src/modules/agent/sys/procs"
 	"github.com/didi/nightingale/src/modules/agent/timer"
+	"github.com/didi/nightingale/src/modules/agent/udp"
+	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
@@ -59,6 +62,7 @@ func main() {
 	parseConf()
 
 	loggeri.Init(config.Config.Logger)
+	stats.Init("agent")
 
 	if config.Config.Enable.Mon {
 		monStart()
@@ -72,6 +76,16 @@ func main() {
 		reportStart()
 	}
 
+	if config.Config.Enable.Metrics {
+
+		// 初始化 statsd服务
+		statsd.Start()
+
+		// 开启 udp监听 和 udp数据包处理进程
+		udp.Start()
+	}
+
+	core.InitRpcClients()
 	http.Start()
 
 	endingProc()
@@ -94,7 +108,6 @@ func monStart() {
 	sys.Init(config.Config.Sys)
 	stra.Init()
 
-	core.InitRpcClients()
 	funcs.BuildMappers()
 	funcs.Collect()
 
