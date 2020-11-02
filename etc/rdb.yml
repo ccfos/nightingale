@@ -24,8 +24,6 @@ sso:
   coverAttributes: false
   stateExpiresIn: 300
 
-captcha: true
-
 tokens:
   - rdb-builtin-token
 
@@ -92,3 +90,5 @@ wechat:
   corp_id: "xxxxxxxxxxxxx"
   agent_id: 1000000
   secret: "xxxxxxxxxxxxxxxxx"
+
+captcha: false
