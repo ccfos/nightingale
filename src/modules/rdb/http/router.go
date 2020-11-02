@@ -21,8 +21,10 @@ func Config(r *gin.Engine) {
 		notLogin.GET("/auth/v2/authorize", authAuthorizeV2)
 		notLogin.GET("/auth/v2/callback", authCallbackV2)
 		notLogin.GET("/auth/v2/logout", logoutV2)
+
 		notLogin.POST("/auth/send-rst-code-by-sms", sendRstCodeBySms)
 		notLogin.POST("/auth/rst-password", rstPassword)
+		notLogin.GET("/auth/captcha", captchaGet)
 
 		notLogin.GET("/v2/nodes", nodeGets)
 	}

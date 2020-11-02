@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mojocn/base64Captcha"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/str"
 
@@ -22,8 +24,19 @@ import (
 )
 
 var (
-	loginCodeSmsTpl   *template.Template
-	loginCodeEmailTpl *template.Template
+	loginCodeSmsTpl     *template.Template
+	loginCodeEmailTpl   *template.Template
+	errUnsupportCaptcha = errors.New("unsupported captcha")
+
+	// https://captcha.mojotv.cn
+	captchaDirver = base64Captcha.DriverString{
+		Height:          30,
+		Width:           120,
+		ShowLineOptions: 0,
+		Length:          4,
+		Source:          "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+		//ShowLineOptions: 14,
+	}
 )
 
 func init() {
@@ -473,4 +486,34 @@ func rstPassword(c *gin.Context) {
 	} else {
 		renderData(c, "reset successfully", nil)
 	}
+}
+
+func captchaGet(c *gin.Context) {
+	ret, err := func() (*models.Captcha, error) {
+		if !config.Config.Captcha {
+			return nil, errUnsupportCaptcha
+		}
+
+		driver := captchaDirver.ConvertFonts()
+		id, content, answer := driver.GenerateIdQuestionAnswer()
+		item, err := driver.DrawCaptcha(content)
+		if err != nil {
+			return nil, err
+		}
+
+		ret := &models.Captcha{
+			CaptchaId: id,
+			Answer:    answer,
+			Image:     item.EncodeB64string(),
+			CreatedAt: time.Now().Unix(),
+		}
+
+		if err := ret.Save(); err != nil {
+			return nil, err
+		}
+
+		return ret, nil
+	}()
+
+	renderData(c, ret, err)
 }
