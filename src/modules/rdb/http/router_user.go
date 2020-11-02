@@ -45,6 +45,7 @@ func userAddPost(c *gin.Context) {
 
 	var f userProfileForm
 	bind(c, &f)
+	checkPassword(f.Password)
 
 	pass, err := models.CryptoPass(f.Password)
 	dangerous(err)
@@ -140,6 +141,7 @@ func userPasswordPut(c *gin.Context) {
 
 	var f userPasswordForm
 	bind(c, &f)
+	checkPassword(f.Password)
 
 	target := User(urlParamInt64(c, "id"))
 
@@ -259,6 +261,7 @@ type userInviteForm struct {
 func userInvitePost(c *gin.Context) {
 	var f userInviteForm
 	bind(c, &f)
+	checkPassword(f.Password)
 
 	inv, err := models.InviteGet("token=?", f.Token)
 	dangerous(err)

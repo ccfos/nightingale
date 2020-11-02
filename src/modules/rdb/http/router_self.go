@@ -42,6 +42,7 @@ type selfPasswordForm struct {
 func selfPasswordPut(c *gin.Context) {
 	var f selfPasswordForm
 	bind(c, &f)
+	checkPassword(f.NewPass)
 
 	oldpass, err := models.CryptoPass(f.OldPass)
 	dangerous(err)
