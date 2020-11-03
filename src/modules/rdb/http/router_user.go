@@ -23,6 +23,10 @@ func userListGet(c *gin.Context) {
 	list, err := models.UserGets(ids, query, limit, offset(c, limit))
 	dangerous(err)
 
+	for i := 0; i < len(list); i++ {
+		list[i].UUID = ""
+	}
+
 	renderData(c, gin.H{
 		"list":  list,
 		"total": total,
@@ -75,7 +79,9 @@ func userAddPost(c *gin.Context) {
 }
 
 func userProfileGet(c *gin.Context) {
-	renderData(c, User(urlParamInt64(c, "id")), nil)
+	user := User(urlParamInt64(c, "id"))
+	user.UUID = ""
+	renderData(c, user,nil)
 }
 
 func userProfilePut(c *gin.Context) {
