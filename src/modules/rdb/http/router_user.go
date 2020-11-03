@@ -23,6 +23,10 @@ func userListGet(c *gin.Context) {
 	list, err := models.UserGets(ids, query, limit, offset(c, limit))
 	dangerous(err)
 
+	for i := 0; i < len(list); i++ {
+		list[i].UUID = ""
+	}
+
 	renderData(c, gin.H{
 		"list":  list,
 		"total": total,
@@ -45,6 +49,7 @@ func userAddPost(c *gin.Context) {
 
 	var f userProfileForm
 	bind(c, &f)
+	checkPassword(f.Password)
 
 	pass, err := models.CryptoPass(f.Password)
 	dangerous(err)
@@ -74,7 +79,9 @@ func userAddPost(c *gin.Context) {
 }
 
 func userProfileGet(c *gin.Context) {
-	renderData(c, User(urlParamInt64(c, "id")), nil)
+	user := User(urlParamInt64(c, "id"))
+	user.UUID = ""
+	renderData(c, user,nil)
 }
 
 func userProfilePut(c *gin.Context) {
@@ -140,6 +147,7 @@ func userPasswordPut(c *gin.Context) {
 
 	var f userPasswordForm
 	bind(c, &f)
+	checkPassword(f.Password)
 
 	target := User(urlParamInt64(c, "id"))
 
@@ -259,6 +267,7 @@ type userInviteForm struct {
 func userInvitePost(c *gin.Context) {
 	var f userInviteForm
 	bind(c, &f)
+	checkPassword(f.Password)
 
 	inv, err := models.InviteGet("token=?", f.Token)
 	dangerous(err)

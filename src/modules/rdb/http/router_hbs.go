@@ -36,7 +36,7 @@ func heartBeat(c *gin.Context) {
 }
 
 func instanceGets(c *gin.Context) {
-	mod := mustQueryStr(c, "mod")
+	mod := queryStr(c, "mod")
 	alive := queryInt(c, "alive", 0)
 
 	instances, err := models.GetAllInstances(mod, alive)

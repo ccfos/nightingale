@@ -63,7 +63,7 @@ func main() {
 	backend.Init(cfg.Backend)
 	cron.Init()
 
-	go report.Init(cfg.Report, "monapi")
+	go report.Init(cfg.Report, "rdb")
 	go rpc.Start()
 
 	r := gin.New()

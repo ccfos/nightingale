@@ -57,7 +57,7 @@ func main() {
 	loggeri.Init(config.Config.Logger)
 
 	// 初始化数据库和相关数据
-	models.InitMySQL("rdb")
+	models.InitMySQL("rdb", "hbs")
 	models.InitSalt()
 	models.InitRooter()
 
@@ -77,6 +77,7 @@ func main() {
 	go cron.ConsumeSms()
 	go cron.ConsumeVoice()
 	go cron.ConsumeIm()
+	go cron.CleanerLoop()
 
 	http.Start()
 

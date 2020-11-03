@@ -9,8 +9,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/slice"
 
+	"github.com/didi/nightingale/src/common/address"
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/job/config"
 )
@@ -34,6 +36,9 @@ func taskPost(c *gin.Context) {
 	var f taskForm
 	bind(c, &f)
 	hosts := cleanHosts(f.Hosts)
+	if len(hosts) == 0 {
+		bomb("arg[hosts] empty")
+	}
 
 	checkTaskPerm(hosts, user, f.Account)
 
@@ -556,4 +561,216 @@ func taskCallback(c *gin.Context) {
 	}
 
 	renderMessage(c, nil)
+}
+
+// 这个数据结构是tt回调的时候使用的通用数据结构，里边既有工单基本信息，也有结构化数据，job这里只需要从中解析出结构化数据
+type ttForm struct {
+	Id       int64                  `json:"id" binding:"required"`
+	RunUser  string                 `json:"runUser" binding:"required"`
+	Form     map[string]interface{} `json:"form" binding:"required"`
+	Approval int                    `json:"approval"`
+}
+
+// /api/job-ce/run/:id?hosts=10.3.4.5,10.4.5.6
+func taskRunForTT(c *gin.Context) {
+	var f ttForm
+	bind(c, &f)
+
+	action := c.Request.Host + c.Request.URL.Path
+	if f.Approval == 2 {
+		renderMessage(c, "该任务未通过审批")
+		return
+	}
+	tpl := TaskTpl(urlParamInt64(c, "id"))
+	arr, err := tpl.Hosts()
+	dangerous(err)
+
+	// 如果QueryString里带有hosts参数，就用QueryString里的机器列表
+	// 否则就从结构化数据中解析hosts
+	// 如果结构化数据中也没有，那只能有模板里的，模板里也没有就报错
+	hosts := queryStr(c, "hosts", "")
+
+	if hosts != "" {
+		// 使用QueryString传过来的hosts
+		tmp := cleanHosts(strings.Split(hosts, ","))
+		if len(tmp) > 0 {
+			arr = tmp
+		}
+	} else {
+		if v, ok := f.Form["hosts"]; ok {
+			hosts = v.(string)
+			hosts = strings.ReplaceAll(hosts, "\r", ",")
+			hosts = strings.ReplaceAll(hosts, "\n", ",")
+			tmp := cleanHosts(strings.Split(hosts, ","))
+			if len(tmp) > 0 {
+				arr = tmp
+			}
+		}
+	}
+
+	if len(arr) == 0 {
+		bomb("hosts empty")
+	}
+
+	// 校验权限
+	user := loginUser(c)
+	checkTaskPerm(arr, user, tpl.Account)
+
+	task := &models.TaskMeta{
+		Title:     tpl.Title,
+		Account:   tpl.Account,
+		Batch:     tpl.Batch,
+		Tolerance: tpl.Tolerance,
+		Timeout:   tpl.Timeout,
+		Pause:     tpl.Pause,
+		Script:    tpl.Script,
+		Creator:   user.Username,
+	}
+
+	task.Args = ""
+	for k, v := range f.Form {
+		switch v.(type) {
+		case string:
+			if k == "hosts" {
+				tmp := v.(string)
+				tmp = strings.ReplaceAll(tmp, "\r", ",")
+				tmp = strings.ReplaceAll(tmp, "\n", ",")
+				tmpArray := cleanHosts(strings.Split(hosts, ","))
+				if len(tmpArray) > 0 {
+					v = strings.Join(tmpArray, ",")
+				}
+
+			}
+			if len(v.(string)) < 1600 {
+				task.Args += fmt.Sprintf("--%s=%s,,", k, v.(string))
+			}
+		case int:
+			task.Args += fmt.Sprintf("--%s=%d,,", k, v.(int))
+		case int64:
+			task.Args += fmt.Sprintf("--%s=%d,,", k, v.(int64))
+		case float64:
+			//TODO 暂时不支持传非整型
+			task.Args += fmt.Sprintf("--%s=%d,,", k, int64(v.(float64)))
+		}
+	}
+
+	task.Args = strings.TrimSuffix(task.Args, ",,")
+
+	dangerous(task.Save(arr, "start"))
+	go func() {
+		var arr2Map = map[string]int{}
+		for _, a := range arr {
+			arr2Map[a] = 1
+		}
+
+		for {
+			var (
+				restHosts = map[string]int{}
+			)
+			for h, _ := range arr2Map {
+				th, err := models.TaskHostGet(task.Id, h)
+				if err == nil {
+					if th.Status == "killed" {
+						reply := fmt.Sprintf("### Job通知推送\n* Job平台任务(ID:%d)在机器%s中执行失败，"+
+							"原因为task被kill掉\n* 执行action接口地址为: %s\n* 标准输出: %s\n* 错误输出: %s\n",
+							task.Id, h, action, th.Stdout, th.Stderr)
+						err = TicketSender(f.Id, action, "task has been killed", reply, -1,
+							nil)
+						if err != nil {
+							logger.Errorf("send callback to ticket, err: %v", err)
+						}
+					} else if th.Status == "failed" {
+						reply := fmt.Sprintf("### Job通知推送\n* Job平台任务(ID:%d)在机器%s中执行失败，"+
+							"详情见错误输出\n* 执行action接口地址为: %s\n* 标准输出: %s\n* 错误输出: %s\n",
+							task.Id, h, action, th.Stdout, th.Stderr)
+						err = TicketSender(f.Id, action, "run task failed", reply, -1,
+							nil)
+						if err != nil {
+							logger.Errorf("send callback to ticket, err: %v", err)
+						}
+					} else if th.Status == "timeout" {
+						reply := fmt.Sprintf("### Job通知推送\n* Job平台任务(ID:%d)在机器%s中执行超时"+
+							"\n* 执行action接口地址为: %s\n* 标准输出: %s\n* 错误输出: %s\n",
+							task.Id, h, action, th.Stdout, th.Stderr)
+						err = TicketSender(f.Id, action, "run task failed", reply, -1,
+							nil)
+						if err != nil {
+							logger.Errorf("send callback to ticket, err: %v", err)
+						}
+					} else if th.Status == "success" {
+						reply := fmt.Sprintf("### Job通知推送\n* Job平台任务(ID:%d)在机器%s中执行成功"+
+							"\n* 执行action接口地址为: %s\n* 标准输出: %s\n* 错误输出: %s\n",
+							task.Id, h, action, th.Stdout, th.Stderr)
+						err = TicketSender(f.Id, action, "task ", reply, 1,
+							nil)
+						if err != nil {
+							logger.Errorf("send callback to ticket, err: %v", err)
+						}
+					} else {
+						restHosts[h] = 1
+					}
+				} else {
+					logger.Errorf("get task_host err: %v", err)
+				}
+			}
+
+			arr2Map = restHosts
+			time.Sleep(time.Second)
+		}
+	}()
+
+	go func() {
+		time.Sleep(time.Second)
+		reply := fmt.Sprintf("[任务详情请关注Job平台任务(ID:%d)详情页地址](%s)", task.Id, fmt.Sprintf("/job/tasks/%d/result", task.Id))
+		err = TicketSender(f.Id, action, "", reply, -1,
+			nil)
+		if err != nil {
+			logger.Errorf("send callback to ticket, err: %v", err)
+		}
+	}()
+
+	renderData(c, gin.H{"taskID": task.Id, "detailPage": fmt.Sprintf("/job/tasks/%d/result", task.Id)}, nil)
+}
+
+type ticketCallBackForm struct {
+	TicketId   int64       `json:"ticketId" binding:"required"`
+	ActionApi  string      `json:"actionApi" binding:"required"`
+	SystemName string      `json:"systemName" binding:"required"`
+	Success    int         `json:"success" binding:"required"`
+	Reason     string      `json:"reason"`
+	Info       interface{} `json:"info"`
+	AutoReply  string      `json:"autoReply"`
+}
+
+func TicketSender(id int64, action, reason, reply string, result int, info interface{}) error {
+	addr := address.GetHTTPListen("ticket")
+
+	data := ticketCallBackForm{
+		TicketId:  id,
+		ActionApi: action,
+		Success:   result,
+		Reason:    reason,
+		Info:      info,
+		AutoReply: reply,
+	}
+
+	url := fmt.Sprintf("%s/v1/ticket/callback?systemName=job", addr)
+	if !(strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")) {
+		url = "http://" + url
+	}
+
+	res, code, err := httplib.PostJSON(url, time.Second*5, data, map[string]string{"x-srv-token": "ticket-builtin-token"})
+	if err != nil {
+		logger.Errorf("call sender api failed, server: %v, data: %+v, err: %v, resp:%v, status code:%d", url, data, err, string(res), code)
+		return err
+	}
+
+	if code != 200 {
+		logger.Errorf("call sender api failed, server: %v, data: %+v, resp:%v, code:%d", url, data, string(res), code)
+		return err
+	}
+
+	logger.Debugf("ticket response %s", string(res))
+
+	return nil
 }

@@ -52,7 +52,7 @@ func (f MaskconfForm) Validate() {
 func maskconfPost(c *gin.Context) {
 	var f MaskconfForm
 	errors.Dangerous(c.ShouldBind(&f))
-	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_stra_write", f.Nid)
+	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_maskconf_create", f.Nid)
 	errors.Dangerous(err)
 	if !can {
 		errors.Bomb("permission deny")
@@ -103,7 +103,7 @@ func maskconfDel(c *gin.Context) {
 	mask, err := models.MaskconfGet("id", id)
 	errors.Dangerous(err)
 
-	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_stra_write", mask.Nid)
+	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_maskconf_delete", mask.Nid)
 	errors.Dangerous(err)
 	if !can {
 		errors.Bomb("permission deny")
@@ -120,7 +120,7 @@ func maskconfPut(c *gin.Context) {
 		errors.Bomb("maskconf is nil")
 	}
 
-	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_stra_write", mc.Nid)
+	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_maskconf_modify", mc.Nid)
 	errors.Dangerous(err)
 	if !can {
 		errors.Bomb("permission deny")

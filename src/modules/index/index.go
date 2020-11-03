@@ -61,7 +61,7 @@ func main() {
 	identity.Parse()
 	cache.InitDB(cfg.Cache)
 
-	go report.Init(cfg.Report, "monapi")
+	go report.Init(cfg.Report, "rdb")
 	go rpc.Start()
 
 	r := gin.New()
