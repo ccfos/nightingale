@@ -177,5 +177,12 @@ func Config(r *gin.Engine) {
 		v1.POST("/login", v1Login)
 		v1.POST("/send-login-code-by-sms", v1SendLoginCodeBySms)
 		v1.POST("/send-login-code-by-email", v1SendLoginCodeByEmail)
+
+		// 第三方系统获取某个用户的所有权限点
+		v1.GET("/perms/global", v1PermGlobalOps)
+
+		// 第三方系统同步权限表的数据
+		v1.GET("/table/sync/role-operation", v1RoleOperationGets)
+		v1.GET("/table/sync/role-global-user", v1RoleGlobalUserGets)
 	}
 }

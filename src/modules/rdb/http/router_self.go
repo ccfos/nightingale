@@ -113,3 +113,35 @@ func permGlobalOps(c *gin.Context) {
 
 	renderData(c, operations, err)
 }
+
+func v1PermGlobalOps(c *gin.Context) {
+	user, err := models.UserGet("username=?", queryStr(c, "username"))
+	dangerous(err)
+
+	operations := make(map[string]struct{})
+
+	if user.IsRoot == 1 {
+		for _, system := range config.GlobalOps {
+			for _, group := range system.Groups {
+				for _, op := range group.Ops {
+					operations[op.En] = struct{}{}
+				}
+			}
+		}
+
+		renderData(c, operations, nil)
+		return
+	}
+
+	roleIds, err := models.RoleIdsGetByUserId(user.Id)
+	dangerous(err)
+
+	ops, err := models.OperationsOfRoles(roleIds)
+	dangerous(err)
+
+	for _, op := range ops {
+		operations[op] = struct{}{}
+	}
+
+	renderData(c, operations, err)
+}

@@ -10,6 +10,12 @@ type RoleOperation struct {
 	Operation string `json:"operation"`
 }
 
+func RoleOperationAll() ([]RoleOperation, error) {
+	var objs []RoleOperation
+	err := DB["rdb"].OrderBy("id").Find(&objs)
+	return objs, err
+}
+
 func OperationsOfRoles(rids []int64) ([]string, error) {
 	if len(rids) == 0 {
 		return []string{}, nil
