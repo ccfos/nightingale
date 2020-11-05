@@ -111,6 +111,7 @@ func resourceUnregister(jsonBytes []byte) error {
 	}
 
 	if item.UUID == "" {
+		logger.Warning("unregister res msg uuid is nil")
 		return nil
 	}
 
