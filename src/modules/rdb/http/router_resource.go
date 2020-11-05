@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -365,10 +364,6 @@ func renderNodeResourcesCountByCate(c *gin.Context) {
 	node := Node(nodeId)
 	leadIds, err := node.LeafIds()
 	dangerous(err)
-
-	if len(leadIds) <= 0 {
-		dangerous(fmt.Errorf("leaf ids is nil"))
-	}
 
 	limit := 10000
 	query := ""
