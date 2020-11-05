@@ -29,7 +29,7 @@ const (
 
 type User struct {
 	Id         int64  `json:"id"`
-	UUID       string `json:"-" xorm:"'uuid'"`
+	UUID       string `json:"uuid" xorm:"'uuid'"`
 	Username   string `json:"username"`
 	Password   string `json:"-"`
 	Dispname   string `json:"dispname"`

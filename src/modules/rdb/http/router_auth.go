@@ -459,6 +459,10 @@ func rstPassword(c *gin.Context) {
 			return err
 		}
 
+		if err = checkPassword(in.Password); err != nil {
+			return err
+		}
+
 		if err = user.Update("password"); err != nil {
 			return err
 		}

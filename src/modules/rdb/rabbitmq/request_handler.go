@@ -103,19 +103,18 @@ func resourceRegister(jsonBytes []byte) error {
 
 // 第三方系统，比如RDS、Redis等，资源销毁了，要通知到RDB
 func resourceUnregister(jsonBytes []byte) error {
-	var uuids []string
-	err := json.Unmarshal(jsonBytes, &uuids)
+	var item models.ResourceRegisterItem
+	err := json.Unmarshal(jsonBytes, &item)
 	if err != nil {
-		logger.Error(err)
-		// 这种错误不需要重试，所以也就不需要return err了
+		logger.Warning(err)
 		return nil
 	}
 
-	if len(uuids) == 0 {
+	if item.UUID == "" {
 		return nil
 	}
 
-	err = models.ResourceUnregister(uuids)
+	err = models.ResourceUnregister([]string{item.UUID})
 	if err != nil {
 		logger.Error(err)
 		return err

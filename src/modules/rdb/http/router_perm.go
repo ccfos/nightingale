@@ -41,3 +41,8 @@ func v1CandoNodeOps(c *gin.Context) {
 
 	renderData(c, ret, nil)
 }
+
+func v1RoleGlobalUserGets(c *gin.Context) {
+	objs, err := models.RoleGlobalUserAll()
+	renderData(c, objs, err)
+}
