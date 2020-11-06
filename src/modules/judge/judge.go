@@ -4,8 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/didi/nightingale/src/common/identity"
 	"github.com/didi/nightingale/src/common/loggeri"
@@ -23,7 +21,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 )
 
@@ -80,11 +77,9 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r := gin.New()
-	routes.Config(r)
-	go http.Start(r, "judge", cfg.Logger.Level)
+	http.Start(routes.Config, "judge", cfg.Logger.Level)
 
-	ending()
+	http.GracefulShutdown()
 }
 
 // auto detect configuration file
@@ -120,18 +115,4 @@ func start() {
 	fmt.Println("transfer start, use configuration file:", *conf)
 	fmt.Println("runner.Cwd:", runner.Cwd)
 	fmt.Println("runner.Hostname:", runner.Hostname)
-}
-
-func ending() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	select {
-	case <-c:
-		fmt.Printf("stop signal caught, stopping... pid=%d\n", os.Getpid())
-	}
-
-	logger.Close()
-	http.Shutdown()
-	redi.CloseRedis()
-	fmt.Println("alarm stopped successfully")
 }

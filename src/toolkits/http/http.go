@@ -20,7 +20,7 @@ var srv = &http.Server{
 }
 
 // Start http server
-func Start(r *gin.Engine, mod string, level string) {
+func Start(RouterConfig func(*gin.Engine), mod string, level string) {
 	loggerMid := middleware.LoggerWithConfig(middleware.LoggerConfig{})
 	recoveryMid := middleware.Recovery()
 
@@ -29,8 +29,9 @@ func Start(r *gin.Engine, mod string, level string) {
 	} else {
 		srv.WriteTimeout = 120 * time.Second
 	}
-
+	r := gin.New()
 	r.Use(loggerMid, recoveryMid)
+	RouterConfig(r)
 
 	srv.Addr = address.GetHTTPListen(mod)
 	srv.Handler = r
@@ -43,8 +44,8 @@ func Start(r *gin.Engine, mod string, level string) {
 	}()
 }
 
-// Shutdown http server
-func Shutdown() {
+// GracefulShutdown http server
+func GracefulShutdown() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {

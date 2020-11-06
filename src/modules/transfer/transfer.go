@@ -4,8 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/didi/nightingale/src/common/loggeri"
 	"github.com/didi/nightingale/src/common/report"
@@ -18,9 +16,7 @@ import (
 	"github.com/didi/nightingale/src/toolkits/http"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
-	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 )
 
@@ -66,11 +62,9 @@ func main() {
 	go report.Init(cfg.Report, "rdb")
 	go rpc.Start()
 
-	r := gin.New()
-	routes.Config(r)
-	go http.Start(r, "transfer", cfg.Logger.Level)
+	http.Start(routes.Config, "transfer", cfg.Logger.Level)
 
-	cleanup()
+	http.GracefulShutdown()
 }
 
 // auto detect configuration file
@@ -99,19 +93,6 @@ func pconf() {
 		fmt.Println("cannot parse configuration file:", err)
 		os.Exit(1)
 	}
-}
-
-func cleanup() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	select {
-	case <-c:
-		fmt.Println("stop signal caught, stopping... pid=", os.Getpid())
-	}
-
-	logger.Close()
-	http.Shutdown()
-	fmt.Println("sender stopped successfully")
 }
 
 func start() {
