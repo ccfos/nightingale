@@ -18,12 +18,17 @@ func Config(r *gin.Engine) {
 		notLogin.GET("/roles/local", localRoleGet)
 		notLogin.POST("/users/invite", userInvitePost)
 
-		notLogin.GET("/auth/authorize", authAuthorize)
-		notLogin.GET("/auth/callback", authCallback)
-		notLogin.GET("/auth/settings", authSettings)
-
 		notLogin.GET("/auth/v2/authorize", authAuthorizeV2)
 		notLogin.GET("/auth/v2/callback", authCallbackV2)
+		notLogin.GET("/auth/v2/logout", logoutV2)
+
+		notLogin.POST("/auth/send-login-code-by-sms", v1SendLoginCodeBySms)
+		notLogin.POST("/auth/send-login-code-by-email", v1SendLoginCodeByEmail)
+		notLogin.POST("/auth/send-rst-code-by-sms", sendRstCodeBySms)
+		notLogin.POST("/auth/rst-password", rstPassword)
+		notLogin.GET("/auth/captcha", captchaGet)
+
+		notLogin.GET("/v2/nodes", nodeGets)
 	}
 
 	hbs := r.Group("/api/hbs")
@@ -111,6 +116,7 @@ func Config(r *gin.Engine) {
 		userLogin.POST("/node/:id/roles", rolesUnderNodePost)
 		userLogin.DELETE("/node/:id/roles", rolesUnderNodeDel)
 		userLogin.GET("/node/:id/resources", resourceUnderNodeGet)
+		userLogin.GET("/node/:id/resources/cate-count", renderNodeResourcesCountByCate)
 		userLogin.POST("/node/:id/resources/bind", resourceBindNode)
 		userLogin.POST("/node/:id/resources/unbind", resourceUnbindNode)
 		userLogin.PUT("/node/:id/resources/note", resourceUnderNodeNotePut)
@@ -170,5 +176,14 @@ func Config(r *gin.Engine) {
 		v1.GET("/users", userListGet)
 
 		v1.POST("/login", v1Login)
+		v1.POST("/send-login-code-by-sms", v1SendLoginCodeBySms)
+		v1.POST("/send-login-code-by-email", v1SendLoginCodeByEmail)
+
+		// 第三方系统获取某个用户的所有权限点
+		v1.GET("/perms/global", v1PermGlobalOps)
+
+		// 第三方系统同步权限表的数据
+		v1.GET("/table/sync/role-operation", v1RoleOperationGets)
+		v1.GET("/table/sync/role-global-user", v1RoleGlobalUserGets)
 	}
 }

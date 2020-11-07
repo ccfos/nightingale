@@ -21,3 +21,7 @@
 3.1.6
 影响模块：n9e-ams etc/gop.yml
 更新内容：主机设备增加了扩展字段的管理，用于维护一些位置信息、过保信息，增加了新的sql：sql/n9e_ams_3.1.6.sql
+
+3.2.0
+影响模块：n9e-agent etc/agent.yml
+更新内容：agent支持metrics指标采集能力

@@ -74,6 +74,7 @@ func main() {
 	go cron.ConsumeSms()
 	go cron.ConsumeVoice()
 	go cron.ConsumeIm()
+	go cron.CleanerLoop()
 
 	http.Start()
 
