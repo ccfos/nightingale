@@ -77,5 +77,5 @@ func endingProc() {
 
 	logger.Close()
 	http.Shutdown()
-	fmt.Println("portal stopped successfully")
+	fmt.Println("process stopped successfully")
 }
