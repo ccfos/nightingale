@@ -84,17 +84,6 @@ func tagsIndexTagkvResp(tags *consolidators.CompleteTagsResult) *dataobj.IndexTa
 	return ret
 }
 
-/*
-
-type XcludeResp struct {
-	Endpoint string   `json:"endpoint"`
-	Metric   string   `json:"metric"`
-	Tags     []string `json:"tags"`
-	Step     int      `json:"step"`
-	DsType   string   `json:"dstype"`
-}
-*/
-
 func xcludeResp(iter ident.TagIterator) (ret dataobj.XcludeResp) {
 	tags := map[string]string{}
 	for iter.Next() {
