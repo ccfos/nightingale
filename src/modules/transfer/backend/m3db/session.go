@@ -11,7 +11,6 @@ import (
 	"github.com/m3db/m3/src/query/storage/m3/consolidators"
 	"github.com/m3db/m3/src/x/ident"
 	"github.com/toolkits/pkg/logger"
-	"k8s.io/klog/v2"
 
 	xtime "github.com/m3db/m3/src/x/time"
 )
@@ -97,7 +96,6 @@ func completeTags(
 ) (*consolidators.CompleteTagsResult, error) {
 	aggTagIter, metadata, err := session.Aggregate(namespace, query, opts)
 	if err != nil {
-		klog.Infof("Aggregate err %s", err)
 		return nil, err
 	}
 	completedTags := make([]consolidators.CompletedTag, 0, aggTagIter.Remaining())

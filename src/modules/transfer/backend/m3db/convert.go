@@ -6,7 +6,6 @@ import (
 	"github.com/m3db/m3/src/query/storage/m3/consolidators"
 	"github.com/m3db/m3/src/x/ident"
 	"github.com/toolkits/pkg/logger"
-	"k8s.io/klog/v2"
 )
 
 func mvID(in *dataobj.MetricValue) ident.ID {
@@ -97,11 +96,9 @@ type XcludeResp struct {
 */
 
 func xcludeResp(iter ident.TagIterator) (ret dataobj.XcludeResp) {
-	klog.Infof("entering xcludeResp()")
 	tags := map[string]string{}
 	for iter.Next() {
 		tag := iter.Current()
-		klog.Infof("get tag %s", tag)
 		switch key := tag.Name.String(); key {
 		case METRIC_NAME:
 			ret.Metric = tag.Value.String()
