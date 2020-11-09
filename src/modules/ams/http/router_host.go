@@ -66,10 +66,28 @@ func hostPost(c *gin.Context) {
 	renderMessage(c, nil)
 }
 
+type idsOrIpsForm struct {
+	Ids []int64  `json:"ids"`
+	Ips []string `json:"ips"`
+}
+
+func (f *idsOrIpsForm) Validate() {
+	if len(f.Ids) == 0 {
+		if len(f.Ips) == 0 {
+			bomb("args invalid")
+		}
+		ids, err := models.HostIdsByIps(f.Ips)
+		dangerous(err)
+
+		f.Ids = ids
+	}
+}
+
 // 从某个租户手上回收资源
 func hostBackPut(c *gin.Context) {
-	var f idsForm
+	var f idsOrIpsForm
 	bind(c, &f)
+	f.Validate()
 
 	loginUser(c).CheckPermGlobal("ams_host_modify")
 
@@ -166,8 +184,9 @@ func hostCatePut(c *gin.Context) {
 // 先检查tenant字段是否为空，如果不为空，说明机器仍然在业务线使用，拒绝删除
 // 管理员可以先点【回收】从业务线回收机器，unregister之后tenant字段为空即可删除
 func hostDel(c *gin.Context) {
-	var f idsForm
+	var f idsOrIpsForm
 	bind(c, &f)
+	f.Validate()
 
 	loginUser(c).CheckPermGlobal("ams_host_delete")
 

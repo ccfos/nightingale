@@ -101,7 +101,7 @@ func Parse(conf string) error {
 		"maxIdle":     32,   //建立的连接池的最大空闲数
 		"connTimeout": 1000, //链接超时时间，单位毫秒
 		"callTimeout": 3000, //访问超时时间，单位毫秒
-		"hbsMod":      "monapi",
+		"hbsMod":      "rdb",
 	})
 
 	viper.SetDefault("backend.tsdb", map[string]interface{}{

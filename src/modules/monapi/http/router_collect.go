@@ -41,7 +41,7 @@ func collectPost(c *gin.Context) {
 				errors.Bomb("unmarshal body %s err:%v", string(b), err)
 			}
 
-			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_write", collect.Nid)
+			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
 			errors.Dangerous(err)
 			if !can {
 				errors.Bomb("permission deny")
@@ -73,7 +73,7 @@ func collectPost(c *gin.Context) {
 				errors.Bomb("unmarshal body %s err:%v", string(b), err)
 			}
 
-			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_write", collect.Nid)
+			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
 			errors.Dangerous(err)
 			if !can {
 				errors.Bomb("permission deny")
@@ -104,7 +104,7 @@ func collectPost(c *gin.Context) {
 				errors.Bomb("unmarshal body %s err:%v", string(b), err)
 			}
 
-			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_write", collect.Nid)
+			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
 			errors.Dangerous(err)
 			if !can {
 				errors.Bomb("permission deny")
@@ -136,7 +136,7 @@ func collectPost(c *gin.Context) {
 				errors.Bomb("unmarshal body %s err:%v", string(b), err)
 			}
 
-			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_write", collect.Nid)
+			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
 			errors.Dangerous(err)
 			if !can {
 				errors.Bomb("permission deny")
@@ -168,7 +168,7 @@ func collectPost(c *gin.Context) {
 				errors.Bomb("unmarshal body %s err:%v", string(b), err)
 			}
 
-			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_write", collect.Nid)
+			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
 			errors.Dangerous(err)
 			if !can {
 				errors.Bomb("permission deny")
@@ -266,7 +266,7 @@ func collectPut(c *gin.Context) {
 			errors.Bomb("unmarshal body %s err:%v", string(b), err)
 		}
 
-		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_write", collect.Nid)
+		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
 		errors.Dangerous(err)
 		if !can {
 			errors.Bomb("permission deny")
@@ -311,7 +311,7 @@ func collectPut(c *gin.Context) {
 			errors.Bomb("unmarshal body %s err:%v", string(b), err)
 		}
 
-		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_write", collect.Nid)
+		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
 		errors.Dangerous(err)
 		if !can {
 			errors.Bomb("permission deny")
@@ -331,7 +331,7 @@ func collectPut(c *gin.Context) {
 			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
 		}
 
-		can, err = models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_write", collect.Nid)
+		can, err = models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
 		errors.Dangerous(err)
 		if !can {
 			errors.Bomb("permission deny")
@@ -362,7 +362,7 @@ func collectPut(c *gin.Context) {
 			errors.Bomb("unmarshal body %s err:%v", string(b), err)
 		}
 
-		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_write", collect.Nid)
+		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
 		errors.Dangerous(err)
 		if !can {
 			errors.Bomb("permission deny")
@@ -408,7 +408,7 @@ func collectPut(c *gin.Context) {
 			errors.Bomb("unmarshal body %s err:%v", string(b), err)
 		}
 
-		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_write", collect.Nid)
+		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
 		errors.Dangerous(err)
 		if !can {
 			errors.Bomb("permission deny")
@@ -453,7 +453,7 @@ func collectPut(c *gin.Context) {
 			errors.Bomb("unmarshal body %s err:%v", string(b), err)
 		}
 
-		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_write", collect.Nid)
+		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
 		errors.Dangerous(err)
 		if !can {
 			errors.Bomb("permission deny")
@@ -527,7 +527,7 @@ func collectsDel(c *gin.Context) {
 				nid = tmp.(*models.PluginCollect).Nid
 			}
 
-			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_write", int64(nid))
+			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_delete", int64(nid))
 			errors.Dangerous(err)
 			if !can {
 				errors.Bomb("permission deny")

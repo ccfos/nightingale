@@ -4,6 +4,8 @@ go 1.12
 
 require (
 	github.com/Shopify/sarama v1.19.0
+	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
+	github.com/caio/go-tdigest v3.1.0+incompatible
 	github.com/cespare/xxhash v1.1.0
 	github.com/codegangsta/negroni v1.0.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
@@ -15,12 +17,17 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/uuid v1.1.2-0.20190416172445-c2e93f3ae59f
 	github.com/gorilla/mux v1.7.3
+	github.com/google/go-cmp v0.5.1 // indirect
+	github.com/hashicorp/golang-lru v0.5.1
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb v1.8.0
 	github.com/jhump/protoreflect v1.6.1 // indirect
 	github.com/m3db/m3 v0.15.17
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.0 // indirect
+	github.com/mojocn/base64Captcha v1.3.1
+	github.com/onsi/ginkgo v1.7.0 // indirect
+	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/open-falcon/rrdlite v0.0.0-20200214140804-bf5829f786ad
 	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f // indirect

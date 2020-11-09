@@ -57,7 +57,7 @@ func main() {
 	loggeri.Init(config.Config.Logger)
 
 	// 初始化数据库和相关数据
-	models.InitMySQL("rdb")
+	models.InitMySQL("rdb", "hbs")
 	models.InitSalt()
 	models.InitRooter()
 
@@ -68,15 +68,13 @@ func main() {
 	cron.InitWorker()
 
 	// 初始化 rabbitmq 处理部分异步逻辑
-	if config.Config.RabbitMQ.Enable {
-		rabbitmq.Init(config.Config.RabbitMQ.Addr)
-		go rabbitmq.Consume(config.Config.RabbitMQ.Addr, config.Config.RabbitMQ.Queue)
-	}
+	rabbitmq.Init()
 
 	go cron.ConsumeMail()
 	go cron.ConsumeSms()
 	go cron.ConsumeVoice()
 	go cron.ConsumeIm()
+	go cron.CleanerLoop()
 
 	http.Start()
 
@@ -101,10 +99,7 @@ func endingProc() {
 	logger.Close()
 	http.Shutdown()
 	redisc.CloseRedis()
+	rabbitmq.Shutdown()
 
-	if config.Config.RabbitMQ.Enable {
-		rabbitmq.Shutdown()
-	}
-
-	fmt.Println("stopped successfully")
+	fmt.Println("process stopped successfully")
 }

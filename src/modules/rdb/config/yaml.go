@@ -18,6 +18,7 @@ type ConfigT struct {
 	Sender   map[string]senderSection `yaml:"sender"`
 	RabbitMQ rabbitmqSection          `yaml:"rabbitmq"`
 	WeChat   wechatSection            `yaml:"wechat"`
+	Captcha  bool                     `yaml:"captcha"`
 }
 
 type wechatSection struct {
@@ -33,6 +34,7 @@ type ssoSection struct {
 	ClientId        string `yaml:"clientId"`
 	ClientSecret    string `yaml:"clientSecret"`
 	ApiKey          string `yaml:"apiKey"`
+	StateExpiresIn  int64  `yaml:"stateExpiresIn"`
 	CoverAttributes bool   `yaml:"coverAttributes"`
 	Attributes      struct {
 		Dispname string `yaml:"dispname"`

@@ -6,6 +6,8 @@ import (
 
 	"gopkg.in/ldap.v3"
 
+	"github.com/toolkits/pkg/logger"
+
 	"github.com/didi/nightingale/src/modules/rdb/config"
 )
 
@@ -73,7 +75,8 @@ func ldapReq(user, pass string) (*ldap.SearchResult, error) {
 	}
 
 	if len(sr.Entries) == 0 {
-		return nil, fmt.Errorf("cannot find such user: %v", user)
+		logger.Infof("ldap auth fail, no such user: %s", user)
+		return nil, fmt.Errorf("login fail, check your username and password")
 	}
 
 	if len(sr.Entries) > 1 {
@@ -81,7 +84,8 @@ func ldapReq(user, pass string) (*ldap.SearchResult, error) {
 	}
 
 	if err := conn.Bind(sr.Entries[0].DN, pass); err != nil {
-		return nil, fmt.Errorf("password error")
+		logger.Info("ldap auth fail, password error, user: %s", user)
+		return nil, fmt.Errorf("login fail, check your username and password")
 	}
 	return sr, nil
 }

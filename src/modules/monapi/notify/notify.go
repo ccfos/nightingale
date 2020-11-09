@@ -270,6 +270,10 @@ func HostBindingsForMon(endpointList []string) ([]string, error) {
 			return list, err
 		}
 
+		if node == nil {
+			continue
+		}
+
 		list = append(list, node.Path)
 	}
 	return list, nil
@@ -370,7 +374,7 @@ func send(tos []string, content, subject, notifyType string) error {
 			url = "http://" + url
 		}
 
-		res, code, err := httplib.PostJSON(url, time.Second*5, data, map[string]string{"x-srv-token": "rdb-builtin-token"})
+		res, code, err := httplib.PostJSON(url, time.Second*5, data, map[string]string{"X-Srv-Token": "rdb-builtin-token"})
 		if err != nil {
 			logger.Errorf("call sender api failed, server: %v, data: %+v, err: %v, resp:%v, status code:%d", url, data, err, string(res), code)
 			continue
@@ -436,7 +440,7 @@ func send2Ticket(content, subject, hashId string, prio int, eventType string, wo
 			Info: info,
 		}
 
-		res, code, err := httplib.PostJSON(url, time.Second*5, req, map[string]string{"x-srv-token": "ticket-builtin-token"})
+		res, code, err := httplib.PostJSON(url, time.Second*5, req, map[string]string{"X-Srv-Token": "ticket-builtin-token"})
 		if err != nil {
 			logger.Errorf("call ticket api failed, server: %v, data: %+v, err: %v, resp:%v, status code:%d", url, req, err, string(res), code)
 			return

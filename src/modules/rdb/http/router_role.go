@@ -102,6 +102,10 @@ func roleGlobalUsersGet(c *gin.Context) {
 	list, err := models.UserSearchListInIds(ids, query, limit, offset(c, limit))
 	dangerous(err)
 
+	for i := 0; i < len(list); i++ {
+		list[i].UUID = ""
+	}
+
 	renderData(c, gin.H{
 		"list":  list,
 		"total": total,
@@ -137,4 +141,9 @@ func roleGlobalUsersUnbind(c *gin.Context) {
 	}
 
 	renderMessage(c, obj.UnbindUsers(f.Ids))
+}
+
+func v1RoleOperationGets(c *gin.Context) {
+	objs, err := models.RoleOperationAll()
+	renderData(c, objs, err)
 }

@@ -217,7 +217,7 @@ func cleanCollect() {
 			continue
 		}
 
-		if node.Id == 0 {
+		if node == nil {
 			logger.Infof("delete collect: %+v", collect)
 			if err := models.DeleteCollectById(collectType, "sys", id); err != nil {
 				logger.Warningf("delete collect %s: %d, err: %v", collectType, id, err)

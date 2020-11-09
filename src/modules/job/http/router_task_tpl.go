@@ -293,6 +293,9 @@ func taskTplRun(c *gin.Context) {
 
 	f.Overwrite(tpl)
 	hosts := cleanHosts(f.Hosts)
+	if len(hosts) == 0 {
+		bomb("arg[hosts] empty")
+	}
 
 	checkTaskPerm(hosts, user, f.Account)
 

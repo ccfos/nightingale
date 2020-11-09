@@ -40,7 +40,7 @@ func GetIndexLoop() {
 }
 
 func GetIndex() {
-	instances, err := report.GetAlive("index", "monapi")
+	instances, err := report.GetAlive("index", "rdb")
 	if err != nil {
 		stats.Counter.Set("get.index.err", 1)
 		logger.Warningf("get index list err:%v", err)

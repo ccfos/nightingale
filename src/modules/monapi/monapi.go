@@ -61,7 +61,7 @@ func main() {
 
 	cache.InitMemoryCache(time.Hour)
 	config.InitLogger()
-	models.InitMySQL("mon", "hbs", "rdb")
+	models.InitMySQL("mon", "rdb")
 
 	scache.Init()
 

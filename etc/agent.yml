@@ -7,6 +7,18 @@ enable:
   mon: true
   job: true
   report: true
+  metrics: true
+
+udp:
+  enable: true
+  listen: :788
+
+metrics:
+  maxProcs: 1
+  reportIntervalMs: 10 
+  reportTimeoutMs: 2000
+  reportPacketSize: 100
+  sendToInfoFile: false 
 
 job:
   metadir: ./meta
