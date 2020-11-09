@@ -19,6 +19,19 @@ backend:
     enabled: false
     brokersPeers: "192.168.1.1:9092,192.168.1.2:9092"
     topic: "n9e"
+  m3db:
+    enabled: true
+    config:
+      service:
+        env: default_env
+        zone: embedded
+        service: m3db
+        etcdClusters:
+          - zone: embedded
+            endpoints:
+              - 127.0.0.1:2379
+    writeConsistencyLevel: majority
+    readConsistencyLevel: unstrict_majority
 
 logger:
   dir: logs/transfer
