@@ -29,6 +29,9 @@ var (
 	errUnsupportCaptcha = errors.New("unsupported captcha")
 	errInvalidAnswer    = errors.New("Invalid captcha answer")
 
+	// TODO: set false
+	debug = true
+
 	// https://captcha.mojotv.cn
 	captchaDirver = base64Captcha.DriverString{
 		Height:          30,
@@ -128,6 +131,7 @@ type authRedirect struct {
 
 func authAuthorizeV2(c *gin.Context) {
 	redirect := queryStr(c, "redirect", "/")
+	log.Printf("---> redirect %s", redirect)
 	ret := &authRedirect{Redirect: redirect}
 
 	username := cookieUsername(c)
@@ -236,6 +240,8 @@ func v1Login(c *gin.Context) {
 
 	user, err := authLogin(f)
 	renderData(c, *user, err)
+
+	go models.LoginLogNew(user.Username, f.RemoteAddr, "in")
 }
 
 // authLogin called by /v1/rdb/login, /api/rdb/auth/login
@@ -298,10 +304,11 @@ func v1SendLoginCodeBySms(c *gin.Context) {
 			return "", err
 		}
 
-		// log.Printf("[sms -> %s] %s", phone, buf.String())
+		if debug {
+			return fmt.Sprintf("[debug]: %s", buf.String()), nil
+		}
 
-		// TODO: remove code from msg
-		return fmt.Sprintf("[debug] msg: %s", buf.String()), nil
+		return "successed", nil
 
 	}()
 	renderData(c, msg, err)
@@ -344,22 +351,24 @@ func v1SendLoginCodeByEmail(c *gin.Context) {
 			return "", err
 		}
 
-		err := redisc.Write(&dataobj.Message{
+		if err := redisc.Write(&dataobj.Message{
 			Tos:     []string{email},
 			Content: buf.String(),
-		}, config.SMS_QUEUE_NAME)
+		}, config.SMS_QUEUE_NAME); err != nil {
+			return "", err
+		}
 
-		// log.Printf("[email -> %s] %s", email, buf.String())
-
-		// TODO: remove code from msg
-		return fmt.Sprintf("[debug] msg: %s", buf.String()), err
-
+		if debug {
+			return fmt.Sprintf("[debug]: %s", buf.String()), nil
+		}
+		return "successed", nil
 	}()
 	renderData(c, msg, err)
 }
 
 type sendRstCodeBySmsInput struct {
-	Phone string `json:"phone"`
+	Username string `json:"username"`
+	Phone    string `json:"phone"`
 }
 
 func sendRstCodeBySms(c *gin.Context) {
@@ -371,9 +380,9 @@ func sendRstCodeBySms(c *gin.Context) {
 			return "", fmt.Errorf("sms sender is disabled")
 		}
 		phone := f.Phone
-		user, _ := models.UserGet("phone=?", phone)
+		user, _ := models.UserGet("username=? and phone=?", f.Username, phone)
 		if user == nil {
-			return "", fmt.Errorf("phone %s dose not exist", phone)
+			return "", fmt.Errorf("user %s phone %s dose not exist", f.Username, phone)
 		}
 
 		// general a random code and add cache
@@ -402,51 +411,61 @@ func sendRstCodeBySms(c *gin.Context) {
 			return "", err
 		}
 
-		// log.Printf("[sms -> %s] %s", phone, buf.String())
+		if debug {
+			return fmt.Sprintf("[debug] msg: %s", buf.String()), nil
+		}
 
-		// TODO: remove code from msg
-		return fmt.Sprintf("[debug] msg: %s", buf.String()), nil
+		return "successed", nil
 
 	}()
 	renderData(c, msg, err)
 }
 
 type rstPasswordInput struct {
+	Username string `json:"username"`
 	Phone    string `json:"phone"`
 	Code     string `json:"code"`
 	Password string `json:"password"`
+	Type     string `json:"type"`
 }
 
 func rstPassword(c *gin.Context) {
-	var in loginInput
+	var in rstPasswordInput
 	bind(c, &in)
 
 	err := func() error {
-		user, _ := models.UserGet("phone=?", in.Phone)
+		user, _ := models.UserGet("username=? and phone=?", in.Username, in.Phone)
 		if user == nil {
-			return fmt.Errorf("phone %s dose not exist", in.Phone)
+			return fmt.Errorf("user's phone  not exist")
 		}
 
 		lc, err := models.LoginCodeGet("username=? and code=? and login_type=?",
 			user.Username, in.Code, models.LOGIN_T_RST)
 		if err != nil {
-			return fmt.Errorf("invalid code", in.Phone)
+			return fmt.Errorf("invalid code")
 		}
 
 		if time.Now().Unix()-lc.CreatedAt > models.LOGIN_EXPIRES_IN {
-			return fmt.Errorf("the code has expired", in.Phone)
+			return fmt.Errorf("the code has expired")
 		}
+
+		if in.Type == "verify-code" {
+			return nil
+		}
+		defer lc.Del()
 
 		// update password
 		if user.Password, err = models.CryptoPass(in.Password); err != nil {
 			return err
 		}
 
-		if err = user.Update("password"); err != nil {
+		if err = checkPassword(in.Password); err != nil {
 			return err
 		}
 
-		lc.Del()
+		if err = user.Update("password"); err != nil {
+			return err
+		}
 
 		return nil
 	}()
@@ -486,4 +505,12 @@ func captchaGet(c *gin.Context) {
 	}()
 
 	renderData(c, ret, err)
+}
+
+func authSettings(c *gin.Context) {
+	renderData(c, struct {
+		Sso bool `json:"sso"`
+	}{
+		Sso: config.Config.SSO.Enable,
+	}, nil)
 }

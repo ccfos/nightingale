@@ -5,6 +5,12 @@ type RoleGlobalUser struct {
 	UserId int64 `json:"user_id" xorm:"'user_id'"`
 }
 
+func RoleGlobalUserAll() ([]RoleGlobalUser, error) {
+	var objs []RoleGlobalUser
+	err := DB["rdb"].Find(&objs)
+	return objs, err
+}
+
 // UserHasGlobalRole 查看某个用户是否有某个全局角色
 func UserHasGlobalRole(userId int64, roleIds []int64) (bool, error) {
 	cnt, err := DB["rdb"].Where("user_id=?", userId).In("role_id", roleIds).Count(new(RoleGlobalUser))

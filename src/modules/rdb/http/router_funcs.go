@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -137,12 +138,12 @@ type idsForm struct {
 	Ids []int64 `json:"ids"`
 }
 
-func checkPassword(passwd string) {
+func checkPassword(passwd string) error {
 	indNum := [4]int{0, 0, 0, 0}
 	spCode := []byte{'!', '@', '#', '$', '%', '^', '&', '*', '_', '-', '~', '.', ',', '<', '>', '/', ';', ':', '|', '?', '+', '='}
 
 	if len(passwd) < 6 {
-		bomb("password too short")
+		return fmt.Errorf("password too short")
 	}
 
 	passwdByte := []byte(passwd)
@@ -174,7 +175,7 @@ func checkPassword(passwd string) {
 		}
 
 		if !has {
-			bomb("character: %s not supported", string(i))
+			return fmt.Errorf("character: %s not supported", string(i))
 		}
 
 	}
@@ -185,9 +186,11 @@ func checkPassword(passwd string) {
 		codeCount += i
 	}
 
-	if codeCount < 3 {
-		bomb("password too simple")
+	if codeCount < 4 {
+		return fmt.Errorf("password too simple")
 	}
+
+	return nil
 }
 
 // ------------

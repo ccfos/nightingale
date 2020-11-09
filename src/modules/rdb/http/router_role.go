@@ -142,3 +142,8 @@ func roleGlobalUsersUnbind(c *gin.Context) {
 
 	renderMessage(c, obj.UnbindUsers(f.Ids))
 }
+
+func v1RoleOperationGets(c *gin.Context) {
+	objs, err := models.RoleOperationAll()
+	renderData(c, objs, err)
+}

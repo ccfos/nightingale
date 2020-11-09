@@ -18,7 +18,7 @@ type Stra struct {
 	ExclNidStr          string    `xorm:"excl_nid" json:"-"`            //排除的叶子节点
 	AlertDur            int       `json:"alert_dur"`                    //单位秒，持续异常10分钟则产生异常event
 	RecoveryDur         int       `json:"recovery_dur"`                 //单位秒，持续正常2分钟则产生恢复event，0表示立即产生恢复event
-	RecoveryNotify      int       `json:"recovery_notify"`              //0 发送恢复通知 1不发送恢复通知
+	RecoveryNotify      int       `json:"recovery_notify"`              //1 发送恢复通知 0不发送恢复通知
 	ExprsStr            string    `xorm:"exprs" json:"-"`               //多个条件的监控实例需要相同，并且同时满足才产生event
 	TagsStr             string    `xorm:"tags" json:"-"`                //tag过滤条件
 	EnableStime         string    `json:"enable_stime"`                 //策略生效开始时间

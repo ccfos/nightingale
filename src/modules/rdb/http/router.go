@@ -116,7 +116,7 @@ func Config(r *gin.Engine) {
 		userLogin.POST("/node/:id/roles", rolesUnderNodePost)
 		userLogin.DELETE("/node/:id/roles", rolesUnderNodeDel)
 		userLogin.GET("/node/:id/resources", resourceUnderNodeGet)
-		userLogin.GET("/node/:id/resources/cate_count", renderNodeResourcesCountByCate)
+		userLogin.GET("/node/:id/resources/cate-count", renderNodeResourcesCountByCate)
 		userLogin.POST("/node/:id/resources/bind", resourceBindNode)
 		userLogin.POST("/node/:id/resources/unbind", resourceUnbindNode)
 		userLogin.PUT("/node/:id/resources/note", resourceUnderNodeNotePut)
@@ -178,5 +178,12 @@ func Config(r *gin.Engine) {
 		v1.POST("/login", v1Login)
 		v1.POST("/send-login-code-by-sms", v1SendLoginCodeBySms)
 		v1.POST("/send-login-code-by-email", v1SendLoginCodeByEmail)
+
+		// 第三方系统获取某个用户的所有权限点
+		v1.GET("/perms/global", v1PermGlobalOps)
+
+		// 第三方系统同步权限表的数据
+		v1.GET("/table/sync/role-operation", v1RoleOperationGets)
+		v1.GET("/table/sync/role-global-user", v1RoleGlobalUserGets)
 	}
 }

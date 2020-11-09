@@ -6,7 +6,7 @@ type QueryData struct {
 	ConsolFunc string   `json:"consolFunc"`
 	Endpoints  []string `json:"endpoints"`
 	Nids       []string `json:"nids"`
-	Counters   []string `json:"counters"`
+	Counters   []string `json:"counters" description:"metric/tags"`
 	Step       int      `json:"step"`
 	DsType     string   `json:"dstype"`
 }
