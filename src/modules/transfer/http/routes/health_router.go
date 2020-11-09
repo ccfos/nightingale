@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/toolkits/pkg/logger"
-
 	"github.com/didi/nightingale/src/modules/transfer/backend"
 	"github.com/didi/nightingale/src/modules/transfer/cache"
+	"github.com/didi/nightingale/src/modules/transfer/config"
 	"github.com/didi/nightingale/src/toolkits/http/render"
 	"github.com/didi/nightingale/src/toolkits/str"
-
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errors"
+	"github.com/toolkits/pkg/logger"
 )
 
 func ping(c *gin.Context) {
@@ -51,7 +50,7 @@ func tsdbInstance(c *gin.Context) {
 	var input tsdbInstanceRecv
 	errors.Dangerous(c.ShouldBindJSON(&input))
 
-	dataSource, err := backend.GetDataSourceFor("tsdb")
+	dataSource, err := backend.GetDataSourceFor(config.Config.Backend.DataSource)
 	if err != nil {
 		logger.Warningf("could not find datasource")
 		render.Message(c, err)

@@ -506,3 +506,11 @@ func captchaGet(c *gin.Context) {
 
 	renderData(c, ret, err)
 }
+
+func authSettings(c *gin.Context) {
+	renderData(c, struct {
+		Sso bool `json:"sso"`
+	}{
+		Sso: config.Config.SSO.Enable,
+	}, nil)
+}
