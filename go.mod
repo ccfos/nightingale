@@ -46,8 +46,6 @@ require (
 	xorm.io/xorm v0.8.1
 )
 
-replace github.com/m3db/m3 => ../../m3db/m3
-
 replace github.com/satori/go.uuid => github.com/satori/go.uuid v1.2.0
 
 // branch 0.9.3-pool-read-binary-3
