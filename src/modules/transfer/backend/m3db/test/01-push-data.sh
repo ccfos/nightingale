@@ -18,7 +18,7 @@
 curl -X POST  \
 	http://localhost:8008/api/transfer/push \
 -d '[{
-  "metric": "test2",
+  "metric": "test",
   "endpoint": "m3db-dev01-yubo.py",
   "timestamp": '$(date "+%s")',
   "step": 60,
