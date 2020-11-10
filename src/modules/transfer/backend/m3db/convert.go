@@ -191,31 +191,30 @@ func resample(data []*dataobj.RRDData, start, end, step int64) []*dataobj.RRDDat
 
 	ret := make([]*dataobj.RRDData, 0, l)
 
-	j := 0
 	ts := start
 	if t := data[0].Timestamp; t > start {
 		ts = t - t%step
 	}
+
+	j := 0
 	for ; ts < end; ts += step {
 		get := func() *dataobj.RRDData {
 			if j == len(data) {
 				return nil
 			}
-			d := data[j]
 			for {
 				if j == len(data) {
 					return &dataobj.RRDData{Timestamp: ts, Value: nanFloat}
 				}
-				if d.Timestamp < ts {
+				if d := data[j]; d.Timestamp < ts {
 					j++
 					continue
-				}
-				if d.Timestamp >= ts+step {
+				} else if d.Timestamp >= ts+step {
 					return &dataobj.RRDData{Timestamp: ts, Value: nanFloat}
+				} else {
+					j++
+					return d
 				}
-
-				j++
-				return d
 			}
 		}
 		ret = append(ret, get())
