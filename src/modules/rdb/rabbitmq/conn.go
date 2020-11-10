@@ -6,6 +6,8 @@ import (
 
 	"github.com/streadway/amqp"
 	"github.com/toolkits/pkg/logger"
+
+	"github.com/didi/nightingale/src/modules/rdb/config"
 )
 
 var (
@@ -13,7 +15,14 @@ var (
 	exit = make(chan bool)
 )
 
-func Init(url string) {
+func Init() {
+	if config.Config.RabbitMQ.Enable {
+		dial(config.Config.RabbitMQ.Addr)
+		go Consume(config.Config.RabbitMQ.Addr, config.Config.RabbitMQ.Queue)
+	}
+}
+
+func dial(url string) {
 	var err error
 	conn, err = amqp.Dial(url)
 	if err != nil {
@@ -70,6 +79,8 @@ func close() {
 }
 
 func Shutdown() {
-	conn.Close()
-	exit <- true
+	if config.Config.RabbitMQ.Enable {
+		conn.Close()
+		exit <- true
+	}
 }

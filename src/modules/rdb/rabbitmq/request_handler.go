@@ -54,9 +54,9 @@ func dispatchHandler(method string, jsonBytes []byte) error {
 	switch method {
 	case "oplog_add":
 		return oplogAdd(jsonBytes)
-	case "resource_register":
+	case "res_create":
 		return resourceRegister(jsonBytes)
-	case "resource_unregister":
+	case "res_delete":
 		return resourceUnregister(jsonBytes)
 	default:
 		logger.Warning("mq_request.method not support")

@@ -116,6 +116,7 @@ func Config(r *gin.Engine) {
 		userLogin.POST("/node/:id/roles", rolesUnderNodePost)
 		userLogin.DELETE("/node/:id/roles", rolesUnderNodeDel)
 		userLogin.GET("/node/:id/resources", resourceUnderNodeGet)
+		userLogin.GET("/node/:id/resources/cate-count", renderNodeResourcesCountByCate)
 		userLogin.POST("/node/:id/resources/bind", resourceBindNode)
 		userLogin.POST("/node/:id/resources/unbind", resourceUnbindNode)
 		userLogin.PUT("/node/:id/resources/note", resourceUnderNodeNotePut)

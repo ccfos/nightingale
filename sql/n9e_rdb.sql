@@ -304,7 +304,6 @@ CREATE TABLE `auth_state` (
   PRIMARY KEY (`state`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
-
 CREATE TABLE `captcha` (
   `captcha_id`		varchar(128)				NOT NULL,
   `answer`		varchar(128)		DEFAULT ''	NOT NULL,
