@@ -4,10 +4,14 @@ backend:
     enabled: false
     name: "m3db"
     namespace: "test"
-    writeConsistencyLevel: "majority"
-    readConsistencyLevel: "unstrict_majority"
+    # https://m3db.github.io/m3/m3db/architecture/consistencylevels/
+    writeConsistencyLevel: "majority"          # one|majority|all
+    readConsistencyLevel: "unstrict_majority"  # one|unstrict_majority|majority|all
     config:
       service:
+        # KV environment, zone, and service from which to write/read KV data (placement
+        # and configuration). Leave these as the default values unless you know what
+        # you're doing.
         env: default_env
         zone: embedded
         service: m3db
