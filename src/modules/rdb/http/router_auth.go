@@ -448,11 +448,11 @@ func rstPassword(c *gin.Context) {
 		if time.Now().Unix()-lc.CreatedAt > models.LOGIN_EXPIRES_IN {
 			return fmt.Errorf("the code has expired")
 		}
-		defer lc.Del()
 
 		if in.Type == "verify-code" {
 			return nil
 		}
+		defer lc.Del()
 
 		// update password
 		if user.Password, err = models.CryptoPass(in.Password); err != nil {
