@@ -136,8 +136,11 @@ func (p *Client) QueryDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQue
 		return nil
 	}
 
-	// TODO: groupKey, aggrFunc, consolFunc, Comparisons
-	return ret
+	if input.Step == 0 {
+		input.Step = 60
+	}
+
+	return aggregateResp(ret, input)
 }
 
 // QueryMetrics: || (&& (endpoint)) (counter)...

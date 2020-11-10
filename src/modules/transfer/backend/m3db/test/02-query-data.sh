@@ -19,7 +19,6 @@ curl -X POST  \
   "end": '$(date "+%s")',
   "consolFunc": "",
   "endpoints": ["m3db-dev01-yubo.py"],
-  "nids": ["1"],
   "counters": [],
   "step": 60,
   "dstype": "GAUGE"
