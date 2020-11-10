@@ -1,0 +1,30 @@
+set names utf8;
+use n9e_rdb;
+
+CREATE TABLE `login_code`
+(
+    `username`   varchar(64)  not null comment 'login name, cannot rename',
+    `code`       varchar(32)  not null,
+    `login_type` varchar(32)  not null,
+    `created_at` bigint       not null comment 'created at',
+    KEY (`code`),
+    KEY (`created_at`),
+    UNIQUE KEY (`username`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8;
+
+CREATE TABLE `auth_state` (
+  `state`        varchar(128)       DEFAULT ''    NOT NULL,
+  `typ`          varchar(32)        DEFAULT ''    NOT NULL COMMENT 'response_type',
+  `redirect`     varchar(1024)      DEFAULT ''    NOT NULL,
+  `expires_at`   bigint             DEFAULT '0'   NOT NULL,
+  PRIMARY KEY (`state`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8;
+
+CREATE TABLE `captcha` (
+  `captcha_id`   varchar(128)     NOT NULL,
+  `answer`       varchar(128)     DEFAULT ''    NOT NULL,
+  `created_at`   bigint           DEFAULT '0'    NOT NULL,
+  KEY (`captcha_id`, `answer`),
+  KEY (`created_at`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8;
