@@ -358,7 +358,7 @@ type nodeResourcesCountResp struct {
 }
 
 func renderNodeResourcesCountByCate(c *gin.Context) {
-	needSourceList := []string{"physical", "virtual", "redis", "mongo", "mysql", "container", "sw"}
+	needSourceList := []string{"physical", "virtual", "redis", "mongo", "mysql", "container", "sw", "volume"}
 
 	nodeId := urlParamInt64(c, "id")
 	node := Node(nodeId)
