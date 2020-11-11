@@ -1,12 +1,17 @@
 package http
 
 import (
+	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
 
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/rdb/config"
+	"github.com/didi/nightingale/src/common/address"
 )
 
 func shouldBeLogin() gin.HandlerFunc {
@@ -35,13 +40,35 @@ func shouldBeRoot() gin.HandlerFunc {
 
 func shouldBeService() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		remoteAddr := c.Request.RemoteAddr
+		idx := strings.LastIndex(remoteAddr, ":")
+		ip := ""
+		if idx > 0 {
+			ip = remoteAddr[0:idx]
+		}
+
+		if ip == "127.0.0.1" {
+			c.Next()
+			return
+		}
+
+
+		if ip != "" && slice.ContainsString(address.GetAddresses("rdb"), ip) {
+			c.Next()
+			return
+		}
+
 		token := c.GetHeader("X-Srv-Token")
 		if token == "" {
-			bomb("X-Srv-Token is blank")
+			c.AbortWithError(http.StatusForbidden, fmt.Errorf("X-Srv-Token is blank"))
+			return
 		}
+
 		if !slice.ContainsString(config.Config.Tokens, token) {
-			bomb("X-Srv-Token[%s] invalid", token)
+			c.AbortWithError(http.StatusForbidden, fmt.Errorf("X-Srv-Token[%s] invalid", token))
+			return
 		}
+
 		c.Next()
 	}
 }
