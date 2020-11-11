@@ -4,6 +4,9 @@ backend:
     enabled: false
     name: "m3db"
     namespace: "test"
+    seriesLimit: 0
+    docsLimit: 0
+    daysLimit: 7                               # max query time
     # https://m3db.github.io/m3/m3db/architecture/consistencylevels/
     writeConsistencyLevel: "majority"          # one|majority|all
     readConsistencyLevel: "unstrict_majority"  # one|unstrict_majority|majority|all

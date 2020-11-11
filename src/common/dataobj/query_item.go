@@ -20,9 +20,9 @@ type QueryDataForUI struct {
 	Tags        []string `json:"tags"`
 	Step        int      `json:"step"`
 	DsType      string   `json:"dstype"`
-	GroupKey    []string `json:"groupKey"` //聚合维度
-	AggrFunc    string   `json:"aggrFunc"` //聚合计算
-	ConsolFunc  string   `json:"consolFunc"`
+	GroupKey    []string `json:"groupKey"`                               //聚合维度
+	AggrFunc    string   `json:"aggrFunc" description:"sum,avg,max,min"` //聚合计算
+	ConsolFunc  string   `json:"consolFunc" description:"AVERAGE,MIN,MAX,LAST"`
 	Comparisons []int64  `json:"comparisons"` //环比多少时间
 }
 

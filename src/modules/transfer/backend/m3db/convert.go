@@ -116,9 +116,9 @@ func aggregateResp(data []*dataobj.TsdbQueryResponse, opts dataobj.QueryDataForU
 		return data
 	}
 
-	// Adjust the data
+	// resample the data
 	for _, v := range data {
-		v.Values = resample(v.Values, opts.Start, opts.End, int64(opts.Step))
+		v.Values = resample(v.Values, opts.Start, opts.End, int64(opts.Step), opts.AggrFunc)
 	}
 
 	// 没有聚合 tag, 或者曲线没有其他 tags, 直接所有曲线进行计算
@@ -179,11 +179,7 @@ func aggregateResp(data []*dataobj.TsdbQueryResponse, opts dataobj.QueryDataForU
 	return aggrDatas
 }
 
-var (
-	nanFloat = dataobj.JsonFloat(math.NaN())
-)
-
-func resample(data []*dataobj.RRDData, start, end, step int64) []*dataobj.RRDData {
+func resample(data []*dataobj.RRDData, start, end, step int64, aggrFunc string) []*dataobj.RRDData {
 	l := int((end - start) / step)
 	if l <= 0 {
 		return []*dataobj.RRDData{}
@@ -198,29 +194,91 @@ func resample(data []*dataobj.RRDData, start, end, step int64) []*dataobj.RRDDat
 
 	j := 0
 	for ; ts < end; ts += step {
-		get := func() *dataobj.RRDData {
+		get := func() (ret []dataobj.JsonFloat) {
 			if j == len(data) {
-				return nil
+				return
 			}
 			for {
 				if j == len(data) {
-					return &dataobj.RRDData{Timestamp: ts, Value: nanFloat}
+					return
 				}
 				if d := data[j]; d.Timestamp < ts {
+					ret = append(ret, d.Value)
 					j++
 					continue
 				} else if d.Timestamp >= ts+step {
-					return &dataobj.RRDData{Timestamp: ts, Value: nanFloat}
+					return
 				} else {
+					ret = append(ret, d.Value)
 					j++
-					return d
+					return
 				}
 			}
 		}
-		ret = append(ret, get())
+		ret = append(ret, &dataobj.RRDData{
+			Timestamp: ts,
+			Value:     aggrData(aggrFunc, get()),
+		})
 	}
 
 	return ret
+}
+
+func aggrData(fn string, data []dataobj.JsonFloat) dataobj.JsonFloat {
+	if len(data) == 0 {
+		return dataobj.JsonFloat(math.NaN())
+	}
+	switch fn {
+	case "sum":
+		return sum(data)
+	case "avg":
+		return avg(data)
+	case "max":
+		return max(data)
+	case "min":
+		return min(data)
+		// case "last":
+	default:
+		return last(data)
+	}
+}
+
+func sum(data []dataobj.JsonFloat) (ret dataobj.JsonFloat) {
+	for _, v := range data {
+		ret += v
+	}
+	return ret
+}
+
+func avg(data []dataobj.JsonFloat) (ret dataobj.JsonFloat) {
+	for _, v := range data {
+		ret += v
+	}
+	return ret / dataobj.JsonFloat(len(data))
+}
+
+func max(data []dataobj.JsonFloat) (ret dataobj.JsonFloat) {
+	ret = data[0]
+	for i := 1; i < len(data); i++ {
+		if data[i] > ret {
+			ret = data[i]
+		}
+	}
+	return ret
+}
+
+func min(data []dataobj.JsonFloat) (ret dataobj.JsonFloat) {
+	ret = data[0]
+	for i := 1; i < len(data); i++ {
+		if data[i] < ret {
+			ret = data[i]
+		}
+	}
+	return ret
+}
+
+func last(data []dataobj.JsonFloat) (ret dataobj.JsonFloat) {
+	return data[len(data)-1]
 }
 
 func getTags(counter string) (tags string) {
