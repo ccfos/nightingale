@@ -7,7 +7,7 @@
 curl -X POST  \
 	http://localhost:8008/api/index/metrics \
 -d '{
-  "endpoints": []
+  "endpoints": ["10.178.24.116"]
 }'
 
 
