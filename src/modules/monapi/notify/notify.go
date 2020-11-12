@@ -388,6 +388,8 @@ func send(tos []string, content, subject, notifyType string) error {
 		if err == nil {
 			break
 		}
+
+		logger.Infof("curl %s response: %s", url, string(res))
 	}
 
 	return err

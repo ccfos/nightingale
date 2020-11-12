@@ -71,6 +71,11 @@ func GetHTTPAddresses(mod string) []string {
 	return addresses
 }
 
+func GetAddresses(mod string) []string {
+	modConf := getMod(mod)
+	return modConf.Addresses
+}
+
 func GetRPCAddresses(mod string) []string {
 	modConf := getMod(mod)
 

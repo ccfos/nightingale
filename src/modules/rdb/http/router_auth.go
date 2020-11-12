@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mojocn/base64Captcha"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/str"
 
@@ -22,59 +24,79 @@ import (
 )
 
 var (
-	loginCodeSmsTpl   *template.Template
-	loginCodeEmailTpl *template.Template
+	loginCodeSmsTpl     *template.Template
+	loginCodeEmailTpl   *template.Template
+	errUnsupportCaptcha = errors.New("unsupported captcha")
+	errInvalidAnswer    = errors.New("Invalid captcha answer")
+
+	// TODO: set false
+	debug = true
+
+	// https://captcha.mojotv.cn
+	captchaDirver = base64Captcha.DriverString{
+		Height:          30,
+		Width:           120,
+		ShowLineOptions: 0,
+		Length:          4,
+		Source:          "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+		//ShowLineOptions: 14,
+	}
 )
 
+func getConfigFile(name, ext string) (string, error) {
+	if p := path.Join(path.Join(file.SelfDir(), "etc", name+".local."+ext)); file.IsExist(p) {
+		return p, nil
+	}
+	if p := path.Join(path.Join(file.SelfDir(), "etc", name+"."+ext)); file.IsExist(p) {
+		return p, nil
+	} else {
+		return "", fmt.Errorf("file %s not found", p)
+	}
+
+}
+
 func init() {
-	var err error
-	filename := path.Join(file.SelfDir(), "etc", "login-code-sms.tpl")
+	filename, err := getConfigFile("login-code-sms", "tpl")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	loginCodeSmsTpl, err = template.ParseFiles(filename)
 	if err != nil {
 		log.Fatalf("open %s err: %s", filename, err)
 	}
 
-	filename = path.Join(file.SelfDir(), "etc", "login-code-email.tpl")
+	filename, err = getConfigFile("login-code-email", "tpl")
+	if err != nil {
+		log.Fatal(err)
+	}
 	loginCodeEmailTpl, err = template.ParseFiles(filename)
 	if err != nil {
 		log.Fatalf("open %s err: %s", filename, err)
 	}
 }
 
-type loginForm struct {
-	Username   string `json:"username" binding:"required"`
-	Password   string `json:"password" binding:"required"`
-	IsLDAP     int    `json:"is_ldap"`
-	RemoteAddr string `json:"remote_addr"`
-}
-
-func (f *loginForm) validate() {
-	if str.Dangerous(f.Username) {
-		bomb("%s invalid", f.Username)
-	}
-
-	if len(f.Username) > 64 {
-		bomb("%s too long", f.Username)
-	}
-}
-
 func login(c *gin.Context) {
-	var f loginForm
+	var f loginInput
 	bind(c, &f)
 	f.validate()
 
-	if f.IsLDAP == 1 {
-		dangerous(models.LdapLogin(f.Username, f.Password, c.ClientIP()))
-	} else {
-		dangerous(models.PassLogin(f.Username, f.Password, c.ClientIP()))
+	if config.Config.Captcha {
+		c, err := models.CaptchaGet("captcha_id=?", f.CaptchaId)
+		dangerous(err)
+		if strings.ToLower(c.Answer) != strings.ToLower(f.Answer) {
+			dangerous(errInvalidAnswer)
+		}
 	}
 
-	user, err := models.UserGet("username=?", f.Username)
+	user, err := authLogin(f)
 	dangerous(err)
 
 	writeCookieUser(c, user.UUID)
 
 	renderMessage(c, "")
+
+	go models.LoginLogNew(user.Username, c.ClientIP(), "in")
 }
 
 func logout(c *gin.Context) {
@@ -92,31 +114,14 @@ func logout(c *gin.Context) {
 
 	writeCookieUser(c, "")
 
-	go models.LoginLogNew(username, c.ClientIP(), "out")
-
 	if config.Config.SSO.Enable {
 		redirect := queryStr(c, "redirect", "/")
 		c.Redirect(302, ssoc.LogoutLocation(redirect))
 	} else {
 		c.String(200, "logout successfully")
 	}
-}
 
-func authAuthorize(c *gin.Context) {
-	username := cookieUsername(c)
-	if username != "" { // alread login
-		c.String(200, "hi, "+username)
-		return
-	}
-
-	redirect := queryStr(c, "redirect", "/")
-
-	if config.Config.SSO.Enable {
-		c.Redirect(302, ssoc.Authorize(redirect))
-	} else {
-		c.String(200, "sso does not enable")
-	}
-
+	go models.LoginLogNew(username, c.ClientIP(), "out")
 }
 
 type authRedirect struct {
@@ -126,6 +131,7 @@ type authRedirect struct {
 
 func authAuthorizeV2(c *gin.Context) {
 	redirect := queryStr(c, "redirect", "/")
+	log.Printf("---> redirect %s", redirect)
 	ret := &authRedirect{Redirect: redirect}
 
 	username := cookieUsername(c)
@@ -134,29 +140,13 @@ func authAuthorizeV2(c *gin.Context) {
 		return
 	}
 
+	var err error
 	if config.Config.SSO.Enable {
-		ret.Redirect = ssoc.Authorize(redirect)
+		ret.Redirect, err = ssoc.Authorize(redirect)
 	} else {
 		ret.Redirect = "/login"
 	}
-	renderData(c, ret, nil)
-}
-
-func authCallback(c *gin.Context) {
-	code := queryStr(c, "code", "")
-	state := queryStr(c, "state", "")
-	if code == "" {
-		if redirect := queryStr(c, "redirect"); redirect != "" {
-			c.Redirect(302, redirect)
-			return
-		}
-	}
-
-	redirect, user, err := ssoc.Callback(code, state)
-	dangerous(err)
-
-	writeCookieUser(c, user.UUID)
-	c.Redirect(302, redirect)
+	renderData(c, ret, err)
 }
 
 func authCallbackV2(c *gin.Context) {
@@ -182,14 +172,6 @@ func authCallbackV2(c *gin.Context) {
 	renderData(c, ret, nil)
 }
 
-func authSettings(c *gin.Context) {
-	renderData(c, struct {
-		Sso bool `json:"sso"`
-	}{
-		Sso: config.Config.SSO.Enable,
-	}, nil)
-}
-
 func logoutV2(c *gin.Context) {
 	redirect := queryStr(c, "redirect", "")
 	ret := &authRedirect{Redirect: redirect}
@@ -209,15 +191,16 @@ func logoutV2(c *gin.Context) {
 	writeCookieUser(c, "")
 	ret.Msg = "logout successfully"
 
-	go models.LoginLogNew(username, c.ClientIP(), "out")
-
 	if config.Config.SSO.Enable {
 		if redirect == "" {
 			redirect = "/"
 		}
 		ret.Redirect = ssoc.LogoutLocation(redirect)
 	}
+
 	renderData(c, ret, nil)
+
+	go models.LoginLogNew(username, c.ClientIP(), "out")
 }
 
 type loginInput struct {
@@ -226,51 +209,55 @@ type loginInput struct {
 	Phone      string `json:"phone"`
 	Email      string `json:"email"`
 	Code       string `json:"code"`
-	Type       string `json:"type"`
-	RemoteAddr string `json:"remote_addr"`
+	CaptchaId  string `json:"captcha_id"`
+	Answer     string `json:"answer" description:"captcha answer"`
+	Type       string `json:"type" description:"sms-code|email-code|password|ldap"`
+	RemoteAddr string `json:"remote_addr" description:"use for server account(v1)"`
+	IsLDAP     int    `json:"is_ldap" description:"deprecated"`
 }
 
-const (
-	LOGIN_T_SMS      = "sms-code"
-	LOGIN_T_EMAIL    = "email-code"
-	LOGIN_T_RST      = "rst-code"
-	LOGIN_T_PWD      = "password"
-	LOGIN_T_LDAP     = "ldap"
-	LOGIN_EXPIRES_IN = 300
-)
+func (f *loginInput) validate() {
+	if f.IsLDAP == 1 {
+		f.Type = models.LOGIN_T_LDAP
+	}
+	if f.Type == "" {
+		f.Type = models.LOGIN_T_PWD
+	}
+	if f.Type == models.LOGIN_T_PWD {
+		if str.Dangerous(f.Username) {
+			bomb("%s invalid", f.Username)
+		}
+		if len(f.Username) > 64 {
+			bomb("%s too long", f.Username)
+		}
+	}
+}
 
 // v1Login called by sso.rdb module
 func v1Login(c *gin.Context) {
 	var f loginInput
 	bind(c, &f)
 
-	user, err := func() (*models.User, error) {
-		switch strings.ToLower(f.Type) {
-		case LOGIN_T_LDAP:
-			err := models.LdapLogin(f.Username, f.Password, c.ClientIP())
-			if err != nil {
-				return nil, err
-			}
-			return models.UserGet("username=?", f.Username)
-		case LOGIN_T_PWD:
-			err := models.PassLogin(f.Username, f.Password, c.ClientIP())
-			if err != nil {
-				return nil, err
-			}
-			return models.UserGet("username=?", f.Username)
-		case LOGIN_T_SMS:
-			return smsCodeVerify(f.Phone, f.Code)
-		case LOGIN_T_EMAIL:
-			return emailCodeVerify(f.Email, f.Code)
-		default:
-			return nil, fmt.Errorf("invalid login type %s", f.Type)
-		}
-	}()
+	user, err := authLogin(f)
+	renderData(c, *user, err)
 
-	// TODO: implement remote address access control
-	go models.LoginLogNew(f.Username, f.RemoteAddr, "in")
+	go models.LoginLogNew(user.Username, f.RemoteAddr, "in")
+}
 
-	renderData(c, user, err)
+// authLogin called by /v1/rdb/login, /api/rdb/auth/login
+func authLogin(in loginInput) (user *models.User, err error) {
+	switch strings.ToLower(in.Type) {
+	case models.LOGIN_T_LDAP:
+		return models.LdapLogin(in.Username, in.Password)
+	case models.LOGIN_T_PWD:
+		return models.PassLogin(in.Username, in.Password)
+	case models.LOGIN_T_SMS:
+		return models.SmsCodeLogin(in.Phone, in.Code)
+	case models.LOGIN_T_EMAIL:
+		return models.EmailCodeLogin(in.Email, in.Code)
+	default:
+		return nil, fmt.Errorf("invalid login type %s", in.Type)
+	}
 }
 
 type v1SendLoginCodeBySmsInput struct {
@@ -297,7 +284,7 @@ func v1SendLoginCodeBySms(c *gin.Context) {
 		loginCode := &models.LoginCode{
 			Username:  user.Username,
 			Code:      code,
-			LoginType: LOGIN_T_SMS,
+			LoginType: models.LOGIN_T_SMS,
 			CreatedAt: time.Now().Unix(),
 		}
 
@@ -317,33 +304,14 @@ func v1SendLoginCodeBySms(c *gin.Context) {
 			return "", err
 		}
 
-		// log.Printf("[sms -> %s] %s", phone, buf.String())
+		if debug {
+			return fmt.Sprintf("[debug]: %s", buf.String()), nil
+		}
 
-		// TODO: remove code from msg
-		return fmt.Sprintf("[debug] msg: %s", buf.String()), nil
+		return "successed", nil
 
 	}()
 	renderData(c, msg, err)
-}
-
-func smsCodeVerify(phone, code string) (*models.User, error) {
-	user, _ := models.UserGet("phone=?", phone)
-	if user == nil {
-		return nil, fmt.Errorf("phone %s dose not exist", phone)
-	}
-
-	lc, err := models.LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_SMS)
-	if err != nil {
-		return nil, fmt.Errorf("invalid code", phone)
-	}
-
-	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
-		return nil, fmt.Errorf("the code has expired", phone)
-	}
-
-	lc.Del()
-
-	return user, nil
 }
 
 type v1SendLoginCodeByEmailInput struct {
@@ -370,7 +338,7 @@ func v1SendLoginCodeByEmail(c *gin.Context) {
 		loginCode := &models.LoginCode{
 			Username:  user.Username,
 			Code:      code,
-			LoginType: LOGIN_T_EMAIL,
+			LoginType: models.LOGIN_T_EMAIL,
 			CreatedAt: time.Now().Unix(),
 		}
 
@@ -383,42 +351,24 @@ func v1SendLoginCodeByEmail(c *gin.Context) {
 			return "", err
 		}
 
-		err := redisc.Write(&dataobj.Message{
+		if err := redisc.Write(&dataobj.Message{
 			Tos:     []string{email},
 			Content: buf.String(),
-		}, config.SMS_QUEUE_NAME)
+		}, config.SMS_QUEUE_NAME); err != nil {
+			return "", err
+		}
 
-		// log.Printf("[email -> %s] %s", email, buf.String())
-
-		// TODO: remove code from msg
-		return fmt.Sprintf("[debug] msg: %s", buf.String()), err
-
+		if debug {
+			return fmt.Sprintf("[debug]: %s", buf.String()), nil
+		}
+		return "successed", nil
 	}()
 	renderData(c, msg, err)
 }
 
-func emailCodeVerify(email, code string) (*models.User, error) {
-	user, _ := models.UserGet("email=?", email)
-	if user == nil {
-		return nil, fmt.Errorf("email %s dose not exist", email)
-	}
-
-	lc, err := models.LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_EMAIL)
-	if err != nil {
-		return nil, fmt.Errorf("invalid code", email)
-	}
-
-	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
-		return nil, fmt.Errorf("the code has expired", email)
-	}
-
-	lc.Del()
-
-	return user, nil
-}
-
 type sendRstCodeBySmsInput struct {
-	Phone string `json:"phone"`
+	Username string `json:"username"`
+	Phone    string `json:"phone"`
 }
 
 func sendRstCodeBySms(c *gin.Context) {
@@ -430,9 +380,9 @@ func sendRstCodeBySms(c *gin.Context) {
 			return "", fmt.Errorf("sms sender is disabled")
 		}
 		phone := f.Phone
-		user, _ := models.UserGet("phone=?", phone)
+		user, _ := models.UserGet("username=? and phone=?", f.Username, phone)
 		if user == nil {
-			return "", fmt.Errorf("phone %s dose not exist", phone)
+			return "", fmt.Errorf("user %s phone %s dose not exist", f.Username, phone)
 		}
 
 		// general a random code and add cache
@@ -441,7 +391,7 @@ func sendRstCodeBySms(c *gin.Context) {
 		loginCode := &models.LoginCode{
 			Username:  user.Username,
 			Code:      code,
-			LoginType: LOGIN_T_RST,
+			LoginType: models.LOGIN_T_RST,
 			CreatedAt: time.Now().Unix(),
 		}
 
@@ -461,51 +411,61 @@ func sendRstCodeBySms(c *gin.Context) {
 			return "", err
 		}
 
-		// log.Printf("[sms -> %s] %s", phone, buf.String())
+		if debug {
+			return fmt.Sprintf("[debug] msg: %s", buf.String()), nil
+		}
 
-		// TODO: remove code from msg
-		return fmt.Sprintf("[debug] msg: %s", buf.String()), nil
+		return "successed", nil
 
 	}()
 	renderData(c, msg, err)
 }
 
 type rstPasswordInput struct {
+	Username string `json:"username"`
 	Phone    string `json:"phone"`
 	Code     string `json:"code"`
 	Password string `json:"password"`
+	Type     string `json:"type"`
 }
 
 func rstPassword(c *gin.Context) {
-	var in loginInput
+	var in rstPasswordInput
 	bind(c, &in)
 
 	err := func() error {
-		user, _ := models.UserGet("phone=?", in.Phone)
+		user, _ := models.UserGet("username=? and phone=?", in.Username, in.Phone)
 		if user == nil {
-			return fmt.Errorf("phone %s dose not exist", in.Phone)
+			return fmt.Errorf("user's phone  not exist")
 		}
 
 		lc, err := models.LoginCodeGet("username=? and code=? and login_type=?",
-			user.Username, in.Code, LOGIN_T_RST)
+			user.Username, in.Code, models.LOGIN_T_RST)
 		if err != nil {
-			return fmt.Errorf("invalid code", in.Phone)
+			return fmt.Errorf("invalid code")
 		}
 
-		if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
-			return fmt.Errorf("the code has expired", in.Phone)
+		if time.Now().Unix()-lc.CreatedAt > models.LOGIN_EXPIRES_IN {
+			return fmt.Errorf("the code has expired")
 		}
+
+		if in.Type == "verify-code" {
+			return nil
+		}
+		defer lc.Del()
 
 		// update password
 		if user.Password, err = models.CryptoPass(in.Password); err != nil {
 			return err
 		}
 
-		if err = user.Update("password"); err != nil {
+		if err = checkPassword(in.Password); err != nil {
 			return err
 		}
 
-		lc.Del()
+		if err = user.Update("password"); err != nil {
+			return err
+		}
 
 		return nil
 	}()
@@ -515,4 +475,42 @@ func rstPassword(c *gin.Context) {
 	} else {
 		renderData(c, "reset successfully", nil)
 	}
+}
+
+func captchaGet(c *gin.Context) {
+	ret, err := func() (*models.Captcha, error) {
+		if !config.Config.Captcha {
+			return nil, errUnsupportCaptcha
+		}
+
+		driver := captchaDirver.ConvertFonts()
+		id, content, answer := driver.GenerateIdQuestionAnswer()
+		item, err := driver.DrawCaptcha(content)
+		if err != nil {
+			return nil, err
+		}
+
+		ret := &models.Captcha{
+			CaptchaId: id,
+			Answer:    answer,
+			Image:     item.EncodeB64string(),
+			CreatedAt: time.Now().Unix(),
+		}
+
+		if err := ret.Save(); err != nil {
+			return nil, err
+		}
+
+		return ret, nil
+	}()
+
+	renderData(c, ret, err)
+}
+
+func authSettings(c *gin.Context) {
+	renderData(c, struct {
+		Sso bool `json:"sso"`
+	}{
+		Sso: config.Config.SSO.Enable,
+	}, nil)
 }

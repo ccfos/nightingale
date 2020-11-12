@@ -1,11 +1,17 @@
 package models
 
+import "errors"
+
 type LoginCode struct {
 	Username  string `json:"username"`
 	Code      string `json:"code"`
 	LoginType string `json:"login_type"`
 	CreatedAt int64  `json:"created_at"`
 }
+
+var (
+	errLoginCode = errors.New("invalid login code")
+)
 
 func LoginCodeGet(where string, args ...interface{}) (*LoginCode, error) {
 	var obj LoginCode
@@ -15,7 +21,7 @@ func LoginCodeGet(where string, args ...interface{}) (*LoginCode, error) {
 	}
 
 	if !has {
-		return nil, nil
+		return nil, errLoginCode
 	}
 
 	return &obj, nil

@@ -1,7 +1,10 @@
 package backend
 
 import (
+	"log"
+
 	"github.com/didi/nightingale/src/modules/transfer/backend/influxdb"
+	"github.com/didi/nightingale/src/modules/transfer/backend/m3db"
 	"github.com/didi/nightingale/src/modules/transfer/backend/tsdb"
 )
 
@@ -10,6 +13,7 @@ type BackendSection struct {
 	StraPath   string `yaml:"straPath"`
 
 	Judge    JudgeSection             `yaml:"judge"`
+	M3db     m3db.M3dbSection         `yaml:"m3db"`
 	Tsdb     tsdb.TsdbSection         `yaml:"tsdb"`
 	Influxdb influxdb.InfluxdbSection `yaml:"influxdb"`
 	OpenTsdb OpenTsdbSection          `yaml:"opentsdb"`
@@ -23,6 +27,7 @@ var (
 	openTSDBPushEndpoint *OpenTsdbPushEndpoint
 	influxdbDataSource   *influxdb.InfluxdbDataSource
 	kafkaPushEndpoint    *KafkaPushEndpoint
+	m3dbDataSource       *m3db.Client
 )
 
 func Init(cfg BackendSection) {
@@ -72,5 +77,14 @@ func Init(cfg BackendSection) {
 		kafkaPushEndpoint.Init()
 		// register
 		RegisterPushEndpoint(kafkaPushEndpoint.Section.Name, kafkaPushEndpoint)
+	}
+	// init m3db
+	if cfg.M3db.Enabled {
+		var err error
+		m3dbDataSource, err = m3db.NewClient(cfg.M3db)
+		if err != nil {
+			log.Fatalf("unable to new m3db client: %v", err)
+		}
+		RegisterDataSource(cfg.M3db.Name, m3dbDataSource)
 	}
 }

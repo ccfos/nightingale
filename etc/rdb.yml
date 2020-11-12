@@ -24,6 +24,8 @@ sso:
   coverAttributes: false
   stateExpiresIn: 300
 
+captcha: false
+
 tokens:
   - rdb-builtin-token
 

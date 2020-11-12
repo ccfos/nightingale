@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -135,6 +136,61 @@ func renderZeroPage(c *gin.Context) {
 
 type idsForm struct {
 	Ids []int64 `json:"ids"`
+}
+
+func checkPassword(passwd string) error {
+	indNum := [4]int{0, 0, 0, 0}
+	spCode := []byte{'!', '@', '#', '$', '%', '^', '&', '*', '_', '-', '~', '.', ',', '<', '>', '/', ';', ':', '|', '?', '+', '='}
+
+	if len(passwd) < 6 {
+		return fmt.Errorf("password too short")
+	}
+
+	passwdByte := []byte(passwd)
+
+	for _, i := range passwdByte {
+
+		if i >= 'A' && i <= 'Z' {
+			indNum[0] = 1
+			continue
+		}
+
+		if i >= 'a' && i <= 'z' {
+			indNum[1] = 1
+			continue
+		}
+
+		if i >= '0' && i <= '9' {
+			indNum[2] = 1
+			continue
+		}
+
+		has := false
+		for _, s := range spCode {
+			if i == s {
+				indNum[3] = 1
+				has = true
+				break
+			}
+		}
+
+		if !has {
+			return fmt.Errorf("character: %s not supported", string(i))
+		}
+
+	}
+
+	codeCount := 0
+
+	for _, i := range indNum {
+		codeCount += i
+	}
+
+	if codeCount < 4 {
+		return fmt.Errorf("password too simple")
+	}
+
+	return nil
 }
 
 // ------------
