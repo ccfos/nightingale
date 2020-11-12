@@ -28,10 +28,14 @@ const (
 )
 
 type M3dbSection struct {
-	Name      string               `yaml:"name"`
-	Enabled   bool                 `yaml:"enabled"`
-	Namespace string               `yaml:"namespace"`
-	Config    client.Configuration `yaml:",inline"`
+	Name        string               `yaml:"name"`
+	Enabled     bool                 `yaml:"enabled"`
+	Namespace   string               `yaml:"namespace"`
+	DaysLimit   int                  `yaml:"daysLimit"`
+	SeriesLimit int                  `yaml:"seriesLimit"`
+	DocsLimit   int                  `yaml:"docsLimit"`
+	MinStep     int                  `yaml:"minStep"`
+	Config      client.Configuration `yaml:",inline"`
 }
 
 type Client struct {
@@ -42,22 +46,26 @@ type Client struct {
 	opts   client.Options
 
 	namespace string
-	config    *client.Configuration
+	config    *M3dbSection
 
 	namespaceID ident.ID
 }
 
-func NewClient(namespace string, cfg *client.Configuration) (*Client, error) {
-	client, err := cfg.NewClient(client.ConfigurationParameters{})
+func NewClient(cfg M3dbSection) (*Client, error) {
+	client, err := cfg.Config.NewClient(client.ConfigurationParameters{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get new M3DB client: %v", err)
 	}
 
+	if cfg.MinStep == 0 {
+		cfg.MinStep = 1
+	}
+
 	ret := &Client{
-		namespace:   namespace,
-		config:      cfg,
+		namespace:   cfg.Namespace,
+		config:      &cfg,
 		client:      client,
-		namespaceID: ident.StringID(namespace),
+		namespaceID: ident.StringID(cfg.Namespace),
 	}
 
 	if _, err := ret.session(); err != nil {
@@ -107,7 +115,7 @@ func (p *Client) QueryData(inputs []dataobj.QueryData) []*dataobj.TsdbQueryRespo
 		return nil
 	}
 
-	query, opts := queryDataOptions(inputs)
+	query, opts := p.config.queryDataOptions(inputs)
 	ret, err := fetchTagged(session, p.namespaceID, query, opts)
 	if err != nil {
 		logger.Errorf("unable to query data: ", err)
@@ -118,9 +126,13 @@ func (p *Client) QueryData(inputs []dataobj.QueryData) []*dataobj.TsdbQueryRespo
 }
 
 // QueryDataForUi: && (metric) (|| endpoints...) (&& tags...)
-// get kv
 func (p *Client) QueryDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 	logger.Debugf("query data for ui, input: %+v", input)
+
+	if err := p.config.validateQueryDataForUI(&input); err != nil {
+		logger.Errorf("input is invalid %s", err)
+		return nil
+	}
 
 	session, err := p.session()
 	if err != nil {
@@ -128,16 +140,12 @@ func (p *Client) QueryDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQue
 		return nil
 	}
 
-	query, opts := queryDataUIOptions(input)
+	query, opts := p.config.queryDataUIOptions(input)
 
 	ret, err := fetchTagged(session, p.namespaceID, query, opts)
 	if err != nil {
 		logger.Errorf("unable to query data for ui: %s", err)
 		return nil
-	}
-
-	if input.Step == 0 {
-		input.Step = 60
 	}
 
 	return aggregateResp(ret, input)
@@ -152,7 +160,7 @@ func (p *Client) QueryMetrics(input dataobj.EndpointsRecv) *dataobj.MetricResp {
 		return nil
 	}
 
-	query, opts := queryMetricsOptions(input)
+	query, opts := p.config.queryMetricsOptions(input)
 
 	tags, err := completeTags(session, p.namespaceID, query, opts)
 	if err != nil {
@@ -171,7 +179,7 @@ func (p *Client) QueryTagPairs(input dataobj.EndpointMetricRecv) []dataobj.Index
 		return nil
 	}
 
-	query, opts := queryTagPairsOptions(input)
+	query, opts := p.config.queryTagPairsOptions(input)
 
 	tags, err := completeTags(session, p.namespaceID, query, opts)
 	if err != nil {
@@ -199,7 +207,7 @@ func (p *Client) QueryIndexByClude(inputs []dataobj.CludeRecv) (ret []dataobj.Xc
 }
 
 func (p *Client) queryIndexByClude(session client.Session, input dataobj.CludeRecv) []dataobj.XcludeResp {
-	query, opts := queryIndexByCludeOptions(input)
+	query, opts := p.config.queryIndexByCludeOptions(input)
 
 	iter, _, err := session.FetchTaggedIDs(p.namespaceID, query, opts)
 	if err != nil {
@@ -263,7 +271,7 @@ func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.Inde
 		DsType: "GAUGE",
 	}
 
-	query, opts := queryIndexByFullTagsOptions(input)
+	query, opts := p.config.queryIndexByFullTagsOptions(input)
 	if query.Query.Equal(idx.NewAllQuery()) {
 		ret.Endpoints = input.Endpoints
 		log.Printf("all query")
@@ -445,4 +453,41 @@ func seriesIterWalk(iter encoding.SeriesIterator) (out *dataobj.TsdbQueryRespons
 		Counter:  counter,
 		Values:   values,
 	}, nil
+}
+
+func (cfg M3dbSection) validateQueryDataForUI(in *dataobj.QueryDataForUI) (err error) {
+	if in.AggrFunc != "" &&
+		in.AggrFunc != "sum" &&
+		in.AggrFunc != "avg" &&
+		in.AggrFunc != "max" &&
+		in.AggrFunc != "min" {
+		return fmt.Errorf("%s is invalid aggrfunc", in.AggrFunc)
+	}
+
+	if err := cfg.validateTime(in.Start, in.End, &in.Step); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cfg M3dbSection) validateTime(start, end int64, step *int) error {
+	if end <= start {
+		return fmt.Errorf("query time range is invalid end %d <= start %d", end, start)
+	}
+
+	if cfg.DaysLimit > 0 {
+		if days := int((end - start) / 86400); days > cfg.DaysLimit {
+			return fmt.Errorf("query time reange in invalid, daysLimit(%d/%d)", days, cfg.DaysLimit)
+		}
+	}
+
+	if *step == 0 {
+		*step = int((end - start) / 720)
+	}
+
+	if *step > cfg.MinStep {
+		*step = cfg.MinStep
+	}
+	return nil
 }
