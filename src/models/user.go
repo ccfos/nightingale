@@ -41,6 +41,7 @@ type User struct {
 	IsRoot     int    `json:"is_root"`
 	LeaderId   int64  `json:"leader_id"`
 	LeaderName string `json:"leader_name"`
+	CreateAt   int64  `json:"create_at"`
 }
 
 func (u *User) CopyLdapAttr(sr *ldap.SearchResult) {
@@ -639,4 +640,14 @@ func GetUsersNameByIds(ids string) ([]string, error) {
 		names = append(names, user.Username)
 	}
 	return names, err
+}
+
+func UsersGet(where string, args ...interface{}) ([]User, error) {
+	var objs []User
+	err := DB["rdb"].Where(where, args...).Find(&objs)
+	if err != nil {
+		return nil, err
+	}
+
+	return objs, nil
 }

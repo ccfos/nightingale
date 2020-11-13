@@ -54,6 +54,7 @@ func userAddPost(c *gin.Context) {
 	pass, err := models.CryptoPass(f.Password)
 	dangerous(err)
 
+	now := time.Now().Unix()
 	u := models.User{
 		Username: f.Username,
 		Password: pass,
@@ -64,6 +65,7 @@ func userAddPost(c *gin.Context) {
 		IsRoot:   f.IsRoot,
 		LeaderId: f.LeaderId,
 		UUID:     models.GenUUIDForUser(f.Username),
+		CreateAt: now,
 	}
 
 	if f.LeaderId != 0 {
