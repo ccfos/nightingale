@@ -28,20 +28,21 @@ const (
 )
 
 type User struct {
-	Id         int64     `json:"id"`
-	UUID       string    `json:"uuid" xorm:"'uuid'"`
-	Username   string    `json:"username"`
-	Password   string    `json:"-"`
-	Dispname   string    `json:"dispname"`
-	Phone      string    `json:"phone"`
-	Email      string    `json:"email"`
-	Im         string    `json:"im"`
-	Portrait   string    `json:"portrait"`
-	Intro      string    `json:"intro"`
-	IsRoot     int       `json:"is_root"`
-	LeaderId   int64     `json:"leader_id"`
-	LeaderName string    `json:"leader_name"`
-	CreateAt   time.Time `json:"create_at" xorm:"<-"`
+	Id           int64     `json:"id"`
+	UUID         string    `json:"uuid" xorm:"'uuid'"`
+	Username     string    `json:"username"`
+	Password     string    `json:"-"`
+	Dispname     string    `json:"dispname"`
+	Phone        string    `json:"phone"`
+	Email        string    `json:"email"`
+	Im           string    `json:"im"`
+	Portrait     string    `json:"portrait"`
+	Intro        string    `json:"intro"`
+	Organization string    `json:"organization"`
+	IsRoot       int       `json:"is_root"`
+	LeaderId     int64     `json:"leader_id"`
+	LeaderName   string    `json:"leader_name"`
+	CreateAt     time.Time `json:"create_at" xorm:"<-"`
 }
 
 func (u *User) CopyLdapAttr(sr *ldap.SearchResult) {
