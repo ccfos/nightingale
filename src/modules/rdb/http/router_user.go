@@ -54,7 +54,6 @@ func userAddPost(c *gin.Context) {
 	pass, err := models.CryptoPass(f.Password)
 	dangerous(err)
 
-	now := time.Now().Unix()
 	u := models.User{
 		Username: f.Username,
 		Password: pass,
@@ -65,7 +64,7 @@ func userAddPost(c *gin.Context) {
 		IsRoot:   f.IsRoot,
 		LeaderId: f.LeaderId,
 		UUID:     models.GenUUIDForUser(f.Username),
-		CreateAt: now,
+		CreateAt: time.Now().Unix(),
 	}
 
 	if f.LeaderId != 0 {
@@ -274,7 +273,8 @@ func userInvitePost(c *gin.Context) {
 	inv, err := models.InviteGet("token=?", f.Token)
 	dangerous(err)
 
-	if inv.Expire < time.Now().Unix() {
+	now := time.Now().Unix()
+	if inv.Expire < now {
 		dangerous("invite url already expired")
 	}
 
@@ -285,6 +285,7 @@ func userInvitePost(c *gin.Context) {
 		Email:    f.Email,
 		Im:       f.Im,
 		UUID:     models.GenUUIDForUser(f.Username),
+		CreateAt: now,
 	}
 
 	u.Password, err = models.CryptoPass(f.Password)
