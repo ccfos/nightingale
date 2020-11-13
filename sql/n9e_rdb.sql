@@ -19,6 +19,7 @@ CREATE TABLE `user`
     `is_root`     tinyint(1)   not null,
     `leader_id`   int unsigned not null default 0,
     `leader_name` varchar(32)  not null default '',
+    `create_at`   int unsigned not null default 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`username`),
     UNIQUE KEY (`uuid`)
