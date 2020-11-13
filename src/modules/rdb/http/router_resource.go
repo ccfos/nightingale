@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,41 @@ func resourceSearchGet(c *gin.Context) {
 	field := queryStr(c, "field")
 	list, err := models.ResourceSearch(batch, field)
 	renderData(c, list, err)
+}
+
+type containerSyncForm struct {
+	Name  string                     `json:"name" binding:"required"`
+	Items []v1ContainersRegisterItem `json:"items"`
+}
+
+func containerSyncPost(c *gin.Context) {
+	var sf containerSyncForm
+	bind(c, &sf)
+
+	count := len(sf.Items)
+
+	for i := 0; i < count; i++ {
+		sf.Items[i].Validate()
+	}
+
+	var (
+		rids []int64
+	)
+
+	list, err := models.ResourceGets("labels like ?",
+		fmt.Sprintf("%%resourceName=%s%%", sf.Name))
+	dangerous(err)
+
+	for _, l := range list {
+		rids = append(rids, l.Id)
+	}
+
+	newItemData := convertItems(sf.Items)
+
+	//起一个事务，先删除旧的资源与绑定关系， 再挂载新的。
+	dangerous(models.ContainerResourceSync(rids, newItemData))
+
+	renderMessage(c, "")
 }
 
 type resourceNotePutForm struct {
