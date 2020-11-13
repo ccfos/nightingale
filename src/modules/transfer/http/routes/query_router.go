@@ -148,5 +148,10 @@ func GetIndexByFullTags(c *gin.Context) {
 	}
 
 	resp := dataSource.QueryIndexByFullTags(recvs)
-	render.Data(c, resp, nil)
+	render.Data(c, &listResp{List: resp, Count: len(resp)}, nil)
+}
+
+type listResp struct {
+	List  interface{} `json:"list"`
+	Count int         `json:"count"`
 }

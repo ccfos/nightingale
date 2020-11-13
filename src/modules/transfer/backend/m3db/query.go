@@ -10,7 +10,7 @@ import (
 )
 
 // QueryData
-func queryDataOptions(inputs []dataobj.QueryData) (index.Query, index.QueryOptions) {
+func (cfg M3dbSection) queryDataOptions(inputs []dataobj.QueryData) (index.Query, index.QueryOptions) {
 	q := []idx.Query{}
 
 	for _, input := range inputs {
@@ -23,14 +23,14 @@ func queryDataOptions(inputs []dataobj.QueryData) (index.Query, index.QueryOptio
 		index.QueryOptions{
 			StartInclusive: time.Unix(inputs[0].Start, 0),
 			EndExclusive:   time.Unix(inputs[0].End, 0),
-			DocsLimit:      DOCS_LIMIT,
-			SeriesLimit:    SERIES_LIMIT,
+			SeriesLimit:    cfg.SeriesLimit,
+			DocsLimit:      cfg.DocsLimit,
 		}
 }
 
 // QueryDataForUI
 // metric && (endpoints[0] || endporint[1] ...) && (tags[0] || tags[1] ...)
-func queryDataUIOptions(input dataobj.QueryDataForUI) (index.Query, index.QueryOptions) {
+func (cfg M3dbSection) queryDataUIOptions(input dataobj.QueryDataForUI) (index.Query, index.QueryOptions) {
 	q1 := idx.NewTermQuery([]byte(METRIC_NAME), []byte(input.Metric))
 	q2 := endpointsQuery(input.Nids, input.Endpoints)
 	q3 := metricTagsQuery(input.Tags)
@@ -39,8 +39,8 @@ func queryDataUIOptions(input dataobj.QueryDataForUI) (index.Query, index.QueryO
 		index.QueryOptions{
 			StartInclusive: time.Unix(input.Start, 0),
 			EndExclusive:   time.Unix(input.End, 0),
-			SeriesLimit:    SERIES_LIMIT,
-			DocsLimit:      DOCS_LIMIT,
+			SeriesLimit:    cfg.SeriesLimit,
+			DocsLimit:      cfg.DocsLimit,
 		}
 }
 
@@ -126,7 +126,7 @@ func metricTagsQuery(tags []string) idx.Query {
 
 // QueryMetrics
 // (endpoint[0] || endpoint[1] ... )
-func queryMetricsOptions(input dataobj.EndpointsRecv) (index.Query, index.AggregationOptions) {
+func (cfg M3dbSection) queryMetricsOptions(input dataobj.EndpointsRecv) (index.Query, index.AggregationOptions) {
 	nameByte := []byte(METRIC_NAME)
 	return index.Query{idx.NewConjunctionQuery(
 			endpointsQuery(nil, input.Endpoints),
@@ -134,10 +134,10 @@ func queryMetricsOptions(input dataobj.EndpointsRecv) (index.Query, index.Aggreg
 		)},
 		index.AggregationOptions{
 			QueryOptions: index.QueryOptions{
-				StartInclusive: time.Time{},
+				StartInclusive: indexStartTime(),
 				EndExclusive:   time.Now(),
-				SeriesLimit:    SERIES_LIMIT,
-				DocsLimit:      DOCS_LIMIT,
+				SeriesLimit:    cfg.SeriesLimit,
+				DocsLimit:      cfg.DocsLimit,
 			},
 			FieldFilter: [][]byte{nameByte},
 			Type:        index.AggregateTagNamesAndValues,
@@ -146,17 +146,17 @@ func queryMetricsOptions(input dataobj.EndpointsRecv) (index.Query, index.Aggreg
 
 // QueryTagPairs
 // (endpoint[0] || endpoint[1]...) && (metrics[0] || metrics[1] ... )
-func queryTagPairsOptions(input dataobj.EndpointMetricRecv) (index.Query, index.AggregationOptions) {
+func (cfg M3dbSection) queryTagPairsOptions(input dataobj.EndpointMetricRecv) (index.Query, index.AggregationOptions) {
 	q1 := endpointsQuery(nil, input.Endpoints)
 	q2 := metricsQuery(input.Metrics)
 
 	return index.Query{idx.NewConjunctionQuery(q1, q2)},
 		index.AggregationOptions{
 			QueryOptions: index.QueryOptions{
-				StartInclusive: time.Time{},
+				StartInclusive: indexStartTime(),
 				EndExclusive:   time.Now(),
-				SeriesLimit:    SERIES_LIMIT,
-				DocsLimit:      DOCS_LIMIT,
+				SeriesLimit:    cfg.SeriesLimit,
+				DocsLimit:      cfg.DocsLimit,
 			},
 			FieldFilter: index.AggregateFieldFilter(nil),
 			Type:        index.AggregateTagNamesAndValues,
@@ -164,7 +164,7 @@ func queryTagPairsOptions(input dataobj.EndpointMetricRecv) (index.Query, index.
 }
 
 // QueryIndexByClude: || (&& (|| endpoints...) (metric) (|| include...) (&& exclude..))
-func queryIndexByCludeOptions(input dataobj.CludeRecv) (index.Query, index.QueryOptions) {
+func (cfg M3dbSection) queryIndexByCludeOptions(input dataobj.CludeRecv) (index.Query, index.QueryOptions) {
 	query := index.Query{}
 	q := []idx.Query{}
 
@@ -188,16 +188,16 @@ func queryIndexByCludeOptions(input dataobj.CludeRecv) (index.Query, index.Query
 	}
 
 	return query, index.QueryOptions{
-		StartInclusive: time.Time{},
+		StartInclusive: indexStartTime(),
 		EndExclusive:   time.Now(),
-		SeriesLimit:    SERIES_LIMIT,
-		DocsLimit:      DOCS_LIMIT,
+		SeriesLimit:    cfg.SeriesLimit,
+		DocsLimit:      cfg.DocsLimit,
 	}
 
 }
 
 // QueryIndexByFullTags: && (|| endpoints) (metric) (&& tagkv)
-func queryIndexByFullTagsOptions(input dataobj.IndexByFullTagsRecv) (index.Query, index.QueryOptions) {
+func (cfg M3dbSection) queryIndexByFullTagsOptions(input dataobj.IndexByFullTagsRecv) (index.Query, index.QueryOptions) {
 	query := index.Query{}
 	q := []idx.Query{}
 
@@ -218,10 +218,10 @@ func queryIndexByFullTagsOptions(input dataobj.IndexByFullTagsRecv) (index.Query
 	}
 
 	return query, index.QueryOptions{
-		StartInclusive: time.Time{},
+		StartInclusive: indexStartTime(),
 		EndExclusive:   time.Now(),
-		SeriesLimit:    SERIES_LIMIT,
-		DocsLimit:      DOCS_LIMIT,
+		SeriesLimit:    cfg.SeriesLimit,
+		DocsLimit:      cfg.DocsLimit,
 	}
 }
 

@@ -9,9 +9,9 @@ import (
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
 
+	"github.com/didi/nightingale/src/common/address"
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/rdb/config"
-	"github.com/didi/nightingale/src/common/address"
 )
 
 func shouldBeLogin() gin.HandlerFunc {
@@ -51,7 +51,6 @@ func shouldBeService() gin.HandlerFunc {
 			c.Next()
 			return
 		}
-
 
 		if ip != "" && slice.ContainsString(address.GetAddresses("rdb"), ip) {
 			c.Next()
