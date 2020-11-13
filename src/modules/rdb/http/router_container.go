@@ -28,21 +28,6 @@ func (f v1ContainersRegisterItem) Validate() {
 	}
 }
 
-func convertItems(items []v1ContainersRegisterItem) (newItems []map[string]interface{}) {
-	for _, i := range items {
-		newItems = append(newItems, map[string]interface{}{
-			"uuid":   i.UUID,
-			"ident":  i.Ident,
-			"name":   i.Name,
-			"labels": i.Labels,
-			"extend": i.Extend,
-			"cate":   i.Cate,
-			"nid":    i.NID,
-		})
-	}
-	return
-}
-
 func v1ContainersBindPost(c *gin.Context) {
 	var items []v1ContainersRegisterItem
 	bind(c, &items)
