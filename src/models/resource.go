@@ -373,7 +373,7 @@ func ContainerResourceSync(ids []int64, newItems []map[string]interface{}) error
 	}
 
 	for i := 0; i < count; i++ {
-		id := int64(newItems[i]["nid"].(float64))
+		id := newItems[i]["nid"].(int64)
 
 		var node Node
 		has, err := session.Where("id = ?", id).Get(&node)

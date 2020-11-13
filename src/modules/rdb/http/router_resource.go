@@ -38,7 +38,7 @@ func containerSyncPost(c *gin.Context) {
 	)
 
 	list, err := models.ResourceGets("labels like ?",
-		fmt.Sprintf("%%resourceName=%s%%", sf.Name))
+		fmt.Sprintf("%%\"resourceName\":\"%s\"%%", sf.Name))
 	dangerous(err)
 
 	for _, l := range list {
