@@ -221,18 +221,18 @@ func (p *Client) queryIndexByClude(session client.Session, input dataobj.CludeRe
 	}
 
 	// group by endpoint-metric
-	respMap := make(map[string]dataobj.XcludeResp)
+	respMap := make(map[string]*dataobj.XcludeResp)
 	for iter.Next() {
 		_, _, tagIter := iter.Current()
 
 		resp := xcludeResp(tagIter)
-		key := fmt.Sprintf("%s-%s", resp.Endpoint, resp.Metric)
-		if v, ok := respMap[key]; ok {
-			if len(resp.Tags) > 0 {
+		if len(resp.Tags) > 0 && len(resp.Tags[0]) > 0 {
+			key := fmt.Sprintf("%s-%s", resp.Endpoint, resp.Metric)
+			if v, ok := respMap[key]; ok {
 				v.Tags = append(v.Tags, resp.Tags[0])
+			} else {
+				respMap[key] = resp
 			}
-		} else {
-			respMap[key] = resp
 		}
 	}
 
@@ -243,7 +243,7 @@ func (p *Client) queryIndexByClude(session client.Session, input dataobj.CludeRe
 
 	resp := make([]dataobj.XcludeResp, 0, len(respMap))
 	for _, v := range respMap {
-		resp = append(resp, v)
+		resp = append(resp, *v)
 	}
 
 	return resp
