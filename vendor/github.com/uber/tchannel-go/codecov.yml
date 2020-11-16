@@ -1,0 +1,15 @@
+coverage:
+  range: 75..100
+  round: down
+  precision: 2
+
+  status:
+    project:
+      default:
+        enabled: yes
+        target: 85%
+        if_not_found: success
+        if_ci_failed: error
+ignore:
+- "*_string.go"
+

@@ -134,7 +134,7 @@ func (cfg M3dbSection) queryMetricsOptions(input dataobj.EndpointsRecv) (index.Q
 		)},
 		index.AggregationOptions{
 			QueryOptions: index.QueryOptions{
-				StartInclusive: time.Time{},
+				StartInclusive: indexStartTime(),
 				EndExclusive:   time.Now(),
 				SeriesLimit:    cfg.SeriesLimit,
 				DocsLimit:      cfg.DocsLimit,
@@ -153,7 +153,7 @@ func (cfg M3dbSection) queryTagPairsOptions(input dataobj.EndpointMetricRecv) (i
 	return index.Query{idx.NewConjunctionQuery(q1, q2)},
 		index.AggregationOptions{
 			QueryOptions: index.QueryOptions{
-				StartInclusive: time.Time{},
+				StartInclusive: indexStartTime(),
 				EndExclusive:   time.Now(),
 				SeriesLimit:    cfg.SeriesLimit,
 				DocsLimit:      cfg.DocsLimit,
@@ -184,11 +184,11 @@ func (cfg M3dbSection) queryIndexByCludeOptions(input dataobj.CludeRecv) (index.
 	if len(q) == 0 {
 		query = index.Query{idx.NewAllQuery()}
 	} else {
-		query = index.Query{idx.NewDisjunctionQuery(q...)}
+		query = index.Query{idx.NewConjunctionQuery(q...)}
 	}
 
 	return query, index.QueryOptions{
-		StartInclusive: time.Time{},
+		StartInclusive: indexStartTime(),
 		EndExclusive:   time.Now(),
 		SeriesLimit:    cfg.SeriesLimit,
 		DocsLimit:      cfg.DocsLimit,
@@ -218,7 +218,7 @@ func (cfg M3dbSection) queryIndexByFullTagsOptions(input dataobj.IndexByFullTags
 	}
 
 	return query, index.QueryOptions{
-		StartInclusive: time.Time{},
+		StartInclusive: indexStartTime(),
 		EndExclusive:   time.Now(),
 		SeriesLimit:    cfg.SeriesLimit,
 		DocsLimit:      cfg.DocsLimit,
@@ -268,12 +268,8 @@ func includeTagsQuery2(in []dataobj.TagPair) idx.Query {
 func excludeTagsQuery(in []*dataobj.TagPair) idx.Query {
 	q := []idx.Query{}
 	for _, kvs := range in {
-		q1 := []idx.Query{}
 		for _, v := range kvs.Values {
-			q1 = append(q1, idx.NewNegationQuery(idx.NewTermQuery([]byte(kvs.Key), []byte(v))))
-		}
-		if len(q1) > 0 {
-			q = append(q, idx.NewConjunctionQuery(q1...))
+			q = append(q, idx.NewNegationQuery(idx.NewTermQuery([]byte(kvs.Key), []byte(v))))
 		}
 	}
 

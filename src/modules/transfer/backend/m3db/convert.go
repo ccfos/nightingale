@@ -88,7 +88,8 @@ func tagsIndexTagkvResp(tags *consolidators.CompleteTagsResult) *dataobj.IndexTa
 	return ret
 }
 
-func xcludeResp(iter ident.TagIterator) (ret dataobj.XcludeResp) {
+func xcludeResp(iter ident.TagIterator) *dataobj.XcludeResp {
+	ret := &dataobj.XcludeResp{}
 	tags := map[string]string{}
 	for iter.Next() {
 		tag := iter.Current()

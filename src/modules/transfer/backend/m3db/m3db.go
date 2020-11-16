@@ -25,6 +25,7 @@ const (
 	METRIC_NAME   = "__name__"
 	SERIES_LIMIT  = 1000
 	DOCS_LIMIT    = 100
+	MAX_PONINTS   = 720
 )
 
 type M3dbSection struct {
@@ -49,6 +50,10 @@ type Client struct {
 	config    *M3dbSection
 
 	namespaceID ident.ID
+}
+
+func indexStartTime() time.Time {
+	return time.Now().Add(-time.Hour * 25)
 }
 
 func NewClient(cfg M3dbSection) (*Client, error) {
@@ -216,18 +221,18 @@ func (p *Client) queryIndexByClude(session client.Session, input dataobj.CludeRe
 	}
 
 	// group by endpoint-metric
-	respMap := make(map[string]dataobj.XcludeResp)
+	respMap := make(map[string]*dataobj.XcludeResp)
 	for iter.Next() {
 		_, _, tagIter := iter.Current()
 
 		resp := xcludeResp(tagIter)
-		key := fmt.Sprintf("%s-%s", resp.Endpoint, resp.Metric)
-		if v, ok := respMap[key]; ok {
-			if len(resp.Tags) > 0 {
+		if len(resp.Tags) > 0 && len(resp.Tags[0]) > 0 {
+			key := fmt.Sprintf("%s-%s", resp.Endpoint, resp.Metric)
+			if v, ok := respMap[key]; ok {
 				v.Tags = append(v.Tags, resp.Tags[0])
+			} else {
+				respMap[key] = resp
 			}
-		} else {
-			respMap[key] = resp
 		}
 	}
 
@@ -238,7 +243,7 @@ func (p *Client) queryIndexByClude(session client.Session, input dataobj.CludeRe
 
 	resp := make([]dataobj.XcludeResp, 0, len(respMap))
 	for _, v := range respMap {
-		resp = append(resp, v)
+		resp = append(resp, *v)
 	}
 
 	return resp
@@ -267,7 +272,6 @@ func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.Inde
 	ret = dataobj.IndexByFullTagsResp{
 		Metric: input.Metric,
 		Tags:   []string{},
-		Step:   10,
 		DsType: "GAUGE",
 	}
 
@@ -285,20 +289,22 @@ func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.Inde
 	}
 
 	ret.Endpoints = input.Endpoints
+	tags := map[string]struct{}{}
 	for iter.Next() {
-		log.Printf("iter.next() ")
 		_, _, tagIter := iter.Current()
 		resp := xcludeResp(tagIter)
-		if len(resp.Tags) > 0 {
-			ret.Tags = append(ret.Tags, resp.Tags[0])
+		if len(resp.Tags) > 0 && len(resp.Tags[0]) > 0 {
+			tags[resp.Tags[0]] = struct{}{}
 		}
+	}
+	for k, _ := range tags {
+		ret.Tags = append(ret.Tags, k)
 	}
 	if err := iter.Err(); err != nil {
 		logger.Errorf("FetchTaggedIDs iter:", err)
 	}
 
 	return ret
-
 }
 
 // GetInstance: && (metric) (endpoint) (&& tags...)
@@ -438,12 +444,21 @@ func seriesIterWalk(iter encoding.SeriesIterator) (out *dataobj.TsdbQueryRespons
 
 	tagsIter := iter.Tags()
 	tags := map[string]string{}
+	var metric, endpoint string
+
 	for tagsIter.Next() {
 		tag := tagsIter.Current()
-		tags[tag.Name.String()] = tag.Value.String()
+		k := tag.Name.String()
+		v := tag.Value.String()
+		switch k {
+		case METRIC_NAME:
+			metric = v
+		case ENDPOINT_NAME, NID_NAME:
+			endpoint = v
+		default:
+			tags[k] = v
+		}
 	}
-	metric := tags[METRIC_NAME]
-	endpoint := tags[ENDPOINT_NAME]
 	counter, err := dataobj.GetCounter(metric, "", tags)
 
 	return &dataobj.TsdbQueryResponse{
@@ -483,7 +498,7 @@ func (cfg M3dbSection) validateTime(start, end int64, step *int) error {
 	}
 
 	if *step == 0 {
-		*step = int((end - start) / 720)
+		*step = int((end - start) / MAX_PONINTS)
 	}
 
 	if *step > cfg.MinStep {
