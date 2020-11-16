@@ -1,0 +1,86 @@
+// Copyright (c) 2018 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+syntax = "proto3";
+
+option go_package = "github.com/m3db/m3/src/metrics/generated/proto/pipelinepb";
+
+package pipelinepb;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "github.com/m3db/m3/src/metrics/generated/proto/aggregationpb/aggregation.proto";
+import "github.com/m3db/m3/src/metrics/generated/proto/transformationpb/transformation.proto";
+
+message AggregationOp {
+  aggregationpb.AggregationType type = 1;
+}
+
+message TransformationOp {
+  transformationpb.TransformationType type = 1;
+}
+
+message RollupOp {
+  string new_name = 1;
+  repeated string tags = 2;
+  repeated aggregationpb.AggregationType aggregation_types = 3;
+}
+
+message PipelineOp {
+  enum Type {
+    UNKNOWN = 0;
+    AGGREGATION = 1;
+    TRANSFORMATION = 2;
+    ROLLUP = 3;
+  }
+  Type type = 1;
+  AggregationOp aggregation = 2;
+  TransformationOp transformation = 3;
+  RollupOp rollup = 4;
+}
+
+message Pipeline {
+  repeated PipelineOp ops = 1 [(gogoproto.nullable) = false];
+}
+
+// AppliedRollupOp is a rollup operation that has been
+// applied against a metric.
+message AppliedRollupOp {
+  bytes id = 1;
+  aggregationpb.AggregationID aggregation_id = 2 [(gogoproto.nullable) = false];
+}
+
+// AppliedPipelineOp is a pipeline operation that has
+// been applied against a metric.
+message AppliedPipelineOp {
+  enum Type {
+    UNKNOWN = 0;
+    TRANSFORMATION = 1;
+    ROLLUP = 2;
+  }
+  Type type = 1;
+  TransformationOp transformation = 2;
+  AppliedRollupOp rollup = 3;
+}
+
+// AppliedPipelineOp is a pipeline containing operations
+// that have been applied against a metric.
+message AppliedPipeline {
+  repeated AppliedPipelineOp ops = 1 [(gogoproto.nullable) = false];
+}

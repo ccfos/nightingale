@@ -28,19 +28,20 @@ const (
 )
 
 type User struct {
-	Id         int64  `json:"id"`
-	UUID       string `json:"uuid" xorm:"'uuid'"`
-	Username   string `json:"username"`
-	Password   string `json:"-"`
-	Dispname   string `json:"dispname"`
-	Phone      string `json:"phone"`
-	Email      string `json:"email"`
-	Im         string `json:"im"`
-	Portrait   string `json:"portrait"`
-	Intro      string `json:"intro"`
-	IsRoot     int    `json:"is_root"`
-	LeaderId   int64  `json:"leader_id"`
-	LeaderName string `json:"leader_name"`
+	Id         int64     `json:"id"`
+	UUID       string    `json:"uuid" xorm:"'uuid'"`
+	Username   string    `json:"username"`
+	Password   string    `json:"-"`
+	Dispname   string    `json:"dispname"`
+	Phone      string    `json:"phone"`
+	Email      string    `json:"email"`
+	Im         string    `json:"im"`
+	Portrait   string    `json:"portrait"`
+	Intro      string    `json:"intro"`
+	IsRoot     int       `json:"is_root"`
+	LeaderId   int64     `json:"leader_id"`
+	LeaderName string    `json:"leader_name"`
+	CreateAt   time.Time `json:"create_at" xorm:"<-"`
 }
 
 func (u *User) CopyLdapAttr(sr *ldap.SearchResult) {
@@ -639,4 +640,14 @@ func GetUsersNameByIds(ids string) ([]string, error) {
 		names = append(names, user.Username)
 	}
 	return names, err
+}
+
+func UsersGet(where string, args ...interface{}) ([]User, error) {
+	var objs []User
+	err := DB["rdb"].Where(where, args...).Find(&objs)
+	if err != nil {
+		return nil, err
+	}
+
+	return objs, nil
 }
