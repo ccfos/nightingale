@@ -20,10 +20,11 @@ func resourceSearchGet(c *gin.Context) {
 
 type containerSyncForm struct {
 	Name  string                     `json:"name" binding:"required"`
+	Type  string                     `json:"type" binding:"type"`
 	Items []v1ContainersRegisterItem `json:"items"`
 }
 
-func containerSyncPost(c *gin.Context) {
+func v1ContainerSyncPost(c *gin.Context) {
 	var sf containerSyncForm
 	bind(c, &sf)
 
@@ -32,7 +33,7 @@ func containerSyncPost(c *gin.Context) {
 	)
 
 	list, err := models.ResourceGets("labels like ?",
-		fmt.Sprintf("%%,resourceName=%s%%", sf.Name))
+		fmt.Sprintf("%%,resourceType=%s,resourceName=%s%%", sf.Type, sf.Name))
 	dangerous(err)
 
 	for _, l := range list {
@@ -114,8 +115,6 @@ func resourceHttpRegister(count int, items []v1ContainersRegisterItem) {
 
 		dangerous(innerCateNode.Bind([]int64{res.Id}))
 	}
-
-	return
 }
 
 // 游离资源页面修改备注，超级管理员，或者是租户管理员
