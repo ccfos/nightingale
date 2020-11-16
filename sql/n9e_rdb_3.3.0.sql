@@ -28,3 +28,6 @@ CREATE TABLE `captcha` (
   KEY (`captcha_id`, `answer`),
   KEY (`created_at`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
+
+alter table user add column create_at timestamp not null default CURRENT_TIMESTAMP;
+update user set create_at = '2020-11-14 17:00:08';

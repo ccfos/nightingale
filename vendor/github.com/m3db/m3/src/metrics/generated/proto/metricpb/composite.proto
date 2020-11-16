@@ -1,0 +1,97 @@
+// Copyright (c) 2018 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+syntax = "proto3";
+
+option go_package = "github.com/m3db/m3/src/metrics/generated/proto/metricpb";
+
+package metricpb;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "github.com/m3db/m3/src/metrics/generated/proto/metricpb/metric.proto";
+import "github.com/m3db/m3/src/metrics/generated/proto/metricpb/metadata.proto";
+import "github.com/m3db/m3/src/metrics/generated/proto/policypb/policy.proto";
+
+message CounterWithMetadatas {
+  Counter counter = 1 [(gogoproto.nullable) = false];
+  StagedMetadatas metadatas = 2 [(gogoproto.nullable) = false];
+}
+
+message BatchTimerWithMetadatas {
+  BatchTimer batch_timer = 1 [(gogoproto.nullable) = false];
+  StagedMetadatas metadatas = 2 [(gogoproto.nullable) = false];
+}
+
+message GaugeWithMetadatas {
+  Gauge gauge = 1 [(gogoproto.nullable) = false];
+  StagedMetadatas metadatas = 2 [(gogoproto.nullable) = false];
+}
+
+message ForwardedMetricWithMetadata {
+  ForwardedMetric metric = 1 [(gogoproto.nullable) = false];
+  ForwardMetadata metadata = 2 [(gogoproto.nullable) = false];
+}
+
+message TimedMetricWithMetadata {
+  TimedMetric metric = 1 [(gogoproto.nullable) = false];
+  TimedMetadata metadata = 2 [(gogoproto.nullable) = false];
+}
+
+message TimedMetricWithMetadatas {
+  TimedMetric metric = 1 [(gogoproto.nullable) = false];
+  StagedMetadatas metadatas = 2 [(gogoproto.nullable) = false];
+}
+
+message TimedMetricWithStoragePolicy {
+  TimedMetric timed_metric = 1 [(gogoproto.nullable) = false];
+  policypb.StoragePolicy storage_policy = 2 [(gogoproto.nullable) = false];
+}
+
+message AggregatedMetric {
+  TimedMetricWithStoragePolicy metric = 1 [(gogoproto.nullable) = false];
+  int64 encode_nanos = 2;
+}
+
+// NB: we intentionally choose to explicitly define the message type as well
+// as the corresponding payload as opposed to use `oneof` protobuf type here.
+// This is because the generated `Unmarshal` method of `oneof` types doesn't
+// permit reusing existing protobuf messages for decoding, thus incurring a
+// significant performance hit when such message type is used for encoding
+// and decoding high volume traffic.
+message MetricWithMetadatas {
+  enum Type {
+    UNKNOWN = 0;
+    COUNTER_WITH_METADATAS = 1;
+    BATCH_TIMER_WITH_METADATAS = 2;
+    GAUGE_WITH_METADATAS = 3;
+    FORWARDED_METRIC_WITH_METADATA = 4;
+    TIMED_METRIC_WITH_METADATA = 5;
+    TIMED_METRIC_WITH_METADATAS = 6;
+    TIMED_METRIC_WITH_STORAGE_POLICY = 7;
+  }
+  Type type = 1;
+  CounterWithMetadatas counter_with_metadatas = 2;
+  BatchTimerWithMetadatas batch_timer_with_metadatas = 3;
+  GaugeWithMetadatas gauge_with_metadatas = 4;
+  ForwardedMetricWithMetadata forwarded_metric_with_metadata = 5;
+  TimedMetricWithMetadata timed_metric_with_metadata = 6;
+  TimedMetricWithMetadatas timed_metric_with_metadatas = 7;
+  TimedMetricWithStoragePolicy timed_metric_with_storage_policy = 8;
+}

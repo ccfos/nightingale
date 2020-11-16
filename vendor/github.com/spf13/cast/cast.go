@@ -20,6 +20,14 @@ func ToTime(i interface{}) time.Time {
 	return v
 }
 
+// ToTimeInDefaultLocationE casts an empty interface to time.Time,
+// interpreting inputs without a timezone to be in the given location.
+// To fall back to the local timezone, use time.Local as the last argument.
+func ToTimeInDefaultLocation(i interface{}, location *time.Location) time.Time {
+	v, _ := ToTimeInDefaultLocationE(i, location)
+	return v
+}
+
 // ToDuration casts an interface to a time.Duration type.
 func ToDuration(i interface{}) time.Duration {
 	v, _ := ToDurationE(i)

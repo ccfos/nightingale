@@ -1,0 +1,58 @@
+sudo: false
+language: go
+
+cache:
+  directories:
+  - $HOME/.glide/cache
+
+go:
+- 1.11.x
+- 1.12.x
+
+matrix:
+  include:
+  - go: 1.12.x
+    env: CROSSDOCK=true
+    sudo: required
+    dist: trusty
+    services:
+    - docker
+  include:
+  - go: 1.12.x
+    env: NO_TEST=yes COVERAGE=yes LINT=yes
+
+env:
+  global:
+  - DOCKER_COMPOSE_VERSION=1.8.0
+  - COMMIT=${TRAVIS_COMMIT::8}
+  # Set higher timeouts for Travis
+  - TEST_TIMEOUT_SCALE=20
+  # Dump all debug logs on any failure
+  - LOGS_ON_FAILURE=1
+  # DOCKER_EMAIL
+  - secure: OS9ccMrvJU1W3LgAltdxSn2iqeC/hS/V+xYZ2yfmGqYifzCWWa2R+GmQAfHaxQ6+ut4ISWJX/EYdtnqoUD3SBYRBOeY1fD47LFX0Q0gFnuxfgf3hS6jG5dpiK9nlp+Vj+fxnWkA2QxQQBzLDkdB1B7mBWBMt+MSuevq1QGxT6coy2XypZoAc2ohvTaznHX4PdISFS2Ddku5Zo7jqL80RYW+K1HeYxnjHYG/K7ZSZbhFQxBM5S9FSvwp8ooGiqQ7kIfK4DsOWiIBXx0fHDNHxJtNJfJeAfF9unqkeNx9QZmGcjMWzbmPqBhz231BRXPd+Z0ZyXZVnlLCzOXN2DsE/JffUTLWTxb6rJ6lrwwZ6oZm/YAM3YHRgjotiC92fjZpXEVoBPGtRMcD+P6iwbedKIeaYOj9XQ5OizKaMbJAwU5HfIUWz5iWW66SZf2NWRPwl0BX8qjL2G3yhwJwCzgIpcZ7zxIbVgtZgMcCG5K5i3/HyuGNGI2vqhXCYoFrqJu+T9t59m74ZyKf76e7bfOUQSGZlUMYVGxRtuCdjMACr4jbHD4lIBSnRGE0uat+OSle/+Ke9plP6W5b8XkALgJreOAgBa5Hnf+0ODeQnCaK0gJk6Ax5O9v4B9NEPae5hvdk1rHvG5ke/MXecu18y7wopMhJ/cpSJxRTfADmuCIdIhy4=
+  # DOCKER_USER
+  - secure: D6KY81H0sxRPvXjE2VeYz1c3vkpEUg/UoV0pRIrVlWD7HOKG6a92ZGUbwz8Ex+PRcTPPlEP1rwE/rJ/0uhrueynkXNBqQsDWT9ECsK7l92b931JY3sEM3eBJCL0whtorCLtXQ2l/g5PJS3AcNGDxP1zP07J2pcsgk2SBcZqnAq0h8U3M7/rLX8JroudG3JxmSvH6HqXkGDdOJXTCeyG9EVdrsUCVb0JY7Q0oMGMzIcZTkJ0Yts7mtjNS/VXDeSYnHxELuRgioLTJThjwBa31StZNTqnnzWh5kR2u/WZvjYf7eaHZfzZJa85CS8yIAAaMc//tu/13qxgAsdiT9TjEhx8hS0J2Wu/JXpCmbKkoHp42sX9aZDWJIR4ZQHaPEIdcTnAbPROhS0XGHqAvpcDAjWuwbtwpnB4Quz67GVpoZNQV4uHiu6fuRqY5kvkzv28K1jGeStUyNDwBtNGCvggB5OZlLYyo+2G7vu//LxV6FXsioqqKePn7xxQBtxgf2LGQEhmeO7iNUyXTy3EoaFrpl7ScQbi9XoCKN28Fi5Da9J5IOn0KQ4niRg126Xgk+vwNytj3qoP4xIZps3WavtTqXvbbGkGCIbIEDNzDFtqrdo2ZAA6YhtlwuB2/2Jbmva7zmma7VDMPapHVqe4tTsQoAl3IEeokV9wRFr/28vGDrKE=
+  # DOCKER_PASS
+  - secure: xzdXvoLEQRRz7x9YLdjyagn83lYgLX9hHlNJy0AnHUfbMpdjbnAzEDBnhorNfqoK/E2Vw4sx13+2M2ZbVQ0qfdjqUne/oBiNxzm+lTUyeZv5lhWeX5ZiJkfmecDmimK/mQBw+eah7ClzPmj3dsL2Oq4E8fd6LVCwO7ZyJUKyaeQ8/cLbJsfOSaBF40T1EFpvX8jim/dz3dtmW5ksHmjPMF3yGKTvSKuz4T2ZCe8CafvLI/Vlei/oNcJuZrIYMXsfSgjAtCW2VNeIgWetezr1KySZXe8rKVre4lyyT48t5OKXqNemxtRXE21pB7td0okpgpYTLfpwP1qP5x/87f3xFEzwBU0iJiTTXaeVifIK0irJwSm8IC63uURg7R0NYjj+183rhQkH37bfKIivj5xBbu/YID8LMTanBNRFkImlHogoSRBRt4ZdcJ7GY2gvN+2+XGWoRmRGwbp5sSHUZtntJoqMDQlu61uU2CX4CuXMy6G6I7um8CX63J0xywqDCbgB2XrQvcyiWRc4PCfnKKBtFKZRBU4aZwf/6r4BckU3NKXE8Sji98OEm2nNpyQmyKR7lfvulPTSWfwfTWUg5SAnzTcBshIsH8rFm8qU8f26WR7YoykgO3PKP/nHVItOkYs/i9roi7az9FX4nEPkgYkgwWV8d/4sJt8Uz+ll1WNIKOE=
+
+install:
+- make install_ci
+
+script:
+- test -n "$NO_TEST" || make test_ci
+- test -z "$COVERAGE" || make cover_ci
+- test -z "$LINT" || make install_lint lint
+- make crossdock_logs_ci
+
+after_success:
+- export REPO=tchannelhub/xdock-go
+- export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
+- export TAG=`if [ "$BRANCH" == "master" ]; then echo "latest"; else echo $BRANCH; fi`
+- echo "TRAVIS_BRANCH=$TRAVIS_BRANCH, REPO=$REPO, PR=$PR, BRANCH=$BRANCH, TAG=$TAG"
+- export DOCKER=$(if [ "$CROSSDOCK" == "true" ]; then echo docker; else echo true; fi)
+- $DOCKER login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+- $DOCKER build -f crossdock/Dockerfile -t $REPO:$COMMIT .
+- $DOCKER tag $REPO:$COMMIT $REPO:$TAG
+- $DOCKER tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+- $DOCKER push $REPO

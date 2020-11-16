@@ -1,15 +1,15 @@
 package models
 
 import (
-"log"
-"path"
-"time"
+	"log"
+	"path"
+	"time"
 
-"xorm.io/core"
-"xorm.io/xorm"
+	"xorm.io/core"
+	"xorm.io/xorm"
 
-"github.com/toolkits/pkg/file"
-"github.com/toolkits/pkg/runner"
+	"github.com/toolkits/pkg/file"
+	"github.com/toolkits/pkg/runner"
 )
 
 type MySQLConf struct {

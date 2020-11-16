@@ -129,6 +129,7 @@ func Config(r *gin.Engine) {
 		userLogin.GET("/resources/bindings", resourceBindingsGet)
 		userLogin.GET("/resources/orphan", resourceOrphanGet)
 
+		userLogin.POST("/container/sync", containerSyncPost)
 	}
 
 	v1 := r.Group("/v1/rdb").Use(shouldBeService())
