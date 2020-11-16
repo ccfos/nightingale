@@ -47,13 +47,9 @@ func ToJudge(historyMap *cache.JudgeItemMap, key string, val *dataobj.JudgeItem,
 		return
 	}
 
-	needCount := stra.AlertDur / int(val.Step)
-	if needCount < 1 {
-		needCount = 1
-	}
 	linkedList, exists := historyMap.Get(key)
 	if exists {
-		needJudge := linkedList.PushFrontAndMaintain(val, needCount)
+		needJudge := linkedList.PushFrontAndMaintain(val, stra.AlertDur)
 		if !needJudge {
 			return
 		}
@@ -64,8 +60,8 @@ func ToJudge(historyMap *cache.JudgeItemMap, key string, val *dataobj.JudgeItem,
 		historyMap.Set(key, linkedList)
 	}
 
-	historyData, isEnough := linkedList.HistoryData(needCount)
-	if !isEnough {
+	historyData := linkedList.HistoryData()
+	if len(historyData) == 0 {
 		return
 	}
 	history := []dataobj.History{}
@@ -192,17 +188,8 @@ func judgeItemWithStrategy(stra *models.Stra, historyData []*dataobj.HistoryData
 	straFunc := exp.Func
 
 	var straParam []interface{}
-	if firstItem.Step == 0 {
-		logger.Errorf("wrong step:%+v", firstItem)
-		return
-	}
 
-	limit := stra.AlertDur / firstItem.Step
-	if limit <= 0 {
-		limit = 1
-	}
-
-	straParam = append(straParam, limit)
+	straParam = append(straParam, 1)
 
 	switch straFunc {
 	case "happen", "stddev":
