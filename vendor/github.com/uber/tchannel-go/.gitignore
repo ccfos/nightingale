@@ -1,0 +1,20 @@
+build
+Godeps/_workspace
+vendor/
+thrift-gen-release/
+
+# Lint output
+lint.log
+
+# Cover profiles
+*.out
+
+# Editor and OS detritus
+*~
+*.swp
+.DS_Store
+.idea
+tchannel-go.iml
+.vscode
+.bin/
+.idea/
