@@ -13,12 +13,10 @@ import (
 	"github.com/didi/nightingale/src/modules/transfer/backend"
 	"github.com/didi/nightingale/src/modules/transfer/config"
 	"github.com/didi/nightingale/src/modules/transfer/cron"
-	"github.com/didi/nightingale/src/modules/transfer/http/routes"
+	"github.com/didi/nightingale/src/modules/transfer/http"
 	"github.com/didi/nightingale/src/modules/transfer/rpc"
-	"github.com/didi/nightingale/src/toolkits/http"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
-	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
@@ -66,9 +64,10 @@ func main() {
 	go report.Init(cfg.Report, "rdb")
 	go rpc.Start()
 
-	r := gin.New()
-	routes.Config(r)
-	go http.Start(r, "transfer", cfg.Logger.Level)
+	// r := gin.New()
+	// routes.Config(r)
+	// go http.Start(r, "transfer", cfg.Logger.Level)
+	http.Start()
 
 	cleanup()
 }
