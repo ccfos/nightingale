@@ -71,8 +71,15 @@ func (ll *SafeLinkedList) HistoryData() []*dataobj.HistoryData {
 	if judgeType == 'G' || judgeType == 'g' {
 		vs = make([]*dataobj.HistoryData, 0)
 
+		v := &dataobj.HistoryData{
+			Timestamp: firstItem.Timestamp,
+			Value:     dataobj.JsonFloat(firstItem.Value),
+			Extra:     firstItem.Extra,
+		}
+		vs = append(vs, v)
+
 		currentElement := firstElement
-		for i := 0; i < size; i++ {
+		for i := 1; i < size; i++ {
 			nextElement := currentElement.Next()
 			if nextElement == nil {
 				return vs
