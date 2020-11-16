@@ -2,7 +2,6 @@ package m3db
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -226,13 +225,14 @@ func (p *Client) queryIndexByClude(session client.Session, input dataobj.CludeRe
 		_, _, tagIter := iter.Current()
 
 		resp := xcludeResp(tagIter)
-		if len(resp.Tags) > 0 && len(resp.Tags[0]) > 0 {
-			key := fmt.Sprintf("%s-%s", resp.Endpoint, resp.Metric)
-			if v, ok := respMap[key]; ok {
+		key := fmt.Sprintf("%s-%s", resp.Endpoint, resp.Metric)
+
+		if v, ok := respMap[key]; ok {
+			if len(resp.Tags) > 0 && len(resp.Tags[0]) > 0 {
 				v.Tags = append(v.Tags, resp.Tags[0])
-			} else {
-				respMap[key] = resp
 			}
+		} else {
+			respMap[key] = resp
 		}
 	}
 
@@ -267,7 +267,6 @@ func (p *Client) QueryIndexByFullTags(inputs []dataobj.IndexByFullTagsRecv) []da
 }
 
 func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.IndexByFullTagsRecv) (ret dataobj.IndexByFullTagsResp) {
-	log.Printf("entering queryIndexByFullTags")
 
 	ret = dataobj.IndexByFullTagsResp{
 		Metric: input.Metric,
@@ -278,7 +277,6 @@ func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.Inde
 	query, opts := p.config.queryIndexByFullTagsOptions(input)
 	if query.Query.Equal(idx.NewAllQuery()) {
 		ret.Endpoints = input.Endpoints
-		log.Printf("all query")
 		return
 	}
 
@@ -435,7 +433,6 @@ func seriesIterWalk(iter encoding.SeriesIterator) (out *dataobj.TsdbQueryRespons
 	values := []*dataobj.RRDData{}
 	for iter.Next() {
 		dp, _, _ := iter.Current()
-		logger.Printf("%s: %v", dp.Timestamp.String(), dp.Value)
 		values = append(values, dataobj.NewRRDData(dp.Timestamp.Unix(), dp.Value))
 	}
 	if err := iter.Err(); err != nil {

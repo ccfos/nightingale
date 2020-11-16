@@ -85,6 +85,7 @@ type CludeRecv struct {
 
 type XcludeResp struct {
 	Endpoint string   `json:"endpoint"`
+	Nid      string   `json:"nid"`
 	Metric   string   `json:"metric"`
 	Tags     []string `json:"tags"`
 	Step     int      `json:"step"`

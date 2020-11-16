@@ -96,8 +96,10 @@ func xcludeResp(iter ident.TagIterator) *dataobj.XcludeResp {
 		switch key := tag.Name.String(); key {
 		case METRIC_NAME:
 			ret.Metric = tag.Value.String()
-		case ENDPOINT_NAME, NID_NAME:
+		case ENDPOINT_NAME:
 			ret.Endpoint = tag.Value.String()
+		case NID_NAME:
+			ret.Nid = tag.Value.String()
 		default:
 			tags[key] = tag.Value.String()
 		}
