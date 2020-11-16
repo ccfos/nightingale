@@ -43,8 +43,9 @@ type LoggerSection struct {
 }
 
 type HTTPSection struct {
-	Enabled bool   `yaml:"enabled"`
-	Access  string `yaml:"access"`
+	Mode         string `yaml:"mode"`
+	CookieName   string `yaml:"cookieName"`
+	CookieDomain string `yaml:"cookieDomain"`
 }
 
 type RPCSection struct {
