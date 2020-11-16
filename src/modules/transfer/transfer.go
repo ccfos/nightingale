@@ -64,9 +64,6 @@ func main() {
 	go report.Init(cfg.Report, "rdb")
 	go rpc.Start()
 
-	// r := gin.New()
-	// routes.Config(r)
-	// go http.Start(r, "transfer", cfg.Logger.Level)
 	http.Start()
 
 	cleanup()

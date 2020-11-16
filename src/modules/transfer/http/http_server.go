@@ -21,12 +21,9 @@ var srv = &http.Server{
 	MaxHeaderBytes: 1 << 20,
 }
 
-var skipPaths = []string{"/api/rdb/auth/login"}
-
 func Start() {
 	c := config.Config
 
-	loggerMid := middleware.LoggerWithConfig(middleware.LoggerConfig{SkipPaths: skipPaths})
 	recoveryMid := middleware.Recovery()
 
 	if strings.ToLower(c.HTTP.Mode) == "release" {
@@ -35,7 +32,7 @@ func Start() {
 	}
 
 	r := gin.New()
-	r.Use(loggerMid, recoveryMid)
+	r.Use(recoveryMid)
 
 	Config(r)
 
