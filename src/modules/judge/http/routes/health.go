@@ -42,6 +42,6 @@ func getData(c *gin.Context) {
 	errors.Dangerous(c.ShouldBind(&input))
 	pk := input.MD5()
 	linkedList, _ := cache.HistoryBigMap[pk[0:2]].Get(pk)
-	data, _ := linkedList.HistoryData(10)
+	data := linkedList.HistoryData()
 	render.Data(c, data, nil)
 }
