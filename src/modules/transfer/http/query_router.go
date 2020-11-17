@@ -1,4 +1,4 @@
-package routes
+package http
 
 import (
 	"github.com/didi/nightingale/src/common/dataobj"
@@ -31,7 +31,8 @@ func QueryDataForUI(c *gin.Context) {
 	stats.Counter.Set("data.ui.qp10s", 1)
 	var input dataobj.QueryDataForUI
 	var respData []*dataobj.QueryDataForUIResp
-	errors.Dangerous(c.ShouldBindJSON(&input))
+
+	dangerous(c.ShouldBindJSON(&input))
 	start := input.Start
 	end := input.End
 
