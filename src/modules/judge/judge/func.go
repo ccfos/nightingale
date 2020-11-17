@@ -19,6 +19,16 @@ type MaxFunction struct {
 }
 
 func (f MaxFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
+	count := len(vs)
+	if count < 1 {
+		return
+	}
+
+	duration := int(vs[0].Timestamp - vs[count-1].Timestamp)
+	if duration < f.Limit {
+		return
+	}
+
 	max := vs[0].Value
 	for i := 1; i < len(vs); i++ {
 		if max < vs[i].Value {
@@ -39,6 +49,16 @@ type MinFunction struct {
 }
 
 func (f MinFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
+	count := len(vs)
+	if count < 1 {
+		return
+	}
+
+	duration := int(vs[0].Timestamp - vs[count-1].Timestamp)
+	if duration < f.Limit {
+		return
+	}
+
 	min := vs[0].Value
 
 	for i := 1; i < len(vs); i++ {
@@ -60,16 +80,13 @@ type AllFunction struct {
 }
 
 func (f AllFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
-	isTriggered = true
 	count := len(vs)
 	if count < 1 {
-		isTriggered = false
 		return
 	}
 
 	duration := int(vs[0].Timestamp - vs[count-1].Timestamp)
 	if duration < f.Limit {
-		isTriggered = false
 		return
 	}
 
@@ -92,8 +109,18 @@ type SumFunction struct {
 }
 
 func (f SumFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
+	count := len(vs)
+	if count < 1 {
+		return
+	}
+
+	duration := int(vs[0].Timestamp - vs[count-1].Timestamp)
+	if duration < f.Limit {
+		return
+	}
+
 	sum := dataobj.JsonFloat(0.0)
-	for i := 0; i < len(vs); i++ {
+	for i := 0; i < count; i++ {
 		sum += vs[i].Value
 	}
 
@@ -110,8 +137,17 @@ type AvgFunction struct {
 }
 
 func (f AvgFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
-	sum := dataobj.JsonFloat(0.0)
 	vsLen := len(vs)
+	if vsLen < 1 {
+		return
+	}
+
+	duration := int(vs[0].Timestamp - vs[vsLen-1].Timestamp)
+	if duration < f.Limit {
+		return
+	}
+
+	sum := dataobj.JsonFloat(0.0)
 
 	for i := 0; i < vsLen; i++ {
 		sum += vs[i].Value
@@ -131,6 +167,15 @@ type StddevFunction struct {
 func (f StddevFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
 	var sum float64
 	vsLen := len(vs)
+	if vsLen < 1 {
+		return
+	}
+
+	duration := int(vs[0].Timestamp - vs[vsLen-1].Timestamp)
+	if duration < f.Limit {
+		return
+	}
+
 	for i := 0; i < vsLen; i++ {
 		sum += float64(vs[i].Value)
 	}
@@ -160,11 +205,20 @@ type DiffFunction struct {
 
 // 只要有一个点的diff触发阈值，就报警
 func (f DiffFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
+	vsLen := len(vs)
+	if vsLen < 1 {
+		return
+	}
+
+	duration := int(vs[0].Timestamp - vs[vsLen-1].Timestamp)
+	if duration < f.Limit {
+		return
+	}
 
 	first := vs[0].Value
 
 	isTriggered = false
-	for i := 1; i < len(vs); i++ {
+	for i := 1; i < vsLen; i++ {
 		// diff是当前值减去历史值
 		leftValue = first - vs[i].Value
 		isTriggered = checkIsTriggered(leftValue, f.Operator, f.RightValue)
@@ -185,6 +239,16 @@ type PDiffFunction struct {
 }
 
 func (f PDiffFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
+	vsLen := len(vs)
+	if vsLen < 1 {
+		return
+	}
+
+	duration := int(vs[0].Timestamp - vs[vsLen-1].Timestamp)
+	if duration < f.Limit {
+		return
+	}
+
 	first := vs[0].Value
 	isTriggered = false
 	for i := 1; i < len(vs); i++ {
@@ -246,9 +310,18 @@ type CAvgAbsFunction struct {
 }
 
 func (f CAvgAbsFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
+	vsLen := len(vs)
+	if vsLen < 1 {
+		return
+	}
+
+	duration := int(vs[0].Timestamp - vs[vsLen-1].Timestamp)
+	if duration < f.Limit {
+		return
+	}
+
 	sum := dataobj.JsonFloat(0.0)
 
-	vsLen := len(vs)
 	for i := 0; i < vsLen; i++ {
 		sum += vs[i].Value
 	}
@@ -270,6 +343,14 @@ type CAvgFunction struct {
 
 func (f CAvgFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
 	vsLen := len(vs)
+	if vsLen < 1 {
+		return
+	}
+
+	duration := int(vs[0].Timestamp - vs[vsLen-1].Timestamp)
+	if duration < f.Limit {
+		return
+	}
 
 	sum := dataobj.JsonFloat(0.0)
 	for i := 0; i < vsLen; i++ {
@@ -292,6 +373,14 @@ type CAvgRateAbsFunction struct {
 
 func (f CAvgRateAbsFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
 	vsLen := len(vs)
+	if vsLen < 1 {
+		return
+	}
+
+	duration := int(vs[0].Timestamp - vs[vsLen-1].Timestamp)
+	if duration < f.Limit {
+		return
+	}
 
 	sum := dataobj.JsonFloat(0.0)
 	for i := 0; i < vsLen; i++ {
@@ -315,6 +404,14 @@ type CAvgRateFunction struct {
 
 func (f CAvgRateFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
 	vsLen := len(vs)
+	if vsLen < 1 {
+		return
+	}
+
+	duration := int(vs[0].Timestamp - vs[vsLen-1].Timestamp)
+	if duration < f.Limit {
+		return
+	}
 
 	sum := dataobj.JsonFloat(0.0)
 	for i := 0; i < vsLen; i++ {

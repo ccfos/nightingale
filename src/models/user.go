@@ -39,6 +39,8 @@ type User struct {
 	Portrait     string    `json:"portrait"`
 	Intro        string    `json:"intro"`
 	Organization string    `json:"organization"`
+	Typ          int       `json:"typ"`
+	Status       int       `json:"status"`
 	IsRoot       int       `json:"is_root"`
 	LeaderId     int64     `json:"leader_id"`
 	LeaderName   string    `json:"leader_name"`

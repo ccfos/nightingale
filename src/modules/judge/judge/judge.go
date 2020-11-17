@@ -97,14 +97,6 @@ func ToJudge(historyMap *cache.JudgeItemMap, key string, val *dataobj.JudgeItem,
 				return
 			}
 
-			/*if respData[0].Nid != "" {
-				firstItem.Nid = respData[0].Nid
-			} else if respData[0].Endpoint != "" {
-				firstItem.Endpoint = respData[0].Endpoint
-			}
-			firstItem.Tags = getTags(respData[0].Counter)
-			*/
-
 			history, info, lastValue, status := Judge(stra, expr, dataobj.RRDData2HistoryData(respData[0].Values), val, now)
 
 			statusArr = append(statusArr, status)
