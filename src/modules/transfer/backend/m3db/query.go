@@ -22,7 +22,7 @@ func (cfg M3dbSection) queryDataOptions(inputs []dataobj.QueryData) (index.Query
 	return index.Query{idx.NewDisjunctionQuery(q...)},
 		index.QueryOptions{
 			StartInclusive: time.Unix(inputs[0].Start, 0),
-			EndExclusive:   time.Unix(inputs[0].End, 0),
+			EndExclusive:   time.Unix(inputs[0].End+1, 0),
 			SeriesLimit:    cfg.SeriesLimit,
 			DocsLimit:      cfg.DocsLimit,
 		}
@@ -38,7 +38,7 @@ func (cfg M3dbSection) queryDataUIOptions(input dataobj.QueryDataForUI) (index.Q
 	return index.Query{idx.NewConjunctionQuery(q1, q2, q3)},
 		index.QueryOptions{
 			StartInclusive: time.Unix(input.Start, 0),
-			EndExclusive:   time.Unix(input.End, 0),
+			EndExclusive:   time.Unix(input.End+1, 0),
 			SeriesLimit:    cfg.SeriesLimit,
 			DocsLimit:      cfg.DocsLimit,
 		}
