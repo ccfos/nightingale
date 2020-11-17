@@ -32,27 +32,28 @@ type HistoryData struct {
 
 func RRDData2HistoryData(datas []*RRDData) []*HistoryData {
 	count := len(datas)
-	historyDatas := make([]*HistoryData, count)
-	for i := count - 1; i > 0; i-- {
+	historyDatas := make([]*HistoryData, 0, count)
+	for i := count - 1; i >= 0; i-- {
 		historyData := &HistoryData{
 			Timestamp: datas[i].Timestamp,
 			Value:     datas[i].Value,
 		}
-		historyDatas[i] = historyData
+		historyDatas = append(historyDatas, historyData)
 	}
 
 	return historyDatas
 }
 
 func HistoryData2RRDData(datas []*HistoryData) []*RRDData {
-	rrdDatas := make([]*RRDData, len(datas))
+	count := len(datas)
+	rrdDatas := make([]*RRDData, 0, count)
 
-	for i := range datas {
+	for i := count - 1; i >= 0; i-- {
 		data := &RRDData{
 			Timestamp: datas[i].Timestamp,
 			Value:     datas[i].Value,
 		}
-		rrdDatas[i] = data
+		rrdDatas = append(rrdDatas, data)
 	}
 	return rrdDatas
 }

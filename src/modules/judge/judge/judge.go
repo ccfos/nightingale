@@ -174,7 +174,7 @@ func judgeItemWithStrategy(stra *models.Stra, historyData []*dataobj.HistoryData
 
 	var straParam []interface{}
 
-	straParam = append(straParam, 1)
+	straParam = append(straParam, stra.AlertDur)
 
 	switch straFunc {
 	case "happen", "stddev":

@@ -61,6 +61,16 @@ type AllFunction struct {
 
 func (f AllFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonFloat, isTriggered bool) {
 	isTriggered = true
+	count := len(vs)
+	if count < 1 {
+		isTriggered = false
+		return
+	}
+
+	if vs[0]-vs[count-1] < f.Limit {
+		isTriggered = false
+		return
+	}
 
 	for i := 0; i < len(vs); i++ {
 		isTriggered = checkIsTriggered(vs[i].Value, f.Operator, f.RightValue)
