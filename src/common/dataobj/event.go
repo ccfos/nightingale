@@ -31,15 +31,16 @@ type HistoryData struct {
 }
 
 func RRDData2HistoryData(datas []*RRDData) []*HistoryData {
-	historyDatas := make([]*HistoryData, len(datas))
-
-	for i := range datas {
+	count := len(datas)
+	historyDatas := make([]*HistoryData, count)
+	for i := count - 1; i > 0; i-- {
 		historyData := &HistoryData{
 			Timestamp: datas[i].Timestamp,
 			Value:     datas[i].Value,
 		}
 		historyDatas[i] = historyData
 	}
+
 	return historyDatas
 }
 

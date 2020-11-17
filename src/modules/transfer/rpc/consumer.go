@@ -9,6 +9,7 @@ import (
 	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/transfer/aggr"
 	"github.com/didi/nightingale/src/modules/transfer/cache"
+	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/Shopify/sarama"
 	"github.com/toolkits/pkg/logger"
@@ -72,6 +73,8 @@ func consumer() {
 					item := aggrOut2MetricValue(out)
 					var args []*dataobj.MetricValue
 					args = append(args, item)
+
+					stats.Counter.Set("aggr.points.in", len(args))
 					PushData(args)
 				}
 
