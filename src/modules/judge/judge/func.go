@@ -67,7 +67,8 @@ func (f AllFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.JsonF
 		return
 	}
 
-	if vs[0]-vs[count-1] < f.Limit {
+	duration := int(vs[0].Timestamp - vs[count-1].Timestamp)
+	if duration < f.Limit {
 		isTriggered = false
 		return
 	}
