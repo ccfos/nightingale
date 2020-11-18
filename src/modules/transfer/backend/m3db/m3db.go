@@ -155,6 +155,8 @@ func (p *Client) QueryDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQue
 		return nil
 	}
 
+	ret = resampleResp(ret, input)
+
 	return aggregateResp(ret, input)
 }
 
@@ -484,9 +486,8 @@ func (cfg M3dbSection) validateQueryDataForUI(in *dataobj.QueryDataForUI) (err e
 	}
 
 	if cfg.DaysLimit > 0 {
-		if t := in.End - cfg.timeLimit; in.Start < t {
-			// return fmt.Errorf("query time reange in invalid, daysLimit(%d/%d)", days, cfg.DaysLimit)
-			in.Start = t
+		if t := in.Start + cfg.timeLimit; in.End > t {
+			in.End = t
 		}
 	}
 
