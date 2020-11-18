@@ -33,5 +33,5 @@ alter table user add column create_at timestamp not null default CURRENT_TIMESTA
 update user set create_at = '2020-11-14 17:00:08';
 
 alter table user add `organization` varchar(255) not null default '' after intro;
-alter table user add `typ` tinyint(1) not null default 1 comment '0: temporary account; 1: long-term account' after intro;
-alter table user add `status` tinyint(1) not null default 1 comment '0: disabled; 1: active 2: inactive' after intro;
+alter table user add `typ` tinyint(1) not null default 1 comment '0: long-term account; 1: temporary account' after intro;
+alter table user add `status` tinyint(1) not null default 1 comment '0: active; 1: inactive 2: disable' after intro;
