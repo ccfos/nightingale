@@ -114,18 +114,19 @@ func xcludeResp(iter ident.TagIterator) *dataobj.XcludeResp {
 	return ret
 }
 
-func aggregateResp(data []*dataobj.TsdbQueryResponse, opts dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
-	if len(data) < 2 {
-		return data
-	}
-
-	// resample the data
+func resampleResp(data []*dataobj.TsdbQueryResponse, opts dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 	for _, v := range data {
+		if len(v.Values) <= MAX_PONINTS {
+			continue
+		}
 		v.Values = resample(v.Values, opts.Start, opts.End, int64(opts.Step), opts.ConsolFunc)
 	}
+	return data
+}
 
+func aggregateResp(data []*dataobj.TsdbQueryResponse, opts dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 	// aggregateResp
-	if opts.AggrFunc == "" {
+	if len(data) < 2 || opts.AggrFunc == "" {
 		return data
 	}
 
@@ -188,6 +189,7 @@ func aggregateResp(data []*dataobj.TsdbQueryResponse, opts dataobj.QueryDataForU
 }
 
 func resample(data []*dataobj.RRDData, start, end, step int64, consolFunc string) []*dataobj.RRDData {
+
 	l := int((end - start) / step)
 	if l <= 0 {
 		return []*dataobj.RRDData{}
