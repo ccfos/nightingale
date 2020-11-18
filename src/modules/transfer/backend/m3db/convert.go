@@ -115,13 +115,18 @@ func xcludeResp(iter ident.TagIterator) *dataobj.XcludeResp {
 }
 
 func aggregateResp(data []*dataobj.TsdbQueryResponse, opts dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
-	if len(data) < 2 || opts.AggrFunc == "" {
+	if len(data) < 2 {
 		return data
 	}
 
 	// resample the data
 	for _, v := range data {
-		v.Values = resample(v.Values, opts.Start, opts.End, int64(opts.Step), opts.AggrFunc)
+		v.Values = resample(v.Values, opts.Start, opts.End, int64(opts.Step), opts.ConsolFunc)
+	}
+
+	// aggregateResp
+	if opts.AggrFunc == "" {
+		return data
 	}
 
 	// 没有聚合 tag, 或者曲线没有其他 tags, 直接所有曲线进行计算
@@ -182,7 +187,7 @@ func aggregateResp(data []*dataobj.TsdbQueryResponse, opts dataobj.QueryDataForU
 	return aggrDatas
 }
 
-func resample(data []*dataobj.RRDData, start, end, step int64, aggrFunc string) []*dataobj.RRDData {
+func resample(data []*dataobj.RRDData, start, end, step int64, consolFunc string) []*dataobj.RRDData {
 	l := int((end - start) / step)
 	if l <= 0 {
 		return []*dataobj.RRDData{}
@@ -192,7 +197,7 @@ func resample(data []*dataobj.RRDData, start, end, step int64, aggrFunc string) 
 
 	ts := start
 	if t := data[0].Timestamp; t > start {
-		ts = t - t%step
+		ts = t
 	}
 
 	j := 0
@@ -220,7 +225,7 @@ func resample(data []*dataobj.RRDData, start, end, step int64, aggrFunc string) 
 		}
 		ret = append(ret, &dataobj.RRDData{
 			Timestamp: ts,
-			Value:     aggrData(aggrFunc, get()),
+			Value:     aggrData(consolFunc, get()),
 		})
 	}
 
@@ -234,11 +239,11 @@ func aggrData(fn string, data []dataobj.JsonFloat) dataobj.JsonFloat {
 	switch fn {
 	case "sum":
 		return sum(data)
-	case "avg":
+	case "avg", "AVERAGE":
 		return avg(data)
-	case "max":
+	case "max", "MAX":
 		return max(data)
-	case "min":
+	case "min", "MIN":
 		return min(data)
 		// case "last":
 	default:

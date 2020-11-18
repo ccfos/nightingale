@@ -36,6 +36,7 @@ type M3dbSection struct {
 	DocsLimit   int                  `yaml:"docsLimit"`
 	MinStep     int                  `yaml:"minStep"`
 	Config      client.Configuration `yaml:",inline"`
+	timeLimit   int64                `yaml:"-"`
 }
 
 type Client struct {
@@ -64,6 +65,8 @@ func NewClient(cfg M3dbSection) (*Client, error) {
 	if cfg.MinStep == 0 {
 		cfg.MinStep = 1
 	}
+
+	cfg.timeLimit = int64(86400 * cfg.DaysLimit)
 
 	ret := &Client{
 		namespace:   cfg.Namespace,
@@ -476,30 +479,29 @@ func (cfg M3dbSection) validateQueryDataForUI(in *dataobj.QueryDataForUI) (err e
 		return fmt.Errorf("%s is invalid aggrfunc", in.AggrFunc)
 	}
 
-	if err := cfg.validateTime(in.Start, in.End, &in.Step); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (cfg M3dbSection) validateTime(start, end int64, step *int) error {
-	if end <= start {
-		return fmt.Errorf("query time range is invalid end %d <= start %d", end, start)
+	if in.End <= in.Start {
+		return fmt.Errorf("query time range is invalid end %d <= start %d", in.End, in.Start)
 	}
 
 	if cfg.DaysLimit > 0 {
-		if days := int((end - start) / 86400); days > cfg.DaysLimit {
-			return fmt.Errorf("query time reange in invalid, daysLimit(%d/%d)", days, cfg.DaysLimit)
+		if t := in.End - cfg.timeLimit; in.Start < t {
+			// return fmt.Errorf("query time reange in invalid, daysLimit(%d/%d)", days, cfg.DaysLimit)
+			in.Start = t
 		}
 	}
 
-	if *step == 0 {
-		*step = int((end - start) / MAX_PONINTS)
+	if in.Step > 0 {
+		if n := (in.End - in.Start) / int64(in.Step); n > MAX_PONINTS {
+			in.Step = 0
+		}
 	}
 
-	if *step > cfg.MinStep {
-		*step = cfg.MinStep
+	if in.Step <= 0 {
+		in.Step = int((in.End - in.Start) / MAX_PONINTS)
+	}
+
+	if in.Step < cfg.MinStep {
+		in.Step = cfg.MinStep
 	}
 	return nil
 }
