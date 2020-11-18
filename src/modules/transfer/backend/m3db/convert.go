@@ -75,6 +75,11 @@ func tagsIndexTagkvResp(tags *consolidators.CompleteTagsResult) *dataobj.IndexTa
 			for i, v := range tag.Values {
 				ret.Endpoints[i] = string(v)
 			}
+		case NID_NAME:
+			ret.Nids = make([]string, len(tag.Values))
+			for i, v := range tag.Values {
+				ret.Nids[i] = string(v)
+			}
 		default:
 			kv := &dataobj.TagPair{Key: string(tag.Name)}
 			kv.Values = make([]string, len(tag.Values))
