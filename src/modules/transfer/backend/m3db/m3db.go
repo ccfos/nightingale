@@ -292,6 +292,7 @@ func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.Inde
 	}
 
 	ret.Endpoints = input.Endpoints
+	ret.Nids = input.Nids
 	tags := map[string]struct{}{}
 	for iter.Next() {
 		_, _, tagIter := iter.Current()
@@ -446,7 +447,7 @@ func seriesIterWalk(iter encoding.SeriesIterator) (out *dataobj.TsdbQueryRespons
 
 	tagsIter := iter.Tags()
 	tags := map[string]string{}
-	var metric, endpoint string
+	var metric, endpoint, nid string
 
 	for tagsIter.Next() {
 		tag := tagsIter.Current()
@@ -455,8 +456,10 @@ func seriesIterWalk(iter encoding.SeriesIterator) (out *dataobj.TsdbQueryRespons
 		switch k {
 		case METRIC_NAME:
 			metric = v
-		case ENDPOINT_NAME, NID_NAME:
+		case ENDPOINT_NAME:
 			endpoint = v
+		case NID_NAME:
+			nid = v
 		default:
 			tags[k] = v
 		}
@@ -467,6 +470,7 @@ func seriesIterWalk(iter encoding.SeriesIterator) (out *dataobj.TsdbQueryRespons
 		Start:    iter.Start().Unix(),
 		End:      iter.End().Unix(),
 		Endpoint: endpoint,
+		Nid:      nid,
 		Counter:  counter,
 		Values:   values,
 	}, nil
