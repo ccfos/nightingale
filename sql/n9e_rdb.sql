@@ -17,8 +17,8 @@ CREATE TABLE `user`
     `portrait`     varchar(2048) not null default '',
     `intro`        varchar(2048) not null default '',
     `organization` varchar(255) not null default '',
-    `typ`          tinyint(1)   not null default 1 comment '0: temporary account; 1: long-term account'
-    `status`       tinyint(1)   not null default 1 comment '0: disabled; 1: active 2: inactive'
+    `typ`          tinyint(1)   not null default 0 comment '0: long-term account; 1: temporary account',
+    `status`       tinyint(1)   not null default 0 comment '0: active; 1: inactive 2: disable',
     `is_root`      tinyint(1)   not null,
     `leader_id`    int unsigned not null default 0,
     `leader_name`  varchar(32)  not null default '',
