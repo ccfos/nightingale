@@ -20,7 +20,7 @@ func resourceSearchGet(c *gin.Context) {
 
 type containerSyncForm struct {
 	Name  string                     `json:"name" binding:"required"`
-	Type  string                     `json:"type" binding:"type"`
+	Type  string                     `json:"type" binding:"required"`
 	Items []v1ContainersRegisterItem `json:"items"`
 }
 
@@ -44,6 +44,7 @@ func v1ContainerSyncPost(c *gin.Context) {
 
 	count := len(sf.Items)
 	if count == 0 {
+		renderMessage(c, "")
 		return
 	}
 
