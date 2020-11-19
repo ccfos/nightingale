@@ -268,6 +268,7 @@ _RETURN_OK:
 
 	if rsize > 2 {
 		realStep = int(resp.Values[1].Timestamp - resp.Values[0].Timestamp)
+		resp.Step = realStep
 	}
 	if rsize > MaxRRAPointCnt || needStep != 0 {
 
