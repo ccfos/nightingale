@@ -3,7 +3,7 @@ backend:
   m3db:
     enabled: false
     name: "m3db"
-    namespace: "test"
+    namespace: "default"
     seriesLimit: 0
     docsLimit: 0
     daysLimit: 7                               # max query time
@@ -15,7 +15,7 @@ backend:
         # KV environment, zone, and service from which to write/read KV data (placement
         # and configuration). Leave these as the default values unless you know what
         # you're doing.
-        env: default_env
+        env: default
         zone: embedded
         service: m3db
         etcdClusters:
@@ -23,9 +23,9 @@ backend:
             endpoints:
               - 127.0.0.1:2379
             tls:
-              caCrtPath: /opt/run/etcd/certs/root/ca.pem
-              crtPath: /opt/run/etcd/certs/output/etcd-client.pem
-              keyPath: /opt/run/etcd/certs/output/etcd-client-key.pem
+              caCrtPath: /etc/etcd/certs/ca.pem
+              crtPath: /etc/etcd/certs/etcd-client.pem
+              keyPath: /etc/etcd/certs/etcd-client-key.pem
   tsdb:
     enabled: true
     name: "tsdb"
