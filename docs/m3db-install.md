@@ -1,6 +1,6 @@
 # 安装 M3db，ETCD
 
-下载安装包 [https://s3-gz01.didistatic.com/n9e-pub/tarball/quanshi/m3db-install.tar.gz](https://s3-gz01.didistatic.com/n9e-pub/tarball/quanshi/m3db-install.tar.gz) 
+下载安装包 [m3db-install.tar.gz](https://s3-gz01.didistatic.com/n9e-pub/tarball/m3db-install.tar.gz) 
 
 
 ## 配置
