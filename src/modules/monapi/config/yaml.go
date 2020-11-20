@@ -25,6 +25,7 @@ type ConfYaml struct {
 	Merge         mergeSection        `yaml:"merge"`
 	Notify        map[string][]string `yaml:"notify"`
 	Link          linkSection         `yaml:"link"`
+	IndexMod      string              `yaml:"indexMod"`
 }
 
 type mergeSection struct {
@@ -136,6 +137,7 @@ func Parse(ymlfile string) error {
 	})
 
 	viper.SetDefault("alarmEnabled", "true")
+	viper.SetDefault("indexMod", "index")
 
 	viper.SetDefault("habits.identity", "ip")
 

@@ -9,6 +9,7 @@ import (
 	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/common/report"
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/monapi/config"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errors"
@@ -128,7 +129,7 @@ func Tagkv(request NidMetricRecv) ([]IndexTagkvResp, error) {
 
 func GetIndexes() []string {
 	var indexInstances []string
-	instances, err := report.GetAlive("index", "rdb")
+	instances, err := report.GetAlive(config.Get().IndexMod, "rdb")
 	if err != nil {
 		return indexInstances
 	}
