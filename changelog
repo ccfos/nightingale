@@ -27,5 +27,5 @@
 更新内容：agent支持metrics指标采集能力，这个版本是为商业版本服务的，开源用户无需更新
 
 3.3.0
-影响模块：n9e-rdb n9e-transfer
-更新内容：增强安全性：密码复杂度、cookie处理优化等；支持M3DB作为存储后端（如果要尝试M3需要修改transfer配置文件）
+影响模块：n9e-rdb n9e-transfer n9e-judge n9e-ams sql/n9e_rdb_3.3.0.sql
+更新内容：增强安全性：密码复杂度、cookie处理优化等；支持M3DB作为存储后端（如果要尝试M3需要修改transfer配置文件）；修复告警引擎与条件串数的问题；为主机设备增加自定义字段的能力
