@@ -55,3 +55,4 @@ _test
 /src/modules/tsdb/tsdb
 
 tmp/
+main

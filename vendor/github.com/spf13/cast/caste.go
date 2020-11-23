@@ -20,13 +20,20 @@ var errNegativeNotAllowed = errors.New("unable to cast negative value")
 
 // ToTimeE casts an interface to a time.Time type.
 func ToTimeE(i interface{}) (tim time.Time, err error) {
+	return ToTimeInDefaultLocationE(i, nil)
+}
+
+// ToTimeInDefaultLocationE casts an empty interface to time.Time,
+// interpreting inputs without a timezone to be in the given location.
+// To fall back to the local timezone, use time.Local as the last argument.
+func ToTimeInDefaultLocationE(i interface{}, location *time.Location) (tim time.Time, err error) {
 	i = indirect(i)
 
 	switch v := i.(type) {
 	case time.Time:
 		return v, nil
 	case string:
-		return StringToDate(v)
+		return StringToDateInDefaultLocation(v, location)
 	case int:
 		return time.Unix(int64(v), 0), nil
 	case int64:
@@ -1204,42 +1211,96 @@ func ToDurationSliceE(i interface{}) ([]time.Duration, error) {
 // predefined list of formats.  If no suitable format is found, an error is
 // returned.
 func StringToDate(s string) (time.Time, error) {
-	return parseDateWith(s, []string{
-		time.RFC3339,
-		"2006-01-02T15:04:05", // iso8601 without timezone
-		time.RFC1123Z,
-		time.RFC1123,
-		time.RFC822Z,
-		time.RFC822,
-		time.RFC850,
-		time.ANSIC,
-		time.UnixDate,
-		time.RubyDate,
-		"2006-01-02 15:04:05.999999999 -0700 MST", // Time.String()
-		"2006-01-02",
-		"02 Jan 2006",
-		"2006-01-02T15:04:05-0700", // RFC3339 without timezone hh:mm colon
-		"2006-01-02 15:04:05 -07:00",
-		"2006-01-02 15:04:05 -0700",
-		"2006-01-02 15:04:05Z07:00", // RFC3339 without T
-		"2006-01-02 15:04:05Z0700",  // RFC3339 without T or timezone hh:mm colon
-		"2006-01-02 15:04:05",
-		time.Kitchen,
-		time.Stamp,
-		time.StampMilli,
-		time.StampMicro,
-		time.StampNano,
-	})
+	return parseDateWith(s, nil, timeFormats)
 }
 
-func parseDateWith(s string, dates []string) (d time.Time, e error) {
-	for _, dateType := range dates {
-		if d, e = time.Parse(dateType, s); e == nil {
+// StringToDateInDefaultLocation to parse a string into a time.Time type using a
+// predefined list of formats, interpreting inputs without a timezone to be in
+// the given location.
+// To fall back to the local timezone, use time.Local as the last argument.
+func StringToDateInDefaultLocation(s string, location *time.Location) (time.Time, error) {
+	return parseDateWith(s, location, timeFormats)
+}
+
+func parseDateWith(s string, location *time.Location, formats []timeFormat) (d time.Time, e error) {
+	for _, format := range formats {
+		if d, e = time.Parse(format.format, s); e == nil {
+
+			// Some time formats have a zone name, but no offset, so it gets
+			// put in that zone name (not the default one passed in to us), but
+			// without that zone's offset. So set the location manually.
+			// Note that we only do this when we get a location in the new *InDefaultLocation
+			// variants to avoid breaking existing behaviour in ToTime, however
+			// weird that existing behaviour may be.
+			if location != nil && !format.hasNumericTimezone() {
+				year, month, day := d.Date()
+				hour, min, sec := d.Clock()
+				d = time.Date(year, month, day, hour, min, sec, d.Nanosecond(), location)
+			}
+
 			return
 		}
 	}
 	return d, fmt.Errorf("unable to parse date: %s", s)
 }
+
+type timeFormatType int
+
+const (
+	timeFormatShort timeFormatType = iota // time or date only, no timezone
+	timeFormatNoTimezone
+
+	// All below have some kind of timezone information, a name and/or offset.
+	timeFormatNamedTimezone
+
+	// All below have what we consider to be solid timezone information.
+	timeFormatNumericAndNamedTimezone
+	timeFormatNumericTimezone
+)
+
+type timeFormat struct {
+	format string
+	typ    timeFormatType
+}
+
+func (f timeFormat) hasNumericTimezone() bool {
+	return f.typ >= timeFormatNumericAndNamedTimezone
+}
+
+func (f timeFormat) hasAnyTimezone() bool {
+	return f.typ >= timeFormatNamedTimezone
+}
+
+var (
+	timeFormats = []timeFormat{
+		{time.RFC3339, timeFormatNumericTimezone},
+		{"2006-01-02T15:04:05", timeFormatNoTimezone}, // iso8601 without timezone
+		{time.RFC1123Z, timeFormatNumericTimezone},
+		{time.RFC1123, timeFormatNamedTimezone},
+		{time.RFC822Z, timeFormatNumericTimezone},
+		{time.RFC822, timeFormatNamedTimezone},
+		{time.RFC850, timeFormatNamedTimezone},
+		{"2006-01-02 15:04:05.999999999 -0700 MST", timeFormatNumericAndNamedTimezone}, // Time.String()
+		{"2006-01-02T15:04:05-0700", timeFormatNumericTimezone},                        // RFC3339 without timezone hh:mm colon
+		{"2006-01-02 15:04:05Z0700", timeFormatNumericTimezone},                        // RFC3339 without T or timezone hh:mm colon
+		{"2006-01-02 15:04:05", timeFormatNoTimezone},
+		{time.ANSIC, timeFormatNoTimezone},
+		// Must try RubyDate before UnixDate, see:
+		// https://github.com/golang/go/issues/32358
+		{time.RubyDate, timeFormatNumericTimezone},
+		{time.UnixDate, timeFormatNamedTimezone},
+		{"2006-01-02 15:04:05Z07:00", timeFormatNumericTimezone},
+		{"2006-01-02", timeFormatShort},
+		{"02 Jan 2006", timeFormatShort},
+		{"2006-01-02 15:04:05 -07:00", timeFormatNumericTimezone},
+		{"2006-01-02 15:04:05 -0700", timeFormatNumericTimezone},
+		{time.Kitchen, timeFormatShort},
+		{time.Stamp, timeFormatShort},
+		{time.StampMilli, timeFormatShort},
+		{time.StampMicro, timeFormatShort},
+		{time.StampNano, timeFormatShort},
+	}
+)
 
 // jsonStringToObject attempts to unmarshall a string as JSON into
 // the object passed as pointer.

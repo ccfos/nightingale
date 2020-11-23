@@ -22,7 +22,7 @@ func (cfg M3dbSection) queryDataOptions(inputs []dataobj.QueryData) (index.Query
 	return index.Query{idx.NewDisjunctionQuery(q...)},
 		index.QueryOptions{
 			StartInclusive: time.Unix(inputs[0].Start, 0),
-			EndExclusive:   time.Unix(inputs[0].End, 0),
+			EndExclusive:   time.Unix(inputs[0].End+1, 0),
 			SeriesLimit:    cfg.SeriesLimit,
 			DocsLimit:      cfg.DocsLimit,
 		}
@@ -38,7 +38,7 @@ func (cfg M3dbSection) queryDataUIOptions(input dataobj.QueryDataForUI) (index.Q
 	return index.Query{idx.NewConjunctionQuery(q1, q2, q3)},
 		index.QueryOptions{
 			StartInclusive: time.Unix(input.Start, 0),
-			EndExclusive:   time.Unix(input.End, 0),
+			EndExclusive:   time.Unix(input.End+1, 0),
 			SeriesLimit:    cfg.SeriesLimit,
 			DocsLimit:      cfg.DocsLimit,
 		}
@@ -62,6 +62,9 @@ func endpointsQuery(nids, endpoints []string) idx.Query {
 		for _, v := range nids {
 			q = append(q, idx.NewTermQuery([]byte(NID_NAME), []byte(v)))
 		}
+		if len(q) == 1 {
+			return q[0]
+		}
 		return idx.NewDisjunctionQuery(q...)
 	}
 
@@ -69,6 +72,9 @@ func endpointsQuery(nids, endpoints []string) idx.Query {
 		q := []idx.Query{}
 		for _, v := range endpoints {
 			q = append(q, idx.NewTermQuery([]byte(ENDPOINT_NAME), []byte(v)))
+		}
+		if len(q) == 1 {
+			return q[0]
 		}
 		return idx.NewDisjunctionQuery(q...)
 	}
@@ -82,14 +88,19 @@ func counterQuery(counters []string) idx.Query {
 	for _, v := range counters {
 		items := strings.SplitN(v, "/", 2)
 
-		if len(items) != 2 {
+		var metric, tag string
+		if len(items) == 2 {
+			metric, tag = items[0], items[1]
+		} else if len(items) == 1 && len(items[0]) > 0 {
+			metric = items[0]
+		} else {
 			continue
 		}
 
-		tagMap := dataobj.DictedTagstring(items[1])
+		tagMap := dataobj.DictedTagstring(tag)
 
 		q2 := []idx.Query{}
-		q2 = append(q2, idx.NewTermQuery([]byte(METRIC_NAME), []byte(items[0])))
+		q2 = append(q2, idx.NewTermQuery([]byte(METRIC_NAME), []byte(metric)))
 
 		for k, v := range tagMap {
 			q2 = append(q2, idx.NewTermQuery([]byte(k), []byte(v)))
@@ -129,7 +140,7 @@ func metricTagsQuery(tags []string) idx.Query {
 func (cfg M3dbSection) queryMetricsOptions(input dataobj.EndpointsRecv) (index.Query, index.AggregationOptions) {
 	nameByte := []byte(METRIC_NAME)
 	return index.Query{idx.NewConjunctionQuery(
-			endpointsQuery(nil, input.Endpoints),
+			endpointsQuery(input.Nids, input.Endpoints),
 			idx.NewFieldQuery(nameByte),
 		)},
 		index.AggregationOptions{
@@ -147,7 +158,7 @@ func (cfg M3dbSection) queryMetricsOptions(input dataobj.EndpointsRecv) (index.Q
 // QueryTagPairs
 // (endpoint[0] || endpoint[1]...) && (metrics[0] || metrics[1] ... )
 func (cfg M3dbSection) queryTagPairsOptions(input dataobj.EndpointMetricRecv) (index.Query, index.AggregationOptions) {
-	q1 := endpointsQuery(nil, input.Endpoints)
+	q1 := endpointsQuery(input.Nids, input.Endpoints)
 	q2 := metricsQuery(input.Metrics)
 
 	return index.Query{idx.NewConjunctionQuery(q1, q2)},
@@ -168,8 +179,8 @@ func (cfg M3dbSection) queryIndexByCludeOptions(input dataobj.CludeRecv) (index.
 	query := index.Query{}
 	q := []idx.Query{}
 
-	if len(input.Endpoints) > 0 {
-		q = append(q, endpointsQuery(nil, input.Endpoints))
+	if len(input.Endpoints) > 0 || len(input.Nids) > 0 {
+		q = append(q, endpointsQuery(input.Nids, input.Endpoints))
 	}
 	if input.Metric != "" {
 		q = append(q, metricQuery(input.Metric))
@@ -183,8 +194,10 @@ func (cfg M3dbSection) queryIndexByCludeOptions(input dataobj.CludeRecv) (index.
 
 	if len(q) == 0 {
 		query = index.Query{idx.NewAllQuery()}
+	} else if len(q) == 1 {
+		query = index.Query{q[0]}
 	} else {
-		query = index.Query{idx.NewDisjunctionQuery(q...)}
+		query = index.Query{idx.NewConjunctionQuery(q...)}
 	}
 
 	return query, index.QueryOptions{
@@ -201,8 +214,8 @@ func (cfg M3dbSection) queryIndexByFullTagsOptions(input dataobj.IndexByFullTags
 	query := index.Query{}
 	q := []idx.Query{}
 
-	if len(input.Endpoints) > 0 {
-		q = append(q, endpointsQuery(nil, input.Endpoints))
+	if len(input.Endpoints) > 0 || len(input.Nids) > 0 {
+		q = append(q, endpointsQuery(input.Nids, input.Endpoints))
 	}
 	if input.Metric != "" {
 		q = append(q, metricQuery(input.Metric))
@@ -268,12 +281,8 @@ func includeTagsQuery2(in []dataobj.TagPair) idx.Query {
 func excludeTagsQuery(in []*dataobj.TagPair) idx.Query {
 	q := []idx.Query{}
 	for _, kvs := range in {
-		q1 := []idx.Query{}
 		for _, v := range kvs.Values {
-			q1 = append(q1, idx.NewNegationQuery(idx.NewTermQuery([]byte(kvs.Key), []byte(v))))
-		}
-		if len(q1) > 0 {
-			q = append(q, idx.NewConjunctionQuery(q1...))
+			q = append(q, idx.NewNegationQuery(idx.NewTermQuery([]byte(kvs.Key), []byte(v))))
 		}
 	}
 

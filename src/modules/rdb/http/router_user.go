@@ -42,6 +42,8 @@ type userProfileForm struct {
 	Im       string `json:"im"`
 	IsRoot   int    `json:"is_root"`
 	LeaderId int64  `json:"leader_id"`
+	Typ      int    `json:"typ"`
+	Status   int    `json:"status"`
 }
 
 func userAddPost(c *gin.Context) {
@@ -129,7 +131,17 @@ func userProfilePut(c *gin.Context) {
 		target.IsRoot = f.IsRoot
 	}
 
-	err := target.Update("dispname", "phone", "email", "im", "is_root", "leader_id", "leader_name")
+	if f.Typ != target.Typ {
+		arr = append(arr, fmt.Sprintf("typ: %s -> %s", target.Typ, f.Typ))
+		target.Typ = f.Typ
+	}
+
+	if f.Status != target.Status {
+		arr = append(arr, fmt.Sprintf("typ: %s -> %s", target.Status, f.Status))
+		target.Status = f.Status
+	}
+
+	err := target.Update("dispname", "phone", "email", "im", "is_root", "leader_id", "leader_name", "typ", "status")
 	if err == nil && len(arr) > 0 {
 		content := strings.Join(arr, "，")
 		go models.OperationLogNew(root.Username, "user", target.Id, fmt.Sprintf("UserModify %s %s", target.Username, content))

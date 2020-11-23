@@ -22,7 +22,7 @@ func nodeGets(c *gin.Context) {
 	where := ""
 	param := []interface{}{}
 	if cate != "" {
-		where += "cate in (?)"
+		where += "cate = ?"
 		param = append(param, cate)
 	}
 

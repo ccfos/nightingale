@@ -2,7 +2,6 @@ package m3db
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -37,6 +36,7 @@ type M3dbSection struct {
 	DocsLimit   int                  `yaml:"docsLimit"`
 	MinStep     int                  `yaml:"minStep"`
 	Config      client.Configuration `yaml:",inline"`
+	timeLimit   int64                `yaml:"-"`
 }
 
 type Client struct {
@@ -65,6 +65,8 @@ func NewClient(cfg M3dbSection) (*Client, error) {
 	if cfg.MinStep == 0 {
 		cfg.MinStep = 1
 	}
+
+	cfg.timeLimit = int64(86400 * cfg.DaysLimit)
 
 	ret := &Client{
 		namespace:   cfg.Namespace,
@@ -153,6 +155,8 @@ func (p *Client) QueryDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQue
 		return nil
 	}
 
+	ret = resampleResp(ret, input)
+
 	return aggregateResp(ret, input)
 }
 
@@ -221,14 +225,15 @@ func (p *Client) queryIndexByClude(session client.Session, input dataobj.CludeRe
 	}
 
 	// group by endpoint-metric
-	respMap := make(map[string]dataobj.XcludeResp)
+	respMap := make(map[string]*dataobj.XcludeResp)
 	for iter.Next() {
 		_, _, tagIter := iter.Current()
 
 		resp := xcludeResp(tagIter)
 		key := fmt.Sprintf("%s-%s", resp.Endpoint, resp.Metric)
+
 		if v, ok := respMap[key]; ok {
-			if len(resp.Tags) > 0 {
+			if len(resp.Tags) > 0 && len(resp.Tags[0]) > 0 {
 				v.Tags = append(v.Tags, resp.Tags[0])
 			}
 		} else {
@@ -243,7 +248,7 @@ func (p *Client) queryIndexByClude(session client.Session, input dataobj.CludeRe
 
 	resp := make([]dataobj.XcludeResp, 0, len(respMap))
 	for _, v := range respMap {
-		resp = append(resp, v)
+		resp = append(resp, *v)
 	}
 
 	return resp
@@ -267,7 +272,6 @@ func (p *Client) QueryIndexByFullTags(inputs []dataobj.IndexByFullTagsRecv) []da
 }
 
 func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.IndexByFullTagsRecv) (ret dataobj.IndexByFullTagsResp) {
-	log.Printf("entering queryIndexByFullTags")
 
 	ret = dataobj.IndexByFullTagsResp{
 		Metric: input.Metric,
@@ -278,7 +282,6 @@ func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.Inde
 	query, opts := p.config.queryIndexByFullTagsOptions(input)
 	if query.Query.Equal(idx.NewAllQuery()) {
 		ret.Endpoints = input.Endpoints
-		log.Printf("all query")
 		return
 	}
 
@@ -289,6 +292,7 @@ func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.Inde
 	}
 
 	ret.Endpoints = input.Endpoints
+	ret.Nids = input.Nids
 	tags := map[string]struct{}{}
 	for iter.Next() {
 		_, _, tagIter := iter.Current()
@@ -435,7 +439,6 @@ func seriesIterWalk(iter encoding.SeriesIterator) (out *dataobj.TsdbQueryRespons
 	values := []*dataobj.RRDData{}
 	for iter.Next() {
 		dp, _, _ := iter.Current()
-		logger.Printf("%s: %v", dp.Timestamp.String(), dp.Value)
 		values = append(values, dataobj.NewRRDData(dp.Timestamp.Unix(), dp.Value))
 	}
 	if err := iter.Err(); err != nil {
@@ -444,7 +447,7 @@ func seriesIterWalk(iter encoding.SeriesIterator) (out *dataobj.TsdbQueryRespons
 
 	tagsIter := iter.Tags()
 	tags := map[string]string{}
-	var metric, endpoint string
+	var metric, endpoint, nid string
 
 	for tagsIter.Next() {
 		tag := tagsIter.Current()
@@ -453,8 +456,10 @@ func seriesIterWalk(iter encoding.SeriesIterator) (out *dataobj.TsdbQueryRespons
 		switch k {
 		case METRIC_NAME:
 			metric = v
-		case ENDPOINT_NAME, NID_NAME:
+		case ENDPOINT_NAME:
 			endpoint = v
+		case NID_NAME:
+			nid = v
 		default:
 			tags[k] = v
 		}
@@ -465,6 +470,7 @@ func seriesIterWalk(iter encoding.SeriesIterator) (out *dataobj.TsdbQueryRespons
 		Start:    iter.Start().Unix(),
 		End:      iter.End().Unix(),
 		Endpoint: endpoint,
+		Nid:      nid,
 		Counter:  counter,
 		Values:   values,
 	}, nil
@@ -479,30 +485,28 @@ func (cfg M3dbSection) validateQueryDataForUI(in *dataobj.QueryDataForUI) (err e
 		return fmt.Errorf("%s is invalid aggrfunc", in.AggrFunc)
 	}
 
-	if err := cfg.validateTime(in.Start, in.End, &in.Step); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (cfg M3dbSection) validateTime(start, end int64, step *int) error {
-	if end <= start {
-		return fmt.Errorf("query time range is invalid end %d <= start %d", end, start)
+	if in.End <= in.Start {
+		return fmt.Errorf("query time range is invalid end %d <= start %d", in.End, in.Start)
 	}
 
 	if cfg.DaysLimit > 0 {
-		if days := int((end - start) / 86400); days > cfg.DaysLimit {
-			return fmt.Errorf("query time reange in invalid, daysLimit(%d/%d)", days, cfg.DaysLimit)
+		if t := in.Start + cfg.timeLimit; in.End > t {
+			in.End = t
 		}
 	}
 
-	if *step == 0 {
-		*step = int((end - start) / MAX_PONINTS)
+	if in.Step > 0 {
+		if n := (in.End - in.Start) / int64(in.Step); n > MAX_PONINTS {
+			in.Step = 0
+		}
 	}
 
-	if *step > cfg.MinStep {
-		*step = cfg.MinStep
+	if in.Step <= 0 {
+		in.Step = int((in.End - in.Start) / MAX_PONINTS)
+	}
+
+	if in.Step < cfg.MinStep {
+		in.Step = cfg.MinStep
 	}
 	return nil
 }

@@ -128,7 +128,6 @@ func Config(r *gin.Engine) {
 		userLogin.PUT("/resources/note", resourceNotePut)
 		userLogin.GET("/resources/bindings", resourceBindingsGet)
 		userLogin.GET("/resources/orphan", resourceOrphanGet)
-
 	}
 
 	v1 := r.Group("/v1/rdb").Use(shouldBeService())
@@ -141,6 +140,7 @@ func Config(r *gin.Engine) {
 		v1.POST("/resources/unregister", v1ResourcesUnregisterPost)
 
 		v1.POST("/containers/bind", v1ContainersBindPost)
+		v1.POST("/container/sync", v1ContainerSyncPost)
 
 		// 发送邮件、短信、语音、即时通讯消息，这些都依赖客户那边的通道
 		v1.POST("/sender/mail", v1SendMail)
@@ -150,6 +150,7 @@ func Config(r *gin.Engine) {
 
 		v1.GET("/nodes", nodeGets)
 		v1.GET("/node/:id", nodeGet)
+		v1.GET("/node/:id/projs", v1treeUntilProjectGetsByNid)
 		v1.GET("/tree/projs", v1TreeUntilProjectGets)
 
 		// 外部系统推送一些操作日志过来，RDB统一存储，实际用MQ会更好一些
