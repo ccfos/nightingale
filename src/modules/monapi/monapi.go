@@ -17,6 +17,7 @@ import (
 	"github.com/didi/nightingale/src/modules/monapi/redisc"
 	"github.com/didi/nightingale/src/modules/monapi/scache"
 
+	_ "github.com/didi/nightingale/src/modules/monapi/collect/collector"
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/toolkits/pkg/cache"

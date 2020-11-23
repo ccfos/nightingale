@@ -389,12 +389,3 @@ CREATE TABLE `collect_hist` (
   PRIMARY KEY (`id`),
   KEY `idx_cid` (`cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT 'hist';
-
-
-CREATE TABLE `api_collect_sid` (
-  `id`  bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
-  `sid` bigint(20) NOT NULL DEFAULT '0' COMMENT 'stra id',
-  `cid` bigint(20) NOT NULL DEFAULT '0' COMMENT 'collect id',
-  PRIMARY KEY (`id`),
-  KEY  (`sid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
