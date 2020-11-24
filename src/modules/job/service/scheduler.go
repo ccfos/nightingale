@@ -88,8 +88,9 @@ func startTask(id int64, action *models.TaskAction) {
 		err = action.Update("pause")
 		if err != nil {
 			logger.Errorf("cannot update task[%d] action to 'pause': %v", id, err)
-			return
 		}
+
+		return
 	}
 
 	waitings, err := models.WaitingHostList(id)
