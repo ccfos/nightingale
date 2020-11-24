@@ -14,7 +14,9 @@ func init() {
 
 type ProcCollector struct{}
 
-func (p ProcCollector) Name() string { return "proc" }
+func (p ProcCollector) Name() string                   { return "proc" }
+func (p ProcCollector) Category() collect.Category     { return collect.LocalCategory }
+func (p ProcCollector) Template() (interface{}, error) { return nil, nil }
 
 func (p ProcCollector) Get(id int64) (interface{}, error) {
 	collect := new(models.ProcCollect)

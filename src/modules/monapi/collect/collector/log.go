@@ -14,7 +14,9 @@ func init() {
 
 type LogCollector struct{}
 
-func (p LogCollector) Name() string { return "log" }
+func (p LogCollector) Name() string                   { return "log" }
+func (p LogCollector) Category() collect.Category     { return collect.LocalCategory }
+func (p LogCollector) Template() (interface{}, error) { return nil, nil }
 
 func (p LogCollector) Get(id int64) (interface{}, error) {
 	collect := new(models.LogCollect)

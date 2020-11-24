@@ -4,16 +4,29 @@ import (
 	"fmt"
 )
 
-var collectors map[string]Collector
+var (
+	collectors       = map[string]Collector{}
+	remoteCollectors = []string{}
+	localCollectors  = []string{}
+)
+
+type Category string
+
+const (
+	RemoteCategory Category = "remote" // used for prober
+	LocalCategory  Category = "local"  // used for agent
+)
 
 type Collector interface {
 	Name() string
+	Category() Category
 	Get(id int64) (interface{}, error)
 	Gets(nids []int64) ([]interface{}, error)
 	GetByNameAndNid(name string, nid int64) (interface{}, error)
 	Create(data []byte, username string) error
 	Update(data []byte, username string) error
 	Delete(id int64, username string) error
+	Template() (interface{}, error)
 }
 
 func CollectorRegister(c Collector) error {
@@ -22,6 +35,15 @@ func CollectorRegister(c Collector) error {
 		return fmt.Errorf("collector %s exists", name)
 	}
 	collectors[name] = c
+
+	if c.Category() == RemoteCategory {
+		remoteCollectors = append(remoteCollectors, name)
+	}
+
+	if c.Category() == LocalCategory {
+		localCollectors = append(localCollectors, name)
+	}
+
 	return nil
 }
 
@@ -31,4 +53,12 @@ func GetCollector(name string) (Collector, error) {
 	} else {
 		return c, nil
 	}
+}
+
+func GetRemoteCollectors() []string {
+	return remoteCollectors
+}
+
+func GetLocalCollectors() []string {
+	return localCollectors
 }

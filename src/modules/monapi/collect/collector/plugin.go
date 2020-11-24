@@ -14,7 +14,9 @@ func init() {
 
 type PluginCollector struct{}
 
-func (p PluginCollector) Name() string { return "plugin" }
+func (p PluginCollector) Name() string                   { return "plugin" }
+func (p PluginCollector) Category() collect.Category     { return collect.LocalCategory }
+func (p PluginCollector) Template() (interface{}, error) { return nil, nil }
 
 func (p PluginCollector) Get(id int64) (interface{}, error) {
 	collect := new(models.PluginCollect)

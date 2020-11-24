@@ -121,6 +121,27 @@ func collectsDel(c *gin.Context) {
 	renderData(c, "ok", nil)
 }
 
+func collectTypesGet(c *gin.Context) {
+	category := mustQueryStr(c, "category")
+	switch category {
+	case "remote":
+		renderData(c, collect.GetRemoteCollectors(), nil)
+	case "local":
+		renderData(c, collect.GetLocalCollectors(), nil)
+	default:
+		renderData(c, nil, nil)
+	}
+}
+
+func collectTemplateGet(c *gin.Context) {
+	t := mustQueryStr(c, "type")
+	collect, err := collect.GetCollector(t)
+	errors.Dangerous(err)
+
+	tpl, err := collect.Template()
+	renderData(c, tpl, err)
+}
+
 type RegExpCheckDto struct {
 	Success bool                `json:"success"`
 	Data    []map[string]string `json:"tags"`

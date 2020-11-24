@@ -85,18 +85,20 @@ func Config(r *gin.Engine) {
 
 	collect := r.Group("/api/mon/collect").Use(GetCookieUser())
 	{
-		collect.POST("", collectPost)
-		collect.GET("/list", collectsGet)
-		collect.GET("", collectGet)
-		collect.PUT("", collectPut)
-		collect.DELETE("", collectsDel)
-		collect.POST("/check", regExpCheck)
+		collect.POST("", collectPost)                // create a collect rule
+		collect.GET("/list", collectsGet)            // get collect rules
+		collect.GET("", collectGet)                  // get collect rule by type & id
+		collect.PUT("", collectPut)                  // update collect rule by type & id
+		collect.DELETE("", collectsDel)              // delete collect rules by type & ids
+		collect.POST("/check", regExpCheck)          // check collect rule
+		collect.GET("/types", collectTypesGet)       // get collect types, category: local|remote
+		collect.GET("/template", collectTemplateGet) // get collect teplate by type
 	}
 
 	collects := r.Group("/api/mon/collects")
 	{
-		collects.GET("/:endpoint", collectGetByEndpoint)
-		collects.GET("", collectsGet)
+		collects.GET("/:endpoint", collectGetByEndpoint) // get collect rules by endpoint
+		collects.GET("", collectsGet)                    // get collect rules
 	}
 
 	stra := r.Group("/api/mon/stra").Use(GetCookieUser())

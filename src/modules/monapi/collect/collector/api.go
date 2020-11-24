@@ -14,7 +14,9 @@ func init() {
 
 type ApiCollector struct{}
 
-func (p ApiCollector) Name() string { return "api" }
+func (p ApiCollector) Name() string                   { return "api" }
+func (p ApiCollector) Category() collect.Category     { return collect.RemoteCategory }
+func (p ApiCollector) Template() (interface{}, error) { return nil, nil }
 
 func (p ApiCollector) Get(id int64) (interface{}, error) {
 	collect := new(models.ApiCollect)

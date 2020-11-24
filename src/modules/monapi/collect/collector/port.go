@@ -14,7 +14,9 @@ func init() {
 
 type PortCollector struct{}
 
-func (p PortCollector) Name() string { return "port" }
+func (p PortCollector) Name() string                   { return "port" }
+func (p PortCollector) Category() collect.Category     { return collect.LocalCategory }
+func (p PortCollector) Template() (interface{}, error) { return nil, nil }
 
 func (p PortCollector) Get(id int64) (interface{}, error) {
 	collect := new(models.PortCollect)
