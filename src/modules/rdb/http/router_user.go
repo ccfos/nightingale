@@ -15,12 +15,29 @@ import (
 func userListGet(c *gin.Context) {
 	limit := queryInt(c, "limit", 20)
 	query := queryStr(c, "query", "")
+	org := queryStr(c, "org", "")
 	ids := str.IdsInt64(queryStr(c, "ids", ""))
 
-	total, err := models.UserTotal(ids, query)
+	where := "1 = 1"
+	param := []interface{}{}
+
+	if query != "" {
+		q := "%" + query + "%"
+		where += " and (username like ? or dispname like ? or phone like ? or email like ?)"
+		param = append(param, q, q, q, q)
+	}
+
+	if org != "" {
+		q := "%" + org + "%"
+		where += " and organization like ?"
+		param = append(param, q)
+
+	}
+
+	total, err := models.UserTotal(ids, where, param)
 	dangerous(err)
 
-	list, err := models.UserGets(ids, query, limit, offset(c, limit))
+	list, err := models.UserGets(ids, limit, offset(c, limit), where, param)
 	dangerous(err)
 
 	for i := 0; i < len(list); i++ {
