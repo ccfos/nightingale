@@ -18,26 +18,7 @@ func userListGet(c *gin.Context) {
 	org := queryStr(c, "org", "")
 	ids := str.IdsInt64(queryStr(c, "ids", ""))
 
-	where := "1 = 1"
-	param := []interface{}{}
-
-	if query != "" {
-		q := "%" + query + "%"
-		where += " and (username like ? or dispname like ? or phone like ? or email like ?)"
-		param = append(param, q, q, q, q)
-	}
-
-	if org != "" {
-		q := "%" + org + "%"
-		where += " and organization like ?"
-		param = append(param, q)
-
-	}
-
-	total, err := models.UserTotal(ids, where, param...)
-	dangerous(err)
-
-	list, err := models.UserGets(ids, limit, offset(c, limit), where, param...)
+	list, total, err := models.UserAndTotalGets(query, org, limit, offset(c, limit), ids)
 	dangerous(err)
 
 	for i := 0; i < len(list); i++ {
@@ -48,6 +29,20 @@ func userListGet(c *gin.Context) {
 		"list":  list,
 		"total": total,
 	}, nil)
+}
+
+func v1UserListGet(c *gin.Context) {
+	limit := queryInt(c, "limit", 20)
+	query := queryStr(c, "query", "")
+	org := queryStr(c, "org", "")
+	ids := str.IdsInt64(queryStr(c, "ids", ""))
+
+	list, total, err := models.UserAndTotalGets(query, org, limit, offset(c, limit), ids)
+
+	renderData(c, gin.H{
+		"list":  list,
+		"total": total,
+	}, err)
 }
 
 type userProfileForm struct {
