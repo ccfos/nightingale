@@ -299,9 +299,7 @@ func UserGets(ids []int64, limit, offset int, where string, args ...interface{})
 	}
 
 	if where != "" {
-		session = session.Where(where, args...).Limit(limit, offset)
-	} else {
-		session = session.Limit(limit, offset)
+		session = session.Where(where, args...)
 	}
 
 	var users []User
