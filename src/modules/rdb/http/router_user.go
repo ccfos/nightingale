@@ -34,10 +34,10 @@ func userListGet(c *gin.Context) {
 
 	}
 
-	total, err := models.UserTotal(ids, where, param)
+	total, err := models.UserTotal(ids, where, param...)
 	dangerous(err)
 
-	list, err := models.UserGets(ids, limit, offset(c, limit), where, param)
+	list, err := models.UserGets(ids, limit, offset(c, limit), where, param...)
 	dangerous(err)
 
 	for i := 0; i < len(list); i++ {
@@ -51,16 +51,17 @@ func userListGet(c *gin.Context) {
 }
 
 type userProfileForm struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Dispname string `json:"dispname"`
-	Phone    string `json:"phone"`
-	Email    string `json:"email"`
-	Im       string `json:"im"`
-	IsRoot   int    `json:"is_root"`
-	LeaderId int64  `json:"leader_id"`
-	Typ      int    `json:"typ"`
-	Status   int    `json:"status"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	Dispname     string `json:"dispname"`
+	Phone        string `json:"phone"`
+	Email        string `json:"email"`
+	Im           string `json:"im"`
+	IsRoot       int    `json:"is_root"`
+	LeaderId     int64  `json:"leader_id"`
+	Typ          int    `json:"typ"`
+	Status       int    `json:"status"`
+	Organization string `json:"organization"`
 }
 
 func userAddPost(c *gin.Context) {
@@ -158,7 +159,17 @@ func userProfilePut(c *gin.Context) {
 		target.Status = f.Status
 	}
 
-	err := target.Update("dispname", "phone", "email", "im", "is_root", "leader_id", "leader_name", "typ", "status")
+	if f.Status != target.Status {
+		arr = append(arr, fmt.Sprintf("typ: %s -> %s", target.Status, f.Status))
+		target.Status = f.Status
+	}
+
+	if f.Organization != target.Organization {
+		arr = append(arr, fmt.Sprintf("organization: %s -> %s", target.Organization, f.Organization))
+		target.Organization = f.Organization
+	}
+
+	err := target.Update("dispname", "phone", "email", "im", "is_root", "leader_id", "leader_name", "typ", "status", "organization")
 	if err == nil && len(arr) > 0 {
 		content := strings.Join(arr, "，")
 		go models.OperationLogNew(root.Username, "user", target.Id, fmt.Sprintf("UserModify %s %s", target.Username, content))
