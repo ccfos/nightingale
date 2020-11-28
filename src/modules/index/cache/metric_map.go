@@ -27,7 +27,6 @@ func NewMetricIndex(item dataobj.IndexModel, counter string, now int64) *MetricI
 		Ts:         now,
 	}
 
-	metricIndex.TagkvMap = NewTagkvIndex()
 	for k, v := range item.Tags {
 		metricIndex.TagkvMap.Set(k, v, now)
 	}
