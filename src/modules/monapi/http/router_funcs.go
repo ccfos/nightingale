@@ -11,7 +11,7 @@ import (
 )
 
 func dangerous(v interface{}) {
-	errors.Dangerous(i18n.Sprint(v))
+	errors.Dangerous(v)
 }
 
 func bomb(format string, a ...interface{}) {
