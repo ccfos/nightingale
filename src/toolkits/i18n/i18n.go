@@ -22,7 +22,7 @@ func initZhCN(tag language.Tag, fpath string) {
 		return
 	}
 
-	m := make(map[string]string)
+	m := make(map[string]map[string]string)
 
 	err = json.Unmarshal([]byte(content), &m)
 	if err != nil {
@@ -30,9 +30,12 @@ func initZhCN(tag language.Tag, fpath string) {
 		return
 	}
 
-	for k, v := range m {
-		_ = message.SetString(tag, k, v)
+	if dict, exists := m["zh"]; exists {
+		for k, v := range dict {
+			_ = message.SetString(tag, k, v)
+		}
 	}
+
 }
 
 var p *message.Printer

@@ -212,7 +212,7 @@ func Node(id int64) *models.Node {
 	dangerous(err)
 
 	if node == nil {
-		bomb("no such node[id:%d]", id)
+		bomb("no such node[%d]", id)
 	}
 
 	return node

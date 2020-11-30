@@ -326,13 +326,13 @@ func resourceBindNode(c *gin.Context) {
 		ids, err = models.ResourceIdsByUUIDs(f.Items)
 		dangerous(err)
 		if len(ids) == 0 {
-			bomb("resources not found by uuid")
+			bomb("resources not found by %s", "uuic")
 		}
 	} else if f.Field == "ident" {
 		ids, err = models.ResourceIdsByIdents(f.Items)
 		dangerous(err)
 		if len(ids) == 0 {
-			bomb("resources not found by ident")
+			bomb("resources not found by %s", "ident")
 		}
 	} else {
 		bomb("field[%s] not supported", f.Field)

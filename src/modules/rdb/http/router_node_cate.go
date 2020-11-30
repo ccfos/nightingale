@@ -20,23 +20,23 @@ type nodeCatePostForm struct {
 
 func (f nodeCatePostForm) Validate() {
 	if f.Ident == "" {
-		bomb("ident is blank")
+		bomb("[%s] is blank", "ident")
 	}
 
 	if f.Name == "" {
-		bomb("name is blank")
+		bomb("[%s] is blank", "name")
 	}
 
 	if len(f.Ident) > 32 {
-		bomb("arg[ident] too long")
+		bomb("arg[%s] too long > %d", "ident", 32)
 	}
 
 	if len(f.Name) > 255 {
-		bomb("arg[name] too long")
+		bomb("arg[%s] too long > %d", "name", 255)
 	}
 
 	if !str.IsMatch(f.Ident, "[a-z]+") {
-		bomb("arg[ident] invalid")
+		bomb("arg[%s] invalid", "ident")
 	}
 
 	if str.Dangerous(f.Name) {
@@ -65,7 +65,7 @@ type nodeCatePutForm struct {
 
 func (f nodeCatePutForm) Validate() {
 	if len(f.Name) > 255 {
-		bomb("arg[name] too long")
+		bomb("arg[%s] too long > %d", "name", 255)
 	}
 
 	if str.Dangerous(f.Name) {
