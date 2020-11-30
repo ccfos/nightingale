@@ -16,6 +16,7 @@ import (
 	"github.com/didi/nightingale/src/modules/monapi/http"
 	"github.com/didi/nightingale/src/modules/monapi/redisc"
 	"github.com/didi/nightingale/src/modules/monapi/scache"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -64,6 +65,8 @@ func main() {
 	models.InitMySQL("mon", "rdb")
 
 	scache.Init()
+
+	i18n.Init(config.Get().I18n)
 
 	if err := scache.CheckJudge(); err != nil {
 		logger.Errorf("check judge fail: %v", err)

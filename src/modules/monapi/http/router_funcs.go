@@ -4,16 +4,25 @@ import (
 	"strconv"
 
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errors"
 )
 
+func dangerous(v interface{}) {
+	errors.Dangerous(v)
+}
+
+func bomb(format string, a ...interface{}) {
+	errors.Bomb(i18n.Sprintf(format, a...))
+}
+
 func urlParamStr(c *gin.Context, field string) string {
 	val := c.Param(field)
 
 	if val == "" {
-		errors.Bomb("[%s] is blank", field)
+		bomb("[%s] is blank", field)
 	}
 
 	return val
@@ -23,7 +32,7 @@ func urlParamInt64(c *gin.Context, field string) int64 {
 	strval := urlParamStr(c, field)
 	intval, err := strconv.ParseInt(strval, 10, 64)
 	if err != nil {
-		errors.Bomb("cannot convert %s to int64", strval)
+		bomb("cannot convert %s to int64", strval)
 	}
 
 	return intval
@@ -45,7 +54,7 @@ func queryStr(c *gin.Context, key string, defaultVal string) string {
 func mustQueryStr(c *gin.Context, key string) string {
 	val := c.Query(key)
 	if val == "" {
-		errors.Bomb("arg[%s] not found", key)
+		bomb("arg[%s] not found", key)
 	}
 
 	return val
@@ -56,7 +65,7 @@ func mustQueryInt(c *gin.Context, key string) int {
 
 	intv, err := strconv.Atoi(strv)
 	if err != nil {
-		errors.Bomb("cannot convert [%s] to int", strv)
+		bomb("cannot convert [%s] to int", strv)
 	}
 
 	return intv
@@ -67,7 +76,7 @@ func mustQueryInt64(c *gin.Context, key string) int64 {
 
 	intv, err := strconv.ParseInt(strv, 10, 64)
 	if err != nil {
-		errors.Bomb("cannot convert [%s] to int64", strv)
+		bomb("cannot convert [%s] to int64", strv)
 	}
 
 	return intv
@@ -81,7 +90,7 @@ func queryInt(c *gin.Context, key string, defaultVal int) int {
 
 	intv, err := strconv.Atoi(strv)
 	if err != nil {
-		errors.Bomb("cannot convert [%s] to int", strv)
+		bomb("cannot convert [%s] to int", strv)
 	}
 
 	return intv
@@ -95,7 +104,7 @@ func queryInt64(c *gin.Context, key string, defaultVal int64) int64 {
 
 	intv, err := strconv.ParseInt(strv, 10, 64)
 	if err != nil {
-		errors.Bomb("cannot convert [%s] to int64", strv)
+		bomb("cannot convert [%s] to int64", strv)
 	}
 
 	return intv
@@ -150,7 +159,7 @@ func loginUsername(c *gin.Context) string {
 
 	username2 := cookieUsername(c)
 	if username2 == "" {
-		errors.Bomb("unauthorized")
+		bomb("unauthorized")
 	}
 
 	return username2
@@ -159,11 +168,11 @@ func loginUsername(c *gin.Context) string {
 func mustNode(id int64) *models.Node {
 	node, err := models.NodeGet("id=?", id)
 	if err != nil {
-		errors.Bomb("cannot retrieve node[%d]: %v", id, err)
+		bomb("cannot retrieve node[%d]: %v", id, err)
 	}
 
 	if node == nil {
-		errors.Bomb("no such node[%d]", id)
+		bomb("no such node[%d]", id)
 	}
 
 	return node
@@ -172,11 +181,11 @@ func mustNode(id int64) *models.Node {
 func mustScreen(id int64) *models.Screen {
 	screen, err := models.ScreenGet("id", id)
 	if err != nil {
-		errors.Bomb("cannot retrieve screen[%d]: %v", id, err)
+		bomb("cannot retrieve screen[%d]: %v", id, err)
 	}
 
 	if screen == nil {
-		errors.Bomb("no such screen[%d]", id)
+		bomb("no such screen[%d]", id)
 	}
 
 	return screen
@@ -185,11 +194,11 @@ func mustScreen(id int64) *models.Screen {
 func mustScreenSubclass(id int64) *models.ScreenSubclass {
 	subclass, err := models.ScreenSubclassGet("id", id)
 	if err != nil {
-		errors.Bomb("cannot retrieve subclass[%d]: %v", id, err)
+		bomb("cannot retrieve subclass[%d]: %v", id, err)
 	}
 
 	if subclass == nil {
-		errors.Bomb("no such subclass[%d]", id)
+		bomb("no such subclass[%d]", id)
 	}
 
 	return subclass
@@ -198,11 +207,11 @@ func mustScreenSubclass(id int64) *models.ScreenSubclass {
 func mustChart(id int64) *models.Chart {
 	chart, err := models.ChartGet("id", id)
 	if err != nil {
-		errors.Bomb("cannot retrieve chart[%d]: %v", id, err)
+		bomb("cannot retrieve chart[%d]: %v", id, err)
 	}
 
 	if chart == nil {
-		errors.Bomb("no such chart[%d]", id)
+		bomb("no such chart[%d]", id)
 	}
 
 	return chart
@@ -211,11 +220,11 @@ func mustChart(id int64) *models.Chart {
 func mustEventCur(id int64) *models.EventCur {
 	eventCur, err := models.EventCurGet("id", id)
 	if err != nil {
-		errors.Bomb("cannot retrieve eventCur[%d]: %v", id, err)
+		bomb("cannot retrieve eventCur[%d]: %v", id, err)
 	}
 
 	if eventCur == nil {
-		errors.Bomb("no such eventCur[%d]", id)
+		bomb("no such eventCur[%d]", id)
 	}
 
 	return eventCur
@@ -224,11 +233,11 @@ func mustEventCur(id int64) *models.EventCur {
 func mustEvent(id int64) *models.Event {
 	eventCur, err := models.EventGet("id", id)
 	if err != nil {
-		errors.Bomb("cannot retrieve event[%d]: %v", id, err)
+		bomb("cannot retrieve event[%d]: %v", id, err)
 	}
 
 	if eventCur == nil {
-		errors.Bomb("no such event[%d]", id)
+		bomb("no such event[%d]", id)
 	}
 
 	return eventCur

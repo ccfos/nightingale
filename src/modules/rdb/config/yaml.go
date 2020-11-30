@@ -6,6 +6,7 @@ import (
 	"github.com/toolkits/pkg/file"
 
 	"github.com/didi/nightingale/src/common/loggeri"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 )
 
 type ConfigT struct {
@@ -19,6 +20,7 @@ type ConfigT struct {
 	RabbitMQ rabbitmqSection          `yaml:"rabbitmq"`
 	WeChat   wechatSection            `yaml:"wechat"`
 	Captcha  bool                     `yaml:"captcha"`
+	I18n     i18n.I18nSection         `yaml:"i18n"`
 }
 
 type wechatSection struct {
@@ -114,6 +116,14 @@ func Parse() error {
 
 	Config = &c
 	fmt.Println("config.file:", ymlFile)
+
+	if Config.I18n.DictPath == "" {
+		Config.I18n.DictPath = "etc/dict.json"
+	}
+
+	if Config.I18n.Lang == "" {
+		Config.I18n.Lang = "zh"
+	}
 
 	if err = parseOps(); err != nil {
 		return err
