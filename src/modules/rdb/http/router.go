@@ -120,6 +120,7 @@ func Config(r *gin.Engine) {
 		userLogin.POST("/node/:id/resources/bind", resourceBindNode)
 		userLogin.POST("/node/:id/resources/unbind", resourceUnbindNode)
 		userLogin.PUT("/node/:id/resources/note", resourceUnderNodeNotePut)
+		userLogin.PUT("/node/:id/resources/labels", resourceUnderNodeLabelsPut)
 
 		userLogin.GET("/tree", treeUntilLeafGets)
 		userLogin.GET("/tree/projs", treeUntilProjectGets)
