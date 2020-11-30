@@ -34,9 +34,7 @@ func hostGets(c *gin.Context) {
 }
 
 func hostGet(c *gin.Context) {
-	hId := urlParamInt64(c, "id")
-	host, err := models.HostGet("id=?", hId)
-	dangerous(err)
+	host, err := models.HostGet("id=?", urlParamInt64(c, "id"))
 	renderData(c, host, err)
 }
 
