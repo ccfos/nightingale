@@ -7,14 +7,15 @@ import (
 	"github.com/toolkits/pkg/errors"
 
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 )
 
 func dangerous(v interface{}) {
-	errors.Dangerous(v)
+	errors.Dangerous(i18n.Sprint(v))
 }
 
 func bomb(format string, a ...interface{}) {
-	errors.Bomb(format, a...)
+	errors.Bomb(i18n.Sprintf(format, a...))
 }
 
 func bind(c *gin.Context, ptr interface{}) {

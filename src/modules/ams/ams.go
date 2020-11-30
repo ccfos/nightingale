@@ -16,6 +16,7 @@ import (
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/ams/config"
 	"github.com/didi/nightingale/src/modules/ams/http"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 )
 
 var (
@@ -41,6 +42,8 @@ func init() {
 		flag.Usage()
 		os.Exit(0)
 	}
+
+	i18n.Init()
 
 	runner.Init()
 	fmt.Println("runner.cwd:", runner.Cwd)
