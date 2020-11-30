@@ -288,6 +288,25 @@ func v1HostRegister(c *gin.Context) {
 	host, err := models.HostGet(f.UniqKey+" = ?", uniqValue)
 	dangerous(err)
 
+	hFixed := map[string]struct{}{
+		"sn":    struct{}{},
+		"ip":    struct{}{},
+		"ident": struct{}{},
+		"name":  struct{}{},
+		"note":  struct{}{},
+		"cate":  struct{}{},
+		"clock": struct{}{},
+		"cpu":   struct{}{},
+		"mem":   struct{}{},
+		"disk":  struct{}{},
+	}
+
+	for k := range f.Fields {
+		if _, ok := hFixed[k]; !ok {
+			delete(f.Fields, k)
+		}
+	}
+
 	if host == nil {
 		err = models.HostNew(f.SN, f.IP, f.Ident, f.Name, f.Cate, f.Fields)
 		if err == nil {
@@ -313,13 +332,7 @@ func v1HostRegister(c *gin.Context) {
 
 		res.Extend = string(js)
 
-		if nt, ok := oldFields["note"]; ok {
-			res.Note = nt.(string)
-			dangerous(res.Update("ident", "name", "note", "cate", "extend"))
-		} else {
-			dangerous(res.Update("ident", "name", "cate", "extend"))
-		}
-
+		dangerous(res.Update("ident", "name", "cate", "extend"))
 	}
 
 	f.Fields["sn"] = f.SN
@@ -328,25 +341,6 @@ func v1HostRegister(c *gin.Context) {
 	f.Fields["name"] = f.Name
 	f.Fields["cate"] = f.Cate
 	f.Fields["clock"] = time.Now().Unix()
-
-	hFixed := map[string]struct{}{
-		"sn":    struct{}{},
-		"ip":    struct{}{},
-		"ident": struct{}{},
-		"name":  struct{}{},
-		"note":  struct{}{},
-		"cate":  struct{}{},
-		"clock": struct{}{},
-		"cpu":   struct{}{},
-		"mem":   struct{}{},
-		"disk":  struct{}{},
-	}
-
-	for k := range f.Fields {
-		if _, ok := hFixed[k]; !ok {
-			delete(f.Fields, k)
-		}
-	}
 
 	err = host.Update(f.Fields)
 	if err == nil {
@@ -358,29 +352,20 @@ func v1HostRegister(c *gin.Context) {
 	var objs []models.HostFieldValue
 	for k, v := range oldFields {
 		if k == "tenant" {
-			n, err := models.NodeGet("id = ? and cate = ?", v, "tenant")
-			if err != nil {
-				logger.Warning(err)
-				continue
-			}
+			vStr := v.(string)
+			if vStr != "" {
+				err = models.HostUpdateTenant([]int64{host.Id}, vStr)
+				if err != nil {
+					logger.Warning(err)
+					continue
+				}
 
-			if n == nil {
-				logger.Warningf("id:%d is not tenant", v.(int64))
-				continue
+				err = models.ResourceRegister([]models.Host{*host}, vStr)
+				if err != nil {
+					logger.Warning(err)
+					continue
+				}
 			}
-
-			err = models.HostUpdateTenant([]int64{host.Id}, n.Name)
-			if err != nil {
-				logger.Warning(err)
-				continue
-			}
-
-			err = models.ResourceRegister([]models.Host{*host}, n.Name)
-			if err != nil {
-				logger.Warning(err)
-				continue
-			}
-
 			continue
 		}
 
