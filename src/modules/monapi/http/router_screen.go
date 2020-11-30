@@ -17,19 +17,19 @@ type ScreenForm struct {
 
 func screenNameValidate(name string) {
 	if str.Dangerous(name) {
-		errors.Bomb("arg[name] is dangerous")
+		bomb("arg[name] is dangerous")
 	}
 
 	if len(name) > 250 {
-		errors.Bomb("arg[name] too long")
+		bomb("arg[name] too long")
 	}
 
 	if len(name) == 0 {
-		errors.Bomb("arg[name] is blank")
+		bomb("arg[name] is blank")
 	}
 
 	if strings.ContainsAny(name, "/%") {
-		errors.Bomb("arg[name] invalid")
+		bomb("arg[name] invalid")
 	}
 }
 
@@ -42,7 +42,7 @@ func screenPost(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(username, "mon_screen_create", node.Id)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	screenNameValidate(f.Name)
@@ -64,7 +64,7 @@ func screenGets(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(username, "mon_screen_view", nid)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	objs, err := models.ScreenGets(nid)
@@ -79,7 +79,7 @@ func screenGet(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(username, "mon_screen_view", obj.NodeId)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	obj.NodePath = node.Path
@@ -102,7 +102,7 @@ func screenPut(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(username, "mon_screen_modify", screen.NodeId)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	node := mustNode(f.NodeId)
@@ -121,7 +121,7 @@ func screenDel(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(username, "mon_screen_delete", screen.NodeId)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	errors.Dangerous(screen.Del())
@@ -142,11 +142,11 @@ type ScreenSubclassForm struct {
 
 func (f ScreenSubclassForm) Validate() {
 	if str.Dangerous(f.Name) {
-		errors.Bomb("name invalid")
+		bomb("arg[name] invalid")
 	}
 
 	if strings.ContainsAny(f.Name, "/%") {
-		errors.Bomb("name invalid")
+		bomb("arg[name] invalid")
 	}
 }
 
@@ -160,7 +160,7 @@ func screenSubclassPost(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_screen_create", screen.NodeId)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	screenNameValidate(f.Name)
@@ -188,7 +188,7 @@ func screenSubclassPut(c *gin.Context) {
 		can, err := models.UsernameCandoNodeOp(username, "mon_screen_modify", screen.NodeId)
 		errors.Dangerous(err)
 		if !can {
-			errors.Bomb("permission deny")
+			bomb("permission deny")
 		}
 	}
 
@@ -213,7 +213,7 @@ func screenSubclassLocPut(c *gin.Context) {
 		can, err := models.UsernameCandoNodeOp(username, "mon_screen_modify", screen.NodeId)
 		errors.Dangerous(err)
 		if !can {
-			errors.Bomb("permission deny")
+			bomb("permission deny")
 		}
 	}
 
@@ -232,7 +232,7 @@ func screenSubclassDel(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_screen_delete", screen.NodeId)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	if subclass == nil {

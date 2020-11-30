@@ -26,6 +26,12 @@ type ConfYaml struct {
 	Notify        map[string][]string `yaml:"notify"`
 	Link          linkSection         `yaml:"link"`
 	IndexMod      string              `yaml:"indexMod"`
+	I18n          i18nSection         `yaml:"i18n"`
+}
+
+type i18nSection struct {
+	DictPath string `yaml:"dictPath"`
+	Lang     string `yaml:"lang"`
 }
 
 type mergeSection struct {
@@ -140,6 +146,9 @@ func Parse(ymlfile string) error {
 	viper.SetDefault("indexMod", "index")
 
 	viper.SetDefault("habits.identity", "ip")
+
+	viper.SetDefault("i18n.dictPath", "etc/dict.json")
+	viper.SetDefault("i18n.lang", "zh")
 
 	viper.SetDefault("redis.idle", 5)
 	viper.SetDefault("redis.timeout", map[string]int{
