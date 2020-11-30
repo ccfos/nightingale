@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/cache"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/src/models"
 )
@@ -33,7 +34,9 @@ func hostGets(c *gin.Context) {
 }
 
 func hostGet(c *gin.Context) {
-	host, err := models.HostGet("id=?", urlParamInt64(c, "id"))
+	hId := urlParamInt64(c, "id")
+	host, err := models.HostGet("id=?", hId)
+	dangerous(err)
 	renderData(c, host, err)
 }
 
@@ -251,6 +254,11 @@ func v1HostRegister(c *gin.Context) {
 	bind(c, &f)
 	f.Validate()
 
+	oldFields := make(map[string]interface{}, len(f.Fields))
+	for k, v := range f.Fields {
+		oldFields[k] = v
+	}
+
 	uniqValue := f.SN
 	if f.UniqKey == "ip" {
 		uniqValue = f.IP
@@ -286,6 +294,8 @@ func v1HostRegister(c *gin.Context) {
 		err = models.HostNew(f.SN, f.IP, f.Ident, f.Name, f.Cate, f.Fields)
 		if err == nil {
 			cache.Set(cacheKey, f.Digest, cache.DEFAULT)
+		} else {
+			logger.Warning(err)
 		}
 		renderMessage(c, err)
 		return
@@ -305,7 +315,13 @@ func v1HostRegister(c *gin.Context) {
 
 		res.Extend = string(js)
 
-		dangerous(res.Update("ident", "name", "cate", "extend"))
+		if nt, ok := oldFields["note"]; ok {
+			res.Note = nt.(string)
+			dangerous(res.Update("ident", "name", "note", "cate", "extend"))
+		} else {
+			dangerous(res.Update("ident", "name", "cate", "extend"))
+		}
+
 	}
 
 	f.Fields["sn"] = f.SN
@@ -315,9 +331,70 @@ func v1HostRegister(c *gin.Context) {
 	f.Fields["cate"] = f.Cate
 	f.Fields["clock"] = time.Now().Unix()
 
+	hFixed := map[string]struct{}{
+		"sn":    struct{}{},
+		"ip":    struct{}{},
+		"ident": struct{}{},
+		"name":  struct{}{},
+		"note":  struct{}{},
+		"cate":  struct{}{},
+		"clock": struct{}{},
+		"cpu":   struct{}{},
+		"mem":   struct{}{},
+		"disk":  struct{}{},
+	}
+
+	for k := range f.Fields {
+		if _, ok := hFixed[k]; !ok {
+			delete(f.Fields, k)
+		}
+	}
+
 	err = host.Update(f.Fields)
 	if err == nil {
 		cache.Set(cacheKey, f.Digest, cache.DEFAULT)
+	} else {
+		logger.Warning(err)
+	}
+
+	var objs []models.HostFieldValue
+	for k, v := range oldFields {
+		if k == "tenant" {
+			n, err := models.NodeGet("id = ? and cate = ?", v, "tenant")
+			if err != nil {
+				logger.Warning(err)
+				continue
+			}
+
+			if n == nil {
+				logger.Warningf("id:%d is not tenant", v.(int64))
+				continue
+			}
+
+			err = models.HostUpdateTenant([]int64{host.Id}, n.Name)
+			if err != nil {
+				logger.Warning(err)
+				continue
+			}
+
+			err = models.ResourceRegister([]models.Host{*host}, n.Name)
+			if err != nil {
+				logger.Warning(err)
+				continue
+			}
+
+			continue
+		}
+
+		if _, ok := hFixed[k]; !ok {
+			tmp := models.HostFieldValue{HostId: host.Id, FieldIdent: k, FieldValue: v.(string)}
+			objs = append(objs, tmp)
+		}
+	}
+
+	if len(objs) > 0 {
+		err = models.HostFieldValuePuts(host.Id, objs)
+		dangerous(err)
 	}
 
 	renderMessage(c, err)
