@@ -274,7 +274,7 @@ func v1HostRegister(c *gin.Context) {
 		bomb("%s is blank", f.UniqKey)
 	}
 
-	cacheKey := "/host/info/" + f.UniqKey + "/" + uniqValue
+	cacheKey := "/host/info/" + f.UniqKey + "/" + uniqValue + "/" + f.Digest
 
 	var val string
 	if err := cache.Get(cacheKey, &val); err == nil {
@@ -308,14 +308,28 @@ func v1HostRegister(c *gin.Context) {
 	}
 
 	if host == nil {
-		err = models.HostNew(f.SN, f.IP, f.Ident, f.Name, f.Cate, f.Fields)
+		var err error
+		host, err = models.HostNew(f.SN, f.IP, f.Ident, f.Name, f.Cate, f.Fields)
 		if err == nil {
 			cache.Set(cacheKey, f.Digest, cache.DEFAULT)
 		} else {
 			logger.Warning(err)
 		}
-		renderMessage(c, err)
-		return
+	}
+
+	if v, ok := oldFields["tenant"]; ok {
+		vStr := v.(string)
+		if vStr != "" {
+			err = models.HostUpdateTenant([]int64{host.Id}, vStr)
+			if err != nil {
+				logger.Warning(err)
+			}
+
+			err = models.ResourceRegister([]models.Host{*host}, vStr)
+			if err != nil {
+				logger.Warning(err)
+			}
+		}
 	}
 
 	if host.Tenant != "" {
@@ -352,20 +366,6 @@ func v1HostRegister(c *gin.Context) {
 	var objs []models.HostFieldValue
 	for k, v := range oldFields {
 		if k == "tenant" {
-			vStr := v.(string)
-			if vStr != "" {
-				err = models.HostUpdateTenant([]int64{host.Id}, vStr)
-				if err != nil {
-					logger.Warning(err)
-					continue
-				}
-
-				err = models.ResourceRegister([]models.Host{*host}, vStr)
-				if err != nil {
-					logger.Warning(err)
-					continue
-				}
-			}
 			continue
 		}
 
