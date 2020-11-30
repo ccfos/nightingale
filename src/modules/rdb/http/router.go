@@ -174,7 +174,7 @@ func Config(r *gin.Engine) {
 		v1.GET("/get-teams-by-ids", v1TeamGetByIds)
 		v1.GET("/get-user-ids-by-team-ids", v1UserIdsGetByTeamIds)
 
-		v1.GET("/users", userListGet)
+		v1.GET("/users", v1UserListGet)
 
 		v1.POST("/login", v1Login)
 		v1.POST("/send-login-code-by-sms", v1SendLoginCodeBySms)
