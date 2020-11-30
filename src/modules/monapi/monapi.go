@@ -66,7 +66,7 @@ func main() {
 
 	scache.Init()
 
-	i18n.Init(config.Get().I18n.Lang, config.Get().I18n.DictPath)
+	i18n.Init(config.Get().I18n)
 
 	if err := scache.CheckJudge(); err != nil {
 		logger.Errorf("check judge fail: %v", err)

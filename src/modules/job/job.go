@@ -83,7 +83,7 @@ func main() {
 	// 将task_host_doing表缓存到内存里，减少DB压力
 	timer.CacheHostDoing()
 
-	i18n.Init()
+	i18n.Init(config.Config.I18n)
 
 	go rpc.Start()
 	http.Start()

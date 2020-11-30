@@ -11,6 +11,42 @@ import (
 	"github.com/toolkits/pkg/file"
 )
 
+type I18nSection struct {
+	DictPath string `yaml:"dictPath"`
+	Lang     string `yaml:"lang"`
+}
+
+// Init will init i18n support via input language.
+func Init(config ...I18nSection) {
+	l := "zh"
+	fpath := "etc/dict.json"
+
+	if len(config) > 0 {
+		l = config[0].Lang
+		fpath = config[0].DictPath
+	}
+
+	lang := language.Chinese
+	switch l {
+	case "en":
+		lang = language.English
+	case "zh":
+		lang = language.Chinese
+	}
+
+	tag, _, _ := supported.Match(lang)
+	switch tag {
+	case language.AmericanEnglish, language.English:
+		initEnUS(lang)
+	case language.SimplifiedChinese, language.Chinese:
+		initZhCN(lang, fpath)
+	default:
+		initZhCN(lang, fpath)
+	}
+
+	p = message.NewPrinter(lang)
+}
+
 func initEnUS(tag language.Tag) {
 }
 
@@ -83,37 +119,6 @@ var supported = newMatcher([]language.Tag{
 	language.SimplifiedChinese,
 	language.Chinese,
 })
-
-// Init will init i18n support via input language.
-func Init(arr ...string) {
-	l := "zh"
-	fpath := "etc/dict.json"
-
-	if len(arr) == 2 {
-		l = arr[0]
-		fpath = arr[1]
-	}
-
-	lang := language.Chinese
-	switch l {
-	case "en":
-		lang = language.English
-	case "zh":
-		lang = language.Chinese
-	}
-
-	tag, _, _ := supported.Match(lang)
-	switch tag {
-	case language.AmericanEnglish, language.English:
-		initEnUS(lang)
-	case language.SimplifiedChinese, language.Chinese:
-		initZhCN(lang, fpath)
-	default:
-		initZhCN(lang, fpath)
-	}
-
-	p = message.NewPrinter(lang)
-}
 
 // Fprintf is like fmt.Fprintf, but using language-specific formatting.
 func Fprintf(w io.Writer, key message.Reference, a ...interface{}) (n int, err error) {

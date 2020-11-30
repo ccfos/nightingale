@@ -58,6 +58,8 @@ func main() {
 	// 初始化数据库和相关数据
 	models.InitMySQL("rdb", "ams")
 
+	i18n.Init(config.Config.I18n)
+
 	http.Start()
 
 	endingProc()

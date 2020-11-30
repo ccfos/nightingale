@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/didi/nightingale/src/toolkits/i18n"
+
 	"github.com/spf13/viper"
 	"github.com/toolkits/pkg/file"
 )
@@ -26,12 +28,7 @@ type ConfYaml struct {
 	Notify        map[string][]string `yaml:"notify"`
 	Link          linkSection         `yaml:"link"`
 	IndexMod      string              `yaml:"indexMod"`
-	I18n          i18nSection         `yaml:"i18n"`
-}
-
-type i18nSection struct {
-	DictPath string `yaml:"dictPath"`
-	Lang     string `yaml:"lang"`
+	I18n          i18n.I18nSection    `yaml:"i18n"`
 }
 
 type mergeSection struct {
