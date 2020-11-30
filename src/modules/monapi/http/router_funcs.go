@@ -10,6 +10,14 @@ import (
 	"github.com/toolkits/pkg/errors"
 )
 
+func dangerous(v interface{}) {
+	errors.Dangerous(i18n.Sprint(v))
+}
+
+func bomb(format string, a ...interface{}) {
+	errors.Bomb(i18n.Sprintf(format, a...))
+}
+
 func urlParamStr(c *gin.Context, field string) string {
 	val := c.Param(field)
 
@@ -233,23 +241,4 @@ func mustEvent(id int64) *models.Event {
 	}
 
 	return eventCur
-}
-
-func bomb(format string, a ...interface{}) {
-	panic(errors.PageError{Message: i18n.Sprintf(format, a...)})
-}
-
-func dangerous(v interface{}) {
-	if v == nil {
-		return
-	}
-
-	switch t := v.(type) {
-	case string:
-		if t != "" {
-			panic(errors.PageError{Message: i18n.Sprint(t)})
-		}
-	case error:
-		panic(errors.PageError{Message: i18n.Sprint(t.Error())})
-	}
 }

@@ -82,7 +82,15 @@ var supported = newMatcher([]language.Tag{
 })
 
 // Init will init i18n support via input language.
-func Init(l string, fpath string) {
+func Init(arr ...string) {
+	l := "zh"
+	fpath := "etc/dict.json"
+
+	if len(arr) == 2 {
+		l = arr[0]
+		fpath = arr[1]
+	}
+
 	lang := language.Chinese
 	switch l {
 	case "en":
