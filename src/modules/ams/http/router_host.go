@@ -301,10 +301,15 @@ func v1HostRegister(c *gin.Context) {
 		"disk":  struct{}{},
 	}
 
+	var dels []string
 	for k := range f.Fields {
 		if _, ok := hFixed[k]; !ok {
-			delete(f.Fields, k)
+			dels = append(dels, k)
 		}
+	}
+
+	for i := 0; i < len(dels); i++ {
+		delete(f.Fields, dels[i])
 	}
 
 	if host == nil {
@@ -349,6 +354,19 @@ func v1HostRegister(c *gin.Context) {
 		// 已经分配给某个租户了，那肯定对应某个resource，需要更新resource的信息
 		res, err := models.ResourceGet("uuid=?", fmt.Sprintf("host-%d", host.Id))
 		dangerous(err)
+
+		if res == nil {
+			// 数据不干净，ams里有这个host，而且是已分配状态，但是resource表里没有，重新注册一下
+			dangerous(models.ResourceRegister([]models.Host{*host}, host.Tenant))
+
+			// 注册完了，重新查询一下试试
+			res, err = models.ResourceGet("uuid=?", fmt.Sprintf("host-%d", host.Id))
+			dangerous(err)
+
+			if res == nil {
+				bomb("resource register fail, unknown error")
+			}
+		}
 
 		res.Ident = f.Ident
 		res.Name = f.Name
