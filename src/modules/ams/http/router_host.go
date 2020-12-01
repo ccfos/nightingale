@@ -320,6 +320,7 @@ func v1HostRegister(c *gin.Context) {
 			msg := "create host failed"
 			logger.Warningf("%s info:%v", msg, f)
 			renderMessage(c, msg)
+			return
 		}
 	}
 
@@ -328,12 +329,18 @@ func v1HostRegister(c *gin.Context) {
 		if vStr != "" {
 			err = models.HostUpdateTenant([]int64{host.Id}, vStr)
 			if err != nil {
-				logger.Warning(err)
+				logger.Error(err)
+				msg := "update host tenant err"
+				renderMessage(c, msg)
+				return
 			}
 
 			err = models.ResourceRegister([]models.Host{*host}, vStr)
 			if err != nil {
-				logger.Warning(err)
+				logger.Error(err)
+				msg := "register resource err"
+				renderMessage(c, msg)
+				return
 			}
 		}
 	}
@@ -366,7 +373,10 @@ func v1HostRegister(c *gin.Context) {
 	if err == nil {
 		cache.Set(cacheKey, f.Digest, cache.DEFAULT)
 	} else {
-		logger.Warning(err)
+		logger.Error(err)
+		msg := "update host err"
+		renderMessage(c, msg)
+		return
 	}
 
 	var objs []models.HostFieldValue
