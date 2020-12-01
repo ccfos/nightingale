@@ -16,7 +16,7 @@ func aggrCalcPost(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(username, "mon_aggr_write", stra.Nid)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	stra.Creator = username
@@ -26,7 +26,7 @@ func aggrCalcPost(c *gin.Context) {
 
 	oldStra, _ := models.AggrCalcGet("nid=? and new_metric=?", stra.Nid, stra.NewMetric)
 	if oldStra != nil {
-		errors.Bomb("同节点下指标计算 新指标名称 %s 已存在", stra.NewMetric)
+		bomb("同节点下指标计算 新指标名称 %s 已存在", stra.NewMetric)
 	}
 
 	err = stra.Save()
@@ -42,7 +42,7 @@ func aggrCalcPut(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(username, "mon_aggr_write", stra.Nid)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	stra.LastUpdator = username
@@ -50,7 +50,7 @@ func aggrCalcPut(c *gin.Context) {
 
 	oldStra, _ := models.AggrCalcGet("nid=? and new_metric=?", stra.Nid, stra.NewMetric)
 	if oldStra != nil && oldStra.Id != stra.Id {
-		errors.Bomb("同节点下指标计算 新指标名称 %s 已存在", stra.NewMetric)
+		bomb("同节点下指标计算 新指标名称 %s 已存在", stra.NewMetric)
 	}
 
 	err = stra.Update("new_metric", "new_step", "groupby", "raw_metrics", "global_operator",
@@ -80,7 +80,7 @@ func aggrCalcsDel(c *gin.Context) {
 		can, err := models.UsernameCandoNodeOp(username, "mon_aggr_write", stra.Nid)
 		errors.Dangerous(err)
 		if !can {
-			errors.Bomb("permission deny")
+			bomb("permission deny")
 		}
 	}
 
@@ -97,7 +97,7 @@ func aggrCalcGet(c *gin.Context) {
 	stra, err := models.AggrCalcGet("id=?", id)
 	errors.Dangerous(err)
 	if stra == nil {
-		errors.Bomb("stra not found")
+		bomb("stra not found")
 	}
 
 	err = stra.Decode()

@@ -120,6 +120,7 @@ func Config(r *gin.Engine) {
 		userLogin.POST("/node/:id/resources/bind", resourceBindNode)
 		userLogin.POST("/node/:id/resources/unbind", resourceUnbindNode)
 		userLogin.PUT("/node/:id/resources/note", resourceUnderNodeNotePut)
+		userLogin.PUT("/node/:id/resources/labels", resourceUnderNodeLabelsPut)
 
 		userLogin.GET("/tree", treeUntilLeafGets)
 		userLogin.GET("/tree/projs", treeUntilProjectGets)
@@ -174,7 +175,7 @@ func Config(r *gin.Engine) {
 		v1.GET("/get-teams-by-ids", v1TeamGetByIds)
 		v1.GET("/get-user-ids-by-team-ids", v1UserIdsGetByTeamIds)
 
-		v1.GET("/users", userListGet)
+		v1.GET("/users", v1UserListGet)
 
 		v1.POST("/login", v1Login)
 		v1.POST("/send-login-code-by-sms", v1SendLoginCodeBySms)

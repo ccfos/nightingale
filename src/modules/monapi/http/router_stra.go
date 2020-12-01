@@ -16,7 +16,7 @@ func straPost(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(username, "mon_stra_create", stra.Nid)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	stra.Creator = username
@@ -26,7 +26,7 @@ func straPost(c *gin.Context) {
 
 	oldStra, _ := models.StraGet("name", stra.Name)
 	if oldStra != nil && oldStra.Nid == stra.Nid {
-		errors.Bomb("同节点下策略名称 %s 已存在", stra.Name)
+		bomb("同节点下策略名称 %s 已存在", stra.Name)
 	}
 
 	errors.Dangerous(stra.Save())
@@ -48,7 +48,7 @@ func straPut(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(username, "mon_stra_modify", stra.Nid)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	stra.LastUpdator = username
@@ -56,7 +56,7 @@ func straPut(c *gin.Context) {
 
 	oldStra, _ := models.StraGet("name", stra.Name)
 	if oldStra != nil && oldStra.Id != stra.Id && oldStra.Nid == stra.Nid {
-		errors.Bomb("同节点下策略名称 %s 已存在", stra.Name)
+		bomb("同节点下策略名称 %s 已存在", stra.Name)
 	}
 
 	s, err := models.StraGet("id", stra.Id)
@@ -83,7 +83,7 @@ func strasDel(c *gin.Context) {
 		can, err := models.UsernameCandoNodeOp(username, "mon_stra_delete", stra.Nid)
 		errors.Dangerous(err)
 		if !can {
-			errors.Bomb("permission deny")
+			bomb("permission deny")
 		}
 	}
 
@@ -100,7 +100,7 @@ func straGet(c *gin.Context) {
 	stra, err := models.StraGet("id", sid)
 	errors.Dangerous(err)
 	if stra == nil {
-		errors.Bomb("stra not found")
+		bomb("stra not found")
 	}
 
 	err = stra.Decode()

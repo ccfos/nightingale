@@ -153,6 +153,15 @@ func Config(r *gin.Engine) {
 		indexProxy.POST("/counter/detail", indexReq)
 	}
 
+	/*
+		v1 := r.Group("/v1/mon")
+		{
+			v1.POST("/report-detector-heartbeat", detectorHeartBeat)
+			v1.GET("/detectors", detectorInstanceGets)
+			v1.GET("/rules", collectRulesGet)
+		}
+	*/
+
 	if config.Get().Logger.Level == "DEBUG" {
 		pprof.Register(r, "/api/monapi/debug/pprof")
 	}

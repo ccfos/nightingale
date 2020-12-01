@@ -58,7 +58,18 @@ type resourceNotePutForm struct {
 	Note string  `json:"note"`
 }
 
+type resourceLabelsPutForm struct {
+	Ids    []int64 `json:"ids" binding:"required"`
+	Labels string  `json:"labels"`
+}
+
 func (f resourceNotePutForm) Validate() {
+	if len(f.Ids) == 0 {
+		bomb("arg[ids] is empty")
+	}
+}
+
+func (f resourceLabelsPutForm) Validate() {
 	if len(f.Ids) == 0 {
 		bomb("arg[ids] is empty")
 	}
@@ -326,13 +337,13 @@ func resourceBindNode(c *gin.Context) {
 		ids, err = models.ResourceIdsByUUIDs(f.Items)
 		dangerous(err)
 		if len(ids) == 0 {
-			bomb("resources not found by uuid")
+			bomb("resources not found by %s", "uuic")
 		}
 	} else if f.Field == "ident" {
 		ids, err = models.ResourceIdsByIdents(f.Items)
 		dangerous(err)
 		if len(ids) == 0 {
-			bomb("resources not found by ident")
+			bomb("resources not found by %s", "ident")
 		}
 	} else {
 		bomb("field[%s] not supported", f.Field)
@@ -381,6 +392,33 @@ func resourceUnderNodeNotePut(c *gin.Context) {
 
 		res.Note = f.Note
 		dangerous(res.Update("note"))
+	}
+
+	renderMessage(c, nil)
+}
+
+func resourceUnderNodeLabelsPut(c *gin.Context) {
+	var f resourceLabelsPutForm
+	bind(c, &f)
+	f.Validate()
+
+	node := Node(urlParamInt64(c, "id"))
+	loginUser(c).CheckPermByNode(node, "rdb_resource_modify")
+
+	for i := 0; i < len(f.Ids); i++ {
+		res, err := models.ResourceGet("id=?", f.Ids[i])
+		dangerous(err)
+
+		if res == nil {
+			continue
+		}
+
+		if res.Labels == f.Labels {
+			continue
+		}
+
+		res.Labels = f.Labels
+		dangerous(res.Update("labels"))
 	}
 
 	renderMessage(c, nil)
