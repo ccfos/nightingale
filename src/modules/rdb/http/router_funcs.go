@@ -8,6 +8,7 @@ import (
 	"github.com/toolkits/pkg/errors"
 
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 )
 
 func dangerous(v interface{}) {
@@ -15,7 +16,7 @@ func dangerous(v interface{}) {
 }
 
 func bomb(format string, a ...interface{}) {
-	errors.Bomb(format, a...)
+	errors.Bomb(i18n.Sprintf(format, a...))
 }
 
 func bind(c *gin.Context, ptr interface{}) {
@@ -110,7 +111,7 @@ func renderMessage(c *gin.Context, v interface{}) {
 
 	switch t := v.(type) {
 	case string:
-		c.JSON(200, gin.H{"err": t})
+		c.JSON(200, gin.H{"err": i18n.Sprintf(t)})
 	case error:
 		c.JSON(200, gin.H{"err": t.Error()})
 	}
@@ -274,7 +275,7 @@ func Node(id int64) *models.Node {
 	dangerous(err)
 
 	if node == nil {
-		bomb("no such node[id:%d]", id)
+		bomb("no such node[%d]", id)
 	}
 
 	return node
