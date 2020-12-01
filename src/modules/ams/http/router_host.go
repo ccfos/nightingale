@@ -274,7 +274,7 @@ func v1HostRegister(c *gin.Context) {
 		bomb("%s is blank", f.UniqKey)
 	}
 
-	cacheKey := "/host/info/" + f.UniqKey + "/" + uniqValue + "/" + f.Digest
+	cacheKey := "/host/info/" + f.UniqKey + "/" + uniqValue
 
 	var val string
 	if err := cache.Get(cacheKey, &val); err == nil {
