@@ -315,6 +315,12 @@ func v1HostRegister(c *gin.Context) {
 		} else {
 			logger.Warning(err)
 		}
+
+		if host == nil {
+			msg := "create host failed"
+			logger.Warningf("%s info:%v", msg, f)
+			renderMessage(c, msg)
+		}
 	}
 
 	if v, ok := oldFields["tenant"]; ok {
