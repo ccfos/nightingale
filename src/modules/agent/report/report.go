@@ -1,6 +1,7 @@
 package report
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
@@ -122,9 +123,13 @@ func report() error {
 	for _, i := range rand.Perm(len(servers)) {
 		url := fmt.Sprintf("http://%s/v1/ams-ce/hosts/register", servers[i])
 
+		logger.Debugf("report: %+v", form)
+
 		var body errRes
 		err := httplib.Post(url).JSONBodyQuiet(form).Header("X-Srv-Token", config.Config.Report.Token).SetTimeout(time.Second * 5).ToJSON(&body)
 		if err != nil {
+			js, _ := json.Marshal(form)
+			logger.Errorf("report payload: %s, token: %s", string(js), config.Config.Report.Token)
 			return fmt.Errorf("curl %s fail: %v", url, err)
 		}
 
