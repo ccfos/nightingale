@@ -308,14 +308,41 @@ func v1HostRegister(c *gin.Context) {
 	}
 
 	if host == nil {
-		err = models.HostNew(f.SN, f.IP, f.Ident, f.Name, f.Cate, f.Fields)
+		var err error
+		host, err = models.HostNew(f.SN, f.IP, f.Ident, f.Name, f.Cate, f.Fields)
 		if err == nil {
 			cache.Set(cacheKey, f.Digest, cache.DEFAULT)
 		} else {
 			logger.Warning(err)
 		}
-		renderMessage(c, err)
-		return
+
+		if host == nil {
+			msg := "create host failed"
+			logger.Warningf("%s info:%v", msg, f)
+			renderMessage(c, msg)
+			return
+		}
+	}
+
+	if v, ok := oldFields["tenant"]; ok {
+		vStr := v.(string)
+		if vStr != "" {
+			err = models.HostUpdateTenant([]int64{host.Id}, vStr)
+			if err != nil {
+				logger.Error(err)
+				msg := "update host tenant err"
+				renderMessage(c, msg)
+				return
+			}
+
+			err = models.ResourceRegister([]models.Host{*host}, vStr)
+			if err != nil {
+				logger.Error(err)
+				msg := "register resource err"
+				renderMessage(c, msg)
+				return
+			}
+		}
 	}
 
 	if host.Tenant != "" {
@@ -346,26 +373,15 @@ func v1HostRegister(c *gin.Context) {
 	if err == nil {
 		cache.Set(cacheKey, f.Digest, cache.DEFAULT)
 	} else {
-		logger.Warning(err)
+		logger.Error(err)
+		msg := "update host err"
+		renderMessage(c, msg)
+		return
 	}
 
 	var objs []models.HostFieldValue
 	for k, v := range oldFields {
 		if k == "tenant" {
-			vStr := v.(string)
-			if vStr != "" {
-				err = models.HostUpdateTenant([]int64{host.Id}, vStr)
-				if err != nil {
-					logger.Warning(err)
-					continue
-				}
-
-				err = models.ResourceRegister([]models.Host{*host}, vStr)
-				if err != nil {
-					logger.Warning(err)
-					continue
-				}
-			}
 			continue
 		}
 
