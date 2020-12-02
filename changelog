@@ -1,0 +1,31 @@
+3.1.1
+影响模块：n9e-job
+更新内容：job模块之前给监控用的callback地址method误设置为了get，是不对的，改成了post
+
+3.1.2
+影响模块：n9e-rdb
+更新内容：子节点修改的时候，不允许修改为租户节点
+
+3.1.3
+影响模块：n9e-monapi
+更新内容：对于P2、P3的告警会发送重复的两条
+
+3.1.4
+影响模块：n9e-index n9e-judge n9e-monapi n9e-rdb n9e-transfer n9e-tsdb
+更新内容：把hbs的逻辑从monapi挪到rdb，拆分监控的权限点
+
+3.1.5
+影响模块：n9e-monapi
+更新内容：清理策略的时候会空指针，node删除了，策略还在，此时会复现
+
+3.1.6
+影响模块：n9e-ams etc/gop.yml
+更新内容：主机设备增加了扩展字段的管理，用于维护一些位置信息、过保信息，增加了新的sql：sql/n9e_ams_3.1.6.sql
+
+3.2.0
+影响模块：n9e-agent etc/agent.yml
+更新内容：agent支持metrics指标采集能力，这个版本是为商业版本服务的，开源用户无需更新
+
+3.3.0
+影响模块：n9e-rdb n9e-transfer n9e-judge n9e-ams n9e-monapi sql/n9e_rdb_3.3.0.sql etc/*.tpl
+更新内容：增强安全性：密码复杂度、cookie处理优化等；支持M3DB作为存储后端（如果要尝试M3需要修改transfer、monapi配置文件）；修复告警引擎与条件串数的问题；为主机设备增加自定义字段的能力

@@ -1,0 +1,20 @@
+- system: 资产管理系统
+  groups:
+    - title: 主机设备
+      ops:
+        - en: ams_host_mgr_menu
+          cn: 主机设备管理菜单展示
+        - en: ams_host_delete
+          cn: 主机设备删除
+        - en: ams_host_modify
+          cn: 主机设备信息修改
+        - en: ams_host_field_mgr_menu
+          cn: 主机设备扩展字段菜单展示
+        - en: ams_host_field_mgr
+          cn: 主机设备扩展字段管理
+    # - title: 网络设备
+    #   ops:
+    #     - en: ams_netware_mgr_menu
+    #       cn: 网络设备管理菜单
+    #     - en: ams_netware_modify
+    #       cn: 网络设备信息修改

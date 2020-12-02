@@ -1,0 +1,86 @@
+- system: 用户资源库
+  groups:
+    - title: 人员授权
+      ops:
+        - en: rdb_perm_grant
+          cn: 权限分配
+    - title: 节点类操作
+      ops:
+        - en: rdb_node_create
+          cn: 创建节点
+        - en: rdb_node_modify
+          cn: 修改节点
+        - en: rdb_node_delete
+          cn: 删除节点
+    - title: 资源类操作
+      ops:
+        - en: rdb_resource_view
+          cn: 资源信息查看
+        - en: rdb_resource_bind
+          cn: 资源挂载节点
+        - en: rdb_resource_unbind
+          cn: 资源解挂节点
+        - en: rdb_resource_modify
+          cn: 资源信息修改
+- system: 任务执行中心
+  groups:
+    - title: 任务模板相关
+      ops:
+        - en: job_tpl_view
+          cn: 查看任务模板
+        - en: job_tpl_create
+          cn: 创建任务模板
+        - en: job_tpl_modify
+          cn: 修改任务模板
+        - en: job_tpl_delete
+          cn: 删除任务模板
+    - title: 任务执行相关
+      ops:
+        - en: task_run_use_root_account
+          cn: 使用root账号运行脚本
+        - en: task_run_use_gene_account
+          cn: 使用普通账号运行脚本
+- system: 监控告警系统
+  groups:
+    - title: 告警策略
+      ops:
+        - en: mon_stra_create
+          cn: 创建告警策略
+        - en: mon_stra_modify
+          cn: 修改告警策略
+        - en: mon_stra_delete
+          cn: 删除告警策略
+    - title: 告警屏蔽
+      ops:
+        - en: mon_maskconf_create
+          cn: 创建告警屏蔽
+        - en: mon_maskconf_modify
+          cn: 修改告警屏蔽
+        - en: mon_maskconf_delete
+          cn: 删除告警屏蔽
+    - title: 采集策略
+      ops:
+        - en: mon_collect_create
+          cn: 创建采集策略
+        - en: mon_collect_modify
+          cn: 修改采集策略
+        - en: mon_collect_delete
+          cn: 删除采集策略
+    - title: 大盘操作
+      ops:
+        - en: mon_screen_create
+          cn: 创建监控大盘
+        - en: mon_screen_modify
+          cn: 修改监控大盘
+        - en: mon_screen_delete
+          cn: 删除监控大盘
+        - en: mon_screen_view
+          cn: 查看监控大盘
+    # - title: 指标计算
+    #   ops:
+    #     - en: mon_aggr_write
+    #       cn: 指标计算配置权限
+    - title: 告警历史
+      ops:
+        - en: mon_event_write
+          cn: 告警历史认领、忽略

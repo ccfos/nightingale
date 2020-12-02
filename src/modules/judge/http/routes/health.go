@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/judge/cache"
 	"github.com/didi/nightingale/src/toolkits/http/render"
 
@@ -42,6 +42,6 @@ func getData(c *gin.Context) {
 	errors.Dangerous(c.ShouldBind(&input))
 	pk := input.MD5()
 	linkedList, _ := cache.HistoryBigMap[pk[0:2]].Get(pk)
-	data, _ := linkedList.HistoryData(10)
+	data := linkedList.HistoryData()
 	render.Data(c, data, nil)
 }

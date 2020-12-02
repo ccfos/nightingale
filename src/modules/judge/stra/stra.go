@@ -8,11 +8,11 @@ import (
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/httplib"
 
-	"github.com/didi/nightingale/src/model"
+	"github.com/didi/nightingale/src/common/address"
+	"github.com/didi/nightingale/src/common/identity"
+	"github.com/didi/nightingale/src/common/report"
+	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/judge/cache"
-	"github.com/didi/nightingale/src/toolkits/address"
-	"github.com/didi/nightingale/src/toolkits/identity"
-	"github.com/didi/nightingale/src/toolkits/report"
 	"github.com/didi/nightingale/src/toolkits/stats"
 )
 
@@ -27,8 +27,8 @@ type StrategySection struct {
 }
 
 type StrasResp struct {
-	Data []*model.Stra `json:"dat"`
-	Err  string        `json:"err"`
+	Data []*models.Stra `json:"dat"`
+	Err  string         `json:"err"`
 }
 
 func GetStrategy(cfg StrategySection) {
@@ -50,10 +50,13 @@ func getStrategy(opts StrategySection) {
 	var resp StrasResp
 	perm := rand.Perm(len(addrs))
 	for i := range perm {
-		//PartitionApi = "/api/portal/stras/effective?instance=%s:%s"
-		url := fmt.Sprintf("http://%s"+opts.PartitionApi, addrs[perm[i]], identity.Identity, report.Config.RPCPort)
-		err := httplib.Get(url).SetTimeout(time.Duration(opts.Timeout) * time.Millisecond).ToJSON(&resp)
+		ident, err := identity.GetIdent()
+		if err != nil {
+			logger.Error("err")
+		}
 
+		url := fmt.Sprintf("http://%s"+opts.PartitionApi, addrs[perm[i]], ident, report.Config.RPCPort)
+		err = httplib.Get(url).SetTimeout(time.Duration(opts.Timeout) * time.Millisecond).ToJSON(&resp)
 		if err != nil {
 			logger.Warningf("get strategy from remote failed, error:%v", err)
 			stats.Counter.Set("stra.get.err", 1)

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/tsdb/cache"
 	"github.com/didi/nightingale/src/modules/tsdb/rrdtool"
 	"github.com/didi/nightingale/src/modules/tsdb/utils"

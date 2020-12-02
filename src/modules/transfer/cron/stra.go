@@ -5,10 +5,10 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/didi/nightingale/src/model"
+	"github.com/didi/nightingale/src/common/address"
+	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/transfer/backend"
 	"github.com/didi/nightingale/src/modules/transfer/cache"
-	"github.com/didi/nightingale/src/toolkits/address"
 	"github.com/didi/nightingale/src/toolkits/stats"
 	"github.com/didi/nightingale/src/toolkits/str"
 
@@ -17,8 +17,8 @@ import (
 )
 
 type StraResp struct {
-	Data []*model.Stra `json:"dat"`
-	Err  string        `json:"err"`
+	Data []*models.Stra `json:"dat"`
+	Err  string         `json:"err"`
 }
 
 func GetStrategy() {
@@ -41,7 +41,7 @@ func getStrategy() {
 	perm := rand.Perm(len(addrs))
 	var err error
 	for i := range perm {
-		url := fmt.Sprintf("http://%s%s", addrs[perm[i]], backend.Config.StraPath)
+		url := fmt.Sprintf("http://%s%s", addrs[perm[i]], backend.StraPath)
 		err = httplib.Get(url).SetTimeout(time.Duration(3000) * time.Millisecond).ToJSON(&stras)
 
 		if err != nil {
@@ -67,7 +67,7 @@ func getStrategy() {
 		return
 	}
 
-	straMap := make(map[string]map[string][]*model.Stra)
+	straMap := make(map[string]map[string][]*models.Stra)
 	for _, stra := range stras.Data {
 		stats.Counter.Set("stra.count", 1)
 
@@ -75,22 +75,35 @@ func getStrategy() {
 			logger.Warningf("illegal stra:%v exprs", stra)
 			continue
 		}
-		// nodata 策略不使用 push 模式
-		if stra.Exprs[0].Func == "nodata" {
-			continue
-		}
 
 		metric := stra.Exprs[0].Metric
-		for _, endpoint := range stra.Endpoints {
-			key := str.PK(metric, endpoint) //TODO get straMap key， 此处需要优化
+		for _, nid := range stra.Nids {
+			key := str.MD5(nid, metric, "") //TODO get straMap key， 此处需要优化
 			k1 := key[0:2]                  //为了加快查找，增加一层 map，key 为计算出来的 hash 的前 2 位
 
 			if _, exists := straMap[k1]; !exists {
-				straMap[k1] = make(map[string][]*model.Stra)
+				straMap[k1] = make(map[string][]*models.Stra)
 			}
 
 			if _, exists := straMap[k1][key]; !exists {
-				straMap[k1][key] = []*model.Stra{stra}
+				straMap[k1][key] = []*models.Stra{stra}
+				stats.Counter.Set("stra.key", 1)
+
+			} else {
+				straMap[k1][key] = append(straMap[k1][key], stra)
+			}
+		}
+
+		for _, endpoint := range stra.Endpoints {
+			key := str.MD5(endpoint, metric, "") //TODO get straMap key， 此处需要优化
+			k1 := key[0:2]                       //为了加快查找，增加一层 map，key 为计算出来的 hash 的前 2 位
+
+			if _, exists := straMap[k1]; !exists {
+				straMap[k1] = make(map[string][]*models.Stra)
+			}
+
+			if _, exists := straMap[k1][key]; !exists {
+				straMap[k1][key] = []*models.Stra{stra}
 				stats.Counter.Set("stra.key", 1)
 
 			} else {

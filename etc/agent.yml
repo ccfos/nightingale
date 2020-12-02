@@ -1,0 +1,77 @@
+logger:
+  dir: logs/agent
+  level: INFO
+  keepHours: 24
+
+enable:
+  mon: true
+  job: true
+  report: true
+  metrics: true
+
+udp:
+  enable: true
+  listen: :788
+
+metrics:
+  maxProcs: 1
+  reportIntervalMs: 10 
+  reportTimeoutMs: 2000
+  reportPacketSize: 100
+  sendToInfoFile: false 
+
+job:
+  metadir: ./meta
+  interval: 2
+
+report:
+  # 调用ams的接口上报数据，需要ams的token
+  token: ams-builtin-token
+
+  # 上报周期，单位是秒
+  interval: 10
+
+  # physical：物理机，virtual：虚拟机，container：容器，switch：交换机
+  cate: physical
+
+  # 使用哪个字段作为唯一KEY，即作为where条件更新对应记录，一般使用sn或ip
+  uniqkey: ip
+
+  # 如果是虚拟机，应该是获取uuid
+  # curl -s http://169.254.169.254/a/meta-data/instance-id
+  sn: dmidecode -s system-serial-number | tail -n 1
+
+  fields:
+    cpu: cat /proc/cpuinfo | grep processor | wc -l
+    mem: cat /proc/meminfo | grep MemTotal | awk '{printf "%dGi", $2/1024/1024}'
+    disk: df -m | grep '/dev/' | grep -v '/var/lib' | grep -v tmpfs | awk '{sum += $2};END{printf "%dGi", sum/1024}'
+
+sys:
+  # timeout in ms
+  # interval in second
+  timeout: 5000
+  interval: 30
+  ifacePrefix:
+    - eth
+    - em
+    - ens
+
+  # ignore disk mount point
+  mountIgnore:
+    prefix:
+      - /var/lib
+      - /run
+    # collect anyway
+    exclude: []
+
+  ignoreMetrics:
+    - cpu.core.idle
+    - cpu.core.util
+    - cpu.core.sys
+    - cpu.core.user
+    - cpu.core.nice
+    - cpu.core.guest
+    - cpu.core.irq
+    - cpu.core.softirq
+    - cpu.core.iowait
+    - cpu.core.steal

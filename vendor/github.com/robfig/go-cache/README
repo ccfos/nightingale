@@ -1,0 +1,161 @@
+go-cache is an in-memory key:value store/cache similar to memcached that is
+suitable for applications running on a single machine. Its major advantage is
+that, being essentially a thread-safe map[string]interface{} with expiration
+times, it doesn't need to serialize or transmit its contents over the network.
+
+Any object can be stored, for a given duration or forever, and the cache can be
+safely used by multiple goroutines.
+
+Although go-cache isn't meant to be used as a persistent datastore, the entire
+cache may be saved to and loaded from a file (or any io.Reader/Writer) to
+recover from downtime quickly.
+
+== Installation
+
+go get github.com/pmylund/go-cache
+
+== Usage
+
+import "github.com/pmylund/go-cache"
+
+// Create a cache with a default expiration time of 5 minutes, and which
+// purges expired items every 30 seconds
+c := cache.New(5*time.Minute, 30*time.Second)
+
+// Set the value of the key "foo" to "bar", with the default expiration time
+c.Set("foo", "bar", 0)
+
+// Set the value of the key "baz" to 42, with no expiration time
+// (the item won't be removed until it is re-set, or removed using
+// c.Delete("baz")
+c.Set("baz", 42, -1)
+
+// Get the string associated with the key "foo" from the cache
+foo, found := c.Get("foo")
+if found {
+        fmt.Println(foo)
+}
+
+// Since Go is statically typed, and cache values can be anything, type
+// assertion is needed when values are being passed to functions that don't
+// take arbitrary types, (i.e. interface{}). The simplest way to do this for
+// values which will only be used once--e.g. for passing to another
+// function--is:
+foo, found := c.Get("foo")
+if found {
+        MyFunction(foo.(string))
+}
+
+// This gets tedious if the value is used several times in the same function.
+// You might do either of the following instead:
+if x, found := c.Get("foo"); found {
+        foo := x.(string)
+        ...
+}
+// or
+var foo string
+if x, found := c.Get("foo"); found {
+        foo = x.(string)
+}
+...
+// foo can then be passed around freely as a string
+
+// Want performance? Store pointers!
+c.Set("foo", &MyStruct, 0)
+if x, found := c.Get("foo"); found {
+        foo := x.(*MyStruct)
+        ...
+}
+
+// If you store a reference type like a pointer, slice, map or channel, you
+// do not need to run Set if you modify the underlying data. The cached
+// reference points to the same memory, so if you modify a struct whose
+// pointer you've stored in the cache, retrieving that pointer with Get will
+// point you to the same data:
+foo := &MyStruct{Num: 1}
+c.Set("foo", foo, 0)
+...
+x, _ := c.Get("foo")
+foo := x.(*MyStruct)
+fmt.Println(foo.Num)
+...
+foo.Num++
+...
+x, _ := c.Get("foo")
+foo := x.(*MyStruct)
+foo.Println(foo.Num)
+
+// will print:
+1
+2
+
+== Reference
+
+func New(de, ci time.Duration) *Cache
+    Return a new cache with a given default expiration duration and cleanup
+    interval. If the expiration duration is less than 1, the items in the cache
+    never expire (by default), and must be deleted manually. If the cleanup
+    interval is less than one, expired items are not deleted from the cache
+    before their next lookup or before calling DeleteExpired.
+
+func (c *Cache) Set(k string, x interface{}, d time.Duration)
+    Add an item to the cache, replacing any existing item. If the duration is
+    0, the cache's default expiration time is used. If it is -1, the item never
+    expires.
+
+func (c *Cache) Add(k string, x interface{}, d time.Duration) error
+    Add an item to the cache only if an item doesn't already exist for the
+    given key, or if the existing item has expired. Returns an error if not.
+
+func (c *Cache) Replace(k string, x interface{}, d time.Duration) error
+    Set a new value for the cache key only if it already exists. Returns an
+    error if it does not.
+
+func (c *Cache) Get(k string) (interface{}, bool)
+    Get an item from the cache. Returns the item or nil, and a bool indicating
+    whether the key was found.
+
+func (c *Cache) Increment(k string, n int64) error
+    Increment an item of type int, int8, int16, int32, int64, uintptr, uint,
+    uint8, uint32, or uint64, float32 or float64 by n. Returns an error if the
+    item's value is not an integer, if it was not found, or if it is not
+    possible to increment it by n.
+
+func (c *Cache) IncrementFloat(k string, n float64) error
+    Increment an item of type float32 or float64 by n. Returns an error if the
+    item's value is not floating point, if it was not found, or if it is not
+    possible to increment it by n. Pass a negative number to decrement the
+    value.
+
+func (c *Cache) Decrement(k string, n int64) error
+    Decrement an item of type int, int8, int16, int32, int64, uintptr, uint,
+    uint8, uint32, or uint64, float32 or float64 by n. Returns an error if the
+    item's value is not an integer, if it was not found, or if it is not
+    possible to decrement it by n.
+
+func (c *Cache) Delete(k string)
+    Delete an item from the cache. Does nothing if the key does not exist in the
+    cache.
+
+func (c *Cache) DeleteExpired()
+    Delete all expired items from the cache.
+
+func (c *Cache) Flush()
+    Delete all items from the cache.
+
+func (c *Cache) Save(w io.Writer) error
+    Write the cache's items (using Gob) to an io.Writer. Returns an error if
+    the serialization fails, e.g. because there are unserializable objects like
+    channels in the cache.
+
+func (c *Cache) SaveFile(fname string) error
+    Save the cache's items to the given filename, creating the file if it
+    doesn't exist, and overwriting it if it does.
+
+func (c *Cache) Load(r io.Reader) error
+    Add (Gob-serialized) cache items from an io.Reader, excluding any items
+    with keys that already exist in the current cache.
+
+func (c *Cache) LoadFile(fname string) error
+    Loads and adds cache items from the given filename, excluding any items
+    with keys that already exist in the current cache.

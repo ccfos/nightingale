@@ -7,3 +7,5 @@
 
 *.out
 *.txt
+
+vendor/

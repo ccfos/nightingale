@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package namespace;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/wrappers.proto";
+import "github.com/m3db/m3/src/dbnode/generated/proto/namespace/schema.proto";
+
+message RetentionOptions {
+    int64 retentionPeriodNanos                     = 1;
+    int64 blockSizeNanos                           = 2;
+    int64 bufferFutureNanos                        = 3;
+    int64 bufferPastNanos                          = 4;
+    bool  blockDataExpiry                          = 5;
+    int64 blockDataExpiryAfterNotAccessPeriodNanos = 6;
+    int64 futureRetentionPeriodNanos               = 7;
+}
+
+message IndexOptions {
+    bool  enabled        = 1;
+    int64 blockSizeNanos = 2;
+}
+
+message NamespaceOptions {
+    bool bootstrapEnabled                           = 1;
+    bool flushEnabled                               = 2;
+    bool writesToCommitLog                          = 3;
+    bool cleanupEnabled                             = 4;
+    bool repairEnabled                              = 5;
+    RetentionOptions retentionOptions               = 6;
+    bool snapshotEnabled                            = 7;
+    IndexOptions indexOptions                       = 8;
+    SchemaOptions schemaOptions                     = 9;
+    bool coldWritesEnabled                          = 10;
+    NamespaceRuntimeOptions runtimeOptions          = 11;
+    google.protobuf.BoolValue cacheBlocksOnRetrieve = 12;
+    AggregationOptions aggregationOptions           = 13;
+    google.protobuf.Any extendedOptions             = 14;
+}
+
+// AggregationOptions is a set of options for aggregating data
+// within the namespace.
+message AggregationOptions {
+    // aggregations is a repeated field to support the ability to send aggregated data
+    // to a namespace also receiving unaggregated data. In this case, the namespace will
+    // have one Aggregation with aggregated set to false and another with aggregated set to true.
+    repeated Aggregation aggregations = 1;
+}
+
+// Aggregation describes data points within the namespace.
+message Aggregation {
+    // aggregated is true if data points are aggregated, false otherwise.
+    bool aggregated = 1;
+
+    // attributes specifies how to aggregate data when aggregated is set to true.
+    // This field is ignored when aggregated is false and required when aggregated
+    // is true.
+    AggregatedAttributes attributes = 2;
+}
+
+// AggregatedAttributes describe how to aggregate data.
+message AggregatedAttributes {
+    // resolutionNanos is the time range to aggregate data across.
+    int64 resolutionNanos = 1;
+    DownsampleOptions downsampleOptions = 2;
+}
+
+// DownsampleOptions is a set of options related to downsampling data.
+message DownsampleOptions {
+    // all indicates whether to send data points to this namespace. If false,
+    // data points must be sent via rollup/recording rules. Defaults to true.
+    bool all = 1;
+}
+
+message Registry {
+    map<string, NamespaceOptions> namespaces = 1;
+}
+
+message NamespaceRuntimeOptions {
+    google.protobuf.DoubleValue writeIndexingPerCPUConcurrency = 1;
+    google.protobuf.DoubleValue flushIndexingPerCPUConcurrency = 2;
+}

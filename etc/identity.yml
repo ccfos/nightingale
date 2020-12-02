@@ -1,0 +1,9 @@
+# 用来做心跳，给服务端上报本机ip
+ip:
+  specify: ""
+  shell: ifconfig `route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|head -n 1
+
+# MON、JOB的客户端拿来做本机标识
+ident:
+  specify: ""
+  shell: ifconfig `route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|head -n 1

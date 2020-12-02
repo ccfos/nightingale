@@ -1,28 +1,28 @@
 #!/bin/bash
 
+# release version
+version=3.3.0
+
 CWD=$(cd $(dirname $0)/; pwd)
 cd $CWD
 
 usage()
 {
-	echo $"Usage: $0 {start|stop|restart|status|build|pack} <module>"
+	echo $"Usage: $0 {start|stop|restart|status|build|build_local|pack} <module>"
 	exit 0
 }
 
 start_all()
 {
-	# http: 5800
+	test -x n9e-rdb && start rdb
+	test -x n9e-job && start job
+	test -x n9e-ams && start ams
 	test -x n9e-monapi && start monapi
-	# http: 5810 ; rpc: 5811
-	test -x n9e-transfer && start transfer
-	# http: 5820 ; rpc: 5821
 	test -x n9e-tsdb && start tsdb
-	# http: 5830 ; rpc: 5831
 	test -x n9e-index && start index
-	# http: 5840 ; rpc: 5841
+	test -x n9e-transfer && start transfer
 	test -x n9e-judge && start judge
-	# http: 2058
-	test -x n9e-collector && start collector
+	test -x n9e-agent && start agent
 }
 
 start()
@@ -67,12 +67,15 @@ start()
 
 stop_all()
 {
-	test -x n9e-monapi && stop monapi
-	test -x n9e-transfer && stop transfer
-	test -x n9e-tsdb && stop tsdb
-	test -x n9e-index && stop index
+	test -x n9e-agent && stop agent
 	test -x n9e-judge && stop judge
-	test -x n9e-collector && stop collector
+	test -x n9e-transfer && stop transfer
+	test -x n9e-index && stop index
+	test -x n9e-tsdb && stop tsdb
+	test -x n9e-monapi && stop monapi
+	test -x n9e-ams && stop ams
+	test -x n9e-job && stop job
+	test -x n9e-rdb && stop rdb
 }
 
 stop()
@@ -136,18 +139,22 @@ status()
 build_one()
 {
 	mod=$1
-	go build -mod=vendor -o n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
+	echo -n "building ${mod} ... "
+	go build -ldflags "-X main.version=${version}" -o n9e-${mod} src/modules/${mod}/${mod}.go
+	echo "done"
 }
 
-build_docker()
+build_local_one()
 {
 	mod=$1
-	go build -mod=vendor -o bin/n9e-${mod} --tags "md5" src/modules/${mod}/${mod}.go
+	echo -n "building ${mod} ... "
+	go build -mod=vendor -ldflags "-X main.version=${version}" -o n9e-${mod} src/modules/${mod}/${mod}.go
+	echo "done"
 }
 
 build()
 {
-  export GO111MODULE=on
+	export GO111MODULE=on
 
 	mod=$1
 	if [ "x${mod}" = "x" ]; then
@@ -155,22 +162,36 @@ build()
 		build_one transfer
 		build_one index
 		build_one judge
-		build_one collector
+		build_one agent
 		build_one tsdb
-		return
-	fi
-	
-	if [ "x${mod}" = "xdocker" ]; then
-		build_docker monapi
-		build_docker transfer
-		build_docker index
-		build_docker judge
-		build_docker collector
-		build_docker tsdb
+		build_one rdb
+		build_one ams
+		build_one job
 		return
 	fi
 
 	build_one $mod 
+}
+
+build_local()
+{
+	export GO111MODULE=on
+
+	mod=$1
+	if [ "x${mod}" = "x" ]; then
+		build_local_one monapi
+		build_local_one transfer
+		build_local_one index
+		build_local_one judge
+		build_local_one agent
+		build_local_one tsdb
+		build_local_one rdb
+		build_local_one ams
+		build_local_one job
+		return
+	fi
+
+	build_local_one $mod
 }
 
 reload()
@@ -187,14 +208,12 @@ reload()
 
 pack()
 {
-	v=$(date +%Y-%m-%d-%H-%M-%S)
-	tar zcvf n9e-$v.tar.gz control sql plugin pub etc/log etc/port etc/service etc/nginx.conf etc/mysql.yml etc/address.yml \
-	n9e-collector etc/collector.yml \
-	n9e-tsdb etc/tsdb.yml \
-	n9e-index etc/index.yml \
-	n9e-judge etc/judge.yml \
-	n9e-transfer etc/transfer.yml \
-	n9e-monapi etc/monapi.yml
+	clock=$(date +%s)
+	mkdir $clock
+	mv etc/*.local.yml $clock
+	tar zcvf n9e-${version}.tar.gz script control sql etc n9e-*
+	mv $clock/* etc/
+	rm -rf $clock
 }
 
 case "$1" in
@@ -213,11 +232,14 @@ case "$1" in
 	build)
 		build $2
 		;;
+	build_local)
+		build_local $2
+		;;
 	reload)
 		reload $2
 		;;
 	pack)
-		pack
+		pack $2
 		;;
 	*)
 		usage

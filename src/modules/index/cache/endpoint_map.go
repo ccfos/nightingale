@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
 	"github.com/toolkits/pkg/logger"
@@ -20,15 +20,23 @@ type EndpointIndexMap struct {
 func (e *EndpointIndexMap) Push(item dataobj.IndexModel, now int64) {
 	tags := dataobj.SortedTags(item.Tags)
 	metric := item.Metric
+	var key string
+	if item.Nid != "" {
+		key = item.Nid
+	} else {
+		key = item.Endpoint
+	}
 
 	// 先判断 endpoint 是否已经被记录，不存在则直接初始化
-	metricIndexMap, exists := e.GetMetricIndexMap(item.Endpoint)
+	metricIndexMap, exists := e.GetMetricIndexMap(key)
 	if !exists {
 		metricIndexMap = &MetricIndexMap{Data: make(map[string]*MetricIndex)}
 		metricIndexMap.SetMetricIndex(metric, NewMetricIndex(item, tags, now))
-		e.SetMetricIndexMap(item.Endpoint, metricIndexMap)
+		e.SetMetricIndexMap(key, metricIndexMap)
 
-		NewEndpoints.PushFront(item.Endpoint) //必须在 metricIndexMap 成功之后再 push
+		if item.Nid == "" {
+			NewEndpoints.PushFront(key) //必须在 metricIndexMap 成功之后再 push
+		}
 		return
 	}
 
@@ -132,4 +140,11 @@ func (e *EndpointIndexMap) GetEndpoints() []string {
 		i++
 	}
 	return ret
+}
+
+func (e *EndpointIndexMap) DelByEndpoint(endpoint string) {
+	e.Lock()
+	defer e.Unlock()
+
+	delete(e.M, endpoint)
 }

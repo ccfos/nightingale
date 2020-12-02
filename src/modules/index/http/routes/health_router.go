@@ -23,7 +23,14 @@ func pid(c *gin.Context) {
 }
 
 func indexTotal(c *gin.Context) {
-	endpoints := cache.IndexDB.GetEndpoints()
+	var total int
+	total += getIndexDBCount(cache.IndexDB)
+	total += getIndexDBCount(cache.NidIndexDB)
+	render.Data(c, total, nil)
+}
+
+func getIndexDBCount(indexDB *cache.EndpointIndexMap) int {
+	endpoints := indexDB.GetEndpoints()
 	var total int
 	for _, endpoint := range endpoints {
 		metricIndexMap, exists := cache.IndexDB.GetMetricIndexMap(endpoint)
@@ -40,5 +47,5 @@ func indexTotal(c *gin.Context) {
 			total += metricIndex.CounterMap.Len()
 		}
 	}
-	render.Data(c, total, nil)
+	return total
 }

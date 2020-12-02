@@ -7,27 +7,31 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
+
+	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/monapi/acache"
+	"github.com/didi/nightingale/src/modules/monapi/alarm"
+	"github.com/didi/nightingale/src/modules/monapi/config"
+	"github.com/didi/nightingale/src/modules/monapi/http"
+	"github.com/didi/nightingale/src/modules/monapi/redisc"
+	"github.com/didi/nightingale/src/modules/monapi/scache"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 
 	_ "github.com/go-sql-driver/mysql"
 
+	"github.com/toolkits/pkg/cache"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
-
-	"github.com/didi/nightingale/src/model"
-	"github.com/didi/nightingale/src/modules/monapi/config"
-	"github.com/didi/nightingale/src/modules/monapi/cron"
-	"github.com/didi/nightingale/src/modules/monapi/http"
-	"github.com/didi/nightingale/src/modules/monapi/mcache"
-	"github.com/didi/nightingale/src/modules/monapi/redisc"
-	"github.com/didi/nightingale/src/modules/monapi/scache"
-	"github.com/didi/nightingale/src/toolkits/stats"
 )
 
 var (
 	vers *bool
 	help *bool
 	conf *string
+
+	version = "No Version Provided"
 )
 
 func init() {
@@ -37,7 +41,7 @@ func init() {
 	flag.Parse()
 
 	if *vers {
-		fmt.Println("version:", config.Version)
+		fmt.Println("Version:", version)
 		os.Exit(0)
 	}
 
@@ -47,45 +51,49 @@ func init() {
 	}
 
 	runner.Init()
-	fmt.Println("runner.cwd:", runner.Cwd)
-	fmt.Println("runner.hostname:", runner.Hostname)
+	fmt.Println("monapi start, use configuration file:", *conf)
+	fmt.Println("runner.Cwd:", runner.Cwd)
+	fmt.Println("runner.Hostname:", runner.Hostname)
 }
 
 func main() {
 	aconf()
 	pconf()
 
+	cache.InitMemoryCache(time.Hour)
 	config.InitLogger()
-	go stats.Init("n9e.monapi")
-
-	model.InitMySQL("uic", "mon", "hbs")
-	model.InitRoot()
-	model.InitNode()
+	models.InitMySQL("mon", "rdb")
 
 	scache.Init()
-	mcache.Init()
 
-	if err := cron.SyncMaskconf(); err != nil {
-		log.Fatalf("sync maskconf fail: %v", err)
+	i18n.Init(config.Get().I18n)
+
+	if err := scache.CheckJudge(); err != nil {
+		logger.Errorf("check judge fail: %v", err)
 	}
 
-	if err := cron.SyncStra(); err != nil {
-		log.Fatalf("sync stra fail: %v", err)
+	if config.Get().AlarmEnabled {
+		acache.Init()
+
+		if err := alarm.SyncMaskconf(); err != nil {
+			log.Fatalf("sync maskconf fail: %v", err)
+		}
+
+		if err := alarm.SyncStra(); err != nil {
+			log.Fatalf("sync stra fail: %v", err)
+		}
+
+		redisc.InitRedis()
+
+		go alarm.SyncMaskconfLoop()
+		go alarm.SyncStraLoop()
+		go alarm.CleanStraLoop()
+		go alarm.ReadHighEvent()
+		go alarm.ReadLowEvent()
+		go alarm.CallbackConsumer()
+		go alarm.MergeEvent()
+		go alarm.CleanEventLoop()
 	}
-
-	if err := cron.CheckJudge(); err != nil {
-		log.Fatalf("check judge fail: %v", err)
-	}
-
-	redisc.InitRedis()
-
-	go cron.SyncMaskconfLoop()
-	go cron.SyncStraLoop()
-	go cron.CleanStraLoop()
-	go cron.EventConsumer()
-	go cron.CallbackConsumer()
-	go cron.CleanEventLoop()
-	go cron.CheckJudgeLoop()
 
 	http.Start()
 	ending()
@@ -101,7 +109,7 @@ func ending() {
 
 	logger.Close()
 	http.Shutdown()
-	fmt.Println("portal stopped successfully")
+	fmt.Println("monapi stopped successfully")
 }
 
 // auto detect configuration file
@@ -120,7 +128,7 @@ func aconf() {
 		return
 	}
 
-	fmt.Println("no configuration file for portal")
+	fmt.Println("no configuration file for monapi")
 	os.Exit(1)
 }
 
@@ -129,7 +137,5 @@ func pconf() {
 	if err := config.Parse(*conf); err != nil {
 		fmt.Println("cannot parse configuration file:", err)
 		os.Exit(1)
-	} else {
-		fmt.Println("portal start, use configuration file:", *conf)
 	}
 }

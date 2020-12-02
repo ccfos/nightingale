@@ -1,0 +1,93 @@
+logger:
+  dir: logs/rdb
+  level: INFO
+  keepHours: 24
+
+http:
+  mode: release
+  cookieDomain: ""
+  cookieName: ecmc-user
+
+sso:
+  enable: false
+  ssoAddr: "http://{sso-host}"
+  redirectURL: "http://{rdb-host}/auth-callback"
+  clientId: ""
+  clientSecret: ""
+  apiKey: ""
+  attributes:
+    dispname: "display_name"
+    email: "email"
+    phone: "phone"
+    im: ""
+  coverAttributes: false
+  stateExpiresIn: 300
+
+captcha: false
+
+tokens:
+  - rdb-builtin-token
+
+# for ldap authorization
+ldap:
+  host: "ldap.example.org"
+  port: 389
+  baseDn: "dc=example,dc=org"
+  # AD: manange@example.org
+  bindUser: "cn=manager,dc=example,dc=org"
+  bindPass: "*******"
+  # openldap: (&(uid=%s))
+  # AD: (&(sAMAccountName=%s))
+  authFilter: "(&(uid=%s))"
+  attributes:
+    dispname: "cn"
+    email: "mail"
+    phone: "mobile"
+    im: ""
+  coverAttributes: false
+  autoRegist: true
+  tls: false
+  startTLS: false
+
+# as queue for sender
+redis:
+  enable: true
+  addr: 127.0.0.1:6379
+  pass: ""
+  idle: 5
+  timeout:
+    conn: 500
+    read: 3000
+    write: 3000
+
+rabbitmq:
+  enable: false
+  addr: amqp://root:1234@127.0.0.1:5672/
+  queue: test
+
+sender:
+  mail:
+    # three choice: smtp|shell|api
+    way: smtp
+    worker: 10
+    api: http://127.0.0.1:2008/mail
+  sms:
+    # two choice: shell|api
+    way: api
+    worker: 10
+    api: http://127.0.0.1:2008/sms
+  voice:
+    # two choice: shell|api
+    way: shell
+    worker: 10
+    api: http://127.0.0.1:2008/voice
+  im:
+    # five choice: shell|api|wechat|wechat_robot|dingtalk_robot
+    way: shell
+    worker: 10
+    api: http://127.0.0.1:2008/im
+
+wechat:
+  corp_id: "xxxxxxxxxxxxx"
+  agent_id: 1000000
+  secret: "xxxxxxxxxxxxxxxxx"

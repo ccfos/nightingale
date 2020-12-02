@@ -3,7 +3,7 @@ package rpc
 import (
 	"time"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/index/cache"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
@@ -34,7 +34,12 @@ func push(args []*dataobj.IndexModel, reply *dataobj.IndexResp) {
 	now := time.Now().Unix()
 	for _, item := range args {
 		logger.Debugf("<---index %v", item)
-		cache.IndexDB.Push(*item, now)
+
+		if item.Nid != "" {
+			cache.NidIndexDB.Push(*item, now)
+		} else {
+			cache.IndexDB.Push(*item, now)
+		}
 	}
 
 	reply.Total = len(args)

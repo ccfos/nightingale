@@ -3,7 +3,7 @@ package index
 import (
 	"reflect"
 
-	"github.com/didi/nightingale/src/dataobj"
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/tsdb/utils"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
@@ -40,53 +40,28 @@ func Init(cfg IndexSection) {
 	logger.Info("index.Start ok")
 }
 
-func GetItemFronIndex(hash interface{}) *dataobj.TsdbItem {
-	switch hash.(type) {
-	case uint64:
-		indexedItemCache := IndexedItemCacheBigMap[hash.(uint64)%INDEX_SHARD]
-		return indexedItemCache.Get(hash)
-	case string:
-		indexedItemCache := IndexedItemCacheBigMap[utils.HashKey(hash.(string))%INDEX_SHARD]
-		return indexedItemCache.Get(hash)
-	}
-
-	return nil
+func GetItemFronIndex(hash string) *dataobj.TsdbItem {
+	indexedItemCache := IndexedItemCacheBigMap[utils.HashKey(hash)%INDEX_SHARD]
+	return indexedItemCache.Get(hash)
 }
 
-func DeleteItemFronIndex(hash interface{}) *dataobj.TsdbItem {
-	switch hash.(type) {
-	case uint64:
-		indexedItemCache := IndexedItemCacheBigMap[hash.(uint64)%INDEX_SHARD]
-		indexedItemCache.Remove(hash)
-	case string:
-		indexedItemCache := IndexedItemCacheBigMap[utils.HashKey(hash.(string))%INDEX_SHARD]
-		indexedItemCache.Remove(hash)
-	}
-
-	return nil
+func DeleteItemFronIndex(hash string) {
+	indexedItemCache := IndexedItemCacheBigMap[utils.HashKey(hash)%INDEX_SHARD]
+	indexedItemCache.Remove(hash)
+	return
 }
 
 // index收到一条新上报的监控数据,尝试用于增量更新索引
-func ReceiveItem(item *dataobj.TsdbItem, hash interface{}) {
+func ReceiveItem(item *dataobj.TsdbItem, hash string) {
 	if item == nil {
 		return
 	}
 	var indexedItemCache *IndexCacheBase
 	var unIndexedItemCache *IndexCacheBase
 
-	switch hash.(type) {
-	case uint64:
-		indexedItemCache = IndexedItemCacheBigMap[int(hash.(uint64)%INDEX_SHARD)]
-		unIndexedItemCache = UnIndexedItemCacheBigMap[int(hash.(uint64)%INDEX_SHARD)]
-	case string:
-		indexedItemCache = IndexedItemCacheBigMap[int(hashKey(hash.(string))%INDEX_SHARD)]
-		unIndexedItemCache = UnIndexedItemCacheBigMap[int(hashKey(hash.(string))%INDEX_SHARD)]
-	default:
-		logger.Error("undefined hash type", hash)
-		stats.Counter.Set("index.in.err", 1)
+	indexedItemCache = IndexedItemCacheBigMap[int(hashKey(hash)%INDEX_SHARD)]
+	unIndexedItemCache = UnIndexedItemCacheBigMap[int(hashKey(hash)%INDEX_SHARD)]
 
-		return
-	}
 	if indexedItemCache == nil {
 		stats.Counter.Set("index.in.err", 1)
 		logger.Error("indexedItemCache: ", reflect.TypeOf(hash), hash)

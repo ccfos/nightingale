@@ -26,7 +26,7 @@ func updateJudgeQueue() {
 		if !backend.JudgeQueues.Exists(instance) {
 			q := list.NewSafeListLimited(backend.DefaultSendQueueMaxSize)
 			backend.JudgeQueues.Set(instance, q)
-			go backend.Send2JudgeTask(q, instance, backend.Config.WorkerNum)
+			go backend.Send2JudgeTask(q, instance, backend.Judge.WorkerNum)
 		} else {
 			backend.JudgeQueues.UpdateTS(instance)
 		}

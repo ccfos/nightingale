@@ -1,0 +1,11 @@
+.idea/*
+.idea
+examples/nohup.out
+examples/examples
+goTestOutPutPng/*
+ex
+.codecov
+coverage.*
+*.exe
+_builds/*
+_builds

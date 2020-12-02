@@ -1,0 +1,57 @@
+// Copyright (c) 2018 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+syntax = "proto3";
+
+option go_package = "github.com/m3db/m3/src/metrics/generated/proto/aggregationpb";
+
+package aggregationpb;
+
+enum AggregationType {
+  UNKNOWN = 0;
+  LAST = 1;
+  MIN = 2;
+  MAX = 3;
+  MEAN = 4;
+  MEDIAN = 5;
+  COUNT = 6;
+  SUM = 7;
+  SUMSQ = 8;
+  STDEV = 9;
+  P10 = 10;
+  P20 = 11;
+  P30 = 12;
+  P40 = 13;
+  P50 = 14;
+  P60 = 15;
+  P70 = 16;
+  P80 = 17;
+  P90 = 18;
+  P95 = 19;
+  P99 = 20;
+  P999 = 21;
+  P9999 = 22;
+}
+
+// AggregationID is a unique identifier uniquely identifying
+// one or more aggregation types.
+message AggregationID {
+  uint64 id = 1;
+}
