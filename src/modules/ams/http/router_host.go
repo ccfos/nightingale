@@ -247,7 +247,7 @@ func (f hostRegisterForm) Validate() {
 }
 
 // mapKeyClear map key clear
-func mapKeyClear(src map[string]interface{}, save map[string]struct{}) error {
+func mapKeyClear(src map[string]interface{}, save map[string]struct{}) {
 	var dels []string
 	for k := range src {
 		if _, ok := save[k]; !ok {
@@ -258,8 +258,6 @@ func mapKeyClear(src map[string]interface{}, save map[string]struct{}) error {
 	for i := 0; i < len(dels); i++ {
 		delete(src, dels[i])
 	}
-
-	return nil
 }
 
 // agent主动上报注册信息
@@ -317,8 +315,7 @@ func v1HostRegister(c *gin.Context) {
 		"disk": struct{}{},
 	}
 
-	err = mapKeyClear(f.Fields, hFixed)
-	dangerous(err)
+	mapKeyClear(f.Fields, hFixed)
 
 	if host == nil {
 		msg := "create host failed"
@@ -394,8 +391,7 @@ func v1HostRegister(c *gin.Context) {
 		res.Name = f.Name
 		res.Cate = f.Cate
 
-		err = mapKeyClear(f.Fields, hFixed)
-		dangerous(err)
+		mapKeyClear(f.Fields, hFixed)
 
 		js, err := json.Marshal(f.Fields)
 		dangerous(err)
