@@ -11,5 +11,8 @@ RUN \
 sed -i "s/127.0.0.1:6379/redis:6379/g" `grep -rl "127.0.0.1:6379" ./etc/` &&\
 sed -i 's/127.0.0.1/mysql/g' etc/mysql.yml
 COPY entrpoint.sh .
-RUN yum install mysql net-tools -y
+RUN set -ex \
+    && yum install mysql net-tools -y \
+    && yum clean all \
+    && rm -rf /var/cache/yum
 ENTRYPOINT ./entrpoint.sh
