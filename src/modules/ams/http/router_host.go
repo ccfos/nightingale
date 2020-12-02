@@ -246,6 +246,22 @@ func (f hostRegisterForm) Validate() {
 	}
 }
 
+// mapKeyClear map key clear
+func mapKeyClear(src map[string]interface{}, save map[string]struct{}) error {
+	var dels []string
+	for k := range src {
+		if _, ok := save[k]; !ok {
+			dels = append(dels, k)
+		}
+	}
+
+	for i := 0; i < len(dels); i++ {
+		delete(src, dels[i])
+	}
+
+	return nil
+}
+
 // agent主动上报注册信息
 func v1HostRegister(c *gin.Context) {
 	var f hostRegisterForm
@@ -283,47 +299,53 @@ func v1HostRegister(c *gin.Context) {
 			renderMessage(c, nil)
 			return
 		}
+	} else {
+		if err.Error() != cache.ErrCacheMiss.Error() {
+			msg := "get cache err"
+			logger.Error(err)
+			renderMessage(c, msg)
+			return
+		}
 	}
 
 	host, err := models.HostGet(f.UniqKey+" = ?", uniqValue)
 	dangerous(err)
 
 	hFixed := map[string]struct{}{
-		"sn":    struct{}{},
-		"ip":    struct{}{},
-		"ident": struct{}{},
-		"name":  struct{}{},
-		"note":  struct{}{},
-		"cate":  struct{}{},
-		"clock": struct{}{},
-		"cpu":   struct{}{},
-		"mem":   struct{}{},
-		"disk":  struct{}{},
+		"cpu":  struct{}{},
+		"mem":  struct{}{},
+		"disk": struct{}{},
 	}
 
-	var dels []string
-	for k := range f.Fields {
-		if _, ok := hFixed[k]; !ok {
-			dels = append(dels, k)
-		}
-	}
-
-	for i := 0; i < len(dels); i++ {
-		delete(f.Fields, dels[i])
-	}
+	err = mapKeyClear(f.Fields, hFixed)
+	dangerous(err)
 
 	if host == nil {
-		var err error
+		msg := "create host failed"
 		host, err = models.HostNew(f.SN, f.IP, f.Ident, f.Name, f.Cate, f.Fields)
-		if err == nil {
-			cache.Set(cacheKey, f.Digest, cache.DEFAULT)
-		} else {
-			logger.Warning(err)
+		if err != nil {
+			logger.Error(err)
+			renderMessage(c, msg)
+			return
 		}
 
 		if host == nil {
-			msg := "create host failed"
-			logger.Warningf("%s info:%v", msg, f)
+			logger.Errorf("%s, report info:%v", msg, f)
+			renderMessage(c, msg)
+			return
+		}
+	} else {
+		f.Fields["sn"] = f.SN
+		f.Fields["ip"] = f.IP
+		f.Fields["ident"] = f.Ident
+		f.Fields["name"] = f.Name
+		f.Fields["cate"] = f.Cate
+		f.Fields["clock"] = time.Now().Unix()
+
+		err = host.Update(f.Fields)
+		if err != nil {
+			logger.Error(err)
+			msg := "update host err"
 			renderMessage(c, msg)
 			return
 		}
@@ -372,29 +394,15 @@ func v1HostRegister(c *gin.Context) {
 		res.Name = f.Name
 		res.Cate = f.Cate
 
+		err = mapKeyClear(f.Fields, hFixed)
+		dangerous(err)
+
 		js, err := json.Marshal(f.Fields)
 		dangerous(err)
 
 		res.Extend = string(js)
 
 		dangerous(res.Update("ident", "name", "cate", "extend"))
-	}
-
-	f.Fields["sn"] = f.SN
-	f.Fields["ip"] = f.IP
-	f.Fields["ident"] = f.Ident
-	f.Fields["name"] = f.Name
-	f.Fields["cate"] = f.Cate
-	f.Fields["clock"] = time.Now().Unix()
-
-	err = host.Update(f.Fields)
-	if err == nil {
-		cache.Set(cacheKey, f.Digest, cache.DEFAULT)
-	} else {
-		logger.Error(err)
-		msg := "update host err"
-		renderMessage(c, msg)
-		return
 	}
 
 	var objs []models.HostFieldValue
@@ -414,5 +422,13 @@ func v1HostRegister(c *gin.Context) {
 		dangerous(err)
 	}
 
-	renderMessage(c, err)
+	err = cache.Set(cacheKey, f.Digest, cache.DEFAULT)
+	if err != nil {
+		msg := "set cache err"
+		logger.Error(err)
+		renderMessage(c, msg)
+		return
+	}
+
+	renderMessage(c, nil)
 }
