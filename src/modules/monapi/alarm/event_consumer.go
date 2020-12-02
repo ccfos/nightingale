@@ -173,7 +173,7 @@ func isInConverge(event *models.Event) bool {
 		startTs = recoveryTs
 	}
 
-	cnt, err := models.EventCnt(event.HashId, models.ParseEtime(startTs), models.ParseEtime(now), event.RealUpgrade)
+	cnt, err := models.EventCnt(event.HashId, startTs, now, event.RealUpgrade)
 	if err != nil {
 		logger.Errorf("get event count failed, err: %v", err)
 		return false

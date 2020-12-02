@@ -200,8 +200,8 @@ func EventAlertUpgradeUnMarshal(str string) (EventAlertUpgrade, error) {
 	return obj, err
 }
 
-func EventCnt(hashid uint64, stime, etime string, isUpgrade bool) (int64, error) {
-	session := DB["mon"].Where("hashid = ? and event_type = ? and created between ? and ?", hashid, config.ALERT, stime, etime)
+func EventCnt(hashid uint64, stime, etime int64, isUpgrade bool) (int64, error) {
+	session := DB["mon"].Where("hashid = ? and event_type = ? and etime between ? and ?", hashid, config.ALERT, stime, etime)
 
 	if isUpgrade {
 		return session.In("status", GetFlagsByStatus([]string{STATUS_UPGRADE, STATUS_SEND})).Count(new(Event))
