@@ -46,46 +46,27 @@ func nodataJudge() {
 			logger.Debugf("stra:%+v endpoints or nids is null", stra)
 			continue
 		}
-
-		now := time.Now().Unix()
-		respData, err := GetData(stra, stra.Exprs[0], nil, now, false)
-		if err != nil {
-			logger.Errorf("stra:%+v get query data err:%v", stra, err)
+		if len(stra.Exprs) == 0 {
+			logger.Debugf("stra:%+v exp or nids is null", stra)
 			continue
 		}
 
-		for _, data := range respData {
-			var metric, tag string
-			// 兼容格式disk.bytes.free/mount=/data/docker/overlay2/xxx/merged
-			arr := strings.SplitN(data.Counter, "/", 2)
-			if len(arr) == 2 {
-				metric = arr[0]
-				tag = arr[1]
-			} else {
-				metric = data.Counter
-			}
+		now := time.Now().Unix()
+		reqs := GetReqs(stra, stra.Exprs[0].Metric, stra.Nids, stra.Endpoints, now)
+		if len(reqs) == 0 {
+			logger.Errorf("stra:%+v get query data err:req is null", stra)
+			continue
+		}
 
-			if data.Endpoint == "" && data.Nid == "" {
-				continue
-			}
-
-			judgeItem := &dataobj.JudgeItem{
-				Nid:      data.Nid,
-				Endpoint: data.Endpoint,
-				Metric:   metric,
-				Tags:     tag,
-				TagsMap:  dataobj.DictedTagstring(tag),
-				DsType:   data.DsType,
-				Step:     data.Step,
-			}
-
+		items := getJudgeItems(reqs)
+		for _, item := range items {
 			nodataJob.Acquire()
-			go AsyncJudge(nodataJob, stra, stra.Exprs, dataobj.RRDData2HistoryData(data.Values), judgeItem, now)
+			go AsyncJudge(nodataJob, stra, stra.Exprs, item, now)
 		}
 	}
 }
 
-func AsyncJudge(sema *semaphore.Semaphore, stra *models.Stra, exps []models.Exp, historyData []*dataobj.HistoryData, firstItem *dataobj.JudgeItem, now int64) {
+func AsyncJudge(sema *semaphore.Semaphore, stra *models.Stra, exps []models.Exp, firstItem *dataobj.JudgeItem, now int64) {
 	defer sema.Release()
 
 	historyArr := []dataobj.History{}
@@ -94,7 +75,7 @@ func AsyncJudge(sema *semaphore.Semaphore, stra *models.Stra, exps []models.Exp,
 	value := ""
 
 	for _, expr := range exps {
-		respData, err := GetData(stra, expr, firstItem, now, true)
+		respData, err := GetData(stra, expr, firstItem, now)
 		if err != nil {
 			logger.Errorf("stra:%+v get query data err:%v", stra, err)
 			return
@@ -136,5 +117,50 @@ func AsyncJudge(sema *semaphore.Semaphore, stra *models.Stra, exps []models.Exp,
 		Hashid:    getHashId(stra.Id, firstItem),
 	}
 
-	sendEventIfNeed(historyData, statusArr, event, stra)
+	sendEventIfNeed(statusArr, event, stra)
+}
+
+func getJudgeItems(reqs []*dataobj.QueryData) []*dataobj.JudgeItem {
+	var items []*dataobj.JudgeItem
+	for _, req := range reqs {
+		for _, counter := range req.Counters {
+			var metric, tag string
+			// 兼容格式disk.bytes.free/mount=/data/docker/overlay2/xxx/merged
+			arr := strings.SplitN(counter, "/", 2)
+			if len(arr) == 2 {
+				metric = arr[0]
+				tag = arr[1]
+			} else {
+				metric = counter
+			}
+
+			if len(req.Nids) != 0 {
+				for _, nid := range req.Nids {
+					judgeItem := &dataobj.JudgeItem{
+						Nid:      nid,
+						Endpoint: "",
+						Metric:   metric,
+						Tags:     tag,
+						TagsMap:  dataobj.DictedTagstring(tag),
+						DsType:   req.DsType,
+						Step:     req.Step,
+					}
+					items = append(items, judgeItem)
+				}
+			} else {
+				for _, endpoint := range req.Endpoints {
+					judgeItem := &dataobj.JudgeItem{
+						Endpoint: endpoint,
+						Metric:   metric,
+						Tags:     tag,
+						TagsMap:  dataobj.DictedTagstring(tag),
+						DsType:   req.DsType,
+						Step:     req.Step,
+					}
+					items = append(items, judgeItem)
+				}
+			}
+		}
+	}
+	return items
 }

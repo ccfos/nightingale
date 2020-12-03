@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/didi/nightingale/src/common/dataobj"
+	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/judge/cache"
 	"github.com/didi/nightingale/src/toolkits/stats"
 	"github.com/didi/nightingale/src/toolkits/str"
@@ -23,17 +25,18 @@ var (
 
 // 执行Query操作
 // 默认不重试, 如果要做重试, 在这里完成
-func Query(reqs []*dataobj.QueryData, sid int64, expFunc string) []*dataobj.TsdbQueryResponse {
+func Query(reqs []*dataobj.QueryData, stra *models.Stra, expFunc string) []*dataobj.TsdbQueryResponse {
 	stats.Counter.Set("query.data", 1)
 	var resp *dataobj.QueryDataResp
-	var respData []*dataobj.TsdbQueryResponse
 	var err error
 
-	respData, reqs = QueryFromMem(reqs, sid)
-	if len(reqs) > 0 {
+	filterMap := make(map[string]struct{})
+
+	respData, newReqs := QueryFromMem(reqs, stra)
+	if len(newReqs) > 0 {
 		stats.Counter.Set("query.data.by.transfer", 1)
 		for i := 0; i < 3; i++ {
-			err = TransferConnPools.Call("", "Transfer.Query", reqs, &resp)
+			err = TransferConnPools.Call("", "Transfer.Query", newReqs, &resp)
 			if err == nil {
 				break
 			}
@@ -41,16 +44,73 @@ func Query(reqs []*dataobj.QueryData, sid int64, expFunc string) []*dataobj.Tsdb
 		}
 		if err != nil {
 			stats.Counter.Set("query.data.transfer.err", 1)
-			logger.Warning("get data err:%v msg:%+v, query data from mem", err, resp)
+			logger.Warningf("get data err:%v", err)
 		} else {
-			respData = append(respData, resp.Data...)
+			for i := 0; i < len(resp.Data); i++ {
+				var values dataobj.RRDValues
+				count := len(resp.Data[i].Values)
+				//裁剪掉多余的点
+				for j := count - 1; j > 0; j-- {
+					if resp.Data[i].Values[count-1].Timestamp-resp.Data[i].Values[j].Timestamp > int64(stra.AlertDur) {
+						break
+					}
+					values = append(values, resp.Data[i].Values[j])
+				}
+				sort.Sort(values)
+
+				resp.Data[i].Values = values
+				respData = append(respData, resp.Data[i])
+				key := resp.Data[i].Endpoint + "/" + resp.Data[i].Nid + "/" + resp.Data[i].Counter
+				filterMap[key] = struct{}{}
+			}
+		}
+	}
+
+	//补全查询数据丢失的曲线
+	for _, req := range newReqs {
+		if len(req.Endpoints) > 0 {
+			for _, endpoint := range req.Endpoints {
+				for _, counter := range req.Counters {
+					key := endpoint + "//" + counter
+					if _, exists := filterMap[key]; exists {
+						continue
+					}
+					data := &dataobj.TsdbQueryResponse{
+						Start:    req.Start,
+						End:      req.End,
+						Endpoint: endpoint,
+						Counter:  counter,
+						Step:     req.Step,
+					}
+					respData = append(respData, data)
+				}
+			}
+		}
+
+		if len(req.Nids) > 0 {
+			for _, nid := range req.Nids {
+				for _, counter := range req.Counters {
+					key := "/" + nid + "/" + counter
+					if _, exists := filterMap[key]; exists {
+						continue
+					}
+					data := &dataobj.TsdbQueryResponse{
+						Start:   req.Start,
+						End:     req.End,
+						Nid:     nid,
+						Counter: counter,
+						Step:    req.Step,
+					}
+					respData = append(respData, data)
+				}
+			}
 		}
 	}
 
 	return respData
 }
 
-func QueryFromMem(reqs []*dataobj.QueryData, sid int64) ([]*dataobj.TsdbQueryResponse, []*dataobj.QueryData) {
+func QueryFromMem(reqs []*dataobj.QueryData, stra *models.Stra) ([]*dataobj.TsdbQueryResponse, []*dataobj.QueryData) {
 	stats.Counter.Set("query.data.by.mem", 1)
 
 	var resps []*dataobj.TsdbQueryResponse
@@ -79,7 +139,7 @@ func QueryFromMem(reqs []*dataobj.QueryData, sid int64) ([]*dataobj.TsdbQueryRes
 						Nid:     nid,
 						Metric:  metric,
 						TagsMap: tagsMap,
-						Sid:     sid,
+						Sid:     stra.Id,
 					}
 
 					pk := item.MD5()
@@ -88,7 +148,7 @@ func QueryFromMem(reqs []*dataobj.QueryData, sid int64) ([]*dataobj.TsdbQueryRes
 						historyData := linkedList.QueryDataByTS(req.Start, req.End)
 						resp.Values = dataobj.HistoryData2RRDData(historyData)
 					}
-					if len(resp.Values) > 0 {
+					if len(resp.Values) > 0 && resp.Values[len(resp.Values)-1].Timestamp-resp.Values[0].Timestamp >= int64(stra.AlertDur) {
 						resps = append(resps, resp)
 					} else {
 						newReq.Nids = append(newReq.Nids, nid)
@@ -112,7 +172,7 @@ func QueryFromMem(reqs []*dataobj.QueryData, sid int64) ([]*dataobj.TsdbQueryRes
 						Endpoint: endpoint,
 						Metric:   metric,
 						TagsMap:  tagsMap,
-						Sid:      sid,
+						Sid:      stra.Id,
 					}
 
 					pk := item.MD5()
@@ -121,7 +181,7 @@ func QueryFromMem(reqs []*dataobj.QueryData, sid int64) ([]*dataobj.TsdbQueryRes
 						historyData := linkedList.QueryDataByTS(req.Start, req.End)
 						resp.Values = dataobj.HistoryData2RRDData(historyData)
 					}
-					if len(resp.Values) > 0 {
+					if len(resp.Values) > 0 && resp.Values[len(resp.Values)-1].Timestamp-resp.Values[0].Timestamp >= int64(stra.AlertDur) {
 						resps = append(resps, resp)
 					} else {
 						newReq.Endpoints = append(newReq.Endpoints, endpoint)
