@@ -11,7 +11,7 @@ import (
 func straPost(c *gin.Context) {
 	username := loginUsername(c)
 	stra := new(models.Stra)
-	errors.Dangerous(c.ShouldBind(stra))
+	errors.Dangerous(c.ShouldBindJSON(stra))
 
 	can, err := models.UsernameCandoNodeOp(username, "mon_stra_create", stra.Nid)
 	errors.Dangerous(err)
