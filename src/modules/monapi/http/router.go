@@ -83,22 +83,41 @@ func Config(r *gin.Engine) {
 		event.POST("/cur/claim", eventCurClaim)
 	}
 
+	// TODO: merge to collect-rule
 	collect := r.Group("/api/mon/collect").Use(GetCookieUser())
 	{
-		collect.POST("", collectPost)                // create a collect rule
-		collect.GET("/list", collectsGet)            // get collect rules
-		collect.GET("", collectGet)                  // get collect rule by type & id
-		collect.PUT("", collectPut)                  // update collect rule by type & id
-		collect.DELETE("", collectsDel)              // delete collect rules by type & ids
-		collect.POST("/check", regExpCheck)          // check collect rule
-		collect.GET("/types", collectTypesGet)       // get collect types, category: local|remote
-		collect.GET("/template", collectTemplateGet) // get collect teplate by type
+		collect.POST("", collectRulePost)                // create a collect rule
+		collect.GET("/list", collectRulesGet)            // get collect rules
+		collect.GET("", collectRuleGet)                  // get collect rule by type & id
+		collect.PUT("", collectRulePut)                  // update collect rule by type & id
+		collect.DELETE("", collectsRuleDel)              // delete collect rules by type & ids
+		collect.POST("/check", regExpCheck)              // check collect rule
+		collect.GET("/types", collectRuleTypesGet)       // get collect types, category: local|remote
+		collect.GET("/template", collectRuleTemplateGet) // get collect teplate by type
 	}
 
+	// TODO: merge to collect-rules
 	collects := r.Group("/api/mon/collects")
 	{
-		collects.GET("/:endpoint", collectGetByEndpoint) // get collect rules by endpoint
-		collects.GET("", collectsGet)                    // get collect rules
+		collects.GET("/:endpoint", collectGetByEndpoint) // get collect rules by endpoint, for agent
+		collects.GET("", collectRulesGet)                // get collect rules
+	}
+
+	collectRule := r.Group("/api/mon/collect-rule").Use(GetCookieUser())
+	{
+		collectRule.POST("", collectRulePost)                // create a collect rule
+		collectRule.GET("/list", collectRulesGet)            // get collect rules
+		collectRule.GET("", collectRuleGet)                  // get collect rule by type & id
+		collectRule.PUT("", collectRulePut)                  // update collect rule by type & id
+		collectRule.DELETE("", collectsRuleDel)              // delete collect rules by type & ids
+		collectRule.POST("/check", regExpCheck)              // check collect rule
+		collectRule.GET("/types", collectRuleTypesGet)       // get collect types, category: local|remote
+		collectRule.GET("/template", collectRuleTemplateGet) // get collect teplate by type
+	}
+
+	collectRules := r.Group("/api/mon/collect-rules")
+	{
+		collectRules.GET("/effective", getCollectRules)
 	}
 
 	stra := r.Group("/api/mon/stra").Use(GetCookieUser())

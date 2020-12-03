@@ -322,6 +322,8 @@ CREATE TABLE `snmp_collect` (
 CREATE TABLE `collect_rule` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
   `nid` bigint(20) unsigned NOT NULL DEFAULT '0' COMMENT 'nid',
+  `step` int(11) NOT NULL DEFAULT '0' COMMENT 'step',
+  `timeout` int(11) NOT NULL DEFAULT '0' COMMENT 'total timeout',
   `collect_type` varchar(64) NOT NULL DEFAULT '' COMMENT 'collector name',
   `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'name',
   `region` varchar(32) NOT NULL DEFAULT 'default' COMMENT 'region',

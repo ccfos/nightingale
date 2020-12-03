@@ -6,7 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/didi/nightingale/src/modules/monapi/collect"
+	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/modules/monapi/scache"
 
 	"github.com/gin-gonic/gin"
@@ -19,13 +20,13 @@ type CollectRecv struct {
 	Data json.RawMessage `json:"data"`
 }
 
-func collectPost(c *gin.Context) {
+func collectRulePost(c *gin.Context) {
 	var recv []CollectRecv
 	errors.Dangerous(c.ShouldBind(&recv))
 
 	creator := loginUsername(c)
 	for _, obj := range recv {
-		cl, err := collect.GetCollector(obj.Type)
+		cl, err := collector.GetCollector(obj.Type)
 		errors.Dangerous(err)
 
 		if err := cl.Create([]byte(obj.Data), creator); err != nil {
@@ -41,18 +42,18 @@ func collectGetByEndpoint(c *gin.Context) {
 	renderData(c, collect, nil)
 }
 
-func collectGet(c *gin.Context) {
+func collectRuleGet(c *gin.Context) {
 	t := mustQueryStr(c, "type")
 	id := mustQueryInt64(c, "id")
 
-	cl, err := collect.GetCollector(t)
+	cl, err := collector.GetCollector(t)
 	errors.Dangerous(err)
 
 	ret, err := cl.Get(id)
 	renderData(c, ret, err)
 }
 
-func collectsGet(c *gin.Context) {
+func collectRulesGet(c *gin.Context) {
 	nid := queryInt64(c, "nid", -1)
 	tp := queryStr(c, "type", "")
 	var resp []interface{}
@@ -66,7 +67,7 @@ func collectsGet(c *gin.Context) {
 
 	nids := []int64{nid}
 	for _, t := range types {
-		cl, err := collect.GetCollector(t)
+		cl, err := collector.GetCollector(t)
 		if err != nil {
 			logger.Warning(t, err)
 			continue
@@ -83,11 +84,11 @@ func collectsGet(c *gin.Context) {
 	renderData(c, resp, nil)
 }
 
-func collectPut(c *gin.Context) {
+func collectRulePut(c *gin.Context) {
 	var recv CollectRecv
 	errors.Dangerous(c.ShouldBind(&recv))
 
-	cl, err := collect.GetCollector(recv.Type)
+	cl, err := collector.GetCollector(recv.Type)
 	errors.Dangerous(err)
 
 	creator := loginUsername(c)
@@ -102,14 +103,14 @@ type CollectsDelRev struct {
 	Ids  []int64 `json:"ids"`
 }
 
-func collectsDel(c *gin.Context) {
+func collectsRuleDel(c *gin.Context) {
 	var recv []CollectsDelRev
 	errors.Dangerous(c.ShouldBind(&recv))
 
 	username := loginUsername(c)
 	for _, obj := range recv {
 		for i := 0; i < len(obj.Ids); i++ {
-			cl, err := collect.GetCollector(obj.Type)
+			cl, err := collector.GetCollector(obj.Type)
 			errors.Dangerous(err)
 
 			if err := cl.Delete(obj.Ids[i], username); err != nil {
@@ -121,24 +122,24 @@ func collectsDel(c *gin.Context) {
 	renderData(c, "ok", nil)
 }
 
-func collectTypesGet(c *gin.Context) {
+func collectRuleTypesGet(c *gin.Context) {
 	category := mustQueryStr(c, "category")
 	switch category {
 	case "remote":
-		renderData(c, collect.GetRemoteCollectors(), nil)
+		renderData(c, collector.GetRemoteCollectors(), nil)
 	case "local":
-		renderData(c, collect.GetLocalCollectors(), nil)
+		renderData(c, collector.GetLocalCollectors(), nil)
 	default:
 		renderData(c, nil, nil)
 	}
 }
 
-func collectTemplateGet(c *gin.Context) {
+func collectRuleTemplateGet(c *gin.Context) {
 	t := mustQueryStr(c, "type")
-	collect, err := collect.GetCollector(t)
+	collector, err := collector.GetCollector(t)
 	errors.Dangerous(err)
 
-	tpl, err := collect.Template()
+	tpl, err := collector.Template()
 	renderData(c, tpl, err)
 }
 
@@ -345,4 +346,15 @@ func genSubErrMsg(sign string) string {
 // 生成子串匹配错误信息
 func genIllegalCharErrMsg() string {
 	return fmt.Sprintf(`正则匹配成功。但是tag的key或者value包含非法字符:[:,/=\r\n\t], 请重新调整`)
+}
+
+func getCollectRules(c *gin.Context) {
+	rules := []*models.CollectRule{}
+
+	if queryInt(c, "all", 0) == 1 {
+		rules = scache.CollectRuleCache.GetAll()
+	} else if instance := queryStr(c, "instance", ""); instance != "" {
+		rules = scache.CollectRuleCache.GetBy(instance)
+	}
+	renderData(c, rules, nil)
 }

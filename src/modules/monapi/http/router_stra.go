@@ -129,7 +129,7 @@ func effectiveStrasGet(c *gin.Context) {
 	if queryInt(c, "all", 0) == 1 {
 		stras = scache.StraCache.GetAll()
 	} else if instance != "" {
-		node, err := scache.ActiveNode.GetNodeBy(instance)
+		node, err := scache.ActiveJudgeNode.GetNodeBy(instance)
 		errors.Dangerous(err)
 
 		stras = scache.StraCache.GetByNode(node)

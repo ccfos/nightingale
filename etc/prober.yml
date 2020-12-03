@@ -1,0 +1,8 @@
+logger:
+  dir: logs/prober
+  level: INFO
+  keepHours: 24
+region: default 
+identity:
+  specify: ""
+  shell: ifconfig `route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|awk -F ':' '{print $NF}'|head -n 1
