@@ -195,6 +195,9 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 		smsContent = fmt.Sprintf("InternalServerError: cannot parse %s %v", fp, err)
 	} else {
 		var body bytes.Buffer
+		t = t.Funcs(template.FuncMap{
+			"unescaped": func(str string) interface{} { return template.HTML(str) },
+		})
 		err = t.Execute(&body, values)
 		if err != nil {
 			logger.Errorf("InternalServerError: %v", err)
