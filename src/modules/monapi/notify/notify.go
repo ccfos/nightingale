@@ -189,7 +189,7 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 
 	// 生成告警短信，短信和IM复用一个内容模板
 	fp = path.Join(file.SelfDir(), "etc", "sms.tpl")
-	t, err = template.New("sms-template").Funcs(template.FuncMap{
+	t, err = template.New(fp).Funcs(template.FuncMap{
 		"unescaped":  func(str string) interface{} { return template.HTML(str) },
 		"urlconvert": func(str string) interface{} { return template.URL(str) },
 	}).ParseFiles(fp)
