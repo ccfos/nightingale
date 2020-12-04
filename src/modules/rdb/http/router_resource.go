@@ -345,6 +345,8 @@ func resourceBindNode(c *gin.Context) {
 		if len(ids) == 0 {
 			bomb("resources not found by %s", "ident")
 		}
+	} else if f.Field == "id" {
+		ids = str.IdsInt64(strings.Join(f.Items, ","))
 	} else {
 		bomb("field[%s] not supported", f.Field)
 	}
