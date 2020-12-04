@@ -189,15 +189,15 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 
 	// 生成告警短信，短信和IM复用一个内容模板
 	fp = path.Join(file.SelfDir(), "etc", "sms.tpl")
-	t, err = template.ParseFiles(fp)
+	t, err = template.New("sms-template").Funcs(template.FuncMap{
+		"unescaped":  func(str string) interface{} { return template.HTML(str) },
+		"urlconvert": func(str string) interface{} { return template.URL(str) },
+	}).ParseFiles(fp)
 	if err != nil {
 		logger.Errorf("InternalServerError: cannot parse %s %v", fp, err)
 		smsContent = fmt.Sprintf("InternalServerError: cannot parse %s %v", fp, err)
 	} else {
 		var body bytes.Buffer
-		t = t.Funcs(template.FuncMap{
-			"unescaped": func(str string) interface{} { return template.HTML(str) },
-		})
 		err = t.Execute(&body, values)
 		if err != nil {
 			logger.Errorf("InternalServerError: %v", err)

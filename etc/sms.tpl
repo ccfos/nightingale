@@ -9,6 +9,6 @@
 当前值：{{.Value}}
 报警说明：{{.Info | unescaped}}
 触发时间：{{.Etime}}
-报警详情：{{.Elink | unescaped}}
-报警策略：{{.Slink | unescaped}}
-{{if .HasClaim}}认领报警：{{.Clink | unescaped}}{{end}}
+报警详情：{{.Elink | urlconvert}}
+报警策略：{{.Slink | urlconvert}}
+{{if .HasClaim}}认领报警：{{.Clink | urlconvert}}{{end}}
