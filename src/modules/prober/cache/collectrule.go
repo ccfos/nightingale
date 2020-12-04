@@ -105,7 +105,7 @@ type collectRulesResp struct {
 	Err  string                `json:"err"`
 }
 
-func (p *CollectRuleCache) syncCollectRule() (err error) {
+func (p *CollectRuleCache) syncCollectRule() error {
 	addrs := address.GetHTTPAddresses(p.Mod)
 	if len(addrs) == 0 {
 		return fmt.Errorf("empty config addr")
@@ -122,7 +122,7 @@ func (p *CollectRuleCache) syncCollectRule() (err error) {
 		url := fmt.Sprintf("http://%s"+p.PartitionApi, addrs[perm[i]], ident, report.Config.RPCPort)
 		err = httplib.Get(url).SetTimeout(p.timeout).ToJSON(&resp)
 		if err != nil {
-			logger.Warningf("get collect rule from remote failed, error:%v", err)
+			logger.Warningf("get %s collect rule from remote failed, error:%v", url, err)
 			stats.Counter.Set("collectrule.get.err", 1)
 			continue
 		}
@@ -145,9 +145,14 @@ func (p *CollectRuleCache) syncCollectRule() (err error) {
 	}
 
 	for _, rule := range resp.Data {
+		if err := rule.Validate(); err != nil {
+			logger.Debugf("rule.Validate err %s", err)
+			continue
+		}
 		stats.Counter.Set("collectrule.common", 1)
 		p.Set(rule.Id, rule)
 	}
 
 	p.Clean()
+	return nil
 }

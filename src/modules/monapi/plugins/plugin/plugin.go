@@ -19,7 +19,7 @@ type PluginCollector struct{}
 func (p PluginCollector) Name() string                   { return "plugin" }
 func (p PluginCollector) Category() collector.Category   { return collector.LocalCategory }
 func (p PluginCollector) Template() (interface{}, error) { return nil, nil }
-func (p PluginCollector) TelegrafInput(interface{}) (telegraf.Input, error) {
+func (p PluginCollector) TelegrafInput(*models.CollectRule) (telegraf.Input, error) {
 	return nil, errors.New("unsupported")
 }
 

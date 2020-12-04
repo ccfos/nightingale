@@ -19,7 +19,7 @@ type ApiCollector struct{}
 func (p ApiCollector) Name() string                   { return "api" }
 func (p ApiCollector) Category() collector.Category   { return collector.RemoteCategory }
 func (p ApiCollector) Template() (interface{}, error) { return nil, nil }
-func (p ApiCollector) TelegrafInput(interface{}) (telegraf.Input, error) {
+func (p ApiCollector) TelegrafInput(*models.CollectRule) (telegraf.Input, error) {
 	return nil, errors.New("unsupported")
 }
 

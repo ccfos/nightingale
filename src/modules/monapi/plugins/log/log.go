@@ -19,7 +19,7 @@ type LogCollector struct{}
 func (p LogCollector) Name() string                   { return "log" }
 func (p LogCollector) Category() collector.Category   { return collector.LocalCategory }
 func (p LogCollector) Template() (interface{}, error) { return nil, nil }
-func (p LogCollector) TelegrafInput(interface{}) (telegraf.Input, error) {
+func (p LogCollector) TelegrafInput(*models.CollectRule) (telegraf.Input, error) {
 	return nil, errors.New("unsupported")
 }
 

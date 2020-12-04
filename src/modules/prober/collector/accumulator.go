@@ -3,63 +3,125 @@ package collector
 import (
 	"time"
 
+	"github.com/didi/nightingale/src/common/dataobj"
+	"github.com/didi/nightingale/src/modules/prober/metric"
 	"github.com/influxdata/telegraf"
+	"log"
 )
 
-type accumulator struct{}
+type MetricMaker interface {
+	MakeMetric(metric telegraf.Metric) *dataobj.MetricValue
+}
 
-// AddFields adds a metric to the accumulator with the given measurement
-// name, fields, and tags (and timestamp). If a timestamp is not provided,
-// then the accumulator sets it to "now".
-func (p *accumulator) AddFields(measurement string,
+type accumulator struct {
+	maker     MetricMaker
+	metrics   chan<- *dataobj.MetricValue
+	precision time.Duration
+}
+
+func NewAccumulator(
+	maker MetricMaker,
+	metrics chan<- *dataobj.MetricValue,
+) telegraf.Accumulator {
+	acc := accumulator{
+		maker:     maker,
+		metrics:   metrics,
+		precision: time.Second,
+	}
+	return &acc
+}
+
+func (ac *accumulator) AddFields(
+	measurement string,
 	fields map[string]interface{},
 	tags map[string]string,
-	t ...time.Time) {
+	t ...time.Time,
+) {
+	ac.addFields(measurement, tags, fields, telegraf.Untyped, t...)
 }
 
-// AddGauge is the same as AddFields, but will add the metric as a "Gauge" type
-func (p *accumulator) AddGauge(measurement string,
+func (ac *accumulator) AddGauge(
+	measurement string,
 	fields map[string]interface{},
 	tags map[string]string,
-	t ...time.Time) {
+	t ...time.Time,
+) {
+	ac.addFields(measurement, tags, fields, telegraf.Gauge, t...)
 }
 
-// AddCounter is the same as AddFields, but will add the metric as a "Counter" type
-func (p *accumulator) AddCounter(measurement string,
+func (ac *accumulator) AddCounter(
+	measurement string,
 	fields map[string]interface{},
 	tags map[string]string,
-	t ...time.Time) {
+	t ...time.Time,
+) {
+	ac.addFields(measurement, tags, fields, telegraf.Counter, t...)
 }
 
-// AddSummary is the same as AddFields, but will add the metric as a "Summary" type
-func (p *accumulator) AddSummary(measurement string,
+func (ac *accumulator) AddSummary(
+	measurement string,
 	fields map[string]interface{},
 	tags map[string]string,
-	t ...time.Time) {
+	t ...time.Time,
+) {
+	ac.addFields(measurement, tags, fields, telegraf.Summary, t...)
 }
 
-// AddHistogram is the same as AddFields, but will add the metric as a "Histogram" type
-func (p *accumulator) AddHistogram(measurement string,
+func (ac *accumulator) AddHistogram(
+	measurement string,
 	fields map[string]interface{},
 	tags map[string]string,
-	t ...time.Time) {
+	t ...time.Time,
+) {
+	ac.addFields(measurement, tags, fields, telegraf.Histogram, t...)
 }
 
-// AddMetric adds an metric to the accumulator.
-func (p *accumulator) AddMetric(telegraf.Metric) {
+func (ac *accumulator) AddMetric(m telegraf.Metric) {
+	m.SetTime(m.Time().Round(ac.precision))
+	if m := ac.maker.MakeMetric(m); m != nil {
+		ac.metrics <- m
+	}
 }
 
-// SetPrecision sets the timestamp rounding precision.  All metrics addeds
-// added to the accumulator will have their timestamp rounded to the
-// nearest multiple of precision.
-func (p *accumulator) SetPrecision(precision time.Duration) {
+func (ac *accumulator) addFields(
+	measurement string,
+	tags map[string]string,
+	fields map[string]interface{},
+	tp telegraf.ValueType,
+	t ...time.Time,
+) {
+	m, err := metric.New(measurement, tags, fields, ac.getTime(t), tp)
+	if err != nil {
+		return
+	}
+	if m := ac.maker.MakeMetric(m); m != nil {
+		ac.metrics <- m
+	}
 }
 
-// Report an error.
-func (p *accumulator) AddError(err error) {
+// AddError passes a runtime error to the accumulator.
+// The error will be tagged with the plugin name and written to the log.
+func (ac *accumulator) AddError(err error) {
+	if err == nil {
+		return
+	}
+	log.Printf("Error in plugin: %v", err)
 }
 
-// Upgrade to a TrackingAccumulator with space for maxTracked
-// metrics/batches.
-func (p *accumulator) WithTracking(maxTracked int) TrackingAccumulator {
+func (ac *accumulator) SetPrecision(precision time.Duration) {
+	ac.precision = precision
+}
+
+func (ac *accumulator) getTime(t []time.Time) time.Time {
+	var timestamp time.Time
+	if len(t) > 0 {
+		timestamp = t[0]
+	} else {
+		timestamp = time.Now()
+	}
+	return timestamp.Round(ac.precision)
+}
+
+func (ac *accumulator) WithTracking(maxTracked int) telegraf.TrackingAccumulator {
+	return nil
 }

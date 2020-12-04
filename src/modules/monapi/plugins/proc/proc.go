@@ -19,7 +19,7 @@ type ProcCollector struct{}
 func (p ProcCollector) Name() string                   { return "proc" }
 func (p ProcCollector) Category() collector.Category   { return collector.LocalCategory }
 func (p ProcCollector) Template() (interface{}, error) { return nil, nil }
-func (p ProcCollector) TelegrafInput(interface{}) (telegraf.Input, error) {
+func (p ProcCollector) TelegrafInput(*models.CollectRule) (telegraf.Input, error) {
 	return nil, errors.New("unsupported")
 }
 

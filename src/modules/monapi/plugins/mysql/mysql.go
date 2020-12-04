@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/didi/nightingale/src/modules/monapi/collector"
+	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs/mysql"
 )
 
@@ -54,7 +55,11 @@ func (p *MysqlRule) Validate() error {
 	return nil
 }
 
-func (p MysqlRule) Mysql() *mysql.Mysql {
+func (p *MysqlRule) TelegrafInput() (telegraf.Input, error) {
+	if err := p.Validate(); err != nil {
+		return nil, err
+	}
+
 	return &mysql.Mysql{
 		Servers:                             p.Servers,
 		PerfEventsStatementsDigestTextLimit: 120,
@@ -77,5 +82,5 @@ func (p MysqlRule) Mysql() *mysql.Mysql {
 		GatherGlobalVars:                    true,
 		IntervalSlow:                        p.IntervalSlow,
 		MetricVersion:                       2,
-	}
+	}, nil
 }

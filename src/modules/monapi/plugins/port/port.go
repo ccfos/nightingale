@@ -19,7 +19,7 @@ type PortCollector struct{}
 func (p PortCollector) Name() string                   { return "port" }
 func (p PortCollector) Category() collector.Category   { return collector.LocalCategory }
 func (p PortCollector) Template() (interface{}, error) { return nil, nil }
-func (p PortCollector) TelegrafInput(interface{}) (telegraf.Input, error) {
+func (p PortCollector) TelegrafInput(*models.CollectRule) (telegraf.Input, error) {
 	return nil, errors.New("unsupported")
 }
 

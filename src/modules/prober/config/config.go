@@ -23,8 +23,9 @@ type ConfYaml struct {
 	// Redis    redi.RedisSection        `yaml:"redis"`
 	// transfer transfer.TransferSection `yaml:"transfer"`
 	// Strategy          stra.StrategySection     `yaml:"strategy"`
-	Identity identity.Identity    `yaml:"identity"`
-	Report   report.ReportSection `yaml:"report"`
+	Identity        identity.Identity    `yaml:"identity"`
+	Report          report.ReportSection `yaml:"report"`
+	WorkerProcesses int                  `yaml:"workerProcesses"`
 	// NodataConcurrency int                            `yaml:"nodataConcurrency"`
 	HTTP HTTPSection `yaml:"http"`
 }
@@ -62,27 +63,6 @@ func Parse(conf string) error {
 	}
 
 	viper.SetDefault("http.enabled", true)
-	/*
-		viper.SetDefault("query", map[string]interface{}{
-			"maxConn":          100,
-			"maxIdle":          10,
-			"connTimeout":      1000,
-			"callTimeout":      2000,
-			"indexCallTimeout": 2000,
-			"indexMod":         "index",
-			"indexPath":        "/api/index/counter/clude",
-		})
-		/*
-
-		/*
-			viper.SetDefault("redis.idle", 5)
-			viper.SetDefault("redis.prefix", "/n9e")
-			viper.SetDefault("redis.timeout", map[string]int{
-				"conn":  500,
-				"read":  3000,
-				"write": 3000,
-			})
-	*/
 
 	viper.SetDefault("collectRule", map[string]interface{}{
 		"partitionApi":   "/api/mon/collect-rules/effective?instance=%s:%s",
@@ -92,16 +72,6 @@ func Parse(conf string) error {
 		"mod":            "monapi",
 		"eventPrefix":    "n9e",
 	})
-	/*
-		viper.SetDefault("strategy", map[string]interface{}{
-			"partitionApi":   "/api/mon/stras/effective?instance=%s:%s",
-			"updateInterval": 9000,
-			"indexInterval":  60000,
-			"timeout":        5000,
-			"mod":            "monapi",
-			"eventPrefix":    "n9e",
-		})
-	*/
 
 	viper.SetDefault("report", map[string]interface{}{
 		"mod":      "prober",
@@ -112,6 +82,8 @@ func Parse(conf string) error {
 		"remark":   "",
 		"region":   "default",
 	})
+
+	viper.SetDefault("workerProcesses", 5)
 
 	viper.SetDefault("pushUrl", "http://127.0.0.1:2058/v1/push")
 

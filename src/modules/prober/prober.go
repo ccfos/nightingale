@@ -18,6 +18,7 @@ import (
 	// "github.com/didi/nightingale/src/modules/prober/backend/transfer"
 	"github.com/didi/nightingale/src/modules/agent/core"
 	"github.com/didi/nightingale/src/modules/prober/cache"
+	"github.com/didi/nightingale/src/modules/prober/collector"
 	"github.com/didi/nightingale/src/modules/prober/config"
 	"github.com/didi/nightingale/src/modules/prober/http"
 
@@ -78,7 +79,8 @@ func main() {
 
 	core.InitRpcClients()
 
-	collectrule.Start()
+	manager := collector.NewManager(cfg, cache.CollectRule)
+	manager.Start(ctx)
 
 	http.Start()
 

@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+const (
+	defaultStep = 10
+)
+
 type CollectRule struct {
 	Id          int64           `json:"id"`
 	Nid         int64           `json:"nid"`
@@ -26,16 +30,20 @@ type validator interface {
 	Validate() error
 }
 
-func (p *CollectRule) Validate(v interface{}) error {
+func (p *CollectRule) Validate(v ...interface{}) error {
 	if p.Name == "" {
 		return fmt.Errorf("invalid collectRule.name")
 	}
 
-	if v != nil {
-		if err := json.Unmarshal(p.Data, v); err != nil {
+	if p.Step == 0 {
+		p.Step = defaultStep
+	}
+
+	if len(v) > 0 && v[0] != nil {
+		if err := json.Unmarshal(p.Data, v[0]); err != nil {
 			return err
 		}
-		if o, ok := v.(validator); ok {
+		if o, ok := v[0].(validator); ok {
 			if err := o.Validate(); err != nil {
 				return err
 			}

@@ -22,10 +22,27 @@ func NewBaseCollector(name string, category Category, newRule func() interface{}
 	}
 }
 
-func (p BaseCollector) Name() string                                      { return p.name }
-func (p BaseCollector) Category() Category                                { return p.category }
-func (p BaseCollector) Template() (interface{}, error)                    { return Template(p.newRule()) }
-func (p BaseCollector) TelegrafInput(interface{}) (telegraf.Input, error) { return nil, errUnsupported }
+type telegrafPlugin interface {
+	TelegrafInput() (telegraf.Input, error)
+}
+
+func (p BaseCollector) Name() string                   { return p.name }
+func (p BaseCollector) Category() Category             { return p.category }
+func (p BaseCollector) Template() (interface{}, error) { return Template(p.newRule()) }
+
+func (p BaseCollector) TelegrafInput(rule *models.CollectRule) (telegraf.Input, error) {
+	r2 := p.newRule()
+	if err := json.Unmarshal(rule.Data, r2); err != nil {
+		return nil, err
+	}
+
+	plugin, ok := r2.(telegrafPlugin)
+	if !ok {
+		return nil, errUnsupported
+	}
+
+	return plugin.TelegrafInput()
+}
 
 func (p BaseCollector) Get(id int64) (interface{}, error) {
 	collect := &models.CollectRule{}

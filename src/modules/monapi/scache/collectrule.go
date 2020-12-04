@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"sync"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/didi/nightingale/src/common/report"
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/monapi/config"
@@ -78,7 +78,8 @@ func (p *collectRuleCache) GetAll() []*models.CollectRule {
 	defer p.RUnlock()
 
 	data := []*models.CollectRule{}
-	for _, rules := range p.Data {
+	for nodeId, rules := range p.Data {
+		logger.Debugf("get nodeId %s rules %d", nodeId, len(rules))
 		for _, s := range rules {
 			data = append(data, s)
 		}
@@ -128,7 +129,7 @@ func (p *collectRuleCache) syncCollectRules() {
 			logger.Warningf("get node err:%v %v", err, rule)
 			continue
 		}
-		key := rule.Region + "-" + node
+		key := node
 		if _, exists := rulesMap[key]; exists {
 			rulesMap[key] = append(rulesMap[key], rule)
 		} else {
