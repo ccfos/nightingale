@@ -43,6 +43,14 @@ func Config(r *gin.Engine) {
 		rootLogin.POST("/configs/smtp/test", smtpTest)
 		rootLogin.PUT("/configs/smtp", smtpConfigsPut)
 
+		rootLogin.GET("/configs/auth", authConfigsGet)
+		rootLogin.PUT("/configs/auth", authConfigsPut)
+		rootLogin.POST("/auth/white-list", whiteListPost)
+		rootLogin.GET("/auth/white-list", whiteListsGet)
+		rootLogin.GET("/auth/white-list/:id", whiteListGet)
+		rootLogin.PUT("/auth/white-list/:id", whiteListPut)
+		rootLogin.DELETE("/auth/white-list/:id", whiteListDel)
+
 		rootLogin.GET("/log/login", loginLogGets)
 		rootLogin.GET("/log/operation", operationLogGets)
 

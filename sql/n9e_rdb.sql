@@ -315,3 +315,22 @@ CREATE TABLE `captcha` (
   KEY (`captcha_id`, `answer`),
   KEY (`created_at`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
+
+CREATE TABLE `white_list` (
+  `id`           bigint unsigned not null AUTO_INCREMENT,
+  `start_ip`     varchar(32)      DEFAULT '0'    NOT NULL,
+  `end_ip`       varchar(32)      DEFAULT '0'    NOT NULL,
+  `start_ip_int` bigint           DEFAULT '0'    NOT NULL,
+  `end_ip_int`   bigint           DEFAULT '0'    NOT NULL,
+  `start_time`   bigint           DEFAULT '0'    NOT NULL,
+  `end_time`     bigint           DEFAULT '0'    NOT NULL,
+  `created_at`   bigint           DEFAULT '0'    NOT NULL,
+  `updated_at`   bigint           DEFAULT '0'    NOT NULL,
+  `creator`      varchar(64)      DEFAULT ''    NOT NULL,
+  `updater`      varchar(64)      DEFAULT ''    NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY (`start_ip_int`, `end_ip_int`),
+  KEY (`start_time`, `end_time`),
+  KEY (`created_at`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8;
+

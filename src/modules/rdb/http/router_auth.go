@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -515,4 +516,261 @@ func authSettings(c *gin.Context) {
 	}{
 		Sso: config.Config.SSO.Enable,
 	}, nil)
+}
+
+func authConfigsGet(c *gin.Context) {
+	ckeys := []string{
+		"auth.maxNumErr",
+		"auth.maxOccurs",
+		"auth.maxConnIdelTime",
+		"auth.freezingTime",
+		"auth.accessType",
+		"auth.pwd.minLenght",
+		"auth.pwd.includeUpper",
+		"auth.pwd.includeLower",
+		"auth.pwd.includeNumber",
+		"auth.pwd.includeSpecChar",
+	}
+	kvmap, err := models.ConfigsGets(ckeys)
+	dangerous(err)
+
+	renderData(c, newAuthConfigs(kvmap), nil)
+}
+
+type authConfigs struct {
+	MaxNumErr          string `json:"maxNumErr"`
+	MaxOccurs          string `json:"maxOccurs"`
+	MaxConnIdelTime    string `json:"maxConnIdelTime"`
+	FreezingTime       string `json:"freezingTime"`
+	AccessType         string `json:"accessType"`
+	PwdMinLenght       string `json:"pwdMinLenght"`
+	PwdExpiresIn       string `json:"pwdExpiresIn"`
+	PwdIncludeUpper    string `json:"pwdIncludeUpper" description:"'0': fasle, other: true"`
+	PwdIncludeLower    string `json:"pwdIncludeLower"`
+	PwdIncludeNumber   string `json:"pwdIncludeNumber"`
+	PwdIncludeSpecChar string `json:"pwdIncludeSpecChar"`
+}
+
+func newAuthConfigs(kv map[string]string) *authConfigs {
+	c := &authConfigs{
+		MaxNumErr:          kv["auth.maxNumErr"],
+		MaxOccurs:          kv["auth.maxOccurs"],
+		MaxConnIdelTime:    kv["auth.maxConnIdelTime"],
+		FreezingTime:       kv["auth.freezingTime"],
+		AccessType:         kv["auth.accessType"],
+		PwdMinLenght:       kv["auth.pwd.minLenght"],
+		PwdExpiresIn:       kv["auth.pwd.expiresIn"],
+		PwdIncludeUpper:    kv["auth.pwd.includeUpper"],
+		PwdIncludeLower:    kv["auth.pwd.includeLower"],
+		PwdIncludeNumber:   kv["auth.pwd.includeNumber"],
+		PwdIncludeSpecChar: kv["auth.pwd.includeSpecChar"],
+	}
+	c.Validate()
+	return c
+}
+
+func (p *authConfigs) save() error {
+	if err := models.ConfigsSet("auth.maxNumErr", p.MaxNumErr); err != nil {
+		return err
+	}
+	if err := models.ConfigsSet("auth.maxOccurs", p.MaxOccurs); err != nil {
+		return err
+	}
+	if err := models.ConfigsSet("auth.maxConnIdelTime", p.MaxConnIdelTime); err != nil {
+		return err
+	}
+	if err := models.ConfigsSet("auth.freezingTime", p.FreezingTime); err != nil {
+		return err
+	}
+	if err := models.ConfigsSet("auth.accessType", p.AccessType); err != nil {
+		return err
+	}
+	if err := models.ConfigsSet("auth.pwdMinLenght", p.PwdMinLenght); err != nil {
+		return err
+	}
+	if err := models.ConfigsSet("auth.pwdExpiresIn", p.PwdExpiresIn); err != nil {
+		return err
+	}
+	if err := models.ConfigsSet("auth.pwdIncludeUpper", p.PwdIncludeUpper); err != nil {
+		return err
+	}
+	if err := models.ConfigsSet("auth.pwdIncludeLower", p.PwdIncludeLower); err != nil {
+		return err
+	}
+	if err := models.ConfigsSet("auth.pwdIncludeNumber", p.PwdIncludeNumber); err != nil {
+		return err
+	}
+	if err := models.ConfigsSet("auth.pwdIncludeSpecChar", p.PwdIncludeSpecChar); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *authConfigs) Validate() error {
+	if p.MaxNumErr == "" {
+		p.MaxNumErr = "0"
+	}
+	if p.MaxOccurs == "" {
+		p.MaxOccurs = "0"
+	}
+	if p.MaxConnIdelTime == "" {
+		p.MaxConnIdelTime = "0"
+	}
+	if p.FreezingTime == "" {
+		p.FreezingTime = "0"
+	}
+	if p.PwdMinLenght == "" {
+		p.PwdMinLenght = "0"
+	}
+	if p.PwdExpiresIn == "" {
+		p.PwdExpiresIn = "0"
+	}
+	if p.PwdIncludeUpper == "" {
+		p.PwdIncludeUpper = "0"
+	}
+	if p.PwdIncludeLower == "" {
+		p.PwdIncludeLower = "0"
+	}
+	if p.PwdIncludeNumber == "" {
+		p.PwdIncludeNumber = "0"
+	}
+	if p.PwdIncludeSpecChar == "" {
+		p.PwdIncludeSpecChar = "0"
+	}
+	if _, err := strconv.Atoi(p.MaxNumErr); err != nil {
+		return fmt.Errorf("invalid maxNumErr %s", err)
+	}
+	if _, err := strconv.Atoi(p.MaxOccurs); err != nil {
+		return fmt.Errorf("invalid maxOccurs %s", err)
+	}
+	if _, err := strconv.Atoi(p.MaxConnIdelTime); err != nil {
+		return fmt.Errorf("invalid maxConnIdelTime %s", err)
+	}
+	if _, err := strconv.Atoi(p.FreezingTime); err != nil {
+		return fmt.Errorf("invalid freezingTime %s", err)
+	}
+	if _, err := strconv.Atoi(p.PwdMinLenght); err != nil {
+		return fmt.Errorf("invalid pwd.pwdMinLenght %s", err)
+	}
+	if _, err := strconv.Atoi(p.PwdExpiresIn); err != nil {
+		return fmt.Errorf("invalid pwd.pwdExpiresIn %s", err)
+	}
+	if _, err := strconv.Atoi(p.PwdIncludeUpper); err != nil {
+		return fmt.Errorf("invalid pwd.includeUpper %s", err)
+	}
+	if _, err := strconv.Atoi(p.PwdIncludeLower); err != nil {
+		return fmt.Errorf("invalid pwd.includeLower %s", err)
+	}
+	if _, err := strconv.Atoi(p.PwdIncludeNumber); err != nil {
+		return fmt.Errorf("invalid pwd.includeNumber %s", err)
+	}
+	if _, err := strconv.Atoi(p.PwdIncludeSpecChar); err != nil {
+		return fmt.Errorf("invalid pwd.includeSpecChar %s", err)
+	}
+	return nil
+}
+
+func authConfigsPut(c *gin.Context) {
+	var in authConfigs
+	bind(c, &in)
+
+	if err := in.Validate(); err != nil {
+		bomb("invalid arguments %s", err)
+	}
+
+	if err := in.save(); err != nil {
+	}
+
+	renderMessage(c, nil)
+}
+
+type createWhiteListInput struct {
+	StartIp   string `json:"startIp"`
+	EndIp     string `json:"endIp"`
+	StartTime int64  `json:"startTime"`
+	EndTime   int64  `json:"endTime"`
+}
+
+func whiteListPost(c *gin.Context) {
+	var in createWhiteListInput
+	bind(c, &in)
+
+	username := loginUser(c).Username
+	ts := time.Now().Unix()
+
+	wl := models.WhiteList{
+		StartIp:   in.StartIp,
+		EndIp:     in.EndIp,
+		StartTime: in.StartTime,
+		EndTime:   in.EndTime,
+		CreatedAt: ts,
+		UpdatedAt: ts,
+		Creator:   username,
+		Updater:   username,
+	}
+	if err := wl.Validate(); err != nil {
+		bomb("invalid arguments %s", err)
+	}
+	dangerous(wl.Save())
+
+	renderData(c, gin.H{"id": wl.Id}, nil)
+}
+
+func whiteListsGet(c *gin.Context) {
+	limit := queryInt(c, "limit", 20)
+	query := queryStr(c, "query", "")
+
+	total, err := models.WhiteListTotal(query)
+	dangerous(err)
+
+	list, err := models.WhiteListGets(query, limit, offset(c, limit))
+	dangerous(err)
+
+	renderData(c, gin.H{
+		"list":  list,
+		"total": total,
+	}, nil)
+}
+
+func whiteListGet(c *gin.Context) {
+	id := urlParamInt64(c, "id")
+	ret, err := models.WhiteListGet("id=?", id)
+	renderData(c, ret, err)
+}
+
+type updateWhiteListInput struct {
+	StartIp   string `json:"startIp"`
+	EndIp     string `json:"endIp"`
+	StartTime int64  `json:"startTime"`
+	EndTime   int64  `json:"endTime"`
+}
+
+func whiteListPut(c *gin.Context) {
+	var in updateWhiteListInput
+	bind(c, &in)
+
+	wl, err := models.WhiteListGet("id=?", urlParamInt64(c, "id"))
+	if err != nil {
+		bomb("not found white list")
+	}
+
+	wl.StartIp = in.StartIp
+	wl.EndIp = in.EndIp
+	wl.StartTime = in.StartTime
+	wl.EndTime = in.EndTime
+	wl.UpdatedAt = time.Now().Unix()
+	wl.Updater = loginUser(c).Username
+
+	if err := wl.Validate(); err != nil {
+		bomb("invalid arguments %s", err)
+	}
+
+	renderMessage(c, wl.Update("start_ip", "end_ip", "start_time", "end_time", "updated_at", "updater"))
+}
+
+func whiteListDel(c *gin.Context) {
+	wl, err := models.WhiteListGet("id=?", urlParamInt64(c, "id"))
+	dangerous(err)
+
+	renderMessage(c, wl.Del())
 }
