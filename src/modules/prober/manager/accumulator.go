@@ -1,10 +1,9 @@
-package collector
+package manager
 
 import (
 	"time"
 
 	"github.com/didi/nightingale/src/common/dataobj"
-	"github.com/didi/nightingale/src/modules/prober/metric"
 	"github.com/influxdata/telegraf"
 	"log"
 )
@@ -90,7 +89,7 @@ func (ac *accumulator) addFields(
 	tp telegraf.ValueType,
 	t ...time.Time,
 ) {
-	m, err := metric.New(measurement, tags, fields, ac.getTime(t), tp)
+	m, err := NewMetric(measurement, tags, fields, ac.getTime(t), tp)
 	if err != nil {
 		return
 	}

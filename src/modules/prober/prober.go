@@ -16,11 +16,11 @@ import (
 	// "github.com/didi/nightingale/src/modules/prober/backend/query"
 	// "github.com/didi/nightingale/src/modules/prober/backend/redi"
 	// "github.com/didi/nightingale/src/modules/prober/backend/transfer"
-	"github.com/didi/nightingale/src/modules/agent/core"
 	"github.com/didi/nightingale/src/modules/prober/cache"
-	"github.com/didi/nightingale/src/modules/prober/collector"
 	"github.com/didi/nightingale/src/modules/prober/config"
+	"github.com/didi/nightingale/src/modules/prober/core"
 	"github.com/didi/nightingale/src/modules/prober/http"
+	"github.com/didi/nightingale/src/modules/prober/manager"
 
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/all"
 	_ "github.com/go-sql-driver/mysql"
@@ -66,12 +66,11 @@ func main() {
 	cfg := config.Config
 	identity.Parse()
 	loggeri.Init(cfg.Logger)
-	go stats.Init("n9e.prober")
 
-	// transfer.Init(cfg.Transfer, "rdb")
+	go stats.Init("n9e.prober")
+	go report.Init(cfg.Report, "rdb")
 
 	cache.Init(ctx)
-	go report.Init(cfg.Report, "rdb")
 
 	if cfg.Logger.Level != "DEBUG" {
 		gin.SetMode(gin.ReleaseMode)
@@ -79,8 +78,7 @@ func main() {
 
 	core.InitRpcClients()
 
-	manager := collector.NewManager(cfg, cache.CollectRule)
-	manager.Start(ctx)
+	manager.NewManager(cfg, cache.CollectRule).Start(ctx)
 
 	http.Start()
 

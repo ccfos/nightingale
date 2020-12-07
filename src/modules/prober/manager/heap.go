@@ -1,4 +1,4 @@
-package collector
+package manager
 
 type ruleSummary struct {
 	id        int64 // collect rule id

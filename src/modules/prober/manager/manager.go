@@ -1,4 +1,4 @@
-package collector
+package manager
 
 import (
 	"container/heap"
@@ -20,14 +20,14 @@ type manager struct {
 	cache   *cache.CollectRuleCache
 	config  *config.ConfYaml
 	heap    ruleSummaryHeap
-	index   map[int64]*collectorEntity // add at cache.C , del at executeAt check
+	index   map[int64]*ruleEntity // add at cache.C , del at executeAt check
 	worker  []worker
-	tx      chan *collectorEntity
+	tx      chan *ruleEntity
 	acc     telegraf.Accumulator
 	metrics chan *dataobj.MetricValue
 }
 
-type collectorEntity struct {
+type ruleEntity struct {
 	telegraf.Input
 	rule *models.CollectRule
 }
@@ -36,7 +36,7 @@ func NewManager(cfg *config.ConfYaml, cache *cache.CollectRuleCache) *manager {
 	return &manager{
 		cache:  cache,
 		config: cfg,
-		index:  make(map[int64]*collectorEntity),
+		index:  make(map[int64]*ruleEntity),
 	}
 }
 
@@ -56,7 +56,7 @@ func (p *manager) Start(ctx context.Context) error {
 	p.acc = NewAccumulator(p, p.metrics)
 	p.metrics = make(chan *dataobj.MetricValue, 100)
 	p.ctx = ctx
-	p.tx = make(chan *collectorEntity, 1)
+	p.tx = make(chan *ruleEntity, 1)
 	heap.Init(&p.heap)
 
 	p.worker = make([]worker, workerProcesses)
@@ -191,7 +191,7 @@ func (p *manager) AddRule(rule *models.CollectRule) error {
 		return err
 	}
 
-	p.index[rule.Id] = &collectorEntity{
+	p.index[rule.Id] = &ruleEntity{
 		Input: input,
 		rule:  rule,
 	}
@@ -213,7 +213,7 @@ func telegrafInput(rule *models.CollectRule) (telegraf.Input, error) {
 type worker struct {
 	ctx   context.Context
 	cache *cache.CollectRuleCache
-	rx    chan *collectorEntity
+	rx    chan *ruleEntity
 	acc   telegraf.Accumulator
 }
 
@@ -232,6 +232,6 @@ func (p *worker) loop(id int) {
 	}()
 }
 
-func (p *worker) do(entity *collectorEntity) error {
+func (p *worker) do(entity *ruleEntity) error {
 	return entity.Input.Gather(p.acc)
 }

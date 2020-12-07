@@ -1,4 +1,4 @@
-package metric
+package manager
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ type metric struct {
 	aggregate bool
 }
 
-func New(
+func NewMetric(
 	name string,
 	tags map[string]string,
 	fields map[string]interface{},

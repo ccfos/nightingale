@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -108,14 +107,12 @@ func str(in interface{}) string {
 }
 
 func (p *collectRuleCache) syncCollectRules() {
-	fmt.Printf("entering syncCollectRules\n")
-
 	rules, err := models.GetCollectRules()
 	if err != nil {
 		logger.Warningf("get log collectRules err:%v", err)
 	}
 
-	log.Infof("get collectRules %d %s", len(rules), str(rules))
+	logger.Debugf("get collectRules %d %s", len(rules), str(rules))
 
 	rulesMap := make(map[string][]*models.CollectRule)
 	for _, rule := range rules {
@@ -162,7 +159,7 @@ func (p *collectRuleCache) syncPlacement() error {
 		return fmt.Errorf("report.GetAlive prober fail: %v", err)
 	}
 
-	log.Infof("get placement %d %s", len(instances), str(instances))
+	logger.Debugf("get placement %d %s", len(instances), str(instances))
 
 	if len(instances) < 1 {
 		logger.Warningf("probers count is zero")
