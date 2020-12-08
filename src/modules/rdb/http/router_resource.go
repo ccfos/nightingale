@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 
@@ -487,9 +488,9 @@ type nodeResourcesCountResp struct {
 	Count int    `json:"count"`
 }
 
-func renderNodeResourcesCountByCate(c *gin.Context) {
-	needSourceList := []string{"physical", "virtual", "redis", "mongo", "mysql", "container", "sw", "volume"}
+var needSourceList = []string{"physical", "virtual", "redis", "mongo", "mysql", "container", "sw", "volume"}
 
+func renderNodeResourcesCountByCate(c *gin.Context) {
 	nodeId := urlParamInt64(c, "id")
 	node := Node(nodeId)
 	leadIds, err := node.LeafIds()
@@ -503,7 +504,44 @@ func renderNodeResourcesCountByCate(c *gin.Context) {
 	ress, err := models.ResourceUnderNodeGets(leadIds, query, batch, field, limit, 0)
 	dangerous(err)
 
-	aggDat := make(map[string]int, len(ress))
+	aggDat := make(map[string]int, len(needSourceList))
+	for _, res := range ress {
+		cate := res.Cate
+		if cate != "" {
+			if _, ok := aggDat[cate]; !ok {
+				aggDat[cate] = 0
+			}
+
+			aggDat[cate]++
+		}
+	}
+
+	for _, need := range needSourceList {
+		if _, ok := aggDat[need]; !ok {
+			aggDat[need] = 0
+		}
+	}
+
+	var list []*nodeResourcesCountResp
+	for n, c := range aggDat {
+		ns := new(nodeResourcesCountResp)
+		ns.Name = n
+		ns.Count = c
+
+		list = append(list, ns)
+	}
+
+	renderData(c, list, nil)
+}
+
+func renderAllResourcesCountByCate(c *gin.Context) {
+	aggDat := make(map[string]int, len(needSourceList))
+	ress, err := models.ResourceGets("", nil)
+	if err != nil {
+		logger.Error(err)
+		dangerous(err)
+	}
+
 	for _, res := range ress {
 		cate := res.Cate
 		if cate != "" {
