@@ -26,6 +26,17 @@ const (
 	LOGIN_T_LDAP     = "ldap"
 	LOGIN_EXPIRES_IN = 300
 )
+const (
+	USER_S_ACTIVE = iota
+	USER_S_INACTIVE
+	USER_S_LOCKED
+	USER_S_FROZEN
+	USER_S_WRITEN_OFF
+)
+const (
+	USER_T_NATIVE = iota
+	USER_T_TEMP
+)
 
 type User struct {
 	Id           int64     `json:"id"`
@@ -39,12 +50,20 @@ type User struct {
 	Portrait     string    `json:"portrait"`
 	Intro        string    `json:"intro"`
 	Organization string    `json:"organization"`
-	Typ          int       `json:"typ"`
-	Status       int       `json:"status"`
+	Typ          int       `json:"typ" description:"0: long-term account; 1: temporary account"`
+	Status       int       `json:"status" description:"0: active, 1: inactive, 2: locked, 3: frozen, 5: writen-off"`
 	IsRoot       int       `json:"is_root"`
 	LeaderId     int64     `json:"leader_id"`
 	LeaderName   string    `json:"leader_name"`
+	LoginErrNum  int       `json:"login_err_num"`
+	ActiveBegin  int64     `json:"active_begin" description:"for temporary account"`
+	ActiveEnd    int64     `json:"active_end" description:"for temporary account"`
+	LastAt       time.Time `json:"last_at"`
 	CreateAt     time.Time `json:"create_at" xorm:"<-"`
+}
+
+func (u *User) Validate() error {
+	return nil
 }
 
 func (u *User) CopyLdapAttr(sr *ldap.SearchResult) {

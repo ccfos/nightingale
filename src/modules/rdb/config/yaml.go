@@ -19,8 +19,13 @@ type ConfigT struct {
 	Sender   map[string]senderSection `yaml:"sender"`
 	RabbitMQ rabbitmqSection          `yaml:"rabbitmq"`
 	WeChat   wechatSection            `yaml:"wechat"`
-	Captcha  bool                     `yaml:"captcha"`
 	I18n     i18n.I18nSection         `yaml:"i18n"`
+	Auth     authSection              `yaml:"auth"`
+}
+
+type authSection struct {
+	Captcha   bool `yaml:"captcha"`
+	WhiteList bool `yaml:"whiteList"`
 }
 
 type wechatSection struct {

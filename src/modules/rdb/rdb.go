@@ -14,6 +14,7 @@ import (
 
 	"github.com/didi/nightingale/src/common/loggeri"
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/cache"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/didi/nightingale/src/modules/rdb/cron"
 	"github.com/didi/nightingale/src/modules/rdb/http"
@@ -72,6 +73,8 @@ func main() {
 	// 初始化 rabbitmq 处理部分异步逻辑
 	rabbitmq.Init()
 
+	cache.Start()
+
 	go cron.ConsumeMail()
 	go cron.ConsumeSms()
 	go cron.ConsumeVoice()
@@ -102,6 +105,7 @@ func endingProc() {
 	http.Shutdown()
 	redisc.CloseRedis()
 	rabbitmq.Shutdown()
+	cache.Stop()
 
 	fmt.Println("process stopped successfully")
 }

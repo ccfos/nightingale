@@ -1,0 +1,77 @@
+#!/bin/bash
+OLDPATH=`pwd`
+ROOT=`cd $(dirname $0)/..; pwd`
+cd ${ROOT}
+function finish {
+    cd ${OLDPATH}
+}
+
+oldTag=$1
+newTag=$2
+dsn=$3
+modules="ams hbs job mon rdb"
+oldDb=mysqldiff_old
+newDb=mysqldiff_new
+
+usage() {
+	file=${0##*/}
+	echo "$file uses tow temporary databases mysqldiff_old and mysqldiff_new"
+	echo
+	echo "Usage:"
+	echo "  $file <old tag> <new tag> <mysql dsn>"
+	echo 
+	echo  "Arguments:"
+	echo "  mysql dsn        mysql data source name, e.g. user:pwd@tcp(ip:port)"
+	echo
+	echo "Example:"
+	echo "  $0 v3.3.1 v3.3.2 'root:123123@tcp(localhost:3306)'"
+	echo "  $0 v3.3.1 v3.3.2 \"\${MYSQL_USER}:\${MYSQL_PWD}@tcp(localhost:3306)\""
+}
+
+check() {
+	mysqldiff -h >/dev/null 2>&1
+	if [[ $? -ne 0 ]]; then
+		echo 'Error: mysqldiff is not installed.'
+		echo 'You can install it with the following command:'
+		echo 'go get -u github.com/yubo/gotool/mysqldiff'
+		exit 1
+	fi
+
+	mysql -V >/dev/null 2>&1
+	if [[ $? -ne 0 ]]; then
+		echo 'Error: mysql is not installed.'
+		exit 1
+	fi
+
+
+	if [[ -z ${oldTag} ]] || [[ -z ${newTag} ]] || [[ -z ${dsn} ]]; then
+		usage
+		exit 1
+	fi
+
+	for moudule in ${modules}; do
+		file="./sql/n9e_${module}.sql"
+		if [[ ! -f ${file} ]]; then
+			echo "file ${file} dose not exist"
+			exit 1
+		fi
+	done
+}
+
+gen_upgrade_script() {
+	module=$1
+	echo "drop database if exists ${oldDb}" | mysql
+	echo "create database ${oldDb}" | mysql
+	mysql ${old} < 
+
+	echo "drop database if exists ${newDb}" | mysql
+	echo "create database ${newDb}" | mysql
+}
+
+
+
+
+
+check
+
+

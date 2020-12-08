@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -87,4 +88,37 @@ func ConfigsGets(ckeys []string) (map[string]string, error) {
 	}
 
 	return kvmap, nil
+}
+
+type AuthConfig struct {
+	MaxNumErr          int `json:"maxNumErr"`
+	MaxOccurs          int `json:"maxOccurs"`
+	MaxConnIdelTime    int `json:"maxConnIdelTime"`
+	LockTime           int `json:"lockTime"`
+	PwdMinLenght       int `json:"pwdMinLenght"`
+	PwdExpiresIn       int `json:"pwdExpiresIn"`
+	PwdIncludeUpper    int `json:"pwdIncludeUpper" description:"'0': fasle, other: true"`
+	PwdIncludeLower    int `json:"pwdIncludeLower"`
+	PwdIncludeNumber   int `json:"pwdIncludeNumber"`
+	PwdIncludeSpecChar int `json:"pwdIncludeSpecChar"`
+}
+
+func AuthConfigGet() (*AuthConfig, error) {
+	buf, err := ConfigsGet("auth.config")
+	if err != nil {
+		return nil, err
+	}
+	config := &AuthConfig{}
+	if err := json.Unmarshal([]byte(buf), config); err != nil {
+		return nil, err
+	}
+	return config, nil
+}
+
+func AuthConfigSet(config *AuthConfig) error {
+	buf, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+	return ConfigsSet("auth.config", string(buf))
 }
