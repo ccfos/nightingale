@@ -29,30 +29,9 @@ CREATE TABLE `captcha` (
   KEY (`created_at`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
-CREATE TABLE `white_list` (
-  `id`           bigint unsigned not null AUTO_INCREMENT,
-  `start_ip`     varchar(32)      DEFAULT '0'    NOT NULL,
-  `end_ip`       varchar(32)      DEFAULT '0'    NOT NULL,
-  `start_ip_int` bigint           DEFAULT '0'    NOT NULL,
-  `end_ip_int`   bigint           DEFAULT '0'    NOT NULL,
-  `start_time`   bigint           DEFAULT '0'    NOT NULL,
-  `end_time`     bigint           DEFAULT '0'    NOT NULL,
-  `created_at`   bigint           DEFAULT '0'    NOT NULL,
-  `updated_at`   bigint           DEFAULT '0'    NOT NULL,
-  `creator`      varchar(64)      DEFAULT ''    NOT NULL,
-  `updater`      varchar(64)      DEFAULT ''    NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY (`start_ip_int`, `end_ip_int`),
-  KEY (`start_time`, `end_time`),
-  KEY (`created_at`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8;
-
 alter table user add column create_at timestamp not null default CURRENT_TIMESTAMP;
 update user set create_at = '2020-11-14 17:00:08';
 
 alter table user add `organization` varchar(255) not null default '' after intro;
 alter table user add `typ` tinyint(1) not null default 0 comment '0: long-term account; 1: temporary account' after intro;
 alter table user add `status` tinyint(1) not null default 0 comment '0: active; 1: inactive 2: disable' after intro;
-
-
-

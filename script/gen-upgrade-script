@@ -1,4 +1,7 @@
 #!/bin/bash
+echo 'not supported with drop/use database sql' >&2
+exit 1
+
 OLDPATH=`pwd`
 ROOT=`cd $(dirname $0)/..; pwd`
 cd ${ROOT}
@@ -8,27 +11,34 @@ function finish {
 
 oldTag=$1
 newTag=$2
-dsn=$3
-modules="ams hbs job mon rdb"
+mysqlUser=$3
+mysqlPwd=$4
+mysqlHost=$5
+mysqlPort=$6
+modules="n9e_ams n9e_hbs n9e_job n9e_mon n9e_rdb"
+tmpDir="./tmp"
 oldDb=mysqldiff_old
 newDb=mysqldiff_new
+mysql="mysql -u${mysqlUser} -p${mysqlPwd} -h${mysqlHost} -P${mysqlPort}"
 
 usage() {
 	file=${0##*/}
 	echo "$file uses tow temporary databases mysqldiff_old and mysqldiff_new"
 	echo
 	echo "Usage:"
-	echo "  $file <old tag> <new tag> <mysql dsn>"
+	echo "  $file <old tag> <new tag> <mysql user> <mysql pwd> <mysql host> <mysql port>"
 	echo 
-	echo  "Arguments:"
-	echo "  mysql dsn        mysql data source name, e.g. user:pwd@tcp(ip:port)"
-	echo
 	echo "Example:"
-	echo "  $0 v3.3.1 v3.3.2 'root:123123@tcp(localhost:3306)'"
-	echo "  $0 v3.3.1 v3.3.2 \"\${MYSQL_USER}:\${MYSQL_PWD}@tcp(localhost:3306)\""
+	echo "  $0 v3.3.1 v3.3.2 root 123123 localhost 3306"
+	echo "  $0 v3.3.1 v3.3.2 \${MYSQL_USER} \${MYSQL_PWD} localhost 3306"
 }
 
 check() {
+	if [[ $# -ne 6 ]]; then
+		usage
+		exit 1
+	fi
+
 	mysqldiff -h >/dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
 		echo 'Error: mysqldiff is not installed.'
@@ -43,14 +53,16 @@ check() {
 		exit 1
 	fi
 
-
-	if [[ -z ${oldTag} ]] || [[ -z ${newTag} ]] || [[ -z ${dsn} ]]; then
-		usage
+	set -x
+	echo "select 1;" | ${mysql} >/dev/null 2>&1
+	if [[ $? -ne 0 ]]; then
+		echo 'Error: mysql is invalidate, please check mysql user/pwd/host/port.'
 		exit 1
 	fi
 
-	for moudule in ${modules}; do
-		file="./sql/n9e_${module}.sql"
+
+	for module in ${modules}; do
+		file="./sql/${module}.sql"
 		if [[ ! -f ${file} ]]; then
 			echo "file ${file} dose not exist"
 			exit 1
@@ -58,20 +70,42 @@ check() {
 	done
 }
 
+prepare() {
+	if [[ -d ${tmpDir} ]]; then
+		rm -rf ${tmpDir}
+	fi
+	mkdir -p ${tmpDir}/{${oldTag},${newTag}}
+
+	for module in ${modules}; do
+		git show ${oldTag}:sql/${module}.sql > ${tmpDir}/${oldTag}/${module}.sql
+		cat sql/${module}.sql > ${tmpDir}/${newTag}/${module}.sql
+	done
+}
+
 gen_upgrade_script() {
 	module=$1
-	echo "drop database if exists ${oldDb}" | mysql
-	echo "create database ${oldDb}" | mysql
-	mysql ${old} < 
+	echo "drop database if exists ${oldDb}" | ${mysql}
+	echo "create database ${oldDb}" | ${mysql}
+	${mysql} ${oldDb} < ${tmpDir}/${oldTag}/${module}.sql || exit 1
 
-	echo "drop database if exists ${newDb}" | mysql
-	echo "create database ${newDb}" | mysql
+	echo "drop database if exists ${newDb}" | ${mysql}
+	echo "create database ${newDb}" | ${mysql}
+	${mysql} ${newDb} < ${tmpDir}/${newTag}/${module}.sql || exit 1
+
+	mysqldiff --dsn1="${mysqlUser}:${mysqlPwd}@tcp(${mysqlHost}:${mysqlPort})/${newDb}?charset=utf8" \
+		--dsn2="${mysqlUser}:${mysqlPwd}@tcp(${mysqlHost}:${mysqlPort})/${oldDb}?charset=utf8" \
+		--logtostderr > ${tmpDir}/${module}-${oldTag}-${newTag}.sql || exit 1
+}
+
+generate() {
+	for module in ${modules}; do
+		gen_upgrade_script ${module}
+	done
 }
 
 
 
 
-
-check
-
-
+check $*
+prepare
+generate
