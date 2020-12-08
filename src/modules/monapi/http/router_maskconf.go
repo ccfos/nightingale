@@ -25,15 +25,15 @@ func (f MaskconfForm) Validate() {
 	mustNode(f.Nid)
 
 	if f.Category == 1 && (f.Endpoints == nil || len(f.Endpoints) == 0) {
-		errors.Bomb("arg[endpoints] empty")
+		bomb("arg[endpoints] empty")
 	}
 
 	if f.Category == 2 && len(f.CurNidPaths) == 0 {
-		errors.Bomb("arg[cur_nid_paths] empty")
+		bomb("arg[cur_nid_paths] empty")
 	}
 
 	if f.Btime >= f.Etime {
-		errors.Bomb("args[btime,etime] invalid")
+		bomb("args[btime,etime] invalid")
 	}
 
 	if f.Tags == "" {
@@ -44,7 +44,7 @@ func (f MaskconfForm) Validate() {
 	for i := 0; i < len(tagsList); i++ {
 		kv := strings.Split(tagsList[i], "=")
 		if len(kv) != 2 {
-			errors.Bomb("arg[tags] invalid")
+			bomb("arg[tags] invalid")
 		}
 	}
 }
@@ -55,7 +55,7 @@ func maskconfPost(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_maskconf_create", f.Nid)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	f.Validate()
@@ -106,7 +106,7 @@ func maskconfDel(c *gin.Context) {
 	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_maskconf_delete", mask.Nid)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	renderMessage(c, models.MaskconfDel(id))
@@ -117,13 +117,13 @@ func maskconfPut(c *gin.Context) {
 	errors.Dangerous(err)
 
 	if mc == nil {
-		errors.Bomb("maskconf is nil")
+		bomb("maskconf is nil")
 	}
 
 	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_maskconf_modify", mc.Nid)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	var f MaskconfForm

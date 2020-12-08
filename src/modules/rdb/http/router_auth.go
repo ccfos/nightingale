@@ -231,7 +231,7 @@ func (f *loginInput) validate() {
 			bomb("%s invalid", f.Username)
 		}
 		if len(f.Username) > 64 {
-			bomb("%s too long", f.Username)
+			bomb("%s too long > 64", f.Username)
 		}
 	}
 }

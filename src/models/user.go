@@ -277,7 +277,7 @@ func (u *User) Save() error {
 	return err
 }
 
-func UserTotal(ids []int64, query string) (int64, error) {
+func UserTotal(ids []int64, where string, args ...interface{}) (int64, error) {
 	session := DB["rdb"].NewSession()
 	defer session.Close()
 
@@ -285,23 +285,21 @@ func UserTotal(ids []int64, query string) (int64, error) {
 		session = session.In("id", ids)
 	}
 
-	if query != "" {
-		q := "%" + query + "%"
-		return session.Where("username like ? or dispname like ? or phone like ? or email like ?", q, q, q, q).Count(new(User))
+	if where != "" {
+		session = session.Where(where, args...)
 	}
 
 	return session.Count(new(User))
 }
 
-func UserGets(ids []int64, query string, limit, offset int) ([]User, error) {
+func UserGets(ids []int64, limit, offset int, where string, args ...interface{}) ([]User, error) {
 	session := DB["rdb"].Limit(limit, offset).OrderBy("username")
 	if len(ids) > 0 {
 		session = session.In("id", ids)
 	}
 
-	if query != "" {
-		q := "%" + query + "%"
-		session = session.Where("username like ? or dispname like ? or phone like ? or email like ?", q, q, q, q)
+	if where != "" {
+		session = session.Where(where, args...)
 	}
 
 	var users []User

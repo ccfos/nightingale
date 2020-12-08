@@ -21,7 +21,7 @@ func GetCookieUser() gin.HandlerFunc {
 		}
 
 		if username == "" {
-			errors.Bomb("unauthorized")
+			bomb("unauthorized")
 		}
 
 		c.Set("username", username)
@@ -61,7 +61,7 @@ func CheckHeaderToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("X-Srv-Token")
 		if token != internalToken && !slice.ContainsString(config.Get().Tokens, token) {
-			errors.Bomb("token[%s] invalid", token)
+			bomb("token[%s] invalid", token)
 		}
 		c.Next()
 	}

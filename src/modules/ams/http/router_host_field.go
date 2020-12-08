@@ -13,15 +13,15 @@ func hostFieldNew(c *gin.Context) {
 	bind(c, &obj)
 
 	if obj.FieldIdent == "" {
-		bomb("field_ident is blank")
+		bomb("[%s] is blank", "field_ident")
 	}
 
 	if obj.FieldName == "" {
-		bomb("field_name is blank")
+		bomb("[%s] is blank", "field_name")
 	}
 
 	if obj.FieldType == "" {
-		bomb("field_type is blank")
+		bomb("[%s] is blank", "field_type")
 	}
 
 	if obj.FieldCate == "" {

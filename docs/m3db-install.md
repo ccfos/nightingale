@@ -10,9 +10,10 @@
 # 填写etcd的机器列表
 
 # 生成证书
-./etcd/certs/reinit-root-ca.sh
-./etcd/certs/update-etcd-client-certs.sh
-./etcd/certs/update-etcd-server-certs.sh
+cd etcd/certs
+./reinit-root-ca.sh
+./update-etcd-client-certs.sh
+./update-etcd-server-certs.sh
 ```
 
 

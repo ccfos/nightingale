@@ -3,7 +3,8 @@ module github.com/didi/nightingale
 go 1.12
 
 require (
-	github.com/Shopify/sarama v1.19.0
+	github.com/Shopify/sarama v1.27.1
+	github.com/apex/log v1.3.0
 	github.com/cespare/xxhash v1.1.0
 	github.com/codegangsta/negroni v1.0.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
@@ -18,6 +19,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb v1.8.0
+	github.com/influxdata/telegraf v1.16.2
 	github.com/m3db/m3 v0.15.17
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.0 // indirect
@@ -26,7 +28,7 @@ require (
 	github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
 	github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62 // indirect
-	github.com/shirou/gopsutil v2.20.7+incompatible
+	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/viper v1.7.1
 	github.com/streadway/amqp v1.0.0
@@ -35,8 +37,8 @@ require (
 	github.com/ugorji/go/codec v1.1.7
 	github.com/unrolled/render v1.0.3
 	go.uber.org/automaxprocs v1.3.0 // indirect
-	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+	golang.org/x/text v0.3.3
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/ldap.v3 v3.1.0

@@ -3,6 +3,7 @@ package config
 const Version = 1
 
 const JudgesReplicas = 500
+const ProbersReplicas = 500
 const DetectorReplicas = 500
 
 const (

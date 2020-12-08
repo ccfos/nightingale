@@ -30,9 +30,9 @@ type MetricValue struct {
 	Step         int64             `json:"step"`
 	ValueUntyped interface{}       `json:"value"`
 	Value        float64           `json:"-"`
-	CounterType  string            `json:"counterType"`
-	Tags         string            `json:"tags"`
-	TagsMap      map[string]string `json:"tagsMap"` //保留2种格式，方便后端组件使用
+	CounterType  string            `json:"counterType"` // GAUGE | COUNTER | SUBTRACT | DERIVE
+	Tags         string            `json:"tags"`        // a=1,b=2,c=3
+	TagsMap      map[string]string `json:"tagsMap"`     // {"a":1, "b"=2, "c="3} 保留2种格式，方便后端组件使用
 	Extra        string            `json:"extra"`
 }
 

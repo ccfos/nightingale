@@ -4,13 +4,16 @@ import (
 	"fmt"
 
 	"github.com/didi/nightingale/src/common/loggeri"
+	"github.com/didi/nightingale/src/toolkits/i18n"
+
 	"github.com/toolkits/pkg/file"
 )
 
 type ConfigT struct {
-	Logger loggeri.Config `yaml:"logger"`
-	HTTP   httpSection    `yaml:"http"`
-	Tokens []string       `yaml:"tokens"`
+	Logger loggeri.Config   `yaml:"logger"`
+	HTTP   httpSection      `yaml:"http"`
+	Tokens []string         `yaml:"tokens"`
+	I18n   i18n.I18nSection `yaml:"i18n"`
 }
 
 type httpSection struct {
@@ -35,6 +38,14 @@ func Parse() error {
 	}
 
 	Config = &c
+	if Config.I18n.DictPath == "" {
+		Config.I18n.DictPath = "etc/dict.json"
+	}
+
+	if Config.I18n.Lang == "" {
+		Config.I18n.Lang = "zh"
+	}
+
 	fmt.Println("config.file:", ymlFile)
 
 	return nil

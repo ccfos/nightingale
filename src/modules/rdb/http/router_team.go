@@ -213,7 +213,7 @@ func belongTeamsGet(c *gin.Context) {
 	dangerous(err)
 
 	if user == nil {
-		bomb("no such username[%s]", username)
+		bomb("no such user: %s", username)
 	}
 
 	var ids []int64
@@ -246,7 +246,7 @@ func isTeamMember(c *gin.Context) {
 	dangerous(err)
 
 	if user == nil {
-		bomb("no such username[%s]", username)
+		bomb("no such user: %s", username)
 	}
 
 	team, err := models.TeamGet("ident=?", teamIdent)

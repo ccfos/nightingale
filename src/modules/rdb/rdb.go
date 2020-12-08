@@ -20,6 +20,7 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/rabbitmq"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
 	"github.com/didi/nightingale/src/modules/rdb/ssoc"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 )
 
 var (
@@ -66,6 +67,7 @@ func main() {
 	// 初始化 redis 用来发送邮件短信等
 	redisc.InitRedis()
 	cron.InitWorker()
+	i18n.Init(config.Config.I18n)
 
 	// 初始化 rabbitmq 处理部分异步逻辑
 	rabbitmq.Init()

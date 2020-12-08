@@ -108,7 +108,7 @@ func report() error {
 	content := form.SN + form.IP + form.Ident + form.Name + form.Cate + form.UniqKey
 	var keys []string
 	for key := range fields {
-		keys = append(keys, key)
+		keys = append(keys, key, fields[key])
 	}
 	sort.Strings(keys)
 
