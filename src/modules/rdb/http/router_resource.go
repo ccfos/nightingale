@@ -488,12 +488,13 @@ type nodeResourcesCountResp struct {
 	Count int    `json:"count"`
 }
 
-func nodeAggData(nodeId int64, cateCount int) (map[string]int, error) {
+var needSourceList = []string{"physical", "virtual", "redis", "mongo", "mysql", "container", "sw", "volume"}
+
+func renderNodeResourcesCountByCate(c *gin.Context) {
+	nodeId := urlParamInt64(c, "id")
 	node := Node(nodeId)
 	leadIds, err := node.LeafIds()
-	if err != nil {
-		return nil, err
-	}
+	dangerous(err)
 
 	limit := 10000
 	query := ""
@@ -501,11 +502,9 @@ func nodeAggData(nodeId int64, cateCount int) (map[string]int, error) {
 	field := "ident"
 
 	ress, err := models.ResourceUnderNodeGets(leadIds, query, batch, field, limit, 0)
-	if err != nil {
-		return nil, err
-	}
+	dangerous(err)
 
-	aggDat := make(map[string]int, cateCount)
+	aggDat := make(map[string]int, len(needSourceList))
 	for _, res := range ress {
 		cate := res.Cate
 		if cate != "" {
@@ -517,45 +516,40 @@ func nodeAggData(nodeId int64, cateCount int) (map[string]int, error) {
 		}
 	}
 
-	return aggDat, nil
+	for _, need := range needSourceList {
+		if _, ok := aggDat[need]; !ok {
+			aggDat[need] = 0
+		}
+	}
+
+	var list []*nodeResourcesCountResp
+	for n, c := range aggDat {
+		ns := new(nodeResourcesCountResp)
+		ns.Name = n
+		ns.Count = c
+
+		list = append(list, ns)
+	}
+
+	renderData(c, list, nil)
 }
 
-func renderNodeResourcesCountByCate(c *gin.Context) {
-	needSourceList := []string{"physical", "virtual", "redis", "mongo", "mysql", "container", "sw", "volume"}
+func renderAllResourcesCountByCate(c *gin.Context) {
+	aggDat := make(map[string]int, len(needSourceList))
+	ress, err := models.ResourceGets("", nil)
+	if err != nil {
+		logger.Error(err)
+		dangerous(err)
+	}
 
-	needSourceLen := len(needSourceList)
-	aggDat := make(map[string]int, needSourceLen)
-	var err error
-
-	nodeId := urlParamInt64(c, "id")
-	if nodeId != 0 {
-		aggDat, err = nodeAggData(nodeId, needSourceLen)
-		if err != nil {
-			logger.Error(err)
-			dangerous(err)
-		}
-	} else {
-		// 查询所有租户，汇聚资源
-		nodes, err := models.NodeGets("cate=?", "tenant")
-		if err != nil {
-			logger.Error(err)
-			dangerous(err)
-		}
-
-		for _, node := range nodes {
-			tmpData, err := nodeAggData(node.Id, needSourceLen)
-			if err != nil {
-				logger.Error(err)
-				dangerous(err)
+	for _, res := range ress {
+		cate := res.Cate
+		if cate != "" {
+			if _, ok := aggDat[cate]; !ok {
+				aggDat[cate] = 0
 			}
 
-			for k, v := range tmpData {
-				if _, ok := aggDat[k]; ok {
-					aggDat[k] += v
-				} else {
-					aggDat[k] = v
-				}
-			}
+			aggDat[cate]++
 		}
 	}
 

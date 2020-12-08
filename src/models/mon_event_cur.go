@@ -163,16 +163,12 @@ func SaveEventCurStatus(hashid uint64, status string) error {
 }
 
 func EventCurTotal(stime, etime int64, nodePath, query string, priorities, sendTypes []string) (int64, error) {
-	nodePathWhere := ""
-	sqlParamValue := []interface{}{}
+	sql := "etime > ? and etime < ? and ignore_alert=0"
+	sqlParamValue := []interface{}{stime, etime}
 	if nodePath != "" {
-		nodePathWhere = fmt.Sprintf(" and (node_path = ? or node_path like ?)")
+		sql += " and (node_path = ? or node_path like ?) "
 		sqlParamValue = []interface{}{stime, etime, nodePath, nodePath + ".%"}
-	} else {
-		sqlParamValue = []interface{}{stime, etime}
 	}
-
-	sql := fmt.Sprintf("etime > ? and etime < ? %s and ignore_alert=0", nodePathWhere)
 
 	session := DB["mon"].Where(sql, sqlParamValue...)
 	if len(priorities) > 0 && priorities[0] != "" {
@@ -202,16 +198,12 @@ func EventCurTotal(stime, etime int64, nodePath, query string, priorities, sendT
 func EventCurGets(stime, etime int64, nodePath, query string, priorities, sendTypes []string, limit, offset int) ([]EventCur, error) {
 	var obj []EventCur
 
-	nodePathWhere := ""
-	sqlParamValue := []interface{}{}
+	sql := "etime > ? and etime < ? and ignore_alert=0"
+	sqlParamValue := []interface{}{stime, etime}
 	if nodePath != "" {
-		nodePathWhere = fmt.Sprintf(" and (node_path = ? or node_path like ?)")
+		sql += " and (node_path = ? or node_path like ?) "
 		sqlParamValue = []interface{}{stime, etime, nodePath, nodePath + ".%"}
-	} else {
-		sqlParamValue = []interface{}{stime, etime}
 	}
-
-	sql := fmt.Sprintf("etime > ? and etime < ? %s and ignore_alert=0", nodePathWhere)
 
 	session := DB["mon"].Where(sql, sqlParamValue...)
 	if len(priorities) > 0 && priorities[0] != "" {
