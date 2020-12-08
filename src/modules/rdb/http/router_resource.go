@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 
@@ -487,13 +488,12 @@ type nodeResourcesCountResp struct {
 	Count int    `json:"count"`
 }
 
-func renderNodeResourcesCountByCate(c *gin.Context) {
-	needSourceList := []string{"physical", "virtual", "redis", "mongo", "mysql", "container", "sw", "volume"}
-
-	nodeId := urlParamInt64(c, "id")
+func nodeAggData(nodeId int64, cateCount int) (map[string]int, error) {
 	node := Node(nodeId)
 	leadIds, err := node.LeafIds()
-	dangerous(err)
+	if err != nil {
+		return nil, err
+	}
 
 	limit := 10000
 	query := ""
@@ -501,9 +501,11 @@ func renderNodeResourcesCountByCate(c *gin.Context) {
 	field := "ident"
 
 	ress, err := models.ResourceUnderNodeGets(leadIds, query, batch, field, limit, 0)
-	dangerous(err)
+	if err != nil {
+		return nil, err
+	}
 
-	aggDat := make(map[string]int, len(ress))
+	aggDat := make(map[string]int, cateCount)
 	for _, res := range ress {
 		cate := res.Cate
 		if cate != "" {
@@ -512,6 +514,48 @@ func renderNodeResourcesCountByCate(c *gin.Context) {
 			}
 
 			aggDat[cate]++
+		}
+	}
+
+	return aggDat, nil
+}
+
+func renderNodeResourcesCountByCate(c *gin.Context) {
+	needSourceList := []string{"physical", "virtual", "redis", "mongo", "mysql", "container", "sw", "volume"}
+
+	needSourceLen := len(needSourceList)
+	aggDat := make(map[string]int, needSourceLen)
+	var err error
+
+	nodeId := urlParamInt64(c, "id")
+	if nodeId != 0 {
+		aggDat, err = nodeAggData(nodeId, needSourceLen)
+		if err != nil {
+			logger.Error(err)
+			dangerous(err)
+		}
+	} else {
+		// 查询所有租户，汇聚资源
+		nodes, err := models.NodeGets("cate=?", "tenant")
+		if err != nil {
+			logger.Error(err)
+			dangerous(err)
+		}
+
+		for _, node := range nodes {
+			tmpData, err := nodeAggData(node.Id, needSourceLen)
+			if err != nil {
+				logger.Error(err)
+				dangerous(err)
+			}
+
+			for k, v := range tmpData {
+				if _, ok := aggDat[k]; ok {
+					aggDat[k] += v
+				} else {
+					aggDat[k] = v
+				}
+			}
 		}
 	}
 

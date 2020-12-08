@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -102,7 +103,18 @@ func (e *Event) GetEventDetail() ([]EventDetail, error) {
 }
 
 func EventTotal(stime, etime int64, nodePath, query, eventType string, priorities, sendTypes []string) (int64, error) {
-	session := DB["mon"].Where("etime > ? and etime < ? and (node_path = ? or node_path like ?)", stime, etime, nodePath, nodePath+".%")
+	nodePathWhere := ""
+	sqlParamValue := []interface{}{}
+	if nodePath != "" {
+		nodePathWhere = fmt.Sprintf(" and (node_path = ? or node_path like ?)")
+		sqlParamValue = []interface{}{stime, etime, nodePath, nodePath + ".%"}
+	} else {
+		sqlParamValue = []interface{}{stime, etime}
+	}
+
+	sql := fmt.Sprintf("etime > ? and etime < ? %s", nodePathWhere)
+
+	session := DB["mon"].Where(sql, sqlParamValue...)
 	if len(priorities) > 0 && priorities[0] != "" {
 		session = session.In("priority", priorities)
 	}
@@ -134,7 +146,18 @@ func EventTotal(stime, etime int64, nodePath, query, eventType string, prioritie
 func EventGets(stime, etime int64, nodePath, query, eventType string, priorities, sendTypes []string, limit, offset int) ([]Event, error) {
 	var objs []Event
 
-	session := DB["mon"].Where("etime > ? and etime < ? and (node_path = ? or node_path like ?)", stime, etime, nodePath, nodePath+".%")
+	nodePathWhere := ""
+	sqlParamValue := []interface{}{}
+	if nodePath != "" {
+		nodePathWhere = fmt.Sprintf(" and (node_path = ? or node_path like ?)")
+		sqlParamValue = []interface{}{stime, etime, nodePath, nodePath + ".%"}
+	} else {
+		sqlParamValue = []interface{}{stime, etime}
+	}
+
+	sql := fmt.Sprintf("etime > ? and etime < ? %s", nodePathWhere)
+
+	session := DB["mon"].Where(sql, sqlParamValue...)
 	if len(priorities) > 0 && priorities[0] != "" {
 		session = session.In("priority", priorities)
 	}

@@ -52,7 +52,7 @@ func eventCurGets(c *gin.Context) {
 
 	stime := mustQueryInt64(c, "stime")
 	etime := mustQueryInt64(c, "etime")
-	nodePath := mustQueryStr(c, "nodepath")
+	nodePath := queryStr(c, "nodepath", "")
 
 	limit := queryInt(c, "limit", 20)
 
@@ -146,7 +146,7 @@ func eventHisGets(c *gin.Context) {
 
 	stime := mustQueryInt64(c, "stime")
 	etime := mustQueryInt64(c, "etime")
-	nodePath := mustQueryStr(c, "nodepath")
+	nodePath := queryStr(c, "nodepath", "")
 
 	limit := queryInt(c, "limit", 20)
 
