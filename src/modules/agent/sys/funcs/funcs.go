@@ -29,7 +29,6 @@ func BuildMappers() {
 					IOStatsMetrics,
 					NfMetrics,
 					FsKernelMetrics,
-					FsRWMetrics,
 					ProcsNumMetrics,
 					EntityNumMetrics,
 					NtpOffsetMetrics,
@@ -46,6 +45,17 @@ func BuildMappers() {
 				Interval: interval,
 			},
 		}
+
+		if sys.Config.FsRWEnable {
+			Mapper := FuncsAndInterval{
+				Fs: []func() []*dataobj.MetricValue{
+					FsRWMetrics,
+				},
+				Interval: interval,
+			}
+			Mappers = append(Mappers, Mapper)
+		}
+
 	} else {
 		log.Println("sys collect enable is false.")
 		Mappers = []FuncsAndInterval{
