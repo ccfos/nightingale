@@ -52,9 +52,18 @@ type ssoSection struct {
 }
 
 type httpSection struct {
-	Mode         string `yaml:"mode"`
-	CookieName   string `yaml:"cookieName"`
-	CookieDomain string `yaml:"cookieDomain"`
+	Mode    string         `yaml:"mode"`
+	Session SessionSection `yaml:"session"`
+}
+
+type SessionSection struct {
+	CookieName     string `yaml:"cookieName"`
+	SidLength      int    `yaml:"sidLength"`
+	HttpOnly       bool   `yaml:"httpOnly"`
+	Domain         string `yaml:"domain"`
+	GcInterval     int64  `yaml:"gcInterval"`
+	CookieLifetime int64  `yaml:"cookieLifetime"`
+	Storage        string `yaml:"storage" description:"mem|db(defualt)"`
 }
 
 type ldapSection struct {
@@ -134,6 +143,13 @@ func Parse() error {
 		return err
 	}
 
+	if Config.HTTP.Session.CookieLifetime == 0 {
+		Config.HTTP.Session.CookieLifetime = 24 * 3600
+	}
+
+	if Config.HTTP.Session.SidLength == 0 {
+		Config.HTTP.Session.SidLength = 32
+	}
 	return nil
 }
 

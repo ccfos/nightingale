@@ -81,7 +81,7 @@ func login(c *gin.Context) {
 	bind(c, &f)
 	f.validate()
 
-	if config.Config.Captcha {
+	if config.Config.Auth.Captcha {
 		c, err := models.CaptchaGet("captcha_id=?", f.CaptchaId)
 		dangerous(err)
 		if strings.ToLower(c.Answer) != strings.ToLower(f.Answer) {
@@ -92,7 +92,7 @@ func login(c *gin.Context) {
 	user, err := authLogin(f)
 	dangerous(err)
 
-	writeCookieUser(c, user.UUID)
+	sessionSet(c, "username", user.Username)
 
 	renderMessage(c, "")
 
@@ -101,15 +101,11 @@ func login(c *gin.Context) {
 
 func logout(c *gin.Context) {
 	func() {
-		uuid := readCookieUser(c)
-		if uuid == "" {
-			return
-		}
-		username := models.UsernameByUUID(uuid)
+		username := sessionUsername(c)
 		if username == "" {
 			return
 		}
-		writeCookieUser(c, "")
+		sessionSet(c, "username", "")
 		go models.LoginLogNew(username, c.ClientIP(), "out")
 	}()
 
@@ -133,16 +129,19 @@ type authRedirect struct {
 }
 
 func authAuthorizeV2(c *gin.Context) {
+	err := sessionStart(c)
+	dangerous(err)
+	defer sessionUpdate(c)
+
 	redirect := queryStr(c, "redirect", "/")
 	ret := &authRedirect{Redirect: redirect}
 
-	username := cookieUsername(c)
+	username := sessionUsername(c)
 	if username != "" { // alread login
 		renderData(c, ret, nil)
 		return
 	}
 
-	var err error
 	if config.Config.SSO.Enable {
 		ret.Redirect, err = ssoc.Authorize(redirect)
 	} else {
@@ -170,27 +169,23 @@ func authCallbackV2(c *gin.Context) {
 		return
 	}
 
-	writeCookieUser(c, user.UUID)
+	sessionSet(c, "username", user.Username)
 	renderData(c, ret, nil)
 }
 
 func logoutV2(c *gin.Context) {
+	sessionStart(c)
+
 	redirect := queryStr(c, "redirect", "")
 	ret := &authRedirect{Redirect: redirect}
 
-	uuid := readCookieUser(c)
-	if uuid == "" {
-		renderData(c, ret, nil)
-		return
-	}
-
-	username := models.UsernameByUUID(uuid)
+	username := sessionUsername(c)
 	if username == "" {
 		renderData(c, ret, nil)
 		return
 	}
 
-	writeCookieUser(c, "")
+	sessionDestory(c)
 	ret.Msg = "logout successfully"
 
 	if config.Config.SSO.Enable {
@@ -481,7 +476,7 @@ func rstPassword(c *gin.Context) {
 
 func captchaGet(c *gin.Context) {
 	ret, err := func() (*models.Captcha, error) {
-		if !config.Config.Captcha {
+		if !config.Config.Auth.Captcha {
 			return nil, errUnsupportCaptcha
 		}
 

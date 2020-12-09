@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/didi/nightingale/src/models"
 	"github.com/toolkits/pkg/logger"
 )
 

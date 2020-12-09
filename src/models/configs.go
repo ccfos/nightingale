@@ -91,16 +91,16 @@ func ConfigsGets(ckeys []string) (map[string]string, error) {
 }
 
 type AuthConfig struct {
-	MaxNumErr          int `json:"maxNumErr"`
-	MaxOccurs          int `json:"maxOccurs"`
-	MaxConnIdelTime    int `json:"maxConnIdelTime"`
-	LockTime           int `json:"lockTime"`
-	PwdMinLenght       int `json:"pwdMinLenght"`
-	PwdExpiresIn       int `json:"pwdExpiresIn"`
-	PwdIncludeUpper    int `json:"pwdIncludeUpper" description:"'0': fasle, other: true"`
-	PwdIncludeLower    int `json:"pwdIncludeLower"`
-	PwdIncludeNumber   int `json:"pwdIncludeNumber"`
-	PwdIncludeSpecChar int `json:"pwdIncludeSpecChar"`
+	MaxNumErr          int   `json:"maxNumErr"`
+	MaxOccurs          int   `json:"maxOccurs"`
+	MaxConnIdelTime    int64 `json:"maxConnIdelTime"`
+	LockTime           int   `json:"lockTime"`
+	PwdMinLenght       int   `json:"pwdMinLenght"`
+	PwdExpiresIn       int   `json:"pwdExpiresIn"`
+	PwdIncludeUpper    int   `json:"pwdIncludeUpper" description:"'0': fasle, other: true"`
+	PwdIncludeLower    int   `json:"pwdIncludeLower"`
+	PwdIncludeNumber   int   `json:"pwdIncludeNumber"`
+	PwdIncludeSpecChar int   `json:"pwdIncludeSpecChar"`
 }
 
 func AuthConfigGet() (*AuthConfig, error) {

@@ -20,6 +20,7 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/http"
 	"github.com/didi/nightingale/src/modules/rdb/rabbitmq"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
+	"github.com/didi/nightingale/src/modules/rdb/session"
 	"github.com/didi/nightingale/src/modules/rdb/ssoc"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 )
@@ -74,6 +75,7 @@ func main() {
 	rabbitmq.Init()
 
 	cache.Start()
+	session.Init()
 
 	go cron.ConsumeMail()
 	go cron.ConsumeSms()
@@ -105,6 +107,7 @@ func endingProc() {
 	http.Shutdown()
 	redisc.CloseRedis()
 	rabbitmq.Shutdown()
+	session.Stop()
 	cache.Stop()
 
 	fmt.Println("process stopped successfully")

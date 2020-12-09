@@ -339,3 +339,15 @@ CREATE TABLE `white_list` (
   KEY (`created_at`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
+CREATE TABLE `session` (
+   `sid`         char(128) NOT NULL,
+   `data`        blob NULL,
+   `user_name`   varchar(64) DEFAULT '',
+   `cookie_name` char(128) DEFAULT '',
+   `created_at`  integer unsigned DEFAULT '0',
+   `updated_at`  integer unsigned DEFAULT '0' NOT NULL,
+   PRIMARY KEY (`sid`),
+   KEY (`user_name`),
+   KEY (`cookie_name`),
+   KEY (`updated_at`)
+) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8;

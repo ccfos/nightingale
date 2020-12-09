@@ -21,7 +21,7 @@ func (p *configCache) AuthConfig() *models.AuthConfig {
 }
 
 func (p *configCache) loop(ctx context.Context, interval int) {
-	func() {
+	go func() {
 		t := time.NewTicker(time.Duration(interval) * time.Second)
 		defer t.Stop()
 
