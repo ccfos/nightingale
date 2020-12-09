@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 type WhiteList struct {
@@ -17,6 +18,20 @@ type WhiteList struct {
 	UpdatedAt  int64  `json:"updateAt"`
 	Creator    string `json:"creator"`
 	Updater    string `json:"updater"`
+}
+
+func WhiteListAccess(addr string) error {
+	ip := parseIPv4(addr)
+	if ip == 0 {
+		return fmt.Errorf("invalid remote address %s", addr)
+	}
+	now := time.Now().Unix()
+	count, _ := DB["rdb"].Where("start_ip_int<? and end_ip_int>? and start_time>? and end_time<?", ip, ip, now, now).Count(new(WhiteList))
+	if count == 0 {
+		return fmt.Errorf("access deny from %s", addr)
+	}
+
+	return nil
 }
 
 const big = 0xFFFFFF

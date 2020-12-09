@@ -14,10 +14,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mojocn/base64Captcha"
 	"github.com/toolkits/pkg/file"
+	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 
 	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/cache"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
 	"github.com/didi/nightingale/src/modules/rdb/ssoc"
@@ -76,27 +78,30 @@ func init() {
 	}
 }
 
+// login for UI
 func login(c *gin.Context) {
-	var f loginInput
-	bind(c, &f)
-	f.validate()
+	var in loginInput
+	bind(c, &in)
+	in.validate()
+
+	in.RemoteAddr = c.ClientIP()
 
 	if config.Config.Auth.Captcha {
-		c, err := models.CaptchaGet("captcha_id=?", f.CaptchaId)
+		c, err := models.CaptchaGet("captcha_id=?", in.CaptchaId)
 		dangerous(err)
-		if strings.ToLower(c.Answer) != strings.ToLower(f.Answer) {
+		if strings.ToLower(c.Answer) != strings.ToLower(in.Answer) {
 			dangerous(errInvalidAnswer)
 		}
 	}
 
-	user, err := authLogin(f)
+	user, err := authLogin(in)
 	dangerous(err)
 
 	sessionSet(c, "username", user.Username)
 
 	renderMessage(c, "")
 
-	go models.LoginLogNew(user.Username, c.ClientIP(), "in")
+	go models.LoginLogNew(user.Username, in.RemoteAddr, "in")
 }
 
 func logout(c *gin.Context) {
@@ -157,6 +162,7 @@ func authCallbackV2(c *gin.Context) {
 
 	ret := &authRedirect{Redirect: redirect}
 	if code == "" && redirect != "" {
+		logger.Debugf("sso.callback()  can't get code and redirect is not set")
 		renderData(c, ret, nil)
 		return
 	}
@@ -165,10 +171,15 @@ func authCallbackV2(c *gin.Context) {
 	var err error
 	ret.Redirect, user, err = ssoc.Callback(code, state)
 	if err != nil {
+		logger.Debugf("sso.callback() error %s", err)
 		renderData(c, ret, err)
 		return
 	}
 
+	dangerous(sessionStart(c))
+	defer sessionUpdate(c)
+
+	logger.Debugf("sso.callback() successfully, set username %s", user.Username)
 	sessionSet(c, "username", user.Username)
 	renderData(c, ret, nil)
 }
@@ -243,17 +254,91 @@ func v1Login(c *gin.Context) {
 
 // authLogin called by /v1/rdb/login, /api/rdb/auth/login
 func authLogin(in loginInput) (user *models.User, err error) {
+	if config.Config.Auth.WhiteList {
+		if err := models.WhiteListAccess(in.RemoteAddr); err != nil {
+			return nil, err
+		}
+	}
+
 	switch strings.ToLower(in.Type) {
 	case models.LOGIN_T_LDAP:
-		return models.LdapLogin(in.Username, in.Password)
+		user, err = models.LdapLogin(in.Username, in.Password)
 	case models.LOGIN_T_PWD:
-		return models.PassLogin(in.Username, in.Password)
+		user, err = models.PassLogin(in.Username, in.Password)
 	case models.LOGIN_T_SMS:
-		return models.SmsCodeLogin(in.Phone, in.Code)
+		user, err = models.SmsCodeLogin(in.Phone, in.Code)
 	case models.LOGIN_T_EMAIL:
-		return models.EmailCodeLogin(in.Email, in.Code)
+		user, err = models.EmailCodeLogin(in.Email, in.Code)
 	default:
 		return nil, fmt.Errorf("invalid login type %s", in.Type)
+	}
+
+	err = authPostCheck(in.Username, err == nil, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func authPostCheck(username string, login bool, user *models.User) error {
+	cookieName := config.Config.HTTP.Session.CookieName
+	cf := cache.AuthConfig()
+	user, err := models.UserMustGet("username=?", username)
+	if err != nil {
+		return err
+	}
+	now := time.Now().Unix()
+	defer user.Update("login_err_num", "status", "locked_at", "updated_at")
+
+	if now-user.UpdatedAt > 86400 {
+		user.LoginErrNum = 0
+	}
+	user.UpdatedAt = now
+
+retry:
+	switch user.Status {
+	case models.USER_S_ACTIVE:
+		if cf.MaxNumErr > 0 && user.LoginErrNum >= cf.MaxNumErr {
+			user.Status = models.USER_S_LOCKED
+			user.LockedAt = now
+			goto retry
+		}
+
+		if !login {
+			user.LoginErrNum++
+			return fmt.Errorf("max login err %d/%d", user.LoginErrNum, cf.MaxNumErr)
+		}
+
+		user.LoginErrNum = 0
+
+		if cf.MaxSessionNumber > 0 {
+			n, err := models.SessionUserAll(cookieName, username)
+			if err != nil {
+				return err
+			}
+
+			if n >= cf.MaxSessionNumber {
+				return fmt.Errorf("max session limit %d/%d", n, cf.MaxSessionNumber)
+			}
+		}
+
+		return nil
+	case models.USER_S_INACTIVE:
+		return fmt.Errorf("user is inactive")
+	case models.USER_S_LOCKED:
+		if now-user.LockedAt > cf.LockTime*60 {
+			user.Status = models.USER_S_ACTIVE
+			user.LoginErrNum = 0
+			goto retry
+		}
+		return fmt.Errorf("user is locked")
+	case models.USER_S_FROZEN:
+		return fmt.Errorf("user is frozen")
+	case models.USER_S_WRITEN_OFF:
+		return fmt.Errorf("user is writen off")
+	default:
+		return fmt.Errorf("invalid user status %d", user.Status)
 	}
 }
 
@@ -363,23 +448,43 @@ func v1SendLoginCodeByEmail(c *gin.Context) {
 	renderData(c, msg, err)
 }
 
-type sendRstCodeBySmsInput struct {
+type sendRstCodeInput struct {
 	Username string `json:"username"`
 	Phone    string `json:"phone"`
+	Email    string `json:"email"`
 }
 
-func sendRstCodeBySms(c *gin.Context) {
-	var f sendRstCodeBySmsInput
-	bind(c, &f)
+func (p *sendRstCodeInput) Validate() error {
+	if p.Username == "" {
+		return fmt.Errorf("unable to get username")
+	}
+	if p.Phone == "" && p.Email == "" {
+		return fmt.Errorf("unable to get phone or email")
+	}
+	return nil
+}
+
+func sendRstCode(c *gin.Context) {
+	var in sendRstCodeInput
+	bind(c, &in)
 
 	msg, err := func() (string, error) {
 		if !config.Config.Redis.Enable {
-			return "", fmt.Errorf("sms sender is disabled")
+			return "", fmt.Errorf("code sender is disabled")
 		}
-		phone := f.Phone
-		user, _ := models.UserGet("username=? and phone=?", f.Username, phone)
+
+		if err := in.Validate(); err != nil {
+			return "", err
+		}
+
+		var user *models.User
+		if in.Phone != "" {
+			user, _ = models.UserGet("username=? and phone=?", in.Username, in.Phone)
+		} else {
+			user, _ = models.UserGet("username=? and email=?", in.Username, in.Email)
+		}
 		if user == nil {
-			return "", fmt.Errorf("user %s phone %s dose not exist", f.Username, phone)
+			return "", fmt.Errorf("User %s's infomation is incorrect", in.Username)
 		}
 
 		// general a random code and add cache
@@ -401,10 +506,15 @@ func sendRstCodeBySms(c *gin.Context) {
 			return "", err
 		}
 
-		if err := redisc.Write(&dataobj.Message{
-			Tos:     []string{phone},
-			Content: buf.String(),
-		}, config.SMS_QUEUE_NAME); err != nil {
+		var err error
+		if in.Phone != "" {
+			err = redisc.Write(&dataobj.Message{Tos: []string{in.Phone},
+				Content: buf.String()}, config.SMS_QUEUE_NAME)
+		} else {
+			err = redisc.Write(&dataobj.Message{Tos: []string{in.Phone},
+				Content: buf.String()}, config.MAIL_QUEUE_NAME)
+		}
+		if err != nil {
 			return "", err
 		}
 
@@ -421,9 +531,20 @@ func sendRstCodeBySms(c *gin.Context) {
 type rstPasswordInput struct {
 	Username string `json:"username"`
 	Phone    string `json:"phone"`
+	Email    string `json:"email"`
 	Code     string `json:"code"`
 	Password string `json:"password"`
 	Type     string `json:"type"`
+}
+
+func (p *rstPasswordInput) Validate() error {
+	if p.Username == "" {
+		return fmt.Errorf("unable to get username")
+	}
+	if p.Phone == "" && p.Email == "" {
+		return fmt.Errorf("unable to get phone or email")
+	}
+	return nil
 }
 
 func rstPassword(c *gin.Context) {
@@ -431,9 +552,18 @@ func rstPassword(c *gin.Context) {
 	bind(c, &in)
 
 	err := func() error {
-		user, _ := models.UserGet("username=? and phone=?", in.Username, in.Phone)
+		if err := in.Validate(); err != nil {
+			return err
+		}
+
+		var user *models.User
+		if in.Phone != "" {
+			user, _ = models.UserGet("username=? and phone=?", in.Username, in.Phone)
+		} else {
+			user, _ = models.UserGet("username=? and email=?", in.Username, in.Email)
+		}
 		if user == nil {
-			return fmt.Errorf("user's phone  not exist")
+			return fmt.Errorf("User %s's infomation is incorrect", in.Username)
 		}
 
 		lc, err := models.LoginCodeGet("username=? and code=? and login_type=?",

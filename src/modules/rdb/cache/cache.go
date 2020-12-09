@@ -12,8 +12,8 @@ var (
 		config: configCache{
 			authConfig: &models.AuthConfig{
 				MaxNumErr:          0,
-				MaxOccurs:          0,
-				MaxConnIdelTime:    0,
+				MaxSessionNumber:   0,
+				MaxConnIdelTime:    1800,
 				LockTime:           0,
 				PwdMinLenght:       0,
 				PwdExpiresIn:       0,

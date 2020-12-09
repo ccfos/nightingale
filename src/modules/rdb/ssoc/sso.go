@@ -96,7 +96,6 @@ func Authorize(redirect string) (string, error) {
 		return "", err
 	}
 
-	// log.Printf("add state %s", state)
 	return cli.config.AuthCodeURL(state.State), nil
 }
 
@@ -116,13 +115,11 @@ func Callback(code, state string) (string, *models.User, error) {
 	}
 
 	s.Del()
-	// log.Printf("remove state %s", state)
 
 	u, err := exchangeUser(code)
 	if err != nil {
 		return "", nil, errUser
 	}
-	// log.Printf("exchange user %v", u)
 
 	user, err := models.UserGet("username=?", u.Username)
 	if err != nil {

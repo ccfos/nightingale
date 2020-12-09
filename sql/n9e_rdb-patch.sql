@@ -36,5 +36,6 @@ alter table user add `login_err_num` int unsigned not null default 0 after leade
 
 alter table user add `active_begin`  bigint       not null default 0 after login_err_num;
 alter table user add `active_end`    bigint       not null default 0 after active_begin;
-alter table user add `last_at`       bigint       not null default 0 after active_end;
-alter table user add `locked_at`     bigint       not null default 0 after last_at;
+alter table user add `locked_at`     bigint       not null default 0 after active_end;
+alter table user add `updated_at`    bigint       not null default 0 after locked_at;
+alter table user add `pwd_updated_at`    bigint       not null default 0 after updated_at;

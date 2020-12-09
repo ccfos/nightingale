@@ -8,6 +8,7 @@ import (
 	"github.com/toolkits/pkg/errors"
 
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/cache"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 )
 
@@ -143,8 +144,11 @@ func checkPassword(passwd string) error {
 	indNum := [4]int{0, 0, 0, 0}
 	spCode := []byte{'!', '@', '#', '$', '%', '^', '&', '*', '_', '-', '~', '.', ',', '<', '>', '/', ';', ':', '|', '?', '+', '='}
 
-	if len(passwd) < 6 {
-		return fmt.Errorf("password too short")
+	cf := cache.AuthConfig()
+
+	if cf.PwdMinLenght > 0 && len(passwd) < cf.PwdMinLenght {
+		return fmt.Errorf("password too short %d/%d",
+			len(passwd), cf.PwdMinLenght)
 	}
 
 	passwdByte := []byte(passwd)
@@ -181,20 +185,24 @@ func checkPassword(passwd string) error {
 
 	}
 
-	codeCount := 0
-
-	for _, i := range indNum {
-		codeCount += i
+	if cf.PwdIncludeUpper > 0 && indNum[0] == 0 {
+		return fmt.Errorf("password must include upper char")
 	}
 
-	if codeCount < 4 {
-		return fmt.Errorf("password too simple")
+	if cf.PwdIncludeLower > 0 && indNum[1] == 0 {
+		return fmt.Errorf("password must include lower char")
+	}
+
+	if cf.PwdIncludeNumber > 0 && indNum[2] == 0 {
+		return fmt.Errorf("password must include number char")
+	}
+
+	if cf.PwdIncludeSpecChar > 0 && indNum[3] == 0 {
+		return fmt.Errorf("password must include special char")
 	}
 
 	return nil
 }
-
-// ------------
 
 func loginUsername(c *gin.Context) string {
 	value, has := c.Get("username")

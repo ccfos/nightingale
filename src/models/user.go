@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -43,6 +44,7 @@ type User struct {
 	UUID         string    `json:"uuid" xorm:"'uuid'"`
 	Username     string    `json:"username"`
 	Password     string    `json:"-"`
+	Passwords    string    `json:"-"`
 	Dispname     string    `json:"dispname"`
 	Phone        string    `json:"phone"`
 	Email        string    `json:"email"`
@@ -58,7 +60,9 @@ type User struct {
 	LoginErrNum  int       `json:"login_err_num"`
 	ActiveBegin  int64     `json:"active_begin" description:"for temporary account"`
 	ActiveEnd    int64     `json:"active_end" description:"for temporary account"`
-	LastAt       time.Time `json:"last_at"`
+	LockedAt     int64     `json:"locked_at"`
+	UpdatedAt    int64     `json:"updated_at"`
+	PwdUpdatedAt int64     `json:"pwd_updated_at"`
 	CreateAt     time.Time `json:"create_at" xorm:"<-"`
 }
 
@@ -227,11 +231,25 @@ func UserGet(where string, args ...interface{}) (*User, error) {
 	return &obj, nil
 }
 
+func UserMustGet(where string, args ...interface{}) (*User, error) {
+	var obj User
+	has, err := DB["rdb"].Where(where, args...).Get(&obj)
+	if err != nil {
+		return nil, err
+	}
+
+	if !has {
+		return nil, fmt.Errorf("user dose not exist")
+	}
+
+	return &obj, nil
+}
+
 func (u *User) IsRooter() bool {
 	return u.IsRoot == 1
 }
 
-func (u *User) CheckFields() {
+func (u *User) CheckFields(cols ...string) {
 	u.Username = strings.TrimSpace(u.Username)
 	if u.Username == "" {
 		errors.Bomb("username is blank")
@@ -264,10 +282,47 @@ func (u *User) CheckFields() {
 	if strings.ContainsAny(u.Im, "%'") {
 		errors.Bomb("im invalid")
 	}
+
+	for _, col := range cols {
+		if col == "password" {
+			u.checkPassword()
+		}
+	}
+}
+
+func (u *User) checkPassword() {
+	var passwords []string
+	err := json.Unmarshal([]byte(u.Passwords), &passwords)
+	if err != nil {
+		// reset passwords
+		passwords = []string{u.Password}
+		b, _ := json.Marshal(passwords)
+		u.Passwords = string(b)
+		return
+	}
+
+	for _, v := range passwords {
+		if u.Password == v {
+			errors.Bomb("The password is the same as the old password")
+		}
+	}
+
+	cf, err := AuthConfigGet()
+	if err != nil {
+		errors.Bomb("AuthConfigGet error")
+	}
+
+	passwords = append(passwords, u.Password)
+	if n := len(passwords) - cf.PwdHistorySize; n > 0 {
+		passwords = passwords[n:]
+	}
+	b, _ := json.Marshal(passwords)
+	u.Passwords = string(b)
+	return
 }
 
 func (u *User) Update(cols ...string) error {
-	u.CheckFields()
+	u.CheckFields(cols...)
 	_, err := DB["rdb"].Where("id=?", u.Id).Cols(cols...).Update(u)
 	return err
 }
@@ -291,6 +346,8 @@ func (u *User) Save() error {
 	if cnt > 0 {
 		return fmt.Errorf("username already exists")
 	}
+
+	u.Passwords = u.Password
 
 	_, err = DB["rdb"].Insert(u)
 	return err

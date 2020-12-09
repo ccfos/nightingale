@@ -19,6 +19,10 @@ func SessionAll(cookieName string) (int64, error) {
 	return DB["rdb"].Where("cookie_name=?", cookieName).Count(new(Session))
 }
 
+func SessionUserAll(cookieName, username string) (int64, error) {
+	return DB["rdb"].Where("cookie_name=? and user_name=?", cookieName, username).Count(new(Session))
+}
+
 func SessionGet(sid string) (*Session, error) {
 	var obj Session
 	has, err := DB["rdb"].Where("sid=?", sid).Get(&obj)
@@ -60,11 +64,11 @@ func SessionUpdate(in *Session) error {
 	}
 	in.Data_ = string(b)
 
-	_, err = DB["rdb"].Where("id=?", in.Sid).Cols("data", "updated_at").Update(in)
+	_, err = DB["rdb"].Where("sid=?", in.Sid).AllCols().Update(in)
 	return err
 }
 
 func SessionCleanup(ts int64, cookieName string) error {
-	_, err := DB["rdb"].In("updated_at<? and cookie_name=?", ts, cookieName).Delete(new(Session))
+	_, err := DB["rdb"].Where("updated_at<? and cookie_name=?", ts, cookieName).Delete(new(Session))
 	return err
 }

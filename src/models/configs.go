@@ -92,11 +92,12 @@ func ConfigsGets(ckeys []string) (map[string]string, error) {
 
 type AuthConfig struct {
 	MaxNumErr          int   `json:"maxNumErr"`
-	MaxOccurs          int   `json:"maxOccurs"`
+	MaxSessionNumber   int64 `json:"maxSessionNumber"`
 	MaxConnIdelTime    int64 `json:"maxConnIdelTime"`
-	LockTime           int   `json:"lockTime"`
+	LockTime           int64 `json:"lockTime"`
+	PwdHistorySize     int   `json:"pwdHistorySize"`
 	PwdMinLenght       int   `json:"pwdMinLenght"`
-	PwdExpiresIn       int   `json:"pwdExpiresIn"`
+	PwdExpiresIn       int64 `json:"pwdExpiresIn"`
 	PwdIncludeUpper    int   `json:"pwdIncludeUpper" description:"'0': fasle, other: true"`
 	PwdIncludeLower    int   `json:"pwdIncludeLower"`
 	PwdIncludeNumber   int   `json:"pwdIncludeNumber"`

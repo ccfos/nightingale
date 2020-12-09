@@ -18,7 +18,9 @@ import (
 func shouldBeLogin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sessionStart(c)
-		c.Set("username", mustUsername(c))
+		username := mustUsername(c)
+		logger.Debug("set username %s", username)
+		c.Set("username", username)
 		c.Next()
 		sessionUpdate(c)
 	}
@@ -120,7 +122,10 @@ func sessionStart(c *gin.Context) error {
 
 func sessionUpdate(c *gin.Context) {
 	if store, ok := session.FromContext(c.Request.Context()); ok {
-		store.Update(c.Writer)
+		err := store.Update(c.Writer)
+		if err != nil {
+			logger.Errorf("session update err %s", err)
+		}
 	}
 }
 

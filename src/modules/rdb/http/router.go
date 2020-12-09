@@ -24,7 +24,7 @@ func Config(r *gin.Engine) {
 
 		notLogin.POST("/auth/send-login-code-by-sms", v1SendLoginCodeBySms)
 		notLogin.POST("/auth/send-login-code-by-email", v1SendLoginCodeByEmail)
-		notLogin.POST("/auth/send-rst-code-by-sms", sendRstCodeBySms)
+		notLogin.POST("/auth/send-rst-code", sendRstCode)
 		notLogin.POST("/auth/rst-password", rstPassword)
 		notLogin.GET("/auth/captcha", captchaGet)
 

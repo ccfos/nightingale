@@ -147,6 +147,10 @@ func Parse() error {
 		Config.HTTP.Session.CookieLifetime = 24 * 3600
 	}
 
+	if Config.HTTP.Session.GcInterval == 0 {
+		Config.HTTP.Session.GcInterval = 60
+	}
+
 	if Config.HTTP.Session.SidLength == 0 {
 		Config.HTTP.Session.SidLength = 32
 	}
