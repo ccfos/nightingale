@@ -29,6 +29,7 @@ CREATE TABLE `user`
     `locked_at`     bigint       not null default 0,
     `updated_at`    bigint       not null default 0,
     `pwd_updated_at` bigint      not null default 0,
+    `logged_at`     bigint       not null default 0,
     `create_at`     timestamp    not null default CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`username`),

@@ -82,6 +82,7 @@ func main() {
 	go cron.ConsumeVoice()
 	go cron.ConsumeIm()
 	go cron.CleanerLoop()
+	go cron.UserManagerLoop()
 
 	http.Start()
 

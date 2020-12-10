@@ -24,8 +24,9 @@ type ConfigT struct {
 }
 
 type authSection struct {
-	Captcha   bool `yaml:"captcha"`
-	WhiteList bool `yaml:"whiteList"`
+	Captcha    bool `yaml:"captcha"`
+	WhiteList  bool `yaml:"whiteList"`
+	UserExpire bool `yaml:"userExpire" description:"enable user expire control, active -> frozen -> writen-off"`
 }
 
 type wechatSection struct {

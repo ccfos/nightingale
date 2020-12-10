@@ -22,8 +22,7 @@ func Config(r *gin.Engine) {
 		notLogin.GET("/auth/v2/callback", authCallbackV2)
 		notLogin.GET("/auth/v2/logout", logoutV2)
 
-		notLogin.POST("/auth/send-login-code-by-sms", v1SendLoginCodeBySms)
-		notLogin.POST("/auth/send-login-code-by-email", v1SendLoginCodeByEmail)
+		notLogin.POST("/auth/send-login-code", sendLoginCode)
 		notLogin.POST("/auth/send-rst-code", sendRstCode)
 		notLogin.POST("/auth/rst-password", rstPassword)
 		notLogin.GET("/auth/captcha", captchaGet)
@@ -186,8 +185,7 @@ func Config(r *gin.Engine) {
 		v1.GET("/users", v1UserListGet)
 
 		v1.POST("/login", v1Login)
-		v1.POST("/send-login-code-by-sms", v1SendLoginCodeBySms)
-		v1.POST("/send-login-code-by-email", v1SendLoginCodeByEmail)
+		v1.POST("/send-login-code", sendLoginCode)
 
 		// 第三方系统获取某个用户的所有权限点
 		v1.GET("/perms/global", v1PermGlobalOps)

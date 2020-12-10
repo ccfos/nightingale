@@ -39,3 +39,5 @@ alter table user add `active_end`    bigint       not null default 0 after activ
 alter table user add `locked_at`     bigint       not null default 0 after active_end;
 alter table user add `updated_at`    bigint       not null default 0 after locked_at;
 alter table user add `pwd_updated_at`    bigint       not null default 0 after updated_at;
+alter table user add `logged_at`    bigint       not null default 0 after pwd_updated_at;
+alter table user add  `passwords` varchar(512) not null default '' after password;

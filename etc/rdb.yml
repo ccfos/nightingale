@@ -26,6 +26,7 @@ sso:
 auth:
   captcha: false
   whiteList: true
+  userExpire: false
 
 tokens:
   - rdb-builtin-token

@@ -60,9 +60,10 @@ type User struct {
 	LoginErrNum  int       `json:"login_err_num"`
 	ActiveBegin  int64     `json:"active_begin" description:"for temporary account"`
 	ActiveEnd    int64     `json:"active_end" description:"for temporary account"`
-	LockedAt     int64     `json:"locked_at"`
-	UpdatedAt    int64     `json:"updated_at"`
-	PwdUpdatedAt int64     `json:"pwd_updated_at"`
+	LockedAt     int64     `json:"locked_at" description:"locked time"`
+	UpdatedAt    int64     `json:"updated_at" description:"user info change time"`
+	PwdUpdatedAt int64     `json:"pwd_updated_at" description:"password change time"`
+	LoggedAt     int64     `json:"logged_at" description:"last logged time"`
 	CreateAt     time.Time `json:"create_at" xorm:"<-"`
 }
 
@@ -173,8 +174,8 @@ func PassLogin(user, pass string) (*User, error) {
 	return &u, nil
 }
 
-func SmsCodeLogin(phone, code string) (*User, error) {
-	user, _ := UserGet("phone=?", phone)
+func SmsCodeLogin(username, phone, code string) (*User, error) {
+	user, _ := UserGet("username=? and phone=?", username, phone)
 	if user == nil {
 		return nil, fmt.Errorf("phone %s dose not exist", phone)
 	}
@@ -195,20 +196,20 @@ func SmsCodeLogin(phone, code string) (*User, error) {
 	return user, nil
 }
 
-func EmailCodeLogin(email, code string) (*User, error) {
-	user, _ := UserGet("email=?", email)
+func EmailCodeLogin(username, email, code string) (*User, error) {
+	user, _ := UserGet("username=? and email=?", username, email)
 	if user == nil {
 		return nil, fmt.Errorf("email %s dose not exist", email)
 	}
 
-	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_EMAIL)
+	lc, err := LoginCodeGet("username=? and code=? and login_type=?", username, code, LOGIN_T_EMAIL)
 	if err != nil {
-		logger.Infof("email-code auth fail, user: %s", user.Username)
+		logger.Infof("email-code auth fail, user: %s", username)
 		return nil, fmt.Errorf("login fail, check your email-code")
 	}
 
 	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
-		logger.Infof("email-code auth expired, user: %s", user.Username)
+		logger.Infof("email-code auth expired, user: %s", username)
 		return nil, fmt.Errorf("login fail, the code has expired")
 	}
 
@@ -318,6 +319,7 @@ func (u *User) checkPassword() {
 	}
 	b, _ := json.Marshal(passwords)
 	u.Passwords = string(b)
+	u.PwdUpdatedAt = time.Now().Unix()
 	return
 }
 
@@ -348,6 +350,8 @@ func (u *User) Save() error {
 	}
 
 	u.Passwords = u.Password
+	u.UpdatedAt = time.Now().Unix()
+	u.PwdUpdatedAt = u.UpdatedAt
 
 	_, err = DB["rdb"].Insert(u)
 	return err
