@@ -5,8 +5,15 @@ logger:
 
 http:
   mode: release
-  cookieDomain: ""
-  cookieName: ecmc-user
+  session:
+    cookieName: ecmc-sid
+    domain: ""
+    httpOnly: true
+    gcInterval: 60
+    cookieLifetime: 86400
+
+i18n:
+  lang: en
 
 sso:
   enable: false

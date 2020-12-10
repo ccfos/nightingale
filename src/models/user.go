@@ -611,7 +611,9 @@ func safeUserIds(ids []int64) ([]int64, error) {
 	return ret, nil
 }
 
+// Deprecated
 func UsernameByUUID(uuid string) string {
+	logger.Warningf("UsernameByUUID is Deprectaed, use UsernameBySid instead of it")
 	if uuid == "" {
 		return ""
 	}
@@ -634,6 +636,30 @@ func UsernameByUUID(uuid string) string {
 	cache.Set("user."+uuid, user.Username, time.Hour*24)
 
 	return user.Username
+}
+
+func UsernameBySid(sid string) string {
+	if sid == "" {
+		return ""
+	}
+
+	var username string
+	if err := cache.Get("sid."+sid, &username); err == nil {
+		return username
+	}
+
+	s, err := SessionGet(sid)
+	if err != nil {
+		return ""
+	}
+
+	// update session
+	s.UpdatedAt = time.Now().Unix()
+	s.Update("updated_at")
+
+	cache.Set("sid."+sid, s.UserName, time.Second*30)
+
+	return s.UserName
 }
 
 func UserFillUUIDs() error {

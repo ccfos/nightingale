@@ -173,6 +173,7 @@ func Config(r *gin.Engine) {
 
 		// 获取用户、团队相关信息
 		v1.GET("/get-username-by-uuid", v1UsernameGetByUUID)
+		v1.GET("/get-username-by-sid", v1UsernameGetBySid)
 		v1.GET("/get-user-by-uuid", v1UserGetByUUID)
 		v1.GET("/get-users-by-uuids", v1UserGetByUUIDs)
 		v1.GET("/get-users-by-ids", v1UserGetByIds)

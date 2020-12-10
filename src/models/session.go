@@ -72,3 +72,9 @@ func SessionCleanup(ts int64, cookieName string) error {
 	_, err := DB["rdb"].Where("updated_at<? and cookie_name=?", ts, cookieName).Delete(new(Session))
 	return err
 }
+
+// unsafe for in.Data
+func (s *Session) Update(cols ...string) error {
+	_, err := DB["rdb"].Where("id=?", s.Sid).Cols(cols...).Update(s)
+	return err
+}

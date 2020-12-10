@@ -325,3 +325,8 @@ func userInvitePost(c *gin.Context) {
 
 	renderMessage(c, u.Save())
 }
+
+// v1UsernameGetBySid return username by session id
+func v1UsernameGetBySid(c *gin.Context) {
+	renderData(c, models.UsernameBySid(queryStr(c, "sid")), nil)
+}
