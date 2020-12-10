@@ -1,26 +1,22 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
 type Session struct {
-	Sid        string
-	Data_      string            `xorm:"data"`
-	Data       map[string]string `xorm:"-"`
-	UserName   string
-	CookieName string
-	CreatedAt  int64
-	UpdatedAt  int64
+	Sid       string
+	UserName  string
+	CreatedAt int64
+	UpdatedAt int64
 }
 
-func SessionAll(cookieName string) (int64, error) {
-	return DB["rdb"].Where("cookie_name=?", cookieName).Count(new(Session))
+func SessionAll() (int64, error) {
+	return DB["rdb"].Count(new(Session))
 }
 
-func SessionUserAll(cookieName, username string) (int64, error) {
-	return DB["rdb"].Where("cookie_name=? and user_name=?", cookieName, username).Count(new(Session))
+func SessionUserAll(username string) (int64, error) {
+	return DB["rdb"].Where("user_name=?", username).Count(new(Session))
 }
 
 func SessionGet(sid string) (*Session, error) {
@@ -33,22 +29,11 @@ func SessionGet(sid string) (*Session, error) {
 		return nil, fmt.Errorf("not found")
 	}
 
-	err = json.Unmarshal([]byte(obj.Data_), &obj.Data)
-	if err != nil {
-		return nil, err
-	}
-
 	return &obj, nil
 }
 
 func SessionInsert(in *Session) error {
-	b, err := json.Marshal(in.Data)
-	if err != nil {
-		return err
-	}
-	in.Data_ = string(b)
-
-	_, err = DB["rdb"].Insert(in)
+	_, err := DB["rdb"].Insert(in)
 	return err
 }
 
@@ -58,22 +43,15 @@ func SessionDel(sid string) error {
 }
 
 func SessionUpdate(in *Session) error {
-	b, err := json.Marshal(in.Data)
-	if err != nil {
-		return err
-	}
-	in.Data_ = string(b)
-
-	_, err = DB["rdb"].Where("sid=?", in.Sid).AllCols().Update(in)
+	_, err := DB["rdb"].Where("sid=?", in.Sid).AllCols().Update(in)
 	return err
 }
 
-func SessionCleanup(ts int64, cookieName string) error {
-	_, err := DB["rdb"].Where("updated_at<? and cookie_name=?", ts, cookieName).Delete(new(Session))
+func SessionCleanup(ts int64) error {
+	_, err := DB["rdb"].Where("updated_at<?", ts).Delete(new(Session))
 	return err
 }
 
-// unsafe for in.Data
 func (s *Session) Update(cols ...string) error {
 	_, err := DB["rdb"].Where("id=?", s.Sid).Cols(cols...).Update(s)
 	return err

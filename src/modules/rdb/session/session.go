@@ -187,11 +187,9 @@ func (p *Manager) getSessionStore(sid string, create bool) (*SessionStore, error
 	if sc == nil && create {
 		ts := time.Now().Unix()
 		sc = &models.Session{
-			Sid:        sid,
-			CookieName: p.config.CookieName,
-			CreatedAt:  ts,
-			UpdatedAt:  ts,
-			Data:       make(map[string]string),
+			Sid:       sid,
+			CreatedAt: ts,
+			UpdatedAt: ts,
 		}
 		err = p.insert(sc)
 	}
@@ -216,8 +214,6 @@ func (p *SessionStore) Set(key, value string) error {
 	switch strings.ToLower(key) {
 	case "username":
 		p.session.UserName = value
-	default:
-		p.session.Data[key] = value
 	}
 	return nil
 }
@@ -229,9 +225,8 @@ func (p *SessionStore) Get(key string) string {
 	switch strings.ToLower(key) {
 	case "username":
 		return p.session.UserName
-	default:
-		return p.session.Data[key]
 	}
+	return ""
 }
 
 func (p *SessionStore) CreatedAt() int64 {
@@ -242,7 +237,11 @@ func (p *SessionStore) CreatedAt() int64 {
 func (p *SessionStore) Delete(key string) error {
 	p.Lock()
 	defer p.Unlock()
-	delete(p.session.Data, key)
+	switch strings.ToLower(key) {
+	case "username":
+		p.session.UserName = ""
+	}
+
 	return nil
 }
 
@@ -251,7 +250,6 @@ func (p *SessionStore) Reset() error {
 	p.Lock()
 	defer p.Unlock()
 	p.session.UserName = ""
-	p.session.Data = make(map[string]string)
 	return nil
 }
 

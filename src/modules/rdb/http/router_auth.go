@@ -305,7 +305,6 @@ func authLogin(in loginInput) (user *models.User, err error) {
 }
 
 func authPostCheck(username string, login bool, user *models.User) (err error) {
-	cookieName := config.Config.HTTP.Session.CookieName
 	cf := cache.AuthConfig()
 	if user == nil {
 		if user, err = models.UserMustGet("username=?", username); err != nil {
@@ -347,7 +346,7 @@ retry:
 		user.UpdatedAt = now
 
 		if cf.MaxSessionNumber > 0 {
-			if n, err = models.SessionUserAll(cookieName, username); err != nil {
+			if n, err = models.SessionUserAll(username); err != nil {
 				return err
 			}
 

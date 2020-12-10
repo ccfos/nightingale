@@ -20,7 +20,7 @@ func newDbStorage(cf *config.SessionSection, opts *options) (storage, error) {
 			case <-opts.ctx.Done():
 				return
 			case <-t.C:
-				err := models.SessionCleanup(time.Now().Unix()-cache.AuthConfig().MaxConnIdelTime, cf.CookieName)
+				err := models.SessionCleanup(time.Now().Unix() - cache.AuthConfig().MaxConnIdelTime)
 				if err != nil {
 					logger.Errorf("session gc err %s", err)
 				}
@@ -36,7 +36,7 @@ type dbStorage struct {
 }
 
 func (p *dbStorage) all() int {
-	n, err := models.SessionAll(p.config.CookieName)
+	n, err := models.SessionAll()
 	if err != nil {
 		logger.Errorf("sessionAll() err %s", err)
 	}

@@ -21,14 +21,11 @@ CREATE TABLE `white_list` (
 
 CREATE TABLE `session` (
    `sid`         char(128) NOT NULL,
-   `data`        blob NULL,
-   `user_name`   varchar(64) DEFAULT '',
-   `cookie_name` char(128) DEFAULT '',
+   `username`   varchar(64) DEFAULT '',
    `created_at`  integer unsigned DEFAULT '0',
    `updated_at`  integer unsigned DEFAULT '0' NOT NULL,
    PRIMARY KEY (`sid`),
    KEY (`user_name`),
-   KEY (`cookie_name`),
    KEY (`updated_at`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8;
 
@@ -38,6 +35,6 @@ alter table user add `active_begin`  bigint       not null default 0 after login
 alter table user add `active_end`    bigint       not null default 0 after active_begin;
 alter table user add `locked_at`     bigint       not null default 0 after active_end;
 alter table user add `updated_at`    bigint       not null default 0 after locked_at;
-alter table user add `pwd_updated_at`    bigint       not null default 0 after updated_at;
-alter table user add `logged_at`    bigint       not null default 0 after pwd_updated_at;
-alter table user add  `passwords` varchar(512) not null default '' after password;
+alter table user add `pwd_updated_at` bigint      not null default 0 after updated_at;
+alter table user add `logged_at`     bigint       not null default 0 after pwd_updated_at;
+alter table user add `passwords`     varchar(512) not null default '' after password;
