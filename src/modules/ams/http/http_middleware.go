@@ -60,7 +60,7 @@ func mustUsername(c *gin.Context) string {
 }
 
 func sessionUsername(c *gin.Context) string {
-	return models.UsernameBySid(readSessionId(c))
+	return models.SessionGetWithCache(readSessionId(c))
 }
 
 func headerUsername(c *gin.Context) string {

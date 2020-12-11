@@ -191,6 +191,7 @@ func Config(r *gin.Engine) {
 
 		// session
 		v1.GET("/sessions/:sid", v1SessionGet)
+		v1.GET("/sessions/:sid/user", v1SessionGetUser)
 		v1.DELETE("/sessions/:sid", v1SessionDelete)
 
 		// 第三方系统同步权限表的数据

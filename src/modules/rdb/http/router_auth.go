@@ -768,7 +768,13 @@ func whiteListDel(c *gin.Context) {
 }
 
 func v1SessionGet(c *gin.Context) {
-	renderData(c, models.UsernameBySid(urlParamStr(c, "sid")), nil)
+	sess, err := models.SessionGetWithCache(urlParamStr(c, "sid"))
+	renderData(c, sess, err)
+}
+
+func v1SessionGetUser(c *gin.Context) {
+	user, err := models.SessionGetUserWithCache(urlParamStr(c, "sid"))
+	renderData(c, user, err)
 }
 
 func v1SessionDelete(c *gin.Context) {

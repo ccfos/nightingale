@@ -2,6 +2,9 @@ package models
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/toolkits/pkg/cache"
 )
 
 type Session struct {
@@ -56,4 +59,38 @@ func SessionCleanup(ts int64) error {
 func (s *Session) Update(cols ...string) error {
 	_, err := DB["rdb"].Where("id=?", s.Sid).Cols(cols...).Update(s)
 	return err
+}
+
+// SessionGetWithCache will update session.UpdatedAt
+func SessionGetWithCache(sid string) (*Session, error) {
+	if sid == "" {
+		return nil, fmt.Errorf("unable to get sid")
+	}
+
+	sess := &Session{}
+	if err := cache.Get("sid."+sid, &sess); err == nil {
+		return sess, nil
+	}
+
+	var err error
+	if sess, err = SessionGet(sid); err != nil {
+		return nil, fmt.Errorf("session not found")
+	}
+
+	// update session
+	sess.UpdatedAt = time.Now().Unix()
+	sess.Update("updated_at")
+
+	cache.Set("sid."+sid, sess, time.Second*30)
+
+	return sess, nil
+}
+
+func SessionGetUserWithCache(sid string) (*User, error) {
+	s, err := SessionGetWithCache(sid)
+	if err != nil {
+		return nil, err
+	}
+
+	return UserGet("username=?", s.Username)
 }

@@ -80,7 +80,7 @@ func getUserByToken(token string) (user *models.User, err error) {
 }
 
 func sessionUsername(c *gin.Context) string {
-	return models.UsernameBySid(readSessionId(c))
+	return models.SessionGetWithCache(readSessionId(c))
 }
 
 func readSessionId(c *gin.Context) string {

@@ -638,30 +638,6 @@ func UsernameByUUID(uuid string) string {
 	return user.Username
 }
 
-func UsernameBySid(sid string) string {
-	if sid == "" {
-		return ""
-	}
-
-	var username string
-	if err := cache.Get("sid."+sid, &username); err == nil {
-		return username
-	}
-
-	s, err := SessionGet(sid)
-	if err != nil {
-		return ""
-	}
-
-	// update session
-	s.UpdatedAt = time.Now().Unix()
-	s.Update("updated_at")
-
-	cache.Set("sid."+sid, s.Username, time.Second*30)
-
-	return s.Username
-}
-
 func UserFillUUIDs() error {
 	var users []User
 	err := DB["rdb"].Find(&users)
