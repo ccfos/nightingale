@@ -144,9 +144,9 @@ func Parse() error {
 		return err
 	}
 
-	if Config.HTTP.Session.CookieLifetime == 0 {
-		Config.HTTP.Session.CookieLifetime = 24 * 3600
-	}
+	// if Config.HTTP.Session.CookieLifetime == 0 {
+	// 	Config.HTTP.Session.CookieLifetime = 24 * 3600
+	// }
 
 	if Config.HTTP.Session.GcInterval == 0 {
 		Config.HTTP.Session.GcInterval = 60
