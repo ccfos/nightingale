@@ -112,7 +112,7 @@ func LdapLogin(user, pass string) (*User, error) {
 	if has {
 		if config.Config.LDAP.CoverAttributes {
 			_, err := DB["rdb"].Where("id=?", u.Id).Update(u)
-			return nil, err
+			return &u, err
 		} else {
 			return &u, err
 		}
