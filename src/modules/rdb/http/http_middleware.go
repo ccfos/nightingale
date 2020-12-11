@@ -138,26 +138,26 @@ func sessionUsername(c *gin.Context) string {
 	if !ok {
 		return ""
 	}
-	return s.Get("username")
+	return s.GetUsername()
 }
 
-func sessionSet(c *gin.Context, k, v string) {
+func sessionSetUsername(c *gin.Context, username string) {
 	s, ok := session.FromContext(c.Request.Context())
 	if !ok {
 		logger.Warningf("session.Start() err not found sessionStore")
 		return
 	}
-	if err := s.Set(k, v); err != nil {
-		logger.Warningf("session.Set() err %s", err)
+	if err := s.SetUsername(username); err != nil {
+		logger.Warningf("session.SetUsername() err %s", err)
 		return
 	}
 }
 
-func sessionGet(c *gin.Context, k string) string {
+func sessionGetUsername(c *gin.Context) string {
 	s, ok := session.FromContext(c.Request.Context())
 	if !ok {
 		logger.Warningf("session.Start() err not found sessionStore")
 		return ""
 	}
-	return s.Get(k)
+	return s.GetUsername()
 }

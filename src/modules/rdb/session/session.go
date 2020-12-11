@@ -208,25 +208,18 @@ type SessionStore struct {
 
 // Set value in mysql session.
 // it is temp value in map.
-func (p *SessionStore) Set(key, value string) error {
+func (p *SessionStore) SetUsername(username string) error {
 	p.Lock()
 	defer p.Unlock()
-	switch strings.ToLower(key) {
-	case "username":
-		p.session.UserName = value
-	}
+	p.session.Username = username
 	return nil
 }
 
 // Get value from mysql session
-func (p *SessionStore) Get(key string) string {
+func (p *SessionStore) GetUsername() string {
 	p.RLock()
 	defer p.RUnlock()
-	switch strings.ToLower(key) {
-	case "username":
-		return p.session.UserName
-	}
-	return ""
+	return p.session.Username
 }
 
 func (p *SessionStore) CreatedAt() int64 {
@@ -239,7 +232,7 @@ func (p *SessionStore) Delete(key string) error {
 	defer p.Unlock()
 	switch strings.ToLower(key) {
 	case "username":
-		p.session.UserName = ""
+		p.session.Username = ""
 	}
 
 	return nil
@@ -249,7 +242,7 @@ func (p *SessionStore) Delete(key string) error {
 func (p *SessionStore) Reset() error {
 	p.Lock()
 	defer p.Unlock()
-	p.session.UserName = ""
+	p.session.Username = ""
 	return nil
 }
 

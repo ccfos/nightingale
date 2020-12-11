@@ -657,9 +657,9 @@ func UsernameBySid(sid string) string {
 	s.UpdatedAt = time.Now().Unix()
 	s.Update("updated_at")
 
-	cache.Set("sid."+sid, s.UserName, time.Second*30)
+	cache.Set("sid."+sid, s.Username, time.Second*30)
 
-	return s.UserName
+	return s.Username
 }
 
 func UserFillUUIDs() error {

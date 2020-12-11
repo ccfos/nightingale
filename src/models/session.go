@@ -6,7 +6,7 @@ import (
 
 type Session struct {
 	Sid       string
-	UserName  string
+	Username  string
 	CreatedAt int64
 	UpdatedAt int64
 }
@@ -16,7 +16,7 @@ func SessionAll() (int64, error) {
 }
 
 func SessionUserAll(username string) (int64, error) {
-	return DB["rdb"].Where("user_name=?", username).Count(new(Session))
+	return DB["rdb"].Where("username=?", username).Count(new(Session))
 }
 
 func SessionGet(sid string) (*Session, error) {

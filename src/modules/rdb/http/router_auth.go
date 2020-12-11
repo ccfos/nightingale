@@ -97,7 +97,7 @@ func login(c *gin.Context) {
 	user, err := authLogin(in)
 	dangerous(err)
 
-	sessionSet(c, "username", user.Username)
+	sessionSetUsername(c, user.Username)
 
 	renderMessage(c, "")
 
@@ -110,7 +110,7 @@ func logout(c *gin.Context) {
 		if username == "" {
 			return
 		}
-		sessionSet(c, "username", "")
+		sessionSetUsername(c, "")
 		go models.LoginLogNew(username, c.ClientIP(), "out")
 	}()
 
@@ -180,7 +180,7 @@ func authCallbackV2(c *gin.Context) {
 	defer sessionUpdate(c)
 
 	logger.Debugf("sso.callback() successfully, set username %s", user.Username)
-	sessionSet(c, "username", user.Username)
+	sessionSetUsername(c, user.Username)
 	renderData(c, ret, nil)
 }
 
