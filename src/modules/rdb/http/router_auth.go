@@ -97,7 +97,7 @@ func login(c *gin.Context) {
 	user, err := authLogin(in)
 	dangerous(err)
 
-	sessionSetUsername(c, user.Username)
+	sessionLogin(c, user.Username, in.RemoteAddr)
 
 	renderMessage(c, "")
 
@@ -110,7 +110,7 @@ func logout(c *gin.Context) {
 		if username == "" {
 			return
 		}
-		sessionSetUsername(c, "")
+		sessionDestory(c)
 		go models.LoginLogNew(username, c.ClientIP(), "out")
 	}()
 
@@ -180,7 +180,7 @@ func authCallbackV2(c *gin.Context) {
 	defer sessionUpdate(c)
 
 	logger.Debugf("sso.callback() successfully, set username %s", user.Username)
-	sessionSetUsername(c, user.Username)
+	sessionLogin(c, user.Username, c.ClientIP())
 	renderData(c, ret, nil)
 }
 
@@ -473,6 +473,7 @@ func sendLoginCode(c *gin.Context) {
 func sendRstCode(c *gin.Context) {
 	var in sendCodeInput
 	bind(c, &in)
+	logger.Debugf("rst code input %#v", in)
 
 	msg, err := func() (string, error) {
 		if !config.Config.Redis.Enable {
@@ -764,4 +765,12 @@ func whiteListDel(c *gin.Context) {
 	dangerous(err)
 
 	renderMessage(c, wl.Del())
+}
+
+func v1SessionGet(c *gin.Context) {
+	renderData(c, models.UsernameBySid(urlParamStr(c, "sid")), nil)
+}
+
+func v1SessionDelete(c *gin.Context) {
+	renderMessage(c, models.SessionDel(urlParamStr(c, "sid")))
 }

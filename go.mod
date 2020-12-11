@@ -4,12 +4,10 @@ go 1.12
 
 require (
 	github.com/Shopify/sarama v1.27.1
-	github.com/apex/log v1.3.0
 	github.com/cespare/xxhash v1.1.0
 	github.com/codegangsta/negroni v1.0.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/dgryski/go-tsz v0.0.0-20180227144327-03b7d791f4fe
-	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/garyburd/redigo v1.6.2
 	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.6.3
@@ -26,7 +24,6 @@ require (
 	github.com/mojocn/base64Captcha v1.3.1
 	github.com/open-falcon/rrdlite v0.0.0-20200214140804-bf5829f786ad
 	github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f // indirect
-	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
 	github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62 // indirect
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/spaolacci/murmur3 v1.1.0
@@ -39,7 +36,6 @@ require (
 	go.uber.org/automaxprocs v1.3.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/text v0.3.3
-	google.golang.org/appengine v1.6.5
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/ldap.v3 v3.1.0

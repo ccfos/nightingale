@@ -172,8 +172,6 @@ func Config(r *gin.Engine) {
 		v1.GET("/can-do-node-ops", v1CandoNodeOps)
 
 		// 获取用户、团队相关信息
-		v1.GET("/get-username-by-uuid", v1UsernameGetByUUID)
-		v1.GET("/get-username-by-sid", v1UsernameGetBySid)
 		v1.GET("/get-user-by-uuid", v1UserGetByUUID)
 		v1.GET("/get-users-by-uuids", v1UserGetByUUIDs)
 		v1.GET("/get-users-by-ids", v1UserGetByIds)
@@ -190,6 +188,10 @@ func Config(r *gin.Engine) {
 
 		// 第三方系统获取某个用户的所有权限点
 		v1.GET("/perms/global", v1PermGlobalOps)
+
+		// session
+		v1.GET("/sessions/:sid", v1SessionGet)
+		v1.DELETE("/sessions/:sid", v1SessionDelete)
 
 		// 第三方系统同步权限表的数据
 		v1.GET("/table/sync/role-operation", v1RoleOperationGets)

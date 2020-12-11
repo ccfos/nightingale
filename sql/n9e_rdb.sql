@@ -344,7 +344,8 @@ CREATE TABLE `white_list` (
 
 CREATE TABLE `session` (
    `sid`         char(128) NOT NULL,
-   `username`   varchar(64) DEFAULT '',
+   `username`    varchar(64) DEFAULT '',
+   `remote_addr` varchar(32) DEFAULT '',
    `created_at`  integer unsigned DEFAULT '0',
    `updated_at`  integer unsigned DEFAULT '0' NOT NULL,
    PRIMARY KEY (`sid`),

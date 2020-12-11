@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -208,18 +207,32 @@ type SessionStore struct {
 
 // Set value in mysql session.
 // it is temp value in map.
-func (p *SessionStore) SetUsername(username string) error {
+func (p *SessionStore) Set(k, v string) error {
 	p.Lock()
 	defer p.Unlock()
-	p.session.Username = username
+	switch k {
+	case "username":
+		p.session.Username = v
+	case "remoteAddr":
+		p.session.RemoteAddr = v
+	default:
+		fmt.Errorf("unsupported session field %s", k)
+	}
 	return nil
 }
 
 // Get value from mysql session
-func (p *SessionStore) GetUsername() string {
+func (p *SessionStore) Get(k string) string {
 	p.RLock()
 	defer p.RUnlock()
-	return p.session.Username
+	switch k {
+	case "username":
+		return p.session.Username
+	case "remoteAddr":
+		return p.session.RemoteAddr
+	default:
+		return ""
+	}
 }
 
 func (p *SessionStore) CreatedAt() int64 {
@@ -227,15 +240,8 @@ func (p *SessionStore) CreatedAt() int64 {
 }
 
 // Delete value in mysql session
-func (p *SessionStore) Delete(key string) error {
-	p.Lock()
-	defer p.Unlock()
-	switch strings.ToLower(key) {
-	case "username":
-		p.session.Username = ""
-	}
-
-	return nil
+func (p *SessionStore) Delete(k string) error {
+	return p.Set(k, "")
 }
 
 // Reset clear all values in mysql session
@@ -243,6 +249,7 @@ func (p *SessionStore) Reset() error {
 	p.Lock()
 	defer p.Unlock()
 	p.session.Username = ""
+	p.session.RemoteAddr = ""
 	return nil
 }
 

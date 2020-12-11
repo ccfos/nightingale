@@ -5,10 +5,11 @@ import (
 )
 
 type Session struct {
-	Sid       string
-	Username  string
-	CreatedAt int64
-	UpdatedAt int64
+	Sid        string
+	Username   string
+	RemoteAddr string
+	CreatedAt  int64
+	UpdatedAt  int64
 }
 
 func SessionAll() (int64, error) {
