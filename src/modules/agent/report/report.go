@@ -63,7 +63,8 @@ func gatherFields(m map[string]string) (map[string]string, error) {
 	for k, v := range m {
 		output, err := exec(v)
 		if err != nil {
-			return nil, err
+			logger.Errorf("get %s by exec %v err:%v", k, v, err)
+			continue
 		}
 		ret[k] = output
 	}
