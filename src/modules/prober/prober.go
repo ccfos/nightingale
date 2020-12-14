@@ -13,9 +13,6 @@ import (
 	"github.com/didi/nightingale/src/common/report"
 	"github.com/didi/nightingale/src/toolkits/stats"
 
-	// "github.com/didi/nightingale/src/modules/prober/backend/query"
-	// "github.com/didi/nightingale/src/modules/prober/backend/redi"
-	// "github.com/didi/nightingale/src/modules/prober/backend/transfer"
 	"github.com/didi/nightingale/src/modules/prober/cache"
 	"github.com/didi/nightingale/src/modules/prober/config"
 	"github.com/didi/nightingale/src/modules/prober/core"

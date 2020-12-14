@@ -18,7 +18,7 @@ import (
 	"github.com/didi/nightingale/src/modules/prober/cache"
 )
 
-func Push(metricItems []*dataobj.MetricValue) error {
+func Push(metricItems []*dataobj.MetricValue) {
 	var err error
 	var items []*dataobj.MetricValue
 	now := time.Now().Unix()
@@ -63,7 +63,7 @@ func Push(metricItems []*dataobj.MetricValue) error {
 					err = fmt.Errorf("some item push err: %s", reply.Msg)
 					logger.Error(err)
 				}
-				return err
+				return
 			}
 		}
 
@@ -74,8 +74,6 @@ func Push(metricItems []*dataobj.MetricValue) error {
 			break
 		}
 	}
-
-	return err
 }
 
 func rpcCall(addr string, items []*dataobj.MetricValue) (dataobj.TransferResp, error) {

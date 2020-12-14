@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/didi/nightingale/src/common/dataobj"
 )
 
 const (
@@ -20,6 +22,7 @@ type CollectRule struct {
 	Region      string          `json:"region"`
 	Comment     string          `json:"comment"`
 	Data        json.RawMessage `json:"data"`
+	Tags        string          `json:"tags" description:"k1=v1,k2=v2,k3=v3,..."`
 	Creator     string          `json:"creator" description:"just for output"`
 	LastUpdator string          `xorm:"last_updator" json:"last_updator" description:"just for output"`
 	Created     time.Time       `xorm:"updated" json:"created" description:"just for output"`
@@ -37,6 +40,10 @@ func (p *CollectRule) Validate(v ...interface{}) error {
 
 	if p.Step == 0 {
 		p.Step = defaultStep
+	}
+
+	if _, err := dataobj.SplitTagsString(p.Tags); err != nil {
+		return err
 	}
 
 	if len(v) > 0 && v[0] != nil {

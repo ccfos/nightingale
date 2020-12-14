@@ -69,7 +69,7 @@ func (m *MetricValue) CheckValidity(now int64) (err error) {
 	}
 
 	if m.Nid == "" && m.Endpoint == "" {
-		err = fmt.Errorf("nid or endpoint should not be empty")
+		err = fmt.Errorf("nid and endpoint should not be empty")
 		return
 	}
 
@@ -133,7 +133,7 @@ func (m *MetricValue) CheckValidity(now int64) (err error) {
 		k = filterString(k)
 		v = filterString(v)
 		if len(k) == 0 || len(v) == 0 {
-			err = fmt.Errorf("tag key and value should not be empty")
+			err = fmt.Errorf("tag key and value should not be empty key:%s value:%s", k, v)
 			return
 		}
 

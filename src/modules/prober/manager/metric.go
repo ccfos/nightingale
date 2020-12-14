@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/influxdata/telegraf"
@@ -282,93 +283,94 @@ func (m *metric) Drop() {
 }
 
 // Convert field to a supported type or nil if unconvertible
+// tranfer to float64
 func convertField(v interface{}) interface{} {
 	switch v := v.(type) {
 	case float64:
 		return v
 	case int64:
-		return v
+		return float64(v)
 	case string:
-		return v
+		return atof(v)
 	case bool:
-		return v
+		return btof(v)
 	case int:
-		return int64(v)
+		return float64(v)
 	case uint:
-		return uint64(v)
+		return float64(v)
 	case uint64:
-		return uint64(v)
+		return float64(v)
 	case []byte:
-		return string(v)
+		return atof(string(v))
 	case int32:
-		return int64(v)
+		return float64(v)
 	case int16:
-		return int64(v)
+		return float64(v)
 	case int8:
-		return int64(v)
+		return float64(v)
 	case uint32:
-		return uint64(v)
+		return float64(v)
 	case uint16:
-		return uint64(v)
+		return float64(v)
 	case uint8:
-		return uint64(v)
+		return float64(v)
 	case float32:
 		return float64(v)
 	case *float64:
 		if v != nil {
-			return *v
+			return float64(*v)
 		}
 	case *int64:
 		if v != nil {
-			return *v
+			return float64(*v)
 		}
 	case *string:
 		if v != nil {
-			return *v
+			return atof(*v)
 		}
 	case *bool:
 		if v != nil {
-			return *v
+			return btof(*v)
 		}
 	case *int:
 		if v != nil {
-			return int64(*v)
+			return float64(*v)
 		}
 	case *uint:
 		if v != nil {
-			return uint64(*v)
+			return float64(*v)
 		}
 	case *uint64:
 		if v != nil {
-			return uint64(*v)
+			return float64(*v)
 		}
 	case *[]byte:
 		if v != nil {
-			return string(*v)
+			return atof(string(*v))
 		}
 	case *int32:
 		if v != nil {
-			return int64(*v)
+			return float64(*v)
 		}
 	case *int16:
 		if v != nil {
-			return int64(*v)
+			return float64(*v)
 		}
 	case *int8:
 		if v != nil {
-			return int64(*v)
+			return float64(*v)
 		}
 	case *uint32:
 		if v != nil {
-			return uint64(*v)
+			return float64(*v)
 		}
 	case *uint16:
 		if v != nil {
-			return uint64(*v)
+			return float64(*v)
 		}
 	case *uint8:
 		if v != nil {
-			return uint64(*v)
+			return float64(*v)
 		}
 	case *float32:
 		if v != nil {
@@ -378,4 +380,19 @@ func convertField(v interface{}) interface{} {
 		return nil
 	}
 	return nil
+}
+
+func atof(s string) interface{} {
+	if f, err := strconv.ParseFloat(s, 64); err != nil {
+		return nil
+	} else {
+		return f
+	}
+}
+
+func btof(b bool) interface{} {
+	if b {
+		return float64(1)
+	}
+	return float64(0)
 }
