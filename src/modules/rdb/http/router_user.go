@@ -221,10 +221,6 @@ func userDel(c *gin.Context) {
 	renderMessage(c, err)
 }
 
-func v1UsernameGetByUUID(c *gin.Context) {
-	renderData(c, models.UsernameByUUID(queryStr(c, "uuid")), nil)
-}
-
 func v1UserGetByUUID(c *gin.Context) {
 	user, err := models.UserGet("uuid=?", queryStr(c, "uuid"))
 	dangerous(err)

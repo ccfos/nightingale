@@ -5,8 +5,15 @@ logger:
 
 http:
   mode: release
-  cookieDomain: ""
-  cookieName: ecmc-user
+  session:
+    cookieName: ecmc-sid
+    domain: ""
+    httpOnly: true
+    gcInterval: 60
+    cookieLifetime: 86400 # 单位秒，0: 与浏览器相同
+
+i18n:
+  lang: en
 
 sso:
   enable: false
@@ -23,7 +30,10 @@ sso:
   coverAttributes: false
   stateExpiresIn: 300
 
-captcha: false
+auth:
+  captcha: false
+  whiteList: true
+  userExpire: false
 
 tokens:
   - rdb-builtin-token

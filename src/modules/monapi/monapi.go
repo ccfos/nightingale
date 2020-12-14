@@ -18,6 +18,7 @@ import (
 	"github.com/didi/nightingale/src/modules/monapi/scache"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 
+	_ "github.com/didi/nightingale/src/modules/monapi/plugins/all"
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/toolkits/pkg/cache"

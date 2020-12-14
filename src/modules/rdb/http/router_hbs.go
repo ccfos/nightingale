@@ -23,12 +23,14 @@ func heartBeat(c *gin.Context) {
 			Module:   rev.Module,
 			RPCPort:  rev.RPCPort,
 			HTTPPort: rev.HTTPPort,
+			Region:   rev.Region,
 			TS:       now,
 		}
 		errors.Dangerous(instance.Add())
 	} else {
 		instance.TS = now
 		instance.HTTPPort = rev.HTTPPort
+		instance.Region = rev.Region
 		errors.Dangerous(instance.Update())
 	}
 
