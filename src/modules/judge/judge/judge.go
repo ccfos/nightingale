@@ -86,7 +86,7 @@ func ToJudge(historyMap *cache.JudgeItemMap, key string, val *dataobj.JudgeItem,
 		}
 	} else { //与条件
 		for _, expr := range stra.Exprs {
-			respData, err := GetData(stra, expr, val, now, true)
+			respData, err := GetData(stra, expr, val, now)
 			if err != nil {
 				logger.Errorf("stra:%+v get query data err:%v", stra, err)
 				return
@@ -130,7 +130,7 @@ func ToJudge(historyMap *cache.JudgeItemMap, key string, val *dataobj.JudgeItem,
 		Hashid:    getHashId(stra.Id, val),
 	}
 
-	sendEventIfNeed(historyData, statusArr, event, stra)
+	sendEventIfNeed(statusArr, event, stra)
 }
 
 func Judge(stra *models.Stra, exp models.Exp, historyData []*dataobj.HistoryData, firstItem *dataobj.JudgeItem, now int64) (history dataobj.History, info string, lastValue string, status bool) {
@@ -188,7 +188,7 @@ func judgeItemWithStrategy(stra *models.Stra, historyData []*dataobj.HistoryData
 			stra.AlertDur = 7 * firstItem.Step
 		}
 
-		respItems, err := GetData(stra, exp, firstItem, now-int64(exp.Params[0]), true)
+		respItems, err := GetData(stra, exp, firstItem, now-int64(exp.Params[0]))
 		if err != nil {
 			logger.Errorf("stra:%v %+v get compare data err:%v", stra.Id, exp, err)
 			return
@@ -218,45 +218,30 @@ func judgeItemWithStrategy(stra *models.Stra, historyData []*dataobj.HistoryData
 	return fn.Compute(historyData)
 }
 
-func GetData(stra *models.Stra, exp models.Exp, firstItem *dataobj.JudgeItem, now int64, sameTag bool) ([]*dataobj.TsdbQueryResponse, error) {
+func GetData(stra *models.Stra, exp models.Exp, firstItem *dataobj.JudgeItem, now int64) ([]*dataobj.TsdbQueryResponse, error) {
 	var reqs []*dataobj.QueryData
 	var respData []*dataobj.TsdbQueryResponse
 	var err error
-	if sameTag { //与条件要求是相同tag的场景，不需要查询索引
-		if firstItem.Tags != "" && len(firstItem.TagsMap) == 0 {
-			firstItem.TagsMap = str.DictedTagstring(firstItem.Tags)
-		}
-		//+1 防止由于查询不到最新点，导致点数不够
-		start := now - int64(stra.AlertDur) - int64(firstItem.Step) + 1
+	if firstItem.Tags != "" && len(firstItem.TagsMap) == 0 {
+		firstItem.TagsMap = str.DictedTagstring(firstItem.Tags)
+	}
 
-		queryParam, err := query.NewQueryRequest(firstItem.Nid, firstItem.Endpoint, exp.Metric, firstItem.TagsMap, firstItem.Step, start, now)
-		if err != nil {
-			return respData, err
-		}
+	//多查一些数据，防止由于查询不到最新点，导致点数不够
+	start := now - int64(stra.AlertDur) - int64(firstItem.Step) - 60
 
-		reqs = append(reqs, queryParam)
-	} /*else if firstItem != nil { //点驱动告警策略的场景
-		var nids, endpoints []string
-		if firstItem.Nid != "" {
-			nids = []string{firstItem.Nid}
-		} else if firstItem.Endpoint != "" {
-			endpoints = []string{firstItem.Endpoint}
-		}
-		reqs = GetReqs(stra, exp.Metric, nids, endpoints, now)
-		//} else { //nodata的场景
-		//	reqs = GetReqs(stra, exp.Metric, stra.Nids, stra.Endpoints, now)
-	}*/
+	queryParam, err := query.NewQueryRequest(firstItem.Nid, firstItem.Endpoint, exp.Metric, firstItem.TagsMap, firstItem.Step, start, now)
+	if err != nil {
+		return respData, err
+	}
+
+	reqs = append(reqs, queryParam)
 
 	if len(reqs) == 0 {
 		return respData, err
 	}
 
-	respData = query.Query(reqs, stra.Id, exp.Func)
+	respData = query.Query(reqs, stra, exp.Func)
 
-	if len(respData) < 1 {
-		stats.Counter.Set("get.data.null", 1)
-		err = fmt.Errorf("get query data is null")
-	}
 	return respData, err
 }
 
@@ -292,46 +277,31 @@ func GetReqs(stra *models.Stra, metric string, nids, endpoints []string, now int
 
 	lostSeries := []cache.Series{}
 	for _, index := range indexsData {
-		if index.Step == 0 {
-			//没有查到索引的 endpoint+metric 也要记录，给nodata处理
+		if len(index.Tags) == 0 {
+			hash := getHash(index, "")
 			s := cache.Series{
 				Nid:      index.Nid,
 				Endpoint: index.Endpoint,
 				Metric:   index.Metric,
 				Tag:      "",
-				Step:     10,
-				Dstype:   "GAUGE",
+				Step:     index.Step,
+				Dstype:   index.Dstype,
 				TS:       now,
 			}
-			lostSeries = append(lostSeries, s)
+			cache.SeriesMap.Set(stra.Id, hash, s)
 		} else {
-			if len(index.Tags) == 0 {
-				hash := getHash(index, "")
+			for _, tag := range index.Tags {
+				hash := getHash(index, tag)
 				s := cache.Series{
 					Nid:      index.Nid,
 					Endpoint: index.Endpoint,
 					Metric:   index.Metric,
-					Tag:      "",
+					Tag:      tag,
 					Step:     index.Step,
 					Dstype:   index.Dstype,
 					TS:       now,
 				}
 				cache.SeriesMap.Set(stra.Id, hash, s)
-			} else {
-				for _, tag := range index.Tags {
-					hash := getHash(index, tag)
-					s := cache.Series{
-						Nid:      index.Nid,
-						Endpoint: index.Endpoint,
-						Metric:   index.Metric,
-						Tag:      tag,
-						Step:     index.Step,
-						Dstype:   index.Dstype,
-						TS:       now,
-					}
-					cache.SeriesMap.Set(stra.Id, hash, s)
-				}
-
 			}
 		}
 	}
@@ -397,7 +367,7 @@ func GetReqs(stra *models.Stra, metric string, nids, endpoints []string, now int
 	return reqs
 }
 
-func sendEventIfNeed(historyData []*dataobj.HistoryData, status []bool, event *dataobj.Event, stra *models.Stra) {
+func sendEventIfNeed(status []bool, event *dataobj.Event, stra *models.Stra) {
 	isTriggered := true
 	for _, s := range status {
 		isTriggered = isTriggered && s

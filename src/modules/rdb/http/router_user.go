@@ -145,12 +145,12 @@ func userProfilePut(c *gin.Context) {
 	}
 
 	if f.Typ != target.Typ {
-		arr = append(arr, fmt.Sprintf("typ: %s -> %s", target.Typ, f.Typ))
+		arr = append(arr, fmt.Sprintf("typ: %d -> %d", target.Typ, f.Typ))
 		target.Typ = f.Typ
 	}
 
 	if f.Status != target.Status {
-		arr = append(arr, fmt.Sprintf("typ: %s -> %s", target.Status, f.Status))
+		arr = append(arr, fmt.Sprintf("typ: %d -> %d", target.Status, f.Status))
 		target.Status = f.Status
 	}
 

@@ -1,7 +1,6 @@
 {
   "zh": {
     "stra not found": "聚合策略为找到",
-    "unauthorized": "用户未授权",
     "same stra name %s in node": "同节点下策略名称 %s 已存在",
     "collect type not support": "采集类型不合法",
     "[%s] is blank": "参数[%s]值不能为空",
