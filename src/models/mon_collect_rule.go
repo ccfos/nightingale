@@ -17,7 +17,7 @@ type CollectRule struct {
 	Nid         int64           `json:"nid"`
 	Step        int             `json:"step" description:"interval"`
 	Timeout     int             `json:"timeout"`
-	CollectType string          `json:"collect_type" description:"just for output"`
+	CollectType string          `json:"collect_type" description:"plugin name"`
 	Name        string          `json:"name"`
 	Region      string          `json:"region"`
 	Comment     string          `json:"comment"`

@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/modules/prober/cache"
@@ -17,15 +16,13 @@ import (
 )
 
 type manager struct {
-	ctx     context.Context
-	cache   *cache.CollectRuleCache
-	config  *config.ConfYaml
-	heap    ruleSummaryHeap
-	index   map[int64]*ruleEntity // add at cache.C , del at executeAt check
-	worker  []worker
-	tx      chan *ruleEntity
-	metrics chan *dataobj.MetricValue
-	// acc     telegraf.Accumulator
+	ctx    context.Context
+	cache  *cache.CollectRuleCache
+	config *config.ConfYaml
+	heap   ruleSummaryHeap
+	index  map[int64]*ruleEntity // add at cache.C , del at executeAt check
+	worker []worker
+	tx     chan *ruleEntity
 }
 
 func NewManager(cfg *config.ConfYaml, cache *cache.CollectRuleCache) *manager {
@@ -39,7 +36,6 @@ func NewManager(cfg *config.ConfYaml, cache *cache.CollectRuleCache) *manager {
 func (p *manager) Start(ctx context.Context) error {
 	workerProcesses := p.config.WorkerProcesses
 
-	p.metrics = make(chan *dataobj.MetricValue, 100)
 	p.ctx = ctx
 	p.tx = make(chan *ruleEntity, 1)
 	heap.Init(&p.heap)
@@ -75,36 +71,6 @@ func (p *manager) loop() {
 			case <-tick.C:
 				if err := p.schedule(); err != nil {
 					log.Printf("manager.schedule err %s", err)
-				}
-			}
-		}
-	}()
-
-	// sender
-	go func() {
-		tick := time.NewTicker(1 * time.Second)
-		defer tick.Stop()
-		metrics := make([]*dataobj.MetricValue, 0, 100)
-
-		push := func() {
-			core.Push(metrics)
-			metrics = metrics[:0]
-		}
-		for {
-			select {
-			case <-p.ctx.Done():
-				return
-			case metric := <-p.metrics:
-				if metric == nil {
-					continue
-				}
-				metrics = append(metrics, metric)
-				if len(metrics) > 99 {
-					push()
-				}
-			case <-tick.C:
-				if len(metrics) > 0 {
-					push()
 				}
 			}
 		}
@@ -162,7 +128,7 @@ func (p *manager) SyncRules() error {
 }
 
 func (p *manager) AddRule(rule *models.CollectRule) error {
-	ruleEntity, err := newRuleEntity(rule, p.metrics)
+	ruleEntity, err := newRuleEntity(rule)
 	if err != nil {
 		return err
 	}
@@ -192,7 +158,6 @@ type worker struct {
 	ctx   context.Context
 	cache *cache.CollectRuleCache
 	rx    chan *ruleEntity
-	//acc   telegraf.Accumulator
 }
 
 func (p *worker) loop(id int) {
@@ -211,5 +176,19 @@ func (p *worker) loop(id int) {
 }
 
 func (p *worker) do(entity *ruleEntity) error {
-	return entity.Input.Gather(entity)
+	entity.metrics = entity.metrics[:0]
+
+	// telegraf
+	err := entity.Input.Gather(entity)
+	if len(entity.metrics) == 0 {
+		return err
+	}
+
+	// eval expression metrics
+	entity.calc()
+
+	// send
+	core.Push(entity.metrics)
+
+	return err
 }

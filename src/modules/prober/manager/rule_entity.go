@@ -3,6 +3,7 @@ package manager
 import (
 	"log"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/didi/nightingale/src/common/dataobj"
@@ -14,14 +15,15 @@ import (
 
 // not thread-safe
 type ruleEntity struct {
+	sync.RWMutex
 	telegraf.Input
 	rule      *models.CollectRule
 	tags      map[string]string
-	metrics   chan *dataobj.MetricValue
 	precision time.Duration
+	metrics   []*dataobj.MetricValue
 }
 
-func newRuleEntity(rule *models.CollectRule, metrics chan *dataobj.MetricValue) (*ruleEntity, error) {
+func newRuleEntity(rule *models.CollectRule) (*ruleEntity, error) {
 	c, err := collector.GetCollector(rule.CollectType)
 	if err != nil {
 		return nil, err
@@ -41,9 +43,46 @@ func newRuleEntity(rule *models.CollectRule, metrics chan *dataobj.MetricValue) 
 		Input:     input,
 		rule:      rule,
 		tags:      tags,
-		metrics:   metrics,
+		metrics:   []*dataobj.MetricValue{},
 		precision: time.Second,
 	}, nil
+}
+
+// calc metrics with expression
+func (p *ruleEntity) calc() error {
+	if len(p.metrics) == 0 {
+		return nil
+	}
+	sample := p.metrics[0]
+
+	configs, ok := cache.GetMetricExprs(p.rule.CollectType)
+	if !ok {
+		return nil
+	}
+
+	vars := map[string]float64{}
+	for _, v := range p.metrics {
+		vars[v.Metric] = v.Value
+	}
+
+	// TODO: add some variable from system or rule
+	for _, config := range configs {
+		f, err := config.Calc(vars)
+		if err != nil {
+			continue
+		}
+		p.metrics = append(p.metrics, &dataobj.MetricValue{
+			Nid:          sample.Nid,
+			Metric:       config.Name,
+			Timestamp:    sample.Timestamp,
+			Step:         sample.Step,
+			CounterType:  config.Type,
+			TagsMap:      sample.TagsMap,
+			Value:        f,
+			ValueUntyped: f,
+		})
+	}
+	return nil
 }
 
 func (p *ruleEntity) update(rule *models.CollectRule) error {
@@ -162,10 +201,14 @@ func (p *ruleEntity) AddHistogram(
 func (p *ruleEntity) AddMetric(m telegraf.Metric) {
 	m.SetTime(m.Time().Round(p.precision))
 	if metrics := p.MakeMetric(m); m != nil {
-		for _, m := range metrics {
-			p.metrics <- m
-		}
+		p.pushMetrics(metrics)
 	}
+}
+
+func (p *ruleEntity) pushMetrics(metrics []*dataobj.MetricValue) {
+	p.Lock()
+	defer p.Unlock()
+	p.metrics = append(p.metrics, metrics...)
 }
 
 func (p *ruleEntity) addFields(
@@ -180,9 +223,7 @@ func (p *ruleEntity) addFields(
 		return
 	}
 	if metrics := p.MakeMetric(m); m != nil {
-		for _, m := range metrics {
-			p.metrics <- m
-		}
+		p.pushMetrics(metrics)
 	}
 }
 

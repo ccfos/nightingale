@@ -1,4 +1,114 @@
 metrics:
+  - name: mysql_queries
+    type: COUNTER
+  - name: mysql_transactions
+    type: COUNTER
+    expr: mysql_com_commit + mysql_com_rollback
+  - name: mysql_threads_running
+    type: GAUGE
+    comment: "并发数"
+  - name: mysql_threads_connected
+    type: GAUGE
+    comment: "当前连接数"
+  - name: mysql_variables_max_connections
+    type: GAUGE
+    comment: "最大连接数"
+  - name: mysql_connections_threshold
+    type: GAUGE
+    expr: mysql_threads_connected / mysql_variables_max_connections
+    comment: "连接数阈值 < 0.8"
+  - name: mysql_innodb_buffer_pool_read_requests
+    type: COUNTER
+    comment: "innodb缓冲池查询总数"
+  - name: mysql_innodb_buffer_pool_reads
+    type: COUNTER
+    comment: "innodb从磁盘查询数"
+  - name: mysql_innodb_buffer_read_threshold
+    type: COUNTER
+    expr: (mysql_innodb_buffer_pool_read_requests - mysql_innodb_buffer_pool_reads) / mysql_innodb_buffer_pool_read_requests
+    comment: "磁盘查询报警阈值 < 0.95"
+  - name: mysql_binary_files_count
+    type: COUNTER
+  - name: mysql_binary_size_bytes
+    type: COUNTER
+  - name: mysql_binlog_bytes_written
+    type: COUNTER
+  - name: mysql_binlog_cache_disk_use
+    type: COUNTER
+  - name: mysql_binlog_cache_use
+    type: COUNTER
+  - name: mysql_binlog_commits
+    type: COUNTER
+  - name: mysql_com_begin
+    type: COUNTER
+  - name: mysql_com_binlog
+    type: COUNTER
+  - name: mysql_com_commit
+    type: COUNTER
+  - name: mysql_com_create_table
+    type: COUNTER
+  - name: mysql_com_delete
+    type: COUNTER
+  - name: mysql_com_delete_multi
+    type: COUNTER
+  - name: mysql_com_drop_table
+    type: COUNTER
+  - name: mysql_com_empty_query
+    type: COUNTER
+  - name: mysql_com_execute_sql
+    type: COUNTER
+  - name: mysql_com_flush
+    type: COUNTER
+  - name: mysql_com_insert
+    type: COUNTER
+  - name: mysql_com_lock_tables
+    type: COUNTER
+  - name: mysql_com_rollback
+    type: COUNTER
+  - name: mysql_com_stmt_close
+    type: COUNTER
+  - name: mysql_com_stmt_execute
+    type: COUNTER
+  - name: mysql_com_stmt_prepare
+    type: COUNTER
+  - name: mysql_com_stmt_reprepare
+    type: COUNTER
+  - name: mysql_com_stmt_reset
+    type: COUNTER
+  - name: mysql_com_stmt_fetch
+    type: COUNTER
+  - name: mysql_com_update
+    type: COUNTER
+  - name: mysql_com_update_multi
+    type: COUNTER
+  - name: mysql_compression
+    type: COUNTER
+  - name: mysql_connections
+    type: GAUGE
+  - name: mysql_max_used_connections
+    type: COUNTER
+  - name: mysql_open_files
+    type: GAUGE
+  - name: mysql_open_streams
+    type: GAUGE
+  - name: mysql_open_tables
+    type: GAUGE
+  - name: mysql_opened_files
+    type: COUNTER
+  - name: mysql_opened_table_definitions
+    type: COUNTER
+  - name: mysql_opened_tables
+    type: COUNTER
+  - name: mysql_opened_views
+    type: COUNTER
+  - name: mysql_rows_read
+    type: COUNTER
+  - name: mysql_rows_sent
+    type: COUNTER
+  - name: mysql_sort_rows
+    type: COUNTER
+
+trash:
   - name: mysql_aborted_clients
     type: COUNTER
     comment: "mysql aborted clients number"
@@ -22,13 +132,6 @@ metrics:
     type: COUNTER
   - name: mysql_aria_transaction_log_syncs
     type: COUNTER
-trash:
-  - name: mysql_binary_files_count
-  - name: mysql_binary_size_bytes
-  - name: mysql_binlog_bytes_written
-  - name: mysql_binlog_cache_disk_use
-  - name: mysql_binlog_cache_use
-  - name: mysql_binlog_commits
   - name: mysql_binlog_group_commits
   - name: mysql_binlog_snapshot_position
   - name: mysql_binlog_stmt_cache_disk_use
@@ -47,28 +150,22 @@ trash:
   - name: mysql_com_alter_tablespace
   - name: mysql_com_analyze
   - name: mysql_com_assign_to_keycache
-  - name: mysql_com_begin
-  - name: mysql_com_binlog
   - name: mysql_com_call_procedure
   - name: mysql_com_change_db
   - name: mysql_com_change_master
   - name: mysql_com_check
   - name: mysql_com_checksum
-  - name: mysql_com_commit
   - name: mysql_com_create_db
   - name: mysql_com_create_event
   - name: mysql_com_create_function
   - name: mysql_com_create_index
   - name: mysql_com_create_procedure
   - name: mysql_com_create_server
-  - name: mysql_com_create_table
   - name: mysql_com_create_trigger
   - name: mysql_com_create_udf
   - name: mysql_com_create_user
   - name: mysql_com_create_view
   - name: mysql_com_dealloc_sql
-  - name: mysql_com_delete
-  - name: mysql_com_delete_multi
   - name: mysql_com_do
   - name: mysql_com_drop_db
   - name: mysql_com_drop_event
@@ -76,24 +173,18 @@ trash:
   - name: mysql_com_drop_index
   - name: mysql_com_drop_procedure
   - name: mysql_com_drop_server
-  - name: mysql_com_drop_table
   - name: mysql_com_drop_trigger
   - name: mysql_com_drop_user
   - name: mysql_com_drop_view
-  - name: mysql_com_empty_query
-  - name: mysql_com_execute_sql
-  - name: mysql_com_flush
   - name: mysql_com_grant
   - name: mysql_com_ha_close
   - name: mysql_com_ha_open
   - name: mysql_com_ha_read
   - name: mysql_com_help
-  - name: mysql_com_insert
   - name: mysql_com_insert_select
   - name: mysql_com_install_plugin
   - name: mysql_com_kill
   - name: mysql_com_load
-  - name: mysql_com_lock_tables
   - name: mysql_com_optimize
   - name: mysql_com_preload_keys
   - name: mysql_com_prepare_sql
@@ -109,7 +200,6 @@ trash:
   - name: mysql_com_resignal
   - name: mysql_com_revoke
   - name: mysql_com_revoke_all
-  - name: mysql_com_rollback
   - name: mysql_com_rollback_to_savepoint
   - name: mysql_com_savepoint
   - name: mysql_com_select
@@ -161,26 +251,16 @@ trash:
   - name: mysql_com_signal
   - name: mysql_com_slave_start
   - name: mysql_com_slave_stop
-  - name: mysql_com_stmt_close
-  - name: mysql_com_stmt_execute
-  - name: mysql_com_stmt_fetch
-  - name: mysql_com_stmt_prepare
-  - name: mysql_com_stmt_reprepare
-  - name: mysql_com_stmt_reset
   - name: mysql_com_stmt_send_long_data
   - name: mysql_com_truncate
   - name: mysql_com_uninstall_plugin
   - name: mysql_com_unlock_tables
-  - name: mysql_com_update
-  - name: mysql_com_update_multi
   - name: mysql_com_xa_commit
   - name: mysql_com_xa_end
   - name: mysql_com_xa_prepare
   - name: mysql_com_xa_recover
   - name: mysql_com_xa_rollback
   - name: mysql_com_xa_start
-  - name: mysql_compression
-  - name: mysql_connections
   - name: mysql_cpu_time
   - name: mysql_created_tmp_disk_tables
   - name: mysql_created_tmp_files
@@ -244,8 +324,6 @@ trash:
   - name: mysql_innodb_buffer_pool_read_ahead
   - name: mysql_innodb_buffer_pool_read_ahead_evicted
   - name: mysql_innodb_buffer_pool_read_ahead_rnd
-  - name: mysql_innodb_buffer_pool_read_requests
-  - name: mysql_innodb_buffer_pool_reads
   - name: mysql_innodb_buffer_pool_wait_free
   - name: mysql_innodb_buffer_pool_write_requests
   - name: mysql_innodb_checkpoint_age
@@ -332,16 +410,8 @@ trash:
   - name: mysql_key_write_requests
   - name: mysql_key_writes
   - name: mysql_last_query_cost
-  - name: mysql_max_used_connections
   - name: mysql_not_flushed_delayed_rows
-  - name: mysql_open_files
-  - name: mysql_open_streams
   - name: mysql_open_table_definitions
-  - name: mysql_open_tables
-  - name: mysql_opened_files
-  - name: mysql_opened_table_definitions
-  - name: mysql_opened_tables
-  - name: mysql_opened_views
   - name: mysql_performance_schema_cond_classes_lost
   - name: mysql_performance_schema_cond_instances_lost
   - name: mysql_performance_schema_file_classes_lost
@@ -416,10 +486,7 @@ trash:
   - name: mysql_qcache_not_cached
   - name: mysql_qcache_queries_in_cache
   - name: mysql_qcache_total_blocks
-  - name: mysql_queries
   - name: mysql_questions
-  - name: mysql_rows_read
-  - name: mysql_rows_sent
   - name: mysql_rows_tmp_read
   - name: mysql_select_full_join
   - name: mysql_select_full_range_join
@@ -435,7 +502,6 @@ trash:
   - name: mysql_slow_queries
   - name: mysql_sort_merge_passes
   - name: mysql_sort_range
-  - name: mysql_sort_rows
   - name: mysql_sort_scan
   - name: mysql_ssl_accept_renegotiates
   - name: mysql_ssl_accepts
@@ -467,9 +533,7 @@ trash:
   - name: mysql_threadpool_idle_threads
   - name: mysql_threadpool_threads
   - name: mysql_threads_cached
-  - name: mysql_threads_connected
   - name: mysql_threads_created
-  - name: mysql_threads_running
   - name: mysql_uptime
   - name: mysql_uptime_since_flush_status
   - name: mysql_users_connections
@@ -660,7 +724,6 @@ trash:
   - name: mysql_variables_max_binlog_size
   - name: mysql_variables_max_binlog_stmt_cache_size
   - name: mysql_variables_max_connect_errors
-  - name: mysql_variables_max_connections
   - name: mysql_variables_max_delayed_threads
   - name: mysql_variables_max_error_count
   - name: mysql_variables_max_heap_table_size
