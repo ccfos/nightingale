@@ -140,3 +140,30 @@ func UsernameCandoNodeOp(username, operation string, nodeId int64) (bool, error)
 
 	return user.HasPermByNode(node, operation)
 }
+
+func UserAndTotalGets(query, org string, limit, offset int, ids []int64) ([]User, int64, error) {
+	where := "1 = 1"
+	param := []interface{}{}
+
+	if query != "" {
+		q := "%" + query + "%"
+		where += " and (username like ? or dispname like ? or phone like ? or email like ?)"
+		param = append(param, q, q, q, q)
+	}
+
+	if org != "" {
+		q := "%" + org + "%"
+		where += " and organization like ?"
+		param = append(param, q)
+
+	}
+
+	total, err := UserTotal(ids, where, param...)
+	if err != nil {
+		return []User{}, total, err
+	}
+
+	list, err := UserGets(ids, limit, offset, where, param...)
+
+	return list, total, err
+}

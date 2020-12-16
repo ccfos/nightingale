@@ -20,6 +20,7 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/rabbitmq"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
 	"github.com/didi/nightingale/src/modules/rdb/ssoc"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 )
 
 var (
@@ -66,17 +67,16 @@ func main() {
 	// 初始化 redis 用来发送邮件短信等
 	redisc.InitRedis()
 	cron.InitWorker()
+	i18n.Init(config.Config.I18n)
 
 	// 初始化 rabbitmq 处理部分异步逻辑
-	if config.Config.RabbitMQ.Enable {
-		rabbitmq.Init(config.Config.RabbitMQ.Addr)
-		go rabbitmq.Consume(config.Config.RabbitMQ.Addr, config.Config.RabbitMQ.Queue)
-	}
+	rabbitmq.Init()
 
 	go cron.ConsumeMail()
 	go cron.ConsumeSms()
 	go cron.ConsumeVoice()
 	go cron.ConsumeIm()
+	go cron.CleanerLoop()
 
 	http.Start()
 
@@ -101,10 +101,7 @@ func endingProc() {
 	logger.Close()
 	http.Shutdown()
 	redisc.CloseRedis()
+	rabbitmq.Shutdown()
 
-	if config.Config.RabbitMQ.Enable {
-		rabbitmq.Shutdown()
-	}
-
-	fmt.Println("stopped successfully")
+	fmt.Println("process stopped successfully")
 }

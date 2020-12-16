@@ -15,13 +15,15 @@ import (
 func userListGet(c *gin.Context) {
 	limit := queryInt(c, "limit", 20)
 	query := queryStr(c, "query", "")
+	org := queryStr(c, "org", "")
 	ids := str.IdsInt64(queryStr(c, "ids", ""))
 
-	total, err := models.UserTotal(ids, query)
+	list, total, err := models.UserAndTotalGets(query, org, limit, offset(c, limit), ids)
 	dangerous(err)
 
-	list, err := models.UserGets(ids, query, limit, offset(c, limit))
-	dangerous(err)
+	for i := 0; i < len(list); i++ {
+		list[i].UUID = ""
+	}
 
 	renderData(c, gin.H{
 		"list":  list,
@@ -29,15 +31,32 @@ func userListGet(c *gin.Context) {
 	}, nil)
 }
 
+func v1UserListGet(c *gin.Context) {
+	limit := queryInt(c, "limit", 20)
+	query := queryStr(c, "query", "")
+	org := queryStr(c, "org", "")
+	ids := str.IdsInt64(queryStr(c, "ids", ""))
+
+	list, total, err := models.UserAndTotalGets(query, org, limit, offset(c, limit), ids)
+
+	renderData(c, gin.H{
+		"list":  list,
+		"total": total,
+	}, err)
+}
+
 type userProfileForm struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Dispname string `json:"dispname"`
-	Phone    string `json:"phone"`
-	Email    string `json:"email"`
-	Im       string `json:"im"`
-	IsRoot   int    `json:"is_root"`
-	LeaderId int64  `json:"leader_id"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	Dispname     string `json:"dispname"`
+	Phone        string `json:"phone"`
+	Email        string `json:"email"`
+	Im           string `json:"im"`
+	IsRoot       int    `json:"is_root"`
+	LeaderId     int64  `json:"leader_id"`
+	Typ          int    `json:"typ"`
+	Status       int    `json:"status"`
+	Organization string `json:"organization"`
 }
 
 func userAddPost(c *gin.Context) {
@@ -45,6 +64,7 @@ func userAddPost(c *gin.Context) {
 
 	var f userProfileForm
 	bind(c, &f)
+	dangerous(checkPassword(f.Password))
 
 	pass, err := models.CryptoPass(f.Password)
 	dangerous(err)
@@ -74,7 +94,9 @@ func userAddPost(c *gin.Context) {
 }
 
 func userProfileGet(c *gin.Context) {
-	renderData(c, User(urlParamInt64(c, "id")), nil)
+	user := User(urlParamInt64(c, "id"))
+	user.UUID = ""
+	renderData(c, user, nil)
 }
 
 func userProfilePut(c *gin.Context) {
@@ -122,7 +144,27 @@ func userProfilePut(c *gin.Context) {
 		target.IsRoot = f.IsRoot
 	}
 
-	err := target.Update("dispname", "phone", "email", "im", "is_root", "leader_id", "leader_name")
+	if f.Typ != target.Typ {
+		arr = append(arr, fmt.Sprintf("typ: %d -> %d", target.Typ, f.Typ))
+		target.Typ = f.Typ
+	}
+
+	if f.Status != target.Status {
+		arr = append(arr, fmt.Sprintf("typ: %d -> %d", target.Status, f.Status))
+		target.Status = f.Status
+	}
+
+	if f.Status != target.Status {
+		arr = append(arr, fmt.Sprintf("typ: %s -> %s", target.Status, f.Status))
+		target.Status = f.Status
+	}
+
+	if f.Organization != target.Organization {
+		arr = append(arr, fmt.Sprintf("organization: %s -> %s", target.Organization, f.Organization))
+		target.Organization = f.Organization
+	}
+
+	err := target.Update("dispname", "phone", "email", "im", "is_root", "leader_id", "leader_name", "typ", "status", "organization")
 	if err == nil && len(arr) > 0 {
 		content := strings.Join(arr, "，")
 		go models.OperationLogNew(root.Username, "user", target.Id, fmt.Sprintf("UserModify %s %s", target.Username, content))
@@ -140,6 +182,7 @@ func userPasswordPut(c *gin.Context) {
 
 	var f userPasswordForm
 	bind(c, &f)
+	dangerous(checkPassword(f.Password))
 
 	target := User(urlParamInt64(c, "id"))
 
@@ -259,6 +302,7 @@ type userInviteForm struct {
 func userInvitePost(c *gin.Context) {
 	var f userInviteForm
 	bind(c, &f)
+	dangerous(checkPassword(f.Password))
 
 	inv, err := models.InviteGet("token=?", f.Token)
 	dangerous(err)

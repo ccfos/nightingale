@@ -33,18 +33,18 @@ func collectPost(c *gin.Context) {
 
 			b, err := json.Marshal(obj.Data)
 			if err != nil {
-				errors.Bomb("marshal body %s err:%v", obj, err)
+				bomb("marshal body %s err:%v", obj, err)
 			}
 
 			err = json.Unmarshal(b, collect)
 			if err != nil {
-				errors.Bomb("unmarshal body %s err:%v", string(b), err)
+				bomb("unmarshal body %s err:%v", string(b), err)
 			}
 
 			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
 			errors.Dangerous(err)
 			if !can {
-				errors.Bomb("permission deny")
+				bomb("permission deny")
 			}
 
 			collect.Creator = creator
@@ -56,7 +56,7 @@ func collectPost(c *gin.Context) {
 			old, err := models.GetCollectByNameAndNid(obj.Type, name, nid)
 			errors.Dangerous(err)
 			if old != nil {
-				errors.Bomb("同节点下策略名称 %s 已存在", name)
+				bomb("same stra name %s in node", name)
 			}
 			errors.Dangerous(models.CreateCollect(obj.Type, creator, collect))
 
@@ -65,18 +65,18 @@ func collectPost(c *gin.Context) {
 
 			b, err := json.Marshal(obj.Data)
 			if err != nil {
-				errors.Bomb("marshal body %s err:%v", obj, err)
+				bomb("marshal body %s err:%v", obj, err)
 			}
 
 			err = json.Unmarshal(b, collect)
 			if err != nil {
-				errors.Bomb("unmarshal body %s err:%v", string(b), err)
+				bomb("unmarshal body %s err:%v", string(b), err)
 			}
 
 			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
 			errors.Dangerous(err)
 			if !can {
-				errors.Bomb("permission deny")
+				bomb("permission deny")
 			}
 
 			collect.Creator = creator
@@ -88,7 +88,7 @@ func collectPost(c *gin.Context) {
 			old, err := models.GetCollectByNameAndNid(obj.Type, name, nid)
 			errors.Dangerous(err)
 			if old != nil {
-				errors.Bomb("同节点下策略名称 %s 已存在", name)
+				bomb("same stra name %s in node", name)
 			}
 			errors.Dangerous(models.CreateCollect(obj.Type, creator, collect))
 		case "log":
@@ -96,18 +96,18 @@ func collectPost(c *gin.Context) {
 
 			b, err := json.Marshal(obj.Data)
 			if err != nil {
-				errors.Bomb("marshal body %s err:%v", obj, err)
+				bomb("marshal body %s err:%v", obj, err)
 			}
 
 			err = json.Unmarshal(b, collect)
 			if err != nil {
-				errors.Bomb("unmarshal body %s err:%v", string(b), err)
+				bomb("unmarshal body %s err:%v", string(b), err)
 			}
 
 			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
 			errors.Dangerous(err)
 			if !can {
-				errors.Bomb("permission deny")
+				bomb("permission deny")
 			}
 
 			collect.Encode()
@@ -120,7 +120,7 @@ func collectPost(c *gin.Context) {
 			old, err := models.GetCollectByNameAndNid(obj.Type, name, nid)
 			errors.Dangerous(err)
 			if old != nil {
-				errors.Bomb("同节点下策略名称 %s 已存在", name)
+				bomb("same stra name %s in node", name)
 			}
 			errors.Dangerous(models.CreateCollect(obj.Type, creator, collect))
 		case "plugin":
@@ -128,18 +128,18 @@ func collectPost(c *gin.Context) {
 
 			b, err := json.Marshal(obj.Data)
 			if err != nil {
-				errors.Bomb("marshal body %s err:%v", obj, err)
+				bomb("marshal body %s err:%v", obj, err)
 			}
 
 			err = json.Unmarshal(b, collect)
 			if err != nil {
-				errors.Bomb("unmarshal body %s err:%v", string(b), err)
+				bomb("unmarshal body %s err:%v", string(b), err)
 			}
 
 			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
 			errors.Dangerous(err)
 			if !can {
-				errors.Bomb("permission deny")
+				bomb("permission deny")
 			}
 
 			collect.Creator = creator
@@ -151,7 +151,7 @@ func collectPost(c *gin.Context) {
 			old, err := models.GetCollectByNameAndNid(obj.Type, name, nid)
 			errors.Dangerous(err)
 			if old != nil {
-				errors.Bomb("同节点下策略名称 %s 已存在", name)
+				bomb("same stra name %s in node", name)
 			}
 			errors.Dangerous(models.CreateCollect(obj.Type, creator, collect))
 
@@ -160,18 +160,18 @@ func collectPost(c *gin.Context) {
 
 			b, err := json.Marshal(obj.Data)
 			if err != nil {
-				errors.Bomb("marshal body %s err:%v", obj, err)
+				bomb("marshal body %s err:%v", obj, err)
 			}
 
 			err = json.Unmarshal(b, collect)
 			if err != nil {
-				errors.Bomb("unmarshal body %s err:%v", string(b), err)
+				bomb("unmarshal body %s err:%v", string(b), err)
 			}
 
 			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
 			errors.Dangerous(err)
 			if !can {
-				errors.Bomb("permission deny")
+				bomb("permission deny")
 			}
 
 			collect.Encode()
@@ -184,12 +184,12 @@ func collectPost(c *gin.Context) {
 			old, err := models.GetCollectByNameAndNid(obj.Type, name, nid)
 			errors.Dangerous(err)
 			if old != nil {
-				errors.Bomb("同节点下策略名称 %s 已存在", name)
+				bomb("same stra name %s in node", name)
 			}
 			errors.Dangerous(models.CreateCollect(obj.Type, creator, collect))
 
 		default:
-			errors.Bomb("采集类型不合法")
+			bomb("collect type not support")
 		}
 	}
 
@@ -258,18 +258,18 @@ func collectPut(c *gin.Context) {
 
 		b, err := json.Marshal(recv.Data)
 		if err != nil {
-			errors.Bomb("marshal body %s err:%v", recv, err)
+			bomb("marshal body %s err:%v", recv, err)
 		}
 
 		err = json.Unmarshal(b, collect)
 		if err != nil {
-			errors.Bomb("unmarshal body %s err:%v", string(b), err)
+			bomb("unmarshal body %s err:%v", string(b), err)
 		}
 
 		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
 		errors.Dangerous(err)
 		if !can {
-			errors.Bomb("permission deny")
+			bomb("permission deny")
 		}
 
 		nid := collect.Nid
@@ -278,12 +278,12 @@ func collectPut(c *gin.Context) {
 		//校验采集是否存在
 		obj, err := models.GetCollectById(recv.Type, collect.Id) //id找不到的情况
 		if err != nil {
-			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
 		}
 
 		tmpId := obj.(*models.PortCollect).Id
 		if tmpId == 0 {
-			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
 		}
 
 		collect.Creator = creator
@@ -292,7 +292,7 @@ func collectPut(c *gin.Context) {
 		old, err := models.GetCollectByNameAndNid(recv.Type, name, nid)
 		errors.Dangerous(err)
 		if old != nil && tmpId != old.(*models.PortCollect).Id {
-			errors.Bomb("同节点下策略名称 %s 已存在", name)
+			bomb("same stra name %s in node", name)
 		}
 
 		errors.Dangerous(collect.Update())
@@ -303,18 +303,18 @@ func collectPut(c *gin.Context) {
 
 		b, err := json.Marshal(recv.Data)
 		if err != nil {
-			errors.Bomb("marshal body %s err:%v", recv, err)
+			bomb("marshal body %s err:%v", recv, err)
 		}
 
 		err = json.Unmarshal(b, collect)
 		if err != nil {
-			errors.Bomb("unmarshal body %s err:%v", string(b), err)
+			bomb("unmarshal body %s err:%v", string(b), err)
 		}
 
 		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
 		errors.Dangerous(err)
 		if !can {
-			errors.Bomb("permission deny")
+			bomb("permission deny")
 		}
 
 		nid := collect.Nid
@@ -323,18 +323,18 @@ func collectPut(c *gin.Context) {
 		//校验采集是否存在
 		obj, err := models.GetCollectById(recv.Type, collect.Id) //id找不到的情况
 		if err != nil {
-			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
 		}
 
 		tmpId := obj.(*models.ProcCollect).Id
 		if tmpId == 0 {
-			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
 		}
 
 		can, err = models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
 		errors.Dangerous(err)
 		if !can {
-			errors.Bomb("permission deny")
+			bomb("permission deny")
 		}
 
 		collect.Creator = creator
@@ -343,7 +343,7 @@ func collectPut(c *gin.Context) {
 		old, err := models.GetCollectByNameAndNid(recv.Type, name, nid)
 		errors.Dangerous(err)
 		if old != nil && tmpId != old.(*models.ProcCollect).Id {
-			errors.Bomb("同节点下策略名称 %s 已存在", name)
+			bomb("same stra name %s in node", name)
 		}
 
 		errors.Dangerous(collect.Update())
@@ -354,18 +354,18 @@ func collectPut(c *gin.Context) {
 
 		b, err := json.Marshal(recv.Data)
 		if err != nil {
-			errors.Bomb("marshal body %s err:%v", recv, err)
+			bomb("marshal body %s err:%v", recv, err)
 		}
 
 		err = json.Unmarshal(b, collect)
 		if err != nil {
-			errors.Bomb("unmarshal body %s err:%v", string(b), err)
+			bomb("unmarshal body %s err:%v", string(b), err)
 		}
 
 		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
 		errors.Dangerous(err)
 		if !can {
-			errors.Bomb("permission deny")
+			bomb("permission deny")
 		}
 
 		collect.Encode()
@@ -375,12 +375,12 @@ func collectPut(c *gin.Context) {
 		//校验采集是否存在
 		obj, err := models.GetCollectById(recv.Type, collect.Id) //id找不到的情况
 		if err != nil {
-			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
 		}
 
 		tmpId := obj.(*models.LogCollect).Id
 		if tmpId == 0 {
-			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
 		}
 
 		collect.Creator = creator
@@ -389,7 +389,7 @@ func collectPut(c *gin.Context) {
 		old, err := models.GetCollectByNameAndNid(recv.Type, name, nid)
 		errors.Dangerous(err)
 		if old != nil && tmpId != old.(*models.LogCollect).Id {
-			errors.Bomb("同节点下策略名称 %s 已存在", name)
+			bomb("same stra name %s in node", name)
 		}
 
 		errors.Dangerous(collect.Update())
@@ -400,18 +400,18 @@ func collectPut(c *gin.Context) {
 
 		b, err := json.Marshal(recv.Data)
 		if err != nil {
-			errors.Bomb("marshal body %s err:%v", recv, err)
+			bomb("marshal body %s err:%v", recv, err)
 		}
 
 		err = json.Unmarshal(b, collect)
 		if err != nil {
-			errors.Bomb("unmarshal body %s err:%v", string(b), err)
+			bomb("unmarshal body %s err:%v", string(b), err)
 		}
 
 		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
 		errors.Dangerous(err)
 		if !can {
-			errors.Bomb("permission deny")
+			bomb("permission deny")
 		}
 
 		nid := collect.Nid
@@ -420,12 +420,12 @@ func collectPut(c *gin.Context) {
 		//校验采集是否存在
 		obj, err := models.GetCollectById(recv.Type, collect.Id) //id找不到的情况
 		if err != nil {
-			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
 		}
 
 		tmpId := obj.(*models.PluginCollect).Id
 		if tmpId == 0 {
-			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
 		}
 
 		collect.Creator = creator
@@ -434,7 +434,7 @@ func collectPut(c *gin.Context) {
 		old, err := models.GetCollectByNameAndNid(recv.Type, name, nid)
 		errors.Dangerous(err)
 		if old != nil && tmpId != old.(*models.PluginCollect).Id {
-			errors.Bomb("同节点下策略名称 %s 已存在", name)
+			bomb("same stra name %s in node", name)
 		}
 
 		errors.Dangerous(collect.Update())
@@ -445,18 +445,18 @@ func collectPut(c *gin.Context) {
 
 		b, err := json.Marshal(recv.Data)
 		if err != nil {
-			errors.Bomb("marshal body %s err:%v", recv, err)
+			bomb("marshal body %s err:%v", recv, err)
 		}
 
 		err = json.Unmarshal(b, collect)
 		if err != nil {
-			errors.Bomb("unmarshal body %s err:%v", string(b), err)
+			bomb("unmarshal body %s err:%v", string(b), err)
 		}
 
 		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
 		errors.Dangerous(err)
 		if !can {
-			errors.Bomb("permission deny")
+			bomb("permission deny")
 		}
 
 		collect.Encode()
@@ -466,12 +466,12 @@ func collectPut(c *gin.Context) {
 		//校验采集是否存在
 		obj, err := models.GetCollectById(recv.Type, collect.Id) //id找不到的情况
 		if err != nil {
-			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
 		}
 
 		tmpId := obj.(*models.ApiCollect).Id
 		if tmpId == 0 {
-			errors.Bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
+			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
 		}
 
 		collect.Creator = creator
@@ -480,7 +480,7 @@ func collectPut(c *gin.Context) {
 		old, err := models.GetCollectByNameAndNid(recv.Type, name, nid)
 		errors.Dangerous(err)
 		if old != nil && tmpId != old.(*models.ApiCollect).Id {
-			errors.Bomb("同节点下策略名称 %s 已存在", name)
+			bomb("same stra name %s in node", name)
 		}
 
 		errors.Dangerous(collect.Update())
@@ -488,7 +488,7 @@ func collectPut(c *gin.Context) {
 		return
 
 	default:
-		errors.Bomb("采集类型不合法")
+		bomb("采集类型不合法")
 	}
 
 	renderData(c, "ok", nil)
@@ -508,11 +508,11 @@ func collectsDel(c *gin.Context) {
 		for i := 0; i < len(obj.Ids); i++ {
 			tmp, err := models.GetCollectById(obj.Type, obj.Ids[i]) //id找不到的情况
 			if err != nil {
-				errors.Bomb("采集不存在 type:%s id:%d", obj.Type, obj.Ids[i])
+				bomb("采集不存在 type:%s id:%d", obj.Type, obj.Ids[i])
 			}
 
 			if tmp == nil {
-				errors.Bomb("采集不存在 type:%s id:%d", obj.Type, obj.Ids[i])
+				bomb("采集不存在 type:%s id:%d", obj.Type, obj.Ids[i])
 			}
 
 			var nid int64
@@ -530,7 +530,7 @@ func collectsDel(c *gin.Context) {
 			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_delete", int64(nid))
 			errors.Dangerous(err)
 			if !can {
-				errors.Bomb("permission deny")
+				bomb("permission deny")
 			}
 		}
 

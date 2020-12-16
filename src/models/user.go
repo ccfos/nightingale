@@ -18,20 +18,33 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/config"
 )
 
+const (
+	LOGIN_T_SMS      = "sms-code"
+	LOGIN_T_EMAIL    = "email-code"
+	LOGIN_T_RST      = "rst-code"
+	LOGIN_T_PWD      = "password"
+	LOGIN_T_LDAP     = "ldap"
+	LOGIN_EXPIRES_IN = 300
+)
+
 type User struct {
-	Id         int64  `json:"id"`
-	UUID       string `json:"uuid" xorm:"'uuid'"`
-	Username   string `json:"username"`
-	Password   string `json:"-"`
-	Dispname   string `json:"dispname"`
-	Phone      string `json:"phone"`
-	Email      string `json:"email"`
-	Im         string `json:"im"`
-	Portrait   string `json:"portrait"`
-	Intro      string `json:"intro"`
-	IsRoot     int    `json:"is_root"`
-	LeaderId   int64  `json:"leader_id"`
-	LeaderName string `json:"leader_name"`
+	Id           int64     `json:"id"`
+	UUID         string    `json:"uuid" xorm:"'uuid'"`
+	Username     string    `json:"username"`
+	Password     string    `json:"-"`
+	Dispname     string    `json:"dispname"`
+	Phone        string    `json:"phone"`
+	Email        string    `json:"email"`
+	Im           string    `json:"im"`
+	Portrait     string    `json:"portrait"`
+	Intro        string    `json:"intro"`
+	Organization string    `json:"organization"`
+	Typ          int       `json:"typ"`
+	Status       int       `json:"status"`
+	IsRoot       int       `json:"is_root"`
+	LeaderId     int64     `json:"leader_id"`
+	LeaderName   string    `json:"leader_name"`
+	CreateAt     time.Time `json:"create_at" xorm:"<-"`
 }
 
 func (u *User) CopyLdapAttr(sr *ldap.SearchResult) {
@@ -82,18 +95,16 @@ func InitRooter() {
 	log.Println("user root init done")
 }
 
-func LdapLogin(user, pass, clientIP string) error {
+func LdapLogin(user, pass string) (*User, error) {
 	sr, err := ldapReq(user, pass)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	go LoginLogNew(user, clientIP, "in")
 
 	var u User
 	has, err := DB["rdb"].Where("username=?", user).Get(&u)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	u.CopyLdapAttr(sr)
@@ -101,9 +112,9 @@ func LdapLogin(user, pass, clientIP string) error {
 	if has {
 		if config.Config.LDAP.CoverAttributes {
 			_, err := DB["rdb"].Where("id=?", u.Id).Update(u)
-			return err
+			return &u, err
 		} else {
-			return nil
+			return &u, err
 		}
 	}
 
@@ -111,32 +122,76 @@ func LdapLogin(user, pass, clientIP string) error {
 	u.Password = "******"
 	u.UUID = GenUUIDForUser(user)
 	_, err = DB["rdb"].Insert(u)
-	return err
+	return &u, nil
 }
 
-func PassLogin(user, pass, clientIP string) error {
+func PassLogin(user, pass string) (*User, error) {
 	var u User
-	has, err := DB["rdb"].Where("username=?", user).Cols("password").Get(&u)
+	has, err := DB["rdb"].Where("username=?", user).Get(&u)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !has {
-		return fmt.Errorf("user[%s] not found", user)
+		logger.Infof("password auth fail, no such user: %s", user)
+		return nil, fmt.Errorf("login fail, check your username and password")
 	}
 
 	loginPass, err := CryptoPass(pass)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if loginPass != u.Password {
-		return fmt.Errorf("password error")
+		logger.Infof("password auth fail, password error, user: %s", user)
+		return nil, fmt.Errorf("login fail, check your username and password")
 	}
 
-	go LoginLogNew(user, clientIP, "in")
+	return &u, nil
+}
 
-	return nil
+func SmsCodeLogin(phone, code string) (*User, error) {
+	user, _ := UserGet("phone=?", phone)
+	if user == nil {
+		return nil, fmt.Errorf("phone %s dose not exist", phone)
+	}
+
+	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_SMS)
+	if err != nil {
+		logger.Infof("sms-code auth fail, user: %s", user.Username)
+		return nil, fmt.Errorf("login fail, check your sms-code")
+	}
+
+	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
+		logger.Infof("sms-code auth expired, user: %s", user.Username)
+		return nil, fmt.Errorf("login fail, the code has expired")
+	}
+
+	lc.Del()
+
+	return user, nil
+}
+
+func EmailCodeLogin(email, code string) (*User, error) {
+	user, _ := UserGet("email=?", email)
+	if user == nil {
+		return nil, fmt.Errorf("email %s dose not exist", email)
+	}
+
+	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_EMAIL)
+	if err != nil {
+		logger.Infof("email-code auth fail, user: %s", user.Username)
+		return nil, fmt.Errorf("login fail, check your email-code")
+	}
+
+	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
+		logger.Infof("email-code auth expired, user: %s", user.Username)
+		return nil, fmt.Errorf("login fail, the code has expired")
+	}
+
+	lc.Del()
+
+	return user, nil
 }
 
 func UserGet(where string, args ...interface{}) (*User, error) {
@@ -222,7 +277,7 @@ func (u *User) Save() error {
 	return err
 }
 
-func UserTotal(ids []int64, query string) (int64, error) {
+func UserTotal(ids []int64, where string, args ...interface{}) (int64, error) {
 	session := DB["rdb"].NewSession()
 	defer session.Close()
 
@@ -230,23 +285,21 @@ func UserTotal(ids []int64, query string) (int64, error) {
 		session = session.In("id", ids)
 	}
 
-	if query != "" {
-		q := "%" + query + "%"
-		return session.Where("username like ? or dispname like ? or phone like ? or email like ?", q, q, q, q).Count(new(User))
+	if where != "" {
+		session = session.Where(where, args...)
 	}
 
 	return session.Count(new(User))
 }
 
-func UserGets(ids []int64, query string, limit, offset int) ([]User, error) {
+func UserGets(ids []int64, limit, offset int, where string, args ...interface{}) ([]User, error) {
 	session := DB["rdb"].Limit(limit, offset).OrderBy("username")
 	if len(ids) > 0 {
 		session = session.In("id", ids)
 	}
 
-	if query != "" {
-		q := "%" + query + "%"
-		session = session.Where("username like ? or dispname like ? or phone like ? or email like ?", q, q, q, q)
+	if where != "" {
+		session = session.Where(where, args...)
 	}
 
 	var users []User
@@ -588,4 +641,14 @@ func GetUsersNameByIds(ids string) ([]string, error) {
 		names = append(names, user.Username)
 	}
 	return names, err
+}
+
+func UsersGet(where string, args ...interface{}) ([]User, error) {
+	var objs []User
+	err := DB["rdb"].Where(where, args...).Find(&objs)
+	if err != nil {
+		return nil, err
+	}
+
+	return objs, nil
 }

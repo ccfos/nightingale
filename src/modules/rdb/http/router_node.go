@@ -18,11 +18,12 @@ func nodeGet(c *gin.Context) {
 func nodeGets(c *gin.Context) {
 	cate := queryStr(c, "cate", "")
 	withInner := queryInt(c, "inner", 0)
+	ids := queryStr(c, "ids", "")
 
 	where := ""
 	param := []interface{}{}
 	if cate != "" {
-		where += "cate in (?)"
+		where += "cate = ?"
 		param = append(param, cate)
 	}
 
@@ -32,6 +33,13 @@ func nodeGets(c *gin.Context) {
 		}
 		where += "path not like ?"
 		param = append(param, "inner")
+	}
+
+	if ids != "" {
+		if where != "" {
+			where += " and "
+		}
+		where += "id in (" + ids + ")"
 	}
 
 	nodes, err := models.NodeGets(where, param...)
@@ -58,8 +66,12 @@ func (f nodeForm) Validate() {
 		bomb("arg[pid] invalid")
 	}
 
-	if !str.IsMatch(f.Ident, `^[a-zA-Z0-9\-_]+$`) {
-		bomb("ident legal characters: [a-zA-Z0-9_-]")
+	if !str.IsMatch(f.Ident, `^[a-z0-9\-_]+$`) {
+		bomb("ident legal characters: [a-z0-9_-]")
+	}
+
+	if len(f.Ident) >= 32 {
+		bomb("ident length should be less than 32")
 	}
 
 	if f.Leaf != 0 && f.Leaf != 1 {

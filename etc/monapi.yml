@@ -1,12 +1,22 @@
 ---
 tokens:
   - monapi-internal-third-module-pass-fjsdi
+
 logger:
   dir: logs/monapi
   level: INFO
   keepHours: 24
+
 region:
   - default
+
+# clean history event
+cleaner:
+  # retention days
+  days: 100
+  # number of events deleted per time
+  batch: 100
+
 # read alert from redis
 redis:
   addr: 127.0.0.1:6379

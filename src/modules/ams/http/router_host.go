@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/cache"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/src/models"
 )
@@ -66,10 +67,28 @@ func hostPost(c *gin.Context) {
 	renderMessage(c, nil)
 }
 
+type idsOrIpsForm struct {
+	Ids []int64  `json:"ids"`
+	Ips []string `json:"ips"`
+}
+
+func (f *idsOrIpsForm) Validate() {
+	if len(f.Ids) == 0 {
+		if len(f.Ips) == 0 {
+			bomb("args invalid")
+		}
+		ids, err := models.HostIdsByIps(f.Ips)
+		dangerous(err)
+
+		f.Ids = ids
+	}
+}
+
 // 从某个租户手上回收资源
 func hostBackPut(c *gin.Context) {
-	var f idsForm
+	var f idsOrIpsForm
 	bind(c, &f)
+	f.Validate()
 
 	loginUser(c).CheckPermGlobal("ams_host_modify")
 
@@ -166,8 +185,9 @@ func hostCatePut(c *gin.Context) {
 // 先检查tenant字段是否为空，如果不为空，说明机器仍然在业务线使用，拒绝删除
 // 管理员可以先点【回收】从业务线回收机器，unregister之后tenant字段为空即可删除
 func hostDel(c *gin.Context) {
-	var f idsForm
+	var f idsOrIpsForm
 	bind(c, &f)
+	f.Validate()
 
 	loginUser(c).CheckPermGlobal("ams_host_delete")
 
@@ -226,11 +246,30 @@ func (f hostRegisterForm) Validate() {
 	}
 }
 
+// mapKeyClear map key clear
+func mapKeyClear(src map[string]interface{}, save map[string]struct{}) {
+	var dels []string
+	for k := range src {
+		if _, ok := save[k]; !ok {
+			dels = append(dels, k)
+		}
+	}
+
+	for i := 0; i < len(dels); i++ {
+		delete(src, dels[i])
+	}
+}
+
 // agent主动上报注册信息
 func v1HostRegister(c *gin.Context) {
 	var f hostRegisterForm
 	bind(c, &f)
 	f.Validate()
+
+	oldFields := make(map[string]interface{}, len(f.Fields))
+	for k, v := range f.Fields {
+		oldFields[k] = v
+	}
 
 	uniqValue := f.SN
 	if f.UniqKey == "ip" {
@@ -258,18 +297,76 @@ func v1HostRegister(c *gin.Context) {
 			renderMessage(c, nil)
 			return
 		}
+	} else {
+		if err.Error() != cache.ErrCacheMiss.Error() {
+			msg := "get cache err"
+			logger.Error(err)
+			renderMessage(c, msg)
+			return
+		}
 	}
 
 	host, err := models.HostGet(f.UniqKey+" = ?", uniqValue)
 	dangerous(err)
 
+	hFixed := map[string]struct{}{
+		"cpu":  struct{}{},
+		"mem":  struct{}{},
+		"disk": struct{}{},
+	}
+
+	mapKeyClear(f.Fields, hFixed)
+
 	if host == nil {
-		err = models.HostNew(f.SN, f.IP, f.Ident, f.Name, f.Cate, f.Fields)
-		if err == nil {
-			cache.Set(cacheKey, f.Digest, cache.DEFAULT)
+		msg := "create host failed"
+		host, err = models.HostNew(f.SN, f.IP, f.Ident, f.Name, f.Cate, f.Fields)
+		if err != nil {
+			logger.Error(err)
+			renderMessage(c, msg)
+			return
 		}
-		renderMessage(c, err)
-		return
+
+		if host == nil {
+			logger.Errorf("%s, report info:%v", msg, f)
+			renderMessage(c, msg)
+			return
+		}
+	} else {
+		f.Fields["sn"] = f.SN
+		f.Fields["ip"] = f.IP
+		f.Fields["ident"] = f.Ident
+		f.Fields["name"] = f.Name
+		f.Fields["cate"] = f.Cate
+		f.Fields["clock"] = time.Now().Unix()
+
+		err = host.Update(f.Fields)
+		if err != nil {
+			logger.Error(err)
+			msg := "update host err"
+			renderMessage(c, msg)
+			return
+		}
+	}
+
+	if v, ok := oldFields["tenant"]; ok {
+		vStr := v.(string)
+		if vStr != "" {
+			err = models.HostUpdateTenant([]int64{host.Id}, vStr)
+			if err != nil {
+				logger.Error(err)
+				msg := "update host tenant err"
+				renderMessage(c, msg)
+				return
+			}
+
+			err = models.ResourceRegister([]models.Host{*host}, vStr)
+			if err != nil {
+				logger.Error(err)
+				msg := "register resource err"
+				renderMessage(c, msg)
+				return
+			}
+		}
 	}
 
 	if host.Tenant != "" {
@@ -277,9 +374,24 @@ func v1HostRegister(c *gin.Context) {
 		res, err := models.ResourceGet("uuid=?", fmt.Sprintf("host-%d", host.Id))
 		dangerous(err)
 
+		if res == nil {
+			// 数据不干净，ams里有这个host，而且是已分配状态，但是resource表里没有，重新注册一下
+			dangerous(models.ResourceRegister([]models.Host{*host}, host.Tenant))
+
+			// 注册完了，重新查询一下试试
+			res, err = models.ResourceGet("uuid=?", fmt.Sprintf("host-%d", host.Id))
+			dangerous(err)
+
+			if res == nil {
+				bomb("resource register fail, unknown error")
+			}
+		}
+
 		res.Ident = f.Ident
 		res.Name = f.Name
 		res.Cate = f.Cate
+
+		mapKeyClear(f.Fields, hFixed)
 
 		js, err := json.Marshal(f.Fields)
 		dangerous(err)
@@ -289,17 +401,30 @@ func v1HostRegister(c *gin.Context) {
 		dangerous(res.Update("ident", "name", "cate", "extend"))
 	}
 
-	f.Fields["sn"] = f.SN
-	f.Fields["ip"] = f.IP
-	f.Fields["ident"] = f.Ident
-	f.Fields["name"] = f.Name
-	f.Fields["cate"] = f.Cate
-	f.Fields["clock"] = time.Now().Unix()
+	var objs []models.HostFieldValue
+	for k, v := range oldFields {
+		if k == "tenant" {
+			continue
+		}
 
-	err = host.Update(f.Fields)
-	if err == nil {
-		cache.Set(cacheKey, f.Digest, cache.DEFAULT)
+		if _, ok := hFixed[k]; !ok {
+			tmp := models.HostFieldValue{HostId: host.Id, FieldIdent: k, FieldValue: v.(string)}
+			objs = append(objs, tmp)
+		}
 	}
 
-	renderMessage(c, err)
+	if len(objs) > 0 {
+		err = models.HostFieldValuePuts(host.Id, objs)
+		dangerous(err)
+	}
+
+	err = cache.Set(cacheKey, f.Digest, cache.DEFAULT)
+	if err != nil {
+		msg := "set cache err"
+		logger.Error(err)
+		renderMessage(c, msg)
+		return
+	}
+
+	renderMessage(c, nil)
 }

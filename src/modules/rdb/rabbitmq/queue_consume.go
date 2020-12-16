@@ -85,6 +85,8 @@ func consume(queueName string) bool {
 	}
 
 	size := 0
+
+	isSleep := false
 	for d := range msgs {
 		size++
 		logger.Infof("rabbitmq consume message: %s", d.Body)
@@ -93,8 +95,13 @@ func consume(queueName string) bool {
 			d.Ack(true)
 		} else {
 			// 底层代码认为不应该ack，说明处理的过程出现问题，可能是DB有问题之类的，sleep一下
-			return true
+			isSleep = true
+			continue
 		}
+	}
+
+	if isSleep {
+		return true
 	}
 
 	if size == 0 {

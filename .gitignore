@@ -54,4 +54,6 @@ _test
 /src/modules/transfer/transfer
 /src/modules/tsdb/tsdb
 
-
+tmp/
+main
+Makefile

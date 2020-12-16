@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -69,6 +70,9 @@ type Properties struct {
 
 	// Stores the keys in order of appearance.
 	k []string
+
+	// WriteSeparator specifies the separator of key and value while writing the properties.
+	WriteSeparator string
 }
 
 // NewProperties creates a new Properties struct with the default
@@ -586,6 +590,12 @@ func (p *Properties) String() string {
 	return s
 }
 
+// Sort sorts the properties keys in alphabetical order.
+// This is helpfully before writing the properties.
+func (p *Properties) Sort() {
+	sort.Strings(p.k)
+}
+
 // Write writes all unexpanded 'key = value' pairs to the given writer.
 // Write returns the number of bytes written and any write error encountered.
 func (p *Properties) Write(w io.Writer, enc Encoding) (n int, err error) {
@@ -635,8 +645,11 @@ func (p *Properties) WriteComment(w io.Writer, prefix string, enc Encoding) (n i
 				}
 			}
 		}
-
-		x, err = fmt.Fprintf(w, "%s = %s\n", encode(key, " :", enc), encode(value, "", enc))
+		sep := " = "
+		if p.WriteSeparator != "" {
+			sep = p.WriteSeparator
+		}
+		x, err = fmt.Fprintf(w, "%s%s%s\n", encode(key, " :", enc), sep, encode(value, "", enc))
 		if err != nil {
 			return
 		}
@@ -820,6 +833,8 @@ func escape(r rune, special string) string {
 		return "\\r"
 	case '\t':
 		return "\\t"
+	case '\\':
+		return "\\\\"
 	default:
 		if strings.ContainsRune(special, r) {
 			return "\\" + string(r)

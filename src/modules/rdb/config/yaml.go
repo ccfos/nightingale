@@ -6,6 +6,7 @@ import (
 	"github.com/toolkits/pkg/file"
 
 	"github.com/didi/nightingale/src/common/loggeri"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 )
 
 type ConfigT struct {
@@ -18,6 +19,8 @@ type ConfigT struct {
 	Sender   map[string]senderSection `yaml:"sender"`
 	RabbitMQ rabbitmqSection          `yaml:"rabbitmq"`
 	WeChat   wechatSection            `yaml:"wechat"`
+	Captcha  bool                     `yaml:"captcha"`
+	I18n     i18n.I18nSection         `yaml:"i18n"`
 }
 
 type wechatSection struct {
@@ -33,6 +36,7 @@ type ssoSection struct {
 	ClientId        string `yaml:"clientId"`
 	ClientSecret    string `yaml:"clientSecret"`
 	ApiKey          string `yaml:"apiKey"`
+	StateExpiresIn  int64  `yaml:"stateExpiresIn"`
 	CoverAttributes bool   `yaml:"coverAttributes"`
 	Attributes      struct {
 		Dispname string `yaml:"dispname"`
@@ -112,6 +116,14 @@ func Parse() error {
 
 	Config = &c
 	fmt.Println("config.file:", ymlFile)
+
+	if Config.I18n.DictPath == "" {
+		Config.I18n.DictPath = "etc/dict.json"
+	}
+
+	if Config.I18n.Lang == "" {
+		Config.I18n.Lang = "zh"
+	}
 
 	if err = parseOps(); err != nil {
 		return err

@@ -29,7 +29,7 @@ func (h *Host) Save() error {
 	return err
 }
 
-func HostNew(sn, ip, ident, name, cate string, fields map[string]interface{}) error {
+func HostNew(sn, ip, ident, name, cate string, fields map[string]interface{}) (*Host, error) {
 	host := new(Host)
 	host.SN = sn
 	host.IP = ip
@@ -42,22 +42,24 @@ func HostNew(sn, ip, ident, name, cate string, fields map[string]interface{}) er
 	defer session.Close()
 
 	if err := session.Begin(); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := session.Insert(host); err != nil {
 		session.Rollback()
-		return err
+		return nil, err
 	}
 
 	if len(fields) > 0 {
 		if _, err := session.Table(new(Host)).ID(host.Id).Update(fields); err != nil {
 			session.Rollback()
-			return err
+			return nil, err
 		}
 	}
 
-	return session.Commit()
+	err := session.Commit()
+
+	return host, err
 }
 
 func (h *Host) Update(fields map[string]interface{}) error {
@@ -114,6 +116,11 @@ func HostByIds(ids []int64) (hosts []Host, err error) {
 	}
 
 	err = DB["ams"].In("id", ids).Find(&hosts)
+	return
+}
+
+func HostIdsByIps(ips []string) (ids []int64, err error) {
+	err = DB["ams"].Table(new(Host)).In("ip", ips).Select("id").Find(&ids)
 	return
 }
 

@@ -116,6 +116,13 @@ func treeUntilLeafGets(c *gin.Context) {
 	renderData(c, oks, nil)
 }
 
+func v1treeUntilProjectGetsByNid(c *gin.Context) {
+	nid := urlParamInt64(c, "id")
+
+	oks, err := models.TreeUntilProjectsGetByNid(nid)
+	renderData(c, oks, err)
+}
+
 // 这个方法，展示的树只到project，节点搜索功能放到前台去
 func treeUntilProjectGets(c *gin.Context) {
 	me := loginUser(c)

@@ -30,7 +30,6 @@ func NewRandom() (UUID, error) {
 	return NewRandomFromReader(rander)
 }
 
-// NewRandomFromReader returns a UUID based on bytes read from a given io.Reader.
 func NewRandomFromReader(r io.Reader) (UUID, error) {
 	var uuid UUID
 	_, err := io.ReadFull(r, uuid[:])
@@ -41,3 +40,4 @@ func NewRandomFromReader(r io.Reader) (UUID, error) {
 	uuid[8] = (uuid[8] & 0x3f) | 0x80 // Variant is 10
 	return uuid, nil
 }
+

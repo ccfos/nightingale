@@ -1,29 +1,25 @@
-# A Self-Documenting Makefile: http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
+GOVERSION := $(shell go version | cut -d ' ' -f 3 | cut -d '.' -f 2)
 
-.PHONY: check fmt lint test test-race vet test-cover-html help
+.PHONY: check fmt test test-race vet test-cover-html help
 .DEFAULT_GOAL := help
 
-check: test-race fmt vet lint ## Run tests and linters
+check: test-race fmt vet ## Run tests and linters
 
 test: ## Run tests
 	go test ./...
 
 test-race: ## Run tests with race detector
-	go test -race ./...
+	go test -v -race ./...
 
 fmt: ## Run gofmt linter
+ifeq "$(GOVERSION)" "12"
 	@for d in `go list` ; do \
 		if [ "`gofmt -l -s $$GOPATH/src/$$d | tee /dev/stderr`" ]; then \
 			echo "^ improperly formatted go files" && echo && exit 1; \
 		fi \
 	done
+endif
 
-lint: ## Run golint linter
-	@for d in `go list` ; do \
-		if [ "`golint $$d | tee /dev/stderr`" ]; then \
-			echo "^ golint errors!" && echo && exit 1; \
-		fi \
-	done
 
 vet: ## Run go vet linter
 	@if [ "`go vet | tee /dev/stderr`" ]; then \

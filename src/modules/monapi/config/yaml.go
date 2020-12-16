@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/didi/nightingale/src/toolkits/i18n"
+
 	"github.com/spf13/viper"
 	"github.com/toolkits/pkg/file"
 )
@@ -25,6 +27,8 @@ type ConfYaml struct {
 	Merge         mergeSection        `yaml:"merge"`
 	Notify        map[string][]string `yaml:"notify"`
 	Link          linkSection         `yaml:"link"`
+	IndexMod      string              `yaml:"indexMod"`
+	I18n          i18n.I18nSection    `yaml:"i18n"`
 }
 
 type mergeSection struct {
@@ -136,8 +140,12 @@ func Parse(ymlfile string) error {
 	})
 
 	viper.SetDefault("alarmEnabled", "true")
+	viper.SetDefault("indexMod", "index")
 
 	viper.SetDefault("habits.identity", "ip")
+
+	viper.SetDefault("i18n.dictPath", "etc/dict.json")
+	viper.SetDefault("i18n.lang", "zh")
 
 	viper.SetDefault("redis.idle", 5)
 	viper.SetDefault("redis.timeout", map[string]int{

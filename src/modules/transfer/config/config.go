@@ -16,6 +16,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/toolkits/pkg/file"
+	"gopkg.in/yaml.v2"
 )
 
 type ConfYaml struct {
@@ -42,8 +43,9 @@ type LoggerSection struct {
 }
 
 type HTTPSection struct {
-	Enabled bool   `yaml:"enabled"`
-	Access  string `yaml:"access"`
+	Mode         string `yaml:"mode"`
+	CookieName   string `yaml:"cookieName"`
+	CookieDomain string `yaml:"cookieDomain"`
 }
 
 type RPCSection struct {
@@ -170,6 +172,16 @@ func Parse(conf string) error {
 
 	Config.Report.HTTPPort = strconv.Itoa(address.GetHTTPPort("transfer"))
 	Config.Report.RPCPort = strconv.Itoa(address.GetRPCPort("transfer"))
+
+	if Config.Backend.M3db.Enabled {
+		// viper.Unmarshal not compatible with yaml.Unmarshal
+		var b *ConfYaml
+		err := yaml.Unmarshal([]byte(bs), &b)
+		if err != nil {
+			return err
+		}
+		Config.Backend.M3db = b.Backend.M3db
+	}
 
 	return identity.Parse()
 }

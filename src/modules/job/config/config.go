@@ -7,13 +7,15 @@ import (
 
 	"github.com/didi/nightingale/src/common/identity"
 	"github.com/didi/nightingale/src/common/loggeri"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 )
 
 type ConfigT struct {
-	Logger loggeri.Config `yaml:"logger"`
-	HTTP   httpSection    `yaml:"http"`
-	Tokens []string       `yaml:"tokens"`
-	Output outputSection  `yaml:"output"`
+	Logger loggeri.Config   `yaml:"logger"`
+	HTTP   httpSection      `yaml:"http"`
+	Tokens []string         `yaml:"tokens"`
+	Output outputSection    `yaml:"output"`
+	I18n   i18n.I18nSection `yaml:"i18n"`
 }
 
 type httpSection struct {
@@ -43,6 +45,15 @@ func Parse() error {
 	}
 
 	Config = &c
+
+	if Config.I18n.DictPath == "" {
+		Config.I18n.DictPath = "etc/dict.json"
+	}
+
+	if Config.I18n.Lang == "" {
+		Config.I18n.Lang = "zh"
+	}
+
 	fmt.Println("config.file:", ymlFile)
 
 	return identity.Parse()

@@ -16,6 +16,7 @@ import (
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/ams/config"
 	"github.com/didi/nightingale/src/modules/ams/http"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 )
 
 var (
@@ -42,6 +43,8 @@ func init() {
 		os.Exit(0)
 	}
 
+	i18n.Init()
+
 	runner.Init()
 	fmt.Println("runner.cwd:", runner.Cwd)
 	fmt.Println("runner.hostname:", runner.Hostname)
@@ -54,6 +57,8 @@ func main() {
 
 	// 初始化数据库和相关数据
 	models.InitMySQL("rdb", "ams")
+
+	i18n.Init(config.Config.I18n)
 
 	http.Start()
 
@@ -77,5 +82,5 @@ func endingProc() {
 
 	logger.Close()
 	http.Shutdown()
-	fmt.Println("portal stopped successfully")
+	fmt.Println("process stopped successfully")
 }

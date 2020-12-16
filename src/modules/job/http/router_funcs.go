@@ -8,6 +8,7 @@ import (
 	"github.com/toolkits/pkg/errors"
 
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 )
 
 func dangerous(v interface{}) {
@@ -15,9 +16,8 @@ func dangerous(v interface{}) {
 }
 
 func bomb(format string, a ...interface{}) {
-	errors.Bomb(format, a...)
+	errors.Bomb(i18n.Sprintf(format, a...))
 }
-
 func bind(c *gin.Context, ptr interface{}) {
 	dangerous(c.ShouldBindJSON(ptr))
 }
@@ -212,7 +212,7 @@ func Node(id int64) *models.Node {
 	dangerous(err)
 
 	if node == nil {
-		bomb("no such node[id:%d]", id)
+		bomb("no such node[%d]", id)
 	}
 
 	return node
@@ -254,11 +254,6 @@ func cleanHosts(formHosts []string) []string {
 		}
 
 		arr = append(arr, item)
-	}
-
-	cnt = len(arr)
-	if cnt == 0 {
-		bomb("arg[hosts] empty")
 	}
 
 	return arr

@@ -183,12 +183,20 @@ func (n *Node) CreateChild(ident, name, note, cate, creator string, leaf, proxy 
 		return nil, fmt.Errorf("tenant node should be root node only")
 	}
 
+	if cate == "project" && (n.Cate != "tenant" && n.Cate != "organization") {
+		return nil, fmt.Errorf("project node should be under tenant or organization")
+	}
+
 	if ident == "" {
 		return nil, fmt.Errorf("ident is blank")
 	}
 
-	if !str.IsMatch(ident, "^[a-zA-Z0-9\\-\\_]+$") {
+	if !str.IsMatch(ident, "^[a-z0-9\\-\\_]+$") {
 		return nil, fmt.Errorf("ident invalid")
+	}
+
+	if len(ident) >= 32 {
+		return nil, fmt.Errorf("ident length should be less than 32")
 	}
 
 	if creator != "system" {

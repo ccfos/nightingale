@@ -1,6 +1,7 @@
 package report
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
@@ -62,7 +63,8 @@ func gatherFields(m map[string]string) (map[string]string, error) {
 	for k, v := range m {
 		output, err := exec(v)
 		if err != nil {
-			return nil, err
+			logger.Errorf("get %s by exec %v err:%v", k, v, err)
+			continue
 		}
 		ret[k] = output
 	}
@@ -108,7 +110,7 @@ func report() error {
 	content := form.SN + form.IP + form.Ident + form.Name + form.Cate + form.UniqKey
 	var keys []string
 	for key := range fields {
-		keys = append(keys, key)
+		keys = append(keys, key, fields[key])
 	}
 	sort.Strings(keys)
 
@@ -122,9 +124,13 @@ func report() error {
 	for _, i := range rand.Perm(len(servers)) {
 		url := fmt.Sprintf("http://%s/v1/ams-ce/hosts/register", servers[i])
 
+		logger.Debugf("report: %+v", form)
+
 		var body errRes
 		err := httplib.Post(url).JSONBodyQuiet(form).Header("X-Srv-Token", config.Config.Report.Token).SetTimeout(time.Second * 5).ToJSON(&body)
 		if err != nil {
+			js, _ := json.Marshal(form)
+			logger.Errorf("report payload: %s, token: %s", string(js), config.Config.Report.Token)
 			return fmt.Errorf("curl %s fail: %v", url, err)
 		}
 

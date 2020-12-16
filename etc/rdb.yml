@@ -10,8 +10,8 @@ http:
 
 sso:
   enable: false
-  ssoAddr: "http://10.1.2.3:8071"
-  redirectURL: "http://10.1.2.3:8072/api/rdb/auth/callback"
+  ssoAddr: "http://{sso-host}"
+  redirectURL: "http://{rdb-host}/auth-callback"
   clientId: ""
   clientSecret: ""
   apiKey: ""
@@ -21,6 +21,9 @@ sso:
     phone: "phone"
     im: ""
   coverAttributes: false
+  stateExpiresIn: 300
+
+captcha: false
 
 tokens:
   - rdb-builtin-token
