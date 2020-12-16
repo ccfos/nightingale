@@ -108,11 +108,15 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 		}
 	}
 
+	resources := getResources(events)
+
 	metric := strings.Join(metricList, ",")
 
 	status := genStatus(events)
 	sname := events[cnt-1].Sname
 	endpoint := genEndpoint(events)
+	name := genNameByResources(resources)
+	note := genNoteByResources(resources)
 	tags := genTags(events)
 	value := events[cnt-1].Value
 	info := events[cnt-1].Info
@@ -156,6 +160,8 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 		"Status":       status,
 		"Sname":        sname,
 		"Endpoint":     endpoint,
+		"Name":         name,
+		"note":         note,
 		"CurNodePath":  curNodePath,
 		"Metric":       metric,
 		"Tags":         tags,
@@ -280,6 +286,46 @@ func HostBindingsForMon(endpointList []string) ([]string, error) {
 		list = append(list, node.Path)
 	}
 	return list, nil
+}
+
+func getResources(events []*models.Event) []models.Resource {
+	idents := []string{}
+	for i := 0; i < len(events); i++ {
+		idents = append(idents, events[i].Endpoint)
+	}
+	resources, err := models.ResourcesByIdents(idents)
+	if err != nil {
+		logger.Errorf("get resources by idents failed : %v", err)
+	}
+	return resources
+}
+
+func genNameByResources(resources []models.Resource) string {
+	res := []string{}
+	for i := 0; i < len(resources); i++ {
+		res = append(res, resources[i].Name)
+	}
+	res = config.Set(res)
+
+	if len(res) == 1 {
+		return res[0]
+	}
+
+	return fmt.Sprintf("%s（%v）", strings.Join(res, ","), len(res))
+}
+
+func genNoteByResources(resources []models.Resource) string {
+	res := []string{}
+	for i := 0; i < len(resources); i++ {
+		res = append(res, resources[i].Note)
+	}
+	res = config.Set(res)
+
+	if len(res) == 1 {
+		return res[0]
+	}
+
+	return fmt.Sprintf("%s（%v）", strings.Join(res, ","), len(res))
 }
 
 func getEndpoint(events []*models.Event) []string {
