@@ -11,6 +11,7 @@ type SysSection struct {
 	PluginRemote     bool                `yaml:"pluginRemote"`
 	Interval         int                 `yaml:"interval"`
 	Timeout          int                 `yaml:"timeout"`
+	FsRWEnable       bool                `yaml:"fsRWEnable"`
 }
 
 type MountIgnoreSection struct {
