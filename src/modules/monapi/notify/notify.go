@@ -115,8 +115,7 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 	status := genStatus(events)
 	sname := events[cnt-1].Sname
 	endpoint := genEndpoint(events)
-	name := genNameByResources(resources)
-	note := genNoteByResources(resources)
+	name, note := genNameAndNoteByResources(resources)
 	tags := genTags(events)
 	value := events[cnt-1].Value
 	info := events[cnt-1].Info
@@ -161,7 +160,7 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 		"Sname":        sname,
 		"Endpoint":     endpoint,
 		"Name":         name,
-		"note":         note,
+		"Note":         note,
 		"CurNodePath":  curNodePath,
 		"Metric":       metric,
 		"Tags":         tags,
@@ -300,32 +299,24 @@ func getResources(events []*models.Event) []models.Resource {
 	return resources
 }
 
-func genNameByResources(resources []models.Resource) string {
-	res := []string{}
+func genNameAndNoteByResources(resources []models.Resource) (name, note string) {
+	names := []string{}
+	notes := []string{}
 	for i := 0; i < len(resources); i++ {
-		res = append(res, resources[i].Name)
+		names = append(names, resources[i].Name)
+		notes = append(notes, resources[i].Note)
 	}
-	res = config.Set(res)
+	names = config.Set(names)
+	notes = config.Set(notes)
 
-	if len(res) == 1 {
-		return res[0]
+	if len(resources) == 1 {
+		name = names[0]
+		note = notes[0]
+		return
 	}
-
-	return fmt.Sprintf("%s（%v）", strings.Join(res, ","), len(res))
-}
-
-func genNoteByResources(resources []models.Resource) string {
-	res := []string{}
-	for i := 0; i < len(resources); i++ {
-		res = append(res, resources[i].Note)
-	}
-	res = config.Set(res)
-
-	if len(res) == 1 {
-		return res[0]
-	}
-
-	return fmt.Sprintf("%s（%v）", strings.Join(res, ","), len(res))
+	name = fmt.Sprintf("%s（%v）", strings.Join(names, ","), len(names))
+	note = fmt.Sprintf("%s（%v）", strings.Join(notes, ","), len(notes))
+	return
 }
 
 func getEndpoint(events []*models.Event) []string {
