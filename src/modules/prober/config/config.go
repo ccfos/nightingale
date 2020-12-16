@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/didi/nightingale/src/common/address"
-	"github.com/didi/nightingale/src/common/identity"
 	"github.com/didi/nightingale/src/common/loggeri"
 	"github.com/didi/nightingale/src/common/report"
 
@@ -17,17 +16,13 @@ import (
 )
 
 type ConfYaml struct {
-	CollectRule CollectRuleSection `yaml:"collectRule"`
-	Logger      loggeri.Config     `yaml:"logger"`
-	// Query    query.SeriesQuerySection `yaml:"query"`
-	// Redis    redi.RedisSection        `yaml:"redis"`
-	// transfer transfer.TransferSection `yaml:"transfer"`
-	// Strategy          stra.StrategySection     `yaml:"strategy"`
-	Identity        identity.Identity    `yaml:"identity"`
+	CollectRule     CollectRuleSection   `yaml:"collectRule"`
+	Logger          loggeri.Config       `yaml:"logger"`
 	Report          report.ReportSection `yaml:"report"`
 	WorkerProcesses int                  `yaml:"workerProcesses"`
-	// NodataConcurrency int                            `yaml:"nodataConcurrency"`
-	HTTP HTTPSection `yaml:"http"`
+	PluginsConfig   string               `yaml:"pluginsConfig"`
+	IgnoreConfig    bool                 `yaml:"ignoreConfig"`
+	HTTP            HTTPSection          `yaml:"http"`
 }
 
 type CollectRuleSection struct {
@@ -84,6 +79,8 @@ func Parse(conf string) error {
 	})
 
 	viper.SetDefault("workerProcesses", 5)
+
+	viper.SetDefault("pluginsConfig", "etc/plugins")
 
 	viper.SetDefault("pushUrl", "http://127.0.0.1:2058/v1/push")
 

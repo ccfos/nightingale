@@ -26,7 +26,7 @@ CREATE TABLE `session` (
    `created_at`  integer unsigned DEFAULT '0',
    `updated_at`  integer unsigned DEFAULT '0' NOT NULL,
    PRIMARY KEY (`sid`),
-   KEY (`user_name`),
+   KEY (`username`),
    KEY (`updated_at`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8;
 

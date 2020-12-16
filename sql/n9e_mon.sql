@@ -329,6 +329,7 @@ CREATE TABLE `collect_rule` (
   `region` varchar(32) NOT NULL DEFAULT 'default' COMMENT 'region',
   `comment` varchar(512) NOT NULL DEFAULT '' COMMENT 'comment',
   `data` blob NULL COMMENT 'data',
+  `tags` varchar(512) NOT NULL DEFAULT '' COMMENT 'tags',
   `creator` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',
   `last_updator` varchar(64) NOT NULL DEFAULT '' COMMENT 'last_updator',
   `created` datetime NOT NULL  COMMENT 'created',

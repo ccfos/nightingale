@@ -27,7 +27,7 @@ func SessionGet(sid string) (*Session, error) {
 	var obj Session
 	has, err := DB["rdb"].Where("sid=?", sid).Get(&obj)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get session err %s", err)
 	}
 	if !has {
 		return nil, fmt.Errorf("not found")
