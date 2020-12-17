@@ -15,7 +15,7 @@ backend:
         # KV environment, zone, and service from which to write/read KV data (placement
         # and configuration). Leave these as the default values unless you know what
         # you're doing.
-        env: default
+        env: default_env
         zone: embedded
         service: m3db
         etcdClusters:

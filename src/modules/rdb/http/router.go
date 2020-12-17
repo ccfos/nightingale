@@ -129,6 +129,8 @@ func Config(r *gin.Engine) {
 		userLogin.PUT("/resources/note", resourceNotePut)
 		userLogin.GET("/resources/bindings", resourceBindingsGet)
 		userLogin.GET("/resources/orphan", resourceOrphanGet)
+
+		userLogin.GET("/resources/cate-count", renderAllResourcesCountByCate)
 	}
 
 	v1 := r.Group("/v1/rdb").Use(shouldBeService())

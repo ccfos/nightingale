@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"xorm.io/xorm"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 type Stra struct {
@@ -448,47 +450,56 @@ func (s *Stra) Decode() error {
 
 	s.AlertUpgrade, err = AlertUpgradeUnMarshal(s.AlertUpgradeStr)
 	if err != nil {
+		logger.Errorf("decode strategy(%d) on AlertUpgradeStr fail: %v", s.Id, err)
 		return err
 	}
 
 	err = json.Unmarshal([]byte(s.ExclNidStr), &s.ExclNid)
 	if err != nil {
+		logger.Errorf("decode strategy(%d) on ExclNid fail: %v", s.Id, err)
 		return err
 	}
 
 	err = json.Unmarshal([]byte(s.ExprsStr), &s.Exprs)
 	if err != nil {
+		logger.Errorf("decode strategy(%d) on Exprs fail: %v", s.Id, err)
 		return err
 	}
 
 	err = json.Unmarshal([]byte(s.TagsStr), &s.Tags)
 	if err != nil {
+		logger.Errorf("decode strategy(%d) on Tags fail: %v", s.Id, err)
 		return err
 	}
 
 	err = json.Unmarshal([]byte(s.EnableDaysOfWeekStr), &s.EnableDaysOfWeek)
 	if err != nil {
+		logger.Errorf("decode strategy(%d) on EnableDaysOfWeek fail: %v", s.Id, err)
 		return err
 	}
 
 	err = json.Unmarshal([]byte(s.ConvergeStr), &s.Converge)
 	if err != nil {
+		logger.Errorf("decode strategy(%d) on Converge fail: %v", s.Id, err)
 		return err
 	}
 
 	err = json.Unmarshal([]byte(s.NotifyUserStr), &s.NotifyUser)
 	if err != nil {
+		logger.Errorf("decode strategy(%d) on NotifyUser fail: %v", s.Id, err)
 		return err
 	}
 
 	err = json.Unmarshal([]byte(s.NotifyGroupStr), &s.NotifyGroup)
 	if err != nil {
+		logger.Errorf("decode strategy(%d) on NotifyGroup fail: %v", s.Id, err)
 		return err
 	}
 
 	if s.WorkGroupsStr != "" {
 		err = json.Unmarshal([]byte(s.WorkGroupsStr), &s.WorkGroups)
 		if err != nil {
+			logger.Errorf("decode strategy(%d) on WorkGroups fail: %v", s.Id, err)
 			return err
 		}
 	}
