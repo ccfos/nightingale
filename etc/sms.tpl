@@ -2,6 +2,8 @@
 级别状态：{{.Status}}
 策略名称：{{.Sname}}
 告警设备：{{.Endpoint}}
+设备名称：{{.Name}}
+设备备注：{{.Note}}
 挂载节点：
 {{range .Bindings}}{{.}}
 {{end}}监控指标：{{.Metric}}

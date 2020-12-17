@@ -164,6 +164,14 @@
                     <td>{{.Endpoint}}</td>
                 </tr>
                 <tr>
+                    <th>设备名称：</th>
+                    <td>{{.Name}}</td>
+                </tr>
+                <tr>
+                    <th>设备备注：</th>
+                    <td>{{.Note}}</td>
+                </tr>
+                <tr>
                     <th>挂载节点：</th>
                     <td>
                         {{range .Bindings}}

@@ -54,6 +54,15 @@ func ResourceIdsByIdents(idents []string) ([]int64, error) {
 	return ids, err
 }
 
+func ResourcesByIdents(idents []string) ([]Resource, error) {
+	if len(idents) == 0 {
+		return []Resource{}, nil
+	}
+	var resouces = []Resource{}
+	err := DB["rdb"].Table(new(Resource)).In("ident", idents).Find(&resouces)
+	return resouces, err
+}
+
 func ResourceIdentsByIds(ids []int64) ([]string, error) {
 	if len(ids) == 0 {
 		return []string{}, nil
