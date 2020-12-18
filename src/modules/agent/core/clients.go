@@ -12,7 +12,7 @@ type RpcClientContainer struct {
 
 var rpcClients *RpcClientContainer
 
-func InitRpcClients() {
+func init() {
 	rpcClients = &RpcClientContainer{
 		M: make(map[string]*rpc.Client),
 	}
