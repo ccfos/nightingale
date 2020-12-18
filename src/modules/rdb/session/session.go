@@ -11,6 +11,7 @@ import (
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/google/uuid"
+	"github.com/toolkits/pkg/logger"
 )
 
 type storage interface {
@@ -144,6 +145,7 @@ func (p *Manager) Destroy(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	sid, _ := url.QueryUnescape(cookie.Value)
+	logger.Debugf("session Destory sid %s", sid)
 	p.del(sid)
 
 	cookie = &http.Cookie{Name: p.config.CookieName,

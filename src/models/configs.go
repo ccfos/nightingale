@@ -104,16 +104,20 @@ type AuthConfig struct {
 	PwdIncludeSpecChar int   `json:"pwdIncludeSpecChar"`
 }
 
+var DefaultAuthConfig = AuthConfig{
+	MaxConnIdelTime: 1800,
+}
+
 func AuthConfigGet() (*AuthConfig, error) {
 	buf, err := ConfigsGet("auth.config")
 	if err != nil {
-		return nil, err
+		return &DefaultAuthConfig, nil
 	}
-	config := &AuthConfig{}
-	if err := json.Unmarshal([]byte(buf), config); err != nil {
-		return nil, err
+	c := &AuthConfig{}
+	if err := json.Unmarshal([]byte(buf), c); err != nil {
+		return &DefaultAuthConfig, nil
 	}
-	return config, nil
+	return c, nil
 }
 
 func AuthConfigSet(config *AuthConfig) error {

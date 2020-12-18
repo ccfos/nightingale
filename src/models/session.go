@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/toolkits/pkg/cache"
+	"github.com/toolkits/pkg/logger"
 )
 
 type Session struct {
@@ -52,10 +53,15 @@ func SessionUpdate(in *Session) error {
 }
 
 func SessionCleanup(ts int64) error {
-	_, err := DB["rdb"].Where("updated_at<?", ts).Delete(new(Session))
+	n, err := DB["rdb"].Where("updated_at<?", ts).Delete(new(Session))
+	logger.Debugf("delete before updated_at %d session %d", ts, n)
 	return err
 }
-
+func SessionCleanupByCreatedAt(ts int64) error {
+	n, err := DB["rdb"].Where("created_at<?", ts).Delete(new(Session))
+	logger.Debugf("delete before created_at %d session %d", ts, n)
+	return err
+}
 func (s *Session) Update(cols ...string) error {
 	_, err := DB["rdb"].Where("id=?", s.Sid).Cols(cols...).Update(s)
 	return err

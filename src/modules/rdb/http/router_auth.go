@@ -778,5 +778,7 @@ func v1SessionGetUser(c *gin.Context) {
 }
 
 func v1SessionDelete(c *gin.Context) {
-	renderMessage(c, models.SessionDel(urlParamStr(c, "sid")))
+	sid := urlParamStr(c, "sid")
+	logger.Debugf("session del sid %s", sid)
+	renderMessage(c, models.SessionDel(sid))
 }

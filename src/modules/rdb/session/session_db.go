@@ -20,10 +20,22 @@ func newDbStorage(cf *config.SessionSection, opts *options) (storage, error) {
 			case <-opts.ctx.Done():
 				return
 			case <-t.C:
-				err := models.SessionCleanup(time.Now().Unix() - cache.AuthConfig().MaxConnIdelTime)
-				if err != nil {
-					logger.Errorf("session gc err %s", err)
+				if st := cache.AuthConfig().MaxConnIdelTime; st > 0 {
+					err := models.SessionCleanup(time.Now().Unix() - st)
+					if err != nil {
+						logger.Errorf("session gc err %s", err)
+					}
+				} else {
+					ct := config.Config.HTTP.Session.CookieLifetime
+					if ct == 0 {
+						ct = 86400
+						err := models.SessionCleanupByCreatedAt(time.Now().Unix() - ct)
+						if err != nil {
+							logger.Errorf("session gc err %s", err)
+						}
+					}
 				}
+
 			}
 		}
 	}()
