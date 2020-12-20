@@ -388,7 +388,7 @@ func (f CAvgRateAbsFunction) Compute(vs []*dataobj.HistoryData) (leftValue datao
 	}
 
 	value := sum / dataobj.JsonFloat(vsLen)
-	leftValue = dataobj.JsonFloat(math.Abs(float64(value)-float64(f.CompareValue)) / f.CompareValue)
+	leftValue = dataobj.JsonFloat(math.Abs((float64(value)-float64(f.CompareValue))/f.CompareValue)) * 100.00
 
 	isTriggered = checkIsTriggered(leftValue, f.Operator, f.RightValue)
 	return
@@ -419,7 +419,7 @@ func (f CAvgRateFunction) Compute(vs []*dataobj.HistoryData) (leftValue dataobj.
 	}
 
 	value := sum / dataobj.JsonFloat(vsLen)
-	leftValue = (value - dataobj.JsonFloat(f.CompareValue)) / dataobj.JsonFloat(math.Abs(f.CompareValue))
+	leftValue = (value - dataobj.JsonFloat(f.CompareValue)) / dataobj.JsonFloat(math.Abs(f.CompareValue)) * 100.00
 
 	isTriggered = checkIsTriggered(leftValue, f.Operator, f.RightValue)
 	return
