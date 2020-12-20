@@ -10,7 +10,6 @@ import (
 	"github.com/didi/nightingale/src/common/loggeri"
 	"github.com/didi/nightingale/src/modules/agent/cache"
 	"github.com/didi/nightingale/src/modules/agent/config"
-	"github.com/didi/nightingale/src/modules/agent/core"
 	"github.com/didi/nightingale/src/modules/agent/http"
 	"github.com/didi/nightingale/src/modules/agent/log/worker"
 	"github.com/didi/nightingale/src/modules/agent/report"
@@ -85,7 +84,6 @@ func main() {
 		udp.Start()
 	}
 
-	core.InitRpcClients()
 	http.Start()
 
 	endingProc()
