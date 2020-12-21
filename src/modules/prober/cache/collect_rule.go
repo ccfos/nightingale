@@ -119,7 +119,8 @@ func (p *CollectRuleCache) syncCollectRule() error {
 			return fmt.Errorf("getIdent err %s", err)
 		}
 
-		url := fmt.Sprintf("http://%s"+p.PartitionApi, addrs[perm[i]], ident, report.Config.RPCPort)
+		url := fmt.Sprintf("http://%s/api/mon/collect-rules/endpoints/%s:%s/remote",
+			addrs[perm[i]], ident, report.Config.RPCPort)
 		err = httplib.Get(url).SetTimeout(p.timeout).ToJSON(&resp)
 		if err != nil {
 			logger.Warningf("get %s collect rule from remote failed, error:%v", url, err)

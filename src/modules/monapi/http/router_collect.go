@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/modules/monapi/scache"
 
@@ -37,7 +36,7 @@ func collectRulePost(c *gin.Context) {
 	renderData(c, "ok", nil)
 }
 
-func collectGetByEndpoint(c *gin.Context) {
+func collectRulesGetByLocalEndpoint(c *gin.Context) {
 	collect := scache.CollectCache.GetBy(urlParamStr(c, "endpoint"))
 	renderData(c, collect, nil)
 }
@@ -135,7 +134,7 @@ func collectRuleTypesGet(c *gin.Context) {
 }
 
 func collectRuleTemplateGet(c *gin.Context) {
-	t := mustQueryStr(c, "type")
+	t := urlParamStr(c, "type")
 	collector, err := collector.GetCollector(t)
 	errors.Dangerous(err)
 
@@ -348,13 +347,8 @@ func genIllegalCharErrMsg() string {
 	return fmt.Sprintf(`正则匹配成功。但是tag的key或者value包含非法字符:[:,/=\r\n\t], 请重新调整`)
 }
 
-func getCollectRules(c *gin.Context) {
-	rules := []*models.CollectRule{}
-
-	if queryInt(c, "all", 0) == 1 {
-		rules = scache.CollectRuleCache.GetAll()
-	} else if instance := queryStr(c, "instance", ""); instance != "" {
-		rules = scache.CollectRuleCache.GetBy(instance)
-	}
+func collectRulesGetByRemoteEndpoint(c *gin.Context) {
+	rules := scache.CollectRuleCache.GetBy(urlParamStr(c, "endpoint"))
 	renderData(c, rules, nil)
+
 }

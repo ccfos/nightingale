@@ -157,11 +157,11 @@ func (p BaseCollector) Delete(id int64, username string) error {
 	nid := tmp.(*models.CollectRule).Nid
 	can, err := models.UsernameCandoNodeOp(username, "mon_collect_delete", int64(nid))
 	if err != nil {
-		return err
+		return fmt.Errorf("models.UsernameCandoNodeOp error %s", err)
 	}
 	if !can {
 		return fmt.Errorf("permission deny")
 	}
 
-	return models.DeleteCollectById(p.name, username, id)
+	return models.DeleteCollectRule(id)
 }

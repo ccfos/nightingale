@@ -26,7 +26,6 @@ type ConfYaml struct {
 }
 
 type CollectRuleSection struct {
-	PartitionApi   string `yaml:"partitionApi"`
 	Timeout        int    `yaml:"timeout"`
 	Token          string `yaml:"token"`
 	UpdateInterval int    `yaml:"updateInterval"`
@@ -60,7 +59,6 @@ func Parse(conf string) error {
 	viper.SetDefault("http.enabled", true)
 
 	viper.SetDefault("collectRule", map[string]interface{}{
-		"partitionApi":   "/api/mon/collect-rules/effective?instance=%s:%s",
 		"updateInterval": 9000,
 		"indexInterval":  60000,
 		"timeout":        5000,

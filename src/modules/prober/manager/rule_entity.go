@@ -11,6 +11,7 @@ import (
 	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/modules/prober/cache"
 	"github.com/influxdata/telegraf"
+	"github.com/toolkits/pkg/logger"
 )
 
 // not thread-safe
@@ -62,6 +63,7 @@ func (p *ruleEntity) calc() error {
 
 	vars := map[string]float64{}
 	for _, v := range p.metrics {
+		logger.Debugf("get v[%s] %f", v.Metric, v.Value)
 		vars[v.Metric] = v.Value
 	}
 
@@ -69,6 +71,7 @@ func (p *ruleEntity) calc() error {
 	for _, config := range configs {
 		f, err := config.Calc(vars)
 		if err != nil {
+			logger.Debugf("calc err %s", err)
 			continue
 		}
 		p.metrics = append(p.metrics, &dataobj.MetricValue{

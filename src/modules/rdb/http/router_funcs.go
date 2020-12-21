@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/errors"
-
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/rdb/cache"
 	"github.com/didi/nightingale/src/toolkits/i18n"
+	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/errors"
 )
 
 func dangerous(v interface{}) {
@@ -134,8 +133,6 @@ func renderZeroPage(c *gin.Context) {
 	}, nil)
 }
 
-// ------------
-
 type idsForm struct {
 	Ids []int64 `json:"ids"`
 }
@@ -182,22 +179,21 @@ func checkPassword(passwd string) error {
 		if !has {
 			return fmt.Errorf("character: %s not supported", string(i))
 		}
-
 	}
 
-	if cf.PwdIncludeUpper > 0 && indNum[0] == 0 {
+	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_UPPER > 0 && indNum[0] == 0 {
 		return fmt.Errorf("password must include upper char")
 	}
 
-	if cf.PwdIncludeLower > 0 && indNum[1] == 0 {
+	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_LOWER > 0 && indNum[1] == 0 {
 		return fmt.Errorf("password must include lower char")
 	}
 
-	if cf.PwdIncludeNumber > 0 && indNum[2] == 0 {
+	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_NUMBER > 0 && indNum[2] == 0 {
 		return fmt.Errorf("password must include number char")
 	}
 
-	if cf.PwdIncludeSpecChar > 0 && indNum[3] == 0 {
+	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_SPEC_CHAR > 0 && indNum[3] == 0 {
 		return fmt.Errorf("password must include special char")
 	}
 

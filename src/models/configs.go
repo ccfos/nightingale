@@ -91,21 +91,46 @@ func ConfigsGets(ckeys []string) (map[string]string, error) {
 }
 
 type AuthConfig struct {
-	MaxNumErr          int   `json:"maxNumErr"`
-	MaxSessionNumber   int64 `json:"maxSessionNumber"`
-	MaxConnIdelTime    int64 `json:"maxConnIdelTime"`
-	LockTime           int64 `json:"lockTime"`
-	PwdHistorySize     int   `json:"pwdHistorySize"`
-	PwdMinLenght       int   `json:"pwdMinLenght"`
-	PwdExpiresIn       int64 `json:"pwdExpiresIn"`
-	PwdIncludeUpper    int   `json:"pwdIncludeUpper" description:"'0': fasle, other: true"`
-	PwdIncludeLower    int   `json:"pwdIncludeLower"`
-	PwdIncludeNumber   int   `json:"pwdIncludeNumber"`
-	PwdIncludeSpecChar int   `json:"pwdIncludeSpecChar"`
+	MaxNumErr          int      `json:"maxNumErr"`
+	MaxSessionNumber   int64    `json:"maxSessionNumber"`
+	MaxConnIdelTime    int64    `json:"maxConnIdelTime"`
+	LockTime           int64    `json:"lockTime"`
+	PwdHistorySize     int      `json:"pwdHistorySize"`
+	PwdMinLenght       int      `json:"pwdMinLenght"`
+	PwdExpiresIn       int64    `json:"pwdExpiresIn"`
+	PwdMustInclude     []string `json:"pwdMustInclude" description:"upper,lower,number,specChar"`
+	PwdMustIncludeFlag int      `json:"-"`
+}
+
+const (
+	PWD_INCLUDE_UPPER = 1 << iota
+	PWD_INCLUDE_LOWER
+	PWD_INCLUDE_NUMBER
+	PWD_INCLUDE_SPEC_CHAR
+)
+
+func (p *AuthConfig) Validate() error {
+	for _, v := range p.PwdMustInclude {
+		switch v {
+		case "upper":
+			p.PwdMustIncludeFlag |= PWD_INCLUDE_UPPER
+		case "lower":
+			p.PwdMustIncludeFlag |= PWD_INCLUDE_LOWER
+		case "number":
+			p.PwdMustIncludeFlag |= PWD_INCLUDE_NUMBER
+		case "specChar":
+			p.PwdMustIncludeFlag |= PWD_INCLUDE_SPEC_CHAR
+		default:
+			return fmt.Errorf("invalid pwd flags, must be 'upper', 'lower', 'number', 'specChar'")
+		}
+	}
+
+	return nil
 }
 
 var DefaultAuthConfig = AuthConfig{
 	MaxConnIdelTime: 1800,
+	PwdMustInclude:  []string{},
 }
 
 func AuthConfigGet() (*AuthConfig, error) {
@@ -121,6 +146,10 @@ func AuthConfigGet() (*AuthConfig, error) {
 }
 
 func AuthConfigSet(config *AuthConfig) error {
+	if err := config.Validate(); err != nil {
+		return err
+	}
+
 	buf, err := json.Marshal(config)
 	if err != nil {
 		return err

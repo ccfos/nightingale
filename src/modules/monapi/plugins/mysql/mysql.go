@@ -44,7 +44,7 @@ type MysqlRule struct {
 	GatherFileEventsStats               bool     `label:"File Events Stats" json:"gather_file_events_stats" description:"gather metrics from PERFORMANCE_SCHEMA.FILE_SUMMARY_BY_EVENT_NAME"`
 	GatherPerfEventsStatements          bool     `label:"Perf Events Statements" json:"gather_perf_events_statements" description:"gather metrics from PERFORMANCE_SCHEMA.EVENTS_STATEMENTS_SUMMARY_BY_DIGEST"`
 	GatherGlobalVars                    bool     `label:"-" json:"-"`
-	IntervalSlow                        string   `label:"Interval Slow" json:"interval_slow" desc:"Some queries we may want to run less often (such as SHOW GLOBAL VARIABLES)" example:"interval_slow = '30m'"`
+	IntervalSlow                        string   `label:"Interval Slow" json:"interval_slow" desc:"Some queries we may want to run less often (such as SHOW GLOBAL VARIABLES)" example:"interval_slow = '30m'" json:"-"`
 	MetricVersion                       int      `label:"-" json:"-"`
 }
 
@@ -80,7 +80,7 @@ func (p *MysqlRule) TelegrafInput() (telegraf.Input, error) {
 		GatherFileEventsStats:               p.GatherFileEventsStats,
 		GatherPerfEventsStatements:          p.GatherPerfEventsStatements,
 		GatherGlobalVars:                    true,
-		IntervalSlow:                        p.IntervalSlow,
+		IntervalSlow:                        "0m",
 		MetricVersion:                       2,
 	}, nil
 }

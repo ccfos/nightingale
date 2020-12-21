@@ -97,3 +97,8 @@ func (p *CollectRule) Update() error {
 
 	return err
 }
+
+func DeleteCollectRule(sid int64) error {
+	_, err := DB["mon"].Where("id=?", sid).Delete(new(CollectRule))
+	return err
+}
