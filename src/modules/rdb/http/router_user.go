@@ -298,26 +298,40 @@ type userInviteForm struct {
 func userInvitePost(c *gin.Context) {
 	var f userInviteForm
 	bind(c, &f)
-	dangerous(checkPassword(f.Password))
 
-	inv, err := models.InviteGet("token=?", f.Token)
-	dangerous(err)
+	err := func() error {
+		if err := checkPassword(f.Password); err != nil {
+			return err
+		}
 
-	if inv.Expire < time.Now().Unix() {
-		dangerous("invite url already expired")
-	}
+		inv, err := models.InviteGet("token=?", f.Token)
+		if err != nil {
+			return err
+		}
 
-	u := models.User{
-		Username: f.Username,
-		Dispname: f.Dispname,
-		Phone:    f.Phone,
-		Email:    f.Email,
-		Im:       f.Im,
-		UUID:     models.GenUUIDForUser(f.Username),
-	}
+		if inv.Expire < time.Now().Unix() {
+			return _e("invite url already expired")
+		}
 
-	u.Password, err = models.CryptoPass(f.Password)
-	dangerous(err)
+		u := models.User{
+			Username: f.Username,
+			Dispname: f.Dispname,
+			Phone:    f.Phone,
+			Email:    f.Email,
+			Im:       f.Im,
+			UUID:     models.GenUUIDForUser(f.Username),
+		}
 
-	renderMessage(c, u.Save())
+		u.Password, err = models.CryptoPass(f.Password)
+		if err != nil {
+			return err
+		}
+		if err = u.Save(); err != nil {
+			return err
+		}
+
+		return inv.Del()
+	}()
+
+	renderMessage(c, err)
 }
