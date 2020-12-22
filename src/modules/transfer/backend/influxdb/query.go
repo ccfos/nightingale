@@ -407,7 +407,7 @@ func (influxdb *InfluxdbDataSource) QueryIndexByClude(recvs []dataobj.CludeRecv)
 }
 
 // show series from metric where ...
-func (influxdb *InfluxdbDataSource) QueryIndexByFullTags(recvs []dataobj.IndexByFullTagsRecv) []dataobj.IndexByFullTagsResp {
+func (influxdb *InfluxdbDataSource) QueryIndexByFullTags(recvs []dataobj.IndexByFullTagsRecv) ([]dataobj.IndexByFullTagsResp, int) {
 	logger.Debugf("query IndexByFullTags , recv: %+v", recvs)
 
 	c, err := NewInfluxdbClient(influxdb.Section)
@@ -415,7 +415,7 @@ func (influxdb *InfluxdbDataSource) QueryIndexByFullTags(recvs []dataobj.IndexBy
 
 	if err != nil {
 		logger.Errorf("init influxdb client fail: %v", err)
-		return nil
+		return nil, 0
 	}
 
 	resp := make([]dataobj.IndexByFullTagsResp, 0)
@@ -483,7 +483,7 @@ func (influxdb *InfluxdbDataSource) QueryIndexByFullTags(recvs []dataobj.IndexBy
 		resp = append(resp, fullTagResp)
 	}
 
-	return resp
+	return resp, len(resp)
 }
 
 func convertValues(series models.Row) []*dataobj.RRDData {

@@ -277,6 +277,7 @@ CREATE TABLE `login_log`
     `client`   varchar(128) not null comment 'client ip',
     `clock`    bigint       not null comment 'login timestamp',
     `loginout` char(3)      not null comment 'in or out',
+    `err`      varchar(128) not null comment 'err msg',
     PRIMARY KEY (`id`),
     KEY (`username`),
     KEY (`clock`)

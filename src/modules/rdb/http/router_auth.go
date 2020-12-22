@@ -82,26 +82,35 @@ func init() {
 func login(c *gin.Context) {
 	var in loginInput
 	bind(c, &in)
-	in.validate()
-
 	in.RemoteAddr = c.ClientIP()
+	logger.Debugf("entering login %#v", in)
 
-	if config.Config.Auth.Captcha {
-		c, err := models.CaptchaGet("captcha_id=?", in.CaptchaId)
-		dangerous(err)
-		if strings.ToLower(c.Answer) != strings.ToLower(in.Answer) {
-			dangerous(errInvalidAnswer)
+	if err := func() error {
+		if err := in.Validate(); err != nil {
+			return err
 		}
+
+		if config.Config.Auth.Captcha {
+			c, err := models.CaptchaGet("captcha_id=?", in.CaptchaId)
+			if err != nil {
+				return err
+			}
+			if strings.ToLower(c.Answer) != strings.ToLower(in.Answer) {
+				return errInvalidAnswer
+			}
+		}
+
+		user, err := authLogin(in.v1LoginInput())
+		if err != nil {
+			return err
+		}
+
+		sessionLogin(c, user.Username, in.RemoteAddr)
+		return nil
+	}(); err != nil {
+		renderMessage(c, err.Error())
 	}
 
-	user, err := authLogin(in)
-	dangerous(err)
-
-	sessionLogin(c, user.Username, in.RemoteAddr)
-
-	renderMessage(c, "")
-
-	go models.LoginLogNew(user.Username, in.RemoteAddr, "in")
 }
 
 func logout(c *gin.Context) {
@@ -111,7 +120,7 @@ func logout(c *gin.Context) {
 			return
 		}
 		sessionDestory(c)
-		go models.LoginLogNew(username, c.ClientIP(), "out")
+		models.LoginLogNew(username, c.ClientIP(), "out", nil)
 	}()
 
 	if config.Config.SSO.Enable {
@@ -208,44 +217,69 @@ func logoutV2(c *gin.Context) {
 
 	renderData(c, ret, nil)
 
-	go models.LoginLogNew(username, c.ClientIP(), "out")
+	models.LoginLogNew(username, c.ClientIP(), "out", nil)
 }
 
 type loginInput struct {
-	Username   string `json:"username"`
-	Password   string `json:"password"`
-	Phone      string `json:"phone"`
-	Email      string `json:"email"`
-	Code       string `json:"code"`
-	CaptchaId  string `json:"captcha_id"`
-	Answer     string `json:"answer" description:"captcha answer"`
-	Type       string `json:"type" description:"sms-code|email-code|password|ldap"`
-	RemoteAddr string `json:"remote_addr" description:"use for server account(v1)"`
-	IsLDAP     int    `json:"is_ldap" description:"deprecated"`
+	Username   string   `json:"username"`
+	Password   string   `json:"password"`
+	CaptchaId  string   `json:"captcha_id"`
+	Answer     string   `json:"answer" description:"captcha answer"`
+	Type       string   `json:"type" description:"sms-code|email-code|password|ldap"`
+	Args       []string `json:"args" description:""`
+	RemoteAddr string   `json:"remote_addr" description:"use for server account(v1)"`
+	IsLDAP     int      `json:"is_ldap" description:"deprecated"`
 }
 
-func (f *loginInput) validate() {
-	if f.IsLDAP == 1 {
-		f.Type = models.LOGIN_T_LDAP
+func (p *loginInput) Validate() error {
+	if p.IsLDAP == 1 {
+		p.Type = models.LOGIN_T_LDAP
 	}
-	if f.Type == "" {
-		f.Type = models.LOGIN_T_PWD
+	if p.Type == "" {
+		p.Type = models.LOGIN_T_PWD
 	}
-	if f.Type == models.LOGIN_T_PWD {
-		if str.Dangerous(f.Username) {
-			bomb("%s invalid", f.Username)
+	if p.Type == models.LOGIN_T_PWD || p.Type == models.LOGIN_T_LDAP {
+		if len(p.Args) == 0 {
+			if str.Dangerous(p.Username) {
+				return _e("%s invalid", p.Username)
+			}
+			if len(p.Username) > 64 {
+				return _e("%s too long > 64", p.Username)
+			}
+			p.Args = []string{p.Username, p.Password}
 		}
-		if len(f.Username) > 64 {
-			bomb("%s too long > 64", f.Username)
-		}
+	}
+
+	if len(p.Args) == 0 {
+		return _e("login args must be set")
+	}
+	return nil
+}
+
+func (p *loginInput) v1LoginInput() *v1LoginInput {
+	return &v1LoginInput{
+		Type:       p.Type,
+		Args:       p.Args,
+		RemoteAddr: p.RemoteAddr,
 	}
 }
 
 type v1LoginInput struct {
-	Username   string   `json:"username"`
 	Type       string   `param:"data" json:"type"`
 	Args       []string `param:"data" json:"args"`
 	RemoteAddr string   `param:"data" json:"remote_addr"`
+}
+
+func (p *v1LoginInput) Validate() error {
+	if p.Type == "" {
+		p.Type = models.LOGIN_T_PWD
+	}
+
+	if len(p.Args) == 0 {
+		return fmt.Errorf("login args must be set")
+	}
+
+	return nil
 }
 
 // v1Login called by sso.rdb module
@@ -253,50 +287,40 @@ func v1Login(c *gin.Context) {
 	var in v1LoginInput
 	bind(c, &in)
 
-	input := loginInput{
-		Username:   in.Username,
-		Type:       in.Type,
-		RemoteAddr: in.RemoteAddr,
-	}
-	switch in.Type {
-	case models.LOGIN_T_SMS:
-		input.Phone = in.Args[0]
-		input.Code = in.Args[1]
-	case models.LOGIN_T_EMAIL:
-		input.Email = in.Args[0]
-		input.Code = in.Args[1]
-	case models.LOGIN_T_PWD:
-		input.Password = in.Args[0]
-	}
-
-	user, err := authLogin(input)
-	renderData(c, *user, err)
-
-	go models.LoginLogNew(user.Username, in.RemoteAddr, "in")
+	user, err := authLogin(&in)
+	renderData(c, user, err)
 }
 
 // authLogin called by /v1/rdb/login, /api/rdb/auth/login
-func authLogin(in loginInput) (user *models.User, err error) {
+func authLogin(in *v1LoginInput) (user *models.User, err error) {
+	if err = in.Validate(); err != nil {
+		return
+	}
+
 	if config.Config.Auth.WhiteList {
 		if err := models.WhiteListAccess(in.RemoteAddr); err != nil {
 			return nil, err
 		}
 	}
+	defer func() {
+		models.LoginLogNew(in.Args[0], in.RemoteAddr, "in", err)
+	}()
 
 	switch strings.ToLower(in.Type) {
 	case models.LOGIN_T_LDAP:
-		user, err = models.LdapLogin(in.Username, in.Password)
+		user, err = models.LdapLogin(in.Args[0], in.Args[1])
+		authPostCheck(in.Args[0], user, err == nil)
 	case models.LOGIN_T_PWD:
-		user, err = models.PassLogin(in.Username, in.Password)
+		user, err = models.PassLogin(in.Args[0], in.Args[1])
+		authPostCheck(in.Args[0], user, err == nil)
 	case models.LOGIN_T_SMS:
-		user, err = models.SmsCodeLogin(in.Username, in.Phone, in.Code)
+		user, err = models.SmsCodeLogin(in.Args[0], in.Args[1])
 	case models.LOGIN_T_EMAIL:
-		user, err = models.EmailCodeLogin(in.Username, in.Email, in.Code)
+		user, err = models.EmailCodeLogin(in.Args[0], in.Args[1])
 	default:
-		return nil, fmt.Errorf("invalid login type %s", in.Type)
+		err = fmt.Errorf("invalid login type %s", in.Type)
 	}
 
-	err = authPostCheck(in.Username, err == nil, user)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +328,7 @@ func authLogin(in loginInput) (user *models.User, err error) {
 	return user, nil
 }
 
-func authPostCheck(username string, login bool, user *models.User) (err error) {
+func authPostCheck(username string, user *models.User, login bool) (err error) {
 	cf := cache.AuthConfig()
 	if user == nil {
 		if user, err = models.UserMustGet("username=?", username); err != nil {
@@ -357,7 +381,7 @@ retry:
 		}
 
 		if cf.PwdExpiresIn > 0 {
-			if now-user.PwdUpdatedAt > cf.PwdExpiresIn {
+			if now-user.PwdUpdatedAt > cf.PwdExpiresIn*30*86400 {
 				err = fmt.Errorf("password has been expired")
 				return err
 			}
@@ -384,15 +408,11 @@ retry:
 }
 
 type sendCodeInput struct {
-	Username string `json:"username"`
-	Type     string `json:"type" description:"sms-code, email-code"`
-	Arg      string `json:"arg"`
+	Type string `json:"type" description:"sms-code, email-code"`
+	Arg  string `json:"arg"`
 }
 
 func (p *sendCodeInput) Validate() error {
-	if p.Username == "" {
-		return fmt.Errorf("unable to get username")
-	}
 	if p.Type == "" {
 		return fmt.Errorf("unable to get type, sms-code | email-code")
 	}
@@ -407,6 +427,9 @@ func sendLoginCode(c *gin.Context) {
 	bind(c, &in)
 
 	msg, err := func() (string, error) {
+		if err := in.Validate(); err != nil {
+			return "", err
+		}
 		if !config.Config.Redis.Enable {
 			return "", fmt.Errorf("sms/email sender is disabled")
 		}
@@ -419,9 +442,8 @@ func sendLoginCode(c *gin.Context) {
 		code := fmt.Sprintf("%06d", rand.Intn(1000000))
 
 		loginCode := &models.LoginCode{
-			Username:  in.Username,
 			Code:      code,
-			LoginType: in.Type,
+			LoginType: models.LOGIN_T_LOGIN,
 			CreatedAt: time.Now().Unix(),
 		}
 
@@ -433,13 +455,13 @@ func sendLoginCode(c *gin.Context) {
 
 		switch in.Type {
 		case models.LOGIN_T_SMS:
-			user, _ = models.UserGet("username=? and phone=?", in.Username, in.Arg)
+			user, _ = models.UserGet("phone=?", in.Arg)
 			if err := loginCodeSmsTpl.Execute(&buf, loginCode); err != nil {
 				return "", err
 			}
 			queueName = config.SMS_QUEUE_NAME
 		case models.LOGIN_T_EMAIL:
-			user, _ = models.UserGet("username=? and email=?", in.Username, in.Arg)
+			user, _ = models.UserGet("email=?", in.Arg)
 			if err := loginCodeEmailTpl.Execute(&buf, loginCode); err != nil {
 				return "", err
 			}
@@ -452,6 +474,7 @@ func sendLoginCode(c *gin.Context) {
 			return "", fmt.Errorf("user informations is invalid")
 		}
 
+		loginCode.Username = user.Username
 		if err := loginCode.Save(); err != nil {
 			return "", err
 		}
@@ -476,6 +499,9 @@ func sendRstCode(c *gin.Context) {
 	logger.Debugf("rst code input %#v", in)
 
 	msg, err := func() (string, error) {
+		if err := in.Validate(); err != nil {
+			return "", err
+		}
 		if !config.Config.Redis.Enable {
 			return "", fmt.Errorf("email/sms sender is disabled")
 		}
@@ -488,7 +514,6 @@ func sendRstCode(c *gin.Context) {
 		code := fmt.Sprintf("%06d", rand.Intn(1000000))
 
 		loginCode := &models.LoginCode{
-			Username:  in.Username,
 			Code:      code,
 			LoginType: models.LOGIN_T_RST,
 			CreatedAt: time.Now().Unix(),
@@ -502,13 +527,13 @@ func sendRstCode(c *gin.Context) {
 
 		switch in.Type {
 		case models.LOGIN_T_SMS:
-			user, _ = models.UserGet("username=? and phone=?", in.Username, in.Arg)
+			user, _ = models.UserGet("phone=?", in.Arg)
 			if err := loginCodeSmsTpl.Execute(&buf, loginCode); err != nil {
 				return "", err
 			}
 			queueName = config.SMS_QUEUE_NAME
 		case models.LOGIN_T_EMAIL:
-			user, _ = models.UserGet("username=? and email=?", in.Username, in.Arg)
+			user, _ = models.UserGet("email=?", in.Arg)
 			if err := loginCodeEmailTpl.Execute(&buf, loginCode); err != nil {
 				return "", err
 			}
@@ -518,9 +543,10 @@ func sendRstCode(c *gin.Context) {
 		}
 
 		if user == nil {
-			return "", fmt.Errorf("User %s's infomation is incorrect", in.Username)
+			return "", fmt.Errorf("User %s's infomation is incorrect", in.Arg)
 		}
 
+		loginCode.Username = user.Username
 		if err := loginCode.Save(); err != nil {
 			return "", err
 		}
@@ -539,7 +565,6 @@ func sendRstCode(c *gin.Context) {
 }
 
 type rstPasswordInput struct {
-	Username string `json:"username"`
 	Type     string `json:"type"`
 	Arg      string `json:"arg"`
 	Code     string `json:"code"`
@@ -548,16 +573,13 @@ type rstPasswordInput struct {
 }
 
 func (p *rstPasswordInput) Validate() error {
-	if p.Username == "" {
-		return fmt.Errorf("unable to get username")
-	}
 	if p.Type == "" {
 		return fmt.Errorf("unable to get type, sms-code | email-code")
 	}
 	if p.Arg == "" {
 		return fmt.Errorf("unable to get arg")
 	}
-	if p.Password == "" {
+	if !p.DryRun && p.Password == "" {
 		return fmt.Errorf("password must be set")
 	}
 	return nil
@@ -576,19 +598,18 @@ func rstPassword(c *gin.Context) {
 
 		switch in.Type {
 		case models.LOGIN_T_SMS:
-			user, _ = models.UserGet("username=? and phone=?", in.Username, in.Arg)
+			user, _ = models.UserGet("phone=?", in.Arg)
 		case models.LOGIN_T_EMAIL:
-			user, _ = models.UserGet("username=? and email=?", in.Username, in.Arg)
+			user, _ = models.UserGet("email=?", in.Arg)
 		default:
 			return fmt.Errorf("invalid type %s", in.Type)
 		}
 
 		if user == nil {
-			return fmt.Errorf("User %s's infomation is incorrect", in.Username)
+			return fmt.Errorf("User %s's infomation is incorrect", in.Arg)
 		}
 
-		lc, err := models.LoginCodeGet("username=? and code=? and login_type=?",
-			user.Username, in.Code, models.LOGIN_T_RST)
+		lc, err := models.LoginCodeGet("code=? and login_type=?", in.Code, models.LOGIN_T_RST)
 		if err != nil {
 			return fmt.Errorf("invalid code")
 		}

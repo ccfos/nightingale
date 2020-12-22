@@ -22,9 +22,10 @@ import (
 const (
 	LOGIN_T_SMS      = "sms-code"
 	LOGIN_T_EMAIL    = "email-code"
-	LOGIN_T_RST      = "rst-code"
 	LOGIN_T_PWD      = "password"
 	LOGIN_T_LDAP     = "ldap"
+	LOGIN_T_RST      = "rst-code"
+	LOGIN_T_LOGIN    = "login-code"
 	LOGIN_EXPIRES_IN = 300
 )
 const (
@@ -68,6 +69,11 @@ type User struct {
 }
 
 func (u *User) Validate() error {
+	cnt, _ := DB["rdb"].Where("((email <> '' and email=?) or (phone <> '' and phone=?)) and username=?",
+		u.Email, u.Phone, u.Username).Count(u)
+	if cnt > 0 {
+		return fmt.Errorf("email %s or phone %s is exists", u.Email, u.Phone)
+	}
 	return nil
 }
 
@@ -174,13 +180,13 @@ func PassLogin(user, pass string) (*User, error) {
 	return &u, nil
 }
 
-func SmsCodeLogin(username, phone, code string) (*User, error) {
-	user, _ := UserGet("username=? and phone=?", username, phone)
+func SmsCodeLogin(phone, code string) (*User, error) {
+	user, _ := UserGet("phone=?", phone)
 	if user == nil {
 		return nil, fmt.Errorf("phone %s dose not exist", phone)
 	}
 
-	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_SMS)
+	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_LOGIN)
 	if err != nil {
 		logger.Infof("sms-code auth fail, user: %s", user.Username)
 		return nil, fmt.Errorf("login fail, check your sms-code")
@@ -196,20 +202,20 @@ func SmsCodeLogin(username, phone, code string) (*User, error) {
 	return user, nil
 }
 
-func EmailCodeLogin(username, email, code string) (*User, error) {
-	user, _ := UserGet("username=? and email=?", username, email)
+func EmailCodeLogin(email, code string) (*User, error) {
+	user, _ := UserGet("email=?", email)
 	if user == nil {
 		return nil, fmt.Errorf("email %s dose not exist", email)
 	}
 
-	lc, err := LoginCodeGet("username=? and code=? and login_type=?", username, code, LOGIN_T_EMAIL)
+	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_LOGIN)
 	if err != nil {
-		logger.Infof("email-code auth fail, user: %s", username)
+		logger.Infof("email-code auth fail, user: %s", user.Username)
 		return nil, fmt.Errorf("login fail, check your email-code")
 	}
 
 	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
-		logger.Infof("email-code auth expired, user: %s", username)
+		logger.Infof("email-code auth expired, user: %s", user.Username)
 		return nil, fmt.Errorf("login fail, the code has expired")
 	}
 
@@ -324,13 +330,29 @@ func (u *User) checkPassword() {
 }
 
 func (u *User) Update(cols ...string) error {
+	if err := u.Validate(); err != nil {
+		return err
+	}
+
+	for _, col := range cols {
+		if col == "password" {
+			cols = append(cols, "passwords", "pwd_updated_at")
+			break
+		}
+	}
+
 	u.CheckFields(cols...)
+
 	_, err := DB["rdb"].Where("id=?", u.Id).Cols(cols...).Update(u)
 	return err
 }
 
 func (u *User) Save() error {
 	u.CheckFields()
+
+	if err := u.Validate(); err != nil {
+		return err
+	}
 
 	if u.Id > 0 {
 		return fmt.Errorf("user.id[%d] not equal 0", u.Id)

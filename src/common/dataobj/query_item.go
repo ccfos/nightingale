@@ -110,4 +110,5 @@ type IndexByFullTagsResp struct {
 	Tags      []string `json:"tags"`
 	Step      int      `json:"step"`
 	DsType    string   `json:"dstype"`
+	Count     int      `json:"count"`
 }

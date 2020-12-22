@@ -30,7 +30,7 @@ type DataSource interface {
 	QueryMetrics(recv dataobj.EndpointsRecv) *dataobj.MetricResp
 	QueryTagPairs(recv dataobj.EndpointMetricRecv) []dataobj.IndexTagkvResp
 	QueryIndexByClude(recv []dataobj.CludeRecv) []dataobj.XcludeResp
-	QueryIndexByFullTags(recv []dataobj.IndexByFullTagsRecv) []dataobj.IndexByFullTagsResp
+	QueryIndexByFullTags(recv []dataobj.IndexByFullTagsRecv) ([]dataobj.IndexByFullTagsResp, int)
 
 	// tsdb instance
 	GetInstance(metric, endpoint string, tags map[string]string) []string

@@ -284,3 +284,11 @@ func Node(id int64) *models.Node {
 
 	return node
 }
+
+func _e(format string, a ...interface{}) error {
+	return fmt.Errorf(i18n.Sprintf(format, a...))
+}
+
+func _s(format string, a ...interface{}) error {
+	return i18n.Sprintf(format, a...)
+}
