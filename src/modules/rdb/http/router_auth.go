@@ -85,7 +85,7 @@ func login(c *gin.Context) {
 	in.RemoteAddr = c.ClientIP()
 	logger.Debugf("entering login %#v", in)
 
-	if err := func() error {
+	err := func() error {
 		if err := in.Validate(); err != nil {
 			return err
 		}
@@ -107,10 +107,8 @@ func login(c *gin.Context) {
 
 		sessionLogin(c, user.Username, in.RemoteAddr)
 		return nil
-	}(); err != nil {
-		renderMessage(c, err.Error())
-	}
-
+	}()
+	renderMessage(c, err)
 }
 
 func logout(c *gin.Context) {
