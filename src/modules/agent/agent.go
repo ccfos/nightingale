@@ -63,6 +63,11 @@ func main() {
 	loggeri.Init(config.Config.Logger)
 	stats.Init("agent")
 
+	if err := report.GatherBase(); err != nil {
+		fmt.Println("gatherBase fail: ", err)
+		os.Exit(1)
+	}
+
 	if config.Config.Enable.Mon {
 		monStart()
 	}
@@ -76,7 +81,6 @@ func main() {
 	}
 
 	if config.Config.Enable.Metrics {
-
 		// 初始化 statsd服务
 		statsd.Start()
 
@@ -90,11 +94,6 @@ func main() {
 }
 
 func reportStart() {
-	if err := report.GatherBase(); err != nil {
-		fmt.Println("gatherBase fail: ", err)
-		os.Exit(1)
-	}
-
 	go report.LoopReport()
 }
 
