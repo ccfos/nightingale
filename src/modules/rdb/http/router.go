@@ -10,24 +10,28 @@ func Config(r *gin.Engine) {
 	{
 		notLogin.GET("/ping", ping)
 		notLogin.GET("/ldap/used", ldapUsed)
-		notLogin.POST("/auth/login", login)
-		notLogin.GET("/auth/logout", logout)
 		notLogin.GET("/ops/global", globalOpsGet)
 		notLogin.GET("/ops/local", localOpsGet)
 		notLogin.GET("/roles/global", globalRoleGet)
 		notLogin.GET("/roles/local", localRoleGet)
 		notLogin.POST("/users/invite", userInvitePost)
 
-		notLogin.GET("/auth/v2/authorize", authAuthorizeV2)
-		notLogin.GET("/auth/v2/callback", authCallbackV2)
-		notLogin.GET("/auth/v2/logout", logoutV2)
-
 		notLogin.POST("/auth/send-login-code", sendLoginCode)
 		notLogin.POST("/auth/send-rst-code", sendRstCode)
 		notLogin.POST("/auth/rst-password", rstPassword)
 		notLogin.GET("/auth/captcha", captchaGet)
+		notLogin.GET("/auth/logout", logout)
+		notLogin.GET("/auth/v2/logout", logoutV2)
 
 		notLogin.GET("/v2/nodes", nodeGets)
+
+	}
+
+	sessionStarted := r.Group("/api/rdb").Use(shouldStartSession())
+	{
+		sessionStarted.POST("/auth/login", login)
+		sessionStarted.GET("/auth/v2/authorize", authAuthorizeV2)
+		sessionStarted.GET("/auth/v2/callback", authCallbackV2)
 	}
 
 	hbs := r.Group("/api/hbs")

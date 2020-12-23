@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/auth"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/gin-gonic/gin"
 )
@@ -42,21 +43,16 @@ type selfPasswordForm struct {
 func selfPasswordPut(c *gin.Context) {
 	var f selfPasswordForm
 	bind(c, &f)
-	dangerous(checkPassword(f.NewPass))
 
+	user := loginUser(c)
 	oldpass, err := models.CryptoPass(f.OldPass)
 	dangerous(err)
 
-	newpass, err := models.CryptoPass(f.NewPass)
-	dangerous(err)
-
-	user := loginUser(c)
 	if user.Password != oldpass {
 		bomb("old password error")
 	}
 
-	user.Password = newpass
-	renderMessage(c, user.Update("password"))
+	renderMessage(c, auth.ChangePassword(user, f.NewPass))
 }
 
 func selfTokenGets(c *gin.Context) {

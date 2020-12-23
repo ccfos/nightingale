@@ -19,7 +19,7 @@ import (
 
 	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/models"
-	"github.com/didi/nightingale/src/modules/rdb/cache"
+	"github.com/didi/nightingale/src/modules/rdb/auth"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
 	"github.com/didi/nightingale/src/modules/rdb/ssoc"
@@ -83,7 +83,6 @@ func login(c *gin.Context) {
 	var in loginInput
 	bind(c, &in)
 	in.RemoteAddr = c.ClientIP()
-	logger.Debugf("entering login %#v", in)
 
 	err := func() error {
 		if err := in.Validate(); err != nil {
@@ -102,6 +101,7 @@ func login(c *gin.Context) {
 
 		user, err := authLogin(in.v1LoginInput())
 		if err != nil {
+			logger.Debugf("login error %s", err)
 			return err
 		}
 
@@ -141,25 +141,25 @@ type authRedirect struct {
 }
 
 func authAuthorizeV2(c *gin.Context) {
-	err := sessionStart(c)
-	dangerous(err)
-	defer sessionUpdate(c)
+	resp, err := func() (*authRedirect, error) {
+		redirect := queryStr(c, "redirect", "/")
 
-	redirect := queryStr(c, "redirect", "/")
-	ret := &authRedirect{Redirect: redirect}
+		username := sessionUsername(c)
+		if username != "" { // alread login
+			return &authRedirect{Redirect: redirect}, nil
+		}
 
-	username := sessionUsername(c)
-	if username != "" { // alread login
-		renderData(c, ret, nil)
-		return
-	}
+		if !config.Config.SSO.Enable {
+			return &authRedirect{Redirect: "/login"}, nil
+		}
 
-	if config.Config.SSO.Enable {
-		ret.Redirect, err = ssoc.Authorize(redirect)
-	} else {
-		ret.Redirect = "/login"
-	}
-	renderData(c, ret, err)
+		if redirect, err := ssoc.Authorize(redirect); err != nil {
+			return nil, err
+		} else {
+			return &authRedirect{Redirect: redirect}, nil
+		}
+	}()
+	renderData(c, resp, err)
 }
 
 func authCallbackV2(c *gin.Context) {
@@ -183,17 +183,12 @@ func authCallbackV2(c *gin.Context) {
 		return
 	}
 
-	dangerous(sessionStart(c))
-	defer sessionUpdate(c)
-
 	logger.Debugf("sso.callback() successfully, set username %s", user.Username)
 	sessionLogin(c, user.Username, c.ClientIP())
 	renderData(c, ret, nil)
 }
 
 func logoutV2(c *gin.Context) {
-	sessionStart(c)
-
 	redirect := queryStr(c, "redirect", "")
 	ret := &authRedirect{Redirect: redirect}
 
@@ -295,10 +290,8 @@ func authLogin(in *v1LoginInput) (user *models.User, err error) {
 		return
 	}
 
-	if config.Config.Auth.WhiteList {
-		if err := models.WhiteListAccess(in.RemoteAddr); err != nil {
-			return nil, err
-		}
+	if err := auth.WhiteListAccess(in.RemoteAddr); err != nil {
+		return nil, err
 	}
 	defer func() {
 		models.LoginLogNew(in.Args[0], in.RemoteAddr, "in", err)
@@ -307,10 +300,8 @@ func authLogin(in *v1LoginInput) (user *models.User, err error) {
 	switch strings.ToLower(in.Type) {
 	case models.LOGIN_T_LDAP:
 		user, err = models.LdapLogin(in.Args[0], in.Args[1])
-		authPostCheck(in.Args[0], user, err == nil)
 	case models.LOGIN_T_PWD:
 		user, err = models.PassLogin(in.Args[0], in.Args[1])
-		authPostCheck(in.Args[0], user, err == nil)
 	case models.LOGIN_T_SMS:
 		user, err = models.SmsCodeLogin(in.Args[0], in.Args[1])
 	case models.LOGIN_T_EMAIL:
@@ -319,90 +310,11 @@ func authLogin(in *v1LoginInput) (user *models.User, err error) {
 		err = fmt.Errorf("invalid login type %s", in.Type)
 	}
 
-	if err != nil {
+	if err = auth.PostLogin(user, err); err != nil {
 		return nil, err
 	}
 
 	return user, nil
-}
-
-func authPostCheck(username string, user *models.User, login bool) (err error) {
-	cf := cache.AuthConfig()
-	if user == nil {
-		if user, err = models.UserMustGet("username=?", username); err != nil {
-			return err
-		}
-	}
-	now := time.Now().Unix()
-	defer func() {
-		if err == nil {
-			user.LoggedAt = now
-		}
-		user.Update("login_err_num", "status", "locked_at", "updated_at", "logged_at")
-	}()
-
-	if user.Typ == models.USER_T_TEMP && (now < user.ActiveBegin || user.ActiveEnd < now) {
-		err = fmt.Errorf("Temporary user has expired")
-		return
-	}
-
-	var n int64
-retry:
-	switch user.Status {
-	case models.USER_S_ACTIVE:
-		if cf.MaxNumErr > 0 && user.LoginErrNum >= cf.MaxNumErr {
-			user.Status = models.USER_S_LOCKED
-			user.LockedAt = now
-			user.UpdatedAt = now
-			goto retry
-		}
-
-		if !login {
-			user.LoginErrNum++
-			user.UpdatedAt = now
-			err = fmt.Errorf("max login err %d/%d", user.LoginErrNum, cf.MaxNumErr)
-			return err
-		}
-
-		user.LoginErrNum = 0
-		user.UpdatedAt = now
-
-		if cf.MaxSessionNumber > 0 {
-			if n, err = models.SessionUserAll(username); err != nil {
-				return err
-			}
-
-			if n >= cf.MaxSessionNumber {
-				err = fmt.Errorf("max session limit %d/%d", n, cf.MaxSessionNumber)
-				return err
-			}
-		}
-
-		if cf.PwdExpiresIn > 0 {
-			if now-user.PwdUpdatedAt > cf.PwdExpiresIn*30*86400 {
-				err = fmt.Errorf("password has been expired")
-				return err
-			}
-		}
-		return nil
-	case models.USER_S_INACTIVE:
-		err = fmt.Errorf("user is inactive")
-	case models.USER_S_LOCKED:
-		if now-user.LockedAt > cf.LockTime*60 {
-			user.Status = models.USER_S_ACTIVE
-			user.LoginErrNum = 0
-			user.UpdatedAt = now
-			goto retry
-		}
-		err = fmt.Errorf("user is locked")
-	case models.USER_S_FROZEN:
-		err = fmt.Errorf("user is frozen")
-	case models.USER_S_WRITEN_OFF:
-		err = fmt.Errorf("user is writen off")
-	default:
-		err = fmt.Errorf("invalid user status %d", user.Status)
-	}
-	return
 }
 
 type sendCodeInput struct {
@@ -622,19 +534,7 @@ func rstPassword(c *gin.Context) {
 		defer lc.Del()
 
 		// update password
-		if user.Password, err = models.CryptoPass(in.Password); err != nil {
-			return err
-		}
-
-		if err = checkPassword(in.Password); err != nil {
-			return err
-		}
-
-		if err = user.Update("password"); err != nil {
-			return err
-		}
-
-		return nil
+		return auth.ChangePassword(user, in.Password)
 	}()
 
 	if err != nil {

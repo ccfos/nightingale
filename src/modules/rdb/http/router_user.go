@@ -9,6 +9,7 @@ import (
 	"github.com/toolkits/pkg/str"
 
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/auth"
 )
 
 // 通讯录，只要登录用户就可以看，超管要修改某个用户的信息，也是调用这个接口获取列表先
@@ -64,7 +65,7 @@ func userAddPost(c *gin.Context) {
 
 	var f userProfileForm
 	bind(c, &f)
-	dangerous(checkPassword(f.Password))
+	dangerous(auth.CheckPassword(f.Password))
 
 	pass, err := models.CryptoPass(f.Password)
 	dangerous(err)
@@ -144,9 +145,9 @@ func userProfilePut(c *gin.Context) {
 		target.IsRoot = f.IsRoot
 	}
 
-	if f.Typ != target.Typ {
-		arr = append(arr, fmt.Sprintf("typ: %d -> %d", target.Typ, f.Typ))
-		target.Typ = f.Typ
+	if f.Typ != target.Type {
+		arr = append(arr, fmt.Sprintf("typ: %d -> %d", target.Type, f.Typ))
+		target.Type = f.Typ
 	}
 
 	if f.Status != target.Status {
@@ -182,17 +183,13 @@ func userPasswordPut(c *gin.Context) {
 
 	var f userPasswordForm
 	bind(c, &f)
-	dangerous(checkPassword(f.Password))
+	dangerous(auth.CheckPassword(f.Password))
 
-	target := User(urlParamInt64(c, "id"))
+	user := User(urlParamInt64(c, "id"))
+	err := auth.ChangePassword(user, f.Password)
 
-	pass, err := models.CryptoPass(f.Password)
-	dangerous(err)
-
-	target.Password = pass
-	err = target.Update("password")
 	if err == nil {
-		go models.OperationLogNew(root.Username, "user", target.Id, fmt.Sprintf("UserChangePassword %s", target.Username))
+		go models.OperationLogNew(root.Username, "user", user.Id, fmt.Sprintf("UserChangePassword %s", user.Username))
 	}
 	renderMessage(c, err)
 }
@@ -300,7 +297,7 @@ func userInvitePost(c *gin.Context) {
 	bind(c, &f)
 
 	err := func() error {
-		if err := checkPassword(f.Password); err != nil {
+		if err := auth.CheckPassword(f.Password); err != nil {
 			return err
 		}
 

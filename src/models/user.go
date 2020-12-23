@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -53,8 +52,8 @@ type User struct {
 	Portrait     string    `json:"portrait"`
 	Intro        string    `json:"intro"`
 	Organization string    `json:"organization"`
-	Typ          int       `json:"typ" description:"0: long-term account; 1: temporary account"`
-	Status       int       `json:"status" description:"0: active, 1: inactive, 2: locked, 3: frozen, 5: writen-off"`
+	Type         int       `json:"type" xorm:"'typ'" description:"0: long-term account; 1: temporary account"`
+	Status       int       `json:"status" description:"0: active, 1: inactive, 2: locked, 3: frozen, 4: writen-off"`
 	IsRoot       int       `json:"is_root"`
 	LeaderId     int64     `json:"leader_id"`
 	LeaderName   string    `json:"leader_name"`
@@ -69,6 +68,39 @@ type User struct {
 }
 
 func (u *User) Validate() error {
+	u.Username = strings.TrimSpace(u.Username)
+	if u.Username == "" {
+		return fmt.Errorf("username is blank")
+	}
+
+	if str.Dangerous(u.Username) {
+		return fmt.Errorf("username is dangerous")
+	}
+
+	if str.Dangerous(u.Dispname) {
+		return fmt.Errorf("dispname is dangerous")
+	}
+
+	if u.Phone != "" && !str.IsPhone(u.Phone) {
+		return fmt.Errorf("%s format error", u.Phone)
+	}
+
+	if u.Email != "" && !str.IsMail(u.Email) {
+		return fmt.Errorf("%s format error", u.Email)
+	}
+
+	if len(u.Username) > 32 {
+		return fmt.Errorf("username too long")
+	}
+
+	if len(u.Dispname) > 32 {
+		return fmt.Errorf("dispname too long")
+	}
+
+	if strings.ContainsAny(u.Im, "%'") {
+		return fmt.Errorf("im invalid")
+	}
+
 	cnt, _ := DB["rdb"].Where("((email <> '' and email=?) or (phone <> '' and phone=?)) and username=?",
 		u.Email, u.Phone, u.Username).Count(u)
 	if cnt > 0 {
@@ -125,59 +157,59 @@ func InitRooter() {
 	log.Println("user root init done")
 }
 
-func LdapLogin(user, pass string) (*User, error) {
-	sr, err := ldapReq(user, pass)
+func LdapLogin(username, pass string) (*User, error) {
+	sr, err := ldapReq(username, pass)
 	if err != nil {
 		return nil, err
 	}
 
-	var u User
-	has, err := DB["rdb"].Where("username=?", user).Get(&u)
+	var user User
+	has, err := DB["rdb"].Where("username=?", username).Get(&user)
 	if err != nil {
 		return nil, err
 	}
 
-	u.CopyLdapAttr(sr)
+	user.CopyLdapAttr(sr)
 
 	if has {
 		if config.Config.LDAP.CoverAttributes {
-			_, err := DB["rdb"].Where("id=?", u.Id).Update(u)
-			return &u, err
+			_, err := DB["rdb"].Where("id=?", user.Id).Update(user)
+			return &user, err
 		} else {
-			return &u, err
+			return &user, err
 		}
 	}
 
-	u.Username = user
-	u.Password = "******"
-	u.UUID = GenUUIDForUser(user)
-	_, err = DB["rdb"].Insert(u)
-	return &u, nil
+	user.Username = username
+	user.Password = "******"
+	user.UUID = GenUUIDForUser(username)
+	_, err = DB["rdb"].Insert(user)
+	return &user, nil
 }
 
-func PassLogin(user, pass string) (*User, error) {
-	var u User
-	has, err := DB["rdb"].Where("username=?", user).Get(&u)
+func PassLogin(username, pass string) (*User, error) {
+	var user User
+	has, err := DB["rdb"].Where("username=?", username).Get(&user)
 	if err != nil {
 		return nil, err
 	}
 
 	if !has {
-		logger.Infof("password auth fail, no such user: %s", user)
+		logger.Infof("password auth fail, no such user: %s", username)
 		return nil, fmt.Errorf("login fail, check your username and password")
 	}
 
 	loginPass, err := CryptoPass(pass)
 	if err != nil {
-		return nil, err
+		return &user, err
 	}
 
-	if loginPass != u.Password {
-		logger.Infof("password auth fail, password error, user: %s", user)
-		return nil, fmt.Errorf("login fail, check your username and password")
+	if loginPass != user.Password {
+		logger.Infof("password auth fail, password error, user: %s", username)
+		return &user, fmt.Errorf("login fail, check your username and password")
 	}
 
-	return &u, nil
+	return &user, nil
 }
 
 func SmsCodeLogin(phone, code string) (*User, error) {
@@ -189,12 +221,12 @@ func SmsCodeLogin(phone, code string) (*User, error) {
 	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_LOGIN)
 	if err != nil {
 		logger.Infof("sms-code auth fail, user: %s", user.Username)
-		return nil, fmt.Errorf("login fail, check your sms-code")
+		return user, fmt.Errorf("login fail, check your sms-code")
 	}
 
 	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
 		logger.Infof("sms-code auth expired, user: %s", user.Username)
-		return nil, fmt.Errorf("login fail, the code has expired")
+		return user, fmt.Errorf("login fail, the code has expired")
 	}
 
 	lc.Del()
@@ -211,12 +243,12 @@ func EmailCodeLogin(email, code string) (*User, error) {
 	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_LOGIN)
 	if err != nil {
 		logger.Infof("email-code auth fail, user: %s", user.Username)
-		return nil, fmt.Errorf("login fail, check your email-code")
+		return user, fmt.Errorf("login fail, check your email-code")
 	}
 
 	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
 		logger.Infof("email-code auth expired, user: %s", user.Username)
-		return nil, fmt.Errorf("login fail, the code has expired")
+		return user, fmt.Errorf("login fail, the code has expired")
 	}
 
 	lc.Del()
@@ -256,100 +288,16 @@ func (u *User) IsRooter() bool {
 	return u.IsRoot == 1
 }
 
-func (u *User) CheckFields(cols ...string) {
-	u.Username = strings.TrimSpace(u.Username)
-	if u.Username == "" {
-		errors.Bomb("username is blank")
-	}
-
-	if str.Dangerous(u.Username) {
-		errors.Bomb("username is dangerous")
-	}
-
-	if str.Dangerous(u.Dispname) {
-		errors.Bomb("dispname is dangerous")
-	}
-
-	if u.Phone != "" && !str.IsPhone(u.Phone) {
-		errors.Bomb("%s format error", u.Phone)
-	}
-
-	if u.Email != "" && !str.IsMail(u.Email) {
-		errors.Bomb("%s format error", u.Email)
-	}
-
-	if len(u.Username) > 32 {
-		errors.Bomb("username too long")
-	}
-
-	if len(u.Dispname) > 32 {
-		errors.Bomb("dispname too long")
-	}
-
-	if strings.ContainsAny(u.Im, "%'") {
-		errors.Bomb("im invalid")
-	}
-
-	for _, col := range cols {
-		if col == "password" {
-			u.checkPassword()
-		}
-	}
-}
-
-func (u *User) checkPassword() {
-	var passwords []string
-	err := json.Unmarshal([]byte(u.Passwords), &passwords)
-	if err != nil {
-		// reset passwords
-		passwords = []string{u.Password}
-		b, _ := json.Marshal(passwords)
-		u.Passwords = string(b)
-		return
-	}
-
-	for _, v := range passwords {
-		if u.Password == v {
-			errors.Bomb("The password is the same as the old password")
-		}
-	}
-
-	cf, err := AuthConfigGet()
-	if err != nil {
-		errors.Bomb("AuthConfigGet error")
-	}
-
-	passwords = append(passwords, u.Password)
-	if n := len(passwords) - cf.PwdHistorySize; n > 0 {
-		passwords = passwords[n:]
-	}
-	b, _ := json.Marshal(passwords)
-	u.Passwords = string(b)
-	u.PwdUpdatedAt = time.Now().Unix()
-	return
-}
-
 func (u *User) Update(cols ...string) error {
 	if err := u.Validate(); err != nil {
 		return err
 	}
-
-	for _, col := range cols {
-		if col == "password" {
-			cols = append(cols, "passwords", "pwd_updated_at")
-			break
-		}
-	}
-
-	u.CheckFields(cols...)
 
 	_, err := DB["rdb"].Where("id=?", u.Id).Cols(cols...).Update(u)
 	return err
 }
 
 func (u *User) Save() error {
-	u.CheckFields()
-
 	if err := u.Validate(); err != nil {
 		return err
 	}
@@ -371,9 +319,10 @@ func (u *User) Save() error {
 		return fmt.Errorf("username already exists")
 	}
 
+	now := time.Now().Unix()
 	u.Passwords = u.Password
-	u.UpdatedAt = time.Now().Unix()
-	u.PwdUpdatedAt = u.UpdatedAt
+	u.UpdatedAt = now
+	u.PwdUpdatedAt = now
 
 	_, err = DB["rdb"].Insert(u)
 	return err

@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/didi/nightingale/src/models"
-	"github.com/didi/nightingale/src/modules/rdb/cache"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errors"
@@ -135,69 +134,6 @@ func renderZeroPage(c *gin.Context) {
 
 type idsForm struct {
 	Ids []int64 `json:"ids"`
-}
-
-func checkPassword(passwd string) error {
-	indNum := [4]int{0, 0, 0, 0}
-	spCode := []byte{'!', '@', '#', '$', '%', '^', '&', '*', '_', '-', '~', '.', ',', '<', '>', '/', ';', ':', '|', '?', '+', '='}
-
-	cf := cache.AuthConfig()
-
-	if cf.PwdMinLenght > 0 && len(passwd) < cf.PwdMinLenght {
-		return fmt.Errorf("password too short %d/%d",
-			len(passwd), cf.PwdMinLenght)
-	}
-
-	passwdByte := []byte(passwd)
-
-	for _, i := range passwdByte {
-
-		if i >= 'A' && i <= 'Z' {
-			indNum[0] = 1
-			continue
-		}
-
-		if i >= 'a' && i <= 'z' {
-			indNum[1] = 1
-			continue
-		}
-
-		if i >= '0' && i <= '9' {
-			indNum[2] = 1
-			continue
-		}
-
-		has := false
-		for _, s := range spCode {
-			if i == s {
-				indNum[3] = 1
-				has = true
-				break
-			}
-		}
-
-		if !has {
-			return fmt.Errorf("character: %s not supported", string(i))
-		}
-	}
-
-	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_UPPER > 0 && indNum[0] == 0 {
-		return fmt.Errorf("password must include upper char")
-	}
-
-	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_LOWER > 0 && indNum[1] == 0 {
-		return fmt.Errorf("password must include lower char")
-	}
-
-	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_NUMBER > 0 && indNum[2] == 0 {
-		return fmt.Errorf("password must include number char")
-	}
-
-	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_SPEC_CHAR > 0 && indNum[3] == 0 {
-		return fmt.Errorf("password must include special char")
-	}
-
-	return nil
 }
 
 func loginUsername(c *gin.Context) string {

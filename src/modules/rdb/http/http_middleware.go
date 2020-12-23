@@ -15,11 +15,19 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/session"
 )
 
+func shouldStartSession() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		sessionStart(c)
+		c.Next()
+		sessionUpdate(c)
+	}
+}
+
 func shouldBeLogin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sessionStart(c)
 		username := mustUsername(c)
-		logger.Debug("set username %s", username)
+		logger.Debugf("set username %s", username)
 		c.Set("username", username)
 		c.Next()
 		sessionUpdate(c)

@@ -9,11 +9,11 @@ import (
 )
 
 type Session struct {
-	Sid        string
-	Username   string
-	RemoteAddr string
-	CreatedAt  int64
-	UpdatedAt  int64
+	Sid        string `json:"sid"`
+	Username   string `json:"username"`
+	RemoteAddr string `json:"remote_addr"`
+	CreatedAt  int64  `json:"created_at"`
+	UpdatedAt  int64  `json:"updated_at"`
 }
 
 func SessionAll() (int64, error) {

@@ -14,6 +14,7 @@ import (
 
 	"github.com/didi/nightingale/src/common/loggeri"
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/auth"
 	"github.com/didi/nightingale/src/modules/rdb/cache"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/didi/nightingale/src/modules/rdb/cron"
@@ -77,12 +78,14 @@ func main() {
 	cache.Start()
 	session.Init()
 
+	auth.Init(config.Config.Auth.ExtraMode)
+	auth.Start()
+
 	go cron.ConsumeMail()
 	go cron.ConsumeSms()
 	go cron.ConsumeVoice()
 	go cron.ConsumeIm()
 	go cron.CleanerLoop()
-	go cron.UserManagerLoop()
 
 	http.Start()
 
