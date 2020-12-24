@@ -29,7 +29,6 @@ var (
 	loginCodeSmsTpl     *template.Template
 	loginCodeEmailTpl   *template.Template
 	errUnsupportCaptcha = errors.New("unsupported captcha")
-	errInvalidAnswer    = errors.New("Invalid captcha answer")
 
 	// TODO: set false
 	debug = true
@@ -92,10 +91,10 @@ func login(c *gin.Context) {
 		if config.Config.Auth.Captcha {
 			c, err := models.CaptchaGet("captcha_id=?", in.CaptchaId)
 			if err != nil {
-				return err
+				return _e("Unable to get captcha")
 			}
 			if strings.ToLower(c.Answer) != strings.ToLower(in.Answer) {
-				return errInvalidAnswer
+				return _e("Invalid captcha answer")
 			}
 		}
 
@@ -234,17 +233,17 @@ func (p *loginInput) Validate() error {
 	if p.Type == models.LOGIN_T_PWD || p.Type == models.LOGIN_T_LDAP {
 		if len(p.Args) == 0 {
 			if str.Dangerous(p.Username) {
-				return _e("%s invalid", p.Username)
+				return _e("Username %s is invalid", p.Username)
 			}
 			if len(p.Username) > 64 {
-				return _e("%s too long > 64", p.Username)
+				return _e("Username %s too long > 64", p.Username)
 			}
 			p.Args = []string{p.Username, p.Password}
 		}
 	}
 
 	if len(p.Args) == 0 {
-		return _e("login args must be set")
+		return _e("Unable to get login arguments")
 	}
 	return nil
 }
@@ -269,7 +268,7 @@ func (p *v1LoginInput) Validate() error {
 	}
 
 	if len(p.Args) == 0 {
-		return fmt.Errorf("login args must be set")
+		return _e("Unable to get login arguments")
 	}
 
 	return nil
@@ -291,7 +290,7 @@ func authLogin(in *v1LoginInput) (user *models.User, err error) {
 	}
 
 	if err := auth.WhiteListAccess(in.RemoteAddr); err != nil {
-		return nil, err
+		return nil, _e("Deny Access from %s with whitelist control", in.RemoteAddr)
 	}
 	defer func() {
 		models.LoginLogNew(in.Args[0], in.RemoteAddr, "in", err)
@@ -307,7 +306,7 @@ func authLogin(in *v1LoginInput) (user *models.User, err error) {
 	case models.LOGIN_T_EMAIL:
 		user, err = models.EmailCodeLogin(in.Args[0], in.Args[1])
 	default:
-		err = fmt.Errorf("invalid login type %s", in.Type)
+		err = _e("Invalid login type %s", in.Type)
 	}
 
 	if err = auth.PostLogin(user, err); err != nil {
@@ -324,10 +323,10 @@ type sendCodeInput struct {
 
 func (p *sendCodeInput) Validate() error {
 	if p.Type == "" {
-		return fmt.Errorf("unable to get type, sms-code | email-code")
+		return _e("Unable to get type, sms-code | email-code")
 	}
 	if p.Arg == "" {
-		return fmt.Errorf("unable to get arg")
+		return _e("Unable to get code arg")
 	}
 	return nil
 }
@@ -341,7 +340,7 @@ func sendLoginCode(c *gin.Context) {
 			return "", err
 		}
 		if !config.Config.Redis.Enable {
-			return "", fmt.Errorf("sms/email sender is disabled")
+			return "", _e("sms/email sender is disabled")
 		}
 
 		if err := in.Validate(); err != nil {
@@ -377,11 +376,11 @@ func sendLoginCode(c *gin.Context) {
 			}
 			queueName = config.MAIL_QUEUE_NAME
 		default:
-			return "", fmt.Errorf("invalid type %s", in.Type)
+			return "", _e("Invalid code type %s", in.Type)
 		}
 
 		if user == nil {
-			return "", fmt.Errorf("user informations is invalid")
+			return "", _e("Cannot find the user by %s", in.Arg)
 		}
 
 		loginCode.Username = user.Username
@@ -413,7 +412,7 @@ func sendRstCode(c *gin.Context) {
 			return "", err
 		}
 		if !config.Config.Redis.Enable {
-			return "", fmt.Errorf("email/sms sender is disabled")
+			return "", _e("email/sms sender is disabled")
 		}
 
 		if err := in.Validate(); err != nil {
@@ -449,11 +448,11 @@ func sendRstCode(c *gin.Context) {
 			}
 			queueName = config.MAIL_QUEUE_NAME
 		default:
-			return "", fmt.Errorf("invalid type %s", in.Type)
+			return "", _e("Invalid code type %s", in.Type)
 		}
 
 		if user == nil {
-			return "", fmt.Errorf("User %s's infomation is incorrect", in.Arg)
+			return "", _e("Cannot find the user by %s", in.Arg)
 		}
 
 		loginCode.Username = user.Username
@@ -484,13 +483,13 @@ type rstPasswordInput struct {
 
 func (p *rstPasswordInput) Validate() error {
 	if p.Type == "" {
-		return fmt.Errorf("unable to get type, sms-code | email-code")
+		return _e("Unable to get type, sms-code | email-code")
 	}
 	if p.Arg == "" {
-		return fmt.Errorf("unable to get arg")
+		return _e("Unable to get code arg")
 	}
 	if !p.DryRun && p.Password == "" {
-		return fmt.Errorf("password must be set")
+		return _e("Unable to get password")
 	}
 	return nil
 }
@@ -516,16 +515,16 @@ func rstPassword(c *gin.Context) {
 		}
 
 		if user == nil {
-			return fmt.Errorf("User %s's infomation is incorrect", in.Arg)
+			return _e("Cannot find the user by %s", in.Arg)
 		}
 
 		lc, err := models.LoginCodeGet("code=? and login_type=?", in.Code, models.LOGIN_T_RST)
 		if err != nil {
-			return fmt.Errorf("invalid code")
+			return _e("Invalid code")
 		}
 
 		if time.Now().Unix()-lc.CreatedAt > models.LOGIN_EXPIRES_IN {
-			return fmt.Errorf("the code has expired")
+			return _e("The code has expired")
 		}
 
 		if in.DryRun {
@@ -620,7 +619,7 @@ func whiteListPost(c *gin.Context) {
 		Updater:   username,
 	}
 	if err := wl.Validate(); err != nil {
-		bomb("invalid arguments %s", err)
+		bomb("Invalid arguments %s", err)
 	}
 	dangerous(wl.Save())
 
@@ -662,7 +661,7 @@ func whiteListPut(c *gin.Context) {
 
 	wl, err := models.WhiteListGet("id=?", urlParamInt64(c, "id"))
 	if err != nil {
-		bomb("not found white list")
+		bomb("Cannot found white list")
 	}
 
 	wl.StartIp = in.StartIp
@@ -673,7 +672,7 @@ func whiteListPut(c *gin.Context) {
 	wl.Updater = loginUser(c).Username
 
 	if err := wl.Validate(); err != nil {
-		bomb("invalid arguments %s", err)
+		bomb("Invalid arguments %s", err)
 	}
 
 	renderMessage(c, wl.Update("start_ip", "end_ip", "start_time", "end_time", "updated_at", "updater"))

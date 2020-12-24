@@ -98,6 +98,23 @@
     "HTTP timeout": "HTTP timeout",
     "Timeout for HTTP requests": "Timeout for HTTP requests",
 
+    "Unable to get captcha": "无法获得验证码",
+    "Invalid captcha answer": "错误的验证码",
+    "Username %s is invalid": "用户名 %s 不符合规范",
+    "Username %s too long > 64": "用户名 %s 太长(64)",
+    "Unable to get login arguments": "无法获得登陆参数",
+    "Deny Access from %s with whitelist control": "来自 %s 的访问被白名单规则拒绝",
+    "Invalid login type %s": "不支持的登陆类型 %s",
+    "Unable to get type, sms-code | email-code": "无法获得验证码类型",
+    "Unable to get code arg": "无法获得验证码类型",
+    "sms/email sender is disabled": "无法发送 短信/邮件 验证码",
+    "Invalid code type %s": "不支持的验证码类型 %s",
+    "Cannot find the user by %s": "无法用 %s 找到相关用户",
+    "Unable to get password": "无法获取密码",
+    "Invalid code": "不符合规范的验证码",
+    "The code has expired": "失效的验证码",
+    "Invalid arguments %s": "不合法的参数 %s",
+
     "EOF": ""
   } 
 }
