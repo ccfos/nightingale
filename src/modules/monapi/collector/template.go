@@ -7,30 +7,24 @@ import (
 	"strings"
 	"sync"
 	"unicode"
-
-	"k8s.io/klog/v2"
 )
 
 var fieldCache sync.Map // map[reflect.Type]structFields
 
 type Field struct {
-	skip        bool               `json:"-"`
-	definitions map[string][]Field `json:"-"`
+	skip bool `json:"-"`
+	// definitions map[string][]Field `json:"-"`
 
-	Name         string             `json:"name,omitempty"`
-	Label        string             `json:"label,omitempty"`
-	Example      string             `json:"example,omitempty"`
-	Description  string             `json:"description,omitempty"`
-	Required     bool               `json:"required,omitempty"`
-	Items        *Field             `json:"items,omitempty" description:"arrays's items"`
-	Type         string             `json:"type,omitempty" description:"struct,boolean,integer,folat,string,array"`
-	Ref          string             `json:"$ref,omitempty" description:"name of the struct ref"`
-	StructFields []Field            `json:"structFields,omitempty" description:"fields of struct type"`
-	Definitions  map[string][]Field `json:"definitions,omitempty"`
-
-	// Type         string     `json:"type,omitempty" description:"struct,boolean,integer,folat,string,array"`
-	// Items        *TypeContent `json:"items,omitempty" description:"arrays's items"`
-	// StructFields []Field    `json:"structFields,omitempty" description:"fields of struct type"`
+	Name        string             `json:"name,omitempty"`
+	Label       string             `json:"label,omitempty"`
+	Example     string             `json:"example,omitempty"`
+	Description string             `json:"description,omitempty"`
+	Required    bool               `json:"required,omitempty"`
+	Items       *Field             `json:"items,omitempty" description:"arrays's items"`
+	Type        string             `json:"type,omitempty" description:"struct,boolean,integer,folat,string,array"`
+	Ref         string             `json:"$ref,omitempty" description:"name of the struct ref"`
+	Fields      []Field            `json:"fields,omitempty" description:"fields of struct type"`
+	Definitions map[string][]Field `json:"definitions,omitempty"`
 }
 
 func (p Field) String() string {
@@ -39,7 +33,6 @@ func (p Field) String() string {
 
 // cachedTypeContent is like typeFields but uses a cache to avoid repeated work.
 func cachedTypeContent(t reflect.Type) Field {
-	klog.Infof("--- entering cachedTypeContent %s", t.String())
 	if f, ok := fieldCache.Load(t); ok {
 		return f.(Field)
 	}
@@ -48,12 +41,12 @@ func cachedTypeContent(t reflect.Type) Field {
 }
 
 func typeContent(t reflect.Type) Field {
-	klog.Infof("--- entering typeContent %s", t.String())
-	// Fields found.
+	definitions := map[string][]Field{t.String(): nil}
+
 	ret := Field{
-		definitions: map[string][]Field{
-			t.String(): nil,
-		},
+		// definitions: map[string][]Field{
+		// 	t.String(): nil,
+		// },
 	}
 
 	for i := 0; i < t.NumField(); i++ {
@@ -72,24 +65,22 @@ func typeContent(t reflect.Type) Field {
 		}
 		ft := sf.Type
 
-		fieldType(ft, &field)
+		fieldType(ft, &field, definitions)
 
 		// Record found field and index sequence.
 		if field.Name != "" || !sf.Anonymous || ft.Kind() != reflect.Struct {
-			ret.StructFields = append(ret.StructFields, field)
+			ret.Fields = append(ret.Fields, field)
 			continue
 		}
 
 		panic("unsupported anonymous, struct field")
 	}
 
-	ret.definitions[t.String()] = ret.StructFields
+	definitions[t.String()] = ret.Fields
+
+	ret.Definitions = definitions
 
 	return ret
-}
-
-func typeFields2(t reflect.Type) (string, []Field) {
-	return "", nil
 }
 
 // tagOptions is the string following a comma in a struct field's "json"
@@ -181,7 +172,6 @@ func Template(v interface{}) (interface{}, error) {
 	}
 
 	content := cachedTypeContent(rv.Type())
-	content.Definitions = content.definitions
 
 	return content, nil
 }
@@ -191,7 +181,7 @@ func prettify(in interface{}) string {
 	return string(b)
 }
 
-func fieldType(t reflect.Type, in *Field) {
+func fieldType(t reflect.Type, in *Field, definitions map[string][]Field) {
 	if t.Name() == "" && t.Kind() == reflect.Ptr {
 		// Follow pointer.
 		t = t.Elem()
@@ -208,8 +198,11 @@ func fieldType(t reflect.Type, in *Field) {
 		in.Type = "string"
 	case reflect.Struct:
 		name := t.String()
-		if _, ok := in.definitions[name]; !ok {
-			in.addDefinitions(cachedTypeContent(t).definitions)
+		if _, ok := definitions[name]; !ok {
+			f := cachedTypeContent(t)
+			for k, v := range f.Definitions {
+				definitions[k] = v
+			}
 		}
 		in.Ref = t.String()
 	case reflect.Slice, reflect.Array:
@@ -222,22 +215,13 @@ func fieldType(t reflect.Type, in *Field) {
 			k == reflect.Float32 || k == reflect.Float64 ||
 			k == reflect.Bool || k == reflect.String || k == reflect.Struct {
 			in.Type = "array"
-			in.Items = &Field{definitions: in.definitions}
-			fieldType(t2, in.Items)
+			in.Items = &Field{}
+			fieldType(t2, in.Items, definitions)
 		} else {
 			panic(fmt.Sprintf("unspport type %s items %s", t.String(), t2.String()))
 		}
 	default:
 		panic(fmt.Sprintf("unspport type %s", t.String()))
 		// in.Type = "string"
-	}
-}
-
-func (p *Field) addDefinitions(in map[string][]Field) {
-	if p.definitions == nil {
-		p.definitions = make(map[string][]Field)
-	}
-	for k, v := range in {
-		p.definitions[k] = v
 	}
 }
