@@ -10,23 +10,30 @@ import (
 
 var fieldCache sync.Map // map[reflect.Type]structFields
 
-type field struct {
-	skip        bool   `json:"-"`
-	Name        string `json:"name"`
-	Label       string `json:"label"`
-	Example     string `json:"example"`
-	Description string `json:"description"`
-	Type        string `json:"type"`
-	Required    bool   `json:"required"`
+type Field struct {
+	skip         bool      `json:"-"`
+	Name         string    `json:"name,omitempty"`
+	Label        string    `json:"label,omitempty"`
+	Example      string    `json:"example,omitempty"`
+	Description  string    `json:"description,omitempty"`
+	Type         string    `json:"type,omitempty" description:"struct,boolean,integer,folat,string,array"`
+	StructFields []Field   `json:"structFields,omitempty"`
+	Items        TypeItems `json:"items,omitempty"`
+	Required     bool      `json:"required,omitempty"`
 }
 
-func (p field) String() string {
+type TypeItems struct {
+	Type         string  `json:"type" description:"struct,boolean,integer,folat,string,array"`
+	StructFields []Field `json:"structFields"`
+}
+
+func (p Field) String() string {
 	return fmt.Sprintf("name %s label %v format %s skip %v required %v description %s",
 		p.Name, p.Label, p.Type, p.skip, p.Required, p.Description)
 }
 
 type structFields struct {
-	fields []field
+	fields []Field
 }
 
 func (p structFields) String() string {
@@ -48,7 +55,7 @@ func cachedTypeFields(t reflect.Type) structFields {
 
 func typeFields(t reflect.Type) structFields {
 	// Fields found.
-	var fields []field
+	var fields []Field
 
 	for i := 0; i < t.NumField(); i++ {
 		sf := t.Field(i)
@@ -70,7 +77,25 @@ func typeFields(t reflect.Type) structFields {
 			ft = ft.Elem()
 		}
 
-		field.Type = ft.String()
+		switch ft.Kind() {
+		case reflect.Int, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint32, reflect.Uint64:
+			field.Type = "integer"
+		case reflect.Float32, reflect.Float64:
+			field.Type = "float"
+		case reflect.Bool:
+			field.Type = "boolean"
+		case reflect.String:
+			field.Type = "string"
+		case reflect.Slice, reflect.Array:
+			field.Type = "array"
+			// TODO: fill items
+
+		case reflect.Struct:
+			field.Type = "struct"
+			// TODO: fill struct define
+		default:
+			field.Type = ft.String()
+		}
 
 		// Record found field and index sequence.
 		if field.Name != "" || !sf.Anonymous || ft.Kind() != reflect.Struct {
@@ -120,7 +145,7 @@ func (o tagOptions) Contains(optionName string) bool {
 	return false
 }
 
-func getTagOpt(sf reflect.StructField) (opt field) {
+func getTagOpt(sf reflect.StructField) (opt Field) {
 	if sf.Anonymous {
 		return
 	}
@@ -137,9 +162,9 @@ func getTagOpt(sf reflect.StructField) (opt field) {
 	}
 
 	opt.Name = name
-	opt.Label = sf.Tag.Get("label")
+	opt.Label = _s(sf.Tag.Get("label"))
 	opt.Example = sf.Tag.Get("example")
-	opt.Description = sf.Tag.Get("description")
+	opt.Description = _s(sf.Tag.Get("description"))
 
 	return
 }

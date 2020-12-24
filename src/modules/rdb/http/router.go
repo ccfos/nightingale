@@ -20,8 +20,6 @@ func Config(r *gin.Engine) {
 		notLogin.POST("/auth/send-rst-code", sendRstCode)
 		notLogin.POST("/auth/rst-password", rstPassword)
 		notLogin.GET("/auth/captcha", captchaGet)
-		notLogin.GET("/auth/logout", logout)
-		notLogin.GET("/auth/v2/logout", logoutV2)
 
 		notLogin.GET("/v2/nodes", nodeGets)
 
@@ -30,8 +28,10 @@ func Config(r *gin.Engine) {
 	sessionStarted := r.Group("/api/rdb").Use(shouldStartSession())
 	{
 		sessionStarted.POST("/auth/login", login)
+		sessionStarted.GET("/auth/logout", logout)
 		sessionStarted.GET("/auth/v2/authorize", authAuthorizeV2)
 		sessionStarted.GET("/auth/v2/callback", authCallbackV2)
+		sessionStarted.GET("/auth/v2/logout", logoutV2)
 	}
 
 	hbs := r.Group("/api/hbs")

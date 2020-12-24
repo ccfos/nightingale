@@ -15,6 +15,7 @@ func WhiteListAccess(remoteAddr string) error {
 	return defaultAuth.WhiteListAccess(remoteAddr)
 }
 
+// PostLogin check user status after login
 func PostLogin(user *models.User, loginErr error) error {
 	return defaultAuth.PostLogin(user, loginErr)
 }

@@ -21,8 +21,12 @@ type Authenticator struct {
 
 // description:"enable user expire control, active -> frozen -> writen-off"
 func New(cf config.AuthExtraSection) *Authenticator {
+	if !cf.Enable {
+		return &Authenticator{}
+	}
+
 	return &Authenticator{
-		extraMode:     cf.Enable,
+		extraMode:     true,
 		whiteList:     cf.WhiteList,
 		frozenTime:    86400 * int64(cf.FrozenDays),
 		writenOffTime: 86400 * int64(cf.WritenOffDays),
@@ -30,7 +34,7 @@ func New(cf config.AuthExtraSection) *Authenticator {
 }
 
 func (p *Authenticator) WhiteListAccess(remoteAddr string) error {
-	if !p.extraMode {
+	if !p.whiteList {
 		return nil
 	}
 	return models.WhiteListAccess(remoteAddr)
