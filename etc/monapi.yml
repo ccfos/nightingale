@@ -25,6 +25,8 @@ redis:
   #   conn: 500
   #   read: 3000
   #   write: 3000
+i18n:
+  lang: zh
 
 notify:
   p1: ["voice", "sms", "mail", "im"]

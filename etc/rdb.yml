@@ -32,8 +32,11 @@ sso:
 
 auth:
   captcha: false
-  whiteList: true
-  userExpire: false
+  extraMode: 
+    enable: false        # enable whiteList, login retry lock, userControl, ...
+    whiteList: false
+    frozenDays: 90      # frozen time (day)
+    writenOffDays: 365  # writenOff time (day)
 
 tokens:
   - rdb-builtin-token
