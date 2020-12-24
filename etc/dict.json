@@ -112,8 +112,12 @@
     "Cannot find the user by %s": "无法用 %s 找到相关用户",
     "Unable to get password": "无法获取密码",
     "Invalid code": "不符合规范的验证码",
+    "The code is incorrect": "无效的验证码",
     "The code has expired": "失效的验证码",
     "Invalid arguments %s": "不合法的参数 %s",
+    "Login fail, check your username and password": "登陆失败，请检查用户名/密码",
+    "User dose not exist": "用户不存在",
+    "Username %s already exists": "用户名 %s 已存在",
 
     "EOF": ""
   } 

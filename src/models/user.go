@@ -191,12 +191,12 @@ func PassLogin(username, pass string) (*User, error) {
 	var user User
 	has, err := DB["rdb"].Where("username=?", username).Get(&user)
 	if err != nil {
-		return nil, err
+		return nil, _e("Login fail, check your username and password")
 	}
 
 	if !has {
 		logger.Infof("password auth fail, no such user: %s", username)
-		return nil, fmt.Errorf("login fail, check your username and password")
+		return nil, _e("Login fail, check your username and password")
 	}
 
 	loginPass, err := CryptoPass(pass)
@@ -206,7 +206,7 @@ func PassLogin(username, pass string) (*User, error) {
 
 	if loginPass != user.Password {
 		logger.Infof("password auth fail, password error, user: %s", username)
-		return &user, fmt.Errorf("login fail, check your username and password")
+		return &user, _e("Login fail, check your username and password")
 	}
 
 	return &user, nil
@@ -220,13 +220,13 @@ func SmsCodeLogin(phone, code string) (*User, error) {
 
 	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_LOGIN)
 	if err != nil {
-		logger.Infof("sms-code auth fail, user: %s", user.Username)
-		return user, fmt.Errorf("login fail, check your sms-code")
+		logger.Debugf("sms-code auth fail, user: %s", user.Username)
+		return user, _e("The code is incorrect")
 	}
 
 	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
-		logger.Infof("sms-code auth expired, user: %s", user.Username)
-		return user, fmt.Errorf("login fail, the code has expired")
+		logger.Debugf("sms-code auth expired, user: %s", user.Username)
+		return user, _e("The code has expired")
 	}
 
 	lc.Del()
@@ -242,13 +242,13 @@ func EmailCodeLogin(email, code string) (*User, error) {
 
 	lc, err := LoginCodeGet("username=? and code=? and login_type=?", user.Username, code, LOGIN_T_LOGIN)
 	if err != nil {
-		logger.Infof("email-code auth fail, user: %s", user.Username)
-		return user, fmt.Errorf("login fail, check your email-code")
+		logger.Debugf("email-code auth fail, user: %s", user.Username)
+		return user, _e("The code is incorrect")
 	}
 
 	if time.Now().Unix()-lc.CreatedAt > LOGIN_EXPIRES_IN {
-		logger.Infof("email-code auth expired, user: %s", user.Username)
-		return user, fmt.Errorf("login fail, the code has expired")
+		logger.Debugf("email-code auth expired, user: %s", user.Username)
+		return user, _e("The code has expired")
 	}
 
 	lc.Del()
@@ -278,7 +278,7 @@ func UserMustGet(where string, args ...interface{}) (*User, error) {
 	}
 
 	if !has {
-		return nil, fmt.Errorf("user dose not exist")
+		return nil, _e("User dose not exist")
 	}
 
 	return &obj, nil
@@ -303,7 +303,7 @@ func (u *User) Save() error {
 	}
 
 	if u.Id > 0 {
-		return fmt.Errorf("user.id[%d] not equal 0", u.Id)
+		return _e("user.id[%d] not equal 0", u.Id)
 	}
 
 	if u.UUID == "" {
@@ -316,7 +316,7 @@ func (u *User) Save() error {
 	}
 
 	if cnt > 0 {
-		return fmt.Errorf("username already exists")
+		return _e("Username %s already exists", u.Username)
 	}
 
 	now := time.Now().Unix()
@@ -491,7 +491,7 @@ func (u *User) HasPermGlobal(operation string) (bool, error) {
 
 	rids, err := RoleIdsHasOp(operation)
 	if err != nil {
-		return false, fmt.Errorf("[CheckPermGlobal] RoleIdsHasOp fail: %v, operation: %s", err, operation)
+		return false, _e("[CheckPermGlobal] RoleIdsHasOp fail: %v, operation: %s", err, operation)
 	}
 
 	if rids == nil || len(rids) == 0 {
@@ -500,7 +500,7 @@ func (u *User) HasPermGlobal(operation string) (bool, error) {
 
 	has, err := UserHasGlobalRole(u.Id, rids)
 	if err != nil {
-		return false, fmt.Errorf("[CheckPermGlobal] UserHasGlobalRole fail: %v, username: %s", err, u.Username)
+		return false, _e("[CheckPermGlobal] UserHasGlobalRole fail: %v, username: %s", err, u.Username)
 	}
 
 	return has, nil
