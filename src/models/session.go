@@ -102,7 +102,7 @@ func SessionGetUserWithCache(sid string) (*User, error) {
 		return nil, fmt.Errorf("user not found")
 	}
 
-	return UserGet("username=?", s.Username)
+	return UserMustGet("username=?", s.Username)
 }
 
 func SessionCacheDelete(sid string) {
