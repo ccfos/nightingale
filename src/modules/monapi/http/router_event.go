@@ -51,7 +51,7 @@ type AlertUpgrade struct {
 func eventCurGets(c *gin.Context) {
 
 	stime := mustQueryInt64(c, "stime")
-	etime := mustQueryInt64(c, "etime")
+	etime := queryInt64(c, "etime", time.Now().Unix()+3600*24)
 	nodePath := queryStr(c, "nodepath", "")
 
 	limit := queryInt(c, "limit", 20)
@@ -145,7 +145,7 @@ func eventCurGets(c *gin.Context) {
 func eventHisGets(c *gin.Context) {
 
 	stime := mustQueryInt64(c, "stime")
-	etime := mustQueryInt64(c, "etime")
+	etime := queryInt64(c, "etime", time.Now().Unix()+3600*24)
 	nodePath := queryStr(c, "nodepath", "")
 
 	limit := queryInt(c, "limit", 20)
