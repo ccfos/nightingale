@@ -137,8 +137,12 @@ func sessionUpdate(c *gin.Context) {
 	}
 }
 
-func sessionDestory(c *gin.Context) {
-	session.Destroy(c.Writer, c.Request)
+func sessionDestory(c *gin.Context) (sid string, err error) {
+	if sid, err = session.Destroy(c.Writer, c.Request); sid != "" {
+		models.SessionCacheDelete(sid)
+	}
+
+	return
 }
 
 func sessionUsername(c *gin.Context) string {

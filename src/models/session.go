@@ -98,5 +98,13 @@ func SessionGetUserWithCache(sid string) (*User, error) {
 		return nil, err
 	}
 
+	if s.Username == "" {
+		return nil, fmt.Errorf("user not found")
+	}
+
 	return UserGet("username=?", s.Username)
+}
+
+func SessionCacheDelete(sid string) {
+	cache.Delete("sid." + sid)
 }

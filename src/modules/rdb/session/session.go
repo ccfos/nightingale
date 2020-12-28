@@ -42,7 +42,7 @@ func Start(w http.ResponseWriter, r *http.Request) (store *SessionStore, err err
 	return DefaultSession.Start(w, r)
 }
 
-func Destroy(w http.ResponseWriter, r *http.Request) error {
+func Destroy(w http.ResponseWriter, r *http.Request) (string, error) {
 	return DefaultSession.Destroy(w, r)
 }
 
@@ -138,10 +138,10 @@ func (p *Manager) StopGC() {
 	}
 }
 
-func (p *Manager) Destroy(w http.ResponseWriter, r *http.Request) error {
+func (p *Manager) Destroy(w http.ResponseWriter, r *http.Request) (string, error) {
 	cookie, err := r.Cookie(p.config.CookieName)
 	if err != nil || cookie.Value == "" {
-		return fmt.Errorf("Have not login yet")
+		return "", fmt.Errorf("Have not login yet")
 	}
 
 	sid, _ := url.QueryUnescape(cookie.Value)
@@ -155,7 +155,7 @@ func (p *Manager) Destroy(w http.ResponseWriter, r *http.Request) error {
 		MaxAge:   -1}
 
 	http.SetCookie(w, cookie)
-	return nil
+	return sid, nil
 }
 
 func (p *Manager) Get(sid string) (*SessionStore, error) {
