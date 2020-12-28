@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 
@@ -18,14 +19,114 @@ func resourceSearchGet(c *gin.Context) {
 	renderData(c, list, err)
 }
 
+type containerSyncForm struct {
+	Name  string                     `json:"name" binding:"required"`
+	Type  string                     `json:"type" binding:"required"`
+	Items []v1ContainersRegisterItem `json:"items"`
+}
+
+func v1ContainerSyncPost(c *gin.Context) {
+	var sf containerSyncForm
+	bind(c, &sf)
+
+	var (
+		uuids []string
+	)
+
+	list, err := models.ResourceGets("labels like ?",
+		fmt.Sprintf("%%,res_type=%s,res_name=%s%%", sf.Type, sf.Name))
+	dangerous(err)
+
+	for _, l := range list {
+		uuids = append(uuids, l.UUID)
+	}
+
+	dangerous(models.ResourceUnregister(uuids))
+
+	count := len(sf.Items)
+	if count == 0 {
+		renderMessage(c, "")
+		return
+	}
+
+	resourceHttpRegister(count, sf.Items)
+
+	renderMessage(c, "")
+}
+
 type resourceNotePutForm struct {
 	Ids  []int64 `json:"ids" binding:"required"`
 	Note string  `json:"note"`
 }
 
+type resourceLabelsPutForm struct {
+	Ids    []int64 `json:"ids" binding:"required"`
+	Labels string  `json:"labels"`
+}
+
 func (f resourceNotePutForm) Validate() {
 	if len(f.Ids) == 0 {
 		bomb("arg[ids] is empty")
+	}
+}
+
+func (f resourceLabelsPutForm) Validate() {
+	if len(f.Ids) == 0 {
+		bomb("arg[ids] is empty")
+	}
+}
+
+func resourceHttpRegister(count int, items []v1ContainersRegisterItem) {
+	for i := 0; i < count; i++ {
+		items[i].Validate()
+
+		node := Node(items[i].NID)
+		if node.Leaf != 1 {
+			bomb("node not leaf")
+		}
+
+		res, err := models.ResourceGet("uuid=?", items[i].UUID)
+		dangerous(err)
+
+		if res != nil {
+			// 这个资源之前就已经存在过了，这次可能是更新了部分字段
+			res.Name = items[i].Name
+			res.Labels = items[i].Labels
+			res.Extend = items[i].Extend
+			dangerous(res.Update("name", "labels", "extend"))
+		} else {
+			// 之前没有过这个资源，在RDB注册这个资源
+			res = new(models.Resource)
+			res.UUID = items[i].UUID
+			res.Ident = items[i].Ident
+			res.Name = items[i].Name
+			res.Labels = items[i].Labels
+			res.Extend = items[i].Extend
+			res.Cate = items[i].Cate
+			res.Tenant = node.Tenant()
+			dangerous(res.Save())
+		}
+
+		dangerous(node.Bind([]int64{res.Id}))
+
+		// 第二个挂载位置：inner.${cate}
+		innerCatePath := "inner." + node.Ident
+		innerCateNode, err := models.NodeGet("path=?", innerCatePath)
+		dangerous(err)
+
+		if innerCateNode == nil {
+			innerNode, err := models.NodeGet("path=?", "inner")
+			dangerous(err)
+
+			if innerNode == nil {
+				bomb("inner node not exists")
+			}
+
+			innerCateNode, err = innerNode.CreateChild(node.Ident, node.Name, "", node.Cate, "system", 1, 1, []int64{})
+			dangerous(err)
+		}
+
+		dangerous(innerCateNode.Bind([]int64{res.Id}))
 	}
 }
 
@@ -292,14 +393,16 @@ func resourceBindNode(c *gin.Context) {
 		ids, err = models.ResourceIdsByUUIDs(f.Items)
 		dangerous(err)
 		if len(ids) == 0 {
-			bomb("resources not found by uuid")
+			bomb("resources not found by %s", "uuic")
 		}
 	} else if f.Field == "ident" {
 		ids, err = models.ResourceIdsByIdents(f.Items)
 		dangerous(err)
 		if len(ids) == 0 {
-			bomb("resources not found by ident")
+			bomb("resources not found by %s", "ident")
 		}
+	} else if f.Field == "id" {
+		ids = str.IdsInt64(strings.Join(f.Items, ","))
 	} else {
 		bomb("field[%s] not supported", f.Field)
 	}
@@ -347,6 +450,33 @@ func resourceUnderNodeNotePut(c *gin.Context) {
 
 		res.Note = f.Note
 		dangerous(res.Update("note"))
+	}
+
+	renderMessage(c, nil)
+}
+
+func resourceUnderNodeLabelsPut(c *gin.Context) {
+	var f resourceLabelsPutForm
+	bind(c, &f)
+	f.Validate()
+
+	node := Node(urlParamInt64(c, "id"))
+	loginUser(c).CheckPermByNode(node, "rdb_resource_modify")
+
+	for i := 0; i < len(f.Ids); i++ {
+		res, err := models.ResourceGet("id=?", f.Ids[i])
+		dangerous(err)
+
+		if res == nil {
+			continue
+		}
+
+		if res.Labels == f.Labels {
+			continue
+		}
+
+		res.Labels = f.Labels
+		dangerous(res.Update("labels"))
 	}
 
 	renderMessage(c, nil)
@@ -413,9 +543,9 @@ type nodeResourcesCountResp struct {
 	Count int    `json:"count"`
 }
 
-func renderNodeResourcesCountByCate(c *gin.Context) {
-	needSourceList := []string{"physical", "virtual", "redis", "mongo", "mysql", "container", "sw"}
+var needSourceList = []string{"physical", "virtual", "redis", "mongo", "mysql", "container", "sw", "volume"}
 
+func renderNodeResourcesCountByCate(c *gin.Context) {
 	nodeId := urlParamInt64(c, "id")
 	node := Node(nodeId)
 	leadIds, err := node.LeafIds()
@@ -429,7 +559,44 @@ func renderNodeResourcesCountByCate(c *gin.Context) {
 	ress, err := models.ResourceUnderNodeGets(leadIds, query, batch, field, limit, 0)
 	dangerous(err)
 
-	aggDat := make(map[string]int, len(ress))
+	aggDat := make(map[string]int, len(needSourceList))
+	for _, res := range ress {
+		cate := res.Cate
+		if cate != "" {
+			if _, ok := aggDat[cate]; !ok {
+				aggDat[cate] = 0
+			}
+
+			aggDat[cate]++
+		}
+	}
+
+	for _, need := range needSourceList {
+		if _, ok := aggDat[need]; !ok {
+			aggDat[need] = 0
+		}
+	}
+
+	var list []*nodeResourcesCountResp
+	for n, c := range aggDat {
+		ns := new(nodeResourcesCountResp)
+		ns.Name = n
+		ns.Count = c
+
+		list = append(list, ns)
+	}
+
+	renderData(c, list, nil)
+}
+
+func renderAllResourcesCountByCate(c *gin.Context) {
+	aggDat := make(map[string]int, len(needSourceList))
+	ress, err := models.ResourceGets("", nil)
+	if err != nil {
+		logger.Error(err)
+		dangerous(err)
+	}
+
 	for _, res := range ress {
 		cate := res.Cate
 		if cate != "" {

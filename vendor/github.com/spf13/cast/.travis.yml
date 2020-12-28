@@ -4,12 +4,18 @@ env:
 sudo: required
 go:
   - "1.11.x"
+  - "1.12.x"
   - tip
 os:
   - linux
+  - osx
+  - windows
 matrix:
   allow_failures:
     - go: tip
+  exclude:
+    - os: windows
+      go: tip
   fast_finish: true
 script:
-  - make check
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then go test -v -race ./...; else make check; fi

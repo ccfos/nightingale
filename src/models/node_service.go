@@ -4,6 +4,44 @@ import (
 	"github.com/toolkits/pkg/slice"
 )
 
+func TreeUntilProjectsGetByNid(nid int64) ([]Node, error) {
+	nodes, err := NodeByIds([]int64{nid})
+	if err != nil {
+		return []Node{}, err
+	}
+
+	ret, err := PermNodes(nodes)
+	if err != nil {
+		return ret, err
+	}
+
+	cnt := len(ret)
+	all := make(map[string]Node, cnt)
+	for i := 0; i < cnt; i++ {
+		all[ret[i].Path] = ret[i]
+	}
+
+	// 只取project（含）以上的部分
+	var oks []Node
+
+	set := make(map[string]struct{})
+	for i := 0; i < cnt; i++ {
+		if ret[i].Cate == "project" {
+			paths := Paths(ret[i].Path)
+			for _, path := range paths {
+				if _, has := set[path]; has {
+					continue
+				}
+
+				set[path] = struct{}{}
+				oks = append(oks, all[path])
+			}
+		}
+	}
+
+	return oks, err
+}
+
 func TreeUntilProjectsGetByUser(user *User) ([]Node, error) {
 	ret, err := UserPermNodes(user)
 	if err != nil {

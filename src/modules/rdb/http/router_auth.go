@@ -100,28 +100,31 @@ func login(c *gin.Context) {
 }
 
 func logout(c *gin.Context) {
-	uuid := readCookieUser(c)
-	if uuid == "" {
-		c.String(200, "logout successfully")
-		return
-	}
-
-	username := models.UsernameByUUID(uuid)
-	if username == "" {
-		c.String(200, "logout successfully")
-		return
-	}
-
-	writeCookieUser(c, "")
+	func() {
+		uuid := readCookieUser(c)
+		if uuid == "" {
+			return
+		}
+		username := models.UsernameByUUID(uuid)
+		if username == "" {
+			return
+		}
+		writeCookieUser(c, "")
+		go models.LoginLogNew(username, c.ClientIP(), "out")
+	}()
 
 	if config.Config.SSO.Enable {
 		redirect := queryStr(c, "redirect", "/")
 		c.Redirect(302, ssoc.LogoutLocation(redirect))
-	} else {
-		c.String(200, "logout successfully")
+		return
 	}
 
-	go models.LoginLogNew(username, c.ClientIP(), "out")
+	if redirect := queryStr(c, "redirect", ""); redirect != "" {
+		c.Redirect(302, redirect)
+		return
+	}
+
+	c.String(200, "logout successfully")
 }
 
 type authRedirect struct {
@@ -131,7 +134,6 @@ type authRedirect struct {
 
 func authAuthorizeV2(c *gin.Context) {
 	redirect := queryStr(c, "redirect", "/")
-	log.Printf("---> redirect %s", redirect)
 	ret := &authRedirect{Redirect: redirect}
 
 	username := cookieUsername(c)
@@ -228,7 +230,7 @@ func (f *loginInput) validate() {
 			bomb("%s invalid", f.Username)
 		}
 		if len(f.Username) > 64 {
-			bomb("%s too long", f.Username)
+			bomb("%s too long > 64", f.Username)
 		}
 	}
 }

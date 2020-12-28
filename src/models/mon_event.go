@@ -102,7 +102,14 @@ func (e *Event) GetEventDetail() ([]EventDetail, error) {
 }
 
 func EventTotal(stime, etime int64, nodePath, query, eventType string, priorities, sendTypes []string) (int64, error) {
-	session := DB["mon"].Where("etime > ? and etime < ? and (node_path = ? or node_path like ?)", stime, etime, nodePath, nodePath+".%")
+	sql := "etime > ? and etime < ?"
+	sqlParamValue := []interface{}{stime, etime}
+	if nodePath != "" {
+		sql += " and (node_path = ? or node_path like ?) "
+		sqlParamValue = []interface{}{stime, etime, nodePath, nodePath + ".%"}
+	}
+
+	session := DB["mon"].Where(sql, sqlParamValue...)
 	if len(priorities) > 0 && priorities[0] != "" {
 		session = session.In("priority", priorities)
 	}
@@ -134,7 +141,14 @@ func EventTotal(stime, etime int64, nodePath, query, eventType string, prioritie
 func EventGets(stime, etime int64, nodePath, query, eventType string, priorities, sendTypes []string, limit, offset int) ([]Event, error) {
 	var objs []Event
 
-	session := DB["mon"].Where("etime > ? and etime < ? and (node_path = ? or node_path like ?)", stime, etime, nodePath, nodePath+".%")
+	sql := "etime > ? and etime < ?"
+	sqlParamValue := []interface{}{stime, etime}
+	if nodePath != "" {
+		sql += " and (node_path = ? or node_path like ?) "
+		sqlParamValue = []interface{}{stime, etime, nodePath, nodePath + ".%"}
+	}
+
+	session := DB["mon"].Where(sql, sqlParamValue...)
 	if len(priorities) > 0 && priorities[0] != "" {
 		session = session.In("priority", priorities)
 	}
@@ -200,8 +214,8 @@ func EventAlertUpgradeUnMarshal(str string) (EventAlertUpgrade, error) {
 	return obj, err
 }
 
-func EventCnt(hashid uint64, stime, etime string, isUpgrade bool) (int64, error) {
-	session := DB["mon"].Where("hashid = ? and event_type = ? and created between ? and ?", hashid, config.ALERT, stime, etime)
+func EventCnt(hashid uint64, stime, etime int64, isUpgrade bool) (int64, error) {
+	session := DB["mon"].Where("hashid = ? and event_type = ? and etime between ? and ?", hashid, config.ALERT, stime, etime)
 
 	if isUpgrade {
 		return session.In("status", GetFlagsByStatus([]string{STATUS_UPGRADE, STATUS_SEND})).Count(new(Event))

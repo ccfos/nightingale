@@ -81,7 +81,7 @@ func Init(cfg BackendSection) {
 	// init m3db
 	if cfg.M3db.Enabled {
 		var err error
-		m3dbDataSource, err = m3db.NewClient(cfg.M3db.Namespace, &cfg.M3db.Config)
+		m3dbDataSource, err = m3db.NewClient(cfg.M3db)
 		if err != nil {
 			log.Fatalf("unable to new m3db client: %v", err)
 		}

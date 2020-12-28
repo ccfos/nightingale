@@ -1,6 +1,7 @@
 package report
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
@@ -18,9 +19,9 @@ import (
 )
 
 var (
-	sn    string
-	ip    string
-	ident string
+	SN    string
+	IP    string
+	Ident string
 )
 
 func LoopReport() {
@@ -35,21 +36,21 @@ func LoopReport() {
 
 func GatherBase() error {
 	var err error
-	sn, err = exec(config.Config.Report.SN)
+	SN, err = exec(config.Config.Report.SN)
 	if err != nil {
 		return fmt.Errorf("cannot get sn: %s", err)
 	}
 
-	ip, err = identity.GetIP()
+	IP, err = identity.GetIP()
 	if err != nil {
 		return fmt.Errorf("cannot get ip: %s", err)
 	}
 
-	if !str.IsIP(ip) {
-		return fmt.Errorf("'%s' not ip", ip)
+	if !str.IsIP(IP) {
+		return fmt.Errorf("'%s' not ip", IP)
 	}
 
-	ident, err = identity.GetIdent()
+	Ident, err = identity.GetIdent()
 	if err != nil {
 		return fmt.Errorf("cannot get ident: %s", err)
 	}
@@ -62,7 +63,8 @@ func gatherFields(m map[string]string) (map[string]string, error) {
 	for k, v := range m {
 		output, err := exec(v)
 		if err != nil {
-			return nil, err
+			logger.Errorf("get %s by exec %v err:%v", k, v, err)
+			continue
 		}
 		ret[k] = output
 	}
@@ -96,9 +98,9 @@ func report() error {
 	}
 
 	form := hostRegisterForm{
-		SN:      sn,
-		IP:      ip,
-		Ident:   ident,
+		SN:      SN,
+		IP:      IP,
+		Ident:   Ident,
 		Name:    name,
 		Cate:    config.Config.Report.Cate,
 		UniqKey: config.Config.Report.UniqKey,
@@ -108,7 +110,7 @@ func report() error {
 	content := form.SN + form.IP + form.Ident + form.Name + form.Cate + form.UniqKey
 	var keys []string
 	for key := range fields {
-		keys = append(keys, key)
+		keys = append(keys, key, fields[key])
 	}
 	sort.Strings(keys)
 
@@ -122,9 +124,13 @@ func report() error {
 	for _, i := range rand.Perm(len(servers)) {
 		url := fmt.Sprintf("http://%s/v1/ams-ce/hosts/register", servers[i])
 
+		logger.Debugf("report: %+v", form)
+
 		var body errRes
 		err := httplib.Post(url).JSONBodyQuiet(form).Header("X-Srv-Token", config.Config.Report.Token).SetTimeout(time.Second * 5).ToJSON(&body)
 		if err != nil {
+			js, _ := json.Marshal(form)
+			logger.Errorf("report payload: %s, token: %s", string(js), config.Config.Report.Token)
 			return fmt.Errorf("curl %s fail: %v", url, err)
 		}
 

@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # release version
-version=3.2.0
+version=3.3.1
 
 CWD=$(cd $(dirname $0)/; pwd)
 cd $CWD
 
 usage()
 {
-	echo $"Usage: $0 {start|stop|restart|status|build|pack} <module>"
+	echo $"Usage: $0 {start|stop|restart|status|build|build_local|pack} <module>"
 	exit 0
 }
 
@@ -139,7 +139,17 @@ status()
 build_one()
 {
 	mod=$1
+	echo -n "building ${mod} ... "
 	go build -ldflags "-X main.version=${version}" -o n9e-${mod} src/modules/${mod}/${mod}.go
+	echo "done"
+}
+
+build_local_one()
+{
+	mod=$1
+	echo -n "building ${mod} ... "
+	go build -mod=vendor -ldflags "-X main.version=${version}" -o n9e-${mod} src/modules/${mod}/${mod}.go
+	echo "done"
 }
 
 build()
@@ -161,6 +171,27 @@ build()
 	fi
 
 	build_one $mod 
+}
+
+build_local()
+{
+	export GO111MODULE=on
+
+	mod=$1
+	if [ "x${mod}" = "x" ]; then
+		build_local_one monapi
+		build_local_one transfer
+		build_local_one index
+		build_local_one judge
+		build_local_one agent
+		build_local_one tsdb
+		build_local_one rdb
+		build_local_one ams
+		build_local_one job
+		return
+	fi
+
+	build_local_one $mod
 }
 
 reload()
@@ -200,6 +231,9 @@ case "$1" in
 		;;
 	build)
 		build $2
+		;;
+	build_local)
+		build_local $2
 		;;
 	reload)
 		reload $2

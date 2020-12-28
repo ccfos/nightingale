@@ -20,11 +20,11 @@
 
 curl -X POST  \
 	http://localhost:8008/api/transfer/data/ui \
--d '[{
-  "start": "1",
-  "end": '$(data "+%s")',
+-d '{
+  "start": '$(date -d "1 hour ago" "+%s")',
+  "end": '$(date "+%s")',
   "metric": "test",
-  "endpoints": [],
+  "endpoints": ["m3db-dev01-yubo.py"],
   "nids": [],
   "tags": [],
   "step": 60,
@@ -32,7 +32,7 @@ curl -X POST  \
   "groupKey": [],
   "aggrFunc": "",
   "consolFunc": "",
-  "Comparisons": []
-}]'
+  "comparisons": []
+}' | jq .
 
 

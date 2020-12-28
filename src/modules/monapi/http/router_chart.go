@@ -20,10 +20,10 @@ func chartPost(c *gin.Context) {
 	errors.Dangerous(c.ShouldBind(&f))
 
 	screen := mustScreen(subclass.ScreenId)
-	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_screen_write", screen.NodeId)
+	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_screen_modify", screen.NodeId)
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	chart := models.Chart{
@@ -55,7 +55,7 @@ func chartPut(c *gin.Context) {
 	can, err := canWriteChart(f.SubclassId, loginUsername(c))
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	chart.Configs = f.Configs
@@ -81,7 +81,7 @@ func chartWeightsPut(c *gin.Context) {
 		can, err := canWriteChart(chart.SubclassId, loginUsername(c))
 		errors.Dangerous(err)
 		if !can {
-			errors.Bomb("permission deny")
+			bomb("permission deny")
 		}
 	}
 
@@ -99,7 +99,7 @@ func chartDel(c *gin.Context) {
 	can, err := canWriteChart(chart.SubclassId, loginUsername(c))
 	errors.Dangerous(err)
 	if !can {
-		errors.Bomb("permission deny")
+		bomb("permission deny")
 	}
 
 	errors.Dangerous(chart.Del())
@@ -111,6 +111,6 @@ func chartDel(c *gin.Context) {
 func canWriteChart(subclassId int64, username string) (bool, error) {
 	subclass, err := models.ScreenSubclassGet("id", subclassId)
 	screen := mustScreen(subclass.ScreenId)
-	can, err := models.UsernameCandoNodeOp(username, "mon_screen_write", screen.NodeId)
+	can, err := models.UsernameCandoNodeOp(username, "mon_screen_modify", screen.NodeId)
 	return can, err
 }

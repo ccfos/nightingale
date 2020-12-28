@@ -28,19 +28,23 @@ const (
 )
 
 type User struct {
-	Id         int64  `json:"id"`
-	UUID       string `json:"uuid" xorm:"'uuid'"`
-	Username   string `json:"username"`
-	Password   string `json:"-"`
-	Dispname   string `json:"dispname"`
-	Phone      string `json:"phone"`
-	Email      string `json:"email"`
-	Im         string `json:"im"`
-	Portrait   string `json:"portrait"`
-	Intro      string `json:"intro"`
-	IsRoot     int    `json:"is_root"`
-	LeaderId   int64  `json:"leader_id"`
-	LeaderName string `json:"leader_name"`
+	Id           int64     `json:"id"`
+	UUID         string    `json:"uuid" xorm:"'uuid'"`
+	Username     string    `json:"username"`
+	Password     string    `json:"-"`
+	Dispname     string    `json:"dispname"`
+	Phone        string    `json:"phone"`
+	Email        string    `json:"email"`
+	Im           string    `json:"im"`
+	Portrait     string    `json:"portrait"`
+	Intro        string    `json:"intro"`
+	Organization string    `json:"organization"`
+	Typ          int       `json:"typ"`
+	Status       int       `json:"status"`
+	IsRoot       int       `json:"is_root"`
+	LeaderId     int64     `json:"leader_id"`
+	LeaderName   string    `json:"leader_name"`
+	CreateAt     time.Time `json:"create_at" xorm:"<-"`
 }
 
 func (u *User) CopyLdapAttr(sr *ldap.SearchResult) {
@@ -108,7 +112,7 @@ func LdapLogin(user, pass string) (*User, error) {
 	if has {
 		if config.Config.LDAP.CoverAttributes {
 			_, err := DB["rdb"].Where("id=?", u.Id).Update(u)
-			return nil, err
+			return &u, err
 		} else {
 			return &u, err
 		}
@@ -273,7 +277,7 @@ func (u *User) Save() error {
 	return err
 }
 
-func UserTotal(ids []int64, query string) (int64, error) {
+func UserTotal(ids []int64, where string, args ...interface{}) (int64, error) {
 	session := DB["rdb"].NewSession()
 	defer session.Close()
 
@@ -281,23 +285,21 @@ func UserTotal(ids []int64, query string) (int64, error) {
 		session = session.In("id", ids)
 	}
 
-	if query != "" {
-		q := "%" + query + "%"
-		return session.Where("username like ? or dispname like ? or phone like ? or email like ?", q, q, q, q).Count(new(User))
+	if where != "" {
+		session = session.Where(where, args...)
 	}
 
 	return session.Count(new(User))
 }
 
-func UserGets(ids []int64, query string, limit, offset int) ([]User, error) {
+func UserGets(ids []int64, limit, offset int, where string, args ...interface{}) ([]User, error) {
 	session := DB["rdb"].Limit(limit, offset).OrderBy("username")
 	if len(ids) > 0 {
 		session = session.In("id", ids)
 	}
 
-	if query != "" {
-		q := "%" + query + "%"
-		session = session.Where("username like ? or dispname like ? or phone like ? or email like ?", q, q, q, q)
+	if where != "" {
+		session = session.Where(where, args...)
 	}
 
 	var users []User
@@ -639,4 +641,14 @@ func GetUsersNameByIds(ids string) ([]string, error) {
 		names = append(names, user.Username)
 	}
 	return names, err
+}
+
+func UsersGet(where string, args ...interface{}) ([]User, error) {
+	var objs []User
+	err := DB["rdb"].Where(where, args...).Find(&objs)
+	if err != nil {
+		return nil, err
+	}
+
+	return objs, nil
 }

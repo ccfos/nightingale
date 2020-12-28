@@ -25,14 +25,17 @@ func (ll *SafeLinkedList) Len() int {
 }
 
 // @return needJudge 如果是false不需要做judge，因为新上来的数据不合法
-func (ll *SafeLinkedList) PushFrontAndMaintain(v *dataobj.JudgeItem, maxCount int) bool {
+func (ll *SafeLinkedList) PushFrontAndMaintain(v *dataobj.JudgeItem, alertDur int) bool {
 	ll.Lock()
 	defer ll.Unlock()
 
 	sz := ll.L.Len()
+	lastPointTs := ll.L.Front().Value.(*dataobj.JudgeItem).Timestamp
+	earliestTs := v.Timestamp - int64(alertDur)
+
 	if sz > 0 {
 		// 新push上来的数据有可能重复了，或者timestamp不对，这种数据要丢掉
-		if v.Timestamp <= ll.L.Front().Value.(*dataobj.JudgeItem).Timestamp || v.Timestamp <= 0 {
+		if v.Timestamp <= lastPointTs {
 			return false
 		}
 	}
@@ -40,12 +43,12 @@ func (ll *SafeLinkedList) PushFrontAndMaintain(v *dataobj.JudgeItem, maxCount in
 	ll.L.PushFront(v)
 
 	sz++
-	if sz <= maxCount {
-		return true
-	}
 
-	del := sz - maxCount
-	for i := 0; i < del; i++ {
+	for i := 0; i < sz; i++ {
+		if ll.L.Back().Value.(*dataobj.JudgeItem).Timestamp >= earliestTs {
+			break
+		}
+		//最前面的点已经不在告警策略时间周期内，丢弃掉
 		ll.L.Remove(ll.L.Back())
 	}
 
@@ -53,60 +56,47 @@ func (ll *SafeLinkedList) PushFrontAndMaintain(v *dataobj.JudgeItem, maxCount in
 }
 
 // @param limit 至多返回这些，如果不够，有多少返回多少
-// @return bool isEnough
-func (ll *SafeLinkedList) HistoryData(limit int) ([]*dataobj.HistoryData, bool) {
-	if limit < 1 {
-		// 其实limit不合法，此处也返回false吧，上层代码要注意
-		// 因为false通常使上层代码进入异常分支，这样就统一了
-		return []*dataobj.HistoryData{}, false
-	}
-
+func (ll *SafeLinkedList) HistoryData() []*dataobj.HistoryData {
 	size := ll.Len()
 	if size == 0 {
-		return []*dataobj.HistoryData{}, false
+		return []*dataobj.HistoryData{}
 	}
 
 	firstElement := ll.Front()
 	firstItem := firstElement.Value.(*dataobj.JudgeItem)
 
 	var vs []*dataobj.HistoryData
-	isEnough := true
 
 	judgeType := firstItem.DsType[0]
 	if judgeType == 'G' || judgeType == 'g' {
-		if size < limit {
-			// 有多少获取多少
-			limit = size
-			isEnough = false
-		}
-		vs = make([]*dataobj.HistoryData, limit)
-		vs[0] = &dataobj.HistoryData{
+		vs = make([]*dataobj.HistoryData, 0)
+
+		v := &dataobj.HistoryData{
 			Timestamp: firstItem.Timestamp,
 			Value:     dataobj.JsonFloat(firstItem.Value),
 			Extra:     firstItem.Extra,
 		}
+		vs = append(vs, v)
 
-		i := 1
 		currentElement := firstElement
-		for i < limit {
+		for i := 1; i < size; i++ {
 			nextElement := currentElement.Next()
-
 			if nextElement == nil {
-				isEnough = false
-				return vs, isEnough
+				return vs
 			}
 
-			vs[i] = &dataobj.HistoryData{
+			v := &dataobj.HistoryData{
 				Timestamp: nextElement.Value.(*dataobj.JudgeItem).Timestamp,
 				Value:     dataobj.JsonFloat(nextElement.Value.(*dataobj.JudgeItem).Value),
 				Extra:     nextElement.Value.(*dataobj.JudgeItem).Extra,
 			}
-			i++
+			vs = append(vs, v)
+
 			currentElement = nextElement
 		}
 	}
 
-	return vs, isEnough
+	return vs
 }
 
 func (ll *SafeLinkedList) QueryDataByTS(start, end int64) []*dataobj.HistoryData {

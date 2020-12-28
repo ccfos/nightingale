@@ -24,4 +24,12 @@
 
 3.2.0
 影响模块：n9e-agent etc/agent.yml
-更新内容：agent支持metrics指标采集能力
+更新内容：agent支持metrics指标采集能力，这个版本是为商业版本服务的，开源用户无需更新
+
+3.3.0
+影响模块：n9e-rdb n9e-transfer n9e-judge n9e-ams n9e-monapi sql/n9e_rdb_3.3.0.sql etc/*.tpl
+更新内容：增强安全性：密码复杂度、cookie处理优化等；支持M3DB作为存储后端（如果要尝试M3需要修改transfer、monapi配置文件）；修复告警引擎与条件串数的问题；为主机设备增加自定义字段的能力
+
+3.3.1
+影响模块：n9e-job n9e-rdb n9e-agent n9e-ams n9e-judge
+更新内容：修复job模块的一个调度bug；rdb支持根据org搜索user；agent在fields变化时及时感知，fields和host扩展字段联动；解决上个版本引入的judge处理nodata的问题

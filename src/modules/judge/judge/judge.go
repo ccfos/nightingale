@@ -47,13 +47,9 @@ func ToJudge(historyMap *cache.JudgeItemMap, key string, val *dataobj.JudgeItem,
 		return
 	}
 
-	needCount := stra.AlertDur / int(val.Step)
-	if needCount < 1 {
-		needCount = 1
-	}
 	linkedList, exists := historyMap.Get(key)
 	if exists {
-		needJudge := linkedList.PushFrontAndMaintain(val, needCount)
+		needJudge := linkedList.PushFrontAndMaintain(val, stra.AlertDur)
 		if !needJudge {
 			return
 		}
@@ -64,145 +60,115 @@ func ToJudge(historyMap *cache.JudgeItemMap, key string, val *dataobj.JudgeItem,
 		historyMap.Set(key, linkedList)
 	}
 
-	historyData, isEnough := linkedList.HistoryData(needCount)
-	if !isEnough {
+	historyData := linkedList.HistoryData()
+	if len(historyData) == 0 {
 		return
 	}
-	history := []dataobj.History{}
 
-	Judge(stra, stra.Exprs, historyData, val, now, history, "", "", "", []bool{})
+	historyArr := []dataobj.History{}
+	statusArr := []bool{}
+	eventInfo := ""
+	value := ""
+
+	if len(stra.Exprs) == 1 {
+		for _, expr := range stra.Exprs {
+			history, info, lastValue, status := Judge(stra, expr, historyData, val, now)
+			statusArr = append(statusArr, status)
+
+			if value == "" {
+				value = fmt.Sprintf("%s: %s", expr.Metric, lastValue)
+			} else {
+				value += fmt.Sprintf("; %s: %s", expr.Metric, lastValue)
+			}
+
+			historyArr = append(historyArr, history)
+			eventInfo += info
+		}
+	} else { //与条件
+		for _, expr := range stra.Exprs {
+			respData, err := GetData(stra, expr, val, now)
+			if err != nil {
+				logger.Errorf("stra:%+v get query data err:%v", stra, err)
+				return
+			}
+
+			if len(respData) != 1 {
+				logger.Errorf("stra:%+v get query data respData:%v err", stra, respData)
+				return
+			}
+
+			history, info, lastValue, status := Judge(stra, expr, dataobj.RRDData2HistoryData(respData[0].Values), val, now)
+
+			statusArr = append(statusArr, status)
+			if value == "" {
+				value = fmt.Sprintf("%s: %s", expr.Metric, lastValue)
+			} else {
+				value += fmt.Sprintf("; %s: %s", expr.Metric, lastValue)
+			}
+
+			historyArr = append(historyArr, history)
+			eventInfo += info
+		}
+
+	}
+
+	bs, err := json.Marshal(historyArr)
+	if err != nil {
+		logger.Errorf("Marshal history:%+v err:%v", historyArr, err)
+	}
+
+	event := &dataobj.Event{
+		ID:        fmt.Sprintf("s_%d_%s", stra.Id, val.PrimaryKey()),
+		Etime:     now,
+		Endpoint:  val.Endpoint,
+		CurNid:    val.Nid,
+		Info:      eventInfo,
+		Detail:    string(bs),
+		Value:     value,
+		Partition: redi.Config.Prefix + "/event/p" + strconv.Itoa(stra.Priority),
+		Sid:       stra.Id,
+		Hashid:    getHashId(stra.Id, val),
+	}
+
+	sendEventIfNeed(statusArr, event, stra)
 }
 
-func Judge(stra *models.Stra, exps []models.Exp, historyData []*dataobj.HistoryData, firstItem *dataobj.JudgeItem, now int64, history []dataobj.History, info string, value string, extra string, status []bool) {
+func Judge(stra *models.Stra, exp models.Exp, historyData []*dataobj.HistoryData, firstItem *dataobj.JudgeItem, now int64) (history dataobj.History, info string, lastValue string, status bool) {
 	stats.Counter.Set("running", 1)
 
-	if len(exps) < 1 {
-		stats.Counter.Set("stra.illegal", 1)
-		logger.Warningf("stra:%+v exp is null", stra)
-		return
-	}
-	exp := exps[0]
 	var leftValue dataobj.JsonFloat
-	var isTriggered bool
-
 	if exp.Func == "nodata" {
-		info += fmt.Sprintf(" %s (%s,%ds)", exp.Metric, exp.Func, stra.AlertDur)
+		info = fmt.Sprintf(" %s (%s,%ds)", exp.Metric, exp.Func, stra.AlertDur)
 	} else if exp.Func == "stddev" {
-		info += fmt.Sprintf(" %s (%s,%ds) %v", exp.Metric, exp.Func, stra.AlertDur, exp.Params)
+		info = fmt.Sprintf(" %s (%s,%ds) %v", exp.Metric, exp.Func, stra.AlertDur, exp.Params)
+	} else if exp.Func == "happen" {
+		info = fmt.Sprintf(" %s (%s,%ds) %v %s %v", exp.Metric, exp.Func, stra.AlertDur, exp.Params, exp.Eopt, exp.Threshold)
 	} else {
-		info += fmt.Sprintf(" %s(%s,%ds) %s %v", exp.Metric, exp.Func, stra.AlertDur, exp.Eopt, exp.Threshold)
+		info = fmt.Sprintf(" %s(%s,%ds) %s %v", exp.Metric, exp.Func, stra.AlertDur, exp.Eopt, exp.Threshold)
 	}
 
-	h := dataobj.History{
+	leftValue, status = judgeItemWithStrategy(stra, historyData, exp, firstItem, now)
+
+	lastValue = "null"
+	if !math.IsNaN(float64(leftValue)) {
+		lastValue = strconv.FormatFloat(float64(leftValue), 'f', -1, 64)
+	}
+
+	history = dataobj.History{
 		Metric:      exp.Metric,
 		Tags:        firstItem.TagsMap,
 		Granularity: int(firstItem.Step),
 		Points:      historyData,
 	}
-	history = append(history, h)
-
-	defer func() {
-		if len(exps) == 1 {
-			bs, err := json.Marshal(history)
-			if err != nil {
-				logger.Errorf("Marshal history:%+v err:%v", history, err)
-			}
-
-			event := &dataobj.Event{
-				ID:        fmt.Sprintf("s_%d_%s", stra.Id, firstItem.PrimaryKey()),
-				Etime:     now,
-				Endpoint:  firstItem.Endpoint,
-				CurNid:    firstItem.Nid,
-				Info:      info,
-				Detail:    string(bs),
-				Value:     value,
-				Partition: redi.Config.Prefix + "/event/p" + strconv.Itoa(stra.Priority),
-				Sid:       stra.Id,
-				Hashid:    getHashId(stra.Id, firstItem),
-			}
-
-			sendEventIfNeed(historyData, status, event, stra)
-		}
-	}()
-
-	leftValue, isTriggered = judgeItemWithStrategy(stra, historyData, exps[0], firstItem, now)
-	lastValue := "null"
-	if !math.IsNaN(float64(leftValue)) {
-		lastValue = strconv.FormatFloat(float64(leftValue), 'f', -1, 64)
-	}
-	if value == "" {
-		value = fmt.Sprintf("%s: %s", exp.Metric, lastValue)
-	} else {
-		value += fmt.Sprintf("; %s: %s", exp.Metric, lastValue)
-	}
-	status = append(status, isTriggered)
-
-	//与条件情况下执行
-	if len(exps) > 1 {
-		if exps[1].Func == "nodata" { //nodata重新查询索引来进行告警判断
-			respData, err := GetData(stra, exps[1], firstItem, now, false)
-			if err != nil {
-				logger.Errorf("stra:%v get query data err:%v", stra, err)
-
-				judgeItem := &dataobj.JudgeItem{
-					Endpoint: firstItem.Endpoint,
-					Nid:      firstItem.Nid,
-					Metric:   stra.Exprs[0].Metric,
-					Tags:     "",
-					DsType:   "GAUGE",
-				}
-				Judge(stra, exps[1:], []*dataobj.HistoryData{}, judgeItem, now, history, info, value, extra, status)
-				return
-			}
-
-			for i := range respData {
-				firstItem.Endpoint = respData[i].Endpoint
-				firstItem.Tags = getTags(respData[i].Counter)
-				firstItem.Step = respData[i].Step
-				Judge(stra, exps[1:], dataobj.RRDData2HistoryData(respData[i].Values), firstItem, now, history, info, value, extra, status)
-			}
-
-		} else {
-			var respData []*dataobj.TsdbQueryResponse
-			var err error
-			if firstItem.Step != 0 { //上报点的逻辑会走到这里，使用第一个exp上报点的索引进行告警判断
-				respData, err = GetData(stra, exps[1], firstItem, now, true)
-			} else { //上一个规则是nodata没有获取到索引数据，重新获取索引做计算
-				respData, err = GetData(stra, exps[1], firstItem, now, false)
-			}
-			if err != nil {
-				logger.Errorf("stra:%+v get query data err:%v", stra, err)
-				return
-			}
-			for i := range respData {
-				if respData[i].Nid != "" {
-					firstItem.Nid = respData[i].Nid
-				} else if respData[i].Endpoint != "" {
-					firstItem.Endpoint = respData[i].Endpoint
-				}
-				firstItem.Tags = getTags(respData[i].Counter)
-				firstItem.Step = respData[i].Step
-				Judge(stra, exps[1:], dataobj.RRDData2HistoryData(respData[i].Values), firstItem, now, history, info, value, extra, status)
-			}
-		}
-	}
+	return
 }
 
 func judgeItemWithStrategy(stra *models.Stra, historyData []*dataobj.HistoryData, exp models.Exp, firstItem *dataobj.JudgeItem, now int64) (leftValue dataobj.JsonFloat, isTriggered bool) {
 	straFunc := exp.Func
 
 	var straParam []interface{}
-	if firstItem.Step == 0 {
-		logger.Errorf("wrong step:%+v", firstItem)
-		return
-	}
 
-	limit := stra.AlertDur / firstItem.Step
-	if limit <= 0 {
-		limit = 1
-	}
-
-	straParam = append(straParam, limit)
+	straParam = append(straParam, stra.AlertDur)
 
 	switch straFunc {
 	case "happen", "stddev":
@@ -222,7 +188,7 @@ func judgeItemWithStrategy(stra *models.Stra, historyData []*dataobj.HistoryData
 			stra.AlertDur = 7 * firstItem.Step
 		}
 
-		respItems, err := GetData(stra, exp, firstItem, now-int64(exp.Params[0]), true)
+		respItems, err := GetData(stra, exp, firstItem, now-int64(exp.Params[0]))
 		if err != nil {
 			logger.Errorf("stra:%v %+v get compare data err:%v", stra.Id, exp, err)
 			return
@@ -252,45 +218,30 @@ func judgeItemWithStrategy(stra *models.Stra, historyData []*dataobj.HistoryData
 	return fn.Compute(historyData)
 }
 
-func GetData(stra *models.Stra, exp models.Exp, firstItem *dataobj.JudgeItem, now int64, sameTag bool) ([]*dataobj.TsdbQueryResponse, error) {
+func GetData(stra *models.Stra, exp models.Exp, firstItem *dataobj.JudgeItem, now int64) ([]*dataobj.TsdbQueryResponse, error) {
 	var reqs []*dataobj.QueryData
 	var respData []*dataobj.TsdbQueryResponse
 	var err error
-	if sameTag { //与条件要求是相同tag的场景，不需要查询索引
-		if firstItem.Tags != "" && len(firstItem.TagsMap) == 0 {
-			firstItem.TagsMap = str.DictedTagstring(firstItem.Tags)
-		}
-		//+1 防止由于查询不到最新点，导致点数不够
-		start := now - int64(stra.AlertDur) - int64(firstItem.Step) + 1
-
-		queryParam, err := query.NewQueryRequest(firstItem.Nid, firstItem.Endpoint, exp.Metric, firstItem.TagsMap, firstItem.Step, start, now)
-		if err != nil {
-			return respData, err
-		}
-
-		reqs = append(reqs, queryParam)
-	} else if firstItem != nil { //点驱动告警策略的场景
-		var nids, endpoints []string
-		if firstItem.Nid != "" {
-			nids = []string{firstItem.Nid}
-		} else if firstItem.Endpoint != "" {
-			endpoints = []string{firstItem.Endpoint}
-		}
-		reqs = GetReqs(stra, exp.Metric, nids, endpoints, now)
-	} else { //nodata的场景
-		reqs = GetReqs(stra, exp.Metric, stra.Nids, stra.Endpoints, now)
+	if firstItem.Tags != "" && len(firstItem.TagsMap) == 0 {
+		firstItem.TagsMap = str.DictedTagstring(firstItem.Tags)
 	}
+
+	//多查一些数据，防止由于查询不到最新点，导致点数不够
+	start := now - int64(stra.AlertDur) - int64(firstItem.Step) - 60
+
+	queryParam, err := query.NewQueryRequest(firstItem.Nid, firstItem.Endpoint, exp.Metric, firstItem.TagsMap, firstItem.Step, start, now)
+	if err != nil {
+		return respData, err
+	}
+
+	reqs = append(reqs, queryParam)
 
 	if len(reqs) == 0 {
 		return respData, err
 	}
 
-	respData = query.Query(reqs, stra.Id, exp.Func)
+	respData = query.Query(reqs, stra, exp.Func)
 
-	if len(respData) < 1 {
-		stats.Counter.Set("get.data.null", 1)
-		err = fmt.Errorf("get query data is null")
-	}
 	return respData, err
 }
 
@@ -326,46 +277,31 @@ func GetReqs(stra *models.Stra, metric string, nids, endpoints []string, now int
 
 	lostSeries := []cache.Series{}
 	for _, index := range indexsData {
-		if index.Step == 0 {
-			//没有查到索引的 endpoint+metric 也要记录，给nodata处理
+		if len(index.Tags) == 0 {
+			hash := getHash(index, "")
 			s := cache.Series{
 				Nid:      index.Nid,
 				Endpoint: index.Endpoint,
 				Metric:   index.Metric,
 				Tag:      "",
-				Step:     10,
-				Dstype:   "GAUGE",
+				Step:     index.Step,
+				Dstype:   index.Dstype,
 				TS:       now,
 			}
-			lostSeries = append(lostSeries, s)
+			cache.SeriesMap.Set(stra.Id, hash, s)
 		} else {
-			if len(index.Tags) == 0 {
-				hash := getHash(index, "")
+			for _, tag := range index.Tags {
+				hash := getHash(index, tag)
 				s := cache.Series{
 					Nid:      index.Nid,
 					Endpoint: index.Endpoint,
 					Metric:   index.Metric,
-					Tag:      "",
+					Tag:      tag,
 					Step:     index.Step,
 					Dstype:   index.Dstype,
 					TS:       now,
 				}
 				cache.SeriesMap.Set(stra.Id, hash, s)
-			} else {
-				for _, tag := range index.Tags {
-					hash := getHash(index, tag)
-					s := cache.Series{
-						Nid:      index.Nid,
-						Endpoint: index.Endpoint,
-						Metric:   index.Metric,
-						Tag:      tag,
-						Step:     index.Step,
-						Dstype:   index.Dstype,
-						TS:       now,
-					}
-					cache.SeriesMap.Set(stra.Id, hash, s)
-				}
-
 			}
 		}
 	}
@@ -431,7 +367,7 @@ func GetReqs(stra *models.Stra, metric string, nids, endpoints []string, now int
 	return reqs
 }
 
-func sendEventIfNeed(historyData []*dataobj.HistoryData, status []bool, event *dataobj.Event, stra *models.Stra) {
+func sendEventIfNeed(status []bool, event *dataobj.Event, stra *models.Stra) {
 	isTriggered := true
 	for _, s := range status {
 		isTriggered = isTriggered && s

@@ -20,9 +20,9 @@ type QueryDataForUI struct {
 	Tags        []string `json:"tags"`
 	Step        int      `json:"step"`
 	DsType      string   `json:"dstype"`
-	GroupKey    []string `json:"groupKey"` //聚合维度
-	AggrFunc    string   `json:"aggrFunc"` //聚合计算
-	ConsolFunc  string   `json:"consolFunc"`
+	GroupKey    []string `json:"groupKey"`                               //聚合维度
+	AggrFunc    string   `json:"aggrFunc" description:"sum,avg,max,min"` //聚合计算
+	ConsolFunc  string   `json:"consolFunc" description:"AVERAGE,MIN,MAX,LAST"`
 	Comparisons []int64  `json:"comparisons"` //环比多少时间
 }
 
@@ -54,6 +54,7 @@ func (resp *TsdbQueryResponse) Key() string {
 
 type EndpointsRecv struct {
 	Endpoints []string `json:"endpoints"`
+	Nids      []string `json:"nids"`
 }
 
 type MetricResp struct {
@@ -62,11 +63,13 @@ type MetricResp struct {
 
 type EndpointMetricRecv struct {
 	Endpoints []string `json:"endpoints"`
+	Nids      []string `json:"nids"`
 	Metrics   []string `json:"metrics"`
 }
 
 type IndexTagkvResp struct {
 	Endpoints []string   `json:"endpoints"`
+	Nids      []string   `json:"nids"`
 	Metric    string     `json:"metric"`
 	Tagkv     []*TagPair `json:"tagkv"`
 }
@@ -78,6 +81,7 @@ type TagPair struct {
 
 type CludeRecv struct {
 	Endpoints []string   `json:"endpoints"`
+	Nids      []string   `json:"nids"`
 	Metric    string     `json:"metric"`
 	Include   []*TagPair `json:"include"`
 	Exclude   []*TagPair `json:"exclude"`
@@ -85,6 +89,7 @@ type CludeRecv struct {
 
 type XcludeResp struct {
 	Endpoint string   `json:"endpoint"`
+	Nid      string   `json:"nid"`
 	Metric   string   `json:"metric"`
 	Tags     []string `json:"tags"`
 	Step     int      `json:"step"`
@@ -93,12 +98,14 @@ type XcludeResp struct {
 
 type IndexByFullTagsRecv struct {
 	Endpoints []string  `json:"endpoints"`
+	Nids      []string  `json:"nids"`
 	Metric    string    `json:"metric"`
 	Tagkv     []TagPair `json:"tagkv"`
 }
 
 type IndexByFullTagsResp struct {
 	Endpoints []string `json:"endpoints"`
+	Nids      []string `json:"nids"`
 	Metric    string   `json:"metric"`
 	Tags      []string `json:"tags"`
 	Step      int      `json:"step"`

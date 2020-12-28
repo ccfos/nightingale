@@ -1,0 +1,81 @@
+// Copyright (c) 2017 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+syntax = "proto3";
+
+package placementpb;
+
+message Placement {
+  map<string, Instance> instances = 1;
+  uint32 replica_factor = 2;
+  uint32 num_shards = 3;
+  bool is_sharded = 4;
+
+  // cutover_time is the placement-level cutover time and determines when the clients
+  // watching the placement deems the placement as "in effect" and can use it to determine
+  // shard placement.
+  int64 cutover_time = 5;
+
+  bool is_mirrored = 6;
+
+  // max_shard_set_id stores the maximum shard set id used to guarantee unique
+  // shard set id generations across placement changes.
+  uint32 max_shard_set_id = 7;
+}
+
+message Instance {
+  string id                 = 1;
+  string isolation_group    = 2;
+  string zone               = 3;
+  uint32 weight             = 4;
+  string endpoint           = 5;
+  repeated Shard shards     = 6;
+  uint32 shard_set_id       = 7;
+  string hostname           = 8;
+  uint32 port               = 9;
+  InstanceMetadata metadata = 10;
+}
+
+message InstanceMetadata {
+  uint32 debug_port = 1;
+}
+
+message Shard {
+  uint32 id = 1;
+  ShardState state = 2;
+  string source_id = 3;
+
+  // Shard-level cutover and cutoff times determine when the shards have been cut over or
+  // cut off from the source instance to the destination instance. The placement-level
+  // cutover times are usually (but not required to be) earlier than shard-level cutover
+  // times if the clients watching the placement need to send traffic to the shards before
+  // they are ready to cut over or after they are ready to cut off (e.g., for warmup purposes).
+  int64 cutover_nanos = 4;
+  int64 cutoff_nanos = 5;
+}
+
+enum ShardState {
+  INITIALIZING = 0;
+  AVAILABLE = 1;
+  LEAVING = 2;
+}
+
+message PlacementSnapshots {
+  repeated Placement snapshots = 1;
+}

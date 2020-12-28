@@ -6,19 +6,23 @@ use n9e_rdb;
 
 CREATE TABLE `user`
 (
-    `id`          int unsigned not null AUTO_INCREMENT,
-    `uuid`        varchar(128) not null comment 'use in cookie',
-    `username`    varchar(64)  not null comment 'login name, cannot rename',
-    `password`    varchar(128) not null default '',
-    `dispname`    varchar(32)  not null default '' comment 'display name, chinese name',
-    `phone`       varchar(16)  not null default '',
-    `email`       varchar(64)  not null default '',
-    `im`          varchar(64)  not null default '',
-    `portrait`    varchar(2048) not null default '',
-    `intro`       varchar(2048) not null default '',
-    `is_root`     tinyint(1)   not null,
-    `leader_id`   int unsigned not null default 0,
-    `leader_name` varchar(32)  not null default '',
+    `id`           int unsigned not null AUTO_INCREMENT,
+    `uuid`         varchar(128) not null comment 'use in cookie',
+    `username`     varchar(64)  not null comment 'login name, cannot rename',
+    `password`     varchar(128) not null default '',
+    `dispname`     varchar(32)  not null default '' comment 'display name, chinese name',
+    `phone`        varchar(16)  not null default '',
+    `email`        varchar(64)  not null default '',
+    `im`           varchar(64)  not null default '',
+    `portrait`     varchar(2048) not null default '',
+    `intro`        varchar(2048) not null default '',
+    `organization` varchar(255) not null default '',
+    `typ`          tinyint(1)   not null default 0 comment '0: long-term account; 1: temporary account',
+    `status`       tinyint(1)   not null default 0 comment '0: active; 1: inactive 2: disable',
+    `is_root`      tinyint(1)   not null,
+    `leader_id`    int unsigned not null default 0,
+    `leader_name`  varchar(32)  not null default '',
+    `create_at`    timestamp    not null default CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`username`),
     UNIQUE KEY (`uuid`)
@@ -297,18 +301,17 @@ CREATE TABLE `login_code`
   DEFAULT CHARSET = utf8;
 
 CREATE TABLE `auth_state` (
-  `state`		varchar(128)		DEFAULT ''	NOT NULL,
-  `typ`			varchar(32)		DEFAULT ''	NOT NULL COMMENT 'response_type',
-  `redirect`		varchar(1024)		DEFAULT ''	NOT NULL,
-  `expires_at`		bigint 			DEFAULT '0'	NOT NULL,
+  `state`        varchar(128)       DEFAULT ''    NOT NULL,
+  `typ`          varchar(32)        DEFAULT ''    NOT NULL COMMENT 'response_type',
+  `redirect`     varchar(1024)      DEFAULT ''    NOT NULL,
+  `expires_at`   bigint             DEFAULT '0'   NOT NULL,
   PRIMARY KEY (`state`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
-
 CREATE TABLE `captcha` (
-  `captcha_id`		varchar(128)				NOT NULL,
-  `answer`		varchar(128)		DEFAULT ''	NOT NULL,
-  `created_at`		bigint			DEFAULT '0'	NOT NULL,
+  `captcha_id`   varchar(128)     NOT NULL,
+  `answer`       varchar(128)     DEFAULT ''    NOT NULL,
+  `created_at`   bigint           DEFAULT '0'    NOT NULL,
   KEY (`captcha_id`, `answer`),
   KEY (`created_at`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;

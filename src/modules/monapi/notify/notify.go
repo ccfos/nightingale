@@ -108,11 +108,14 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 		}
 	}
 
+	resources := getResources(events)
+
 	metric := strings.Join(metricList, ",")
 
 	status := genStatus(events)
 	sname := events[cnt-1].Sname
 	endpoint := genEndpoint(events)
+	name, note := genNameAndNoteByResources(resources)
 	tags := genTags(events)
 	value := events[cnt-1].Value
 	info := events[cnt-1].Info
@@ -156,6 +159,8 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 		"Status":       status,
 		"Sname":        sname,
 		"Endpoint":     endpoint,
+		"Name":         name,
+		"Note":         note,
 		"CurNodePath":  curNodePath,
 		"Metric":       metric,
 		"Tags":         tags,
@@ -189,7 +194,10 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 
 	// 生成告警短信，短信和IM复用一个内容模板
 	fp = path.Join(file.SelfDir(), "etc", "sms.tpl")
-	t, err = template.ParseFiles(fp)
+	t, err = template.New("sms.tpl").Funcs(template.FuncMap{
+		"unescaped":  func(str string) interface{} { return template.HTML(str) },
+		"urlconvert": func(str string) interface{} { return template.URL(str) },
+	}).ParseFiles(fp)
 	if err != nil {
 		logger.Errorf("InternalServerError: cannot parse %s %v", fp, err)
 		smsContent = fmt.Sprintf("InternalServerError: cannot parse %s %v", fp, err)
@@ -277,6 +285,38 @@ func HostBindingsForMon(endpointList []string) ([]string, error) {
 		list = append(list, node.Path)
 	}
 	return list, nil
+}
+
+func getResources(events []*models.Event) []models.Resource {
+	idents := []string{}
+	for i := 0; i < len(events); i++ {
+		idents = append(idents, events[i].Endpoint)
+	}
+	resources, err := models.ResourcesByIdents(idents)
+	if err != nil {
+		logger.Errorf("get resources by idents failed : %v", err)
+	}
+	return resources
+}
+
+func genNameAndNoteByResources(resources []models.Resource) (name, note string) {
+	names := []string{}
+	notes := []string{}
+	for i := 0; i < len(resources); i++ {
+		names = append(names, resources[i].Name)
+		notes = append(notes, resources[i].Note)
+	}
+	names = config.Set(names)
+	notes = config.Set(notes)
+
+	if len(resources) == 1 {
+		name = names[0]
+		note = notes[0]
+		return
+	}
+	name = fmt.Sprintf("%s（%v）", strings.Join(names, ","), len(names))
+	note = fmt.Sprintf("%s（%v）", strings.Join(notes, ","), len(notes))
+	return
 }
 
 func getEndpoint(events []*models.Event) []string {
@@ -388,6 +428,8 @@ func send(tos []string, content, subject, notifyType string) error {
 		if err == nil {
 			break
 		}
+
+		logger.Infof("curl %s response: %s", url, string(res))
 	}
 
 	return err
