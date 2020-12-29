@@ -530,10 +530,13 @@ func rstPassword(c *gin.Context) {
 		if in.DryRun {
 			return nil
 		}
-		defer lc.Del()
 
 		// update password
-		return auth.ChangePassword(user, in.Password)
+		if err := auth.ChangePassword(user, in.Password); err != nil {
+			return err
+		}
+		lc.Del()
+		return nil
 	}()
 
 	if err != nil {

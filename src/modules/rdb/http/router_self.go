@@ -49,7 +49,7 @@ func selfPasswordPut(c *gin.Context) {
 	dangerous(err)
 
 	if user.Password != oldpass {
-		bomb("old password error")
+		bomb("Incorrect old password")
 	}
 
 	renderMessage(c, auth.ChangePassword(user, f.NewPass))

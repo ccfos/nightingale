@@ -10,9 +10,12 @@ import (
 
 // CryptoPass crypto password use salt
 func CryptoPass(raw string) (string, error) {
+	if raw == "" {
+		return "", _e("Password is not set")
+	}
 	salt, err := ConfigsGet("salt")
 	if err != nil {
-		return "", fmt.Errorf("query salt from mysql fail: %v", err)
+		return "", _e("query salt from mysql fail: %v", err)
 	}
 
 	return str.MD5(salt + "<-*Uk30^96eY*->" + raw), nil

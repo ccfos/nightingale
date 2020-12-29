@@ -70,41 +70,41 @@ type User struct {
 func (u *User) Validate() error {
 	u.Username = strings.TrimSpace(u.Username)
 	if u.Username == "" {
-		return fmt.Errorf("username is blank")
+		return _e("username is blank")
 	}
 
 	if str.Dangerous(u.Username) {
-		return fmt.Errorf("username is dangerous")
+		return _e("%s %s format error", _s("username"), u.Username)
 	}
 
 	if str.Dangerous(u.Dispname) {
-		return fmt.Errorf("dispname is dangerous")
+		return _e("%s %s format error", _s("dispname"), u.Dispname)
 	}
 
 	if u.Phone != "" && !str.IsPhone(u.Phone) {
-		return fmt.Errorf("%s format error", u.Phone)
+		return _e("%s %s format error", _s("phone"), u.Phone)
 	}
 
 	if u.Email != "" && !str.IsMail(u.Email) {
-		return fmt.Errorf("%s format error", u.Email)
+		return _e("%s %s format error", _s("email"), u.Email)
 	}
 
 	if len(u.Username) > 32 {
-		return fmt.Errorf("username too long")
+		return _e("username too long (max:%d)", 32)
 	}
 
 	if len(u.Dispname) > 32 {
-		return fmt.Errorf("dispname too long")
+		return _e("dispname too long (max:%d)", 32)
 	}
 
 	if strings.ContainsAny(u.Im, "%'") {
-		return fmt.Errorf("im invalid")
+		return _e("%s %s format error", "im", u.Im)
 	}
 
 	cnt, _ := DB["rdb"].Where("((email <> '' and email=?) or (phone <> '' and phone=?)) and username=?",
 		u.Email, u.Phone, u.Username).Count(u)
 	if cnt > 0 {
-		return fmt.Errorf("email %s or phone %s is exists", u.Email, u.Phone)
+		return _e("email %s or phone %s is exists", u.Email, u.Phone)
 	}
 	return nil
 }

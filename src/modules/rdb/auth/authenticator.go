@@ -8,6 +8,7 @@ import (
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/rdb/cache"
 	"github.com/didi/nightingale/src/modules/rdb/config"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -137,7 +138,7 @@ func (p *Authenticator) ChangePassword(user *models.User, password string) (err 
 
 	for _, v := range passwords {
 		if user.Password == v {
-			err = fmt.Errorf("The password is the same as the old password")
+			err = _e("The password is the same as the old password")
 			return
 		}
 	}
@@ -198,6 +199,10 @@ func (p *Authenticator) Start() error {
 func activeUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) error {
 	now := time.Now().Unix()
 
+	if loginErr != nil {
+		user.LoginErrNum++
+	}
+
 	if cf.MaxNumErr > 0 && user.LoginErrNum >= cf.MaxNumErr {
 		user.Status = models.USER_S_LOCKED
 		user.LockedAt = now
@@ -206,9 +211,9 @@ func activeUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) 
 	}
 
 	if loginErr != nil {
-		user.LoginErrNum++
 		user.UpdatedAt = now
-		return fmt.Errorf("max login err %d/%d", user.LoginErrNum, cf.MaxNumErr)
+		return _e("Incorrect login/password %s times, you still have %s chances",
+			user.LoginErrNum, cf.MaxNumErr-user.LoginErrNum)
 	}
 
 	user.LoginErrNum = 0
@@ -218,19 +223,25 @@ func activeUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) 
 		if n, err := models.SessionUserAll(user.Username); err != nil {
 			return err
 		} else if n >= cf.MaxSessionNumber {
-			return fmt.Errorf("max session limit %d/%d", n, cf.MaxSessionNumber)
+			return _e("The limited sessions %d", cf.MaxSessionNumber)
 		}
 	}
 
 	if cf.PwdExpiresIn > 0 {
+		// debug account
+		if user.Username == "Demo.2022" {
+			if now-user.PwdUpdatedAt > cf.PwdExpiresIn*60 {
+				return _e("Password has been expired")
+			}
+		}
 		if now-user.PwdUpdatedAt > cf.PwdExpiresIn*30*86400 {
-			return fmt.Errorf("password has been expired")
+			return _e("Password has been expired")
 		}
 	}
 	return nil
 }
 func inactiveUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) error {
-	return fmt.Errorf("user is inactive")
+	return _e("User is inactive")
 }
 func lockedUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) error {
 	now := time.Now().Unix()
@@ -240,15 +251,15 @@ func lockedUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) 
 		user.UpdatedAt = now
 		return nil
 	}
-	return fmt.Errorf("user is locked")
+	return _e("User is locked")
 }
 
 func frozenUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) error {
-	return fmt.Errorf("user is frozen")
+	return _e("User is frozen")
 }
 
 func writenOffUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) error {
-	return fmt.Errorf("user is writen off")
+	return _e("User is writen off")
 }
 
 func checkPassword(cf *models.AuthConfig, passwd string) error {
@@ -256,8 +267,7 @@ func checkPassword(cf *models.AuthConfig, passwd string) error {
 	spCode := []byte{'!', '@', '#', '$', '%', '^', '&', '*', '_', '-', '~', '.', ',', '<', '>', '/', ';', ':', '|', '?', '+', '='}
 
 	if cf.PwdMinLenght > 0 && len(passwd) < cf.PwdMinLenght {
-		return fmt.Errorf("password too short %d/%d",
-			len(passwd), cf.PwdMinLenght)
+		return _e("Password too short (min:%d) %s", cf.PwdMinLenght, cf.Usage())
 	}
 
 	passwdByte := []byte(passwd)
@@ -289,25 +299,33 @@ func checkPassword(cf *models.AuthConfig, passwd string) error {
 		}
 
 		if !has {
-			return fmt.Errorf("character: %s not supported", string(i))
+			return _e("character: %s not supported", string(i))
 		}
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_UPPER > 0 && indNum[0] == 0 {
-		return fmt.Errorf("password must include upper char")
+		return _e("Invalid Password, %s", cf.Usage())
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_LOWER > 0 && indNum[1] == 0 {
-		return fmt.Errorf("password must include lower char")
+		return _e("Invalid Password, %s", cf.Usage())
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_NUMBER > 0 && indNum[2] == 0 {
-		return fmt.Errorf("password must include number char")
+		return _e("Invalid Password, %s", cf.Usage())
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_SPEC_CHAR > 0 && indNum[3] == 0 {
-		return fmt.Errorf("password must include special char")
+		return _e("Invalid Password, %s", cf.Usage())
 	}
 
 	return nil
+}
+
+func _e(format string, a ...interface{}) error {
+	return fmt.Errorf(i18n.Sprintf(format, a...))
+}
+
+func _s(format string, a ...interface{}) string {
+	return i18n.Sprintf(format, a...)
 }

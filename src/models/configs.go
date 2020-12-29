@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/toolkits/pkg/runner"
@@ -99,7 +100,29 @@ type AuthConfig struct {
 	PwdMinLenght       int      `json:"pwdMinLenght"`
 	PwdExpiresIn       int64    `json:"pwdExpiresIn" description:"month"`
 	PwdMustInclude     []string `json:"pwdMustInclude" description:"upper,lower,number,specChar"`
-	PwdMustIncludeFlag int      `json:"-"`
+	PwdMustIncludeFlag int      `json:"pwdMustIncludeFlag"`
+}
+
+func (p AuthConfig) Usage() string {
+	s := []string{}
+	if p.PwdMustIncludeFlag&PWD_INCLUDE_UPPER > 0 {
+		s = append(s, _s("Upper char"))
+	}
+	if p.PwdMustIncludeFlag&PWD_INCLUDE_LOWER > 0 {
+		s = append(s, _s("Lower char"))
+	}
+	if p.PwdMustIncludeFlag&PWD_INCLUDE_NUMBER > 0 {
+		s = append(s, _s("Number"))
+	}
+	if p.PwdMustIncludeFlag&PWD_INCLUDE_SPEC_CHAR > 0 {
+		s = append(s, _s("Special char"))
+	}
+
+	if len(s) > 0 {
+		return _s("Must include %s", strings.Join(s, ","))
+	}
+
+	return ""
 }
 
 const (
