@@ -2,6 +2,7 @@ package cron
 
 import (
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
@@ -163,12 +164,20 @@ func sendImByDingTalkRobot(message *dataobj.Message) {
 		}
 	}
 
-	for tokenUser := range set {
-		err := dingtalk.RobotSend(tokenUser, message.Content)
-		if err != nil {
-			logger.Warningf("im dingtalk_robot send to %s fail: %v", tokenUser, err)
+	req := regexp.MustCompile("^1[0-9]{10}$")
+	var atUser []string
+	var tokenUser string
+	for user := range set {
+		if req.MatchString(user){
+			atUser = append(atUser, user)
 		} else {
-			logger.Infof("im dingtalk_robot send to %s succ", tokenUser)
+			tokenUser = user
 		}
+	}
+	err := dingtalk.RobotSend(tokenUser, message.Content, atUser)
+	if err != nil {
+		logger.Warningf("im dingtalk_robot send to %s fail: %v", tokenUser, err)
+	} else {
+		logger.Infof("im dingtalk_robot send to %s succ", tokenUser)
 	}
 }
