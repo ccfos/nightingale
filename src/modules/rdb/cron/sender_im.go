@@ -166,18 +166,20 @@ func sendImByDingTalkRobot(message *dataobj.Message) {
 
 	req := regexp.MustCompile("^1[0-9]{10}$")
 	var atUser []string
-	var tokenUser string
+	var tokenUser []string
 	for user := range set {
 		if req.MatchString(user){
 			atUser = append(atUser, user)
 		} else {
-			tokenUser = user
+			tokenUser = append(tokenUser, user)
 		}
 	}
-	err := dingtalk.RobotSend(tokenUser, message.Content, atUser)
-	if err != nil {
-		logger.Warningf("im dingtalk_robot send to %s fail: %v", tokenUser, err)
-	} else {
-		logger.Infof("im dingtalk_robot send to %s succ", tokenUser)
+	for _, u := range tokenUser {
+		err := dingtalk.RobotSend(u, message.Content, atUser)
+		if err != nil {
+			logger.Warningf("im dingtalk_robot send to %s fail: %v", u, err)
+		} else {
+			logger.Infof("im dingtalk_robot send to %s succ", u)
+		}
 	}
 }
