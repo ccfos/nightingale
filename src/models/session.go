@@ -87,7 +87,9 @@ func SessionGetWithCache(sid string) (*Session, error) {
 	sess.UpdatedAt = time.Now().Unix()
 	sess.Update("updated_at")
 
-	cache.Set("sid."+sid, sess, time.Second*30)
+	if sess.Username != "" {
+		cache.Set("sid."+sid, sess, time.Second*30)
+	}
 
 	return sess, nil
 }
