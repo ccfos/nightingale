@@ -319,10 +319,7 @@ func (u *User) Save() error {
 		return _e("Username %s already exists", u.Username)
 	}
 
-	now := time.Now().Unix()
-	u.Passwords = u.Password
-	u.UpdatedAt = now
-	u.PwdUpdatedAt = now
+	u.UpdatedAt = time.Now().Unix()
 
 	_, err = DB["rdb"].Insert(u)
 	return err

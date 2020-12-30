@@ -227,7 +227,7 @@ func activeUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) 
 		}
 	}
 
-	if cf.PwdExpiresIn > 0 {
+	if cf.PwdExpiresIn > 0 && user.PwdUpdatedAt > 0 {
 		// debug account
 		if user.Username == "Demo.2022" {
 			if now-user.PwdUpdatedAt > cf.PwdExpiresIn*60 {

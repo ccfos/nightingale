@@ -135,8 +135,9 @@ func logout(c *gin.Context) {
 }
 
 type authRedirect struct {
-	Redirect string `json:"redirect"`
-	Msg      string `json:"msg"`
+	Redirect string       `json:"redirect"`
+	User     *models.User `json:"user"`
+	Msg      string       `json:"msg"`
 }
 
 func authAuthorizeV2(c *gin.Context) {
@@ -173,17 +174,16 @@ func authCallbackV2(c *gin.Context) {
 		return
 	}
 
-	var user *models.User
 	var err error
-	ret.Redirect, user, err = ssoc.Callback(code, state)
+	ret.Redirect, ret.User, err = ssoc.Callback(code, state)
 	if err != nil {
 		logger.Debugf("sso.callback() error %s", err)
 		renderData(c, ret, err)
 		return
 	}
 
-	logger.Debugf("sso.callback() successfully, set username %s", user.Username)
-	sessionLogin(c, user.Username, c.ClientIP())
+	logger.Debugf("sso.callback() successfully, set username %s", ret.User.Username)
+	sessionLogin(c, ret.User.Username, c.ClientIP())
 	renderData(c, ret, nil)
 }
 
