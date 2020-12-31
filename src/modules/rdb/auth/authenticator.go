@@ -56,15 +56,12 @@ func (p *Authenticator) ChangePasswordRedirect(user *models.User, redirect strin
 	cf := cache.AuthConfig()
 
 	var reason string
-	//TODO: remove me
-	if user.Username != "xz1005" {
-		if user.PwdUpdatedAt == 0 {
-			reason = _s("First Login, please change the password in time")
-		} else if user.PwdUpdatedAt+cf.PwdExpiresIn*86400*30 < time.Now().Unix() {
-			reason = _s("Password expired, please change the password in time")
-		} else {
-			return ""
-		}
+	if user.PwdUpdatedAt == 0 {
+		reason = _s("First Login, please change the password in time")
+	} else if user.PwdUpdatedAt+cf.PwdExpiresIn*86400*30 < time.Now().Unix() {
+		reason = _s("Password expired, please change the password in time")
+	} else {
+		return ""
 	}
 
 	v := url.Values{

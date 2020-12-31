@@ -121,12 +121,6 @@ func logout(c *gin.Context) {
 		models.LoginLogNew(username, c.ClientIP(), "out", nil)
 	}()
 
-	if config.Config.SSO.Enable {
-		redirect := queryStr(c, "redirect", "/")
-		c.Redirect(302, ssoc.LogoutLocation(redirect))
-		return
-	}
-
 	if redirect := queryStr(c, "redirect", ""); redirect != "" {
 		c.Redirect(302, redirect)
 		return
@@ -207,13 +201,6 @@ func logoutV2(c *gin.Context) {
 
 	sessionDestory(c)
 	ret.Msg = "logout successfully"
-
-	if config.Config.SSO.Enable {
-		if redirect == "" {
-			redirect = "/"
-		}
-		ret.Redirect = ssoc.LogoutLocation(redirect)
-	}
 
 	renderData(c, ret, nil)
 
