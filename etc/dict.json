@@ -133,7 +133,8 @@
     "User is locked": "用户已锁定",
     "User is frozen": "用户已休眠",
     "User is writen off": "用户已注销",
-    "Password too short (min:%d) %s": "密码太短 (最少%d) %s",
+    "Minimum password length %d": "密码最小长度 %d",
+    "Password too short (min:%d) %s": "密码太短 (最小 %d) %s",
     "%s format error":"%s 所填内容不符合规范",
     "%s %s format error":"%s %s 所填内容不符合规范",
     "username too long (max:%d)": "用户名太长 (最长:%d)",
@@ -146,6 +147,10 @@
     "email": "邮箱",
     "username": "用户名",
     "dispname": "昵称",
+    "Temporary user has expired": "临时账户,已过有效期",
+    "Invalid user status %d": "异常的用户状态 %d",
+    "Password expired, please change the password in time": "密码过期，请及时修改密码",
+    "First Login, please change the password in time": "初始登陆，请及时修改密码",
 
     "EOF": ""
   } 

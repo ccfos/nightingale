@@ -22,6 +22,7 @@ func Config(r *gin.Engine) {
 		notLogin.GET("/auth/captcha", captchaGet)
 
 		notLogin.GET("/v2/nodes", nodeGets)
+		notLogin.GET("/pwd-rules", pwdRulesGet)
 
 	}
 
@@ -94,11 +95,12 @@ func Config(r *gin.Engine) {
 
 		userLogin.GET("/self/profile", selfProfileGet)
 		userLogin.PUT("/self/profile", selfProfilePut)
-		userLogin.PUT("/self/password", selfPasswordPut)
 		userLogin.GET("/self/token", selfTokenGets)
 		userLogin.POST("/self/token", selfTokenPost)
 		userLogin.PUT("/self/token", selfTokenPut)
 		userLogin.GET("/self/perms/global", permGlobalOps)
+
+		notLogin.PUT("/self/password", selfPasswordPut)
 
 		userLogin.GET("/users", userListGet)
 		userLogin.GET("/users/invite", userInviteGet)

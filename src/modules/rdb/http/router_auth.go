@@ -20,6 +20,7 @@ import (
 	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/rdb/auth"
+	"github.com/didi/nightingale/src/modules/rdb/cache"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
 	"github.com/didi/nightingale/src/modules/rdb/ssoc"
@@ -179,6 +180,13 @@ func authCallbackV2(c *gin.Context) {
 	if err != nil {
 		logger.Debugf("sso.callback() error %s", err)
 		renderData(c, ret, err)
+		return
+	}
+
+	if redirect := auth.ChangePasswordRedirect(ret.User, ret.Redirect); redirect != "" {
+		logger.Debugf("sso.callback() redirect to changePassword  %s", redirect)
+		ret.Redirect = redirect
+		renderData(c, ret, nil)
 		return
 	}
 
@@ -702,4 +710,10 @@ func v1SessionDelete(c *gin.Context) {
 	sid := urlParamStr(c, "sid")
 	logger.Debugf("session del sid %s", sid)
 	renderMessage(c, models.SessionDel(sid))
+}
+
+// pwdRulesGet return pwd rules
+func pwdRulesGet(c *gin.Context) {
+	cf := cache.AuthConfig()
+	renderData(c, cf.PwdRules(), nil)
 }

@@ -36,23 +36,32 @@ func selfProfilePut(c *gin.Context) {
 }
 
 type selfPasswordForm struct {
-	OldPass string `json:"oldpass" binding:"required"`
-	NewPass string `json:"newpass" binding:"required"`
+	Username string `json:"username" binding:"required"`
+	OldPass  string `json:"oldpass" binding:"required"`
+	NewPass  string `json:"newpass" binding:"required"`
 }
 
 func selfPasswordPut(c *gin.Context) {
 	var f selfPasswordForm
 	bind(c, &f)
 
-	user := loginUser(c)
-	oldpass, err := models.CryptoPass(f.OldPass)
-	dangerous(err)
+	err := func() error {
+		user, err := models.UserMustGet("username=?", f.Username)
+		if err != nil {
+			return err
+		}
+		oldpass, err := models.CryptoPass(f.OldPass)
+		if err != nil {
+			return err
+		}
+		if user.Password != oldpass {
+			return _e("Incorrect old password")
+		}
 
-	if user.Password != oldpass {
-		bomb("Incorrect old password")
-	}
+		return auth.ChangePassword(user, f.NewPass)
+	}()
 
-	renderMessage(c, auth.ChangePassword(user, f.NewPass))
+	renderMessage(c, err)
 }
 
 func selfTokenGets(c *gin.Context) {

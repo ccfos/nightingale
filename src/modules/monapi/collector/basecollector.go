@@ -55,7 +55,7 @@ func (p BaseCollector) Get(id int64) (interface{}, error) {
 
 func (p BaseCollector) Gets(nids []int64) (ret []interface{}, err error) {
 	collects := []models.CollectRule{}
-	err = models.DB["mon"].In("nid", nids).Find(&collects)
+	err = models.DB["mon"].Where("collect_type=?", p.name).In("nid", nids).Find(&collects)
 	for _, c := range collects {
 		ret = append(ret, c)
 	}

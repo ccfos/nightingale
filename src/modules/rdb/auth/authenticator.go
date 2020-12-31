@@ -3,6 +3,7 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/didi/nightingale/src/models"
@@ -10,6 +11,10 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/toolkits/pkg/logger"
+)
+
+const (
+	ChangePasswordURL = "/change-password"
 )
 
 type Authenticator struct {
@@ -41,6 +46,36 @@ func (p *Authenticator) WhiteListAccess(remoteAddr string) error {
 	return models.WhiteListAccess(remoteAddr)
 }
 
+// ChangePasswordRedirect check user should change password before login
+// return change password redirect url
+func (p *Authenticator) ChangePasswordRedirect(user *models.User, redirect string) string {
+	if !p.extraMode {
+		return ""
+	}
+
+	cf := cache.AuthConfig()
+
+	var reason string
+	//TODO: remove me
+	if user.Username != "xz1005" {
+		if user.PwdUpdatedAt == 0 {
+			reason = _s("First Login, please change the password in time")
+		} else if user.PwdUpdatedAt+cf.PwdExpiresIn*86400*30 < time.Now().Unix() {
+			reason = _s("Password expired, please change the password in time")
+		} else {
+			return ""
+		}
+	}
+
+	v := url.Values{
+		"redirect": {redirect},
+		"username": {user.Username},
+		"reason":   {reason},
+		"pwdRules": cf.PwdRules(),
+	}
+	return ChangePasswordURL + "?" + v.Encode()
+}
+
 func (p *Authenticator) PostLogin(user *models.User, loginErr error) (err error) {
 	now := time.Now().Unix()
 	defer func() {
@@ -61,7 +96,7 @@ func (p *Authenticator) PostLogin(user *models.User, loginErr error) (err error)
 	cf := cache.AuthConfig()
 
 	if user.Type == models.USER_T_TEMP && (now < user.ActiveBegin || user.ActiveEnd < now) {
-		err = fmt.Errorf("Temporary user has expired")
+		err = _e("Temporary user has expired")
 		return
 	}
 
@@ -79,7 +114,7 @@ retry:
 	case models.USER_S_WRITEN_OFF:
 		err = writenOffUserAccess(cf, user, loginErr)
 	default:
-		err = fmt.Errorf("invalid user status %d", user.Status)
+		err = _e("Invalid user status %d", user.Status)
 	}
 
 	// if user's status has been changed goto retry
@@ -200,20 +235,19 @@ func activeUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) 
 	now := time.Now().Unix()
 
 	if loginErr != nil {
-		user.LoginErrNum++
-	}
-
-	if cf.MaxNumErr > 0 && user.LoginErrNum >= cf.MaxNumErr {
-		user.Status = models.USER_S_LOCKED
-		user.LockedAt = now
-		user.UpdatedAt = now
-		return nil
-	}
-
-	if loginErr != nil {
-		user.UpdatedAt = now
-		return _e("Incorrect login/password %s times, you still have %s chances",
-			user.LoginErrNum, cf.MaxNumErr-user.LoginErrNum)
+		if cf.MaxNumErr > 0 {
+			user.UpdatedAt = now
+			user.LoginErrNum++
+			if user.LoginErrNum >= cf.MaxNumErr {
+				user.Status = models.USER_S_LOCKED
+				user.LockedAt = now
+				return nil
+			}
+			return _e("Incorrect login/password %s times, you still have %s chances",
+				user.LoginErrNum, cf.MaxNumErr-user.LoginErrNum)
+		} else {
+			return loginErr
+		}
 	}
 
 	user.LoginErrNum = 0
@@ -229,6 +263,7 @@ func activeUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) 
 
 	if cf.PwdExpiresIn > 0 && user.PwdUpdatedAt > 0 {
 		// debug account
+		// TODO: remove me
 		if user.Username == "Demo.2022" {
 			if now-user.PwdUpdatedAt > cf.PwdExpiresIn*60 {
 				return _e("Password has been expired")
@@ -267,7 +302,7 @@ func checkPassword(cf *models.AuthConfig, passwd string) error {
 	spCode := []byte{'!', '@', '#', '$', '%', '^', '&', '*', '_', '-', '~', '.', ',', '<', '>', '/', ';', ':', '|', '?', '+', '='}
 
 	if cf.PwdMinLenght > 0 && len(passwd) < cf.PwdMinLenght {
-		return _e("Password too short (min:%d) %s", cf.PwdMinLenght, cf.Usage())
+		return _e("Password too short (min:%d) %s", cf.PwdMinLenght, cf.MustInclude())
 	}
 
 	passwdByte := []byte(passwd)
@@ -304,19 +339,19 @@ func checkPassword(cf *models.AuthConfig, passwd string) error {
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_UPPER > 0 && indNum[0] == 0 {
-		return _e("Invalid Password, %s", cf.Usage())
+		return _e("Invalid Password, %s", cf.MustInclude())
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_LOWER > 0 && indNum[1] == 0 {
-		return _e("Invalid Password, %s", cf.Usage())
+		return _e("Invalid Password, %s", cf.MustInclude())
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_NUMBER > 0 && indNum[2] == 0 {
-		return _e("Invalid Password, %s", cf.Usage())
+		return _e("Invalid Password, %s", cf.MustInclude())
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_SPEC_CHAR > 0 && indNum[3] == 0 {
-		return _e("Invalid Password, %s", cf.Usage())
+		return _e("Invalid Password, %s", cf.MustInclude())
 	}
 
 	return nil

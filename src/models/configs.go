@@ -103,7 +103,18 @@ type AuthConfig struct {
 	PwdMustIncludeFlag int      `json:"pwdMustIncludeFlag"`
 }
 
-func (p AuthConfig) Usage() string {
+func (p AuthConfig) PwdRules() []string {
+	s := []string{}
+	if p.PwdMinLenght > 0 {
+		s = append(s, _s("Minimum password length %d", p.PwdMinLenght))
+	}
+	if rule := p.MustInclude(); rule != "" {
+		s = append(s, rule)
+	}
+	return s
+}
+
+func (p AuthConfig) MustInclude() string {
 	s := []string{}
 	if p.PwdMustIncludeFlag&PWD_INCLUDE_UPPER > 0 {
 		s = append(s, _s("Upper char"))

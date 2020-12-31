@@ -28,6 +28,12 @@ func CheckPassword(password string) error {
 	return defaultAuth.CheckPassword(password)
 }
 
+// ChangePasswordRedirect check user should change password before login
+// return change password redirect url
+func ChangePasswordRedirect(user *models.User, redirect string) string {
+	return defaultAuth.ChangePasswordRedirect(user, redirect)
+}
+
 func Start() error {
 	return defaultAuth.Start()
 }

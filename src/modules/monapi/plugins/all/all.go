@@ -5,6 +5,7 @@ import (
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/api"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/github"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/mysql"
+	// _ "github.com/didi/nightingale/src/modules/monapi/plugins/prometheus"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/redis"
 
 	// local

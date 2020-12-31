@@ -43,7 +43,6 @@ require (
 	gopkg.in/ldap.v3 v3.1.0
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0
-	k8s.io/klog/v2 v2.4.0
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.1
 )
