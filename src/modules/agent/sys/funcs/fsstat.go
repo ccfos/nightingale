@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"time"
@@ -68,7 +69,7 @@ func FsRWMetrics() []*dataobj.MetricValue {
 			continue
 		}
 
-		file := filepath.Join(du.FsFile, ".fs-detect")
+		file := filepath.Join(du.FsFile, ".fs-detect."+genRandStr())
 		now := time.Now().Format("2006-01-02 15:04:05")
 		content := "FS-RW" + now
 		err = CheckFS(file, content)
@@ -113,4 +114,21 @@ func CheckFS(file string, content string) error {
 		return err
 	}
 	return nil
+}
+
+func genRandStr() string {
+	const len = 5
+	var letters []byte = []byte("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	randBytes := make([]byte, len)
+	if _, err := rand.Read(randBytes); err != nil {
+		return fmt.Sprintf("%d", rand.Int63())
+	}
+
+	for i := 0; i < len; i++ {
+		pos := randBytes[i] % 62
+		randBytes[i] = letters[pos]
+	}
+
+	return string(randBytes)
 }

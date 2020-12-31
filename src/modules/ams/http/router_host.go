@@ -271,7 +271,12 @@ func v1HostRegister(c *gin.Context) {
 		oldFields[k] = v
 	}
 
-	uniqValue := f.SN
+	uniqValue := ""
+
+	if f.UniqKey == "sn" {
+		uniqValue = f.SN
+	}
+
 	if f.UniqKey == "ip" {
 		uniqValue = f.IP
 	}

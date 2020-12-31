@@ -11,6 +11,7 @@ import (
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/agent/config"
 	"github.com/didi/nightingale/src/modules/agent/core"
+	"github.com/didi/nightingale/src/modules/agent/report"
 )
 
 type PortScheduler struct {
@@ -46,7 +47,11 @@ func (p *PortScheduler) Stop() {
 
 func PortCollect(p *models.PortCollect) {
 	value := 0
-	if isListening(p.Port) {
+	if isListen(p.Port, 1, "127.0.0.1") {
+		value = 1
+	} else if isListen(p.Port, 1, report.IP) {
+		value = 1
+	} else if isListen(p.Port, 1, "::1") {
 		value = 1
 	}
 

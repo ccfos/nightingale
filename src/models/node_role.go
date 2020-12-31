@@ -1,7 +1,5 @@
 package models
 
-import "fmt"
-
 type NodeRole struct {
 	Id       int64  `json:"id"`
 	NodeId   int64  `json:"node_id"`
@@ -18,7 +16,7 @@ func (nr *NodeRole) Save() error {
 	}
 
 	if cnt > 0 {
-		return fmt.Errorf("user already has this role")
+		return nil
 	}
 
 	_, err = DB["rdb"].Insert(nr)
