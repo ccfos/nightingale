@@ -13,7 +13,7 @@ http:
     cookieLifetime: 86400 # 单位秒，0: 与浏览器相同
 
 i18n:
-  lang: en
+  lang: zh
 
 sso:
   enable: false
