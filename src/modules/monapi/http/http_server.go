@@ -2,9 +2,11 @@ package http
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/didi/nightingale/src/common/address"
@@ -31,7 +33,7 @@ func Start() {
 	loggerMid := middleware.LoggerWithConfig(middleware.LoggerConfig{SkipPaths: skipPaths})
 	recoveryMid := middleware.Recovery()
 
-	if c.Logger.Level != "DEBUG" {
+	if strings.ToLower(c.HTTP.Mode) == "release" {
 		gin.SetMode(gin.ReleaseMode)
 		middleware.DisableConsoleColor()
 	} else {
@@ -47,9 +49,10 @@ func Start() {
 	srv.Handler = r
 
 	go func() {
-		log.Println("starting http server, listening on:", srv.Addr)
+		fmt.Println("http.listening:", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listening %s occur error: %s\n", srv.Addr, err)
+			fmt.Printf("listening %s occur error: %s\n", srv.Addr, err)
+			os.Exit(3)
 		}
 	}()
 }
@@ -59,14 +62,15 @@ func Shutdown() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalln("cannot shutdown http server:", err)
+		fmt.Println("cannot shutdown http server:", err)
+		os.Exit(2)
 	}
 
 	// catching ctx.Done(). timeout of 5 seconds.
 	select {
 	case <-ctx.Done():
-		log.Println("shutdown http server timeout of 5 seconds.")
+		fmt.Println("shutdown http server timeout of 5 seconds.")
 	default:
-		log.Println("http server stopped")
+		fmt.Println("http server stopped")
 	}
 }

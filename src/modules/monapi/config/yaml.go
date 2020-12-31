@@ -94,7 +94,9 @@ type loggerSection struct {
 }
 
 type httpSection struct {
-	Listen string `yaml:"listen"`
+	Mode         string `yaml:"mode"`
+	CookieName   string `yaml:"cookieName"`
+	CookieDomain string `yaml:"cookieDomain"`
 }
 
 type proxySection struct {

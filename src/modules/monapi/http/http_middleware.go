@@ -88,7 +88,7 @@ func sessionUsername(c *gin.Context) string {
 }
 
 func readSessionId(c *gin.Context) string {
-	sid, err := c.Cookie("ecmc-sid")
+	sid, err := c.Cookie(config.Get().HTTP.CookieName)
 	if err != nil {
 		return ""
 	}
