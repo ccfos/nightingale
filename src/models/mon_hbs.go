@@ -10,6 +10,7 @@ type Instance struct {
 	HTTPPort string `json:"http_port" xorm:"http_port"`
 	TS       int64  `json:"ts" xorm:"ts"`
 	Remark   string `json:"remark"`
+	Region   string `json:"region"`
 	Active   bool   `xorm:"-" json:"active"`
 }
 

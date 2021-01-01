@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/errors"
-
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/toolkits/i18n"
+	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/errors"
 )
 
 func dangerous(v interface{}) {
@@ -133,68 +132,9 @@ func renderZeroPage(c *gin.Context) {
 	}, nil)
 }
 
-// ------------
-
 type idsForm struct {
 	Ids []int64 `json:"ids"`
 }
-
-func checkPassword(passwd string) error {
-	indNum := [4]int{0, 0, 0, 0}
-	spCode := []byte{'!', '@', '#', '$', '%', '^', '&', '*', '_', '-', '~', '.', ',', '<', '>', '/', ';', ':', '|', '?', '+', '='}
-
-	if len(passwd) < 6 {
-		return fmt.Errorf("password too short")
-	}
-
-	passwdByte := []byte(passwd)
-
-	for _, i := range passwdByte {
-
-		if i >= 'A' && i <= 'Z' {
-			indNum[0] = 1
-			continue
-		}
-
-		if i >= 'a' && i <= 'z' {
-			indNum[1] = 1
-			continue
-		}
-
-		if i >= '0' && i <= '9' {
-			indNum[2] = 1
-			continue
-		}
-
-		has := false
-		for _, s := range spCode {
-			if i == s {
-				indNum[3] = 1
-				has = true
-				break
-			}
-		}
-
-		if !has {
-			return fmt.Errorf("character: %s not supported", string(i))
-		}
-
-	}
-
-	codeCount := 0
-
-	for _, i := range indNum {
-		codeCount += i
-	}
-
-	if codeCount < 4 {
-		return fmt.Errorf("password too simple")
-	}
-
-	return nil
-}
-
-// ------------
 
 func loginUsername(c *gin.Context) string {
 	value, has := c.Get("username")
@@ -279,4 +219,12 @@ func Node(id int64) *models.Node {
 	}
 
 	return node
+}
+
+func _e(format string, a ...interface{}) error {
+	return fmt.Errorf(i18n.Sprintf(format, a...))
+}
+
+func _s(format string, a ...interface{}) string {
+	return i18n.Sprintf(format, a...)
 }

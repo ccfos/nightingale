@@ -1,6 +1,7 @@
 package scache
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/didi/nightingale/src/common/report"
@@ -9,8 +10,9 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+var CollectRuleCache *collectRuleCache
 var JudgeHashRing *ConsistentHashRing
-var ActiveNode = NewNodeMap()
+var ActiveJudgeNode = NewNodeMap()
 
 const CHECK_INTERVAL = 9
 
@@ -22,8 +24,10 @@ func Init() {
 
 	InitJudgeHashRing()
 
-	go CheckJudgeNodes()
+	CollectRuleCache = NewCollectRuleCache()
+	CollectRuleCache.Start(context.Background())
 
+	go CheckJudgeNodes()
 	go SyncStras()
 	go SyncCollects()
 	go CleanCollectLoop()

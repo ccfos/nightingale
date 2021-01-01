@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type LoginLog struct {
 	Id       int64  `json:"id"`
@@ -8,18 +11,20 @@ type LoginLog struct {
 	Client   string `json:"client"`
 	Clock    int64  `json:"clock"`
 	Loginout string `json:"loginout"`
+	Err      string `json:"err"`
 }
 
-func LoginLogNew(username, client, inout string) error {
+func LoginLogNew(username, client, inout string, err error) error {
 	now := time.Now().Unix()
 	obj := LoginLog{
 		Username: username,
 		Client:   client,
 		Clock:    now,
 		Loginout: inout,
+		Err:      fmt.Sprintf("%v", err),
 	}
-	_, err := DB["rdb"].Insert(obj)
-	return err
+	_, e := DB["rdb"].Insert(obj)
+	return e
 }
 
 func LoginLogTotal(username string, btime, etime int64) (int64, error) {

@@ -42,5 +42,11 @@ judge:
   addresses:
     - 127.0.0.1
 
+prober:
+  http: 0.0.0.0:8023
+  rpc: 0.0.0.0:8024
+  addresses:
+    - 127.0.0.1
+
 agent:
   http: 0.0.0.0:2080

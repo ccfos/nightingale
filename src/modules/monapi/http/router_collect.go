@@ -6,8 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/didi/nightingale/src/models"
-	"github.com/didi/nightingale/src/modules/monapi/config"
+	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/modules/monapi/scache"
 
 	"github.com/gin-gonic/gin"
@@ -16,201 +15,44 @@ import (
 )
 
 type CollectRecv struct {
-	Type string      `json:"type"`
-	Data interface{} `json:"data"`
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"data"`
 }
 
-//此处实现需要重构
-func collectPost(c *gin.Context) {
-	creator := loginUsername(c)
+func collectRulePost(c *gin.Context) {
 	var recv []CollectRecv
 	errors.Dangerous(c.ShouldBind(&recv))
 
+	creator := loginUsername(c)
 	for _, obj := range recv {
-		switch obj.Type {
-		case "port":
-			collect := new(models.PortCollect)
+		cl, err := collector.GetCollector(obj.Type)
+		errors.Dangerous(err)
 
-			b, err := json.Marshal(obj.Data)
-			if err != nil {
-				bomb("marshal body %s err:%v", obj, err)
-			}
-
-			err = json.Unmarshal(b, collect)
-			if err != nil {
-				bomb("unmarshal body %s err:%v", string(b), err)
-			}
-
-			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
-			errors.Dangerous(err)
-			if !can {
-				bomb("permission deny")
-			}
-
-			collect.Creator = creator
-			collect.LastUpdator = creator
-
-			nid := collect.Nid
-			name := collect.Name
-
-			old, err := models.GetCollectByNameAndNid(obj.Type, name, nid)
-			errors.Dangerous(err)
-			if old != nil {
-				bomb("same stra name %s in node", name)
-			}
-			errors.Dangerous(models.CreateCollect(obj.Type, creator, collect))
-
-		case "proc":
-			collect := new(models.ProcCollect)
-
-			b, err := json.Marshal(obj.Data)
-			if err != nil {
-				bomb("marshal body %s err:%v", obj, err)
-			}
-
-			err = json.Unmarshal(b, collect)
-			if err != nil {
-				bomb("unmarshal body %s err:%v", string(b), err)
-			}
-
-			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
-			errors.Dangerous(err)
-			if !can {
-				bomb("permission deny")
-			}
-
-			collect.Creator = creator
-			collect.LastUpdator = creator
-
-			nid := collect.Nid
-			name := collect.Name
-
-			old, err := models.GetCollectByNameAndNid(obj.Type, name, nid)
-			errors.Dangerous(err)
-			if old != nil {
-				bomb("same stra name %s in node", name)
-			}
-			errors.Dangerous(models.CreateCollect(obj.Type, creator, collect))
-		case "log":
-			collect := new(models.LogCollect)
-
-			b, err := json.Marshal(obj.Data)
-			if err != nil {
-				bomb("marshal body %s err:%v", obj, err)
-			}
-
-			err = json.Unmarshal(b, collect)
-			if err != nil {
-				bomb("unmarshal body %s err:%v", string(b), err)
-			}
-
-			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
-			errors.Dangerous(err)
-			if !can {
-				bomb("permission deny")
-			}
-
-			collect.Encode()
-			collect.Creator = creator
-			collect.LastUpdator = creator
-
-			nid := collect.Nid
-			name := collect.Name
-
-			old, err := models.GetCollectByNameAndNid(obj.Type, name, nid)
-			errors.Dangerous(err)
-			if old != nil {
-				bomb("same stra name %s in node", name)
-			}
-			errors.Dangerous(models.CreateCollect(obj.Type, creator, collect))
-		case "plugin":
-			collect := new(models.PluginCollect)
-
-			b, err := json.Marshal(obj.Data)
-			if err != nil {
-				bomb("marshal body %s err:%v", obj, err)
-			}
-
-			err = json.Unmarshal(b, collect)
-			if err != nil {
-				bomb("unmarshal body %s err:%v", string(b), err)
-			}
-
-			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
-			errors.Dangerous(err)
-			if !can {
-				bomb("permission deny")
-			}
-
-			collect.Creator = creator
-			collect.LastUpdator = creator
-
-			nid := collect.Nid
-			name := collect.Name
-
-			old, err := models.GetCollectByNameAndNid(obj.Type, name, nid)
-			errors.Dangerous(err)
-			if old != nil {
-				bomb("same stra name %s in node", name)
-			}
-			errors.Dangerous(models.CreateCollect(obj.Type, creator, collect))
-
-		case "api":
-			collect := new(models.ApiCollect)
-
-			b, err := json.Marshal(obj.Data)
-			if err != nil {
-				bomb("marshal body %s err:%v", obj, err)
-			}
-
-			err = json.Unmarshal(b, collect)
-			if err != nil {
-				bomb("unmarshal body %s err:%v", string(b), err)
-			}
-
-			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_create", collect.Nid)
-			errors.Dangerous(err)
-			if !can {
-				bomb("permission deny")
-			}
-
-			collect.Encode()
-			collect.Creator = creator
-			collect.LastUpdator = creator
-
-			nid := collect.Nid
-			name := collect.Name
-
-			old, err := models.GetCollectByNameAndNid(obj.Type, name, nid)
-			errors.Dangerous(err)
-			if old != nil {
-				bomb("same stra name %s in node", name)
-			}
-			errors.Dangerous(models.CreateCollect(obj.Type, creator, collect))
-
-		default:
-			bomb("collect type not support")
+		if err := cl.Create([]byte(obj.Data), creator); err != nil {
+			errors.Bomb("%s add rule err %s", obj.Type, err)
 		}
 	}
 
 	renderData(c, "ok", nil)
 }
 
-func collectGetByEndpoint(c *gin.Context) {
+func collectRulesGetByLocalEndpoint(c *gin.Context) {
 	collect := scache.CollectCache.GetBy(urlParamStr(c, "endpoint"))
 	renderData(c, collect, nil)
 }
 
-func collectGet(c *gin.Context) {
+func collectRuleGet(c *gin.Context) {
 	t := mustQueryStr(c, "type")
-	nid := mustQueryInt64(c, "id")
-	collect, err := models.GetCollectById(t, nid)
+	id := mustQueryInt64(c, "id")
+
+	cl, err := collector.GetCollector(t)
 	errors.Dangerous(err)
 
-	renderData(c, collect, nil)
+	ret, err := cl.Get(id)
+	renderData(c, ret, err)
 }
 
-func collectsGet(c *gin.Context) {
+func collectRulesGet(c *gin.Context) {
 	nid := queryInt64(c, "nid", -1)
 	tp := queryStr(c, "type", "")
 	var resp []interface{}
@@ -222,275 +64,36 @@ func collectsGet(c *gin.Context) {
 		types = []string{tp}
 	}
 
-	if nid == -1 && tp != "" { //没有nid参数，tp不为空
-		if tp == "api" {
-			collects, err := models.GetApiCollects()
-			errors.Dangerous(err)
-			for _, c := range collects {
-				c.Decode()
-				resp = append(resp, c)
-			}
+	nids := []int64{nid}
+	for _, t := range types {
+		cl, err := collector.GetCollector(t)
+		if err != nil {
+			logger.Warning(t, err)
+			continue
 		}
-	} else {
-		nids := []int64{nid}
-		for _, t := range types {
-			collects, err := models.GetCollectByNid(t, nids)
-			if err != nil {
-				logger.Warning(t, err)
-				continue
-			}
-			resp = append(resp, collects...)
+
+		ret, err := cl.Gets(nids)
+		if err != nil {
+			logger.Warning(t, err)
+			continue
 		}
+		resp = append(resp, ret...)
 	}
 
 	renderData(c, resp, nil)
 }
 
-func collectPut(c *gin.Context) {
-	creator := loginUsername(c)
-
+func collectRulePut(c *gin.Context) {
 	var recv CollectRecv
 	errors.Dangerous(c.ShouldBind(&recv))
 
-	switch recv.Type {
-	case "port":
-		collect := new(models.PortCollect)
+	cl, err := collector.GetCollector(recv.Type)
+	errors.Dangerous(err)
 
-		b, err := json.Marshal(recv.Data)
-		if err != nil {
-			bomb("marshal body %s err:%v", recv, err)
-		}
-
-		err = json.Unmarshal(b, collect)
-		if err != nil {
-			bomb("unmarshal body %s err:%v", string(b), err)
-		}
-
-		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
-		errors.Dangerous(err)
-		if !can {
-			bomb("permission deny")
-		}
-
-		nid := collect.Nid
-		name := collect.Name
-
-		//校验采集是否存在
-		obj, err := models.GetCollectById(recv.Type, collect.Id) //id找不到的情况
-		if err != nil {
-			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
-		}
-
-		tmpId := obj.(*models.PortCollect).Id
-		if tmpId == 0 {
-			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
-		}
-
-		collect.Creator = creator
-		collect.LastUpdator = creator
-
-		old, err := models.GetCollectByNameAndNid(recv.Type, name, nid)
-		errors.Dangerous(err)
-		if old != nil && tmpId != old.(*models.PortCollect).Id {
-			bomb("same stra name %s in node", name)
-		}
-
-		errors.Dangerous(collect.Update())
-		renderData(c, "ok", nil)
-		return
-	case "proc":
-		collect := new(models.ProcCollect)
-
-		b, err := json.Marshal(recv.Data)
-		if err != nil {
-			bomb("marshal body %s err:%v", recv, err)
-		}
-
-		err = json.Unmarshal(b, collect)
-		if err != nil {
-			bomb("unmarshal body %s err:%v", string(b), err)
-		}
-
-		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
-		errors.Dangerous(err)
-		if !can {
-			bomb("permission deny")
-		}
-
-		nid := collect.Nid
-		name := collect.Name
-
-		//校验采集是否存在
-		obj, err := models.GetCollectById(recv.Type, collect.Id) //id找不到的情况
-		if err != nil {
-			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
-		}
-
-		tmpId := obj.(*models.ProcCollect).Id
-		if tmpId == 0 {
-			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
-		}
-
-		can, err = models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
-		errors.Dangerous(err)
-		if !can {
-			bomb("permission deny")
-		}
-
-		collect.Creator = creator
-		collect.LastUpdator = creator
-
-		old, err := models.GetCollectByNameAndNid(recv.Type, name, nid)
-		errors.Dangerous(err)
-		if old != nil && tmpId != old.(*models.ProcCollect).Id {
-			bomb("same stra name %s in node", name)
-		}
-
-		errors.Dangerous(collect.Update())
-		renderData(c, "ok", nil)
-		return
-	case "log":
-		collect := new(models.LogCollect)
-
-		b, err := json.Marshal(recv.Data)
-		if err != nil {
-			bomb("marshal body %s err:%v", recv, err)
-		}
-
-		err = json.Unmarshal(b, collect)
-		if err != nil {
-			bomb("unmarshal body %s err:%v", string(b), err)
-		}
-
-		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
-		errors.Dangerous(err)
-		if !can {
-			bomb("permission deny")
-		}
-
-		collect.Encode()
-		nid := collect.Nid
-		name := collect.Name
-
-		//校验采集是否存在
-		obj, err := models.GetCollectById(recv.Type, collect.Id) //id找不到的情况
-		if err != nil {
-			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
-		}
-
-		tmpId := obj.(*models.LogCollect).Id
-		if tmpId == 0 {
-			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
-		}
-
-		collect.Creator = creator
-		collect.LastUpdator = creator
-
-		old, err := models.GetCollectByNameAndNid(recv.Type, name, nid)
-		errors.Dangerous(err)
-		if old != nil && tmpId != old.(*models.LogCollect).Id {
-			bomb("same stra name %s in node", name)
-		}
-
-		errors.Dangerous(collect.Update())
-		renderData(c, "ok", nil)
-		return
-	case "plugin":
-		collect := new(models.PluginCollect)
-
-		b, err := json.Marshal(recv.Data)
-		if err != nil {
-			bomb("marshal body %s err:%v", recv, err)
-		}
-
-		err = json.Unmarshal(b, collect)
-		if err != nil {
-			bomb("unmarshal body %s err:%v", string(b), err)
-		}
-
-		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
-		errors.Dangerous(err)
-		if !can {
-			bomb("permission deny")
-		}
-
-		nid := collect.Nid
-		name := collect.Name
-
-		//校验采集是否存在
-		obj, err := models.GetCollectById(recv.Type, collect.Id) //id找不到的情况
-		if err != nil {
-			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
-		}
-
-		tmpId := obj.(*models.PluginCollect).Id
-		if tmpId == 0 {
-			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
-		}
-
-		collect.Creator = creator
-		collect.LastUpdator = creator
-
-		old, err := models.GetCollectByNameAndNid(recv.Type, name, nid)
-		errors.Dangerous(err)
-		if old != nil && tmpId != old.(*models.PluginCollect).Id {
-			bomb("same stra name %s in node", name)
-		}
-
-		errors.Dangerous(collect.Update())
-		renderData(c, "ok", nil)
-		return
-	case "api":
-		collect := new(models.ApiCollect)
-
-		b, err := json.Marshal(recv.Data)
-		if err != nil {
-			bomb("marshal body %s err:%v", recv, err)
-		}
-
-		err = json.Unmarshal(b, collect)
-		if err != nil {
-			bomb("unmarshal body %s err:%v", string(b), err)
-		}
-
-		can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_modify", collect.Nid)
-		errors.Dangerous(err)
-		if !can {
-			bomb("permission deny")
-		}
-
-		collect.Encode()
-		nid := collect.Nid
-		name := collect.Name
-
-		//校验采集是否存在
-		obj, err := models.GetCollectById(recv.Type, collect.Id) //id找不到的情况
-		if err != nil {
-			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
-		}
-
-		tmpId := obj.(*models.ApiCollect).Id
-		if tmpId == 0 {
-			bomb("采集不存在 type:%s id:%d", recv.Type, collect.Id)
-		}
-
-		collect.Creator = creator
-		collect.LastUpdator = creator
-
-		old, err := models.GetCollectByNameAndNid(recv.Type, name, nid)
-		errors.Dangerous(err)
-		if old != nil && tmpId != old.(*models.ApiCollect).Id {
-			bomb("same stra name %s in node", name)
-		}
-
-		errors.Dangerous(collect.Update())
-		renderData(c, "ok", nil)
-		return
-
-	default:
-		bomb("采集类型不合法")
+	creator := loginUsername(c)
+	if err := cl.Update([]byte(recv.Data), creator); err != nil {
+		errors.Bomb("%s update rule err %s", recv.Type, err)
 	}
-
 	renderData(c, "ok", nil)
 }
 
@@ -499,89 +102,44 @@ type CollectsDelRev struct {
 	Ids  []int64 `json:"ids"`
 }
 
-func collectsDel(c *gin.Context) {
-	username := loginUsername(c)
+func collectsRuleDel(c *gin.Context) {
 	var recv []CollectsDelRev
 	errors.Dangerous(c.ShouldBind(&recv))
+
+	username := loginUsername(c)
 	for _, obj := range recv {
-
 		for i := 0; i < len(obj.Ids); i++ {
-			tmp, err := models.GetCollectById(obj.Type, obj.Ids[i]) //id找不到的情况
-			if err != nil {
-				bomb("采集不存在 type:%s id:%d", obj.Type, obj.Ids[i])
-			}
-
-			if tmp == nil {
-				bomb("采集不存在 type:%s id:%d", obj.Type, obj.Ids[i])
-			}
-
-			var nid int64
-			switch obj.Type {
-			case "log":
-				nid = tmp.(*models.LogCollect).Nid
-			case "proc":
-				nid = tmp.(*models.ProcCollect).Nid
-			case "port":
-				nid = tmp.(*models.PortCollect).Nid
-			case "plugin":
-				nid = tmp.(*models.PluginCollect).Nid
-			}
-
-			can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_collect_delete", int64(nid))
+			cl, err := collector.GetCollector(obj.Type)
 			errors.Dangerous(err)
-			if !can {
-				bomb("permission deny")
-			}
-		}
 
-		for i := 0; i < len(obj.Ids); i++ {
-			switch obj.Type {
-			case "api":
-				err := models.DeleteApiCollect(obj.Ids[i])
-				errors.Dangerous(err)
-			default:
-				err := models.DeleteCollectById(obj.Type, username, obj.Ids[i])
+			if err := cl.Delete(obj.Ids[i], username); err != nil {
 				errors.Dangerous(err)
 			}
-
 		}
 	}
 
 	renderData(c, "ok", nil)
 }
 
-type ApiStraRev struct {
-	Sid int64 `json:"sid"`
-	Cid int64 `json:"cid"`
+func collectRuleTypesGet(c *gin.Context) {
+	category := mustQueryStr(c, "category")
+	switch category {
+	case "remote":
+		renderData(c, collector.GetRemoteCollectors(), nil)
+	case "local":
+		renderData(c, collector.GetLocalCollectors(), nil)
+	default:
+		renderData(c, nil, nil)
+	}
 }
 
-type ApiStraRes struct {
-	Has bool  `json:"has"`
-	Sid int64 `json:"sid"`
-}
-
-func ApiStraGet(c *gin.Context) {
-	cid := mustQueryInt64(c, "cid")
-	sid, err := models.GetSidByCid(cid)
-	var res ApiStraRes
+func collectRuleTemplateGet(c *gin.Context) {
+	t := urlParamStr(c, "type")
+	collector, err := collector.GetCollector(t)
 	errors.Dangerous(err)
-	if sid != 0 {
-		res.Has = true
-		res.Sid = sid
-	}
-	renderData(c, res, nil)
-}
 
-func ApiStraPost(c *gin.Context) {
-	recv := new(models.ApiCollectSid)
-	errors.Dangerous(c.ShouldBind(&recv))
-	errors.Dangerous(recv.Add())
-	renderData(c, "ok", nil)
-	return
-}
-
-func ApiRegionGet(c *gin.Context) {
-	renderData(c, config.Get().Region, nil)
+	tpl, err := collector.Template()
+	renderData(c, tpl, err)
 }
 
 type RegExpCheckDto struct {
@@ -787,4 +345,10 @@ func genSubErrMsg(sign string) string {
 // 生成子串匹配错误信息
 func genIllegalCharErrMsg() string {
 	return fmt.Sprintf(`正则匹配成功。但是tag的key或者value包含非法字符:[:,/=\r\n\t], 请重新调整`)
+}
+
+func collectRulesGetByRemoteEndpoint(c *gin.Context) {
+	rules := scache.CollectRuleCache.GetBy(urlParamStr(c, "endpoint"))
+	renderData(c, rules, nil)
+
 }

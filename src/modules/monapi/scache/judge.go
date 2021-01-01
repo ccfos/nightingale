@@ -40,11 +40,11 @@ func CheckJudge() error {
 	}
 
 	rehash := false
-	if ActiveNode.Len() != len(judgeNode) { //scache.ActiveNode中的node数量和新获取的不同，重新rehash
+	if ActiveJudgeNode.Len() != len(judgeNode) { //scache.ActiveJudgeNode中的node数量和新获取的不同，重新rehash
 		rehash = true
 	} else {
 		for node, instance := range judgeNode {
-			v, exists := ActiveNode.GetInstanceBy(node)
+			v, exists := ActiveJudgeNode.GetInstanceBy(node)
 			if !exists || (exists && instance != v) {
 				rehash = true
 				break
@@ -52,12 +52,12 @@ func CheckJudge() error {
 		}
 	}
 	if rehash {
-		ActiveNode.Set(judgeNode)
+		ActiveJudgeNode.Set(judgeNode)
 
 		//重建judge hash环
 		r := consistent.New()
 		r.NumberOfReplicas = config.JudgesReplicas
-		nodes := ActiveNode.GetNodes()
+		nodes := ActiveJudgeNode.GetNodes()
 		for _, node := range nodes {
 			r.Add(node)
 		}

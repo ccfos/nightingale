@@ -30,9 +30,9 @@ type MetricValue struct {
 	Step         int64             `json:"step"`
 	ValueUntyped interface{}       `json:"value"`
 	Value        float64           `json:"-"`
-	CounterType  string            `json:"counterType"`
-	Tags         string            `json:"tags"`
-	TagsMap      map[string]string `json:"tagsMap"` //保留2种格式，方便后端组件使用
+	CounterType  string            `json:"counterType"` // GAUGE | COUNTER | SUBTRACT | DERIVE
+	Tags         string            `json:"tags"`        // a=1,b=2,c=3
+	TagsMap      map[string]string `json:"tagsMap"`     // {"a":1, "b"=2, "c="3} 保留2种格式，方便后端组件使用
 	Extra        string            `json:"extra"`
 }
 
@@ -69,7 +69,7 @@ func (m *MetricValue) CheckValidity(now int64) (err error) {
 	}
 
 	if m.Nid == "" && m.Endpoint == "" {
-		err = fmt.Errorf("nid or endpoint should not be empty")
+		err = fmt.Errorf("nid and endpoint should not be empty")
 		return
 	}
 
@@ -133,7 +133,7 @@ func (m *MetricValue) CheckValidity(now int64) (err error) {
 		k = filterString(k)
 		v = filterString(v)
 		if len(k) == 0 || len(v) == 0 {
-			err = fmt.Errorf("tag key and value should not be empty")
+			err = fmt.Errorf("tag key and value should not be empty key:%s value:%s", k, v)
 			return
 		}
 

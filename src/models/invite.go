@@ -35,3 +35,8 @@ func InviteNew(token, creator string) error {
 	_, err := DB["rdb"].Insert(obj)
 	return err
 }
+
+func (i *Invite) Del() error {
+	_, err := DB["rdb"].Where("token=?", i.Token).Delete(i)
+	return err
+}

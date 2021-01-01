@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/toolkits/pkg/str"
 
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/auth"
 )
 
 // 通讯录，只要登录用户就可以看，超管要修改某个用户的信息，也是调用这个接口获取列表先
@@ -64,21 +66,25 @@ func userAddPost(c *gin.Context) {
 
 	var f userProfileForm
 	bind(c, &f)
-	dangerous(checkPassword(f.Password))
+	dangerous(auth.CheckPassword(f.Password))
 
 	pass, err := models.CryptoPass(f.Password)
 	dangerous(err)
 
+	now := time.Now().Unix()
+	b, _ := json.Marshal([]string{pass})
 	u := models.User{
-		Username: f.Username,
-		Password: pass,
-		Dispname: f.Dispname,
-		Phone:    f.Phone,
-		Email:    f.Email,
-		Im:       f.Im,
-		IsRoot:   f.IsRoot,
-		LeaderId: f.LeaderId,
-		UUID:     models.GenUUIDForUser(f.Username),
+		Username:  f.Username,
+		Password:  pass,
+		Passwords: string(b),
+		Dispname:  f.Dispname,
+		Phone:     f.Phone,
+		Email:     f.Email,
+		Im:        f.Im,
+		IsRoot:    f.IsRoot,
+		LeaderId:  f.LeaderId,
+		UpdatedAt: now,
+		UUID:      models.GenUUIDForUser(f.Username),
 	}
 
 	if f.LeaderId != 0 {
@@ -144,19 +150,17 @@ func userProfilePut(c *gin.Context) {
 		target.IsRoot = f.IsRoot
 	}
 
-	if f.Typ != target.Typ {
-		arr = append(arr, fmt.Sprintf("typ: %d -> %d", target.Typ, f.Typ))
-		target.Typ = f.Typ
+	if f.Typ != target.Type {
+		arr = append(arr, fmt.Sprintf("typ: %d -> %d", target.Type, f.Typ))
+		target.Type = f.Typ
 	}
 
 	if f.Status != target.Status {
 		arr = append(arr, fmt.Sprintf("typ: %d -> %d", target.Status, f.Status))
 		target.Status = f.Status
-	}
-
-	if f.Status != target.Status {
-		arr = append(arr, fmt.Sprintf("typ: %s -> %s", target.Status, f.Status))
-		target.Status = f.Status
+		if target.Status == models.USER_S_ACTIVE {
+			target.LoginErrNum = 0
+		}
 	}
 
 	if f.Organization != target.Organization {
@@ -164,7 +168,9 @@ func userProfilePut(c *gin.Context) {
 		target.Organization = f.Organization
 	}
 
-	err := target.Update("dispname", "phone", "email", "im", "is_root", "leader_id", "leader_name", "typ", "status", "organization")
+	target.UpdatedAt = time.Now().Unix()
+
+	err := target.Update("dispname", "phone", "email", "im", "is_root", "leader_id", "leader_name", "typ", "status", "organization", "login_err_num", "updated_at")
 	if err == nil && len(arr) > 0 {
 		content := strings.Join(arr, "，")
 		go models.OperationLogNew(root.Username, "user", target.Id, fmt.Sprintf("UserModify %s %s", target.Username, content))
@@ -182,17 +188,13 @@ func userPasswordPut(c *gin.Context) {
 
 	var f userPasswordForm
 	bind(c, &f)
-	dangerous(checkPassword(f.Password))
+	dangerous(auth.CheckPassword(f.Password))
 
-	target := User(urlParamInt64(c, "id"))
+	user := User(urlParamInt64(c, "id"))
+	err := auth.ChangePassword(user, f.Password)
 
-	pass, err := models.CryptoPass(f.Password)
-	dangerous(err)
-
-	target.Password = pass
-	err = target.Update("password")
 	if err == nil {
-		go models.OperationLogNew(root.Username, "user", target.Id, fmt.Sprintf("UserChangePassword %s", target.Username))
+		go models.OperationLogNew(root.Username, "user", user.Id, fmt.Sprintf("UserChangePassword %s", user.Username))
 	}
 	renderMessage(c, err)
 }
@@ -219,10 +221,6 @@ func userDel(c *gin.Context) {
 	}
 
 	renderMessage(c, err)
-}
-
-func v1UsernameGetByUUID(c *gin.Context) {
-	renderData(c, models.UsernameByUUID(queryStr(c, "uuid")), nil)
 }
 
 func v1UserGetByUUID(c *gin.Context) {
@@ -302,26 +300,40 @@ type userInviteForm struct {
 func userInvitePost(c *gin.Context) {
 	var f userInviteForm
 	bind(c, &f)
-	dangerous(checkPassword(f.Password))
 
-	inv, err := models.InviteGet("token=?", f.Token)
-	dangerous(err)
+	err := func() error {
+		if err := auth.CheckPassword(f.Password); err != nil {
+			return err
+		}
 
-	if inv.Expire < time.Now().Unix() {
-		dangerous("invite url already expired")
-	}
+		inv, err := models.InviteGet("token=?", f.Token)
+		if err != nil {
+			return err
+		}
 
-	u := models.User{
-		Username: f.Username,
-		Dispname: f.Dispname,
-		Phone:    f.Phone,
-		Email:    f.Email,
-		Im:       f.Im,
-		UUID:     models.GenUUIDForUser(f.Username),
-	}
+		if inv.Expire < time.Now().Unix() {
+			return _e("invite url already expired")
+		}
 
-	u.Password, err = models.CryptoPass(f.Password)
-	dangerous(err)
+		u := models.User{
+			Username: f.Username,
+			Dispname: f.Dispname,
+			Phone:    f.Phone,
+			Email:    f.Email,
+			Im:       f.Im,
+			UUID:     models.GenUUIDForUser(f.Username),
+		}
 
-	renderMessage(c, u.Save())
+		u.Password, err = models.CryptoPass(f.Password)
+		if err != nil {
+			return err
+		}
+		if err = u.Save(); err != nil {
+			return err
+		}
+
+		return inv.Del()
+	}()
+
+	renderMessage(c, err)
 }

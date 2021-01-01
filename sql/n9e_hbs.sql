@@ -10,7 +10,8 @@ create table `instance` (
   `identity`  varchar(255) not null,
   `rpc_port`  varchar(16) not null,
   `http_port` varchar(16) not null,
-  `remark` 	  text,
+  `region`    varchar(32) not null,
+  `remark`    text,
   `ts`        int unsigned not null,
   primary key (`id`),
   key(`module`,`identity`,`rpc_port`,`http_port`)

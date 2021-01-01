@@ -5,7 +5,6 @@ import (
 
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/monapi/config"
-	"github.com/didi/nightingale/src/modules/monapi/tools"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errors"
@@ -15,7 +14,7 @@ import (
 // GetCookieUser 从cookie中获取username
 func GetCookieUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		username := cookieUser(c)
+		username := sessionUsername(c)
 		if username == "" {
 			username = headerUser(c)
 		}
@@ -27,15 +26,6 @@ func GetCookieUser() gin.HandlerFunc {
 		c.Set("username", username)
 		c.Next()
 	}
-}
-
-func cookieUser(c *gin.Context) string {
-	uuid, err := c.Cookie("ecmc-user")
-	if err != nil {
-		return ""
-	}
-
-	return tools.UsernameByUUID(uuid)
 }
 
 func headerUser(c *gin.Context) string {
@@ -87,4 +77,20 @@ func getUserByToken(token string) (user *models.User, err error) {
 	}
 
 	return
+}
+
+func sessionUsername(c *gin.Context) string {
+	sess, err := models.SessionGetWithCache(readSessionId(c))
+	if err != nil {
+		return ""
+	}
+	return sess.Username
+}
+
+func readSessionId(c *gin.Context) string {
+	sid, err := c.Cookie(config.Get().HTTP.CookieName)
+	if err != nil {
+		return ""
+	}
+	return sid
 }
