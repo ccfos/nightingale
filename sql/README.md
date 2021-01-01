@@ -10,7 +10,7 @@
 module=rdb
 version=v3.3.3
 cat n9e_${module}-patch.sql > upgrade/n9e_${module}-${version}.sql
-echo > n9e_{module}-patch.sql
+echo > n9e_${module}-patch.sql
 
 # 然后提交更改后，再打上版本的tag
 git add .
