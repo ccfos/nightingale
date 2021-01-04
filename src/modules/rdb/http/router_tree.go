@@ -81,16 +81,15 @@ func treeUntilLeafGets(c *gin.Context) {
 					pathSet[ret[i].Path] = struct{}{}
 				}
 			}
-			// 租户名搜索
+			// 节点名搜索
 			allNodes, err := models.NodeGets("", nil)
 			dangerous(err)
 			for i := 0; i < cnt; i++ {
-				if ret[i].Cate == "tenant" {
-					if strings.Contains(ret[i].Name, arr[0]) {
-						for _, n := range allNodes {
-							if strings.HasPrefix(n.Path, ret[i].Ident) {
-								pathSet[n.Path] = struct{}{}
-							}
+				if strings.HasPrefix(ret[i].Name, arr[0]) {
+					pathSet[ret[i].Path] = struct{}{}
+					for _, n := range allNodes {
+						if strings.HasPrefix(n.Path, ret[i].Path) {
+							pathSet[n.Path] = struct{}{}
 						}
 					}
 				}
@@ -113,13 +112,12 @@ func treeUntilLeafGets(c *gin.Context) {
 				pathSet[ret[i].Path] = struct{}{}
 			}
 
-			if ret[i].Cate == "tenant" {
-				for j := 0; j < qsz; j++ {
-					if strings.Contains(ret[i].Name, arr[j]) {
-						for _, n := range allNodes {
-							if strings.HasPrefix(n.Path, ret[i].Ident) {
-								pathSet[n.Path] = struct{}{}
-							}
+			for j := 0; j < qsz; j++ {
+				if strings.HasPrefix(ret[i].Name, arr[j]) {
+					pathSet[ret[i].Path] = struct{}{}
+					for _, n := range allNodes {
+						if strings.HasPrefix(n.Path, ret[i].Path) {
+							pathSet[n.Path] = struct{}{}
 						}
 					}
 				}
