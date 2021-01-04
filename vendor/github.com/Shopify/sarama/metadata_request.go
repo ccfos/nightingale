@@ -37,15 +37,8 @@ func (r *MetadataRequest) decode(pd packetDecoder, version int16) error {
 	if err != nil {
 		return err
 	}
-	if size < 0 {
-		return nil
-	} else {
-		topicCount := size
-		if topicCount == 0 {
-			return nil
-		}
-
-		r.Topics = make([]string, topicCount)
+	if size > 0 {
+		r.Topics = make([]string, size)
 		for i := range r.Topics {
 			topic, err := pd.getString()
 			if err != nil {
@@ -70,6 +63,10 @@ func (r *MetadataRequest) key() int16 {
 
 func (r *MetadataRequest) version() int16 {
 	return r.Version
+}
+
+func (r *MetadataRequest) headerVersion() int16 {
+	return 1
 }
 
 func (r *MetadataRequest) requiredVersion() KafkaVersion {

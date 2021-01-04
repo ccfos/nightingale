@@ -255,6 +255,10 @@ func (r *MetadataResponse) version() int16 {
 	return r.Version
 }
 
+func (r *MetadataResponse) headerVersion() int16 {
+	return 0
+}
+
 func (r *MetadataResponse) requiredVersion() KafkaVersion {
 	switch r.Version {
 	case 1:
@@ -296,7 +300,7 @@ foundTopic:
 	return tmatch
 }
 
-func (r *MetadataResponse) AddTopicPartition(topic string, partition, brokerID int32, replicas, isr []int32, err KError) {
+func (r *MetadataResponse) AddTopicPartition(topic string, partition, brokerID int32, replicas, isr []int32, offline []int32, err KError) {
 	tmatch := r.AddTopic(topic, ErrNoError)
 	var pmatch *PartitionMetadata
 
@@ -316,6 +320,6 @@ foundPartition:
 	pmatch.Leader = brokerID
 	pmatch.Replicas = replicas
 	pmatch.Isr = isr
+	pmatch.OfflineReplicas = offline
 	pmatch.Err = err
-
 }

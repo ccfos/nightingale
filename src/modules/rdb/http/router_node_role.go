@@ -22,8 +22,24 @@ func rolesUnderNodeGets(c *gin.Context) {
 	dangerous(err)
 
 	size := len(list)
+	var usernames []string
+	for i := 0; i < size; i++ {
+		usernames = append(usernames, list[i].Username)
+	}
+
+	users, err := models.UserGetByNames(usernames)
+	dangerous(err)
+
+	usersMap := make(map[string]models.User)
+	for i := 0; i < len(users); i++ {
+		usersMap[users[i].Username] = users[i]
+	}
+
 	for i := 0; i < size; i++ {
 		list[i].RoleTxt = m[list[i].RoleId]
+		if user, exists := usersMap[list[i].Username]; exists {
+			list[i].Dispname = user.Dispname
+		}
 	}
 
 	renderData(c, gin.H{

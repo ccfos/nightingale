@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/auth"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/gin-gonic/gin"
 )
@@ -35,28 +36,32 @@ func selfProfilePut(c *gin.Context) {
 }
 
 type selfPasswordForm struct {
-	OldPass string `json:"oldpass" binding:"required"`
-	NewPass string `json:"newpass" binding:"required"`
+	Username string `json:"username" binding:"required"`
+	OldPass  string `json:"oldpass" binding:"required"`
+	NewPass  string `json:"newpass" binding:"required"`
 }
 
 func selfPasswordPut(c *gin.Context) {
 	var f selfPasswordForm
 	bind(c, &f)
-	dangerous(checkPassword(f.NewPass))
 
-	oldpass, err := models.CryptoPass(f.OldPass)
-	dangerous(err)
+	err := func() error {
+		user, err := models.UserMustGet("username=?", f.Username)
+		if err != nil {
+			return err
+		}
+		oldpass, err := models.CryptoPass(f.OldPass)
+		if err != nil {
+			return err
+		}
+		if user.Password != oldpass {
+			return _e("Incorrect old password")
+		}
 
-	newpass, err := models.CryptoPass(f.NewPass)
-	dangerous(err)
+		return auth.ChangePassword(user, f.NewPass)
+	}()
 
-	user := loginUser(c)
-	if user.Password != oldpass {
-		bomb("old password error")
-	}
-
-	user.Password = newpass
-	renderMessage(c, user.Update("password"))
+	renderMessage(c, err)
 }
 
 func selfTokenGets(c *gin.Context) {

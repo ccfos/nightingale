@@ -16,14 +16,20 @@ type Result struct {
 type dingReqData struct {
 	Msgtype string       `json:"msgtype"`
 	Text    *textContent `json:"text"`
+	At		*atContent `json:"at"`
 }
 
 type textContent struct {
 	Content string `json:"content"`
 }
 
+type atContent struct {
+	AtMobiles []string	`json:"atMobiles"`
+	IsAtAll   bool		`json:"isAtAll"`
+}
+
 // RobotSend robot发送信息
-func RobotSend(tokenUser, sendContent string) error {
+func RobotSend(tokenUser, sendContent string, atUser []string) error {
 	url := "https://oapi.dingtalk.com/robot/send?access_token=" + tokenUser
 
 	dingReqData := new(dingReqData)
@@ -31,6 +37,10 @@ func RobotSend(tokenUser, sendContent string) error {
 	reqContent := new(textContent)
 	reqContent.Content = sendContent
 	dingReqData.Text = reqContent
+	reqAtContent := new(atContent)
+	reqAtContent.IsAtAll = false
+	reqAtContent.AtMobiles = atUser
+	dingReqData.At = reqAtContent
 
 	content, err := json.Marshal(dingReqData)
 	if err != nil {

@@ -113,11 +113,7 @@ type hostTenantForm struct {
 	Tenant string  `json:"tenant"`
 }
 
-// 管理员修改主机设备的租户，相当于分配设备
-func hostTenantPut(c *gin.Context) {
-	var f hostTenantForm
-	bind(c, &f)
-
+func (f *hostTenantForm) Validate() {
 	if len(f.Ids) == 0 {
 		bomb("ids is empty")
 	}
@@ -125,6 +121,13 @@ func hostTenantPut(c *gin.Context) {
 	if f.Tenant == "" {
 		bomb("tenant is blank")
 	}
+}
+
+// 管理员修改主机设备的租户，相当于分配设备
+func hostTenantPut(c *gin.Context) {
+	var f hostTenantForm
+	bind(c, &f)
+	f.Validate()
 
 	hosts, err := models.HostByIds(f.Ids)
 	dangerous(err)

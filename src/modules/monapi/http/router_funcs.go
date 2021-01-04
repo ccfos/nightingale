@@ -142,22 +142,13 @@ func renderData(c *gin.Context, data interface{}, err error) {
 	renderMessage(c, err.Error())
 }
 
-func cookieUsername(c *gin.Context) string {
-	uuid, err := c.Cookie("ecmc-user")
-	if err != nil {
-		return ""
-	}
-
-	return models.UsernameByUUID(uuid)
-}
-
 func loginUsername(c *gin.Context) string {
 	username1, has := c.Get("username")
 	if has {
 		return username1.(string)
 	}
 
-	username2 := cookieUsername(c)
+	username2 := sessionUsername(c)
 	if username2 == "" {
 		bomb("unauthorized")
 	}

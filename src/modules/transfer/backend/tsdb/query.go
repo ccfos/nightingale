@@ -443,21 +443,22 @@ type IndexByFullTagsResp struct {
 	Err  string                        `json:"err"`
 }
 
-func (tsdb *TsdbDataSource) QueryIndexByFullTags(recv []dataobj.IndexByFullTagsRecv) []dataobj.IndexByFullTagsResp {
+// deprecated
+func (tsdb *TsdbDataSource) QueryIndexByFullTags(recv []dataobj.IndexByFullTagsRecv) ([]dataobj.IndexByFullTagsResp, int) {
 	var result IndexByFullTagsResp
 	err := PostIndex("/api/index/counter/fullmatch", int64(tsdb.Section.CallTimeout),
 		recv, &result)
 	if err != nil {
 		logger.Errorf("post index failed, %+v", err)
-		return nil
+		return nil, 0
 	}
 
 	if result.Err != "" || len(result.Data) == 0 {
 		logger.Errorf("index fullTags failed, %+v", result.Err)
-		return nil
+		return nil, 0
 	}
 
-	return result.Data
+	return result.Data, len(result.Data)
 }
 
 func PostIndex(url string, calltimeout int64, recv interface{}, resp interface{}) error {

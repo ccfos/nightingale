@@ -1,0 +1,8 @@
+region: default 
+workerProcesses: 5
+logger:
+  dir: logs/prober
+  level: DEBUG
+  keepHours: 24
+pluginsConfig: etc/plugins
+ignoreConfig: false

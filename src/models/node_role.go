@@ -7,6 +7,7 @@ type NodeRole struct {
 	RoleId   int64  `json:"role_id"`
 	NodePath string `xorm:"<- 'node_path'" json:"node_path"`
 	RoleTxt  string `xorm:"-" json:"role_txt"`
+	Dispname string `xorm:"-" json:"dispname"`
 }
 
 func (nr *NodeRole) Save() error {

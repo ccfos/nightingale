@@ -46,7 +46,7 @@ func (s *StraCacheMap) GetAll() []*models.Stra {
 
 	data := []*models.Stra{}
 	for node, stras := range s.Data {
-		instance, exists := ActiveNode.GetInstanceBy(node)
+		instance, exists := ActiveJudgeNode.GetInstanceBy(node)
 		if !exists {
 			continue
 		}
