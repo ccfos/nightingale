@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 type WhiteList struct {
@@ -25,8 +27,9 @@ func WhiteListAccess(addr string) error {
 	if ip == 0 {
 		return fmt.Errorf("invalid remote address %s", addr)
 	}
+	logger.Debugf("WhiteListAccess htol(%s) %d", addr, ip)
 	now := time.Now().Unix()
-	count, _ := DB["rdb"].Where("start_ip_int<? and end_ip_int>? and start_time>? and end_time<?", ip, ip, now, now).Count(new(WhiteList))
+	count, _ := DB["rdb"].Where("start_ip_int<=? and end_ip_int>=? and start_time>=? and end_time=<?", ip, ip, now, now).Count(new(WhiteList))
 	if count == 0 {
 		return fmt.Errorf("access deny from %s", addr)
 	}

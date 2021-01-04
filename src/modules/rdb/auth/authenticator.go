@@ -20,6 +20,7 @@ const (
 type Authenticator struct {
 	extraMode     bool
 	whiteList     bool
+	debug         bool
 	frozenTime    int64
 	writenOffTime int64
 	userExpire    bool
@@ -34,6 +35,7 @@ func New(cf config.AuthExtraSection) *Authenticator {
 	return &Authenticator{
 		extraMode:     true,
 		whiteList:     cf.WhiteList,
+		debug:         cf.Debug,
 		frozenTime:    86400 * int64(cf.FrozenDays),
 		writenOffTime: 86400 * int64(cf.WritenOffDays),
 	}
@@ -43,7 +45,15 @@ func (p *Authenticator) WhiteListAccess(remoteAddr string) error {
 	if !p.whiteList {
 		return nil
 	}
-	return models.WhiteListAccess(remoteAddr)
+	if err := models.WhiteListAccess(remoteAddr); err != nil {
+		if p.debug {
+			logger.Debugf("WhiteListAccess err %s", err)
+			return nil
+		}
+
+		return err
+	}
+	return nil
 }
 
 // ChangePasswordRedirect check user should change password before login
