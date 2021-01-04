@@ -317,61 +317,6 @@ func renderResourcesUnderLeafIds(c *gin.Context, lids []int64) {
 	}, nil)
 }
 
-type nodeResourcesCountResp struct {
-	Name  string `json:"name"`
-	Count int    `json:"count"`
-}
-
-func renderNodeResourcesCountByCate(c *gin.Context) {
-	needSourceList := []string{"physical", "virtual", "redis", "mongo", "mysql"}
-
-	nodeId := urlParamInt64(c, "id")
-	node := Node(nodeId)
-	leadIds, err := node.LeafIds()
-	dangerous(err)
-
-	if len(leadIds) <= 0 {
-		dangerous(fmt.Errorf("leaf ids is nil"))
-	}
-
-	limit := 10000
-	query := ""
-	batch := ""
-	field := "ident"
-
-	ress, err := models.ResourceUnderNodeGets(leadIds, query, batch, field, limit, 0)
-	dangerous(err)
-
-	aggDat := make(map[string]int, len(ress))
-	for _, res := range ress {
-		cate := res.Cate
-		if cate != "" {
-			if _, ok := aggDat[cate]; !ok {
-				aggDat[cate] = 0
-			}
-
-			aggDat[cate]++
-		}
-	}
-
-	for _, need := range needSourceList {
-		if _, ok := aggDat[need]; !ok {
-			aggDat[need] = 0
-		}
-	}
-
-	var list []*nodeResourcesCountResp
-	for n, c := range aggDat {
-		ns := new(nodeResourcesCountResp)
-		ns.Name = n
-		ns.Count = c
-
-		list = append(list, ns)
-	}
-
-	renderData(c, list, nil)
-}
-
 type resourceBindForm struct {
 	Field string   `json:"field"`
 	Items []string `json:"items"`

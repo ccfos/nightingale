@@ -81,6 +81,20 @@ func treeUntilLeafGets(c *gin.Context) {
 					pathSet[ret[i].Path] = struct{}{}
 				}
 			}
+			// 租户名搜索
+			allNodes, err := models.NodeGets("", nil)
+			dangerous(err)
+			for i := 0; i < cnt; i++ {
+				if ret[i].Cate == "tenant" {
+					if strings.Contains(ret[i].Name, arr[0]) {
+						for _, n := range allNodes {
+							if strings.HasPrefix(n.Path, ret[i].Ident) {
+								pathSet[n.Path] = struct{}{}
+							}
+						}
+					}
+				}
+			}
 		}
 	} else {
 		// 按照空格切分，发现有多个搜索字符串，那必然是在搜索节点
