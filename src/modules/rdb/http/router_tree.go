@@ -114,7 +114,6 @@ func treeUntilLeafGets(c *gin.Context) {
 
 			for j := 0; j < qsz; j++ {
 				if strings.HasPrefix(ret[i].Name, arr[j]) {
-					pathSet[ret[i].Path] = struct{}{}
 					for _, n := range allNodes {
 						if strings.HasPrefix(n.Path, ret[i].Path) {
 							pathSet[n.Path] = struct{}{}
