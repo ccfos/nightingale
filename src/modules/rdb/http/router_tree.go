@@ -80,9 +80,8 @@ func treeUntilLeafGets(c *gin.Context) {
 				if strings.Contains(ret[i].Path, arr[0]) {
 					pathSet[ret[i].Path] = struct{}{}
 				}
-			}
-			// 根据节点名搜索
-			for i := 0; i < cnt; i++ {
+
+				// 根据节点名搜索
 				if strings.Contains(ret[i].Name, arr[0]) {
 					for j := 0; j < cnt; j++ {
 						if strings.HasPrefix(ret[j].Path, ret[i].Path) {
