@@ -67,8 +67,7 @@ func (p *ruleEntity) calc() error {
 		vars[v.Metric] = v.Value
 	}
 
-	// TODO: add some variable from system or rule
-	for _, config := range configs {
+	for _, config := range configs.Metrics {
 		f, err := config.Calc(vars)
 		if err != nil {
 			logger.Debugf("calc err %s", err)
@@ -84,6 +83,24 @@ func (p *ruleEntity) calc() error {
 			Value:        f,
 			ValueUntyped: f,
 		})
+	}
+
+	if configs.Mode == cache.PluginModeOverlay {
+		for k, v := range vars {
+			if _, ok := configs.Metrics[k]; ok {
+				continue
+			}
+			p.metrics = append(p.metrics, &dataobj.MetricValue{
+				Nid:          sample.Nid,
+				Metric:       k,
+				Timestamp:    sample.Timestamp,
+				Step:         sample.Step,
+				CounterType:  "GAUGE",
+				TagsMap:      sample.TagsMap,
+				Value:        v,
+				ValueUntyped: v,
+			})
+		}
 	}
 	return nil
 }
