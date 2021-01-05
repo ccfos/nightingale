@@ -81,6 +81,17 @@ func treeUntilLeafGets(c *gin.Context) {
 					pathSet[ret[i].Path] = struct{}{}
 				}
 			}
+			// 根据节点名搜索
+			for i := 0; i < cnt; i++ {
+				if strings.Contains(ret[i].Name, arr[0]) {
+					pathSet[ret[i].Path] = struct{}{}
+					for j := 0; j < cnt; j++ {
+						if strings.HasPrefix(ret[j].Path, ret[i].Path) {
+							pathSet[ret[j].Path] = struct{}{}
+						}
+					}
+				}
+			}
 		}
 	} else {
 		// 按照空格切分，发现有多个搜索字符串，那必然是在搜索节点
@@ -95,6 +106,18 @@ func treeUntilLeafGets(c *gin.Context) {
 			if match {
 				pathSet[ret[i].Path] = struct{}{}
 			}
+
+			// 根据节点名搜索
+			for j := 0; j < qsz; j++ {
+				if strings.Contains(ret[i].Name, arr[j]) {
+					for k := 0; k < cnt; k++ {
+						if strings.HasPrefix(ret[k].Path, ret[i].Path) {
+							pathSet[ret[k].Path] = struct{}{}
+						}
+					}
+				}
+			}
+
 		}
 	}
 
