@@ -230,6 +230,31 @@ func (p *Authenticator) changePasswordRedirect(in *ssoc.CallbackOutput, cf *mode
 	return
 }
 
+func (p *Authenticator) DeleteSession(sid string) error {
+	s, err := models.SessionGet(sid)
+	if err != nil {
+		return err
+	}
+
+	if !p.extraMode {
+		pkgcache.Delete("sid." + s.Sid)
+		models.SessionDelete(s.Sid)
+		return nil
+	}
+	return deleteSession(s)
+}
+
+func (p *Authenticator) DeleteToken(accessToken string) error {
+	if !p.extraMode {
+		return nil
+	}
+	token, err := models.TokenGet(accessToken)
+	if err != nil {
+		return err
+	}
+	return deleteSessionByToken(token)
+}
+
 func (p *Authenticator) Stop() error {
 	p.cancel()
 	return nil
@@ -469,20 +494,23 @@ func checkPassword(cf *models.AuthConfig, passwd string) error {
 	return nil
 }
 
-func deleteSession(s *models.Session) {
+func deleteSession(s *models.Session) error {
 	pkgcache.Delete("sid." + s.Sid)
-	pkgcache.Delete("access-token." + s.AccessToken)
 	models.SessionDelete(s.Sid)
+	pkgcache.Delete("access-token." + s.AccessToken)
 	models.TokenDelete(s.AccessToken)
+	return nil
 }
 
-func deleteSessionByToken(t *models.Token) {
+func deleteSessionByToken(t *models.Token) error {
 	if s, _ := models.SessionGetByToken(t.AccessToken); s != nil {
 		deleteSession(s)
 	} else {
 		pkgcache.Delete("access-token." + t.AccessToken)
 		models.TokenDelete(t.AccessToken)
 	}
+
+	return nil
 }
 
 func _e(format string, a ...interface{}) error {

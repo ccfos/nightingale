@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/toolkits/pkg/cache"
 )
 
@@ -40,6 +41,18 @@ func TokenGet(token string) (*Token, error) {
 	return &obj, nil
 }
 
+func (p *Token) Session() *Session {
+	now := time.Now().Unix()
+	return &Session{
+		Sid:         uuid.New().String(),
+		AccessToken: p.AccessToken,
+		Username:    p.UserName,
+		RemoteAddr:  "",
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+}
+
 func (p *Token) Update(cols ...string) error {
 	_, err := DB["sso"].Where("access_token=?", p.AccessToken).Cols(cols...).Update(p)
 	return err
@@ -72,24 +85,20 @@ func TokenGetWithCache(accessToken string) (*Session, error) {
 
 	var err error
 	if sess, err = SessionGetByToken(accessToken); err != nil {
-		return nil, fmt.Errorf("token not found")
+		// try to get token from sso
+		if t, err := TokenGet(accessToken); err != nil {
+			return nil, fmt.Errorf("token not found")
+		} else {
+			sess = t.Session()
+			sess.Save()
+		}
 	}
 
 	// update session
 	sess.UpdatedAt = time.Now().Unix()
 	sess.Update("updated_at")
 
-	if sess.Username != "" {
-		cache.Set("access-token."+accessToken, sess, time.Second*10)
-	}
+	cache.Set("access-token."+accessToken, sess, time.Second*10)
 
 	return sess, nil
-}
-
-func TokenDeleteWithCache(token string) error {
-	cache.Delete("access-token." + token)
-	if sess, _ := SessionGetByToken(token); sess != nil {
-		return SessionDelete(sess.Sid)
-	}
-	return nil
 }

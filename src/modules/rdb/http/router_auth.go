@@ -23,6 +23,7 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/cache"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
+	"github.com/didi/nightingale/src/modules/rdb/session"
 	"github.com/didi/nightingale/src/modules/rdb/ssoc"
 )
 
@@ -704,7 +705,7 @@ func v1SessionGetUser(c *gin.Context) {
 func v1SessionDelete(c *gin.Context) {
 	sid := urlParamStr(c, "sid")
 	logger.Debugf("session del sid %s", sid)
-	renderMessage(c, models.SessionDeleteWithCache(sid))
+	renderMessage(c, auth.DeleteSession(sid))
 }
 
 func v1TokenGet(c *gin.Context) {
@@ -730,14 +731,24 @@ func v1TokenGetUser(c *gin.Context) {
 	renderData(c, user, err)
 }
 
+// just for auth.extraMode
 func v1TokenDelete(c *gin.Context) {
 	token := urlParamStr(c, "token")
 	logger.Debugf("del token %s", token)
-	renderMessage(c, models.TokenDeleteWithCache(token))
+
+	renderMessage(c, auth.DeleteToken(token))
 }
 
 // pwdRulesGet return pwd rules
 func pwdRulesGet(c *gin.Context) {
 	cf := cache.AuthConfig()
 	renderData(c, cf.PwdRules(), nil)
+}
+
+func sessionDestory(c *gin.Context) (sid string, err error) {
+	if sid, err = session.Destroy(c.Writer, c.Request); sid != "" {
+		auth.DeleteSession(sid)
+	}
+
+	return
 }

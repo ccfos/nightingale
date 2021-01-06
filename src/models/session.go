@@ -10,7 +10,7 @@ import (
 
 type Session struct {
 	Sid         string `json:"sid"`
-	AccessToken string `json:"access_token"`
+	AccessToken string `json:"-"`
 	Username    string `json:"username"`
 	RemoteAddr  string `json:"remote_addr"`
 	CreatedAt   int64  `json:"created_at"`
@@ -38,8 +38,8 @@ func SessionGet(sid string) (*Session, error) {
 	return &obj, nil
 }
 
-func SessionInsert(in *Session) error {
-	_, err := DB["rdb"].Insert(in)
+func (s *Session) Save() error {
+	_, err := DB["rdb"].Insert(s)
 	return err
 }
 
@@ -101,9 +101,4 @@ func SessionGetWithCache(sid string) (*Session, error) {
 	}
 
 	return sess, nil
-}
-
-func SessionDeleteWithCache(sid string) error {
-	cache.Delete("sid." + sid)
-	return SessionDelete(sid)
 }

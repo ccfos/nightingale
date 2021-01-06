@@ -52,7 +52,7 @@ func (p *dbStorage) get(sid string) (*models.Session, error) {
 }
 
 func (p *dbStorage) insert(s *models.Session) error {
-	return models.SessionInsert(s)
+	return s.Save()
 
 }
 
