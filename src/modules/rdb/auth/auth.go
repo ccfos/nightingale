@@ -12,8 +12,8 @@ func Init(cf config.AuthExtraSection) {
 	defaultAuth = *New(cf)
 }
 
-func WhiteListAccess(remoteAddr string) error {
-	return defaultAuth.WhiteListAccess(remoteAddr)
+func WhiteListAccess(user *models.User, remoteAddr string) error {
+	return defaultAuth.WhiteListAccess(user, remoteAddr)
 }
 
 // PostLogin check user status after login

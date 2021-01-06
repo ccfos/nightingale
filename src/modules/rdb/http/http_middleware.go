@@ -27,7 +27,6 @@ func shouldBeLogin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sessionStart(c)
 		username := mustUsername(c)
-		logger.Debugf("set username %s", username)
 		c.Set("username", username)
 		c.Next()
 		sessionUpdate(c)

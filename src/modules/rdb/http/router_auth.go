@@ -32,9 +32,6 @@ var (
 	loginCodeEmailTpl   *template.Template
 	errUnsupportCaptcha = errors.New("unsupported captcha")
 
-	// TODO: set false
-	debug = true
-
 	// https://captcha.mojotv.cn
 	captchaDirver = base64Captcha.DriverString{
 		Height:          30,
@@ -279,10 +276,6 @@ func authLogin(in *v1LoginInput) (user *models.User, err error) {
 	if err = in.Validate(); err != nil {
 		return
 	}
-
-	if err := auth.WhiteListAccess(in.RemoteAddr); err != nil {
-		return nil, _e("Deny Access from %s with whitelist control", in.RemoteAddr)
-	}
 	defer func() {
 		models.LoginLogNew(in.Args[0], in.RemoteAddr, "in", err)
 	}()
@@ -298,6 +291,12 @@ func authLogin(in *v1LoginInput) (user *models.User, err error) {
 		user, err = models.EmailCodeLogin(in.Args[0], in.Args[1])
 	default:
 		err = _e("Invalid login type %s", in.Type)
+	}
+
+	if user != nil {
+		if err := auth.WhiteListAccess(user, in.RemoteAddr); err != nil {
+			return nil, _e("Deny Access from %s with whitelist control", in.RemoteAddr)
+		}
 	}
 
 	if err = auth.PostLogin(user, err); err != nil {
@@ -383,7 +382,7 @@ func sendLoginCode(c *gin.Context) {
 			return "", err
 		}
 
-		if debug {
+		if config.Config.Auth.ExtraMode.Debug {
 			return fmt.Sprintf("[debug]: %s", buf.String()), nil
 		}
 
@@ -455,7 +454,7 @@ func sendRstCode(c *gin.Context) {
 			return "", err
 		}
 
-		if debug {
+		if config.Config.Auth.ExtraMode.Debug {
 			return fmt.Sprintf("[debug] msg: %s", buf.String()), nil
 		}
 

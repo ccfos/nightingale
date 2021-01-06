@@ -21,6 +21,10 @@ func (p *configCache) AuthConfig() *models.AuthConfig {
 }
 
 func (p *configCache) loop(ctx context.Context, interval int) {
+	if err := p.update(); err != nil {
+		logger.Errorf("configCache update err %s", err)
+	}
+
 	go func() {
 		t := time.NewTicker(time.Duration(interval) * time.Second)
 		defer t.Stop()

@@ -29,11 +29,12 @@ type authSection struct {
 }
 
 type AuthExtraSection struct {
-	Enable        bool `yaml:"enable"`
-	Debug         bool `yaml:"debug" description:"whiteList debug"`
-	WhiteList     bool `yaml:"whiteList"`
-	FrozenDays    int  `yaml:"frozenDays"`
-	WritenOffDays int  `yaml:"writenOffDays"`
+	Enable        bool   `yaml:"enable"`
+	Debug         bool   `yaml:"debug" description:"debug"`
+	DebugUser     string `yaml:"debugUser" description:"debug username"`
+	WhiteList     bool   `yaml:"whiteList"`
+	FrozenDays    int    `yaml:"frozenDays"`
+	WritenOffDays int    `yaml:"writenOffDays"`
 }
 
 type wechatSection struct {
