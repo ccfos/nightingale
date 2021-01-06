@@ -42,6 +42,7 @@ func TreeUntilProjectsGetByNid(nid int64) ([]Node, error) {
 	return oks, err
 }
 
+// 暂时保留，不知道外部其他组件是否有调用
 func TreeUntilProjectsGetByUser(user *User) ([]Node, error) {
 	ret, err := UserPermNodes(user)
 	if err != nil {
@@ -104,4 +105,37 @@ func UserPermNodes(me *User) ([]Node, error) {
 
 	ret, err = PermNodes(nodes)
 	return ret, err
+}
+
+func TreeUntilTypGetByUser(user *User, typ string) ([]Node, error) {
+	ret, err := UserPermNodes(user)
+	if err != nil {
+		return ret, err
+	}
+
+	cnt := len(ret)
+	all := make(map[string]Node, cnt)
+	for i := 0; i < cnt; i++ {
+		all[ret[i].Path] = ret[i]
+	}
+
+	// 只取typ（含）以上的部分
+	var oks []Node
+
+	set := make(map[string]struct{})
+	for i := 0; i < cnt; i++ {
+		if ret[i].Cate == typ {
+			paths := Paths(ret[i].Path)
+			for _, path := range paths {
+				if _, has := set[path]; has {
+					continue
+				}
+
+				set[path] = struct{}{}
+				oks = append(oks, all[path])
+			}
+		}
+	}
+
+	return oks, err
 }
