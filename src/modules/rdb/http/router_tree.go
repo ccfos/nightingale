@@ -144,7 +144,7 @@ func v1treeUntilProjectGetsByNid(c *gin.Context) {
 // 这个方法，展示的树只到project，节点搜索功能放到前台去
 func treeUntilProjectGets(c *gin.Context) {
 	me := loginUser(c)
-	oks, err := models.TreeUntilProjectsGetByUser(me)
+	oks, err := models.TreeUntilTypGetByUser(me, "project")
 
 	renderData(c, oks, err)
 }
@@ -155,7 +155,15 @@ func v1TreeUntilProjectGets(c *gin.Context) {
 	user, err := models.UserGet("username=?", username)
 	dangerous(err)
 
-	oks, err := models.TreeUntilProjectsGetByUser(user)
+	oks, err := models.TreeUntilTypGetByUser(user, "project")
+
+	renderData(c, oks, err)
+}
+
+// 这个方法，展示的树只到organization
+func treeUntilOrganizationGets(c *gin.Context) {
+	me := loginUser(c)
+	oks, err := models.TreeUntilTypGetByUser(me, "organization")
 
 	renderData(c, oks, err)
 }
