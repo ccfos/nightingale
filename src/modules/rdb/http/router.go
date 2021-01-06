@@ -137,6 +137,7 @@ func Config(r *gin.Engine) {
 
 		userLogin.GET("/tree", treeUntilLeafGets)
 		userLogin.GET("/tree/projs", treeUntilProjectGets)
+		userLogin.GET("/tree/orgs", treeUntilOrganizationGets)
 
 		userLogin.GET("/resources/search", resourceSearchGet)
 		userLogin.PUT("/resources/note", resourceNotePut)
