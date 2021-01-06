@@ -3,6 +3,7 @@ package auth
 import (
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/rdb/config"
+	"github.com/didi/nightingale/src/modules/rdb/ssoc"
 )
 
 var defaultAuth Authenticator
@@ -28,10 +29,8 @@ func CheckPassword(password string) error {
 	return defaultAuth.CheckPassword(password)
 }
 
-// ChangePasswordRedirect check user should change password before login
-// return change password redirect url
-func ChangePasswordRedirect(user *models.User, redirect string) string {
-	return defaultAuth.ChangePasswordRedirect(user, redirect)
+func PostCallback(in *ssoc.CallbackOutput) error {
+	return defaultAuth.PostCallback(in)
 }
 
 func Start() error {

@@ -61,7 +61,7 @@ func main() {
 	loggeri.Init(config.Config.Logger)
 
 	// 初始化数据库和相关数据
-	models.InitMySQL("rdb", "hbs")
+	models.InitMySQL("rdb", "hbs", "sso")
 	models.InitSalt()
 	models.InitRooter()
 

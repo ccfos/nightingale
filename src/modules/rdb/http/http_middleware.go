@@ -139,7 +139,7 @@ func sessionUpdate(c *gin.Context) {
 
 func sessionDestory(c *gin.Context) (sid string, err error) {
 	if sid, err = session.Destroy(c.Writer, c.Request); sid != "" {
-		models.SessionCacheDelete(sid)
+		models.SessionDeleteWithCache(sid)
 	}
 
 	return
@@ -153,7 +153,7 @@ func sessionUsername(c *gin.Context) string {
 	return s.Get("username")
 }
 
-func sessionLogin(c *gin.Context, username, remoteAddr string) {
+func sessionLogin(c *gin.Context, username, remoteAddr, accessToken string) {
 	s, ok := session.FromContext(c.Request.Context())
 	if !ok {
 		logger.Warningf("session.Start() err not found sessionStore")
@@ -164,6 +164,10 @@ func sessionLogin(c *gin.Context, username, remoteAddr string) {
 		return
 	}
 	if err := s.Set("remoteAddr", remoteAddr); err != nil {
+		logger.Warningf("session.Set() err %s", err)
+		return
+	}
+	if err := s.Set("accessToken", accessToken); err != nil {
 		logger.Warningf("session.Set() err %s", err)
 		return
 	}

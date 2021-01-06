@@ -105,7 +105,7 @@ func login(c *gin.Context) {
 			return err
 		}
 
-		sessionLogin(c, user.Username, in.RemoteAddr)
+		sessionLogin(c, user.Username, in.RemoteAddr, "")
 		return nil
 	}()
 	renderMessage(c, err)
@@ -162,30 +162,25 @@ func authCallbackV2(c *gin.Context) {
 	state := queryStr(c, "state", "")
 	redirect := queryStr(c, "redirect", "")
 
-	ret := &authRedirect{Redirect: redirect}
 	if code == "" && redirect != "" {
 		logger.Debugf("sso.callback()  can't get code and redirect is not set")
-		renderData(c, ret, nil)
+		renderData(c, &ssoc.CallbackOutput{Redirect: redirect}, nil)
 		return
 	}
 
-	var err error
-	ret.Redirect, ret.User, err = ssoc.Callback(code, state)
+	ret, err := ssoc.Callback(code, state)
 	if err != nil {
 		logger.Debugf("sso.callback() error %s", err)
-		renderData(c, ret, err)
+		renderData(c, nil, err)
 		return
 	}
 
-	if redirect := auth.ChangePasswordRedirect(ret.User, ret.Redirect); redirect != "" {
-		logger.Debugf("sso.callback() redirect to changePassword  %s", redirect)
-		ret.Redirect = redirect
-		renderData(c, ret, nil)
-		return
+	if err = auth.PostCallback(ret); err == nil {
+		logger.Debugf("sso.callback() successfully, set username %s", ret.User.Username)
+		sessionLogin(c, ret.User.Username, c.ClientIP(), ret.AccessToken)
+	} else {
+		logger.Debugf("sso.callback() redirect to changePassword  %s", ret.Redirect)
 	}
-
-	logger.Debugf("sso.callback() successfully, set username %s", ret.User.Username)
-	sessionLogin(c, ret.User.Username, c.ClientIP())
 	renderData(c, ret, nil)
 }
 
@@ -684,19 +679,61 @@ func whiteListDel(c *gin.Context) {
 }
 
 func v1SessionGet(c *gin.Context) {
-	sess, err := models.SessionGetWithCache(urlParamStr(c, "sid"))
-	renderData(c, sess, err)
+	s, err := models.SessionGetWithCache(urlParamStr(c, "sid"))
+	renderData(c, s, err)
 }
 
 func v1SessionGetUser(c *gin.Context) {
-	user, err := models.SessionGetUserWithCache(urlParamStr(c, "sid"))
+	sid := urlParamStr(c, "sid")
+
+	user, err := func() (*models.User, error) {
+		s, err := models.SessionGetWithCache(sid)
+		if err != nil {
+			return nil, err
+		}
+
+		if s.Username == "" {
+			return nil, fmt.Errorf("user not found")
+		}
+		return models.UserMustGet("username=?", s.Username)
+	}()
+
 	renderData(c, user, err)
 }
 
 func v1SessionDelete(c *gin.Context) {
 	sid := urlParamStr(c, "sid")
 	logger.Debugf("session del sid %s", sid)
-	renderMessage(c, models.SessionDel(sid))
+	renderMessage(c, models.SessionDeleteWithCache(sid))
+}
+
+func v1TokenGet(c *gin.Context) {
+	t, err := models.TokenGetWithCache(urlParamStr(c, "token"))
+	renderData(c, t, err)
+}
+
+func v1TokenGetUser(c *gin.Context) {
+	token := urlParamStr(c, "token")
+
+	user, err := func() (*models.User, error) {
+		t, err := models.TokenGetWithCache(token)
+		if err != nil {
+			return nil, err
+		}
+
+		if t.Username == "" {
+			return nil, fmt.Errorf("user not found")
+		}
+		return models.UserMustGet("username=?", t.Username)
+	}()
+
+	renderData(c, user, err)
+}
+
+func v1TokenDelete(c *gin.Context) {
+	token := urlParamStr(c, "token")
+	logger.Debugf("del token %s", token)
+	renderMessage(c, models.TokenDeleteWithCache(token))
 }
 
 // pwdRulesGet return pwd rules
