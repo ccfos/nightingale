@@ -3,6 +3,7 @@ package ssoc
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -112,6 +113,11 @@ type CallbackOutput struct {
 	AccessToken string       `json:"accessToken"`
 	User        *models.User `json:"user"`
 	Msg         string       `json:"msg"`
+}
+
+func (p CallbackOutput) String() string {
+	b, _ := json.Marshal(p)
+	return string(b)
 }
 
 // Callback 用 code 兑换 accessToken 以及 用户信息,

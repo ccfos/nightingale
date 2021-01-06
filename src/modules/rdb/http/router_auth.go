@@ -167,8 +167,8 @@ func authCallbackV2(c *gin.Context) {
 	}
 
 	ret, err := ssoc.Callback(code, state)
+	logger.Debugf("sso.callback() ret %s error %v", ret, err)
 	if err != nil {
-		logger.Debugf("sso.callback() error %s", err)
 		renderData(c, nil, err)
 		return
 	}
