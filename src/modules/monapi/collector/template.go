@@ -137,7 +137,7 @@ func getTagOpt(sf reflect.StructField) (opt Field) {
 
 	opt.Name = name
 	opt.Label = _s(sf.Tag.Get("label"))
-	opt.Default = _s(sf.Tag.Get("default"))
+	opt.Default = sf.Tag.Get("default")
 	opt.Example = sf.Tag.Get("example")
 	opt.Description = _s(sf.Tag.Get("description"))
 
