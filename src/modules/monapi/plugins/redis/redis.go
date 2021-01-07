@@ -2,12 +2,14 @@ package redis
 
 import (
 	"github.com/didi/nightingale/src/modules/monapi/collector"
+	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs/redis"
 )
 
 func init() {
 	collector.CollectorRegister(NewRedisCollector()) // for monapi
+	i18n.DictRegister(langDict)
 }
 
 type RedisCollector struct {
@@ -22,6 +24,20 @@ func NewRedisCollector() *RedisCollector {
 	)}
 }
 
+var (
+	langDict = map[string]map[string]string{
+		"zh": map[string]string{
+			"Field":           "名称",
+			"Type":            "类型",
+			"Servers":         "服务",
+			"specify servers": "指定服务器地址",
+			"Optional. Specify redis commands to retrieve values": "设置服务器命令,采集数据名称",
+			"Password":                "密码",
+			"specify server password": "服务密码",
+		},
+	}
+)
+
 type RedisCommand struct {
 	Command []string `label:"Command" json:"command,required" description:"" `
 	Field   string   `label:"Field" json:"field,required" description:"metric name"`
@@ -29,7 +45,7 @@ type RedisCommand struct {
 }
 
 type RedisRule struct {
-	Servers  []string        `label:"Servers" json:"servers,required" description:"If no servers are specified, then localhost is used as the host." example:"tcp://localhost:6379"`
+	Servers  []string        `label:"Servers" json:"servers,required" description:"specify servers" example:"tcp://localhost:6379"`
 	Commands []*RedisCommand `label:"Commands" json:"commands" description:"Optional. Specify redis commands to retrieve values"`
 	Password string          `label:"Password" json:"password" description:"specify server password"`
 }
