@@ -1,6 +1,8 @@
 package redis
 
 import (
+	"fmt"
+
 	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/influxdata/telegraf"
@@ -41,7 +43,7 @@ var (
 type RedisCommand struct {
 	Command []string `label:"Command" json:"command,required" description:"" `
 	Field   string   `label:"Field" json:"field,required" description:"metric name"`
-	Type    string   `label:"Type" json:"type" description:"integer|string|float"`
+	Type    string   `label:"Type" json:"type" description:"integer|string|float(default)"`
 }
 
 type RedisRule struct {
@@ -51,6 +53,20 @@ type RedisRule struct {
 }
 
 func (p *RedisRule) Validate() error {
+	if len(p.Servers) == 0 || p.Servers[0] == "" {
+		return fmt.Errorf("redis.rule.servers must be set")
+	}
+	for i, cmd := range p.Commands {
+		if len(cmd.Command) == 0 {
+			return fmt.Errorf("redis.rule.commands[%d].command must be set", i)
+		}
+		if cmd.Field == "" {
+			return fmt.Errorf("redis.rule.commands[%d].field must be set", i)
+		}
+		if cmd.Type == "" {
+			cmd.Type = "float"
+		}
+	}
 	return nil
 }
 
