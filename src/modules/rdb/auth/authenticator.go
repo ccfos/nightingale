@@ -301,11 +301,11 @@ func (p *Authenticator) cleanupSession() {
 	cf := cache.AuthConfig()
 
 	// idle session cleanup
-	if cf.MaxConnIdelTime > 0 {
-		expiresAt := now - cf.MaxConnIdelTime*60
+	if cf.MaxConnIdleTime > 0 {
+		expiresAt := now - cf.MaxConnIdleTime*60
 		sessions := []models.Session{}
 		if err := models.DB["rdb"].SQL("select * from session where updated_at < ? and username <> '' ", expiresAt).Find(&sessions); err != nil {
-			logger.Errorf("token idel time cleanup err %s", err)
+			logger.Errorf("token idle time cleanup err %s", err)
 		}
 
 		logger.Debugf("find %d idle sessions that should be clean up", len(sessions))
@@ -327,7 +327,7 @@ func (p *Authenticator) cleanupSession() {
 		cnt := 0
 
 		if err := models.DB["sso"].SQL("select * from token order by user_name, id desc").Find(&tokens); err != nil {
-			logger.Errorf("token idel time cleanup err %s", err)
+			logger.Errorf("token idle time cleanup err %s", err)
 		}
 
 		for _, token := range tokens {

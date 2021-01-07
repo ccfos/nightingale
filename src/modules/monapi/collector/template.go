@@ -17,6 +17,7 @@ type Field struct {
 
 	Name        string             `json:"name,omitempty"`
 	Label       string             `json:"label,omitempty"`
+	Default     string             `json:"default,omitempty"`
 	Example     string             `json:"example,omitempty"`
 	Description string             `json:"description,omitempty"`
 	Required    bool               `json:"required,omitempty"`
@@ -136,6 +137,7 @@ func getTagOpt(sf reflect.StructField) (opt Field) {
 
 	opt.Name = name
 	opt.Label = _s(sf.Tag.Get("label"))
+	opt.Default = sf.Tag.Get("default")
 	opt.Example = sf.Tag.Get("example")
 	opt.Description = _s(sf.Tag.Get("description"))
 

@@ -92,7 +92,7 @@ func (p *WhiteList) Validate() error {
 func WhiteListTotal(query string) (int64, error) {
 	if query != "" {
 		q := "%" + query + "%"
-		return DB["rdb"].Where("start_ip like ? or end_ip like ?", q, q).Count(new(NodeTrash))
+		return DB["rdb"].Where("start_ip like ? or end_ip like ?", q, q).Count(new(WhiteList))
 	}
 
 	return DB["rdb"].Count(new(WhiteList))

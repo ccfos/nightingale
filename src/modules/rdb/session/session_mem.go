@@ -85,7 +85,12 @@ func (p *mStorage) gc() {
 	p.Lock()
 	defer p.Unlock()
 
-	expiresAt := time.Now().Unix() - cache.AuthConfig().MaxConnIdelTime*60
+	idleTime := cache.AuthConfig().MaxConnIdleTime * 60
+	if idleTime == 0 {
+		return
+	}
+
+	expiresAt := time.Now().Unix() - idleTime
 	keys := []string{}
 	for k, v := range p.data {
 		if v.UpdatedAt < expiresAt {

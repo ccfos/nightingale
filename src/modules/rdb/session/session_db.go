@@ -11,6 +11,16 @@ import (
 func newDbStorage(cf *config.SessionSection, opts *options) (storage, error) {
 	st := &dbStorage{config: cf}
 
+	lifeTime := config.Config.HTTP.Session.CookieLifetime
+	if lifeTime == 0 {
+		if config.Config.Auth.ExtraMode.Enable {
+			// cleanup by idle time worker
+			lifeTime = 86400 * 10
+		} else {
+			lifeTime = 86400
+		}
+	}
+
 	go func() {
 		t := time.NewTicker(time.Second * time.Duration(cf.GcInterval))
 		defer t.Stop()
@@ -19,11 +29,7 @@ func newDbStorage(cf *config.SessionSection, opts *options) (storage, error) {
 			case <-opts.ctx.Done():
 				return
 			case <-t.C:
-				ct := config.Config.HTTP.Session.CookieLifetime
-				if ct == 0 {
-					ct = 86400
-				}
-				err := models.SessionCleanupByCreatedAt(time.Now().Unix() - ct)
+				err := models.SessionCleanupByCreatedAt(time.Now().Unix() - lifeTime)
 				if err != nil {
 					logger.Errorf("session gc err %s", err)
 				}
