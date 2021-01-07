@@ -3,6 +3,7 @@ package ssoc
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -107,40 +108,58 @@ func LogoutLocation(redirect string) string {
 		url.QueryEscape(redirect))
 }
 
-// Callback 用 code 兑换 accessToken 以及 用户信息,
-func Callback(code, state string) (string, *models.User, error) {
-	s, err := models.AuthStateGet("state=?", state)
-	if err != nil {
-		return "", nil, errState
-	}
-
-	s.Del()
-
-	u, err := exchangeUser(code)
-	if err != nil {
-		return "", nil, errUser
-	}
-
-	user, err := models.UserGet("username=?", u.Username)
-	if err != nil {
-		return "", nil, errUser
-	}
-
-	if user == nil {
-		user = u
-		err = user.Save()
-	} else if cli.coverAttributes {
-		user.Email = u.Email
-		user.Dispname = u.Dispname
-		user.Phone = u.Phone
-		user.Im = u.Im
-		err = user.Update("email", "dispname", "phone", "im")
-	}
-
-	return s.Redirect, user, err
+type CallbackOutput struct {
+	Redirect    string       `json:"redirect"`
+	AccessToken string       `json:"accessToken"`
+	User        *models.User `json:"user"`
+	Msg         string       `json:"msg"`
 }
 
-func exchangeUser(code string) (*models.User, error) {
+func (p CallbackOutput) String() string {
+	b, _ := json.Marshal(p)
+	return string(b)
+}
+
+// Callback 用 code 兑换 accessToken 以及 用户信息,
+func Callback(code, state string) (*CallbackOutput, error) {
+	s, err := models.AuthStateGet("state=?", state)
+	if err != nil {
+		return nil, errState
+	}
+	s.Del()
+
+	ret, err := exchangeUser(code)
+	if err != nil {
+		return nil, errUser
+	}
+	ret.Redirect = s.Redirect
+
+	user, err := models.UserGet("username=?", ret.User.Username)
+	if err != nil {
+		return nil, errUser
+	}
+
+	if user != nil {
+		// user exists
+		if cli.coverAttributes {
+			user.Email = ret.User.Email
+			user.Dispname = ret.User.Dispname
+			user.Phone = ret.User.Phone
+			user.Im = ret.User.Im
+			user.Update("email", "dispname", "phone", "im")
+		}
+		ret.User = user
+	} else {
+		// create user from sso
+		if err := ret.User.Save(); err != nil {
+			return nil, err
+		}
+	}
+
+	return ret, nil
+}
+
+func exchangeUser(code string) (*CallbackOutput, error) {
 	ctx := context.Background()
 	oauth2Token, err := cli.config.Exchange(ctx, code)
 	if err != nil {
@@ -169,13 +188,15 @@ func exchangeUser(code string) (*models.User, error) {
 		}
 	}
 
-	return &models.User{
-		Username: v(cli.attributes.username),
-		Dispname: v(cli.attributes.dispname),
-		Phone:    v(cli.attributes.phone),
-		Email:    v(cli.attributes.email),
-		Im:       v(cli.attributes.im),
-	}, nil
+	return &CallbackOutput{
+		AccessToken: oauth2Token.AccessToken,
+		User: &models.User{
+			Username: v(cli.attributes.username),
+			Dispname: v(cli.attributes.dispname),
+			Phone:    v(cli.attributes.phone),
+			Email:    v(cli.attributes.email),
+			Im:       v(cli.attributes.im),
+		}}, nil
 }
 
 func CreateClient(w http.ResponseWriter, body io.ReadCloser) error {

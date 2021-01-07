@@ -9,11 +9,12 @@ import (
 )
 
 type Session struct {
-	Sid        string `json:"sid"`
-	Username   string `json:"username"`
-	RemoteAddr string `json:"remote_addr"`
-	CreatedAt  int64  `json:"created_at"`
-	UpdatedAt  int64  `json:"updated_at"`
+	Sid         string `json:"sid"`
+	AccessToken string `json:"-"`
+	Username    string `json:"username"`
+	RemoteAddr  string `json:"remote_addr"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
 }
 
 func SessionAll() (int64, error) {
@@ -37,12 +38,12 @@ func SessionGet(sid string) (*Session, error) {
 	return &obj, nil
 }
 
-func SessionInsert(in *Session) error {
-	_, err := DB["rdb"].Insert(in)
+func (s *Session) Save() error {
+	_, err := DB["rdb"].Insert(s)
 	return err
 }
 
-func SessionDel(sid string) error {
+func SessionDelete(sid string) error {
 	_, err := DB["rdb"].Where("sid=?", sid).Delete(new(Session))
 	return err
 }
@@ -52,11 +53,6 @@ func SessionUpdate(in *Session) error {
 	return err
 }
 
-func SessionCleanup(ts int64) error {
-	n, err := DB["rdb"].Where("updated_at<?", ts).Delete(new(Session))
-	logger.Debugf("delete before updated_at %d session %d", ts, n)
-	return err
-}
 func SessionCleanupByCreatedAt(ts int64) error {
 	n, err := DB["rdb"].Where("created_at<?", ts).Delete(new(Session))
 	logger.Debugf("delete before created_at %d session %d", ts, n)
@@ -67,7 +63,20 @@ func (s *Session) Update(cols ...string) error {
 	return err
 }
 
-// SessionGetWithCache will update session.UpdatedAt
+func SessionGetByToken(token string) (*Session, error) {
+	var obj Session
+	has, err := DB["rdb"].Where("access_token=?", token).Get(&obj)
+	if err != nil {
+		return nil, fmt.Errorf("get session err %s", err)
+	}
+	if !has {
+		return nil, fmt.Errorf("not found")
+	}
+
+	return &obj, nil
+}
+
+// SessionGetWithCache will update session.UpdatedAt && token.LastAt
 func SessionGetWithCache(sid string) (*Session, error) {
 	if sid == "" {
 		return nil, fmt.Errorf("unable to get sid")
@@ -88,25 +97,8 @@ func SessionGetWithCache(sid string) (*Session, error) {
 	sess.Update("updated_at")
 
 	if sess.Username != "" {
-		cache.Set("sid."+sid, sess, time.Second*30)
+		cache.Set("sid."+sid, sess, time.Second*10)
 	}
 
 	return sess, nil
-}
-
-func SessionGetUserWithCache(sid string) (*User, error) {
-	s, err := SessionGetWithCache(sid)
-	if err != nil {
-		return nil, err
-	}
-
-	if s.Username == "" {
-		return nil, fmt.Errorf("user not found")
-	}
-
-	return UserMustGet("username=?", s.Username)
-}
-
-func SessionCacheDelete(sid string) {
-	cache.Delete("sid." + sid)
 }

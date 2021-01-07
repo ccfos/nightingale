@@ -203,6 +203,11 @@ func Config(r *gin.Engine) {
 		v1.GET("/sessions/:sid/user", v1SessionGetUser)
 		v1.DELETE("/sessions/:sid", v1SessionDelete)
 
+		// token
+		v1.GET("/tokens/:token", v1TokenGet)
+		v1.GET("/tokens/:token/user", v1TokenGetUser)
+		v1.DELETE("/tokens/:token", v1TokenDelete)
+
 		// 第三方系统同步权限表的数据
 		v1.GET("/table/sync/role-operation", v1RoleOperationGets)
 		v1.GET("/table/sync/role-global-user", v1RoleGlobalUserGets)

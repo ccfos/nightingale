@@ -217,6 +217,8 @@ func (p *SessionStore) Set(k, v string) error {
 		p.session.Username = v
 	case "remoteAddr":
 		p.session.RemoteAddr = v
+	case "accessToken":
+		p.session.AccessToken = v
 	default:
 		fmt.Errorf("unsupported session field %s", k)
 	}

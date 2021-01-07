@@ -19,10 +19,10 @@ const (
 )
 
 type TokenNotation struct {
-	tokenType tokenType
-	o         token.Token // operator
-	v         string      // variable
-	c         float64     // const
+	tokenType     tokenType
+	tokenOperator token.Token
+	tokenVariable string
+	tokenConst    float64
 }
 
 type Notations []*TokenNotation
@@ -38,11 +38,11 @@ func (s Notations) String() string {
 		tn := s[i]
 		switch tn.tokenType {
 		case tokenOperator:
-			out.WriteString(tn.o.String() + " ")
+			out.WriteString(tn.tokenOperator.String() + " ")
 		case tokenVar:
-			out.WriteString(tn.v + " ")
+			out.WriteString(tn.tokenVariable + " ")
 		case tokenConst:
-			out.WriteString(fmt.Sprintf("%.0f ", tn.c))
+			out.WriteString(fmt.Sprintf("%.0f ", tn.tokenConst))
 		}
 	}
 	return out.String()
@@ -67,18 +67,18 @@ func (rpn Notations) Calc(vars map[string]float64) (float64, error) {
 		tn := rpn[i]
 		switch tn.tokenType {
 		case tokenVar:
-			if v, ok := vars[tn.v]; !ok {
-				return 0, fmt.Errorf("variable %s is not set", tn.v)
+			if v, ok := vars[tn.tokenVariable]; !ok {
+				return 0, fmt.Errorf("variable %s is not set", tn.tokenVariable)
 			} else {
-				logger.Debugf("get %s %f", tn.v, v)
+				logger.Debugf("get %s %f", tn.tokenVariable, v)
 				s.Push(v)
 			}
 		case tokenConst:
-			s.Push(tn.c)
+			s.Push(tn.tokenConst)
 		case tokenOperator:
 			op2 := s.Pop()
 			op1 := s.Pop()
-			switch tn.o {
+			switch tn.tokenOperator {
 			case token.ADD:
 				s.Push(op1 + op2)
 			case token.SUB:
@@ -123,9 +123,9 @@ func NewNotations(src []byte) (output Notations, err error) {
 				return nil, fmt.Errorf("parseFloat error %s\t%s\t%q",
 					fset.Position(pos), tok, lit)
 			}
-			output.Push(&TokenNotation{tokenType: tokenConst, c: c})
+			output.Push(&TokenNotation{tokenType: tokenConst, tokenConst: c})
 		case token.IDENT:
-			output.Push(&TokenNotation{tokenType: tokenVar, v: lit})
+			output.Push(&TokenNotation{tokenType: tokenVar, tokenVariable: lit})
 		case token.LPAREN: // (
 			s.Push(tok)
 		case token.ADD, token.SUB, token.MUL, token.QUO: // + - * /
@@ -135,7 +135,7 @@ func NewNotations(src []byte) (output Notations, err error) {
 			} else if op := s.Top(); op == token.LPAREN || priority(tok) > priority(op) {
 				s.Push(tok)
 			} else {
-				output.Push(&TokenNotation{tokenType: tokenOperator, o: s.Pop()})
+				output.Push(&TokenNotation{tokenType: tokenOperator, tokenOperator: s.Pop()})
 				goto opRetry
 			}
 		case token.RPAREN: // )
@@ -143,7 +143,7 @@ func NewNotations(src []byte) (output Notations, err error) {
 				if op := s.Pop(); op == token.LPAREN {
 					break
 				} else {
-					output.Push(&TokenNotation{tokenType: tokenOperator, o: op})
+					output.Push(&TokenNotation{tokenType: tokenOperator, tokenOperator: op})
 				}
 			}
 		default:
@@ -153,7 +153,7 @@ func NewNotations(src []byte) (output Notations, err error) {
 
 out:
 	for i, l := 0, s.Len(); i < l; i++ {
-		output.Push(&TokenNotation{tokenType: tokenOperator, o: s.Pop()})
+		output.Push(&TokenNotation{tokenType: tokenOperator, tokenOperator: s.Pop()})
 	}
 	return
 }

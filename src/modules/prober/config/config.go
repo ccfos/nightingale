@@ -21,7 +21,6 @@ type ConfYaml struct {
 	Report          report.ReportSection `yaml:"report"`
 	WorkerProcesses int                  `yaml:"workerProcesses"`
 	PluginsConfig   string               `yaml:"pluginsConfig"`
-	IgnoreConfig    bool                 `yaml:"ignoreConfig"`
 	HTTP            HTTPSection          `yaml:"http"`
 }
 

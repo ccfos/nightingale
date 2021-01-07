@@ -21,7 +21,7 @@ type Field struct {
 	Description string             `json:"description,omitempty"`
 	Required    bool               `json:"required,omitempty"`
 	Items       *Field             `json:"items,omitempty" description:"arrays's items"`
-	Type        string             `json:"type,omitempty" description:"struct,boolean,integer,folat,string,array"`
+	Type        string             `json:"type,omitempty" description:"boolean,integer,folat,string,array"`
 	Ref         string             `json:"$ref,omitempty" description:"name of the struct ref"`
 	Fields      []Field            `json:"fields,omitempty" description:"fields of struct type"`
 	Definitions map[string][]Field `json:"definitions,omitempty"`

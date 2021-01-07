@@ -62,6 +62,10 @@ func main() {
 
 	// 初始化数据库和相关数据
 	models.InitMySQL("rdb", "hbs")
+
+	if config.Config.SSO.Enable && config.Config.Auth.ExtraMode.Enable {
+		models.InitMySQL("sso")
+	}
 	models.InitSalt()
 	models.InitRooter()
 

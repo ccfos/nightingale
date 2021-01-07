@@ -23,6 +23,7 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/cache"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
+	"github.com/didi/nightingale/src/modules/rdb/session"
 	"github.com/didi/nightingale/src/modules/rdb/ssoc"
 )
 
@@ -30,9 +31,6 @@ var (
 	loginCodeSmsTpl     *template.Template
 	loginCodeEmailTpl   *template.Template
 	errUnsupportCaptcha = errors.New("unsupported captcha")
-
-	// TODO: set false
-	debug = true
 
 	// https://captcha.mojotv.cn
 	captchaDirver = base64Captcha.DriverString{
@@ -105,7 +103,7 @@ func login(c *gin.Context) {
 			return err
 		}
 
-		sessionLogin(c, user.Username, in.RemoteAddr)
+		sessionLogin(c, user.Username, in.RemoteAddr, "")
 		return nil
 	}()
 	renderMessage(c, err)
@@ -162,30 +160,25 @@ func authCallbackV2(c *gin.Context) {
 	state := queryStr(c, "state", "")
 	redirect := queryStr(c, "redirect", "")
 
-	ret := &authRedirect{Redirect: redirect}
 	if code == "" && redirect != "" {
 		logger.Debugf("sso.callback()  can't get code and redirect is not set")
-		renderData(c, ret, nil)
+		renderData(c, &ssoc.CallbackOutput{Redirect: redirect}, nil)
 		return
 	}
 
-	var err error
-	ret.Redirect, ret.User, err = ssoc.Callback(code, state)
+	ret, err := ssoc.Callback(code, state)
+	logger.Debugf("sso.callback() ret %s error %v", ret, err)
 	if err != nil {
-		logger.Debugf("sso.callback() error %s", err)
-		renderData(c, ret, err)
+		renderData(c, nil, err)
 		return
 	}
 
-	if redirect := auth.ChangePasswordRedirect(ret.User, ret.Redirect); redirect != "" {
-		logger.Debugf("sso.callback() redirect to changePassword  %s", redirect)
-		ret.Redirect = redirect
-		renderData(c, ret, nil)
-		return
+	if err = auth.PostCallback(ret); err == nil {
+		logger.Debugf("sso.callback() successfully, set username %s", ret.User.Username)
+		sessionLogin(c, ret.User.Username, c.ClientIP(), ret.AccessToken)
+	} else {
+		logger.Debugf("sso.callback() redirect to changePassword  %s", ret.Redirect)
 	}
-
-	logger.Debugf("sso.callback() successfully, set username %s", ret.User.Username)
-	sessionLogin(c, ret.User.Username, c.ClientIP())
 	renderData(c, ret, nil)
 }
 
@@ -283,10 +276,6 @@ func authLogin(in *v1LoginInput) (user *models.User, err error) {
 	if err = in.Validate(); err != nil {
 		return
 	}
-
-	if err := auth.WhiteListAccess(in.RemoteAddr); err != nil {
-		return nil, _e("Deny Access from %s with whitelist control", in.RemoteAddr)
-	}
 	defer func() {
 		models.LoginLogNew(in.Args[0], in.RemoteAddr, "in", err)
 	}()
@@ -302,6 +291,12 @@ func authLogin(in *v1LoginInput) (user *models.User, err error) {
 		user, err = models.EmailCodeLogin(in.Args[0], in.Args[1])
 	default:
 		err = _e("Invalid login type %s", in.Type)
+	}
+
+	if user != nil {
+		if err := auth.WhiteListAccess(user, in.RemoteAddr); err != nil {
+			return nil, _e("Deny Access from %s with whitelist control", in.RemoteAddr)
+		}
 	}
 
 	if err = auth.PostLogin(user, err); err != nil {
@@ -387,7 +382,7 @@ func sendLoginCode(c *gin.Context) {
 			return "", err
 		}
 
-		if debug {
+		if config.Config.Auth.ExtraMode.Debug {
 			return fmt.Sprintf("[debug]: %s", buf.String()), nil
 		}
 
@@ -459,7 +454,7 @@ func sendRstCode(c *gin.Context) {
 			return "", err
 		}
 
-		if debug {
+		if config.Config.Auth.ExtraMode.Debug {
 			return fmt.Sprintf("[debug] msg: %s", buf.String()), nil
 		}
 
@@ -684,23 +679,75 @@ func whiteListDel(c *gin.Context) {
 }
 
 func v1SessionGet(c *gin.Context) {
-	sess, err := models.SessionGetWithCache(urlParamStr(c, "sid"))
-	renderData(c, sess, err)
+	s, err := models.SessionGetWithCache(urlParamStr(c, "sid"))
+	renderData(c, s, err)
 }
 
 func v1SessionGetUser(c *gin.Context) {
-	user, err := models.SessionGetUserWithCache(urlParamStr(c, "sid"))
+	sid := urlParamStr(c, "sid")
+
+	user, err := func() (*models.User, error) {
+		s, err := models.SessionGetWithCache(sid)
+		if err != nil {
+			return nil, err
+		}
+
+		if s.Username == "" {
+			return nil, fmt.Errorf("user not found")
+		}
+		return models.UserMustGet("username=?", s.Username)
+	}()
+
 	renderData(c, user, err)
 }
 
 func v1SessionDelete(c *gin.Context) {
 	sid := urlParamStr(c, "sid")
 	logger.Debugf("session del sid %s", sid)
-	renderMessage(c, models.SessionDel(sid))
+	renderMessage(c, auth.DeleteSession(sid))
+}
+
+func v1TokenGet(c *gin.Context) {
+	t, err := models.TokenGetWithCache(urlParamStr(c, "token"))
+	renderData(c, t, err)
+}
+
+func v1TokenGetUser(c *gin.Context) {
+	token := urlParamStr(c, "token")
+
+	user, err := func() (*models.User, error) {
+		t, err := models.TokenGetWithCache(token)
+		if err != nil {
+			return nil, err
+		}
+
+		if t.Username == "" {
+			return nil, fmt.Errorf("user not found")
+		}
+		return models.UserMustGet("username=?", t.Username)
+	}()
+
+	renderData(c, user, err)
+}
+
+// just for auth.extraMode
+func v1TokenDelete(c *gin.Context) {
+	token := urlParamStr(c, "token")
+	logger.Debugf("del token %s", token)
+
+	renderMessage(c, auth.DeleteToken(token))
 }
 
 // pwdRulesGet return pwd rules
 func pwdRulesGet(c *gin.Context) {
 	cf := cache.AuthConfig()
 	renderData(c, cf.PwdRules(), nil)
+}
+
+func sessionDestory(c *gin.Context) (sid string, err error) {
+	if sid, err = session.Destroy(c.Writer, c.Request); sid != "" {
+		auth.DeleteSession(sid)
+	}
+
+	return
 }

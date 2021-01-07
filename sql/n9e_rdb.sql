@@ -344,12 +344,14 @@ CREATE TABLE `white_list` (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
 CREATE TABLE `session` (
-   `sid`         char(128) NOT NULL,
-   `username`    varchar(64) DEFAULT '',
-   `remote_addr` varchar(32) DEFAULT '',
-   `created_at`  integer unsigned DEFAULT '0',
-   `updated_at`  integer unsigned DEFAULT '0' NOT NULL,
+   `sid`          char(128) NOT NULL,
+   `access_token` char(128) DEFAULT '',
+   `username`     varchar(64) DEFAULT '',
+   `remote_addr`  varchar(32) DEFAULT '',
+   `created_at`   integer unsigned DEFAULT '0',
+   `updated_at`   integer unsigned DEFAULT '0' NOT NULL,
    PRIMARY KEY (`sid`),
+   KEY (`access_token`),
    KEY (`username`),
    KEY (`updated_at`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8;
