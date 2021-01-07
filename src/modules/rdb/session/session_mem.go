@@ -85,7 +85,7 @@ func (p *mStorage) gc() {
 	p.Lock()
 	defer p.Unlock()
 
-	idleTime := cache.AuthConfig().MaxConnIdelTime * 60
+	idleTime := cache.AuthConfig().MaxConnIdleTime * 60
 	if idleTime == 0 {
 		return
 	}

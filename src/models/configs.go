@@ -94,7 +94,7 @@ func ConfigsGets(ckeys []string) (map[string]string, error) {
 type AuthConfig struct {
 	MaxNumErr          int      `json:"maxNumErr"`
 	MaxSessionNumber   int64    `json:"maxSessionNumber"`
-	MaxConnIdelTime    int64    `json:"maxConnIdelTime" description:"minute"`
+	MaxConnIdleTime    int64    `json:"maxConnIdleTime" description:"minute"`
 	LockTime           int64    `json:"lockTime" description:"minute"`
 	PwdHistorySize     int      `json:"pwdHistorySize"`
 	PwdMinLenght       int      `json:"pwdMinLenght"`
@@ -163,7 +163,7 @@ func (p *AuthConfig) Validate() error {
 }
 
 var DefaultAuthConfig = AuthConfig{
-	MaxConnIdelTime: 30,
+	MaxConnIdleTime: 30,
 	PwdMustInclude:  []string{},
 }
 
