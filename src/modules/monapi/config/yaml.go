@@ -38,8 +38,9 @@ type mergeSection struct {
 }
 
 type cleanerSection struct {
-	Days  int `yaml:"days"`
-	Batch int `yaml:"batch"`
+	Days     int  `yaml:"days"`
+	Batch    int  `yaml:"batch"`
+	Converge bool `yaml:"converge"`
 }
 
 type queueSection struct {
@@ -169,8 +170,9 @@ func Parse(ymlfile string) error {
 	})
 
 	viper.SetDefault("cleaner", map[string]interface{}{
-		"days":  31,
-		"batch": 100,
+		"days":     31,
+		"batch":    100,
+		"converge": true, // 历史告警的数据库表，对于已收敛的告警，默认删掉，不保留，省得告警太多
 	})
 
 	err = viper.Unmarshal(&yaml)

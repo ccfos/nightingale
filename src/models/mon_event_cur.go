@@ -246,7 +246,11 @@ func EventCurGet(col string, value interface{}) (*EventCur, error) {
 }
 
 func (e *EventCur) EventIgnore() error {
-	_, err := DB["mon"].Exec("delete from event_cur where id=?", e.Id)
+	return EventCurDelById(e.Id)
+}
+
+func EventCurDelById(id interface{}) error {
+	_, err := DB["mon"].Where("id=?", id).Delete(new(EventCur))
 	return err
 }
 
