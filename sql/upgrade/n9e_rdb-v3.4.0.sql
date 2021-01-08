@@ -40,3 +40,6 @@ alter table user add `pwd_updated_at` bigint      not null default 0 after updat
 alter table user add `logged_at`     bigint       not null default 0 after pwd_updated_at;
 alter table user add `passwords`     varchar(512) not null default '' after password;
 alter table login_log add `err`     varchar(128) not null default '' after loginout;
+
+alter table session add `access_token` char(128) default '' after sid;
+alter table session add key (`access_token`);
