@@ -231,8 +231,8 @@ func (cfg M3dbSection) queryIndexByFullTagsOptions(input dataobj.IndexByFullTags
 	}
 
 	return query, index.QueryOptions{
-		StartInclusive: indexStartTime(),
-		EndExclusive:   time.Now(),
+		StartInclusive: input.StartInclusive,
+		EndExclusive:   input.EndExclusive,
 		SeriesLimit:    cfg.SeriesLimit,
 		DocsLimit:      cfg.DocsLimit,
 	}

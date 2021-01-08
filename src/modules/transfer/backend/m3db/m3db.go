@@ -268,6 +268,11 @@ func (p *Client) QueryIndexByFullTags(inputs []dataobj.IndexByFullTagsRecv) ([]d
 
 	var resp dataobj.IndexByFullTagsResp
 	for i, input := range inputs {
+		if err := input.Validate(); err != nil {
+			logger.Errorf("input validate err %s", err)
+			continue
+		}
+
 		resp = p.queryIndexByFullTags(session, input)
 		list[i] = resp
 		count += resp.Count
