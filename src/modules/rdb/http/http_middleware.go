@@ -121,6 +121,7 @@ func headerUsername(c *gin.Context) string {
 func sessionStart(c *gin.Context) error {
 	s, err := session.Start(c.Writer, c.Request)
 	if err != nil {
+		logger.Warningf("session.Start() err %s", err)
 		return err
 	}
 	c.Request = c.Request.WithContext(session.NewContext(c.Request.Context(), s))
