@@ -85,7 +85,7 @@ func eventCurGets(c *gin.Context) {
 		}
 
 		tagsList := []string{}
-		if len(detail) > 1 {
+		if len(detail) > 0 {
 			for k, v := range detail[0].Tags {
 				tagsList = append(tagsList, fmt.Sprintf("%s=%s", k, v))
 			}
