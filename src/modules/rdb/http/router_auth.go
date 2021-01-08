@@ -685,19 +685,7 @@ func v1SessionGet(c *gin.Context) {
 
 func v1SessionGetUser(c *gin.Context) {
 	sid := urlParamStr(c, "sid")
-
-	user, err := func() (*models.User, error) {
-		s, err := models.SessionGetWithCache(sid)
-		if err != nil {
-			return nil, err
-		}
-
-		if s.Username == "" {
-			return nil, fmt.Errorf("user not found")
-		}
-		return models.UserMustGet("username=?", s.Username)
-	}()
-
+	user, err := models.SessionGetUserWithCache(sid)
 	renderData(c, user, err)
 }
 

@@ -102,3 +102,16 @@ func SessionGetWithCache(sid string) (*Session, error) {
 
 	return sess, nil
 }
+
+func SessionGetUserWithCache(sid string) (*User, error) {
+	s, err := SessionGetWithCache(sid)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.Username == "" {
+		return nil, fmt.Errorf("user not found")
+	}
+	return UserMustGet("username=?", s.Username)
+
+}
