@@ -15,22 +15,40 @@ import (
 var p *message.Printer
 
 type I18nSection struct {
-	DictPath string `yaml:"dictPath"`
 	Lang     string `yaml:"lang"`
+	DictPath string `yaml:"dictPath"`
 }
 
-// Init will init i18n support via input language.
-func Init(config ...I18nSection) {
-	l := "zh"
-	fpath := "etc/dict.json"
-
-	if len(config) > 0 {
-		l = config[0].Lang
-		fpath = config[0].DictPath
+func (p *I18nSection) Validate() error {
+	if p.Lang == "" {
+		p.Lang = defaultConfig.Lang
+	}
+	if p.DictPath == "" {
+		p.DictPath = defaultConfig.DictPath
 	}
 
-	DictFileRegister(fpath)
-	p = message.NewPrinter(langTag(l))
+	return nil
+}
+
+var (
+	defaultConfig = I18nSection{"zh", "etc/dict.json"}
+)
+
+// Init will init i18n support via input language.
+func Init(configs ...I18nSection) error {
+	config := defaultConfig
+	if len(configs) > 0 {
+		config = configs[0]
+	}
+
+	if err := config.Validate(); err != nil {
+		return err
+	}
+
+	DictFileRegister(config.DictPath)
+	p = message.NewPrinter(langTag(config.Lang))
+
+	return nil
 }
 
 func DictFileRegister(files ...string) {

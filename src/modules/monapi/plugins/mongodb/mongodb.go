@@ -1,6 +1,8 @@
 package mongodb
 
 import (
+	"fmt"
+
 	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/modules/monapi/plugins/mongodb/mongodb"
 	"github.com/didi/nightingale/src/toolkits/i18n"
@@ -52,6 +54,9 @@ type MongodbRule struct {
 }
 
 func (p *MongodbRule) Validate() error {
+	if len(p.Servers) == 0 || p.Servers[0] == "" {
+		return fmt.Errorf("mongodb.rule.servers must be set")
+	}
 	return nil
 }
 
