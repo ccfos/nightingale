@@ -46,6 +46,10 @@ func Destroy(w http.ResponseWriter, r *http.Request) (string, error) {
 	return DefaultSession.Destroy(w, r)
 }
 
+func GetSid(r *http.Request) (string, error) {
+	return DefaultSession.GetSid(r)
+}
+
 func Get(sid string) (*SessionStore, error) {
 	return DefaultSession.Get(sid)
 }
@@ -99,7 +103,7 @@ type Manager struct {
 func (p *Manager) Start(w http.ResponseWriter, r *http.Request) (store *SessionStore, err error) {
 	var sid string
 
-	if sid, err = p.getSid(r); err != nil {
+	if sid, err = p.GetSid(r); err != nil {
 		return
 	}
 
@@ -172,7 +176,7 @@ func (p *Manager) All() int {
 	return p.all()
 }
 
-func (p *Manager) getSid(r *http.Request) (sid string, err error) {
+func (p *Manager) GetSid(r *http.Request) (sid string, err error) {
 	var cookie *http.Cookie
 
 	cookie, err = r.Cookie(p.config.CookieName)
