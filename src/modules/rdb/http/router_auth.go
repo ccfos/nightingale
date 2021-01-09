@@ -733,9 +733,15 @@ func pwdRulesGet(c *gin.Context) {
 }
 
 func sessionDestory(c *gin.Context) (sid string, err error) {
-	if sid, err = session.Destroy(c.Writer, c.Request); sid != "" {
-		auth.DeleteSession(sid)
+	if sid, err = session.GetSid(c.Request); sid == "" {
+		return
 	}
+
+	if e := auth.DeleteSession(sid); e != nil {
+		logger.Debugf("auth.deleteSession sid %s err %v", sid, e)
+	}
+
+	session.Destroy(c.Writer, c.Request)
 
 	return
 }

@@ -237,8 +237,7 @@ func (p *Authenticator) DeleteSession(sid string) error {
 
 	if !p.extraMode {
 		pkgcache.Delete("sid." + s.Sid)
-		models.SessionDelete(s.Sid)
-		return nil
+		return models.SessionDelete(s.Sid)
 	}
 	return deleteSession(s)
 }
@@ -490,10 +489,12 @@ func checkPassword(cf *models.AuthConfig, passwd string) error {
 
 func deleteSession(s *models.Session) error {
 	pkgcache.Delete("sid." + s.Sid)
-	models.SessionDelete(s.Sid)
 	pkgcache.Delete("access-token." + s.AccessToken)
-	models.TokenDelete(s.AccessToken)
-	return nil
+
+	if err := models.SessionDelete(s.Sid); err != nil {
+		return err
+	}
+	return models.TokenDelete(s.AccessToken)
 }
 
 func deleteSessionByToken(t *models.Token) error {
