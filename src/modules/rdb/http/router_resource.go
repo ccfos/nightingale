@@ -734,7 +734,12 @@ func singleProjectResCount(id int64, resName string, worker chan struct{}, dataC
 	}
 
 	data := new(resourceRank)
-	data.Name = node.Name
+	nodeName := node.Name
+	if nodeName != "" {
+		data.Name = nodeName
+	} else {
+		data.Name = node.Ident
+	}
 	data.Count = cnt
 
 	dataChan <- data
