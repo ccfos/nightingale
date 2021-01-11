@@ -90,6 +90,12 @@ func Config(r *gin.Engine) {
 
 		rootLogin.GET("/resources/tenant-rank", tenantResourcesCountRank)
 		rootLogin.GET("/resources/project-rank", projectResourcesCountRank)
+
+		rootLogin.GET("/privileges", privilegeGets)
+		rootLogin.POST("/privileges", privilegePost)
+		rootLogin.PUT("/privilege", privilegePut)
+		rootLogin.DELETE("/privileges", privilegeDel)
+		rootLogin.PUT("/privileges-weights", privilegeWeights)
 	}
 
 	userLogin := r.Group("/api/rdb").Use(shouldBeLogin())
