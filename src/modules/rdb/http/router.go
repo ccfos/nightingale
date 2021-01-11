@@ -87,6 +87,9 @@ func Config(r *gin.Engine) {
 		rootLogin.GET("/sso/clients/:clientId", ssoClientGet)
 		rootLogin.PUT("/sso/clients/:clientId", ssoClientPut)
 		rootLogin.DELETE("/sso/clients/:clientId", ssoClientDel)
+
+		rootLogin.GET("/resources/tenant-rank", tenantResourcesCountRank)
+		rootLogin.GET("/resources/project-rank", projectResourcesCountRank)
 	}
 
 	userLogin := r.Group("/api/rdb").Use(shouldBeLogin())
