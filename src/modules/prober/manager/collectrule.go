@@ -257,7 +257,7 @@ func (p *collectRule) AddError(err error) {
 	if err == nil {
 		return
 	}
-	log.Printf("Error in plugin: %v", err)
+	logger.Debugf("Error in plugin: %v", err)
 }
 
 func (p *collectRule) SetPrecision(precision time.Duration) {
