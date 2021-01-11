@@ -9,22 +9,22 @@ import (
 	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/monapi/collector"
-	"github.com/didi/nightingale/src/modules/prober/cache"
+	"github.com/didi/nightingale/src/modules/prober/config"
 	"github.com/influxdata/telegraf"
 	"github.com/toolkits/pkg/logger"
 )
 
 // not thread-safe
-type ruleEntity struct {
+type collectRule struct {
 	sync.RWMutex
 	telegraf.Input
-	rule      *models.CollectRule
+	*models.CollectRule
 	tags      map[string]string
 	precision time.Duration
 	metrics   []*dataobj.MetricValue
 }
 
-func newRuleEntity(rule *models.CollectRule) (*ruleEntity, error) {
+func newCollectRule(rule *models.CollectRule) (*collectRule, error) {
 	c, err := collector.GetCollector(rule.CollectType)
 	if err != nil {
 		return nil, err
@@ -40,73 +40,87 @@ func newRuleEntity(rule *models.CollectRule) (*ruleEntity, error) {
 		return nil, err
 	}
 
-	return &ruleEntity{
-		Input:     input,
-		rule:      rule,
-		tags:      tags,
-		metrics:   []*dataobj.MetricValue{},
-		precision: time.Second,
+	return &collectRule{
+		Input:       input,
+		CollectRule: rule,
+		tags:        tags,
+		metrics:     []*dataobj.MetricValue{},
+		precision:   time.Second,
 	}, nil
 }
 
-// calc metrics with expression
-func (p *ruleEntity) calc() error {
+// prepareMetrics
+func (p *collectRule) prepareMetrics() error {
 	if len(p.metrics) == 0 {
 		return nil
 	}
-	sample := p.metrics[0]
+	ts := p.metrics[0].Timestamp
+	nid := strconv.FormatInt(p.Nid, 10)
 
-	configs, ok := cache.GetMetricExprs(p.rule.CollectType)
+	pluginConfig, ok := config.GetPluginConfig(p.PluginName())
 	if !ok {
 		return nil
 	}
 
-	vars := map[string]float64{}
+	vars := map[string]*dataobj.MetricValue{}
 	for _, v := range p.metrics {
 		logger.Debugf("get v[%s] %f", v.Metric, v.Value)
-		vars[v.Metric] = v.Value
+		vars[v.Metric] = v
 	}
 
-	for _, config := range configs.Metrics {
-		f, err := config.Calc(vars)
+	p.metrics = p.metrics[:0]
+	for _, metric := range pluginConfig.ExprMetrics {
+		f, err := metric.Calc(vars)
 		if err != nil {
 			logger.Debugf("calc err %s", err)
 			continue
 		}
 		p.metrics = append(p.metrics, &dataobj.MetricValue{
-			Nid:          sample.Nid,
-			Metric:       config.Name,
-			Timestamp:    sample.Timestamp,
-			Step:         sample.Step,
-			CounterType:  config.Type,
-			TagsMap:      sample.TagsMap,
+			Nid:          nid,
+			Metric:       metric.Name,
+			Timestamp:    ts,
+			Step:         p.Step,
+			CounterType:  metric.Type,
+			TagsMap:      p.tags,
 			Value:        f,
 			ValueUntyped: f,
 		})
 	}
 
-	if configs.Mode == cache.PluginModeOverlay {
-		for k, v := range vars {
-			if _, ok := configs.Metrics[k]; ok {
+	for k, v := range vars {
+		if metric, ok := pluginConfig.Metrics[k]; ok {
+			p.metrics = append(p.metrics, &dataobj.MetricValue{
+				Nid:          nid,
+				Metric:       k,
+				Timestamp:    ts,
+				Step:         p.Step,
+				CounterType:  metric.Type,
+				TagsMap:      v.TagsMap,
+				Value:        v.Value,
+				ValueUntyped: v.ValueUntyped,
+			})
+		} else {
+			if pluginConfig.Mode == config.PluginModeWhitelist {
 				continue
 			}
 			p.metrics = append(p.metrics, &dataobj.MetricValue{
-				Nid:          sample.Nid,
+				Nid:          nid,
 				Metric:       k,
-				Timestamp:    sample.Timestamp,
-				Step:         sample.Step,
+				Timestamp:    ts,
+				Step:         p.Step,
 				CounterType:  "GAUGE",
-				TagsMap:      sample.TagsMap,
-				Value:        v,
-				ValueUntyped: v,
+				TagsMap:      v.TagsMap,
+				Value:        v.Value,
+				ValueUntyped: v.ValueUntyped,
 			})
+
 		}
 	}
 	return nil
 }
 
-func (p *ruleEntity) update(rule *models.CollectRule) error {
-	if p.rule.LastUpdated == rule.LastUpdated {
+func (p *collectRule) update(rule *models.CollectRule) error {
+	if p.CollectRule.LastUpdated == rule.LastUpdated {
 		return nil
 	}
 
@@ -123,14 +137,14 @@ func (p *ruleEntity) update(rule *models.CollectRule) error {
 	}
 
 	p.Input = input
-	p.rule = rule
+	p.CollectRule = rule
 	p.tags = tags
 
 	return nil
 }
 
 // https://docs.influxdata.com/telegraf/v1.14/data_formats/output/prometheus/
-func (p *ruleEntity) MakeMetric(metric telegraf.Metric) []*dataobj.MetricValue {
+func (p *collectRule) MakeMetric(metric telegraf.Metric) []*dataobj.MetricValue {
 	tags := map[string]string{}
 	for _, v := range metric.TagList() {
 		tags[v.Key] = v.Value
@@ -140,10 +154,8 @@ func (p *ruleEntity) MakeMetric(metric telegraf.Metric) []*dataobj.MetricValue {
 		tags[k] = v
 	}
 
-	nid := strconv.FormatInt(p.rule.Nid, 10)
 	name := metric.Name()
 	ts := metric.Time().Unix()
-	step := int64(p.rule.Step) // deprecated
 
 	fields := metric.Fields()
 	ms := make([]*dataobj.MetricValue, 0, len(fields))
@@ -153,17 +165,9 @@ func (p *ruleEntity) MakeMetric(metric telegraf.Metric) []*dataobj.MetricValue {
 			continue
 		}
 
-		c, ok := cache.Metric(name+"_"+k, metric.Type())
-		if !ok {
-			continue
-		}
-
 		ms = append(ms, &dataobj.MetricValue{
-			Nid:          nid,
-			Metric:       c.Name,
+			Metric:       name + "_" + k,
 			Timestamp:    ts,
-			Step:         step,
-			CounterType:  c.Type,
 			TagsMap:      tags,
 			Value:        f,
 			ValueUntyped: f,
@@ -173,7 +177,7 @@ func (p *ruleEntity) MakeMetric(metric telegraf.Metric) []*dataobj.MetricValue {
 	return ms
 }
 
-func (p *ruleEntity) AddFields(
+func (p *collectRule) AddFields(
 	measurement string,
 	fields map[string]interface{},
 	tags map[string]string,
@@ -182,7 +186,7 @@ func (p *ruleEntity) AddFields(
 	p.addFields(measurement, tags, fields, telegraf.Untyped, t...)
 }
 
-func (p *ruleEntity) AddGauge(
+func (p *collectRule) AddGauge(
 	measurement string,
 	fields map[string]interface{},
 	tags map[string]string,
@@ -191,7 +195,7 @@ func (p *ruleEntity) AddGauge(
 	p.addFields(measurement, tags, fields, telegraf.Gauge, t...)
 }
 
-func (p *ruleEntity) AddCounter(
+func (p *collectRule) AddCounter(
 	measurement string,
 	fields map[string]interface{},
 	tags map[string]string,
@@ -200,7 +204,7 @@ func (p *ruleEntity) AddCounter(
 	p.addFields(measurement, tags, fields, telegraf.Counter, t...)
 }
 
-func (p *ruleEntity) AddSummary(
+func (p *collectRule) AddSummary(
 	measurement string,
 	fields map[string]interface{},
 	tags map[string]string,
@@ -209,7 +213,7 @@ func (p *ruleEntity) AddSummary(
 	p.addFields(measurement, tags, fields, telegraf.Summary, t...)
 }
 
-func (p *ruleEntity) AddHistogram(
+func (p *collectRule) AddHistogram(
 	measurement string,
 	fields map[string]interface{},
 	tags map[string]string,
@@ -218,20 +222,20 @@ func (p *ruleEntity) AddHistogram(
 	p.addFields(measurement, tags, fields, telegraf.Histogram, t...)
 }
 
-func (p *ruleEntity) AddMetric(m telegraf.Metric) {
+func (p *collectRule) AddMetric(m telegraf.Metric) {
 	m.SetTime(m.Time().Round(p.precision))
 	if metrics := p.MakeMetric(m); m != nil {
 		p.pushMetrics(metrics)
 	}
 }
 
-func (p *ruleEntity) pushMetrics(metrics []*dataobj.MetricValue) {
+func (p *collectRule) pushMetrics(metrics []*dataobj.MetricValue) {
 	p.Lock()
 	defer p.Unlock()
 	p.metrics = append(p.metrics, metrics...)
 }
 
-func (p *ruleEntity) addFields(
+func (p *collectRule) addFields(
 	measurement string,
 	tags map[string]string,
 	fields map[string]interface{},
@@ -249,18 +253,18 @@ func (p *ruleEntity) addFields(
 
 // AddError passes a runtime error to the accumulator.
 // The error will be tagged with the plugin name and written to the log.
-func (p *ruleEntity) AddError(err error) {
+func (p *collectRule) AddError(err error) {
 	if err == nil {
 		return
 	}
 	log.Printf("Error in plugin: %v", err)
 }
 
-func (p *ruleEntity) SetPrecision(precision time.Duration) {
+func (p *collectRule) SetPrecision(precision time.Duration) {
 	p.precision = precision
 }
 
-func (p *ruleEntity) getTime(t []time.Time) time.Time {
+func (p *collectRule) getTime(t []time.Time) time.Time {
 	var timestamp time.Time
 	if len(t) > 0 {
 		timestamp = t[0]
@@ -270,6 +274,6 @@ func (p *ruleEntity) getTime(t []time.Time) time.Time {
 	return timestamp.Round(p.precision)
 }
 
-func (p *ruleEntity) WithTracking(maxTracked int) telegraf.TrackingAccumulator {
+func (p *collectRule) WithTracking(maxTracked int) telegraf.TrackingAccumulator {
 	return nil
 }

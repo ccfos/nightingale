@@ -13,6 +13,6 @@ func Init(ctx context.Context) error {
 	CollectRule = NewCollectRuleCache(&config.Config.CollectRule)
 	CollectRule.start(ctx)
 	MetricHistory = NewHistory()
-	InitPluginsConfig(config.Config)
+	config.InitPluginsConfig(config.Config)
 	return nil
 }
