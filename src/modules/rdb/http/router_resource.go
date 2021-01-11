@@ -579,7 +579,7 @@ type resourceRank struct {
 }
 
 func tenantResourcesCountRank(c *gin.Context) {
-	resName := queryStr(c, "resource_name", "virtual")
+	resCate := queryStr(c, "resource_cate", "virtual")
 	top := queryInt(c, "top", 0)
 	if top < 0 {
 		dangerous(fmt.Errorf("param top < 0"))
@@ -596,7 +596,7 @@ func tenantResourcesCountRank(c *gin.Context) {
 		}
 	}
 
-	ress, err := models.ResourceGets("cate=?", resName)
+	ress, err := models.ResourceGets("cate=?", resCate)
 	dangerous(err)
 
 	resMap := make(map[string]int, 50)
@@ -643,7 +643,7 @@ func tenantResourcesCountRank(c *gin.Context) {
 }
 
 func projectResourcesCountRank(c *gin.Context) {
-	resName := queryStr(c, "resource_name", "virtual")
+	resCate := queryStr(c, "resource_cate", "virtual")
 	top := queryInt(c, "top", 0)
 	if top < 0 {
 		dangerous(fmt.Errorf("param top < 0"))
@@ -673,7 +673,7 @@ func projectResourcesCountRank(c *gin.Context) {
 
 	for _, pN := range projectNodes {
 		worker <- struct{}{}
-		go singleProjectResCount(pN.Id, resName, worker,
+		go singleProjectResCount(pN.Id, resCate, worker,
 			dataChan)
 	}
 
@@ -705,7 +705,7 @@ func projectResourcesCountRank(c *gin.Context) {
 	renderData(c, resp, nil)
 }
 
-func singleProjectResCount(id int64, resName string, worker chan struct{}, dataChan chan *resourceRank) {
+func singleProjectResCount(id int64, resCate string, worker chan struct{}, dataChan chan *resourceRank) {
 	defer func() {
 		<-worker
 	}()
@@ -727,7 +727,7 @@ func singleProjectResCount(id int64, resName string, worker chan struct{}, dataC
 		return
 	}
 
-	cnt, err := models.ResCountGetByNodeIdsAndCate(leafIds, resName)
+	cnt, err := models.ResCountGetByNodeIdsAndCate(leafIds, resCate)
 	if err != nil {
 		logger.Error(err)
 		return
