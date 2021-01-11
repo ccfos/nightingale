@@ -50,8 +50,24 @@ type AlertUpgrade struct {
 
 func eventCurGets(c *gin.Context) {
 
-	stime := mustQueryInt64(c, "stime")
-	etime := mustQueryInt64(c, "etime")
+	stime := queryInt64(c, "stime", 0)
+	etime := queryInt64(c, "etime", 0)
+
+	hours := queryInt64(c, "hours", 0)
+	now := time.Now().Unix()
+	if hours != 0 {
+		stime = now - 3600*hours
+		etime = now + 3600*24
+	}
+
+	if stime != 0 && etime == 0 {
+		etime = now + 3600*24
+	}
+
+	if stime == 0 && hours == 0 {
+		dangerous(fmt.Errorf("stime and hours is nil"))
+	}
+
 	nodePath := queryStr(c, "nodepath", "")
 
 	limit := queryInt(c, "limit", 20)
@@ -85,7 +101,7 @@ func eventCurGets(c *gin.Context) {
 		}
 
 		tagsList := []string{}
-		if len(detail) > 1 {
+		if len(detail) > 0 {
 			for k, v := range detail[0].Tags {
 				tagsList = append(tagsList, fmt.Sprintf("%s=%s", k, v))
 			}
@@ -144,8 +160,24 @@ func eventCurGets(c *gin.Context) {
 
 func eventHisGets(c *gin.Context) {
 
-	stime := mustQueryInt64(c, "stime")
-	etime := mustQueryInt64(c, "etime")
+	stime := queryInt64(c, "stime", 0)
+	etime := queryInt64(c, "etime", 0)
+
+	hours := queryInt64(c, "hours", 0)
+	now := time.Now().Unix()
+	if hours != 0 {
+		stime = now - 3600*hours
+		etime = now + 3600*24
+	}
+
+	if stime != 0 && etime == 0 {
+		etime = now + 3600*24
+	}
+
+	if stime == 0 && hours == 0 {
+		dangerous(fmt.Errorf("stime and hours is nil"))
+	}
+
 	nodePath := queryStr(c, "nodepath", "")
 
 	limit := queryInt(c, "limit", 20)

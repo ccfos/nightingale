@@ -40,6 +40,7 @@
   - 修复部分sql注入漏洞
   - 告警引擎函数优化，all、c_avg_rate_abs等
   - 告警消息内容优化，可以展示设备名称和设备备注，感谢冯骐的PR
+  - 增加了大盘导入导出功能
 升级方法：
   - 除了agent、tsdb、index的二进制不用升级，其他所有模块的二进制都要升级
   - job ams monapi rdb 四个模块的配置文件中的cookieName全部换成ecmc-sid
