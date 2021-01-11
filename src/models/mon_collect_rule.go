@@ -15,10 +15,10 @@ const (
 type CollectRule struct {
 	Id          int64           `json:"id"`
 	Nid         int64           `json:"nid"`
-	Step        int             `json:"step" description:"interval"`
+	Step        int64           `json:"step" description:"interval"`
 	Timeout     int             `json:"timeout"`
 	CollectType string          `json:"collect_type" description:"plugin name"`
-	Name        string          `json:"name"`
+	Name        string          `json:"name" describes:"customize name"`
 	Region      string          `json:"region"`
 	Comment     string          `json:"comment"`
 	Data        json.RawMessage `json:"data"`
@@ -31,6 +31,10 @@ type CollectRule struct {
 
 type validator interface {
 	Validate() error
+}
+
+func (p CollectRule) PluginName() string {
+	return p.CollectType
 }
 
 func (p *CollectRule) Validate(v ...interface{}) error {
