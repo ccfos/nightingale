@@ -74,17 +74,18 @@ func userAddPost(c *gin.Context) {
 	now := time.Now().Unix()
 	b, _ := json.Marshal([]string{pass})
 	u := models.User{
-		Username:  f.Username,
-		Password:  pass,
-		Passwords: string(b),
-		Dispname:  f.Dispname,
-		Phone:     f.Phone,
-		Email:     f.Email,
-		Im:        f.Im,
-		IsRoot:    f.IsRoot,
-		LeaderId:  f.LeaderId,
-		UpdatedAt: now,
-		UUID:      models.GenUUIDForUser(f.Username),
+		Username:     f.Username,
+		Password:     pass,
+		Passwords:    string(b),
+		Dispname:     f.Dispname,
+		Phone:        f.Phone,
+		Email:        f.Email,
+		Im:           f.Im,
+		IsRoot:       f.IsRoot,
+		LeaderId:     f.LeaderId,
+		Organization: f.Organization,
+		UpdatedAt:    now,
+		UUID:         models.GenUUIDForUser(f.Username),
 	}
 
 	if f.LeaderId != 0 {
