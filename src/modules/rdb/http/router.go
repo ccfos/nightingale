@@ -93,9 +93,10 @@ func Config(r *gin.Engine) {
 
 		rootLogin.GET("/privileges", privilegeGets)
 		rootLogin.POST("/privileges", privilegePost)
-		rootLogin.PUT("/privilege", privilegePut)
+		rootLogin.PUT("/privileges", privilegePut)
 		rootLogin.DELETE("/privileges", privilegeDel)
 		rootLogin.PUT("/privileges-weights", privilegeWeights)
+		rootLogin.PUT("/privileges-import", privilegeImport)
 	}
 
 	userLogin := r.Group("/api/rdb").Use(shouldBeLogin())

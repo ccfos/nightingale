@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -48,6 +49,20 @@ func (p *Privilege) Save() error {
 	return err
 }
 
+func subMaxWeight(pid int64) (int, error) {
+	var obj Privilege
+	has, err := DB["rdb"].Where("pid=?", pid).Desc("weight").Limit(1).Get(&obj)
+	if err != nil {
+		return -1, err
+	}
+
+	if has {
+		return obj.Weight, nil
+	}
+
+	return -1, nil
+}
+
 // 批量添加
 func PrivilegeAdds(ps []*Privilege) error {
 	session := DB["rdb"].NewSession()
@@ -59,7 +74,7 @@ func PrivilegeAdds(ps []*Privilege) error {
 
 	for _, p := range ps {
 		// path 已存在不允许插入
-		pexist, err := PrivilegeGets("path=?", p.Path)
+		pexist, err := PrivilegeGets("typ = ? and path=?", p.Typ, p.Path)
 		if err != nil {
 			if err != nil {
 				session.Rollback()
@@ -69,7 +84,7 @@ func PrivilegeAdds(ps []*Privilege) error {
 
 		if len(pexist) > 0 {
 			session.Rollback()
-			return fmt.Errorf("privilege[%s] is exist", p.Path)
+			return fmt.Errorf("privilege[%s][%s] is exist", p.Typ, p.Path)
 		}
 
 		_, err = session.InsertOne(p)
@@ -116,6 +131,108 @@ func PrivilegeDels(ids []int64) error {
 		}
 
 		_, err = session.Where("id=?", id).Delete(new(Privilege))
+		if err != nil {
+			session.Rollback()
+			return err
+		}
+	}
+
+	return session.Commit()
+}
+
+func PrivilegeUpdates(ps []Privilege, oper string) error {
+	session := DB["rdb"].NewSession()
+	defer session.Close()
+
+	if err := session.Begin(); err != nil {
+		return err
+	}
+
+	for _, p := range ps {
+		po, err := PrivilegeGet("id=?", p.Id)
+		if err != nil {
+			session.Rollback()
+			return err
+		}
+
+		if po == nil {
+			session.Rollback()
+			return fmt.Errorf("privilege not exist +%v", p)
+		}
+
+		po.Pid = p.Pid
+		po.Typ = p.Typ
+		po.Cn = p.Cn
+		po.En = p.En
+		po.Weight = p.Weight
+		po.Path = p.Path
+		po.Leaf = p.Leaf
+		po.LastUpdater = oper
+		err = po.Update("pid", "typ", "cn", "en", "weight", "path", "leaf", "last_updater")
+
+		if err != nil {
+			session.Rollback()
+			return err
+		}
+	}
+
+	return session.Commit()
+}
+
+func PrivilegeImport(ps []Privilege, oper string) error {
+	session := DB["rdb"].NewSession()
+	defer session.Close()
+	if err := session.Begin(); err != nil {
+		return err
+	}
+
+	weight := 0
+	for _, p := range ps {
+		po, err := PrivilegeGet("typ=? and path=?", p.Typ, p.Path)
+		if err != nil {
+			session.Rollback()
+			return err
+		}
+
+		if po != nil {
+			session.Rollback()
+			return fmt.Errorf("privilege[%s][%s] exist", p.Typ, p.Path)
+		}
+
+		if strings.Contains(p.Path, ".") {
+			pathSlice := strings.Split(p.Path, ".")
+			parentSlice := pathSlice[0 : len(pathSlice)-1]
+			parentPath := strings.Join(parentSlice, ".")
+			parent, err := PrivilegeGet("typ=? and path=?", p.Typ, parentPath)
+			if err != nil {
+				session.Rollback()
+				return err
+			}
+
+			if parent == nil {
+				session.Rollback()
+				return fmt.Errorf("privilege[%s] parent[%s] not exist", p.Path, parentPath)
+			}
+
+			// 权重处理
+			weight, err = subMaxWeight(parent.Id)
+			if err != nil {
+				session.Rollback()
+				return err
+			}
+
+			p.Pid = parent.Id
+		} else {
+			weight, err = subMaxWeight(0)
+			if err != nil {
+				session.Rollback()
+				return err
+			}
+		}
+
+		p.Weight = weight + 1
+		p.LastUpdater = oper
+		err = p.Save()
 		if err != nil {
 			session.Rollback()
 			return err

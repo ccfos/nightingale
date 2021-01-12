@@ -2,6 +2,7 @@ package http
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/didi/nightingale/src/models"
 	"github.com/gin-gonic/gin"
@@ -33,26 +34,11 @@ func privilegePost(c *gin.Context) {
 }
 
 func privilegePut(c *gin.Context) {
-	var f models.Privilege
-	bind(c, &f)
+	var fs []models.Privilege
+	bind(c, &fs)
 
 	me := loginUsername(c)
-	p, err := models.PrivilegeGet("id=?", f.Id)
-	dangerous(err)
-
-	if p == nil {
-		dangerous(fmt.Errorf("privilege is nil"))
-	}
-
-	p.Pid = f.Pid
-	p.Typ = f.Typ
-	p.Cn = f.Cn
-	p.En = f.En
-	p.Weight = f.Weight
-	p.Path = f.Path
-	p.Leaf = f.Leaf
-	p.LastUpdater = me
-	err = p.Update("pid", "typ", "cn", "en", "weight", "path", "leaf", "last_updater")
+	err := models.PrivilegeUpdates(fs, me)
 	dangerous(err)
 
 	renderMessage(c, nil)
@@ -67,6 +53,21 @@ func privilegeDel(c *gin.Context) {
 	dangerous(err)
 
 	logger.Infof("[rdb] %s delete privilege %+v", me, fs)
+
+	renderMessage(c, nil)
+}
+
+func privilegeImport(c *gin.Context) {
+	var fs []models.Privilege
+	bind(c, &fs)
+
+	me := loginUsername(c)
+	sort.Slice(fs, func(i int, j int) bool { return fs[i].Path < fs[j].Path })
+
+	err := models.PrivilegeImport(fs, me)
+	dangerous(err)
+
+	logger.Infof("[rdb] %s import privilege %+v", me, fs)
 
 	renderMessage(c, nil)
 }
@@ -89,13 +90,6 @@ func privilegeWeights(c *gin.Context) {
 		if privilege == nil {
 			dangerous(fmt.Errorf("privilege is nil"))
 		}
-
-		// 加权限点控制  参考canWriteChart
-		// can, err := canWritePrivilege(chart.SubclassId, me)
-		// dangerous(err)
-		// if !can {
-		// 	dangerous("forbidden")
-		// }
 	}
 
 	for i := 0; i < cnt; i++ {
