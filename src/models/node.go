@@ -411,14 +411,19 @@ func (n *Node) RoleList(username string, limit, offset int) ([]NodeRole, error) 
 
 	sql = fmt.Sprintf(sql, n.Id, n.Path+".%")
 
+	var args []interface{}
+
 	if username != "" {
-		sql += fmt.Sprintf(" and node_role.username = '%s'", username)
+		sql += fmt.Sprintf(" and node_role.username = ?")
+		args = append(args, username)
 	}
 
 	sql += " order by node.path limit ? offset ?"
+	args = append(args, limit)
+	args = append(args, offset)
 
 	var objs []NodeRole
-	err := DB["rdb"].SQL(sql, limit, offset).Find(&objs)
+	err := DB["rdb"].SQL(sql, args...).Find(&objs)
 	return objs, err
 }
 
