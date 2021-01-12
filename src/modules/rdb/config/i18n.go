@@ -123,6 +123,9 @@ var (
 			"Invalid user status %d":     "异常的用户状态 %d",
 			"Password expired, please change the password in time": "密码过期，请及时修改密码",
 			"First Login, please change the password in time":      "初始登陆，请及时修改密码",
+			"no privilege":       "privilege 未设置",
+			"node is nil":        "node 未设置",
+			"operation is blank": "operation  未设置",
 		},
 	}
 )

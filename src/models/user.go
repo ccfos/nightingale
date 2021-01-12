@@ -411,18 +411,18 @@ func (u *User) CanModifyTeam(t *Team) (bool, error) {
 
 func (u *User) CheckPermByNode(node *Node, operation string) {
 	if node == nil {
-		errors.Bomb("node is nil")
+		errors.Bomb(_s("node is nil"))
 	}
 
 	if operation == "" {
-		errors.Bomb("operation is blank")
+		errors.Bomb(_s("operation is blank"))
 	}
 
 	has, err := u.HasPermByNode(node, operation)
 	errors.Dangerous(err)
 
 	if !has {
-		errors.Bomb("no privilege")
+		errors.Bomb(_s("no privilege"))
 	}
 }
 
@@ -477,7 +477,7 @@ func (u *User) CheckPermGlobal(operation string) {
 	errors.Dangerous(err)
 
 	if !has {
-		errors.Bomb("no privilege")
+		errors.Bomb(_s("no privilege"))
 	}
 }
 
