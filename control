@@ -209,11 +209,19 @@ reload()
 pack()
 {
 	clock=$(date +%s)
-	mkdir $clock
-	mv etc/*.local.yml $clock
+	mkdir -p ~/n9e.bak.$clock
+
+	if ls etc/*.local.yml &>/dev/null; then
+	  mv etc/*.local.yml ~/n9e.bak.$clock
+	fi
+
 	tar zcvf n9e-${version}.tar.gz script control sql etc n9e-*
-	mv $clock/* etc/
-	rm -rf $clock
+
+	if ls ~/n9e.bak.$clock/*.local.yml &>/dev/null; then
+	  mv  ~/n9e.bak.$clock/*.local.yml etc/
+	fi
+
+	rm -rf ~/n9e.bak.$clock
 }
 
 case "$1" in
