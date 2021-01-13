@@ -643,6 +643,10 @@ func GetRelatedNidsForMon(nid int64, exclNid []int64) ([]int64, error) {
 		return nids, err
 	}
 
+	if node == nil {
+		return nids, nil
+	}
+
 	nodes, err := node.RelatedNodes()
 	if err != nil {
 		return nids, err
