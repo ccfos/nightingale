@@ -24,9 +24,9 @@ type CollectRule struct {
 	Data        json.RawMessage `json:"data"`
 	Tags        string          `json:"tags" description:"k1=v1,k2=v2,k3=v3,..."`
 	Creator     string          `json:"creator" description:"just for output"`
-	LastUpdator string          `xorm:"last_updator" json:"last_updator" description:"just for output"`
-	Created     time.Time       `xorm:"updated" json:"created" description:"just for output"`
-	LastUpdated time.Time       `xorm:"updated" json:"last_updated" description:"just for output"`
+	LastUpdator string          `json:"last_updator" description:"just for output"`
+	Created     time.Time       `json:"created" description:"just for output"`
+	LastUpdated time.Time       `json:"last_updated" description:"just for output"`
 }
 
 type validator interface {
