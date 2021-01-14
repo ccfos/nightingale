@@ -147,7 +147,7 @@ func Config(r *gin.Engine) {
 	tpl := r.Group("/api/mon/tpl")
 	{
 		tpl.GET("", tplNameGets)
-		tpl.GET("/content", tplNameGets)
+		tpl.GET("/content", tplGet)
 	}
 
 	aggrs := r.Group("/api/mon/aggrs").Use()
