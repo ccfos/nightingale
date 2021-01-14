@@ -96,13 +96,13 @@ func (p *Client) Push2Queue(items []*dataobj.MetricValue) {
 	)
 	for _, item := range items {
 		wg.Add(1)
-		go func() {
+		go func(dm *dataobj.MetricValue) {
 			err := session.WriteTagged(
 				p.namespaceID,
-				mvID(item),
-				ident.NewTagsIterator(mvTags(item)),
-				time.Unix(item.Timestamp, 0),
-				item.Value,
+				mvID(dm),
+				ident.NewTagsIterator(mvTags(dm)),
+				time.Unix(dm.Timestamp, 0),
+				dm.Value,
 				xtime.Second,
 				nil)
 			if err != nil {
@@ -110,7 +110,7 @@ func (p *Client) Push2Queue(items []*dataobj.MetricValue) {
 				atomic.AddInt32(&errCnt, 1)
 			}
 			wg.Done()
-		}()
+		}(item)
 
 	}
 	wg.Wait()
