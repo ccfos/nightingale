@@ -33,7 +33,7 @@ type ConfYaml struct {
 }
 
 type tplSection struct {
-	StraPath   string `yaml:"straPath"`
+	AlertPath  string `yaml:"alertPath"`
 	ScreenPath string `yaml:"screenPath"`
 }
 
@@ -182,7 +182,7 @@ func Parse(ymlfile string) error {
 	})
 
 	viper.SetDefault("tpl", map[string]string{
-		"straPath":   "./etc/stra",
+		"alertPath":  "./etc/alert",
 		"screenPath": "./etc/screen",
 	})
 

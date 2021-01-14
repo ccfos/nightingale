@@ -13,8 +13,8 @@ func tplNameGets(c *gin.Context) {
 	var files []string
 	var err error
 	switch tplType {
-	case "stra":
-		files, err = file.FilesUnder(config.Get().Tpl.StraPath)
+	case "alert":
+		files, err = file.FilesUnder(config.Get().Tpl.AlertPath)
 		dangerous(err)
 	case "screen":
 		files, err = file.FilesUnder(config.Get().Tpl.ScreenPath)
@@ -32,8 +32,8 @@ func tplGet(c *gin.Context) {
 
 	var filePath string
 	switch tplType {
-	case "stra":
-		filePath = config.Get().Tpl.StraPath + "/" + tplName
+	case "alert":
+		filePath = config.Get().Tpl.AlertPath + "/" + tplName
 	case "screen":
 		filePath = config.Get().Tpl.ScreenPath + "/" + tplName
 	default:
