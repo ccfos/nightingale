@@ -144,6 +144,12 @@ func Config(r *gin.Engine) {
 		aggr.GET("/:id", aggrCalcGet)
 	}
 
+	tpl := r.Group("/api/mon/tpl")
+	{
+		tpl.GET("", tplNameGets)
+		tpl.GET("/content", tplNameGets)
+	}
+
 	aggrs := r.Group("/api/mon/aggrs").Use()
 	{
 		aggrs.GET("", aggrCalcsWithEndpointGet)
