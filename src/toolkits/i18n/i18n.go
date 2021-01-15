@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"strings"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -11,114 +12,84 @@ import (
 	"github.com/toolkits/pkg/file"
 )
 
-type I18nSection struct {
-	DictPath string `yaml:"dictPath"`
-	Lang     string `yaml:"lang"`
-}
-
-// Init will init i18n support via input language.
-func Init(config ...I18nSection) {
-	l := "zh"
-	fpath := "etc/dict.json"
-
-	if len(config) > 0 {
-		l = config[0].Lang
-		fpath = config[0].DictPath
-	}
-
-	lang := language.Chinese
-	switch l {
-	case "en":
-		lang = language.English
-	case "zh":
-		lang = language.Chinese
-	}
-
-	tag, _, _ := supported.Match(lang)
-	switch tag {
-	case language.AmericanEnglish, language.English:
-		initEnUS(lang)
-	case language.SimplifiedChinese, language.Chinese:
-		initZhCN(lang, fpath)
-	default:
-		initZhCN(lang, fpath)
-	}
-
-	p = message.NewPrinter(lang)
-}
-
-func initEnUS(tag language.Tag) {
-}
-
-func initZhCN(tag language.Tag, fpath string) {
-
-	content, err := file.ToTrimString(fpath)
-	if err != nil {
-		log.Printf("read configuration file %s fail %s", fpath, err.Error())
-		return
-	}
-
-	m := make(map[string]map[string]string)
-
-	err = json.Unmarshal([]byte(content), &m)
-	if err != nil {
-		log.Println("parse config file:", fpath, "fail:", err)
-		return
-	}
-
-	if dict, exists := m["zh"]; exists {
-		for k, v := range dict {
-			_ = message.SetString(tag, k, v)
-		}
-	}
-
-}
-
 var p *message.Printer
 
-func newMatcher(t []language.Tag) *matcher {
-	tags := &matcher{make(map[language.Tag]int)}
-	for i, tag := range t {
-		ct, err := language.All.Canonicalize(tag)
-		if err != nil {
-			ct = tag
-		}
-		tags.index[ct] = i
+type I18nSection struct {
+	Lang     string `yaml:"lang"`
+	DictPath string `yaml:"dictPath"`
+}
+
+func (p *I18nSection) Validate() error {
+	if p.Lang == "" {
+		p.Lang = defaultConfig.Lang
 	}
-	return tags
+	if p.DictPath == "" {
+		p.DictPath = defaultConfig.DictPath
+	}
+
+	return nil
 }
 
-type matcher struct {
-	index map[language.Tag]int
+var (
+	defaultConfig = I18nSection{"zh", "etc/dict.json"}
+)
+
+// Init will init i18n support via input language.
+func Init(configs ...I18nSection) error {
+	config := defaultConfig
+	if len(configs) > 0 {
+		config = configs[0]
+	}
+
+	if err := config.Validate(); err != nil {
+		return err
+	}
+
+	DictFileRegister(config.DictPath)
+	p = message.NewPrinter(langTag(config.Lang))
+
+	return nil
 }
 
-func (m matcher) Match(want ...language.Tag) (language.Tag, int, language.Confidence) {
-	for _, t := range want {
-		ct, err := language.All.Canonicalize(t)
+func DictFileRegister(files ...string) {
+	for _, filePath := range files {
+		content, err := file.ToTrimString(filePath)
 		if err != nil {
-			ct = t
+			log.Printf("read configuration file %s fail %s", filePath, err)
+			continue
 		}
-		conf := language.Exact
-		for {
-			if index, ok := m.index[ct]; ok {
-				return ct, index, conf
-			}
-			if ct == language.Und {
-				break
-			}
-			ct = ct.Parent()
-			conf = language.High
+
+		m := make(map[string]map[string]string)
+		err = json.Unmarshal([]byte(content), &m)
+		if err != nil {
+			log.Println("parse config file:", filePath, "fail:", err)
+			continue
+		}
+
+		DictRegister(m)
+	}
+}
+
+func DictRegister(m map[string]map[string]string) {
+	for lang, dict := range m {
+		tag := langTag(lang)
+		if tag == language.English {
+			continue
+		}
+		for k, v := range dict {
+			message.SetString(tag, k, v)
 		}
 	}
-	return language.Und, 0, language.No
 }
 
-var supported = newMatcher([]language.Tag{
-	language.AmericanEnglish,
-	language.English,
-	language.SimplifiedChinese,
-	language.Chinese,
-})
+func langTag(l string) language.Tag {
+	switch strings.ToLower(l) {
+	case "zh", "cn":
+		return language.Chinese
+	default:
+		return language.English
+	}
+}
 
 // Fprintf is like fmt.Fprintf, but using language-specific formatting.
 func Fprintf(w io.Writer, key message.Reference, a ...interface{}) (n int, err error) {

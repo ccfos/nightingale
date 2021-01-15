@@ -1,9 +1,11 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/toolkits/pkg/runner"
@@ -87,4 +89,104 @@ func ConfigsGets(ckeys []string) (map[string]string, error) {
 	}
 
 	return kvmap, nil
+}
+
+type AuthConfig struct {
+	MaxNumErr          int      `json:"maxNumErr"`
+	MaxSessionNumber   int64    `json:"maxSessionNumber"`
+	MaxConnIdleTime    int64    `json:"maxConnIdleTime" description:"minute"`
+	LockTime           int64    `json:"lockTime" description:"minute"`
+	PwdHistorySize     int      `json:"pwdHistorySize"`
+	PwdMinLenght       int      `json:"pwdMinLenght"`
+	PwdExpiresIn       int64    `json:"pwdExpiresIn" description:"month"`
+	PwdMustInclude     []string `json:"pwdMustInclude" description:"upper,lower,number,specChar"`
+	PwdMustIncludeFlag int      `json:"pwdMustIncludeFlag"`
+}
+
+func (p AuthConfig) PwdRules() []string {
+	s := []string{}
+	if p.PwdMinLenght > 0 {
+		s = append(s, _s("Minimum password length %d", p.PwdMinLenght))
+	}
+	if rule := p.MustInclude(); rule != "" {
+		s = append(s, rule)
+	}
+	return s
+}
+
+func (p AuthConfig) MustInclude() string {
+	s := []string{}
+	if p.PwdMustIncludeFlag&PWD_INCLUDE_UPPER > 0 {
+		s = append(s, _s("Upper char"))
+	}
+	if p.PwdMustIncludeFlag&PWD_INCLUDE_LOWER > 0 {
+		s = append(s, _s("Lower char"))
+	}
+	if p.PwdMustIncludeFlag&PWD_INCLUDE_NUMBER > 0 {
+		s = append(s, _s("Number"))
+	}
+	if p.PwdMustIncludeFlag&PWD_INCLUDE_SPEC_CHAR > 0 {
+		s = append(s, _s("Special char"))
+	}
+
+	if len(s) > 0 {
+		return _s("Must include %s", strings.Join(s, ","))
+	}
+
+	return ""
+}
+
+const (
+	PWD_INCLUDE_UPPER = 1 << iota
+	PWD_INCLUDE_LOWER
+	PWD_INCLUDE_NUMBER
+	PWD_INCLUDE_SPEC_CHAR
+)
+
+func (p *AuthConfig) Validate() error {
+	for _, v := range p.PwdMustInclude {
+		switch v {
+		case "upper":
+			p.PwdMustIncludeFlag |= PWD_INCLUDE_UPPER
+		case "lower":
+			p.PwdMustIncludeFlag |= PWD_INCLUDE_LOWER
+		case "number":
+			p.PwdMustIncludeFlag |= PWD_INCLUDE_NUMBER
+		case "specChar":
+			p.PwdMustIncludeFlag |= PWD_INCLUDE_SPEC_CHAR
+		default:
+			return fmt.Errorf("invalid pwd flags, must be 'upper', 'lower', 'number', 'specChar'")
+		}
+	}
+
+	return nil
+}
+
+var DefaultAuthConfig = AuthConfig{
+	MaxConnIdleTime: 30,
+	PwdMustInclude:  []string{},
+}
+
+func AuthConfigGet() (*AuthConfig, error) {
+	buf, err := ConfigsGet("auth.config")
+	if err != nil {
+		return &DefaultAuthConfig, nil
+	}
+	c := &AuthConfig{}
+	if err := json.Unmarshal([]byte(buf), c); err != nil {
+		return &DefaultAuthConfig, nil
+	}
+	return c, nil
+}
+
+func AuthConfigSet(config *AuthConfig) error {
+	if err := config.Validate(); err != nil {
+		return err
+	}
+
+	buf, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+	return ConfigsSet("auth.config", string(buf))
 }

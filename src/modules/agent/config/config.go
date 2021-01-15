@@ -105,7 +105,7 @@ func Parse() error {
 
 	viper.SetDefault("stra", map[string]interface{}{
 		"enable":   true,
-		"timeout":  1000,
+		"timeout":  5000,
 		"interval": 10, //采集策略更新时间
 		"portPath": "./etc/port",
 		"procPath": "./etc/proc",

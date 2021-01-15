@@ -14,11 +14,14 @@ import (
 
 	"github.com/didi/nightingale/src/common/loggeri"
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/auth"
+	"github.com/didi/nightingale/src/modules/rdb/cache"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/didi/nightingale/src/modules/rdb/cron"
 	"github.com/didi/nightingale/src/modules/rdb/http"
 	"github.com/didi/nightingale/src/modules/rdb/rabbitmq"
 	"github.com/didi/nightingale/src/modules/rdb/redisc"
+	"github.com/didi/nightingale/src/modules/rdb/session"
 	"github.com/didi/nightingale/src/modules/rdb/ssoc"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 )
@@ -59,6 +62,10 @@ func main() {
 
 	// 初始化数据库和相关数据
 	models.InitMySQL("rdb", "hbs")
+
+	if config.Config.SSO.Enable && config.Config.Auth.ExtraMode.Enable {
+		models.InitMySQL("sso")
+	}
 	models.InitSalt()
 	models.InitRooter()
 
@@ -71,6 +78,12 @@ func main() {
 
 	// 初始化 rabbitmq 处理部分异步逻辑
 	rabbitmq.Init()
+
+	cache.Start()
+	session.Init()
+
+	auth.Init(config.Config.Auth.ExtraMode)
+	auth.Start()
 
 	go cron.ConsumeMail()
 	go cron.ConsumeSms()
@@ -102,6 +115,8 @@ func endingProc() {
 	http.Shutdown()
 	redisc.CloseRedis()
 	rabbitmq.Shutdown()
+	session.Stop()
+	cache.Stop()
 
 	fmt.Println("process stopped successfully")
 }

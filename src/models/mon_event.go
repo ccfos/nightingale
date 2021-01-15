@@ -199,6 +199,11 @@ func DelEventOlder(ts int64, batch int) error {
 	return err
 }
 
+func EventDelById(id interface{}) error {
+	_, err := DB["mon"].Where("id=?", id).Delete(new(Event))
+	return err
+}
+
 func EventAlertUpgradeUnMarshal(str string) (EventAlertUpgrade, error) {
 	var obj EventAlertUpgrade
 	if strings.TrimSpace(str) == "" {

@@ -33,3 +33,19 @@
 3.3.1
 影响模块：n9e-job n9e-rdb n9e-agent n9e-ams n9e-judge
 更新内容：修复job模块的一个调度bug；rdb支持根据org搜索user；agent在fields变化时及时感知，fields和host扩展字段联动；解决上个版本引入的judge处理nodata的问题
+
+3.4.0
+升级内容：
+  - 增强了安全性，引入了session机制，写入cookie的内容从user.uuid变更为随机session.id
+  - 修复部分sql注入漏洞
+  - 告警引擎函数优化，all、c_avg_rate_abs等
+  - 告警消息内容优化，可以展示设备名称和设备备注，感谢冯骐的PR
+  - 增加了大盘导入导出功能
+升级方法：
+  - 除了agent、tsdb、index的二进制不用升级，其他所有模块的二进制都要升级
+  - job ams monapi rdb 四个模块的配置文件中的cookieName全部换成ecmc-sid
+  - rdb的配置文件发生了较大变化，需要对照升级
+  - sql目录下有几个3.4.0的sql，需要导入
+
+
+

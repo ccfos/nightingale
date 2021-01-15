@@ -47,7 +47,7 @@ func shouldBeService() gin.HandlerFunc {
 }
 
 func mustUsername(c *gin.Context) string {
-	username := cookieUsername(c)
+	username := sessionUsername(c)
 	if username == "" {
 		username = headerUsername(c)
 	}
@@ -59,8 +59,12 @@ func mustUsername(c *gin.Context) string {
 	return username
 }
 
-func cookieUsername(c *gin.Context) string {
-	return models.UsernameByUUID(readCookieUser(c))
+func sessionUsername(c *gin.Context) string {
+	sess, err := models.SessionGetWithCache(readSessionId(c))
+	if err != nil {
+		return ""
+	}
+	return sess.Username
 }
 
 func headerUsername(c *gin.Context) string {
@@ -84,11 +88,10 @@ func headerUsername(c *gin.Context) string {
 
 // ------------
 
-func readCookieUser(c *gin.Context) string {
-	uuid, err := c.Cookie(config.Config.HTTP.CookieName)
+func readSessionId(c *gin.Context) string {
+	sid, err := c.Cookie(config.Config.HTTP.CookieName)
 	if err != nil {
 		return ""
 	}
-
-	return uuid
+	return sid
 }

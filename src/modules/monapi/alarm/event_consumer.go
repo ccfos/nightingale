@@ -277,18 +277,28 @@ func needUpgrade(event *models.Event) bool {
 }
 
 func SetEventStatus(event *models.Event, status string) {
-	if err := models.SaveEventStatus(event.Id, status); err != nil {
-		logger.Errorf("set event status fail, event: %+v, status: %v, err:%v", event, status, err)
-	} else {
-		logger.Infof("set event status succ, event hasid: %v, status: %v", event.HashId, status)
-	}
-
 	if event.EventType == config.ALERT {
 		if err := models.SaveEventCurStatus(event.HashId, status); err != nil {
 			logger.Errorf("set event_cur status fail, event: %+v, status: %v, err:%v", event, status, err)
 		} else {
 			logger.Infof("set event_cur status succ, event hashid: %v, status: %v", event.HashId, status)
 		}
+	}
+
+	if config.Get().Cleaner.Converge && status == models.STATUS_CONVERGE {
+		// 已收敛的告警，直接从库里删了，不保留了
+		if err := models.EventDelById(event.Id); err != nil {
+			logger.Errorf("converge_del fail, id: %v, hash id: %v, error: %v", event.Id, event.HashId, err)
+		} else {
+			logger.Infof("converge_del succ, id: %v, hash id: %v", event.Id, event.HashId)
+		}
+		return
+	}
+
+	if err := models.SaveEventStatus(event.Id, status); err != nil {
+		logger.Errorf("set event status fail, event: %+v, status: %v, err:%v", event, status, err)
+	} else {
+		logger.Infof("set event status succ, event hasid: %v, status: %v", event.HashId, status)
 	}
 }
 

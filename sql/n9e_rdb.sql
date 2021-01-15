@@ -6,23 +6,31 @@ use n9e_rdb;
 
 CREATE TABLE `user`
 (
-    `id`           int unsigned not null AUTO_INCREMENT,
-    `uuid`         varchar(128) not null comment 'use in cookie',
-    `username`     varchar(64)  not null comment 'login name, cannot rename',
-    `password`     varchar(128) not null default '',
-    `dispname`     varchar(32)  not null default '' comment 'display name, chinese name',
-    `phone`        varchar(16)  not null default '',
-    `email`        varchar(64)  not null default '',
-    `im`           varchar(64)  not null default '',
-    `portrait`     varchar(2048) not null default '',
-    `intro`        varchar(2048) not null default '',
-    `organization` varchar(255) not null default '',
-    `typ`          tinyint(1)   not null default 0 comment '0: long-term account; 1: temporary account',
-    `status`       tinyint(1)   not null default 0 comment '0: active; 1: inactive 2: disable',
-    `is_root`      tinyint(1)   not null,
-    `leader_id`    int unsigned not null default 0,
-    `leader_name`  varchar(32)  not null default '',
-    `create_at`    timestamp    not null default CURRENT_TIMESTAMP,
+    `id`            int unsigned not null AUTO_INCREMENT,
+    `uuid`          varchar(128) not null comment 'use in cookie',
+    `username`      varchar(64)  not null comment 'login name, cannot rename',
+    `password`      varchar(128) not null default '',
+    `passwords`     varchar(512) not null default '',
+    `dispname`      varchar(32)  not null default '' comment 'display name, chinese name',
+    `phone`         varchar(16)  not null default '',
+    `email`         varchar(64)  not null default '',
+    `im`            varchar(64)  not null default '',
+    `portrait`      varchar(2048) not null default '',
+    `intro`         varchar(2048) not null default '',
+    `organization`  varchar(255) not null default '',
+    `typ`           tinyint(1)   not null default 0 comment '0: long-term account; 1: temporary account',
+    `status`        tinyint(1)   not null default 0 comment '0: active, 1: inactive, 2: locked, 3: frozen, 5: writen-off',
+    `is_root`       tinyint(1)   not null,
+    `leader_id`     int unsigned not null default 0,
+    `leader_name`   varchar(32)  not null default '',
+    `login_err_num` int unsigned not null default 0,
+    `active_begin`  bigint       not null default 0,
+    `active_end`    bigint       not null default 0,
+    `locked_at`     bigint       not null default 0,
+    `updated_at`    bigint       not null default 0,
+    `pwd_updated_at` bigint      not null default 0,
+    `logged_at`     bigint       not null default 0,
+    `create_at`     timestamp    not null default CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`username`),
     UNIQUE KEY (`uuid`)
@@ -269,6 +277,7 @@ CREATE TABLE `login_log`
     `client`   varchar(128) not null comment 'client ip',
     `clock`    bigint       not null comment 'login timestamp',
     `loginout` char(3)      not null comment 'in or out',
+    `err`      varchar(128) not null comment 'err msg',
     PRIMARY KEY (`id`),
     KEY (`username`),
     KEY (`clock`)
@@ -315,3 +324,34 @@ CREATE TABLE `captcha` (
   KEY (`captcha_id`, `answer`),
   KEY (`created_at`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
+
+CREATE TABLE `white_list` (
+  `id`           bigint unsigned not null AUTO_INCREMENT,
+  `start_ip`     varchar(32)      DEFAULT '0'    NOT NULL,
+  `end_ip`       varchar(32)      DEFAULT '0'    NOT NULL,
+  `start_ip_int` bigint           DEFAULT '0'    NOT NULL,
+  `end_ip_int`   bigint           DEFAULT '0'    NOT NULL,
+  `start_time`   bigint           DEFAULT '0'    NOT NULL,
+  `end_time`     bigint           DEFAULT '0'    NOT NULL,
+  `created_at`   bigint           DEFAULT '0'    NOT NULL,
+  `updated_at`   bigint           DEFAULT '0'    NOT NULL,
+  `creator`      varchar(64)      DEFAULT ''    NOT NULL,
+  `updater`      varchar(64)      DEFAULT ''    NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY (`start_ip_int`, `end_ip_int`),
+  KEY (`start_time`, `end_time`),
+  KEY (`created_at`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8;
+
+CREATE TABLE `session` (
+   `sid`          char(128) NOT NULL,
+   `access_token` char(128) DEFAULT '',
+   `username`     varchar(64) DEFAULT '',
+   `remote_addr`  varchar(32) DEFAULT '',
+   `created_at`   integer unsigned DEFAULT '0',
+   `updated_at`   integer unsigned DEFAULT '0' NOT NULL,
+   PRIMARY KEY (`sid`),
+   KEY (`access_token`),
+   KEY (`username`),
+   KEY (`updated_at`)
+) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8;

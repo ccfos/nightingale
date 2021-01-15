@@ -310,8 +310,12 @@ func genNameAndNoteByResources(resources []models.Resource) (name, note string) 
 	notes = config.Set(notes)
 
 	if len(resources) == 1 {
-		name = names[0]
-		note = notes[0]
+		if len(names) > 0 {
+			name = names[0]
+		}
+		if len(notes) > 0 {
+			note = notes[0]
+		}
 		return
 	}
 	name = fmt.Sprintf("%s（%v）", strings.Join(names, ","), len(names))

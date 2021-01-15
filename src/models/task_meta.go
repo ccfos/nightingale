@@ -151,8 +151,8 @@ func (m *TaskMeta) Save(hosts []string, action string) error {
 	}
 
 	for _, host := range hosts {
-		sql := fmt.Sprintf("INSERT INTO %s(id, host, status) VALUES(%d, '%s', 'waiting')", tht(id), id, host)
-		if _, err := session.Exec(sql); err != nil {
+		sql := fmt.Sprintf("INSERT INTO %s(id, host, status) VALUES(%d, ?, 'waiting')", tht(id), id)
+		if _, err := session.Exec(sql, host); err != nil {
 			session.Rollback()
 			return err
 		}

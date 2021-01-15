@@ -1,5 +1,10 @@
 package dataobj
 
+import (
+	"fmt"
+	"time"
+)
+
 type QueryData struct {
 	Start      int64    `json:"start"`
 	End        int64    `json:"end"`
@@ -97,10 +102,34 @@ type XcludeResp struct {
 }
 
 type IndexByFullTagsRecv struct {
-	Endpoints []string  `json:"endpoints"`
-	Nids      []string  `json:"nids"`
-	Metric    string    `json:"metric"`
-	Tagkv     []TagPair `json:"tagkv"`
+	Endpoints      []string  `json:"endpoints"`
+	Nids           []string  `json:"nids"`
+	Metric         string    `json:"metric"`
+	Tagkv          []TagPair `json:"tagkv"`
+	Start          int64     `json:"start" description:"inclusive"`
+	End            int64     `json:"end" description:"exclusive"`
+	StartInclusive time.Time `json:"-"`
+	EndExclusive   time.Time `json:"-"`
+}
+
+func (p *IndexByFullTagsRecv) Validate() error {
+	if p.End == 0 {
+		p.EndExclusive = time.Now()
+	} else {
+		p.EndExclusive = time.Unix(p.End, 0)
+	}
+
+	if p.Start == 0 {
+		p.StartInclusive = p.EndExclusive.Add(-time.Hour * 25)
+	} else {
+		p.StartInclusive = time.Unix(p.Start, 0)
+	}
+
+	if p.StartInclusive.After(p.EndExclusive) {
+		return fmt.Errorf("start is after end")
+	}
+
+	return nil
 }
 
 type IndexByFullTagsResp struct {
@@ -110,4 +139,5 @@ type IndexByFullTagsResp struct {
 	Tags      []string `json:"tags"`
 	Step      int      `json:"step"`
 	DsType    string   `json:"dstype"`
+	Count     int      `json:"count"`
 }

@@ -27,7 +27,7 @@ func (t *Transfer) Push(args []*dataobj.MetricValue, reply *dataobj.TransferResp
 		stats.Counter.Set("points.in", 1)
 		if err := v.CheckValidity(start.Unix()); err != nil {
 			stats.Counter.Set("points.in.err", 1)
-			msg := fmt.Sprintf("illegal item:%s err:%v", v, err)
+			msg := fmt.Sprintf("illegal item:%+v err:%v", v, err)
 			logger.Warningf(msg)
 			reply.Invalid += 1
 			reply.Msg += msg
@@ -74,7 +74,7 @@ func PushData(args []*dataobj.MetricValue) (int, string) {
 		stats.Counter.Set("points.in", 1)
 		if err := v.CheckValidity(start.Unix()); err != nil {
 			stats.Counter.Set("points.in.err", 1)
-			msg := fmt.Sprintf("illegal item:%s err:%v", v, err)
+			msg := fmt.Sprintf("illegal item:%+v err:%v", v, err)
 			logger.Warningf(msg)
 			errCount += 1
 			errMsg += msg

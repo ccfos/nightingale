@@ -256,19 +256,29 @@ func (p *Client) queryIndexByClude(session client.Session, input dataobj.CludeRe
 
 // QueryIndexByFullTags: && (|| endpoints...) (metric) (&& Tagkv...)
 // return all the tags that matches
-func (p *Client) QueryIndexByFullTags(inputs []dataobj.IndexByFullTagsRecv) []dataobj.IndexByFullTagsResp {
+func (p *Client) QueryIndexByFullTags(inputs []dataobj.IndexByFullTagsRecv) ([]dataobj.IndexByFullTagsResp, int) {
 	session, err := p.session()
 	if err != nil {
 		logger.Errorf("unable to get m3db session: %s", err)
-		return nil
+		return nil, 0
 	}
 
-	ret := make([]dataobj.IndexByFullTagsResp, len(inputs))
+	list := make([]dataobj.IndexByFullTagsResp, len(inputs))
+	count := 0
+
+	var resp dataobj.IndexByFullTagsResp
 	for i, input := range inputs {
-		ret[i] = p.queryIndexByFullTags(session, input)
+		if err := input.Validate(); err != nil {
+			logger.Errorf("input validate err %s", err)
+			continue
+		}
+
+		resp = p.queryIndexByFullTags(session, input)
+		list[i] = resp
+		count += resp.Count
 	}
 
-	return ret
+	return list, count
 }
 
 func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.IndexByFullTagsRecv) (ret dataobj.IndexByFullTagsResp) {
@@ -293,6 +303,7 @@ func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.Inde
 
 	ret.Endpoints = input.Endpoints
 	ret.Nids = input.Nids
+	ret.Count = iter.Remaining()
 	tags := map[string]struct{}{}
 	for iter.Next() {
 		_, _, tagIter := iter.Current()

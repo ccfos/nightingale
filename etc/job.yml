@@ -6,7 +6,7 @@ logger:
 http:
   mode: release
   cookieDomain: ""
-  cookieName: ecmc-user
+  cookieName: ecmc-sid
 
 output:
   # database | remote

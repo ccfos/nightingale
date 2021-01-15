@@ -54,8 +54,8 @@ func sendSms(message *dataobj.Message) {
 
 func sendSmsByAPI(message *dataobj.Message) {
 	api := config.Config.Sender["sms"].API
-	res, code, err := httplib.PostJSON(api, time.Second, message, nil)
-	logger.Infof("SendSmsByAPI, api:%s, sms:%+v, error:%v, response:%s, statuscode:%d", api, message, err, string(res), code)
+	res, err := httplib.Post(api).JSONBodyQuiet(message).SetTimeout(time.Second * 3).String()
+	logger.Infof("SendSmsByAPI, api:%s, sms:%+v, error:%v, response:%s", api, message, err, res)
 }
 
 func sendSmsByShell(message *dataobj.Message) {
