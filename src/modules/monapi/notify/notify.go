@@ -309,17 +309,23 @@ func genNameAndNoteByResources(resources []models.Resource) (name, note string) 
 	names = config.Set(names)
 	notes = config.Set(notes)
 
-	if len(resources) == 1 {
-		if len(names) > 0 {
-			name = names[0]
-		}
-		if len(notes) > 0 {
-			note = notes[0]
-		}
-		return
+	switch len(names) {
+	case 0:
+		name = ""
+	case 1:
+		name = names[0]
+	default:
+		name = fmt.Sprintf("%s（%v）", strings.Join(names, ","), len(names))
 	}
-	name = fmt.Sprintf("%s（%v）", strings.Join(names, ","), len(names))
-	note = fmt.Sprintf("%s（%v）", strings.Join(notes, ","), len(notes))
+
+	switch len(notes) {
+	case 0:
+		note = ""
+	case 1:
+		note = notes[0]
+	default:
+		note = fmt.Sprintf("%s（%v）", strings.Join(notes, ","), len(notes))
+	}
 	return
 }
 
