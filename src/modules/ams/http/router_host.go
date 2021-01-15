@@ -190,7 +190,7 @@ func hostNodePut(c *gin.Context) {
 
 	for _, h := range hosts {
 		if h.Tenant != "" {
-			bomb("function only for agent first bind, some agent tenant not null, please clear tenant manual")
+			bomb("%s already belongs to %s", h.Name, h.Tenant)
 		}
 	}
 
