@@ -292,6 +292,17 @@ func ResourceRegister(hosts []Host, tenant string) error {
 			return err
 		}
 
+		// ident agent修改ident带来重复问题
+		if res == nil {
+			ident := hosts[i].Ident
+			if ident != "" {
+				res, err = ResourceGet("ident=?", ident)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 		if res == nil {
 			res = &Resource{
 				UUID:   uuid,
@@ -326,6 +337,7 @@ func ResourceRegister(hosts []Host, tenant string) error {
 					return err
 				}
 			}
+			res.UUID = uuid
 			res.Ident = hosts[i].Ident
 			res.Name = hosts[i].Name
 			res.Cate = hosts[i].Cate
@@ -343,7 +355,7 @@ func ResourceRegister(hosts []Host, tenant string) error {
 			}
 
 			res.Extend = string(js)
-			err = res.Update("ident", "name", "cate", "extend", "tenant")
+			err = res.Update("uuid", "ident", "name", "cate", "extend", "tenant")
 			if err != nil {
 				return err
 			}
