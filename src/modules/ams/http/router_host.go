@@ -177,7 +177,6 @@ func hostNodePut(c *gin.Context) {
 	if node == nil {
 		bomb("node is nil")
 	}
-	loginUser(c).CheckPermByNode(node, "rdb_resource_bind")
 
 	if node.Leaf != 1 {
 		bomb("node is not leaf")
@@ -187,6 +186,12 @@ func hostNodePut(c *gin.Context) {
 	dangerous(err)
 	if len(hosts) == 0 {
 		bomb("hosts is empty")
+	}
+
+	for _, h := range hosts {
+		if h.Tenant != "" {
+			bomb("function only for agent first bind, some agent tenant not null, please clear tenant manual")
+		}
 	}
 
 	// 绑定租户
@@ -209,9 +214,6 @@ func hostNodePut(c *gin.Context) {
 	if len(resIds) == 0 {
 		bomb("res ids is empty")
 	}
-
-	err = models.NodeResourceUnbindByRids(resIds)
-	dangerous(err)
 
 	renderMessage(c, node.Bind(resIds))
 }
