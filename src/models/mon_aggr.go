@@ -130,7 +130,7 @@ func (a *AggrCalc) Update(cols ...string) error {
 		return err
 	}
 
-	err = saveHist(a.Id, "calc", "update", a.Creator, string(straByte), session)
+	err = saveHistory(a.Id, "calc", "update", a.Creator, string(straByte), session)
 	if err != nil {
 		session.Rollback()
 		return err
@@ -170,7 +170,7 @@ func AggrCalcDel(id int64) error {
 		return err
 	}
 
-	err = saveHist(obj.Id, "calc", "delete", obj.Creator, string(straByte), session)
+	err = saveHistory(obj.Id, "calc", "delete", obj.Creator, string(straByte), session)
 	if err != nil {
 		session.Rollback()
 		return err

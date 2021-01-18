@@ -3,9 +3,9 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/didi/nightingale/src/common/dataobj"
+	"xorm.io/xorm"
 )
 
 const (
@@ -24,9 +24,9 @@ type CollectRule struct {
 	Data        json.RawMessage `json:"data"`
 	Tags        string          `json:"tags" description:"k1=v1,k2=v2,k3=v3,..."`
 	Creator     string          `json:"creator" description:"just for output"`
-	LastUpdator string          `json:"last_updator" description:"just for output"`
-	Created     time.Time       `json:"created" description:"just for output"`
-	LastUpdated time.Time       `json:"last_updated" description:"just for output"`
+	Updater     string          `json:"updater" description:"just for output"`
+	CreatedAt   int64           `json:"created_at" description:"just for output"`
+	UpdatedAt   int64           `json:"updated_at" description:"just for output"`
 }
 
 type validator interface {
@@ -51,23 +51,49 @@ func (p *CollectRule) Validate(v ...interface{}) error {
 	}
 
 	if len(v) > 0 && v[0] != nil {
-		if err := json.Unmarshal(p.Data, v[0]); err != nil {
+		obj := v[0]
+		if err := json.Unmarshal(p.Data, obj); err != nil {
 			return err
 		}
-		if o, ok := v[0].(validator); ok {
+		if o, ok := obj.(validator); ok {
 			if err := o.Validate(); err != nil {
 				return err
 			}
 		}
+		b, err := json.Marshal(obj)
+		if err != nil {
+			return err
+		}
+		p.Data = json.RawMessage(b)
 	}
 
 	return nil
 }
 
-func GetCollectRules() ([]*CollectRule, error) {
+func DumpCollectRules() ([]*CollectRule, error) {
 	rules := []*CollectRule{}
 	err := DB["mon"].Find(&rules)
 	return rules, err
+}
+
+func GetCollectRules(typ string, nid int64, limit, offset int) (total int64, list []*CollectRule, err error) {
+	search := func() *xorm.Session {
+		session := DB["mon"].Where("1=1")
+		if nid != 0 {
+			session = session.And("nid=?", nid)
+		}
+		if typ != "" {
+			return session.And("collect_type=?", typ)
+		}
+		return session
+	}
+
+	if total, err = search().Count(new(CollectRule)); err != nil {
+		return
+	}
+
+	err = search().Desc("created").Limit(limit, offset).Find(&list)
+	return
 }
 
 func (p *CollectRule) Update() error {
@@ -90,7 +116,7 @@ func (p *CollectRule) Update() error {
 		return err
 	}
 
-	if err := saveHist(p.Id, p.CollectType, "update", p.Creator, string(b), session); err != nil {
+	if err := saveHistory(p.Id, p.CollectType, "update", p.Creator, string(b), session); err != nil {
 		session.Rollback()
 		return err
 	}

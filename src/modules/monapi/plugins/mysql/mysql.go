@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/didi/nightingale/src/modules/monapi/collector"
+	"github.com/didi/nightingale/src/modules/monapi/plugins"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs/mysql"
@@ -64,10 +65,10 @@ var (
 )
 
 type MysqlRule struct {
-	Servers                             []string `label:"Servers" json:"servers,required" description:"specify servers via a url matching\n[username[:password]@][protocol[(address)]]/[?tls=[true|false|skip-verify|custom]]\nsee https://github.com/go-sql-driver/mysql#dsn-data-source-name" example:"servers = ['user:passwd@tcp(127.0.0.1:3306)/?tls=false']\nservers = ["user@tcp(127.0.0.1:3306)/?tls=false"]"`
-	PerfEventsStatementsDigestTextLimit int64    `label:"-" json:"-"`
-	PerfEventsStatementsLimit           int64    `label:"-" json:"-"`
-	PerfEventsStatementsTimeLimit       int64    `label:"-" json:"-"`
+	Servers                             []string `label:"Servers" json:"servers,required" description:"specify servers via a url matching\n[username[:password]@][protocol[(address)]]/[?tls=[true|false|skip-verify|custom]]\nsee https://github.com/go-sql-driver/mysql#dsn-data-source-name" example:"user:passwd@tcp(127.0.0.1:3306)/?tls=false"`
+	PerfEventsStatementsDigestTextLimit int64    `label:"Perf Events Statements Digest Text Limit" json:"perf_events_statements_digest_text_limit" default:"120" description:"the limits for metrics form perf_events_statements"`
+	PerfEventsStatementsLimit           int64    `label:"Perf Events Statements Limit" json:"perf_events_statements_limit" default:"250" description:"the limits for metrics form perf_events_statements"`
+	PerfEventsStatementsTimeLimit       int64    `label:"Perf Events Statements Timelimit" json:"perf_events_statements_time_limit" default:"86400" description:"the limits for metrics form perf_events_statements"`
 	TableSchemaDatabases                []string `label:"Databases" json:"table_schema_databases" description:"if the list is empty, then metrics are gathered from all database tables"`
 	GatherProcessList                   bool     `label:"Process List" json:"gather_process_list" description:"gather thread state counts from INFORMATION_SCHEMA.PROCESSLIST"`
 	GatherUserStatistics                bool     `label:"User Statistics" json:"gather_user_statistics" description:"gather user statistics from INFORMATION_SCHEMA.USER_STATISTICS"`
@@ -82,14 +83,23 @@ type MysqlRule struct {
 	GatherTableSchema                   bool     `label:"Tables" json:"gather_table_schema" description:"gather metrics from INFORMATION_SCHEMA.TABLES for databases provided above list"`
 	GatherFileEventsStats               bool     `label:"File Events Stats" json:"gather_file_events_stats" description:"gather metrics from PERFORMANCE_SCHEMA.FILE_SUMMARY_BY_EVENT_NAME"`
 	GatherPerfEventsStatements          bool     `label:"Perf Events Statements" json:"gather_perf_events_statements" description:"gather metrics from PERFORMANCE_SCHEMA.EVENTS_STATEMENTS_SUMMARY_BY_DIGEST"`
-	GatherGlobalVars                    bool     `label:"-" json:"-"`
-	IntervalSlow                        string   `label:"Interval Slow" json:"interval_slow" desc:"Some queries we may want to run less often (such as SHOW GLOBAL VARIABLES)" example:"interval_slow = '30m'" json:"-"`
+	GatherGlobalVars                    bool     `label:"Global Vars" json:"gather_global_variables" description:"gather metrics from PERFORMANCE_SCHEMA.GLOBAL_VARIABLES" default:"true"`
+	IntervalSlow                        string   `label:"Interval Slow" json:"interval_slow" desc:"Some queries we may want to run less often (such as SHOW GLOBAL VARIABLES)" example:"30m"`
 	MetricVersion                       int      `label:"-" json:"-"`
 }
 
 func (p *MysqlRule) Validate() error {
 	if len(p.Servers) == 0 || p.Servers[0] == "" {
 		return fmt.Errorf("mysql.rule.servers must be set")
+	}
+	if p.PerfEventsStatementsDigestTextLimit == 0 {
+		p.PerfEventsStatementsDigestTextLimit = 120
+	}
+	if p.PerfEventsStatementsLimit == 0 {
+		p.PerfEventsStatementsLimit = 250
+	}
+	if p.PerfEventsStatementsTimeLimit == 0 {
+		p.PerfEventsStatementsTimeLimit = 86400
 	}
 	return nil
 }
@@ -101,9 +111,9 @@ func (p *MysqlRule) TelegrafInput() (telegraf.Input, error) {
 
 	return &mysql.Mysql{
 		Servers:                             p.Servers,
-		PerfEventsStatementsDigestTextLimit: 120,
-		PerfEventsStatementsLimit:           250,
-		PerfEventsStatementsTimeLimit:       86400,
+		PerfEventsStatementsDigestTextLimit: p.PerfEventsStatementsDigestTextLimit,
+		PerfEventsStatementsLimit:           p.PerfEventsStatementsLimit,
+		PerfEventsStatementsTimeLimit:       p.PerfEventsStatementsTimeLimit,
 		TableSchemaDatabases:                p.TableSchemaDatabases,
 		GatherProcessList:                   p.GatherProcessList,
 		GatherUserStatistics:                p.GatherUserStatistics,
@@ -118,8 +128,9 @@ func (p *MysqlRule) TelegrafInput() (telegraf.Input, error) {
 		GatherTableSchema:                   p.GatherTableSchema,
 		GatherFileEventsStats:               p.GatherFileEventsStats,
 		GatherPerfEventsStatements:          p.GatherPerfEventsStatements,
-		GatherGlobalVars:                    true,
-		IntervalSlow:                        "0m",
+		GatherGlobalVars:                    p.GatherGlobalVars,
+		IntervalSlow:                        "",
 		MetricVersion:                       2,
+		Log:                                 plugins.GetLogger(),
 	}, nil
 }
