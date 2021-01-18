@@ -117,7 +117,7 @@ func pconf() {
 
 func start() {
 	runner.Init()
-	fmt.Println("transfer start, use configuration file:", *conf)
+	fmt.Println("judge start, use configuration file:", *conf)
 	fmt.Println("runner.Cwd:", runner.Cwd)
 	fmt.Println("runner.Hostname:", runner.Hostname)
 }

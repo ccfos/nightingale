@@ -192,6 +192,20 @@ func StraGet(col string, val interface{}) (*Stra, error) {
 	return &obj, nil
 }
 
+func StraFindOne(where string, args ...interface{}) (*Stra, error) {
+	var obj Stra
+	has, err := DB["mon"].Where(where, args...).Get(&obj)
+	if err != nil {
+		return nil, err
+	}
+
+	if !has {
+		return nil, nil
+	}
+
+	return &obj, nil
+}
+
 func StraDel(id int64) error {
 	session := DB["mon"].NewSession()
 	defer session.Close()

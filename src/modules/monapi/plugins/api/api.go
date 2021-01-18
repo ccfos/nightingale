@@ -29,6 +29,7 @@ func (p ApiCollector) Get(id int64) (interface{}, error) {
 	if !has {
 		return nil, err
 	}
+	collect.Decode()
 	return collect, err
 }
 

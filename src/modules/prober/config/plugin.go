@@ -1,4 +1,4 @@
-package cache
+package config
 
 import (
 	"fmt"
@@ -6,15 +6,24 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/modules/monapi/collector"
-	"github.com/didi/nightingale/src/modules/prober/config"
 	"github.com/didi/nightingale/src/modules/prober/expr"
 	"github.com/influxdata/telegraf"
 	"github.com/toolkits/pkg/logger"
 	"gopkg.in/yaml.v2"
 )
 
-type MetricConfig struct {
+var (
+	pluginConfigs map[string]*PluginConfig
+)
+
+const (
+	PluginModeWhitelist = iota
+	PluginModeOverlay
+)
+
+type Metric struct {
 	Name      string         `yaml:"name"`
 	Type      string         `yaml:"type"`
 	Comment   string         `yaml:"comment"`
@@ -23,23 +32,19 @@ type MetricConfig struct {
 }
 
 type PluginConfig struct {
-	Metrics []*MetricConfig `yaml:"metrics"`
-	Mode    string          `yaml:"mode"`
-	mode    int             `yaml:"-"`
+	Name        string
+	Mode        int
+	Metrics     map[string]*Metric
+	ExprMetrics map[string]*Metric
 }
 
-type CachePluginConfig struct {
-	Name    string
-	Mode    int
-	Metrics map[string]*MetricConfig
+type pluginConfig struct {
+	Metrics []*Metric `yaml:"metrics"`
+	Mode    string    `yaml:"mode"`
+	mode    int       `yaml:"-"`
 }
 
-const (
-	PluginModeWhitelist = iota
-	PluginModeOverlay
-)
-
-func (p *PluginConfig) Validate() error {
+func (p *pluginConfig) Validate() error {
 	switch strings.ToLower(p.Mode) {
 	case "whitelist":
 		p.mode = PluginModeWhitelist
@@ -51,19 +56,12 @@ func (p *PluginConfig) Validate() error {
 	return nil
 }
 
-var (
-	metricsConfig map[string]*MetricConfig
-	metricsExpr   map[string]*CachePluginConfig
-)
-
-func InitPluginsConfig(cf *config.ConfYaml) {
-	metricsConfig = make(map[string]*MetricConfig)
-	metricsExpr = make(map[string]*CachePluginConfig)
-	plugins := collector.GetRemoteCollectors()
-	for _, plugin := range plugins {
-		cacheConfig := newCachePluginConfig()
-		config := PluginConfig{}
-		metricsExpr[plugin] = cacheConfig
+func InitPluginsConfig(cf *ConfYaml) {
+	pluginConfigs = make(map[string]*PluginConfig)
+	for _, plugin := range collector.GetRemoteCollectors() {
+		c := pluginConfig{}
+		config := newPluginConfig()
+		pluginConfigs[plugin] = config
 
 		file := filepath.Join(cf.PluginsConfig, plugin+".yml")
 		b, err := ioutil.ReadFile(file)
@@ -72,49 +70,53 @@ func InitPluginsConfig(cf *config.ConfYaml) {
 			continue
 		}
 
-		if err := yaml.Unmarshal(b, &config); err != nil {
+		if err := yaml.Unmarshal(b, &c); err != nil {
 			logger.Warningf("yaml.Unmarshal %s err %s", plugin, err)
 			continue
 		}
 
-		if err := config.Validate(); err != nil {
+		if err := c.Validate(); err != nil {
 			logger.Warningf("%s Validate() err %s", plugin, err)
 			continue
 		}
-		cacheConfig.Name = plugin
-		cacheConfig.Mode = config.mode
+		config.Name = plugin
+		config.Mode = c.mode
 
-		for _, v := range config.Metrics {
-			if _, ok := metricsConfig[v.Name]; ok {
-				panic(fmt.Sprintf("plugin %s metrics %s is already exists", plugin, v.Name))
-			}
-			if v.Expr == "" {
-				// nomore
-				metricsConfig[v.Name] = v
-			} else {
+		for _, v := range c.Metrics {
+			if v.Expr != "" {
 				err := v.parse()
 				if err != nil {
 					panic(fmt.Sprintf("plugin %s metrics %s expr %s parse err %s",
 						plugin, v.Name, v.Expr, err))
 				}
-				cacheConfig.Metrics[v.Name] = v
+				config.ExprMetrics[v.Name] = v
+			} else {
+				config.Metrics[v.Name] = v
 			}
 		}
 		logger.Infof("loaded plugin config %s", file)
 	}
 }
 
-func (p *MetricConfig) parse() (err error) {
+func (p *Metric) parse() (err error) {
 	p.notations, err = expr.NewNotations([]byte(p.Expr))
 	return
 }
 
-func (p *MetricConfig) Calc(vars map[string]float64) (float64, error) {
+func (p *Metric) Calc(vars map[string]*dataobj.MetricValue) (float64, error) {
 	return p.notations.Calc(vars)
 }
 
-func Metric(metric string, typ telegraf.ValueType) (c *MetricConfig, ok bool) {
-	c, ok = metricsConfig[metric]
+func GetMetric(plugin, metric string, typ telegraf.ValueType) (c *Metric, ok bool) {
+	p, ok := pluginConfigs[plugin]
+	if !ok {
+		return
+	}
+
+	c, ok = p.Metrics[metric]
+	if !ok {
+		c, ok = p.ExprMetrics[metric]
+	}
 	if !ok {
 		return
 	}
@@ -126,8 +128,8 @@ func Metric(metric string, typ telegraf.ValueType) (c *MetricConfig, ok bool) {
 	return
 }
 
-func GetMetricExprs(pluginName string) (c *CachePluginConfig, ok bool) {
-	c, ok = metricsExpr[pluginName]
+func GetPluginConfig(pluginName string) (c *PluginConfig, ok bool) {
+	c, ok = pluginConfigs[pluginName]
 	return
 }
 
@@ -148,8 +150,9 @@ func metricType(typ telegraf.ValueType) string {
 	}
 }
 
-func newCachePluginConfig() *CachePluginConfig {
-	return &CachePluginConfig{
-		Metrics: map[string]*MetricConfig{},
+func newPluginConfig() *PluginConfig {
+	return &PluginConfig{
+		Metrics:     map[string]*Metric{},
+		ExprMetrics: map[string]*Metric{},
 	}
 }
