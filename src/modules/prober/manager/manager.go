@@ -82,7 +82,7 @@ func (p *manager) schedule() error {
 		if p.heap.Len() == 0 {
 			return nil
 		}
-		if p.heap.Top().executeAt > now {
+		if p.heap.Top().activeAt > now {
 			return nil
 		}
 
@@ -108,7 +108,12 @@ func (p *manager) schedule() error {
 
 		p.collectRuleCh <- rule
 
-		summary.executeAt = now + int64(ruleConfig.Step)
+		logger.Debugf("%s %s %d lastAt %ds before nextAt %ds later",
+			rule.CollectType, rule.Name, rule.Id,
+			now-rule.lastAt, ruleConfig.Step)
+
+		summary.activeAt = now + int64(ruleConfig.Step)
+		rule.lastAt = now
 		heap.Push(&p.heap, summary)
 
 		continue
@@ -134,8 +139,8 @@ func (p *manager) AddRule(rule *models.CollectRule) error {
 
 	p.index[rule.Id] = ruleEntity
 	heap.Push(&p.heap, &ruleSummary{
-		id:        rule.Id,
-		executeAt: time.Now().Unix() + int64(rule.Step),
+		id:       rule.Id,
+		activeAt: time.Now().Unix() + int64(rule.Step),
 	})
 	return nil
 }

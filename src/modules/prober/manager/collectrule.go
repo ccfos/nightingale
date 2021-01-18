@@ -22,6 +22,7 @@ type collectRule struct {
 	tags      map[string]string
 	precision time.Duration
 	metrics   []*dataobj.MetricValue
+	lastAt    int64
 }
 
 func newCollectRule(rule *models.CollectRule) (*collectRule, error) {
@@ -120,7 +121,7 @@ func (p *collectRule) prepareMetrics() error {
 }
 
 func (p *collectRule) update(rule *models.CollectRule) error {
-	if p.CollectRule.LastUpdated == rule.LastUpdated {
+	if p.CollectRule.UpdatedAt == rule.UpdatedAt {
 		return nil
 	}
 
@@ -257,7 +258,7 @@ func (p *collectRule) AddError(err error) {
 	if err == nil {
 		return
 	}
-	logger.Debugf("Error in plugin: %v", err)
+	logger.Debugf("collectRule %s.%s(%d) Error: %s", p.CollectType, p.Name, p.Id, err)
 }
 
 func (p *collectRule) SetPrecision(precision time.Duration) {
