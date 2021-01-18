@@ -115,8 +115,7 @@ func PrivilegeDels(ids []int64) error {
 		}
 
 		if p == nil {
-			session.Rollback()
-			return fmt.Errorf("privilege[%d] is nil", id)
+			continue
 		}
 
 		ps, err := PrivilegeGets("pid=?", p.Id)
