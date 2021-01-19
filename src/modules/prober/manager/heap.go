@@ -1,8 +1,8 @@
 package manager
 
 type ruleSummary struct {
-	id        int64 // collect rule id
-	executeAt int64
+	id       int64 // collect rule id
+	activeAt int64
 }
 
 type ruleSummaryHeap []*ruleSummary
@@ -12,7 +12,7 @@ func (h ruleSummaryHeap) Len() int {
 }
 
 func (h ruleSummaryHeap) Less(i, j int) bool {
-	return h[i].executeAt < h[j].executeAt
+	return h[i].activeAt < h[j].activeAt
 }
 
 func (h ruleSummaryHeap) Swap(i, j int) {
@@ -30,5 +30,5 @@ func (h *ruleSummaryHeap) Pop() interface{} {
 }
 
 func (h *ruleSummaryHeap) Top() *ruleSummary {
-	return (*h)[len(*h)-1]
+	return (*h)[0]
 }

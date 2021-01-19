@@ -3,6 +3,7 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/didi/nightingale/src/models"
 	"github.com/influxdata/telegraf"
@@ -91,8 +92,11 @@ func (p BaseCollector) Create(data []byte, username string) error {
 		return fmt.Errorf("permission deny")
 	}
 
+	now := time.Now().Unix()
 	collect.Creator = username
-	collect.LastUpdator = username
+	collect.CreatedAt = now
+	collect.Updater = username
+	collect.UpdatedAt = now
 
 	old, err := p.GetByNameAndNid(collect.Name, collect.Nid)
 	if err != nil {
@@ -135,8 +139,8 @@ func (p BaseCollector) Update(data []byte, username string) error {
 		return fmt.Errorf("采集不存在 type:%s id:%d", p.name, collect.Id)
 	}
 
-	collect.Creator = username
-	collect.LastUpdator = username
+	collect.Updater = username
+	collect.UpdatedAt = time.Now().Unix()
 
 	old, err := p.GetByNameAndNid(collect.Name, collect.Nid)
 	if err != nil {
