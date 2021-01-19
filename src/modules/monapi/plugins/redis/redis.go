@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/didi/nightingale/src/modules/monapi/collector"
+	"github.com/didi/nightingale/src/modules/monapi/plugins"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs/redis"
@@ -91,5 +92,6 @@ func (p *RedisRule) TelegrafInput() (telegraf.Input, error) {
 		Servers:  p.Servers,
 		Commands: commands,
 		Password: p.Password,
+		Log:      plugins.GetLogger(),
 	}, nil
 }

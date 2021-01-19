@@ -107,7 +107,7 @@ func str(in interface{}) string {
 }
 
 func (p *collectRuleCache) syncCollectRules() {
-	rules, err := models.GetCollectRules()
+	rules, err := models.DumpCollectRules()
 	if err != nil {
 		logger.Warningf("get log collectRules err:%v", err)
 	}

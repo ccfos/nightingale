@@ -292,7 +292,12 @@ func taskHostStdout(c *gin.Context) {
 	}
 
 	url := fmt.Sprintf("http://%s:%d/output/%d/stdout.json", host, config.Config.Output.RemotePort, id)
-	resp, err := http.Get(url)
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	resp, err := client.Get(url)
 	dangerous(err)
 
 	defer resp.Body.Close()
@@ -320,7 +325,12 @@ func taskHostStderr(c *gin.Context) {
 	}
 
 	url := fmt.Sprintf("http://%s:%d/output/%d/stderr.json", host, config.Config.Output.RemotePort, id)
-	resp, err := http.Get(url)
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	resp, err := client.Get(url)
 	dangerous(err)
 
 	defer resp.Body.Close()

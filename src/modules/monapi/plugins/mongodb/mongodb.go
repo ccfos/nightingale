@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/didi/nightingale/src/modules/monapi/collector"
+	"github.com/didi/nightingale/src/modules/monapi/plugins"
 	"github.com/didi/nightingale/src/modules/monapi/plugins/mongodb/mongodb"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/influxdata/telegraf"
@@ -72,5 +73,6 @@ func (p *MongodbRule) TelegrafInput() (telegraf.Input, error) {
 		GatherPerdbStats:    p.GatherPerdbStats,
 		GatherColStats:      p.GatherColStats,
 		ColStatsDbs:         p.ColStatsDbs,
+		Log:                 plugins.GetLogger(),
 	}, nil
 }

@@ -331,9 +331,10 @@ CREATE TABLE `collect_rule` (
   `data` blob NULL COMMENT 'data',
   `tags` varchar(512) NOT NULL DEFAULT '' COMMENT 'tags',
   `creator` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',
-  `last_updator` varchar(64) NOT NULL DEFAULT '' COMMENT 'last_updator',
+  `updater` varchar(64) NOT NULL DEFAULT '' COMMENT 'updater',
   `created` datetime NOT NULL  COMMENT 'created',
-  `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` bigint not null default 0,
+  `updated_at` bigint not null default 0,
   PRIMARY KEY (`id`),
   KEY `idx_nid` (`nid`),
   KEY `idx_collect_type` (`collect_type`)
