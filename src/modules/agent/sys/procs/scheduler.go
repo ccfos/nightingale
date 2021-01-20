@@ -84,10 +84,13 @@ func ProcCollect(p *models.ProcCollect) {
 			cnt++
 			memory += proc.Mem
 			fdNum += proc.FdCount
-			if rOld := rBytes[proc.Pid]; rOld <= proc.RBytes {
+			rOld := rBytes[proc.Pid]
+			if rOld != 0 && rOld <= proc.RBytes {
 				ioRead += proc.RBytes - rOld
 			}
-			if wOld := wBytes[proc.Pid]; wOld <= proc.WBytes {
+
+			wOld := wBytes[proc.Pid]
+			if wOld != 0 && wOld <= proc.WBytes {
 				ioWrite += proc.WBytes - wOld
 			}
 
