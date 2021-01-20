@@ -23,7 +23,7 @@ func NewRedisCollector() *RedisCollector {
 	return &RedisCollector{BaseCollector: collector.NewBaseCollector(
 		"redis",
 		collector.RemoteCategory,
-		func() interface{} { return &RedisRule{} },
+		func() collector.TelegrafPlugin { return &RedisRule{} },
 	)}
 }
 

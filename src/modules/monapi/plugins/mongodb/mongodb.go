@@ -40,7 +40,7 @@ func NewMongodbCollector() *MongodbCollector {
 	return &MongodbCollector{BaseCollector: collector.NewBaseCollector(
 		"mongodb",
 		collector.RemoteCategory,
-		func() interface{} { return &MongodbRule{} },
+		func() collector.TelegrafPlugin { return &MongodbRule{} },
 	)}
 }
 

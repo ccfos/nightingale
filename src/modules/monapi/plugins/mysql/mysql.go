@@ -23,7 +23,7 @@ func NewMysqlCollector() *MysqlCollector {
 	return &MysqlCollector{BaseCollector: collector.NewBaseCollector(
 		"mysql",
 		collector.RemoteCategory,
-		func() interface{} { return &MysqlRule{} },
+		func() collector.TelegrafPlugin { return &MysqlRule{} },
 	)}
 }
 
@@ -139,7 +139,7 @@ func (p *MysqlRule) TelegrafInput() (telegraf.Input, error) {
 		GatherFileEventsStats:               p.GatherFileEventsStats,
 		GatherPerfEventsStatements:          p.GatherPerfEventsStatements,
 		GatherGlobalVars:                    p.GatherGlobalVars,
-		IntervalSlow:                        "",
+		IntervalSlow:                        p.IntervalSlow,
 		MetricVersion:                       2,
 		Log:                                 plugins.GetLogger(),
 	}, nil
