@@ -93,31 +93,6 @@ func AllProcs() (ps []*Proc, err error) {
 		p.Uptime = readUptime(p.Pid)
 	}
 
-	jiffyBefore := readJiffy()
-
-	for _, p := range ps {
-		p.jiffy, err = readProcJiffy(p.Pid)
-		if err != nil {
-			logger.Errorf("readJiffy error:%v pid:%d", err, p.Pid)
-		}
-	}
-	time.Sleep(time.Second)
-	jiffyAfter := readJiffy()
-	if jiffyBefore == jiffyAfter {
-		return
-	}
-	for _, p := range ps {
-		jiffy, err := readProcJiffy(p.Pid)
-		if err != nil {
-			logger.Errorf("readJiffy error:%v pid:%d", err, p.Pid)
-		}
-
-		if jiffy <= p.jiffy {
-			p.Cpu = 0
-		} else {
-			p.Cpu = float64(jiffy-p.jiffy) / float64(jiffyAfter-jiffyBefore)
-		}
-	}
 	return
 }
 
