@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -188,76 +187,6 @@ func readProcJiffy(pid int) (uint64, error) {
 		ret += v
 	}
 	return ret, nil
-}
-
-func readTcp() (map[uint64]bool, error) {
-	res := make(map[uint64]bool)
-	quit := make(chan bool, 1)
-	resChan := make(chan map[uint64]bool, 1)
-	f, err := os.Open("/proc/net/tcp")
-	if err != nil {
-		return res, err
-	}
-	defer f.Close()
-
-	go func() {
-		scanner := bufio.NewScanner(f)
-		scanner.Scan()
-		for scanner.Scan() {
-			select {
-			case <-quit:
-				return
-			default:
-				b := []byte(scanner.Text())
-				if len(b) != 149 || b[34] != 48 || b[35] != 49 { //only established
-					continue
-				}
-				start := 91
-				end := start
-				for end = start; b[end] != 32; end++ {
-				}
-				inode, err := strconv.ParseUint(string(b[start:end]), 10, 64)
-				if err != nil {
-					continue
-				}
-				res[inode] = true
-			}
-		}
-		resChan <- res
-	}()
-
-	select {
-	case res := <-resChan:
-		return res, err
-	case <-time.After(time.Millisecond * 500):
-		err := fmt.Errorf("read /proc/net/tcp timeout")
-		quit <- true
-		return res, err
-	}
-
-	return res, err
-}
-
-func tcpEstablishCount(inodes map[uint64]bool, pid int) int {
-	res := 0
-	dir := fmt.Sprintf("/proc/%d/fd", pid)
-	fis, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return res
-	}
-
-	for _, fi := range fis {
-		link, err := os.Readlink(path.Join(dir, fi.Name()))
-		if err != nil || !strings.HasPrefix(link, "socket:") {
-			continue
-		}
-		s := link[8 : len(link)-1]
-		inode, err := strconv.ParseUint(s, 10, 64)
-		if err == nil && inodes[inode] {
-			res++
-		}
-	}
-	return res
 }
 
 func readIO(pid int) (r uint64, w uint64) {
