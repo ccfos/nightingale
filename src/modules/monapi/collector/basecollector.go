@@ -12,10 +12,10 @@ import (
 type BaseCollector struct {
 	name     string
 	category Category
-	newRule  func() interface{}
+	newRule  func() TelegrafPlugin
 }
 
-func NewBaseCollector(name string, category Category, newRule func() interface{}) *BaseCollector {
+func NewBaseCollector(name string, category Category, newRule func() TelegrafPlugin) *BaseCollector {
 	return &BaseCollector{
 		name:     name,
 		category: category,
@@ -23,7 +23,7 @@ func NewBaseCollector(name string, category Category, newRule func() interface{}
 	}
 }
 
-type telegrafPlugin interface {
+type TelegrafPlugin interface {
 	TelegrafInput() (telegraf.Input, error)
 }
 
@@ -37,12 +37,7 @@ func (p BaseCollector) TelegrafInput(rule *models.CollectRule) (telegraf.Input, 
 		return nil, err
 	}
 
-	plugin, ok := r2.(telegrafPlugin)
-	if !ok {
-		return nil, errUnsupported
-	}
-
-	return plugin.TelegrafInput()
+	return r2.TelegrafInput()
 }
 
 func (p BaseCollector) Get(id int64) (interface{}, error) {

@@ -59,15 +59,6 @@
     "cannot delete root user": "root用户不能删除",
     "user not found": "用户未找到",
 
-    "Repositories": "Repositories",
-    "List of repositories to monitor": "List of repositories to monitor",
-    "Access token": "Access token",
-    "Github API access token.  Unauthenticated requests are limited to 60 per hour": "Github API access token.  Unauthenticated requests are limited to 60 per hour",
-    "Enterprise base url": "Enterprise base url",
-    "Github API enterprise url. Github Enterprise accounts must specify their base url": "Github API enterprise url. Github Enterprise accounts must specify their base url",
-    "HTTP timeout": "HTTP timeout",
-    "Timeout for HTTP requests": "Timeout for HTTP requests",
-
     "Unable to get captcha": "无法获得验证码",
     "Invalid captcha answer": "错误的验证码",
     "Username %s is invalid": "用户名 %s 不符合规范",

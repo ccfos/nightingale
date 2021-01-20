@@ -23,7 +23,7 @@ func NewRedisCollector() *RedisCollector {
 	return &RedisCollector{BaseCollector: collector.NewBaseCollector(
 		"redis",
 		collector.RemoteCategory,
-		func() interface{} { return &RedisRule{} },
+		func() collector.TelegrafPlugin { return &RedisRule{} },
 	)}
 }
 
@@ -34,6 +34,7 @@ var (
 			"Type":            "类型",
 			"Servers":         "服务",
 			"specify servers": "指定服务器地址",
+			"metric type":     "数据类型",
 			"Optional. Specify redis commands to retrieve values": "设置服务器命令,采集数据名称",
 			"Password":                "密码",
 			"specify server password": "服务密码",
@@ -44,7 +45,7 @@ var (
 type RedisCommand struct {
 	Command []string `label:"Command" json:"command,required" description:"" `
 	Field   string   `label:"Field" json:"field,required" description:"metric name"`
-	Type    string   `label:"Type" json:"type" description:"integer|string|float(default)"`
+	Type    string   `label:"Type" json:"type" enum:"[\"float\", \"integer\"]" default:"float" description:"metric type"`
 }
 
 type RedisRule struct {

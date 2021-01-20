@@ -1,4 +1,4 @@
-mode: whitelist # whitelist(default),overlay
+mode: whitelist # whitelist(default),all
 metrics:
   - name: mysql_queries
     type: COUNTER

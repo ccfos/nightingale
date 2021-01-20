@@ -1,0 +1,9 @@
+mode: whitelist # whitelist(default),all
+metrics:
+  - name: github_repository_forks
+  - name: github_repository_networks
+  - name: github_repository_open_issues
+  - name: github_repository_size
+  - name: github_repository_stars
+  - name: github_repository_subscribers
+  - name: github_repository_watchers
