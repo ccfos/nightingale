@@ -7,7 +7,6 @@ import (
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/influxdata/telegraf"
-	"github.com/toolkits/pkg/logger"
 )
 
 var (
@@ -83,6 +82,5 @@ func GetLocalCollectors() []string {
 }
 
 func _s(format string, a ...interface{}) string {
-	logger.Debugf(`    "%s": "%s",`, format, format)
 	return i18n.Sprintf(format, a...)
 }

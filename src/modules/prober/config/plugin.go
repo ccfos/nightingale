@@ -63,8 +63,12 @@ func InitPluginsConfig(cf *ConfYaml) {
 		config := newPluginConfig()
 		pluginConfigs[plugin] = config
 
-		file := filepath.Join(cf.PluginsConfig, plugin+".yml")
+		file := filepath.Join(cf.PluginsConfig, plugin+".local.yml")
 		b, err := ioutil.ReadFile(file)
+		if err != nil {
+			file = filepath.Join(cf.PluginsConfig, plugin+".yml")
+			b, err = ioutil.ReadFile(file)
+		}
 		if err != nil {
 			logger.Debugf("readfile %s err %s", plugin, err)
 			continue
