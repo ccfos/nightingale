@@ -4,22 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 	"sync"
 	"unicode"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 var fieldCache sync.Map // map[reflect.Type]structFields
 
 type Field struct {
-	skip bool   `json:"-"`
-	def  string `json:"-"`
-	// definitions map[string][]Field `json:"-"`
-
+	skip        bool               `json:"-"`
 	Name        string             `json:"name,omitempty"`
 	Label       string             `json:"label,omitempty"`
 	Default     interface{}        `json:"default,omitempty"`
+	Enum        []interface{}      `json:"enum,omitempty"`
 	Example     string             `json:"example,omitempty"`
 	Description string             `json:"description,omitempty"`
 	Required    bool               `json:"required,omitempty"`
@@ -45,12 +44,7 @@ func cachedTypeContent(t reflect.Type) Field {
 
 func typeContent(t reflect.Type) Field {
 	definitions := map[string][]Field{t.String(): nil}
-
-	ret := Field{
-		// definitions: map[string][]Field{
-		// 	t.String(): nil,
-		// },
-	}
+	ret := Field{}
 
 	for i := 0; i < t.NumField(); i++ {
 		sf := t.Field(i)
@@ -139,9 +133,20 @@ func getTagOpt(sf reflect.StructField) (opt Field) {
 
 	opt.Name = name
 	opt.Label = _s(sf.Tag.Get("label"))
-	opt.def = sf.Tag.Get("default")
 	opt.Example = sf.Tag.Get("example")
 	opt.Description = _s(sf.Tag.Get("description"))
+	if s := sf.Tag.Get("enum"); s != "" {
+		if err := json.Unmarshal([]byte(s), &opt.Enum); err != nil {
+			logger.Warningf("%s.enum %s Unmarshal err %s",
+				sf.Name, s, err)
+		}
+	}
+	if s := sf.Tag.Get("default"); s != "" {
+		if err := json.Unmarshal([]byte(s), &opt.Default); err != nil {
+			logger.Warningf("%s.default %s Unmarshal err %s",
+				sf.Name, s, err)
+		}
+	}
 
 	return
 }
@@ -191,29 +196,15 @@ func fieldType(t reflect.Type, in *Field, definitions map[string][]Field) {
 		t = t.Elem()
 	}
 
-	var def interface{}
-
 	switch t.Kind() {
 	case reflect.Int, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint32, reflect.Uint64:
 		in.Type = "integer"
-		if in.def != "" {
-			def, _ = strconv.ParseInt(in.def, 10, 64)
-		}
 	case reflect.Float32, reflect.Float64:
 		in.Type = "float"
-		if in.def != "" {
-			def, _ = strconv.ParseFloat(in.def, 64)
-		}
 	case reflect.Bool:
 		in.Type = "boolean"
-		if in.def != "" {
-			def = in.def == "true"
-		}
 	case reflect.String:
 		in.Type = "string"
-		if in.def != "" {
-			def = in.def
-		}
 	case reflect.Struct:
 		name := t.String()
 		if _, ok := definitions[name]; !ok {
@@ -238,17 +229,8 @@ func fieldType(t reflect.Type, in *Field, definitions map[string][]Field) {
 		} else {
 			panic(fmt.Sprintf("unspport type %s items %s", t.String(), t2.String()))
 		}
-		if t2.Kind() == reflect.String && in.def != "" {
-			var s []string
-			json.Unmarshal([]byte(in.def), &s)
-			def = s
-		}
 	default:
 		panic(fmt.Sprintf("unspport type %s", t.String()))
 		// in.Type = "string"
-	}
-
-	if def != nil {
-		in.Default = def
 	}
 }

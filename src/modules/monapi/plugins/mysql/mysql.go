@@ -34,7 +34,7 @@ var (
 			"Databases": "数据库",
 			"if the list is empty, then metrics are gathered from all database tables": "如果列表为空，则收集所有数据库表",
 			"Process List": "进程列表",
-			"gather thread state counts from INFORMATION_SCHEMA.PROCESSLIST": "采集 INFORMATION_SCHEMA.PROCESSLIST 线程状态",
+			"gather thread state counts from INFORMATION_SCHEMA.PROCESSLIST": "采集 INFORMATION_SCHEMA.PROCESSLIST",
 			"User Statistics": "用户统计",
 			"gather user statistics from INFORMATION_SCHEMA.USER_STATISTICS": "采集 INFORMATION_SCHEMA.USER_STATISTICS",
 			"Auto Increment": "自动递增变量",

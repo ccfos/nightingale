@@ -27,7 +27,7 @@ var (
 			"Col stats":                               "集合信息",
 			"When true, collect per collection stats": "开启时，采集集合的统计信息",
 			"Col stats dbs":                           "集合列表信息",
-			"List of db where collections stats are collected, If empty, all db are concerned": "如果未设置，则采集数据库里所有集合的统计信息",
+			"List of db where collections stats are collected, If empty, all db are concerned": "如果未设置，则采集数据库里所有集合的统计信息, 开启`集合信息`时有效",
 		},
 	}
 )

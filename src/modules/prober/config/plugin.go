@@ -20,7 +20,7 @@ var (
 
 const (
 	PluginModeWhitelist = iota
-	PluginModeOverlay
+	PluginModeAll
 )
 
 type Metric struct {
@@ -48,8 +48,8 @@ func (p *pluginConfig) Validate() error {
 	switch strings.ToLower(p.Mode) {
 	case "whitelist":
 		p.mode = PluginModeWhitelist
-	case "overlay":
-		p.mode = PluginModeOverlay
+	case "all":
+		p.mode = PluginModeAll
 	default:
 		p.mode = PluginModeWhitelist
 	}
