@@ -172,6 +172,7 @@ func Config(r *gin.Engine) {
 		v1.GET("/node/:id", nodeGet)
 		v1.GET("/node/:id/projs", v1treeUntilProjectGetsByNid)
 		v1.GET("/tree/projs", v1TreeUntilProjectGets)
+		v1.GET("/tree", v1TreeUntilTypGets)
 
 		// 外部系统推送一些操作日志过来，RDB统一存储，实际用MQ会更好一些
 		v1.POST("/resoplogs", v1OperationLogResPost)
