@@ -21,6 +21,7 @@ type ReportSection struct {
 	HTTPPort string `yaml:"http_port"`
 	RPCPort  string `yaml:"rpc_port"`
 	Remark   string `yaml:"remark"`
+	Region   string `yaml:"region"`
 }
 
 var Config ReportSection
@@ -55,6 +56,7 @@ func report(addrs []string) {
 			"rpc_port":  Config.RPCPort,
 			"http_port": Config.HTTPPort,
 			"remark":    Config.Remark,
+			"region":    Config.Region,
 		}
 
 		var body reportRes

@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/modules/monapi/plugins"
@@ -38,13 +39,15 @@ var (
 			"Optional. Specify redis commands to retrieve values": "设置服务器命令,采集数据名称",
 			"Password":                "密码",
 			"specify server password": "服务密码",
+			"redis-cli command":       "redis-cli命令，如果参数中带有空格，请以数组方式设置参数",
+			"metric name":             "变量名称，采集时会加上前缀 redis_commands_",
 		},
 	}
 )
 
 type RedisCommand struct {
-	Command []string `label:"Command" json:"command,required" description:"" `
-	Field   string   `label:"Field" json:"field,required" description:"metric name"`
+	Command []string `label:"Command" json:"command,required" example:"get sample_key" description:"redis-cli command"`
+	Field   string   `label:"Field" json:"field,required" example:"sample_key" description:"metric name"`
 	Type    string   `label:"Type" json:"type" enum:"[\"float\", \"integer\"]" default:"float" description:"metric type"`
 }
 
@@ -62,6 +65,20 @@ func (p *RedisRule) Validate() error {
 		if len(cmd.Command) == 0 {
 			return fmt.Errorf("redis.rule.commands[%d].command must be set", i)
 		}
+
+		var command []string
+		for i, cmd := range cmd.Command {
+			if i == 0 {
+				for _, v := range strings.Fields(cmd) {
+					command = append(command, v)
+				}
+				continue
+			}
+
+			command = append(command, cmd)
+		}
+		cmd.Command = command
+
 		if cmd.Field == "" {
 			return fmt.Errorf("redis.rule.commands[%d].field must be set", i)
 		}
