@@ -107,8 +107,8 @@ func ProcCollect(p *models.ProcCollect) {
 	}
 
 	procNumItem := core.GaugeValue("proc.num", cnt, p.Tags)
-	procFdItem := core.GaugeValue("proc.uptime", uptime, p.Tags)
-	procUptimeItem := core.GaugeValue("proc.fdnum", fdNum, p.Tags)
+	procUptimeItem := core.GaugeValue("proc.uptime", uptime, p.Tags)
+	procFdItem := core.GaugeValue("proc.fdnum", fdNum, p.Tags)
 	memUsedItem := core.GaugeValue("proc.mem.used", memory*1024, p.Tags)
 	ioReadItem := core.GaugeValue("proc.io.read.bytes", ioRead, p.Tags)
 	ioWriteItem := core.GaugeValue("proc.io.write.bytes", ioWrite, p.Tags)
