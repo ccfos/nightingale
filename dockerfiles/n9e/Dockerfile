@@ -1,6 +1,6 @@
 FROM golang as builder
 WORKDIR /home/n9e/builder
-ENV GOPROXY=https://mirrors.aliyun.com/goproxy/
+ENV GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
 RUN git clone  https://hub.fastgit.org/didi/nightingale.git
 RUN nightingale/control build
 
