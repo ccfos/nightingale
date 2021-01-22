@@ -64,3 +64,4 @@
   - sql目录下有个3.5.0的sql patch文件，需要导入
   - etc目录下新增了screen、alert两个目录，需要拷贝到生产环境
   - etc目录下新增了plugins目录，需要随着prober模块走
+  - etc/address.yml里增加prober的配置
