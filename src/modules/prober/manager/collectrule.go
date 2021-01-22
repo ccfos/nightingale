@@ -1,7 +1,6 @@
 package manager
 
 import (
-	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -23,6 +22,7 @@ type collectRule struct {
 	precision time.Duration
 	metrics   []*dataobj.MetricValue
 	lastAt    int64
+	updatedAt int64
 }
 
 func newCollectRule(rule *models.CollectRule) (*collectRule, error) {
@@ -47,6 +47,7 @@ func newCollectRule(rule *models.CollectRule) (*collectRule, error) {
 		tags:        tags,
 		metrics:     []*dataobj.MetricValue{},
 		precision:   time.Second,
+		updatedAt:   rule.UpdatedAt,
 	}, nil
 }
 
@@ -121,15 +122,16 @@ func (p *collectRule) prepareMetrics() error {
 }
 
 func (p *collectRule) update(rule *models.CollectRule) error {
-	if p.CollectRule.UpdatedAt == rule.UpdatedAt {
+	if p.updatedAt == rule.UpdatedAt {
 		return nil
 	}
+
+	logger.Debugf("update %s", rule)
 
 	input, err := telegrafInput(rule)
 	if err != nil {
 		// ignore error, use old config
-		log.Printf("telegrafInput() id %d type %s name %s err %s",
-			rule.Id, rule.CollectType, rule.Name, err)
+		logger.Warningf("telegrafInput %s err %s", rule, err)
 	}
 
 	tags, err := dataobj.SplitTagsString(rule.Tags)
@@ -140,6 +142,7 @@ func (p *collectRule) update(rule *models.CollectRule) error {
 	p.Input = input
 	p.CollectRule = rule
 	p.tags = tags
+	p.UpdatedAt = rule.UpdatedAt
 
 	return nil
 }

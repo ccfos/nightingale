@@ -3,7 +3,6 @@ package http
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 
@@ -90,7 +89,6 @@ func collectRulesGetV2(c *gin.Context) {
 	limit := queryInt(c, "limit", 20)
 	typ := queryStr(c, "type", "")
 
-	log.Printf("typ %s", typ)
 	total, list, err := models.GetCollectRules(typ, nid, limit, offset(c, limit, 0))
 
 	renderData(c, map[string]interface{}{

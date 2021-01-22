@@ -87,22 +87,22 @@ func (p *manager) schedule() error {
 		}
 
 		summary := heap.Pop(&p.heap).(*ruleSummary)
-		ruleConfig, ok := p.cache.Get(summary.id)
+		latestRule, ok := p.cache.Get(summary.id)
 		if !ok {
 			// drop it if not exist in cache
 			delete(p.index, summary.id)
 			continue
 		}
 
-		rule, ok := p.index[ruleConfig.Id]
+		rule, ok := p.index[latestRule.Id]
 		if !ok {
 			// impossible
-			log.Printf("manager.index[%d] not exists", ruleConfig.Id)
+			logger.Warningf("manager.index[%d] not exists", latestRule.Id)
 			continue
 		}
 
 		// update rule
-		if err := rule.update(ruleConfig); err != nil {
+		if err := rule.update(latestRule); err != nil {
 			logger.Warningf("ruleEntity update err %s", err)
 		}
 
@@ -110,9 +110,9 @@ func (p *manager) schedule() error {
 
 		logger.Debugf("%s %s %d lastAt %ds before nextAt %ds later",
 			rule.CollectType, rule.Name, rule.Id,
-			now-rule.lastAt, ruleConfig.Step)
+			now-rule.lastAt, rule.Step)
 
-		summary.activeAt = now + int64(ruleConfig.Step)
+		summary.activeAt = now + int64(rule.Step)
 		rule.lastAt = now
 		heap.Push(&p.heap, summary)
 
