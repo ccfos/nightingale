@@ -37,6 +37,10 @@ func (p CollectRule) PluginName() string {
 	return p.CollectType
 }
 
+func (p *CollectRule) String() string {
+	return fmt.Sprintf("id %d type %s name %s", p.Id, p.CollectType, p.Name)
+}
+
 func (p *CollectRule) Validate(v ...interface{}) error {
 	if p.Name == "" {
 		return fmt.Errorf("invalid collectRule.name")
