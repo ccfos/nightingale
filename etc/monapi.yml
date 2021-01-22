@@ -7,7 +7,7 @@ logger:
   level: INFO
   keepHours: 24
 
-alarmEnabled: false
+alarmEnabled: true
 
 region:
   - default
