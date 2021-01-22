@@ -40,6 +40,7 @@ func (p BaseCollector) TelegrafInput(rule *models.CollectRule) (telegraf.Input, 
 	return r2.TelegrafInput()
 }
 
+// used for ui
 func (p BaseCollector) Get(id int64) (interface{}, error) {
 	collect := &models.CollectRule{}
 	has, err := models.DB["mon"].Where("id = ?", id).Get(collect)
@@ -47,6 +48,18 @@ func (p BaseCollector) Get(id int64) (interface{}, error) {
 		return nil, err
 	}
 	return collect, err
+}
+
+func (p BaseCollector) mustGetRule(id int64) (*models.CollectRule, error) {
+	collect := &models.CollectRule{}
+	has, err := models.DB["mon"].Where("id = ?", id).Get(collect)
+	if err != nil {
+		return nil, err
+	}
+	if !has {
+		return nil, fmt.Errorf("unable to get the collectRule")
+	}
+	return collect, nil
 }
 
 func (p BaseCollector) Gets(nids []int64) (ret []interface{}, err error) {
@@ -124,13 +137,8 @@ func (p BaseCollector) Update(data []byte, username string) error {
 	}
 
 	//校验采集是否存在
-	obj, err := p.Get(collect.Id) //id找不到的情况
+	obj, err := p.mustGetRule(collect.Id)
 	if err != nil {
-		return fmt.Errorf("采集不存在 type:%s id:%d", p.name, collect.Id)
-	}
-
-	tmpId := obj.(*models.CollectRule).Id
-	if tmpId == 0 {
 		return fmt.Errorf("采集不存在 type:%s id:%d", p.name, collect.Id)
 	}
 
@@ -141,7 +149,7 @@ func (p BaseCollector) Update(data []byte, username string) error {
 	if err != nil {
 		return err
 	}
-	if old != nil && tmpId != old.(*models.CollectRule).Id {
+	if old != nil && obj.Id != old.(*models.CollectRule).Id {
 		return fmt.Errorf("同节点下策略名称 %s 已存在", collect.Name)
 	}
 
@@ -149,12 +157,11 @@ func (p BaseCollector) Update(data []byte, username string) error {
 }
 
 func (p BaseCollector) Delete(id int64, username string) error {
-	tmp, err := p.Get(id) //id找不到的情况
+	rule, err := p.mustGetRule(id) //id找不到的情况
 	if err != nil {
 		return fmt.Errorf("采集不存在 type:%s id:%d", p.name, id)
 	}
-	nid := tmp.(*models.CollectRule).Nid
-	can, err := models.UsernameCandoNodeOp(username, "mon_collect_delete", int64(nid))
+	can, err := models.UsernameCandoNodeOp(username, "mon_collect_delete", int64(rule.Nid))
 	if err != nil {
 		return fmt.Errorf("models.UsernameCandoNodeOp error %s", err)
 	}
