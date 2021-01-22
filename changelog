@@ -53,3 +53,14 @@
 升级方法：
   - 更新monapi的二进制即可
 
+3.5.0
+升级内容：
+  - 引入了组件监控模块prober，内置了mysql、redis、mongo监控采集能力
+  - 引入了内置监控大盘和内置告警策略，可以在任意节点一键导入内置大盘和策略
+升级方法：
+  - n9e-monapi n9e-rdb n9e-transfer n9e-ams n9e-job 的二进制要升级
+  - n9e-agent也可以升级，解决了进程监控的性能问题，如果不在意可以不升级
+  - n9e-prober 模块需要新部署
+  - sql目录下有个3.5.0的sql patch文件，需要导入
+  - etc目录下新增了screen、alert两个目录，需要拷贝到生产环境
+  - etc目录下新增了plugins目录，需要随着prober模块走
