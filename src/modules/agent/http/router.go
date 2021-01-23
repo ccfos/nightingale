@@ -18,6 +18,7 @@ func Config(r *gin.Engine) {
 		v1.GET("/ping", ping)
 		v1.GET("/pid", pid)
 		v1.GET("/addr", addr)
+		v1.GET("/endpoint", endpoint)
 
 		v1.GET("/stra", getStrategy)
 		v1.GET("/cached", getLogCached)
