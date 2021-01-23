@@ -108,6 +108,7 @@ func ReadNameAndMem(path string) (name string, memory uint64, err error) {
 		var bs []byte
 		bs, err = file.ReadLine(reader)
 		if err == io.EOF {
+			err = nil
 			return
 		}
 
