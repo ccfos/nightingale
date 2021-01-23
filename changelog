@@ -65,3 +65,14 @@
   - etc目录下新增了screen、alert两个目录，需要拷贝到生产环境
   - etc目录下新增了plugins目录，需要随着prober模块走
   - etc/address.yml里增加prober的配置
+
+3.5.1
+升级内容：
+  - monapi里的alarmEnabled默认值设置为true
+  - agent进程采集，忽略EOF日志
+  - agent增加一个接口获取endpoint
+  - agent日志监控支持一种新的日志时间格式
+  - 修复组件监控调整采集频率不生效的问题
+升级方法：
+  - 替换n9e-monapi n9e-prober n9e-agent 二进制
+
