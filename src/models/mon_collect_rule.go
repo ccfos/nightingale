@@ -96,7 +96,7 @@ func GetCollectRules(typ string, nid int64, limit, offset int) (total int64, lis
 		return
 	}
 
-	err = search().Desc("created").Limit(limit, offset).Find(&list)
+	err = search().Desc("updated_at").Limit(limit, offset).Find(&list)
 	return
 }
 
