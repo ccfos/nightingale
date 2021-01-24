@@ -53,6 +53,20 @@ func (p *pluginConfig) Validate() error {
 	default:
 		p.mode = PluginModeWhitelist
 	}
+
+	for k, v := range p.Metrics {
+		if v.Name == "" {
+			return fmt.Errorf("metrics[%d].name must be set", k)
+		}
+		if v.Type == "" {
+			v.Type = dataobj.GAUGE
+		}
+		if v.Type != dataobj.GAUGE &&
+			v.Type != dataobj.COUNTER &&
+			v.Type != dataobj.SUBTRACT {
+			return fmt.Errorf("metrics[%s].type.%s unsupported", v.Name, v.Type)
+		}
+	}
 	return nil
 }
 
