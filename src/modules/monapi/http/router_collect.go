@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/modules/monapi/scache"
 
@@ -81,6 +82,19 @@ func collectRulesGet(c *gin.Context) {
 	}
 
 	renderData(c, resp, nil)
+}
+
+func collectRulesGetV2(c *gin.Context) {
+	nid := queryInt64(c, "nid", 0)
+	limit := queryInt(c, "limit", 20)
+	typ := queryStr(c, "type", "")
+
+	total, list, err := models.GetCollectRules(typ, nid, limit, offset(c, limit, 0))
+
+	renderData(c, map[string]interface{}{
+		"total": total,
+		"list":  list,
+	}, err)
 }
 
 func collectRulePut(c *gin.Context) {

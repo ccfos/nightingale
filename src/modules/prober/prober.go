@@ -73,6 +73,7 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	// for manager -> core.Push()
 	core.InitRpcClients()
 
 	manager.NewManager(cfg, cache.CollectRule).Start(ctx)
@@ -120,6 +121,7 @@ func start() {
 func ending(cancel context.CancelFunc) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
 	select {
 	case <-c:
 		fmt.Printf("stop signal caught, stopping... pid=%d\n", os.Getpid())

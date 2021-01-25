@@ -44,7 +44,6 @@ judge:
 
 prober:
   http: 0.0.0.0:8023
-  rpc: 0.0.0.0:8024
   addresses:
     - 127.0.0.1
 

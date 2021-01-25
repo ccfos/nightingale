@@ -602,7 +602,7 @@ func tenantResourcesCountRank(c *gin.Context) {
 	resMap := make(map[string]int, 50)
 	for _, res := range ress {
 		tenant := res.Tenant
-		if tenant != "" {
+		if tenant != "" && tenant != "inner" {
 			if _, ok := resMap[tenant]; !ok {
 				resMap[tenant] = 0
 			}
@@ -650,8 +650,16 @@ func projectResourcesCountRank(c *gin.Context) {
 	}
 
 	// 获取全部project
-	projectNodes, err := models.NodeGets("cate=?", "project")
+	projectAllNodes, err := models.NodeGets("cate=?", "project")
 	dangerous(err)
+
+	var projectNodes []models.Node
+	for _, p := range projectAllNodes {
+		tenant := p.Tenant()
+		if tenant != "inner" {
+			projectNodes = append(projectNodes, p)
+		}
+	}
 
 	projectNodesLen := len(projectNodes)
 	workerNum := 50

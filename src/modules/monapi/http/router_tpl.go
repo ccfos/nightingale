@@ -1,6 +1,8 @@
 package http
 
 import (
+	"path"
+
 	"github.com/didi/nightingale/src/modules/monapi/config"
 
 	"github.com/gin-gonic/gin"
@@ -27,7 +29,7 @@ func tplNameGets(c *gin.Context) {
 }
 
 func tplGet(c *gin.Context) {
-	tplName := mustQueryStr(c, "tplName")
+	tplName := path.Base(mustQueryStr(c, "tplName"))
 	tplType := mustQueryStr(c, "tplType")
 
 	var filePath string

@@ -7,17 +7,18 @@ import (
 	"strings"
 	"sync"
 	"unicode"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 var fieldCache sync.Map // map[reflect.Type]structFields
 
 type Field struct {
-	skip bool `json:"-"`
-	// definitions map[string][]Field `json:"-"`
-
+	skip        bool               `json:"-"`
 	Name        string             `json:"name,omitempty"`
 	Label       string             `json:"label,omitempty"`
-	Default     string             `json:"default,omitempty"`
+	Default     interface{}        `json:"default,omitempty"`
+	Enum        []interface{}      `json:"enum,omitempty"`
 	Example     string             `json:"example,omitempty"`
 	Description string             `json:"description,omitempty"`
 	Required    bool               `json:"required,omitempty"`
@@ -43,12 +44,7 @@ func cachedTypeContent(t reflect.Type) Field {
 
 func typeContent(t reflect.Type) Field {
 	definitions := map[string][]Field{t.String(): nil}
-
-	ret := Field{
-		// definitions: map[string][]Field{
-		// 	t.String(): nil,
-		// },
-	}
+	ret := Field{}
 
 	for i := 0; i < t.NumField(); i++ {
 		sf := t.Field(i)
@@ -137,9 +133,20 @@ func getTagOpt(sf reflect.StructField) (opt Field) {
 
 	opt.Name = name
 	opt.Label = _s(sf.Tag.Get("label"))
-	opt.Default = sf.Tag.Get("default")
 	opt.Example = sf.Tag.Get("example")
 	opt.Description = _s(sf.Tag.Get("description"))
+	if s := sf.Tag.Get("enum"); s != "" {
+		if err := json.Unmarshal([]byte(s), &opt.Enum); err != nil {
+			logger.Warningf("%s.enum %s Unmarshal err %s",
+				sf.Name, s, err)
+		}
+	}
+	if s := sf.Tag.Get("default"); s != "" {
+		if err := json.Unmarshal([]byte(s), &opt.Default); err != nil {
+			logger.Warningf("%s.default %s Unmarshal err %s",
+				sf.Name, s, err)
+		}
+	}
 
 	return
 }

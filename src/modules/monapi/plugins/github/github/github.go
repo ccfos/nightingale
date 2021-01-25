@@ -193,7 +193,7 @@ func getFields(repositoryInfo *github.Repository) map[string]interface{} {
 func init() {
 	inputs.Add("github", func() telegraf.Input {
 		return &GitHub{
-			HTTPTimeout: time.Second * 5,
+			HTTPTimeout: internal.Duration{Duration: time.Second * 5},
 		}
 	})
 }
