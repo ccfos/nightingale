@@ -50,7 +50,7 @@ type MongodbRule struct {
 	GatherPerdbStats    bool     `label:"Per DB stats" json:"gather_perdb_stats" description:"When true, collect per database stats" default:"false"`
 	GatherColStats      bool     `label:"Col stats" json:"gather_col_stats" description:"When true, collect per collection stats" default:"false"`
 	ColStatsDbs         []string `label:"Col stats dbs" json:"col_stats_dbs" description:"List of db where collections stats are collected, If empty, all db are concerned" example:"local" default:"[\"local\"]"`
-	// tlsint.ClientConfig
+	plugins.ClientConfig
 	// Ssl                 Ssl
 }
 
@@ -74,5 +74,6 @@ func (p *MongodbRule) TelegrafInput() (telegraf.Input, error) {
 		GatherColStats:      p.GatherColStats,
 		ColStatsDbs:         p.ColStatsDbs,
 		Log:                 plugins.GetLogger(),
+		ClientConfig:        p.ClientConfig.TlsClientConfig(),
 	}, nil
 }
