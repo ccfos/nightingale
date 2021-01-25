@@ -105,9 +105,10 @@ func typeContent(t reflect.Type) Field {
 					ft = ft.Elem()
 				}
 
+				fieldType(ft, &field, definitions)
+
 				// Record found field and index sequence.
 				if field.Name != "" || !sf.Anonymous || ft.Kind() != reflect.Struct {
-					fieldType(ft, &field, definitions)
 					field.index = index
 					field.typ = ft
 
@@ -127,9 +128,12 @@ func typeContent(t reflect.Type) Field {
 				if nextCount[ft] == 1 {
 					next = append(next, Field{index: index, typ: ft})
 				}
+
 			}
 		}
 	}
+
+	definitions[t.String()] = fields
 
 	return Field{Fields: fields, Definitions: definitions}
 }

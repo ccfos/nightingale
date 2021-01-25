@@ -63,6 +63,7 @@ type User struct {
 	LockedAt     int64     `json:"locked_at" description:"locked time"`
 	UpdatedAt    int64     `json:"updated_at" description:"user info change time"`
 	PwdUpdatedAt int64     `json:"pwd_updated_at" description:"password change time"`
+	PwdExpiresAt int64     `xorm:"-" json:"pwd_expires_at" description:"password expires time"`
 	LoggedAt     int64     `json:"logged_at" description:"last logged time"`
 	CreateAt     time.Time `json:"create_at" xorm:"<-"`
 }

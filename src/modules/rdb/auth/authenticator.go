@@ -294,6 +294,15 @@ func (p *Authenticator) Start() error {
 	return nil
 }
 
+func (p *Authenticator) PrepareUser(user *models.User) {
+	if !p.extraMode {
+		return
+	}
+
+	cf := cache.AuthConfig()
+	user.PwdExpiresAt = user.PwdUpdatedAt + cf.PwdExpiresIn*86400*30
+}
+
 // cleanup rdb.session & sso.token
 func (p *Authenticator) cleanupSession() {
 	now := time.Now().Unix()
@@ -432,7 +441,7 @@ func checkPassword(cf *models.AuthConfig, passwd string) error {
 	spCode := []byte{'!', '@', '#', '$', '%', '^', '&', '*', '_', '-', '~', '.', ',', '<', '>', '/', ';', ':', '|', '?', '+', '='}
 
 	if cf.PwdMinLenght > 0 && len(passwd) < cf.PwdMinLenght {
-		return _e("Password too short (min:%d) %s", cf.PwdMinLenght, cf.MustInclude())
+		return _e("Password too short (min:%d)", cf.PwdMinLenght)
 	}
 
 	passwdByte := []byte(passwd)
@@ -469,19 +478,19 @@ func checkPassword(cf *models.AuthConfig, passwd string) error {
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_UPPER > 0 && indNum[0] == 0 {
-		return _e("Invalid Password, %s", cf.MustInclude())
+		return _e("Invalid Password, must include %s", _s("Upper char"))
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_LOWER > 0 && indNum[1] == 0 {
-		return _e("Invalid Password, %s", cf.MustInclude())
+		return _e("Invalid Password, must include %s", _s("Lower char"))
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_NUMBER > 0 && indNum[2] == 0 {
-		return _e("Invalid Password, %s", cf.MustInclude())
+		return _e("Invalid Password, must include %s", _s("Number"))
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_SPEC_CHAR > 0 && indNum[3] == 0 {
-		return _e("Invalid Password, %s", cf.MustInclude())
+		return _e("Invalid Password, must include %s", _s("Special char"))
 	}
 
 	return nil
