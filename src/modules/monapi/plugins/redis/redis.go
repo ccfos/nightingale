@@ -54,7 +54,7 @@ type RedisCommand struct {
 type RedisRule struct {
 	Servers  []string        `label:"Servers" json:"servers,required" description:"specify servers" example:"tcp://localhost:6379"`
 	Commands []*RedisCommand `label:"Commands" json:"commands" description:"Optional. Specify redis commands to retrieve values"`
-	Password string          `label:"Password" json:"password" description:"specify server password"`
+	Password string          `label:"Password" json:"password" format:"password" description:"specify server password"`
 }
 
 func (p *RedisRule) Validate() error {
