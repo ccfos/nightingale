@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/auth"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errors"
@@ -158,6 +159,8 @@ func loginUser(c *gin.Context) *models.User {
 	if user == nil {
 		bomb("unauthorized")
 	}
+
+	auth.PrepareUser(user)
 
 	return user
 }

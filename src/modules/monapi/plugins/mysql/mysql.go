@@ -96,6 +96,7 @@ type MysqlRule struct {
 	GatherGlobalVars                    bool     `label:"Global Vars" json:"gather_global_variables" description:"gather metrics from PERFORMANCE_SCHEMA.GLOBAL_VARIABLES" default:"true"`
 	IntervalSlow                        string   `label:"Interval Slow" json:"interval_slow" description:"Some queries we may want to run less often (such as SHOW GLOBAL VARIABLES)" example:"30m"`
 	MetricVersion                       int      `label:"-" json:"-"`
+	plugins.ClientConfig
 }
 
 func (p *MysqlRule) Validate() error {
@@ -142,5 +143,6 @@ func (p *MysqlRule) TelegrafInput() (telegraf.Input, error) {
 		IntervalSlow:                        p.IntervalSlow,
 		MetricVersion:                       2,
 		Log:                                 plugins.GetLogger(),
+		ClientConfig:                        p.ClientConfig.TlsClientConfig(),
 	}, nil
 }

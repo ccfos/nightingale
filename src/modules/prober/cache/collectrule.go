@@ -24,6 +24,7 @@ type CollectRuleCache struct {
 	TS      map[int64]int64
 	C       chan time.Time
 	timeout time.Duration
+	token   string
 }
 
 func NewCollectRuleCache(cf *config.CollectRuleSection) *CollectRuleCache {
@@ -31,8 +32,9 @@ func NewCollectRuleCache(cf *config.CollectRuleSection) *CollectRuleCache {
 		CollectRuleSection: cf,
 		Data:               make(map[int64]*models.CollectRule),
 		TS:                 make(map[int64]int64),
-		timeout:            time.Duration(cf.Timeout) * time.Millisecond,
 		C:                  make(chan time.Time, 1),
+		timeout:            time.Duration(cf.Timeout) * time.Millisecond,
+		token:              cf.Token,
 	}
 }
 
@@ -119,10 +121,10 @@ func (p *CollectRuleCache) syncCollectRule() error {
 			return fmt.Errorf("getIdent err %s", err)
 		}
 
-		url := fmt.Sprintf("http://%s/api/mon/collect-rules/endpoints/%s:%s/remote",
-			addrs[perm[i]], ident, report.Config.RPCPort)
-		err = httplib.Get(url).SetTimeout(p.timeout).ToJSON(&resp)
-		if err != nil {
+		url := fmt.Sprintf("http://%s/v1/mon/collect-rules/endpoints/%s:%s/remote",
+			addrs[perm[i]], ident, report.Config.HTTPPort)
+		if err = httplib.Get(url).SetTimeout(p.timeout).
+			Header("X-Srv-Token", p.token).ToJSON(&resp); err != nil {
 			logger.Warningf("get %s collect rule from remote failed, error:%v", url, err)
 			stats.Counter.Set("collectrule.get.err", 1)
 			continue

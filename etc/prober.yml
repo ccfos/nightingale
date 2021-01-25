@@ -7,8 +7,7 @@ logger:
 pluginsConfig: etc/plugins
 
 report:
-  enabled: true
   region: default 
-  interval: 4000
-  timeout: 3000
-  api: api/hbs/heartbeat
+
+collectRule:
+  token: monapi-internal-third-module-pass-fjsdi

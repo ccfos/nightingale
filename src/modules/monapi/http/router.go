@@ -121,8 +121,7 @@ func Config(r *gin.Engine) {
 
 	collectRulesAnonymous := r.Group("/api/mon/collect-rules")
 	{
-		collectRulesAnonymous.GET("/endpoints/:endpoint/remote", collectRulesGetByRemoteEndpoint) // for prober
-		collectRulesAnonymous.GET("/endpoints/:endpoint/local", collectRulesGetByLocalEndpoint)   // for agent
+		collectRulesAnonymous.GET("/endpoints/:endpoint/local", collectRulesGetByLocalEndpoint) // for agent
 	}
 
 	stra := r.Group("/api/mon/stra").Use(GetCookieUser())
@@ -183,14 +182,10 @@ func Config(r *gin.Engine) {
 		indexProxy.POST("/counter/detail", indexReq)
 	}
 
-	/*
-		v1 := r.Group("/v1/mon")
-		{
-			v1.POST("/report-detector-heartbeat", detectorHeartBeat)
-			v1.GET("/detectors", detectorInstanceGets)
-			v1.GET("/rules", collectRulesGet)
-		}
-	*/
+	v1 := r.Group("/v1/mon")
+	{
+		v1.GET("/collect-rules/endpoints/:endpoint/remote", collectRulesGetByRemoteEndpoint) // for prober
+	}
 
 	if config.Get().Logger.Level == "DEBUG" {
 		pprof.Register(r, "/api/monapi/debug/pprof")

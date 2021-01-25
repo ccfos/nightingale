@@ -54,7 +54,8 @@ type RedisCommand struct {
 type RedisRule struct {
 	Servers  []string        `label:"Servers" json:"servers,required" description:"specify servers" example:"tcp://localhost:6379"`
 	Commands []*RedisCommand `label:"Commands" json:"commands" description:"Optional. Specify redis commands to retrieve values"`
-	Password string          `label:"Password" json:"password" description:"specify server password"`
+	Password string          `label:"Password" json:"password" format:"password" description:"specify server password"`
+	plugins.ClientConfig
 }
 
 func (p *RedisRule) Validate() error {
@@ -107,9 +108,10 @@ func (p *RedisRule) TelegrafInput() (telegraf.Input, error) {
 	}
 
 	return &redis.Redis{
-		Servers:  p.Servers,
-		Commands: commands,
-		Password: p.Password,
-		Log:      plugins.GetLogger(),
+		Servers:      p.Servers,
+		Commands:     commands,
+		Password:     p.Password,
+		Log:          plugins.GetLogger(),
+		ClientConfig: p.ClientConfig.TlsClientConfig(),
 	}, nil
 }
