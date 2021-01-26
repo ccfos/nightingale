@@ -1,3 +1,7 @@
+<img src="https://s3-gz01.didistatic.com/n9e-pub/logo/nightingale-logo.png" width="200" alt="Nightingale"/>
+
+---
+
 国内用户可以访问gitee镜像仓库： https://gitee.com/cnperl/Nightingale ，非实时同步，每天一次，不过速度很快。
 
 ---
