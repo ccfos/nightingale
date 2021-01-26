@@ -76,3 +76,9 @@
 升级方法：
   - 替换n9e-monapi n9e-prober n9e-agent 二进制
 
+3.5.2
+升级内容：
+  - prober模板支持匿名结构体，结构体嵌套
+  - prober插件添加了对TLS的支持
+  - 修复prober上报没有port的问题
+

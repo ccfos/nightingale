@@ -144,7 +144,7 @@ func (p *CollectRuleCache) syncCollectRule() error {
 	collectRuleCount := len(resp.Data)
 	stats.Counter.Set("collectrule.count", collectRuleCount)
 	if collectRuleCount == 0 { //获取策略数为0，不正常，不更新策略缓存
-		logger.Debugf("clloect rule count is 0")
+		logger.Debugf("collect rule count is 0")
 		return nil
 	}
 
