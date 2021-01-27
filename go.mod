@@ -26,7 +26,7 @@ require (
 	github.com/open-falcon/rrdlite v0.0.0-20200214140804-bf5829f786ad
 	github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f // indirect
 	github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62 // indirect
-	github.com/shirou/gopsutil v3.20.11+incompatible
+	github.com/shirou/gopsutil v3.20.11+incompatible // indirect
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/viper v1.7.1
 	github.com/streadway/amqp v1.0.0
