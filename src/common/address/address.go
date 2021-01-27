@@ -46,7 +46,7 @@ func convPort(module, listen, portType string) int {
 	}
 	port, err := strconv.Atoi(strings.Split(listen, splitChar)[1])
 	if err != nil {
-		fmt.Printf("%s.%s invalid", module, portType)
+		fmt.Printf("address: %s.%s invalid", module, portType)
 		os.Exit(1)
 	}
 
@@ -101,7 +101,7 @@ func getMod(modKey string) Module {
 
 	mod, has := mods[modKey]
 	if !has {
-		fmt.Printf("module(%s) configuration section not found", modKey)
+		fmt.Printf("address: module(%s) configuration section not found", modKey)
 		os.Exit(1)
 	}
 
