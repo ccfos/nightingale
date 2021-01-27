@@ -82,5 +82,5 @@
   - prober插件添加了对TLS的支持
   - 修复prober上报没有port的问题
 升级方法：
-  - 替换n9e-prober二进制，升级pub下的前端资源文件
+  - 替换n9e-prober n9e-monapi二进制，升级pub下的前端资源文件
 
