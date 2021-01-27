@@ -4,6 +4,8 @@ github.com/BurntSushi/toml
 github.com/MichaelTJones/pcg
 # github.com/Shopify/sarama v1.27.1
 github.com/Shopify/sarama
+# github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d
+github.com/alecthomas/units
 # github.com/apache/thrift v0.13.0 => github.com/m3db/thrift v0.0.0-20190820191926-05b5a2227fe4
 github.com/apache/thrift/lib/go/thrift
 # github.com/beorn7/perks v1.0.1
@@ -138,12 +140,14 @@ github.com/influxdata/influxdb/models
 github.com/influxdata/influxdb/pkg/escape
 # github.com/influxdata/telegraf v1.16.2
 github.com/influxdata/telegraf
+github.com/influxdata/telegraf/internal
 github.com/influxdata/telegraf/metric
 github.com/influxdata/telegraf/plugins/common/tls
 github.com/influxdata/telegraf/plugins/inputs
 github.com/influxdata/telegraf/plugins/inputs/mysql
 github.com/influxdata/telegraf/plugins/inputs/mysql/v1
 github.com/influxdata/telegraf/plugins/inputs/mysql/v2
+github.com/influxdata/telegraf/plugins/inputs/nginx
 github.com/influxdata/telegraf/plugins/inputs/redis
 github.com/influxdata/telegraf/selfstat
 github.com/influxdata/telegraf/testutil

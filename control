@@ -228,30 +228,49 @@ pack()
 	rm -rf ~/n9e.bak.$clock
 }
 
+exec()
+{
+
+  params=${@:2}
+
+  if [ ${#2} -gt 0 ]; then
+    for param in $params
+    do
+      $1 $param
+      if [ "x${mod}" = "xall" ]; then
+        break
+      fi
+    done
+  else
+  echo $1
+    $1
+  fi
+}
+
 case "$1" in
 	start)
-		start $2
+		exec start ${@:2}
 		;;
 	stop)
-		stop $2
+		exec stop ${@:2}
 		;;
 	restart)
-		restart $2
+		exec restart ${@:2}
 		;;
 	status)
 		status
 		;;
 	build)
-		build $2
+		exec build ${@:2}
 		;;
 	build_local)
-		build_local $2
+		exec build_local ${@:2}
 		;;
 	reload)
-		reload $2
+		exec reload ${@:2}
 		;;
 	pack)
-		pack $2
+		exec pack ${@:2}
 		;;
 	*)
 		usage
