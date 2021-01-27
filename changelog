@@ -74,5 +74,13 @@
   - agent日志监控支持一种新的日志时间格式
   - 修复组件监控调整采集频率不生效的问题
 升级方法：
-  - 替换n9e-monapi n9e-prober n9e-agent 二进制
+  - 替换n9e-monapi n9e-prober n9e-agent二进制，升级pub下的前端资源文件
+
+3.5.2
+升级内容：
+  - prober模板支持匿名结构体，结构体嵌套
+  - prober插件添加了对TLS的支持
+  - 修复prober上报没有port的问题
+升级方法：
+  - 替换n9e-prober n9e-monapi二进制，升级pub下的前端资源文件
 

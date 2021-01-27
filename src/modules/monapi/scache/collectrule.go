@@ -172,7 +172,7 @@ func (p *collectRuleCache) syncPlacement() error {
 			if _, exists := nodesMap[d.Region]; !exists {
 				nodesMap[d.Region] = make(map[string]struct{})
 			}
-			nodesMap[d.Region][d.Identity+":"+d.RPCPort] = struct{}{}
+			nodesMap[d.Region][d.Identity+":"+d.HTTPPort] = struct{}{}
 		}
 	}
 
