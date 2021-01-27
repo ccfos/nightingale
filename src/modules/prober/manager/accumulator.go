@@ -2,6 +2,7 @@ package manager
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -144,16 +145,6 @@ func (p *accumulator) getTime(t []time.Time) time.Time {
 	return timestamp.Round(p.precision)
 }
 
-// CounterType  string            `json:"counterType"` // GAUGE | COUNTER | SUBTRACT | DERIVE
-func metricType(metric telegraf.Metric) string {
-	switch metric.Type() {
-	case telegraf.Counter:
-		return "COUNTER"
-	default:
-		return "GAUGE"
-	}
-}
-
 // https://docs.influxdata.com/telegraf/v1.14/data_formats/output/prometheus/
 func (p *accumulator) makeMetric(metric telegraf.Metric) []*dataobj.MetricValue {
 	tags := map[string]string{}
@@ -165,12 +156,54 @@ func (p *accumulator) makeMetric(metric telegraf.Metric) []*dataobj.MetricValue 
 		tags[k] = v
 	}
 
+	switch metric.Type() {
+	case telegraf.Counter:
+		return makeCounter(metric, tags)
+	case telegraf.Summary, telegraf.Histogram:
+		return makeSummary(metric, tags)
+	default:
+		return makeGauge(metric, tags)
+	}
+
+}
+
+func makeSummary(metric telegraf.Metric, tags map[string]string) []*dataobj.MetricValue {
 	name := metric.Name()
 	ts := metric.Time().Unix()
-
 	fields := metric.Fields()
-	conterType := metricType(metric)
 	ms := make([]*dataobj.MetricValue, 0, len(fields))
+
+	for k, v := range fields {
+		f, ok := v.(float64)
+		if !ok {
+			continue
+		}
+
+		countType := "GAUGE"
+		if strings.HasSuffix(k, "_count") ||
+			strings.HasSuffix(k, "_sum") {
+			countType = "COUNTER"
+		}
+
+		ms = append(ms, &dataobj.MetricValue{
+			Metric:       name + "_" + k,
+			CounterType:  countType,
+			Timestamp:    ts,
+			TagsMap:      tags,
+			Value:        f,
+			ValueUntyped: f,
+		})
+
+	}
+	return ms
+}
+
+func makeCounter(metric telegraf.Metric, tags map[string]string) []*dataobj.MetricValue {
+	name := metric.Name()
+	ts := metric.Time().Unix()
+	fields := metric.Fields()
+	ms := make([]*dataobj.MetricValue, 0, len(fields))
+
 	for k, v := range fields {
 		f, ok := v.(float64)
 		if !ok {
@@ -179,7 +212,7 @@ func (p *accumulator) makeMetric(metric telegraf.Metric) []*dataobj.MetricValue 
 
 		ms = append(ms, &dataobj.MetricValue{
 			Metric:       name + "_" + k,
-			CounterType:  conterType,
+			CounterType:  "COUNTER",
 			Timestamp:    ts,
 			TagsMap:      tags,
 			Value:        f,
@@ -188,6 +221,32 @@ func (p *accumulator) makeMetric(metric telegraf.Metric) []*dataobj.MetricValue 
 	}
 
 	return ms
+}
+
+func makeGauge(metric telegraf.Metric, tags map[string]string) []*dataobj.MetricValue {
+	name := metric.Name()
+	ts := metric.Time().Unix()
+	fields := metric.Fields()
+	ms := make([]*dataobj.MetricValue, 0, len(fields))
+
+	for k, v := range fields {
+		f, ok := v.(float64)
+		if !ok {
+			continue
+		}
+
+		ms = append(ms, &dataobj.MetricValue{
+			Metric:       name + "_" + k,
+			CounterType:  "GAUGE",
+			Timestamp:    ts,
+			TagsMap:      tags,
+			Value:        f,
+			ValueUntyped: f,
+		})
+	}
+
+	return ms
+
 }
 
 func (p *accumulator) pushMetrics(metrics []*dataobj.MetricValue) {
