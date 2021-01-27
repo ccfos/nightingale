@@ -3,7 +3,6 @@ package manager
 import (
 	"container/heap"
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -168,7 +167,7 @@ func (p *worker) loop(id int) {
 				return
 			case rule := <-p.collectRuleCh:
 				if err := p.do(rule); err != nil {
-					logger.Debugf("work[%d].do %s", id, err)
+					log.Printf("work[%d].do err %s", id, err)
 				}
 			}
 		}
@@ -176,22 +175,19 @@ func (p *worker) loop(id int) {
 }
 
 func (p *worker) do(rule *collectRule) error {
-	rule.reset()
+	rule.metrics = rule.metrics[:0]
 
 	// telegraf
-	err := rule.input.Gather(rule.acc)
-	if err != nil {
-		return fmt.Errorf("gather %s", err)
+	err := rule.Input.Gather(rule)
+	if len(rule.metrics) == 0 {
+		return err
 	}
 
 	// eval expression metrics
-	metrics, err := rule.prepareMetrics()
-	if err != nil {
-		return fmt.Errorf("prepareMetrics %s", err)
-	}
+	rule.prepareMetrics()
 
-	// push to transfer
-	core.Push(metrics)
+	// send
+	core.Push(rule.metrics)
 
 	return err
 }
