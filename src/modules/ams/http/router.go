@@ -14,6 +14,7 @@ func Config(r *gin.Engine) {
 		userLogin.POST("/hosts", hostPost)
 		userLogin.GET("/host/:id", hostGet)
 		userLogin.PUT("/hosts/tenant", hostTenantPut)
+		userLogin.PUT("/hosts/node", hostNodePut)
 		userLogin.PUT("/hosts/back", hostBackPut)
 		userLogin.PUT("/hosts/note", hostNotePut)
 		userLogin.PUT("/hosts/cate", hostCatePut)

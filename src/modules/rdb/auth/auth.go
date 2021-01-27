@@ -44,3 +44,7 @@ func DeleteToken(accessToken string) error {
 func Start() error {
 	return defaultAuth.Start()
 }
+
+func PrepareUser(user *models.User) {
+	defaultAuth.PrepareUser(user)
+}

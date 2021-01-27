@@ -4,8 +4,6 @@ github.com/BurntSushi/toml
 github.com/MichaelTJones/pcg
 # github.com/Shopify/sarama v1.27.1
 github.com/Shopify/sarama
-# github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d
-github.com/StackExchange/wmi
 # github.com/apache/thrift v0.13.0 => github.com/m3db/thrift v0.0.0-20190820191926-05b5a2227fe4
 github.com/apache/thrift/lib/go/thrift
 # github.com/beorn7/perks v1.0.1
@@ -52,9 +50,6 @@ github.com/gin-gonic/gin/binding
 github.com/gin-gonic/gin/internal/bytesconv
 github.com/gin-gonic/gin/internal/json
 github.com/gin-gonic/gin/render
-# github.com/go-ole/go-ole v1.2.4
-github.com/go-ole/go-ole
-github.com/go-ole/go-ole/oleutil
 # github.com/go-playground/locales v0.13.0
 github.com/go-playground/locales
 github.com/go-playground/locales/currency
@@ -98,6 +93,13 @@ github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
 # github.com/golang/snappy v0.0.1
 github.com/golang/snappy
+# github.com/google/go-cmp v0.5.2
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/cmpopts
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
 # github.com/google/go-github/v32 v32.1.0
 github.com/google/go-github/v32/github
 # github.com/google/go-querystring v1.0.0
@@ -144,6 +146,7 @@ github.com/influxdata/telegraf/plugins/inputs/mysql/v1
 github.com/influxdata/telegraf/plugins/inputs/mysql/v2
 github.com/influxdata/telegraf/plugins/inputs/redis
 github.com/influxdata/telegraf/selfstat
+github.com/influxdata/telegraf/testutil
 # github.com/jcmturner/gofork v1.0.0
 github.com/jcmturner/gofork/encoding/asn1
 github.com/jcmturner/gofork/x/crypto/pbkdf2
@@ -365,12 +368,6 @@ github.com/rcrowley/go-metrics
 github.com/robfig/go-cache
 # github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b => github.com/satori/go.uuid v1.2.0
 github.com/satori/go.uuid
-# github.com/shirou/gopsutil v3.20.11+incompatible
-github.com/shirou/gopsutil/cpu
-github.com/shirou/gopsutil/internal/common
-github.com/shirou/gopsutil/mem
-github.com/shirou/gopsutil/net
-github.com/shirou/gopsutil/process
 # github.com/spaolacci/murmur3 v1.1.0
 github.com/spaolacci/murmur3
 # github.com/spf13/afero v1.2.2
@@ -730,6 +727,12 @@ gopkg.in/jcmturner/rpc.v1/mstypes
 gopkg.in/jcmturner/rpc.v1/ndr
 # gopkg.in/ldap.v3 v3.1.0
 gopkg.in/ldap.v3
+# gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
+gopkg.in/mgo.v2
+gopkg.in/mgo.v2/bson
+gopkg.in/mgo.v2/internal/json
+gopkg.in/mgo.v2/internal/sasl
+gopkg.in/mgo.v2/internal/scram
 # gopkg.in/square/go-jose.v2 v2.5.1
 gopkg.in/square/go-jose.v2
 gopkg.in/square/go-jose.v2/cipher

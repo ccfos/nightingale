@@ -20,7 +20,7 @@ func (i *Instance) Add() error {
 }
 
 func (i *Instance) Update() error {
-	_, err := DB["hbs"].Where("id=?", i.Id).MustCols("ts", "http_port", "rpc_port").Update(i)
+	_, err := DB["hbs"].Where("id=?", i.Id).MustCols("ts", "http_port", "rpc_port", "region").Update(i)
 	return err
 }
 

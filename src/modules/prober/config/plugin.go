@@ -20,7 +20,7 @@ var (
 
 const (
 	PluginModeWhitelist = iota
-	PluginModeOverlay
+	PluginModeAll
 )
 
 type Metric struct {
@@ -48,10 +48,24 @@ func (p *pluginConfig) Validate() error {
 	switch strings.ToLower(p.Mode) {
 	case "whitelist":
 		p.mode = PluginModeWhitelist
-	case "overlay":
-		p.mode = PluginModeOverlay
+	case "all":
+		p.mode = PluginModeAll
 	default:
 		p.mode = PluginModeWhitelist
+	}
+
+	for k, v := range p.Metrics {
+		if v.Name == "" {
+			return fmt.Errorf("metrics[%d].name must be set", k)
+		}
+		if v.Type == "" {
+			v.Type = dataobj.GAUGE
+		}
+		if v.Type != dataobj.GAUGE &&
+			v.Type != dataobj.COUNTER &&
+			v.Type != dataobj.SUBTRACT {
+			return fmt.Errorf("metrics[%s].type.%s unsupported", v.Name, v.Type)
+		}
 	}
 	return nil
 }
@@ -63,8 +77,12 @@ func InitPluginsConfig(cf *ConfYaml) {
 		config := newPluginConfig()
 		pluginConfigs[plugin] = config
 
-		file := filepath.Join(cf.PluginsConfig, plugin+".yml")
+		file := filepath.Join(cf.PluginsConfig, plugin+".local.yml")
 		b, err := ioutil.ReadFile(file)
+		if err != nil {
+			file = filepath.Join(cf.PluginsConfig, plugin+".yml")
+			b, err = ioutil.ReadFile(file)
+		}
 		if err != nil {
 			logger.Debugf("readfile %s err %s", plugin, err)
 			continue

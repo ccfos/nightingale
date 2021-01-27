@@ -12,7 +12,6 @@ import (
 
 	"github.com/influxdata/telegraf"
 	tlsint "github.com/influxdata/telegraf/plugins/common/tls"
-	"github.com/influxdata/telegraf/plugins/inputs"
 	"gopkg.in/mgo.v2"
 )
 
@@ -186,6 +185,7 @@ func (m *MongoDB) gatherServer(server *Server, acc telegraf.Accumulator) error {
 	return server.gatherData(acc, m.GatherClusterStatus, m.GatherPerdbStats, m.GatherColStats, m.ColStatsDbs)
 }
 
+/*
 func init() {
 	inputs.Add("mongodb", func() telegraf.Input {
 		return &MongoDB{
@@ -197,3 +197,4 @@ func init() {
 		}
 	})
 }
+*/

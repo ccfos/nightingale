@@ -7,7 +7,6 @@ import (
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/influxdata/telegraf"
-	"github.com/toolkits/pkg/logger"
 )
 
 var (
@@ -24,16 +23,27 @@ const (
 	LocalCategory  Category = "local"  // used for agent
 )
 
+// Collector is an abstract, pluggable interface for monapi & prober.
 type Collector interface {
+	// Name return the collector name
 	Name() string
+	// Category return the collector category,  remote | local
 	Category() Category
+	// Get return a collectRule by collectRule.Id
 	Get(id int64) (interface{}, error)
+	// Gets return collectRule list by node ids
 	Gets(nids []int64) ([]interface{}, error)
+	// GetByNameAndNid return collectRule by collectRule.Name & collectRule.Nid
 	GetByNameAndNid(name string, nid int64) (interface{}, error)
+	// Create a collectRule by []byte format, witch could be able to unmarshal with a collectRule struct
 	Create(data []byte, username string) error
+	// Update a collectRule by []byte format, witch could be able to unmarshal with a collectRule struct
 	Update(data []byte, username string) error
+	// Delete a collectRule by collectRule.Id with operator's name
 	Delete(id int64, username string) error
+	// Template return a template used for UI render
 	Template() (interface{}, error)
+	// TelegrafInput return a telegraf.Input interface, this is called by prober.manager every collectRule.Step
 	TelegrafInput(*models.CollectRule) (telegraf.Input, error)
 }
 
@@ -72,6 +82,5 @@ func GetLocalCollectors() []string {
 }
 
 func _s(format string, a ...interface{}) string {
-	logger.Debugf(`    "%s": "%s",`, format, format)
 	return i18n.Sprintf(format, a...)
 }

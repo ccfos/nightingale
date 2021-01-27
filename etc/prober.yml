@@ -1,8 +1,13 @@
-region: default 
 workerProcesses: 5
+
 logger:
   dir: logs/prober
-  level: DEBUG
+  level: INFO
   keepHours: 24
 pluginsConfig: etc/plugins
-ignoreConfig: false
+
+report:
+  region: default 
+
+collectRule:
+  token: monapi-internal-third-module-pass-fjsdi

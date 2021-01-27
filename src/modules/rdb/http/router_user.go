@@ -25,6 +25,7 @@ func userListGet(c *gin.Context) {
 
 	for i := 0; i < len(list); i++ {
 		list[i].UUID = ""
+		auth.PrepareUser(&list[i])
 	}
 
 	renderData(c, gin.H{
@@ -103,6 +104,9 @@ func userAddPost(c *gin.Context) {
 func userProfileGet(c *gin.Context) {
 	user := User(urlParamInt64(c, "id"))
 	user.UUID = ""
+
+	auth.PrepareUser(user)
+
 	renderData(c, user, nil)
 }
 

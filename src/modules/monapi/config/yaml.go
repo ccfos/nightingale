@@ -29,6 +29,12 @@ type ConfYaml struct {
 	Link          linkSection         `yaml:"link"`
 	IndexMod      string              `yaml:"indexMod"`
 	I18n          i18n.I18nSection    `yaml:"i18n"`
+	Tpl           tplSection          `yaml:"tpl"`
+}
+
+type tplSection struct {
+	AlertPath  string `yaml:"alertPath"`
+	ScreenPath string `yaml:"screenPath"`
 }
 
 type mergeSection struct {
@@ -173,6 +179,11 @@ func Parse(ymlfile string) error {
 		"days":     31,
 		"batch":    100,
 		"converge": true, // 历史告警的数据库表，对于已收敛的告警，默认删掉，不保留，省得告警太多
+	})
+
+	viper.SetDefault("tpl", map[string]string{
+		"alertPath":  "./etc/alert",
+		"screenPath": "./etc/screen",
 	})
 
 	err = viper.Unmarshal(&yaml)

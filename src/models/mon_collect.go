@@ -304,7 +304,7 @@ func (p *PortCollect) Update() error {
 		return err
 	}
 
-	if err := saveHist(p.Id, "port", "update", p.Creator, string(portByte), session); err != nil {
+	if err := saveHistory(p.Id, "port", "update", p.Creator, string(portByte), session); err != nil {
 		session.Rollback()
 		return err
 	}
@@ -342,7 +342,7 @@ func (p *ProcCollect) Update() error {
 		return err
 	}
 
-	if err := saveHist(p.Id, "port", "update", p.Creator, string(b), session); err != nil {
+	if err := saveHistory(p.Id, "port", "update", p.Creator, string(b), session); err != nil {
 		session.Rollback()
 		return err
 	}
@@ -380,7 +380,7 @@ func (p *LogCollect) Update() error {
 		return err
 	}
 
-	if err := saveHist(p.Id, "log", "update", p.Creator, string(b), session); err != nil {
+	if err := saveHistory(p.Id, "log", "update", p.Creator, string(b), session); err != nil {
 		session.Rollback()
 		return err
 	}
@@ -438,7 +438,7 @@ func (p *PluginCollect) Update() error {
 		return err
 	}
 
-	if err := saveHist(p.Id, "plugin", "update", p.Creator, string(b), session); err != nil {
+	if err := saveHistory(p.Id, "plugin", "update", p.Creator, string(b), session); err != nil {
 		session.Rollback()
 		return err
 	}
@@ -513,7 +513,7 @@ func (a *ApiCollect) Update() error {
 		return err
 	}
 
-	if err := saveHist(a.Id, "api", "update", a.Creator, string(b), session); err != nil {
+	if err := saveHistory(a.Id, "api", "update", a.Creator, string(b), session); err != nil {
 		session.Rollback()
 		return err
 	}
@@ -545,7 +545,7 @@ func CreateCollect(collectType, creator string, collect interface{}) error {
 		return err
 	}
 
-	if err := saveHist(0, collectType, "create", creator, string(b), session); err != nil {
+	if err := saveHistory(0, collectType, "create", creator, string(b), session); err != nil {
 		session.Rollback()
 		return err
 	}
@@ -564,7 +564,7 @@ func DeleteCollectById(collectType, creator string, cid int64) error {
 		return err
 	}
 
-	if err := saveHist(cid, collectType, "delete", creator, strconv.FormatInt(cid, 10), session); err != nil {
+	if err := saveHistory(cid, collectType, "delete", creator, strconv.FormatInt(cid, 10), session); err != nil {
 		session.Rollback()
 		return err
 	}
@@ -572,7 +572,7 @@ func DeleteCollectById(collectType, creator string, cid int64) error {
 	return session.Commit()
 }
 
-func saveHist(id int64, tp string, action, username, body string, session *xorm.Session) error {
+func saveHistory(id int64, tp string, action, username, body string, session *xorm.Session) error {
 	h := CollectHist{
 		Cid:         id,
 		CollectType: tp,
