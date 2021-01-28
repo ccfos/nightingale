@@ -39,7 +39,7 @@ type Rule struct {
 
 func (p *Rule) Validate() error {
 	if len(p.Urls) == 0 || p.Urls[0] == "" {
-		return fmt.Errorf("github.rule.urls must be set")
+		return fmt.Errorf("ningx.rule.urls must be set")
 	}
 
 	return nil
