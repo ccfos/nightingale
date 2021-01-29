@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/src/modules/monapi/collector"
-	"github.com/didi/nightingale/src/modules/monapi/plugins/github/github"
+	"github.com/didi/nightingale/src/modules/monapi/plugins"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/influxdata/telegraf"
+	"github.com/influxdata/telegraf/plugins/inputs/github"
 )
 
 func init() {
@@ -64,10 +65,15 @@ func (p *GitHubRule) TelegrafInput() (telegraf.Input, error) {
 		return nil, err
 	}
 
-	return &github.GitHub{
+	input := &github.GitHub{
 		Repositories:      p.Repositories,
 		AccessToken:       p.AccessToken,
 		EnterpriseBaseURL: p.EnterpriseBaseURL,
-		HTTPTimeout:       time.Second * time.Duration(p.HTTPTimeout),
-	}, nil
+	}
+
+	if err := plugins.SetValue(&input.HTTPTimeout.Duration, time.Second*time.Duration(p.HTTPTimeout)); err != nil {
+		return nil, err
+	}
+
+	return input, nil
 }
