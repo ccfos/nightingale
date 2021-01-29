@@ -106,6 +106,13 @@ func PrivilegeDels(ids []int64) error {
 		return err
 	}
 
+	existIds := make(map[int64]struct{}, len(ids))
+	for _, id := range ids {
+		if _, ok := existIds[id]; !ok {
+			existIds[id] = struct{}{}
+		}
+	}
+
 	for _, id := range ids {
 		// 下面有子节点的话不允许删除
 		p, err := PrivilegeGet("id=?", id)
@@ -124,7 +131,7 @@ func PrivilegeDels(ids []int64) error {
 			return err
 		}
 
-		if len(ps) > 0 {
+		if _, ok := existIds[p.Id]; !ok && len(ps) > 0 {
 			session.Rollback()
 			return fmt.Errorf("privilege[%s] has child privilege", p.Path)
 		}
