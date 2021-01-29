@@ -10,6 +10,7 @@ import (
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/prometheus"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/redis"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/nginx"
+	_ "github.com/didi/nightingale/src/modules/monapi/plugins/elasticsearch"
 
 	// local
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/log"
