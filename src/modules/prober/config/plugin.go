@@ -15,7 +15,8 @@ import (
 )
 
 var (
-	pluginConfigs map[string]*PluginConfig
+	pluginConfigs              map[string]*PluginConfig
+	defaultPluginConfigContent = []byte("mode: whitelist # whitelist(default),all")
 )
 
 const (
@@ -84,8 +85,15 @@ func InitPluginsConfig(cf *ConfYaml) {
 			b, err = ioutil.ReadFile(file)
 		}
 		if err != nil {
-			logger.Debugf("readfile %s err %s", plugin, err)
-			continue
+			file = filepath.Join(cf.PluginsConfig, plugin+".local.yml")
+			err = ioutil.WriteFile(file, defaultPluginConfigContent, 0644)
+			if err != nil {
+				logger.Warningf("create plugin config %s err %s", file, err)
+				continue
+			} else {
+				logger.Infof("create plugin config %s", file)
+				b = defaultPluginConfigContent
+			}
 		}
 
 		if err := yaml.Unmarshal(b, &c); err != nil {
