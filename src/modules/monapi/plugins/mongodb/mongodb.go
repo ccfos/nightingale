@@ -2,12 +2,14 @@ package mongodb
 
 import (
 	"fmt"
+	"reflect"
+	"unsafe"
 
 	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/modules/monapi/plugins"
-	"github.com/didi/nightingale/src/modules/monapi/plugins/mongodb/mongodb"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/influxdata/telegraf"
+	"github.com/influxdata/telegraf/plugins/inputs/mongodb"
 )
 
 func init() {
@@ -66,14 +68,19 @@ func (p *MongodbRule) TelegrafInput() (telegraf.Input, error) {
 		return nil, err
 	}
 
-	return &mongodb.MongoDB{
+	input := &mongodb.MongoDB{
 		Servers:             p.Servers,
-		Mongos:              make(map[string]*mongodb.Server),
 		GatherClusterStatus: p.GatherClusterStatus,
 		GatherPerdbStats:    p.GatherPerdbStats,
 		GatherColStats:      p.GatherColStats,
 		ColStatsDbs:         p.ColStatsDbs,
 		Log:                 plugins.GetLogger(),
 		ClientConfig:        p.ClientConfig.TlsClientConfig(),
-	}, nil
+	}
+
+	rv := reflect.Indirect(reflect.ValueOf(input)).FieldByName("mongos")
+	ptr := (*map[string]*mongodb.Server)(unsafe.Pointer(rv.UnsafeAddr()))
+	*ptr = make(map[string]*mongodb.Server)
+
+	return input, nil
 }
