@@ -58,3 +58,4 @@ _test
 tmp/
 main
 Makefile
+src/modules/monapi/plugins/snmp/

@@ -689,6 +689,18 @@ func v1SessionGetUser(c *gin.Context) {
 	renderData(c, user, err)
 }
 
+func v1SessionListGet(c *gin.Context) {
+	limit := queryInt(c, "limit", 20)
+	query := queryStr(c, "query", "")
+
+	list, total, err := models.SessionAndTotalGets(query, limit, offset(c, limit))
+
+	renderData(c, gin.H{
+		"list":  list,
+		"total": total,
+	}, err)
+}
+
 func v1SessionDelete(c *gin.Context) {
 	sid := urlParamStr(c, "sid")
 	logger.Debugf("session del sid %s", sid)

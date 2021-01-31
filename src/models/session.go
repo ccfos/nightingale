@@ -58,6 +58,11 @@ func SessionCleanupByCreatedAt(ts int64) error {
 	logger.Debugf("delete before created_at %d session %d", ts, n)
 	return err
 }
+func SessionCleanupByUpdatedAt(ts int64) error {
+	n, err := DB["rdb"].Where("updated_at<?", ts).Delete(new(Session))
+	logger.Debugf("delete before updated_at %d session %d", ts, n)
+	return err
+}
 func (s *Session) Update(cols ...string) error {
 	_, err := DB["rdb"].Where("id=?", s.Sid).Cols(cols...).Update(s)
 	return err
@@ -114,4 +119,47 @@ func SessionGetUserWithCache(sid string) (*User, error) {
 	}
 	return UserMustGet("username=?", s.Username)
 
+}
+
+func SessionTotal(where string, args ...interface{}) (int64, error) {
+	session := DB["rdb"].NewSession()
+	defer session.Close()
+
+	if where != "" {
+		session = session.Where(where, args...)
+	}
+
+	return session.Count(new(Session))
+}
+
+func SessionGets(limit, offset int, where string, args ...interface{}) ([]Session, error) {
+	session := DB["rdb"].Limit(limit, offset).Desc("updated_at")
+
+	if where != "" {
+		session = session.Where(where, args...)
+	}
+
+	var sessions []Session
+	err := session.Find(&sessions)
+	return sessions, err
+}
+
+func SessionAndTotalGets(query string, limit, offset int) ([]Session, int64, error) {
+	where := "username != ''"
+	param := []interface{}{}
+
+	if query != "" {
+		q := "%" + query + "%"
+		where += " and (username like ? or remote_addr like ?)"
+		param = append(param, q, q)
+	}
+
+	total, err := SessionTotal(where, param...)
+	if err != nil {
+		return []Session{}, total, err
+	}
+
+	list, err := SessionGets(limit, offset, where, param...)
+
+	return list, total, err
 }
