@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/url"
 	"time"
 
@@ -425,7 +426,7 @@ func lockedUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) 
 		user.UpdatedAt = now
 		return nil
 	}
-	return _e("User is locked")
+	return _e("User is locked, unlock at %dm later", math.Ceil(float64(user.LockedAt+cf.LockTime-now))/60.0)
 }
 
 func frozenUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) error {

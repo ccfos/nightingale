@@ -20,6 +20,8 @@ require (
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb v1.8.0
 	github.com/influxdata/telegraf v1.16.2
+	github.com/influxdata/toml v0.0.0-20190415235208-270119a8ce65
+	github.com/influxdata/wlog v0.0.0-20160411224016-7c63b0a71ef8
 	github.com/m3db/m3 v0.15.17
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.0 // indirect
@@ -31,6 +33,7 @@ require (
 	github.com/prometheus/common v0.9.1
 	github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62 // indirect
 	github.com/shirou/gopsutil v3.20.11+incompatible // indirect
+	github.com/soniah/gosnmp v1.25.0
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/viper v1.7.1
 	github.com/streadway/amqp v1.0.0

@@ -205,6 +205,7 @@ func Config(r *gin.Engine) {
 		// session
 		v1.GET("/sessions/:sid", v1SessionGet)
 		v1.GET("/sessions/:sid/user", v1SessionGetUser)
+		v1.GET("/sessions", v1SessionListGet)
 		v1.DELETE("/sessions/:sid", v1SessionDelete)
 
 		// token
