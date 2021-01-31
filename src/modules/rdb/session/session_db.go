@@ -29,7 +29,7 @@ func newDbStorage(cf *config.SessionSection, opts *options) (storage, error) {
 			case <-opts.ctx.Done():
 				return
 			case <-t.C:
-				err := models.SessionCleanupByCreatedAt(time.Now().Unix() - lifeTime)
+				err := models.SessionCleanupByUpdatedAt(time.Now().Unix() - lifeTime)
 				if err != nil {
 					logger.Errorf("session gc err %s", err)
 				}
