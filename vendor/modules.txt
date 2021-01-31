@@ -116,13 +116,6 @@ github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
 # github.com/golang/snappy v0.0.1
 github.com/golang/snappy
-# github.com/google/go-cmp v0.5.2
-github.com/google/go-cmp/cmp
-github.com/google/go-cmp/cmp/cmpopts
-github.com/google/go-cmp/cmp/internal/diff
-github.com/google/go-cmp/cmp/internal/flags
-github.com/google/go-cmp/cmp/internal/function
-github.com/google/go-cmp/cmp/internal/value
 # github.com/google/go-github/v32 v32.1.0
 github.com/google/go-github/v32/github
 # github.com/google/go-querystring v1.0.0
@@ -167,14 +160,16 @@ github.com/influxdata/telegraf/metric
 github.com/influxdata/telegraf/plugins/common/tls
 github.com/influxdata/telegraf/plugins/inputs
 github.com/influxdata/telegraf/plugins/inputs/elasticsearch
+github.com/influxdata/telegraf/plugins/inputs/github
+github.com/influxdata/telegraf/plugins/inputs/mongodb
 github.com/influxdata/telegraf/plugins/inputs/mysql
 github.com/influxdata/telegraf/plugins/inputs/mysql/v1
 github.com/influxdata/telegraf/plugins/inputs/mysql/v2
 github.com/influxdata/telegraf/plugins/inputs/nginx
+github.com/influxdata/telegraf/plugins/inputs/prometheus
 github.com/influxdata/telegraf/plugins/inputs/redis
 github.com/influxdata/telegraf/plugins/parsers/json
 github.com/influxdata/telegraf/selfstat
-github.com/influxdata/telegraf/testutil
 # github.com/jcmturner/gofork v1.0.0
 github.com/jcmturner/gofork/encoding/asn1
 github.com/jcmturner/gofork/x/crypto/pbkdf2
