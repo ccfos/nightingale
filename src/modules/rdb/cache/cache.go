@@ -36,6 +36,7 @@ func Stop() {
 type Cache struct {
 	session sessionCache
 	config  configCache
+	counter counterCache
 
 	interval int
 	ctx      context.Context
