@@ -11,6 +11,7 @@ import (
 
 	"github.com/didi/nightingale/src/common/address"
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/cache"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/didi/nightingale/src/modules/rdb/session"
 )
@@ -146,6 +147,8 @@ func sessionUsername(c *gin.Context) string {
 }
 
 func sessionLogin(c *gin.Context, username, remoteAddr, accessToken string) {
+	cache.Login()
+
 	s, ok := session.FromContext(c.Request.Context())
 	if !ok {
 		logger.Warningf("session.Start() err not found sessionStore")

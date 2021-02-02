@@ -23,6 +23,7 @@ func Config(r *gin.Engine) {
 
 		notLogin.GET("/v2/nodes", nodeGets)
 		notLogin.GET("/pwd-rules", pwdRulesGet)
+		notLogin.GET("/counter", counterGet)
 
 	}
 
