@@ -90,6 +90,11 @@ func Config(r *gin.Engine) {
 
 		rootLogin.GET("/resources/tenant-rank", tenantResourcesCountRank)
 		rootLogin.GET("/resources/project-rank", projectResourcesCountRank)
+
+		rootLogin.GET("/root/users", userListGet)
+		rootLogin.GET("/root/teams/all", teamAllGet)
+		rootLogin.GET("/root/node-cates", nodeCateGets)
+
 	}
 
 	userLogin := r.Group("/api/rdb").Use(shouldBeLogin())
@@ -150,6 +155,11 @@ func Config(r *gin.Engine) {
 		userLogin.GET("/resources/orphan", resourceOrphanGet)
 
 		userLogin.GET("/resources/cate-count", renderAllResourcesCountByCate)
+
+		// 是否在某个节点上有权限做某个操作(即资源权限点)
+		userLogin.GET("/can-do-node-op", v1CandoNodeOp)
+		// 同时校验多个操作权限点
+		userLogin.GET("/can-do-node-ops", v1CandoNodeOps)
 	}
 
 	v1 := r.Group("/v1/rdb").Use(shouldBeService())
