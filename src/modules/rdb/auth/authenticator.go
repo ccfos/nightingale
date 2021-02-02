@@ -370,7 +370,7 @@ func (p *Authenticator) updateUserStatus() {
 	now := time.Now().Unix()
 	if p.frozenTime > 0 {
 		// 3个月以上未登录，用户自动变为休眠状态
-		if _, err := models.DB["rdb"].Exec("update user set status=?, updated_at=?, locked_at=? where ((logged_at > 0 and logged_at<?) or (logged_at == 0 and created_at < ?)) and status in (?,?,?)",
+		if _, err := models.DB["rdb"].Exec("update user set status=?, updated_at=?, locked_at=? where ((logged_at > 0 and logged_at<?) or (logged_at = 0 and created_at < ?)) and status in (?,?,?)",
 			models.USER_S_FROZEN, now, now, now-p.frozenTime,
 			models.USER_S_ACTIVE, models.USER_S_INACTIVE, models.USER_S_LOCKED); err != nil {
 			logger.Errorf("update user status error %s", err)

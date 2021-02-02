@@ -23,11 +23,10 @@ func (p *Counter) Add(a int64) {
 	p.Inc += a
 }
 
-func (p *Counter) Set(a int64) {
+func (p *Counter) SetBase(a int64) {
 	p.Lock()
-	defer p.RUnlock()
+	defer p.Unlock()
 	p.Base = a
-	p.Inc = 0
 }
 
 func (p *Counter) Get() int64 {
@@ -88,9 +87,12 @@ func (p *counterCache) update() (err error) {
 	counter.Login.Base += inc
 
 	if err = setCounter(session, counter); err != nil {
-		session.Rollback()
+		// reset inc
 		p.Login.Add(inc)
+		session.Rollback()
 	} else {
+		// update base
+		p.Login.SetBase(counter.Login.Base)
 		session.Commit()
 	}
 
