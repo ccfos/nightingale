@@ -13,15 +13,23 @@ func newDbStorage(cf *config.SessionSection, opts *options) (storage, error) {
 
 	lifeTime := config.Config.HTTP.Session.CookieLifetime
 	if lifeTime == 0 {
-		if config.Config.Auth.ExtraMode.Enable {
-			// cleanup by idle time worker
-			lifeTime = 86400 * 10
-		} else {
-			lifeTime = 86400
+		lifeTime = 86400
+	}
+
+	cleanup := func() {
+		now := time.Now().Unix()
+		err := models.SessionCleanupByUpdatedAt(now - lifeTime)
+		if err != nil {
+			logger.Errorf("session gc err %s", err)
 		}
+
+		n, err := models.DB["rdb"].Where("username='' and created_at < ?", now-lifeTime).Delete(new(models.Session))
+		logger.Debugf("delete session %d lt created_at %d err %v", n, now-lifeTime, err)
 	}
 
 	go func() {
+		cleanup()
+
 		t := time.NewTicker(time.Second * time.Duration(cf.GcInterval))
 		defer t.Stop()
 		for {
@@ -29,11 +37,7 @@ func newDbStorage(cf *config.SessionSection, opts *options) (storage, error) {
 			case <-opts.ctx.Done():
 				return
 			case <-t.C:
-				err := models.SessionCleanupByCreatedAt(time.Now().Unix() - lifeTime)
-				if err != nil {
-					logger.Errorf("session gc err %s", err)
-				}
-
+				cleanup()
 			}
 		}
 	}()

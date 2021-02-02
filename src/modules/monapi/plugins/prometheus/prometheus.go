@@ -6,9 +6,9 @@ import (
 
 	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/modules/monapi/plugins"
-	"github.com/didi/nightingale/src/modules/monapi/plugins/prometheus/prometheus"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/influxdata/telegraf"
+	"github.com/influxdata/telegraf/plugins/inputs/prometheus"
 )
 
 func init() {
@@ -74,7 +74,7 @@ func (p *PrometheusRule) TelegrafInput() (telegraf.Input, error) {
 		return nil, err
 	}
 
-	return &prometheus.Prometheus{
+	input := &prometheus.Prometheus{
 		URLs:   p.URLs,
 		URLTag: "target",
 		// KubernetesServices:      p.KubernetesServices,
@@ -86,9 +86,15 @@ func (p *PrometheusRule) TelegrafInput() (telegraf.Input, error) {
 		// BearerTokenString:       p.BearerTokenString,
 		// Username:                p.Username,
 		// Password:                p.Password,
-		ResponseTimeout: time.Second * time.Duration(p.ResponseTimeout),
-		MetricVersion:   2,
-		Log:             plugins.GetLogger(),
-		ClientConfig:    p.ClientConfig.TlsClientConfig(),
-	}, nil
+		// ResponseTimeout: time.Second * time.Duration(p.ResponseTimeout),
+		MetricVersion: 2,
+		Log:           plugins.GetLogger(),
+		ClientConfig:  p.ClientConfig.TlsClientConfig(),
+	}
+
+	if err := plugins.SetValue(&input.ResponseTimeout.Duration,
+		time.Second*time.Duration(p.ResponseTimeout)); err != nil {
+		return nil, err
+	}
+	return input, nil
 }

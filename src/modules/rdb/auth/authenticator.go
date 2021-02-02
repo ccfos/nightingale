@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/url"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 const (
 	ChangePasswordURL = "/change-password"
 	loginModeFifo     = true
+	pwdHistorySize    = 4
 )
 
 type Authenticator struct {
@@ -131,14 +133,13 @@ func (p *Authenticator) ChangePassword(user *models.User, password string) (err 
 		return nil
 	}
 
-	if !p.extraMode {
-		return changePassword()
-	}
-
 	// precheck
 	cf := cache.AuthConfig()
-	if err = checkPassword(cf, password); err != nil {
-		return
+
+	if p.extraMode {
+		if err = checkPassword(cf, password); err != nil {
+			return
+		}
 	}
 
 	if err = changePassword(); err != nil {
@@ -156,15 +157,22 @@ func (p *Authenticator) ChangePassword(user *models.User, password string) (err 
 		return
 	}
 
-	for _, v := range passwords {
-		if user.Password == v {
-			err = _e("The password is the same as the old password")
-			return
+	if p.extraMode {
+		for _, v := range passwords {
+			if user.Password == v {
+				err = _e("The password is the same as the old password")
+				return
+			}
 		}
 	}
 
 	passwords = append(passwords, user.Password)
-	if n := len(passwords) - cf.PwdHistorySize; n > 0 {
+
+	historySize := pwdHistorySize
+	if cf.PwdHistorySize > historySize {
+		historySize = cf.PwdHistorySize
+	}
+	if n := len(passwords) - historySize; n > 0 {
 		passwords = passwords[n:]
 	}
 
@@ -300,7 +308,9 @@ func (p *Authenticator) PrepareUser(user *models.User) {
 	}
 
 	cf := cache.AuthConfig()
-	user.PwdExpiresAt = user.PwdUpdatedAt + cf.PwdExpiresIn*86400*30
+	if cf.PwdExpiresIn > 0 {
+		user.PwdExpiresAt = user.PwdUpdatedAt + cf.PwdExpiresIn*86400*30
+	}
 }
 
 // cleanup rdb.session & sso.token
@@ -425,7 +435,7 @@ func lockedUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) 
 		user.UpdatedAt = now
 		return nil
 	}
-	return _e("User is locked")
+	return _e("User is locked, unlock at %dm later", int(math.Ceil(float64(user.LockedAt+cf.LockTime*60-now))/60.0))
 }
 
 func frozenUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) error {

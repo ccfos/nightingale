@@ -84,3 +84,9 @@
 升级方法：
   - 替换n9e-prober n9e-monapi二进制，升级pub下的前端资源文件
 
+3.6.0
+升级内容：
+  - prober模块支持nginx、elasticsearch、prometheus的监控采集，prometheus转换时姑且干掉了 Histogram 和 Summary
+  - 告警消息中节点挂载关系做了去重处理
+升级方法：
+  - 替换n9e-prober n9e-monapi二进制

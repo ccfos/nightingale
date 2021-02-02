@@ -1,6 +1,10 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/didi/nightingale/src/toolkits/slice"
+)
 
 type NodeResource struct {
 	NodeId int64
@@ -64,7 +68,11 @@ func NodeIdsGetByResIds(rids []int64) ([]int64, error) {
 
 	var ids []int64
 	err := DB["rdb"].Table(new(NodeResource)).In("res_id", rids).Select("node_id").Find(&ids)
-	return ids, err
+	if err != nil {
+		return ids, err
+	}
+
+	return slice.Int64Set(ids), err
 }
 
 // ResIdsGetByNodeIds 根据叶子节点获取资源ID列表
@@ -75,7 +83,11 @@ func ResIdsGetByNodeIds(nids []int64) ([]int64, error) {
 
 	var ids []int64
 	err := DB["rdb"].Table(new(NodeResource)).In("node_id", nids).Select("res_id").Find(&ids)
-	return ids, err
+	if err != nil {
+		return ids, err
+	}
+
+	return slice.Int64Set(ids), err
 }
 
 // ResCountGetByNodeIdsAndWhere 根据叶子节点和Where条件获取资源数量表
