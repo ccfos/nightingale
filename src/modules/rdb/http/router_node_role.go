@@ -120,7 +120,6 @@ func rolesUnderNodeDelTry(c *gin.Context) {
 	bind(c, &f)
 
 	node := Node(urlParamInt64(c, "id"))
-	role := Role(f.RoleId)
 
 	me := loginUser(c)
 	if me.Username != f.Username {
@@ -128,5 +127,5 @@ func rolesUnderNodeDelTry(c *gin.Context) {
 		me.CheckPermByNode(node, "rdb_perm_grant")
 	}
 
-	renderMessage(c, err)
+	renderMessage(c, nil)
 }
