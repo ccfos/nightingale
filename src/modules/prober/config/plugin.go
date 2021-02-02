@@ -129,7 +129,7 @@ func (p *Metric) parse() (err error) {
 	return
 }
 
-func (p *Metric) Calc(vars map[string]*dataobj.MetricValue) (float64, error) {
+func (p *Metric) Calc(vars map[string][]*dataobj.MetricValue) (float64, error) {
 	return p.notations.Calc(vars)
 }
 

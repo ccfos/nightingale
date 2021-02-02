@@ -62,17 +62,17 @@ func (s *StackFloat) Push(f float64) { *s = append(*s, f) }
 func (s *StackFloat) Pop() float64   { n := (*s)[len(*s)-1]; *s = (*s)[:len(*s)-1]; return n }
 func (s *StackFloat) Len() int       { return len(*s) }
 
-func (rpn Notations) Calc(vars map[string]*dataobj.MetricValue) (float64, error) {
+func (rpn Notations) Calc(vars map[string][]*dataobj.MetricValue) (float64, error) {
 	var s StackFloat
 	for i := 0; i < rpn.Len(); i++ {
 		tn := rpn[i]
 		switch tn.tokenType {
 		case tokenVar:
-			if v, ok := vars[tn.tokenVariable]; !ok {
+			if v, ok := vars[tn.tokenVariable]; !ok && len(v) == 0 {
 				return 0, fmt.Errorf("variable %s is not set", tn.tokenVariable)
 			} else {
-				logger.Debugf("get %s %f", tn.tokenVariable, v.Value)
-				s.Push(v.Value)
+				logger.Debugf("get %s %f", tn.tokenVariable, v[0].Value)
+				s.Push(v[0].Value)
 			}
 		case tokenConst:
 			s.Push(tn.tokenConst)
