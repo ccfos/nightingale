@@ -146,6 +146,8 @@ func sessionUsername(c *gin.Context) string {
 }
 
 func sessionLogin(c *gin.Context, username, remoteAddr, accessToken string) {
+	stats.Login.Inc(1)
+
 	s, ok := session.FromContext(c.Request.Context())
 	if !ok {
 		logger.Warningf("session.Start() err not found sessionStore")
