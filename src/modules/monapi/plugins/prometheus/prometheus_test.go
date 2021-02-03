@@ -59,3 +59,6 @@ func TestCollect(t *testing.T) {
 		URLs: []string{"http://localhost:18080/metrics"},
 	})
 }
+
+func TestCollect2(t *testing.T) {
+}
