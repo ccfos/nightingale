@@ -3,7 +3,7 @@ module github.com/didi/nightingale
 go 1.12
 
 require (
-	github.com/Shopify/sarama v1.27.1
+	github.com/Shopify/sarama v1.27.2
 	github.com/cespare/xxhash v1.1.0
 	github.com/codegangsta/negroni v1.0.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
@@ -13,13 +13,14 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.6.3
+	github.com/glinton/ping v0.1.4-0.20200311211934-5ac87da8cd96 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
-	github.com/google/uuid v1.1.2-0.20190416172445-c2e93f3ae59f
+	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.7.3
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb v1.8.0
-	github.com/influxdata/telegraf v1.16.2
+	github.com/influxdata/telegraf v1.17.2
 	github.com/influxdata/toml v0.0.0-20190415235208-270119a8ce65 // indirect
 	github.com/influxdata/wlog v0.0.0-20160411224016-7c63b0a71ef8 // indirect
 	github.com/m3db/m3 v0.15.17

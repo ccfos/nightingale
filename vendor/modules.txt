@@ -2,7 +2,7 @@
 github.com/BurntSushi/toml
 # github.com/MichaelTJones/pcg v0.0.0-20180122055547-df440c6ed7ed
 github.com/MichaelTJones/pcg
-# github.com/Shopify/sarama v1.27.1
+# github.com/Shopify/sarama v1.27.2
 github.com/Shopify/sarama
 # github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d
 github.com/alecthomas/units
@@ -120,7 +120,7 @@ github.com/golang/snappy
 github.com/google/go-github/v32/github
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
-# github.com/google/uuid v1.1.2-0.20190416172445-c2e93f3ae59f
+# github.com/google/uuid v1.1.2
 github.com/google/uuid
 # github.com/gorilla/mux v1.7.3
 github.com/gorilla/mux
@@ -152,7 +152,7 @@ github.com/hydrogen18/stalecucumber
 github.com/influxdata/influxdb/client/v2
 github.com/influxdata/influxdb/models
 github.com/influxdata/influxdb/pkg/escape
-# github.com/influxdata/telegraf v1.16.2
+# github.com/influxdata/telegraf v1.17.2
 github.com/influxdata/telegraf
 github.com/influxdata/telegraf/filter
 github.com/influxdata/telegraf/internal
@@ -168,7 +168,11 @@ github.com/influxdata/telegraf/plugins/inputs/mysql/v2
 github.com/influxdata/telegraf/plugins/inputs/nginx
 github.com/influxdata/telegraf/plugins/inputs/prometheus
 github.com/influxdata/telegraf/plugins/inputs/redis
+github.com/influxdata/telegraf/plugins/inputs/tengine
+github.com/influxdata/telegraf/plugins/inputs/zookeeper
 github.com/influxdata/telegraf/plugins/parsers/json
+github.com/influxdata/telegraf/plugins/parsers/prometheus
+github.com/influxdata/telegraf/plugins/parsers/prometheus/common
 github.com/influxdata/telegraf/selfstat
 # github.com/jcmturner/gofork v1.0.0
 github.com/jcmturner/gofork/encoding/asn1
@@ -616,25 +620,25 @@ google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20200317114155-1f3552e48f24
+# google.golang.org/genproto v0.0.0-20200513103714-09dca8ec2884
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/protobuf/api
 google.golang.org/genproto/protobuf/field_mask
 google.golang.org/genproto/protobuf/ptype
 google.golang.org/genproto/protobuf/source_context
-# google.golang.org/grpc v1.29.1
+# google.golang.org/grpc v1.33.1
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/base
+google.golang.org/grpc/balancer/grpclb/state
 google.golang.org/grpc/balancer/roundrobin
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
 google.golang.org/grpc/credentials
-google.golang.org/grpc/credentials/internal
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/grpclog
@@ -644,6 +648,7 @@ google.golang.org/grpc/internal/balancerload
 google.golang.org/grpc/internal/binarylog
 google.golang.org/grpc/internal/buffer
 google.golang.org/grpc/internal/channelz
+google.golang.org/grpc/internal/credentials
 google.golang.org/grpc/internal/envconfig
 google.golang.org/grpc/internal/grpclog
 google.golang.org/grpc/internal/grpcrand
@@ -651,12 +656,12 @@ google.golang.org/grpc/internal/grpcsync
 google.golang.org/grpc/internal/grpcutil
 google.golang.org/grpc/internal/resolver/dns
 google.golang.org/grpc/internal/resolver/passthrough
+google.golang.org/grpc/internal/serviceconfig
 google.golang.org/grpc/internal/status
 google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/internal/transport
 google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
-google.golang.org/grpc/naming
 google.golang.org/grpc/peer
 google.golang.org/grpc/resolver
 google.golang.org/grpc/resolver/dns
