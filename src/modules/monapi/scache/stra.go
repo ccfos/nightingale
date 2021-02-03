@@ -21,7 +21,7 @@ func SyncStras() {
 
 func syncStras() {
 	logger.Info("[cron] sync stras start...")
-	start := time.Now().Unix()
+	start := time.Now()
 	stras, err := models.EffectiveStrasList()
 	if err != nil {
 		logger.Error("sync stras err:", err)
