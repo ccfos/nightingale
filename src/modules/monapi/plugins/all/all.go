@@ -11,6 +11,8 @@ import (
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/redis"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/nginx"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/elasticsearch"
+	_ "github.com/didi/nightingale/src/modules/monapi/plugins/tengine"
+	_ "github.com/didi/nightingale/src/modules/monapi/plugins/zookeeper"
 
 	// local
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/log"

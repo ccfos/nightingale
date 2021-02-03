@@ -3,9 +3,11 @@ package nginx
 import (
 	"fmt"
 	"github.com/didi/nightingale/src/modules/monapi/collector"
+	"github.com/didi/nightingale/src/modules/monapi/plugins"
 	"github.com/didi/nightingale/src/toolkits/i18n"
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs/nginx"
+	"time"
 )
 
 func init() {
@@ -28,20 +30,24 @@ func NewCollector() *Collector {
 var (
 	langDict = map[string]map[string]string{
 		"zh": map[string]string{
-			"nginx status uri": "查看Nginx状态的地址",
+			"Urls": "服务",
+			"An array of Nginx stub_status URI to gather stats.": "查看Nginx状态的地址",
+			"ResponseTimeout":"响应超时时间",
+			"HTTP response timeout (default: 5s)": "HTTP响应超时时间(单位: 秒)，默认5秒",
 		},
 	}
 )
 
 type Rule struct {
-	Urls []string `label:"nginx status uri" json:"url,required" example:"http://localhost/status"`
+	Urls []string `label:"Urls" json:"urls,required" description:"An array of Nginx stub_status URI to gather stats." example:"http://localhost/status"`
+	ResponseTimeout int `label:"ResponseTimeout" json:"response_timeout" default:"5" description:"HTTP response timeout (default: 5s)"`
+	plugins.ClientConfig
 }
 
 func (p *Rule) Validate() error {
 	if len(p.Urls) == 0 || p.Urls[0] == "" {
 		return fmt.Errorf("ningx.rule.urls must be set")
 	}
-
 	return nil
 }
 
@@ -49,7 +55,11 @@ func (p *Rule) TelegrafInput() (telegraf.Input, error) {
 	if err := p.Validate(); err != nil {
 		return nil, err
 	}
-	return &nginx.Nginx{
+	input := &nginx.Nginx{
 		Urls: p.Urls,
-	}, nil
+	}
+	if err := plugins.SetValue(&input.ResponseTimeout.Duration, time.Second*time.Duration(p.ResponseTimeout)); err != nil {
+		return nil, err
+	}
+	return input, nil
 }

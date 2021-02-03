@@ -2,6 +2,16 @@
 
 #### Unreleased
 
+#### Version 1.27.2 (2020-10-21)
+
+# Improvements
+
+#1750 - @krantideep95 Adds missing mock responses for mocking consumer group
+
+# Fixes
+
+#1817 - reverts #1785 - Add private method to Client interface to prevent implementation
+
 #### Version 1.27.1 (2020-10-07)
 
 # Improvements
