@@ -355,3 +355,11 @@ CREATE TABLE `session` (
    KEY (`username`),
    KEY (`updated_at`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8;
+
+
+CREATE TABLE `stats`
+(
+    `name`   varchar(64)  not null,
+    `value`  bigint       not null default 0,
+    PRIMARY KEY (`name`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8;
