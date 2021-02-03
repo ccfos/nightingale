@@ -114,3 +114,12 @@ func rolesUnderNodeDel(c *gin.Context) {
 
 	renderMessage(c, err)
 }
+
+func rolesUnderNodeDelTry(c *gin.Context) {
+	node := Node(urlParamInt64(c, "id"))
+
+	me := loginUser(c)
+	me.CheckPermByNode(node, "rdb_perm_grant")
+
+	renderMessage(c, nil)
+}
