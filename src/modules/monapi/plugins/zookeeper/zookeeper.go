@@ -31,7 +31,7 @@ var (
 	langDict = map[string]map[string]string{
 		"zh": map[string]string{
 			"Servers": "服务",
-			"An array of address to gather stats about. Specify an ip or hostname <br /> with port. ie localhost:2181, 10.0.0.1:2181, etc.": "服务地址，格式[localhost:2182]",
+			"An array of address to gather stats about. Specify an ip or hostname <br /> with port. ie localhost:2181, 10.0.0.1:2181, etc.": "服务地址，格式[localhost:2182]，服务需开启四字指令",
 			"Timeout": "请求超时时间",
 			"Timeout for metric collections from all servers.  Minimum timeout is 1s": "获取监控指标的超时时间（单位: 秒），最小值为1秒",
 		},
