@@ -184,8 +184,13 @@ func (p *worker) do(rule *collectRule) error {
 		return fmt.Errorf("gather %s", err)
 	}
 
+	pluginConfig, ok := config.GetPluginConfig(rule.PluginName())
+	if !ok {
+		return nil
+	}
+
 	// eval expression metrics
-	metrics, err := rule.prepareMetrics()
+	metrics, err := rule.prepareMetrics(pluginConfig)
 	if err != nil {
 		return fmt.Errorf("prepareMetrics %s", err)
 	}
