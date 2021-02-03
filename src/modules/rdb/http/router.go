@@ -136,6 +136,7 @@ func Config(r *gin.Engine) {
 		userLogin.GET("/node/:id/roles", rolesUnderNodeGets)
 		userLogin.POST("/node/:id/roles", rolesUnderNodePost)
 		userLogin.DELETE("/node/:id/roles", rolesUnderNodeDel)
+		userLogin.DELETE("/node/:id/roles/try", rolesUnderNodeDelTry)
 		userLogin.GET("/node/:id/resources", resourceUnderNodeGet)
 		userLogin.GET("/node/:id/resources/cate-count", renderNodeResourcesCountByCate)
 		userLogin.POST("/node/:id/resources/bind", resourceBindNode)
@@ -149,6 +150,7 @@ func Config(r *gin.Engine) {
 
 		userLogin.GET("/resources/search", resourceSearchGet)
 		userLogin.PUT("/resources/note", resourceNotePut)
+		userLogin.PUT("/resources/note/try", resourceNotePutTry)
 		userLogin.GET("/resources/bindings", resourceBindingsGet)
 		userLogin.GET("/resources/orphan", resourceOrphanGet)
 
