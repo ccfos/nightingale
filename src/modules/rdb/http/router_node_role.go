@@ -116,16 +116,10 @@ func rolesUnderNodeDel(c *gin.Context) {
 }
 
 func rolesUnderNodeDelTry(c *gin.Context) {
-	var f roleUnderNodeDelForm
-	bind(c, &f)
-
 	node := Node(urlParamInt64(c, "id"))
 
 	me := loginUser(c)
-	if me.Username != f.Username {
-		// 即使我没有rdb_perm_grant权限，我也可以删除我自己的权限，所以，两个username不同的时候才需要鉴权
-		me.CheckPermByNode(node, "rdb_perm_grant")
-	}
+	me.CheckPermByNode(node, "rdb_perm_grant")
 
 	renderMessage(c, nil)
 }

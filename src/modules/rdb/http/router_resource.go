@@ -133,12 +133,16 @@ func resourceHttpRegister(count int, items []v1ContainersRegisterItem) {
 
 // 游离资源页面修改备注权限测试，超级管理员，或者是租户管理员有权限
 func resourceNotePutTry(c *gin.Context) {
-	path := queryStr(c, "tenant")
+	path := queryStr(c, "tenant", "")
 	me := loginUser(c)
 
 	if me.IsRooter() {
 		renderMessage(c, nil)
 		return
+	}
+
+	if path == "" {
+		bomb("no privilege")
 	}
 
 	tenantNode, err := models.NodeGet("path=?", path)
