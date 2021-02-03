@@ -116,6 +116,13 @@ github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
 # github.com/golang/snappy v0.0.1
 github.com/golang/snappy
+# github.com/google/go-cmp v0.5.2
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/cmpopts
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
 # github.com/google/go-github/v32 v32.1.0
 github.com/google/go-github/v32/github
 # github.com/google/go-querystring v1.0.0
@@ -124,6 +131,8 @@ github.com/google/go-querystring/query
 github.com/google/uuid
 # github.com/gorilla/mux v1.7.3
 github.com/gorilla/mux
+# github.com/gosnmp/gosnmp v1.29.0
+github.com/gosnmp/gosnmp
 # github.com/hashicorp/go-uuid v1.0.2
 github.com/hashicorp/go-uuid
 # github.com/hashicorp/golang-lru v0.5.4
@@ -156,6 +165,7 @@ github.com/influxdata/influxdb/pkg/escape
 github.com/influxdata/telegraf
 github.com/influxdata/telegraf/filter
 github.com/influxdata/telegraf/internal
+github.com/influxdata/telegraf/internal/snmp
 github.com/influxdata/telegraf/metric
 github.com/influxdata/telegraf/plugins/common/tls
 github.com/influxdata/telegraf/plugins/inputs
@@ -167,13 +177,18 @@ github.com/influxdata/telegraf/plugins/inputs/mysql/v1
 github.com/influxdata/telegraf/plugins/inputs/mysql/v2
 github.com/influxdata/telegraf/plugins/inputs/nginx
 github.com/influxdata/telegraf/plugins/inputs/prometheus
+github.com/influxdata/telegraf/plugins/inputs/rabbitmq
 github.com/influxdata/telegraf/plugins/inputs/redis
+github.com/influxdata/telegraf/plugins/inputs/snmp
 github.com/influxdata/telegraf/plugins/inputs/tengine
 github.com/influxdata/telegraf/plugins/inputs/zookeeper
 github.com/influxdata/telegraf/plugins/parsers/json
 github.com/influxdata/telegraf/plugins/parsers/prometheus
 github.com/influxdata/telegraf/plugins/parsers/prometheus/common
 github.com/influxdata/telegraf/selfstat
+github.com/influxdata/telegraf/testutil
+# github.com/influxdata/wlog v0.0.0-20160411224016-7c63b0a71ef8
+github.com/influxdata/wlog
 # github.com/jcmturner/gofork v1.0.0
 github.com/jcmturner/gofork/encoding/asn1
 github.com/jcmturner/gofork/x/crypto/pbkdf2
@@ -627,18 +642,18 @@ google.golang.org/genproto/protobuf/api
 google.golang.org/genproto/protobuf/field_mask
 google.golang.org/genproto/protobuf/ptype
 google.golang.org/genproto/protobuf/source_context
-# google.golang.org/grpc v1.33.1
+# google.golang.org/grpc v1.33.1 => google.golang.org/grpc v1.29.1
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/base
-google.golang.org/grpc/balancer/grpclb/state
 google.golang.org/grpc/balancer/roundrobin
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
 google.golang.org/grpc/credentials
+google.golang.org/grpc/credentials/internal
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/grpclog
@@ -648,7 +663,6 @@ google.golang.org/grpc/internal/balancerload
 google.golang.org/grpc/internal/binarylog
 google.golang.org/grpc/internal/buffer
 google.golang.org/grpc/internal/channelz
-google.golang.org/grpc/internal/credentials
 google.golang.org/grpc/internal/envconfig
 google.golang.org/grpc/internal/grpclog
 google.golang.org/grpc/internal/grpcrand
@@ -656,12 +670,12 @@ google.golang.org/grpc/internal/grpcsync
 google.golang.org/grpc/internal/grpcutil
 google.golang.org/grpc/internal/resolver/dns
 google.golang.org/grpc/internal/resolver/passthrough
-google.golang.org/grpc/internal/serviceconfig
 google.golang.org/grpc/internal/status
 google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/internal/transport
 google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
+google.golang.org/grpc/naming
 google.golang.org/grpc/peer
 google.golang.org/grpc/resolver
 google.golang.org/grpc/resolver/dns
