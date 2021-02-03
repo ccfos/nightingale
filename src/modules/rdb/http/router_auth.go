@@ -293,7 +293,7 @@ func authLogin(in *v1LoginInput) (user *models.User, err error) {
 		err = _e("Invalid login type %s", in.Type)
 	}
 
-	if user != nil {
+	if user != nil && in.RemoteAddr != "" {
 		if err := auth.WhiteListAccess(user, in.RemoteAddr); err != nil {
 			return nil, _e("Deny Access from %s with whitelist control", in.RemoteAddr)
 		}
@@ -684,8 +684,7 @@ func v1SessionGet(c *gin.Context) {
 }
 
 func v1SessionGetUser(c *gin.Context) {
-	sid := urlParamStr(c, "sid")
-	user, err := models.SessionGetUserWithCache(sid)
+	user, err := models.SessionGetUserWithCache(urlParamStr(c, "sid"))
 	renderData(c, user, err)
 }
 

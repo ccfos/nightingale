@@ -64,7 +64,7 @@ func SessionCleanupByUpdatedAt(ts int64) error {
 	return err
 }
 func (s *Session) Update(cols ...string) error {
-	_, err := DB["rdb"].Where("id=?", s.Sid).Cols(cols...).Update(s)
+	_, err := DB["rdb"].Where("sid=?", s.Sid).Cols(cols...).Update(s)
 	return err
 }
 
@@ -118,7 +118,6 @@ func SessionGetUserWithCache(sid string) (*User, error) {
 		return nil, fmt.Errorf("user not found")
 	}
 	return UserMustGet("username=?", s.Username)
-
 }
 
 func SessionTotal(where string, args ...interface{}) (int64, error) {
