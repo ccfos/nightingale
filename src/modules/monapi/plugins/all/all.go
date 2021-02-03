@@ -11,6 +11,8 @@ import (
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/redis"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/nginx"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/elasticsearch"
+	_ "github.com/didi/nightingale/src/modules/monapi/plugins/rabbitmq"
+	_ "github.com/didi/nightingale/src/modules/monapi/plugins/haproxy"
 
 	// local
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/log"
