@@ -684,8 +684,7 @@ func v1SessionGet(c *gin.Context) {
 }
 
 func v1SessionGetUser(c *gin.Context) {
-	sid := urlParamStr(c, "sid")
-	user, err := models.SessionGetUserWithCache(sid)
+	user, err := models.SessionGetUserWithCache(urlParamStr(c, "sid"))
 	renderData(c, user, err)
 }
 

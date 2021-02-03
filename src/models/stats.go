@@ -30,11 +30,12 @@ func MustNewStats(name string) *Stats {
 }
 
 func (p *Stats) Get() int64 {
-	has, _ := DB["rdb"].Where("name=?", p.Name).Get(p)
+	var s Stats
+	has, _ := DB["rdb"].Where("name=?", p.Name).Get(&s)
 	if !has {
 		p.Save()
 	}
-	return p.Value
+	return s.Value
 }
 
 func (p *Stats) Save() error {
@@ -48,13 +49,14 @@ func (p *Stats) Del() error {
 }
 
 // for GAUAGE
-func (p *Stats) Update() error {
+func (p *Stats) Update(i int64) error {
+	p.Value = i
 	_, err := DB["rdb"].Where("name=?", p.Name).Cols("value").Update(p)
 	return err
 }
 
 // for COUNTER
 func (p *Stats) Inc(i int) error {
-	_, err := DB["rdb"].Exec("update from stats set value = value + ? where name=?", i, p.Name)
+	_, err := DB["rdb"].Exec("update stats set value = value + ? where name=?", i, p.Name)
 	return err
 }
