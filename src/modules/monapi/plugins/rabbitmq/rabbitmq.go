@@ -91,11 +91,8 @@ func (p *RabbitMQRule) TelegrafInput() (telegraf.Input, error) {
 	}
 	v := reflect.ValueOf(&(mq.ResponseHeaderTimeout.Duration)).Elem()
 	v.Set(reflect.ValueOf(time.Second * time.Duration(p.ResponseHeaderTimeout)))
-
 	v1 := reflect.ValueOf(&(mq.ClientTimeout.Duration)).Elem()
 	v1.Set(reflect.ValueOf(time.Second * time.Duration(p.ClientTimeout)))
-
-
 	return mq, nil
 }
 
