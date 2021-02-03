@@ -66,7 +66,6 @@ func (p *HaproxyRule) TelegrafInput() (telegraf.Input, error) {
 		ClientConfig:          p.ClientConfig.TlsClientConfig(),
 	}
 
-
 	return ha, nil
 }
 
