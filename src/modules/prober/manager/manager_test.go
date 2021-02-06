@@ -1,12 +1,11 @@
 package manager
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/monapi/plugins/prometheus"
@@ -14,20 +13,10 @@ import (
 )
 
 func TestManager(t *testing.T) {
-	{
-		http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, sampleTextFormat) })
-		server := &http.Server{Addr: ":18080"}
-		go func() {
-			server.ListenAndServe()
-		}()
-		defer server.Shutdown(context.Background())
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, sampleTextFormat) }))
+	defer s.Close()
 
-		time.Sleep(time.Millisecond * 100)
-	}
-
-	promRule := prometheus.PrometheusRule{
-		URLs: []string{"http://localhost:18080/metrics"},
-	}
+	promRule := prometheus.PrometheusRule{URLs: []string{s.URL}}
 
 	b, err := json.Marshal(promRule)
 	if err != nil {
