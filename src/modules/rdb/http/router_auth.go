@@ -508,7 +508,7 @@ func rstPassword(c *gin.Context) {
 			return _e("Cannot find the user by %s", in.Arg)
 		}
 
-		lc, err := models.LoginCodeGet("code=? and login_type=?", in.Code, models.LOGIN_T_RST)
+		lc, err := models.LoginCodeGet("username=? and code=? and login_type=?", user.Username, in.Code, models.LOGIN_T_RST)
 		if err != nil {
 			return _e("Invalid code")
 		}
