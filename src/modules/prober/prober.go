@@ -19,6 +19,7 @@ import (
 	"github.com/didi/nightingale/src/modules/prober/http"
 	"github.com/didi/nightingale/src/modules/prober/manager"
 
+	"github.com/didi/nightingale/src/modules/monapi/collector"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/all"
 	_ "github.com/go-sql-driver/mysql"
 
@@ -78,6 +79,8 @@ func main() {
 
 	manager.NewManager(cfg, cache.CollectRule).Start(ctx)
 
+	pluginInfo()
+
 	http.Start()
 
 	ending(cancel)
@@ -131,4 +134,11 @@ func ending(cancel context.CancelFunc) {
 	logger.Close()
 	http.Shutdown()
 	fmt.Printf("%s stopped successfully\n", os.Args[0])
+}
+
+func pluginInfo() {
+	fmt.Println("remote collector")
+	for k, v := range collector.GetRemoteCollectors() {
+		fmt.Printf("  %d %s\n", k, v)
+	}
 }
