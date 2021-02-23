@@ -6,9 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/didi/nightingale/src/common/dataobj"
-	"github.com/didi/nightingale/src/modules/prober/manager"
-	"github.com/influxdata/telegraf"
+	"github.com/didi/nightingale/src/modules/monapi/plugins"
 )
 
 const sampleTextFormat = `# HELP test_metric An untyped metric with a timestamp
@@ -50,39 +48,7 @@ func TestCollect(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, sampleTextFormat) }))
 	defer s.Close()
 
-	PluginTest(t, &PrometheusRule{
+	plugins.PluginTest(t, &PrometheusRule{
 		URLs: []string{s.URL},
 	})
-}
-
-type telegrafPlugin interface {
-	TelegrafInput() (telegraf.Input, error)
-}
-
-func PluginTest(t *testing.T, plugin telegrafPlugin) telegraf.Input {
-	input, err := plugin.TelegrafInput()
-	if err != nil {
-		t.Error(err)
-	}
-
-	PluginInputTest(t, input)
-
-	return input
-}
-
-func PluginInputTest(t *testing.T, input telegraf.Input) {
-	metrics := []*dataobj.MetricValue{}
-
-	acc, err := manager.NewAccumulator(manager.AccumulatorOptions{Name: "plugin-test", Metrics: &metrics})
-	if err != nil {
-		t.Error(err)
-	}
-
-	if err = input.Gather(acc); err != nil {
-		t.Error(err)
-	}
-
-	for k, v := range metrics {
-		t.Logf("%d %s %s %f", k, v.CounterType, v.PK(), v.Value)
-	}
 }
