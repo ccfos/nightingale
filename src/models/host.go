@@ -148,7 +148,9 @@ func HostGetsForAdmin(tenant, query, batch, field string, limit, offset int) ([]
 func buildHostWhere(tenant, query, batch, field string) *xorm.Session {
 	session := DB["ams"].Table(new(Host)).OrderBy("ident")
 
-	if tenant != "" {
+	if tenant == "0" {
+		session = session.Where("tenant=?", "")
+	} else if tenant != "" {
 		session = session.Where("tenant=?", tenant)
 	}
 

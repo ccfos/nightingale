@@ -1,4 +1,4 @@
-mode: whitelist # whitelist(default),all
+mode: whitelist # whitelist(default),overlay
 metrics:
   - name: mysql_queries
     type: COUNTER
@@ -14,20 +14,12 @@ metrics:
   - name: mysql_variables_max_connections
     type: GAUGE
     comment: "最大连接数"
-  - name: mysql_connections_threshold
-    type: GAUGE
-    expr: mysql_threads_connected / mysql_variables_max_connections
-    comment: "连接数阈值 < 0.8"
   - name: mysql_innodb_buffer_pool_read_requests
     type: COUNTER
     comment: "innodb缓冲池查询总数"
   - name: mysql_innodb_buffer_pool_reads
     type: COUNTER
     comment: "innodb从磁盘查询数"
-  - name: mysql_innodb_buffer_read_threshold
-    type: COUNTER
-    expr: (mysql_innodb_buffer_pool_read_requests - mysql_innodb_buffer_pool_reads) / mysql_innodb_buffer_pool_read_requests
-    comment: "磁盘查询报警阈值 < 0.95"
   - name: mysql_binary_files_count
     type: COUNTER
   - name: mysql_binary_size_bytes

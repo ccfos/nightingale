@@ -16,20 +16,20 @@ import (
 )
 
 type manager struct {
-	ctx    context.Context
-	cache  *cache.CollectRuleCache
-	config *config.ConfYaml
-	heap   ruleSummaryHeap
-	index  map[int64]*ruleEntity // add at cache.C , del at executeAt check
-	worker []worker
-	tx     chan *ruleEntity
+	ctx           context.Context
+	cache         *cache.CollectRuleCache
+	config        *config.ConfYaml
+	heap          ruleSummaryHeap
+	index         map[int64]*collectRule // add at cache.C , del at executeAt check
+	worker        []worker
+	collectRuleCh chan *collectRule
 }
 
 func NewManager(cfg *config.ConfYaml, cache *cache.CollectRuleCache) *manager {
 	return &manager{
 		cache:  cache,
 		config: cfg,
-		index:  make(map[int64]*ruleEntity),
+		index:  make(map[int64]*collectRule),
 	}
 }
 
@@ -37,15 +37,13 @@ func (p *manager) Start(ctx context.Context) error {
 	workerProcesses := p.config.WorkerProcesses
 
 	p.ctx = ctx
-	p.tx = make(chan *ruleEntity, 1)
+	p.collectRuleCh = make(chan *collectRule, 1)
 	heap.Init(&p.heap)
 
 	p.worker = make([]worker, workerProcesses)
 	for i := 0; i < workerProcesses; i++ {
-		p.worker[i].rx = p.tx
+		p.worker[i].collectRuleCh = p.collectRuleCh
 		p.worker[i].ctx = ctx
-		// p.worker[i].acc = p.acc
-
 		p.worker[i].loop(i)
 	}
 
@@ -65,7 +63,7 @@ func (p *manager) loop() {
 			case <-p.ctx.Done():
 				return
 			case <-p.cache.C:
-				if err := p.SyncRules(); err != nil {
+				if err := p.AddRules(); err != nil {
 					log.Printf("manager.SyncRules err %s", err)
 				}
 			case <-tick.C:
@@ -89,36 +87,37 @@ func (p *manager) schedule() error {
 		}
 
 		summary := heap.Pop(&p.heap).(*ruleSummary)
-		rule, ok := p.cache.Get(summary.id)
+		ruleConfig, ok := p.cache.Get(summary.id)
 		if !ok {
 			// drop it if not exist in cache
 			delete(p.index, summary.id)
 			continue
 		}
 
-		entity, ok := p.index[rule.Id]
+		rule, ok := p.index[ruleConfig.Id]
 		if !ok {
 			// impossible
-			log.Printf("manager.index[%d] not exists", rule.Id)
-			// let's fix it
-			p.index[entity.rule.Id] = entity
+			log.Printf("manager.index[%d] not exists", ruleConfig.Id)
+			continue
 		}
 
 		// update rule
-		if err := entity.update(rule); err != nil {
+		if err := rule.update(ruleConfig); err != nil {
 			logger.Warningf("ruleEntity update err %s", err)
 		}
 
-		p.tx <- entity
+		p.collectRuleCh <- rule
 
-		summary.executeAt = now + int64(rule.Step)
+		summary.executeAt = now + int64(ruleConfig.Step)
 		heap.Push(&p.heap, summary)
 
 		continue
 	}
 }
 
-func (p *manager) SyncRules() error {
+// AddRules add new rule to p.index from cache
+// update / cleanup will be done by p.schedule() -> ruleEntity.update()
+func (p *manager) AddRules() error {
 	for _, v := range p.cache.GetAll() {
 		if _, ok := p.index[v.Id]; !ok {
 			p.AddRule(v)
@@ -128,7 +127,7 @@ func (p *manager) SyncRules() error {
 }
 
 func (p *manager) AddRule(rule *models.CollectRule) error {
-	ruleEntity, err := newRuleEntity(rule)
+	ruleEntity, err := newCollectRule(rule)
 	if err != nil {
 		return err
 	}
@@ -141,11 +140,6 @@ func (p *manager) AddRule(rule *models.CollectRule) error {
 	return nil
 }
 
-type collectRule interface {
-	telegraf.Input
-	tags() map[string]string
-}
-
 func telegrafInput(rule *models.CollectRule) (telegraf.Input, error) {
 	c, err := collector.GetCollector(rule.CollectType)
 	if err != nil {
@@ -155,9 +149,9 @@ func telegrafInput(rule *models.CollectRule) (telegraf.Input, error) {
 }
 
 type worker struct {
-	ctx   context.Context
-	cache *cache.CollectRuleCache
-	rx    chan *ruleEntity
+	ctx           context.Context
+	cache         *cache.CollectRuleCache
+	collectRuleCh chan *collectRule
 }
 
 func (p *worker) loop(id int) {
@@ -166,8 +160,8 @@ func (p *worker) loop(id int) {
 			select {
 			case <-p.ctx.Done():
 				return
-			case entity := <-p.rx:
-				if err := p.do(entity); err != nil {
+			case rule := <-p.collectRuleCh:
+				if err := p.do(rule); err != nil {
 					log.Printf("work[%d].do err %s", id, err)
 				}
 			}
@@ -175,20 +169,20 @@ func (p *worker) loop(id int) {
 	}()
 }
 
-func (p *worker) do(entity *ruleEntity) error {
-	entity.metrics = entity.metrics[:0]
+func (p *worker) do(rule *collectRule) error {
+	rule.metrics = rule.metrics[:0]
 
 	// telegraf
-	err := entity.Input.Gather(entity)
-	if len(entity.metrics) == 0 {
+	err := rule.Input.Gather(rule)
+	if len(rule.metrics) == 0 {
 		return err
 	}
 
 	// eval expression metrics
-	entity.calc()
+	rule.prepareMetrics()
 
 	// send
-	core.Push(entity.metrics)
+	core.Push(rule.metrics)
 
 	return err
 }

@@ -77,3 +77,34 @@ func ResIdsGetByNodeIds(nids []int64) ([]int64, error) {
 	err := DB["rdb"].Table(new(NodeResource)).In("node_id", nids).Select("res_id").Find(&ids)
 	return ids, err
 }
+
+// ResCountGetByNodeIdsAndWhere 根据叶子节点和Where条件获取资源数量表
+func ResCountGetByNodeIdsAndCate(nids []int64, cate string) (int, error) {
+	if len(nids) == 0 {
+		return 0, nil
+	}
+
+	var nodeRess []NodeResource
+	err := DB["rdb"].Table(new(NodeResource)).In("node_id", nids).Find(&nodeRess)
+	if err != nil {
+		return 0, err
+	}
+
+	cnt := 0
+	for _, res := range nodeRess {
+		res, err := ResourceGet("id=?", res.ResId)
+		if err != nil {
+			return 0, err
+		}
+
+		if res == nil {
+			continue
+		}
+
+		if res.Cate == cate {
+			cnt++
+		}
+	}
+
+	return cnt, nil
+}
