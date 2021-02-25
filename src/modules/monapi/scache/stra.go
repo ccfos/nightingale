@@ -13,7 +13,6 @@ func SyncStras() {
 	t1 := time.NewTicker(time.Duration(CHECK_INTERVAL) * time.Second)
 
 	syncStras()
-	logger.Info("[cron] sync stras start...")
 	for {
 		<-t1.C
 		syncStras()
@@ -21,6 +20,8 @@ func SyncStras() {
 }
 
 func syncStras() {
+	logger.Info("[cron] sync stras start...")
+	start := time.Now()
 	stras, err := models.EffectiveStrasList()
 	if err != nil {
 		logger.Error("sync stras err:", err)
@@ -91,6 +92,7 @@ func syncStras() {
 		}
 	}
 	StraCache.SetAll(strasMap)
+	logger.Infof("[cron] sync stras done, cost: %dms", time.Now().Sub(start).Milliseconds())
 }
 
 func CleanStraLoop() {

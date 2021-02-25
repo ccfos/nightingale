@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/url"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 const (
 	ChangePasswordURL = "/change-password"
 	loginModeFifo     = true
+	pwdHistorySize    = 4
 )
 
 type Authenticator struct {
@@ -131,14 +133,13 @@ func (p *Authenticator) ChangePassword(user *models.User, password string) (err 
 		return nil
 	}
 
-	if !p.extraMode {
-		return changePassword()
-	}
-
 	// precheck
 	cf := cache.AuthConfig()
-	if err = checkPassword(cf, password); err != nil {
-		return
+
+	if p.extraMode {
+		if err = checkPassword(cf, password); err != nil {
+			return
+		}
 	}
 
 	if err = changePassword(); err != nil {
@@ -156,15 +157,22 @@ func (p *Authenticator) ChangePassword(user *models.User, password string) (err 
 		return
 	}
 
-	for _, v := range passwords {
-		if user.Password == v {
-			err = _e("The password is the same as the old password")
-			return
+	if p.extraMode {
+		for _, v := range passwords {
+			if user.Password == v {
+				err = _e("The password is the same as the old password")
+				return
+			}
 		}
 	}
 
 	passwords = append(passwords, user.Password)
-	if n := len(passwords) - cf.PwdHistorySize; n > 0 {
+
+	historySize := pwdHistorySize
+	if cf.PwdHistorySize > historySize {
+		historySize = cf.PwdHistorySize
+	}
+	if n := len(passwords) - historySize; n > 0 {
 		passwords = passwords[n:]
 	}
 
@@ -294,6 +302,17 @@ func (p *Authenticator) Start() error {
 	return nil
 }
 
+func (p *Authenticator) PrepareUser(user *models.User) {
+	if !p.extraMode {
+		return
+	}
+
+	cf := cache.AuthConfig()
+	if cf.PwdExpiresIn > 0 {
+		user.PwdExpiresAt = user.PwdUpdatedAt + cf.PwdExpiresIn*86400*30
+	}
+}
+
 // cleanup rdb.session & sso.token
 func (p *Authenticator) cleanupSession() {
 	now := time.Now().Unix()
@@ -351,7 +370,7 @@ func (p *Authenticator) updateUserStatus() {
 	now := time.Now().Unix()
 	if p.frozenTime > 0 {
 		// 3个月以上未登录，用户自动变为休眠状态
-		if _, err := models.DB["rdb"].Exec("update user set status=?, updated_at=?, locked_at=? where ((logged_at > 0 and logged_at<?) or (logged_at == 0 and created_at < ?)) and status in (?,?,?)",
+		if _, err := models.DB["rdb"].Exec("update user set status=?, updated_at=?, locked_at=? where ((logged_at > 0 and logged_at<?) or (logged_at = 0 and created_at < ?)) and status in (?,?,?)",
 			models.USER_S_FROZEN, now, now, now-p.frozenTime,
 			models.USER_S_ACTIVE, models.USER_S_INACTIVE, models.USER_S_LOCKED); err != nil {
 			logger.Errorf("update user status error %s", err)
@@ -416,7 +435,7 @@ func lockedUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) 
 		user.UpdatedAt = now
 		return nil
 	}
-	return _e("User is locked")
+	return _e("User is locked, unlock at %dm later", int(math.Ceil(float64(user.LockedAt+cf.LockTime*60-now))/60.0))
 }
 
 func frozenUserAccess(cf *models.AuthConfig, user *models.User, loginErr error) error {
@@ -432,7 +451,7 @@ func checkPassword(cf *models.AuthConfig, passwd string) error {
 	spCode := []byte{'!', '@', '#', '$', '%', '^', '&', '*', '_', '-', '~', '.', ',', '<', '>', '/', ';', ':', '|', '?', '+', '='}
 
 	if cf.PwdMinLenght > 0 && len(passwd) < cf.PwdMinLenght {
-		return _e("Password too short (min:%d) %s", cf.PwdMinLenght, cf.MustInclude())
+		return _e("Password too short (min:%d)", cf.PwdMinLenght)
 	}
 
 	passwdByte := []byte(passwd)
@@ -469,19 +488,19 @@ func checkPassword(cf *models.AuthConfig, passwd string) error {
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_UPPER > 0 && indNum[0] == 0 {
-		return _e("Invalid Password, %s", cf.MustInclude())
+		return _e("Invalid Password, must include %s", _s("Upper char"))
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_LOWER > 0 && indNum[1] == 0 {
-		return _e("Invalid Password, %s", cf.MustInclude())
+		return _e("Invalid Password, must include %s", _s("Lower char"))
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_NUMBER > 0 && indNum[2] == 0 {
-		return _e("Invalid Password, %s", cf.MustInclude())
+		return _e("Invalid Password, must include %s", _s("Number"))
 	}
 
 	if cf.PwdMustIncludeFlag&models.PWD_INCLUDE_SPEC_CHAR > 0 && indNum[3] == 0 {
-		return _e("Invalid Password, %s", cf.MustInclude())
+		return _e("Invalid Password, must include %s", _s("Special char"))
 	}
 
 	return nil

@@ -324,20 +324,20 @@ CREATE TABLE `collect_rule` (
   `nid` bigint(20) unsigned NOT NULL DEFAULT '0' COMMENT 'nid',
   `step` int(11) NOT NULL DEFAULT '0' COMMENT 'step',
   `timeout` int(11) NOT NULL DEFAULT '0' COMMENT 'total timeout',
-  `collect_type` varchar(64) NOT NULL DEFAULT '' COMMENT 'collector name',
-  `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'name',
+  `collect_type` varchar(64) NOT NULL DEFAULT '' COMMENT 'collect plugin name',
+  `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'collect rule name',
   `region` varchar(32) NOT NULL DEFAULT 'default' COMMENT 'region',
   `comment` varchar(512) NOT NULL DEFAULT '' COMMENT 'comment',
   `data` blob NULL COMMENT 'data',
   `tags` varchar(512) NOT NULL DEFAULT '' COMMENT 'tags',
   `creator` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',
-  `last_updator` varchar(64) NOT NULL DEFAULT '' COMMENT 'last_updator',
-  `created` datetime NOT NULL  COMMENT 'created',
-  `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `updater` varchar(64) NOT NULL DEFAULT '' COMMENT 'updater',
+  `created_at` bigint not null default 0,
+  `updated_at` bigint not null default 0,
   PRIMARY KEY (`id`),
   KEY `idx_nid` (`nid`),
   KEY `idx_collect_type` (`collect_type`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT 'api collect';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT 'collect rule';
 
 CREATE TABLE `aggr_calc` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',

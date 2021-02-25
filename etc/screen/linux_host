@@ -1,0 +1,38 @@
+[
+    {
+        "name": "日常巡检大盘",
+        "node_path": "",
+        "tags": [
+            {
+                "name": "机器负载",
+                "weight": 0,
+                "charts": [
+                    {
+                        "configs": "{\"title\":\"CPU使用率\",\"type\":\"chart\",\"now\":\"1611191937020\",\"start\":\"1611188337020\",\"end\":\"1611191937020\",\"comparisonOptions\":[{\"label\":\"1小时\",\"labelEn\":\"1 hour\",\"value\":\"3600000\"},{\"label\":\"2小时\",\"labelEn\":\"2 hours\",\"value\":\"7200000\"},{\"label\":\"1天\",\"labelEn\":\"1 day\",\"value\":\"86400000\"},{\"label\":\"2天\",\"labelEn\":\"2 days\",\"value\":\"172800000\"},{\"label\":\"7天\",\"labelEn\":\"7 days\",\"value\":\"604800000\"}],\"threshold\":75,\"legend\":false,\"shared\":true,\"linkVisible\":true,\"metrics\":[{\"selectedNid\":1,\"endpointsKey\":\"endpoints\",\"selectedEndpoint\":[\"=all\"],\"selectedMetric\":\"cpu.util\",\"selectedTagkv\":[],\"counterListCount\":6}],\"id\":152}",
+                        "weight": 0
+                    },
+                    {
+                        "configs": "{\"title\":\"进程总数\",\"type\":\"chart\",\"now\":\"1611192346064\",\"start\":\"1611188746064\",\"end\":\"1611192346064\",\"comparisonOptions\":[{\"label\":\"1小时\",\"labelEn\":\"1 hour\",\"value\":\"3600000\"},{\"label\":\"2小时\",\"labelEn\":\"2 hours\",\"value\":\"7200000\"},{\"label\":\"1天\",\"labelEn\":\"1 day\",\"value\":\"86400000\"},{\"label\":\"2天\",\"labelEn\":\"2 days\",\"value\":\"172800000\"},{\"label\":\"7天\",\"labelEn\":\"7 days\",\"value\":\"604800000\"}],\"legend\":false,\"shared\":true,\"linkVisible\":true,\"metrics\":[{\"selectedNid\":1,\"endpointsKey\":\"endpoints\",\"selectedEndpoint\":[\"=all\"],\"selectedMetric\":\"sys.ps.process.total\",\"selectedTagkv\":[],\"counterListCount\":6,\"aggrFunc\":\"avg\"}],\"chartTypeOptions\":{\"chartType\":\"singleValue\",\"targetValue\":\"avg\",\"subType\":\"normal\",\"valueMap\":\"range\",\"mapConf\":[{\"from\":0,\"to\":3000,\"color\":\"#07cf82\"},{\"from\":3000,\"to\":5000,\"color\":\"#ef900b\"},{\"from\":5000,\"to\":999999,\"color\":\"#f50505\"}],\"suffix\":\"个\"},\"id\":10}",
+                        "weight": 1
+                    },
+                    {
+                        "configs": "{\"title\":\"硬盘使用率\",\"type\":\"chart\",\"now\":\"1611211473892\",\"start\":\"1611207873892\",\"end\":\"1611211473892\",\"comparisonOptions\":[{\"label\":\"1小时\",\"labelEn\":\"1 hour\",\"value\":\"3600000\"},{\"label\":\"2小时\",\"labelEn\":\"2 hours\",\"value\":\"7200000\"},{\"label\":\"1天\",\"labelEn\":\"1 day\",\"value\":\"86400000\"},{\"label\":\"2天\",\"labelEn\":\"2 days\",\"value\":\"172800000\"},{\"label\":\"7天\",\"labelEn\":\"7 days\",\"value\":\"604800000\"}],\"legend\":false,\"shared\":true,\"linkVisible\":true,\"metrics\":[{\"selectedNid\":1,\"endpointsKey\":\"endpoints\",\"selectedEndpoint\":[\"=all\"],\"selectedMetric\":\"disk.bytes.used.percent\",\"selectedTagkv\":[{\"tagk\":\"endpoint\",\"tagv\":[\"=all\"]},{\"tagk\":\"mount\",\"tagv\":[\"=all\"]}],\"counterListCount\":11}],\"chartTypeOptions\":{\"chartType\":\"table\",\"tableType\":\"stats\",\"columnsKey\":[\"last\"],\"valueMap\":\"range\",\"mapConf\":[{}]},\"id\":13,\"sortOrder\":{\"columnKey\":\"last\",\"order\":\"descend\"}}",
+                        "weight": 2
+                    },
+                    {
+                        "configs": "{\"title\":\"内存使用率均值-纯演示扇形图\",\"type\":\"chart\",\"now\":\"1611231230645\",\"start\":\"1611227630645\",\"end\":\"1611231230645\",\"comparisonOptions\":[{\"label\":\"1小时\",\"labelEn\":\"1 hour\",\"value\":\"3600000\"},{\"label\":\"2小时\",\"labelEn\":\"2 hours\",\"value\":\"7200000\"},{\"label\":\"1天\",\"labelEn\":\"1 day\",\"value\":\"86400000\"},{\"label\":\"2天\",\"labelEn\":\"2 days\",\"value\":\"172800000\"},{\"label\":\"7天\",\"labelEn\":\"7 days\",\"value\":\"604800000\"}],\"legend\":false,\"shared\":true,\"linkVisible\":true,\"metrics\":[{\"selectedNid\":1,\"endpointsKey\":\"endpoints\",\"selectedEndpoint\":[\"=all\"],\"selectedMetric\":\"mem.bytes.used.percent\",\"selectedTagkv\":[{\"tagk\":\"endpoint\",\"tagv\":[\"=all\"]}],\"counterListCount\":6,\"aggrFunc\":\"avg\"}],\"chartTypeOptions\":{\"chartType\":\"singleValue\",\"targetValue\":\"avg\",\"subType\":\"solidGauge\",\"valueMap\":\"range\",\"mapConf\":[{\"from\":0,\"to\":40,\"color\":\"#06c663\"},{\"from\":40,\"to\":70,\"color\":\"#da8e0b\"},{\"from\":70,\"to\":90,\"color\":\"#f48b71\"},{\"from\":90,\"to\":111,\"color\":\"#fa0505\"}]},\"id\":11}",
+                        "weight": 3
+                    },
+                    {
+                        "configs": "{\"title\":\"IO使用率-纯演示水位图\",\"type\":\"chart\",\"now\":\"1611231230645\",\"start\":\"1611227630645\",\"end\":\"1611231230645\",\"comparisonOptions\":[{\"label\":\"1小时\",\"labelEn\":\"1 hour\",\"value\":\"3600000\"},{\"label\":\"2小时\",\"labelEn\":\"2 hours\",\"value\":\"7200000\"},{\"label\":\"1天\",\"labelEn\":\"1 day\",\"value\":\"86400000\"},{\"label\":\"2天\",\"labelEn\":\"2 days\",\"value\":\"172800000\"},{\"label\":\"7天\",\"labelEn\":\"7 days\",\"value\":\"604800000\"}],\"legend\":false,\"shared\":true,\"linkVisible\":true,\"metrics\":[{\"selectedNid\":1,\"endpointsKey\":\"endpoints\",\"selectedEndpoint\":[\"=all\"],\"selectedMetric\":\"disk.io.util\",\"selectedTagkv\":[{\"tagk\":\"endpoint\",\"tagv\":[\"=all\"]},{\"tagk\":\"device\",\"tagv\":[\"=all\"]}],\"counterListCount\":24,\"aggrFunc\":\"avg\"}],\"chartTypeOptions\":{\"chartType\":\"singleValue\",\"targetValue\":\"avg\",\"subType\":\"liquidFillGauge\",\"valueMap\":\"range\",\"mapConf\":[{\"color\":\"#07b904\",\"from\":0,\"to\":50},{\"from\":50,\"to\":100,\"color\":\"#e01a1a\"}]},\"id\":12}",
+                        "weight": 4
+                    },
+                    {
+                        "configs": "{\"title\":\"进程数-纯演示饼图\",\"type\":\"chart\",\"now\":\"1611231230645\",\"start\":\"1611227630645\",\"end\":\"1611231230645\",\"comparisonOptions\":[{\"label\":\"1小时\",\"labelEn\":\"1 hour\",\"value\":\"3600000\"},{\"label\":\"2小时\",\"labelEn\":\"2 hours\",\"value\":\"7200000\"},{\"label\":\"1天\",\"labelEn\":\"1 day\",\"value\":\"86400000\"},{\"label\":\"2天\",\"labelEn\":\"2 days\",\"value\":\"172800000\"},{\"label\":\"7天\",\"labelEn\":\"7 days\",\"value\":\"604800000\"}],\"legend\":false,\"shared\":true,\"linkVisible\":true,\"metrics\":[{\"selectedNid\":1,\"endpointsKey\":\"endpoints\",\"selectedEndpoint\":[\"=all\"],\"selectedMetric\":\"sys.ps.process.total\",\"selectedTagkv\":[{\"tagk\":\"endpoint\",\"tagv\":[\"=all\"]}],\"counterListCount\":6}],\"chartTypeOptions\":{\"chartType\":\"pie\",\"pieType\":\"donut\",\"targetValue\":\"avg\"},\"id\":14}",
+                        "weight": 5
+                    }
+                ]
+            }
+        ]
+    }
+]

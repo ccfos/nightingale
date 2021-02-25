@@ -3,6 +3,7 @@ package manager
 import (
 	"container/heap"
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -82,33 +83,38 @@ func (p *manager) schedule() error {
 		if p.heap.Len() == 0 {
 			return nil
 		}
-		if p.heap.Top().executeAt > now {
+		if p.heap.Top().activeAt > now {
 			return nil
 		}
 
 		summary := heap.Pop(&p.heap).(*ruleSummary)
-		ruleConfig, ok := p.cache.Get(summary.id)
+		latestRule, ok := p.cache.Get(summary.id)
 		if !ok {
 			// drop it if not exist in cache
 			delete(p.index, summary.id)
 			continue
 		}
 
-		rule, ok := p.index[ruleConfig.Id]
+		rule, ok := p.index[latestRule.Id]
 		if !ok {
 			// impossible
-			log.Printf("manager.index[%d] not exists", ruleConfig.Id)
+			logger.Warningf("manager.index[%d] not exists", latestRule.Id)
 			continue
 		}
 
 		// update rule
-		if err := rule.update(ruleConfig); err != nil {
+		if err := rule.update(latestRule); err != nil {
 			logger.Warningf("ruleEntity update err %s", err)
 		}
 
 		p.collectRuleCh <- rule
 
-		summary.executeAt = now + int64(ruleConfig.Step)
+		logger.Debugf("%s %s %d lastAt %ds before nextAt %ds later",
+			rule.CollectType, rule.Name, rule.Id,
+			now-rule.lastAt, rule.Step)
+
+		summary.activeAt = now + int64(rule.Step)
+		rule.lastAt = now
 		heap.Push(&p.heap, summary)
 
 		continue
@@ -134,8 +140,8 @@ func (p *manager) AddRule(rule *models.CollectRule) error {
 
 	p.index[rule.Id] = ruleEntity
 	heap.Push(&p.heap, &ruleSummary{
-		id:        rule.Id,
-		executeAt: time.Now().Unix() + int64(rule.Step),
+		id:       rule.Id,
+		activeAt: time.Now().Unix() + int64(rule.Step),
 	})
 	return nil
 }
@@ -162,7 +168,7 @@ func (p *worker) loop(id int) {
 				return
 			case rule := <-p.collectRuleCh:
 				if err := p.do(rule); err != nil {
-					log.Printf("work[%d].do err %s", id, err)
+					logger.Debugf("work[%d].do %s", id, err)
 				}
 			}
 		}
@@ -170,19 +176,27 @@ func (p *worker) loop(id int) {
 }
 
 func (p *worker) do(rule *collectRule) error {
-	rule.metrics = rule.metrics[:0]
+	rule.reset()
 
 	// telegraf
-	err := rule.Input.Gather(rule)
-	if len(rule.metrics) == 0 {
-		return err
+	err := rule.input.Gather(rule.acc)
+	if err != nil {
+		return fmt.Errorf("gather %s", err)
+	}
+
+	pluginConfig, ok := config.GetPluginConfig(rule.PluginName())
+	if !ok {
+		return nil
 	}
 
 	// eval expression metrics
-	rule.prepareMetrics()
+	metrics, err := rule.prepareMetrics(pluginConfig)
+	if err != nil {
+		return fmt.Errorf("prepareMetrics %s", err)
+	}
 
-	// send
-	core.Push(rule.metrics)
+	// push to transfer
+	core.Push(metrics)
 
 	return err
 }

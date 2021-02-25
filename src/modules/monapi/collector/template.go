@@ -7,18 +7,19 @@ import (
 	"strings"
 	"sync"
 	"unicode"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 var fieldCache sync.Map // map[reflect.Type]structFields
 
 type Field struct {
-	skip bool `json:"-"`
-	// definitions map[string][]Field `json:"-"`
-
 	Name        string             `json:"name,omitempty"`
 	Label       string             `json:"label,omitempty"`
-	Default     string             `json:"default,omitempty"`
+	Default     interface{}        `json:"default,omitempty"`
+	Enum        []interface{}      `json:"enum,omitempty"`
 	Example     string             `json:"example,omitempty"`
+	Format      string             `json:"format,omitempty"`
 	Description string             `json:"description,omitempty"`
 	Required    bool               `json:"required,omitempty"`
 	Items       *Field             `json:"items,omitempty" description:"arrays's items"`
@@ -26,6 +27,11 @@ type Field struct {
 	Ref         string             `json:"$ref,omitempty" description:"name of the struct ref"`
 	Fields      []Field            `json:"fields,omitempty" description:"fields of struct type"`
 	Definitions map[string][]Field `json:"definitions,omitempty"`
+
+	// list      []Field
+	skip  bool `json:"-"`
+	index []int
+	typ   reflect.Type
 }
 
 func (p Field) String() string {
@@ -43,45 +49,93 @@ func cachedTypeContent(t reflect.Type) Field {
 
 func typeContent(t reflect.Type) Field {
 	definitions := map[string][]Field{t.String(): nil}
+	current := []Field{}
+	next := []Field{{typ: t}}
 
-	ret := Field{
-		// definitions: map[string][]Field{
-		// 	t.String(): nil,
-		// },
+	// Count of queued names for current level and the next.
+	var count, nextCount map[reflect.Type]int
+
+	// Types already visited at an earlier level.
+	visited := map[reflect.Type]bool{}
+
+	// Fields found.
+	var fields []Field
+
+	for len(next) > 0 {
+		current, next = next, current[:0]
+		count, nextCount = nextCount, map[reflect.Type]int{}
+
+		for _, f := range current {
+			if visited[f.typ] {
+				continue
+			}
+			visited[f.typ] = true
+
+			// Scan f.typ for fields to include.
+			for i := 0; i < f.typ.NumField(); i++ {
+				sf := f.typ.Field(i)
+				isUnexported := sf.PkgPath != ""
+				if sf.Anonymous {
+					t := sf.Type
+					if t.Kind() == reflect.Ptr {
+						t = t.Elem()
+					}
+					if isUnexported && t.Kind() != reflect.Struct {
+						// Ignore embedded fields of unexported non-struct types.
+						continue
+					}
+					// Do not ignore embedded fields of unexported struct types
+					// since they may have exported fields.
+				} else if isUnexported {
+					// Ignore unexported non-embedded fields.
+					continue
+				}
+
+				field := getTagOpt(sf)
+				if field.skip {
+					continue
+				}
+				index := make([]int, len(f.index)+1)
+				copy(index, f.index)
+				index[len(f.index)] = i
+
+				ft := sf.Type
+				if ft.Name() == "" && ft.Kind() == reflect.Ptr {
+					// Follow pointer.
+					ft = ft.Elem()
+				}
+
+				fieldType(ft, &field, definitions)
+
+				// Record found field and index sequence.
+				if field.Name != "" || !sf.Anonymous || ft.Kind() != reflect.Struct {
+					field.index = index
+					field.typ = ft
+
+					fields = append(fields, field)
+					if count[f.typ] > 1 {
+						// If there were multiple instances, add a second,
+						// so that the annihilation code will see a duplicate.
+						// It only cares about the distinction between 1 or 2,
+						// so don't bother generating any more copies.
+						fields = append(fields, fields[len(fields)-1])
+					}
+					continue
+				}
+
+				// Record new anonymous struct to explore in next round.
+				nextCount[ft]++
+				if nextCount[ft] == 1 {
+					next = append(next, Field{index: index, typ: ft})
+				}
+
+			}
+		}
 	}
 
-	for i := 0; i < t.NumField(); i++ {
-		sf := t.Field(i)
-		isUnexported := sf.PkgPath != ""
-		if sf.Anonymous {
-			panic("unsupported anonymous field")
-		} else if isUnexported {
-			// Ignore unexported non-embedded fields.
-			continue
-		}
+	definitions[t.String()] = fields
 
-		field := getTagOpt(sf)
-		if field.skip {
-			continue
-		}
-		ft := sf.Type
-
-		fieldType(ft, &field, definitions)
-
-		// Record found field and index sequence.
-		if field.Name != "" || !sf.Anonymous || ft.Kind() != reflect.Struct {
-			ret.Fields = append(ret.Fields, field)
-			continue
-		}
-
-		panic("unsupported anonymous, struct field")
-	}
-
-	definitions[t.String()] = ret.Fields
-
-	ret.Definitions = definitions
-
-	return ret
+	return Field{Fields: fields, Definitions: definitions}
 }
 
 // tagOptions is the string following a comma in a struct field's "json"
@@ -137,9 +191,21 @@ func getTagOpt(sf reflect.StructField) (opt Field) {
 
 	opt.Name = name
 	opt.Label = _s(sf.Tag.Get("label"))
-	opt.Default = sf.Tag.Get("default")
 	opt.Example = sf.Tag.Get("example")
+	opt.Format = sf.Tag.Get("format")
 	opt.Description = _s(sf.Tag.Get("description"))
+	if s := sf.Tag.Get("enum"); s != "" {
+		if err := json.Unmarshal([]byte(s), &opt.Enum); err != nil {
+			logger.Warningf("%s.enum %s Unmarshal err %s",
+				sf.Name, s, err)
+		}
+	}
+	if s := sf.Tag.Get("default"); s != "" {
+		if err := json.Unmarshal([]byte(s), &opt.Default); err != nil {
+			logger.Warningf("%s.default %s Unmarshal err %s",
+				sf.Name, s, err)
+		}
+	}
 
 	return
 }

@@ -23,6 +23,7 @@ func Config(r *gin.Engine) {
 
 		notLogin.GET("/v2/nodes", nodeGets)
 		notLogin.GET("/pwd-rules", pwdRulesGet)
+		notLogin.GET("/counter", counterGet)
 
 	}
 
@@ -90,6 +91,11 @@ func Config(r *gin.Engine) {
 
 		rootLogin.GET("/resources/tenant-rank", tenantResourcesCountRank)
 		rootLogin.GET("/resources/project-rank", projectResourcesCountRank)
+
+		rootLogin.GET("/root/users", userListGet)
+		rootLogin.GET("/root/teams/all", teamAllGet)
+		rootLogin.GET("/root/node-cates", nodeCateGets)
+
 	}
 
 	userLogin := r.Group("/api/rdb").Use(shouldBeLogin())
@@ -131,6 +137,7 @@ func Config(r *gin.Engine) {
 		userLogin.GET("/node/:id/roles", rolesUnderNodeGets)
 		userLogin.POST("/node/:id/roles", rolesUnderNodePost)
 		userLogin.DELETE("/node/:id/roles", rolesUnderNodeDel)
+		userLogin.DELETE("/node/:id/roles/try", rolesUnderNodeDelTry)
 		userLogin.GET("/node/:id/resources", resourceUnderNodeGet)
 		userLogin.GET("/node/:id/resources/cate-count", renderNodeResourcesCountByCate)
 		userLogin.POST("/node/:id/resources/bind", resourceBindNode)
@@ -144,10 +151,16 @@ func Config(r *gin.Engine) {
 
 		userLogin.GET("/resources/search", resourceSearchGet)
 		userLogin.PUT("/resources/note", resourceNotePut)
+		userLogin.PUT("/resources/note/try", resourceNotePutTry)
 		userLogin.GET("/resources/bindings", resourceBindingsGet)
 		userLogin.GET("/resources/orphan", resourceOrphanGet)
 
 		userLogin.GET("/resources/cate-count", renderAllResourcesCountByCate)
+
+		// 是否在某个节点上有权限做某个操作(即资源权限点)
+		userLogin.GET("/can-do-node-op", v1CandoNodeOp)
+		// 同时校验多个操作权限点
+		userLogin.GET("/can-do-node-ops", v1CandoNodeOps)
 	}
 
 	v1 := r.Group("/v1/rdb").Use(shouldBeService())
@@ -172,6 +185,7 @@ func Config(r *gin.Engine) {
 		v1.GET("/node/:id", nodeGet)
 		v1.GET("/node/:id/projs", v1treeUntilProjectGetsByNid)
 		v1.GET("/tree/projs", v1TreeUntilProjectGets)
+		v1.GET("/tree", v1TreeUntilTypGets)
 
 		// 外部系统推送一些操作日志过来，RDB统一存储，实际用MQ会更好一些
 		v1.POST("/resoplogs", v1OperationLogResPost)
@@ -204,6 +218,7 @@ func Config(r *gin.Engine) {
 		// session
 		v1.GET("/sessions/:sid", v1SessionGet)
 		v1.GET("/sessions/:sid/user", v1SessionGetUser)
+		v1.GET("/sessions", v1SessionListGet)
 		v1.DELETE("/sessions/:sid", v1SessionDelete)
 
 		// token

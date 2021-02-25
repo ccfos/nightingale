@@ -58,3 +58,5 @@ _test
 tmp/
 main
 Makefile
+src/modules/monapi/plugins/snmp/
+src/modules/monapi/plugins/oracle/

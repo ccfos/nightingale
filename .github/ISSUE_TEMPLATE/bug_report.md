@@ -13,6 +13,7 @@ labels: kind/bug
 **Anything else we need to know?**:
 
 **Environment**:
-- OS (e.g: `cat /etc/os-release`):
-- Logs:
+- Nightingale Version (`./n9e-rdb -v`):
+- OS Version (`uname -a`):
+- Logs (stdout/error/warning/http.request/http.response):
 - Others:

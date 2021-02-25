@@ -107,7 +107,7 @@ func str(in interface{}) string {
 }
 
 func (p *collectRuleCache) syncCollectRules() {
-	rules, err := models.GetCollectRules()
+	rules, err := models.DumpCollectRules()
 	if err != nil {
 		logger.Warningf("get log collectRules err:%v", err)
 	}
@@ -172,7 +172,7 @@ func (p *collectRuleCache) syncPlacement() error {
 			if _, exists := nodesMap[d.Region]; !exists {
 				nodesMap[d.Region] = make(map[string]struct{})
 			}
-			nodesMap[d.Region][d.Identity+":"+d.RPCPort] = struct{}{}
+			nodesMap[d.Region][d.Identity+":"+d.HTTPPort] = struct{}{}
 		}
 	}
 

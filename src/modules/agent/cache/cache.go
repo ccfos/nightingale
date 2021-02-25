@@ -5,15 +5,12 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/src/common/dataobj"
-	process "github.com/shirou/gopsutil/process"
 )
 
 var MetricHistory *History
-var ProcsCache *ProcessCache
 
 func Init() {
 	MetricHistory = NewHistory()
-	ProcsCache = NewProcsCache()
 }
 
 func NewHistory() *History {
@@ -61,53 +58,6 @@ func (h *History) clean() {
 	for key, item := range h.Data {
 		if now-item.Timestamp > 10*item.Step {
 			delete(h.Data, key)
-		}
-	}
-}
-
-type ProcessCache struct {
-	sync.RWMutex
-	Data map[int32]*process.Process
-}
-
-func NewProcsCache() *ProcessCache {
-	pc := ProcessCache{
-		Data: make(map[int32]*process.Process),
-	}
-	go pc.Clean()
-	return &pc
-}
-
-func (pc *ProcessCache) Set(pid int32, p *process.Process) {
-	pc.Lock()
-	defer pc.Unlock()
-	pc.Data[pid] = p
-}
-
-func (pc *ProcessCache) Get(pid int32) (*process.Process, bool) {
-	pc.RLock()
-	defer pc.RUnlock()
-	p, exists := pc.Data[pid]
-	return p, exists
-}
-
-func (pc *ProcessCache) Clean() {
-	ticker := time.NewTicker(10 * time.Minute)
-	for {
-		select {
-		case <-ticker.C:
-			pc.clean()
-		}
-	}
-}
-
-func (pc *ProcessCache) clean() {
-	pc.Lock()
-	defer pc.Unlock()
-	for pid, procs := range pc.Data {
-		running, _ := procs.IsRunning()
-		if !running {
-			delete(pc.Data, pid)
 		}
 	}
 }

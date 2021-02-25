@@ -87,7 +87,7 @@ func Parse(conf string) error {
 	}
 
 	Config.Report.HTTPPort = strconv.Itoa(address.GetHTTPPort("prober"))
-	Config.Report.RPCPort = strconv.Itoa(address.GetRPCPort("prober"))
+	// Config.Report.RPCPort = strconv.Itoa(address.GetRPCPort("prober"))
 
 	return err
 }

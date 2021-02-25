@@ -160,6 +160,35 @@ func v1TreeUntilProjectGets(c *gin.Context) {
 	renderData(c, oks, err)
 }
 
+func v1TreeUntilTypGets(c *gin.Context) {
+	username := queryStr(c, "username")
+	cate := queryStr(c, "cate")
+	onlyCate := queryInt(c, "onlyCate", 0)
+	pid := queryInt64(c, "pid", -1)
+	user, err := models.UserGet("username=?", username)
+	dangerous(err)
+
+	oks, err := models.TreeUntilTypGetByUser(user, cate)
+	dangerous(err)
+
+	var ret []models.Node
+	for _, node := range oks {
+		//指定了父节点，不是想要的父节点
+		if pid != -1 && node.Pid != pid {
+			continue
+		}
+
+		//指定了节点类型，不是想要的节点类型
+		if onlyCate != 0 && node.Cate != cate {
+			continue
+		}
+
+		ret = append(ret, node)
+	}
+
+	renderData(c, ret, err)
+}
+
 // 这个方法，展示的树只到organization
 func treeUntilOrganizationGets(c *gin.Context) {
 	me := loginUser(c)

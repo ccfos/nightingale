@@ -1,0 +1,752 @@
+[
+  {
+    "name": "timewait状态tcp连接超过2万",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 3,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": ">",
+        "func": "all",
+        "metric": "net.sockets.tcp.timewait",
+        "params": [],
+        "threshold": 20000
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": [],
+    "notify_user": [],
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "内存利用率大于75%",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 2,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": ">",
+        "func": "all",
+        "metric": "mem.bytes.used.percent",
+        "params": [],
+        "threshold": 75
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "机器loadavg大于16",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 2,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": ">",
+        "func": "all",
+        "metric": "cpu.loadavg.1",
+        "params": [],
+        "threshold": 16
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "某磁盘无法正常读写",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 1,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": ">",
+        "func": "all",
+        "metric": "disk.rw.error",
+        "params": [],
+        "threshold": 0
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "监控agent失联",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 1,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": "=",
+        "func": "nodata",
+        "metric": "proc.agent.alive",
+        "params": [],
+        "threshold": 0
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "磁盘利用率达到85%",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 3,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": ">",
+        "func": "all",
+        "metric": "disk.bytes.used.percent",
+        "params": [],
+        "threshold": 85
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "磁盘利用率达到88%",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 2,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": ">",
+        "func": "all",
+        "metric": "disk.bytes.used.percent",
+        "params": [],
+        "threshold": 88
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "磁盘利用率达到92%",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 1,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": ">",
+        "func": "all",
+        "metric": "disk.bytes.used.percent",
+        "params": [],
+        "threshold": 92
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "端口挂了",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 2,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": "!=",
+        "func": "all",
+        "metric": "proc.port.listen",
+        "params": [],
+        "threshold": 1
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "网卡入方向丢包",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 2,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": ">",
+        "func": "all",
+        "metric": "net.in.dropped",
+        "params": [],
+        "threshold": 3
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "网卡入方向错包",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 2,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": ">",
+        "func": "all",
+        "metric": "net.in.errs",
+        "params": [],
+        "threshold": 3
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "网卡出方向丢包",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 2,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": ">",
+        "func": "all",
+        "metric": "net.out.dropped",
+        "params": [],
+        "threshold": 3
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "网卡出方向错包",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 2,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": ">",
+        "func": "all",
+        "metric": "net.out.errs",
+        "params": [],
+        "threshold": 3
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "进程总数超过3000",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 1,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": ">",
+        "func": "all",
+        "metric": "sys.ps.process.total",
+        "params": [],
+        "threshold": 3000
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  },
+  {
+    "name": "进程挂了",
+    "category": 1,
+    "alert_dur": 60,
+    "recovery_dur": 0,
+    "recovery_notify": 1,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "priority": 2,
+    "callback": "",
+    "need_upgrade": 0,
+    "runbook": "",
+    "excl_nid": null,
+    "nids": null,
+    "exprs": [
+      {
+        "eopt": "<",
+        "func": "all",
+        "metric": "proc.num",
+        "params": [],
+        "threshold": 1
+      }
+    ],
+    "tags": [],
+    "enable_days_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "converge": [
+      36000,
+      1
+    ],
+    "notify_group": null,
+    "notify_user": null,
+    "leaf_nids": null,
+    "endpoints": null,
+    "alert_upgrade": {
+      "users": [],
+      "groups": [],
+      "duration": 60,
+      "level": 1
+    },
+    "judge_instance": "",
+    "work_groups": null
+  }
+]

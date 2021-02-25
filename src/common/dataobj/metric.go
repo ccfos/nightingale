@@ -288,7 +288,11 @@ func SplitTagsString(s string) (tags map[string]string, err error) {
 	for _, tag := range tagSlice {
 		tagPair := strings.SplitN(tag, "=", 2)
 		if len(tagPair) == 2 {
-			tags[tagPair[0]] = tagPair[1]
+			if tagPair[1] == "" {
+				tags[tagPair[0]] = "nil"
+			} else {
+				tags[tagPair[0]] = tagPair[1]
+			}
 		} else {
 			err = fmt.Errorf("bad tag %s", tag)
 			return

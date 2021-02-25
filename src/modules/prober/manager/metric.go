@@ -5,9 +5,11 @@ import (
 	"hash/fnv"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/influxdata/telegraf"
+	"github.com/toolkits/pkg/logger"
 )
 
 type metric struct {
@@ -53,9 +55,10 @@ func NewMetric(
 
 	if len(fields) > 0 {
 		m.fields = make([]*telegraf.Field, 0, len(fields))
-		for k, v := range fields {
-			v := convertField(v)
+		for k, value := range fields {
+			v := convertField(value)
 			if v == nil {
+				logger.Debugf("unable to convert field to float64 %s_%s %v value: %v", name, k, tags, value)
 				continue
 			}
 			m.AddField(k, v)
@@ -383,6 +386,13 @@ func convertField(v interface{}) interface{} {
 }
 
 func atof(s string) interface{} {
+	switch strings.ToLower(s) {
+	case "yes", "true", "on":
+		return float64(1)
+	case "no", "false", "off", "none":
+		return float64(0)
+	}
+
 	if f, err := strconv.ParseFloat(s, 64); err != nil {
 		return nil
 	} else {
