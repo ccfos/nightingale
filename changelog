@@ -97,6 +97,6 @@
   - 新增zookeeper、tengine、rabbitmq、haproxy、ping、telnet相关采集工具
   - bugfix：集群部署的时候，多个redis实例，judge只能识别最后一个实例的问题
 升级方法：
-  - `sql/n9e_rdb-v3.7.0.sql` 有个新的表结构，需要导入一下
+  - sql/n9e_rdb-v3.7.0.sql 有个新的表结构，需要导入一下
   - 替换n9e-rdb n9e-prober n9e-judge n9e-monapi二进制，前端没有升级
 
