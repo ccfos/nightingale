@@ -25,10 +25,17 @@ type Token struct {
 }
 
 func TokenAll() (int64, error) {
+	if _, ok := DB["sso"]; !ok {
+		return 0, nil
+	}
 	return DB["sso"].Count(new(Token))
 }
 
 func TokenGet(token string) (*Token, error) {
+	if _, ok := DB["sso"]; !ok {
+		return nil, nil
+	}
+
 	var obj Token
 	has, err := DB["sso"].Where("access_token=?", token).Get(&obj)
 	if err != nil {
@@ -54,16 +61,25 @@ func (p *Token) Session() *Session {
 }
 
 func (p *Token) Update(cols ...string) error {
+	if _, ok := DB["sso"]; !ok {
+		return nil
+	}
 	_, err := DB["sso"].Where("access_token=?", p.AccessToken).Cols(cols...).Update(p)
 	return err
 }
 
 func TokenDelete(token string) error {
+	if _, ok := DB["sso"]; !ok {
+		return nil
+	}
 	_, err := DB["sso"].Where("access_token=?", token).Delete(new(Token))
 	return err
 }
 
 func TokenGets(where string, args ...interface{}) (tokens []Token, err error) {
+	if _, ok := DB["sso"]; !ok {
+		return
+	}
 	if where != "" {
 		err = DB["sso"].Where(where, args...).Find(&tokens)
 	} else {
