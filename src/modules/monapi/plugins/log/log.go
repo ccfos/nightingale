@@ -82,7 +82,7 @@ func (p LogCollector) Create(data []byte, username string) error {
 	if old != nil {
 		return fmt.Errorf("同节点下策略名称 %s 已存在", name)
 	}
-	return models.CreateCollect(p.Name(), username, collector)
+	return models.CreateCollect(p.Name(), username, collector, false)
 }
 
 func (p LogCollector) Update(data []byte, username string) error {

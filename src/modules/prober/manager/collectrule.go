@@ -9,6 +9,7 @@ import (
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/modules/prober/config"
+	"github.com/didi/nightingale/src/modules/prober/manager/accumulator"
 	"github.com/influxdata/telegraf"
 	"github.com/toolkits/pkg/logger"
 )
@@ -43,7 +44,7 @@ func newCollectRule(rule *models.CollectRule) (*collectRule, error) {
 
 	metrics := []*dataobj.MetricValue{}
 
-	acc, err := NewAccumulator(AccumulatorOptions{
+	acc, err := accumulator.New(accumulator.Options{
 		Name:    fmt.Sprintf("%s-%d", rule.CollectType, rule.Id),
 		Tags:    tags,
 		Metrics: &metrics})
@@ -176,7 +177,7 @@ func (p *collectRule) update(rule *models.CollectRule) error {
 		return err
 	}
 
-	acc, err := NewAccumulator(AccumulatorOptions{
+	acc, err := accumulator.New(accumulator.Options{
 		Name:    fmt.Sprintf("%s-%d", rule.CollectType, rule.Id),
 		Tags:    tags,
 		Metrics: p.metrics})

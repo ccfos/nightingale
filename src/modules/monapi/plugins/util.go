@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/didi/nightingale/src/common/dataobj"
-	"github.com/didi/nightingale/src/modules/prober/manager"
+	"github.com/didi/nightingale/src/modules/prober/manager/accumulator"
 	"github.com/influxdata/telegraf"
 	"github.com/toolkits/pkg/logger"
 )
@@ -83,7 +83,7 @@ func PluginTest(t *testing.T, plugin telegrafPlugin) telegraf.Input {
 func PluginInputTest(t *testing.T, input telegraf.Input) {
 	metrics := []*dataobj.MetricValue{}
 
-	acc, err := manager.NewAccumulator(manager.AccumulatorOptions{Name: "plugin-test", Metrics: &metrics})
+	acc, err := accumulator.New(accumulator.Options{Name: "plugin-test", Metrics: &metrics})
 	if err != nil {
 		t.Error(err)
 	}

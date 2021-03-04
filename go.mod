@@ -8,9 +8,7 @@ require (
 	github.com/codegangsta/negroni v1.0.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/dgryski/go-tsz v0.0.0-20180227144327-03b7d791f4fe
-	github.com/ericchiang/k8s v1.2.0
 	github.com/garyburd/redigo v1.6.2
-	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-ping/ping v0.0.0-20201115131931-3300c582a663
@@ -24,12 +22,9 @@ require (
 	github.com/m3db/m3 v0.15.17
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.0 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.1
 	github.com/mojocn/base64Captcha v1.3.1
 	github.com/open-falcon/rrdlite v0.0.0-20200214140804-bf5829f786ad
 	github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f // indirect
-	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.9.1
 	github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62 // indirect
 	github.com/shirou/gopsutil v3.20.11+incompatible // indirect
 	github.com/spaolacci/murmur3 v1.1.0
@@ -45,7 +40,6 @@ require (
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/ldap.v3 v3.1.0
-	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	xorm.io/core v0.7.3
