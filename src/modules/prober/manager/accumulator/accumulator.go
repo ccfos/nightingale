@@ -1,4 +1,4 @@
-package manager
+package accumulator
 
 import (
 	"fmt"
@@ -7,17 +7,18 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/src/common/dataobj"
+	"github.com/didi/nightingale/src/modules/prober/manager/metric"
 	"github.com/influxdata/telegraf"
 	"github.com/toolkits/pkg/logger"
 )
 
-type AccumulatorOptions struct {
+type Options struct {
 	Name    string
 	Tags    map[string]string
 	Metrics *[]*dataobj.MetricValue
 }
 
-func (p *AccumulatorOptions) Validate() error {
+func (p *Options) Validate() error {
 	if p.Name == "" {
 		return fmt.Errorf("unable to get Name")
 	}
@@ -28,8 +29,8 @@ func (p *AccumulatorOptions) Validate() error {
 	return nil
 }
 
-// NewAccumulator return telegraf.Accumulator
-func NewAccumulator(opt AccumulatorOptions) (telegraf.Accumulator, error) {
+// New return telegraf.Accumulator
+func New(opt Options) (telegraf.Accumulator, error) {
 	if err := opt.Validate(); err != nil {
 		return nil, err
 	}
@@ -126,7 +127,7 @@ func (p *accumulator) addFields(
 	tp telegraf.ValueType,
 	t ...time.Time,
 ) {
-	m, err := NewMetric(measurement, tags, fields, p.getTime(t), tp)
+	m, err := metric.NewMetric(measurement, tags, fields, p.getTime(t), tp)
 	if err != nil {
 		return
 	}

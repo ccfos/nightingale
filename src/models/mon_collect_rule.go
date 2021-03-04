@@ -21,6 +21,7 @@ type CollectRule struct {
 	Name        string          `json:"name" describes:"customize name"`
 	Region      string          `json:"region"`
 	Comment     string          `json:"comment"`
+	DryRun      bool            `json:"dryrun" xorm:"-"`
 	Data        json.RawMessage `json:"data"`
 	Tags        string          `json:"tags" description:"k1=v1,k2=v2,k3=v3,..."`
 	Creator     string          `json:"creator" description:"just for output"`
@@ -100,36 +101,32 @@ func GetCollectRules(typ string, nid int64, limit, offset int) (total int64, lis
 	return
 }
 
-func (p *CollectRule) Update() error {
+func (p *CollectRule) Update() (err error) {
 	session := DB["mon"].NewSession()
-	defer session.Close()
-
-	err := session.Begin()
-	if err != nil {
-		return err
+	if err = session.Begin(); err != nil {
+		session.Close()
+		return
 	}
+	defer func() {
+		if err != nil || p.DryRun {
+			session.Rollback()
+		} else {
+			err = session.Commit()
+		}
+		session.Close()
+	}()
 
 	if _, err = session.Id(p.Id).AllCols().Update(p); err != nil {
-		session.Rollback()
-		return err
+		return
 	}
 
-	b, err := json.Marshal(p)
-	if err != nil {
-		session.Rollback()
-		return err
+	var b []byte
+	if b, err = json.Marshal(p); err != nil {
+		return
 	}
 
-	if err := saveHistory(p.Id, p.CollectType, "update", p.Creator, string(b), session); err != nil {
-		session.Rollback()
-		return err
-	}
-
-	if err = session.Commit(); err != nil {
-		return err
-	}
-
-	return err
+	err = saveHistory(p.Id, p.CollectType, "update", p.Creator, string(b), session)
+	return
 }
 
 func DeleteCollectRule(sid int64) error {
