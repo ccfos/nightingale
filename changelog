@@ -99,4 +99,5 @@
 升级方法：
   - sql/n9e_rdb-v3.7.0.sql 有个新的表结构，需要导入一下
   - 替换n9e-rdb n9e-prober n9e-judge n9e-monapi二进制，前端没有升级
+  - 将etc/plugins里zookeeper.yml,tengine.yml等新增的yml文件复制到配置文件里
 
