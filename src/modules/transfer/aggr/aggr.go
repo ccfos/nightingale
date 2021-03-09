@@ -18,6 +18,7 @@ import (
 
 type AggrSection struct {
 	Enabled           bool     `yaml:"enabled"`
+	Lateness          int      `yaml:"lateness"`
 	ApiPath           string   `yaml:"apiPath"`
 	ApiTimeout        int      `yaml:"apiTimeout"`
 	UpdateInterval    int      `yaml:"updateInterval"`
@@ -131,6 +132,8 @@ func transPoints(item *dataobj.MetricValue, strategys []*dataobj.RawMetricAggrCa
 
 	result.Hash = murmur3.Sum64([]byte(hash)) / 2
 
+	lateness := AggrConfig.Lateness
+
 	for _, rule := range strategys {
 		ruleValid := true
 
@@ -154,8 +157,6 @@ func transPoints(item *dataobj.MetricValue, strategys []*dataobj.RawMetricAggrCa
 		if rule.NewStep == 0 {
 			step = int(item.Step) // 如果没有指定step，则默认和point的step相同
 		}
-
-		lateness := step * 3
 
 		result.Strategys = append(result.Strategys, &dataobj.AggrCalcStra{
 			SID:            rule.Sid,
