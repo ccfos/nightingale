@@ -121,7 +121,7 @@ func xcludeResp(iter ident.TagIterator) *dataobj.XcludeResp {
 
 func resampleResp(data []*dataobj.TsdbQueryResponse, opts dataobj.QueryDataForUI) []*dataobj.TsdbQueryResponse {
 	for _, v := range data {
-		if len(v.Values) <= MAX_PONINTS {
+		if len(v.Values) <= maxSeriesPoints {
 			continue
 		}
 		v.Values = resample(v.Values, opts.Start, opts.End, int64(opts.Step), opts.ConsolFunc)
