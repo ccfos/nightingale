@@ -133,6 +133,9 @@ func transPoints(item *dataobj.MetricValue, strategys []*dataobj.RawMetricAggrCa
 	result.Hash = murmur3.Sum64([]byte(hash)) / 2
 
 	lateness := AggrConfig.Lateness
+	if lateness == 0 {
+		lateness = 60
+	}
 
 	for _, rule := range strategys {
 		ruleValid := true
