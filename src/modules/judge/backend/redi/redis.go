@@ -39,7 +39,8 @@ func Init(cfg RedisSection) {
 	connTimeout := time.Duration(cfg.Timeout.Conn) * time.Millisecond
 	readTimeout := time.Duration(cfg.Timeout.Read) * time.Millisecond
 	writeTimeout := time.Duration(cfg.Timeout.Write) * time.Millisecond
-	for _, addr := range addrs {
+	for i := range addrs {
+		addr := addrs[i]
 		redisConnPool := &redis.Pool{
 			MaxIdle:     maxIdle,
 			IdleTimeout: idleTimeout,

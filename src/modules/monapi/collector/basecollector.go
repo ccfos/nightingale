@@ -1,11 +1,14 @@
 package collector
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/didi/nightingale/src/common/dataobj"
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/prober/manager/accumulator"
 	"github.com/influxdata/telegraf"
 )
 
@@ -113,7 +116,52 @@ func (p BaseCollector) Create(data []byte, username string) error {
 	if old != nil {
 		return fmt.Errorf("同节点下策略名称 %s 已存在", collect.Name)
 	}
-	return models.CreateCollect(p.name, username, collect)
+
+	if err := models.CreateCollect(p.name, username, collect, collect.DryRun); err != nil {
+		return err
+	}
+
+	if collect.DryRun {
+		return p.dryRun(rule)
+	}
+
+	return nil
+}
+
+func (p BaseCollector) dryRun(rule TelegrafPlugin) error {
+	input, err := rule.TelegrafInput()
+	if err != nil {
+		return err
+	}
+
+	metrics := []*dataobj.MetricValue{}
+
+	acc, err := accumulator.New(accumulator.Options{Name: "plugin-dryrun", Metrics: &metrics})
+	if err != nil {
+		return err
+	}
+
+	if err = input.Gather(acc); err != nil {
+		return err
+	}
+
+	buf := &bytes.Buffer{}
+	for k, v := range metrics {
+		fmt.Fprintf(buf, "%d %s %s %f\n", k, v.CounterType, v.PK(), v.Value)
+	}
+	return NewDryRunError(buf.String())
+}
+
+type DryRun struct {
+	msg string
+}
+
+func (p DryRun) Error() string {
+	return p.msg
+}
+
+func NewDryRunError(msg string) error {
+	return DryRun{msg}
 }
 
 func (p BaseCollector) Update(data []byte, username string) error {
@@ -153,7 +201,15 @@ func (p BaseCollector) Update(data []byte, username string) error {
 		return fmt.Errorf("同节点下策略名称 %s 已存在", collect.Name)
 	}
 
-	return collect.Update()
+	if err := collect.Update(); err != nil {
+		return err
+	}
+
+	if collect.DryRun {
+		return p.dryRun(rule)
+	}
+
+	return nil
 }
 
 func (p BaseCollector) Delete(id int64, username string) error {

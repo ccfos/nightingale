@@ -39,6 +39,8 @@ func Start() {
 
 	Config(r)
 
+	initStats()
+
 	srv.Addr = address.GetHTTPListen("rdb")
 	srv.Handler = r
 

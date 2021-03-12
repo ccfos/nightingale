@@ -525,32 +525,32 @@ func (a *ApiCollect) Update() error {
 	return err
 }
 
-func CreateCollect(collectType, creator string, collect interface{}) error {
+func CreateCollect(collectType, creator string, collect interface{}, dryRun bool) (err error) {
 	session := DB["mon"].NewSession()
-	defer session.Close()
-
-	err := session.Begin()
-	if err != nil {
+	if err = session.Begin(); err != nil {
+		session.Close()
 		return err
 	}
+	defer func() {
+		if err != nil || dryRun {
+			session.Rollback()
+		} else {
+			err = session.Commit()
+		}
+		session.Close()
+	}()
 
-	if _, err := session.Insert(collect); err != nil {
-		session.Rollback()
-		return err
+	if _, err = session.Insert(collect); err != nil {
+		return
 	}
 
-	b, err := json.Marshal(collect)
-	if err != nil {
-		session.Rollback()
-		return err
+	var b []byte
+	if b, err = json.Marshal(collect); err != nil {
+		return
 	}
 
-	if err := saveHistory(0, collectType, "create", creator, string(b), session); err != nil {
-		session.Rollback()
-		return err
-	}
-
-	return session.Commit()
+	err = saveHistory(0, collectType, "create", creator, string(b), session)
+	return
 }
 
 func DeleteCollectById(collectType, creator string, cid int64) error {

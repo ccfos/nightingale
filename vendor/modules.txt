@@ -2,7 +2,7 @@
 github.com/BurntSushi/toml
 # github.com/MichaelTJones/pcg v0.0.0-20180122055547-df440c6ed7ed
 github.com/MichaelTJones/pcg
-# github.com/Shopify/sarama v1.27.1
+# github.com/Shopify/sarama v1.27.2
 github.com/Shopify/sarama
 # github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d
 github.com/alecthomas/units
@@ -116,14 +116,23 @@ github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
 # github.com/golang/snappy v0.0.1
 github.com/golang/snappy
+# github.com/google/go-cmp v0.5.2
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/cmpopts
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
 # github.com/google/go-github/v32 v32.1.0
 github.com/google/go-github/v32/github
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
-# github.com/google/uuid v1.1.2-0.20190416172445-c2e93f3ae59f
+# github.com/google/uuid v1.1.2
 github.com/google/uuid
 # github.com/gorilla/mux v1.7.3
 github.com/gorilla/mux
+# github.com/gosnmp/gosnmp v1.29.0
+github.com/gosnmp/gosnmp
 # github.com/hashicorp/go-uuid v1.0.2
 github.com/hashicorp/go-uuid
 # github.com/hashicorp/golang-lru v0.5.4
@@ -152,10 +161,11 @@ github.com/hydrogen18/stalecucumber
 github.com/influxdata/influxdb/client/v2
 github.com/influxdata/influxdb/models
 github.com/influxdata/influxdb/pkg/escape
-# github.com/influxdata/telegraf v1.16.2
+# github.com/influxdata/telegraf v1.17.2
 github.com/influxdata/telegraf
 github.com/influxdata/telegraf/filter
 github.com/influxdata/telegraf/internal
+github.com/influxdata/telegraf/internal/snmp
 github.com/influxdata/telegraf/metric
 github.com/influxdata/telegraf/plugins/common/tls
 github.com/influxdata/telegraf/plugins/inputs
@@ -167,9 +177,18 @@ github.com/influxdata/telegraf/plugins/inputs/mysql/v1
 github.com/influxdata/telegraf/plugins/inputs/mysql/v2
 github.com/influxdata/telegraf/plugins/inputs/nginx
 github.com/influxdata/telegraf/plugins/inputs/prometheus
+github.com/influxdata/telegraf/plugins/inputs/rabbitmq
 github.com/influxdata/telegraf/plugins/inputs/redis
+github.com/influxdata/telegraf/plugins/inputs/snmp
+github.com/influxdata/telegraf/plugins/inputs/tengine
+github.com/influxdata/telegraf/plugins/inputs/zookeeper
 github.com/influxdata/telegraf/plugins/parsers/json
+github.com/influxdata/telegraf/plugins/parsers/prometheus
+github.com/influxdata/telegraf/plugins/parsers/prometheus/common
 github.com/influxdata/telegraf/selfstat
+github.com/influxdata/telegraf/testutil
+# github.com/influxdata/wlog v0.0.0-20160411224016-7c63b0a71ef8
+github.com/influxdata/wlog
 # github.com/jcmturner/gofork v1.0.0
 github.com/jcmturner/gofork/encoding/asn1
 github.com/jcmturner/gofork/x/crypto/pbkdf2
@@ -616,14 +635,14 @@ google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20200317114155-1f3552e48f24
+# google.golang.org/genproto v0.0.0-20200513103714-09dca8ec2884
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/protobuf/api
 google.golang.org/genproto/protobuf/field_mask
 google.golang.org/genproto/protobuf/ptype
 google.golang.org/genproto/protobuf/source_context
-# google.golang.org/grpc v1.29.1
+# google.golang.org/grpc v1.33.1 => google.golang.org/grpc v1.29.1
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff

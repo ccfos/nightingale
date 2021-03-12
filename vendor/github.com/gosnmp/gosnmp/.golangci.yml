@@ -1,0 +1,57 @@
+---
+run:
+  timeout: 5m
+
+linters:
+  disable-all: true
+  enable:
+  - bodyclose
+  - deadcode
+  - dogsled
+  - dupl
+  - errcheck
+  - gochecknoglobals
+  - goconst
+  - gocritic
+  - goimports
+  - golint
+  - goprintffuncname
+  - gosec
+  - gosimple
+  - govet
+  - ineffassign
+  - interfacer
+  - misspell
+  - nakedret
+  - staticcheck
+  - structcheck
+  - stylecheck
+  - typecheck
+  - unconvert
+  - unparam
+  - unused
+  - varcheck
+  - nolintlint
+  - scopelint
+  - whitespace
+
+linters-settings:
+  gofmt:
+    simplify: true
+  golint:
+    min-confidence: 0
+  gocyclo:
+    min-complexity: 20
+  govet:
+    check-shadowing: true
+    enable-all: true
+
+    # TODO the following linters
+    # - gocognit
+    # - gocyclo
+    # - goerr113
+    # - gomnd
+    # - lll
+    # - maligned
+    # - nestif
+    # - prealloc

@@ -12,6 +12,7 @@ import (
 	"github.com/didi/nightingale/src/models"
 	"github.com/didi/nightingale/src/modules/monapi/acache"
 	"github.com/didi/nightingale/src/modules/monapi/alarm"
+	"github.com/didi/nightingale/src/modules/monapi/collector"
 	"github.com/didi/nightingale/src/modules/monapi/config"
 	"github.com/didi/nightingale/src/modules/monapi/http"
 	"github.com/didi/nightingale/src/modules/monapi/redisc"
@@ -96,6 +97,8 @@ func main() {
 		go alarm.CleanEventLoop()
 	}
 
+	pluginInfo()
+
 	http.Start()
 	ending()
 }
@@ -138,5 +141,12 @@ func pconf() {
 	if err := config.Parse(*conf); err != nil {
 		fmt.Println("cannot parse configuration file:", err)
 		os.Exit(1)
+	}
+}
+
+func pluginInfo() {
+	fmt.Println("remote collector")
+	for k, v := range collector.GetRemoteCollectors() {
+		fmt.Printf("  %d %s\n", k, v)
 	}
 }

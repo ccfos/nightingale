@@ -293,7 +293,7 @@ func authLogin(in *v1LoginInput) (user *models.User, err error) {
 		err = _e("Invalid login type %s", in.Type)
 	}
 
-	if user != nil {
+	if user != nil && in.RemoteAddr != "" {
 		if err := auth.WhiteListAccess(user, in.RemoteAddr); err != nil {
 			return nil, _e("Deny Access from %s with whitelist control", in.RemoteAddr)
 		}
@@ -508,7 +508,7 @@ func rstPassword(c *gin.Context) {
 			return _e("Cannot find the user by %s", in.Arg)
 		}
 
-		lc, err := models.LoginCodeGet("code=? and login_type=?", in.Code, models.LOGIN_T_RST)
+		lc, err := models.LoginCodeGet("username=? and code=? and login_type=?", user.Username, in.Code, models.LOGIN_T_RST)
 		if err != nil {
 			return _e("Invalid code")
 		}
@@ -684,8 +684,7 @@ func v1SessionGet(c *gin.Context) {
 }
 
 func v1SessionGetUser(c *gin.Context) {
-	sid := urlParamStr(c, "sid")
-	user, err := models.SessionGetUserWithCache(sid)
+	user, err := models.SessionGetUserWithCache(urlParamStr(c, "sid"))
 	renderData(c, user, err)
 }
 

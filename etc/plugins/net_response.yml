@@ -1,0 +1,5 @@
+mode: whitelist # whitelist(default),all
+metrics:
+  - name: net_response_result_code
+  - name: net_response_response_time
+

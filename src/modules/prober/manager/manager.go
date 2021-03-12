@@ -76,6 +76,15 @@ func (p *manager) loop() {
 	}()
 }
 
+func (p *manager) deleteRule(id int64) {
+	if rule, ok := p.index[id]; ok {
+		if si, ok := rule.input.(telegraf.ServiceInput); ok {
+			si.Stop()
+		}
+		delete(p.index, id)
+	}
+}
+
 // schedule return until there are no jobs
 func (p *manager) schedule() error {
 	for {
@@ -91,7 +100,7 @@ func (p *manager) schedule() error {
 		latestRule, ok := p.cache.Get(summary.id)
 		if !ok {
 			// drop it if not exist in cache
-			delete(p.index, summary.id)
+			p.deleteRule(summary.id)
 			continue
 		}
 
@@ -184,8 +193,13 @@ func (p *worker) do(rule *collectRule) error {
 		return fmt.Errorf("gather %s", err)
 	}
 
+	pluginConfig, ok := config.GetPluginConfig(rule.PluginName())
+	if !ok {
+		return nil
+	}
+
 	// eval expression metrics
-	metrics, err := rule.prepareMetrics()
+	metrics, err := rule.prepareMetrics(pluginConfig)
 	if err != nil {
 		return fmt.Errorf("prepareMetrics %s", err)
 	}

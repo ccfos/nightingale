@@ -1,11 +1,10 @@
 package prometheus
 
 import (
-	"context"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/didi/nightingale/src/modules/monapi/plugins"
 )
@@ -38,19 +37,18 @@ helo_stats_test_histogram_count{region="bj",zone="test_1"} 56
 # HELP go_goroutines Number of goroutines that currently exist.
 # TYPE go_goroutines gauge
 go_goroutines 15 1490802350000
+# HELP test_guage guage
+# TYPE test_guage gauge
+test_guauge{label="1"} 1.1
+test_guauge{label="2"} 1.2
+test_guauge{label="3"} 1.3
 `
 
 func TestCollect(t *testing.T) {
-	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, sampleTextFormat) })
-	server := &http.Server{Addr: ":18080"}
-	go func() {
-		server.ListenAndServe()
-	}()
-	defer server.Shutdown(context.Background())
-
-	time.Sleep(time.Millisecond * 100)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, sampleTextFormat) }))
+	defer s.Close()
 
 	plugins.PluginTest(t, &PrometheusRule{
-		URLs: []string{"http://localhost:18080/metrics"},
+		URLs: []string{s.URL},
 	})
 }

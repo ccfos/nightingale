@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/didi/nightingale/src/common/dataobj"
-	"github.com/didi/nightingale/src/modules/prober/manager"
+	"github.com/didi/nightingale/src/modules/prober/manager/accumulator"
 	"github.com/influxdata/telegraf"
 	"github.com/toolkits/pkg/logger"
 )
@@ -45,38 +45,6 @@ func (l *Logger) Info(args ...interface{}) {
 	logger.LogDepth(logger.INFO, 1, fmt.Sprint(args...))
 }
 
-type telegrafPlugin interface {
-	TelegrafInput() (telegraf.Input, error)
-}
-
-func PluginTest(t *testing.T, plugin telegrafPlugin) telegraf.Input {
-	input, err := plugin.TelegrafInput()
-	if err != nil {
-		t.Error(err)
-	}
-
-	PluginInputTest(t, input)
-
-	return input
-}
-
-func PluginInputTest(t *testing.T, input telegraf.Input) {
-	metrics := []*dataobj.MetricValue{}
-
-	acc, err := manager.NewAccumulator(manager.AccumulatorOptions{Name: "plugin-test", Metrics: &metrics})
-	if err != nil {
-		t.Error(err)
-	}
-
-	if err = input.Gather(acc); err != nil {
-		t.Error(err)
-	}
-
-	for k, v := range metrics {
-		t.Logf("%d %s %s %f", k, v.CounterType, v.PK(), v.Value)
-	}
-}
-
 func SetValue(in interface{}, value interface{}, fields ...string) error {
 	rv := reflect.Indirect(reflect.ValueOf(in))
 
@@ -95,4 +63,36 @@ func SetValue(in interface{}, value interface{}, fields ...string) error {
 	}
 	rv.Set(reflect.Indirect(reflect.ValueOf(value)))
 	return nil
+}
+
+type telegrafPlugin interface {
+	TelegrafInput() (telegraf.Input, error)
+}
+
+func PluginTest(t *testing.T, plugin telegrafPlugin) telegraf.Input {
+	input, err := plugin.TelegrafInput()
+	if err != nil {
+		t.Error(err)
+	}
+
+	PluginInputTest(t, input)
+
+	return input
+}
+
+func PluginInputTest(t *testing.T, input telegraf.Input) {
+	metrics := []*dataobj.MetricValue{}
+
+	acc, err := accumulator.New(accumulator.Options{Name: "plugin-test", Metrics: &metrics})
+	if err != nil {
+		t.Error(err)
+	}
+
+	if err = input.Gather(acc); err != nil {
+		t.Error(err)
+	}
+
+	for k, v := range metrics {
+		t.Logf("%d %s %s %f", k, v.CounterType, v.PK(), v.Value)
+	}
 }
