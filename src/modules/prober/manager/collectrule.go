@@ -166,6 +166,10 @@ func (p *collectRule) update(rule *models.CollectRule) error {
 
 	logger.Debugf("update %s", rule)
 
+	if si, ok := p.input.(telegraf.ServiceInput); ok {
+		si.Stop()
+	}
+
 	input, err := telegrafInput(rule)
 	if err != nil {
 		// ignore error, use old config

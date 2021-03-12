@@ -76,6 +76,15 @@ func (p *manager) loop() {
 	}()
 }
 
+func (p *manager) deleteRule(id int64) {
+	if rule, ok := p.index[id]; ok {
+		if si, ok := rule.input.(telegraf.ServiceInput); ok {
+			si.Stop()
+		}
+		delete(p.index, id)
+	}
+}
+
 // schedule return until there are no jobs
 func (p *manager) schedule() error {
 	for {
@@ -91,7 +100,7 @@ func (p *manager) schedule() error {
 		latestRule, ok := p.cache.Get(summary.id)
 		if !ok {
 			// drop it if not exist in cache
-			delete(p.index, summary.id)
+			p.deleteRule(summary.id)
 			continue
 		}
 

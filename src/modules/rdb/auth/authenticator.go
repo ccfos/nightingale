@@ -158,8 +158,11 @@ func (p *Authenticator) ChangePassword(user *models.User, password string) (err 
 	}
 
 	if p.extraMode {
-		for _, v := range passwords {
-			if user.Password == v {
+		for i, pwd := range passwords {
+			if i >= cf.PwdHistorySize {
+				break
+			}
+			if user.Password == pwd {
 				err = _e("The password is the same as the old password")
 				return
 			}
