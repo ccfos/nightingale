@@ -316,7 +316,11 @@ func (w *Worker) producer(line string, strategy *stra.Strategy) (*AnalysPoint, e
 		Tms:        tms.Unix(),
 		Tags:       tag,
 	}
-
+	// ==1代表要开启带上一条日志
+	if strategy.WhetherAttacheOneLogLine == 1 {
+		logger.Debugf("[strategy:%+v][WhetherAttacheOneLogLine:%+v]", strategy, strategy.WhetherAttacheOneLogLine)
+		ret.OneLogLine = line
+	}
 	return ret, nil
 }
 
