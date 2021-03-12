@@ -46,7 +46,6 @@ backend:
     enabled: false
     brokersPeers: "192.168.1.1:9092,192.168.1.2:9092"
     topic: "n9e"
-
 logger:
   dir: logs/transfer
   level: INFO
