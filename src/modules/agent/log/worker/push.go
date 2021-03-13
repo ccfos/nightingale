@@ -182,6 +182,7 @@ func ToPushQueue(strategy *stra.Strategy, tms int64, pointMap map[string]*PointC
 			Step:         strategy.Interval,
 			TagsMap:      tags,
 			CounterType:  "GAUGE",
+			Extra:        PointCounter.OneLogLine,
 		}
 		//metric.MetricPushDelay(tms)
 		pushQueue <- tmpPoint

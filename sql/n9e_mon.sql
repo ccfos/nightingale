@@ -241,6 +241,7 @@ CREATE TABLE `log_collect` (
   `created` datetime NOT NULL  COMMENT 'created',
   `last_updator` varchar(64) NOT NULL DEFAULT '' COMMENT 'last_updator',
   `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+   `whether_attache_one_log_line` tinyint(1)    not null default 0,
   PRIMARY KEY (`id`),
   KEY `idx_nid` (`nid`),
   KEY `idx_collect_type` (`collect_type`)
