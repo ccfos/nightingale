@@ -115,7 +115,12 @@ func (p *Client) Push2Queue(items []*dataobj.MetricValue) {
 				xtime.Second,
 				nil)
 			if err != nil {
-				logger.Errorf("unable to writeTagged: %s", err)
+				logger.Errorf("[endpoint:%s][metrics_name:%s][metrics_ts:%d][metrics_detail:%+v]unable to writeTagged: %s",
+					dm.Endpoint,
+					dm.Metric,
+					dm.Timestamp,
+					dm,
+					err)
 				atomic.AddInt32(&errCnt, 1)
 			}
 			wg.Done()
