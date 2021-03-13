@@ -132,6 +132,11 @@ type ProcCollect struct {
 
 	Target        string `json:"target"`
 	CollectMethod string `json:"collect_method"`
+
+	ProcJiffy map[int]uint64 `xorm:"-" json:"-"`
+	Jiffy     uint64         `xorm:"-" json:"-"`
+	RBytes    map[int]uint64 `xorm:"-" json:"-"`
+	WBytes    map[int]uint64 `xorm:"-" json:"-"`
 }
 
 type PluginCollect struct {

@@ -185,9 +185,7 @@ func (w *Worker) analysis(line string) {
 			analyspoint, err := w.producer(line, strategy)
 
 			if err != nil {
-				log := fmt.Sprintf("%s[producer error][sid:%d] : %v", w.Mark, strategy.ID, err)
-				//sample_log.Error(log)
-				logger.Error(log)
+				logger.Debugf("%s[producer error][sid:%d] : %v", w.Mark, strategy.ID, err)
 				continue
 			} else {
 				if analyspoint != nil {

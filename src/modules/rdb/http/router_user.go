@@ -66,7 +66,7 @@ func userAddPost(c *gin.Context) {
 	root := loginRoot(c)
 
 	var f userProfileForm
-	bind(c, &f)
+	dangerous(c.ShouldBind(&f))
 	dangerous(auth.CheckPassword(f.Password))
 
 	pass, err := models.CryptoPass(f.Password)
