@@ -317,8 +317,8 @@ func (w *Worker) producer(line string, strategy *stra.Strategy) (*AnalysPoint, e
 		Tags:       tag,
 	}
 	// ==1代表要开启带上一条日志
-	if strategy.WhetherAttacheOneLogLine == 1 {
-		logger.Debugf("[strategy:%+v][WhetherAttacheOneLogLine:%+v]", strategy, strategy.WhetherAttacheOneLogLine)
+	if strategy.WhetherAttachOneLogLine == 1 {
+		logger.Debugf("[strategy:%+v][WhetherAttacheOneLogLine:%+v]", strategy, strategy.WhetherAttachOneLogLine)
 		ret.OneLogLine = line
 	}
 	return ret, nil

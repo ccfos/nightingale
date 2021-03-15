@@ -89,6 +89,6 @@ func DeepCopyStrategy(p *stra.Strategy) *stra.Strategy {
 	s.Creator = p.Creator
 	s.SrvUpdated = p.SrvUpdated
 	s.LocalUpdated = p.LocalUpdated
-
+	s.WhetherAttachOneLogLine = p.WhetherAttachOneLogLine
 	return &s
 }
