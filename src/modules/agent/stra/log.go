@@ -14,28 +14,28 @@ import (
 )
 
 type Strategy struct {
-	ID                       int64                     `json:"id"`
-	Name                     string                    `json:"name"`        //监控策略名
-	FilePath                 string                    `json:"file_path"`   //文件路径
-	TimeFormat               string                    `json:"time_format"` //时间格式
-	Pattern                  string                    `json:"pattern"`     //表达式
-	Exclude                  string                    `json:"-"`
-	MeasurementType          string                    `json:"measurement_type"`
-	Interval                 int64                     `json:"interval"` //采集周期
-	Tags                     map[string]string         `json:"tags"`
-	Func                     string                    `json:"func"` //采集方式（max/min/avg/cnt）
-	Degree                   int64                     `json:"degree"`
-	Unit                     string                    `json:"unit"`
-	Comment                  string                    `json:"comment"`
-	Creator                  string                    `json:"creator"`
-	SrvUpdated               string                    `json:"updated"`
-	LocalUpdated             int64                     `json:"-"`
-	TimeReg                  *regexp.Regexp            `json:"-"`
-	PatternReg               *regexp.Regexp            `json:"-"`
-	ExcludeReg               *regexp.Regexp            `json:"-"`
-	TagRegs                  map[string]*regexp.Regexp `json:"-"`
-	ParseSucc                bool                      `json:"parse_succ"`
-	WhetherAttacheOneLogLine int                       `json:"whether_attache_one_log_line"`
+	ID                      int64                     `json:"id"`
+	Name                    string                    `json:"name"`        //监控策略名
+	FilePath                string                    `json:"file_path"`   //文件路径
+	TimeFormat              string                    `json:"time_format"` //时间格式
+	Pattern                 string                    `json:"pattern"`     //表达式
+	Exclude                 string                    `json:"-"`
+	MeasurementType         string                    `json:"measurement_type"`
+	Interval                int64                     `json:"interval"` //采集周期
+	Tags                    map[string]string         `json:"tags"`
+	Func                    string                    `json:"func"` //采集方式（max/min/avg/cnt）
+	Degree                  int64                     `json:"degree"`
+	Unit                    string                    `json:"unit"`
+	Comment                 string                    `json:"comment"`
+	Creator                 string                    `json:"creator"`
+	SrvUpdated              string                    `json:"updated"`
+	LocalUpdated            int64                     `json:"-"`
+	TimeReg                 *regexp.Regexp            `json:"-"`
+	PatternReg              *regexp.Regexp            `json:"-"`
+	ExcludeReg              *regexp.Regexp            `json:"-"`
+	TagRegs                 map[string]*regexp.Regexp `json:"-"`
+	ParseSucc               bool                      `json:"parse_succ"`
+	WhetherAttachOneLogLine int                       `json:"whether_attach_one_log_line"`
 }
 
 func GetLogCollects() []*Strategy {
@@ -134,8 +134,7 @@ func ToStrategy(p *models.LogCollect) *Strategy {
 	s.Creator = p.Creator
 	s.SrvUpdated = p.LastUpdated.String()
 	s.LocalUpdated = p.LocalUpdated
-	s.WhetherAttacheOneLogLine = p.WhetherAttacheOneLogLine
-
+	s.WhetherAttachOneLogLine = p.WhetherAttachOneLogLine
 	return &s
 }
 
