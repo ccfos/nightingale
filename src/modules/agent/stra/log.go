@@ -134,7 +134,7 @@ func ToStrategy(p *models.LogCollect) *Strategy {
 	s.Creator = p.Creator
 	s.SrvUpdated = p.LastUpdated.String()
 	s.LocalUpdated = p.LocalUpdated
-
+	s.WhetherAttachOneLogLine = p.WhetherAttachOneLogLine
 	return &s
 }
 

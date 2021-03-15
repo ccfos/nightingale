@@ -314,7 +314,10 @@ func (w *Worker) producer(line string, strategy *stra.Strategy) (*AnalysPoint, e
 		Tms:        tms.Unix(),
 		Tags:       tag,
 	}
-
+	if strategy.WhetherAttachOneLogLine == 1 {
+		logger.Debugf("[strategy:%+v][WhetherAttacheOneLogLine:%+v]", strategy, strategy.WhetherAttachOneLogLine)
+		ret.OneLogLine = line
+	}
 	return ret, nil
 }
 
