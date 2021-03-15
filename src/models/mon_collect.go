@@ -132,6 +132,11 @@ type ProcCollect struct {
 
 	Target        string `json:"target"`
 	CollectMethod string `json:"collect_method"`
+
+	ProcJiffy map[int]uint64 `xorm:"-" json:"-"`
+	Jiffy     uint64         `xorm:"-" json:"-"`
+	RBytes    map[int]uint64 `xorm:"-" json:"-"`
+	WBytes    map[int]uint64 `xorm:"-" json:"-"`
 }
 
 type PluginCollect struct {
@@ -177,13 +182,12 @@ type LogCollect struct {
 	Zerofill  int    `xorm:"zero_fill" json:"zerofill"`
 	Aggregate string `json:"aggregate"`
 
-	LocalUpdated            int64                     `xorm:"-" json:"-"`
-	TimeReg                 *regexp.Regexp            `xorm:"-" json:"-"`
-	PatternReg              *regexp.Regexp            `xorm:"-" json:"-"`
-	ExcludeReg              *regexp.Regexp            `xorm:"-" json:"-"`
-	TagRegs                 map[string]*regexp.Regexp `xorm:"-" json:"-"`
-	ParseSucc               bool                      `xorm:"-" json:"-"`
-	WhetherAttachOneLogLine int                       `json:"whether_attach_one_log_line" xorm:"'whether_attach_one_log_line'"`
+	LocalUpdated int64                     `xorm:"-" json:"-"`
+	TimeReg      *regexp.Regexp            `xorm:"-" json:"-"`
+	PatternReg   *regexp.Regexp            `xorm:"-" json:"-"`
+	ExcludeReg   *regexp.Regexp            `xorm:"-" json:"-"`
+	TagRegs      map[string]*regexp.Regexp `xorm:"-" json:"-"`
+	ParseSucc    bool                      `xorm:"-" json:"-"`
 }
 
 type ApiCollect struct {

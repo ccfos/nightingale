@@ -185,9 +185,7 @@ func (w *Worker) analysis(line string) {
 			analyspoint, err := w.producer(line, strategy)
 
 			if err != nil {
-				log := fmt.Sprintf("%s[producer error][sid:%d] : %v", w.Mark, strategy.ID, err)
-				//sample_log.Error(log)
-				logger.Error(log)
+				logger.Debugf("%s[producer error][sid:%d] : %v", w.Mark, strategy.ID, err)
 				continue
 			} else {
 				if analyspoint != nil {
@@ -316,11 +314,7 @@ func (w *Worker) producer(line string, strategy *stra.Strategy) (*AnalysPoint, e
 		Tms:        tms.Unix(),
 		Tags:       tag,
 	}
-	// ==1代表要开启带上一条日志
-	if strategy.WhetherAttachOneLogLine == 1 {
-		logger.Debugf("[strategy:%+v][WhetherAttacheOneLogLine:%+v]", strategy, strategy.WhetherAttachOneLogLine)
-		ret.OneLogLine = line
-	}
+
 	return ret, nil
 }
 

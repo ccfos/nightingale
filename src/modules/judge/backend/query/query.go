@@ -45,6 +45,7 @@ func Query(reqs []*dataobj.QueryData, stra *models.Stra, expFunc string) []*data
 		if err != nil {
 			stats.Counter.Set("query.data.transfer.err", 1)
 			logger.Warningf("get data err:%v", err)
+			return respData
 		} else {
 			for i := 0; i < len(resp.Data); i++ {
 				var values dataobj.RRDValues

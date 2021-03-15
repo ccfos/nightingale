@@ -44,13 +44,6 @@ func (p *ProcScheduler) Stop() {
 	close(p.Quit)
 }
 
-var (
-	rBytes    map[int]uint64
-	wBytes    map[int]uint64
-	procJiffy map[int]uint64
-	jiffy     uint64
-)
-
 func ProcCollect(p *models.ProcCollect) {
 	ps, err := AllProcs()
 	if err != nil {
@@ -84,24 +77,24 @@ func ProcCollect(p *models.ProcCollect) {
 			cnt++
 			memory += proc.Mem
 			fdNum += proc.FdCount
-			rOld := rBytes[proc.Pid]
+			rOld := p.RBytes[proc.Pid]
 			if rOld != 0 && rOld <= proc.RBytes {
 				ioRead += proc.RBytes - rOld
 			}
 
-			wOld := wBytes[proc.Pid]
+			wOld := p.WBytes[proc.Pid]
 			if wOld != 0 && wOld <= proc.WBytes {
 				ioWrite += proc.WBytes - wOld
 			}
 
 			uptime = readUptime(proc.Pid)
 
-			// jiffy 为零，表示第一次采集信息，不做cpu计算
-			if jiffy == 0 {
+			// p.Jiffy 为零，表示第一次采集信息，不做cpu计算
+			if p.Jiffy == 0 {
 				continue
 			}
 
-			cpu += float64(newProcJiffy[proc.Pid] - procJiffy[proc.Pid])
+			cpu += float64(newProcJiffy[proc.Pid] - p.ProcJiffy[proc.Pid])
 		}
 
 	}
@@ -114,8 +107,8 @@ func ProcCollect(p *models.ProcCollect) {
 	ioWriteItem := core.GaugeValue("proc.io.write.bytes", ioWrite, p.Tags)
 	items = []*dataobj.MetricValue{procNumItem, memUsedItem, procFdItem, procUptimeItem, ioReadItem, ioWriteItem}
 
-	if jiffy != 0 {
-		cpuUtil := cpu / float64(newJiffy-jiffy) * 100
+	if p.Jiffy != 0 {
+		cpuUtil := cpu / float64(newJiffy-p.Jiffy) * 100
 		if cpuUtil > 100 {
 			cpuUtil = 100
 		}
@@ -144,10 +137,10 @@ func ProcCollect(p *models.ProcCollect) {
 
 	core.Push(items)
 
-	rBytes = newRBytes
-	wBytes = newWBytes
-	procJiffy = newProcJiffy
-	jiffy = readJiffy()
+	p.RBytes = newRBytes
+	p.WBytes = newWBytes
+	p.ProcJiffy = newProcJiffy
+	p.Jiffy = readJiffy()
 }
 
 func isProc(p *Proc, method, target string) bool {

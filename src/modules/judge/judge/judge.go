@@ -287,6 +287,7 @@ func GetReqs(stra *models.Stra, metric string, nids, endpoints []string, now int
 	if err != nil {
 		stats.Counter.Set("query.index.err", 1)
 		logger.Warning("query index err:", err)
+		return reqs
 	}
 
 	lostSeries := []cache.Series{}
