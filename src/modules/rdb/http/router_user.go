@@ -17,10 +17,11 @@ import (
 func userListGet(c *gin.Context) {
 	limit := queryInt(c, "limit", 20)
 	query := queryStr(c, "query", "")
+	conditions := queryStr(c, "conditions", "")
 	org := queryStr(c, "org", "")
 	ids := str.IdsInt64(queryStr(c, "ids", ""))
 
-	list, total, err := models.UserAndTotalGets(query, org, limit, offset(c, limit), ids)
+	list, total, err := models.UserAndTotalGets(query, org, conditions, limit, offset(c, limit), ids)
 	dangerous(err)
 
 	for i := 0; i < len(list); i++ {
@@ -40,7 +41,7 @@ func v1UserListGet(c *gin.Context) {
 	org := queryStr(c, "org", "")
 	ids := str.IdsInt64(queryStr(c, "ids", ""))
 
-	list, total, err := models.UserAndTotalGets(query, org, limit, offset(c, limit), ids)
+	list, total, err := models.UserAndTotalGets(query, org, "", limit, offset(c, limit), ids)
 
 	renderData(c, gin.H{
 		"list":  list,

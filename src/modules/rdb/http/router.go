@@ -183,6 +183,7 @@ func Config(r *gin.Engine) {
 
 		v1.GET("/nodes", nodeGets)
 		v1.GET("/node/:id", nodeGet)
+		v1.GET("/node-include-trash/:id", nodeIncludeTrashGet)
 		v1.GET("/node/:id/projs", v1treeUntilProjectGetsByNid)
 		v1.GET("/tree/projs", v1TreeUntilProjectGets)
 		v1.GET("/tree", v1TreeUntilTypGets)

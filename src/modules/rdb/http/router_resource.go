@@ -380,9 +380,17 @@ func resourceBindNode(c *gin.Context) {
 		bomb("field[%s] not supported", f.Field)
 	}
 
-	loginUser(c).CheckPermByNode(node, "rdb_resource_bind")
+	me := loginUser(c)
+	me.CheckPermByNode(node, "rdb_resource_bind")
+	dangerous(node.Bind(ids))
 
-	renderMessage(c, node.Bind(ids))
+	sql := "id in (" + str.IdsString(ids) + ")"
+	resources, _ := models.ResourceGets(sql)
+	for _, resource := range resources {
+		go models.OperationLogNew(me.Username, "node", node.Id, fmt.Sprintf("NodeBind path: %s, name: %s resource:%s clientIP: %s", node.Path, node.Name, resource.Ident, c.ClientIP()))
+	}
+
+	renderMessage(c, nil)
 }
 
 func resourceUnbindNode(c *gin.Context) {
@@ -395,9 +403,17 @@ func resourceUnbindNode(c *gin.Context) {
 	var f idsForm
 	bind(c, &f)
 
-	loginUser(c).CheckPermByNode(node, "rdb_resource_unbind")
+	me := loginUser(c)
+	me.CheckPermByNode(node, "rdb_resource_unbind")
+	dangerous(node.Unbind(f.Ids))
 
-	renderMessage(c, node.Unbind(f.Ids))
+	sql := "id in (" + str.IdsString(f.Ids) + ")"
+	resources, _ := models.ResourceGets(sql)
+	for _, resource := range resources {
+		go models.OperationLogNew(me.Username, "node", node.Id, fmt.Sprintf("NodeUnbind path: %s, name: %s resource:%s clientIP: %s", node.Path, node.Name, resource.Ident, c.ClientIP()))
+	}
+
+	renderMessage(c, nil)
 }
 
 // 这个修改备注信息是在节点下挂载的资源页面，非游离资源页面
