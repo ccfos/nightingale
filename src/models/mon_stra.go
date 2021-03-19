@@ -40,19 +40,21 @@ type Stra struct {
 	WorkGroupsStr       string    `xorm:"work_groups" json:"-"`
 	Runbook             string    `xorm:"runbook" json:"runbook"`
 
-	ExclNid          []int64      `xorm:"-" json:"excl_nid"`
-	Nids             []string     `xorm:"-" json:"nids"`
-	Exprs            []Exp        `xorm:"-" json:"exprs"`
-	Tags             []Tag        `xorm:"-" json:"tags"`
-	EnableDaysOfWeek []int        `xorm:"-" json:"enable_days_of_week"`
-	Converge         []int        `xorm:"-" json:"converge"`
-	NotifyGroup      []int        `xorm:"-" json:"notify_group"`
-	NotifyUser       []int        `xorm:"-" json:"notify_user"`
-	LeafNids         []int64      `xorm:"-" json:"leaf_nids"` //叶子节点id
-	Endpoints        []string     `xorm:"-" json:"endpoints"`
-	AlertUpgrade     AlertUpgrade `xorm:"-" json:"alert_upgrade"`
-	JudgeInstance    string       `xorm:"-" json:"judge_instance"`
-	WorkGroups       []int        `xorm:"-" json:"work_groups"`
+	ExclNid           []int64      `xorm:"-" json:"excl_nid"`
+	Nids              []string     `xorm:"-" json:"nids"`
+	Exprs             []Exp        `xorm:"-" json:"exprs"`
+	Tags              []Tag        `xorm:"-" json:"tags"`
+	EnableDaysOfWeek  []int        `xorm:"-" json:"enable_days_of_week"`
+	Converge          []int        `xorm:"-" json:"converge"`
+	NotifyGroup       []int64      `xorm:"-" json:"notify_group"`
+	NotifyGroupDetail []Team       `xorm:"-" json:"notify_group_detail"`
+	NotifyUser        []int64      `xorm:"-" json:"notify_user"`
+	NotifyUserDetail  []User       `xorm:"-" json:"notify_user_detail"`
+	LeafNids          []int64      `xorm:"-" json:"leaf_nids"` //叶子节点id
+	Endpoints         []string     `xorm:"-" json:"endpoints"`
+	AlertUpgrade      AlertUpgrade `xorm:"-" json:"alert_upgrade"`
+	JudgeInstance     string       `xorm:"-" json:"judge_instance"`
+	WorkGroups        []int        `xorm:"-" json:"work_groups"`
 }
 
 func (s *Stra) GetMetric() string {
@@ -504,9 +506,21 @@ func (s *Stra) Decode() error {
 		return err
 	}
 
+	s.NotifyUserDetail, err = UserGets(s.NotifyUser, 10000, 0, "")
+	if err != nil {
+		logger.Errorf("decode strategy(%d) on NotifyUserDetail fail: %v", s.Id, err)
+		return err
+	}
+
 	err = json.Unmarshal([]byte(s.NotifyGroupStr), &s.NotifyGroup)
 	if err != nil {
 		logger.Errorf("decode strategy(%d) on NotifyGroup fail: %v", s.Id, err)
+		return err
+	}
+
+	s.NotifyGroupDetail, err = TeamGetsInIds(s.NotifyGroup, "", 10000, 0)
+	if err != nil {
+		logger.Errorf("decode strategy(%d) on NotifyGroupDetail fail: %v", s.Id, err)
 		return err
 	}
 
