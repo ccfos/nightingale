@@ -314,6 +314,9 @@ func GetPatAndTimeFormat(tf string) (string, string) {
 	case "mmdd HH:MM:SS":
 		pat = `(0[1-9]|1[012])([012][0-9]|3[01])\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
 		timeFormat = "0102 15:04:05"
+	case "dd mmm yyyy HH:MM:SS":
+		pat = `([012][0-9]|3[01])\s+[JFMASOND][a-z]{2}\s+(2[0-9]{3})\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
+		timeFormat = "02 Jan 2006 15:04:05"
 	default:
 		logger.Errorf("match time pac failed : [timeFormat:%s]", tf)
 		return "", ""
