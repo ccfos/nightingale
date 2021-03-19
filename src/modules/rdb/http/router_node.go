@@ -2,11 +2,15 @@ package http
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/str"
 
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/config"
 )
 
 func nodeGet(c *gin.Context) {
@@ -154,6 +158,7 @@ func nodePost(c *gin.Context) {
 		dangerous(models.NodeNew(node, f.AdminIds))
 
 		go models.OperationLogNew(me.Username, "node", node.Id, fmt.Sprintf("NodeCreate path: %s, name: %s", node.Path, node.Name))
+		go nodeEvent("create", node)
 
 		// 把节点详情返回，便于前端易用性处理
 		renderData(c, node, nil)
@@ -175,6 +180,7 @@ func nodePost(c *gin.Context) {
 		child, err := parent.CreateChild(f.Ident, f.Name, f.Note, f.Cate, me.Username, f.Leaf, f.Proxy, f.AdminIds)
 		if err == nil {
 			go models.OperationLogNew(me.Username, "node", child.Id, fmt.Sprintf("NodeCreate path: %s, name: %s", child.Path, child.Name))
+			go nodeEvent("create", child)
 		}
 		renderData(c, child, err)
 	}
@@ -206,6 +212,7 @@ func nodePut(c *gin.Context) {
 
 	err := node.Modify(f.Name, f.Cate, f.Note, f.AdminIds)
 	go models.OperationLogNew(me.Username, "node", node.Id, fmt.Sprintf("NodeModify path: %s, name: %s clientIP: %s", node.Path, node.Name, c.ClientIP()))
+	go nodeEvent("update", node)
 	renderData(c, node, err)
 }
 
@@ -217,5 +224,26 @@ func nodeDel(c *gin.Context) {
 
 	dangerous(node.Del())
 	go models.OperationLogNew(me.Username, "node", node.Id, fmt.Sprintf("NodeDelete path: %s, name: %s clientIP: %s", node.Path, node.Name, c.ClientIP()))
+	go nodeEvent("delete", node)
 	renderMessage(c, nil)
+}
+
+type eventEntity struct {
+	Action string      `json:"action"`
+	Kind   string      `json:"kind"`
+	Data   interface{} `json:"data"`
+}
+
+func nodeEvent(action string, node *models.Node) {
+	for _, backend := range config.Config.Webhook {
+		header := map[string]string{}
+		if backend.Token != "" {
+			header["Authorization"] = "Bearer " + backend.Token
+		}
+
+		event := &eventEntity{Action: action, Kind: "node", Data: node}
+		res, code, err := httplib.PostJSON(backend.Addr, 3*time.Second, event, header)
+		logger.Infof("Webhook, api:%s, event:%+v, error:%v, response:%s, statuscode:%d",
+			backend.Addr, event, err, string(res), code)
+	}
 }

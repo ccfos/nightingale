@@ -21,6 +21,12 @@ type ConfigT struct {
 	WeChat   wechatSection            `yaml:"wechat"`
 	I18n     i18n.I18nSection         `yaml:"i18n"`
 	Auth     authSection              `yaml:"auth"`
+	Webhook  []webhook                `yaml:"webhook"`
+}
+
+type webhook struct {
+	Addr  string `yaml:"addr"`
+	Token string `yaml:"token"`
 }
 
 type authSection struct {
