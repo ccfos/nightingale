@@ -104,3 +104,7 @@ wechat:
   corp_id: "xxxxxxxxxxxxx"
   agent_id: 1000000
   secret: "xxxxxxxxxxxxxxxxx"
+
+#webhook:
+#  - addr: http://localhost:2008/api/event
+#    token: "1234"
