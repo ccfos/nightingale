@@ -101,3 +101,22 @@
   - 替换n9e-rdb n9e-prober n9e-judge n9e-monapi二进制，前端没有升级
   - 将etc/plugins里zookeeper.yml,tengine.yml等新增的yml文件复制到配置文件里
 
+3.7.1
+升级内容：
+  - prober采集增加dryrun测试方法，可以测试是否真的能采集到数据
+  - 增加dns_query插件，对dns做监控
+  - 内置大盘，增加n9e内置模块大盘
+  - 如果存储使用m3，支持在transfer配置一次查询每条线最多返回的原始点数
+  - 日志监控，可以把最后一条日志放到extra字段，报警的时候可以展示，需要升级n9e-agent n9e-monapi
+  - 修复agent对进程监控采集的bug，进程cpu使用采集的不准确
+  - 修改告警策略配置多个团队的时候不生效的问题
+  - monapi支持一个新的timestamp格式
+升级方法：
+  - sql/n9e_mon-v3.7.1.sql变更了表结构，需要执行一下
+  - 将etc/plugins里的dns_query.yml放到生产环境的etc/plugins目录下
+  - 将etc/screen/n9e_modules放到生产环境的etc/screen目录下
+  - 替换n9e-rdb n9e-prober n9e-monapi n9e-transfer n9e-agent二进制
+
+
+
+
