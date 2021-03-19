@@ -25,7 +25,7 @@ type ConfigT struct {
 }
 
 type webhook struct {
-	Addr  string `yaml:"adr"`
+	Addr  string `yaml:"addr"`
 	Token string `yaml:"token"`
 }
 
