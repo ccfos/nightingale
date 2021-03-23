@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"plugin"
 	"strings"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 const pluginDir = "plugins"
@@ -13,14 +15,14 @@ const pluginDir = "plugins"
 func init() {
 	plugins, err := listPlugins(pluginDir)
 	if err != nil {
-		fmt.Printf("list plugins: \n", err)
+		logger.Warningf("list plugins: %s", err)
 		return
 	}
 
 	for _, file := range plugins {
 		_, err := plugin.Open(file)
 		if err != nil {
-			fmt.Printf("plugin.Open %s err %s\n", file, err)
+			logger.Warningf("plugin.Open %s err %s", file, err)
 			continue
 		}
 	}
