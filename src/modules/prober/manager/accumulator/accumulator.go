@@ -160,10 +160,11 @@ func (p *accumulator) makeMetric(metric telegraf.Metric) []*dataobj.MetricValue 
 	switch metric.Type() {
 	case telegraf.Counter:
 		return makeCounter(metric, tags)
-	case telegraf.Summary, telegraf.Histogram:
-		logger.Debugf("unsupported type summary, histogram, skip")
+	case telegraf.Summary:
+		return makeSummary(metric, tags)
+	case telegraf.Histogram:
+		logger.Debugf("unsupported type histogram, skip")
 		return nil
-		// return makeSummary(metric, tags)
 	default:
 		return makeGauge(metric, tags)
 	}
