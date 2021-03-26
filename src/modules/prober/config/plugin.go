@@ -16,7 +16,7 @@ import (
 
 var (
 	pluginConfigs              map[string]*PluginConfig
-	defaultPluginConfigContent = []byte("mode: whitelist # whitelist(default),all")
+	defaultPluginConfigContent = []byte("mode: all # whitelist,all(default)")
 )
 
 const (
@@ -52,7 +52,7 @@ func (p *pluginConfig) Validate() error {
 	case "all":
 		p.mode = PluginModeAll
 	default:
-		p.mode = PluginModeWhitelist
+		p.mode = PluginModeAll
 	}
 
 	for k, v := range p.Metrics {
