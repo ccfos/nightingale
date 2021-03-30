@@ -58,8 +58,17 @@ func (resp *TsdbQueryResponse) Key() string {
 }
 
 type EndpointsRecv struct {
-	Endpoints []string `json:"endpoints"`
-	Nids      []string `json:"nids"`
+	Endpoints      []string  `json:"endpoints"`
+	Nids           []string  `json:"nids"`
+	Start          int64     `json:"start" description:"inclusive"`
+	End            int64     `json:"end" description:"exclusive"`
+	StartInclusive time.Time `json:"-"`
+	EndExclusive   time.Time `json:"-"`
+}
+
+func (p *EndpointsRecv) Validate() (err error) {
+	p.StartInclusive, p.EndExclusive, err = timeRangeValidate(p.Start, p.End)
+	return
 }
 
 type MetricResp struct {
@@ -67,9 +76,18 @@ type MetricResp struct {
 }
 
 type EndpointMetricRecv struct {
-	Endpoints []string `json:"endpoints"`
-	Nids      []string `json:"nids"`
-	Metrics   []string `json:"metrics"`
+	Endpoints      []string  `json:"endpoints"`
+	Nids           []string  `json:"nids"`
+	Metrics        []string  `json:"metrics"`
+	Start          int64     `json:"start" description:"inclusive"`
+	End            int64     `json:"end" description:"exclusive"`
+	StartInclusive time.Time `json:"-"`
+	EndExclusive   time.Time `json:"-"`
+}
+
+func (p *EndpointMetricRecv) Validate() (err error) {
+	p.StartInclusive, p.EndExclusive, err = timeRangeValidate(p.Start, p.End)
+	return
 }
 
 type IndexTagkvResp struct {
@@ -85,11 +103,20 @@ type TagPair struct {
 }
 
 type CludeRecv struct {
-	Endpoints []string   `json:"endpoints"`
-	Nids      []string   `json:"nids"`
-	Metric    string     `json:"metric"`
-	Include   []*TagPair `json:"include"`
-	Exclude   []*TagPair `json:"exclude"`
+	Endpoints      []string   `json:"endpoints"`
+	Nids           []string   `json:"nids"`
+	Metric         string     `json:"metric"`
+	Include        []*TagPair `json:"include"`
+	Exclude        []*TagPair `json:"exclude"`
+	Start          int64      `json:"start" description:"inclusive"`
+	End            int64      `json:"end" description:"exclusive"`
+	StartInclusive time.Time  `json:"-"`
+	EndExclusive   time.Time  `json:"-"`
+}
+
+func (p *CludeRecv) Validate() (err error) {
+	p.StartInclusive, p.EndExclusive, err = timeRangeValidate(p.Start, p.End)
+	return
 }
 
 type XcludeResp struct {
@@ -112,24 +139,9 @@ type IndexByFullTagsRecv struct {
 	EndExclusive   time.Time `json:"-"`
 }
 
-func (p *IndexByFullTagsRecv) Validate() error {
-	if p.End == 0 {
-		p.EndExclusive = time.Now()
-	} else {
-		p.EndExclusive = time.Unix(p.End, 0)
-	}
-
-	if p.Start == 0 {
-		p.StartInclusive = p.EndExclusive.Add(-time.Hour * 25)
-	} else {
-		p.StartInclusive = time.Unix(p.Start, 0)
-	}
-
-	if p.StartInclusive.After(p.EndExclusive) {
-		return fmt.Errorf("start is after end")
-	}
-
-	return nil
+func (p *IndexByFullTagsRecv) Validate() (err error) {
+	p.StartInclusive, p.EndExclusive, err = timeRangeValidate(p.Start, p.End)
+	return
 }
 
 type IndexByFullTagsResp struct {
@@ -140,4 +152,24 @@ type IndexByFullTagsResp struct {
 	Step      int      `json:"step"`
 	DsType    string   `json:"dstype"`
 	Count     int      `json:"count"`
+}
+
+func timeRangeValidate(start, end int64) (startInclusive, endExclusive time.Time, err error) {
+	if end == 0 {
+		endExclusive = time.Now()
+	} else {
+		endExclusive = time.Unix(end, 0)
+	}
+
+	if start == 0 {
+		startInclusive = endExclusive.Add(-time.Hour * 25)
+	} else {
+		startInclusive = time.Unix(start, 0)
+	}
+
+	if startInclusive.After(endExclusive) {
+		err = fmt.Errorf("start is after end")
+	}
+
+	return
 }

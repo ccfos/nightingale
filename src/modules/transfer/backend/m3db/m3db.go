@@ -58,10 +58,6 @@ type Client struct {
 	namespaceID ident.ID
 }
 
-func indexStartTime() time.Time {
-	return time.Now().Add(-time.Hour * 25)
-}
-
 func NewClient(cfg M3dbSection) (*Client, error) {
 	client, err := cfg.Config.NewClient(client.ConfigurationParameters{})
 	if err != nil {
@@ -186,6 +182,11 @@ func (p *Client) QueryDataForUI(input dataobj.QueryDataForUI) []*dataobj.TsdbQue
 // QueryMetrics: || (&& (endpoint)) (counter)...
 // return all the values that tag == __name__
 func (p *Client) QueryMetrics(input dataobj.EndpointsRecv) *dataobj.MetricResp {
+	if err := input.Validate(); err != nil {
+		logger.Errorf("input validate err %s", err)
+		return nil
+	}
+
 	session, err := p.session()
 	if err != nil {
 		logger.Errorf("unable to get m3db session: %s", err)
@@ -205,6 +206,11 @@ func (p *Client) QueryMetrics(input dataobj.EndpointsRecv) *dataobj.MetricResp {
 // QueryTagPairs: && (|| endpoints...) (|| metrics...)
 // return all the tags that matches
 func (p *Client) QueryTagPairs(input dataobj.EndpointMetricRecv) []dataobj.IndexTagkvResp {
+	if err := input.Validate(); err != nil {
+		logger.Errorf("input validate err %s", err)
+		return nil
+	}
+
 	session, err := p.session()
 	if err != nil {
 		logger.Errorf("unable to get m3db session: %s", err)
@@ -232,6 +238,10 @@ func (p *Client) QueryIndexByClude(inputs []dataobj.CludeRecv) (ret []dataobj.Xc
 	}
 
 	for _, input := range inputs {
+		if err := input.Validate(); err != nil {
+			logger.Errorf("input validate err %s", err)
+			continue
+		}
 		ret = append(ret, p.queryIndexByClude(session, input)...)
 	}
 
