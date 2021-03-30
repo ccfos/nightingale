@@ -145,8 +145,8 @@ func (cfg M3dbSection) queryMetricsOptions(input dataobj.EndpointsRecv) (index.Q
 		)},
 		index.AggregationOptions{
 			QueryOptions: index.QueryOptions{
-				StartInclusive: indexStartTime(),
-				EndExclusive:   time.Now(),
+				StartInclusive: input.StartInclusive,
+				EndExclusive:   input.EndExclusive,
 				SeriesLimit:    cfg.SeriesLimit,
 				DocsLimit:      cfg.DocsLimit,
 			},
@@ -164,8 +164,8 @@ func (cfg M3dbSection) queryTagPairsOptions(input dataobj.EndpointMetricRecv) (i
 	return index.Query{idx.NewConjunctionQuery(q1, q2)},
 		index.AggregationOptions{
 			QueryOptions: index.QueryOptions{
-				StartInclusive: indexStartTime(),
-				EndExclusive:   time.Now(),
+				StartInclusive: input.StartInclusive,
+				EndExclusive:   input.EndExclusive,
 				SeriesLimit:    cfg.SeriesLimit,
 				DocsLimit:      cfg.DocsLimit,
 			},
@@ -201,8 +201,8 @@ func (cfg M3dbSection) queryIndexByCludeOptions(input dataobj.CludeRecv) (index.
 	}
 
 	return query, index.QueryOptions{
-		StartInclusive: indexStartTime(),
-		EndExclusive:   time.Now(),
+		StartInclusive: input.StartInclusive,
+		EndExclusive:   input.EndExclusive,
 		SeriesLimit:    cfg.SeriesLimit,
 		DocsLimit:      cfg.DocsLimit,
 	}
