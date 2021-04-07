@@ -108,6 +108,7 @@ func Config(r *gin.Engine) {
 		userLogin.POST("/self/token", selfTokenPost)
 		userLogin.PUT("/self/token", selfTokenPut)
 		userLogin.GET("/self/perms/global", permGlobalOps)
+		userLogin.GET("/self/perms/local/node/:id", permLocalOps)
 
 		notLogin.PUT("/self/password", selfPasswordPut)
 

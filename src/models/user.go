@@ -703,3 +703,32 @@ func UsersGet(where string, args ...interface{}) ([]User, error) {
 
 	return objs, nil
 }
+
+func (u *User) PermByNode(node *Node) ([]string, error) {
+	// 我是超管，自然有权限
+	if u.IsRoot == 1 {
+		return config.LocalOpsList, nil
+	}
+
+	// 我是path上游的某个admin，自然有权限
+	nodeIds, err := NodeIdsByPaths(Paths(node.Path))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(nodeIds) == 0 {
+		return nil, nil
+	}
+
+	if yes, err := NodesAdminExists(nodeIds, u.Id); err != nil {
+		return nil, err
+	} else if yes {
+		return config.LocalOpsList, nil
+	}
+
+	if roleIds, err := RoleIdsBindingUsername(u.Username, nodeIds); err != nil {
+		return nil, err
+	} else {
+		return OperationsOfRoles(roleIds)
+	}
+}

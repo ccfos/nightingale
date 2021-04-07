@@ -119,6 +119,14 @@ func permGlobalOps(c *gin.Context) {
 	renderData(c, operations, err)
 }
 
+func permLocalOps(c *gin.Context) {
+	user := loginUser(c)
+	node := Node(urlParamInt64(c, "id"))
+
+	operations, err := user.PermByNode(node)
+	renderData(c, operations, err)
+}
+
 func v1PermGlobalOps(c *gin.Context) {
 	user, err := models.UserGet("username=?", queryStr(c, "username"))
 	dangerous(err)

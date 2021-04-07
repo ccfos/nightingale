@@ -18,8 +18,9 @@ type opsStruct []struct {
 }
 
 var (
-	GlobalOps opsStruct
-	LocalOps  opsStruct
+	GlobalOps    opsStruct
+	LocalOps     opsStruct
+	LocalOpsList []string
 )
 
 func parseOps() error {
@@ -56,6 +57,19 @@ func parseOps() error {
 	}
 
 	LocalOps = lc
+
+	m := map[string]struct{}{}
+	for _, v := range lc {
+		for _, v2 := range v.Groups {
+			for _, v3 := range v2.Ops {
+				m[v3.En] = struct{}{}
+			}
+		}
+	}
+	LocalOpsList = []string{}
+	for k, _ := range m {
+		LocalOpsList = append(LocalOpsList, k)
+	}
 
 	return nil
 }
