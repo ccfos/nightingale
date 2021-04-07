@@ -55,7 +55,6 @@ func (kafka *KafkaPushEndpoint) convert2KafkaItem(d *dataobj.MetricValue) KafkaD
 	m["metric"] = d.Metric
 	m["value"] = d.Value
 	m["timestamp"] = d.Timestamp
-	m["value"] = d.Value
 	m["step"] = d.Step
 	m["endpoint"] = d.Endpoint
 	m["tags"] = d.Tags
