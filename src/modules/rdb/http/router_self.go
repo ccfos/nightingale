@@ -58,7 +58,13 @@ func selfPasswordPut(c *gin.Context) {
 			return _e("Incorrect old password")
 		}
 
-		return auth.ChangePassword(user, f.NewPass)
+		if err := auth.ChangePassword(user, f.NewPass); err != nil {
+			return err
+		}
+
+		passwordChangedNotify(user)
+
+		return nil
 	}()
 
 	renderMessage(c, err)

@@ -200,6 +200,7 @@ func userPasswordPut(c *gin.Context) {
 	err := auth.ChangePassword(user, f.Password)
 
 	if err == nil {
+		passwordChangedNotify(user)
 		go models.OperationLogNew(root.Username, "user", user.Id, fmt.Sprintf("UserChangePassword %s", user.Username))
 	}
 	renderMessage(c, err)
