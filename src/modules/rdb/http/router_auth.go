@@ -28,9 +28,10 @@ import (
 )
 
 var (
-	loginCodeSmsTpl     *template.Template
-	loginCodeEmailTpl   *template.Template
-	errUnsupportCaptcha = errors.New("unsupported captcha")
+	loginCodeSmsTpl         *template.Template
+	loginCodeEmailTpl       *template.Template
+	passwordChangedEmailTpl *template.Template
+	errUnsupportCaptcha     = errors.New("unsupported captcha")
 
 	// https://captcha.mojotv.cn
 	captchaDirver = base64Captcha.DriverString{
@@ -74,6 +75,16 @@ func init() {
 	if err != nil {
 		log.Fatalf("open %s err: %s", filename, err)
 	}
+
+	filename, err = getConfigFile("password-changed-email", "tpl")
+	if err != nil {
+		log.Fatal(err)
+	}
+	passwordChangedEmailTpl, err = template.ParseFiles(filename)
+	if err != nil {
+		log.Fatalf("open %s err: %s", filename, err)
+	}
+
 }
 
 // login for UI
@@ -525,6 +536,10 @@ func rstPassword(c *gin.Context) {
 		if err := auth.ChangePassword(user, in.Password); err != nil {
 			return err
 		}
+
+		if err := passwordChangedNotify(user); err != nil {
+			logger.Warningf("password changed notify error %s", err)
+		}
 		lc.Del()
 		return nil
 	}()
@@ -755,4 +770,13 @@ func sessionDestory(c *gin.Context) (sid string, err error) {
 	session.Destroy(c.Writer, c.Request)
 
 	return
+}
+
+func passwordChangedNotify(user *models.User) error {
+	var buf bytes.Buffer
+	if err := passwordChangedEmailTpl.Execute(&buf, nil); err != nil {
+		return err
+	}
+
+	return redisc.Write(&dataobj.Message{Tos: []string{user.Email}, Subject: _s("[Notify] Password Changed"), Content: buf.String()}, config.MAIL_QUEUE_NAME)
 }
