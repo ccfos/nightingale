@@ -123,11 +123,12 @@ var (
 			"Invalid user status %d":     "异常的用户状态 %d",
 			"Password expired, please change the password in time": "密码过期，请及时修改密码",
 			"First Login, please change the password in time":      "初始登陆，请及时修改密码",
-			"no privilege":       "privilege 未设置",
-			"node is nil":        "node 未设置",
-			"operation is blank": "operation  未设置",
-			"Reset Password":     "重置密码",
-			"Login Code":         "登录验证码",
+			"no privilege":              "privilege 未设置",
+			"node is nil":               "node 未设置",
+			"operation is blank":        "operation  未设置",
+			"Reset Password":            "重置密码",
+			"Login Code":                "登录验证码",
+			"[Notify] Password Changed": "[通知] 账号密码修改",
 		},
 	}
 )

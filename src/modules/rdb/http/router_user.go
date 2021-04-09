@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 
 	"github.com/didi/nightingale/src/models"
@@ -200,6 +201,9 @@ func userPasswordPut(c *gin.Context) {
 	err := auth.ChangePassword(user, f.Password)
 
 	if err == nil {
+		if err := passwordChangedNotify(user); err != nil {
+			logger.Warningf("password changed notify error %s", err)
+		}
 		go models.OperationLogNew(root.Username, "user", user.Id, fmt.Sprintf("UserChangePassword %s", user.Username))
 	}
 	renderMessage(c, err)
