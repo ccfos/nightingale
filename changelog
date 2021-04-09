@@ -117,6 +117,11 @@
   - 将etc/screen/n9e_modules放到生产环境的etc/screen目录下
   - 替换n9e-rdb n9e-prober n9e-monapi n9e-transfer n9e-agent二进制
 
-
-
-
+3.8.0
+升级内容：
+  - monapi优化告警策略中用户信息补全逻辑
+  - rdb新增接口,查询项目下用户拥有的资源权限点
+  - transfer查询索引接口支持指定时间范围
+  - prober去掉组件采集默认的白名单设置
+升级方法：
+  - 替换n9e-rdb n9e-prober n9e-monapi n9e-transfer二进制
