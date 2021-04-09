@@ -537,7 +537,9 @@ func rstPassword(c *gin.Context) {
 			return err
 		}
 
-		passwordChangedNotify(user)
+		if err := passwordChangedNotify(user); err != nil {
+			logger.Warningf("password changed notify error %s", err)
+		}
 		lc.Del()
 		return nil
 	}()

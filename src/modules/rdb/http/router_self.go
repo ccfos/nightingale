@@ -5,6 +5,7 @@ import (
 	"github.com/didi/nightingale/src/modules/rdb/auth"
 	"github.com/didi/nightingale/src/modules/rdb/config"
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/logger"
 )
 
 func selfProfileGet(c *gin.Context) {
@@ -62,7 +63,9 @@ func selfPasswordPut(c *gin.Context) {
 			return err
 		}
 
-		passwordChangedNotify(user)
+		if err := passwordChangedNotify(user); err != nil {
+			logger.Warningf("password changed notify error %s", err)
+		}
 
 		return nil
 	}()
