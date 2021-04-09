@@ -90,7 +90,7 @@ func (self StatsdReporter) handleActions(actions []action) {
 		switch action.actionType {
 		case "report":
 			previousState := StatsdState{}.RollState()
-			//previousState.Summarize() // 指标进一步聚合,得到类似<all>的tag值
+			previousState.Summarize() // 指标进一步聚合,得到类似<all>的tag值
 
 			// 第一个统计周期不准确, 扔掉
 			if isFirstPeriod {

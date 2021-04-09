@@ -341,6 +341,12 @@ func UserTotal(ids []int64, where string, args ...interface{}) (int64, error) {
 	return session.Count(new(User))
 }
 
+func UserGetsByIds(ids []int64) ([]User, error) {
+	var users []User
+	err := DB["rdb"].In("id", ids).Find(&users)
+	return users, err
+}
+
 func UserGets(ids []int64, limit, offset int, where string, args ...interface{}) ([]User, error) {
 	session := DB["rdb"].Limit(limit, offset).OrderBy("username")
 	if len(ids) > 0 {

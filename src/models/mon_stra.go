@@ -506,7 +506,7 @@ func (s *Stra) Decode() error {
 		return err
 	}
 
-	s.NotifyUserDetail, err = UserGets(s.NotifyUser, 10000, 0, "")
+	s.NotifyUserDetail, err = UserGetsByIds(s.NotifyUser)
 	if err != nil {
 		logger.Errorf("decode strategy(%d) on NotifyUserDetail fail: %v", s.Id, err)
 		return err
