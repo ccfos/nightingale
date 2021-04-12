@@ -125,3 +125,4 @@
   - prober去掉组件采集默认的白名单设置
 升级方法：
   - 替换n9e-rdb n9e-prober n9e-monapi n9e-transfer二进制
+  - 将etc/password-changed-email.tpl放到生产环境的etc目录下
