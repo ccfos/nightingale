@@ -1,51 +1,12 @@
 ---
-rdb:
+server:
   http: 0.0.0.0:8000
-  addresses:
-    - 127.0.0.1
-
-ams:
-  http: 0.0.0.0:8002
-  addresses:
-    - 127.0.0.1
-
-job:
-  http: 0.0.0.0:8004
-  rpc: 0.0.0.0:8005
-  addresses:
-    - 127.0.0.1
-
-monapi:
-  http: 0.0.0.0:8006
-  addresses:
-    - 127.0.0.1
-
-transfer:
-  http: 0.0.0.0:8008
-  rpc: 0.0.0.0:8009
-  addresses:
-    - 127.0.0.1
-
-tsdb:
-  http: 0.0.0.0:8010
-  rpc: 0.0.0.0:8011
-
-index:
-  http: 0.0.0.0:8012
-  rpc: 0.0.0.0:8013
-  addresses:
-    - 127.0.0.1
-
-judge:
-  http: 0.0.0.0:8014
-  rpc: 0.0.0.0:8015
+  rpc: 0.0.0.0:8001
   addresses:
     - 127.0.0.1
 
 prober:
   http: 0.0.0.0:8023
-  addresses:
-    - 127.0.0.1
 
-agent:
+agentd:
   http: 0.0.0.0:2080

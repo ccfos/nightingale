@@ -9,9 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/didi/nightingale/src/models"
-	"github.com/didi/nightingale/src/modules/monapi/collector"
-	"github.com/didi/nightingale/src/modules/prober/config"
+	"github.com/didi/nightingale/v4/src/models"
+	"github.com/didi/nightingale/v4/src/modules/prober/config"
+	"github.com/didi/nightingale/v4/src/modules/server/collector"
+
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs/prometheus"
 )

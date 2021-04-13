@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/didi/nightingale/src/common/dataobj"
+	"github.com/didi/nightingale/v4/src/common/dataobj"
 )
 
 func NewHistory() *history {

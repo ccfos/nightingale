@@ -2,6 +2,7 @@ package address
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"strconv"
@@ -118,6 +119,7 @@ func parseConf() {
 		os.Exit(1)
 	}
 
+	log.Println(c)
 	mods = c
 }
 

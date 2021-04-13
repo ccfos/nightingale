@@ -9,6 +9,11 @@ const (
 	COMMON_MODULE = "common"
 )
 
+type IPAndSnmpRpcResp struct {
+	Data []*IPAndSnmp
+	Msg  string
+}
+
 type IPAndSnmp struct {
 	IP          string    `json:"ip"`
 	Module      string    `json:"module"`

@@ -6,9 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/didi/nightingale/src/common/dataobj"
-	"github.com/didi/nightingale/src/modules/monapi/collector"
-	"github.com/didi/nightingale/src/modules/prober/expr"
+	"github.com/didi/nightingale/v4/src/common/dataobj"
+	"github.com/didi/nightingale/v4/src/modules/prober/expr"
+	"github.com/didi/nightingale/v4/src/modules/server/collector"
+
 	"github.com/influxdata/telegraf"
 	"github.com/toolkits/pkg/logger"
 	"gopkg.in/yaml.v2"

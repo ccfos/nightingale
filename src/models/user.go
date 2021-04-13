@@ -7,15 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/toolkits/pkg/slice"
-
 	"github.com/toolkits/pkg/cache"
 	"github.com/toolkits/pkg/errors"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 	"gopkg.in/ldap.v3"
-
-	"github.com/didi/nightingale/src/modules/rdb/config"
 )
 
 const (
@@ -111,7 +108,7 @@ func (u *User) Validate() error {
 }
 
 func (u *User) CopyLdapAttr(sr *ldap.SearchResult) {
-	attrs := config.Config.LDAP.Attributes
+	attrs := LDAPConfig.Attributes
 	if attrs.Dispname != "" {
 		u.Dispname = sr.Entries[0].GetAttributeValue(attrs.Dispname)
 	}
@@ -173,7 +170,7 @@ func LdapLogin(username, pass string) (*User, error) {
 	user.CopyLdapAttr(sr)
 
 	if has {
-		if config.Config.LDAP.CoverAttributes {
+		if LDAPConfig.CoverAttributes {
 			_, err := DB["rdb"].Where("id=?", user.Id).Update(user)
 			return &user, err
 		} else {
@@ -710,10 +707,10 @@ func UsersGet(where string, args ...interface{}) ([]User, error) {
 	return objs, nil
 }
 
-func (u *User) PermByNode(node *Node) ([]string, error) {
+func (u *User) PermByNode(node *Node, localOpsList []string) ([]string, error) {
 	// 我是超管，自然有权限
 	if u.IsRoot == 1 {
-		return config.LocalOpsList, nil
+		return localOpsList, nil
 	}
 
 	// 我是path上游的某个admin，自然有权限
@@ -729,7 +726,7 @@ func (u *User) PermByNode(node *Node) ([]string, error) {
 	if yes, err := NodesAdminExists(nodeIds, u.Id); err != nil {
 		return nil, err
 	} else if yes {
-		return config.LocalOpsList, nil
+		return localOpsList, nil
 	}
 
 	if roleIds, err := RoleIdsBindingUsername(u.Username, nodeIds); err != nil {

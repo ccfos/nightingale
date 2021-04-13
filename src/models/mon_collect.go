@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/didi/nightingale/v4/src/common/dataobj"
 	"xorm.io/xorm"
 )
 
@@ -189,6 +190,11 @@ type LogCollect struct {
 	TagRegs                 map[string]*regexp.Regexp `xorm:"-" json:"-"`
 	ParseSucc               bool                      `xorm:"-" json:"-"`
 	WhetherAttachOneLogLine int                       `json:"whether_attach_one_log_line" xorm:"'whether_attach_one_log_line'"`
+}
+
+type ApiCollectRpcResp struct {
+	Data []*ApiCollect
+	Msg  string
 }
 
 type ApiCollect struct {
@@ -529,6 +535,109 @@ func (a *ApiCollect) Update() error {
 	}
 
 	return err
+}
+
+func GetSnmpCollects(nid int64) ([]*SnmpCollect, error) {
+	collects := []*SnmpCollect{}
+	if nid == 0 {
+		err := DB["mon"].Find(&collects)
+		return collects, err
+	}
+
+	err := DB["mon"].Where("nid = ?", nid).Find(&collects)
+	return collects, err
+}
+
+func (s *SnmpCollect) Encode() error {
+	if s.OidType < 1 || s.OidType > 3 {
+		return fmt.Errorf("oid type not support")
+	}
+
+	if s.OidType == 1 {
+		//补全oid
+		s.Module = dataobj.COMMON_MODULE
+		mib, err := MibGet("module=? and metric=?", s.Module, s.Metric)
+		if err != nil {
+			return fmt.Errorf("get mib err:%v", err)
+		}
+
+		s.Oid = mib.Oid
+	} else {
+		if s.Module == "" {
+			return fmt.Errorf("module is null")
+		}
+
+		if s.Oid == "" {
+			return fmt.Errorf("oid is null")
+		}
+
+		if s.MetricType == "" {
+			return fmt.Errorf("type is null")
+		}
+	}
+
+	if s.Metric == "" {
+		return fmt.Errorf("metric is null")
+	}
+
+	indexes, err := json.Marshal(s.Indexes)
+	if err != nil {
+		return fmt.Errorf("encode indexes err:%v", err)
+	}
+
+	s.IndexesStr = string(indexes)
+	return nil
+}
+
+func (s *SnmpCollect) Decode() error {
+	err := json.Unmarshal([]byte(s.IndexesStr), &s.Indexes)
+	if err != nil {
+		return fmt.Errorf("decode indexes err:%v", err)
+	}
+
+	return err
+}
+
+func (s *SnmpCollect) Update() error {
+	session := DB["mon"].NewSession()
+	defer session.Close()
+
+	err := session.Begin()
+	if err != nil {
+		return err
+	}
+
+	if _, err = session.Id(s.Id).AllCols().Update(s); err != nil {
+		session.Rollback()
+		return err
+	}
+
+	b, err := json.Marshal(s)
+	if err != nil {
+		session.Rollback()
+		return err
+	}
+
+	if err := saveHistory(s.Id, "snmp", "update", s.Creator, string(b), session); err != nil {
+		session.Rollback()
+		return err
+	}
+
+	if err = session.Commit(); err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (s *SnmpCollect) GetByOidAndModule() (*SnmpCollect, error) {
+	collect := new(SnmpCollect)
+	has, err := DB["mon"].Where("oid = ? and nid = ? and module = ? and metric = ?", s.Oid, s.Nid, s.Module, s.Metric).Get(collect)
+	if !has {
+		return nil, err
+	}
+	collect.Decode()
+	return collect, err
 }
 
 func CreateCollect(collectType, creator string, collect interface{}, dryRun bool) (err error) {

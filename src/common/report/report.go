@@ -2,15 +2,13 @@ package report
 
 import (
 	"fmt"
-	"math/rand"
 	"time"
 
-	"github.com/didi/nightingale/src/common/address"
-	"github.com/didi/nightingale/src/common/identity"
-	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/v4/src/common/client"
+	"github.com/didi/nightingale/v4/src/common/identity"
+	"github.com/didi/nightingale/v4/src/models"
 
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/net/httplib"
 )
 
 type ReportSection struct {
@@ -26,85 +24,49 @@ type ReportSection struct {
 
 var Config ReportSection
 
-func Init(cfg ReportSection, mod string) {
+func Init(cfg ReportSection) {
 	Config = cfg
-
-	addrs := address.GetHTTPAddresses(mod)
-
-	t1 := time.NewTicker(time.Duration(Config.Interval) * time.Millisecond)
-	report(addrs)
 	for {
-		<-t1.C
-		report(addrs)
+		report()
+		time.Sleep(time.Duration(Config.Interval) * time.Millisecond)
 	}
 }
 
-type reportRes struct {
-	Err string `json:"err"`
-	Dat string `json:"dat"`
-}
+func report() {
+	ident, _ := identity.GetIdent()
+	instance := models.Instance{
+		Module:   Config.Mod,
+		Identity: ident,
+		RPCPort:  Config.RPCPort,
+		HTTPPort: Config.HTTPPort,
+		Remark:   Config.Remark,
+		Region:   Config.Region,
+	}
 
-func report(addrs []string) {
-	perm := rand.Perm(len(addrs))
-	for i := range perm {
-		url := fmt.Sprintf("http://%s/api/hbs/heartbeat", addrs[perm[i]])
-
-		ident, _ := identity.GetIdent()
-		m := map[string]string{
-			"module":    Config.Mod,
-			"identity":  ident,
-			"rpc_port":  Config.RPCPort,
-			"http_port": Config.HTTPPort,
-			"remark":    Config.Remark,
-			"region":    Config.Region,
-		}
-
-		var body reportRes
-		err := httplib.Post(url).JSONBodyQuiet(m).SetTimeout(3 * time.Second).ToJSON(&body)
-		if err != nil {
-			logger.Errorf("curl %s fail: %v", url, err)
-			continue
-		}
-
-		if body.Err != "" {
-			logger.Error(body.Err)
-			continue
-		}
-
+	var resp string
+	err := client.GetCli("server").Call("Server.HeartBeat", instance, &resp)
+	if err != nil {
+		client.CloseCli()
 		return
 	}
+
+	if resp != "" {
+		logger.Errorf("report instance:%+v err:%s", instance, resp)
+	}
 }
 
-type instanceRes struct {
-	Err string             `json:"err"`
-	Dat []*models.Instance `json:"dat"`
-}
+func GetAlive(wantedMod string) ([]*models.Instance, error) {
 
-func GetAlive(wantedMod, serverMod string) ([]*models.Instance, error) {
-	addrs := address.GetHTTPAddresses(serverMod)
-	perm := rand.Perm(len(addrs))
-
-	timeout := 3000
-	if Config.Timeout != 0 {
-		timeout = Config.Timeout
+	var resp *models.InstancesResp
+	err := client.GetCli("server").Call("Server.InstanceGets", wantedMod, &resp)
+	if err != nil {
+		client.CloseCli()
+		return []*models.Instance{}, fmt.Errorf("get %s instances err:%v", wantedMod, err)
 	}
 
-	var body instanceRes
-	var err error
-	for i := range perm {
-		url := fmt.Sprintf("http://%s/api/hbs/instances?mod=%s&alive=1", addrs[perm[i]], wantedMod)
-		err = httplib.Get(url).SetTimeout(time.Duration(timeout) * time.Millisecond).ToJSON(&body)
-
-		if err != nil {
-			logger.Warningf("curl %s fail: %v", url, err)
-			continue
-		}
-
-		if body.Err != "" {
-			err = fmt.Errorf("curl %s fail: %v", url, body.Err)
-			logger.Warning(err)
-			continue
-		}
+	if resp.Msg != "" {
+		return []*models.Instance{}, fmt.Errorf("get %s instances err:%s", wantedMod, resp.Msg)
 	}
-	return body.Dat, err
+
+	return resp.Data, err
 }

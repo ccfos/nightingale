@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 
-	"github.com/didi/nightingale/src/toolkits/slice"
+	"github.com/didi/nightingale/v4/src/common/slice"
 )
 
 type NodeResource struct {

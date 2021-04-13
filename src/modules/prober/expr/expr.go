@@ -7,7 +7,8 @@ import (
 	"go/token"
 	"strconv"
 
-	"github.com/didi/nightingale/src/common/dataobj"
+	"github.com/didi/nightingale/v4/src/common/dataobj"
+
 	"github.com/toolkits/pkg/logger"
 )
 

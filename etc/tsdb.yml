@@ -1,8 +1,0 @@
-rrd:
-  storage: data/8011
-cache:
-  keepMinutes: 120
-logger:
-  dir: logs/tsdb
-  level: WARNING
-  keepHours: 2
