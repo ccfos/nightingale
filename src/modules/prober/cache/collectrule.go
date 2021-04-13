@@ -3,18 +3,17 @@ package cache
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"sync"
 	"time"
 
-	"github.com/didi/nightingale/src/common/address"
-	"github.com/didi/nightingale/src/common/identity"
-	"github.com/didi/nightingale/src/common/report"
-	"github.com/didi/nightingale/src/models"
-	"github.com/didi/nightingale/src/modules/prober/config"
-	"github.com/didi/nightingale/src/toolkits/stats"
+	"github.com/didi/nightingale/v4/src/common/client"
+	"github.com/didi/nightingale/v4/src/common/identity"
+	"github.com/didi/nightingale/v4/src/common/report"
+	"github.com/didi/nightingale/v4/src/common/stats"
+	"github.com/didi/nightingale/v4/src/models"
+	"github.com/didi/nightingale/v4/src/modules/prober/config"
+
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/net/httplib"
 )
 
 type CollectRuleCache struct {
@@ -108,37 +107,18 @@ type collectRulesResp struct {
 }
 
 func (p *CollectRuleCache) syncCollectRule() error {
-	addrs := address.GetHTTPAddresses(p.Mod)
-	if len(addrs) == 0 {
-		return fmt.Errorf("empty config addr")
+
+	ident, err := identity.GetIdent()
+	if err != nil {
+		return fmt.Errorf("getIdent err %s", err)
 	}
 
-	var resp collectRulesResp
-	perm := rand.Perm(len(addrs))
-	for i := range perm {
-		ident, err := identity.GetIdent()
-		if err != nil {
-			return fmt.Errorf("getIdent err %s", err)
-		}
-
-		url := fmt.Sprintf("http://%s/v1/mon/collect-rules/endpoints/%s:%s/remote",
-			addrs[perm[i]], ident, report.Config.HTTPPort)
-		if err = httplib.Get(url).SetTimeout(p.timeout).
-			Header("X-Srv-Token", p.token).ToJSON(&resp); err != nil {
-			logger.Warningf("get %s collect rule from remote failed, error:%v", url, err)
-			stats.Counter.Set("collectrule.get.err", 1)
-			continue
-		}
-
-		if resp.Err != "" {
-			logger.Warningf("get collect rule from remote failed, error:%v", resp.Err)
-			stats.Counter.Set("collectrule.get.err", 1)
-			continue
-		}
-
-		if len(resp.Data) > 0 {
-			break
-		}
+	endpoint := ident + ":" + report.Config.HTTPPort
+	var resp models.CollectRuleRpcResp
+	err = client.GetCli("server").Call("Server.GetProberCollectBy", endpoint, &resp)
+	if err != nil {
+		client.CloseCli()
+		return fmt.Errorf("Server.GetProberCollectBy err:%v", err)
 	}
 
 	collectRuleCount := len(resp.Data)

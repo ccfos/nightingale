@@ -3,7 +3,7 @@ package dataobj
 import (
 	"strconv"
 
-	"github.com/didi/nightingale/src/toolkits/str"
+	"github.com/didi/nightingale/v4/src/common/str"
 
 	gstr "github.com/toolkits/pkg/str"
 )

@@ -1,0 +1,172 @@
+logger:
+  dir: logs/server
+  level: INFO
+  # rotate by time
+  keepHours: 24
+  ## rotate by size
+  #rotatenum: 3
+  #rotatesize: 256 # unit: MB
+
+http:
+  mode: release
+  showLog: true
+  session:
+    cookieName: ecmc-sid
+    cookieDomain: ""
+    httpOnly: true
+    gcInterval: 60
+    cookieLifetime: 86400 # unit: second, 0: cookie life same to browser
+
+tokens:
+  - rdb-builtin-token
+
+redis:
+  # as queue 
+  local:
+    enable: true
+    addr: 127.0.0.1:6379
+    pass: ""
+    idle: 5
+    timeout:
+      conn: 500
+      read: 3000
+      write: 3000
+
+
+rdb:
+  # for ldap authorization
+  ldap:
+    host: "ldap.example.org"
+    port: 389
+    baseDn: "dc=example,dc=org"
+    # AD: manange@example.org
+    bindUser: "cn=manager,dc=example,dc=org"
+    bindPass: "*******"
+    # openldap: (&(uid=%s))
+    # AD: (&(sAMAccountName=%s))
+    authFilter: "(&(uid=%s))"
+    attributes:
+      dispname: "cn"
+      email: "mail"
+      phone: "mobile"
+      im: ""
+    coverAttributes: false
+    autoRegist: true
+    tls: false
+    startTLS: false
+  ## for enterprise edition
+  #sso:
+  #  enable: false
+  #  ssoAddr: "http://{sso-host}"
+  #  redirectURL: "http://{rdb-host}/auth-callback"
+  #  clientId: ""
+  #  clientSecret: ""
+  #  apiKey: ""
+  #  attributes:
+  #    dispname: "display_name"
+  #    email: "email"
+  #    phone: "phone"
+  #    im: ""
+  #  coverAttributes: false
+  #  stateExpiresIn: 300    
+  #auth:
+  #  captcha: false
+  #  extraMode: 
+  #    enable: false        # enable whiteList, login retry lock, userControl, ...
+  #    whiteList: false
+  #    frozenDays: 90      # frozen time (day)
+  #    writenOffDays: 365  # writenOff time (day)
+
+
+#i18n:
+#  lang: zh
+
+job:
+  enable: true
+  ## database | remote
+  #outputComeFrom: database
+  #remoteAgtdPort: 2080
+
+transfer:
+  enable: true
+  backend:
+    datasource: "m3db"
+    m3db:
+      enabled: true
+      maxSeriesPoints: 720 # default 720
+      name: "m3db"
+      namespace: "default"
+      seriesLimit: 0
+      docsLimit: 0
+      daysLimit: 7                               # max query time
+      # https://m3db.github.io/m3/m3db/architecture/consistencylevels/
+      writeConsistencyLevel: "majority"          # one|majority|all
+      readConsistencyLevel: "unstrict_majority"  # one|unstrict_majority|majority|all
+      config:
+        service:
+          # KV environment, zone, and service from which to write/read KV data (placement
+          # and configuration). Leave these as the default values unless you know what
+          # you're doing.
+          env: default_env
+          zone: embedded
+          service: m3db
+          etcdClusters:
+            - zone: embedded
+              endpoints:
+                - 127.0.0.1:2379
+              #tls:
+              #  caCrtPath: /etc/etcd/certs/ca.pem
+              #  crtPath: /etc/etcd/certs/etcd-client.pem
+              #  keyPath: /etc/etcd/certs/etcd-client-key.pem
+    #tsdb:
+    #  enabled: false
+    #  name: "tsdb"
+    #  cluster:
+    #    tsdb01: 127.0.0.1:8011
+    #influxdb:
+    #  enabled: false
+    #  username: "influx"
+    #  password: "admin123"
+    #  precision: "s"
+    #  database: "n9e"
+    #  address: "http://127.0.0.1:8086"
+    #opentsdb:
+    #  enabled: false
+    #  address: "127.0.0.1:4242"
+    #kafka:
+    #  enabled: false
+    #  brokersPeers: "192.168.1.1:9092,192.168.1.2:9092"
+    #  topic: "n9e"
+monapi:
+  indexMod: server
+  alarmEnabled: true
+  region:
+    - default
+  
+  # clean history event
+  cleaner:
+    # retention days
+    days: 100
+    # number of events deleted per time
+    batch: 100
+  notify:
+    p1: ["voice", "sms", "mail", "im"]
+    p2: ["sms", "mail", "im"]
+    p3: ["mail", "im"]  
+
+  # addresses accessible using browser
+  link:
+    stra: http://n9e.com/mon/strategy/%v
+    event: http://n9e.com/mon/history/his/%v
+    claim: http://n9e.com/mon/history/cur/%v
+
+judge:
+  query:
+    connTimeout: 1000
+    callTimeout: 2000
+    maxConn:          2000
+    maxIdle:          100
+    connTimeout:      1000
+    callTimeout:      2000
+    indexCallTimeout: 2000
+    indexMod:         server

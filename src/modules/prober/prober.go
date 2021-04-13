@@ -8,19 +8,19 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/didi/nightingale/src/common/identity"
-	"github.com/didi/nightingale/src/common/loggeri"
-	"github.com/didi/nightingale/src/common/report"
-	"github.com/didi/nightingale/src/toolkits/stats"
+	"github.com/didi/nightingale/v4/src/common/identity"
+	"github.com/didi/nightingale/v4/src/common/loggeri"
+	"github.com/didi/nightingale/v4/src/common/report"
+	"github.com/didi/nightingale/v4/src/common/stats"
 
-	"github.com/didi/nightingale/src/modules/prober/cache"
-	"github.com/didi/nightingale/src/modules/prober/config"
-	"github.com/didi/nightingale/src/modules/prober/core"
-	"github.com/didi/nightingale/src/modules/prober/http"
-	"github.com/didi/nightingale/src/modules/prober/manager"
+	"github.com/didi/nightingale/v4/src/modules/prober/cache"
+	"github.com/didi/nightingale/v4/src/modules/prober/config"
+	"github.com/didi/nightingale/v4/src/modules/prober/core"
+	"github.com/didi/nightingale/v4/src/modules/prober/http"
+	"github.com/didi/nightingale/v4/src/modules/prober/manager"
 
-	"github.com/didi/nightingale/src/modules/monapi/collector"
-	_ "github.com/didi/nightingale/src/modules/monapi/plugins/all"
+	"github.com/didi/nightingale/v4/src/modules/server/collector"
+	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/all"
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/gin-gonic/gin"
@@ -66,7 +66,7 @@ func main() {
 	loggeri.Init(cfg.Logger)
 
 	go stats.Init("n9e.prober")
-	go report.Init(cfg.Report, "rdb")
+	go report.Init(cfg.Report)
 
 	cache.Init(ctx)
 
