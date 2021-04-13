@@ -220,6 +220,23 @@ func (p *Authenticator) PostCallback(in *ssoc.CallbackOutput) error {
 	return nil
 }
 
+// LogoutByUsername
+func (p *Authenticator) LogoutByUsername(username string) error {
+	if !p.extraMode {
+		return nil
+	}
+
+	tokens := []models.Token{}
+	models.DB["sso"].SQL("select * from token where user_name=?", username).Find(&tokens)
+
+	for i := 0; i < len(tokens); i++ {
+		logger.Debugf("[logout by username] delete session by token %s %s", username, tokens[i].AccessToken)
+		deleteSessionByToken(&tokens[i])
+	}
+
+	return nil
+}
+
 // ChangePasswordRedirect check user should change password before login
 // return err when need changePassword
 func (p *Authenticator) changePasswordRedirect(in *ssoc.CallbackOutput, cf *models.AuthConfig) (err error) {

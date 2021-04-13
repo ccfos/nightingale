@@ -33,6 +33,10 @@ func PostCallback(in *ssoc.CallbackOutput) error {
 	return defaultAuth.PostCallback(in)
 }
 
+func LogoutByUsername(username string) error {
+	return defaultAuth.LogoutByUsername(username)
+}
+
 func DeleteSession(sid string) error {
 	return defaultAuth.DeleteSession(sid)
 }
