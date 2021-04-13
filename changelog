@@ -126,3 +126,17 @@
 升级方法：
   - 替换n9e-rdb n9e-prober n9e-monapi n9e-transfer二进制
   - 将etc/password-changed-email.tpl放到生产环境的etc目录下
+
+4.0.0
+升级内容：
+  - 服务端模块合并为一个模块
+  - agentd和server的调用全部走rpc
+
+重新安装：见 https://n9e.didiyun.com/docs/install/binary/
+
+升级方法：
+  - 使用新的etc替换掉原来的etc
+  - 使用etc/nginx.conf替换原来的nginx.conf
+  - n9e-prober替换旧的n9e-prober
+  - n9e-agentd替换n9e-agent
+  - n9e-server替换n9e-rdb、n9e-ams、n9e-job、n9e-monapi、n9e-transfer、n9e-judge
