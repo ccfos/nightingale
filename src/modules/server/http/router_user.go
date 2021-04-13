@@ -168,6 +168,9 @@ func userProfilePut(c *gin.Context) {
 		if target.Status == models.USER_S_ACTIVE {
 			target.LoginErrNum = 0
 		}
+		if target.Status == models.USER_S_INACTIVE {
+			auth.LogoutByUsername(target.Username)
+		}
 	}
 
 	if f.Organization != target.Organization {
