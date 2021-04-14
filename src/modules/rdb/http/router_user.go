@@ -316,7 +316,7 @@ func userInvitePost(c *gin.Context) {
 			return err
 		}
 
-		inv, err := models.InviteGet("token=?", f.Token)
+		inv, err := models.InviteMustGet("token=?", f.Token)
 		if err != nil {
 			return err
 		}
