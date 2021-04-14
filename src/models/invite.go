@@ -25,6 +25,20 @@ func InviteGet(where string, args ...interface{}) (*Invite, error) {
 	return &obj, nil
 }
 
+func InviteMustGet(where string, args ...interface{}) (*Invite, error) {
+	var obj Invite
+	has, err := DB["rdb"].Where(where, args...).Get(&obj)
+	if err != nil {
+		return nil, err
+	}
+
+	if !has {
+		return nil, fmt.Errorf("invite not found")
+	}
+
+	return &obj, nil
+}
+
 func InviteNew(token, creator string) error {
 	now := time.Now().Unix()
 	obj := Invite{
