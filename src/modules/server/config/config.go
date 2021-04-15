@@ -208,12 +208,7 @@ var Config *ConfigT
 var Ident string
 
 // Parse configuration file
-func Parse() error {
-	ymlFile := getYmlFile()
-	if ymlFile == "" {
-		return fmt.Errorf("configuration file etc/server.yml not found")
-	}
-
+func Parse(ymlFile string) error {
 	bs, err := file.ReadBytes(ymlFile)
 	if err != nil {
 		return fmt.Errorf("cannot read yml[%s]: %v", ymlFile, err)
@@ -405,20 +400,6 @@ func Parse() error {
 	}
 
 	return identity.Parse()
-}
-
-func getYmlFile() string {
-	yml := "etc/server.local.yml"
-	if file.IsExist(yml) {
-		return yml
-	}
-
-	yml = "etc/server.yml"
-	if file.IsExist(yml) {
-		return yml
-	}
-
-	return ""
 }
 
 // map["node"]="host1,host2" --> map["node"]=["host1", "host2"]

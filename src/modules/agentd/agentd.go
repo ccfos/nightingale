@@ -24,6 +24,7 @@ import (
 	"github.com/didi/nightingale/v4/src/modules/agentd/timer"
 	"github.com/didi/nightingale/v4/src/modules/agentd/udp"
 
+	"github.com/toolkits/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 )
@@ -58,6 +59,7 @@ func init() {
 }
 
 func main() {
+	aconf()
 	parseConf()
 
 	loggeri.Init(config.Config.Logger)
@@ -127,10 +129,29 @@ func monStart() {
 }
 
 func parseConf() {
-	if err := config.Parse(); err != nil {
+	if err := config.Parse(*conf); err != nil {
 		fmt.Println("cannot parse configuration file:", err)
 		os.Exit(1)
 	}
+}
+
+func aconf() {
+	if *conf != "" && file.IsExist(*conf) {
+		return
+	}
+
+	*conf = "etc/agentd.local.yml"
+	if file.IsExist(*conf) {
+		return
+	}
+
+	*conf = "etc/agentd.yml"
+	if file.IsExist(*conf) {
+		return
+	}
+
+	fmt.Println("no configuration file for server")
+	os.Exit(1)
 }
 
 func endingProc() {

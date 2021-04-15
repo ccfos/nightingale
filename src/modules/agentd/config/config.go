@@ -82,9 +82,7 @@ var (
 	Endpoint string
 )
 
-func Parse() error {
-	conf := getYmlFile()
-
+func Parse(conf string) error {
 	bs, err := file.ReadBytes(conf)
 	if err != nil {
 		return fmt.Errorf("cannot read yml[%s]: %v", conf, err)
@@ -163,18 +161,4 @@ func Parse() error {
 	Config = c
 
 	return nil
-}
-
-func getYmlFile() string {
-	yml := "etc/agentd.local.yml"
-	if file.IsExist(yml) {
-		return yml
-	}
-
-	yml = "etc/agentd.yml"
-	if file.IsExist(yml) {
-		return yml
-	}
-
-	return ""
 }
