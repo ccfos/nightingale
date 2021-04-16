@@ -10,6 +10,17 @@ import (
 
 func Config(r *gin.Engine) {
 	r.Static("/pub", "./pub")
+	r.Static("/static", "./pub/static")
+	r.Static("/layout", "./pub/layout")
+	r.Static("/ams/", "./pub/ams")
+	r.Static("/rdb/", "./pub/rdb")
+	r.Static("/job/", "./pub/job")
+	r.Static("/mon/", "./pub/mon")
+	r.StaticFile("/ams", "./pub/layout/index.html")
+	r.StaticFile("/mon", "./pub/layout/index.html")
+	r.StaticFile("/job", "./pub/layout/index.html")
+	r.StaticFile("/rdb", "./pub/layout/index.html")
+	r.StaticFile("/", "./pub/layout/index.html")
 	r.StaticFile("/favicon.ico", "./pub/favicon.ico")
 
 	pprof.Register(r, "/api/server/debug/pprof")

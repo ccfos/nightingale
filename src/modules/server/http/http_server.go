@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 
 	"github.com/didi/nightingale/v4/src/common/address"
@@ -41,8 +40,6 @@ func Start() {
 	if c.HTTP.ShowLog {
 		r.Use(loggerMid)
 	}
-
-	r.Use(static.Serve("/", static.LocalFile("./pub", false)))
 
 	Config(r)
 
