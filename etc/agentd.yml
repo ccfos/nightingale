@@ -10,7 +10,7 @@ enable:
   metrics: true
 
 udp:
-  enable: true
+  enable: false
   listen: :788
 
 metrics:
