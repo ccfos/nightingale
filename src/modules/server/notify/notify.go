@@ -182,7 +182,7 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 	}
 
 	// 生成告警邮件
-	fp := path.Join(file.SelfDir(), "etc", "mail.tpl")
+	fp := path.Join(file.SelfDir(), "etc", "tpl", "mail.tpl")
 	t, err := template.ParseFiles(fp)
 	if err != nil {
 		logger.Errorf("InternalServerError: cannot parse %s %v", fp, err)
@@ -199,7 +199,7 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 	}
 
 	// 生成告警短信，短信和IM复用一个内容模板
-	fp = path.Join(file.SelfDir(), "etc", "sms.tpl")
+	fp = path.Join(file.SelfDir(), "etc", "tpl", "sms.tpl")
 	t, err = template.New("sms.tpl").Funcs(template.FuncMap{
 		"unescaped":  func(str string) interface{} { return template.HTML(str) },
 		"urlconvert": func(str string) interface{} { return template.URL(str) },

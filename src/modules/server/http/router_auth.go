@@ -58,7 +58,7 @@ func getConfigFile(name, ext string) (string, error) {
 }
 
 func init() {
-	filename, err := getConfigFile("login-code-sms", "tpl")
+	filename, err := getConfigFile("tpl/login-code-sms", "tpl")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func init() {
 		log.Fatalf("open %s err: %s", filename, err)
 	}
 
-	filename, err = getConfigFile("login-code-email", "tpl")
+	filename, err = getConfigFile("tpl/login-code-email", "tpl")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -77,7 +77,7 @@ func init() {
 		log.Fatalf("open %s err: %s", filename, err)
 	}
 
-	filename, err = getConfigFile("password-changed-email", "tpl")
+	filename, err = getConfigFile("tpl/password-changed-email", "tpl")
 	if err != nil {
 		log.Fatal(err)
 	}
