@@ -54,6 +54,7 @@ func DoNotify(isUpgrade bool, events ...*models.Event) {
 
 	notifyTypes := config.Config.Monapi.Notify[prio]
 	for i := 0; i < len(notifyTypes); i++ {
+		var err error
 		switch notifyTypes[i] {
 		case "voice":
 			if events[0].EventType == models.ALERT {
@@ -62,33 +63,35 @@ func DoNotify(isUpgrade bool, events ...*models.Event) {
 					tos = append(tos, users[j].Phone)
 				}
 
-				send(slice.Set(tos), events[0].Sname, "", "voice")
+				err = send(slice.Set(tos), events[0].Sname, "", "voice")
 			}
+
 		case "sms":
 			tos := []string{}
 			for j := 0; j < len(users); j++ {
 				tos = append(tos, users[j].Phone)
 			}
 
-			send(slice.Set(tos), content, "", "sms")
+			err = send(slice.Set(tos), content, "", "sms")
 		case "mail":
 			tos := []string{}
 			for j := 0; j < len(users); j++ {
 				tos = append(tos, users[j].Email)
 			}
 
-			if err := send(slice.Set(tos), mailContent, subject, "mail"); err == nil {
-				logger.Infof("sendMail: %+v", events[0])
-			}
+			err = send(slice.Set(tos), mailContent, subject, "mail")
 		case "im":
 			tos := []string{}
 			for j := 0; j < len(users); j++ {
 				tos = append(tos, users[j].Im)
 			}
 
-			send(slice.Set(tos), content, "", "im")
+			err = send(slice.Set(tos), content, "", "im")
 		default:
 			logger.Errorf("not support %s to send notify, events: %+v", notifyTypes[i], events)
+		}
+		if err != nil {
+			logger.Errorf("send %s users:%+v content:%s err:%v", notifyTypes[i], users, content, err)
 		}
 	}
 }
@@ -411,6 +414,7 @@ func send(tos []string, content, subject, notifyType string) error {
 		return fmt.Errorf("tos is empty")
 	}
 
+	message.Tos = tos
 	message.Content = strings.TrimSpace(content)
 	if message.Content == "" {
 		return fmt.Errorf("content is blank")
@@ -433,6 +437,8 @@ func send(tos []string, content, subject, notifyType string) error {
 	case "im":
 		redisc.Write(&message, cron.IM_QUEUE_NAME)
 	}
+
+	logger.Infof("write %s message:%+v", message, notifyType)
 
 	return nil
 }
