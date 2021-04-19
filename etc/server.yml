@@ -54,6 +54,27 @@ rdb:
     autoRegist: true
     tls: false
     startTLS: false
+  sender:
+    mail:
+      # three choice: smtp|shell|api
+      way: smtp
+      worker: 10
+      api: http://127.0.0.1:2008/mail
+    sms:
+      # two choice: shell|api
+      way: api
+      worker: 10
+      api: http://127.0.0.1:2008/sms
+    voice:
+      # two choice: shell|api
+      way: shell
+      worker: 10
+      api: http://127.0.0.1:2008/voice
+    im:
+      # five choice: shell|api|wechat|wechat_robot|dingtalk_robot
+      way: shell
+      worker: 10
+      api: http://127.0.0.1:2008/im
   ## for enterprise edition
   #sso:
   #  enable: false
@@ -170,3 +191,8 @@ judge:
     callTimeout:      2000
     indexCallTimeout: 2000
     indexMod:         server
+
+wechat:
+  corp_id: "xxxxxxxxxxxxx"
+  agent_id: 1000000
+  secret: "xxxxxxxxxxxxxxxxx"
