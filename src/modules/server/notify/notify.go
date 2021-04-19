@@ -416,7 +416,7 @@ func send(tos []string, content, subject, notifyType string) error {
 		return fmt.Errorf("content is blank")
 	}
 
-	if notifyType == "email" {
+	if notifyType == "mail" {
 		message.Subject = strings.TrimSpace(message.Subject)
 		if message.Subject == "" {
 			return fmt.Errorf("subject is blank")
@@ -428,7 +428,7 @@ func send(tos []string, content, subject, notifyType string) error {
 		redisc.Write(&message, cron.VOICE_QUEUE_NAME)
 	case "sms":
 		redisc.Write(&message, cron.SMS_QUEUE_NAME)
-	case "email":
+	case "mail":
 		redisc.Write(&message, cron.MAIL_QUEUE_NAME)
 	case "im":
 		redisc.Write(&message, cron.IM_QUEUE_NAME)
