@@ -206,9 +206,10 @@ exec()
   params=${@:2}
 
   if [ ${#2} -gt 0 ]; then
-    for param in $params
+    for mod in $params
     do
-      $1 $param
+      mod=${mod#n9e-}
+      $1 $mod
       if [ "x${mod}" = "xall" ]; then
         break
       fi
