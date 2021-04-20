@@ -43,8 +43,8 @@ report:
 
   fields:
     cpu: cat /proc/cpuinfo | grep processor | wc -l
-    mem: cat /proc/meminfo | grep MemTotal | awk '{printf "%dGi", $2/1024/1024}'
-    disk: df -m | grep '/dev/' | grep -v '/var/lib' | grep -v tmpfs | awk '{sum += $2};END{printf "%dGi", sum/1024}'
+    mem: cat /proc/meminfo | grep MemTotal | awk '{printf "%.1fGi", $2/1024/1024}'
+    disk: df -m | grep '/dev/' | grep -v '/var/lib' | grep -v tmpfs | awk '{sum += $2};END{printf "%.1fGi", sum/1024}'
 
 sys:
   # timeout in ms
