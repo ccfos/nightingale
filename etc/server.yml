@@ -120,9 +120,13 @@ transfer:
       seriesLimit: 0
       docsLimit: 0
       daysLimit: 7                               # max query time
+
       # https://m3db.github.io/m3/m3db/architecture/consistencylevels/
       writeConsistencyLevel: "majority"          # one|majority|all
       readConsistencyLevel: "unstrict_majority"  # one|unstrict_majority|majority|all
+      writeTimeout: 5s
+      fetchTimeout: 5s
+      connectTimeout: 5s
       config:
         service:
           # KV environment, zone, and service from which to write/read KV data (placement
