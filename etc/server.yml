@@ -19,6 +19,7 @@ http:
 
 tokens:
   - rdb-builtin-token
+  - ams-builtin-token
 
 redis:
   # as queue 
