@@ -59,7 +59,7 @@ type userProfileForm struct {
 	Im           string `json:"im"`
 	IsRoot       int    `json:"is_root"`
 	LeaderId     int64  `json:"leader_id"`
-	Typ          int    `json:"typ"`
+	Type         int    `json:"type"`
 	Status       int    `json:"status"`
 	Organization string `json:"organization"`
 }
@@ -86,6 +86,7 @@ func userAddPost(c *gin.Context) {
 		Im:           f.Im,
 		IsRoot:       f.IsRoot,
 		LeaderId:     f.LeaderId,
+		Type:         f.Type,
 		Organization: f.Organization,
 		UpdatedAt:    now,
 		UUID:         models.GenUUIDForUser(f.Username),
@@ -157,13 +158,13 @@ func userProfilePut(c *gin.Context) {
 		target.IsRoot = f.IsRoot
 	}
 
-	if f.Typ != target.Type {
-		arr = append(arr, fmt.Sprintf("typ: %d -> %d", target.Type, f.Typ))
-		target.Type = f.Typ
+	if f.Type != target.Type {
+		arr = append(arr, fmt.Sprintf("type: %d -> %d", target.Type, f.Type))
+		target.Type = f.Type
 	}
 
 	if f.Status != target.Status {
-		arr = append(arr, fmt.Sprintf("typ: %d -> %d", target.Status, f.Status))
+		arr = append(arr, fmt.Sprintf("status: %d -> %d", target.Status, f.Status))
 		target.Status = f.Status
 		if target.Status == models.USER_S_ACTIVE {
 			target.LoginErrNum = 0
