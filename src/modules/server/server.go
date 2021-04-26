@@ -26,15 +26,15 @@ import (
 	"github.com/didi/nightingale/v4/src/modules/server/http/session"
 	"github.com/didi/nightingale/v4/src/modules/server/judge"
 	"github.com/didi/nightingale/v4/src/modules/server/judge/query"
+	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/all"
+	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/api"
 	"github.com/didi/nightingale/v4/src/modules/server/rabbitmq"
 	"github.com/didi/nightingale/v4/src/modules/server/redisc"
 	"github.com/didi/nightingale/v4/src/modules/server/rpc"
 	"github.com/didi/nightingale/v4/src/modules/server/ssoc"
 	"github.com/didi/nightingale/v4/src/modules/server/timer"
 	"github.com/didi/nightingale/v4/src/modules/server/wechat"
-
-	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/all"
-	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/api"
+	_ "github.com/lib/pq"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/toolkits/file"
