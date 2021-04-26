@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/Shopify/sarama v1.27.2 // indirect
 	github.com/alouca/gologger v0.0.0-20120904114645-7d4b7291de9c // indirect
+	github.com/blang/semver v3.5.1+incompatible
 	github.com/cespare/xxhash v1.1.0
 	github.com/coreos/go-oidc v2.2.1+incompatible // indirect
 	github.com/freedomkk-qfeng/go-fastping v0.0.0-20160109021039-d7bb493dee3e // indirect
@@ -21,6 +22,7 @@ require (
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb v1.8.0
 	github.com/influxdata/telegraf v1.17.2
+	github.com/jackc/pgx v3.6.0+incompatible
 	github.com/m3db/m3 v0.15.17 // indirect
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.0 // indirect
