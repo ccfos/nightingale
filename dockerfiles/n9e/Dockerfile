@@ -6,7 +6,7 @@ RUN set -ex \
     && yum clean all \
     && rm -rf /var/cache/yum
 
-ADD http://116.85.64.82/n9e.tar.gz .
+ADD http://116.85.64.82/n9e-3.8.0.tar.gz .
 
 RUN tar xvf n9e.tar.gz \
     && sed -i "s/127.0.0.1:6379/redis:6379/g" `grep -rl "127.0.0.1:6379" ./etc/` \
