@@ -54,6 +54,7 @@ func DoNotify(isUpgrade bool, events ...*models.Event) {
 
 	notifyTypes := config.Config.Monapi.Notify[prio]
 	for i := 0; i < len(notifyTypes); i++ {
+		var err error
 		switch notifyTypes[i] {
 		case "voice":
 			if events[0].EventType == models.ALERT {
@@ -62,33 +63,35 @@ func DoNotify(isUpgrade bool, events ...*models.Event) {
 					tos = append(tos, users[j].Phone)
 				}
 
-				send(slice.Set(tos), events[0].Sname, "", "voice")
+				err = send(slice.Set(tos), events[0].Sname, "", "voice")
 			}
+
 		case "sms":
 			tos := []string{}
 			for j := 0; j < len(users); j++ {
 				tos = append(tos, users[j].Phone)
 			}
 
-			send(slice.Set(tos), content, "", "sms")
+			err = send(slice.Set(tos), content, "", "sms")
 		case "mail":
 			tos := []string{}
 			for j := 0; j < len(users); j++ {
 				tos = append(tos, users[j].Email)
 			}
 
-			if err := send(slice.Set(tos), mailContent, subject, "mail"); err == nil {
-				logger.Infof("sendMail: %+v", events[0])
-			}
+			err = send(slice.Set(tos), mailContent, subject, "mail")
 		case "im":
 			tos := []string{}
 			for j := 0; j < len(users); j++ {
 				tos = append(tos, users[j].Im)
 			}
 
-			send(slice.Set(tos), content, "", "im")
+			err = send(slice.Set(tos), content, "", "im")
 		default:
 			logger.Errorf("not support %s to send notify, events: %+v", notifyTypes[i], events)
+		}
+		if err != nil {
+			logger.Errorf("send %s users:%+v content:%s err:%v", notifyTypes[i], users, content, err)
 		}
 	}
 }
@@ -179,7 +182,7 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 	}
 
 	// 生成告警邮件
-	fp := path.Join(file.SelfDir(), "etc", "mail.tpl")
+	fp := path.Join(file.SelfDir(), "etc", "tpl", "mail.tpl")
 	t, err := template.ParseFiles(fp)
 	if err != nil {
 		logger.Errorf("InternalServerError: cannot parse %s %v", fp, err)
@@ -196,7 +199,7 @@ func genContent(isUpgrade bool, events []*models.Event) (string, string) {
 	}
 
 	// 生成告警短信，短信和IM复用一个内容模板
-	fp = path.Join(file.SelfDir(), "etc", "sms.tpl")
+	fp = path.Join(file.SelfDir(), "etc", "tpl", "sms.tpl")
 	t, err = template.New("sms.tpl").Funcs(template.FuncMap{
 		"unescaped":  func(str string) interface{} { return template.HTML(str) },
 		"urlconvert": func(str string) interface{} { return template.URL(str) },
@@ -411,13 +414,14 @@ func send(tos []string, content, subject, notifyType string) error {
 		return fmt.Errorf("tos is empty")
 	}
 
+	message.Tos = tos
 	message.Content = strings.TrimSpace(content)
 	if message.Content == "" {
 		return fmt.Errorf("content is blank")
 	}
 
-	if notifyType == "email" {
-		message.Subject = strings.TrimSpace(message.Subject)
+	if notifyType == "mail" {
+		message.Subject = strings.TrimSpace(subject)
 		if message.Subject == "" {
 			return fmt.Errorf("subject is blank")
 		}
@@ -428,11 +432,13 @@ func send(tos []string, content, subject, notifyType string) error {
 		redisc.Write(&message, cron.VOICE_QUEUE_NAME)
 	case "sms":
 		redisc.Write(&message, cron.SMS_QUEUE_NAME)
-	case "email":
+	case "mail":
 		redisc.Write(&message, cron.MAIL_QUEUE_NAME)
 	case "im":
 		redisc.Write(&message, cron.IM_QUEUE_NAME)
 	}
+
+	logger.Infof("write %s message:%+v", message, notifyType)
 
 	return nil
 }

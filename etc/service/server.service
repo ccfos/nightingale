@@ -17,5 +17,8 @@ Restart=always
 RestartSec=1
 StartLimitInterval=0
 
+# LimitNOFILE=60000
+# LimitNPROC=10000
+
 [Install]
 WantedBy=multi-user.target
