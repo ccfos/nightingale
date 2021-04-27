@@ -21,9 +21,9 @@ import (
 
 	"github.com/didi/nightingale/v4/src/modules/server/collector"
 	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/all"
-	_ "github.com/go-sql-driver/mysql"
-
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"

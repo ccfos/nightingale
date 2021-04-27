@@ -14,12 +14,12 @@ import (
 	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/net_response"
 	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/nginx"
 	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/ping"
+	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/postgresql"
 	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/prometheus"
 	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/rabbitmq"
 	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/redis"
 	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/tengine"
 	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/zookeeper"
-
 	// local
 	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/log"
 	_ "github.com/didi/nightingale/v4/src/modules/server/plugins/plugin"

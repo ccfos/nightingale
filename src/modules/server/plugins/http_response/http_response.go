@@ -9,8 +9,8 @@ import (
 	"github.com/didi/nightingale/v4/src/common/i18n"
 	"github.com/didi/nightingale/v4/src/modules/server/collector"
 	"github.com/didi/nightingale/v4/src/modules/server/plugins"
+	"github.com/didi/nightingale/v4/src/modules/server/plugins/http_response/http_response"
 	"github.com/influxdata/telegraf"
-	"github.com/influxdata/telegraf/plugins/inputs/http_response"
 )
 
 func init() {
@@ -33,22 +33,22 @@ func NewCollector() *Collector {
 var (
 	langDict = map[string]map[string]string{
 		"zh": map[string]string{
-			"URLS":                                                                             "地址",
-			"Method":                                                                           "方法",
-			"ResponseTimeout":                                                                  "响应超时",
-			"Headers":                                                                          "Headers",
-			"Username":                                                                         "用户名",
-			"Password":                                                                         "密码",
-			"Body":                                                                             "Body",
-			"ResponseBodyMaxSize":                                                              "ResponseBodyMaxSize",
-			"ResponseStringMatch":                                                              "ResponseStringMatch",
-			"ResponseStatusCode":                                                               "ResponseStatusCode",
-			"Interface":                                                                        "Interface",
-			"HTTPProxy":                                                                        "HTTPProxy",
-			"FollowRedirects":                                                                  "FollowRedirects",
-			"List of urls to query":                                                            "要监测的URL地址",
-			"HTTP Request Method, default GET":                                                 "HTTP 的请求方法，默认是 GET",
-			"HTTP Request Headers":                                                             "HTTP 请求的的 Headers",
+			"URLS":                             "地址",
+			"Method":                           "方法",
+			"ResponseTimeout":                  "响应超时",
+			"Headers":                          "Headers",
+			"Username":                         "用户名",
+			"Password":                         "密码",
+			"Body":                             "Body",
+			"ResponseBodyMaxSize":              "ResponseBodyMaxSize",
+			"ResponseStringMatch":              "ResponseStringMatch",
+			"ResponseStatusCode":               "ResponseStatusCode",
+			"Interface":                        "Interface",
+			"HTTPProxy":                        "HTTPProxy",
+			"FollowRedirects":                  "FollowRedirects",
+			"List of urls to query":            "要监测的URL地址",
+			"HTTP Request Method, default GET": "HTTP 的请求方法，默认是 GET",
+			"HTTP Request Headers":             "HTTP 请求的的 Headers",
 			"Optional HTTP Basic Auth Credentials, Username":                                   "HTTP Basic 认证的用户名",
 			"Optional HTTP Basic Auth Credentials, Password":                                   "HTTP Basic 认证的密码",
 			"Optional HTTP Request Body":                                                       "HTTP 请求的 Body",
