@@ -26,6 +26,11 @@ type ConfigT struct {
 	Metrics MetricsSection `yaml:"metrics"`
 }
 
+type TagsSection struct {
+	Enable  bool                `yaml:"enable"`
+	Tags    map[string]string   `yaml:"tags"`
+}
+
 type UdpSection struct {
 	Enable bool   `yaml:"enable"`
 	Listen string `yaml:"listen"`

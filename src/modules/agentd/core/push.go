@@ -2,12 +2,14 @@ package core
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"math/rand"
 	"net"
 	"net/rpc"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/didi/nightingale/v4/src/common/address"
@@ -23,6 +25,32 @@ func Push(metricItems []*dataobj.MetricValue) error {
 	var err error
 	var items []*dataobj.MetricValue
 	now := time.Now().Unix()
+
+	dt := config.Config.DefaultTags.Tags
+	if config.Config.DefaultTags.Enable && len(dt) > 0 {
+		var buf bytes.Buffer
+		defaultTagsList := []string{}
+		for k, v := range dt {
+			buf.Reset()
+			buf.WriteString(k)
+			buf.WriteString("=")
+			buf.WriteString(v)
+			defaultTagsList = append(defaultTagsList, buf.String())
+		}
+		defaultTags := strings.Join(defaultTagsList, ",")
+
+		for i, x := range metricItems {
+			buf.Reset()
+			if x.Tags == "" {
+				metricItems[i].Tags = defaultTags
+			} else {
+				buf.WriteString(metricItems[i].Tags)
+				buf.WriteString(",")
+				buf.WriteString(defaultTags)
+				metricItems[i].Tags = buf.String()
+			}
+		}
+	}
 
 	for _, item := range metricItems {
 		logger.Debugf("->recv:%+v", item)

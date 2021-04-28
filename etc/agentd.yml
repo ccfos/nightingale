@@ -9,6 +9,10 @@ enable:
   report: true
   metrics: true
 
+defaultTags:
+  enable: false
+  tags: ["key1":"value1","key2":"value2"]
+
 udp:
   enable: false
   listen: :788
