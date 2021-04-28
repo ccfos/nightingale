@@ -44,23 +44,27 @@ func FsRWMetrics() []*dataobj.MetricValue {
 	fsFileFilter := make(map[string]struct{}) //过滤 /proc/mounts 出现重复的fsFile
 
 	for idx := range mountPoints {
-		var du *nux.DeviceUsage
-		du, err = nux.BuildDeviceUsage(mountPoints[idx][0], mountPoints[idx][1], mountPoints[idx][2])
-		if err != nil {
-			logger.Warning(idx, " failed to call BuildDeviceUsage:", err)
+		fsSpec, fsFile, fsVfstype := mountPoints[idx][0], mountPoints[idx][1], mountPoints[idx][2]
+		if !IsFsVfstypeValid(sys.Config.MountIgnore.TypePrefix, fsVfstype) {
 			continue
 		}
 
-		if hasIgnorePrefix(du.FsFile, sys.Config.MountIgnore.Prefix) &&
-			!slice.ContainsString(sys.Config.MountIgnore.Exclude, du.FsFile) {
+		if hasIgnorePrefix(fsFile, sys.Config.MountIgnore.Prefix) &&
+			!slice.ContainsString(sys.Config.MountIgnore.Exclude, fsFile) {
 			continue
 		}
 
-		if _, exists := fsFileFilter[du.FsFile]; exists {
-			logger.Debugf("mount point %s was collected", du.FsFile)
+		if _, exists := fsFileFilter[fsFile]; exists {
+			logger.Debugf("mount point %s was collected", fsFile)
 			continue
 		} else {
-			fsFileFilter[du.FsFile] = struct{}{}
+			fsFileFilter[fsFile] = struct{}{}
+		}
+		var du *nux.DeviceUsage
+		du, err = nux.BuildDeviceUsage(fsSpec, fsFile, fsVfstype)
+		if err != nil {
+			logger.Warning("fsSpec: %s, fsFile: %s, fsVfstype: %s, failed to call BuildDeviceUsage, error: %v", fsSpec, fsFile, fsVfstype, err)
+			continue
 		}
 
 		tags := fmt.Sprintf("mount=%s", du.FsFile)

@@ -15,6 +15,7 @@ type SysSection struct {
 }
 
 type MountIgnoreSection struct {
+	TypePrefix  string `yaml:"typePrefix"`
 	Prefix  []string `yaml:"prefix"`
 	Exclude []string `yaml:"exclude"`
 }

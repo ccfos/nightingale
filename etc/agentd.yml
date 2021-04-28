@@ -62,11 +62,16 @@ sys:
 
   # ignore disk mount point
   mountIgnore:
+    # step.1 collect disk type by regexp
+    typePrefix: "^(btrfs|ext2|ext3|ext4|jfs|reiser|xfs|ffs|ufs|jfs|jfs2|vxfs|hfs|ntfs|fat32|zfs|nfs)$"
+    # step.2 ignore disk mount point
     prefix:
       - /var/lib
       - /run
-    # collect anyway
+      - /boot
+    # step.3 collect anyway in the step.2
     exclude: []
+
 
   ignoreMetrics:
     - cpu.core.idle
