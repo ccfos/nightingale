@@ -3,7 +3,7 @@ package sys
 type SysSection struct {
 	Enable           bool                `yaml:"enable"`
 	IfacePrefix      []string            `yaml:"ifacePrefix"`
-	MountIgnore      MountIgnoreSection  `yaml:"mountIgnore"`
+	MountCollect     MountSection        `yaml:"diskCollect"`
 	IgnoreMetrics    []string            `yaml:"ignoreMetrics"`
 	IgnoreMetricsMap map[string]struct{} `yaml:"-"`
 	NtpServers       []string            `yaml:"ntpServers"`
@@ -14,8 +14,9 @@ type SysSection struct {
 	FsRWEnable       bool                `yaml:"fsRWEnable"`
 }
 
-type MountIgnoreSection struct {
-	Prefix  []string `yaml:"prefix"`
+type MountSection struct {
+	TypePrefix    string    `yaml:"typePrefix"`
+	IgnorePrefix  []string  `yaml:"ignorePrefix"`
 	Exclude []string `yaml:"exclude"`
 }
 

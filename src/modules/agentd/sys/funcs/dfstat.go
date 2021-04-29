@@ -16,6 +16,7 @@ package funcs
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/didi/nightingale/v4/src/common/dataobj"
@@ -42,18 +43,22 @@ func DeviceMetrics() []*dataobj.MetricValue {
 
 	for idx := range mountPoints {
 		fsSpec, fsFile, fsVfstype := mountPoints[idx][0], mountPoints[idx][1], mountPoints[idx][2]
+		// 判断挂载卷类型是否匹配，不匹配则跳过
+		if !IsFsVfstypeValid(sys.Config.MountCollect.TypePrefix, fsVfstype) {
+			continue
+		}
+		
+		// 注意: 虽然前缀被忽略了，但是被忽略的这部分分区里边有些仍然是需要采集的
+		if hasIgnorePrefix(fsFile, sys.Config.MountCollect.IgnorePrefix) &&
+			!slice.ContainsString(sys.Config.MountCollect.Exclude, fsFile) {
+			continue
+		}
 
 		if _, exists := fsFileFilter[fsFile]; exists {
 			logger.Debugf("mount point %s was collected", fsFile)
 			continue
 		} else {
 			fsFileFilter[fsFile] = struct{}{}
-		}
-
-		// 注意: 虽然前缀被忽略了，但是被忽略的这部分分区里边有些仍然是需要采集的
-		if hasIgnorePrefix(fsFile, sys.Config.MountIgnore.Prefix) &&
-			!slice.ContainsString(sys.Config.MountIgnore.Exclude, fsFile) {
-			continue
 		}
 
 		var du *nux.DeviceUsage
@@ -94,6 +99,14 @@ func DeviceMetrics() []*dataobj.MetricValue {
 	}
 
 	return ret
+}
+
+func IsFsVfstypeValid(regx string, fsVfstype string) bool {
+	match, err := regexp.MatchString(regx, fsVfstype)
+	if err != nil {
+		return false
+	}
+	return match
 }
 
 func hasIgnorePrefix(fsFile string, ignoreMountPointsPrefix []string) bool {
