@@ -16,6 +16,7 @@ import (
 
 type ConfigT struct {
 	Logger  loggeri.Config `yaml:"logger"`
+	DefaultTags   TagsSection    `yaml:"defaultTags"`
 	Stra    straSection    `yaml:"stra"`
 	Worker  workerSection  `yaml:"worker"`
 	Sys     sys.SysSection `yaml:"sys"`
@@ -24,6 +25,11 @@ type ConfigT struct {
 	Report  reportSection  `yaml:"report"`
 	Udp     UdpSection     `yaml:"udp"`
 	Metrics MetricsSection `yaml:"metrics"`
+}
+
+type TagsSection struct {
+	Enable   bool                `yaml:"enable"`
+	Tags     map[string]string   `yaml:"tags"`
 }
 
 type UdpSection struct {
