@@ -139,6 +139,7 @@ func Config(r *gin.Engine) {
 
 		rdbRootLogin.GET("/nodes/trash", nodeTrashGets)
 		rdbRootLogin.PUT("/nodes/trash/recycle", nodeTrashRecycle)
+		rdbRootLogin.PATCH("/node/:id/move", nodeMove)
 
 		rdbRootLogin.POST("/sso/clients", ssoClientsPost)
 		rdbRootLogin.GET("/sso/clients", ssoClientsGet)
