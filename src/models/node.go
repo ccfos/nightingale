@@ -360,7 +360,7 @@ func (n *Node) Move(tnode *Node) error {
 		}
 	}
 
-	return nil
+	return session.Commit()
 }
 
 func (n *Node) Del() error {
