@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/didi/nightingale/v4/src/common/i18n"
+	"github.com/didi/nightingale/v4/src/models"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errors"
-
-	"github.com/didi/nightingale/src/models"
-	"github.com/didi/nightingale/src/toolkits/i18n"
 )
 
 func dangerous(v interface{}) {

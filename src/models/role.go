@@ -89,7 +89,7 @@ func (r *Role) Save(ops []string) error {
 	session := DB["rdb"].NewSession()
 	defer session.Close()
 
-	cnt, err := session.Where("name=?", r.Name).Count(new(Role))
+	cnt, err := session.Where("name=? and cate=?", r.Name, r.Cate).Count(new(Role))
 	if err != nil {
 		return err
 	}

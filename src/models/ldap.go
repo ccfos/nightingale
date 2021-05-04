@@ -7,13 +7,38 @@ import (
 	"gopkg.in/ldap.v3"
 
 	"github.com/toolkits/pkg/logger"
-
-	"github.com/didi/nightingale/src/modules/rdb/config"
 )
+
+type LDAPSection struct {
+	DefaultUse      bool           `yaml:"defaultUse"`
+	Host            string         `yaml:"host"`
+	Port            int            `yaml:"port"`
+	BaseDn          string         `yaml:"baseDn"`
+	BindUser        string         `yaml:"bindUser"`
+	BindPass        string         `yaml:"bindPass"`
+	AuthFilter      string         `yaml:"authFilter"`
+	Attributes      ldapAttributes `yaml:"attributes"`
+	CoverAttributes bool           `yaml:"coverAttributes"`
+	TLS             bool           `yaml:"tls"`
+	StartTLS        bool           `yaml:"startTLS"`
+}
+
+type ldapAttributes struct {
+	Dispname string `yaml:"dispname"`
+	Phone    string `yaml:"phone"`
+	Email    string `yaml:"email"`
+	Im       string `yaml:"im"`
+}
+
+var LDAPConfig LDAPSection
+
+func InitLDAP(conf LDAPSection) {
+	LDAPConfig = conf
+}
 
 func genLdapAttributeSearchList() []string {
 	var ldapAttributes []string
-	attrs := config.Config.LDAP.Attributes
+	attrs := LDAPConfig.Attributes
 	if attrs.Dispname != "" {
 		ldapAttributes = append(ldapAttributes, attrs.Dispname)
 	}
@@ -32,7 +57,7 @@ func genLdapAttributeSearchList() []string {
 func ldapReq(user, pass string) (*ldap.SearchResult, error) {
 	var conn *ldap.Conn
 	var err error
-	lc := config.Config.LDAP
+	lc := LDAPConfig
 	addr := fmt.Sprintf("%s:%d", lc.Host, lc.Port)
 
 	if lc.TLS {

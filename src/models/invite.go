@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -20,6 +21,20 @@ func InviteGet(where string, args ...interface{}) (*Invite, error) {
 
 	if !has {
 		return nil, nil
+	}
+
+	return &obj, nil
+}
+
+func InviteMustGet(where string, args ...interface{}) (*Invite, error) {
+	var obj Invite
+	has, err := DB["rdb"].Where(where, args...).Get(&obj)
+	if err != nil {
+		return nil, err
+	}
+
+	if !has {
+		return nil, fmt.Errorf("invite not found")
 	}
 
 	return &obj, nil

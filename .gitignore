@@ -45,16 +45,6 @@ _test
 
 /n9e-*
 
-/src/modules/agent/agent
-/src/modules/ams/ams
-/src/modules/index/index
-/src/modules/job/job
-/src/modules/judge/judge
-/src/modules/monapi/monapi
-/src/modules/rdb/rdb
-/src/modules/transfer/transfer
-/src/modules/tsdb/tsdb
-
 tmp/
 main
 Makefile

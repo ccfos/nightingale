@@ -1,4 +1,0 @@
-logger:
-  dir: logs/index
-  level: INFO
-  keepHours: 24

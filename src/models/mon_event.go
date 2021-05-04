@@ -4,8 +4,13 @@ import (
 	"encoding/json"
 	"strings"
 	"time"
+)
 
-	"github.com/didi/nightingale/src/modules/monapi/config"
+const ALERT = "alert"
+const RECOVERY = "recovery"
+
+var (
+	EventTypeMap = map[string]string{RECOVERY: "恢复", ALERT: "报警"}
 )
 
 type Event struct {
@@ -220,7 +225,7 @@ func EventAlertUpgradeUnMarshal(str string) (EventAlertUpgrade, error) {
 }
 
 func EventCnt(hashid uint64, stime, etime int64, isUpgrade bool) (int64, error) {
-	session := DB["mon"].Where("hashid = ? and event_type = ? and etime between ? and ?", hashid, config.ALERT, stime, etime)
+	session := DB["mon"].Where("hashid = ? and event_type = ? and etime between ? and ?", hashid, ALERT, stime, etime)
 
 	if isUpgrade {
 		return session.In("status", GetFlagsByStatus([]string{STATUS_UPGRADE, STATUS_SEND})).Count(new(Event))

@@ -3,7 +3,7 @@ package cache
 import (
 	"context"
 
-	"github.com/didi/nightingale/src/modules/prober/config"
+	"github.com/didi/nightingale/v4/src/modules/prober/config"
 )
 
 var CollectRule *CollectRuleCache // collectrule.go

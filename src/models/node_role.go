@@ -34,6 +34,12 @@ func NodeRoleDel(nodeId, roleId int64, username string) error {
 	return err
 }
 
+func RoleIdsBindingUsername(username string, nids []int64) ([]int64, error) {
+	var ids []int64
+	err := DB["rdb"].Table("node_role").Where("username=?", username).In("node_id", nids).Select("role_id").Find(&ids)
+	return ids, err
+}
+
 // NodeIdsBindingUsername 某人在哪些节点配置过权限
 func NodeIdsBindingUsername(username string) ([]int64, error) {
 	var ids []int64
