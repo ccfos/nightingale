@@ -82,6 +82,7 @@ func Config(r *gin.Engine) {
 
 		rootLogin.GET("/nodes/trash", nodeTrashGets)
 		rootLogin.PUT("/nodes/trash/recycle", nodeTrashRecycle)
+		rootLogin.PATCH("/node/:id/move", nodeMove)
 
 		rootLogin.POST("/sso/clients", ssoClientsPost)
 		rootLogin.GET("/sso/clients", ssoClientsGet)
