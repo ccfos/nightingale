@@ -247,7 +247,7 @@ CREATE TABLE `role`
     `note` varchar(255) not null default '',
     `cate` char(6)      not null default '' comment 'category: global or local',
     PRIMARY KEY (`id`),
-    UNIQUE KEY (`name`)
+    UNIQUE KEY (`name`,`cate`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
 

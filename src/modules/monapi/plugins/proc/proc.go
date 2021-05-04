@@ -79,7 +79,7 @@ func (p ProcCollector) Create(data []byte, username string) error {
 	if old != nil {
 		return fmt.Errorf("同节点下策略名称 %s 已存在", name)
 	}
-	return models.CreateCollect(p.Name(), username, collect)
+	return models.CreateCollect(p.Name(), username, collect, false)
 }
 
 func (p ProcCollector) Update(data []byte, username string) error {

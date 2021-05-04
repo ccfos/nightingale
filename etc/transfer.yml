@@ -2,6 +2,7 @@ backend:
   datasource: "tsdb"
   m3db:
     enabled: false
+    maxSeriesPoints: 720                       # default 720
     name: "m3db"
     namespace: "default"
     seriesLimit: 0

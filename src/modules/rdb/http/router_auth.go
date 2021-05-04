@@ -378,7 +378,7 @@ func sendLoginCode(c *gin.Context) {
 			return "", err
 		}
 
-		if err := redisc.Write(&dataobj.Message{Tos: []string{in.Arg}, Content: buf.String()}, queueName); err != nil {
+		if err := redisc.Write(&dataobj.Message{Tos: []string{in.Arg}, Subject: _s("Login Code"), Content: buf.String()}, queueName); err != nil {
 			return "", err
 		}
 
@@ -450,7 +450,7 @@ func sendRstCode(c *gin.Context) {
 			return "", err
 		}
 
-		if err := redisc.Write(&dataobj.Message{Tos: []string{in.Arg}, Content: buf.String()}, queueName); err != nil {
+		if err := redisc.Write(&dataobj.Message{Tos: []string{in.Arg}, Subject: _s("Reset Password"), Content: buf.String()}, queueName); err != nil {
 			return "", err
 		}
 

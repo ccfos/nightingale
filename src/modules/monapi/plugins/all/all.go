@@ -4,6 +4,7 @@ import (
 	// remote
 	// _ "github.com/didi/nightingale/src/modules/monapi/plugins/api"
 	// telegraf style
+        _ "github.com/didi/nightingale/src/modules/monapi/plugins/dns_query"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/elasticsearch"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/github"
 	_ "github.com/didi/nightingale/src/modules/monapi/plugins/haproxy"

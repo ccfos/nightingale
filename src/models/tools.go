@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -38,4 +39,125 @@ func Paths(longPath string) []string {
 	}
 
 	return paths
+}
+
+func parseConditions(conditions string) (string, []interface{}) {
+	conditions = strings.TrimSpace(conditions)
+	if conditions == "" {
+		return "", []interface{}{}
+	}
+
+	var (
+		where []string
+		args  []interface{}
+	)
+
+	arr := strings.Split(conditions, ",")
+	cnt := len(arr)
+	for i := 0; i < cnt; i++ {
+		if strings.Contains(arr[i], "~=") {
+			pair := strings.Split(arr[i], "~=")
+			if WarningStr(pair[0]) {
+				continue
+			}
+			if strings.Contains(pair[0], "|") {
+				keys := strings.Split(pair[0], "|")
+				str := "("
+				for i, k := range keys {
+					if i < len(keys)-1 {
+						str += fmt.Sprintf("%s like ? OR ", k)
+					} else {
+						str += fmt.Sprintf("%s like ?)", k)
+					}
+					args = append(args, "%"+pair[1]+"%")
+				}
+				where = append(where, str)
+			} else {
+				where = append(where, pair[0]+" like ?")
+				args = append(args, "%"+pair[1]+"%")
+			}
+			continue
+		}
+
+		if strings.Contains(arr[i], "!=") {
+			pair := strings.Split(arr[i], "!=")
+			if WarningStr(pair[0]) {
+				continue
+			}
+			where = append(where, pair[0]+" != ?")
+			args = append(args, pair[1])
+			continue
+		}
+
+		if strings.Contains(arr[i], ">=") {
+			pair := strings.Split(arr[i], ">=")
+			if WarningStr(pair[0]) {
+				continue
+			}
+			where = append(where, pair[0]+" >= ?")
+			args = append(args, pair[1])
+			continue
+		}
+
+		if strings.Contains(arr[i], "<=") {
+			pair := strings.Split(arr[i], "<=")
+			if WarningStr(pair[0]) {
+				continue
+			}
+			where = append(where, pair[0]+" <= ?")
+			args = append(args, pair[1])
+			continue
+		}
+
+		if strings.Contains(arr[i], "=") {
+			pair := strings.Split(arr[i], "=")
+			if WarningStr(pair[0]) {
+				continue
+			}
+			where = append(where, pair[0]+" = ?")
+			args = append(args, pair[1])
+			continue
+		}
+
+		if strings.Contains(arr[i], ">") {
+			pair := strings.Split(arr[i], ">")
+			if WarningStr(pair[0]) {
+				continue
+			}
+			where = append(where, pair[0]+" > ?")
+			args = append(args, pair[1])
+			continue
+		}
+
+		if strings.Contains(arr[i], "<") {
+			pair := strings.Split(arr[i], "<")
+			if WarningStr(pair[0]) {
+				continue
+			}
+			where = append(where, pair[0]+" < ?")
+			args = append(args, pair[1])
+			continue
+		}
+
+		if strings.Contains(arr[i], "^^") {
+			pair := strings.Split(arr[i], "^^")
+			if WarningStr(pair[0]) {
+				continue
+			}
+			where = append(where, pair[0]+" in ("+strings.Join(strings.Split(pair[1], "|"), ",")+")")
+			continue
+		}
+	}
+
+	return strings.Join(where, " and "), args
+}
+
+var dbfieldPattern = regexp.MustCompile("^[a-z][a-z0-9\\|_A-Z]*$")
+
+func WarningStr(s string) bool {
+	if dbfieldPattern.MatchString(s) || s == "" {
+		return false
+	}
+
+	return true
 }

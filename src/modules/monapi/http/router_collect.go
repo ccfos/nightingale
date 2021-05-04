@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -24,17 +25,23 @@ func collectRulePost(c *gin.Context) {
 	var recv []CollectRecv
 	errors.Dangerous(c.ShouldBind(&recv))
 
+	buf := &bytes.Buffer{}
 	creator := loginUsername(c)
 	for _, obj := range recv {
 		cl, err := collector.GetCollector(obj.Type)
 		errors.Dangerous(err)
 
 		if err := cl.Create([]byte(obj.Data), creator); err != nil {
-			errors.Bomb("%s add rule err %s", obj.Type, err)
+			if _, ok := err.(collector.DryRun); ok {
+				fmt.Fprintf(buf, "%s\n", err)
+			} else {
+				errors.Bomb("%s add rule err %s", obj.Type, err)
+			}
 		}
 	}
 
-	renderData(c, "ok", nil)
+	buf.WriteString("ok")
+	renderData(c, buf.String(), nil)
 }
 
 func collectRulesGetByLocalEndpoint(c *gin.Context) {
@@ -104,11 +111,17 @@ func collectRulePut(c *gin.Context) {
 	cl, err := collector.GetCollector(recv.Type)
 	errors.Dangerous(err)
 
+	buf := &bytes.Buffer{}
 	creator := loginUsername(c)
 	if err := cl.Update([]byte(recv.Data), creator); err != nil {
-		errors.Bomb("%s update rule err %s", recv.Type, err)
+		if _, ok := err.(collector.DryRun); ok {
+			fmt.Fprintf(buf, "%s\n", err)
+		} else {
+			errors.Bomb("%s update rule err %s", recv.Type, err)
+		}
 	}
-	renderData(c, "ok", nil)
+	buf.WriteString("ok")
+	renderData(c, buf.String(), nil)
 }
 
 type CollectsDelRev struct {
@@ -301,6 +314,9 @@ func GetPatAndTimeFormat(tf string) (string, string) {
 	case "mmdd HH:MM:SS":
 		pat = `(0[1-9]|1[012])([012][0-9]|3[01])\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
 		timeFormat = "0102 15:04:05"
+	case "dd mmm yyyy HH:MM:SS":
+		pat = `([012][0-9]|3[01])\s+[JFMASOND][a-z]{2}\s+(2[0-9]{3})\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
+		timeFormat = "02 Jan 2006 15:04:05"
 	default:
 		logger.Errorf("match time pac failed : [timeFormat:%s]", tf)
 		return "", ""

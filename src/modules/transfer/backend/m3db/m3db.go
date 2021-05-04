@@ -28,16 +28,21 @@ const (
 	MAX_PONINTS   = 720
 )
 
+var (
+	maxSeriesPoints = 720
+)
+
 type M3dbSection struct {
-	Name        string               `yaml:"name"`
-	Enabled     bool                 `yaml:"enabled"`
-	Namespace   string               `yaml:"namespace"`
-	DaysLimit   int                  `yaml:"daysLimit"`
-	SeriesLimit int                  `yaml:"seriesLimit"`
-	DocsLimit   int                  `yaml:"docsLimit"`
-	MinStep     int                  `yaml:"minStep"`
-	Config      client.Configuration `yaml:",inline"`
-	timeLimit   int64                `yaml:"-"`
+	Name            string               `yaml:"name"`
+	Enabled         bool                 `yaml:"enabled"`
+	Namespace       string               `yaml:"namespace"`
+	DaysLimit       int                  `yaml:"daysLimit"`
+	SeriesLimit     int                  `yaml:"seriesLimit"`
+	DocsLimit       int                  `yaml:"docsLimit"`
+	MinStep         int                  `yaml:"minStep"`
+	MaxSeriesPoints int                  `yaml:"maxSeriesPoints"`
+	Config          client.Configuration `yaml:",inline"`
+	timeLimit       int64                `yaml:"-"`
 }
 
 type Client struct {
@@ -65,6 +70,10 @@ func NewClient(cfg M3dbSection) (*Client, error) {
 
 	if cfg.MinStep == 0 {
 		cfg.MinStep = 1
+	}
+
+	if cfg.MaxSeriesPoints > 0 {
+		maxSeriesPoints = cfg.MaxSeriesPoints
 	}
 
 	cfg.timeLimit = int64(86400 * cfg.DaysLimit)
@@ -106,7 +115,12 @@ func (p *Client) Push2Queue(items []*dataobj.MetricValue) {
 				xtime.Second,
 				nil)
 			if err != nil {
-				logger.Errorf("unable to writeTagged: %s", err)
+				logger.Errorf("[endpoint:%s][metrics_name:%s][metrics_ts:%d][metrics_detail:%+v]unable to writeTagged: %s",
+					dm.Endpoint,
+					dm.Metric,
+					dm.Timestamp,
+					dm,
+					err)
 				atomic.AddInt32(&errCnt, 1)
 			}
 			wg.Done()
@@ -516,13 +530,13 @@ func (cfg M3dbSection) validateQueryDataForUI(in *dataobj.QueryDataForUI) (err e
 	}
 
 	if in.Step > 0 {
-		if n := (in.End - in.Start) / int64(in.Step); n > MAX_PONINTS {
+		if n := int(in.End-in.Start) / in.Step; n > maxSeriesPoints {
 			in.Step = 0
 		}
 	}
 
 	if in.Step <= 0 {
-		in.Step = int((in.End - in.Start) / MAX_PONINTS)
+		in.Step = int(in.End-in.Start) / maxSeriesPoints
 	}
 
 	if in.Step < cfg.MinStep {

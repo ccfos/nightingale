@@ -141,9 +141,13 @@ func UsernameCandoNodeOp(username, operation string, nodeId int64) (bool, error)
 	return user.HasPermByNode(node, operation)
 }
 
-func UserAndTotalGets(query, org string, limit, offset int, ids []int64) ([]User, int64, error) {
-	where := "1 = 1"
+func UserAndTotalGets(query, org string, conditions string, limit, offset int, ids []int64) ([]User, int64, error) {
+	where := ""
 	param := []interface{}{}
+	where, param = parseConditions(conditions)
+	if where == "" {
+		where = "1 = 1"
+	}
 
 	if query != "" {
 		q := "%" + query + "%"

@@ -2,16 +2,56 @@ package http
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/str"
 
 	"github.com/didi/nightingale/src/models"
+	"github.com/didi/nightingale/src/modules/rdb/config"
 )
 
 func nodeGet(c *gin.Context) {
 	node := Node(urlParamInt64(c, "id"))
 	node.FillAdmins()
+	renderData(c, node, nil)
+}
+
+//使用场景：节点被删除了，但还是需要查询节点来补全信息
+func nodeIncludeTrashGet(c *gin.Context) {
+	nid := urlParamInt64(c, "id")
+	realNode, err := models.NodeGet("id=?", nid)
+	dangerous(err)
+	if realNode != nil {
+		realNode.FillAdmins()
+		renderData(c, realNode, nil)
+		return
+	}
+
+	var node *models.Node
+	nodesInTrash, err := models.NodeTrashGetByIds([]int64{nid})
+	dangerous(err)
+	if len(nodesInTrash) == 1 {
+		nodeInTrash := nodesInTrash[0]
+		node = &models.Node{
+			Id:          nid,
+			Pid:         nodeInTrash.Pid,
+			Ident:       nodeInTrash.Ident,
+			Name:        nodeInTrash.Name,
+			Note:        nodeInTrash.Note,
+			Path:        nodeInTrash.Path,
+			Leaf:        nodeInTrash.Leaf,
+			Cate:        nodeInTrash.Cate,
+			IconColor:   nodeInTrash.IconColor,
+			IconChar:    nodeInTrash.IconChar,
+			Proxy:       nodeInTrash.Proxy,
+			Creator:     nodeInTrash.Creator,
+			LastUpdated: nodeInTrash.LastUpdated,
+		}
+	}
+
 	renderData(c, node, nil)
 }
 
@@ -118,6 +158,7 @@ func nodePost(c *gin.Context) {
 		dangerous(models.NodeNew(node, f.AdminIds))
 
 		go models.OperationLogNew(me.Username, "node", node.Id, fmt.Sprintf("NodeCreate path: %s, name: %s", node.Path, node.Name))
+		go nodeEvent("create", node)
 
 		// 把节点详情返回，便于前端易用性处理
 		renderData(c, node, nil)
@@ -139,6 +180,7 @@ func nodePost(c *gin.Context) {
 		child, err := parent.CreateChild(f.Ident, f.Name, f.Note, f.Cate, me.Username, f.Leaf, f.Proxy, f.AdminIds)
 		if err == nil {
 			go models.OperationLogNew(me.Username, "node", child.Id, fmt.Sprintf("NodeCreate path: %s, name: %s", child.Path, child.Name))
+			go nodeEvent("create", child)
 		}
 		renderData(c, child, err)
 	}
@@ -151,7 +193,8 @@ func nodePut(c *gin.Context) {
 	id := urlParamInt64(c, "id")
 	node := Node(id)
 
-	loginUser(c).CheckPermByNode(node, "rdb_node_modify")
+	me := loginUser(c)
+	me.CheckPermByNode(node, "rdb_node_modify")
 
 	// 即使是第三方系统创建的节点，也可以修改，只是改个名字、备注、类别、管理员，没啥大不了的
 	// 第三方系统主要是管理下面的资源的挂载
@@ -168,6 +211,8 @@ func nodePut(c *gin.Context) {
 	}
 
 	err := node.Modify(f.Name, f.Cate, f.Note, f.AdminIds)
+	go models.OperationLogNew(me.Username, "node", node.Id, fmt.Sprintf("NodeModify path: %s, name: %s clientIP: %s", node.Path, node.Name, c.ClientIP()))
+	go nodeEvent("update", node)
 	renderData(c, node, err)
 }
 
@@ -192,8 +237,31 @@ func nodeMove(c *gin.Context) {
 func nodeDel(c *gin.Context) {
 	id := urlParamInt64(c, "id")
 	node := Node(id)
+	me := loginUser(c)
+	me.CheckPermByNode(node, "rdb_node_delete")
 
-	loginUser(c).CheckPermByNode(node, "rdb_node_delete")
+	dangerous(node.Del())
+	go models.OperationLogNew(me.Username, "node", node.Id, fmt.Sprintf("NodeDelete path: %s, name: %s clientIP: %s", node.Path, node.Name, c.ClientIP()))
+	go nodeEvent("delete", node)
+	renderMessage(c, nil)
+}
 
-	renderMessage(c, node.Del())
+type eventEntity struct {
+	Action string      `json:"action"`
+	Kind   string      `json:"kind"`
+	Data   interface{} `json:"data"`
+}
+
+func nodeEvent(action string, node *models.Node) {
+	for _, backend := range config.Config.Webhook {
+		header := map[string]string{}
+		if backend.Token != "" {
+			header["Authorization"] = "Bearer " + backend.Token
+		}
+
+		event := &eventEntity{Action: action, Kind: "node", Data: node}
+		res, code, err := httplib.PostJSON(backend.Addr, 3*time.Second, event, header)
+		logger.Infof("Webhook, api:%s, event:%+v, error:%v, response:%s, statuscode:%d",
+			backend.Addr, event, err, string(res), code)
+	}
 }

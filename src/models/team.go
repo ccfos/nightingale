@@ -337,6 +337,8 @@ func TeamGetByIds(ids []int64) ([]Team, error) {
 }
 
 func GetTeamsNameByIds(ids string) ([]string, error) {
+	ids = strings.Replace(ids, "[", "", -1)
+	ids = strings.Replace(ids, "]", "", -1)
 	idsStrArr := strings.Split(ids, ",")
 	teamIds := []int64{}
 	for _, tid := range idsStrArr {

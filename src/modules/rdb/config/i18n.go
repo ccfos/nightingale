@@ -126,6 +126,8 @@ var (
 			"no privilege":       "privilege 未设置",
 			"node is nil":        "node 未设置",
 			"operation is blank": "operation  未设置",
+			"Reset Password":     "重置密码",
+			"Login Code":         "登录验证码",
 		},
 	}
 )

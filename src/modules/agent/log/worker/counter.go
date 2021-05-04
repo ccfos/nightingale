@@ -21,15 +21,17 @@ type AnalysPoint struct {
 	Value      float64
 	Tms        int64
 	Tags       map[string]string
+	OneLogLine string
 }
 
 //统计的实体
 type PointCounter struct {
 	sync.RWMutex
-	Count int64
-	Sum   float64
-	Max   float64
-	Min   float64
+	Count      int64
+	Sum        float64
+	Max        float64
+	Min        float64
+	OneLogLine string
 }
 
 // 单策略下，单step的统计对象
@@ -104,7 +106,7 @@ func PushToCount(Point *AnalysPoint) error {
 
 	//拿到tmsCount, 更新TagstringMap
 	tagstring := dataobj.SortedTags(Point.Tags)
-	return tmsCount.Update(tagstring, Point.Value)
+	return tmsCount.Update(tagstring, Point.Value, Point.OneLogLine)
 }
 
 //时间戳向前对齐
@@ -164,7 +166,7 @@ func (psc *PointsCounter) GetBytagstring(tagstring string) (*PointCounter, error
 	return point, nil
 }
 
-func (psc *PointsCounter) Update(tagstring string, value float64) error {
+func (psc *PointsCounter) Update(tagstring string, value float64, oneLogLine string) error {
 	pointCount, err := psc.GetBytagstring(tagstring)
 	if err != nil {
 		tmp := new(PointCounter)
@@ -200,7 +202,7 @@ func (psc *PointsCounter) Update(tagstring string, value float64) error {
 
 		pointCount.Count = pointCount.Count + 1
 	}
-
+	pointCount.OneLogLine = oneLogLine
 	pointCount.Unlock()
 
 	return nil

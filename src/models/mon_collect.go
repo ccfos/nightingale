@@ -132,6 +132,11 @@ type ProcCollect struct {
 
 	Target        string `json:"target"`
 	CollectMethod string `json:"collect_method"`
+
+	ProcJiffy map[int]uint64 `xorm:"-" json:"-"`
+	Jiffy     uint64         `xorm:"-" json:"-"`
+	RBytes    map[int]uint64 `xorm:"-" json:"-"`
+	WBytes    map[int]uint64 `xorm:"-" json:"-"`
 }
 
 type PluginCollect struct {
@@ -177,12 +182,13 @@ type LogCollect struct {
 	Zerofill  int    `xorm:"zero_fill" json:"zerofill"`
 	Aggregate string `json:"aggregate"`
 
-	LocalUpdated int64                     `xorm:"-" json:"-"`
-	TimeReg      *regexp.Regexp            `xorm:"-" json:"-"`
-	PatternReg   *regexp.Regexp            `xorm:"-" json:"-"`
-	ExcludeReg   *regexp.Regexp            `xorm:"-" json:"-"`
-	TagRegs      map[string]*regexp.Regexp `xorm:"-" json:"-"`
-	ParseSucc    bool                      `xorm:"-" json:"-"`
+	LocalUpdated            int64                     `xorm:"-" json:"-"`
+	TimeReg                 *regexp.Regexp            `xorm:"-" json:"-"`
+	PatternReg              *regexp.Regexp            `xorm:"-" json:"-"`
+	ExcludeReg              *regexp.Regexp            `xorm:"-" json:"-"`
+	TagRegs                 map[string]*regexp.Regexp `xorm:"-" json:"-"`
+	ParseSucc               bool                      `xorm:"-" json:"-"`
+	WhetherAttachOneLogLine int                       `json:"whether_attach_one_log_line" xorm:"'whether_attach_one_log_line'"`
 }
 
 type ApiCollect struct {
@@ -525,32 +531,32 @@ func (a *ApiCollect) Update() error {
 	return err
 }
 
-func CreateCollect(collectType, creator string, collect interface{}) error {
+func CreateCollect(collectType, creator string, collect interface{}, dryRun bool) (err error) {
 	session := DB["mon"].NewSession()
-	defer session.Close()
-
-	err := session.Begin()
-	if err != nil {
+	if err = session.Begin(); err != nil {
+		session.Close()
 		return err
 	}
+	defer func() {
+		if err != nil || dryRun {
+			session.Rollback()
+		} else {
+			err = session.Commit()
+		}
+		session.Close()
+	}()
 
-	if _, err := session.Insert(collect); err != nil {
-		session.Rollback()
-		return err
+	if _, err = session.Insert(collect); err != nil {
+		return
 	}
 
-	b, err := json.Marshal(collect)
-	if err != nil {
-		session.Rollback()
-		return err
+	var b []byte
+	if b, err = json.Marshal(collect); err != nil {
+		return
 	}
 
-	if err := saveHistory(0, collectType, "create", creator, string(b), session); err != nil {
-		session.Rollback()
-		return err
-	}
-
-	return session.Commit()
+	err = saveHistory(0, collectType, "create", creator, string(b), session)
+	return
 }
 
 func DeleteCollectById(collectType, creator string, cid int64) error {

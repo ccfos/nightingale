@@ -14,27 +14,28 @@ import (
 )
 
 type Strategy struct {
-	ID              int64                     `json:"id"`
-	Name            string                    `json:"name"`        //监控策略名
-	FilePath        string                    `json:"file_path"`   //文件路径
-	TimeFormat      string                    `json:"time_format"` //时间格式
-	Pattern         string                    `json:"pattern"`     //表达式
-	Exclude         string                    `json:"-"`
-	MeasurementType string                    `json:"measurement_type"`
-	Interval        int64                     `json:"interval"` //采集周期
-	Tags            map[string]string         `json:"tags"`
-	Func            string                    `json:"func"` //采集方式（max/min/avg/cnt）
-	Degree          int64                     `json:"degree"`
-	Unit            string                    `json:"unit"`
-	Comment         string                    `json:"comment"`
-	Creator         string                    `json:"creator"`
-	SrvUpdated      string                    `json:"updated"`
-	LocalUpdated    int64                     `json:"-"`
-	TimeReg         *regexp.Regexp            `json:"-"`
-	PatternReg      *regexp.Regexp            `json:"-"`
-	ExcludeReg      *regexp.Regexp            `json:"-"`
-	TagRegs         map[string]*regexp.Regexp `json:"-"`
-	ParseSucc       bool                      `json:"parse_succ"`
+	ID                      int64                     `json:"id"`
+	Name                    string                    `json:"name"`        //监控策略名
+	FilePath                string                    `json:"file_path"`   //文件路径
+	TimeFormat              string                    `json:"time_format"` //时间格式
+	Pattern                 string                    `json:"pattern"`     //表达式
+	Exclude                 string                    `json:"-"`
+	MeasurementType         string                    `json:"measurement_type"`
+	Interval                int64                     `json:"interval"` //采集周期
+	Tags                    map[string]string         `json:"tags"`
+	Func                    string                    `json:"func"` //采集方式（max/min/avg/cnt）
+	Degree                  int64                     `json:"degree"`
+	Unit                    string                    `json:"unit"`
+	Comment                 string                    `json:"comment"`
+	Creator                 string                    `json:"creator"`
+	SrvUpdated              string                    `json:"updated"`
+	LocalUpdated            int64                     `json:"-"`
+	TimeReg                 *regexp.Regexp            `json:"-"`
+	PatternReg              *regexp.Regexp            `json:"-"`
+	ExcludeReg              *regexp.Regexp            `json:"-"`
+	TagRegs                 map[string]*regexp.Regexp `json:"-"`
+	ParseSucc               bool                      `json:"parse_succ"`
+	WhetherAttachOneLogLine int                       `json:"whether_attach_one_log_line"`
 }
 
 func GetLogCollects() []*Strategy {
@@ -133,7 +134,7 @@ func ToStrategy(p *models.LogCollect) *Strategy {
 	s.Creator = p.Creator
 	s.SrvUpdated = p.LastUpdated.String()
 	s.LocalUpdated = p.LocalUpdated
-
+	s.WhetherAttachOneLogLine = p.WhetherAttachOneLogLine
 	return &s
 }
 
@@ -257,6 +258,9 @@ func GetPatAndTimeFormat(tf string) (string, string) {
 	case "yyyy/mm/dd HH:MM:SS":
 		pat = `(2[0-9]{3})/(0[1-9]|1[012])/([012][0-9]|3[01])\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
 		timeFormat = "2006/01/02 15:04:05"
+	case "yyyy/mm/dd - HH:MM:SS":
+		pat = `(2[0-9]{3})/(0[1-9]|1[012])/([012][0-9]|3[01])\s-\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
+		timeFormat = "2006/01/02 - 15:04:05"
 	case "yyyymmdd HH:MM:SS":
 		pat = `(2[0-9]{3})(0[1-9]|1[012])([012][0-9]|3[01])\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
 		timeFormat = "20060102 15:04:05"
@@ -269,9 +273,9 @@ func GetPatAndTimeFormat(tf string) (string, string) {
 	case "dd/mm/yyyy:HH:MM:SS":
 		pat = `([012][0-9]|3[01])/(0[1-9]|1[012])/(2[0-9]{3}):([01][0-9]|2[0-4])(:[012345][0-9]){2}`
 		timeFormat = "02/01/2006:15:04:05"
-        case "mm-dd HH:MM:SS":
-                pat = `(0[1-9]|1[012])-([012][0-9]|3[01])\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
-                timeFormat = "01-02 15:04:05"
+	case "mm-dd HH:MM:SS":
+		pat = `(0[1-9]|1[012])-([012][0-9]|3[01])\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
+		timeFormat = "01-02 15:04:05"
 	default:
 		logger.Errorf("match time pac failed : [timeFormat:%s]", tf)
 		return "", ""
