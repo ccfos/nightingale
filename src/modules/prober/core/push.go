@@ -10,12 +10,12 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/didi/nightingale/v4/src/common/address"
+	"github.com/didi/nightingale/v4/src/common/dataobj"
+	"github.com/didi/nightingale/v4/src/modules/prober/cache"
+
 	"github.com/toolkits/pkg/logger"
 	"github.com/ugorji/go/codec"
-
-	"github.com/didi/nightingale/src/common/address"
-	"github.com/didi/nightingale/src/common/dataobj"
-	"github.com/didi/nightingale/src/modules/prober/cache"
 )
 
 func Push(metricItems []*dataobj.MetricValue) {
@@ -48,7 +48,7 @@ func Push(metricItems []*dataobj.MetricValue) {
 		items = append(items, item)
 	}
 
-	addrs := address.GetRPCAddresses("transfer")
+	addrs := address.GetRPCAddresses("server")
 	count := len(addrs)
 	retry := 0
 	for {
@@ -100,7 +100,7 @@ func rpcCall(addr string, items []*dataobj.MetricValue) (dataobj.TransferResp, e
 	done := make(chan error, 1)
 
 	go func() {
-		err := client.Call("Transfer.Push", items, &reply)
+		err := client.Call("Server.Push", items, &reply)
 		done <- err
 	}()
 

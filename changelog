@@ -117,6 +117,37 @@
   - 将etc/screen/n9e_modules放到生产环境的etc/screen目录下
   - 替换n9e-rdb n9e-prober n9e-monapi n9e-transfer n9e-agent二进制
 
+3.8.0
+升级内容：
+  - monapi优化告警策略中用户信息补全逻辑
+  - rdb新增接口,查询项目下用户拥有的资源权限点
+  - transfer查询索引接口支持指定时间范围
+  - prober去掉组件采集默认的白名单设置
+升级方法：
+  - 替换n9e-rdb n9e-prober n9e-monapi n9e-transfer二进制
+  - 将etc/password-changed-email.tpl放到生产环境的etc目录下
 
+4.0.0
+升级内容：
+  - 服务端模块合并为一个模块
+  - agentd和server的调用全部走rpc
 
+重新安装：见 https://n9e.didiyun.com/docs/install/binary/
 
+升级方法：
+  - 使用新的etc替换掉原来的etc
+  - 使用etc/nginx.conf替换原来的nginx.conf
+  - n9e-prober替换旧的n9e-prober
+  - n9e-agentd替换n9e-agent
+  - n9e-server替换n9e-rdb、n9e-ams、n9e-job、n9e-monapi、n9e-transfer、n9e-judge
+
+4.0.1
+升级内容：
+  - 修复消息通知的问题
+
+重新安装：见 https://n9e.didiyun.com/docs/install/binary/
+
+升级方法：
+  - 将 *.tpl 文件放到 etc/tpl 下
+  - 替换etc/server.yml
+  - 替换n9e-server

@@ -8,8 +8,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/didi/nightingale/src/common/dataobj"
-	"github.com/didi/nightingale/src/toolkits/stack"
+	"github.com/didi/nightingale/v4/src/common/dataobj"
+	"github.com/didi/nightingale/v4/src/common/stack"
 )
 
 type AggrCalc struct {

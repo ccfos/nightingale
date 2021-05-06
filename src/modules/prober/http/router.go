@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/didi/nightingale/src/modules/prober/cache"
+	"github.com/didi/nightingale/v4/src/modules/prober/cache"
+
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 )

@@ -5,7 +5,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/didi/nightingale/src/toolkits/str"
+	"github.com/didi/nightingale/v4/src/common/str"
 )
 
 type JsonFloat float64
@@ -95,7 +95,7 @@ func (t *TsdbItem) PrimaryKey() string {
 }
 
 func (t *TsdbItem) MD5() string {
-	return str.MD5(t.Endpoint, t.Metric, str.SortedTags(t.TagsMap))
+	return str.ToMD5(t.Endpoint, t.Metric, str.SortedTags(t.TagsMap))
 }
 
 func (t *TsdbItem) UUID() string {

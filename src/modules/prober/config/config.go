@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/didi/nightingale/src/common/address"
-	"github.com/didi/nightingale/src/common/loggeri"
-	"github.com/didi/nightingale/src/common/report"
+	"github.com/didi/nightingale/v4/src/common/address"
+	"github.com/didi/nightingale/v4/src/common/loggeri"
+	"github.com/didi/nightingale/v4/src/common/report"
 
-	// "github.com/didi/nightingale/src/modules/prober/backend/transfer"
+	// "github.com/didi/nightingale/v4/src/modules/prober/backend/transfer"
 
 	"github.com/spf13/viper"
 	"github.com/toolkits/pkg/file"

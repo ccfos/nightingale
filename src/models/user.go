@@ -7,15 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/toolkits/pkg/slice"
-
 	"github.com/toolkits/pkg/cache"
 	"github.com/toolkits/pkg/errors"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 	"gopkg.in/ldap.v3"
-
-	"github.com/didi/nightingale/src/modules/rdb/config"
 )
 
 const (
@@ -111,7 +108,7 @@ func (u *User) Validate() error {
 }
 
 func (u *User) CopyLdapAttr(sr *ldap.SearchResult) {
-	attrs := config.Config.LDAP.Attributes
+	attrs := LDAPConfig.Attributes
 	if attrs.Dispname != "" {
 		u.Dispname = sr.Entries[0].GetAttributeValue(attrs.Dispname)
 	}
@@ -173,7 +170,7 @@ func LdapLogin(username, pass string) (*User, error) {
 	user.CopyLdapAttr(sr)
 
 	if has {
-		if config.Config.LDAP.CoverAttributes {
+		if LDAPConfig.CoverAttributes {
 			_, err := DB["rdb"].Where("id=?", user.Id).Update(user)
 			return &user, err
 		} else {
@@ -339,6 +336,12 @@ func UserTotal(ids []int64, where string, args ...interface{}) (int64, error) {
 	}
 
 	return session.Count(new(User))
+}
+
+func UserGetsByIds(ids []int64) ([]User, error) {
+	var users []User
+	err := DB["rdb"].In("id", ids).Find(&users)
+	return users, err
 }
 
 func UserGets(ids []int64, limit, offset int, where string, args ...interface{}) ([]User, error) {
@@ -702,4 +705,33 @@ func UsersGet(where string, args ...interface{}) ([]User, error) {
 	}
 
 	return objs, nil
+}
+
+func (u *User) PermByNode(node *Node, localOpsList []string) ([]string, error) {
+	// 我是超管，自然有权限
+	if u.IsRoot == 1 {
+		return localOpsList, nil
+	}
+
+	// 我是path上游的某个admin，自然有权限
+	nodeIds, err := NodeIdsByPaths(Paths(node.Path))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(nodeIds) == 0 {
+		return nil, nil
+	}
+
+	if yes, err := NodesAdminExists(nodeIds, u.Id); err != nil {
+		return nil, err
+	} else if yes {
+		return localOpsList, nil
+	}
+
+	if roleIds, err := RoleIdsBindingUsername(u.Username, nodeIds); err != nil {
+		return nil, err
+	} else {
+		return OperationsOfRoles(roleIds)
+	}
 }

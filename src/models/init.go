@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/didi/nightingale/src/toolkits/i18n"
+	"github.com/didi/nightingale/v4/src/common/i18n"
 	"github.com/toolkits/pkg/cache"
 )
 

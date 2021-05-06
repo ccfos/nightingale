@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/didi/nightingale/v4/src/common/address"
+	"github.com/didi/nightingale/v4/src/common/middleware"
+	"github.com/didi/nightingale/v4/src/modules/prober/config"
 
-	"github.com/didi/nightingale/src/common/address"
-	"github.com/didi/nightingale/src/common/middleware"
-	"github.com/didi/nightingale/src/modules/prober/config"
+	"github.com/gin-gonic/gin"
 )
 
 var srv = &http.Server{

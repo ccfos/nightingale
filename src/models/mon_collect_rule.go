@@ -4,13 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/didi/nightingale/src/common/dataobj"
+	"github.com/didi/nightingale/v4/src/common/dataobj"
+
 	"xorm.io/xorm"
 )
 
 const (
 	defaultStep = 10
 )
+
+type CollectRuleRpcResp struct {
+	Data []*CollectRule
+	Msg  string
+}
 
 type CollectRule struct {
 	Id          int64           `json:"id"`
