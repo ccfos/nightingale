@@ -328,10 +328,17 @@ func (n *Node) Move(tnode *Node) error {
 		return fmt.Errorf("target node %s in diffrent tenant", tnode.Path)
 	}
 
-	// 找出所有的子节点，需要修改 path
 	pathPrefix := n.Path + "."
+	// 检查迁移目标节点不能是待迁移节点的子孙节点
+	if strings.HasPrefix(tnode.Path, pathPrefix) {
+		return fmt.Errorf("target node %s is descendant of %s", tnode.Path, n.Path)
+	}
+
+	// 找出所有的子节点，需要修改 path
 	var children []*Node
-	DB["rdb"].Where("path like ?", "%"+pathPrefix+".%").Find(&children)
+	if err := DB["rdb"].Where("path like ?", "%"+pathPrefix+".%").Find(&children); err != nil {
+		return err
+	}
 
 	n.Pid = tnode.Id
 	n.Path = tnode.Path + "." + n.Ident
@@ -348,7 +355,7 @@ func (n *Node) Move(tnode *Node) error {
 		return err
 	}
 
-	if _, err := session.Where("id=?", n.Id).Cols("pid, path").Update(n); err != nil {
+	if _, err := session.Where("id=?", n.Id).Cols("pid", "path").Update(n); err != nil {
 		session.Rollback()
 		return err
 	}
