@@ -321,6 +321,54 @@ func (n *Node) Modify(name, cate, note string, adminIds []int64) error {
 	return session.Commit()
 }
 
+func (n *Node) Move(tnode *Node) error {
+	// 检查是否属于同一个租户，不同租户的节点迁移需要迁移机器，暂时不支持
+	if n.Tenant() != tnode.Tenant() {
+		return fmt.Errorf("target node %s in diffrent tenant", tnode.Path)
+	}
+
+	pathPrefix := n.Path + "."
+	// 检查迁移目标节点不能是待迁移节点的子孙节点
+	if strings.HasPrefix(tnode.Path, pathPrefix) {
+		return fmt.Errorf("target node %s is descendant of %s", tnode.Path, n.Path)
+	}
+
+	// 找出所有的子节点，需要修改 path
+	var children []*Node
+	if err := DB["rdb"].Where("path like ?", "%"+pathPrefix+".%").Find(&children); err != nil {
+		return err
+	}
+
+	n.Pid = tnode.Id
+	n.Path = tnode.Path + "." + n.Ident
+	newPrefix := n.Path + "."
+	for _, child := range children {
+		child.Path = strings.Replace(child.Path, pathPrefix, newPrefix, 1)
+	}
+
+	// 事物处理所有数据库 path 修改
+	session := DB["rdb"].NewSession()
+	defer session.Close()
+
+	if err := session.Begin(); err != nil {
+		return err
+	}
+
+	if _, err := session.Where("id=?", n.Id).Cols("pid", "path").Update(n); err != nil {
+		session.Rollback()
+		return err
+	}
+
+	for _, child := range children {
+		if _, err := session.Where("id=?", child.Id).Cols("path").Update(child); err != nil {
+			session.Rollback()
+			return err
+		}
+	}
+
+	return session.Commit()
+}
+
 func (n *Node) Del() error {
 	// inner 租户节点不允许删除
 	if n.Path == InnerTenantIdent {
