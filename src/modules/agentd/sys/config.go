@@ -3,7 +3,7 @@ package sys
 type SysSection struct {
 	Enable           bool                `yaml:"enable"`
 	IfacePrefix      []string            `yaml:"ifacePrefix"`
-	MountCollect     MountSection        `yaml:"diskCollect"`
+	MountCollect     MountSection        `yaml:"mountCollect"`
 	IgnoreMetrics    []string            `yaml:"ignoreMetrics"`
 	IgnoreMetricsMap map[string]struct{} `yaml:"-"`
 	NtpServers       []string            `yaml:"ntpServers"`

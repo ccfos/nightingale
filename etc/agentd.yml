@@ -63,7 +63,7 @@ sys:
     - ens
 
   # 磁盘采集
-  diskCollect:
+  mountCollect:
     # 正则匹配需要采集的挂载卷类型
     typePrefix: "^(btrfs|ext2|ext3|ext4|jfs|reiser|xfs|ffs|ufs|jfs|jfs2|vxfs|hfs|ntfs|fat32|zfs|nfs)$"
     # 忽略采集以下面开头的挂载目录
