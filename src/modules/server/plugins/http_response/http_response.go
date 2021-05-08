@@ -149,10 +149,10 @@ func (p *Rule) TelegrafInput() (telegraf.Input, error) {
 		Log:                 plugins.GetLogger(),
 		ClientConfig:        p.ClientConfig.TlsClientConfig(),
 	}
-	if err := plugins.SetValue(&input.ResponseTimeout.Duration, time.Second*time.Duration(p.ResponseTimeout)); err != nil {
+	if err := plugins.SetValue(&input.ResponseTimeout, time.Second*time.Duration(p.ResponseTimeout)); err != nil {
 		return nil, err
 	}
-	if err := plugins.SetValue(&input.ResponseBodyMaxSize.Size, int64(p.ResponseBodyMaxSize)*1024*1024); err != nil {
+	if err := plugins.SetValue(&input.ResponseBodyMaxSize, int64(p.ResponseBodyMaxSize)*1024*1024); err != nil {
 		return nil, err
 	}
 	return input, nil

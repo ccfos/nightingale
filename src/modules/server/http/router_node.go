@@ -216,6 +216,24 @@ func nodePut(c *gin.Context) {
 	renderData(c, node, err)
 }
 
+func nodeMove(c *gin.Context) {
+	id := urlParamInt64(c, "id")
+	node := Node(id)
+
+	loginUser(c).CheckPermByNode(node, "rdb_node_delete")
+
+	var f struct {
+		Pid int64 `json:"pid"`
+	}
+	bind(c, &f)
+	tNode := Node(f.Pid)
+
+	loginUser(c).CheckPermByNode(tNode, "rdb_node_create")
+
+	err := node.Move(tNode)
+	renderData(c, node, err)
+}
+
 func nodeDel(c *gin.Context) {
 	id := urlParamInt64(c, "id")
 	node := Node(id)
