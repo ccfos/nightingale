@@ -9,6 +9,12 @@ enable:
   report: true
   metrics: true
 
+defaultTags:
+  enable: false
+  tags:
+    key1: value1
+    key2: value2
+    
 udp:
   enable: false
   listen: :788
@@ -56,12 +62,16 @@ sys:
     - em
     - ens
 
-  # ignore disk mount point
-  mountIgnore:
-    prefix:
+  # 磁盘采集
+  mountCollect:
+    # 正则匹配需要采集的挂载卷类型
+    typePrefix: "^(btrfs|ext2|ext3|ext4|jfs|reiser|xfs|ffs|ufs|jfs|jfs2|vxfs|hfs|ntfs|fat32|zfs|nfs)$"
+    # 忽略采集以下面开头的挂载目录
+    ignorePrefix:
       - /var/lib
       - /run
-    # collect anyway
+      - /boot
+    # 仍然采集ignorePrefix中的例外的挂载目录(填写全路径)
     exclude: []
 
   ignoreMetrics:
