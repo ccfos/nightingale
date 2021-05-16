@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/didi/nightingale/v4/src/models"
@@ -29,6 +31,9 @@ func (s *UserMap) GetByIds(ids []int64) []*models.User {
 	defer s.RUnlock()
 	var users []*models.User
 	for _, id := range ids {
+		if s.Data[id] == nil {
+			continue
+		}
 		users = append(users, s.Data[id])
 	}
 
@@ -41,4 +46,24 @@ func (s *UserMap) SetAll(users map[int64]*models.User) {
 
 	s.Data = users
 	return
+}
+
+func (s *UserMap) GetUsernamesByIds(ids string) []string {
+	var names []string
+	ids = strings.Replace(ids, "[", "", -1)
+	ids = strings.Replace(ids, "]", "", -1)
+	idsStrArr := strings.Split(ids, ",")
+
+	userIds := []int64{}
+	for _, userId := range idsStrArr {
+		id, _ := strconv.ParseInt(userId, 10, 64)
+		userIds = append(userIds, id)
+	}
+
+	users := s.GetByIds(userIds)
+	for _, user := range users {
+		names = append(names, user.Username)
+	}
+
+	return names
 }

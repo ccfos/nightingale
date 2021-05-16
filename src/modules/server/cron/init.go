@@ -11,6 +11,7 @@ func Init() {
 	go CleanStraLoop()
 	go SyncCollects()
 	go SyncUsers()
+	go SyncTeams()
 	go SyncTeamUsers()
 	go CleanCollectLoop()
 

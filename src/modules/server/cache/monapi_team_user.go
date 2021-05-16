@@ -11,7 +11,7 @@ type TeamUsersMap struct {
 
 var TeamUsersCache *TeamUsersMap
 
-func NewTeamCache() *TeamUsersMap {
+func NewTeamUsersCache() *TeamUsersMap {
 	return &TeamUsersMap{Data: make(map[int64][]int64)}
 }
 
@@ -27,9 +27,13 @@ func (s *TeamUsersMap) GetByTeamIds(ids []int64) []int64 {
 	defer s.RUnlock()
 	m := make(map[int64]struct{})
 	var userIds []int64
+
 	for _, id := range ids {
-		m[id] = struct{}{}
+		for _, uid := range s.Data[id] {
+			m[uid] = struct{}{}
+		}
 	}
+
 	for id, _ := range m {
 		userIds = append(userIds, id)
 	}

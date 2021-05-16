@@ -8,31 +8,28 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func SyncTeamUsers() {
+func SyncTeams() {
 	t1 := time.NewTicker(time.Duration(cache.CHECK_INTERVAL) * time.Second)
 
-	syncTeamUsers()
+	syncTeam()
 	logger.Info("[cron] sync team start...")
 	for {
 		<-t1.C
-		syncTeamUsers()
+		syncTeam()
 	}
 }
 
-func syncTeamUsers() {
-	teamUsers, err := models.TeamUsers()
-
+func syncTeam() {
+	teams, err := models.AllTeams()
 	if err != nil {
-		logger.Warningf("get Teams err:%v %v", err)
+		logger.Warningf("get teams err:%v %v", err)
+		return
 	}
 
-	teamUsersMap := make(map[int64][]int64)
-	for _, teamUser := range teamUsers {
-		if _, exists := teamUsersMap[teamUser.TeamId]; exists {
-			teamUsersMap[teamUser.TeamId] = append(teamUsersMap[teamUser.TeamId], teamUser.UserId)
-		} else {
-			teamUsersMap[teamUser.TeamId] = []int64{teamUser.UserId}
-		}
+	teamsMap := make(map[int64]*models.Team)
+	for _, team := range teams {
+		teamsMap[team.Id] = &team
 	}
-	cache.TeamUsersCache.SetAll(teamUsersMap)
+
+	cache.TeamCache.SetAll(teamsMap)
 }

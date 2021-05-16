@@ -21,9 +21,9 @@ func SyncUsers() {
 
 func syncUsers() {
 	users, err := models.AllUsers()
-
 	if err != nil {
 		logger.Warningf("get users err:%v %v", err)
+		return
 	}
 
 	usersMap := make(map[int64]*models.User)

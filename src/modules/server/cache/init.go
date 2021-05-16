@@ -27,6 +27,11 @@ func Init(regions []string) {
 	ApiCollectCache = NewApiCollectCache()
 	SnmpCollectCache = NewSnmpCollectCache()
 	SnmpHWCache = NewSnmpHWCache()
+	TeamUsersCache = NewTeamUsersCache()
+	TeamCache = NewTeamCache()
+	UserCache = NewUserCache()
+	TreeNodeCache = NewTreeNodeCache()
+
 	LoadMetrics()
 
 	go InitJudgeHashRing()

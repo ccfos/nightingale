@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/v4/src/models"
+	"github.com/didi/nightingale/v4/src/modules/server/cache"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errors"
@@ -84,14 +85,11 @@ func eventCurGets(c *gin.Context) {
 
 	datList := []eventData{}
 	for i := 0; i < len(events); i++ {
-		users, err := models.GetUsersNameByIds(events[i].Users)
-		errors.Dangerous(err)
+		users := cache.UserCache.GetUsernamesByIds(events[i].Users)
 
-		groups, err := models.GetTeamsNameByIds(events[i].Groups)
-		errors.Dangerous(err)
+		groups := cache.TeamCache.GetTeamNamesByIds(events[i].Groups)
 
-		claimants, err := models.GetUsersNameByIds(events[i].Claimants)
-		errors.Dangerous(err)
+		claimants := cache.UserCache.GetUsernamesByIds(events[i].Claimants)
 
 		var detail []models.EventDetail
 		err = json.Unmarshal([]byte(events[i].Detail), &detail)
@@ -110,11 +108,9 @@ func eventCurGets(c *gin.Context) {
 		alertUpgrade, err := models.EventAlertUpgradeUnMarshal(events[i].AlertUpgrade)
 		errors.Dangerous(err)
 
-		alertUsers, err := models.GetUsersNameByIds(alertUpgrade.Users)
-		errors.Dangerous(err)
+		alertUsers := cache.UserCache.GetUsernamesByIds(alertUpgrade.Users)
 
-		alertGroups, err := models.GetTeamsNameByIds(alertUpgrade.Groups)
-		errors.Dangerous(err)
+		alertGroups := cache.TeamCache.GetTeamNamesByIds(alertUpgrade.Groups)
 
 		dat := eventData{
 			Id:          events[i].Id,
@@ -195,11 +191,9 @@ func eventHisGets(c *gin.Context) {
 
 	datList := []eventData{}
 	for i := 0; i < len(events); i++ {
-		users, err := models.GetUsersNameByIds(events[i].Users)
-		errors.Dangerous(err)
+		users := cache.UserCache.GetUsernamesByIds(events[i].Users)
 
-		groups, err := models.GetTeamsNameByIds(events[i].Groups)
-		errors.Dangerous(err)
+		groups := cache.TeamCache.GetTeamNamesByIds(events[i].Groups)
 
 		var detail []models.EventDetail
 		err = json.Unmarshal([]byte(events[i].Detail), &detail)
@@ -218,11 +212,9 @@ func eventHisGets(c *gin.Context) {
 		alertUpgrade, err := models.EventAlertUpgradeUnMarshal(events[i].AlertUpgrade)
 		errors.Dangerous(err)
 
-		alertUsers, err := models.GetUsersNameByIds(alertUpgrade.Users)
-		errors.Dangerous(err)
+		alertUsers := cache.UserCache.GetUsernamesByIds(alertUpgrade.Users)
 
-		alertGroups, err := models.GetTeamsNameByIds(alertUpgrade.Groups)
-		errors.Dangerous(err)
+		alertGroups := cache.TeamCache.GetTeamNamesByIds(alertUpgrade.Groups)
 
 		dat := eventData{
 			Id:          events[i].Id,
@@ -274,14 +266,12 @@ func eventHisGetById(c *gin.Context) {
 
 	event := mustEvent(urlParamInt64(c, "id"))
 
-	users, err := models.GetUsersNameByIds(event.Users)
-	errors.Dangerous(err)
+	users := cache.UserCache.GetUsernamesByIds(event.Users)
 
-	groups, err := models.GetTeamsNameByIds(event.Groups)
-	errors.Dangerous(err)
+	groups := cache.TeamCache.GetTeamNamesByIds(event.Groups)
 
 	var detail []models.EventDetail
-	err = json.Unmarshal([]byte(event.Detail), &detail)
+	err := json.Unmarshal([]byte(event.Detail), &detail)
 	errors.Dangerous(err)
 
 	tagsList := []string{}
@@ -294,11 +284,9 @@ func eventHisGetById(c *gin.Context) {
 	alertUpgrade, err := models.EventAlertUpgradeUnMarshal(event.AlertUpgrade)
 	errors.Dangerous(err)
 
-	alertUsers, err := models.GetUsersNameByIds(alertUpgrade.Users)
-	errors.Dangerous(err)
+	alertUsers := cache.UserCache.GetUsernamesByIds(alertUpgrade.Users)
 
-	alertGroups, err := models.GetTeamsNameByIds(alertUpgrade.Groups)
-	errors.Dangerous(err)
+	alertGroups := cache.TeamCache.GetTeamNamesByIds(alertUpgrade.Groups)
 
 	dat := eventData{
 		Id:          event.Id,
@@ -339,17 +327,14 @@ func eventCurGetById(c *gin.Context) {
 
 	eventCur := mustEventCur(urlParamInt64(c, "id"))
 
-	users, err := models.GetUsersNameByIds(eventCur.Users)
-	errors.Dangerous(err)
+	users := cache.UserCache.GetUsernamesByIds(eventCur.Users)
 
-	groups, err := models.GetTeamsNameByIds(eventCur.Groups)
-	errors.Dangerous(err)
+	groups := cache.TeamCache.GetTeamNamesByIds(eventCur.Groups)
 
-	claimants, err := models.GetUsersNameByIds(eventCur.Claimants)
-	errors.Dangerous(err)
+	claimants := cache.UserCache.GetUsernamesByIds(eventCur.Claimants)
 
 	var detail []models.EventDetail
-	err = json.Unmarshal([]byte(eventCur.Detail), &detail)
+	err := json.Unmarshal([]byte(eventCur.Detail), &detail)
 	errors.Dangerous(err)
 
 	tagsList := []string{}
@@ -362,10 +347,9 @@ func eventCurGetById(c *gin.Context) {
 	alertUpgrade, err := models.EventAlertUpgradeUnMarshal(eventCur.AlertUpgrade)
 	errors.Dangerous(err)
 
-	alertUsers, err := models.GetUsersNameByIds(alertUpgrade.Users)
-	errors.Dangerous(err)
+	alertUsers := cache.UserCache.GetUsernamesByIds(alertUpgrade.Users)
 
-	alertGroups, err := models.GetTeamsNameByIds(alertUpgrade.Groups)
+	alertGroups := cache.TeamCache.GetTeamNamesByIds(alertUpgrade.Groups)
 
 	dat := eventData{
 		Id:          eventCur.Id,

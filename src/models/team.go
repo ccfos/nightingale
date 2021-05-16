@@ -314,6 +314,12 @@ func TeamGets(query string, limit, offset int) ([]Team, error) {
 	return objs, err
 }
 
+func AllTeams() ([]Team, error) {
+	var teams []Team
+	err := DB["rdb"].Find(&teams)
+	return teams, err
+}
+
 func TeamGetsInIds(ids []int64, query string, limit, offset int) ([]Team, error) {
 	session := DB["rdb"].In("id", ids).Limit(limit, offset).OrderBy("ident")
 	if query != "" {

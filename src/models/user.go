@@ -3,7 +3,6 @@ package models
 import (
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 	"time"
 
@@ -678,29 +677,6 @@ func (u *User) NopriResIdents(resIds []int64, op string) ([]string, error) {
 	// 全量的 - 我有权限的 = 我没有权限的
 	nopris := slice.SubInt64(resIds, permIds)
 	return ResourceIdentsByIds(nopris)
-}
-
-func GetUsersNameByIds(ids string) ([]string, error) {
-	var names []string
-	ids = strings.Replace(ids, "[", "", -1)
-	ids = strings.Replace(ids, "]", "", -1)
-	idsStrArr := strings.Split(ids, ",")
-
-	userIds := []int64{}
-	for _, userId := range idsStrArr {
-		id, _ := strconv.ParseInt(userId, 10, 64)
-		userIds = append(userIds, id)
-	}
-
-	users, err := UserGetByIds(userIds)
-
-	if err != nil {
-		return names, err
-	}
-	for _, user := range users {
-		names = append(names, user.Username)
-	}
-	return names, err
 }
 
 func UsersGet(where string, args ...interface{}) ([]User, error) {
