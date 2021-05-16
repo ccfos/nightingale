@@ -10,6 +10,8 @@ func Init() {
 	go SyncStras()
 	go CleanStraLoop()
 	go SyncCollects()
+	go SyncUsers()
+	go SyncTeamUsers()
 	go CleanCollectLoop()
 
 	//rdb

@@ -316,11 +316,7 @@ func getUserIds(users, groups string) ([]int64, error) {
 		return nil, err
 	}
 
-	teamUserids, err := models.UserIdsByTeamIds(groupIds)
-	if err != nil {
-		logger.Errorf("get user id by team id failed, err: %v", err)
-		return nil, err
-	}
+	teamUserids := cache.TeamUsersCache.GetByTeamIds(groupIds)
 
 	userIds = append(userIds, teamUserids...)
 

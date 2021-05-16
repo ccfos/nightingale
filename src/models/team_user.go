@@ -54,3 +54,9 @@ func TeamHasMember(tid, uid int64, isAdmin ...int) (bool, error) {
 	cnt, err := session.Count(new(TeamUser))
 	return cnt > 0, err
 }
+
+func TeamUsers() ([]TeamUser, error) {
+	var objs []TeamUser
+	err := DB["rdb"].Table("team_user").Find(&objs)
+	return objs, err
+}

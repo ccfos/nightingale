@@ -30,6 +30,8 @@ func Start() {
 	}
 	logger.Infof("server is available at:[%s]", addr)
 
+	go consumer()
+
 	var mh codec.MsgpackHandle
 	mh.MapType = reflect.TypeOf(map[string]interface{}(nil))
 

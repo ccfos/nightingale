@@ -8,6 +8,7 @@ import (
 
 	"github.com/didi/nightingale/v4/src/models"
 	"github.com/didi/nightingale/v4/src/modules/server/auth"
+	"github.com/didi/nightingale/v4/src/modules/server/cache"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
@@ -258,14 +259,12 @@ func v1UserGetByUUIDs(c *gin.Context) {
 
 func v1UserIdsGetByTeamIds(c *gin.Context) {
 	ids := queryStr(c, "ids")
-	userIds, err := models.UserIdsByTeamIds(str.IdsInt64(ids))
-	renderData(c, userIds, err)
+	renderData(c, cache.TeamUsersCache.GetByTeamIds(str.IdsInt64(ids)), nil)
 }
 
 func v1UserGetByIds(c *gin.Context) {
 	ids := queryStr(c, "ids")
-	users, err := models.UserGetByIds(str.IdsInt64(ids))
-	renderData(c, users, err)
+	renderData(c, cache.UserCache.GetByIds(str.IdsInt64(ids)), nil)
 }
 
 func v1UserGetByNames(c *gin.Context) {

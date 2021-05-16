@@ -142,8 +142,8 @@ func syncSnmpCollects() {
 		} else {
 			configsMap[key] = []*dataobj.IPAndSnmp{collect}
 		}
-
-		cache.SnmpCollectCache.SetAll(configsMap)
 	}
+
+	cache.SnmpCollectCache.SetAll(configsMap)
 
 }

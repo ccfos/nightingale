@@ -14,6 +14,7 @@ import (
 	"github.com/didi/nightingale/v4/src/common/dataobj"
 	"github.com/didi/nightingale/v4/src/common/slice"
 	"github.com/didi/nightingale/v4/src/models"
+	"github.com/didi/nightingale/v4/src/modules/server/cache"
 	"github.com/didi/nightingale/v4/src/modules/server/config"
 	"github.com/didi/nightingale/v4/src/modules/server/cron"
 	"github.com/didi/nightingale/v4/src/modules/server/redisc"
@@ -46,11 +47,7 @@ func DoNotify(isUpgrade bool, events ...*models.Event) {
 	if len(userIds) == 0 {
 		return
 	}
-	users, err := models.UserGetByIds(userIds)
-	if err != nil {
-		logger.Errorf("notify failed, get user by id failed, events: %+v, err: %v", events, err)
-		return
-	}
+	users := cache.UserCache.GetByIds(userIds)
 
 	notifyTypes := config.Config.Monapi.Notify[prio]
 	for i := 0; i < len(notifyTypes); i++ {

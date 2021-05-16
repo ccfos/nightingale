@@ -359,6 +359,12 @@ func UserGets(ids []int64, limit, offset int, where string, args ...interface{})
 	return users, err
 }
 
+func AllUsers() ([]User, error) {
+	var users []User
+	err := DB["rdb"].Find(&users)
+	return users, err
+}
+
 func (u *User) Del() error {
 	session := DB["rdb"].NewSession()
 	defer session.Close()

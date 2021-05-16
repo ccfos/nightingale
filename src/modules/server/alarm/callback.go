@@ -126,10 +126,7 @@ func doCallback(event *models.Event) {
 		logger.Errorf("event detail unmarshal event.users, err: %v", err)
 	}
 
-	users, err := models.UserGetByIds(userIds)
-	if err != nil {
-		logger.Errorf("get users err: %v", err)
-	}
+	users := cache.UserCache.GetByIds(userIds)
 
 	usernames := []string{}
 	for _, user := range users {
