@@ -259,6 +259,12 @@ func eventHisGets(c *gin.Context) {
 
 func eventCurDel(c *gin.Context) {
 	eventCur := mustEventCur(urlParamInt64(c, "id"))
+
+	can, err := models.UsernameCandoNodeOp(loginUsername(c), "mon_event_write", eventCur.Nid)
+	errors.Dangerous(err)
+	if !can {
+		errors.Bomb(_s("no privilege"))
+	}
 	renderMessage(c, eventCur.EventIgnore())
 }
 
@@ -403,6 +409,13 @@ func eventCurClaim(c *gin.Context) {
 
 	var f claimForm
 	errors.Dangerous(c.ShouldBind(&f))
+
+	eventCur := mustEventCur(f.Id)
+	can, err := models.UsernameCandoNodeOp(username, "mon_event_write", eventCur.Nid)
+	errors.Dangerous(err)
+	if !can {
+		errors.Bomb(_s("no privilege"))
+	}
 
 	id := f.Id
 	nodePath := f.NodePath
