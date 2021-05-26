@@ -36,7 +36,7 @@ require (
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.6.1
 	github.com/toolkits/file v0.0.0-20160325033739-a5b3c5147e07
-	github.com/toolkits/pkg v1.1.3
+	github.com/toolkits/pkg v1.1.4
 	github.com/toolkits/sys v0.0.0-20170615103026-1f33b217ffaf // indirect
 	github.com/ugorji/go/codec v1.1.7
 	go.uber.org/automaxprocs v1.3.0 // indirect
