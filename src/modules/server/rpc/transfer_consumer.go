@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/didi/nightingale/v4/src/common/dataobj"
 	"github.com/didi/nightingale/v4/src/common/stats"
@@ -95,7 +96,7 @@ func aggrOut2MetricValue(out *dataobj.AggrOut) *dataobj.MetricValue {
 		Metric:       cache.AggrCalcMap.GetMetric(out.Data.Sid),
 		Timestamp:    out.Data.Timestamp / 1000,
 		Step:         out.Data.Step,
-		Tags:         out.Data.GroupTag,
+		Tags:         strings.Replace(out.Data.GroupTag, "||", ",", -1),
 		ValueUntyped: out.Data.Value,
 		CounterType:  "GAUGE",
 	}

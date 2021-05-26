@@ -393,13 +393,16 @@ func Parse(ymlFile string) error {
 	}
 
 	fmt.Println("config.file:", ymlFile)
-	Ident, _ = identity.GetIdent()
-
 	if err := parseOps(); err != nil {
 		return err
 	}
 
-	return identity.Parse()
+	if err := identity.Parse(); err != nil {
+		return err
+	}
+	Ident, _ = identity.GetIdent()
+
+	return nil
 }
 
 // map["node"]="host1,host2" --> map["node"]=["host1", "host2"]

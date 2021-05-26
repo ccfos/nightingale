@@ -410,13 +410,6 @@ func eventCurClaim(c *gin.Context) {
 	var f claimForm
 	errors.Dangerous(c.ShouldBind(&f))
 
-	eventCur := mustEventCur(f.Id)
-	can, err := models.UsernameCandoNodeOp(username, "mon_event_write", eventCur.Nid)
-	errors.Dangerous(err)
-	if !can {
-		errors.Bomb(_s("no privilege"))
-	}
-
 	id := f.Id
 	nodePath := f.NodePath
 
@@ -429,8 +422,27 @@ func eventCurClaim(c *gin.Context) {
 	}
 
 	if id != 0 {
+		eventCur := mustEventCur(id)
+		can, err := models.UsernameCandoNodeOp(username, "mon_event_write", eventCur.Nid)
+		errors.Dangerous(err)
+		if !can {
+			errors.Bomb(_s("no privilege"))
+		}
+
 		renderMessage(c, models.UpdateClaimantsById(users[0].Id, id))
 		return
+	}
+
+	node, err := models.NodeGet("path=?", nodePath)
+	errors.Dangerous(err)
+	if node == nil {
+		errors.Bomb(_s("node not found"))
+	}
+
+	can, err := models.UsernameCandoNodeOp(username, "mon_event_write", node.Id)
+	errors.Dangerous(err)
+	if !can {
+		errors.Bomb(_s("no privilege"))
 	}
 
 	renderMessage(c, models.UpdateClaimantsByNodePath(users[0].Id, nodePath))
