@@ -27,8 +27,8 @@ func syncUsers() {
 	}
 
 	usersMap := make(map[int64]*models.User)
-	for _, user := range users {
-		usersMap[user.Id] = &user
+	for i, _ := range users {
+		usersMap[users[i].Id] = &users[i]
 	}
 
 	cache.UserCache.SetAll(usersMap)

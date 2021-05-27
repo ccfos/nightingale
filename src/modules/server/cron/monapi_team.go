@@ -27,8 +27,8 @@ func syncTeam() {
 	}
 
 	teamsMap := make(map[int64]*models.Team)
-	for _, team := range teams {
-		teamsMap[team.Id] = &team
+	for i, _ := range teams {
+		teamsMap[teams[i].Id] = &teams[i]
 	}
 
 	cache.TeamCache.SetAll(teamsMap)

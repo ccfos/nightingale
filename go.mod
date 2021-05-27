@@ -13,16 +13,16 @@ require (
 	github.com/gaochao1/sw v4.0.0+incompatible
 	github.com/garyburd/redigo v1.6.2
 	github.com/gin-contrib/pprof v1.3.0
-	github.com/gin-contrib/static v0.0.1 // indirect
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-ping/ping v0.0.0-20201115131931-3300c582a663
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/uuid v1.1.2
-	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/hashicorp/golang-lru v0.5.4
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb v1.8.0
 	github.com/influxdata/telegraf v1.17.2
 	github.com/jackc/pgx v3.6.0+incompatible
+	github.com/lib/pq v1.6.0
 	github.com/m3db/m3 v0.15.17
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.0 // indirect
