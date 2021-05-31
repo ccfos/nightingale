@@ -1,7 +1,9 @@
 package backend
 
 import (
-	"log"
+	"context"
+	"fmt"
+	"time"
 
 	"github.com/didi/nightingale/v4/src/modules/server/backend/influxdb"
 	"github.com/didi/nightingale/v4/src/modules/server/backend/m3db"
@@ -29,7 +31,7 @@ var (
 	m3dbDataSource       *m3db.Client
 )
 
-func Init(cfg BackendSection) {
+func Init(cfg BackendSection) error {
 	defaultDataSource = cfg.DataSource
 	StraPath = cfg.StraPath
 
@@ -77,10 +79,26 @@ func Init(cfg BackendSection) {
 	// init m3db
 	if cfg.M3db.Enabled {
 		var err error
-		m3dbDataSource, err = m3db.NewClient(cfg.M3db)
+		d := time.Now().Add(time.Second * 5)
+		ctx, cancel := context.WithDeadline(context.Background(), d)
+
+		go func() {
+			m3dbDataSource, err = m3db.NewClient(cfg.M3db)
+			if err != nil {
+				err = fmt.Errorf("unable to new m3db client: %v", err)
+			}
+			RegisterDataSource(cfg.M3db.Name, m3dbDataSource)
+			cancel()
+		}()
+
+		<-ctx.Done()
 		if err != nil {
-			log.Fatalf("unable to new m3db client: %v", err)
+			return err
 		}
-		RegisterDataSource(cfg.M3db.Name, m3dbDataSource)
+		if err := ctx.Err(); err != nil && err != context.Canceled {
+			return fmt.Errorf("new m3db client err: %s", err)
+		}
 	}
+
+	return nil
 }

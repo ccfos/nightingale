@@ -122,7 +122,9 @@ func main() {
 	}
 
 	aggr.Init(conf.Transfer.Aggr)
-	backend.Init(conf.Transfer.Backend)
+	if err := backend.Init(conf.Transfer.Backend); err != nil {
+		log.Fatalf("backend fail: %v", err)
+	}
 	// init judge
 	go judge.InitJudge(conf.Judge.Backend, config.Ident)
 
