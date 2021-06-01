@@ -151,3 +151,13 @@
   - 将 *.tpl 文件放到 etc/tpl 下
   - 替换etc/server.yml
   - 替换n9e-server
+
+4.0.2
+升级内容：
+  - 优化告警接收人补全逻辑
+  - 增加pospostgresql监控插件
+
+重新安装：见 https://n9e.didiyun.com/docs/install/binary/
+
+升级方法：
+  - 替换n9e-server n9e-prober
