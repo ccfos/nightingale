@@ -188,8 +188,6 @@ monapi:
 
 judge:
   query:
-    connTimeout: 1000
-    callTimeout: 2000
     maxConn:          2000
     maxIdle:          100
     connTimeout:      1000
