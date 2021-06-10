@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/didi/nightingale/v4/src/common/dataobj"
@@ -93,6 +94,7 @@ func PluginRun(plugin *Plugin) {
 			logger.Errorf("plugin:%+v %v", plugin, err)
 			return
 		}
+		cmd.Env = syscall.Environ()
 		for k, v := range envs {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 		}
