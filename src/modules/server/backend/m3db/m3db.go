@@ -145,7 +145,7 @@ func (p *Client) QueryData(inputs []dataobj.QueryData) []*dataobj.TsdbQueryRespo
 	query, opts := p.config.queryDataOptions(inputs)
 	ret, err := fetchTagged(session, p.namespaceID, query, opts)
 	if err != nil {
-		logger.Errorf("unable to query data: ", err)
+		logger.Errorf("unable to query data: %v", err)
 		return nil
 	}
 
@@ -198,7 +198,7 @@ func (p *Client) QueryMetrics(input dataobj.EndpointsRecv) *dataobj.MetricResp {
 
 	tags, err := completeTags(session, p.namespaceID, query, opts)
 	if err != nil {
-		logger.Errorf("unable completeTags: ", err)
+		logger.Errorf("unable completeTags: %v", err)
 		return nil
 	}
 	return tagsMr(tags)
@@ -222,7 +222,7 @@ func (p *Client) QueryTagPairs(input dataobj.EndpointMetricRecv) []dataobj.Index
 
 	tags, err := completeTags(session, p.namespaceID, query, opts)
 	if err != nil {
-		logger.Errorf("unable completeTags: ", err)
+		logger.Errorf("unable completeTags: %v", err)
 		return nil
 	}
 
@@ -254,7 +254,7 @@ func (p *Client) queryIndexByClude(session client.Session, input dataobj.CludeRe
 
 	iter, _, err := session.FetchTaggedIDs(p.namespaceID, query, opts)
 	if err != nil {
-		logger.Errorf("unable FetchTaggedIDs: ", err)
+		logger.Errorf("unable FetchTaggedIDs: %v", err)
 		return nil
 	}
 
@@ -276,7 +276,7 @@ func (p *Client) queryIndexByClude(session client.Session, input dataobj.CludeRe
 	}
 
 	if err := iter.Err(); err != nil {
-		logger.Errorf("FetchTaggedIDs iter:", err)
+		logger.Errorf("FetchTaggedIDs iter: %v", err)
 		return nil
 	}
 
@@ -331,7 +331,7 @@ func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.Inde
 
 	iter, _, err := session.FetchTaggedIDs(p.namespaceID, query, opts)
 	if err != nil {
-		logger.Errorf("unable FetchTaggedIDs: ", err)
+		logger.Errorf("unable FetchTaggedIDs: %v", err)
 		return
 	}
 
@@ -350,7 +350,7 @@ func (p *Client) queryIndexByFullTags(session client.Session, input dataobj.Inde
 		ret.Tags = append(ret.Tags, k)
 	}
 	if err := iter.Err(); err != nil {
-		logger.Errorf("FetchTaggedIDs iter:", err)
+		logger.Errorf("FetchTaggedIDs iter: %v", err)
 	}
 
 	return ret
