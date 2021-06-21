@@ -72,12 +72,7 @@ func main() {
 						items := getTransferItems(endpoint, metric)
 						//log.Println(items[0])
 						start := time.Now().UnixNano()
-						err := cli.Push(items)
-						if err != nil {
-							fmt.Println("err:", err)
-						} else {
-							//fmt.Println("resp:", resp)
-						}
+						cli.Push2Queue(items)
 						log.Println((time.Now().UnixNano() - start) / 1000000)
 					}(endpoint, metric)
 				}
