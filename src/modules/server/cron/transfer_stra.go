@@ -36,6 +36,10 @@ func getStrategy() {
 			continue
 		}
 
+		if stra.Exprs[0].Func == "nodata" {
+			continue
+		}
+
 		metric := stra.Exprs[0].Metric
 		for _, nid := range stra.Nids {
 			key := str.ToMD5(nid, metric, "") //TODO get straMap key， 此处需要优化
