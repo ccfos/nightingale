@@ -43,6 +43,7 @@ func handleMessage(msgBody []byte) bool {
 
 	err = dispatchHandler(req.Method, jsonBytes)
 	if err != nil {
+		logger.Errorf("dispatch msg err:%v", err)
 		// 如果处理的有问题，可能是后端DB挂了，不能ack，等DB恢复了还可以继续处理
 		return false
 	}
@@ -82,17 +83,18 @@ func resourceRegister(jsonBytes []byte) error {
 	var item models.ResourceRegisterItem
 	err := json.Unmarshal(jsonBytes, &item)
 	if err != nil {
-		logger.Warning(err)
+		logger.Warningf("unmarshal msg:%s err:%v", string(jsonBytes), err)
 		return nil
 	}
 
 	errCode, err := models.ResourceRegisterFor3rd(item)
 	if errCode == 0 {
+		logger.Debugf("ResourceRegister success:%+v", item)
 		return nil
 	}
 
 	if errCode == 400 {
-		logger.Warningf("item invalid: %v", err)
+		logger.Warningf("item:%s invalid: %v", string(jsonBytes), err)
 		return nil
 	}
 
