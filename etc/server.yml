@@ -1,201 +1,121 @@
 logger:
-  dir: logs/server
-  level: INFO
-  # rotate by time
-  keepHours: 24
-  ## rotate by size
-  #rotatenum: 3
-  #rotatesize: 256 # unit: MB
+  dir: logs
+  level: DEBUG
+  # # rotate by time
+  # keepHours: 4
+  # rotate by size
+  rotatenum: 3
+  rotatesize: 256 # unit: MB
 
 http:
   mode: release
-  showLog: true
-  session:
-    cookieName: ecmc-sid
-    cookieDomain: ""
-    httpOnly: true
-    gcInterval: 60
-    cookieLifetime: 86400 # unit: second, 0: cookie life same to browser
+  # whether print access log to DEBUG.log
+  access: false
+  listen: 0.0.0.0:8000
+  pprof: false
+  cookieName: n9e
+  cookieDomain: ""
+  cookieMaxAge: 86400
+  cookieSecure: false
+  cookieHttpOnly: true
+  cookieSecret: 4696709ab8cc3ff2fea17b930158516b
+  csrfSecret: 15b8ea164b5d3d9254677053c72a19f1
 
-tokens:
-  - rdb-builtin-token
-  - ams-builtin-token
+rpc:
+  listen: 0.0.0.0:9000
 
-redis:
-  # as queue 
-  local:
-    enable: true
-    addr: 127.0.0.1:6379
-    pass: ""
-    idle: 5
-    timeout:
-      conn: 500
-      read: 3000
-      write: 3000
+mysql:
+  addr: "root:1234@tcp(127.0.0.1:3306)/n9e?charset=utf8&parseTime=True&loc=Asia%2FShanghai"
+  max: 128
+  idle: 16
+  debug: false
 
+# i18n:
+#   # zh | en
+#   lang: zh
+#   dictPath: etc/i18n.json
 
-rdb:
-  # for ldap authorization
-  ldap:
-    host: "ldap.example.org"
-    port: 389
-    baseDn: "dc=example,dc=org"
-    # AD: manange@example.org
-    bindUser: "cn=manager,dc=example,dc=org"
-    bindPass: "*******"
-    # openldap: (&(uid=%s))
-    # AD: (&(sAMAccountName=%s))
-    authFilter: "(&(uid=%s))"
-    attributes:
-      dispname: "cn"
-      email: "mail"
-      phone: "mobile"
-      im: ""
-    coverAttributes: false
-    autoRegist: true
-    tls: false
-    startTLS: false
-  sender:
-    mail:
-      # three choice: smtp|shell|api
-      way: smtp
-      worker: 10
-      api: http://127.0.0.1:2008/mail
-    sms:
-      # two choice: shell|api
-      way: api
-      worker: 10
-      api: http://127.0.0.1:2008/sms
-    voice:
-      # two choice: shell|api
-      way: shell
-      worker: 10
-      api: http://127.0.0.1:2008/voice
-    im:
-      # five choice: shell|api|wechat|wechat_robot|dingtalk_robot
-      way: shell
-      worker: 10
-      api: http://127.0.0.1:2008/im
-  ## for enterprise edition
-  #sso:
-  #  enable: false
-  #  ssoAddr: "http://{sso-host}"
-  #  redirectURL: "http://{rdb-host}/auth-callback"
-  #  clientId: ""
-  #  clientSecret: ""
-  #  apiKey: ""
-  #  attributes:
-  #    dispname: "display_name"
-  #    email: "email"
-  #    phone: "phone"
-  #    im: ""
-  #  coverAttributes: false
-  #  stateExpiresIn: 300    
-  #auth:
-  #  captcha: false
-  #  extraMode: 
-  #    enable: false        # enable whiteList, login retry lock, userControl, ...
-  #    whiteList: false
-  #    frozenDays: 90      # frozen time (day)
-  #    writenOffDays: 365  # writenOff time (day)
+# heartbeat:
+#   # auto detect if blank
+#   ip: ""
+#   # unit: ms
+#   interval: 1000
 
+# ldap:
+#   enable: false
+#   host: ldap.example.org
+#   port: 389
+#   baseDn: "dc=example,dc=org"
+#   # AD: manange@example.org
+#   bindUser: "cn=manager,dc=example,dc=org"
+#   bindPass: "*******"
+#   # openldap: (&(uid=%s))
+#   # AD: (&(sAMAccountName=%s))
+#   authFilter: "(&(uid=%s))"
+#   attributes:
+#     nickname: "cn"
+#     email: "mail"
+#     phone: "mobile"
+#   coverAttributes: false
+#   autoRegist: true
+#   tls: false
+#   startTLS: false
 
-#i18n:
-#  lang: zh
+# judge:
+#   readBatch: 2000
+#   connTimeout: 2000
+#   callTimeout: 5000
+#   writerNum: 256
+#   connMax: 2560
+#   connIdle: 256
 
-job:
-  enable: true
-  ## database | remote
-  #outputComeFrom: database
-  #remoteAgtdPort: 2080
+# alert:
+#   notifyScriptPath: ./etc/script/notify.py
+#   notifyConcurrency: 200
+#   mutedAlertPersist: true
 
-transfer:
+trans:
   enable: true
   backend:
-    datasource: "m3db"
-    m3db:
-      enabled: true
-      maxSeriesPoints: 720 # default 720
-      name: "m3db"
-      namespace: "default"
-      seriesLimit: 0
-      docsLimit: 0
-      daysLimit: 7                               # max query time
+    datasource: "prometheus"
+    prometheus:
+      enable: true
+      name: prometheus
+      batch: 100000
+      maxRetry: 5
+      # prometheus 查询返回最大点数query.max-samples
+      maxSamples: 50000000
+      # prometheus并发的查询 query.max-concurrency
+      maxConcurrentQuery: 20
+      # prometheus 回查窗口 query.lookback-delta
+      lookbackDeltaMinute: 2
+      # 查询全量索引时时间窗口限制，降低高基数
+      maxFetchAllSeriesLimitMinute: 5
+      remoteWrite:
+        # m3db的配置
+        #- name: m3db01
+        #  url: http://localhost:7201/api/v1/prom/remote/write
+        #  remoteTimeoutSecond: 5
 
-      # https://m3db.github.io/m3/m3db/architecture/consistencylevels/
-      writeConsistencyLevel: "majority"          # one|majority|all
-      readConsistencyLevel: "unstrict_majority"  # one|unstrict_majority|majority|all
-      writeTimeout: 5s
-      fetchTimeout: 5s
-      connectTimeout: 5s
-      config:
-        service:
-          # KV environment, zone, and service from which to write/read KV data (placement
-          # and configuration). Leave these as the default values unless you know what
-          # you're doing.
-          env: default_env
-          zone: embedded
-          service: m3db
-          etcdClusters:
-            - zone: embedded
-              endpoints:
-                - 127.0.0.1:2379
-              #tls:
-              #  caCrtPath: /etc/etcd/certs/ca.pem
-              #  crtPath: /etc/etcd/certs/etcd-client.pem
-              #  keyPath: /etc/etcd/certs/etcd-client-key.pem
-    #tsdb:
-    #  enabled: false
-    #  name: "tsdb"
-    #  cluster:
-    #    tsdb01: 127.0.0.1:8011
-    #influxdb:
-    #  enabled: false
-    #  username: "influx"
-    #  password: "admin123"
-    #  precision: "s"
-    #  database: "n9e"
-    #  address: "http://127.0.0.1:8086"
-    #opentsdb:
-    #  enabled: false
-    #  address: "127.0.0.1:4242"
-    #kafka:
-    #  enabled: false
-    #  brokersPeers: "192.168.1.1:9092,192.168.1.2:9092"
-    #  topic: "n9e"
-monapi:
-  indexMod: server
-  alarmEnabled: true
-  region:
-    - default
-  
-  # clean history event
-  cleaner:
-    # retention days
-    days: 100
-    # number of events deleted per time
-    batch: 100
-  notify:
-    p1: ["voice", "sms", "mail", "im"]
-    p2: ["sms", "mail", "im"]
-    p3: ["mail", "im"]  
+        # prometheus的配置
+        - name: prome01
+          url: http://localhost:9090/api/v1/write
+          remoteTimeoutSecond: 5
+      remoteRead:
+        - name: prome01
+          url: http://localhost:9090/api/v1/read
+          remoteTimeoutSecond: 5
 
-  # addresses accessible using browser
-  link:
-    stra: http://n9e.com/mon/strategy/%v
-    event: http://n9e.com/mon/history/his/%v
-    claim: http://n9e.com/mon/history/cur/%v
 
-judge:
-  query:
-    maxConn:          2000
-    maxIdle:          100
-    connTimeout:      1000
-    callTimeout:      2000
-    indexCallTimeout: 2000
-    indexMod:         server
+contactKeys:
+  - label: "Wecom Robot Token"
+    key: wecom_robot_token
+  - label: "Dingtalk Robot Token"
+    key: dingtalk_robot_token
 
-wechat:
-  corp_id: "xxxxxxxxxxxxx"
-  agent_id: 1000000
-  secret: "xxxxxxxxxxxxxxxxx"
+notifyChannels:
+  - email
+  - sms
+  - voice
+  - dingtalk
+  - wecom

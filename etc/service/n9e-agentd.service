@@ -1,0 +1,19 @@
+[Unit]
+Description="n9e-agentd"
+
+[Service]
+Type=simple
+ExecStart=/opt/n9e/n9e-agentd -c /opt/n9e/etc/agentd.yml
+WorkingDirectory=/opt/n9e
+
+Restart=always
+RestartSecs=1s
+SuccessExitStatus=0
+LimitNOFILE=65536
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=n9e-agentd
+
+
+[Install]
+WantedBy=multi-user.target

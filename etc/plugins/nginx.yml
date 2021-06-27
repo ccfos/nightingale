@@ -1,9 +1,0 @@
-mode: whitelist # whitelist(default),all
-metrics:
-  - name: nginx_accepts 
-  - name: nginx_active 
-  - name: nginx_handled 
-  - name: nginx_reading 
-  - name: nginx_requests
-  - name: nginx_waiting
-  - name: nginx_writing 
