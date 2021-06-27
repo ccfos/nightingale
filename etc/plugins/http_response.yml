@@ -1,8 +1,0 @@
-mode: whitelist # whitelist(default),all
-metrics:
-  - name: http_response_http_response_code
-  - name: http_response_content_length
-  - name: http_response_response_string_match
-  - name: http_response_response_status_code_match
-  - name: http_response_result_code
-  - name: http_response_response_time

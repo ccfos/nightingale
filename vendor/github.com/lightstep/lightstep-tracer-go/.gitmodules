@@ -1,3 +1,0 @@
-[submodule "lightstep-tracer-common"]
-	path = lightstep-tracer-common
-	url = https://github.com/lightstep/lightstep-tracer-common.git

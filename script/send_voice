@@ -1,5 +1,0 @@
-#!/bin/bash
-
-echo "$1" >> /tmp/send_voice.txt
-echo "$2" >> /tmp/send_voice.txt
-echo "" >> /tmp/send_voice.txt

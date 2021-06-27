@@ -1,5 +1,0 @@
-mode: whitelist # whitelist(default),all
-metrics:
-  - name: dns_query_query_time_ms
-  - name: dns_query_result_code
-  - name: dns_query_rcode_value

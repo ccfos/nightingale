@@ -1,9 +1,0 @@
-# for heartbeat, connected by other modules
-ip:
-  specify: ""
-  shell: ifconfig `route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|head -n 1|awk -F':' '{print $NF}'
-
-# as identity. equals to endpoint. used by agentd, prober, server
-ident:
-  specify: ""
-  shell: ifconfig `route|grep '^default'|awk '{print $NF}'`|grep inet|awk '{print $2}'|head -n 1|awk -F':' '{print $NF}'
