@@ -52,9 +52,10 @@ func Push(points []*vos.MetricPoint) error {
 			logger.Warningf("point %+v is invalid, err:%v ", points[i], err)
 			reterr = err
 		} else {
-			// 把当前时间也带上，处理的时候只处理最近的数据，避免alias发生变化且数据分散在多个server造成的alias不一致的问题
-			aliasMapper[points[i].Ident] = &models.AliasTime{Alias: points[i].Alias, Time: now}
-
+			if points[i].Ident != "" {
+				// 把当前时间也带上，处理的时候只处理最近的数据，避免alias发生变化且数据分散在多个server造成的alias不一致的问题
+				aliasMapper[points[i].Ident] = &models.AliasTime{Alias: points[i].Alias, Time: now}
+			}
 			// 将resource的tag追加到曲线的tag中，根据tagsmap生成tagslst，排序，生成primarykey
 			enrich(points[i])
 			validPoints = append(validPoints, points[i])
