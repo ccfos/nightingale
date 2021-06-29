@@ -146,7 +146,7 @@ func configRoutes(r *gin.Engine) {
 		pages.POST("/collect-rules", login(), collectRuleAdd)
 		pages.DELETE("/collect-rules", login(), collectRuleDel)
 		pages.PUT("/collect-rule/:id", login(), collectRulePut)
-		pages.POST("/log/check", regExpCheck) // check collect rule
+		pages.POST("/log/check", regExpCheck)
 
 		pages.GET("/metric-descriptions", metricDescriptionGets)
 		pages.POST("/metric-descriptions", login(), metricDescriptionAdd)
