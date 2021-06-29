@@ -12,6 +12,23 @@ from email.header import Header
 # 1. 从stdin拿到告警信息之后，格式化为一个有缩进的json写入一个临时文件
 # 2. 文件路径和名字是.alerts/${timestamp}_${ruleid}
 # 3. 调用SMTP服务器发送告警，微信、钉钉、飞书、slack、jira、短信、电话等等留给社区实现
+
+# 脚本二开指南
+# 1. 可以根据下面的TEST_ALERT_JSON 中的结构修改脚本发送逻辑，定制化告警格式格式如下
+"""
+告警类型：prometheus
+规则名称：pull_promql
+是否已恢复：已触发
+告警级别：1
+触发时间：2021-06-28 11:46:35
+可读表达式： go_gc_duration_seconds>0
+当前值：[vector={__name__="go_gc_duration_seconds", instance="172.20.70.205:9100", job="node-targets", quantile="1"}]: [value=0.022498]
+标签组：a=b c=d instance=172.20.70.205:9100 job=node-targets quantile=1
+"""
+# 2. 每个告警会以json文件的格式存储在LOCAL_EVENT_FILE_DIR 下面，文件名为 filename = '%d_%d_%d' % (rule_id, event_id, trigger_time)
+# 3. 告警通道需要自行定义Send类中的send_xxx同名方法，反射调用：举例 event.notify_channels = [qq dingding]
+# 则需要Send类中 有 send_qq send_dingding方法
+
 import requests
 
 mail_host = "smtp.163.com"
@@ -132,6 +149,7 @@ TEST_ALERT_JSON = {
 def main():
     payload = json.load(sys.stdin)
     trigger_time = payload['event']['trigger_time']
+    event_id = payload['event']['id']
     rule_id = payload['rule']['id']
     notify_channels = payload['event'].get('notify_channels').strip().split(NOTIFY_CHANNELS_SPLIT_STR)
     if len(notify_channels) == 0:
@@ -139,7 +157,7 @@ def main():
         print(msg)
         return
     # 持久化到本地json文件
-    persist(payload, trigger_time, rule_id)
+    persist(payload, rule_id, event_id, trigger_time)
     # 生成告警内容
     alert_content = content_gen(payload)
 
@@ -193,11 +211,11 @@ def content_gen(payload):
     return text
 
 
-def persist(payload, trigger_time, rule_id):
+def persist(payload, rule_id, event_id, trigger_time):
     if not os.path.exists(LOCAL_EVENT_FILE_DIR):
         os.makedirs(LOCAL_EVENT_FILE_DIR)
 
-    filename = '%d_%d' % (trigger_time, rule_id)
+    filename = '%d_%d_%d' % (rule_id, event_id, trigger_time)
     filepath = os.path.join(LOCAL_EVENT_FILE_DIR, filename)
     with open(filepath, 'w') as f:
         f.write(json.dumps(payload, indent=4))
