@@ -3,6 +3,7 @@ package redisc
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/didi/nightingale/v4/src/models"
 	"strings"
 
 	"github.com/didi/nightingale/v4/src/common/dataobj"
@@ -139,6 +140,40 @@ func Pop(count int, queue string) []*dataobj.Message {
 		}
 
 		ret = append(ret, &message)
+	}
+
+	return ret
+}
+
+func PopEvent(count int, queues []interface{}) []*models.Event {
+	queues = append(queues, 1)
+
+	var ret []*models.Event
+
+	rc := RedisConnPool.Get()
+	defer rc.Close()
+
+	for i := 0; i < count; i++ {
+		reply, err := redis.Strings(rc.Do("BRPOP", queues...))
+		if err != nil {
+			if err != redis.ErrNil {
+				logger.Errorf("brpop queue:%s failed, err: %v", queues, err)
+			}
+			break
+		}
+
+		if reply == nil {
+			continue
+		}
+
+		var event models.Event
+		err = json.Unmarshal([]byte(reply[1]), &event)
+		if err != nil {
+			logger.Errorf("unmarshal event failed, err: %v, redis reply: %v", err, reply)
+			continue
+		}
+
+		ret = append(ret, &event)
 	}
 
 	return ret

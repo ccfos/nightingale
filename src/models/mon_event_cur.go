@@ -245,6 +245,12 @@ func EventCurGet(col string, value interface{}) (*EventCur, error) {
 	return &obj, nil
 }
 
+func AllEventCurGet() ([]EventCur, error) {
+	var obj []EventCur
+	err := DB["mon"].Find(&obj)
+	return obj, err
+}
+
 func (e *EventCur) EventIgnore() error {
 	return EventCurDelById(e.Id)
 }

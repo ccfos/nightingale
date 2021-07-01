@@ -18,6 +18,13 @@ var ActiveJudgeNode = NewNodeMap()
 const CHECK_INTERVAL = 9
 
 func Init(regions []string) {
+	TreeNodeCache = NewTreeNodeCache()
+	go SyncTreeNodes()
+
+	// 初始化每个node下的所有主机ident
+	NodeIdentsMapCache = NewNodeIdentsMapCache()
+	go SyncIdentsOfNode()
+
 	// 初始化默认参数
 	StraCache = NewStraCache()
 	CollectCache = NewCollectCache()
@@ -30,7 +37,6 @@ func Init(regions []string) {
 	TeamUsersCache = NewTeamUsersCache()
 	TeamCache = NewTeamCache()
 	UserCache = NewUserCache()
-	TreeNodeCache = NewTreeNodeCache()
 
 	LoadMetrics()
 
@@ -46,6 +52,10 @@ func Init(regions []string) {
 	Strategy = NewStrategyMap()
 	NodataStra = NewStrategyMap()
 	SeriesMap = NewIndexMap()
+
+	//周期缓存当前所有告警
+	HashIdEventCurMapCache = NewHashIdEventCurMapCache()
+	go SyncHashIdEventCur()
 
 	//rdb
 	Start()

@@ -135,9 +135,7 @@ create table `event` (
   KEY `idx_sid` (`sid`),
   KEY `idx_hashid` (`hashid`),
   KEY `idx_node_path` (`node_path`),
-  KEY `idx_etime` (`etime`),
-  KEY `idx_event_type` (`event_type`),
-  KEY `idx_status` (`status`)
+  KEY `idx_etime_hashid_type_status` (`etime`,`hashid`,`event_type`,`status`)
 ) engine=innodb default charset=utf8 comment 'event';
 
 CREATE TABLE `stra` (
