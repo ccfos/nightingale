@@ -260,7 +260,7 @@ class Send(object):
 
             if dingtalk_robot_token == "":
                 print("dingtalk_robot_token_not_found")
-                return
+                continue
 
             dingtalk_api_url = "{}?access_token={}".format(DINGTALK_API, dingtalk_robot_token)
             atMobiles = [u.get("phone")]
