@@ -44,7 +44,7 @@ mail_body = """
 """
 
 # 本地告警event json存储目录
-LOCAL_EVENT_FILE_DIR = "alerts"
+LOCAL_EVENT_FILE_DIR = ".alerts"
 NOTIFY_CHANNELS_SPLIT_STR = " "
 
 # dingding 群机器人token 配置字段
