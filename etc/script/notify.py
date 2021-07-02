@@ -16,19 +16,19 @@ from email.header import Header
 # 脚本二开指南
 # 1. 可以根据下面的TEST_ALERT_JSON 中的结构修改脚本发送逻辑，定制化告警格式格式如下
 """
-告警类型：prometheus
-规则名称：pull_promql
-是否已恢复：已触发
-告警级别：1
-触发时间：2021-06-28 11:46:35
-可读表达式： go_gc_duration_seconds>0
-当前值：[vector={__name__="go_gc_duration_seconds", instance="172.20.70.205:9100", job="node-targets", quantile="1"}]: [value=0.022498]
-标签组：a=b c=d instance=172.20.70.205:9100 job=node-targets quantile=1
+[告警类型：prometheus]
+[规则名称：a]
+[是否已恢复：已触发]
+[告警级别：1]
+[触发时间：2021-07-02 16:05:14]
+[可读表达式：go_goroutines>0]
+[当前值：[vector={__name__="go_goroutines", instance="localhost:9090", job="prometheus"}]: [value=33.000000]]
+[标签组：instance=localhost:9090 job=prometheus]
 """
 # 2. 每个告警会以json文件的格式存储在LOCAL_EVENT_FILE_DIR 下面，文件名为 filename = '%d_%d_%d' % (rule_id, event_id, trigger_time)
-# 3. 告警通道需要自行定义Send类中的send_xxx同名方法，反射调用：举例 event.notify_channels = [qq dingding]
-# 则需要Send类中 有 send_qq send_dingding方法
-
+# 3. 告警通道需要自行定义Send类中的send_xxx同名方法，反射调用：举例 event.notify_channels = [qq dingding] 则需要Send类中 有 send_qq send_dingding方法
+# 4. im发群信息，比如钉钉发群信息需要群的webhook机器人 token，这个信息可以在user的contacts map中，各个send_方法处理即可
+# 5. 用户创建一个虚拟的用户保存上述im群 的机器人token信息 user的contacts map中
 import requests
 
 mail_host = "smtp.163.com"
@@ -44,103 +44,103 @@ mail_body = """
 """
 
 # 本地告警event json存储目录
-LOCAL_EVENT_FILE_DIR = ".alerts"
+LOCAL_EVENT_FILE_DIR = "alerts"
 NOTIFY_CHANNELS_SPLIT_STR = " "
 
+# dingding 群机器人token 配置字段
+DINGTALK_ROBOT_TOKEN_NAME = "dingtalk_robot_token"
+DINGTALK_API = "https://oapi.dingtalk.com/robot/send"
 # stdin 告警json实例
 TEST_ALERT_JSON = {
     "event": {
-        "alert_duration": 30,
-        "hash_id": "0c6cbe29df08bb6f9c26af518638128e",
+        "alert_duration": 10,
+        "notify_channels": "dingtalk",
+        "res_classpaths": "",
+        "id": 4,
+        "notify_group_objs": None,
+        "rule_note": "",
         "history_points": [
             {
-                "metric": "go_gc_duration_seconds",
+                "metric": "go_goroutines",
                 "points": [
                     {
-                        "t": 1624851995,
-                        "v": 0.000175
+                        "t": 1625213114,
+                        "v": 33.0
                     }
                 ],
                 "tags": {
-                    "instance": "172.20.70.205:9100",
-                    "job": "node-targets",
-                    "quantile": "0.25"
+                    "instance": "localhost:9090",
+                    "job": "prometheus"
                 }
             }
         ],
-        "id": 190,
-        "is_prome_pull": 1,
-        "is_recovery": 0,
-        "last_sent": True,
-        "notify_channels": "qq dingding ",
-        "notify_group_objs": None,
-        "notify_groups": "",
-        "notify_user_objs": None,
-        "notify_users": "1",
         "priority": 1,
-        "readable_expression": " go_gc_duration_seconds>0",
-        "res_classpaths": "all",
-        "res_ident": "",
-        "rule_id": 10,
-        "rule_name": "pull_promql",
-        "rule_note": "note",
-        "runbook_url": "qq.com",
-        "status": 0,
+        "last_sent": True,
         "tag_map": {
-            "a": "b",
-            "c": "d",
-            "instance": "172.20.70.205:9100",
-            "job": "node-targets",
-            "quantile": "0.25"
+            "instance": "localhost:9090",
+            "job": "prometheus"
         },
-        "tags": "a=b c=d instance=172.20.70.205:9100 job=node-targets quantile=0.25",
-        "trigger_time": 1624851995,
-        "values": "[vector={__name__=\"go_gc_duration_seconds\", instance=\"172.20.70.205:9100\", job=\"node-targets\", quantile=\"0.25\"}]: [value=0.000175]"
+        "hash_id": "ecb258d2ca03454ee390a352913c461b",
+        "status": 0,
+        "tags": "instance=localhost:9090 job=prometheus",
+        "trigger_time": 1625213114,
+        "res_ident": "",
+        "rule_name": "a",
+        "is_prome_pull": 1,
+        "notify_users": "1",
+        "notify_groups": "",
+        "runbook_url": "",
+        "values": "[vector={__name__=\"go_goroutines\", instance=\"localhost:9090\", job=\"prometheus\"}]: [value=33.000000]",
+        "readable_expression": "go_goroutines>0",
+        "notify_user_objs": None,
+        "is_recovery": 0,
+        "rule_id": 1
     },
     "rule": {
-        "alert_duration": 30,
-        "append_tags": "a=b c=d",
-        "callbacks": "localhost:8881",
-        "create_at": 1624851512,
-        "create_by": "root",
-        "enable_days_of_week": "1 2 3 4 5 6 7",
-        "enable_etime": "23:59",
+        "alert_duration": 10,
+        "notify_channels": "dingtalk",
         "enable_stime": "00:00",
-        "expression": {
-            "evaluation_interval": 3,
-            "promql": " go_gc_duration_seconds>0",
-            "resolve_timeout": 40
-        },
-        "group_id": 1,
-        "id": 10,
-        "name": "pull_promql",
-        "note": "note",
-        "notify_channels": "qq dingding ",
-        "notify_groups": "",
-        "notify_users": "1",
+        "id": 1,
+        "note": "",
+        "create_by": "root",
+        "append_tags": "",
         "priority": 1,
-        "recovery_notify": 0,
-        "runbook_url": "qq.com",
-        "status": 0,
+        "update_by": "root",
         "type": 1,
-        "update_at": 1624851512,
-        "update_by": "root"
+        "status": 0,
+        "recovery_notify": 0,
+        "enable_days_of_week": "1 2 3 4 5 6 7",
+        "callbacks": "localhost:10000",
+        "notify_users": "1",
+        "notify_groups": "",
+        "runbook_url": "",
+        "name": "a",
+        "update_at": 1625211576,
+        "create_at": 1625211576,
+        "enable_etime": "23:59",
+        "group_id": 1,
+        "expression": {
+            "evaluation_interval": 4,
+            "promql": "go_goroutines>0"
+        }
     },
     "users": [
         {
-            "contacts": None,
-            "create_at": 1624258550,
-            "create_by": "system",
-            "email": "",
-            "id": 1,
-            "nickname": "\u8d85\u7ba1",
-            "phone": "",
-            "portrait": "",
-            "role": "Admin",
+            "username": "root",
             "status": 0,
-            "update_at": 1624258550,
-            "update_by": "system",
-            "username": "root"
+            "contacts": {
+                "dingtalk_robot_token": "xxxxxx"
+            },
+            "create_by": "system",
+            "update_at": 1625211432,
+            "create_at": 1624871926,
+            "email": "",
+            "phone": "",
+            "role": "Admin",
+            "update_by": "root",
+            "portrait": "",
+            "nickname": "\u8d85\u7ba1",
+            "id": 1
         }
     ]
 }
@@ -170,7 +170,7 @@ def main():
             print(msg)
             continue
         send_func = getattr(Send, send_func_name)
-        send_func(alert_content)
+        send_func(alert_content, payload)
 
 
 def content_gen(payload):
@@ -182,30 +182,30 @@ def content_gen(payload):
     type_str_m = {1: "prometheus", 0: "n9e"}
     rule_type = type_str_m.get(rule_type)
 
-    text += "告警类型：{}\n".format(rule_type)
+    text += "[告警类型：{}]\n".format(rule_type)
 
     rule_name = event_obj.get("rule_name")
-    text += "规则名称：{}\n".format(rule_name)
+    text += "[规则名称：{}]\n".format(rule_name)
 
     is_recovery = event_obj.get("is_recovery")
     is_recovery_str_m = {1: "已恢复", 0: "已触发"}
     is_recovery = is_recovery_str_m.get(is_recovery)
-    text += "是否已恢复：{}\n".format(is_recovery)
+    text += "[是否已恢复：{}]\n".format(is_recovery)
 
     priority = event_obj.get("priority")
-    text += "告警级别：{}\n".format(priority)
+    text += "[告警级别：{}]\n".format(priority)
 
     trigger_time = event_obj.get("trigger_time")
-    text += "触发时间：{}\n".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(trigger_time))))
+    text += "[触发时间：{}]\n".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(trigger_time))))
 
     readable_expression = event_obj.get("readable_expression")
-    text += "可读表达式：{}\n".format(readable_expression)
+    text += "[可读表达式：{}]\n".format(readable_expression)
 
     values = event_obj.get("values")
-    text += "当前值：{}\n".format(values)
+    text += "[当前值：{}]\n".format(values)
 
     tags = event_obj.get("tags")
-    text += "标签组：{}\n".format(tags)
+    text += "[标签组：{}]\n".format(tags)
 
     print(text)
     return text
@@ -248,27 +248,38 @@ class Send(object):
         print("send_wecom")
 
     @classmethod
-    def send_dingtalk(cls, payload):
-        # TODO 钉钉发群信息需要群的webhook机器人 token，这个信息可以写在告警策略中的附加字段中
-        dingtalk_api_url = "https://oapi.dingtalk.com/robot/send?access_token=xxxx"
-        users = payload.get("event").get("users")
-        atMobiles = [x.get("phone") for x in users]
-        headers = {'Content-Type': 'application/json;charset=utf-8'}
-        payload = {
-            "msgtype": "text",
-            "text": {
-                "content": payload
-            },
-            "at": {
-                "atMobiles": atMobiles,
-                "isAtAll": False
-            }
-        }
-        res = requests.post(dingtalk_api_url, json.dumps(payload), headers=headers)
-        print(res.status_code)
-        print(res.text)
+    def send_dingtalk(cls, alert_content, payload):
+        # 钉钉发群信息需要群的webhook机器人 token，这个信息可以在user的contacts map中
 
-        print("send_dingtalk")
+        users = payload.get("users")
+
+        for u in users:
+            contacts = u.get("contacts")
+
+            dingtalk_robot_token = contacts.get(DINGTALK_ROBOT_TOKEN_NAME, "")
+
+            if dingtalk_robot_token == "":
+                print("dingtalk_robot_token_not_found")
+                return
+
+            dingtalk_api_url = "{}?access_token={}".format(DINGTALK_API, dingtalk_robot_token)
+            atMobiles = [u.get("phone")]
+            headers = {'Content-Type': 'application/json;charset=utf-8'}
+            payload = {
+                "msgtype": "text",
+                "text": {
+                    "content": alert_content
+                },
+                "at": {
+                    "atMobiles": atMobiles,
+                    "isAtAll": False
+                }
+            }
+            res = requests.post(dingtalk_api_url, json.dumps(payload), headers=headers)
+            print(res.status_code)
+            print(res.text)
+
+            print("send_dingtalk")
 
 
 def mail_test():
