@@ -24,6 +24,7 @@ type Node struct {
 	Creator     string    `json:"creator"`
 	LastUpdated time.Time `json:"last_updated" xorm:"<-"`
 	Admins      []User    `json:"admins" xorm:"-"`
+	LeafNids    []int64   `json:"leafNids" xorm:"-"`
 }
 
 func (n *Node) FilterMyChildren(nodes []Node) []Node {

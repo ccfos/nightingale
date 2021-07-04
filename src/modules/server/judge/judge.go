@@ -427,6 +427,13 @@ func sendEventIfNeed(status []bool, event *dataobj.Event, stra *models.Stra) {
 			sendEvent(event)
 			stats.Counter.Set("event.recover", 1)
 		}
+
+		// 如果LastEvent不存在，但当前告警表有该告警则发送恢复（场景为处于告警状态，n9e_server重启导致LastEvent缓存丢失）
+		if !exists && cache.HashIdEventCurMapCache.GetBy(event.Hashid) != nil {
+			event.EventType = EVENT_RECOVER
+			sendEvent(event)
+			stats.Counter.Set("event.recover", 1)
+		}
 	}
 }
 

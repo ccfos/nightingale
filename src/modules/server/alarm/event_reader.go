@@ -10,7 +10,6 @@ import (
 	"github.com/didi/nightingale/v4/src/modules/server/config"
 	"github.com/didi/nightingale/v4/src/modules/server/redisc"
 
-	"github.com/garyburd/redigo/redis"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -20,15 +19,13 @@ func ReadHighEvent() {
 		return
 	}
 
-	duration := time.Duration(400) * time.Millisecond
-
 	for {
-		event, sleep := popEvent(queues)
-		if sleep {
-			time.Sleep(duration)
+		time.Sleep(time.Millisecond * 500)
+		events := redisc.PopEvent(50, queues)
+		if len(events) == 0 {
 			continue
 		}
-		consume(event, true)
+		go processEvents(events, true)
 	}
 }
 
@@ -38,43 +35,31 @@ func ReadLowEvent() {
 		return
 	}
 
-	duration := time.Duration(400) * time.Millisecond
-
 	for {
-		event, sleep := popEvent(queues)
-		if sleep {
-			time.Sleep(duration)
+		time.Sleep(time.Millisecond * 500)
+		events := redisc.PopEvent(100, queues)
+		if len(events) == 0 {
 			continue
 		}
-		consume(event, false)
+		go processEvents(events, false)
 	}
 }
 
-func popEvent(queues []interface{}) (*models.Event, bool) {
-	queues = append(queues, 1)
+func processEvents(events []*models.Event, isHigh bool){
+	for _, one := range events {
+		event, sleep := processEvent(one)
+		logger.Debugf("process event: %+v, sleep: %t", event, sleep)
 
-	rc := redisc.RedisConnPool.Get()
-	defer rc.Close()
-
-	reply, err := redis.Strings(rc.Do("BRPOP", queues...))
-	if err != nil {
-		if err != redis.ErrNil {
-			logger.Warningf("get alarm event from redis failed, queues: %v, err: %v", queues, err)
+		if sleep {
+			time.Sleep(time.Millisecond * 500)
+			continue
 		}
-		return nil, true
-	}
 
-	if reply == nil {
-		logger.Errorf("get alarm event from redis timeout")
-		return nil, true
+		consume(event, isHigh)
 	}
+}
 
-	event := new(models.Event)
-	if err = json.Unmarshal([]byte(reply[1]), event); err != nil {
-		logger.Errorf("unmarshal redis reply failed, err: %v", err)
-		return nil, false
-	}
-
+func processEvent(event *models.Event) (*models.Event, bool) {
 	stra, has := cache.AlarmStraCache.GetById(event.Sid)
 	if !has {
 		// 可能策略已经删除了
@@ -85,9 +70,10 @@ func popEvent(queues []interface{}) (*models.Event, bool) {
 	var nodePath string
 	var curNodePath string
 
-	node, err := models.NodeGet("id=?", stra.Nid)
-	if err != nil || node == nil {
-		logger.Warningf("get node failed, node id: %v, event: %+v, err: %v", stra.Nid, event, err)
+	node := cache.TreeNodeCache.GetBy(stra.Nid)
+	if node == nil {
+		logger.Warningf("get node failed, node id: %v, event: %+v, TreeNodeCache no such node", stra.Nid, event)
+		return nil, true
 	} else {
 		nodePath = node.Path
 	}
@@ -99,12 +85,7 @@ func popEvent(queues []interface{}) (*models.Event, bool) {
 			return nil, true
 		}
 
-		CurNode, err := models.NodeGet("id=?", curNid)
-		if err != nil {
-			logger.Errorf("get cur_node failed, node id: %v, event: %+v, err: %v", stra.Nid, event, err)
-			return nil, true
-		}
-
+		CurNode := cache.TreeNodeCache.GetBy(curNid)
 		if CurNode == nil {
 			logger.Errorf("get cur_node by id return nil, node id: %v, event: %+v", stra.Nid, event)
 			return nil, false
@@ -115,20 +96,12 @@ func popEvent(queues []interface{}) (*models.Event, bool) {
 		// 如果nid和endpoint的对应关系不正确，直接丢弃该event，
 		// 用户如果把机器挪节点了，但是judge那边没有及时的同步到，这边再做一次判断
 
-		nids, err := models.GetLeafNidsForMon(stra.Nid, []int64{})
-		if err != nil {
-			logger.Errorf("err: %v,event: %+v", err, event)
+		idents := cache.NodeIdentsMapCache.GetBy(stra.Nid)
+		if len(idents) == 0 {
+			logger.Errorf("error! not any ident of node id:%d, event: %+v", stra.Nid, event)
+			return nil, true
 		}
 
-		rids, err := models.ResIdsGetByNodeIds(nids)
-		if err != nil {
-			logger.Errorf("err: %v,event: %+v", err, event)
-		}
-
-		idents, err := models.ResourceIdentsByIds(rids)
-		if err != nil {
-			logger.Errorf("err: %v,event: %+v", err, event)
-		}
 		has := false
 		for _, ident := range idents {
 			if ident == event.Endpoint {
@@ -186,13 +159,12 @@ func popEvent(queues []interface{}) (*models.Event, bool) {
 
 	if event.EventType == models.ALERT {
 		eventCur := new(models.EventCur)
-		if err = json.Unmarshal([]byte(reply[1]), eventCur); err != nil {
-			logger.Errorf("unmarshal redis reply failed, err: %v, event: %+v", err, event)
-		}
-
+		eventCur.Sid = event.Sid
 		eventCur.Sname = stra.Name
+		eventCur.Endpoint = event.Endpoint
 		eventCur.Category = stra.Category
 		eventCur.Priority = stra.Priority
+		eventCur.EventType = event.EventType
 		eventCur.Nid = stra.Nid
 		eventCur.CurNid = event.CurNid
 		eventCur.Users = string(users)
@@ -204,6 +176,11 @@ func popEvent(queues []interface{}) (*models.Event, bool) {
 		eventCur.NeedUpgrade = stra.NeedUpgrade
 		eventCur.AlertUpgrade = alertUpgrade
 		eventCur.Status = 0
+		eventCur.HashId = event.HashId
+		eventCur.Etime = event.Etime
+		eventCur.Value = event.Value
+		eventCur.Info = event.Info
+		eventCur.Detail = event.Detail
 		eventCur.Claimants = "[]"
 		err = models.SaveEventCur(eventCur)
 		if err != nil {
