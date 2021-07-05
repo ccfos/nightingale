@@ -21,4 +21,8 @@ func Init() {
 	go ConsumeVoice()
 	go ConsumeIm()
 	go CleanerLoop()
+	go SyncResources()
+	go SyncTreeNodes()
+	go SyncNodeResources()
+	go SyncIdentsOfNode()
 }

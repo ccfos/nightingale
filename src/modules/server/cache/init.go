@@ -19,11 +19,9 @@ const CHECK_INTERVAL = 9
 
 func Init(regions []string) {
 	TreeNodeCache = NewTreeNodeCache()
-	go SyncTreeNodes()
-
-	// 初始化每个node下的所有主机ident
+	ResourceCache = NewResourceCache()
+	NodeResourceCache = NewNodeResourceCache()
 	NodeIdentsMapCache = NewNodeIdentsMapCache()
-	go SyncIdentsOfNode()
 
 	// 初始化默认参数
 	StraCache = NewStraCache()

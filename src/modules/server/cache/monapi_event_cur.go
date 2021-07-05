@@ -27,6 +27,16 @@ func (t *HashIdEventCurMap) GetBy(hashid uint64) *models.EventCur {
 	return t.Data[hashid]
 }
 
+func (t *HashIdEventCurMap) GetAll() []*models.EventCur {
+	t.RLock()
+	defer t.RUnlock()
+	var objs []*models.EventCur
+	for _, obj := range t.Data {
+		objs = append(objs, obj)
+	}
+	return objs
+}
+
 func (t *HashIdEventCurMap) SetAll(objs map[uint64]*models.EventCur) {
 	t.Lock()
 	defer t.Unlock()

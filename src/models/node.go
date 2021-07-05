@@ -628,61 +628,6 @@ func (n *Node) RelatedNodes() ([]Node, error) {
 	return nodes, err
 }
 
-func GetLeafNidsForMon(nid int64, exclNid []int64) ([]int64, error) {
-	var nids []int64
-	idsMap := make(map[int64]struct{})
-
-	node, err := NodeGet("id=?", nid)
-	if err != nil {
-		return nids, err
-	}
-
-	if node == nil {
-		// 节点已经被删了，相关的告警策略也删除
-		// todo 逻辑需要优化
-		//StraDelByNid(nid)
-		return []int64{}, nil
-	}
-
-	nodeIds, err := node.LeafIds()
-	if err != nil {
-		return nids, err
-	}
-
-	for _, id := range nodeIds {
-		idsMap[id] = struct{}{}
-	}
-
-	for _, id := range exclNid {
-		node, err := NodeGet("id=?", id)
-		if err != nil {
-			return nids, err
-		}
-
-		if node == nil {
-			continue
-		}
-		if node.Leaf == 1 {
-			delete(idsMap, id)
-		} else {
-			nodeIds, err := node.LeafIds()
-			if err != nil {
-				return nids, err
-			}
-
-			for _, id := range nodeIds {
-				delete(idsMap, id)
-			}
-		}
-	}
-
-	for id, _ := range idsMap {
-		nids = append(nids, id)
-	}
-
-	return nids, err
-}
-
 func GetRelatedNidsForMon(nid int64, exclNid []int64) ([]int64, error) {
 	var nids []int64
 	idsMap := make(map[int64]struct{})

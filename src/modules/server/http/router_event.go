@@ -447,3 +447,29 @@ func eventCurClaim(c *gin.Context) {
 
 	renderMessage(c, models.UpdateClaimantsByNodePath(users[0].Id, nodePath))
 }
+
+func AlertNids(c *gin.Context) {
+	eventCurs := cache.HashIdEventCurMapCache.GetAll()
+	nidMap := make(map[int64]struct{})
+	for i := range eventCurs {
+		nidMap[eventCurs[i].Nid] = struct{}{}
+		node := cache.TreeNodeCache.GetBy(eventCurs[i].Nid)
+		if node == nil || node.Pid == 0 {
+			continue
+		}
+
+		for {
+			nidMap[node.Pid] = struct{}{}
+			parentNode := cache.TreeNodeCache.GetBy(node.Pid)
+			if parentNode == nil || parentNode.Pid == 0 {
+				break
+			}
+			node = parentNode
+		}
+	}
+	var nids []int64
+	for nid, _ := range nidMap {
+		nids = append(nids, nid)
+	}
+	renderData(c, nids, nil)
+}

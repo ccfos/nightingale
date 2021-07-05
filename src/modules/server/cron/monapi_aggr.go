@@ -34,7 +34,7 @@ func syncAggrCalcStras() {
 		if stras[i].Category == 2 {
 			for j := 0; j < len(stras[i].RawMetrics); j++ {
 				//只有非nodata的告警策略，才支持告警策略继承，否则nodata会有误报
-				nids, err := models.GetRelatedNidsForMon(stras[i].RawMetrics[j].Nid, stras[i].RawMetrics[j].ExclNid)
+				nids, err := cache.GetRelatedNidsForMon(stras[i].RawMetrics[j].Nid, stras[i].RawMetrics[j].ExclNid)
 				if err != nil {
 					logger.Warningf("get LeafNids err:%v %v", err, stras[i].RawMetrics[j])
 					continue
@@ -48,7 +48,7 @@ func syncAggrCalcStras() {
 		} else if stras[i].Category == 1 {
 			for j := 0; j < len(stras[i].RawMetrics); j++ {
 				//增加叶子节点nid
-				leafNids, err := models.GetLeafNidsForMon(stras[i].RawMetrics[j].Nid, stras[i].RawMetrics[j].ExclNid)
+				leafNids, err := cache.GetLeafNidsForMon(stras[i].RawMetrics[j].Nid, stras[i].RawMetrics[j].ExclNid)
 				if err != nil {
 					logger.Warningf("get LeafNids err:%v %v", err, stras[i])
 					continue

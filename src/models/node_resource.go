@@ -11,6 +11,12 @@ type NodeResource struct {
 	ResId  int64
 }
 
+func NodeResourceGetAll() ([]*NodeResource, error) {
+	var objs []*NodeResource
+	err := DB["rdb"].Find(&objs)
+	return objs, err
+}
+
 func NodeResourceUnbind(nid, rid int64) error {
 	_, err := DB["rdb"].Where("node_id=? and res_id=?", nid, rid).Delete(new(NodeResource))
 	return err

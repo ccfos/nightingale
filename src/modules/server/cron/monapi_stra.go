@@ -41,7 +41,7 @@ func syncStras() {
 
 			//只有非nodata的告警策略，才支持告警策略继承，否则nodata会有误报
 			if needChildNids {
-				nids, err := models.GetRelatedNidsForMon(stra.Nid, stra.ExclNid)
+				nids, err := cache.GetRelatedNidsForMon(stra.Nid, stra.ExclNid)
 				if err != nil {
 					logger.Warningf("get LeafNids err:%v %v", err, stra)
 					continue
@@ -55,7 +55,7 @@ func syncStras() {
 			stra.Nids = append(stra.Nids, strconv.FormatInt(stra.Nid, 10))
 		} else {
 			//增加叶子节点nid
-			stra.LeafNids, err = models.GetLeafNidsForMon(stra.Nid, stra.ExclNid)
+			stra.LeafNids, err = cache.GetLeafNidsForMon(stra.Nid, stra.ExclNid)
 			if err != nil {
 				logger.Warningf("get LeafNids err:%v %v", err, stra)
 				continue
@@ -114,12 +114,11 @@ func cleanStra() {
 	}
 
 	for _, stra := range list {
-		node, err := models.NodeGet("id=?", stra.Nid)
-		if err != nil {
-			logger.Warningf("get node failed, node id: %d, err: %v", stra.Nid, err)
+		if cache.TreeNodeCache.Len() == 0 {
 			continue
 		}
 
+		node := cache.TreeNodeCache.GetBy(stra.Nid)
 		if node == nil {
 			logger.Infof("delete stra:%d", stra.Id)
 			if err := models.StraDel(stra.Id); err != nil {

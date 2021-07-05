@@ -45,7 +45,7 @@ func ReadLowEvent() {
 	}
 }
 
-func processEvents(events []*models.Event, isHigh bool){
+func processEvents(events []*models.Event, isHigh bool) {
 	for _, one := range events {
 		event, sleep := processEvent(one)
 		logger.Debugf("process event: %+v, sleep: %t", event, sleep)
@@ -96,15 +96,15 @@ func processEvent(event *models.Event) (*models.Event, bool) {
 		// 如果nid和endpoint的对应关系不正确，直接丢弃该event，
 		// 用户如果把机器挪节点了，但是judge那边没有及时的同步到，这边再做一次判断
 
-		idents := cache.NodeIdentsMapCache.GetBy(stra.Nid)
-		if len(idents) == 0 {
+		resources := cache.NodeIdentsMapCache.GetBy(stra.Nid)
+		if len(resources) == 0 {
 			logger.Errorf("error! not any ident of node id:%d, event: %+v", stra.Nid, event)
 			return nil, true
 		}
 
 		has := false
-		for _, ident := range idents {
-			if ident == event.Endpoint {
+		for _, resource := range resources {
+			if resource.Ident == event.Endpoint {
 				has = true
 				break
 			}

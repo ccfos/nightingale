@@ -229,14 +229,16 @@ func cleanCollect() {
 }
 
 func HostUnderNode(nid int64) ([]string, error) {
-	nids, err := models.GetLeafNidsForMon(nid, []int64{})
+	nids, err := cache.GetLeafNidsForMon(nid, []int64{})
 	if err != nil {
 		return []string{}, err
 	}
-	rids, err := models.ResIdsGetByNodeIds(nids)
-	if err != nil {
-		return []string{}, err
+	rids := cache.NodeResourceCache.GetByNids(nids)
+	resources := cache.ResourceCache.GetByIds(rids)
+	var idents []string
+	for i := range resources {
+		idents = append(idents, resources[i].Ident)
 	}
-	idents, err := models.ResourceIdentsByIds(rids)
+
 	return idents, err
 }

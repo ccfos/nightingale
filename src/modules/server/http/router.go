@@ -314,6 +314,8 @@ func Config(r *gin.Engine) {
 		event.GET("/his", eventHisGets)
 		event.GET("/his/:id", eventHisGetById)
 		event.POST("/cur/claim", eventCurClaim)
+
+		event.GET("/nids", AlertNids)
 	}
 
 	// TODO: merge to collect-rule
