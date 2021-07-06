@@ -387,8 +387,14 @@ func (pd *PromeDataSource) QueryTagKeys(recv vos.CommonTagQueryParam) *vos.TagKe
 	}
 
 	labelNamesSet := make(map[string]struct{})
-	for _, x := range recv.Params {
+	if len(recv.Params) == 0 {
+		recv.Params = append(recv.Params, vos.TagPairQueryParamOne{
+			Idents: []string{},
+			Metric: "",
+		})
+	}
 
+	for _, x := range recv.Params {
 		cj := &commonQueryObj{
 			Idents:   x.Idents,
 			TagPairs: recv.TagPairs,
@@ -444,6 +450,14 @@ func (pd *PromeDataSource) QueryTagKeys(recv vos.CommonTagQueryParam) *vos.TagKe
 // 对应prometheus 中的 /api/v1/label/<label_name>/values
 func (pd *PromeDataSource) QueryTagValues(recv vos.CommonTagQueryParam) *vos.TagValueQueryResp {
 	labelValuesSet := make(map[string]struct{})
+
+	if len(recv.Params) == 0 {
+		recv.Params = append(recv.Params, vos.TagPairQueryParamOne{
+			Idents: []string{},
+			Metric: "",
+		})
+	}
+
 	for _, x := range recv.Params {
 		cj := &commonQueryObj{
 			Idents:   x.Idents,
@@ -553,6 +567,12 @@ func (pd *PromeDataSource) QueryTagPairs(recv vos.CommonTagQueryParam) *vos.TagP
 		Idents:   make([]string, 0),
 	}
 	tps := make(map[string]struct{})
+	if len(recv.Params) == 0 {
+		recv.Params = append(recv.Params, vos.TagPairQueryParamOne{
+			Idents: []string{},
+			Metric: "",
+		})
+	}
 	for _, x := range recv.Params {
 		cj := &commonQueryObj{
 			Idents:   x.Idents,

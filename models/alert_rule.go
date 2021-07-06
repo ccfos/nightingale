@@ -48,9 +48,10 @@ type AlertRule struct {
 }
 
 type PushExpression struct {
-	TagFilters []TagFilter `json:"tags_filters"`
-	ResFilters []ResFilter `json:"res_filters"`
-	Exps       []Exp       `json:"trigger_conditions"`
+	TagFilters    []TagFilter `json:"tags_filters"`
+	ResFilters    []ResFilter `json:"res_filters"`
+	Exps          []Exp       `json:"trigger_conditions"`
+	TogetherOrAny int         `json:"together_or_any"` // 所有触发还是触发一条即可，=0所有 =1一条
 }
 
 type PullExpression struct {

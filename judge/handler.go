@@ -265,7 +265,7 @@ func ToJudge(linkedList *SafeLinkedList, stra *models.AlertRule, val *vos.Metric
 			historyArr = append(historyArr, history)
 			eventInfo += info
 		}
-	} else { //与条件
+	} else { //多个条件
 		for _, expr := range stra.PushExpr.Exps {
 
 			respData, err := GetData(stra, expr, val, now)
@@ -291,7 +291,12 @@ func ToJudge(linkedList *SafeLinkedList, stra *models.AlertRule, val *vos.Metric
 			if eventInfo == "" {
 				eventInfo = info
 			} else {
-				eventInfo += fmt.Sprintf(" & %s", info)
+				if stra.PushExpr.TogetherOrAny == 0 {
+					eventInfo += fmt.Sprintf(" & %s", info)
+				} else if stra.PushExpr.TogetherOrAny == 1 {
+					eventInfo += fmt.Sprintf(" || %s", info)
+				}
+
 			}
 
 		}
@@ -419,8 +424,28 @@ func GetData(stra *models.AlertRule, exp models.Exp, firstItem *vos.MetricPoint,
 // 虽然最近的数据确实产生了事件(产生事件很频繁)，但是未必一定要发送，只有告警/恢复状态发生变化的时候才需发送
 func sendEventIfNeed(status []bool, event *models.AlertEvent, stra *models.AlertRule) {
 	isTriggered := true
-	for _, s := range status {
-		isTriggered = isTriggered && s
+
+	if stra.Type == 0 {
+		// 只判断push型的
+		switch stra.PushExpr.TogetherOrAny {
+
+		case 0:
+			// 全部触发
+			for _, s := range status {
+				isTriggered = isTriggered && s
+			}
+
+		case 1:
+			// 任意一个触发
+			isTriggered = false
+			for _, s := range status {
+				if s == true {
+					isTriggered = true
+					break
+				}
+			}
+
+		}
 	}
 
 	now := time.Now().Unix()
