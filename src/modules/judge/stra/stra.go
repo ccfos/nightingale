@@ -76,9 +76,6 @@ func getStrategy(opts StrategySection) {
 
 	straCount := len(resp.Data)
 	stats.Counter.Set("stra.count", straCount)
-	if straCount == 0 { //获取策略数为0，不正常，不更新策略缓存
-		return
-	}
 
 	for _, stra := range resp.Data {
 		if len(stra.Exprs) < 1 {
