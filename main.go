@@ -71,6 +71,7 @@ func main() {
 
 	timer.SyncResourceTags()
 	timer.SyncUsers()
+	timer.SyncUserGroups()
 	timer.SyncUserGroupMember()
 	timer.SyncClasspathReses()
 	timer.SyncCollectRules()

@@ -204,3 +204,19 @@ func (ug *UserGroup) Del() error {
 
 	return session.Commit()
 }
+
+func UserGroupGetAll() ([]UserGroup, error) {
+	var userGroups []UserGroup
+
+	err := DB.Find(&userGroups)
+	if err != nil {
+		logger.Errorf("mysql.error: select user_group fail: %v", err)
+		return userGroups, internalServerError
+	}
+
+	if len(userGroups) == 0 {
+		return []UserGroup{}, nil
+	}
+
+	return userGroups, nil
+}
