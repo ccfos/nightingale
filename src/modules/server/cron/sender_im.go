@@ -1,6 +1,7 @@
 package cron
 
 import (
+	"github.com/didi/nightingale/v4/src/modules/server/feishu"
 	"path"
 	"regexp"
 	"strings"
@@ -51,6 +52,8 @@ func sendIm(message *dataobj.Message) {
 		sendImByWeChatRobot(message)
 	case "dingtalk_robot":
 		sendImByDingTalkRobot(message)
+	case "feishu_robot":
+		sendImByFeishuRobot(message)
 	default:
 		logger.Errorf("not support %s to send im, im: %+v", Sender["im"].Way, message)
 	}
@@ -175,6 +178,45 @@ func sendImByDingTalkRobot(message *dataobj.Message) {
 			logger.Warningf("im dingtalk_robot send to %s fail: %v", u, err)
 		} else {
 			logger.Infof("im dingtalk_robot send to %s succ", u)
+		}
+	}
+}
+
+func sendImByFeishuRobot(message *dataobj.Message) {
+	cnt := len(message.Tos)
+	if cnt == 0 {
+		logger.Warningf("im send feishu_robot fail, empty tos, message: %+v", message)
+		return
+	}
+
+	set := make(map[string]struct{}, cnt)
+	for i := 0; i < cnt; i++ {
+		toUser := strings.TrimSpace(message.Tos[i])
+		if toUser == "" {
+			continue
+		}
+
+		if _, ok := set[toUser]; !ok {
+			set[toUser] = struct{}{}
+		}
+	}
+
+	req := regexp.MustCompile("^1[0-9]{10}$")
+	var atUser []string
+	var tokenUser []string
+	for user := range set {
+		if req.MatchString(user) {
+			atUser = append(atUser, user)
+		} else {
+			tokenUser = append(tokenUser, user)
+		}
+	}
+	for _, u := range tokenUser {
+		err := feishu.RobotSend(u, message.Content)
+		if err != nil {
+			logger.Warningf("im feishu_robot send to %s fail: %v", u, err)
+		} else {
+			logger.Infof("im feishu_robot send to %s succ", u)
 		}
 	}
 }

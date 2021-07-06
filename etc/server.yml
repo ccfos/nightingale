@@ -72,7 +72,7 @@ rdb:
       worker: 10
       api: http://127.0.0.1:2008/voice
     im:
-      # five choice: shell|api|wechat|wechat_robot|dingtalk_robot
+      # six choice: shell|api|wechat|wechat_robot|dingtalk_robot|feishu_robot
       way: shell
       worker: 10
       api: http://127.0.0.1:2008/im
