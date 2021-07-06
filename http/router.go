@@ -101,6 +101,8 @@ func configRoutes(r *gin.Engine) {
 		pages.GET("/dashboards", login(), dashboardGets)
 		pages.POST("/dashboards", login(), dashboardAdd)
 		pages.POST("/dashboards-clone", login(), dashboardClone)
+		pages.POST("/dashboards/import", login(), dashboardImport)
+		pages.POST("/dashboards/export", login(), dashboardExport)
 		pages.GET("/dashboard/:id", login(), dashboardGet)
 		pages.PUT("/dashboard/:id", login(), dashboardPut)
 		pages.DELETE("/dashboard/:id", login(), dashboardDel)

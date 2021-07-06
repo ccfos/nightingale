@@ -152,3 +152,93 @@ func dashboardFavoriteDel(c *gin.Context) {
 	d := Dashboard(urlParamInt64(c, "id"))
 	renderMessage(c, models.DashboardFavoriteDel(d.Id, me.Id))
 }
+
+type ChartGroupDetail struct {
+	Id          int64          `json:"id"`
+	DashboardId int64          `json:"dashboard_id"`
+	Name        string         `json:"name"`
+	Weight      int            `json:"weight"`
+	Charts      []models.Chart `json:"charts"`
+}
+
+type DashboardDetail struct {
+	Id          int64              `json:"id"`
+	Name        string             `json:"name"`
+	Tags        string             `json:"tags"`
+	Configs     string             `json:"configs"`
+	ChartGroups []ChartGroupDetail `json:"chart_groups"`
+}
+
+func dashboardExport(c *gin.Context) {
+	var f idsForm
+	bind(c, &f)
+	dashboards, err := models.DashboardGetsByIds(f.Ids)
+	dangerous(err)
+
+	var details []DashboardDetail
+	for _, databoard := range dashboards {
+		detail := DashboardDetail{
+			Name:    databoard.Name,
+			Tags:    databoard.Tags,
+			Configs: databoard.Configs,
+		}
+
+		chartGroups, err := models.ChartGroupGets(databoard.Id)
+		dangerous(err)
+
+		var chartGroupsDetail []ChartGroupDetail
+		for _, chartGroup := range chartGroups {
+			chartGroupDetail := ChartGroupDetail{
+				Name:   chartGroup.Name,
+				Weight: chartGroup.Weight,
+			}
+
+			charts, err := models.ChartGets(chartGroup.Id)
+			dangerous(err)
+
+			chartGroupDetail.Charts = charts
+			chartGroupsDetail = append(chartGroupsDetail, chartGroupDetail)
+		}
+		detail.ChartGroups = chartGroupsDetail
+		details = append(details, detail)
+	}
+
+	renderData(c, details, nil)
+}
+
+func dashboardImport(c *gin.Context) {
+	var details []DashboardDetail
+	bind(c, &details)
+	me := loginUser(c).MustPerm("dashboard_create")
+
+	for _, detail := range details {
+		d := &models.Dashboard{
+			Name:     detail.Name,
+			Tags:     detail.Tags,
+			Configs:  detail.Configs,
+			CreateBy: me.Username,
+			UpdateBy: me.Username,
+		}
+		dangerous(d.AddOnly())
+
+		for _, chartGroup := range detail.ChartGroups {
+			cg := models.ChartGroup{
+				DashboardId: d.Id,
+				Name:        chartGroup.Name,
+				Weight:      chartGroup.Weight,
+			}
+			dangerous(cg.Add())
+
+			for _, chart := range chartGroup.Charts {
+				c := models.Chart{
+					GroupId: cg.Id,
+					Configs: chart.Configs,
+					Weight:  chart.Weight,
+				}
+				dangerous(c.Add())
+			}
+		}
+	}
+
+	renderMessage(c, nil)
+}
