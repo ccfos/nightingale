@@ -178,6 +178,17 @@ func DashboardGets(onlyfavorite bool, ids []int64, query string, limit, offset i
 	return objs, nil
 }
 
+func DashboardGetsByIds(ids []int64) ([]*Dashboard, error) {
+	var objs []*Dashboard
+	err := DB.In("id", ids).Find(&objs)
+	if err != nil {
+		logger.Errorf("mysql.error: query dashboards(%v) fail: %v", ids, err)
+		return nil, internalServerError
+	}
+
+	return objs, nil
+}
+
 func DashboardGet(where string, args ...interface{}) (*Dashboard, error) {
 	var obj Dashboard
 	has, err := DB.Where(where, args...).Get(&obj)

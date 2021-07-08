@@ -68,6 +68,10 @@ func alertRuleGroupGet(c *gin.Context) {
 
 func alertRuleOfGroupGet(c *gin.Context) {
 	ars, err := models.AlertRulesOfGroup(urlParamInt64(c, "id"))
+	for i := range ars {
+		alertRuleFillUserAndGroups(&ars[i])
+	}
+
 	renderData(c, ars, err)
 }
 

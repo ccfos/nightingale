@@ -3,16 +3,21 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/didi/nightingale/v5/cache"
 	"github.com/didi/nightingale/v5/config"
 	"github.com/didi/nightingale/v5/models"
 )
 
 func alertRuleGet(c *gin.Context) {
-	renderData(c, AlertRule(urlParamInt64(c, "id")), nil)
+	alertRule := AlertRule(urlParamInt64(c, "id"))
+	alertRuleFillUserAndGroups(alertRule)
+	renderData(c, alertRule, nil)
 }
 
 type alertRuleForm struct {
@@ -162,4 +167,23 @@ func alertRuleDel(c *gin.Context) {
 
 func notifyChannelsGet(c *gin.Context) {
 	renderData(c, config.Config.NotifyChannels, nil)
+}
+
+func alertRuleFillUserAndGroups(alertRule *models.AlertRule) {
+	uidStrs := strings.Fields(alertRule.NotifyUsers)
+	var uids []int64
+	for _, uidStr := range uidStrs {
+		uid, _ := strconv.ParseInt(uidStr, 10, 64)
+		uids = append(uids, uid)
+	}
+	alertRule.NotifyUsersDetail = cache.UserCache.GetByIds(uids)
+
+	gidStrs := strings.Fields(alertRule.NotifyGroups)
+	var gids []int64
+	for _, gidStr := range gidStrs {
+		gid, _ := strconv.ParseInt(gidStr, 10, 64)
+		gids = append(gids, gid)
+	}
+
+	alertRule.NotifyGroupsDetail = cache.UserGroupCache.GetByIds(gids)
 }

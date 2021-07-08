@@ -19,32 +19,34 @@ const ALERT_RULE_ACTIVE = 0
 const ALERT_RULE_DISABLED = 1
 
 type AlertRule struct {
-	Id               int64           `json:"id"`
-	GroupId          int64           `json:"group_id"`
-	Name             string          `json:"name"`
-	Type             int             `json:"type"` // 0: nightingale, 1: prometheus
-	Expression       json.RawMessage `json:"expression"`
-	Status           int             `json:"status"` // 0: active, 1: disabled
-	AppendTags       string          `json:"append_tags"`
-	EnableStime      string          `json:"enable_stime"`
-	EnableEtime      string          `json:"enable_etime"`
-	EnableDaysOfWeek string          `json:"enable_days_of_week"`
-	RecoveryNotify   int             `json:"recovery_notify"`
-	Priority         int             `json:"priority"`
-	NotifyChannels   string          `json:"notify_channels"`
-	NotifyGroups     string          `json:"notify_groups"`
-	NotifyUsers      string          `json:"notify_users"`
-	Callbacks        string          `json:"callbacks"`
-	RunbookUrl       string          `json:"runbook_url"`
-	Note             string          `json:"note"`
-	CreateAt         int64           `json:"create_at"`
-	CreateBy         string          `json:"create_by"`
-	UpdateAt         int64           `json:"update_at"`
-	UpdateBy         string          `json:"update_by"`
-	AlertDuration    int             `json:"alert_duration"` // 告警统计周期，PULL模型会当做P8S的for时间
-	PushExpr         PushExpression  `xorm:"-" json:"-"`
-	PullExpr         PullExpression  `xorm:"-" json:"-"`
-	FirstMetric      string          `xorm:"-" json:"-"` // Exps里可能有多个metric，只取第一个，给后续制作map使用
+	Id                 int64           `json:"id"`
+	GroupId            int64           `json:"group_id"`
+	Name               string          `json:"name"`
+	Type               int             `json:"type"` // 0: nightingale, 1: prometheus
+	Expression         json.RawMessage `json:"expression"`
+	Status             int             `json:"status"` // 0: active, 1: disabled
+	AppendTags         string          `json:"append_tags"`
+	EnableStime        string          `json:"enable_stime"`
+	EnableEtime        string          `json:"enable_etime"`
+	EnableDaysOfWeek   string          `json:"enable_days_of_week"`
+	RecoveryNotify     int             `json:"recovery_notify"`
+	Priority           int             `json:"priority"`
+	NotifyChannels     string          `json:"notify_channels"`
+	NotifyGroups       string          `json:"notify_groups"`
+	NotifyUsers        string          `json:"notify_users"`
+	Callbacks          string          `json:"callbacks"`
+	RunbookUrl         string          `json:"runbook_url"`
+	Note               string          `json:"note"`
+	CreateAt           int64           `json:"create_at"`
+	CreateBy           string          `json:"create_by"`
+	UpdateAt           int64           `json:"update_at"`
+	UpdateBy           string          `json:"update_by"`
+	AlertDuration      int             `json:"alert_duration"` // 告警统计周期，PULL模型会当做P8S的for时间
+	PushExpr           PushExpression  `xorm:"-" json:"-"`
+	PullExpr           PullExpression  `xorm:"-" json:"-"`
+	FirstMetric        string          `xorm:"-" json:"-"` // Exps里可能有多个metric，只取第一个，给后续制作map使用
+	NotifyUsersDetail  []*User         `xorm:"-" json:"notify_users_detail"`
+	NotifyGroupsDetail []*UserGroup    `xorm:"-" json:"notify_groups_detail"`
 }
 
 type PushExpression struct {
