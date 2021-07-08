@@ -106,7 +106,7 @@ func GetTagValues(c *gin.Context) {
 		return
 	}
 	if recv.TagKey == "" {
-		renderMessage(c, errors.New("missing tagkey"))
+		renderMessage(c, errors.New("missing tag_key"))
 		return
 	}
 	resp := dataSource.QueryTagValues(recv)

@@ -56,13 +56,8 @@ func convertToPromql(recv *commonQueryObj) string {
 		labelStrSlice = append(labelStrSlice, metricName)
 
 	}
-	// 匹配ident=~"k1.*|k2.*"
-	for _, i := range recv.Idents {
-		if i != "" {
-			labelIdent += fmt.Sprintf(`.*%s.*|`, i)
-		}
-	}
-	labelIdent = strings.TrimRight(labelIdent, "|")
+	// 匹配ident=~"k1|k2"
+	labelIdent = strings.Join(recv.Idents, "|")
 	if labelIdent != "" {
 		labelStrSlice = append(labelStrSlice, fmt.Sprintf(`ident=~"%s"`, labelIdent))
 	}
@@ -83,10 +78,7 @@ func convertToPromql(recv *commonQueryObj) string {
 
 	}
 
-	for _, s := range labelStrSlice {
-		qlStr += fmt.Sprintf(`%s,`, s)
-	}
-	qlStr = strings.TrimRight(qlStr, ",")
+	qlStr = strings.Join(labelStrSlice, ",")
 	qlStrFinal = fmt.Sprintf(`{%s}`, qlStr)
 	logger.Debugf("[convertToPromql][type=queryLabel][recv:%+v][qlStrFinal:%s]", recv, qlStrFinal)
 
@@ -108,13 +100,8 @@ func convertToPromqlForQueryData(recv *commonQueryObj) string {
 		labelStrSlice = append(labelStrSlice, metricName)
 
 	}
-	// 匹配ident=~"k1.*|k2.*"
-	for _, i := range recv.Idents {
-		if i != "" {
-			labelIdent += fmt.Sprintf(`%s|`, i)
-		}
-	}
-	labelIdent = strings.TrimRight(labelIdent, "|")
+	// 匹配ident=~"k1|k2"
+	labelIdent = strings.Join(recv.Idents, "|")
 	if labelIdent != "" {
 		labelStrSlice = append(labelStrSlice, fmt.Sprintf(`ident=~"%s"`, labelIdent))
 	}
@@ -135,10 +122,7 @@ func convertToPromqlForQueryData(recv *commonQueryObj) string {
 
 	}
 
-	for _, s := range labelStrSlice {
-		qlStr += fmt.Sprintf(`%s,`, s)
-	}
-	qlStr = strings.TrimRight(qlStr, ",")
+	qlStr = strings.Join(labelStrSlice, ",")
 	qlStrFinal = fmt.Sprintf(`{%s}`, qlStr)
 	logger.Debugf("[convertToPromql][type=queryData][recv:%+v][qlStrFinal:%s]", recv, qlStrFinal)
 
