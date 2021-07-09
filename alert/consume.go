@@ -22,7 +22,7 @@ import (
 )
 
 func popEvent() {
-	sema := semaphore.NewSemaphore(config.Config.Alert.NotifyConcurrency)
+	sema := semaphore.NewSemaphore(config.Config.Alert.NotifyScriptConcurrency)
 	duration := time.Duration(100) * time.Millisecond
 	for {
 		events := judge.EventQueue.PopBackBy(200)
@@ -60,7 +60,7 @@ func consume(events []interface{}, sema *semaphore.Semaphore) {
 		event.ResClasspaths = strings.Join(classpaths, " ")
 		enrichTag(event, alertRule)
 
-		if isEventMute(event) {
+		if isEventMute(event) && event.IsAlert() {
 			// 被屏蔽的事件
 			event.MarkMuted()
 

@@ -45,6 +45,10 @@ func Query(reqs *vos.DataQueryParam) []*vos.HPoint {
 
 	//裁剪掉多余的点
 	for _, i := range fD.Values {
+		if i.Timestamp/1000000000 == 1000 {
+			i.Timestamp = i.Timestamp / 1000
+		}
+
 		oneV := &vos.HPoint{
 			Timestamp: i.Timestamp,
 			Value:     i.Value,

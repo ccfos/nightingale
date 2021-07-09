@@ -48,24 +48,22 @@ func syncResourceTags() error {
 
 	resTagsMap := make(map[string]cache.ResourceAndTags)
 	for i := 0; i < len(resources); i++ {
+		resAndTags := cache.ResourceAndTags{
+			Resource: resources[i],
+		}
+
 		tagslst := strings.Fields(resources[i].Tags)
 		count := len(tagslst)
-		if count == 0 {
-			continue
-		}
-
-		tagsmap := make(map[string]string, count)
-		for i := 0; i < count; i++ {
-			arr := strings.Split(tagslst[i], "=")
-			if len(arr) != 2 {
-				continue
+		if count != 0 {
+			tagsmap := make(map[string]string, count)
+			for i := 0; i < count; i++ {
+				arr := strings.Split(tagslst[i], "=")
+				if len(arr) != 2 {
+					continue
+				}
+				tagsmap[arr[0]] = arr[1]
 			}
-			tagsmap[arr[0]] = arr[1]
-		}
-
-		resAndTags := cache.ResourceAndTags{
-			Tags:     tagsmap,
-			Resource: resources[i],
+			resAndTags.Tags = tagsmap
 		}
 
 		resTagsMap[resources[i].Ident] = resAndTags

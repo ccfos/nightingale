@@ -39,9 +39,9 @@ type tplSection struct {
 }
 
 type alertSection struct {
-	NotifyScriptPath  string `yaml:"notifyScriptPath"`
-	NotifyConcurrency int    `yaml:"notifyConcurrency"`
-	MutedAlertPersist bool   `yaml:"mutedAlertPersist"`
+	NotifyScriptPath        string `yaml:"notifyScriptPath"`
+	NotifyScriptConcurrency int    `yaml:"notifyScriptConcurrency"`
+	MutedAlertPersist       bool   `yaml:"mutedAlertPersist"`
 }
 
 type transSection struct {
