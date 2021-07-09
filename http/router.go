@@ -158,11 +158,17 @@ func configRoutes(r *gin.Engine) {
 		pages.GET("/contact-channels", contactChannelsGet)
 		pages.GET("/notify-channels", notifyChannelsGet)
 
+		pages.GET("/tpl/list", tplNameGets)
+		pages.GET("/tpl/content", tplGet)
+
+		pages.GET("/status", Status)
+
 		pages.POST("/query", GetData)
 		pages.POST("/tag-keys", GetTagKeys)
 		pages.POST("/tag-values", GetTagValues)
 		pages.POST("/tag-metrics", GetMetrics)
 		pages.POST("/tag-pairs", GetTagPairs)
+
 	}
 
 	// for thirdparty, do not expose location in nginx.conf
@@ -278,6 +284,8 @@ func configRoutes(r *gin.Engine) {
 		v1.GET("/notify-channels", notifyChannelsGet)
 
 		v1.POST("/push", PushData)
+
+		v1.GET("/status", Status)
 
 		v1.POST("/query", GetData)
 		v1.GET("/check-promql", checkPromeQl)

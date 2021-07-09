@@ -30,6 +30,12 @@ type ConfigStruct struct {
 	Trans          transSection        `yaml:"trans"`
 	ContactKeys    []contactKey        `yaml:"contactKeys"`
 	NotifyChannels []string            `yaml:"notifyChannels"`
+	Tpl            tplSection          `yaml:"tpl"`
+}
+
+type tplSection struct {
+	AlertRulePath string `yaml:"alertRulePath"`
+	DashboardPath string `yaml:"dashboardPath"`
 }
 
 type alertSection struct {
@@ -116,6 +122,8 @@ func Parse() error {
 	viper.SetDefault("trans.backend.prometheus.maxConcurrentQuery", 30)
 	viper.SetDefault("trans.backend.prometheus.maxSamples", 50000000)
 	viper.SetDefault("trans.backend.prometheus.maxFetchAllSeriesLimitMinute", 5)
+	viper.SetDefault("tpl.alertRulePath", "./etc/alert_rule")
+	viper.SetDefault("tpl.dashboardPath", "./etc/dashboard")
 
 	err = viper.Unmarshal(&Config)
 	if err != nil {
