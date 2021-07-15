@@ -9,7 +9,6 @@ import (
 
 	"github.com/didi/nightingale/v5/cache"
 	"github.com/didi/nightingale/v5/models"
-	"github.com/didi/nightingale/v5/pkg/i18n"
 )
 
 type collectRuleForm struct {
@@ -244,15 +243,15 @@ func includeIllegalChar(s string) bool {
 
 // 生成返回错误信息
 func genErrMsg(sign string) string {
-	return i18n.Sprintf("regular match failed, please check your configuration:[%s]", sign)
+	return _s("regular match failed, please check your configuration:[%s]", sign)
 }
 
 // 生成子串匹配错误信息
 func genSubErrMsg(sign string) string {
-	return i18n.Sprintf("regular match was successful. according to the configuration, it does not get the substring inside(), please check your configuration:[%s]", sign)
+	return _s("regular match was successful. according to the configuration, it does not get the substring inside(), please check your configuration:[%s]", sign)
 }
 
 // 生成子串匹配错误信息
 func genIllegalCharErrMsg() string {
-	return i18n.Sprintf(`key or value of tag contains illegal characters:[:,/=\r\n\t]`)
+	return _s(`key or value of tag contains illegal characters:[:,/=\r\n\t]`)
 }

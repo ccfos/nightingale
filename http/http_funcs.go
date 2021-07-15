@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,12 +16,20 @@ import (
 
 const defaultLimit = 20
 
+func _e(format string, a ...interface{}) error {
+	return fmt.Errorf(_s(format, a...))
+}
+
+func _s(format string, a ...interface{}) string {
+	return i18n.Sprintf(format, a...)
+}
+
 func dangerous(v interface{}, code ...int) {
 	ierr.Dangerous(v, code...)
 }
 
 func bomb(code int, format string, a ...interface{}) {
-	ierr.Bomb(code, i18n.Sprintf(format, a...))
+	ierr.Bomb(code, _s(format, a...))
 }
 
 func bind(c *gin.Context, ptr interface{}) {
@@ -138,7 +147,7 @@ func renderMessage(c *gin.Context, v interface{}, statusCode ...int) {
 
 	switch t := v.(type) {
 	case string:
-		c.JSON(code, gin.H{"err": i18n.Sprintf(t)})
+		c.JSON(code, gin.H{"err": _s(t)})
 	case error:
 		c.JSON(code, gin.H{"err": t.Error()})
 	}
