@@ -1,0 +1,176 @@
+[
+  {
+    "name": "内存利用率大于75%",
+    "type": 0,
+    "expression": {
+      "trigger_conditions": [
+        {
+          "optr": ">",
+          "func": "all",
+          "metric": "system_mem_pct_used",
+          "params": [],
+          "threshold": 75
+        }
+      ],
+      "tags_filters": []
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 2,
+    "notify_channels": "sms email",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1625831623,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "机器loadavg大于16",
+    "type": 0,
+    "expression": {
+      "trigger_conditions": [
+        {
+          "optr": ">",
+          "func": "all",
+          "metric": "node_load1",
+          "params": [],
+          "threshold": 16
+        }
+      ],
+      "tags_filters": []
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 1,
+    "notify_channels": "sms email",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1625831689,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "磁盘利用率达到85%",
+    "type": 0,
+    "expression": {
+      "trigger_conditions": [
+        {
+          "optr": ">",
+          "func": "all",
+          "metric": "system_disk_in_use",
+          "params": [],
+          "threshold": 85
+        }
+      ],
+      "tags_filters": []
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 3,
+    "notify_channels": "email",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1625831738,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "磁盘利用率达到88%",
+    "type": 0,
+    "expression": {
+      "trigger_conditions": [
+        {
+          "optr": ">",
+          "func": "all",
+          "metric": "system_disk_in_use",
+          "params": [],
+          "threshold": 88
+        }
+      ],
+      "tags_filters": []
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 2,
+    "notify_channels": "email sms",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1625831774,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "磁盘利用率达到92%",
+    "type": 0,
+    "expression": {
+      "trigger_conditions": [
+        {
+          "optr": ">",
+          "func": "all",
+          "metric": "system_disk_in_use",
+          "params": [],
+          "threshold": 88
+        }
+      ],
+      "tags_filters": []
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 1,
+    "notify_channels": "email sms voice",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1625831752,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "端口挂了",
+    "type": 0,
+    "expression": {
+      "trigger_conditions": [
+        {
+          "optr": "<",
+          "func": "all",
+          "metric": "proc_port_listen",
+          "params": [],
+          "threshold": 1
+        }
+      ],
+      "tags_filters": []
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 2,
+    "notify_channels": "sms email",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1625831564,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  }
+]

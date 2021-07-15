@@ -26,6 +26,10 @@ func (d *Dashboard) TableName() string {
 }
 
 func (d *Dashboard) Validate() error {
+	if d.Name == "" {
+		return _e("Dashboard name is empty")
+	}
+
 	if str.Dangerous(d.Name) {
 		return _e("Dashboard name has invalid characters")
 	}

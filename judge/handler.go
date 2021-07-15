@@ -325,7 +325,7 @@ func ToJudge(linkedList *SafeLinkedList, stra *models.AlertRule, val *vos.Metric
 		ReadableExpression: eventInfo,
 		TagMap:             val.TagsMap,
 	}
-	logger.Debugf("[ToJudge.event.create][type=push][stra:%+v][val:%+v][event:%+v]", stra, val, event)
+	logger.Debugf("[ToJudge.event.create][statusArr:%v][type=push][stra:%+v][val:%+v][event:%+v]", statusArr, stra, val, event)
 	sendEventIfNeed(statusArr, event, stra)
 }
 
