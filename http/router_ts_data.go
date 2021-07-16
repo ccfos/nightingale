@@ -1,8 +1,11 @@
 package http
 
 import (
+	"compress/gzip"
+	"compress/zlib"
 	"errors"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/didi/nightingale/v5/backend"
 	"github.com/didi/nightingale/v5/cache"
@@ -10,7 +13,6 @@ import (
 	"github.com/didi/nightingale/v5/vos"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	agentpayload "github.com/n9e/agent-payload/gogen"
 	"github.com/toolkits/pkg/logger"
 )
@@ -19,9 +21,32 @@ import (
 func PushSeries(c *gin.Context) {
 	req := agentpayload.N9EMetricsPayload{}
 
-	if c.ContentType() == "application/x-protobuf" {
-		err := c.ShouldBindBodyWith(&req, binding.ProtoBuf)
-		if err != nil {
+	r := c.Request
+	reader := r.Body
+
+	var err error
+	if encoding := r.Header.Get("Content-Encoding"); encoding == "gzip" {
+		if reader, err = gzip.NewReader(r.Body); err != nil {
+			logger.Error(err)
+			return
+		}
+		defer reader.Close()
+	} else if encoding == "deflate" {
+		if reader, err = zlib.NewReader(r.Body); err != nil {
+			logger.Error(err)
+			return
+		}
+		defer reader.Close()
+	}
+
+	b, err := ioutil.ReadAll(reader)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+
+	if r.Header.Get("Content-Type") == "application/x-protobuf" {
+		if err := req.Unmarshal(b); err != nil {
 			message := fmt.Sprintf("error: decode protobuf body occur error: %v", err)
 			logger.Warning(message)
 			c.String(200, message)
@@ -46,6 +71,7 @@ func PushSeries(c *gin.Context) {
 		} else {
 			c.String(200, "success: received %d points", len(metricPoints))
 		}
+
 	} else {
 		logger.Debugf("error: trans.push %+v Content-Type(%s) not equals application/x-protobuf", req.Samples)
 		c.String(200, "error: Content-Type(%s) not equals application/x-protobuf")
