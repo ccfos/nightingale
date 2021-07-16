@@ -138,7 +138,7 @@ CREATE TABLE `classpath` (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
 -- new resource will bind classpath(id=1) automatically
-insert into classpath(id, path, note, preset, create_by, update_by, create_at, update_at) values(1, 'all', 'preset classpath, all resources belong to', 1, 'system', 'system', unix_timestamp(now()), unix_timestamp(now()));
+insert into classpath(id, path, note, preset, create_by, update_by, create_at, update_at) values(1, 'all.resources', 'preset classpath, all resources belong to', 1, 'system', 'system', unix_timestamp(now()), unix_timestamp(now()));
 
 CREATE TABLE `classpath_resource` (
     `id` bigint unsigned not null auto_increment,
