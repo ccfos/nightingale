@@ -1,8 +1,8 @@
 package istr
 
 import (
-	"strings"
 	"strconv"
+	"strings"
 )
 
 func SampleKeyInvalid(str string) bool {
