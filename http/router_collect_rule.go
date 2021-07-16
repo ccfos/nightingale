@@ -163,14 +163,14 @@ func regExpCheck(c *gin.Context) {
 	suc, reRes, isSub := checkRegex(param["re"], param["log"])
 	if !suc {
 		ret.Success = false
-		reRes = genErrMsg("re")
+		reRes = genErrMsg(param["re"])
 		ret.Data = append(ret.Data, map[string]string{"re": reRes})
 		renderData(c, ret, nil)
 		return
 	}
 	if calcMethod == "histogram" && !isSub {
 		ret.Success = false
-		reRes = genSubErrMsg("re")
+		reRes = genSubErrMsg(param["re"])
 		ret.Data = append(ret.Data, map[string]string{"re": reRes})
 		renderData(c, ret, nil)
 		return
@@ -193,11 +193,11 @@ func regExpCheck(c *gin.Context) {
 		if !suc {
 			// 正则错误
 			ret.Success = false
-			tagRes = genErrMsg(tagk)
+			tagRes = genErrMsg(pat)
 		} else if !isSub {
 			// 未匹配出子串
 			ret.Success = false
-			tagRes = genSubErrMsg(tagk)
+			tagRes = genSubErrMsg(pat)
 		} else if includeIllegalChar(tagRes) || includeIllegalChar(tagk) {
 			// 保留字报错
 			ret.Success = false
@@ -242,16 +242,16 @@ func includeIllegalChar(s string) bool {
 }
 
 // 生成返回错误信息
-func genErrMsg(sign string) string {
-	return _s("regular match failed, please check your configuration:[%s]", sign)
+func genErrMsg(pattern string) string {
+	return _s("Regexp[%s] matching failed", pattern)
 }
 
 // 生成子串匹配错误信息
-func genSubErrMsg(sign string) string {
-	return _s("regular match was successful. according to the configuration, it does not get the substring inside(), please check your configuration:[%s]", sign)
+func genSubErrMsg(pattern string) string {
+	return _s("Regexp[%s] matched, but cannot get substring()", pattern)
 }
 
 // 生成子串匹配错误信息
 func genIllegalCharErrMsg() string {
-	return _s(`key or value of tag contains illegal characters:[:,/=\r\n\t]`)
+	return _s(`TagKey or TagValue contains illegal characters[:,/=\r\n\t]`)
 }
