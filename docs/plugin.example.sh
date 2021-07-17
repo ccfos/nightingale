@@ -9,7 +9,6 @@ echo '[
             "type": "testcase",
             "author": "ulric"
         },
-        "time": '${now}',
         "value": '${now}',
         "type": "gauge"
     },
@@ -19,7 +18,6 @@ echo '[
             "type": "testcase",
             "author": "ulric"
         },
-        "time": '${now}',
         "value": '${now}',
         "type": "rate"
     },
@@ -29,7 +27,6 @@ echo '[
             "type": "testcase",
             "author": "ulric"
         },
-        "time": '${now}',
         "value": '${now}',
         "type": "increase"
     }
