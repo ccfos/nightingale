@@ -1,13 +1,44 @@
 [
   {
-    "name": "内存利用率大于75%",
+    "name": "cpu使用率大于85%",
     "type": 0,
     "expression": {
+      "together_or_any": 0,
       "trigger_conditions": [
         {
           "optr": ">",
           "func": "all",
-          "metric": "system_mem_pct_used",
+          "metric": "system_cpu_util",
+          "params": [],
+          "threshold": 85
+        }
+      ],
+      "tags_filters": []
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 2,
+    "notify_channels": "",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1626517658,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "内存利用率大于75%",
+    "type": 0,
+    "expression": {
+      "together_or_any": 0,
+      "trigger_conditions": [
+        {
+          "func": "all",
+          "metric": "system_mem_used_percent",
+          "optr": ">",
           "params": [],
           "threshold": 75
         }
@@ -23,7 +54,7 @@
     "notify_channels": "sms email",
     "runbook_url": "",
     "note": "",
-    "create_at": 1625831623,
+    "create_at": 1626517103,
     "alert_duration": 60,
     "notify_users_detail": null,
     "notify_groups_detail": null
@@ -32,16 +63,16 @@
     "name": "机器loadavg大于16",
     "type": 0,
     "expression": {
+      "tags_filters": [],
       "trigger_conditions": [
         {
-          "optr": ">",
           "func": "all",
           "metric": "system_cpu_load1",
+          "optr": ">",
           "params": [],
           "threshold": 16
         }
-      ],
-      "tags_filters": []
+      ]
     },
     "status": 0,
     "enable_stime": "00:00",
@@ -52,7 +83,7 @@
     "notify_channels": "sms email",
     "runbook_url": "",
     "note": "",
-    "create_at": 1625831689,
+    "create_at": 1626517103,
     "alert_duration": 60,
     "notify_users_detail": null,
     "notify_groups_detail": null
@@ -61,16 +92,16 @@
     "name": "磁盘利用率达到85%",
     "type": 0,
     "expression": {
+      "tags_filters": [],
       "trigger_conditions": [
         {
-          "optr": ">",
           "func": "all",
-          "metric": "system_disk_in_use",
+          "metric": "system_disk_used_percent",
+          "optr": ">",
           "params": [],
           "threshold": 85
         }
-      ],
-      "tags_filters": []
+      ]
     },
     "status": 0,
     "enable_stime": "00:00",
@@ -81,7 +112,7 @@
     "notify_channels": "email",
     "runbook_url": "",
     "note": "",
-    "create_at": 1625831738,
+    "create_at": 1626517103,
     "alert_duration": 60,
     "notify_users_detail": null,
     "notify_groups_detail": null
@@ -90,16 +121,16 @@
     "name": "磁盘利用率达到88%",
     "type": 0,
     "expression": {
+      "tags_filters": [],
       "trigger_conditions": [
         {
-          "optr": ">",
           "func": "all",
-          "metric": "system_disk_in_use",
+          "metric": "system_disk_used_percent",
+          "optr": ">",
           "params": [],
           "threshold": 88
         }
-      ],
-      "tags_filters": []
+      ]
     },
     "status": 0,
     "enable_stime": "00:00",
@@ -110,7 +141,7 @@
     "notify_channels": "email sms",
     "runbook_url": "",
     "note": "",
-    "create_at": 1625831774,
+    "create_at": 1626517103,
     "alert_duration": 60,
     "notify_users_detail": null,
     "notify_groups_detail": null
@@ -119,16 +150,16 @@
     "name": "磁盘利用率达到92%",
     "type": 0,
     "expression": {
+      "tags_filters": [],
       "trigger_conditions": [
         {
-          "optr": ">",
           "func": "all",
-          "metric": "system_disk_in_use",
+          "metric": "system_disk_used_percent",
+          "optr": ">",
           "params": [],
           "threshold": 88
         }
-      ],
-      "tags_filters": []
+      ]
     },
     "status": 0,
     "enable_stime": "00:00",
@@ -139,7 +170,7 @@
     "notify_channels": "email sms voice",
     "runbook_url": "",
     "note": "",
-    "create_at": 1625831752,
+    "create_at": 1626517103,
     "alert_duration": 60,
     "notify_users_detail": null,
     "notify_groups_detail": null
@@ -148,16 +179,16 @@
     "name": "端口挂了",
     "type": 0,
     "expression": {
+      "tags_filters": [],
       "trigger_conditions": [
         {
-          "optr": "<",
           "func": "all",
           "metric": "proc_port_listen",
+          "optr": "<",
           "params": [],
           "threshold": 1
         }
-      ],
-      "tags_filters": []
+      ]
     },
     "status": 0,
     "enable_stime": "00:00",
@@ -168,7 +199,71 @@
     "notify_channels": "sms email",
     "runbook_url": "",
     "note": "",
-    "create_at": 1625831564,
+    "create_at": 1626517103,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "网卡入方向错包",
+    "type": 0,
+    "expression": {
+      "together_or_any": 0,
+      "trigger_conditions": [
+        {
+          "optr": ">",
+          "func": "all",
+          "metric": "system_net_packets_in_error",
+          "params": [
+            1
+          ],
+          "threshold": 3
+        }
+      ],
+      "tags_filters": []
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 2,
+    "notify_channels": "",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1626517809,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "网卡出方向错包",
+    "type": 0,
+    "expression": {
+      "together_or_any": 0,
+      "trigger_conditions": [
+        {
+          "optr": ">",
+          "func": "all",
+          "metric": "system_net_packets_out_error",
+          "params": [
+            1
+          ],
+          "threshold": 3
+        }
+      ],
+      "tags_filters": []
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 2,
+    "notify_channels": "",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1626517838,
     "alert_duration": 60,
     "notify_users_detail": null,
     "notify_groups_detail": null

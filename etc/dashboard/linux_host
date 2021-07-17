@@ -3,7 +3,7 @@
     "id": 0,
     "name": "日常巡检大盘",
     "tags": "",
-    "configs": "",
+    "configs": "{\"tags\":[{\"tagName\":\"ident\",\"key\":\"ident\",\"value\":\"*\",\"prefix\":false}]}",
     "chart_groups": [
       {
         "id": 0,
@@ -12,27 +12,27 @@
         "weight": 0,
         "charts": [
           {
-            "id": 158,
-            "group_id": 60,
-            "configs": "{\"name\":\"CPU使用率\",\"mode\":\"nightingale\",\"metric\":[\"system_cpu_used\"],\"tags\":{},\"layout\":{\"h\":2,\"w\":2,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "id": 1,
+            "group_id": 1,
+            "configs": "{\"name\":\"CPU使用率\",\"mode\":\"nightingale\",\"metric\":[\"system_cpu_util\"],\"tags\":{},\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
             "weight": 0
           },
           {
-            "id": 159,
-            "group_id": 60,
-            "configs": "{\"name\":\"硬盘使用率\",\"mode\":\"nightingale\",\"metric\":[\"system_disk_in_use\"],\"tags\":{},\"layout\":{\"h\":2,\"w\":2,\"x\":6,\"y\":0,\"i\":\"1\"}}",
+            "id": 2,
+            "group_id": 1,
+            "configs": "{\"name\":\"硬盘使用率\",\"mode\":\"nightingale\",\"metric\":[\"system_disk_used_percent\"],\"tags\":{},\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":0,\"i\":\"1\"}}",
             "weight": 0
           },
           {
-            "id": 160,
-            "group_id": 60,
-            "configs": "{\"name\":\"内存使用率\",\"mode\":\"nightingale\",\"metric\":[\"system_mem_pct_used\"],\"tags\":{},\"layout\":{\"h\":2,\"w\":2,\"x\":2,\"y\":0,\"i\":\"2\"}}",
+            "id": 3,
+            "group_id": 1,
+            "configs": "{\"name\":\"内存使用率\",\"mode\":\"nightingale\",\"metric\":[\"system_mem_used_percent\"],\"tags\":{},\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":0,\"i\":\"2\"}}",
             "weight": 0
           },
           {
-            "id": 161,
-            "group_id": 60,
-            "configs": "{\"name\":\"IO使用率\",\"mode\":\"nightingale\",\"metric\":[\"system_io_util\"],\"tags\":{},\"layout\":{\"h\":2,\"w\":2,\"x\":4,\"y\":0,\"i\":\"3\"}}",
+            "id": 4,
+            "group_id": 1,
+            "configs": "{\"name\":\"IO使用率\",\"mode\":\"nightingale\",\"metric\":[\"system_io_util\"],\"tags\":{},\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":0,\"i\":\"3\"}}",
             "weight": 0
           }
         ]
