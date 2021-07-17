@@ -175,3 +175,12 @@
 
 部署方式：
   - 见文档 https://n9e.didiyun.com/docs/install/
+
+5.0.0-rc2
+升级内容：
+  - 修复若干问题
+  - 新增告警策略，监控大盘导入、导出和内置模板功能
+  - 新增概览页面
+
+部署方式：
+  - 见文档 https://n9e.didiyun.com/docs/install/
