@@ -36,7 +36,7 @@
         {
           "optr": ">",
           "func": "all",
-          "metric": "node_load1",
+          "metric": "system_cpu_load1",
           "params": [],
           "threshold": 16
         }

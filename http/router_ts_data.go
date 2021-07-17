@@ -27,13 +27,17 @@ func PushSeries(c *gin.Context) {
 	var err error
 	if encoding := r.Header.Get("Content-Encoding"); encoding == "gzip" {
 		if reader, err = gzip.NewReader(r.Body); err != nil {
-			logger.Error(err)
+			message := fmt.Sprintf("error: get gzip reader occur error: %v", err)
+			logger.Warning(message)
+			c.String(200, message)
 			return
 		}
 		defer reader.Close()
 	} else if encoding == "deflate" {
 		if reader, err = zlib.NewReader(r.Body); err != nil {
-			logger.Error(err)
+			message := fmt.Sprintf("error: get zlib reader occur error: %v", err)
+			logger.Warning(message)
+			c.String(200, message)
 			return
 		}
 		defer reader.Close()
@@ -41,7 +45,9 @@ func PushSeries(c *gin.Context) {
 
 	b, err := ioutil.ReadAll(reader)
 	if err != nil {
-		logger.Error(err)
+		message := fmt.Sprintf("error: ioutil occur error: %v", err)
+		logger.Warning(message)
+		c.String(200, message)
 		return
 	}
 
@@ -66,14 +72,13 @@ func PushSeries(c *gin.Context) {
 		}
 
 		if err = trans.Push(metricPoints); err != nil {
-			logger.Debugf("error: trans.push %+v err:%v", req.Samples, err)
+			logger.Warningf("error: trans.push %+v err:%v", req.Samples, err)
 			c.String(200, "error: "+err.Error())
 		} else {
 			c.String(200, "success: received %d points", len(metricPoints))
 		}
-
 	} else {
-		logger.Debugf("error: trans.push %+v Content-Type(%s) not equals application/x-protobuf", req.Samples)
+		logger.Warningf("error: trans.push %+v Content-Type(%s) not equals application/x-protobuf", req.Samples)
 		c.String(200, "error: Content-Type(%s) not equals application/x-protobuf")
 	}
 }
