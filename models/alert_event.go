@@ -185,7 +185,7 @@ func AlertEventTotal(stime, etime int64, query string, status, priority int) (nu
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
 			qarg := "%" + arr[i] + "%"
-			cond = cond.And(cond.Or(builder.Like{"res_classpaths", qarg}, builder.Like{"rule_name", qarg}, builder.Like{"tags", qarg}))
+			cond = cond.Or(builder.Like{"res_classpaths", qarg}, builder.Like{"rule_name", qarg}, builder.Like{"tags", qarg})
 		}
 	}
 
@@ -216,7 +216,7 @@ func AlertEventGets(stime, etime int64, query string, status, priority int, limi
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
 			qarg := "%" + arr[i] + "%"
-			cond = cond.And(cond.Or(builder.Like{"res_classpaths", qarg}, builder.Like{"rule_name", qarg}, builder.Like{"tags", qarg}))
+			cond = cond.Or(builder.Like{"res_classpaths", qarg}, builder.Like{"rule_name", qarg}, builder.Like{"tags", qarg})
 		}
 	}
 
