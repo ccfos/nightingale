@@ -109,7 +109,7 @@ func classpathDelResources(c *gin.Context) {
 	me := loginUser(c).MustPerm("classpath_del_resource")
 
 	if classpathId == 1 {
-		bomb(200, "Resource cannot delete in preset classpath")
+		bomb(200, _s("Resource cannot delete in preset classpath"))
 	}
 
 	cp := Classpath(classpathId)

@@ -57,6 +57,7 @@ var (
 		"Regexp[%s] matching failed":                                 "正则表达式[%s]匹配失败",
 		"Regexp[%s] matched, but cannot get substring()":             "主正则[%s]匹配成功，但无法匹配到子串",
 		"TagKey or TagValue contains illegal characters[:,/=\r\n\t]": "标签KEY或者标签值包含非法字符串[:,/=\r\n\t]",
+		"Resource cannot delete in preset classpath":                 "预置分组不能删除资源",
 	}
 	langDict = map[string]map[string]string{
 		"zh": dict,
