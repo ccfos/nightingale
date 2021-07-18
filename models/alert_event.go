@@ -182,9 +182,11 @@ func AlertEventTotal(stime, etime int64, query string, status, priority int) (nu
 	}
 
 	if query != "" {
-		cond = cond.And(builder.Like{"res_classpaths", "%" + query + "%"})
-		cond = cond.And(builder.Like{"rule_name", "%" + query + "%"})
-		cond = cond.And(builder.Like{"tags", "%" + query + "%"})
+		arr := strings.Fields(query)
+		for i := 0; i < len(arr); i++ {
+			qarg := "%" + arr[i] + "%"
+			cond = cond.And(cond.Or(builder.Like{"res_classpaths", qarg}, builder.Like{"rule_name", qarg}, builder.Like{"tags", qarg}))
+		}
 	}
 
 	num, err = DB.Where(cond).Count(new(AlertEvent))
@@ -211,9 +213,11 @@ func AlertEventGets(stime, etime int64, query string, status, priority int, limi
 	}
 
 	if query != "" {
-		cond = cond.And(builder.Like{"res_classpaths", "%" + query + "%"})
-		cond = cond.And(builder.Like{"rule_name", "%" + query + "%"})
-		cond = cond.And(builder.Like{"tags", "%" + query + "%"})
+		arr := strings.Fields(query)
+		for i := 0; i < len(arr); i++ {
+			qarg := "%" + arr[i] + "%"
+			cond = cond.And(cond.Or(builder.Like{"res_classpaths", qarg}, builder.Like{"rule_name", qarg}, builder.Like{"tags", qarg}))
+		}
 	}
 
 	var objs []AlertEvent
