@@ -1,7 +1,7 @@
 [
   {
     "id": 0,
-    "name": "日常巡检大盘",
+    "name": "linux_host",
     "tags": "",
     "configs": "{\"tags\":[{\"tagName\":\"ident\",\"key\":\"ident\",\"value\":\"*\",\"prefix\":false}]}",
     "chart_groups": [
