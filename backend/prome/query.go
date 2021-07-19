@@ -616,6 +616,36 @@ func (pd *PromeDataSource) QueryTagPairs(recv vos.CommonTagQueryParam) *vos.TagP
 	return respD
 }
 
+func (pd *PromeDataSource) QueryDataInstance(ql string) []*vos.DataQueryInstanceResp {
+	respD := make([]*vos.DataQueryInstanceResp, 0)
+	pv := pd.QueryVector(ql)
+	if pv == nil {
+
+		return respD
+	}
+
+	for _, s := range pv {
+		metricOne := make(map[string]interface{})
+		valueOne := make([]float64, 0)
+
+		for _, l := range s.Metric {
+			if l.Name == LABEL_NAME {
+				continue
+			}
+			metricOne[l.Name] = l.Value
+		}
+		// 毫秒时间时间戳转 秒时间戳
+		valueOne = append(valueOne, float64(s.Point.T)/1e3)
+		valueOne = append(valueOne, s.Point.V)
+		respD = append(respD, &vos.DataQueryInstanceResp{
+			Metric: metricOne,
+			Value:  valueOne,
+		})
+
+	}
+	return respD
+}
+
 func (pd *PromeDataSource) QueryVector(ql string) promql.Vector {
 	t := time.Now()
 	q, err := pd.QueryEngine.NewInstantQuery(pd.Queryable, ql, t)

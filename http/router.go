@@ -169,6 +169,14 @@ func configRoutes(r *gin.Engine) {
 		pages.GET("/tpl/content", tplGet)
 
 		pages.GET("/status", Status)
+
+		pages.POST("/query", GetData)
+		pages.POST("/query_instance", GetDataInstance)
+		pages.POST("/tag-keys", GetTagKeys)
+		pages.POST("/tag-values", GetTagValues)
+		pages.POST("/tag-metrics", GetMetrics)
+		pages.POST("/tag-pairs", GetTagPairs)
+
 	}
 
 	// for thirdparty, do not expose location in nginx.conf
@@ -288,6 +296,8 @@ func configRoutes(r *gin.Engine) {
 		v1.GET("/status", Status)
 
 		v1.POST("/query", GetData)
+		v1.POST("/query_instance", GetDataInstance)
+
 		v1.GET("/check-promql", checkPromeQl)
 		v1.POST("/tag-keys", GetTagKeys)
 		v1.POST("/tag-values", GetTagValues)

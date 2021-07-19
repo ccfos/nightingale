@@ -33,6 +33,10 @@ type DataQueryParam struct {
 	End    int64               `json:"end"`
 }
 
+type DataQueryInstanceParam struct {
+	PromeQl string `json:"prome_ql"`
+}
+
 type DataQueryParamOne struct {
 	PromeQl          string     `json:"prome_ql"`
 	Idents           []string   `json:"idents"`
@@ -57,6 +61,11 @@ type DataQueryResp struct {
 	Values     []*Point `json:"values"`
 	Resolution int64    `json:"resolution"`
 	PNum       int      `json:"pNum"`
+}
+
+type DataQueryInstanceResp struct {
+	Metric map[string]interface{} `json:"metric"`
+	Value  []float64              `json:"value"`
 }
 
 type DataQL struct {
