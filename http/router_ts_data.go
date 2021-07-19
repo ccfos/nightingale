@@ -206,7 +206,7 @@ func GetData(c *gin.Context) {
 	renderData(c, resp, nil)
 }
 
-func GetDataInstance(c *gin.Context) {
+func GetDataInstant(c *gin.Context) {
 	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
 		logger.Warningf("could not find datasource")
@@ -214,8 +214,8 @@ func GetDataInstance(c *gin.Context) {
 		return
 	}
 
-	var input vos.DataQueryInstanceParam
+	var input vos.DataQueryInstantParam
 	dangerous(c.ShouldBindJSON(&input))
-	resp := dataSource.QueryDataInstance(input.PromeQl)
+	resp := dataSource.QueryDataInstant(input.PromeQl)
 	renderData(c, resp, nil)
 }
