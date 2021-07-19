@@ -243,7 +243,7 @@ func (pd *PromeDataSource) processWrite(payload []byte) {
 				time.Sleep(time.Millisecond * 100)
 			}
 			if !sendOk {
-				logger.Warningf("send prome finally fail: %v", err)
+				logger.Errorf("send prome finally fail: %v", err)
 			} else {
 				logger.Infof("send to prome %s ok", cc.url.String())
 			}

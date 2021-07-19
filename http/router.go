@@ -39,6 +39,13 @@ func configRoutes(r *gin.Engine) {
 
 		guest.POST("/auth/login", loginPost)
 		guest.GET("/auth/logout", logoutGet)
+
+		// 开源版本，为了支持图表分享功能，允许匿名查询数据
+		guest.POST("/query", GetData)
+		guest.POST("/tag-pairs", GetTagPairs)
+		guest.POST("/tag-keys", GetTagKeys)
+		guest.POST("/tag-values", GetTagValues)
+		guest.POST("/tag-metrics", GetMetrics)
 	}
 
 	// for brower, expose location in nginx.conf
@@ -118,7 +125,7 @@ func configRoutes(r *gin.Engine) {
 		pages.PUT("/chart/:id", login(), chartPut)
 		pages.DELETE("/chart/:id", login(), chartDel)
 		pages.PUT("/charts/configs", login(), chartConfigsPut)
-		pages.GET("/charts/tmps", login(), chartTmpGets)
+		pages.GET("/charts/tmps", chartTmpGets)
 		pages.POST("/charts/tmps", login(), chartTmpAdd)
 
 		pages.GET("/alert-rule-groups", login(), alertRuleGroupGets)

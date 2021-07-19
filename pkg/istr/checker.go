@@ -1,6 +1,7 @@
 package istr
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -13,5 +14,11 @@ func SampleKeyInvalid(str string) bool {
 			r == ' ' ||
 			r == '='
 	})
-	return idx != -1
+
+	if idx != -1 {
+		return true
+	}
+
+	_, err := strconv.ParseFloat(str, 64)
+	return err == nil
 }
