@@ -33,7 +33,7 @@ type DataQueryParam struct {
 	End    int64               `json:"end"`
 }
 
-type DataQueryInstanceParam struct {
+type DataQueryInstantParam struct {
 	PromeQl string `json:"prome_ql"`
 }
 

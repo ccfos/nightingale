@@ -42,10 +42,12 @@ func configRoutes(r *gin.Engine) {
 
 		// 开源版本，为了支持图表分享功能，允许匿名查询数据
 		guest.POST("/query", GetData)
+		guest.POST("/instant-query", GetDataInstant)
 		guest.POST("/tag-pairs", GetTagPairs)
 		guest.POST("/tag-keys", GetTagKeys)
 		guest.POST("/tag-values", GetTagValues)
 		guest.POST("/tag-metrics", GetMetrics)
+		guest.GET("/check-promql", checkPromeQl)
 	}
 
 	// for brower, expose location in nginx.conf
@@ -170,13 +172,6 @@ func configRoutes(r *gin.Engine) {
 
 		pages.GET("/status", Status)
 
-		pages.POST("/query", GetData)
-		pages.POST("/query_instance", GetDataInstance)
-		pages.POST("/tag-keys", GetTagKeys)
-		pages.POST("/tag-values", GetTagValues)
-		pages.POST("/tag-metrics", GetMetrics)
-		pages.POST("/tag-pairs", GetTagPairs)
-
 	}
 
 	// for thirdparty, do not expose location in nginx.conf
@@ -296,13 +291,12 @@ func configRoutes(r *gin.Engine) {
 		v1.GET("/status", Status)
 
 		v1.POST("/query", GetData)
-		v1.POST("/query_instance", GetDataInstance)
-
-		v1.GET("/check-promql", checkPromeQl)
+		v1.POST("/instant-query", GetDataInstant)
 		v1.POST("/tag-keys", GetTagKeys)
 		v1.POST("/tag-values", GetTagValues)
 		v1.POST("/tag-metrics", GetMetrics)
 		v1.POST("/tag-pairs", GetTagPairs)
+		v1.GET("/check-promql", checkPromeQl)
 	}
 
 	push := r.Group("/v1/n9e/series").Use(gzip.Gzip(gzip.DefaultCompression))

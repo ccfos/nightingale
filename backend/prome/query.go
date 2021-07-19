@@ -616,7 +616,7 @@ func (pd *PromeDataSource) QueryTagPairs(recv vos.CommonTagQueryParam) *vos.TagP
 	return respD
 }
 
-func (pd *PromeDataSource) QueryDataInstance(ql string) []*vos.DataQueryInstanceResp {
+func (pd *PromeDataSource) QueryDataInstant(ql string) []*vos.DataQueryInstanceResp {
 	respD := make([]*vos.DataQueryInstanceResp, 0)
 	pv := pd.QueryVector(ql)
 	if pv == nil {
