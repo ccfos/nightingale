@@ -333,12 +333,12 @@ insert into metric_description(metric, description) values('system_cpu_num_cores
 insert into metric_description(metric, description) values('system_cpu_steal', '等待处理其他虚拟核的时间占比(单位：%)');
 insert into metric_description(metric, description) values('system_cpu_system', '内核态CPU时间占比(单位：%)');
 insert into metric_description(metric, description) values('system_cpu_user', '用户态CPU时间占比(单位：%)');
-insert into metric_description(metric, description) values('system_disk_bytes_free', '磁盘某分区余量大小（单位：kb）');
+insert into metric_description(metric, description) values('system_disk_bytes_free', '磁盘某分区余量大小（单位：byte）');
 insert into metric_description(metric, description) values('system_disk_used_percent', '磁盘某分区用量占比（单位：%）');
 insert into metric_description(metric, description) values('system_disk_read_time', '设备读操作耗时(单位：ms)');
 insert into metric_description(metric, description) values('system_disk_read_time_percent', '读取磁盘时间百分比（单位：%）');
-insert into metric_description(metric, description) values('system_disk_bytes_total', '磁盘某分区总量（单位：kb）');
-insert into metric_description(metric, description) values('system_disk_bytes_used', '磁盘某分区用量大小（单位：kb）');
+insert into metric_description(metric, description) values('system_disk_bytes_total', '磁盘某分区总量（单位：byte）');
+insert into metric_description(metric, description) values('system_disk_bytes_used', '磁盘某分区用量大小（单位：byte）');
 insert into metric_description(metric, description) values('system_disk_write_time', '设备写操作耗时(单位：ms)');
 insert into metric_description(metric, description) values('system_disk_write_time_percent', '');
 insert into metric_description(metric, description) values('system_files_allocated', '系统已分配文件句柄数');
