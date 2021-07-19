@@ -24,7 +24,7 @@ const (
 	LABEL_IDENT  = "ident"
 	LABEL_NAME   = "__name__"
 	DEFAULT_QL   = `{__name__=~".*a.*|.*e.*"}`
-	DEFAULT_STEP = 14
+	DEFAULT_STEP = 15
 )
 
 type commonQueryObj struct {
