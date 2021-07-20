@@ -140,7 +140,6 @@ func configRoutes(r *gin.Engine) {
 		pages.DELETE("/alert-rule-group/:id", login(), alertRuleGroupDel)
 		pages.POST("/alert-rule-group/:id/favorites", login(), alertRuleGroupFavoriteAdd)
 		pages.DELETE("/alert-rule-group/:id/favorites", login(), alertRuleGroupFavoriteDel)
-		pages.GET("/check-promql", checkPromeQl)
 
 		pages.POST("/alert-rules", login(), alertRuleAdd)
 		pages.PUT("/alert-rules/status", login(), alertRuleStatusPut)
