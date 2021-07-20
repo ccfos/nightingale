@@ -129,8 +129,11 @@ func alertRuleGroupFavoriteDel(c *gin.Context) {
 }
 
 func alertRuleWritePermCheck(alertRuleGroup *models.AlertRuleGroup, user *models.User) {
-	if user.Role == "Admin" {
-		return
+	roles := strings.Fields(user.RolesForDB)
+	for i := 0; i < len(roles); i++ {
+		if roles[i] == "Admin" {
+			return
+		}
 	}
 
 	gids := IdsInt64(alertRuleGroup.UserGroupIds)
