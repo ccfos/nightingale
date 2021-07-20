@@ -31,6 +31,7 @@ type DataQueryParam struct {
 	Limit  int                 `json:"limit"`
 	Start  int64               `json:"start"`
 	End    int64               `json:"end"`
+	Step   int64               `json:"step"`
 }
 
 type DataQueryInstantParam struct {
