@@ -44,7 +44,7 @@ func ResourceTotalByClasspathId(classpathIds []int64, query string) (int64, erro
 	}
 
 	q := "%" + query + "%"
-	num, err := DB.Where("ident in (select res_ident from classpath_resource where classpath_id in ("+str.IdsString(classpathIds)+")) and (ident like ? or alias like ?)", q, q).Count(new(Resource))
+	num, err := DB.Where("ident in (select res_ident from classpath_resource where classpath_id in ("+str.IdsString(classpathIds)+")) and (ident like ? or alias like ? or tags like ? or note like ?)", q, q, q, q).Count(new(Resource))
 	if err != nil {
 		logger.Errorf("mysql.error count resource in classpath(id=%v) query=%s fail: %v", classpathIds, query, err)
 		return 0, internalServerError
@@ -60,7 +60,7 @@ func ResourceGetsByClasspathId(classpathIds []int64, query string, limit, offset
 	q := "%" + query + "%"
 
 	var objs []Resource
-	err := DB.Where("ident in (select res_ident from classpath_resource where classpath_id in ("+str.IdsString(classpathIds)+")) and (ident like ? or alias like ?)", q, q).OrderBy("ident").Limit(limit, offset).Find(&objs)
+	err := DB.Where("ident in (select res_ident from classpath_resource where classpath_id in ("+str.IdsString(classpathIds)+")) and (ident like ? or alias like ? or tags like ? or note like ?)", q, q, q, q).OrderBy("ident").Limit(limit, offset).Find(&objs)
 	if err != nil {
 		logger.Errorf("mysql.error query resource in classpath(id=%d) query=%s fail: %v", classpathIds, query, err)
 		return nil, internalServerError

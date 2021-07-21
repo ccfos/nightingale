@@ -15,20 +15,21 @@ import (
 )
 
 type User struct {
-	Id       int64           `json:"id"`
-	Username string          `json:"username"`
-	Nickname string          `json:"nickname"`
-	Password string          `json:"-"`
-	Phone    string          `json:"phone"`
-	Email    string          `json:"email"`
-	Portrait string          `json:"portrait"`
-	Status   int             `json:"status"`
-	Role     string          `json:"role"`
-	Contacts json.RawMessage `json:"contacts"` //内容为 map[string]string 结构
-	CreateAt int64           `json:"create_at"`
-	CreateBy string          `json:"create_by"`
-	UpdateAt int64           `json:"update_at"`
-	UpdateBy string          `json:"update_by"`
+	Id         int64           `json:"id"`
+	Username   string          `json:"username"`
+	Nickname   string          `json:"nickname"`
+	Password   string          `json:"-"`
+	Phone      string          `json:"phone"`
+	Email      string          `json:"email"`
+	Portrait   string          `json:"portrait"`
+	Status     int             `json:"status"`
+	RolesForDB string          `json:"-" xorm:"'roles'"` // 这个字段写入数据库
+	RolesForFE []string        `json:"roles" xorm:"-"`   // 这个字段和前端交互
+	Contacts   json.RawMessage `json:"contacts"`         // 内容为 map[string]string 结构
+	CreateAt   int64           `json:"create_at"`
+	CreateBy   string          `json:"create_by"`
+	UpdateAt   int64           `json:"update_at"`
+	UpdateBy   string          `json:"update_by"`
 }
 
 func (u *User) TableName() string {
@@ -110,16 +111,16 @@ func InitRoot() {
 	now := time.Now().Unix()
 
 	u = User{
-		Username: "root",
-		Password: pass,
-		Nickname: "超管",
-		Portrait: "",
-		Role:     "Admin",
-		Contacts: []byte("{}"),
-		CreateAt: now,
-		UpdateAt: now,
-		CreateBy: "system",
-		UpdateBy: "system",
+		Username:   "root",
+		Password:   pass,
+		Nickname:   "超管",
+		Portrait:   "",
+		RolesForDB: "Admin",
+		Contacts:   []byte("{}"),
+		CreateAt:   now,
+		UpdateAt:   now,
+		CreateBy:   "system",
+		UpdateBy:   "system",
 	}
 
 	_, err = DB.Insert(u)
@@ -150,6 +151,8 @@ func UserGet(where string, args ...interface{}) (*User, error) {
 	if !has {
 		return nil, nil
 	}
+
+	obj.RolesForFE = strings.Fields(obj.RolesForDB)
 
 	return &obj, nil
 }
@@ -188,6 +191,10 @@ func UserGets(query string, limit, offset int) ([]User, error) {
 		return []User{}, nil
 	}
 
+	for i := 0; i < len(users); i++ {
+		users[i].RolesForFE = strings.Fields(users[i].RolesForDB)
+	}
+
 	return users, nil
 }
 
@@ -202,6 +209,10 @@ func UserGetAll() ([]User, error) {
 
 	if len(users) == 0 {
 		return []User{}, nil
+	}
+
+	for i := 0; i < len(users); i++ {
+		users[i].RolesForFE = strings.Fields(users[i].RolesForDB)
 	}
 
 	return users, nil
@@ -223,23 +234,31 @@ func UserGetsByIds(ids []int64) ([]User, error) {
 		return []User{}, nil
 	}
 
+	for i := 0; i < len(users); i++ {
+		users[i].RolesForFE = strings.Fields(users[i].RolesForDB)
+	}
+
 	return users, nil
 }
 
 func UserGetsByIdsStr(ids []string) ([]User, error) {
-	var objs []User
+	var users []User
 
-	err := DB.Where("id in (" + strings.Join(ids, ",") + ")").Find(&objs)
+	err := DB.Where("id in (" + strings.Join(ids, ",") + ")").Find(&users)
 	if err != nil {
 		logger.Errorf("mysql.error: UserGetsByIds fail: %v", err)
 		return nil, internalServerError
 	}
 
-	if len(objs) == 0 {
+	if len(users) == 0 {
 		return []User{}, nil
 	}
 
-	return objs, nil
+	for i := 0; i < len(users); i++ {
+		users[i].RolesForFE = strings.Fields(users[i].RolesForDB)
+	}
+
+	return users, nil
 }
 
 func PassLogin(username, pass string) (*User, error) {
@@ -312,7 +331,8 @@ func LdapLogin(username, pass string) (*User, error) {
 
 	user.Password = "******"
 	user.Portrait = "/img/linux.jpeg"
-	user.Role = "Standard"
+	user.RolesForDB = "Standard"
+	user.RolesForFE = []string{"Standard"}
 	user.Contacts = []byte("{}")
 	user.CreateAt = now
 	user.UpdateAt = now
@@ -474,8 +494,11 @@ func (u *User) MyUserGroups() ([]UserGroup, error) {
 
 func (u *User) CanModifyUserGroup(ug *UserGroup) (bool, error) {
 	// 我是管理员，自然可以
-	if u.Role == "Admin" {
-		return true, nil
+	roles := strings.Fields(u.RolesForDB)
+	for i := 0; i < len(roles); i++ {
+		if roles[i] == "Admin" {
+			return true, nil
+		}
 	}
 
 	// 我是创建者，自然可以
@@ -493,11 +516,14 @@ func (u *User) CanModifyUserGroup(ug *UserGroup) (bool, error) {
 }
 
 func (u *User) CanDo(op string) (bool, error) {
-	if u.Role == "Admin" {
-		return true, nil
+	roles := strings.Fields(u.RolesForDB)
+	for i := 0; i < len(roles); i++ {
+		if roles[i] == "Admin" {
+			return true, nil
+		}
 	}
 
-	return RoleHasOperation(u.Role, op)
+	return RoleHasOperation(roles, op)
 }
 
 // MustPerm return *User for link program

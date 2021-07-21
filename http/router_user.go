@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,14 @@ func userGets(c *gin.Context) {
 	list, err := models.UserGets(query, limit, offset(c, limit))
 	dangerous(err)
 
-	admin := loginUser(c).Role == "Admin"
+	admin := false
+	roles := strings.Fields(loginUser(c).RolesForDB)
+	for i := 0; i < len(roles); i++ {
+		if roles[i] == "Admin" {
+			admin = true
+			break
+		}
+	}
 
 	renderData(c, gin.H{
 		"list":  list,
@@ -36,7 +44,7 @@ type userAddForm struct {
 	Phone    string          `json:"phone"`
 	Email    string          `json:"email"`
 	Portrait string          `json:"portrait"`
-	Role     string          `json:"role"`
+	Roles    []string        `json:"roles"`
 	Contacts json.RawMessage `json:"contacts"`
 }
 
@@ -50,23 +58,23 @@ func userAddPost(c *gin.Context) {
 	now := time.Now().Unix()
 	username := loginUsername(c)
 
-	u := models.User{
-		Username: f.Username,
-		Password: password,
-		Nickname: f.Nickname,
-		Phone:    f.Phone,
-		Email:    f.Email,
-		Portrait: f.Portrait,
-		Role:     f.Role,
-		Contacts: f.Contacts,
-		CreateAt: now,
-		UpdateAt: now,
-		CreateBy: username,
-		UpdateBy: username,
+	if len(f.Roles) == 0 {
+		bomb(200, "roles empty")
 	}
 
-	if u.Role == "" {
-		u.Role = "Standard"
+	u := models.User{
+		Username:   f.Username,
+		Password:   password,
+		Nickname:   f.Nickname,
+		Phone:      f.Phone,
+		Email:      f.Email,
+		Portrait:   f.Portrait,
+		RolesForDB: strings.Join(f.Roles, " "),
+		Contacts:   f.Contacts,
+		CreateAt:   now,
+		UpdateAt:   now,
+		CreateBy:   username,
+		UpdateBy:   username,
 	}
 
 	renderMessage(c, u.Add())
@@ -81,7 +89,7 @@ type userProfileForm struct {
 	Phone    string          `json:"phone"`
 	Email    string          `json:"email"`
 	Portrait string          `json:"portrait"`
-	Role     string          `json:"role"`
+	Roles    []string        `json:"roles"`
 	Status   int             `json:"status"`
 	Contacts json.RawMessage `json:"contacts"`
 }
@@ -90,12 +98,16 @@ func userProfilePut(c *gin.Context) {
 	var f userProfileForm
 	bind(c, &f)
 
+	if len(f.Roles) == 0 {
+		bomb(200, "roles empty")
+	}
+
 	target := User(urlParamInt64(c, "id"))
 	target.Nickname = f.Nickname
 	target.Phone = f.Phone
 	target.Email = f.Email
 	target.Portrait = f.Portrait
-	target.Role = f.Role
+	target.RolesForDB = strings.Join(f.Roles, " ")
 	target.Status = f.Status
 	target.Contacts = f.Contacts
 	target.UpdateAt = time.Now().Unix()
@@ -107,7 +119,7 @@ func userProfilePut(c *gin.Context) {
 			"phone",
 			"email",
 			"portrait",
-			"role",
+			"roles",
 			"status",
 			"contacts",
 			"update_at",
