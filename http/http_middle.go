@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/didi/nightingale/v5/pkg/ierr"
 	"github.com/gin-gonic/gin"
@@ -23,7 +24,17 @@ func admin() gin.HandlerFunc {
 		c.Set("username", username)
 
 		user := loginUser(c)
-		if user.Role != "Admin" {
+
+		roles := strings.Fields(user.RolesForDB)
+		found := false
+		for i := 0; i < len(roles); i++ {
+			if roles[i] == "Admin" {
+				found = true
+				break
+			}
+		}
+
+		if !found {
 			ierr.Bomb(http.StatusForbidden, "forbidden")
 		}
 

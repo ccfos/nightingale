@@ -20,6 +20,7 @@ type DataSource interface {
 	PushEndpoint
 
 	QueryData(inputs vos.DataQueryParam) []*vos.DataQueryResp           // 查询一段时间
+	QueryDataInstant(ql string) []*vos.DataQueryInstanceResp            // 查询一个时间点数据 等同于prometheus instant_query
 	QueryTagKeys(recv vos.CommonTagQueryParam) *vos.TagKeyQueryResp     // 获取标签的names
 	QueryTagValues(recv vos.CommonTagQueryParam) *vos.TagValueQueryResp // 根据一个label_name获取 values
 	QueryTagPairs(recv vos.CommonTagQueryParam) *vos.TagPairQueryResp   // 根据匹配拿到所有 series    上面三个使用统一的结构体

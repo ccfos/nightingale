@@ -24,7 +24,7 @@ const (
 	LABEL_IDENT  = "ident"
 	LABEL_NAME   = "__name__"
 	DEFAULT_QL   = `{__name__=~".*a.*|.*e.*"}`
-	DEFAULT_STEP = 14
+	DEFAULT_STEP = 15
 )
 
 type commonQueryObj struct {
@@ -207,13 +207,15 @@ func (pd *PromeDataSource) QueryData(inputs vos.DataQueryParam) []*vos.DataQuery
 		startT := tsToUtcTs(inputs.Start)
 		endT := tsToUtcTs(inputs.End)
 
-		// TODO 前端传入分辨率还是后端计算，grafana和prometheus ui都是前端传入
-		delta := (inputs.End - inputs.Start) / 3600
-		if delta <= 0 {
-			delta = 1
+		resolution := time.Second * time.Duration(inputs.Step)
+		if inputs.Step == 0 {
+			// step==0 说明要自己算 grafana和prometheus ui都是前端传入
+			delta := (inputs.End - inputs.Start) / 3600
+			if delta <= 0 {
+				delta = 1
+			}
+			resolution = time.Second * time.Duration(delta*DEFAULT_STEP)
 		}
-		resolution := time.Second * time.Duration(delta*DEFAULT_STEP)
-
 		q, err := pd.QueryEngine.NewRangeQuery(pd.Queryable, qlStrFinal, startT, endT, resolution)
 		if err != nil {
 			logger.Errorf("[prome_query_error][QueryData_error_may_be_parse_ql_error][args:%+v][err:%+v]", input, err)
@@ -253,7 +255,8 @@ func (pd *PromeDataSource) QueryData(inputs vos.DataQueryParam) []*vos.DataQuery
 			pNum := len(m.Points)
 			for _, p := range m.Points {
 				tmpP := &vos.Point{
-					Timestamp: p.T,
+					// 毫秒时间时间戳转 秒时间戳
+					Timestamp: p.T / 1e3,
 					Value:     vos.JsonFloat(p.V),
 				}
 				oneResp.Values = append(oneResp.Values, tmpP)
@@ -266,7 +269,7 @@ func (pd *PromeDataSource) QueryData(inputs vos.DataQueryParam) []*vos.DataQuery
 			}
 			tagStr = strings.TrimRight(tagStr, ",")
 			oneResp.Tags = tagStr
-			oneResp.Resolution = delta * DEFAULT_STEP
+			oneResp.Resolution = int64(resolution / time.Second)
 			oneResp.PNum = pNum
 			respD = append(respD, oneResp)
 
@@ -613,6 +616,36 @@ func (pd *PromeDataSource) QueryTagPairs(recv vos.CommonTagQueryParam) *vos.TagP
 	}
 
 	respD.TagPairs = newTags
+	return respD
+}
+
+func (pd *PromeDataSource) QueryDataInstant(ql string) []*vos.DataQueryInstanceResp {
+	respD := make([]*vos.DataQueryInstanceResp, 0)
+	pv := pd.QueryVector(ql)
+	if pv == nil {
+
+		return respD
+	}
+
+	for _, s := range pv {
+		metricOne := make(map[string]interface{})
+		valueOne := make([]float64, 0)
+
+		for _, l := range s.Metric {
+			if l.Name == LABEL_NAME {
+				continue
+			}
+			metricOne[l.Name] = l.Value
+		}
+		// 毫秒时间时间戳转 秒时间戳
+		valueOne = append(valueOne, float64(s.Point.T)/1e3)
+		valueOne = append(valueOne, s.Point.V)
+		respD = append(respD, &vos.DataQueryInstanceResp{
+			Metric: metricOne,
+			Value:  valueOne,
+		})
+
+	}
 	return respD
 }
 
