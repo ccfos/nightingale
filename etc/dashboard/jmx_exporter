@@ -1,0 +1,306 @@
+[
+  {
+    "id": 0,
+    "name": "jmx_exporter",
+    "tags": "",
+    "configs": "{\"tags\":[{\"tagName\":\"java_app\",\"key\":\"java_app\",\"value\":\"*\",\"prefix\":false}]}",
+    "chart_groups": [
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "jvm统计",
+        "weight": 1,
+        "charts": [
+          {
+            "id": 278,
+            "group_id": 75,
+            "configs": "{\"name\":\"jvm版本信息\",\"mode\":\"promethues\",\"prome_ql\":[\"avg(jvm_info{java_app=~\\\"$java_app\\\"}) without  (runtime,vendor)\"],\"layout\":{\"h\":2,\"w\":12,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 309,
+            "group_id": 75,
+            "configs": "{\"name\":\"java进程启动时间 单位：小时\",\"mode\":\"promethues\",\"prome_ql\":[\"(time() - process_start_time_seconds{java_app=~\\\"$java_app\\\"})/3600\"],\"layout\":{\"h\":2,\"w\":12,\"x\":12,\"y\":0,\"i\":\"1\"}}",
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "jvm内存使用",
+        "weight": 2,
+        "charts": [
+          {
+            "id": 279,
+            "group_id": 76,
+            "configs": "{\"name\":\"jvm内存使用 - nonheap 非堆区\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_memory_bytes_used{java_app=~\\\"$java_app\\\",area=\\\"nonheap\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 280,
+            "group_id": 76,
+            "configs": "{\"name\":\"jvm内存使用 - heap堆区\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_memory_bytes_used{java_app=~\\\"$java_app\\\",area=\\\"heap\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":0,\"i\":\"1\"}}",
+            "weight": 0
+          },
+          {
+            "id": 281,
+            "group_id": 76,
+            "configs": "{\"name\":\"提交给 Java虚拟机使用的内存量 heap 堆区\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_memory_bytes_committed{java_app=~\\\"$java_app\\\",area=\\\"heap\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":0,\"i\":\"2\"}}",
+            "weight": 0
+          },
+          {
+            "id": 282,
+            "group_id": 76,
+            "configs": "{\"name\":\"提交给 Java虚拟机使用的内存量 nonheap 非堆区\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_memory_bytes_committed{java_app=~\\\"$java_app\\\",area=\\\"nonheap\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":0,\"i\":\"3\"}}",
+            "weight": 0
+          },
+          {
+            "id": 283,
+            "group_id": 76,
+            "configs": "{\"name\":\"jvm最大内存 \",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_memory_bytes_max{java_app=~\\\"$java_app\\\",area=\\\"heap\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":2,\"i\":\"4\"}}",
+            "weight": 0
+          },
+          {
+            "id": 285,
+            "group_id": 76,
+            "configs": "{\"name\":\"jvm 初始化内存\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_memory_bytes_init{java_app=~\\\"$java_app\\\",area=\\\"heap\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":2,\"i\":\"5\"}}",
+            "weight": 0
+          },
+          {
+            "id": 286,
+            "group_id": 76,
+            "configs": "{\"name\":\"jvm内存使用百分比% heap堆区 \",\"mode\":\"promethues\",\"prome_ql\":[\"100 * jvm_memory_bytes_used{java_app=~\\\"$java_app\\\",area=\\\"heap\\\"}/jvm_memory_bytes_max{java_app=~\\\"$java_app\\\",area=\\\"heap\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":2,\"i\":\"6\"}}",
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "jvm内存池",
+        "weight": 3,
+        "charts": [
+          {
+            "id": 287,
+            "group_id": 77,
+            "configs": "{\"name\":\"jvm内存池分pool展示\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_memory_pool_bytes_max{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":24,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 316,
+            "group_id": 77,
+            "configs": "{\"name\":\" JVM 缓冲池使用缓存大小\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_buffer_pool_used_bytes{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":2,\"i\":\"1\"}}",
+            "weight": 0
+          },
+          {
+            "id": 317,
+            "group_id": 77,
+            "configs": "{\"name\":\"JVM 缓冲池的字节容量\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_buffer_pool_capacity_bytes{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":2,\"i\":\"2\"}}",
+            "weight": 0
+          },
+          {
+            "id": 318,
+            "group_id": 77,
+            "configs": "{\"name\":\"JVM 缓冲池使用的字节大小\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_buffer_pool_used_bytes{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":2,\"i\":\"3\"}}",
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "jvm gc情况",
+        "weight": 4,
+        "charts": [
+          {
+            "id": 288,
+            "group_id": 78,
+            "configs": "{\"name\":\"新生代gc耗时 1分钟\",\"mode\":\"promethues\",\"prome_ql\":[\"increase(jvm_gc_collection_seconds_sum{java_app=~\\\"$java_app\\\",gc=\\\"G1 Young Generation\\\" }[1m])\"],\"layout\":{\"h\":2,\"w\":8,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 289,
+            "group_id": 78,
+            "configs": "{\"name\":\"老生代gc耗时 1分钟\",\"mode\":\"promethues\",\"prome_ql\":[\"increase(jvm_gc_collection_seconds_sum{java_app=~\\\"$java_app\\\",gc=\\\"G1 Old Generation\\\" }[1m])\"],\"layout\":{\"h\":2,\"w\":8,\"x\":8,\"y\":0,\"i\":\"1\"}}",
+            "weight": 0
+          },
+          {
+            "id": 290,
+            "group_id": 78,
+            "configs": "{\"name\":\"新生代gc次数 1分钟\",\"mode\":\"promethues\",\"prome_ql\":[\"increase(jvm_gc_collection_seconds_count{java_app=~\\\"$java_app\\\",gc=\\\"G1 Young Generation\\\" }[1m])\"],\"layout\":{\"h\":2,\"w\":8,\"x\":16,\"y\":0,\"i\":\"2\"}}",
+            "weight": 0
+          },
+          {
+            "id": 291,
+            "group_id": 78,
+            "configs": "{\"name\":\"老生代gc次数 1分钟\",\"mode\":\"promethues\",\"prome_ql\":[\"increase(jvm_gc_collection_seconds_count{java_app=~\\\"$java_app\\\",gc=\\\"G1 Old Generation\\\" }[1m])\"],\"layout\":{\"h\":2,\"w\":8,\"x\":0,\"y\":2,\"i\":\"3\"}}",
+            "weight": 0
+          },
+          {
+            "id": 292,
+            "group_id": 78,
+            "configs": "{\"name\":\"新生代平均gc耗时 秒\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_gc_collection_seconds_sum{java_app=~\\\"$java_app\\\",gc=\\\"G1 Young Generation\\\" }/jvm_gc_collection_seconds_count{java_app=~\\\"$java_app\\\",gc=\\\"G1 Young Generation\\\" }\"],\"layout\":{\"h\":2,\"w\":8,\"x\":8,\"y\":2,\"i\":\"4\"}}",
+            "weight": 0
+          },
+          {
+            "id": 293,
+            "group_id": 78,
+            "configs": "{\"name\":\"老生代平均gc耗时\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_gc_collection_seconds_sum{java_app=~\\\"$java_app\\\",gc=\\\"G1 Old Generation\\\"}/jvm_gc_collection_seconds_count{java_app=~\\\"$java_app\\\",gc=\\\"G1 Old Generation\\\" }\"],\"layout\":{\"h\":2,\"w\":8,\"x\":16,\"y\":2,\"i\":\"5\"}}",
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "jvm线程情况",
+        "weight": 5,
+        "charts": [
+          {
+            "id": 294,
+            "group_id": 79,
+            "configs": "{\"name\":\"当前线程数\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_threads_current{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 295,
+            "group_id": 79,
+            "configs": "{\"name\":\"守护线程数\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_threads_daemon{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":0,\"i\":\"1\"}}",
+            "weight": 0
+          },
+          {
+            "id": 296,
+            "group_id": 79,
+            "configs": "{\"name\":\"死锁线程数\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_threads_deadlocked{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":0,\"i\":\"2\"}}",
+            "weight": 0
+          },
+          {
+            "id": 297,
+            "group_id": 79,
+            "configs": "{\"name\":\"活动线程峰值\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_threads_peak{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":0,\"i\":\"3\"}}",
+            "weight": 0
+          },
+          {
+            "id": 298,
+            "group_id": 79,
+            "configs": "{\"name\":\"自JVM启动后，启动的线程总量（包括daemon,non-daemon和终止了的）\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_threads_started_total{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":2,\"i\":\"4\"}}",
+            "weight": 0
+          },
+          {
+            "id": 299,
+            "group_id": 79,
+            "configs": "{\"name\":\"当前TERMINATED线程个数\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_threads_state{java_app=~\\\"$java_app\\\",state=\\\"TERMINATED\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":4,\"i\":\"5\"}}",
+            "weight": 0
+          },
+          {
+            "id": 300,
+            "group_id": 79,
+            "configs": "{\"name\":\"当前RUNNABLE线程个数\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_threads_state{java_app=~\\\"$java_app\\\",state=\\\"RUNNABLE\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":2,\"i\":\"6\"}}",
+            "weight": 0
+          },
+          {
+            "id": 301,
+            "group_id": 79,
+            "configs": "{\"name\":\"当前NEW线程个数\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_threads_state{java_app=~\\\"$java_app\\\",state=\\\"NEW\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":2,\"i\":\"7\"}}",
+            "weight": 0
+          },
+          {
+            "id": 302,
+            "group_id": 79,
+            "configs": "{\"name\":\"当前TIMED_WAITING线程个数\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_threads_state{java_app=~\\\"$java_app\\\",state=\\\"TIMED_WAITING\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":4,\"i\":\"8\"}}",
+            "weight": 0
+          },
+          {
+            "id": 303,
+            "group_id": 79,
+            "configs": "{\"name\":\"当前BLOCKED线程个数\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_threads_state{java_app=~\\\"$java_app\\\",state=\\\"BLOCKED\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":4,\"i\":\"9\"}}",
+            "weight": 0
+          },
+          {
+            "id": 304,
+            "group_id": 79,
+            "configs": "{\"name\":\"当前WAITING线程个数\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_threads_state{java_app=~\\\"$java_app\\\",state=\\\"WAITING\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":4,\"i\":\"10\"}}",
+            "weight": 0
+          },
+          {
+            "id": 305,
+            "group_id": 79,
+            "configs": "{\"name\":\"当前线程状态汇总\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_threads_state{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":2,\"i\":\"11\"}}",
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "加载类情况",
+        "weight": 6,
+        "charts": [
+          {
+            "id": 306,
+            "group_id": 80,
+            "configs": "{\"name\":\"jvm 当前加载的类个数 \",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_classes_loaded{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":8,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 307,
+            "group_id": 80,
+            "configs": "{\"name\":\"jvm启动以来加载的类总个数\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_classes_loaded_total{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":8,\"x\":8,\"y\":0,\"i\":\"1\"}}",
+            "weight": 0
+          },
+          {
+            "id": 308,
+            "group_id": 80,
+            "configs": "{\"name\":\"jvm启动以来卸载的类总个数\",\"mode\":\"promethues\",\"prome_ql\":[\"jvm_classes_unloaded_total{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":8,\"x\":16,\"y\":0,\"i\":\"2\"}}",
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "机器指标(配置了java.lang才有)",
+        "weight": 7,
+        "charts": [
+          {
+            "id": 311,
+            "group_id": 81,
+            "configs": "{\"name\":\"java进程打开fd数\",\"mode\":\"promethues\",\"prome_ql\":[\"os_open_file_descriptor_count{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":8,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 312,
+            "group_id": 81,
+            "configs": "{\"name\":\"机器总内存\",\"mode\":\"promethues\",\"prome_ql\":[\"os_total_memory_size{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":8,\"x\":8,\"y\":0,\"i\":\"1\"}}",
+            "weight": 0
+          },
+          {
+            "id": 313,
+            "group_id": 81,
+            "configs": "{\"name\":\"机器可用内存数\",\"mode\":\"promethues\",\"prome_ql\":[\"os_free_memory_size{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":8,\"x\":16,\"y\":0,\"i\":\"2\"}}",
+            "weight": 0
+          },
+          {
+            "id": 314,
+            "group_id": 81,
+            "configs": "{\"name\":\"机器近期cpu使用率\",\"mode\":\"promethues\",\"link\":\"https://docs.oracle.com/javase/7/docs/jre/api/management/extension/com/sun/management/OperatingSystemMXBean.html#getSystemCpuLoad()\",\"prome_ql\":[\"100 * os_system_cpu_load{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":8,\"x\":0,\"y\":2,\"i\":\"3\"}}",
+            "weight": 0
+          },
+          {
+            "id": 315,
+            "group_id": 81,
+            "configs": "{\"name\":\"java进程cpu使用\",\"mode\":\"promethues\",\"link\":\"https://docs.oracle.com/javase/7/docs/jre/api/management/extension/com/sun/management/OperatingSystemMXBean.html#getProcessCpuLoad()\",\"prome_ql\":[\"os_process_cpu_load{java_app=~\\\"$java_app\\\"}\"],\"layout\":{\"h\":2,\"w\":8,\"x\":8,\"y\":2,\"i\":\"4\"}}",
+            "weight": 0
+          },
+          {
+            "id": 319,
+            "group_id": 81,
+            "configs": "{\"name\":\"jvm cpu百分比\",\"mode\":\"promethues\",\"prome_ql\":[\"100 *(os_process_cpu_load{java_app=~\\\"$java_app\\\"}/os_system_cpu_load{java_app=~\\\"$java_app\\\"})\"],\"layout\":{\"h\":2,\"w\":8,\"x\":16,\"y\":2,\"i\":\"5\"}}",
+            "weight": 0
+          }
+        ]
+      }
+    ]
+  }
+]
