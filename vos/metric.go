@@ -76,8 +76,7 @@ func (m *MetricPoint) Tidy(now int64) error {
 			if r == '\t' ||
 				r == '\r' ||
 				r == '\n' ||
-				r == ',' ||
-				r == ' ' {
+				r == ',' {
 				return '_'
 			}
 			return r
