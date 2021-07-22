@@ -85,7 +85,12 @@ func (arg *AlertRuleGroup) FillUserGroups() error {
 		return internalServerError
 	}
 
-	arg.UserGroups = ugs
+	if len(ugs) > 0 {
+		arg.UserGroups = ugs
+	} else {
+		arg.UserGroups = []UserGroup{}
+	}
+
 	return nil
 }
 
