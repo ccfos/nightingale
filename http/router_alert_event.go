@@ -49,7 +49,9 @@ func alertEventGets(c *gin.Context) {
 }
 
 func alertEventGet(c *gin.Context) {
-	renderData(c, AlertEvent(urlParamInt64(c, "id")), nil)
+	ae := AlertEvent(urlParamInt64(c, "id"))
+	dangerous(ae.FillObjs())
+	renderData(c, ae, nil)
 }
 
 func alertEventDel(c *gin.Context) {
