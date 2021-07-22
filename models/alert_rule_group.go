@@ -76,6 +76,7 @@ func (arg *AlertRuleGroup) Update(cols ...string) error {
 func (arg *AlertRuleGroup) FillUserGroups() error {
 	ids := strings.Fields(arg.UserGroupIds)
 	if len(ids) == 0 {
+		arg.UserGroups = []UserGroup{}
 		return nil
 	}
 
