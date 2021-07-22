@@ -28,6 +28,10 @@ func (c *Classpath) Validate() error {
 		return _e("Classpath path has invalid characters")
 	}
 
+	if strings.Contains(c.Path, " ") {
+		return _e("Classpath path has invalid characters")
+	}
+
 	if str.Dangerous(c.Note) {
 		return _e("Classpath note has invalid characters")
 	}
