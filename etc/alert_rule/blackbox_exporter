@@ -1,0 +1,191 @@
+[
+  {
+    "name": "dns解析时间超过2秒",
+    "type": 1,
+    "expression": {
+      "evaluation_interval": 10,
+      "promql": "probe_dns_lookup_time_seconds>2"
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 3,
+    "notify_channels": "",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1626935980,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "https证书过期时间小于7天",
+    "type": 1,
+    "expression": {
+      "evaluation_interval": 10,
+      "promql": "(probe_ssl_earliest_cert_expiry - time()) / 3600 / 24 <7"
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 1,
+    "notify_channels": "",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1626935909,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "http响应数据传输占比超过70%",
+    "type": 1,
+    "expression": {
+      "evaluation_interval": 10,
+      "promql": "100 * avg(probe_http_duration_seconds{phase=\"transfer\"})by(instance)  / sum(probe_http_duration_seconds) by(instance) >70"
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 2,
+    "notify_channels": "",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1626936324,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "http接口探测失败",
+    "type": 1,
+    "expression": {
+      "evaluation_interval": 10,
+      "promql": "probe_success{job=~\".*http.*\"}==0"
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 1,
+    "notify_channels": "",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1626935627,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "http接口探测耗时超过3秒",
+    "type": 1,
+    "expression": {
+      "evaluation_interval": 10,
+      "promql": "sum(probe_http_duration_seconds) by (instance) >3\n"
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 3,
+    "notify_channels": "",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1626936059,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "http接口返回状态码4xx/5xx错误",
+    "type": 1,
+    "expression": {
+      "evaluation_interval": 10,
+      "promql": "probe_http_status_code >=400"
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 1,
+    "notify_channels": "",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1626936145,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "icmp探测失败",
+    "type": 1,
+    "expression": {
+      "evaluation_interval": 10,
+      "promql": "probe_success{job=~\".*icmp.*\"}==0"
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 1,
+    "notify_channels": "",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1626935855,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "tcp端口探测失败",
+    "type": 1,
+    "expression": {
+      "evaluation_interval": 10,
+      "promql": "probe_success{job=~\".*tcp.*\"}==0"
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 1,
+    "notify_channels": "",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1626935874,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  },
+  {
+    "name": "机器ssh探测失败",
+    "type": 1,
+    "expression": {
+      "evaluation_interval": 10,
+      "promql": "probe_success{job=~\".*ssh.*\"}==0\n"
+    },
+    "status": 0,
+    "enable_stime": "00:00",
+    "enable_etime": "23:59",
+    "enable_days_of_week": "1 2 3 4 5 6 7",
+    "recovery_notify": 0,
+    "priority": 1,
+    "notify_channels": "",
+    "runbook_url": "",
+    "note": "",
+    "create_at": 1626935827,
+    "alert_duration": 60,
+    "notify_users_detail": null,
+    "notify_groups_detail": null
+  }
+]
