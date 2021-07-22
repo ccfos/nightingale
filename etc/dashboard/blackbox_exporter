@@ -1,0 +1,226 @@
+[
+  {
+    "id": 0,
+    "name": "blackbox_exporter",
+    "tags": "",
+    "configs": "{\"tags\":[{\"tagName\":\"http_probe_job\",\"key\":\"job\",\"value\":\"blackbox-http\",\"prefix\":false},{\"tagName\":\"http_probe_instance\",\"key\":\"instance\",\"value\":\"*\",\"prefix\":false}]}",
+    "chart_groups": [
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "http接口探测",
+        "weight": 0,
+        "charts": [
+          {
+            "id": 440,
+            "group_id": 109,
+            "configs": "{\"name\":\"https的探测\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_http_ssl==1\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 441,
+            "group_id": 109,
+            "configs": "{\"name\":\"http的探测\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_http_ssl==0\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":0,\"i\":\"1\"}}",
+            "weight": 0
+          },
+          {
+            "id": 442,
+            "group_id": 109,
+            "configs": "{\"name\":\"https探测目标个数\",\"mode\":\"promethues\",\"prome_ql\":[\"count(probe_http_ssl==1)\"],\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":0,\"i\":\"2\"}}",
+            "weight": 0
+          },
+          {
+            "id": 443,
+            "group_id": 109,
+            "configs": "{\"name\":\"http探测目标个数\",\"mode\":\"promethues\",\"prome_ql\":[\"count(probe_http_ssl==0)\"],\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":0,\"i\":\"3\"}}",
+            "weight": 0
+          },
+          {
+            "id": 446,
+            "group_id": 109,
+            "configs": "{\"name\":\"http探测成功个数\",\"mode\":\"promethues\",\"prome_ql\":[\"count(probe_success{job=~\\\".*http.*\\\"}==1)\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":2,\"i\":\"4\"}}",
+            "weight": 0
+          },
+          {
+            "id": 447,
+            "group_id": 109,
+            "configs": "{\"name\":\"http探测失败列表\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_success{job=~\\\".*http.*\\\"}==0\"],\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":2,\"i\":\"5\"}}",
+            "weight": 0
+          },
+          {
+            "id": 448,
+            "group_id": 109,
+            "configs": "{\"name\":\"http探测失败个数\",\"mode\":\"promethues\",\"prome_ql\":[\"count(probe_success{job=~\\\".*http.*\\\"}==0)\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":2,\"i\":\"6\"}}",
+            "weight": 0
+          },
+          {
+            "id": 449,
+            "group_id": 109,
+            "configs": "{\"name\":\"http探测总耗时 单位秒\",\"mode\":\"promethues\",\"prome_ql\":[\"sum(probe_http_duration_seconds) by (instance)\"],\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":2,\"i\":\"7\"}}",
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "https接口探测汇总",
+        "weight": 1,
+        "charts": [
+          {
+            "id": 444,
+            "group_id": 110,
+            "configs": "{\"name\":\"tls版本信息\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_tls_version_info\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 445,
+            "group_id": 110,
+            "configs": "{\"name\":\"tls证书过期时间 单位:天\",\"mode\":\"promethues\",\"prome_ql\":[\"(probe_ssl_earliest_cert_expiry - time()) / 3600 / 24\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":0,\"i\":\"1\"}}",
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "http接口各阶段耗时详情",
+        "weight": 2,
+        "charts": [
+          {
+            "id": 450,
+            "group_id": 111,
+            "configs": "{\"name\":\"单个目标的各阶段耗时\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_http_duration_seconds{instance=~\\\"$instance\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 451,
+            "group_id": 111,
+            "configs": "{\"name\":\"[阶段1] dns解析时间\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_http_duration_seconds{instance=~\\\"$instance\\\",phase=\\\"resolve\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":0,\"i\":\"1\"}}",
+            "weight": 0
+          },
+          {
+            "id": 452,
+            "group_id": 111,
+            "configs": "{\"name\":\"[可无]tls握手时间\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_http_duration_seconds{instance=~\\\"$instance\\\",phase=\\\"tls\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":0,\"i\":\"2\"}}",
+            "weight": 0
+          },
+          {
+            "id": 453,
+            "group_id": 111,
+            "configs": "{\"name\":\"[阶段2] tcp连接耗时\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_http_duration_seconds{instance=~\\\"$instance\\\",phase=\\\"connect\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":0,\"i\":\"3\"}}",
+            "weight": 0
+          },
+          {
+            "id": 454,
+            "group_id": 111,
+            "configs": "{\"name\":\"[阶段3] 服务端处理耗时\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_http_duration_seconds{instance=~\\\"$instance\\\",phase=\\\"processing\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":2,\"i\":\"4\"}}",
+            "weight": 0
+          },
+          {
+            "id": 455,
+            "group_id": 111,
+            "configs": "{\"name\":\"[阶段4] 传输响应耗时\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_http_duration_seconds{instance=~\\\"$instance\\\",phase=\\\"transfer\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":2,\"i\":\"5\"}}",
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "ssh存活探测(配置了ssh探测job才有)",
+        "weight": 3,
+        "charts": [
+          {
+            "id": 456,
+            "group_id": 112,
+            "configs": "{\"name\":\"ssh探测成功个数\",\"mode\":\"promethues\",\"prome_ql\":[\"count(probe_success{job=~\\\".*ssh.*\\\"}==1)\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 457,
+            "group_id": 112,
+            "configs": "{\"name\":\"ssh探测失败个数\",\"mode\":\"promethues\",\"prome_ql\":[\"count(probe_success{job=~\\\".*ssh.*\\\"}==0)\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":0,\"i\":\"1\"}}",
+            "weight": 0
+          },
+          {
+            "id": 458,
+            "group_id": 112,
+            "configs": "{\"name\":\"ssh探测失败详情\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_success{job=~\\\".*ssh.*\\\"}==0\"],\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":0,\"i\":\"2\"}}",
+            "weight": 0
+          },
+          {
+            "id": 459,
+            "group_id": 112,
+            "configs": "{\"name\":\"ssh探测耗时\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_duration_seconds{job=~\\\".*ssh.*\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":0,\"i\":\"3\"}}",
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "icmp探测(配置了icmp探测job才有)",
+        "weight": 4,
+        "charts": [
+          {
+            "id": 460,
+            "group_id": 113,
+            "configs": "{\"name\":\"icmp探测成功个数\",\"mode\":\"promethues\",\"prome_ql\":[\"count(probe_success{job=~\\\".*icmp.*\\\"}==1)\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 461,
+            "group_id": 113,
+            "configs": "{\"name\":\"icmp探测失败个数\",\"mode\":\"promethues\",\"prome_ql\":[\"count(probe_success{job=~\\\".*icmp.*\\\"}==0)\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":0,\"i\":\"1\"}}",
+            "weight": 0
+          },
+          {
+            "id": 462,
+            "group_id": 113,
+            "configs": "{\"name\":\"icmp探测失败详情\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_success{job=~\\\".*icmp.*\\\"}==0\"],\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":0,\"i\":\"2\"}}",
+            "weight": 0
+          },
+          {
+            "id": 463,
+            "group_id": 113,
+            "configs": "{\"name\":\"icmp探测总耗时\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_duration_seconds{job=~\\\".*icmp.*\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":0,\"i\":\"3\"}}",
+            "weight": 0
+          }
+        ]
+      },
+      {
+        "id": 0,
+        "dashboard_id": 0,
+        "name": "tcp端口探测(配置了tcp探测job才有)",
+        "weight": 5,
+        "charts": [
+          {
+            "id": 464,
+            "group_id": 114,
+            "configs": "{\"name\":\"tcp端口探测成功个数\",\"mode\":\"promethues\",\"prome_ql\":[\"count(probe_success{job=~\\\".*tcp.*\\\"}==1)\"],\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+            "weight": 0
+          },
+          {
+            "id": 465,
+            "group_id": 114,
+            "configs": "{\"name\":\"tcp端口探测失败个数\",\"mode\":\"promethues\",\"prome_ql\":[\"count(probe_success{job=~\\\".*tcp.*\\\"}==0)\"],\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":0,\"i\":\"1\"}}",
+            "weight": 0
+          },
+          {
+            "id": 466,
+            "group_id": 114,
+            "configs": "{\"name\":\"tcp端口探测失败列表\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_success{job=~\\\".*tcp.*\\\"}==0\"],\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":0,\"i\":\"2\"}}",
+            "weight": 0
+          },
+          {
+            "id": 467,
+            "group_id": 114,
+            "configs": "{\"name\":\"tcp端口探测耗时\",\"mode\":\"promethues\",\"prome_ql\":[\"probe_duration_seconds{job=~\\\".*tcp.*\\\"}\"],\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":0,\"i\":\"3\"}}",
+            "weight": 0
+          }
+        ]
+      }
+    ]
+  }
+]
