@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -79,7 +80,25 @@ func alertRuleOfGroupDel(c *gin.Context) {
 	var f idsForm
 	bind(c, &f)
 	f.Validate()
-	loginUser(c).MustPerm("alert_rule_delete")
+
+	me := loginUser(c).MustPerm("alert_rule_delete")
+
+	// 可能大部分alert_rule都来自同一个alert_rule_group，所以权限判断可以无需重复判断
+	cachePerm := make(map[string]struct{})
+
+	for i := 0; i < len(f.Ids); i++ {
+		ar := AlertRule(f.Ids[i])
+
+		cacheKey := fmt.Sprintf("%d,%d", f.Ids[i], ar.GroupId)
+		if _, has := cachePerm[cacheKey]; has {
+			continue
+		}
+
+		arg := AlertRuleGroup(ar.GroupId)
+		alertRuleWritePermCheck(arg, me)
+		cachePerm[cacheKey] = struct{}{}
+	}
+
 	renderMessage(c, models.AlertRulesDel(f.Ids))
 }
 
