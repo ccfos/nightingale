@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -76,6 +78,7 @@ func (arg *AlertRuleGroup) Update(cols ...string) error {
 func (arg *AlertRuleGroup) FillUserGroups() error {
 	ids := strings.Fields(arg.UserGroupIds)
 	if len(ids) == 0 {
+		arg.UserGroups = []UserGroup{}
 		return nil
 	}
 
@@ -85,10 +88,26 @@ func (arg *AlertRuleGroup) FillUserGroups() error {
 		return internalServerError
 	}
 
-	if len(ugs) > 0 {
-		arg.UserGroups = ugs
-	} else {
-		arg.UserGroups = []UserGroup{}
+	arg.UserGroups = ugs
+
+	// 这里附一个清理逻辑，如果某个团队已经删除了，就顺带把这个团队id从arg中删除
+	ugslen := len(ugs)
+	idslst := make([]string, 0, ugslen)
+
+	for i := 0; i < ugslen; i++ {
+		idslst = append(idslst, fmt.Sprint(ugs[i].Id))
+	}
+
+	sort.Strings(idslst)
+	newids := strings.Join(idslst, " ")
+
+	// 把原来的ids也排个序，两相比较，如果发生变化，就说明有团队已经被删了，更新之
+	sort.Strings(ids)
+	oldids := strings.Join(ids, " ")
+
+	if newids != oldids {
+		arg.UserGroupIds = newids
+		arg.Update("user_group_ids")
 	}
 
 	return nil
