@@ -208,7 +208,7 @@ func notify(alertMsg AlertMsg) {
 	}
 
 	if err != nil {
-		logger.Errorf("notify: exec script %s occur error: %v", fpath, err)
+		logger.Errorf("notify: exec script %s occur error: %v, output: %s", fpath, err, buf.String())
 		return
 	}
 

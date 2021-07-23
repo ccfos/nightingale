@@ -5,6 +5,7 @@ import json
 import os
 import smtplib
 import time
+import requests
 from email.mime.text import MIMEText
 from email.header import Header
 
@@ -29,7 +30,6 @@ from email.header import Header
 # 3. 告警通道需要自行定义Send类中的send_xxx同名方法，反射调用：举例 event.notify_channels = [qq dingding] 则需要Send类中 有 send_qq send_dingding方法
 # 4. im发群信息，比如钉钉发群信息需要群的webhook机器人 token，这个信息可以在user的contacts map中，各个send_方法处理即可
 # 5. 用户创建一个虚拟的用户保存上述im群 的机器人token信息 user的contacts map中
-import requests
 
 mail_host = "smtp.163.com"
 mail_port = 994
