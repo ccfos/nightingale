@@ -46,7 +46,7 @@ func Init(configs ...Config) {
 
 func DictFileRegister(filePath string) {
 	if !file.IsExist(filePath) {
-		fmt.Printf("i18n config file %s not found. donot worry, we'll use default configuration\n", filePath)
+		// fmt.Printf("i18n config file %s not found. donot worry, we'll use default configuration\n", filePath)
 		return
 	}
 
