@@ -258,6 +258,8 @@ func isNoneffective(event *models.AlertEvent, alertRule *models.AlertRule) bool 
 		}
 	}
 
+	alertRule.EnableDaysOfWeek = strings.Replace(alertRule.EnableDaysOfWeek, "7", "0", 1)
+
 	if !strings.Contains(alertRule.EnableDaysOfWeek, triggerWeek) {
 		logger.Debugf("event:%+v alert rule:%+v triggerWeek Noneffective", event, alertRule)
 		return true
