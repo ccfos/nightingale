@@ -121,7 +121,7 @@ func changeCollectRule(rule *models.CollectRule) error {
 
 		config := PortCollectFormat{
 			Instances: []struct {
-				MinCollectionInterval int      `json:"minCollectionInterval,omitempty"`
+				MinCollectionInterval int      `json:"min_collection_interval,omitempty"`
 				Tags                  []string `json:"tags,omitempty"`
 				Protocol              string   `json:"protocol" description:"udp or tcp"`
 				Port                  int      `json:"port"`
@@ -150,8 +150,8 @@ func changeCollectRule(rule *models.CollectRule) error {
 
 		config := ScriptCollectFormat{
 			Instances: []struct {
-				MinCollectionInterval int               `json:"minCollectionInterval,omitempty"`
-				FilePath              string            `json:"filePath"`
+				MinCollectionInterval int               `json:"min_collection_interval,omitempty"`
+				FilePath              string            `json:"file_path"`
 				Root                  string            `json:"root"`
 				Params                string            `json:"params"`
 				Env                   map[string]string `json:"env"`
@@ -181,10 +181,10 @@ func changeCollectRule(rule *models.CollectRule) error {
 
 		config := LogCollectFormat{
 			Instances: []struct {
-				MetricName  string            `json:"metricName"` //
-				FilePath    string            `json:"filePath"`
+				MetricName  string            `json:"metric_name"` //
+				FilePath    string            `json:"file_path"`
 				Pattern     string            `json:"pattern"`
-				TagsPattern map[string]string `json:"tagsPattern"`
+				TagsPattern map[string]string `json:"tags_pattern"`
 				Func        string            `json:"func"`
 			}{{
 				MetricName:  rule.Name,
@@ -209,10 +209,10 @@ func changeCollectRule(rule *models.CollectRule) error {
 
 		config := ProcCollectFormat{
 			Instances: []struct {
-				MinCollectionInterval int      `json:"minCollectionInterval,omitempty"`
+				MinCollectionInterval int      `json:"min_collection_interval,omitempty"`
 				Tags                  []string `json:"tags,omitempty"`
 				Target                string   `json:"target"`
-				CollectMethod         string   `json:"collectMethod" description:"name or cmdline"`
+				CollectMethod         string   `json:"collect_method" description:"name or cmdline"`
 			}{{
 				MinCollectionInterval: rule.Step,
 				Tags:                  strings.Fields(strings.Replace(rule.AppendTags, "=", ":", 1)),
@@ -233,8 +233,8 @@ func changeCollectRule(rule *models.CollectRule) error {
 
 type ScriptCollectFormat struct {
 	Instances []struct {
-		MinCollectionInterval int               `json:"minCollectionInterval,omitempty"`
-		FilePath              string            `json:"filePath"`
+		MinCollectionInterval int               `json:"min_collection_interval,omitempty"`
+		FilePath              string            `json:"file_path"`
 		Root                  string            `json:"root"`
 		Params                string            `json:"params"`
 		Env                   map[string]string `json:"env"`
@@ -245,7 +245,7 @@ type ScriptCollectFormat struct {
 
 type PortCollectFormat struct {
 	Instances []struct {
-		MinCollectionInterval int      `json:"minCollectionInterval,omitempty"`
+		MinCollectionInterval int      `json:"min_collection_interval,omitempty"`
 		Tags                  []string `json:"tags,omitempty"`
 		Protocol              string   `json:"protocol" description:"udp or tcp"`
 		Port                  int      `json:"port"`
@@ -255,19 +255,19 @@ type PortCollectFormat struct {
 
 type LogCollectFormat struct {
 	Instances []struct {
-		MetricName  string            `json:"metricName"`  //
-		FilePath    string            `json:"filePath"`    //
-		Pattern     string            `json:"pattern"`     //
-		TagsPattern map[string]string `json:"tagsPattern"` //
-		Func        string            `json:"func"`        // count(c), histogram(h)
+		MetricName  string            `json:"metric_name"`  //
+		FilePath    string            `json:"file_path"`    //
+		Pattern     string            `json:"pattern"`      //
+		TagsPattern map[string]string `json:"tags_pattern"` //
+		Func        string            `json:"func"`         // count(c), histogram(h)
 	} `json:"instances"`
 }
 
 type ProcCollectFormat struct {
 	Instances []struct {
-		MinCollectionInterval int      `json:"minCollectionInterval,omitempty"`
+		MinCollectionInterval int      `json:"min_collection_interval,omitempty"`
 		Tags                  []string `json:"tags,omitempty"`
 		Target                string   `json:"target"`
-		CollectMethod         string   `json:"collectMethod" description:"name or cmdline"`
+		CollectMethod         string   `json:"collect_method" description:"name or cmdline"`
 	} `json:"instances"`
 }
