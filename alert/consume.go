@@ -84,13 +84,13 @@ func consume(events []interface{}, sema *semaphore.Semaphore) {
 
 		uids := genNotifyUserIDs(alertRule)
 		if len(uids) == 0 {
-			logger.Warningf("event_consume: notify users not found, event:%+v", event)
+			logger.Warningf("event_consume: notify users not found, event_hash_id: %s, rule_id: %d, rule_name: %s, res_ident: %s", event.HashId, event.RuleId, event.RuleName, event.ResIdent)
 			continue
 		}
 
 		users := cache.UserCache.GetByIds(uids)
 		if len(users) == 0 {
-			logger.Warningf("event_consume: notify users not found, event:%+v", event)
+			logger.Warningf("event_consume: notify users not found, event_hash_id: %s, rule_id: %d, rule_name: %s, res_ident: %s", event.HashId, event.RuleId, event.RuleName, event.ResIdent)
 			continue
 		}
 
