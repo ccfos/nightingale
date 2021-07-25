@@ -423,12 +423,6 @@ func GetData(stra *models.AlertRule, exp models.Exp, firstItem *vos.MetricPoint,
 
 // 虽然最近的数据确实产生了事件(产生事件很频繁)，但是未必一定要发送，只有告警/恢复状态发生变化的时候才需发送
 func sendEventIfNeed(status []bool, event *models.AlertEvent, stra *models.AlertRule) {
-	if stra.Name == "system_cpu_util_test" {
-		logger.Errorf("status:%+v", status)
-		logger.Errorf("event:%+v", event)
-		logger.Errorf("stra:%+v", stra)
-	}
-
 	isTriggered := true
 
 	if stra.Type == 0 {
@@ -534,7 +528,6 @@ func sendEventIfNeed(status []bool, event *models.AlertEvent, stra *models.Alert
 }
 
 func SendEvent(event *models.AlertEvent) {
-	logger.Errorf("debug: SendEvent: %+v", event)
 	// update last event
 	LastEvents.Set(event.HashId, event)
 	ok := EventQueue.PushFront(event)
