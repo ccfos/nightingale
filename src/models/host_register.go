@@ -3,9 +3,11 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/toolkits/pkg/cache"
+	"github.com/toolkits/pkg/logger"
 )
 
 type HostRegisterForm struct {
@@ -129,7 +131,11 @@ func HostRegister(f HostRegisterForm) error {
 	}
 
 	if v, ok := oldFields["tenant"]; ok {
-		vStr := v.(string)
+		var vStr string
+		if reflect.TypeOf(v).String() == "string" {
+			vStr = v.(string)
+		}
+
 		if vStr != "" {
 			err = HostUpdateTenant([]int64{host.Id}, vStr)
 			if err != nil {
@@ -194,6 +200,11 @@ func HostRegister(f HostRegisterForm) error {
 		}
 
 		if _, ok := hFixed[k]; !ok {
+			if reflect.TypeOf(v).String() != "string" {
+				logger.Debugf("k:%v, v:%v type is not string", k, v)
+				continue
+			}
+
 			tmp := HostFieldValue{HostId: host.Id, FieldIdent: k, FieldValue: v.(string)}
 			objs = append(objs, tmp)
 		}
