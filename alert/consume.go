@@ -153,6 +153,7 @@ func genNotifyUserIDs(alertRule *models.AlertRule) []int64 {
 // 如果是告警，就存库，如果是恢复，就从未恢复的告警表里删除
 func persist(event *models.AlertEvent) {
 	if event.IsRecov() {
+		logger.Debugf("[event.Recovery.db.DelByHashId]: delete recovery event:%+v", event)
 		err := event.DelByHashId()
 		if err != nil {
 			logger.Warningf("event_consume: delete recovery event err:%v, event:%+v", err, event)
