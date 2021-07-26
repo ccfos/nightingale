@@ -132,7 +132,7 @@ func collectRuleGetsByIdent(c *gin.Context) {
 }
 
 type Summary struct {
-	LatestUpdatedAt int64 `json:"latestUpdatedAt"`
+	LatestUpdatedAt int64 `json:"latest_updated_at"`
 	Total           int   `json:"total"`
 }
 
