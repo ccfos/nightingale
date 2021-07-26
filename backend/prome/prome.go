@@ -225,20 +225,21 @@ func (pd *PromeDataSource) processWrite(payload []byte) {
 	for _, c := range pd.WriteTargets {
 		newC := c
 		go func(cc *HttpClient, payload []byte) {
-
 			sendOk := false
 			var err error
+			var rec bool
 			for i := 0; i < retry; i++ {
-				err := remoteWritePost(cc, payload)
+				err = remoteWritePost(cc, payload)
 				if err == nil {
 					sendOk = true
 					break
 				}
-				err, ok := err.(RecoverableError)
 
-				if !ok {
+				err, rec = err.(RecoverableError)
+				if !rec {
 					break
 				}
+
 				logger.Warningf("send prome fail: %v", err)
 				time.Sleep(time.Millisecond * 100)
 			}

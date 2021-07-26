@@ -84,13 +84,13 @@ func consume(events []interface{}, sema *semaphore.Semaphore) {
 
 		uids := genNotifyUserIDs(alertRule)
 		if len(uids) == 0 {
-			logger.Warningf("event_consume: notify users not found, event:%+v", event)
+			logger.Warningf("event_consume: notify users not found, event_hash_id: %s, rule_id: %d, rule_name: %s, res_ident: %s", event.HashId, event.RuleId, event.RuleName, event.ResIdent)
 			continue
 		}
 
 		users := cache.UserCache.GetByIds(uids)
 		if len(users) == 0 {
-			logger.Warningf("event_consume: notify users not found, event:%+v", event)
+			logger.Warningf("event_consume: notify users not found, event_hash_id: %s, rule_id: %d, rule_name: %s, res_ident: %s", event.HashId, event.RuleId, event.RuleName, event.ResIdent)
 			continue
 		}
 
@@ -208,7 +208,7 @@ func notify(alertMsg AlertMsg) {
 	}
 
 	if err != nil {
-		logger.Errorf("notify: exec script %s occur error: %v", fpath, err)
+		logger.Errorf("notify: exec script %s occur error: %v, output: %s", fpath, err, buf.String())
 		return
 	}
 
@@ -257,6 +257,8 @@ func isNoneffective(event *models.AlertEvent, alertRule *models.AlertRule) bool 
 			return true
 		}
 	}
+
+	alertRule.EnableDaysOfWeek = strings.Replace(alertRule.EnableDaysOfWeek, "7", "0", 1)
 
 	if !strings.Contains(alertRule.EnableDaysOfWeek, triggerWeek) {
 		logger.Debugf("event:%+v alert rule:%+v triggerWeek Noneffective", event, alertRule)

@@ -33,6 +33,11 @@ func (d *Dashboard) Validate() error {
 	if str.Dangerous(d.Name) {
 		return _e("Dashboard name has invalid characters")
 	}
+
+	if strings.Contains(d.Name, "://") {
+		return _e("Dashboard name has invalid characters")
+	}
+
 	return nil
 }
 

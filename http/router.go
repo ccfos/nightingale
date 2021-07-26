@@ -173,6 +173,12 @@ func configRoutes(r *gin.Engine) {
 
 	}
 
+	// for brower, expose location in nginx.conf
+	pagesV2 := r.Group("/api/n9e/v2", csrfMid)
+	{
+		pagesV2.POST("/collect-rules", login(), collectRulesAdd)
+	}
+
 	// for thirdparty, do not expose location in nginx.conf
 	v1 := r.Group("/v1/n9e")
 	{

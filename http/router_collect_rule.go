@@ -44,6 +44,32 @@ func collectRuleAdd(c *gin.Context) {
 	renderMessage(c, cr.Add())
 }
 
+func collectRulesAdd(c *gin.Context) {
+	var forms []collectRuleForm
+	bind(c, &forms)
+
+	me := loginUser(c).MustPerm("collect_rule_create")
+
+	for _, f := range forms {
+		cr := models.CollectRule{
+			ClasspathId: f.ClasspathId,
+			PrefixMatch: f.PrefixMatch,
+			Name:        f.Name,
+			Note:        f.Note,
+			Step:        f.Step,
+			Type:        f.Type,
+			Data:        f.Data,
+			AppendTags:  f.AppendTags,
+			CreateBy:    me.Username,
+			UpdateBy:    me.Username,
+		}
+
+		dangerous(cr.Add())
+	}
+
+	renderMessage(c, nil)
+}
+
 func collectRulePut(c *gin.Context) {
 	var f collectRuleForm
 	bind(c, &f)
@@ -106,7 +132,7 @@ func collectRuleGetsByIdent(c *gin.Context) {
 }
 
 type Summary struct {
-	LatestUpdatedAt int64 `json:"latestUpdatedAt"`
+	LatestUpdatedAt int64 `json:"latest_updated_at"`
 	Total           int   `json:"total"`
 }
 

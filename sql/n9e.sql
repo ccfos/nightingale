@@ -13,7 +13,7 @@ CREATE TABLE `user` (
     `email` varchar(64) not null default '',
     `portrait` varchar(255) not null default '' comment 'portrait image url',
     `status` tinyint(1) not null default 0 comment '0: active, 1: disabled',
-    `role` varchar(32) not null comment 'Admin | Standard | Guest',
+    `roles` varchar(255) not null comment 'Admin | Standard | Guest',
     `contacts` varchar(1024)  default '' comment 'json e.g. {wecom:xx, dingtalk_robot_token:yy}',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
