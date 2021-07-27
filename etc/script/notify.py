@@ -249,8 +249,36 @@ class Send(object):
         print("send_mail_success")
 
     @classmethod
-    def send_wecom(cls, payload):
-        print("send_wecom")
+    def send_wecom(cls, alert_content, payload):
+        users = payload.get("users")
+
+        for u in users:
+            contacts = u.get("contacts")
+            print(contacts)
+            wecom_robot_token = contacts.get(WECOM_ROBOT_TOKEN_NAME, "")
+
+            if wecom_robot_token == "":
+                print("wecom_robot_token_not_found")
+                continue
+
+            wecom_api_url = "{}?key={}".format(WECOM_API, wecom_robot_token)
+            atMobiles = [u.get("phone")]
+            headers = {'Content-Type': 'application/json;charset=utf-8'}
+            payload = {
+                "msgtype": "text",
+                "text": {
+                    "content": alert_content
+                },
+                "at": {
+                    "atMobiles": atMobiles,
+                    "isAtAll": False
+                }
+            }
+            res = requests.post(wecom_api_url, json.dumps(payload), headers=headers)
+            print(res.status_code)
+            print(res.text)
+            print("send_wecom")
+
 
     @classmethod
     def send_dingtalk(cls, alert_content, payload):
