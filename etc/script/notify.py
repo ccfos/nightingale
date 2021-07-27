@@ -9,10 +9,8 @@ import requests
 from email.mime.text import MIMEText
 from email.header import Header
 
-import sys
 reload(sys)                      # reload 才能调用 setdefaultencoding 方法
 sys.setdefaultencoding('utf-8')  # 设置 'utf-8'
-# 建议使用python3运行，避免python2的编码问题
 
 # 希望的demo实现效果：
 # 1. 从stdin拿到告警信息之后，格式化为一个有缩进的json写入一个临时文件
@@ -55,6 +53,10 @@ NOTIFY_CHANNELS_SPLIT_STR = " "
 # dingding 群机器人token 配置字段
 DINGTALK_ROBOT_TOKEN_NAME = "dingtalk_robot_token"
 DINGTALK_API = "https://oapi.dingtalk.com/robot/send"
+
+WECOM_ROBOT_TOKEN_NAME = "wecom_robot_token"
+WECOM_API = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send"
+
 # stdin 告警json实例
 TEST_ALERT_JSON = {
     "event": {
@@ -254,11 +256,9 @@ class Send(object):
 
         for u in users:
             contacts = u.get("contacts")
-            print(contacts)
             wecom_robot_token = contacts.get(WECOM_ROBOT_TOKEN_NAME, "")
 
             if wecom_robot_token == "":
-                print("wecom_robot_token_not_found")
                 continue
 
             wecom_api_url = "{}?key={}".format(WECOM_API, wecom_robot_token)
