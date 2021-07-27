@@ -230,15 +230,15 @@ def persist(payload, rule_id, event_id, trigger_time):
 
 class Send(object):
     @classmethod
-    def send_mail(cls, payload):
-        users = payload.get("event").get("users")
+    def send_email(cls, alert_content, payload):
+        users = payload.get("users")
         emails = [x.get("email") for x in users]
         if not emails:
-            print("[emails_empty]")
             return
+
         recipients = emails
 
-        message = MIMEText(mail_body, 'html', 'utf-8')
+        message = MIMEText(alert_content, 'html', 'utf-8')
         message['From'] = mail_from
         message['To'] = ", ".join(recipients)
         message["Subject"] = "n9e alert"
