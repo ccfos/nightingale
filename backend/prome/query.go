@@ -597,7 +597,14 @@ func (pd *PromeDataSource) QueryTagPairs(recv vos.CommonTagQueryParam) *vos.TagP
 				if i.Name == LABEL_IDENT {
 					labelIdents = append(labelIdents, i.Value)
 				}
-				tps[fmt.Sprintf("%s=%s", i.Name, i.Value)] = struct{}{}
+				if recv.Search != "" {
+					// 如果配置了搜索字符串，则key value中任意匹配到即可
+					if strings.Contains(i.Name, recv.Search) || strings.Contains(i.Value, recv.Search) {
+						tps[fmt.Sprintf("%s=%s", i.Name, i.Value)] = struct{}{}
+					}
+				} else {
+					tps[fmt.Sprintf("%s=%s", i.Name, i.Value)] = struct{}{}
+				}
 			}
 
 		}
