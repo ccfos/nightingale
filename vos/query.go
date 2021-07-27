@@ -146,6 +146,7 @@ type CommonTagQueryParam struct {
 	End            int64                  `json:"end" description:"exclusive"`
 	StartInclusive time.Time              `json:"-"`
 	EndExclusive   time.Time              `json:"-"`
+	Search         string                 `json:"search"` // 查询标签组的时候的搜索 str，可以是key 也可以是value
 	Limit          int                    `json:"limit"`
 }
 
