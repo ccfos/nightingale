@@ -9,6 +9,11 @@ import requests
 from email.mime.text import MIMEText
 from email.header import Header
 
+import sys
+reload(sys)                      # reload 才能调用 setdefaultencoding 方法
+sys.setdefaultencoding('utf-8')  # 设置 'utf-8'
+# 建议使用python3运行，避免python2的编码问题
+
 # 希望的demo实现效果：
 # 1. 从stdin拿到告警信息之后，格式化为一个有缩进的json写入一个临时文件
 # 2. 文件路径和名字是.alerts/${timestamp}_${ruleid}
