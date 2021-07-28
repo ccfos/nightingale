@@ -138,6 +138,7 @@ create table `event` (
   KEY `idx_etime` (`etime`),
   KEY `idx_event_type` (`event_type`),
   KEY `idx_status` (`status`)
+  KEY `idx_created` (`created`)
 ) engine=innodb default charset=utf8 comment 'event';
 
 CREATE TABLE `stra` (
