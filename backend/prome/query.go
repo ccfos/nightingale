@@ -253,14 +253,37 @@ func (pd *PromeDataSource) QueryData(inputs vos.DataQueryParam) []*vos.DataQuery
 			oneResp.Ident = ident
 			// TODO 去掉point num
 			pNum := len(m.Points)
-			for _, p := range m.Points {
+			interval := int64(resolution / time.Second)
+			pNumExpect := int((inputs.End - inputs.Start) / interval)
+
+			remotePIndex := 0
+			for i := 0; i <= pNumExpect; i++ {
+
+				// 先准备好null的point
+				tsLocal := inputs.Start + interval*int64(i)
 				tmpP := &vos.Point{
-					// 毫秒时间时间戳转 秒时间戳
-					Timestamp: p.T / 1e3,
-					Value:     vos.JsonFloat(p.V),
+					Timestamp: tsLocal,
+					Value:     vos.JsonFloat(math.NaN()),
 				}
+				//说明points数组还没越界
+				//去m.Points获取一个
+				if remotePIndex < pNum {
+					pointOne := m.Points[remotePIndex]
+					tsRemote := pointOne.T / 1e3
+					// 判断时间戳 ,前后相差1秒认为时间戳对齐了
+					if math.Abs(float64(tsRemote-tsLocal)) <= 1 {
+						tmpP.Timestamp = tsRemote
+						tmpP.Value = vos.JsonFloat(pointOne.V)
+						// 说明远端的这个索引的值已经被pop了，移动索引
+						remotePIndex++
+					}
+
+				}
+
 				oneResp.Values = append(oneResp.Values, tmpP)
+
 			}
+
 			for _, x := range m.Metric {
 				if x.Name == LABEL_NAME {
 					continue
@@ -269,7 +292,7 @@ func (pd *PromeDataSource) QueryData(inputs vos.DataQueryParam) []*vos.DataQuery
 			}
 			tagStr = strings.TrimRight(tagStr, ",")
 			oneResp.Tags = tagStr
-			oneResp.Resolution = int64(resolution / time.Second)
+			oneResp.Resolution = interval
 			oneResp.PNum = pNum
 			respD = append(respD, oneResp)
 
