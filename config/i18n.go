@@ -54,8 +54,8 @@ var (
 		"Tags filter(Func:%s)'s param invalid":                       "标签过滤条件(函数：%s)参数不合法(为空或包含空格都不合法)",
 		"Regexp: %s cannot be compiled":                              "正则表达式(%s)不合法，无法编译",
 		"AppendTags(%s) invalid":                                     "附件标签(%s)格式不合法",
-		"Regexp[%s] matching failed":                                 "正则表达式[%s]匹配失败",
-		"Regexp[%s] matched, but cannot get substring()":             "主正则[%s]匹配成功，但无法匹配到子串",
+		"Regexp %s matching failed":                                  "正则表达式 %s 匹配失败",
+		"Regexp %s matched, but cannot get substring()":              "主正则 %s 匹配成功，但无法匹配到子串",
 		"TagKey or TagValue contains illegal characters[:,/=\r\n\t]": "标签KEY或者标签值包含非法字符串[:,/=\r\n\t]",
 		"Resource cannot delete in preset classpath":                 "预置分组不能删除资源",
 	}

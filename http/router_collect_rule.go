@@ -269,12 +269,12 @@ func includeIllegalChar(s string) bool {
 
 // 生成返回错误信息
 func genErrMsg(pattern string) string {
-	return _s("Regexp[%s] matching failed", pattern)
+	return _s("Regexp %s matching failed", pattern)
 }
 
 // 生成子串匹配错误信息
 func genSubErrMsg(pattern string) string {
-	return _s("Regexp[%s] matched, but cannot get substring()", pattern)
+	return _s("Regexp %s matched, but cannot get substring()", pattern)
 }
 
 // 生成子串匹配错误信息
