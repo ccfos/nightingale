@@ -55,7 +55,7 @@ func userGroupAdd(c *gin.Context) {
 	// 顺便把创建者也作为团队的一员，失败了也没关系，用户会重新添加成员
 	models.UserGroupMemberAdd(ug.Id, me.Id)
 
-	renderMessage(c, nil)
+	renderData(c, ug.Id, nil)
 }
 
 func userGroupPut(c *gin.Context) {
