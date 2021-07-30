@@ -57,6 +57,7 @@ func consume(events []interface{}, sema *semaphore.Semaphore) {
 		event.RuleNote = alertRule.Note
 		event.NotifyChannels = alertRule.NotifyChannels
 		classpaths := cache.ResClasspath.GetValues(event.ResIdent)
+		sort.Strings(classpaths)
 		event.ResClasspaths = strings.Join(classpaths, " ")
 		enrichTag(event, alertRule)
 
