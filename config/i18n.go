@@ -46,6 +46,7 @@ var (
 		"No such alert rule":                                         "告警规则不存在",
 		"No such alert rule group":                                   "告警规则分组不存在",
 		"No such alert event":                                        "告警事件不存在",
+		"Alert rule %s already exists":                               "告警规则(%s)已存在",
 		"No such collect rule":                                       "采集规则不存在",
 		"Decoded metric description empty":                           "导入的指标释义列表为空",
 		"User disabled":                                              "用户已被禁用",

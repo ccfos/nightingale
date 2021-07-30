@@ -89,6 +89,15 @@ func alertRulePut(c *gin.Context) {
 	arg := AlertRuleGroup(ar.GroupId)
 	alertRuleWritePermCheck(arg, me)
 
+	if ar.Name != f.Name {
+		num, err := models.AlertRuleCount("group_id=? and name=? and id<>?", ar.GroupId, f.Name, ar.Id)
+		dangerous(err)
+
+		if num > 0 {
+			bomb(200, "Alert rule %s already exists", f.Name)
+		}
+	}
+
 	ar.Name = f.Name
 	ar.Note = f.Note
 	ar.Type = f.Type

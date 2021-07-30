@@ -262,6 +262,15 @@ func (ar *AlertRule) Add() error {
 		return err
 	}
 
+	num, err := AlertRuleCount("group_id=? and name=?", ar.GroupId, ar.Name)
+	if err != nil {
+		return err
+	}
+
+	if num > 0 {
+		return _e("Alert rule %s already exists", ar.Name)
+	}
+
 	now := time.Now().Unix()
 	ar.CreateAt = now
 	ar.UpdateAt = now
