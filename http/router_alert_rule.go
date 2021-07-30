@@ -47,7 +47,7 @@ func alertRuleAdd(c *gin.Context) {
 	bind(c, &f)
 
 	me := loginUser(c).MustPerm("alert_rule_create")
-
+	var ids []int64
 	for _, alertRule := range f {
 		arg := AlertRuleGroup(alertRule.GroupId)
 		alertRuleWritePermCheck(arg, me)
@@ -74,9 +74,10 @@ func alertRuleAdd(c *gin.Context) {
 			UpdateBy:         me.Username,
 		}
 		dangerous(ar.Add())
+		ids = append(ids, ar.Id)
 	}
 
-	renderMessage(c, nil)
+	renderData(c, ids, nil)
 }
 
 func alertRulePut(c *gin.Context) {
@@ -88,8 +89,18 @@ func alertRulePut(c *gin.Context) {
 	arg := AlertRuleGroup(ar.GroupId)
 	alertRuleWritePermCheck(arg, me)
 
+	if ar.Name != f.Name {
+		num, err := models.AlertRuleCount("group_id=? and name=? and id<>?", ar.GroupId, f.Name, ar.Id)
+		dangerous(err)
+
+		if num > 0 {
+			bomb(200, "Alert rule %s already exists", f.Name)
+		}
+	}
+
 	ar.Name = f.Name
 	ar.Note = f.Note
+	ar.Type = f.Type
 	ar.Status = f.Status
 	ar.AlertDuration = f.AlertDuration
 	ar.Expression = f.Expression
@@ -111,6 +122,7 @@ func alertRulePut(c *gin.Context) {
 	renderMessage(c, ar.Update(
 		"name",
 		"note",
+		"type",
 		"status",
 		"alert_duration",
 		"expression",

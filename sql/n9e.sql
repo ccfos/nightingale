@@ -340,7 +340,7 @@ insert into metric_description(metric, description) values('system_disk_read_tim
 insert into metric_description(metric, description) values('system_disk_bytes_total', '磁盘某分区总量（单位：byte）');
 insert into metric_description(metric, description) values('system_disk_bytes_used', '磁盘某分区用量大小（单位：byte）');
 insert into metric_description(metric, description) values('system_disk_write_time', '设备写操作耗时(单位：ms)');
-insert into metric_description(metric, description) values('system_disk_write_time_percent', '');
+insert into metric_description(metric, description) values('system_disk_write_time_percent', '写入磁盘时间百分比（单位：%）');
 insert into metric_description(metric, description) values('system_files_allocated', '系统已分配文件句柄数');
 insert into metric_description(metric, description) values('system_files_left', '系统未分配文件句柄数');
 insert into metric_description(metric, description) values('system_files_used_percent', '系统使用文件句柄占已分配百分比（单位：%）');
@@ -382,7 +382,7 @@ insert into metric_description(metric, description) values('system_mem_free', '�
 insert into metric_description(metric, description) values('system_mem_used', '已用内存大小（单位：*byte*）');
 insert into metric_description(metric, description) values('system_swap_cached', '用作缓存的交换空间');
 insert into metric_description(metric, description) values('system_swap_free', '空闲swap大小（单位：*byte*）');
-insert into metric_description(metric, description) values('system_swap_pct_free', '空闲swap占比');
+insert into metric_description(metric, description) values('system_swap_free_percent', '空闲swap占比');
 insert into metric_description(metric, description) values('system_swap_total', 'swap总大小（单位：*byte*）');
 insert into metric_description(metric, description) values('system_swap_used', '已用swap大小（单位：*byte*）');
 insert into metric_description(metric, description) values('system_swap_used_percent', '已用swap占比（单位：%）');
