@@ -226,25 +226,26 @@ func (pd *PromeDataSource) processWrite(payload []byte) {
 		newC := c
 		go func(cc *HttpClient, payload []byte) {
 			sendOk := false
-			var err error
 			var rec bool
+			var finalErr error
 			for i := 0; i < retry; i++ {
-				err = remoteWritePost(cc, payload)
+				err := remoteWritePost(cc, payload)
 				if err == nil {
 					sendOk = true
 					break
 				}
 
-				err, rec = err.(RecoverableError)
+				_, rec = err.(RecoverableError)
+
 				if !rec {
+					finalErr = err
 					break
 				}
-
-				logger.Warningf("send prome fail: %v", err)
+				logger.Warningf("[send prome fail recoverableError][retry: %d/%d][err:%v]", i+1, retry, err)
 				time.Sleep(time.Millisecond * 100)
 			}
 			if !sendOk {
-				logger.Errorf("send prome finally fail: %v", err)
+				logger.Errorf("send prome finally fail: %v", finalErr)
 			} else {
 				logger.Infof("send to prome %s ok", cc.url.String())
 			}
