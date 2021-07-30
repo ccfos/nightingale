@@ -215,7 +215,7 @@ func (w *Worker) producer(line string, strategy *stra.Strategy) (*AnalysPoint, e
 
 	// 如果没有年，需添加当前年
 	// 需干掉内部的多于空格, 如Dec  7,有的有一个空格，有的有两个，这里统一替换成一个
-	if timeFormat == "Jan 2 15:04:05" || timeFormat == "0102 15:04:05" {
+	if timeFormat == "Jan 2 15:04:05" || timeFormat == "0102 15:04:05" || timeFormat == "Jan 02 15:04:05" {
 		timeFormat = fmt.Sprintf("2006 %s", timeFormat)
 		t = fmt.Sprintf("%d %s", time.Now().Year(), t)
 		reg := regexp.MustCompile(`\s+`)

@@ -309,9 +309,12 @@ func GetPatAndTimeFormat(tf string) (string, string) {
 	case "yyyymmdd HH:MM:SS":
 		pat = `(2[0-9]{3})(0[1-9]|1[012])([012][0-9]|3[01])\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
 		timeFormat = "20060102 15:04:05"
-	case "mmm dd HH:MM:SS":
+	case "mmm d HH:MM:SS":
 		pat = `[JFMASOND][a-z]{2}\s+([1-9]|[1-2][0-9]|3[01])\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
 		timeFormat = "Jan 2 15:04:05"
+	case "mmm dd HH:MM:SS":
+		pat = `[JFMASONDjfmasond][a-zA-Z]{2}\s+(0[1-9]|[1-2][0-9]|3[01])\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
+		timeFormat = "Jan 02 15:04:05"
 	case "mmdd HH:MM:SS":
 		pat = `(0[1-9]|1[012])([012][0-9]|3[01])\s([01][0-9]|2[0-4])(:[012345][0-9]){2}`
 		timeFormat = "0102 15:04:05"

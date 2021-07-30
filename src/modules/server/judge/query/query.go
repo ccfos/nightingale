@@ -61,7 +61,12 @@ func Query(reqs []*dataobj.QueryData, stra *models.Stra, expFunc string) []*data
 
 				resp.Data[i].Values = values
 				respData = append(respData, resp.Data[i])
-				key := resp.Data[i].Endpoint + "/" + resp.Data[i].Nid + "/" + resp.Data[i].Counter
+				var key string
+				if resp.Data[i].Nid != "" {
+					key = resp.Data[i].Nid + "/" + resp.Data[i].Counter
+				} else {
+					key = resp.Data[i].Endpoint + "/" + resp.Data[i].Counter
+				}
 				filterMap[key] = struct{}{}
 			}
 		}
@@ -72,7 +77,7 @@ func Query(reqs []*dataobj.QueryData, stra *models.Stra, expFunc string) []*data
 		if len(req.Endpoints) > 0 {
 			for _, endpoint := range req.Endpoints {
 				for _, counter := range req.Counters {
-					key := endpoint + "//" + counter
+					key := endpoint + "/" + counter
 					if _, exists := filterMap[key]; exists {
 						continue
 					}
@@ -91,7 +96,7 @@ func Query(reqs []*dataobj.QueryData, stra *models.Stra, expFunc string) []*data
 		if len(req.Nids) > 0 {
 			for _, nid := range req.Nids {
 				for _, counter := range req.Counters {
-					key := "/" + nid + "/" + counter
+					key := nid + "/" + counter
 					if _, exists := filterMap[key]; exists {
 						continue
 					}
