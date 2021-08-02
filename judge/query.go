@@ -38,7 +38,6 @@ func Query(reqs *vos.DataQueryParam) []*vos.HPoint {
 		return hisD
 	}
 	logger.Debugf("[reqs:%+v][queryResD:%+v]\n", reqs, queryResD[0])
-	// TODO 如何判断查询到的多条曲线？ 与条件希望都是配置时就是一条曲线
 	fD := queryResD[0]
 
 	var values vos.HistoryDataS
