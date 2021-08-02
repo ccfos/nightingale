@@ -296,6 +296,11 @@ func AlertRuleUpdateStatus(ids []int64, status int) error {
 	return err
 }
 
+func AlertRuleUpdateNotifyGroup(ids []int64, notifyGroups string) error {
+	_, err := DB.Exec("UPDATE alert_rule SET notify_groups = ? where id in ("+str.IdsString(ids)+")", notifyGroups)
+	return err
+}
+
 func AlertRuleTotal(query string) (num int64, err error) {
 	if query != "" {
 		q := "%" + query + "%"

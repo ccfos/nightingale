@@ -143,6 +143,7 @@ func configRoutes(r *gin.Engine) {
 
 		pages.POST("/alert-rules", login(), alertRuleAdd)
 		pages.PUT("/alert-rules/status", login(), alertRuleStatusPut)
+		pages.PUT("/alert-rules/notify-groups", login(), alertRuleNotifyGroupsPut)
 		pages.GET("/alert-rule/:id", login(), alertRuleGet)
 		pages.PUT("/alert-rule/:id", login(), alertRulePut)
 		pages.DELETE("/alert-rule/:id", login(), alertRuleDel)
@@ -268,6 +269,7 @@ func configRoutes(r *gin.Engine) {
 
 		v1.POST("/alert-rules", login(), alertRuleAdd)
 		v1.PUT("/alert-rules/status", login(), alertRuleStatusPut)
+		v1.PUT("/alert-rules/notify-groups", login(), alertRuleNotifyGroupsPut)
 		v1.GET("/alert-rule/:id", login(), alertRuleGet)
 		v1.PUT("/alert-rule/:id", login(), alertRulePut)
 		v1.DELETE("/alert-rule/:id", login(), alertRuleDel)
