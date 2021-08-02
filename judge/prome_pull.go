@@ -168,10 +168,9 @@ func handlePromqlVector(pv promql.Vector, r models.AlertRule) {
 		logger.Debugf("[proml.historyArr][metricsName:%v][Tags:%v]\n", metricsName, tagm)
 
 		event := &models.AlertEvent{
-			RuleId:   r.Id,
-			RuleName: r.Name,
-			RuleNote: r.Note,
-			// TODO for expr 这些信息变化 hashid 也要变，
+			RuleId:             r.Id,
+			RuleName:           r.Name,
+			RuleNote:           r.Note,
 			HashId:             hashId,
 			IsPromePull:        1,
 			IsRecovery:         0,
