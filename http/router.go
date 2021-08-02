@@ -143,6 +143,7 @@ func configRoutes(r *gin.Engine) {
 
 		pages.POST("/alert-rules", login(), alertRuleAdd)
 		pages.PUT("/alert-rules/status", login(), alertRuleStatusPut)
+		pages.PUT("/alert-rules/notify-groups", login(), alertRuleNotifyGroupsPut)
 		pages.GET("/alert-rule/:id", login(), alertRuleGet)
 		pages.PUT("/alert-rule/:id", login(), alertRulePut)
 		pages.DELETE("/alert-rule/:id", login(), alertRuleDel)

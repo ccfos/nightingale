@@ -168,6 +168,24 @@ func alertRuleStatusPut(c *gin.Context) {
 	renderMessage(c, models.AlertRuleUpdateStatus(f.Ids, f.Status))
 }
 
+type alertRuleNotifyGroupsForm struct {
+	Ids          []int64 `json:"ids"`
+	NotifyGroups string  `json:"notify_groups"`
+}
+
+func alertRuleNotifyGroupsPut(c *gin.Context) {
+	var f alertRuleNotifyGroupsForm
+	bind(c, &f)
+	//用户有修改告警策略的权限
+	loginUser(c).MustPerm("alert_rule_modify")
+	//id不存在
+	if len(f.Ids) == 0 {
+		bomb(http.StatusBadRequest, "ids is empty")
+	}
+
+	renderMessage(c, models.AlertRuleUpdateNotifyGroup(f.Ids, f.NotifyGroups))
+}
+
 func alertRuleDel(c *gin.Context) {
 	me := loginUser(c).MustPerm("alert_rule_delete")
 	alertRule := AlertRule(urlParamInt64(c, "id"))
