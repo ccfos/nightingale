@@ -223,7 +223,6 @@ func (pd *PromeDataSource) QueryData(inputs vos.DataQueryParam) []*vos.DataQuery
 		}
 		ctx, _ := context.WithTimeout(context.Background(), time.Second*30)
 		res := q.Exec(ctx)
-		// TODO 将err返回给前端
 		if res.Err != nil {
 			logger.Errorf("[prome_query_error][rangeQuery_exec_error][args:%+v][err:%+v]", input, res.Err)
 			q.Close()
@@ -251,7 +250,6 @@ func (pd *PromeDataSource) QueryData(inputs vos.DataQueryParam) []*vos.DataQuery
 			name := m.Metric.Get(LABEL_NAME)
 			oneResp.Metric = name
 			oneResp.Ident = ident
-			// TODO 去掉point num
 			pNum := len(m.Points)
 			interval := int64(resolution / time.Second)
 			pNumExpect := int((inputs.End - inputs.Start) / interval)
@@ -391,7 +389,6 @@ func (pd *PromeDataSource) CommonQuerySeries(cj *commonQueryObj) storage.SeriesS
 // TODO 等待prometheus官方对 remote_read label_values 的支持
 // Implement: https://github.com/prometheus/prometheus/issues/3351
 func (pd *PromeDataSource) QueryTagKeys(recv vos.CommonTagQueryParam) *vos.TagKeyQueryResp {
-	// TODO 完成标签匹配模式
 	respD := &vos.TagKeyQueryResp{
 		Keys: make([]string, 0),
 	}
