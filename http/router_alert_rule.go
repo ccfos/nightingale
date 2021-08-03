@@ -171,6 +171,7 @@ func alertRuleStatusPut(c *gin.Context) {
 type alertRuleNotifyGroupsForm struct {
 	Ids          []int64 `json:"ids"`
 	NotifyGroups string  `json:"notify_groups"`
+	NotifyUsers  string  `json:"notify_users"`
 }
 
 func alertRuleNotifyGroupsPut(c *gin.Context) {
@@ -189,7 +190,51 @@ func alertRuleNotifyGroupsPut(c *gin.Context) {
 		alertRuleWritePermCheck(arg, me)
 	}
 
-	renderMessage(c, models.AlertRuleUpdateNotifyGroup(f.Ids, f.NotifyGroups))
+	renderMessage(c, models.AlertRuleUpdateNotifyGroups(f.Ids, f.NotifyGroups, f.NotifyUsers))
+}
+
+type alertRuleNotifyChannelsForm struct {
+	Ids            []int64 `json:"ids"`
+	NotifyChannels string  `json:"notify_channels"`
+}
+
+func alertRuleNotifyChannelsPut(c *gin.Context) {
+	var f alertRuleNotifyChannelsForm
+	bind(c, &f)
+	me := loginUser(c).MustPerm("alert_rule_modify")
+	if len(f.Ids) == 0 {
+		bomb(http.StatusBadRequest, "ids is empty")
+	}
+
+	for _, id := range f.Ids {
+		alertRule := AlertRule(id)
+		arg := AlertRuleGroup(alertRule.GroupId)
+		alertRuleWritePermCheck(arg, me)
+	}
+
+	renderMessage(c, models.AlertRuleUpdateNotifyChannels(f.Ids, f.NotifyChannels))
+}
+
+type alertRuleAppendTagsForm struct {
+	Ids        []int64 `json:"ids"`
+	AppendTags string  `json:"append_tags"`
+}
+
+func alertRuleAppendTagsPut(c *gin.Context) {
+	var f alertRuleAppendTagsForm
+	bind(c, &f)
+	me := loginUser(c).MustPerm("alert_rule_modify")
+	if len(f.Ids) == 0 {
+		bomb(http.StatusBadRequest, "ids is empty")
+	}
+
+	for _, id := range f.Ids {
+		alertRule := AlertRule(id)
+		arg := AlertRuleGroup(alertRule.GroupId)
+		alertRuleWritePermCheck(arg, me)
+	}
+
+	renderMessage(c, models.AlertRuleUpdateAppendTags(f.Ids, f.AppendTags))
 }
 
 func alertRuleDel(c *gin.Context) {
