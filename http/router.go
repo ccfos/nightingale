@@ -144,8 +144,11 @@ func configRoutes(r *gin.Engine) {
 		pages.POST("/alert-rules", login(), alertRuleAdd)
 		pages.PUT("/alert-rules/status", login(), alertRuleStatusPut)
 		pages.PUT("/alert-rules/notify-groups", login(), alertRuleNotifyGroupsPut)
+<<<<<<< HEAD
 		pages.PUT("/alert-rules/notify-channels", login(), alertRuleNotifyChannelsPut)
 		pages.PUT("/alert-rules/append-tags", login(), alertRuleAppendTagsPut)
+=======
+>>>>>>> origin/master
 		pages.GET("/alert-rule/:id", login(), alertRuleGet)
 		pages.PUT("/alert-rule/:id", login(), alertRulePut)
 		pages.DELETE("/alert-rule/:id", login(), alertRuleDel)
@@ -272,8 +275,11 @@ func configRoutes(r *gin.Engine) {
 		v1.POST("/alert-rules", login(), alertRuleAdd)
 		v1.PUT("/alert-rules/status", login(), alertRuleStatusPut)
 		v1.PUT("/alert-rules/notify-groups", login(), alertRuleNotifyGroupsPut)
+<<<<<<< HEAD
 		v1.PUT("/alert-rules/notify-channels", login(), alertRuleNotifyChannelsPut)
 		v1.PUT("/alert-rules/append-tags", login(), alertRuleAppendTagsPut)
+=======
+>>>>>>> origin/master
 		v1.GET("/alert-rule/:id", login(), alertRuleGet)
 		v1.PUT("/alert-rule/:id", login(), alertRulePut)
 		v1.DELETE("/alert-rule/:id", login(), alertRuleDel)
