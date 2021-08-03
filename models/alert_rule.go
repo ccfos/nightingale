@@ -296,7 +296,6 @@ func AlertRuleUpdateStatus(ids []int64, status int) error {
 	return err
 }
 
-<<<<<<< HEAD
 func AlertRuleUpdateNotifyGroups(ids []int64, notifyGroups string, notifyUsers string) error {
 	_, err := DB.Exec("UPDATE alert_rule SET notify_groups = ? , notify_users = ? where id in ("+str.IdsString(ids)+")", notifyGroups, notifyUsers)
 	return err
@@ -309,10 +308,6 @@ func AlertRuleUpdateNotifyChannels(ids []int64, notifyChannels string) error {
 
 func AlertRuleUpdateAppendTags(ids []int64, appendTags string) error {
 	_, err := DB.Exec("UPDATE alert_rule SET append_tags = ? where id in ("+str.IdsString(ids)+")", appendTags)
-=======
-func AlertRuleUpdateNotifyGroup(ids []int64, notifyGroups string) error {
-	_, err := DB.Exec("UPDATE alert_rule SET notify_groups = ? where id in ("+str.IdsString(ids)+")", notifyGroups)
->>>>>>> origin/master
 	return err
 }
 

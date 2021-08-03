@@ -171,10 +171,7 @@ func alertRuleStatusPut(c *gin.Context) {
 type alertRuleNotifyGroupsForm struct {
 	Ids          []int64 `json:"ids"`
 	NotifyGroups string  `json:"notify_groups"`
-<<<<<<< HEAD
 	NotifyUsers  string  `json:"notify_users"`
-=======
->>>>>>> origin/master
 }
 
 func alertRuleNotifyGroupsPut(c *gin.Context) {
@@ -193,7 +190,6 @@ func alertRuleNotifyGroupsPut(c *gin.Context) {
 		alertRuleWritePermCheck(arg, me)
 	}
 
-<<<<<<< HEAD
 	renderMessage(c, models.AlertRuleUpdateNotifyGroups(f.Ids, f.NotifyGroups, f.NotifyUsers))
 }
 
@@ -239,9 +235,6 @@ func alertRuleAppendTagsPut(c *gin.Context) {
 	}
 
 	renderMessage(c, models.AlertRuleUpdateAppendTags(f.Ids, f.AppendTags))
-=======
-	renderMessage(c, models.AlertRuleUpdateNotifyGroup(f.Ids, f.NotifyGroups))
->>>>>>> origin/master
 }
 
 func alertRuleDel(c *gin.Context) {
