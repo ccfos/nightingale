@@ -3,8 +3,8 @@ Description="n9e-server"
 
 [Service]
 Type=simple
-ExecStart=/opt/n9e/n9e-server
-WorkingDirectory=/opt/n9e
+ExecStart=/opt/n9e/server/n9e-server
+WorkingDirectory=/opt/n9e/server
 
 Restart=always
 RestartSecs=1s
