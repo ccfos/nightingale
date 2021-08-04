@@ -46,7 +46,6 @@ func (s *SafeEventMap) DeleteOrSendRecovery(promql string, toKeepKeys map[string
 		}
 		if ev.ReadableExpression == promql {
 			logger.Debugf("[to_del][ev.IsRecovery:%+v][ev.LastSend:%+v][promql:%v]", ev.IsRecovery, ev.LastSend, promql)
-			delete(s.M, k)
 			now := time.Now().Unix()
 			// promql 没查询到结果，需要将告警标记为已恢复并发送
 			// 同时需要满足 已经发送过触发信息，并且时间差满足 大于AlertDuration
@@ -55,6 +54,7 @@ func (s *SafeEventMap) DeleteOrSendRecovery(promql string, toKeepKeys map[string
 				logger.Debugf("[prom.alert.MarkRecov][promql:%v][ev.RuleName:%v]", promql, ev.RuleName)
 				ev.MarkRecov()
 				EventQueue.PushFront(ev)
+				delete(s.M, k)
 			}
 		}
 	}
