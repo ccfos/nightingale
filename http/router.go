@@ -308,6 +308,9 @@ func configRoutes(r *gin.Engine) {
 		v1.POST("/tag-metrics", GetMetrics)
 		v1.POST("/tag-pairs", GetTagPairs)
 		v1.GET("/check-promql", checkPromeQl)
+
+		v1.GET("/can-do-op-by-name", login(), canDoOpByName)
+		v1.GET("/can-do-op-by-token", login(), canDoOpByToken)
 	}
 
 	push := r.Group("/v1/n9e/series").Use(gzip.Gzip(gzip.DefaultCompression))
