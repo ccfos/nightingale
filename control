@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # release version
-version=4.0.3
+version=4.0.5
 
 CWD=$(cd $(dirname $0)/; pwd)
 cd $CWD
