@@ -389,6 +389,11 @@ func Parse(ymlFile string) error {
 		if err != nil {
 			return err
 		}
+
+		if b.Transfer.Backend.M3db.Timeout == 0 {
+			b.Transfer.Backend.M3db.Timeout = 180
+		}
+
 		Config.Transfer.Backend.M3db = b.Transfer.Backend.M3db
 	}
 

@@ -43,6 +43,7 @@ type M3dbSection struct {
 	MinStep         int                  `yaml:"minStep"`
 	MaxSeriesPoints int                  `yaml:"maxSeriesPoints"`
 	Config          client.Configuration `yaml:",inline"`
+	Timeout         int                  `yaml:"timeout"`
 	timeLimit       int64                `yaml:"-"`
 }
 

@@ -79,7 +79,7 @@ func Init(cfg BackendSection) error {
 	// init m3db
 	if cfg.M3db.Enabled {
 		var err error
-		d := time.Now().Add(time.Second * 5)
+		d := time.Now().Add(time.Second * time.Duration(cfg.M3db.Timeout))
 		ctx, cancel := context.WithDeadline(context.Background(), d)
 
 		go func() {
