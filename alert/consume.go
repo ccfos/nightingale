@@ -66,10 +66,7 @@ func consume(events []interface{}, sema *semaphore.Semaphore) {
 			event.MarkMuted()
 
 			if config.Config.Alert.MutedAlertPersist {
-				err := event.Add()
-				if err != nil {
-					logger.Warningf("event_consume: insert muted event err:%v, event:%+v", err, event)
-				}
+				persist(event)
 			}
 
 			continue
@@ -165,9 +162,10 @@ func persist(event *models.AlertEvent) {
 			logger.Warningf("event_consume: insert alert event err:%v, event:%+v", err, event)
 		}
 	}
-	err := JoinAlertAllEvent(event)
+	obj := ToHistoryAlertEvents(event)
+	err := obj.Add()
 	if err != nil {
-		logger.Warningf("event_consume: insert all alert event err:%v, event:%+v", err, event)
+		logger.Warningf("event_consume: insert history alert event err:%v, event:%+v", err, event)
 	}
 }
 
@@ -300,8 +298,8 @@ func enrichTag(event *models.AlertEvent, alertRule *models.AlertRule) {
 	event.Tags = strings.Join(tagList, " ")
 }
 
-func JoinAlertAllEvent(ae *models.AlertEvent) error {
-	var obj models.AlertAllEvents
+func ToHistoryAlertEvents(ae *models.AlertEvent) *models.HistoryAlertEvents {
+	var obj models.HistoryAlertEvents
 	obj.RuleId = ae.RuleId
 	obj.RuleName = ae.RuleName
 	obj.RuleNote = ae.RuleNote
@@ -323,7 +321,5 @@ func JoinAlertAllEvent(ae *models.AlertEvent) error {
 	obj.Tags = ae.Tags
 	obj.NotifyGroupObjs = ae.NotifyGroupObjs
 	obj.NotifyUserObjs = ae.NotifyUserObjs
-	err := obj.Add()
-	logger.Warningf("event_consume: insert all alert event err:%v, event:%+v", err, ae)
-	return err
+	return &obj
 }

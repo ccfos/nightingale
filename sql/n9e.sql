@@ -313,6 +313,31 @@ CREATE TABLE `alert_event` (
     KEY (`trigger_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE `history_alert_events` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `hash_id` varchar(255) NOT NULL COMMENT 'rule_id + point_pk',
+  `rule_id` bigint unsigned NOT NULL,
+  `rule_name` varchar(255) NOT NULL,
+  `rule_note` varchar(512) NOT NULL DEFAULT 'alert rule note',
+  `res_classpaths` varchar(1024) NOT NULL DEFAULT '' COMMENT 'belong classpaths',
+  `priority` tinyint(1) NOT NULL,
+  `status` tinyint(1) NOT NULL,
+  `is_prome_pull` tinyint(1) NOT NULL,
+  `is_recovery` tinyint(1) NOT NULL,
+  `history_points` text COMMENT 'metric, history points',
+  `trigger_time` bigint NOT NULL,
+  `notify_channels` varchar(255) NOT NULL DEFAULT '',
+  `notify_groups` varchar(255) NOT NULL DEFAULT '',
+  `notify_users` varchar(255) NOT NULL DEFAULT '',
+  `runbook_url` varchar(255) DEFAULT NULL,
+  `readable_expression` varchar(1024) NOT NULL COMMENT 'e.g. mem.bytes.used.percent(all,60s) > 0',
+  `tags` varchar(1024) NOT NULL DEFAULT 'merge data_tags rule_tags and res_tags',
+  PRIMARY KEY (`id`),
+  KEY `hash_id` (`hash_id`),
+  KEY `rule_id` (`rule_id`),
+  KEY `trigger_time` (`trigger_time`)
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb3
+
 CREATE TABLE `metric_description` (
     `id` bigint unsigned not null auto_increment,
     `metric` varchar(255) not null default '',

@@ -226,6 +226,20 @@ func loginUsername(c *gin.Context) string {
 	}
 
 	if username == "" {
+		remoteAddr := c.Request.RemoteAddr
+		idx := strings.LastIndex(remoteAddr, ":")
+		ip := ""
+		if idx > 0 {
+			ip = remoteAddr[0:idx]
+		}
+
+		if ip == "127.0.0.1" {
+			//本地调用都当成是root用户在调用
+			username = "root"
+		}
+	}
+
+	if username == "" {
 		ierr.Bomb(http.StatusUnauthorized, "unauthorized")
 	}
 
@@ -360,8 +374,8 @@ func AlertEvent(id int64) *models.AlertEvent {
 	return obj
 }
 
-func AlertAllEvents(id int64) *models.AlertAllEvents {
-	obj, err := models.AlertAllEventsGet("id=?", id)
+func HistoryAlertEvents(id int64) *models.HistoryAlertEvents {
+	obj, err := models.HistoryAlertEventsGet("id=?", id)
 	dangerous(err)
 
 	if obj == nil {

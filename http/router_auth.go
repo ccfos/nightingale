@@ -56,3 +56,37 @@ func logoutGet(c *gin.Context) {
 	session.Save()
 	renderMessage(c, nil)
 }
+
+func canDoOpByName(c *gin.Context) {
+	user, err := models.UserGetByUsername(queryStr(c, "name"))
+	dangerous(err)
+
+	if user == nil {
+		renderData(c, false, err)
+		return
+	}
+
+	can, err := user.CanDo(queryStr(c, "op"))
+	renderData(c, can, err)
+}
+
+func canDoOpByToken(c *gin.Context) {
+	userToken, err := models.UserTokenGet("token=?", queryStr(c, "token"))
+	dangerous(err)
+
+	if userToken == nil {
+		renderData(c, false, err)
+		return
+	}
+
+	user, err := models.UserGetByUsername(userToken.Username)
+	dangerous(err)
+
+	if user == nil {
+		renderData(c, false, err)
+		return
+	}
+
+	can, err := user.CanDo(queryStr(c, "op"))
+	renderData(c, can, err)
+}

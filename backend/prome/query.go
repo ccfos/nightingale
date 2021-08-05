@@ -530,8 +530,8 @@ func (pd *PromeDataSource) QueryMetrics(recv vos.MetricQueryParam) *vos.MetricQu
 	respD := &vos.MetricQueryResp{}
 	respD.Metrics = make([]string, 0)
 	s := pd.CommonQuerySeries(cj)
-	for _, x := range s.Warnings() {
-		logger.Warningf("[prome_query_error][series_set_iter_error][warning:%+v]\n", x.Error())
+	if s.Warnings() != nil {
+		logger.Warningf("[prome_query_error][series_set_iter_error][warning:%+v]", s.Warnings())
 
 	}
 

@@ -12,7 +12,7 @@ import (
 	"xorm.io/builder"
 )
 
-type AlertAllEvents struct {
+type HistoryAlertEvents struct {
 	Id                 int64           `json:"id"`
 	RuleId             int64           `json:"rule_id"`
 	RuleName           string          `json:"rule_name"`
@@ -22,9 +22,9 @@ type AlertAllEvents struct {
 	ResClasspaths      string          `json:"res_classpaths"`
 	ResIdent           string          `json:"res_ident" xorm:"-"` // res_ident会出现在tags字段，就不用单独写入数据库了，但是各块逻辑中有个单独的res_ident字段更便于处理，所以struct里还留有这个字段；前端不用展示这个字段
 	Priority           int             `json:"priority"`
-	Status             int             `json:"status"`                         // 标识是否 被屏蔽
-	IsRecovery         int             `json:"is_recovery" xorm:"is_recovery"` // 0: alert, 1: recovery
-	HistoryPoints      json.RawMessage `json:"history_points"`                 // HistoryPoints{}
+	Status             int             `json:"status"`         // 标识是否 被屏蔽
+	IsRecovery         int             `json:"is_recovery"`    // 0: alert, 1: recovery
+	HistoryPoints      json.RawMessage `json:"history_points"` // HistoryPoints{}
 	TriggerTime        int64           `json:"trigger_time"`
 	Values             string          `json:"values" xorm:"-"` // e.g. cpu.idle: 23.3; load.1min: 32
 	NotifyChannels     string          `json:"notify_channels"`
@@ -38,106 +38,106 @@ type AlertAllEvents struct {
 }
 
 // IsAlert 语法糖，避免直接拿IsRecovery字段做比对不直观易出错
-func (ae *AlertAllEvents) IsAlert() bool {
-	return ae.IsRecovery != 1
+func (hae *HistoryAlertEvents) IsAlert() bool {
+	return hae.IsRecovery != 1
 }
 
 // IsRecov 语法糖，避免直接拿IsRecovery字段做比对不直观易出错
-func (ae *AlertAllEvents) IsRecov() bool {
-	return ae.IsRecovery == 1
+func (hae *HistoryAlertEvents) IsRecov() bool {
+	return hae.IsRecovery == 1
 }
 
 // MarkAlert 语法糖，标记为告警状态
-func (ae *AlertAllEvents) MarkAlert() {
-	ae.IsRecovery = 0
+func (hae *HistoryAlertEvents) MarkAlert() {
+	hae.IsRecovery = 0
 }
 
 // MarkRecov 语法糖，标记为恢复状态
-func (ae *AlertAllEvents) MarkRecov() {
-	ae.IsRecovery = 1
+func (hae *HistoryAlertEvents) MarkRecov() {
+	hae.IsRecovery = 1
 }
 
 // MarkMuted 语法糖，标记为屏蔽状态
-func (ae *AlertAllEvents) MarkMuted() {
-	ae.Status = 1
+func (hae *HistoryAlertEvents) MarkMuted() {
+	hae.Status = 1
 }
 
-func (ae *AlertAllEvents) String() string {
+func (hae *HistoryAlertEvents) String() string {
 	return fmt.Sprintf("id:%d,rule_id:%d,rule_name:%s,rule_note:%s,hash_id:%s,is_prome_pull:%d,res_classpaths:%s,res_ident:%s,priority:%d,status:%d,is_recovery:%d,history_points:%s,trigger_time:%d,values:%s,notify_channels:%s,runbook_url:%s,readable_expression:%s,tags:%s,notify_group_objs:%+v,notify_user_objs:%+v",
-		ae.Id,
-		ae.RuleId,
-		ae.RuleName,
-		ae.RuleNote,
-		ae.HashId,
-		ae.IsPromePull,
-		ae.ResClasspaths,
-		ae.ResIdent,
-		ae.Priority,
-		ae.Status,
-		ae.IsRecovery,
-		string(ae.HistoryPoints),
-		ae.TriggerTime,
-		ae.Values,
-		ae.NotifyChannels,
-		ae.RunbookUrl,
-		ae.ReadableExpression,
-		ae.Tags,
-		ae.NotifyGroupObjs,
-		ae.NotifyUserObjs,
+		hae.Id,
+		hae.RuleId,
+		hae.RuleName,
+		hae.RuleNote,
+		hae.HashId,
+		hae.IsPromePull,
+		hae.ResClasspaths,
+		hae.ResIdent,
+		hae.Priority,
+		hae.Status,
+		hae.IsRecovery,
+		string(hae.HistoryPoints),
+		hae.TriggerTime,
+		hae.Values,
+		hae.NotifyChannels,
+		hae.RunbookUrl,
+		hae.ReadableExpression,
+		hae.Tags,
+		hae.NotifyGroupObjs,
+		hae.NotifyUserObjs,
 	)
 }
 
-func (ae *AlertAllEvents) FillObjs() error {
-	userGroupIds := strings.Fields(ae.NotifyGroups)
+func (hae *HistoryAlertEvents) FillObjs() error {
+	userGroupIds := strings.Fields(hae.NotifyGroups)
 	if len(userGroupIds) > 0 {
 		groups, err := UserGroupGetsByIdsStr(userGroupIds)
 		if err != nil {
 			return err
 		}
-		ae.NotifyGroupObjs = groups
+		hae.NotifyGroupObjs = groups
 	}
 
-	userIds := strings.Fields(ae.NotifyUsers)
+	userIds := strings.Fields(hae.NotifyUsers)
 	if len(userIds) > 0 {
 		users, err := UserGetsByIdsStr(userIds)
 		if err != nil {
 			return err
 		}
-		ae.NotifyUserObjs = users
+		hae.NotifyUserObjs = users
 	}
 
 	return nil
 }
 
-func (ae *AlertAllEvents) Add() error {
-	return DBInsertOne(ae)
+func (hae *HistoryAlertEvents) Add() error {
+	return DBInsertOne(hae)
 }
 
-func (ar *AlertAllEvents) Del() error {
-	_, err := DB.Where("id=?", ar.Id).Delete(new(AlertAllEvents))
+func (ar *HistoryAlertEvents) Del() error {
+	_, err := DB.Where("id=?", ar.Id).Delete(new(HistoryAlertEvents))
 	if err != nil {
-		logger.Errorf("mysql.error: delete alert_all_events fail: %v", err)
+		logger.Errorf("mysql.error: delete history_alert_events fail: %v", err)
 		return internalServerError
 	}
 
 	return nil
 }
 
-func AlertAllEventsDel(ids []int64) error {
+func HistoryAlertEventsDel(ids []int64) error {
 	if len(ids) == 0 {
 		return fmt.Errorf("param ids is empty")
 	}
 
-	_, err := DB.Exec("DELETE FROM alert_all_events where id in (" + str.IdsString(ids) + ")")
+	_, err := DB.Exec("DELETE FROM history_alert_events where id in (" + str.IdsString(ids) + ")")
 	if err != nil {
-		logger.Errorf("mysql.error: delete alert_all_events(%v) fail: %v", ids, err)
+		logger.Errorf("mysql.error: delete history_alert_events(%v) fail: %v", ids, err)
 		return internalServerError
 	}
 
 	return nil
 }
 
-func AlertAllEventsTotal(stime, etime int64, query string, status, priority int) (num int64, err error) {
+func HistoryAlertEventsTotal(stime, etime int64, query string, status, is_recovery, priority int) (num int64, err error) {
 	cond := builder.NewCond()
 	if stime != 0 && etime != 0 {
 		cond = cond.And(builder.Between{Col: "trigger_time", LessVal: stime, MoreVal: etime})
@@ -145,6 +145,10 @@ func AlertAllEventsTotal(stime, etime int64, query string, status, priority int)
 
 	if status != -1 {
 		cond = cond.And(builder.Eq{"status": status})
+	}
+
+	if is_recovery != -1 {
+		cond = cond.And(builder.Eq{"is_recovery": is_recovery})
 	}
 
 	if priority != -1 {
@@ -163,16 +167,16 @@ func AlertAllEventsTotal(stime, etime int64, query string, status, priority int)
 		}
 	}
 
-	num, err = DB.Where(cond).Count(new(AlertAllEvents))
+	num, err = DB.Where(cond).Count(new(HistoryAlertEvents))
 	if err != nil {
-		logger.Errorf("mysql.error: count alert_all_events fail: %v", err)
+		logger.Errorf("mysql.error: count history_alert_events fail: %v", err)
 		return 0, internalServerError
 	}
 
 	return num, nil
 }
 
-func AlertAllEventsGets(stime, etime int64, query string, status, priority int, limit, offset int) ([]AlertAllEvents, error) {
+func HistoryAlertEventsGets(stime, etime int64, query string, status, is_recovery, priority int, limit, offset int) ([]HistoryAlertEvents, error) {
 	cond := builder.NewCond()
 	if stime != 0 && etime != 0 {
 		cond = cond.And(builder.Between{Col: "trigger_time", LessVal: stime, MoreVal: etime})
@@ -180,6 +184,10 @@ func AlertAllEventsGets(stime, etime int64, query string, status, priority int, 
 
 	if status != -1 {
 		cond = cond.And(builder.Eq{"status": status})
+	}
+
+	if is_recovery != -1 {
+		cond = cond.And(builder.Eq{"is_recovery": is_recovery})
 	}
 
 	if priority != -1 {
@@ -198,25 +206,25 @@ func AlertAllEventsGets(stime, etime int64, query string, status, priority int, 
 		}
 	}
 
-	var objs []AlertAllEvents
+	var objs []HistoryAlertEvents
 	err := DB.Where(cond).Desc("trigger_time").Limit(limit, offset).Find(&objs)
 	if err != nil {
-		logger.Errorf("mysql.error: query alert_all_events fail: %v", err)
+		logger.Errorf("mysql.error: query history_alert_events fail: %v", err)
 		return objs, internalServerError
 	}
 
 	if len(objs) == 0 {
-		return []AlertAllEvents{}, nil
+		return []HistoryAlertEvents{}, nil
 	}
 
 	return objs, nil
 }
 
-func AlertAllEventsGet(where string, args ...interface{}) (*AlertAllEvents, error) {
-	var obj AlertAllEvents
+func HistoryAlertEventsGet(where string, args ...interface{}) (*HistoryAlertEvents, error) {
+	var obj HistoryAlertEvents
 	has, err := DB.Where(where, args...).Get(&obj)
 	if err != nil {
-		logger.Errorf("mysql.error: query alert_all_events(%s)%+v fail: %s", where, args, err)
+		logger.Errorf("mysql.error: query history_alert_events(%s)%+v fail: %s", where, args, err)
 		return nil, internalServerError
 	}
 

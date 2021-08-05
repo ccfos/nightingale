@@ -155,10 +155,10 @@ func configRoutes(r *gin.Engine) {
 		pages.GET("/alert-event/:id", login(), alertEventGet)
 		pages.DELETE("/alert-event/:id", login(), alertEventDel)
 
-		pages.GET("/alert-all-events", login(), alertAllEventsGets)
-		pages.DELETE("/alert-all-events", login(), alertAllEventsDel)
-		pages.GET("/alert-all-event/:id", login(), alertAllEventGet)
-		pages.DELETE("/alert-all-event/:id", login(), alertAllEventDel)
+		pages.GET("/history-alert-events", login(), historyAlertEventsGets)
+		pages.DELETE("/history-alert-events", login(), historyAlertEventsDel)
+		pages.GET("/history-alert-event/:id", login(), historyAlertEventGet)
+		pages.DELETE("/history-alert-event/:id", login(), historyAlertEventDel)
 
 		pages.GET("/classpath/:id/collect-rules", login(), collectRuleGets)
 		pages.POST("/collect-rules", login(), collectRuleAdd)
@@ -288,10 +288,10 @@ func configRoutes(r *gin.Engine) {
 		v1.GET("/alert-event/:id", login(), alertEventGet)
 		v1.DELETE("/alert-event/:id", login(), alertEventDel)
 
-		v1.GET("/alert-all-events", login(), alertAllEventsGets)
-		v1.DELETE("/alert-all-events", login(), alertAllEventsDel)
-		v1.GET("/alert-all-event/:id", login(), alertAllEventGet)
-		v1.DELETE("/alert-all-event/:id", login(), alertAllEventDel)
+		v1.GET("/history-alert-events", login(), historyAlertEventsGets)
+		v1.DELETE("/history-alert-events", login(), historyAlertEventsDel)
+		v1.GET("/history-alert-event/:id", login(), historyAlertEventGet)
+		v1.DELETE("/history-alert-event/:id", login(), historyAlertEventDel)
 
 		v1.POST("/collect-rules", login(), collectRuleAdd)
 		v1.DELETE("/collect-rules", login(), collectRuleDel)
@@ -318,6 +318,9 @@ func configRoutes(r *gin.Engine) {
 		v1.POST("/tag-metrics", GetMetrics)
 		v1.POST("/tag-pairs", GetTagPairs)
 		v1.GET("/check-promql", checkPromeQl)
+
+		v1.GET("/can-do-op-by-name", login(), canDoOpByName)
+		v1.GET("/can-do-op-by-token", login(), canDoOpByToken)
 	}
 
 	push := r.Group("/v1/n9e/series").Use(gzip.Gzip(gzip.DefaultCompression))
