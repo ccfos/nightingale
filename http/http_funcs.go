@@ -374,8 +374,8 @@ func AlertEvent(id int64) *models.AlertEvent {
 	return obj
 }
 
-func HistoryAlertEvents(id int64) *models.HistoryAlertEvents {
-	obj, err := models.HistoryAlertEventsGet("id=?", id)
+func HistoryAlertEvent(id int64) *models.HistoryAlertEvent {
+	obj, err := models.HistoryAlertEventGet("id=?", id)
 	dangerous(err)
 
 	if obj == nil {

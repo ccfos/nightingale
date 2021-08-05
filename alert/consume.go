@@ -162,7 +162,7 @@ func persist(event *models.AlertEvent) {
 			logger.Warningf("event_consume: insert alert event err:%v, event:%+v", err, event)
 		}
 	}
-	obj := ToHistoryAlertEvents(event)
+	obj := ToHistoryAlertEvent(event)
 	err := obj.Add()
 	if err != nil {
 		logger.Warningf("event_consume: insert history alert event err:%v, event:%+v", err, event)
@@ -298,8 +298,8 @@ func enrichTag(event *models.AlertEvent, alertRule *models.AlertRule) {
 	event.Tags = strings.Join(tagList, " ")
 }
 
-func ToHistoryAlertEvents(ae *models.AlertEvent) *models.HistoryAlertEvents {
-	var obj models.HistoryAlertEvents
+func ToHistoryAlertEvent(ae *models.AlertEvent) *models.HistoryAlertEvent {
+	var obj models.HistoryAlertEvent
 	obj.RuleId = ae.RuleId
 	obj.RuleName = ae.RuleName
 	obj.RuleNote = ae.RuleNote

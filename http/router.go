@@ -155,10 +155,8 @@ func configRoutes(r *gin.Engine) {
 		pages.GET("/alert-event/:id", login(), alertEventGet)
 		pages.DELETE("/alert-event/:id", login(), alertEventDel)
 
-		pages.GET("/history-alert-events", login(), historyAlertEventsGets)
-		pages.DELETE("/history-alert-events", login(), historyAlertEventsDel)
+		pages.GET("/history-alert-events", login(), historyAlertEventGets)
 		pages.GET("/history-alert-event/:id", login(), historyAlertEventGet)
-		pages.DELETE("/history-alert-event/:id", login(), historyAlertEventDel)
 
 		pages.GET("/classpath/:id/collect-rules", login(), collectRuleGets)
 		pages.POST("/collect-rules", login(), collectRuleAdd)
@@ -288,10 +286,8 @@ func configRoutes(r *gin.Engine) {
 		v1.GET("/alert-event/:id", login(), alertEventGet)
 		v1.DELETE("/alert-event/:id", login(), alertEventDel)
 
-		v1.GET("/history-alert-events", login(), historyAlertEventsGets)
-		v1.DELETE("/history-alert-events", login(), historyAlertEventsDel)
+		v1.GET("/history-alert-events", login(), historyAlertEventGets)
 		v1.GET("/history-alert-event/:id", login(), historyAlertEventGet)
-		v1.DELETE("/history-alert-event/:id", login(), historyAlertEventDel)
 
 		v1.POST("/collect-rules", login(), collectRuleAdd)
 		v1.DELETE("/collect-rules", login(), collectRuleDel)

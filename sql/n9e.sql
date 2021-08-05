@@ -313,7 +313,7 @@ CREATE TABLE `alert_event` (
     KEY (`trigger_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE `history_alert_events` (
+CREATE TABLE `history_alert_event` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `hash_id` varchar(255) NOT NULL COMMENT 'rule_id + point_pk',
   `rule_id` bigint unsigned NOT NULL,
@@ -336,7 +336,7 @@ CREATE TABLE `history_alert_events` (
   KEY `hash_id` (`hash_id`),
   KEY `rule_id` (`rule_id`),
   KEY `trigger_time` (`trigger_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb3
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `metric_description` (
     `id` bigint unsigned not null auto_increment,

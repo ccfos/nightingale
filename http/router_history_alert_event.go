@@ -8,7 +8,7 @@ import (
 	"github.com/didi/nightingale/v5/models"
 )
 
-func historyAlertEventsGets(c *gin.Context) {
+func historyAlertEventGets(c *gin.Context) {
 	stime := queryInt64(c, "stime", 0)
 	etime := queryInt64(c, "etime", 0)
 	hours := queryInt64(c, "hours", 0)
@@ -25,13 +25,13 @@ func historyAlertEventsGets(c *gin.Context) {
 	query := queryStr(c, "query", "")
 	priority := queryInt(c, "priority", -1)
 	status := queryInt(c, "status", -1)
-	is_recovery := queryInt(c, "is_recovery", -1)
+	isRecovery := queryInt(c, "isRecovery", -1)
 	limit := queryInt(c, "limit", defaultLimit)
 
-	total, err := models.HistoryAlertEventsTotal(stime, etime, query, status, is_recovery, priority)
+	total, err := models.HistoryAlertEventsTotal(stime, etime, query, status, isRecovery, priority)
 	dangerous(err)
 
-	list, err := models.HistoryAlertEventsGets(stime, etime, query, status, is_recovery, priority, limit, offset(c, limit))
+	list, err := models.HistoryAlertEventGets(stime, etime, query, status, isRecovery, priority, limit, offset(c, limit))
 	dangerous(err)
 
 	for i := 0; i < len(list); i++ {
@@ -50,20 +50,7 @@ func historyAlertEventsGets(c *gin.Context) {
 }
 
 func historyAlertEventGet(c *gin.Context) {
-	ae := HistoryAlertEvents(urlParamInt64(c, "id"))
+	ae := HistoryAlertEvent(urlParamInt64(c, "id"))
 	dangerous(ae.FillObjs())
 	renderData(c, ae, nil)
-}
-
-func historyAlertEventDel(c *gin.Context) {
-	loginUser(c).MustPerm("alert_event_delete")
-	renderMessage(c, HistoryAlertEvents(urlParamInt64(c, "id")).Del())
-}
-
-func historyAlertEventsDel(c *gin.Context) {
-	var f idsForm
-	bind(c, &f)
-	f.Validate()
-	loginUser(c).MustPerm("alert_event_delete")
-	renderMessage(c, models.HistoryAlertEventsDel(f.Ids))
 }
