@@ -165,6 +165,10 @@ func persist(event *models.AlertEvent) {
 			logger.Warningf("event_consume: insert alert event err:%v, event:%+v", err, event)
 		}
 	}
+	err := JoinAlertAllEvent(event)
+	if err != nil {
+		logger.Warningf("event_consume: insert all alert event err:%v, event:%+v", err, event)
+	}
 }
 
 type AlertMsg struct {
@@ -294,4 +298,32 @@ func enrichTag(event *models.AlertEvent, alertRule *models.AlertRule) {
 	}
 	sort.Strings(tagList)
 	event.Tags = strings.Join(tagList, " ")
+}
+
+func JoinAlertAllEvent(ae *models.AlertEvent) error {
+	var obj models.AlertAllEvents
+	obj.RuleId = ae.RuleId
+	obj.RuleName = ae.RuleName
+	obj.RuleNote = ae.RuleNote
+	obj.HashId = ae.HashId
+	obj.IsPromePull = ae.IsPromePull
+	obj.ResClasspaths = ae.ResClasspaths
+	obj.ResIdent = ae.ResIdent
+	obj.Priority = ae.Priority
+	obj.Status = ae.Status
+	obj.IsRecovery = ae.IsRecovery
+	obj.HistoryPoints = ae.HistoryPoints
+	obj.TriggerTime = ae.TriggerTime
+	obj.Values = ae.Values
+	obj.NotifyChannels = ae.NotifyChannels
+	obj.NotifyGroups = ae.NotifyGroups
+	obj.NotifyUsers = ae.NotifyUsers
+	obj.RunbookUrl = ae.RunbookUrl
+	obj.ReadableExpression = ae.ReadableExpression
+	obj.Tags = ae.Tags
+	obj.NotifyGroupObjs = ae.NotifyGroupObjs
+	obj.NotifyUserObjs = ae.NotifyUserObjs
+	err := obj.Add()
+	logger.Warningf("event_consume: insert all alert event err:%v, event:%+v", err, ae)
+	return err
 }

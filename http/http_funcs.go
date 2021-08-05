@@ -360,6 +360,17 @@ func AlertEvent(id int64) *models.AlertEvent {
 	return obj
 }
 
+func AlertAllEvents(id int64) *models.AlertAllEvents {
+	obj, err := models.AlertAllEventsGet("id=?", id)
+	dangerous(err)
+
+	if obj == nil {
+		bomb(http.StatusNotFound, "No such alert all event")
+	}
+
+	return obj
+}
+
 func CollectRule(id int64) *models.CollectRule {
 	obj, err := models.CollectRuleGet("id=?", id)
 	dangerous(err)
