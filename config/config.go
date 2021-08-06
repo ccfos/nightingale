@@ -140,10 +140,13 @@ func Parse() error {
 			fmt.Println("heartbeat ip auto got is blank")
 			os.Exit(1)
 		}
-		port := strings.Split(Config.RPC.Listen, ":")[1]
-		endpoint := Config.Heartbeat.IP + ":" + port
-		Config.Heartbeat.LocalAddr = endpoint
+
 	}
+	// 用户在配置文件中指定了heartbeat.ip ，用于本机没有网络，下面的报错，那么需要将Config.Heartbeat.LocalAddr设置一下
+	// auto get outbound ip fail: dial udp 8.8.8.8:80: connect: network is unreachable
+
+	port := strings.Split(Config.RPC.Listen, ":")[1]
+	Config.Heartbeat.LocalAddr = Config.Heartbeat.IP + ":" + port
 
 	// 正常情况肯定不是127.0.0.1，但是，如果就是单机部署，并且这个机器没有网络，比如本地调试并且本机没网的时候
 	// if Config.Heartbeat.IP == "127.0.0.1" {
