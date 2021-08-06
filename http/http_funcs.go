@@ -374,6 +374,17 @@ func AlertEvent(id int64) *models.AlertEvent {
 	return obj
 }
 
+func HistoryAlertEvent(id int64) *models.HistoryAlertEvent {
+	obj, err := models.HistoryAlertEventGet("id=?", id)
+	dangerous(err)
+
+	if obj == nil {
+		bomb(http.StatusNotFound, "No such alert all event")
+	}
+
+	return obj
+}
+
 func CollectRule(id int64) *models.CollectRule {
 	obj, err := models.CollectRuleGet("id=?", id)
 	dangerous(err)

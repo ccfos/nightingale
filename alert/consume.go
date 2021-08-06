@@ -66,10 +66,7 @@ func consume(events []interface{}, sema *semaphore.Semaphore) {
 			event.MarkMuted()
 
 			if config.Config.Alert.MutedAlertPersist {
-				err := event.Add()
-				if err != nil {
-					logger.Warningf("event_consume: insert muted event err:%v, event:%+v", err, event)
-				}
+				persist(event)
 			}
 
 			continue
@@ -164,6 +161,11 @@ func persist(event *models.AlertEvent) {
 		if err != nil {
 			logger.Warningf("event_consume: insert alert event err:%v, event:%+v", err, event)
 		}
+	}
+	obj := ToHistoryAlertEvent(event)
+	err := obj.Add()
+	if err != nil {
+		logger.Warningf("event_consume: insert history alert event err:%v, event:%+v", err, event)
 	}
 }
 
@@ -294,4 +296,30 @@ func enrichTag(event *models.AlertEvent, alertRule *models.AlertRule) {
 	}
 	sort.Strings(tagList)
 	event.Tags = strings.Join(tagList, " ")
+}
+
+func ToHistoryAlertEvent(ae *models.AlertEvent) *models.HistoryAlertEvent {
+	var obj models.HistoryAlertEvent
+	obj.RuleId = ae.RuleId
+	obj.RuleName = ae.RuleName
+	obj.RuleNote = ae.RuleNote
+	obj.HashId = ae.HashId
+	obj.IsPromePull = ae.IsPromePull
+	obj.ResClasspaths = ae.ResClasspaths
+	obj.ResIdent = ae.ResIdent
+	obj.Priority = ae.Priority
+	obj.Status = ae.Status
+	obj.IsRecovery = ae.IsRecovery
+	obj.HistoryPoints = ae.HistoryPoints
+	obj.TriggerTime = ae.TriggerTime
+	obj.Values = ae.Values
+	obj.NotifyChannels = ae.NotifyChannels
+	obj.NotifyGroups = ae.NotifyGroups
+	obj.NotifyUsers = ae.NotifyUsers
+	obj.RunbookUrl = ae.RunbookUrl
+	obj.ReadableExpression = ae.ReadableExpression
+	obj.Tags = ae.Tags
+	obj.NotifyGroupObjs = ae.NotifyGroupObjs
+	obj.NotifyUserObjs = ae.NotifyUserObjs
+	return &obj
 }
