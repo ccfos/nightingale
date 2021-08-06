@@ -25,7 +25,7 @@ func historyAlertEventGets(c *gin.Context) {
 	query := queryStr(c, "query", "")
 	priority := queryInt(c, "priority", -1)
 	status := queryInt(c, "status", -1)
-	isRecovery := queryInt(c, "isRecovery", -1)
+	isRecovery := queryInt(c, "is_recovery", -1)
 	limit := queryInt(c, "limit", defaultLimit)
 
 	total, err := models.HistoryAlertEventsTotal(stime, etime, query, status, isRecovery, priority)
