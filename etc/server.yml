@@ -91,6 +91,11 @@ trans:
       lookbackDeltaMinute: 2
       # 查询全量索引时时间窗口限制，降低高基数
       maxFetchAllSeriesLimitMinute: 5
+      # 查询接口耗时超过多少秒就打印warning日志记录
+      slowLogRecordSecond: 3
+      # remote_read时，如果没有查询条件则用这条默认的ql查询
+      # 注意！ ql匹配series越多，造成的oom或者慢查询可能越大
+      defaultFetchSeriesQl: '{__name__=~"system.*"}'
       remoteWrite:
         # m3db的配置
         #- name: m3db01

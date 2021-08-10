@@ -122,6 +122,8 @@ func Parse() error {
 	viper.SetDefault("trans.backend.prometheus.maxConcurrentQuery", 30)
 	viper.SetDefault("trans.backend.prometheus.maxSamples", 50000000)
 	viper.SetDefault("trans.backend.prometheus.maxFetchAllSeriesLimitMinute", 5)
+	viper.SetDefault("trans.backend.prometheus.slowLogRecordSecond", 3)
+	viper.SetDefault("trans.backend.prometheus.defaultFetchSeriesQl", `{__name__=~"system.*"}`)
 	viper.SetDefault("tpl.alertRulePath", "./etc/alert_rule")
 	viper.SetDefault("tpl.dashboardPath", "./etc/dashboard")
 
