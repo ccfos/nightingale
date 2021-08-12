@@ -122,38 +122,6 @@ func (m *MetricPoint) Tidy(now int64) error {
 	return nil
 }
 
-// func DictedTagstring(s string) map[string]string {
-// 	if i := strings.Index(s, " "); i != -1 {
-// 		s = strings.Replace(s, " ", "", -1)
-// 	}
-
-// 	rmap := make(map[string]string)
-
-// 	if s == "" {
-// 		return rmap
-// 	}
-
-// 	tags := strings.Split(s, ",")
-// 	for _, tag := range tags {
-// 		pair := strings.SplitN(tag, "=", 2)
-// 		if len(pair) != 2 {
-// 			continue
-// 		}
-
-// 		if pair[0] == "" {
-// 			continue
-// 		}
-
-// 		if pair[1] == "" {
-// 			rmap[pair[0]] = "nil"
-// 		} else {
-// 			rmap[pair[0]] = pair[1]
-// 		}
-// 	}
-
-// 	return rmap
-// }
-
 func DictedTagList(tags []string) map[string]string {
 	rmap := make(map[string]string)
 	if len(tags) == 0 {
