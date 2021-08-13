@@ -19,6 +19,24 @@ type Classpath struct {
 	UpdateBy string `json:"update_by"`
 }
 
+type ClasspathTree struct {
+	Id       int64           `json:"id"`
+	Path     string          `json:"path"`
+	Note     string          `json:"note"`
+	Preset   int             `json:"preset"`
+	CreateAt int64           `json:"create_at"`
+	CreateBy string          `json:"create_by"`
+	UpdateAt int64           `json:"update_at"`
+	UpdateBy string          `json:"update_by"`
+	Children []ClasspathTree `json:"child"`
+}
+
+type Node struct {
+	Children []*Node
+	Val      string
+	Obj      Classpath
+}
+
 func (c *Classpath) TableName() string {
 	return "classpath"
 }
@@ -99,14 +117,7 @@ func ClasspathTotal(query string) (num int64, err error) {
 }
 
 func ClasspathGets(query string, limit, offset int) ([]Classpath, error) {
-	session := DB.Limit(limit, offset).OrderBy("path")
-	if query != "" {
-		q := "%" + query + "%"
-		session = session.Where("path like ?", q)
-	}
-
-	var objs []Classpath
-	err := session.Find(&objs)
+	objs, err := ClasspathQuery(query, limit, offset)
 	if err != nil {
 		logger.Errorf("mysql.error: query classpath fail: %v", err)
 		return objs, internalServerError
@@ -217,4 +228,140 @@ func (c *Classpath) AddResources(idents []string) error {
 
 func (c *Classpath) DelResources(idents []string) error {
 	return ClasspathResourceDel(c.Id, idents)
+}
+
+func ClasspathTreeNodesGets(query string, limit, offset int) ([]ClasspathTree, error) {
+	objs, err := ClasspathQuery(query, limit, offset)
+	if err != nil {
+		logger.Errorf("mysql.error: query classpath fail: %v", err)
+		return []ClasspathTree{}, internalServerError
+	}
+
+	if len(objs) == 0 {
+		return []ClasspathTree{}, nil
+	}
+	pcs := ClasspathTreeAllChildren(objs)
+
+	return pcs, nil
+}
+
+func ClasspathQuery(query string, limit, offset int) ([]Classpath, error) {
+	session := DB.Limit(limit, offset).OrderBy("path")
+	if query != "" {
+		q := "%" + query + "%"
+		session = session.Where("path like ?", q)
+	}
+	var objs []Classpath
+	err := session.Find(&objs)
+
+	return objs, err
+}
+
+func ClasspathNodeGetsById(cp Classpath) ([]ClasspathTree, error) {
+	objs, err := ClasspathGetsByPrefix(cp.Path)
+	if err != nil {
+		logger.Errorf("mysql.error: query prefix classpath fail: %v", err)
+		return []ClasspathTree{}, internalServerError
+	}
+	if len(objs) == 0 {
+		return []ClasspathTree{}, nil
+	}
+	pcs := ClasspathNodeChild(objs)
+
+	return pcs, nil
+}
+
+func ClasspathTreeAllChildren(cps []Classpath) []ClasspathTree {
+	var node Node
+	var objs []ClasspathTree
+
+	for _, cp := range cps {
+		TreeInsert(cp, &node)
+	}
+
+	for _, child := range node.Children {
+		objs = append(objs, TreeAllChildren(child))
+	}
+
+	return objs
+}
+
+func ClasspathNodeChild(cps []Classpath) []ClasspathTree {
+	var node Node
+	var objs []ClasspathTree
+
+	for _, cp := range cps {
+		TreeInsert(cp, &node)
+	}
+
+	for _, child := range node.Children {
+		objs = append(objs, NodeChild(child))
+	}
+
+	return objs
+}
+
+func TreeInsert(obj Classpath, node *Node) {
+	path := obj.Path
+	ok := true
+	for {
+		if len(node.Children) == 0 {
+			break
+		}
+		child := node.Children[len(node.Children)-1]
+		prefix := child.Val
+		ok = strings.HasPrefix(path, prefix)
+		if !ok {
+			break
+		}
+		path = path[len(prefix):]
+		node = child
+	}
+	var newNode Node
+	newNode.Obj = obj
+	newNode.Val = path
+	node.Children = append(node.Children, &newNode)
+}
+
+func ToClasspathTree(node *Node) ClasspathTree {
+	var obj ClasspathTree
+
+	obj.Id = node.Obj.Id
+	obj.Path = node.Val
+	obj.Note = node.Obj.Note
+	obj.Preset = node.Obj.Preset
+	obj.CreateAt = node.Obj.CreateAt
+	obj.CreateBy = node.Obj.CreateBy
+	obj.UpdateAt = node.Obj.UpdateAt
+	obj.UpdateBy = node.Obj.UpdateBy
+	obj.Children = []ClasspathTree{}
+	return obj
+}
+
+func TreeAllChildren(node *Node) ClasspathTree {
+	obj := ToClasspathTree(node)
+
+	if len(node.Children) == 0 {
+		obj.Children = []ClasspathTree{}
+		return obj
+	}
+
+	for _, child := range node.Children {
+		obj.Children = append(obj.Children, TreeAllChildren(child))
+	}
+	return obj
+}
+
+func NodeChild(node *Node) ClasspathTree {
+	obj := ToClasspathTree(node)
+
+	if len(node.Children) == 0 {
+		obj.Children = []ClasspathTree{}
+		return obj
+	}
+
+	for _, child := range node.Children {
+		obj.Children = append(obj.Children, ToClasspathTree(child))
+	}
+	return obj
 }
