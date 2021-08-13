@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+#
+# n9e-server把告警事件通过stdin的方式传入notify.py，notify.py从事件中解析出接收人信息、拼出通知内容，发送通知
+# 脚本的灵活性高，要接入短信、电话、jira、飞书等，都非常容易，只要有接口，notify.py去调用即可
+#
 import sys
 import json
 import os
@@ -13,18 +17,9 @@ from bottle import template
 reload(sys)                      # reload 才能调用 setdefaultencoding 方法
 sys.setdefaultencoding('utf-8')  # 设置 'utf-8'
 
-# 希望的demo实现效果：
-# 1. 从stdin拿到告警信息之后，格式化为一个有缩进的json写入一个临时文件
-# 2. 文件路径和名字是.alerts/${timestamp}_${ruleid}
-# 3. 调用SMTP服务器发送告警，微信、钉钉、飞书、slack、jira、短信、电话等等留给社区实现
-
-# 脚本二开指南
-# 1. 可以根据下面的 TEST_ALERT_JSON 中的结构修改脚本发送逻辑，定制化告警格式见tpl下的模块文件
-# 2. 每个告警会以json文件的格式存储在 LOCAL_EVENT_FILE_DIR 下面，文件名为 filename = '%d_%d_%d' % (rule_id, event_id, trigger_time)
-# 3. 告警通道需要自行定义Send类中的send_xxx的方法，反射调用：举例 event.notify_channels = [邮件] 则需要在NOTIFY_CHANNEL_DICT配置 邮件=email，在Send类中实现 send_email 方法
-# 4. im发群信息，比如钉钉发群信息需要群的webhook机器人 token，这个信息可以在user的contacts map中，各个send_方法处理即可
-# 5. 用户创建一个虚拟的用户保存上述im群 的机器人token信息 user的contacts map中
-
+################################
+##    邮件告警，修改下面的配置    ##
+################################
 mail_host = "smtp.163.com"
 mail_port = 994
 mail_user = "ulricqin"
@@ -34,13 +29,6 @@ mail_from = "ulricqin@163.com"
 # 本地告警event json存储目录
 LOCAL_EVENT_FILE_DIR = ".alerts"
 NOTIFY_CHANNELS_SPLIT_STR = " "
-
-# dingding 群机器人token 配置字段
-DINGTALK_ROBOT_TOKEN_NAME = "dingtalk_robot_token"
-DINGTALK_API = "https://oapi.dingtalk.com/robot/send"
-
-WECOM_ROBOT_TOKEN_NAME = "wecom_robot_token"
-WECOM_API = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send"
 
 NOTIFY_CHANNEL_DICT = {
   "email":"email",
@@ -251,12 +239,12 @@ class Send(object):
 
         for u in users:
             contacts = u.get("contacts")
-            wecom_robot_token = contacts.get(WECOM_ROBOT_TOKEN_NAME, "")
+            wecom_robot_token = contacts.get("wecom_robot_token", "")
 
             if wecom_robot_token == "":
                 continue
 
-            wecom_api_url = "{}?key={}".format(WECOM_API, wecom_robot_token)
+            wecom_api_url = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={}".format(wecom_robot_token)
             atMobiles = [u.get("phone")]
             headers = {'Content-Type': 'application/json;charset=utf-8'}
             payload = {
@@ -284,13 +272,13 @@ class Send(object):
         for u in users:
             contacts = u.get("contacts")
 
-            dingtalk_robot_token = contacts.get(DINGTALK_ROBOT_TOKEN_NAME, "")
+            dingtalk_robot_token = contacts.get("dingtalk_robot_token", "")
 
             if dingtalk_robot_token == "":
                 print("dingtalk_robot_token_not_found")
                 continue
 
-            dingtalk_api_url = "{}?access_token={}".format(DINGTALK_API, dingtalk_robot_token)
+            dingtalk_api_url = "https://oapi.dingtalk.com/robot/send?access_token={}".format(dingtalk_robot_token)
             atMobiles = [u.get("phone")]
             headers = {'Content-Type': 'application/json;charset=utf-8'}
             payload = {

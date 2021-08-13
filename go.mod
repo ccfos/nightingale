@@ -12,7 +12,7 @@ require (
 	github.com/go-ldap/ldap/v3 v3.2.4
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.2
-	github.com/golang/snappy v0.0.2
+	github.com/golang/snappy v0.0.3
 	github.com/gopherjs/gopherjs v0.0.0-20190910122728-9d188e94fb99 // indirect
 	github.com/gorilla/sessions v1.2.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.2.0 // indirect

@@ -23,7 +23,6 @@ import (
 const (
 	LABEL_IDENT  = "ident"
 	LABEL_NAME   = "__name__"
-	DEFAULT_QL   = `{__name__=~".*a.*|.*e.*"}`
 	DEFAULT_STEP = 15
 )
 
@@ -323,7 +322,7 @@ func (pd *PromeDataSource) CommonQuerySeries(cj *commonQueryObj) storage.SeriesS
 	qlStrFinal := convertToPromql(cj)
 
 	if qlStrFinal == "{}" {
-		qlStrFinal = DEFAULT_QL
+		qlStrFinal = pd.Section.DefaultFetchSeriesQl
 		reqMinute := (cj.End - cj.Start) / 60
 		// 如果前端啥都没传，要限制下查询series的时间范围，防止高基础查询
 		if reqMinute > pd.Section.MaxFetchAllSeriesLimitMinute {
@@ -379,7 +378,19 @@ func (pd *PromeDataSource) CommonQuerySeries(cj *commonQueryObj) storage.SeriesS
 	}
 
 	// Get all series which match matchers.
+	startTs := time.Now()
 	s := q.Select(true, hints, matcherSets[0]...)
+	timeTookSecond := time.Since(startTs).Seconds()
+	if timeTookSecond > pd.Section.SlowLogRecordSecond {
+		logger.Warningf("[prome_remote_read_show_slow_log_CommonQuerySeries_select][threshold:%v][timeTookSecond:%v][from:%v][args:%+v][promql:%v]",
+			pd.Section.SlowLogRecordSecond,
+			timeTookSecond,
+			cj.From,
+			cj,
+			qlStrFinal,
+		)
+	}
+
 	return s
 
 }
@@ -389,6 +400,7 @@ func (pd *PromeDataSource) CommonQuerySeries(cj *commonQueryObj) storage.SeriesS
 // TODO 等待prometheus官方对 remote_read label_values 的支持
 // Implement: https://github.com/prometheus/prometheus/issues/3351
 func (pd *PromeDataSource) QueryTagKeys(recv vos.CommonTagQueryParam) *vos.TagKeyQueryResp {
+	startTs := time.Now()
 	respD := &vos.TagKeyQueryResp{
 		Keys: make([]string, 0),
 	}
@@ -400,7 +412,7 @@ func (pd *PromeDataSource) QueryTagKeys(recv vos.CommonTagQueryParam) *vos.TagKe
 			Metric: "",
 		})
 	}
-
+	resultSeries := ""
 	for _, x := range recv.Params {
 		cj := &commonQueryObj{
 			Idents:   x.Idents,
@@ -421,8 +433,10 @@ func (pd *PromeDataSource) QueryTagKeys(recv vos.CommonTagQueryParam) *vos.TagKe
 			logger.Errorf("[prome_query_error][series_set_iter_error][err:%+v]", err)
 			continue
 		}
+		thisSeriesNum := 0
 		for s.Next() {
 			series := s.At()
+			thisSeriesNum++
 			for _, lb := range series.Labels() {
 				if lb.Name == LABEL_NAME {
 					continue
@@ -436,12 +450,14 @@ func (pd *PromeDataSource) QueryTagKeys(recv vos.CommonTagQueryParam) *vos.TagKe
 				labelNamesSet[lb.Name] = struct{}{}
 			}
 		}
+		resultSeries += fmt.Sprintf(" %d ", thisSeriesNum)
 
 	}
-	names := make([]string, 0)
+	names := make([]string, len(labelNamesSet))
+	i := 0
 	for key := range labelNamesSet {
-
-		names = append(names, key)
+		names[i] = key
+		i++
 	}
 	sort.Strings(names)
 	// 因为map中的key是无序的，必须这样才能稳定输出
@@ -450,12 +466,17 @@ func (pd *PromeDataSource) QueryTagKeys(recv vos.CommonTagQueryParam) *vos.TagKe
 	}
 
 	respD.Keys = names
+	timeTookSecond := time.Since(startTs).Seconds()
+	if timeTookSecond > pd.Section.SlowLogRecordSecond {
+		logger.Warningf("[prome_remote_read_show_slow_log][threshold:%v][timeTookSecond:%v][func:QueryTagKeys][args:%+v][resultSeries:%v]", pd.Section.SlowLogRecordSecond, timeTookSecond, recv, resultSeries)
+	}
 	return respD
 
 }
 
 // 对应prometheus 中的 /api/v1/label/<label_name>/values
 func (pd *PromeDataSource) QueryTagValues(recv vos.CommonTagQueryParam) *vos.TagValueQueryResp {
+	startTs := time.Now()
 	labelValuesSet := make(map[string]struct{})
 
 	if len(recv.Params) == 0 {
@@ -464,7 +485,7 @@ func (pd *PromeDataSource) QueryTagValues(recv vos.CommonTagQueryParam) *vos.Tag
 			Metric: "",
 		})
 	}
-
+	resultSeries := ""
 	for _, x := range recv.Params {
 		cj := &commonQueryObj{
 			Idents:   x.Idents,
@@ -485,9 +506,10 @@ func (pd *PromeDataSource) QueryTagValues(recv vos.CommonTagQueryParam) *vos.Tag
 			logger.Errorf("[prome_query_error][series_set_iter_error][err:%+v]", err)
 			continue
 		}
-
+		thisSeriesNum := 0
 		for s.Next() {
 			series := s.At()
+			thisSeriesNum++
 			for _, lb := range series.Labels() {
 				if lb.Name == recv.TagKey {
 					if recv.TagValue != "" {
@@ -500,11 +522,13 @@ func (pd *PromeDataSource) QueryTagValues(recv vos.CommonTagQueryParam) *vos.Tag
 				}
 			}
 		}
+		resultSeries += fmt.Sprintf(" %d ", thisSeriesNum)
 	}
-	vals := make([]string, 0)
+	vals := make([]string, len(labelValuesSet))
+	i := 0
 	for val := range labelValuesSet {
-
-		vals = append(vals, val)
+		vals[i] = val
+		i++
 	}
 	sort.Strings(vals)
 	if recv.Limit > 0 && len(vals) > recv.Limit {
@@ -512,12 +536,17 @@ func (pd *PromeDataSource) QueryTagValues(recv vos.CommonTagQueryParam) *vos.Tag
 	}
 	respD := &vos.TagValueQueryResp{}
 	respD.Values = vals
+	timeTookSecond := time.Since(startTs).Seconds()
+	if timeTookSecond > pd.Section.SlowLogRecordSecond {
+		logger.Warningf("[prome_remote_read_show_slow_log][threshold:%v][timeTookSecond:%v][func:QueryTagValues][args:%+v][resultSeries:%v]", pd.Section.SlowLogRecordSecond, timeTookSecond, recv, resultSeries)
+	}
 	return respD
 
 }
 
 // 对应prometheus 中的 /api/v1/label/<label_name>/values label_name == __name__
 func (pd *PromeDataSource) QueryMetrics(recv vos.MetricQueryParam) *vos.MetricQueryResp {
+	startTs := time.Now()
 	cj := &commonQueryObj{
 		Idents:   recv.Idents,
 		Metric:   recv.Metric,
@@ -544,18 +573,23 @@ func (pd *PromeDataSource) QueryMetrics(recv vos.MetricQueryParam) *vos.MetricQu
 	sets = append(sets, s)
 	set := storage.NewMergeSeriesSet(sets, storage.ChainedSeriesMerge)
 	labelValuesSet := make(map[string]struct{})
-	//for s.Next() {
+	resultSeries := ""
+	thisSeriesNum := 0
 	for set.Next() {
 		series := set.At()
+		thisSeriesNum++
 		for _, lb := range series.Labels() {
 			if lb.Name == LABEL_NAME {
 				labelValuesSet[lb.Value] = struct{}{}
 			}
 		}
 	}
-	vals := make([]string, 0)
+	resultSeries += fmt.Sprintf(" %d ", thisSeriesNum)
+	vals := make([]string, len(labelValuesSet))
+	i := 0
 	for val := range labelValuesSet {
-		vals = append(vals, val)
+		vals[i] = val
+		i++
 	}
 
 	sort.Strings(vals)
@@ -564,11 +598,16 @@ func (pd *PromeDataSource) QueryMetrics(recv vos.MetricQueryParam) *vos.MetricQu
 		vals = vals[:recv.Limit]
 	}
 	respD.Metrics = vals
+	timeTookSecond := time.Since(startTs).Seconds()
+	if timeTookSecond > pd.Section.SlowLogRecordSecond {
+		logger.Warningf("[prome_remote_read_show_slow_log][threshold:%v][timeTookSecond:%v][func:QueryMetrics][args:%+v][resultSeries:%v]", pd.Section.SlowLogRecordSecond, timeTookSecond, recv, resultSeries)
+	}
 	return respD
 }
 
 // 对应prometheus 中的 /api/v1/series
 func (pd *PromeDataSource) QueryTagPairs(recv vos.CommonTagQueryParam) *vos.TagPairQueryResp {
+	startTs := time.Now()
 	respD := &vos.TagPairQueryResp{
 		TagPairs: make([]string, 0),
 		Idents:   make([]string, 0),
@@ -580,6 +619,7 @@ func (pd *PromeDataSource) QueryTagPairs(recv vos.CommonTagQueryParam) *vos.TagP
 			Metric: "",
 		})
 	}
+	resultSeries := ""
 	for _, x := range recv.Params {
 		cj := &commonQueryObj{
 			Idents:   x.Idents,
@@ -606,8 +646,10 @@ func (pd *PromeDataSource) QueryTagPairs(recv vos.CommonTagQueryParam) *vos.TagP
 		set := storage.NewMergeSeriesSet(sets, storage.ChainedSeriesMerge)
 
 		labelIdents := make([]string, 0)
+		thisSeriesNum := 0
 		for set.Next() {
 			series := s.At()
+			thisSeriesNum++
 			labelsS := series.Labels()
 			for _, i := range labelsS {
 
@@ -628,13 +670,15 @@ func (pd *PromeDataSource) QueryTagPairs(recv vos.CommonTagQueryParam) *vos.TagP
 			}
 
 		}
+		resultSeries += fmt.Sprintf(" %d ", thisSeriesNum)
 
 	}
 
-	newTags := make([]string, 0)
+	newTags := make([]string, len(tps))
+	i := 0
 	for k := range tps {
-
-		newTags = append(newTags, k)
+		newTags[i] = k
+		i++
 	}
 
 	sort.Strings(newTags)
@@ -643,6 +687,10 @@ func (pd *PromeDataSource) QueryTagPairs(recv vos.CommonTagQueryParam) *vos.TagP
 	}
 
 	respD.TagPairs = newTags
+	timeTookSecond := time.Since(startTs).Seconds()
+	if timeTookSecond > pd.Section.SlowLogRecordSecond {
+		logger.Warningf("[prome_remote_read_show_slow_log][threshold:%v][timeTookSecond:%v][func:QueryTagPairs][args:%+v][resultSeries:%v]", pd.Section.SlowLogRecordSecond, timeTookSecond, recv, resultSeries)
+	}
 	return respD
 }
 

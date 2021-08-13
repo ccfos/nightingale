@@ -37,6 +37,8 @@ type PromeSection struct {
 	MaxConcurrentQuery           int            `yaml:"maxConcurrentQuery"`
 	MaxSamples                   int            `yaml:"maxSamples"`
 	MaxFetchAllSeriesLimitMinute int64          `yaml:"maxFetchAllSeriesLimitMinute"`
+	SlowLogRecordSecond          float64        `yaml:"slowLogRecordSecond"`
+	DefaultFetchSeriesQl         string         `yaml:"defaultFetchSeriesQl"`
 	RemoteWrite                  []RemoteConfig `yaml:"remoteWrite"`
 	RemoteRead                   []RemoteConfig `yaml:"remoteRead"`
 }
