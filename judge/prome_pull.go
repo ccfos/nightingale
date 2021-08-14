@@ -121,7 +121,7 @@ func handlePromqlVector(pv promql.Vector, r models.AlertRule) {
 	toKeepKeys := map[string]struct{}{}
 	if len(pv) == 0 {
 		// 说明没触发，或者没查询到，删掉rule-id开头的所有event
-		LastEvents.DeleteOrSendRecovery(r.PullExpr.PromQl, toKeepKeys)
+		LastEvents.DeleteOrSendRecovery(r.Id, toKeepKeys)
 
 		return
 	}
@@ -191,6 +191,6 @@ func handlePromqlVector(pv promql.Vector, r models.AlertRule) {
 		logger.Debugf("[handlePromqlVector_has_value][event:%+v]\n", event)
 		sendEventIfNeed([]bool{true}, event, &r)
 	}
-	LastEvents.DeleteOrSendRecovery(r.PullExpr.PromQl, toKeepKeys)
+	LastEvents.DeleteOrSendRecovery(r.Id, toKeepKeys)
 
 }
