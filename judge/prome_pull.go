@@ -47,13 +47,16 @@ func (re RuleEval) start() {
 		if re.R.PullExpr.EvaluationInterval <= 0 {
 			re.R.PullExpr.EvaluationInterval = DEFAULT_PULL_ALERT_INTERVAL
 		}
+
+		sleepDuration := time.Duration(re.R.PullExpr.EvaluationInterval) * time.Second
+
 		for {
 			select {
 			case <-re.ctx.Done():
 				return
 			case <-re.quiteChan:
 				return
-			case <-time.After(time.Duration(re.R.PullExpr.EvaluationInterval) * time.Second):
+			default:
 			}
 
 			// 获取backend的prometheus DataSource
@@ -67,8 +70,9 @@ func (re RuleEval) start() {
 			promVector := pb.QueryVector(re.R.PullExpr.PromQl)
 
 			handlePromqlVector(promVector, re.R)
-		}
 
+			time.Sleep(sleepDuration)
+		}
 	}(re)
 }
 
