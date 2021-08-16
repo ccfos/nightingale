@@ -119,6 +119,11 @@ func changeCollectRule(rule *models.CollectRule) error {
 			return err
 		}
 
+		tags := strings.Fields(rule.AppendTags)
+		for i := 0; i < len(tags); i++ {
+			tags[i] = strings.Replace(tags[i], "=", ":", 1)
+		}
+
 		config := PortCollectFormat{
 			Instances: []struct {
 				MinCollectionInterval int      `json:"min_collection_interval,omitempty"`
@@ -128,7 +133,7 @@ func changeCollectRule(rule *models.CollectRule) error {
 				Timeout               int      `json:"timeout"`
 			}{{
 				MinCollectionInterval: rule.Step,
-				Tags:                  strings.Fields(strings.Replace(rule.AppendTags, "=", ":", 1)),
+				Tags:                  tags,
 				Protocol:              conf.Protocol,
 				Port:                  conf.Port,
 				Timeout:               conf.Timeout,
@@ -179,6 +184,11 @@ func changeCollectRule(rule *models.CollectRule) error {
 			return err
 		}
 
+		tags := strings.Fields(rule.AppendTags)
+		for i := 0; i < len(tags); i++ {
+			tags[i] = strings.Replace(tags[i], "=", ":", 1)
+		}
+
 		config := LogCollectFormat{
 			Instances: []struct {
 				MetricName  string            `json:"metric_name"` //
@@ -186,12 +196,14 @@ func changeCollectRule(rule *models.CollectRule) error {
 				Pattern     string            `json:"pattern"`
 				TagsPattern map[string]string `json:"tags_pattern"`
 				Func        string            `json:"func"`
+				Tags        []string          `json:"tags,omitempty"`
 			}{{
 				MetricName:  rule.Name,
 				FilePath:    conf.FilePath,
 				Pattern:     conf.Pattern,
 				TagsPattern: conf.TagsPattern,
 				Func:        conf.Func,
+				Tags:        tags,
 			}},
 		}
 
@@ -207,6 +219,11 @@ func changeCollectRule(rule *models.CollectRule) error {
 			return err
 		}
 
+		tags := strings.Fields(rule.AppendTags)
+		for i := 0; i < len(tags); i++ {
+			tags[i] = strings.Replace(tags[i], "=", ":", 1)
+		}
+
 		config := ProcCollectFormat{
 			Instances: []struct {
 				MinCollectionInterval int      `json:"min_collection_interval,omitempty"`
@@ -215,7 +232,7 @@ func changeCollectRule(rule *models.CollectRule) error {
 				CollectMethod         string   `json:"collect_method" description:"name or cmdline"`
 			}{{
 				MinCollectionInterval: rule.Step,
-				Tags:                  strings.Fields(strings.Replace(rule.AppendTags, "=", ":", 1)),
+				Tags:                  tags,
 				Target:                conf.Param,
 				CollectMethod:         conf.Method,
 			}},
@@ -260,6 +277,7 @@ type LogCollectFormat struct {
 		Pattern     string            `json:"pattern"`      //
 		TagsPattern map[string]string `json:"tags_pattern"` //
 		Func        string            `json:"func"`         // count(c), histogram(h)
+		Tags        []string          `json:"tags,omitempty"`
 	} `json:"instances"`
 }
 
