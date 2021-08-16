@@ -28,8 +28,7 @@ type ClasspathTree struct {
 	CreateBy string           `json:"create_by"`
 	UpdateAt int64            `json:"update_at"`
 	UpdateBy string           `json:"update_by"`
-	Children []*ClasspathTree `json:"child"`
-	//Child    []ClasspathTree `json:"child"`
+	Child    []*ClasspathTree `json:"child"`
 }
 
 func (c *Classpath) TableName() string {
@@ -268,13 +267,11 @@ func ClasspathNodeGetsById(cp Classpath) ([]ClasspathTree, error) {
 
 func ClasspathTreeAllChildren(cps []Classpath) []*ClasspathTree {
 	var root ClasspathTree
-	var objs []*ClasspathTree
 	for _, cp := range cps {
 		TreeInsert(cp, &root)
 	}
-	objs = append(objs, root.Children...)
 
-	return objs
+	return root.Child
 }
 
 func ClasspathNodeChild(cps []Classpath) []ClasspathTree {
@@ -299,10 +296,10 @@ func TreeInsert(obj Classpath, root *ClasspathTree) {
 	path := obj.Path
 	ok := true
 	for {
-		if len(root.Children) == 0 {
+		if len(root.Child) == 0 {
 			break
 		}
-		child := root.Children[len(root.Children)-1]
+		child := root.Child[len(root.Child)-1]
 		prefix := child.Path
 		ok = strings.HasPrefix(path, prefix)
 		if !ok {
@@ -313,7 +310,7 @@ func TreeInsert(obj Classpath, root *ClasspathTree) {
 	}
 
 	newNode := ToClasspathTree(obj, path)
-	root.Children = append(root.Children, &newNode)
+	root.Child = append(root.Child, &newNode)
 }
 
 func ToClasspathTree(cp Classpath, path string) ClasspathTree {
@@ -326,7 +323,7 @@ func ToClasspathTree(cp Classpath, path string) ClasspathTree {
 	obj.CreateBy = cp.CreateBy
 	obj.UpdateAt = cp.UpdateAt
 	obj.UpdateBy = cp.UpdateBy
-	obj.Children = []*ClasspathTree{}
+	obj.Child = []*ClasspathTree{}
 
 	return obj
 }
