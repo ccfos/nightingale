@@ -19,7 +19,7 @@ type Classpath struct {
 	UpdateBy string `json:"update_by"`
 }
 
-type ClasspathTree struct {
+type ClasspathList struct {
 	Id       int64            `json:"id"`
 	Path     string           `json:"path"`
 	Note     string           `json:"note"`
@@ -28,7 +28,7 @@ type ClasspathTree struct {
 	CreateBy string           `json:"create_by"`
 	UpdateAt int64            `json:"update_at"`
 	UpdateBy string           `json:"update_by"`
-	Child    []*ClasspathTree `json:"child"`
+	Child    []*ClasspathList `json:"child"`
 }
 
 func (c *Classpath) TableName() string {
@@ -230,7 +230,7 @@ func (c *Classpath) DelResources(idents []string) error {
 	return ClasspathResourceDel(c.Id, idents)
 }
 
-func ClasspathTreeNodesGets(query string) ([]*ClasspathTree, error) {
+func ClasspathListGets(query string) ([]*ClasspathList, error) {
 	session := DB.OrderBy("path")
 	if query != "" {
 		q := "%" + query + "%"
@@ -240,81 +240,78 @@ func ClasspathTreeNodesGets(query string) ([]*ClasspathTree, error) {
 	err := session.Find(&objs)
 	if err != nil {
 		logger.Errorf("mysql.error: query classpath fail: %v", err)
-		return []*ClasspathTree{}, internalServerError
+		return []*ClasspathList{}, internalServerError
 	}
 
 	if len(objs) == 0 {
-		return []*ClasspathTree{}, nil
+		return []*ClasspathList{}, nil
 	}
-	pcs := ClasspathTreeAllChildren(objs)
+	pcs := ClasspathListAllChildren(objs)
 
 	return pcs, nil
 }
 
-func ClasspathNodeGetsById(cp Classpath) ([]ClasspathTree, error) {
+func ClasspathNodeGetsById(cp Classpath) ([]Classpath, error) {
+	var pcs []Classpath
 	objs, err := ClasspathGetsByPrefix(cp.Path)
 	if err != nil {
 		logger.Errorf("mysql.error: query prefix classpath fail: %v", err)
-		return []ClasspathTree{}, internalServerError
+		return []Classpath{}, internalServerError
 	}
-	if len(objs) == 0 {
-		return []ClasspathTree{}, nil
-	}
-	pcs := ClasspathNodeChild(objs)
-
-	return pcs, nil
-}
-
-func ClasspathTreeAllChildren(cps []Classpath) []*ClasspathTree {
-	var root ClasspathTree
-	for _, cp := range cps {
-		TreeInsert(cp, &root)
+	if len(objs) < 2 {
+		return []Classpath{}, nil
 	}
 
-	return root.Child
-}
+	pre := objs[1]
+	path := pre.Path[len(objs[0].Path):]
+	pre.Path = path
+	pcs = append(pcs, pre)
 
-func ClasspathNodeChild(cps []Classpath) []ClasspathTree {
-	var objs []ClasspathTree
-	pre := cps[1]
-	path := pre.Path[len(cps[0].Path):]
-	objs = append(objs, ToClasspathTree(pre, path))
-
-	for _, cp := range cps[2:] {
-		ok := strings.HasPrefix(cp.Path, pre.Path)
-		if !ok {
-			path := cp.Path[len(cps[0].Path):]
-			objs = append(objs, ToClasspathTree(cp, path))
+	for _, cp := range objs[2:] {
+		has := strings.HasPrefix(cp.Path, pre.Path)
+		if !has {
+			path := cp.Path[len(objs[0].Path):]
+			pre.Path = path
+			pcs = append(pcs, pre)
 			pre = cp
 		}
 	}
 
-	return objs
+	return pcs, nil
 }
 
-func TreeInsert(obj Classpath, root *ClasspathTree) {
+func ClasspathListAllChildren(cps []Classpath) []*ClasspathList {
+	var node ClasspathList
+	for _, cp := range cps {
+		ListInsert(cp, &node)
+	}
+
+	return node.Child
+}
+
+func ListInsert(obj Classpath, node *ClasspathList) {
 	path := obj.Path
-	ok := true
+	has := true
 	for {
-		if len(root.Child) == 0 {
+		if len(node.Child) == 0 {
 			break
 		}
-		child := root.Child[len(root.Child)-1]
+		child := node.Child[len(node.Child)-1]
 		prefix := child.Path
-		ok = strings.HasPrefix(path, prefix)
-		if !ok {
+		has = strings.HasPrefix(path, prefix)
+		if !has {
 			break
 		}
 		path = path[len(prefix):]
-		root = child
+		node = child
 	}
 
-	newNode := ToClasspathTree(obj, path)
-	root.Child = append(root.Child, &newNode)
+	newNode := ToClasspathList(obj, path)
+	node.Child = append(node.Child, &newNode)
 }
 
-func ToClasspathTree(cp Classpath, path string) ClasspathTree {
-	var obj ClasspathTree
+func ToClasspathList(cp Classpath, path string) ClasspathList {
+	var obj ClasspathList
 	obj.Id = cp.Id
 	obj.Path = path
 	obj.Note = cp.Note
@@ -323,7 +320,7 @@ func ToClasspathTree(cp Classpath, path string) ClasspathTree {
 	obj.CreateBy = cp.CreateBy
 	obj.UpdateAt = cp.UpdateAt
 	obj.UpdateBy = cp.UpdateBy
-	obj.Child = []*ClasspathTree{}
+	obj.Child = []*ClasspathList{}
 
 	return obj
 }

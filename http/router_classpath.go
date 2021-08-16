@@ -24,16 +24,16 @@ func classpathListGets(c *gin.Context) {
 	}, nil)
 }
 
-func classpathTreeGets(c *gin.Context) {
+func classpathListNodeGets(c *gin.Context) {
 	query := queryStr(c, "query", "")
 
-	tree, err := models.ClasspathTreeNodesGets(query)
+	list, err := models.ClasspathListGets(query)
 	dangerous(err)
 
-	renderData(c, tree, nil)
+	renderData(c, list, nil)
 }
 
-func classpathTreeNodeGetsById(c *gin.Context) {
+func classpathListNodeGetsById(c *gin.Context) {
 	cp := Classpath(urlParamInt64(c, "id"))
 	node, err := models.ClasspathNodeGetsById(*cp)
 	dangerous(err)

@@ -83,8 +83,8 @@ func configRoutes(r *gin.Engine) {
 		pages.DELETE("/user-group/:id", login(), userGroupDel)
 
 		pages.GET("/classpaths", login(), classpathListGets)
-		pages.GET("/classpaths/tree", login(), classpathTreeGets)
-		pages.GET("/classpaths/tree-node/:id", login(), classpathTreeNodeGetsById)
+		pages.GET("/classpaths/tree", login(), classpathListNodeGets)
+		pages.GET("/classpaths/tree-node/:id", login(), classpathListNodeGetsById)
 		pages.POST("/classpaths", login(), classpathAdd)
 		pages.PUT("/classpath/:id", login(), classpathPut)
 		pages.DELETE("/classpath/:id", login(), classpathDel)
@@ -215,8 +215,8 @@ func configRoutes(r *gin.Engine) {
 		v1.DELETE("/user-group/:id", login(), userGroupDel)
 
 		v1.GET("/classpaths", login(), classpathListGets)
-		v1.GET("/classpaths/tree", login(), classpathTreeGets)
-		v1.GET("/classpaths/tree-node/:id", login(), classpathTreeNodeGetsById)
+		v1.GET("/classpaths/tree", login(), classpathListNodeGets)
+		v1.GET("/classpaths/tree-node/:id", login(), classpathListNodeGetsById)
 		v1.POST("/classpaths", login(), classpathAdd)
 		v1.PUT("/classpath/:id", login(), classpathPut)
 		v1.DELETE("/classpath/:id", login(), classpathDel)
