@@ -25,30 +25,20 @@ func classpathListGets(c *gin.Context) {
 }
 
 func classpathTreeGets(c *gin.Context) {
-	limit := queryInt(c, "limit", defaultLimit)
 	query := queryStr(c, "query", "")
 
-	total, err := models.ClasspathTotal(query)
+	tree, err := models.ClasspathTreeNodesGets(query)
 	dangerous(err)
 
-	list, err := models.ClasspathTreeNodesGets(query, limit, offset(c, limit))
-	dangerous(err)
-
-	renderData(c, gin.H{
-		"list":  list,
-		"total": total,
-	}, nil)
+	renderData(c, tree, nil)
 }
 
 func classpathTreeNodeGetsById(c *gin.Context) {
 	cp := Classpath(urlParamInt64(c, "id"))
-	list, err := models.ClasspathNodeGetsById(*cp)
+	node, err := models.ClasspathNodeGetsById(*cp)
 	dangerous(err)
 
-	renderData(c, gin.H{
-		"list": list,
-		//	"total": total,
-	}, nil)
+	renderData(c, node, nil)
 }
 
 func classpathFavoriteGet(c *gin.Context) {
