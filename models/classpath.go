@@ -19,7 +19,7 @@ type Classpath struct {
 	UpdateBy string `json:"update_by"`
 }
 
-type ClasspathList struct {
+type ClasspathNode struct {
 	Id       int64            `json:"id"`
 	Path     string           `json:"path"`
 	Note     string           `json:"note"`
@@ -28,7 +28,7 @@ type ClasspathList struct {
 	CreateBy string           `json:"create_by"`
 	UpdateAt int64            `json:"update_at"`
 	UpdateBy string           `json:"update_by"`
-	Child    []*ClasspathList `json:"child"`
+	Child    []*ClasspathNode `json:"child"`
 }
 
 func (c *Classpath) TableName() string {
@@ -230,7 +230,7 @@ func (c *Classpath) DelResources(idents []string) error {
 	return ClasspathResourceDel(c.Id, idents)
 }
 
-func ClasspathListGets(query string) ([]*ClasspathList, error) {
+func ClasspathNodeGets(query string) ([]*ClasspathNode, error) {
 	session := DB.OrderBy("path")
 	if query != "" {
 		q := "%" + query + "%"
@@ -240,13 +240,13 @@ func ClasspathListGets(query string) ([]*ClasspathList, error) {
 	err := session.Find(&objs)
 	if err != nil {
 		logger.Errorf("mysql.error: query classpath fail: %v", err)
-		return []*ClasspathList{}, internalServerError
+		return []*ClasspathNode{}, internalServerError
 	}
 
 	if len(objs) == 0 {
-		return []*ClasspathList{}, nil
+		return []*ClasspathNode{}, nil
 	}
-	pcs := ClasspathListAllChildren(objs)
+	pcs := ClasspathNodeAllChildren(objs)
 
 	return pcs, nil
 }
@@ -280,8 +280,8 @@ func ClasspathNodeGetsById(cp Classpath) ([]Classpath, error) {
 	return pcs, nil
 }
 
-func ClasspathListAllChildren(cps []Classpath) []*ClasspathList {
-	var node ClasspathList
+func ClasspathNodeAllChildren(cps []Classpath) []*ClasspathNode {
+	var node ClasspathNode
 	for _, cp := range cps {
 		ListInsert(cp, &node)
 	}
@@ -289,7 +289,7 @@ func ClasspathListAllChildren(cps []Classpath) []*ClasspathList {
 	return node.Child
 }
 
-func ListInsert(obj Classpath, node *ClasspathList) {
+func ListInsert(obj Classpath, node *ClasspathNode) {
 	path := obj.Path
 	has := true
 	for {
@@ -306,12 +306,12 @@ func ListInsert(obj Classpath, node *ClasspathList) {
 		node = child
 	}
 
-	newNode := ToClasspathList(obj, path)
+	newNode := ToClasspathNode(obj, path)
 	node.Child = append(node.Child, &newNode)
 }
 
-func ToClasspathList(cp Classpath, path string) ClasspathList {
-	var obj ClasspathList
+func ToClasspathNode(cp Classpath, path string) ClasspathNode {
+	var obj ClasspathNode
 	obj.Id = cp.Id
 	obj.Path = path
 	obj.Note = cp.Note
@@ -320,7 +320,7 @@ func ToClasspathList(cp Classpath, path string) ClasspathList {
 	obj.CreateBy = cp.CreateBy
 	obj.UpdateAt = cp.UpdateAt
 	obj.UpdateBy = cp.UpdateBy
-	obj.Child = []*ClasspathList{}
+	obj.Child = []*ClasspathNode{}
 
 	return obj
 }

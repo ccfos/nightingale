@@ -27,7 +27,7 @@ func classpathListGets(c *gin.Context) {
 func classpathListNodeGets(c *gin.Context) {
 	query := queryStr(c, "query", "")
 
-	list, err := models.ClasspathListGets(query)
+	list, err := models.ClasspathNodeGets(query)
 	dangerous(err)
 
 	renderData(c, list, nil)
