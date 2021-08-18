@@ -36,9 +36,7 @@ func classpathListNodeGets(c *gin.Context) {
 func classpathListNodeGetsById(c *gin.Context) {
 	cp := Classpath(urlParamInt64(c, "id"))
 	children, err := cp.DirectChildren()
-	dangerous(err)
-
-	renderData(c, children, nil)
+	renderData(c, children, err)
 }
 
 func classpathFavoriteGet(c *gin.Context) {
