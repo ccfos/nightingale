@@ -24,11 +24,7 @@ type ClasspathNode struct {
 	Path     string           `json:"path"`
 	Note     string           `json:"note"`
 	Preset   int              `json:"preset"`
-	CreateAt int64            `json:"create_at"`
-	CreateBy string           `json:"create_by"`
-	UpdateAt int64            `json:"update_at"`
-	UpdateBy string           `json:"update_by"`
-	Child    []*ClasspathNode `json:"child"`
+	Children []*ClasspathNode `json:"children"`
 }
 
 func (c *Classpath) TableName() string {
@@ -162,7 +158,7 @@ func ClasspathGet(where string, args ...interface{}) (*Classpath, error) {
 
 func ClasspathGetsByPrefix(prefix string) ([]Classpath, error) {
 	var objs []Classpath
-	err := DB.Where("path like ?", prefix+"%").Find(&objs)
+	err := DB.Where("path like ?", prefix+"%").OrderBy("path").Find(&objs)
 	if err != nil {
 		logger.Errorf("mysql.error: query classpath fail: %v", err)
 		return objs, internalServerError
@@ -251,7 +247,7 @@ func ClasspathNodeGets(query string) ([]*ClasspathNode, error) {
 	return pcs, nil
 }
 
-func ClasspathNodeGetsById(cp Classpath) ([]Classpath, error) {
+func (cp *Classpath) DirectChildren() ([]Classpath, error) {
 	var pcs []Classpath
 	objs, err := ClasspathGetsByPrefix(cp.Path)
 	if err != nil {
@@ -286,28 +282,28 @@ func ClasspathNodeAllChildren(cps []Classpath) []*ClasspathNode {
 		ListInsert(cp, &node)
 	}
 
-	return node.Child
+	return node.Children
 }
 
 func ListInsert(obj Classpath, node *ClasspathNode) {
 	path := obj.Path
 	has := true
 	for {
-		if len(node.Child) == 0 {
+		if len(node.Children) == 0 {
 			break
 		}
-		child := node.Child[len(node.Child)-1]
-		prefix := child.Path
+		children := node.Children[len(node.Children)-1]
+		prefix := children.Path
 		has = strings.HasPrefix(path, prefix)
 		if !has {
 			break
 		}
 		path = path[len(prefix):]
-		node = child
+		node = children
 	}
 
 	newNode := ToClasspathNode(obj, path)
-	node.Child = append(node.Child, &newNode)
+	node.Children = append(node.Children, &newNode)
 }
 
 func ToClasspathNode(cp Classpath, path string) ClasspathNode {
@@ -316,11 +312,7 @@ func ToClasspathNode(cp Classpath, path string) ClasspathNode {
 	obj.Path = path
 	obj.Note = cp.Note
 	obj.Preset = cp.Preset
-	obj.CreateAt = cp.CreateAt
-	obj.CreateBy = cp.CreateBy
-	obj.UpdateAt = cp.UpdateAt
-	obj.UpdateBy = cp.UpdateBy
-	obj.Child = []*ClasspathNode{}
+	obj.Children = []*ClasspathNode{}
 
 	return obj
 }
