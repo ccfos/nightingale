@@ -41,19 +41,22 @@ type RuleEval struct {
 	ctx       context.Context
 }
 
-func (re *RuleEval) start() {
-	logger.Debugf("[prome_pull_alert_start][RuleEval: %+v]", re)
-	go func(re *RuleEval) {
+func (re RuleEval) start() {
+	go func(re RuleEval) {
+		logger.Debugf("[prome_pull_alert_start][RuleEval: %+v]", re)
 		if re.R.PullExpr.EvaluationInterval <= 0 {
 			re.R.PullExpr.EvaluationInterval = DEFAULT_PULL_ALERT_INTERVAL
 		}
+
+		sleepDuration := time.Duration(re.R.PullExpr.EvaluationInterval) * time.Second
+
 		for {
 			select {
 			case <-re.ctx.Done():
 				return
 			case <-re.quiteChan:
 				return
-			case <-time.After(time.Duration(re.R.PullExpr.EvaluationInterval) * time.Second):
+			default:
 			}
 
 			// 获取backend的prometheus DataSource
@@ -67,12 +70,13 @@ func (re *RuleEval) start() {
 			promVector := pb.QueryVector(re.R.PullExpr.PromQl)
 
 			handlePromqlVector(promVector, re.R)
-		}
 
+			time.Sleep(sleepDuration)
+		}
 	}(re)
 }
 
-func (r *RuleEval) stop() {
+func (r RuleEval) stop() {
 	logger.Debugf("[prome_pull_alert_stop][RuleEval: %+v]", r)
 	close(r.quiteChan)
 }
@@ -103,17 +107,17 @@ func (rm *RuleManager) SyncRules(ctx context.Context, rules []models.AlertRule) 
 	}
 
 	// 停止旧的
-	for hash, t := range rm.activeRules {
+	for hash := range rm.activeRules {
 		if _, loaded := thisAllRules[hash]; !loaded {
-			t.stop()
+			rm.activeRules[hash].stop()
 			delete(rm.activeRules, hash)
 		}
 	}
 	rm.targetMtx.Unlock()
 
 	// 开启新的
-	for _, t := range thisNewRules {
-		t.start()
+	for hash := range thisNewRules {
+		thisNewRules[hash].start()
 	}
 }
 
@@ -121,7 +125,7 @@ func handlePromqlVector(pv promql.Vector, r models.AlertRule) {
 	toKeepKeys := map[string]struct{}{}
 	if len(pv) == 0 {
 		// 说明没触发，或者没查询到，删掉rule-id开头的所有event
-		LastEvents.DeleteOrSendRecovery(r.PullExpr.PromQl, toKeepKeys)
+		LastEvents.DeleteOrSendRecovery(r.Id, toKeepKeys)
 
 		return
 	}
@@ -191,6 +195,6 @@ func handlePromqlVector(pv promql.Vector, r models.AlertRule) {
 		logger.Debugf("[handlePromqlVector_has_value][event:%+v]\n", event)
 		sendEventIfNeed([]bool{true}, event, &r)
 	}
-	LastEvents.DeleteOrSendRecovery(r.PullExpr.PromQl, toKeepKeys)
+	LastEvents.DeleteOrSendRecovery(r.Id, toKeepKeys)
 
 }

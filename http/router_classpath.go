@@ -24,6 +24,21 @@ func classpathListGets(c *gin.Context) {
 	}, nil)
 }
 
+func classpathListNodeGets(c *gin.Context) {
+	query := queryStr(c, "query", "")
+
+	list, err := models.ClasspathNodeGets(query)
+	dangerous(err)
+
+	renderData(c, list, nil)
+}
+
+func classpathListNodeGetsById(c *gin.Context) {
+	cp := Classpath(urlParamInt64(c, "id"))
+	children, err := cp.DirectChildren()
+	renderData(c, children, err)
+}
+
 func classpathFavoriteGet(c *gin.Context) {
 	lst, err := loginUser(c).FavoriteClasspaths()
 	renderData(c, lst, err)

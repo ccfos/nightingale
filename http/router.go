@@ -86,6 +86,8 @@ func configRoutes(r *gin.Engine) {
 		pages.DELETE("/user-group/:id", login(), userGroupDel)
 
 		pages.GET("/classpaths", login(), classpathListGets)
+		pages.GET("/classpaths/tree", login(), classpathListNodeGets)
+		pages.GET("/classpaths/tree-node/:id", login(), classpathListNodeGetsById)
 		pages.POST("/classpaths", login(), classpathAdd)
 		pages.PUT("/classpath/:id", login(), classpathPut)
 		pages.DELETE("/classpath/:id", login(), classpathDel)
@@ -197,13 +199,13 @@ func configRoutes(r *gin.Engine) {
 		v1.POST("/tag-values", GetTagValues)
 		v1.POST("/tag-pairs", GetTagPairs)
 		v1.POST("/tag-metrics", GetMetrics)
+		v1.POST("/push", PushData)
+		v1.GET("/collect-rules-belong-to-ident", collectRuleGetsByIdent)
+		v1.GET("/collect-rules-summary", collectRuleSummaryGetByIdent)
 
 		v1.GET("/can-do-op-by-name", login(), canDoOpByName)
 		v1.GET("/can-do-op-by-token", login(), canDoOpByToken)
-		v1.POST("/push", PushData)
 
-		v1.GET("/collect-rules-belong-to-ident", collectRuleGetsByIdent)
-		v1.GET("/collect-rules-summary", collectRuleSummaryGetByIdent)
 	}
 
 	push := r.Group("/v1/n9e/series").Use(gzip.Gzip(gzip.DefaultCompression))

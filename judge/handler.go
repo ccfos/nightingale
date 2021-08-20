@@ -449,14 +449,14 @@ func sendEventIfNeed(status []bool, event *models.AlertEvent, stra *models.Alert
 	}
 
 	now := time.Now().Unix()
-	lastEvent, exists := LastEvents.Get(event.HashId)
+	lastEvent, exists := LastEvents.Get(event.RuleId, event.HashId)
 
 	switch event.IsPromePull {
 	case 0:
 		//	push型的 && 与条件型的
 		if exists && lastEvent.IsPromePull == 1 {
 			// 之前内存中的事件是pull型的，先清空内存中的事件
-			LastEvents.Del(event.HashId)
+			LastEvents.Del(event.RuleId, event.HashId)
 		}
 
 		if isTriggered {
@@ -476,7 +476,7 @@ func sendEventIfNeed(status []bool, event *models.AlertEvent, stra *models.Alert
 		// pull型的，产生的事件一定是触发了阈值的，即这个case里不存在recovery的场景，recovery的场景用resolve_timeout的cron来处理
 		if exists && lastEvent.IsPromePull == 0 {
 			// 之前内存中的事件是push型的，先清空内存中的事件
-			LastEvents.Del(event.HashId)
+			LastEvents.Del(event.RuleId, event.HashId)
 		}
 
 		// 1. 第一次来，并且AlertDuration=0，直接发送
@@ -490,7 +490,7 @@ func sendEventIfNeed(status []bool, event *models.AlertEvent, stra *models.Alert
 				SendEvent(event)
 			} else {
 				// 只有一条事件，显然无法满足for AlertDuration的时间，放到内存里等待
-				LastEvents.Set(event.HashId, event)
+				LastEvents.Set(event)
 			}
 			return
 		}
@@ -529,7 +529,7 @@ func sendEventIfNeed(status []bool, event *models.AlertEvent, stra *models.Alert
 
 func SendEvent(event *models.AlertEvent) {
 	// update last event
-	LastEvents.Set(event.HashId, event)
+	LastEvents.Set(event)
 	ok := EventQueue.PushFront(event)
 	if !ok {
 		logger.Errorf("push event:%v err", event)
