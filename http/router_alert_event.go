@@ -1,6 +1,7 @@
 package http
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -52,6 +53,23 @@ func alertEventGet(c *gin.Context) {
 	ae := AlertEvent(urlParamInt64(c, "id"))
 	dangerous(ae.FillObjs())
 	renderData(c, ae, nil)
+}
+
+type alertEventNoteForm struct {
+	EventNote string `json:"event_note"`
+}
+
+func alertEventNotePut(c *gin.Context) {
+	var f alertEventNoteForm
+	bind(c, &f)
+
+	me := loginUser(c).MustPerm("alert_event_modify")
+	ae := AlertEvent(urlParamInt64(c, "id"))
+	if len(f.EventNote) == 0 {
+		bomb(http.StatusBadRequest, "event note is empty")
+	}
+
+	renderMessage(c, models.AlertEventUpdateEventNote(ae.Id, ae.HashId, f.EventNote, me.Username))
 }
 
 func alertEventDel(c *gin.Context) {

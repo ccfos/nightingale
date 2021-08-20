@@ -156,6 +156,7 @@ func configRoutes(r *gin.Engine) {
 		pages.DELETE("/alert-events", login(), alertEventsDel)
 		pages.GET("/alert-event/:id", login(), alertEventGet)
 		pages.DELETE("/alert-event/:id", login(), alertEventDel)
+		pages.PUT("/alert-event/:id", login(), alertEventNotePut)
 
 		pages.GET("/history-alert-events", login(), historyAlertEventGets)
 		pages.GET("/history-alert-event/:id", login(), historyAlertEventGet)
@@ -289,6 +290,7 @@ func configRoutes(r *gin.Engine) {
 		v1.DELETE("/alert-events", login(), alertEventsDel)
 		v1.GET("/alert-event/:id", login(), alertEventGet)
 		v1.DELETE("/alert-event/:id", login(), alertEventDel)
+		v1.PUT("/alert-event/:id", login(), alertEventNotePut)
 
 		v1.GET("/history-alert-events", login(), historyAlertEventGets)
 		v1.GET("/history-alert-event/:id", login(), historyAlertEventGet)

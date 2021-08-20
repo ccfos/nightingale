@@ -17,6 +17,8 @@ type AlertEvent struct {
 	RuleId             int64             `json:"rule_id"`
 	RuleName           string            `json:"rule_name"`
 	RuleNote           string            `json:"rule_note"`
+	Administrator      string            `json:"administrator"`
+	EventNote          string            `json:"event_note"`
 	HashId             string            `json:"hash_id"`                 // 唯一标识
 	IsPromePull        int               `json:"is_prome_pull"`           // 代表是否是prometheus pull告警，为1时前端使用 ReadableExpression 拉取最近1小时数据
 	LastSend           bool              `json:"last_sent" xorm:"-"`      // true 代表上次发了，false代表还没发:给prometheus做for判断的
@@ -255,4 +257,19 @@ func AlertEventGet(where string, args ...interface{}) (*AlertEvent, error) {
 	}
 
 	return &obj, nil
+}
+
+func AlertEventUpdateEventNote(id int64, hashId string, note string, username string) error {
+	_, err := DB.Exec("UPDATE alert_event SET event_note = ?, administrator = ? WHERE id = ?", note, username, id)
+	if err != nil {
+		logger.Errorf("mysql.error: update alert_event event_note fail: %s", err)
+		return internalServerError
+	}
+
+	_, err = DB.Exec("UPDATE history_alert_event SET event_note = ?, administrator = ? WHERE hash_id = ?", note, username, hashId)
+	if err != nil {
+		logger.Errorf("mysql.error: update alert_event event_note fail: %s", err)
+		return internalServerError
+	}
+	return nil
 }

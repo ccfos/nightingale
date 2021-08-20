@@ -99,6 +99,7 @@ insert into `role_operation`(role_name, operation) values('Standard', 'alert_rul
 insert into `role_operation`(role_name, operation) values('Standard', 'alert_rule_modify');
 insert into `role_operation`(role_name, operation) values('Standard', 'alert_rule_delete');
 insert into `role_operation`(role_name, operation) values('Standard', 'alert_event_delete');
+insert into `role_operation`(role_name, operation) values('Standard', 'alert_event_modify');
 insert into `role_operation`(role_name, operation) values('Standard', 'collect_rule_create');
 insert into `role_operation`(role_name, operation) values('Standard', 'collect_rule_modify');
 insert into `role_operation`(role_name, operation) values('Standard', 'collect_rule_delete');
@@ -295,6 +296,8 @@ CREATE TABLE `alert_event` (
     `rule_id` bigint unsigned not null,
     `rule_name` varchar(255) not null,
     `rule_note` varchar(512) not null default 'alert rule note',
+    `administrator` varchar(225) NOT NULL DEFAULT 'alert event administrator',
+    `event_note` varchar(512) not null default 'alert event note',
     `res_classpaths` varchar(1024) not null default '' comment 'belong classpaths',
     `priority` tinyint(1) not null,
     `status` tinyint(1) not null,
@@ -319,6 +322,8 @@ CREATE TABLE `history_alert_event` (
   `rule_id` bigint unsigned NOT NULL,
   `rule_name` varchar(255) NOT NULL,
   `rule_note` varchar(512) NOT NULL DEFAULT 'alert rule note',
+  `administrator` varchar(225) NOT NULL DEFAULT 'alert event administrator',
+  `event_note` varchar(512) not null default 'alert event note',
   `res_classpaths` varchar(1024) NOT NULL DEFAULT '' COMMENT 'belong classpaths',
   `priority` tinyint(1) NOT NULL,
   `status` tinyint(1) NOT NULL,
