@@ -19,6 +19,14 @@ type Classpath struct {
 	UpdateBy string `json:"update_by"`
 }
 
+type ClasspathNode struct {
+	Id       int64            `json:"id"`
+	Path     string           `json:"path"`
+	Note     string           `json:"note"`
+	Preset   int              `json:"preset"`
+	Children []*ClasspathNode `json:"children"`
+}
+
 func (c *Classpath) TableName() string {
 	return "classpath"
 }
@@ -104,7 +112,6 @@ func ClasspathGets(query string, limit, offset int) ([]Classpath, error) {
 		q := "%" + query + "%"
 		session = session.Where("path like ?", q)
 	}
-
 	var objs []Classpath
 	err := session.Find(&objs)
 	if err != nil {
@@ -151,7 +158,7 @@ func ClasspathGet(where string, args ...interface{}) (*Classpath, error) {
 
 func ClasspathGetsByPrefix(prefix string) ([]Classpath, error) {
 	var objs []Classpath
-	err := DB.Where("path like ?", prefix+"%").Find(&objs)
+	err := DB.Where("path like ?", prefix+"%").OrderBy("path").Find(&objs)
 	if err != nil {
 		logger.Errorf("mysql.error: query classpath fail: %v", err)
 		return objs, internalServerError
@@ -217,4 +224,95 @@ func (c *Classpath) AddResources(idents []string) error {
 
 func (c *Classpath) DelResources(idents []string) error {
 	return ClasspathResourceDel(c.Id, idents)
+}
+
+func ClasspathNodeGets(query string) ([]*ClasspathNode, error) {
+	session := DB.OrderBy("path")
+	if query != "" {
+		q := "%" + query + "%"
+		session = session.Where("path like ?", q)
+	}
+	var objs []Classpath
+	err := session.Find(&objs)
+	if err != nil {
+		logger.Errorf("mysql.error: query classpath fail: %v", err)
+		return []*ClasspathNode{}, internalServerError
+	}
+
+	if len(objs) == 0 {
+		return []*ClasspathNode{}, nil
+	}
+	pcs := ClasspathNodeAllChildren(objs)
+
+	return pcs, nil
+}
+
+func (cp *Classpath) DirectChildren() ([]Classpath, error) {
+	var pcs []Classpath
+	objs, err := ClasspathGetsByPrefix(cp.Path)
+	if err != nil {
+		logger.Errorf("mysql.error: query prefix classpath fail: %v", err)
+		return []Classpath{}, internalServerError
+	}
+	if len(objs) < 2 {
+		return []Classpath{}, nil
+	}
+
+	pre := objs[1]
+	path := pre.Path[len(objs[0].Path):]
+	pre.Path = path
+	pcs = append(pcs, pre)
+
+	for _, cp := range objs[2:] {
+		has := strings.HasPrefix(cp.Path, pre.Path)
+		if !has {
+			path := cp.Path[len(objs[0].Path):]
+			pre.Path = path
+			pcs = append(pcs, pre)
+			pre = cp
+		}
+	}
+
+	return pcs, nil
+}
+
+func ClasspathNodeAllChildren(cps []Classpath) []*ClasspathNode {
+	var node ClasspathNode
+	for _, cp := range cps {
+		ListInsert(cp, &node)
+	}
+
+	return node.Children
+}
+
+func ListInsert(obj Classpath, node *ClasspathNode) {
+	path := obj.Path
+	has := true
+	for {
+		if len(node.Children) == 0 {
+			break
+		}
+		children := node.Children[len(node.Children)-1]
+		prefix := children.Path
+		has = strings.HasPrefix(path, prefix)
+		if !has {
+			break
+		}
+		path = path[len(prefix):]
+		node = children
+	}
+
+	newNode := ToClasspathNode(obj, path)
+	node.Children = append(node.Children, &newNode)
+}
+
+func ToClasspathNode(cp Classpath, path string) ClasspathNode {
+	var obj ClasspathNode
+	obj.Id = cp.Id
+	obj.Path = path
+	obj.Note = cp.Note
+	obj.Preset = cp.Preset
+	obj.Children = []*ClasspathNode{}
+
+	return obj
 }
