@@ -16,18 +16,24 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-ping/ping v0.0.0-20201115131931-3300c582a663
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/golang/protobuf v1.3.5
+	github.com/golang/snappy v0.0.2
 	github.com/google/uuid v1.1.2
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb v1.8.0
 	github.com/influxdata/telegraf v1.17.2
 	github.com/jackc/pgx v3.6.0+incompatible
+	github.com/json-iterator/go v1.1.9
 	github.com/lib/pq v1.6.0
 	github.com/m3db/m3 v0.15.17
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.0 // indirect
 	github.com/mojocn/base64Captcha v1.3.1
 	github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f // indirect
+	github.com/prometheus/client_golang v1.5.1
+	github.com/prometheus/common v0.9.1
+	github.com/prometheus/prometheus v2.5.0+incompatible
 	github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62 // indirect
 	github.com/shirou/gopsutil v3.20.11+incompatible // indirect
 	github.com/spaolacci/murmur3 v1.1.0

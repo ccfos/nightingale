@@ -78,6 +78,7 @@ func main() {
 	conf := config.Config
 
 	loggeri.Init(conf.Logger)
+	defer logger.GetLogger().Close()
 	i18n.Init()
 	pcache.InitMemoryCache(time.Hour)
 

@@ -310,6 +310,13 @@ func Parse(ymlFile string) error {
 		"callTimeout": 3000, //访问超时时间，单位毫秒
 	})
 
+	viper.SetDefault("transfer.backend.prom", map[string]interface{}{
+		"enabled": false,
+		"name":    "prom",
+		"batch":   20000,
+		"prefix":  "n9e_metric_",
+	})
+
 	viper.SetDefault("monapi.proxy", map[string]string{
 		"transfer": "http://127.0.0.1:7900",
 		"index":    "http://127.0.0.1:7904",
@@ -395,6 +402,17 @@ func Parse(ymlFile string) error {
 		}
 
 		Config.Transfer.Backend.M3db = b.Transfer.Backend.M3db
+	}
+
+	if Config.Transfer.Backend.Prom.Enabled {
+		// viper.Unmarshal not compatible with yaml.Unmarshal
+		var b *ConfigT
+		err := yaml.Unmarshal([]byte(bs), &b)
+		if err != nil {
+			return err
+		}
+		Config.Transfer.Backend.Prom.RemoteRead = b.Transfer.Backend.Prom.RemoteRead
+		Config.Transfer.Backend.Prom.RemoteWrite = b.Transfer.Backend.Prom.RemoteWrite
 	}
 
 	fmt.Println("config.file:", ymlFile)
