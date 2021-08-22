@@ -38,10 +38,14 @@ func Start(ctx context.Context) {
 		os.Exit(1)
 	}
 
+	// 启动心跳goroutinue，如果挂了，trans可以及时感知
 	go loopHeartbeat()
 
 	// PULL型的策略不着急，等一段时间(等哈希环是稳态的)再开始周期性干活
 	go syncPullRules(ctx)
+
+	// 告警策略删除之后，针对这些告警策略缓存的监控数据要被清理
+	go loopCleanStalePoints()
 }
 
 func syncPullRules(ctx context.Context) {
@@ -101,4 +105,11 @@ func heartbeat(endpoint string) error {
 		return fmt.Errorf("mysql.error: instance(service=%s, endpoint=%s) heartbeat fail: %v", config.EndpointName, endpoint, err)
 	}
 	return nil
+}
+
+func loopCleanStalePoints() {
+	for {
+		time.Sleep(time.Hour)
+		CleanStalePoints()
+	}
 }
