@@ -21,7 +21,6 @@ type MetricPoint struct {
 	Alias        string            `json:"alias"`  // 资源名称，跟资源无关的监控数据，该字段为空
 	Metric       string            `json:"metric"` // 监控指标名称
 	TagsMap      map[string]string `json:"tags"`   // 监控数据标签
-	TagsLst      []string          `json:"-"`      // 内部字段，用于对TagsMap排序
 	Time         int64             `json:"time"`   // 时间戳，单位是秒
 	ValueUntyped interface{}       `json:"value"`  // 监控数据数值，可以是int float string，但最终要能转换为float64
 	Value        float64           `json:"-"`      // 内部字段，最终转换之后的float64数值
