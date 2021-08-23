@@ -18,5 +18,5 @@ labels: kind/bug
 
 **日志线索**:
 
-*日志分两部分，一个是logs目录下；另一部分是stdout，如果是systemd托管的，可以通过 `journalctl -u <n9e-server|n9e-agentd> -f` 查看*
+*日志分两部分，一个是logs目录下，重点查看ERROR日志；另一部分是stdout，如果是systemd托管的，可以通过 `journalctl -u <n9e-server|n9e-agentd> -f` 查看*
 
