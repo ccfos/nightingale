@@ -69,7 +69,7 @@ func alertEventNotePut(c *gin.Context) {
 		bomb(http.StatusBadRequest, "event note is empty")
 	}
 
-	renderMessage(c, models.AlertEventUpdateEventNote(ae.Id, ae.HashId, f.EventNote, *me))
+	renderMessage(c, models.AlertEventUpdateEventNote(ae.Id, ae.HashId, f.EventNote, me.Id))
 }
 
 func alertEventDel(c *gin.Context) {

@@ -82,11 +82,13 @@ func (hae *HistoryAlertEvent) FillObjs() error {
 		hae.NotifyUserObjs = users
 	}
 
-	processor, err := UserGetById(hae.ProcessorUid)
-	if err != nil {
-		return err
+	if hae.ProcessorUid != 0 {
+		processor, err := UserGetById(hae.ProcessorUid)
+		if err != nil {
+			return err
+		}
+		hae.ProcessorObjs = *processor
 	}
-	hae.ProcessorObjs = *processor
 
 	return nil
 }
