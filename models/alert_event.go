@@ -17,7 +17,7 @@ type AlertEvent struct {
 	RuleId             int64             `json:"rule_id"`
 	RuleName           string            `json:"rule_name"`
 	RuleNote           string            `json:"rule_note"`
-	Administrator      string            `json:"administrator"`
+	ProcessorUid       int64             `json:"processor_uid"`
 	EventNote          string            `json:"event_note"`
 	HashId             string            `json:"hash_id"`                 // 唯一标识
 	IsPromePull        int               `json:"is_prome_pull"`           // 代表是否是prometheus pull告警，为1时前端使用 ReadableExpression 拉取最近1小时数据
@@ -259,17 +259,23 @@ func AlertEventGet(where string, args ...interface{}) (*AlertEvent, error) {
 	return &obj, nil
 }
 
-func AlertEventUpdateEventNote(id int64, hashId string, note string, username string) error {
-	_, err := DB.Exec("UPDATE alert_event SET event_note = ?, administrator = ? WHERE id = ?", note, username, id)
-	if err != nil {
-		logger.Errorf("mysql.error: update alert_event event_note fail: %s", err)
-		return internalServerError
+func AlertEventUpdateEventNote(id int64, hashId string, note string, processor User) error {
+	session := DB.NewSession()
+	defer session.Close()
+
+	if err := session.Begin(); err != nil {
+		return err
 	}
 
-	_, err = DB.Exec("UPDATE history_alert_event SET event_note = ?, administrator = ? WHERE hash_id = ?", note, username, hashId)
-	if err != nil {
-		logger.Errorf("mysql.error: update alert_event event_note fail: %s", err)
-		return internalServerError
+	if _, err := session.Exec("UPDATE alert_event SET event_note = ?, processor_uid = ? WHERE id = ?", note, processor.Id, id); err != nil {
+		logger.Errorf("mysql.error: update alert_event event_note fail: %v", err)
+		return err
 	}
-	return nil
+
+	if _, err := session.Exec("UPDATE history_alert_event SET event_note = ?, processor_uid = ? WHERE hash_id = ?", note, processor.Id, hashId); err != nil {
+		logger.Errorf("mysql.error: update history_alert_event event_note fail: %v", err)
+		return err
+	}
+
+	return session.Commit()
 }

@@ -15,7 +15,8 @@ type HistoryAlertEvent struct {
 	RuleId             int64           `json:"rule_id"`
 	RuleName           string          `json:"rule_name"`
 	RuleNote           string          `json:"rule_note"`
-	Administrator      string          `json:"administrator"`
+	ProcessorUid       int64           `json:"processor_uid"`
+	ProcessorObjs      User            `json:"processor_user_objs" xorm:"-"`
 	EventNote          string          `json:"event_note"`
 	HashId             string          `json:"hash_id"`       // 唯一标识
 	IsPromePull        int             `json:"is_prome_pull"` // 代表是否是prometheus pull告警，为1时前端使用 ReadableExpression 拉取最近1小时数据
@@ -80,6 +81,12 @@ func (hae *HistoryAlertEvent) FillObjs() error {
 		}
 		hae.NotifyUserObjs = users
 	}
+
+	processor, err := UserGetById(hae.ProcessorUid)
+	if err != nil {
+		return err
+	}
+	hae.ProcessorObjs = *processor
 
 	return nil
 }
