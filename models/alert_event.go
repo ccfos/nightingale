@@ -18,7 +18,7 @@ type AlertEvent struct {
 	RuleName           string            `json:"rule_name"`
 	RuleNote           string            `json:"rule_note"`
 	ProcessorUid       int64             `json:"processor_uid"`
-	ProcessorObjs      User              `json:"processor_user_objs" xorm:"-"`
+	ProcessorObj       User              `json:"processor_user_obj" xorm:"-"`
 	EventNote          string            `json:"event_note"`
 	HashId             string            `json:"hash_id"`                 // 唯一标识
 	IsPromePull        int               `json:"is_prome_pull"`           // 代表是否是prometheus pull告警，为1时前端使用 ReadableExpression 拉取最近1小时数据
@@ -122,7 +122,7 @@ func (ae *AlertEvent) FillObjs() error {
 		if err != nil {
 			return err
 		}
-		ae.ProcessorObjs = *processor
+		ae.ProcessorObj = *processor
 	}
 
 	return nil
@@ -282,7 +282,7 @@ func AlertEventUpdateEventNote(id int64, hashId string, note string, uid int64) 
 		return err
 	}
 
-	if _, err := session.Exec("UPDATE history_alert_event SET event_note = ?, processor_uid = ? WHERE hash_id = ?", note, uid, hashId); err != nil {
+	if _, err := session.Exec("UPDATE history_alert_event SET event_note = ?, processor_uid = ? WHERE hash_id = ? ORDER BY id DESC LIMIT 1", note, uid, hashId); err != nil {
 		logger.Errorf("mysql.error: update history_alert_event event_note fail: %v", err)
 		return err
 	}
