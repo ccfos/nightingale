@@ -86,7 +86,6 @@ func configRoutes(r *gin.Engine) {
 		pages.DELETE("/user-group/:id", login(), userGroupDel)
 
 		pages.GET("/classpaths", login(), classpathListGets)
-		pages.GET("/classpaths/tree", login(), classpathListNodeGets)
 		pages.GET("/classpaths/tree-node/:id", login(), classpathListNodeGetsById)
 		pages.POST("/classpaths", login(), classpathAdd)
 		pages.PUT("/classpath/:id", login(), classpathPut)
