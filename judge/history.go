@@ -17,6 +17,7 @@ package judge
 import (
 	"container/list"
 	"sync"
+	"time"
 
 	"github.com/didi/nightingale/v5/vos"
 )
@@ -50,7 +51,7 @@ func (pc *PointCache) Len() int {
 }
 
 func (pc *PointCache) CleanStale(before int64) {
-	keys := []string{}
+	var keys []string
 
 	pc.RLock()
 	for key, L := range pc.M {
@@ -97,12 +98,25 @@ func (pc *PointCache) PutPoint(p *vos.MetricPoint, maxAliveDuration int64) *Safe
 
 // 这是个线程不安全的大Map，需要提前初始化好
 var PointCaches = make(map[string]*PointCache)
+var pointChars = []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"}
+var pointHeadKeys = make([]string, 0, 256)
 
 func initPointCaches() {
-	arr := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"}
 	for i := 0; i < 16; i++ {
 		for j := 0; j < 16; j++ {
-			PointCaches[arr[i]+arr[j]] = NewPointCache()
+			pointHeadKeys = append(pointHeadKeys, pointChars[i]+pointChars[j])
 		}
+	}
+
+	for i := 0; i < 256; i++ {
+		PointCaches[pointHeadKeys[i]] = NewPointCache()
+	}
+}
+
+func CleanStalePoints() {
+	// 监控数据2天都没关联到任何告警策略，说明对应的告警策略已经删除了
+	before := time.Now().Unix() - 3600*24*2
+	for i := 0; i < 256; i++ {
+		PointCaches[pointHeadKeys[i]].CleanStale(before)
 	}
 }

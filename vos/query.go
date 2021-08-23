@@ -195,27 +195,27 @@ type TagPair struct {
 	Value string `json:"value"`
 }
 
-type IndexQueryParam struct {
-	Metric         string     `json:"metric"`
-	Idents         []string   `json:"idents"`
-	Include        []*TagPair `json:"include"`
-	Exclude        []*TagPair `json:"exclude"`
-	Start          int64      `json:"start" description:"inclusive"`
-	End            int64      `json:"end" description:"exclusive"`
-	StartInclusive time.Time  `json:"-"`
-	EndExclusive   time.Time  `json:"-"`
-}
-
-func (p *IndexQueryParam) Validate() (err error) {
-	p.StartInclusive, p.EndExclusive, err = timeRangeValidate(p.Start, p.End)
-	return
-}
-
-type IndexQueryResp struct {
-	Metric string            `json:"metric"`
-	Ident  string            `json:"ident"`
-	Tags   map[string]string `json:"tags"`
-}
+//type IndexQueryParam struct {
+//	Metric         string     `json:"metric"`
+//	Idents         []string   `json:"idents"`
+//	Include        []*TagPair `json:"include"`
+//	Exclude        []*TagPair `json:"exclude"`
+//	Start          int64      `json:"start" description:"inclusive"`
+//	End            int64      `json:"end" description:"exclusive"`
+//	StartInclusive time.Time  `json:"-"`
+//	EndExclusive   time.Time  `json:"-"`
+//}
+//
+//func (p *IndexQueryParam) Validate() (err error) {
+//	p.StartInclusive, p.EndExclusive, err = timeRangeValidate(p.Start, p.End)
+//	return
+//}
+//
+//type IndexQueryResp struct {
+//	Metric string            `json:"metric"`
+//	Ident  string            `json:"ident"`
+//	Tags   map[string]string `json:"tags"`
+//}
 
 func timeRangeValidate(start, end int64) (startInclusive, endExclusive time.Time, err error) {
 	if end == 0 {

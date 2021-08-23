@@ -32,7 +32,6 @@ type alertRuleForm struct {
 	EnableEtime      string          `json:"enable_etime"`
 	EnableDaysOfWeek string          `json:"enable_days_of_week"`
 	AlertDuration    int             `json:"alert_duration"`
-	RecoveryDuration int             `json:"recovery_duration"`
 	RecoveryNotify   int             `json:"recovery_notify"`
 	Priority         int             `json:"priority"`
 	NotifyChannels   string          `json:"notify_channels"`
@@ -57,6 +56,7 @@ func alertRuleAdd(c *gin.Context) {
 			Name:             alertRule.Name,
 			Type:             alertRule.Type,
 			Note:             alertRule.Note,
+			Status:           alertRule.Status,
 			Expression:       alertRule.Expression,
 			AlertDuration:    alertRule.AlertDuration,
 			AppendTags:       alertRule.AppendTags,
@@ -132,7 +132,6 @@ func alertRulePut(c *gin.Context) {
 		"enable_stime",
 		"enable_etime",
 		"enable_days_of_week",
-		"recovery_duration",
 		"recovery_notify",
 		"priority",
 		"notify_channels",

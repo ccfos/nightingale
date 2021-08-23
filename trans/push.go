@@ -110,17 +110,19 @@ func enrich(point *vos.MetricPoint) {
 		}
 	}
 
+	var tagsLst []string
+
 	// 根据tagsmap生成tagslst，sort
 	count := len(point.TagsMap)
 	if count == 0 {
-		point.TagsLst = []string{}
+		tagsLst = []string{}
 	} else {
 		lst := make([]string, 0, count)
 		for k, v := range point.TagsMap {
 			lst = append(lst, k+"="+v)
 		}
 		sort.Strings(lst)
-		point.TagsLst = lst
+		tagsLst = lst
 	}
 
 	// ident metric tagslst 生成 pk
@@ -131,8 +133,8 @@ func enrich(point *vos.MetricPoint) {
 	ret.WriteString(point.Ident)
 	ret.WriteString(point.Metric)
 
-	for i := 0; i < len(point.TagsLst); i++ {
-		ret.WriteString(point.TagsLst[i])
+	for i := 0; i < len(tagsLst); i++ {
+		ret.WriteString(tagsLst[i])
 	}
 
 	point.PK = str.MD5(ret.String())

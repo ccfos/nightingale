@@ -49,6 +49,7 @@ func Send(points []*vos.MetricPoint) {
 			// 这个监控数据没有关联任何告警策略，省事了不用处理
 			continue
 		}
+
 		logger.Debugf("[point_match_alertRules][point:%+v][alertRuleNum:%+v]", points[i], rulesCount)
 		// 不同的告警规则，alert_duration字段大小不同，找到最大的，按照最大的值来缓存历史数据
 		var maxAliveDuration = 0
@@ -56,10 +57,6 @@ func Send(points []*vos.MetricPoint) {
 			if maxAliveDuration < alertRules[j].AlertDuration {
 				maxAliveDuration = alertRules[j].AlertDuration
 			}
-		}
-		if len(points[i].PK) < 2 {
-			logger.Debugf("[point:%+v] len(pk)<2", points[i])
-			continue
 		}
 
 		ll := PointCaches[points[i].PK[0:2]].PutPoint(points[i], int64(maxAliveDuration))

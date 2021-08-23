@@ -55,11 +55,11 @@ func configRoutes(r *gin.Engine) {
 	pages := r.Group("/api/n9e")
 
 	{
-		/*
-			pages.GET("/csrf", func(c *gin.Context) {
-				renderData(c, csrf.GetToken(c), nil)
-			})
-		*/
+
+		pages.GET("/csrf", func(c *gin.Context) {
+			// renderData(c, csrf.GetToken(c), nil)
+			renderData(c, "not supported", nil)
+		})
 
 		pages.GET("/roles", rolesGet)
 		pages.GET("/self/profile", selfProfileGet)
