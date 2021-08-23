@@ -247,6 +247,7 @@ func AlertEventGets(stime, etime int64, query string, status, priority int, limi
 func AlertEventGet(where string, args ...interface{}) (*AlertEvent, error) {
 	var obj AlertEvent
 	has, err := DB.Where(where, args...).Get(&obj)
+
 	if err != nil {
 		logger.Errorf("mysql.error: query alert_event(%s)%+v fail: %s", where, args, err)
 		return nil, internalServerError
