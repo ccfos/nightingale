@@ -56,6 +56,15 @@ func ClasspathResourceAdd(classpathId int64, resIdent string) error {
 		return nil
 	}
 
+	res, err := ResourceGet("ident=?", resIdent)
+	if err != nil {
+		return err
+	}
+
+	if res == nil {
+		return _e("No such resource %s", resIdent)
+	}
+
 	obj := ClasspathResource{
 		ClasspathId: classpathId,
 		ResIdent:    resIdent,
