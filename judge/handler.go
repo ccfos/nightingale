@@ -527,6 +527,12 @@ func sendEventIfNeed(status []bool, event *models.AlertEvent, stra *models.Alert
 func SendEvent(event *models.AlertEvent) {
 	// update last event
 	LastEvents.Set(event)
+	ae, err := models.AlertEventGet("hash_id = ?", event.HashId)
+	if err == nil && ae != nil {
+		logger.Debugf("[event exists do not send again][type:%+v][event:%+v]", event.IsPromePull, event)
+		return
+	}
+
 	ok := EventQueue.PushFront(event)
 	if !ok {
 		logger.Errorf("push event:%v err", event)

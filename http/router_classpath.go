@@ -24,6 +24,7 @@ func classpathListGets(c *gin.Context) {
 	}, nil)
 }
 
+//此api暂时不对外开放
 func classpathListNodeGets(c *gin.Context) {
 	query := queryStr(c, "query", "")
 
