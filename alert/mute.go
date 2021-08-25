@@ -63,19 +63,26 @@ func matchMute(metric, ident string, tags map[string]string, classpaths string) 
 }
 
 func matchMuteOnce(filter cache.Filter, ident string, tags map[string]string, cps map[int64]int64) bool {
+	if len(filter.ClasspathId) != 0 {
+		ids := str.IdsInt64(filter.ClasspathId)
+		isMute := false
+		for _, id := range ids {
+			_, has := cps[id]
+			if has {
+				isMute = true
+				break
+			}
+		}
+		if !isMute {
+			return false
+		}
+	}
+
 	if filter.ResReg != nil && !filter.ResReg.MatchString(ident) {
 		// 比如屏蔽规则配置的是：c3-ceph.*
 		// 当前事件的资源标识是：c4-ceph01.bj
 		// 只要有任一点不满足，那这个屏蔽规则也没有继续验证下去的必要
 		return false
-	}
-
-	ids := str.IdsInt64(filter.ClasspathId)
-	for _, id := range ids {
-		_, flag := cps[id]
-		if flag {
-			return true
-		}
 	}
 
 	// 每个mute中的tags都得出现在event.tags，否则就是不匹配
