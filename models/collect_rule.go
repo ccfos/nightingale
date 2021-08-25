@@ -28,7 +28,7 @@ type CollectRule struct {
 type PortConfig struct {
 	Port     int    `json:"port"`
 	Protocol string `json:"protocol"` // tcp or udp
-	Timeout  int    `json:"timeout "` // second
+	Timeout  int    `json:"timeout"`  // second
 }
 
 type ProcConfig struct {
@@ -41,7 +41,7 @@ type ScriptConfig struct {
 	Params  string            `json:"params"`
 	Stdin   string            `json:"stdin"`
 	Env     map[string]string `json:"env"`
-	Timeout int               `json:"timeout "` // second
+	Timeout int               `json:"timeout"` // second
 }
 
 type LogConfig struct {

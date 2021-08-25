@@ -4,16 +4,19 @@ about: Report a bug encountered while operating Nightingale
 labels: kind/bug
 ---
 
-**What happened**:
+**问题现象**:
 
-**What you expected to happen**:
 
-**How to reproduce it (as minimally and precisely as possible)**:
+**复现方法**:
 
-**Anything else we need to know?**:
 
-**Environment**:
-- Nightingale Version (`./n9e-rdb -v`):
-- OS Version (`uname -a`):
-- Logs (stdout/error/warning/http.request/http.response):
-- Others:
+**环境信息**:
+
+- 夜莺服务端版本 (通过`./n9e-server -v`可得知版本):
+- 夜莺客户端版本 (通过`./n9e-agentd -v`可得知版本):
+- 操作系统版本 (通过`uname -a`可得知OS版本):
+
+**日志线索**:
+
+*日志分两部分，一个是logs目录下，重点查看ERROR日志；另一部分是stdout，如果是systemd托管的，可以通过 `journalctl -u <n9e-server|n9e-agentd> -f` 查看*
+

@@ -153,6 +153,11 @@ func changeCollectRule(rule *models.CollectRule) error {
 			return err
 		}
 
+		tags := strings.Fields(rule.AppendTags)
+		for i := 0; i < len(tags); i++ {
+			tags[i] = strings.Replace(tags[i], "=", ":", 1)
+		}
+
 		config := ScriptCollectFormat{
 			Instances: []struct {
 				MinCollectionInterval int               `json:"min_collection_interval,omitempty"`
@@ -162,6 +167,7 @@ func changeCollectRule(rule *models.CollectRule) error {
 				Env                   map[string]string `json:"env"`
 				Stdin                 string            `json:"stdin"`
 				Timeout               int               `json:"timeout"`
+				Tags                  []string          `json:"tags,omitempty"`
 			}{{
 				MinCollectionInterval: rule.Step,
 				FilePath:              conf.Path,
@@ -169,6 +175,7 @@ func changeCollectRule(rule *models.CollectRule) error {
 				Env:                   conf.Env,
 				Stdin:                 conf.Stdin,
 				Timeout:               conf.Timeout,
+				Tags:                  tags,
 			}},
 		}
 
@@ -257,6 +264,7 @@ type ScriptCollectFormat struct {
 		Env                   map[string]string `json:"env"`
 		Stdin                 string            `json:"stdin"`
 		Timeout               int               `json:"timeout"`
+		Tags                  []string          `json:"tags,omitempty"`
 	} `json:"instances"`
 }
 

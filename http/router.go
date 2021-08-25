@@ -86,7 +86,6 @@ func configRoutes(r *gin.Engine) {
 		pages.DELETE("/user-group/:id", login(), userGroupDel)
 
 		pages.GET("/classpaths", login(), classpathListGets)
-		pages.GET("/classpaths/tree", login(), classpathListNodeGets)
 		pages.GET("/classpaths/tree-node/:id", login(), classpathListNodeGetsById)
 		pages.POST("/classpaths", login(), classpathAdd)
 		pages.PUT("/classpath/:id", login(), classpathPut)
@@ -206,7 +205,7 @@ func configRoutes(r *gin.Engine) {
 
 		v1.GET("/can-do-op-by-name", login(), canDoOpByName)
 		v1.GET("/can-do-op-by-token", login(), canDoOpByToken)
-
+		v1.GET("/get-user-by-name", login(), getUserByName)
 	}
 
 	push := r.Group("/v1/n9e/series").Use(gzip.Gzip(gzip.DefaultCompression))

@@ -10,7 +10,7 @@ import (
 	"github.com/didi/nightingale/v5/models"
 )
 
-// UpdateAlias 对于上报的监控数据，会缓存在内存里，然后周期性更新其alias
+// Update 对于上报的监控数据，会缓存在内存里，然后周期性更新其alias
 // 主要是性能考虑，要不然每秒上报千万条监控指标，每条都去更新alias耗时太久
 // server是无状态的，对于某个ident，如果刚开始上报alias1到server1，后来上报alias2到server2
 // 如果server1和server2同时去更新数据库，可能会造成混乱，一会是alias1，一会是alias2
