@@ -164,7 +164,7 @@ func alertRuleStatusPut(c *gin.Context) {
 		alertRuleWritePermCheck(arg, me)
 	}
 
-	renderMessage(c, models.AlertRuleUpdateStatus(f.Ids, f.Status))
+	renderMessage(c, models.AlertRuleUpdateStatus(f.Ids, f.Status, me.Username))
 }
 
 type alertRuleNotifyGroupsForm struct {
@@ -189,7 +189,7 @@ func alertRuleNotifyGroupsPut(c *gin.Context) {
 		alertRuleWritePermCheck(arg, me)
 	}
 
-	renderMessage(c, models.AlertRuleUpdateNotifyGroups(f.Ids, f.NotifyGroups, f.NotifyUsers))
+	renderMessage(c, models.AlertRuleUpdateNotifyGroups(f.Ids, f.NotifyGroups, f.NotifyUsers, me.Username))
 }
 
 type alertRuleNotifyChannelsForm struct {
@@ -211,7 +211,7 @@ func alertRuleNotifyChannelsPut(c *gin.Context) {
 		alertRuleWritePermCheck(arg, me)
 	}
 
-	renderMessage(c, models.AlertRuleUpdateNotifyChannels(f.Ids, f.NotifyChannels))
+	renderMessage(c, models.AlertRuleUpdateNotifyChannels(f.Ids, f.NotifyChannels, me.Username))
 }
 
 type alertRuleAppendTagsForm struct {
@@ -233,7 +233,7 @@ func alertRuleAppendTagsPut(c *gin.Context) {
 		alertRuleWritePermCheck(arg, me)
 	}
 
-	renderMessage(c, models.AlertRuleUpdateAppendTags(f.Ids, f.AppendTags))
+	renderMessage(c, models.AlertRuleUpdateAppendTags(f.Ids, f.AppendTags, me.Username))
 }
 
 func alertRuleDel(c *gin.Context) {
