@@ -2,12 +2,14 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/cache"
 	"github.com/didi/nightingale/v5/config"
@@ -251,19 +253,99 @@ func notifyChannelsGet(c *gin.Context) {
 
 func alertRuleFillUserAndGroups(alertRule *models.AlertRule) {
 	uidStrs := strings.Fields(alertRule.NotifyUsers)
-	var uids []int64
-	for _, uidStr := range uidStrs {
-		uid, _ := strconv.ParseInt(uidStr, 10, 64)
-		uids = append(uids, uid)
+	userlen := len(uidStrs)
+	users := make([]*models.User, 0, userlen)
+	if userlen > 0 {
+		// 是否有用户已经被删除的情况出现
+		userMiss := false
+
+		for _, uidStr := range uidStrs {
+			uid, err := strconv.ParseInt(uidStr, 10, 64)
+			if err != nil {
+				userMiss = true
+				continue
+			}
+
+			user := cache.UserCache.GetById(uid)
+			if user != nil {
+				users = append(users, user)
+				continue
+			}
+
+			// uid在cache里找不到，可能是还没来得及缓存，也可能是被删除了
+			// 去查一下数据库，如果确实找不到了，就更新一下
+			user, err = models.UserGetById(uid)
+			if err != nil {
+				logger.Error("UserGetById fail:", err)
+				continue
+			}
+
+			if user != nil {
+				users = append(users, user)
+			} else {
+				userMiss = true
+			}
+		}
+
+		if userMiss {
+			userIdsNew := make([]string, len(users))
+			for i := 0; i < len(users); i++ {
+				userIdsNew[i] = fmt.Sprint(users[i].Id)
+			}
+
+			alertRule.NotifyUsers = strings.Join(userIdsNew, " ")
+			alertRule.UpdateAt = time.Now().Unix()
+			alertRule.Update("notify_users", "update_at")
+		}
 	}
-	alertRule.NotifyUsersDetail = cache.UserCache.GetByIds(uids)
+
+	// 最终存活的user列表，赋值给alertRule
+	alertRule.NotifyUsersDetail = users
 
 	gidStrs := strings.Fields(alertRule.NotifyGroups)
-	var gids []int64
-	for _, gidStr := range gidStrs {
-		gid, _ := strconv.ParseInt(gidStr, 10, 64)
-		gids = append(gids, gid)
+	grplen := len(gidStrs)
+	grps := make([]*models.UserGroup, 0, grplen)
+
+	if grplen > 0 {
+		grpMiss := false
+
+		for _, gidStr := range gidStrs {
+			gid, err := strconv.ParseInt(gidStr, 10, 64)
+			if err != nil {
+				grpMiss = true
+				continue
+			}
+
+			grp := cache.UserGroupCache.GetBy(gid)
+			if grp != nil {
+				grps = append(grps, grp)
+				continue
+			}
+
+			grp, err = models.UserGroupGet("id=?", gid)
+			if err != nil {
+				logger.Error("UserGroupGet fail:", err)
+				continue
+			}
+
+			if grp != nil {
+				grps = append(grps, grp)
+			} else {
+				grpMiss = true
+			}
+		}
+
+		if grpMiss {
+			grpIdsNew := make([]string, len(grps))
+			for i := 0; i < len(grps); i++ {
+				grpIdsNew[i] = fmt.Sprint(grps[i].Id)
+			}
+
+			alertRule.NotifyGroups = strings.Join(grpIdsNew, " ")
+			alertRule.UpdateAt = time.Now().Unix()
+			alertRule.Update("notify_groups", "update_at")
+		}
 	}
 
-	alertRule.NotifyGroupsDetail = cache.UserGroupCache.GetByIds(gids)
+	alertRule.NotifyGroupsDetail = grps
 }

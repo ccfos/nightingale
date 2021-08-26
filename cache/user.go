@@ -34,6 +34,13 @@ func (s *UserMap) GetByIds(ids []int64) []*models.User {
 	return users
 }
 
+func (s *UserMap) GetById(id int64) *models.User {
+	s.RLock()
+	defer s.RUnlock()
+
+	return s.Data[id]
+}
+
 func (s *UserMap) SetAll(users map[int64]*models.User) {
 	s.Lock()
 	defer s.Unlock()
