@@ -291,23 +291,23 @@ func (ar *AlertRule) Update(cols ...string) error {
 	return nil
 }
 
-func AlertRuleUpdateStatus(ids []int64, status int) error {
-	_, err := DB.Exec("UPDATE alert_rule SET status=? WHERE id in ("+str.IdsString(ids)+")", status)
+func AlertRuleUpdateStatus(ids []int64, status int, username string) error {
+	_, err := DB.Exec("UPDATE alert_rule SET status=?, update_at=?, update_by=? WHERE id in ("+str.IdsString(ids)+")", status, time.Now().Unix(), username)
 	return err
 }
 
-func AlertRuleUpdateNotifyGroups(ids []int64, notifyGroups string, notifyUsers string) error {
-	_, err := DB.Exec("UPDATE alert_rule SET notify_groups = ? , notify_users = ? where id in ("+str.IdsString(ids)+")", notifyGroups, notifyUsers)
+func AlertRuleUpdateNotifyGroups(ids []int64, notifyGroups, notifyUsers, username string) error {
+	_, err := DB.Exec("UPDATE alert_rule SET notify_groups = ? , notify_users = ?, update_at = ?, update_by = ? where id in ("+str.IdsString(ids)+")", notifyGroups, notifyUsers, time.Now().Unix(), username)
 	return err
 }
 
-func AlertRuleUpdateNotifyChannels(ids []int64, notifyChannels string) error {
-	_, err := DB.Exec("UPDATE alert_rule SET notify_channels = ? where id in ("+str.IdsString(ids)+")", notifyChannels)
+func AlertRuleUpdateNotifyChannels(ids []int64, notifyChannels, username string) error {
+	_, err := DB.Exec("UPDATE alert_rule SET notify_channels = ?, update_at = ?, update_by = ? where id in ("+str.IdsString(ids)+")", notifyChannels, time.Now().Unix(), username)
 	return err
 }
 
-func AlertRuleUpdateAppendTags(ids []int64, appendTags string) error {
-	_, err := DB.Exec("UPDATE alert_rule SET append_tags = ? where id in ("+str.IdsString(ids)+")", appendTags)
+func AlertRuleUpdateAppendTags(ids []int64, appendTags, username string) error {
+	_, err := DB.Exec("UPDATE alert_rule SET append_tags = ?, update_at = ?, update_by = ? where id in ("+str.IdsString(ids)+")", appendTags, time.Now().Unix(), username)
 	return err
 }
 
