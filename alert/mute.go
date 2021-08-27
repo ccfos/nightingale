@@ -55,10 +55,8 @@ func matchMute(metric, ident string, tags map[string]string, classpaths string) 
 }
 
 func matchMuteOnce(filter cache.Filter, ident string, tags map[string]string, classpaths string) bool {
-	if len(filter.ClasspathPrefix) != 0 {
-		if strings.HasPrefix(classpaths, filter.ClasspathPrefix) || strings.Contains(classpaths, " "+filter.ClasspathPrefix) {
-			return false
-		}
+	if len(filter.ClasspathPrefix) != 0 && !strings.HasPrefix(classpaths, filter.ClasspathPrefix) && !strings.Contains(classpaths, " "+filter.ClasspathPrefix) {
+		return false
 	}
 
 	if filter.ResReg != nil && !filter.ResReg.MatchString(ident) {
