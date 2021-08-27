@@ -23,13 +23,13 @@ func muteGets(c *gin.Context) {
 }
 
 type muteForm struct {
-	Classpath  string `json:"classpath"`
-	Metric     string `json:"metric"`
-	ResFilters string `json:"res_filters"`
-	TagFilters string `json:"tags_filters"`
-	Cause      string `json:"cause"`
-	Btime      int64  `json:"btime"`
-	Etime      int64  `json:"etime"`
+	ClasspathPrefix string `json:"classpath_prefix "`
+	Metric          string `json:"metric"`
+	ResFilters      string `json:"res_filters"`
+	TagFilters      string `json:"tags_filters"`
+	Cause           string `json:"cause"`
+	Btime           int64  `json:"btime"`
+	Etime           int64  `json:"etime"`
 }
 
 func muteAdd(c *gin.Context) {
@@ -39,14 +39,14 @@ func muteAdd(c *gin.Context) {
 	me := loginUser(c).MustPerm("mute_create")
 
 	mt := models.Mute{
-		Classpath:  f.Classpath,
-		Metric:     f.Metric,
-		ResFilters: f.ResFilters,
-		TagFilters: f.TagFilters,
-		Cause:      f.Cause,
-		Btime:      f.Btime,
-		Etime:      f.Etime,
-		CreateBy:   me.Username,
+		ClasspathPrefix: f.ClasspathPrefix,
+		Metric:          f.Metric,
+		ResFilters:      f.ResFilters,
+		TagFilters:      f.TagFilters,
+		Cause:           f.Cause,
+		Btime:           f.Btime,
+		Etime:           f.Etime,
+		CreateBy:        me.Username,
 	}
 
 	renderMessage(c, mt.Add())

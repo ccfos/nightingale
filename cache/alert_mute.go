@@ -10,9 +10,9 @@ type AlertMuteMap struct {
 	Data map[string][]Filter
 }
 type Filter struct {
-	Classpath string
-	ResReg    *regexp.Regexp
-	TagsMap   map[string]string
+	ClasspathPrefix string
+	ResReg          *regexp.Regexp
+	TagsMap         map[string]string
 }
 
 var AlertMute = &AlertMuteMap{Data: make(map[string][]Filter)}

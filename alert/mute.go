@@ -56,10 +56,10 @@ func matchMute(metric, ident string, tags map[string]string, classpaths string) 
 
 func matchMuteOnce(filter cache.Filter, ident string, tags map[string]string, classpaths string) bool {
 	rcps := strings.Fields(classpaths)
-	if len(filter.Classpath) != 0 {
+	if len(filter.ClasspathPrefix) != 0 {
 		isMute := false
 		for _, rcp := range rcps {
-			has := strings.HasPrefix(rcp, filter.Classpath)
+			has := strings.HasPrefix(rcp, filter.ClasspathPrefix)
 			if has {
 				isMute = true
 				break
