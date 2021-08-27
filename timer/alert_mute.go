@@ -58,9 +58,9 @@ func syncAlertMutes() error {
 		}
 
 		filter := cache.Filter{
-			ResReg:      mutes[i].ResRegexp,
-			TagsMap:     mutes[i].TagsMap,
-			ClasspathId: mutes[i].ClasspathId,
+			ResReg:       mutes[i].ResRegexp,
+			TagsMap:      mutes[i].TagsMap,
+			ClasspathIds: mutes[i].ClasspathIds,
 		}
 
 		muteMap[mutes[i].Metric] = append(muteMap[mutes[i].Metric], filter)

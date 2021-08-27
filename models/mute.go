@@ -10,19 +10,18 @@ import (
 )
 
 type Mute struct {
-	Id          int64  `json:"id"`
-	ClasspathId string `json:"classpath_id"`
-	Metric      string `json:"metric"`
-	ResFilters  string `json:"res_filters"`
-	TagFilters  string `json:"tags_filters"`
-	Cause       string `json:"cause"`
-	Btime       int64  `json:"btime"`
-	Etime       int64  `json:"etime"`
-	CreateBy    string `json:"create_by"`
-	CreateAt    int64  `json:"create_at"`
-
-	ResRegexp *regexp.Regexp    `xorm:"-" json:"-"`
-	TagsMap   map[string]string `xorm:"-" json:"-"`
+	Id           int64             `json:"id"`
+	ClasspathIds string            `json:"classpath_ids"`
+	Metric       string            `json:"metric"`
+	ResFilters   string            `json:"res_filters"`
+	TagFilters   string            `json:"tags_filters"`
+	Cause        string            `json:"cause"`
+	Btime        int64             `json:"btime"`
+	Etime        int64             `json:"etime"`
+	CreateBy     string            `json:"create_by"`
+	CreateAt     int64             `json:"create_at"`
+	ResRegexp    *regexp.Regexp    `xorm:"-" json:"-"`
+	TagsMap      map[string]string `xorm:"-" json:"-"`
 }
 
 func (m *Mute) TableName() string {

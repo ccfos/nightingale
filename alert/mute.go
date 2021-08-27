@@ -63,8 +63,8 @@ func matchMute(metric, ident string, tags map[string]string, classpaths string) 
 }
 
 func matchMuteOnce(filter cache.Filter, ident string, tags map[string]string, cps map[int64]int64) bool {
-	if len(filter.ClasspathId) != 0 {
-		ids := str.IdsInt64(filter.ClasspathId)
+	if len(filter.ClasspathIds) != 0 {
+		ids := str.IdsInt64(filter.ClasspathIds)
 		isMute := false
 		for _, id := range ids {
 			_, has := cps[id]
