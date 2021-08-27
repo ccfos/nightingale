@@ -160,6 +160,7 @@ CREATE TABLE `classpath_favorite` (
 
 CREATE TABLE `mute` (
     `id` bigint unsigned not null auto_increment,
+    `classpath` varchar(255) not null default '' comment 'classpath',
     `metric` varchar(255) not null comment 'required',
     `res_filters` varchar(4096) not null default 'resource filters',
     `tag_filters` varchar(8192) not null default '',
