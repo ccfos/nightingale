@@ -1,6 +1,8 @@
 package alert
 
 import (
+	"strings"
+
 	"github.com/didi/nightingale/v5/cache"
 	"github.com/didi/nightingale/v5/models"
 	"github.com/toolkits/pkg/logger"
@@ -14,13 +16,13 @@ func isEventMute(event *models.AlertEvent) bool {
 	}
 
 	// 先去匹配一下metric为空的mute
-	if matchMute("", event.ResIdent, event.TagMap) {
+	if matchMute("", event.ResIdent, event.TagMap, event.ResClasspaths) {
 		return true
 	}
 
 	// 如果是与条件，就会有多个metric，任一个匹配了屏蔽规则都算被屏蔽
 	for i := 0; i < len(historyPoints); i++ {
-		if matchMute(historyPoints[i].Metric, event.ResIdent, event.TagMap) {
+		if matchMute(historyPoints[i].Metric, event.ResIdent, event.TagMap, event.ResClasspaths) {
 			return true
 		}
 	}
@@ -35,7 +37,7 @@ func isEventMute(event *models.AlertEvent) bool {
 	return false
 }
 
-func matchMute(metric, ident string, tags map[string]string) bool {
+func matchMute(metric, ident string, tags map[string]string, classpaths string) bool {
 	filters, exists := cache.AlertMute.GetByKey(metric)
 	if !exists {
 		// 没有屏蔽规则跟这个事件相关
@@ -44,7 +46,7 @@ func matchMute(metric, ident string, tags map[string]string) bool {
 
 	// 只要有一个屏蔽规则命中，那这个事件就是被屏蔽了
 	for _, filter := range filters {
-		if matchMuteOnce(filter, ident, tags) {
+		if matchMuteOnce(filter, ident, tags, classpaths) {
 			return true
 		}
 	}
@@ -52,7 +54,15 @@ func matchMute(metric, ident string, tags map[string]string) bool {
 	return false
 }
 
-func matchMuteOnce(filter cache.Filter, ident string, tags map[string]string) bool {
+func matchMuteOnce(filter cache.Filter, ident string, tags map[string]string, classpaths string) bool {
+	if len(filter.ClasspathPrefix) > 0 && !strings.HasPrefix(classpaths, filter.ClasspathPrefix) && !strings.Contains(classpaths, " "+filter.ClasspathPrefix) {
+		// 没配置分组屏蔽就不做后续比较
+		// 比如事件的资源calsspath为“n9e.mon n9e.rdb ccp.web”，配置屏蔽为n9e.rdb
+		// 只要字符串前缀为n9e.rdb或者字符串包含“ n9e.rdb”即可判断所有alsspath中是否有前缀为n9e.rdb的
+		// 只要有任一点不满足，那这个屏蔽规则也没有继续验证下去的必要
+		return false
+	}
+
 	if filter.ResReg != nil && !filter.ResReg.MatchString(ident) {
 		// 比如屏蔽规则配置的是：c3-ceph.*
 		// 当前事件的资源标识是：c4-ceph01.bj
