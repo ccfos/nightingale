@@ -199,7 +199,7 @@ func localAddress(interfaceName string) (net.Addr, error) {
 	return nil, fmt.Errorf("cannot create local address for interface %q", interfaceName)
 }
 
-func setResult(resultString string, fields map[string]interface{}, tags map[string]string) {
+func setResult(resultString string, fields map[string]interface{}) {
 	resultCodes := map[string]int{
 		"success":                       0,
 		"response_string_mismatch":      1,
@@ -209,15 +209,13 @@ func setResult(resultString string, fields map[string]interface{}, tags map[stri
 		"dns_error":                     5,
 		"response_status_code_mismatch": 6,
 	}
-
-	tags["result"] = resultString
-	fields["result_type"] = resultString
+	//fields["result_type"] = resultString
 	fields["result_code"] = resultCodes[resultString]
 }
 
 func setError(err error, fields map[string]interface{}, tags map[string]string) error {
 	if timeoutError, ok := err.(net.Error); ok && timeoutError.Timeout() {
-		setResult("timeout", fields, tags)
+		setResult("timeout", fields)
 		return timeoutError
 	}
 
@@ -230,12 +228,12 @@ func setError(err error, fields map[string]interface{}, tags map[string]string) 
 	if isNetErr {
 		switch e := (opErr.Err).(type) {
 		case *net.DNSError:
-			setResult("dns_error", fields, tags)
+			setResult("dns_error", fields)
 			return e
 		case *net.ParseError:
 			// Parse error has to do with parsing of IP addresses, so we
 			// group it with address errors
-			setResult("address_error", fields, tags)
+			setResult("address_error", fields)
 			return e
 		}
 	}
@@ -292,12 +290,11 @@ func (h *HTTPResponse) httpGather(u string) (map[string]interface{}, map[string]
 		// Get error details
 		if setError(err, fields, tags) == nil {
 			// Any error not recognized by `set_error` is considered a "connection_failed"
-			setResult("connection_failed", fields, tags)
+			setResult("connection_failed", fields)
 		}
 
 		return fields, tags, nil
 	}
-
 	if _, ok := fields["response_time"]; !ok {
 		fields["response_time"] = responseTime
 	}
@@ -350,7 +347,7 @@ func (h *HTTPResponse) httpGather(u string) (map[string]interface{}, map[string]
 			fields["response_string_match"] = 1
 		} else {
 			success = false
-			setResult("response_string_mismatch", fields, tags)
+			setResult("response_string_mismatch", fields)
 			fields["response_string_match"] = 0
 		}
 	}
@@ -361,13 +358,13 @@ func (h *HTTPResponse) httpGather(u string) (map[string]interface{}, map[string]
 			fields["response_status_code_match"] = 1
 		} else {
 			success = false
-			setResult("response_status_code_mismatch", fields, tags)
+			setResult("response_status_code_mismatch", fields)
 			fields["response_status_code_match"] = 0
 		}
 	}
 
 	if success {
-		setResult("success", fields, tags)
+		setResult("success", fields)
 	}
 
 	return fields, tags, nil
@@ -376,7 +373,7 @@ func (h *HTTPResponse) httpGather(u string) (map[string]interface{}, map[string]
 // Set result in case of a body read error
 func (h *HTTPResponse) setBodyReadError(errorMsg string, bodyBytes []byte, fields map[string]interface{}, tags map[string]string) {
 	h.Log.Debugf(errorMsg)
-	setResult("body_read_error", fields, tags)
+	setResult("body_read_error", fields)
 	fields["content_length"] = len(bodyBytes)
 	if h.ResponseStringMatch != "" {
 		fields["response_string_match"] = 0
