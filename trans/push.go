@@ -39,6 +39,8 @@ func Push(points []*vos.MetricPoint) error {
 		// 如果tags中发现有__ident__和__alias__就提到外层，这个逻辑是为了应对snmp之类的场景
 		if val, has := points[i].TagsMap["__ident__"]; has {
 			points[i].Ident = val
+			// 如果后面没有发现__alias__，那alias就给改成空
+			points[i].Alias = ""
 			delete(points[i].TagsMap, "__ident__")
 		}
 
