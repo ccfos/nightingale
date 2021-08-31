@@ -214,14 +214,37 @@ var fieldRenames = map[string]string{
 	"svname":     "sv",
 	"act":        "active_servers",
 	"bck":        "backup_servers",
-	"cli_abrt":   "cli_abort",
-	"srv_abrt":   "srv_abort",
 	"hrsp_1xx":   "http_response.1xx",
 	"hrsp_2xx":   "http_response.2xx",
 	"hrsp_3xx":   "http_response.3xx",
 	"hrsp_4xx":   "http_response.4xx",
 	"hrsp_5xx":   "http_response.5xx",
 	"hrsp_other": "http_response.other",
+	"qcur":       "current_queue",
+	"qmax":       "max_queue",
+	"scur":       "current_sessions",
+	"smax":       "max_sessions",
+	"slim":       "limit_sessions",
+	"stot":       "sessions",
+	"bin":        "bytes_in",
+	"bout":       "bytes_out",
+	"econ":       "connection_errors",
+	"ereq":       "request_errors",
+	"eresp":      "response_errors",
+	"wretr":      "retry_warnings",
+	"wredis":     "redispatch_warnings",
+	"chkfail":    "check_failures",
+	"downtime":   "downtime_seconds",
+	"lbtot":      "server_selected_total",
+	"rate":       "current_session_rate",
+	"rate_max":   "max_session_rate",
+	"cli_abrt":   "client_aborts_total",
+	"srv_abrt":   "server_aborts_total",
+	"qtime":      "http_queue_time_average_seconds",
+	"ctime":      "http_connect_time_average_seconds",
+	"rtime":      "http_response_time_average_seconds",
+	"ttime":      "http_total_time_average_seconds",
+	"conn_tot":   "connections_total",
 }
 
 func (g *Haproxy) importCsvResult(r io.Reader, acc telegraf.Accumulator, host string) error {
@@ -281,7 +304,9 @@ func (g *Haproxy) importCsvResult(r io.Reader, acc telegraf.Accumulator, host st
 				tags[fieldName] = typeNames[vi]
 			case "check_desc", "agent_desc":
 				// do nothing. These fields are just a more verbose description of the check_status & agent_status fields
-			case "status", "check_status", "last_chk", "mode", "tracked", "agent_status", "last_agt", "addr", "cookie":
+			case "status":
+				fields["status"] = parseStatusField(v)
+			case "check_status", "last_chk", "mode", "tracked", "agent_status", "last_agt", "addr", "cookie":
 				// these are string fields
 				fields[fieldName] = v
 			case "lastsess":
@@ -305,6 +330,17 @@ func (g *Haproxy) importCsvResult(r io.Reader, acc telegraf.Accumulator, host st
 	return err
 }
 
+func parseStatusField(value string) int64 {
+	switch value {
+	case "UP", "UP 1/3", "UP 2/3", "OPEN", "no check", "DRAIN":
+		return 1
+	case "DOWN", "DOWN 1/2", "NOLB", "MAINT", "MAINT(via)", "MAINT(resolution)":
+		return 0
+	default:
+		return 0
+
+	}
+}
 func init() {
 	inputs.Add("haproxy", func() telegraf.Input {
 		return &Haproxy{}
