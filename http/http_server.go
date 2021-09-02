@@ -99,21 +99,7 @@ func configNoRoute(r *gin.Engine) {
 		arr := strings.Split(c.Request.URL.Path, ".")
 		suffix := arr[len(arr)-1]
 		switch suffix {
-		case "png":
-			fallthrough
-		case "jpeg":
-			fallthrough
-		case "jpg":
-			fallthrough
-		case "gif":
-			fallthrough
-		case "css":
-			fallthrough
-		case "js":
-			fallthrough
-		case "html":
-			fallthrough
-		case "htm":
+		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "map":
 			c.File(path.Join(strings.Split("pub/"+c.Request.URL.Path, "/")...))
 		default:
 			c.File(path.Join("pub", "index.html"))
