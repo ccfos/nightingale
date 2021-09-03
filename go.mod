@@ -36,7 +36,6 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.7.1
 	github.com/subosito/gotenv v1.2.1-0.20190917103637-de67a6614a4d // indirect
-	github.com/toolkits/csrf v1.0.5
 	github.com/toolkits/pkg v1.1.3
 	github.com/ugorji/go/codec v1.1.7
 	go.uber.org/atomic v1.7.0
