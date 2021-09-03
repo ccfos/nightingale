@@ -27,8 +27,8 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/orcaman/concurrent-map v0.0.0-20210106121528-16402b402231
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.9.0
-	github.com/prometheus/common v0.17.0
+	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/common v0.26.0
 	github.com/prometheus/prometheus v1.8.2-0.20210220213500-8c8de46003d1
 	github.com/smartystreets/assertions v1.0.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
