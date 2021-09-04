@@ -13,10 +13,10 @@ import (
 )
 
 type AlertEvent struct {
-	Id                 int64             `json:"id"`
-	RuleId             int64             `json:"rule_id"`
-	RuleName           string            `json:"rule_name"`
-	RuleNote           string            `json:"rule_note"`
+	Id       int64  `json:"id"`
+	RuleId   int64  `json:"rule_id"`
+	RuleName string `json:"rule_name"`
+	RuleNote string `json:"rule_note"`
 	// ProcessorUid       int64             `json:"processor_uid"`
 	// ProcessorObj       User              `json:"processor_user_obj" xorm:"-"`
 	// EventNote          string            `json:"event_note"`
@@ -267,6 +267,20 @@ func AlertEventGet(where string, args ...interface{}) (*AlertEvent, error) {
 	}
 
 	return &obj, nil
+}
+
+func AlertEventGetAll() ([]*AlertEvent, error) {
+	var objs []*AlertEvent
+	err := DB.Find(&objs)
+	if err != nil {
+		return objs, err
+	}
+
+	if len(objs) == 0 {
+		return []*AlertEvent{}, nil
+	}
+
+	return objs, nil
 }
 
 // func AlertEventUpdateEventNote(id int64, hashId string, note string, uid int64) error {

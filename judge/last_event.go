@@ -1,6 +1,8 @@
 package judge
 
 import (
+	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -35,14 +37,43 @@ func (s *SafeEventMap) Set(event *models.AlertEvent) {
 	s.Lock()
 	defer s.Unlock()
 
-	m, has := s.M[event.RuleId]
+	_, has := s.M[event.RuleId]
 	if !has {
-		m = make(map[string]*models.AlertEvent)
+		m := make(map[string]*models.AlertEvent)
 		m[event.HashId] = event
 		s.M[event.RuleId] = m
 	} else {
 		s.M[event.RuleId][event.HashId] = event
 	}
+}
+
+func (s *SafeEventMap) Init() {
+	aes, err := models.AlertEventGetAll()
+	if err != nil {
+		fmt.Println("load all alert_event fail:", err)
+		os.Exit(1)
+	}
+
+	if len(aes) == 0 {
+		return
+	}
+
+	data := make(map[int64]map[string]*models.AlertEvent)
+	for i := 0; i < len(aes); i++ {
+		event := aes[i]
+		_, has := data[event.RuleId]
+		if !has {
+			m := make(map[string]*models.AlertEvent)
+			m[event.HashId] = event
+			data[event.RuleId] = m
+		} else {
+			data[event.RuleId][event.HashId] = event
+		}
+	}
+
+	s.Lock()
+	s.M = data
+	s.Unlock()
 }
 
 func (s *SafeEventMap) Del(ruleId int64, hashId string) {

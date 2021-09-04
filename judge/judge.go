@@ -28,6 +28,9 @@ func Start(ctx context.Context) {
 	// PUSH型的告警引擎，依赖内存里缓存的数据来做告警判断，两层map减小锁粒度
 	initPointCaches()
 
+	// 把数据库中的未恢复告警同步一份到内存中，便于后续判断告警是否应该发送
+	LastEvents.Init()
+
 	// 默认初始化的大小是1000万，相当于内存里有1000万事件，应该够用了
 	EventQueue = list.NewSafeListLimited(10000000)
 
