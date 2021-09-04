@@ -37,6 +37,9 @@ func configRoutes(r *gin.Engine) {
 		guest.GET("/addr", func(c *gin.Context) {
 			c.String(200, c.Request.RemoteAddr)
 		})
+		guest.GET("/version", func(c *gin.Context) {
+			c.String(200, config.Version)
+		})
 
 		guest.POST("/auth/login", loginPost)
 		guest.GET("/auth/logout", logoutGet)

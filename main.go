@@ -26,8 +26,6 @@ import (
 	"github.com/didi/nightingale/v5/trans"
 )
 
-var version = "not specified"
-
 var (
 	vers *bool
 	help *bool
@@ -39,7 +37,7 @@ func init() {
 	flag.Parse()
 
 	if *vers {
-		fmt.Println("version:", version)
+		fmt.Println("version:", config.Version)
 		os.Exit(0)
 	}
 
