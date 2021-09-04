@@ -18,9 +18,9 @@ import (
 )
 
 var srv = &http.Server{
-	ReadTimeout:    10 * time.Second,
-	WriteTimeout:   10 * time.Second,
-	MaxHeaderBytes: 1 << 20,
+	ReadTimeout:    30 * time.Second,
+	WriteTimeout:   30 * time.Second,
+	MaxHeaderBytes: 1 << 30,
 }
 
 var skipPaths = []string{
