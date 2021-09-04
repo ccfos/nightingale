@@ -233,7 +233,7 @@ func loginUsername(c *gin.Context) string {
 			ip = remoteAddr[0:idx]
 		}
 
-		if ip == "127.0.0.1" {
+		if (ip == "127.0.0.1" || ip == "[::1]") && c.GetHeader("X-Local") == "1" {
 			//本地调用都当成是root用户在调用
 			username = "root"
 		}
