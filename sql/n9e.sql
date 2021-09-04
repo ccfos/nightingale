@@ -297,8 +297,6 @@ CREATE TABLE `alert_event` (
     `rule_id` bigint unsigned not null,
     `rule_name` varchar(255) not null,
     `rule_note` varchar(512) not null default 'alert rule note',
-    `processor_uid` bigint NOT NULL default 0,
-    `event_note` varchar(512) not null default 'alert event note',
     `res_classpaths` varchar(1024) not null default '' comment 'belong classpaths',
     `priority` tinyint(1) not null,
     `status` tinyint(1) not null,

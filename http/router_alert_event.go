@@ -58,15 +58,15 @@ type alertEventNoteForm struct {
 	EventNote string `json:"event_note"`
 }
 
-func alertEventNotePut(c *gin.Context) {
-	var f alertEventNoteForm
-	bind(c, &f)
+// func alertEventNotePut(c *gin.Context) {
+// 	var f alertEventNoteForm
+// 	bind(c, &f)
 
-	me := loginUser(c).MustPerm("alert_event_modify")
-	ae := AlertEvent(urlParamInt64(c, "id"))
+// 	me := loginUser(c).MustPerm("alert_event_modify")
+// 	ae := AlertEvent(urlParamInt64(c, "id"))
 
-	renderMessage(c, models.AlertEventUpdateEventNote(ae.Id, ae.HashId, f.EventNote, me.Id))
-}
+// 	renderMessage(c, models.AlertEventUpdateEventNote(ae.Id, ae.HashId, f.EventNote, me.Id))
+// }
 
 func alertEventDel(c *gin.Context) {
 	loginUser(c).MustPerm("alert_event_delete")
