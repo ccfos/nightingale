@@ -527,10 +527,14 @@ func sendEventIfNeed(status []bool, event *models.AlertEvent, stra *models.Alert
 func SendEvent(event *models.AlertEvent) {
 	// update last event
 	LastEvents.Set(event)
-	ae, err := models.AlertEventGet("hash_id = ?", event.HashId)
-	if err == nil && ae != nil {
-		logger.Debugf("[event exists do not send again][type:%+v][event:%+v]", event.IsPromePull, event)
-		return
+
+	if event.IsAlert() {
+		// 只有是告警事件，才需要判断是否重复发送的问题，如果是恢复事件，就直接交给后续alert处理
+		ae, err := models.AlertEventGet("hash_id = ?", event.HashId)
+		if err == nil && ae != nil {
+			logger.Debugf("[event exists do not send again][type:%+v][event:%+v]", event.IsPromePull, event)
+			return
+		}
 	}
 
 	ok := EventQueue.PushFront(event)

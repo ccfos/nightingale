@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # release version
-version=5.0.0-rc7
+version=5.0.0-rc7-1
 
 #export GO111MODULE=on
 #export GOPROXY=https://goproxy.cn
