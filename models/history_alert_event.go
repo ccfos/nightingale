@@ -4,20 +4,18 @@ import (
 	"encoding/json"
 	"strings"
 
-	//"github.com/didi/nightingale/v5/vos"
-
 	"github.com/toolkits/pkg/logger"
 	"xorm.io/builder"
 )
 
 type HistoryAlertEvent struct {
-	Id                 int64           `json:"id"`
-	RuleId             int64           `json:"rule_id"`
-	RuleName           string          `json:"rule_name"`
-	RuleNote           string          `json:"rule_note"`
-	ProcessorUid       int64           `json:"processor_uid"`
-	ProcessorObj       User            `json:"processor_user_objs" xorm:"-"`
-	EventNote          string          `json:"event_note"`
+	Id       int64  `json:"id"`
+	RuleId   int64  `json:"rule_id"`
+	RuleName string `json:"rule_name"`
+	RuleNote string `json:"rule_note"`
+	//ProcessorUid       int64           `json:"processor_uid"`
+	//ProcessorObj       User            `json:"processor_user_objs" xorm:""`
+	//EventNote          string          `json:"event_note"`
 	HashId             string          `json:"hash_id"`       // 唯一标识
 	IsPromePull        int             `json:"is_prome_pull"` // 代表是否是prometheus pull告警，为1时前端使用 ReadableExpression 拉取最近1小时数据
 	ResClasspaths      string          `json:"res_classpaths"`
@@ -82,13 +80,15 @@ func (hae *HistoryAlertEvent) FillObjs() error {
 		hae.NotifyUserObjs = users
 	}
 
-	if hae.ProcessorUid != 0 {
-		processor, err := UserGetById(hae.ProcessorUid)
-		if err != nil {
-			return err
+	/*
+		if hae.ProcessorUid != 0 {
+			processor, err := UserGetById(hae.ProcessorUid)
+			if err != nil {
+				return err
+			}
+			hae.ProcessorObj = *processor
 		}
-		hae.ProcessorObj = *processor
-	}
+	*/
 
 	return nil
 }
