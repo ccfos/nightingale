@@ -178,3 +178,20 @@ func userDel(c *gin.Context) {
 func contactChannelsGet(c *gin.Context) {
 	renderData(c, config.Config.ContactKeys, nil)
 }
+
+func getUserByName(c *gin.Context) {
+	user, err := models.UserGetByUsername(queryStr(c, "name"))
+	renderData(c, user, err)
+}
+
+func getUserByToken(c *gin.Context) {
+	userToken, err := models.UserTokenGet("token=?", queryStr(c, "token"))
+	dangerous(err)
+	if userToken == nil {
+		renderMessage(c, nil)
+		return
+	}
+
+	user, err := models.UserGetByUsername(userToken.Username)
+	renderData(c, user, err)
+}

@@ -209,6 +209,7 @@ func configRoutes(r *gin.Engine) {
 		v1.GET("/can-do-op-by-name", login(), canDoOpByName)
 		v1.GET("/can-do-op-by-token", login(), canDoOpByToken)
 		v1.GET("/get-user-by-name", login(), getUserByName)
+		v1.GET("/get-user-by-token", login(), getUserByToken)
 	}
 
 	push := r.Group("/v1/n9e/series").Use(gzip.Gzip(gzip.DefaultCompression))

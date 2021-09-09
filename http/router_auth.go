@@ -90,8 +90,3 @@ func canDoOpByToken(c *gin.Context) {
 	can, err := user.CanDo(queryStr(c, "op"))
 	renderData(c, can, err)
 }
-
-func getUserByName(c *gin.Context) {
-	user, err := models.UserGetByUsername(queryStr(c, "name"))
-	renderData(c, user, err)
-}
