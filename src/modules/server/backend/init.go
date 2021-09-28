@@ -7,6 +7,7 @@ import (
 
 	"github.com/didi/nightingale/v4/src/modules/server/backend/influxdb"
 	"github.com/didi/nightingale/v4/src/modules/server/backend/m3db"
+	"github.com/didi/nightingale/v4/src/modules/server/backend/prom"
 	"github.com/didi/nightingale/v4/src/modules/server/backend/tsdb"
 )
 
@@ -15,6 +16,7 @@ type BackendSection struct {
 	StraPath   string `yaml:"straPath"`
 
 	M3db     m3db.M3dbSection         `yaml:"m3db"`
+	Prom     prom.PromSection         `yaml:"prom"`
 	Tsdb     tsdb.TsdbSection         `yaml:"tsdb"`
 	Influxdb influxdb.InfluxdbSection `yaml:"influxdb"`
 	OpenTsdb OpenTsdbSection          `yaml:"opentsdb"`
@@ -29,6 +31,7 @@ var (
 	influxdbDataSource   *influxdb.InfluxdbDataSource
 	kafkaPushEndpoint    *KafkaPushEndpoint
 	m3dbDataSource       *m3db.Client
+	promDataSource       *prom.PromDataSource
 )
 
 func Init(cfg BackendSection) error {
@@ -98,6 +101,17 @@ func Init(cfg BackendSection) error {
 		if err := ctx.Err(); err != nil && err != context.Canceled {
 			return fmt.Errorf("new m3db client err: %s", err)
 		}
+	}
+
+	// init VictoriaMetrics
+	if cfg.Prom.Enabled {
+		promDataSource = &prom.PromDataSource{
+			Section:               cfg.Prom,
+			SendQueueMaxSize:      DefaultSendQueueMaxSize,
+			SendTaskSleepInterval: DefaultSendTaskSleepInterval,
+		}
+		promDataSource.Init()
+		RegisterDataSource(promDataSource.Section.Name, promDataSource)
 	}
 
 	return nil

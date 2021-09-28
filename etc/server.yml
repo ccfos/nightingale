@@ -22,7 +22,7 @@ tokens:
   - ams-builtin-token
 
 redis:
-  # as queue 
+  # as queue
   local:
     enable: true
     addr: 127.0.0.1:6379
@@ -32,7 +32,6 @@ redis:
       conn: 500
       read: 3000
       write: 3000
-
 
 rdb:
   # for ldap authorization
@@ -90,15 +89,14 @@ rdb:
   #    phone: "phone"
   #    im: ""
   #  coverAttributes: false
-  #  stateExpiresIn: 300    
+  #  stateExpiresIn: 300
   #auth:
   #  captcha: false
-  #  extraMode: 
+  #  extraMode:
   #    enable: false        # enable whiteList, login retry lock, userControl, ...
   #    whiteList: false
   #    frozenDays: 90      # frozen time (day)
   #    writenOffDays: 365  # writenOff time (day)
-
 
 #i18n:
 #  lang: zh
@@ -120,11 +118,11 @@ transfer:
       namespace: "default"
       seriesLimit: 0
       docsLimit: 0
-      daysLimit: 7                               # max query time
+      daysLimit: 7 # max query time
 
       # https://m3db.github.io/m3/m3db/architecture/consistencylevels/
-      writeConsistencyLevel: "majority"          # one|majority|all
-      readConsistencyLevel: "unstrict_majority"  # one|unstrict_majority|majority|all
+      writeConsistencyLevel: "majority" # one|majority|all
+      readConsistencyLevel: "unstrict_majority" # one|unstrict_majority|majority|all
       writeTimeout: 5s
       fetchTimeout: 5s
       connectTimeout: 5s
@@ -144,6 +142,18 @@ transfer:
               #  caCrtPath: /etc/etcd/certs/ca.pem
               #  crtPath: /etc/etcd/certs/etcd-client.pem
               #  keyPath: /etc/etcd/certs/etcd-client-key.pem
+    #prom:
+    #  enabled: true
+    #  name: "prom"
+    #  batch: 10000
+    #  remoteRead:
+    #    - name: prometheus-http
+    #      url: http://172.17.0.3:8428
+    #      remote_timeout: 1s
+    #  remoteWrite:
+    #    - name: prometheus-remotewrite
+    #      url: http://172.17.0.3:8428/api/v1/write
+    #      remote_timeout: 1s
     #tsdb:
     #  enabled: false
     #  name: "tsdb"
@@ -168,7 +178,7 @@ monapi:
   alarmEnabled: true
   region:
     - default
-  
+
   # clean history event
   cleaner:
     # retention days
@@ -178,7 +188,7 @@ monapi:
   notify:
     p1: ["voice", "sms", "mail", "im"]
     p2: ["sms", "mail", "im"]
-    p3: ["mail", "im"]  
+    p3: ["mail", "im"]
 
   # addresses accessible using browser
   link:
@@ -188,12 +198,12 @@ monapi:
 
 judge:
   query:
-    maxConn:          2000
-    maxIdle:          100
-    connTimeout:      1000
-    callTimeout:      2000
+    maxConn: 2000
+    maxIdle: 100
+    connTimeout: 1000
+    callTimeout: 2000
     indexCallTimeout: 2000
-    indexMod:         server
+    indexMod: server
 
 wechat:
   corp_id: "xxxxxxxxxxxxx"

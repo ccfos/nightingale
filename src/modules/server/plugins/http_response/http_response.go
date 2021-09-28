@@ -75,7 +75,7 @@ type Rule struct {
 	ResponseStatusCode  int      `label:"ResponseStatusCode" json:"response_status_code" default:"200" description:"Expected response status code, If match response_status_code_match will be 1"`
 	Interface           string   `label:"Interface" json:"interface" description:"Interface to use when dialing an address" example:"eth0"`
 	HTTPProxy           string   `label:"HTTPProxy" json:"http_proxy" description:"Set http_proxy (telegraf uses the system wide proxy settings if it's is not set)" example:"http://localhost:8888"`
-	FollowRedirects     bool     `label:"FollowRedirects" json:"follow_redirects" description:"Whether to follow redirects from the server (defaults to false)"`
+	FollowRedirects     bool     `label:"FollowRedirects" json:"follow_redirects" default:"true" description:"Whether to follow redirects from the server (defaults to true)" `
 	plugins.ClientConfig
 }
 
