@@ -82,7 +82,7 @@ func GetLeafNidsForMon(nid int64, exclNid []int64) ([]int64, error) {
 	}
 
 	for _, id := range exclNid {
-		node := TreeNodeCache.GetBy(nid)
+		node := TreeNodeCache.GetBy(id)
 		if node == nil {
 			continue
 		}
@@ -122,7 +122,7 @@ func GetRelatedNidsForMon(nid int64, exclNid []int64) ([]int64, error) {
 	idsMap[node.Id] = struct{}{}
 
 	for _, id := range exclNid {
-		node := TreeNodeCache.GetBy(nid)
+		node := TreeNodeCache.GetBy(id)
 		if node == nil {
 			continue
 		}
