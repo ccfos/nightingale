@@ -16,8 +16,8 @@ import (
 )
 
 var srv = &http.Server{
-	ReadTimeout:    10 * time.Second,
-	WriteTimeout:   10 * time.Second,
+	ReadTimeout:    20 * time.Second,
+	WriteTimeout:   60 * time.Second,
 	MaxHeaderBytes: 1 << 20,
 }
 
