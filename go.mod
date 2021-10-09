@@ -24,6 +24,7 @@ require (
 	github.com/influxdata/influxdb v1.8.0
 	github.com/influxdata/telegraf v1.17.2
 	github.com/jackc/pgx v3.6.0+incompatible
+	github.com/jinzhu/copier v0.3.2
 	github.com/json-iterator/go v1.1.9
 	github.com/lib/pq v1.6.0
 	github.com/m3db/m3 v0.15.17

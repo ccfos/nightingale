@@ -2,10 +2,12 @@ package query
 
 import (
 	"errors"
-	"fmt"
-	"math/rand"
+	"github.com/didi/nightingale/v4/src/common/slice"
+	"github.com/didi/nightingale/v4/src/modules/server/backend"
+	"github.com/jinzhu/copier"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/didi/nightingale/v4/src/common/dataobj"
@@ -15,7 +17,6 @@ import (
 	"github.com/didi/nightingale/v4/src/modules/server/cache"
 
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/net/httplib"
 )
 
 var (
@@ -274,29 +275,48 @@ type IndexResp struct {
 
 // index的xclude 不支持批量查询, 暂时不做
 func Xclude(request *IndexReq) ([]IndexData, error) {
-	addrs := IndexList.Get()
-	if len(addrs) == 0 {
-		return nil, errors.New("empty index addr")
-	}
-
-	var result IndexResp
-	perm := rand.Perm(len(addrs))
 	var err error
-	for i := range perm {
-		url := fmt.Sprintf("http://%s%s", addrs[perm[i]], Config.IndexPath)
-		err = httplib.Post(url).JSONBodyQuiet([]IndexReq{*request}).SetTimeout(time.Duration(Config.IndexCallTimeout) * time.Millisecond).ToJSON(&result)
-		if err == nil {
-			break
-		}
-		logger.Warningf("index xclude failed, error:%v, req:%+v", err, request)
-	}
+	var allData []IndexData
 
+	// 切分500一批的分批并发查询，避免一次查询主机过多，给存储太大压力
+	endpointsGroupList := slice.ArrayInGroupsOf(request.Endpoints,500)
+	dataSource, err := backend.GetDataSourceFor("")
 	if err != nil {
-		return nil, fmt.Errorf("index xclude failed, error:%v, req:%+v", err, request)
+		logger.Warningf("could not find datasource")
+		return allData, err
 	}
 
-	if result.Err != "" {
-		return nil, errors.New(result.Err)
+	wg := sync.WaitGroup{}
+	for _, endpoints := range endpointsGroupList {
+		// 直接查询dataSource的方法，避免使用http请求，容易超时
+		var Exclude []*dataobj.TagPair
+		for _, excludeData := range request.Exclude {
+			Exclude = append(Exclude, &dataobj.TagPair{Key: excludeData.Tagk, Values: excludeData.Tagv})
+		}
+		var Include []*dataobj.TagPair
+		for _, includeData := range request.Include {
+			Include = append(Include, &dataobj.TagPair{Key: includeData.Tagk, Values: includeData.Tagv})
+		}
+		reqData := dataobj.CludeRecv{
+			Nids:      request.Nids,
+			Endpoints: endpoints,
+			Metric:    request.Metric,
+			Exclude:    Exclude,
+			Include:    Include,
+		}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			var result []IndexData
+			resp := dataSource.QueryIndexByClude([]dataobj.CludeRecv{reqData})
+			if err := copier.Copy(&result, &resp); err != nil {
+				logger.Errorf("Copy to IndexData struct error")
+			}
+			allData = append(allData, result...)
+		}()
 	}
-	return result.Data, nil
+	wg.Wait()
+
+	return allData, nil
 }
