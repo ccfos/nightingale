@@ -70,7 +70,7 @@ func ListDiskStats() ([]*DiskStats, error) {
 
 		size := len(fields)
 		// kernel version too low
-		if size != 14 {
+		if size < 14 {
 			continue
 		}
 
