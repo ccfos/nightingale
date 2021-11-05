@@ -411,13 +411,14 @@ func send(tos []string, content, subject, notifyType string) error {
 		return fmt.Errorf("tos is empty")
 	}
 
+	message.Tos = tos
 	message.Content = strings.TrimSpace(content)
 	if message.Content == "" {
 		return fmt.Errorf("content is blank")
 	}
 
 	if notifyType == "email" {
-		message.Subject = strings.TrimSpace(message.Subject)
+		message.Subject = strings.TrimSpace(subject)
 		if message.Subject == "" {
 			return fmt.Errorf("subject is blank")
 		}
