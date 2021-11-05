@@ -32,7 +32,9 @@ func send2LocalJudge(q *list.SafeListLimited) {
 
 		points := make([]*vos.MetricPoint, count)
 		for i := 0; i < count; i++ {
-			points[i] = items[i].(*vos.MetricPoint)
+			item := items[i].(*vos.MetricPoint)
+			item.TagsMap["ident"] = item.Ident
+			points[i] = item
 		}
 
 		judge.Send(points)
