@@ -5,6 +5,5 @@
 
 ## 大本营
 
-微信公众号如下
+微信公众号:`__n9e__`（夜莺监控）
 
-<img src="https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png" width="250" alt="Nightingale"/>
