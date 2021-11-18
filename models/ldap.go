@@ -87,8 +87,8 @@ func ldapReq(user, pass string) (*ldap.SearchResult, error) {
 	searchRequest := ldap.NewSearchRequest(
 		lc.BaseDn, // The base dn to search
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf(lc.AuthFilter, user), // The filter to apply
-		genLdapAttributeSearchList(),     // A list attributes to retrieve
+		fmt.Sprintf(lc.AuthFilter, ldap.EscapeFilter(user)), // The filter to apply
+		genLdapAttributeSearchList(),                        // A list attributes to retrieve
 		nil,
 	)
 
