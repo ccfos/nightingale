@@ -1,0 +1,151 @@
+package engine
+
+import (
+	"context"
+	"strconv"
+	"time"
+
+	"github.com/toolkits/pkg/concurrent/semaphore"
+	"github.com/toolkits/pkg/logger"
+
+	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/server/config"
+	"github.com/didi/nightingale/v5/src/server/memsto"
+)
+
+func loopConsume(ctx context.Context) {
+	sema := semaphore.NewSemaphore(config.C.Alerting.NotifyConcurrency)
+	duration := time.Duration(100) * time.Millisecond
+	for {
+		events := EventQueue.PopBackBy(100)
+		if len(events) == 0 {
+			time.Sleep(duration)
+			continue
+		}
+		consume(events, sema)
+	}
+}
+
+func consume(events []interface{}, sema *semaphore.Semaphore) {
+	for i := range events {
+		if events[i] == nil {
+			continue
+		}
+
+		event := events[i].(*models.AlertCurEvent)
+		sema.Acquire()
+		go func(event *models.AlertCurEvent) {
+			defer sema.Release()
+			consumeOne(event)
+		}(event)
+	}
+}
+
+func consumeOne(event *models.AlertCurEvent) {
+	logEvent(event, "consume")
+	persist(event)
+	fillUsers(event)
+	callback(event)
+	notify(event)
+}
+
+func persist(event *models.AlertCurEvent) {
+	has, err := models.AlertCurEventExists("hash=?", event.Hash)
+	if err != nil {
+		logger.Errorf("event_persist_check_exists_fail: %v rule_id=%d hash=%s", err, event.RuleId, event.Hash)
+		return
+	}
+
+	his := event.ToHis()
+
+	if has {
+		// 数据库里有这个事件，说明之前触发过了
+		if event.IsRecovered {
+			// 本次恢复了，把未恢复的事件删除，在全量告警里添加记录
+			err := models.AlertCurEventDelByHash(event.Hash)
+			if err != nil {
+				logger.Errorf("event_del_cur_fail: %v hash=%s", err, event.Hash)
+			}
+
+			if err := his.Add(); err != nil {
+				logger.Errorf(
+					"event_persist_his_fail: %v rule_id=%d hash=%s tags=%v timestamp=%d value=%s",
+					err,
+					event.RuleId,
+					event.Hash,
+					event.TagsJSON,
+					event.TriggerTime,
+					event.TriggerValue,
+				)
+			}
+		}
+		return
+	}
+
+	if event.IsRecovered {
+		// alert_cur_event表里没有数据，表示之前没告警，结果现在报了恢复，神奇....理论上不应该出现的
+		return
+	}
+
+	// 本次是告警，alert_cur_event表里也没有数据
+	if err := his.Add(); err != nil {
+		logger.Errorf(
+			"event_persist_his_fail: %v rule_id=%d hash=%s tags=%v timestamp=%d value=%s",
+			err,
+			event.RuleId,
+			event.Hash,
+			event.TagsJSON,
+			event.TriggerTime,
+			event.TriggerValue,
+		)
+	}
+
+	// use his id as cur id
+	event.Id = his.Id
+	if event.Id > 0 {
+		if err := event.Add(); err != nil {
+			logger.Errorf(
+				"event_persist_cur_fail: %v rule_id=%d hash=%s tags=%v timestamp=%d value=%s",
+				err,
+				event.RuleId,
+				event.Hash,
+				event.TagsJSON,
+				event.TriggerTime,
+				event.TriggerValue,
+			)
+		}
+	}
+}
+
+// for alerting
+func fillUsers(e *models.AlertCurEvent) {
+	gids := make([]int64, 0, len(e.NotifyGroupsJSON))
+	for i := 0; i < len(e.NotifyGroupsJSON); i++ {
+		gid, err := strconv.ParseInt(e.NotifyGroupsJSON[i], 10, 64)
+		if err != nil {
+			continue
+		}
+
+		gids = append(gids, gid)
+	}
+
+	e.NotifyGroupsObj = memsto.UserGroupCache.GetByUserGroupIds(gids)
+
+	uids := make(map[int64]struct{})
+	for i := 0; i < len(e.NotifyGroupsObj); i++ {
+		ug := e.NotifyGroupsObj[i]
+		for j := 0; j < len(ug.UserIds); j++ {
+			uids[ug.UserIds[j]] = struct{}{}
+		}
+	}
+
+	e.NotifyUsersObj = memsto.UserCache.GetByUserIds(mapKeys(uids))
+}
+
+func mapKeys(m map[int64]struct{}) []int64 {
+	lst := make([]int64, 0, len(m))
+	for k := range m {
+		lst = append(lst, k)
+	}
+	return lst
+}
