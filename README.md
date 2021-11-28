@@ -19,5 +19,4 @@ Nightingale, Prometheus enterprise edition
 
 钉钉交流群：
 
-![](doc/img/dingtalk.png)
-
+<img src="doc/img/dingtalk.png" width="200">
