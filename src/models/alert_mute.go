@@ -80,8 +80,8 @@ func (m *AlertMute) Parse() error {
 		} else if m.ITags[i].Func == "in" {
 			arr := strings.Fields(m.ITags[i].Value)
 			m.ITags[i].Vset = make(map[string]struct{})
-			for i := 0; i < len(arr); i++ {
-				m.ITags[i].Vset[arr[i]] = struct{}{}
+			for j := 0; j < len(arr); j++ {
+				m.ITags[i].Vset[arr[j]] = struct{}{}
 			}
 		}
 	}
