@@ -32,14 +32,14 @@ func alertSubscribeAdd(c *gin.Context) {
 	var f models.AlertSubscribe
 	ginx.BindJSON(c, &f)
 
-	if f.GroupId <= 0 {
-		ginx.Bomb(http.StatusBadRequest, "group_id invalid")
-	}
-
 	username := c.MustGet("username").(string)
 	f.CreateBy = username
 	f.UpdateBy = username
 	f.GroupId = ginx.UrlParamInt64(c, "id")
+
+	if f.GroupId <= 0 {
+		ginx.Bomb(http.StatusBadRequest, "group_id invalid")
+	}
 
 	ginx.NewRender(c).Message(f.Add())
 }
