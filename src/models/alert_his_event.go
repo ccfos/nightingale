@@ -103,7 +103,7 @@ func AlertHisEventTotal(bgid, stime, etime int64, severity int, recovered int, c
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
 			qarg := "%" + arr[i] + "%"
-			session = session.Where("rule_name like ? or tags like ?", qarg)
+			session = session.Where("rule_name like ? or tags like ?", qarg, qarg)
 		}
 	}
 
@@ -129,7 +129,7 @@ func AlertHisEventGets(bgid, stime, etime int64, severity int, recovered int, cl
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
 			qarg := "%" + arr[i] + "%"
-			session = session.Where("rule_name like ? or tags like ?", qarg)
+			session = session.Where("rule_name like ? or tags like ?", qarg, qarg)
 		}
 	}
 
