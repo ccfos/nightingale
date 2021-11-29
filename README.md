@@ -10,6 +10,8 @@ Nightingale, Prometheus enterprise edition
 - [ ] notify.py support feishu
 - [ ] notify.py support sms
 - [ ] notify.py support voice
+- [ ] support remote write api
+- [ ] support pushgateway api
 
 
 ## 大本营
