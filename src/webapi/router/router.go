@@ -220,5 +220,6 @@ func configRoute(r *gin.Engine, version string) {
 	service := r.Group("/v1/n9e", gin.BasicAuth(config.C.BasicAuth))
 	{
 		service.Any("/prometheus/*url", prometheusProxy)
+		service.POST("/users", userAddPost)
 	}
 }
