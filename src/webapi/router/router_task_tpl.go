@@ -173,6 +173,7 @@ func (f *tplTagsForm) Verify() {
 func taskTplBindTags(c *gin.Context) {
 	var f tplTagsForm
 	ginx.BindJSON(c, &f)
+	f.Verify()
 
 	username := c.MustGet("username").(string)
 
@@ -193,6 +194,7 @@ func taskTplBindTags(c *gin.Context) {
 func taskTplUnbindTags(c *gin.Context) {
 	var f tplTagsForm
 	ginx.BindJSON(c, &f)
+	f.Verify()
 
 	username := c.MustGet("username").(string)
 
