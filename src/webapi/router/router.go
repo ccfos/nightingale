@@ -185,6 +185,7 @@ func configRoute(r *gin.Engine, version string) {
 		pages.DELETE("/busi-group/:id/alert-mutes", jwtAuth(), user(), bgrw(), alertMuteDel)
 
 		pages.GET("/busi-group/:id/alert-subscribes", jwtAuth(), user(), bgro(), alertSubscribeGets)
+		pages.GET("/alert-subscribe/:sid", jwtAuth(), user(), bgro(), alertSubscribeGet)
 		pages.POST("/busi-group/:id/alert-subscribes", jwtAuth(), user(), bgrw(), alertSubscribeAdd)
 		pages.PUT("/busi-group/:id/alert-subscribes", jwtAuth(), user(), bgrw(), alertSubscribePut)
 		pages.DELETE("/busi-group/:id/alert-subscribes", jwtAuth(), user(), bgrw(), alertSubscribeDel)

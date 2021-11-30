@@ -40,6 +40,20 @@ func AlertSubscribeGets(groupId int64) (lst []AlertSubscribe, err error) {
 	return
 }
 
+func AlertSubscribeGet(where string, args ...interface{}) (*AlertSubscribe, error) {
+	var lst []*AlertSubscribe
+	err := DB().Where(where, args...).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(lst) == 0 {
+		return nil, nil
+	}
+
+	return lst[0], nil
+}
+
 func (s *AlertSubscribe) Verify() error {
 	if s.Cluster == "" {
 		return errors.New("cluster invalid")

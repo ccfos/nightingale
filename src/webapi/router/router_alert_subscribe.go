@@ -28,6 +28,26 @@ func alertSubscribeGets(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
+func alertSubscribeGet(c *gin.Context) {
+	subid := ginx.UrlParamInt64(c, "sid")
+
+	sub, err := models.AlertSubscribeGet("id=?", subid)
+	ginx.Dangerous(err)
+
+	if sub == nil {
+		ginx.NewRender(c, 404).Message("No such alert subscribe")
+		return
+	}
+
+	ugcache := make(map[int64]*models.UserGroup)
+	sub.FillUserGroups(ugcache)
+
+	rulecache := make(map[int64]string)
+	sub.FillRuleName(rulecache)
+
+	ginx.NewRender(c).Data(sub, nil)
+}
+
 func alertSubscribeAdd(c *gin.Context) {
 	var f models.AlertSubscribe
 	ginx.BindJSON(c, &f)

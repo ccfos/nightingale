@@ -36,6 +36,7 @@ _test
 /vendor
 /tmp
 /pub
+/n9e
 
 .alerts
 .idea
