@@ -19,6 +19,9 @@ import (
 )
 
 func loopFilterRules(ctx context.Context) {
+	// wait for samples
+	time.Sleep(time.Minute * 2)
+
 	duration := time.Duration(9000) * time.Millisecond
 	for {
 		select {
