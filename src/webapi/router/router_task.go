@@ -19,7 +19,7 @@ import (
 func taskGets(c *gin.Context) {
 	bgid := ginx.UrlParamInt64(c, "id")
 	mine := ginx.QueryBool(c, "mine", false)
-	hours := ginx.QueryInt64(c, "hours", 24*7)
+	days := ginx.QueryInt64(c, "days", 7)
 	limit := ginx.QueryInt(c, "limit", 20)
 	query := ginx.QueryStr(c, "query", "")
 	user := c.MustGet("user").(*models.User)
@@ -29,7 +29,7 @@ func taskGets(c *gin.Context) {
 		creator = user.Username
 	}
 
-	beginTime := time.Now().Unix() - hours*3600
+	beginTime := time.Now().Unix() - days*24*3600
 
 	total, err := models.TaskRecordTotal(bgid, beginTime, creator, query)
 	ginx.Dangerous(err)
