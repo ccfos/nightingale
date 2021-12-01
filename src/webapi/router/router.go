@@ -102,6 +102,10 @@ func configRoute(r *gin.Engine, version string) {
 	{
 		pages.Any("/prometheus/*url", jwtAuth(), prometheusProxy)
 
+		pages.GET("/version", func(c *gin.Context) {
+			c.String(200, version)
+		})
+
 		pages.POST("/auth/login", loginPost)
 		pages.POST("/auth/logout", logoutPost)
 		pages.POST("/auth/refresh", refreshPost)
