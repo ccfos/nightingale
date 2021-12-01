@@ -20,7 +20,7 @@ import (
 
 func loopFilterRules(ctx context.Context) {
 	// wait for samples
-	time.Sleep(time.Minute * 2)
+	time.Sleep(time.Duration(config.C.EngineDelay) * time.Second)
 
 	duration := time.Duration(9000) * time.Millisecond
 	for {

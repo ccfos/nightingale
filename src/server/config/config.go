@@ -62,6 +62,10 @@ func MustLoad(fpaths ...string) {
 		}
 		m.MustLoad(C)
 
+		if C.EngineDelay == 0 {
+			C.EngineDelay = 120
+		}
+
 		if C.Heartbeat.IP == "" {
 			// auto detect
 			C.Heartbeat.IP = fmt.Sprint(GetOutboundIP())
@@ -85,6 +89,7 @@ func MustLoad(fpaths ...string) {
 type Config struct {
 	RunMode     string
 	ClusterName string
+	EngineDelay int64
 	Log         logx.Config
 	HTTP        httpx.Config
 	BasicAuth   gin.Accounts
