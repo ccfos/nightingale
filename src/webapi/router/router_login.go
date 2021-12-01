@@ -91,7 +91,7 @@ func refreshPost(c *gin.Context) {
 	// if there is an error, the token must have expired
 	if err != nil {
 		// redirect to login page
-		ginx.NewRender(c).Message("refresh token expired")
+		ginx.NewRender(c, http.StatusUnauthorized).Message("refresh token expired")
 		return
 	}
 
@@ -101,21 +101,21 @@ func refreshPost(c *gin.Context) {
 		refreshUuid, ok := claims["refresh_uuid"].(string) //convert the interface to string
 		if !ok {
 			// Theoretically impossible
-			ginx.NewRender(c).Message("failed to parse refresh_uuid from jwt")
+			ginx.NewRender(c, http.StatusUnauthorized).Message("failed to parse refresh_uuid from jwt")
 			return
 		}
 
 		userIdentity, ok := claims["user_identity"].(string)
 		if !ok {
 			// Theoretically impossible
-			ginx.NewRender(c).Message("failed to parse user_identity from jwt")
+			ginx.NewRender(c, http.StatusUnauthorized).Message("failed to parse user_identity from jwt")
 			return
 		}
 
 		// Delete the previous Refresh Token
 		err = deleteAuth(c.Request.Context(), refreshUuid)
 		if err != nil {
-			ginx.NewRender(c).Message(InternalServerError)
+			ginx.NewRender(c, http.StatusUnauthorized).Message(InternalServerError)
 			return
 		}
 
@@ -133,6 +133,6 @@ func refreshPost(c *gin.Context) {
 		}, nil)
 	} else {
 		// redirect to login page
-		ginx.NewRender(c).Message("refresh token expired")
+		ginx.NewRender(c, http.StatusUnauthorized).Message("refresh token expired")
 	}
 }
