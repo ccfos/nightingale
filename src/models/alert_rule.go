@@ -292,7 +292,7 @@ func AlertRuleGetById(id int64) (*AlertRule, error) {
 
 func AlertRuleGetName(id int64) (string, error) {
 	var names []string
-	err := DB().Where("id = ?", id).Pluck("name", &names).Error
+	err := DB().Model(new(AlertRule)).Where("id = ?", id).Pluck("name", &names).Error
 	if err != nil {
 		return "", err
 	}
