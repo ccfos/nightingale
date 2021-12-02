@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 
 	"github.com/didi/nightingale/v5/src/models"
 )
@@ -46,7 +47,7 @@ func alertRuleAdd(c *gin.Context) {
 		lst[i].FE2DB()
 
 		if err := lst[i].Add(); err != nil {
-			reterr[lst[i].Name] = err.Error()
+			reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 		} else {
 			reterr[lst[i].Name] = ""
 		}

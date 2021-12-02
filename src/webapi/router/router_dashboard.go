@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 
 	"github.com/didi/nightingale/v5/src/models"
 )
@@ -186,7 +187,7 @@ func dashboardImport(c *gin.Context) {
 
 		err := dash.Add()
 		if err != nil {
-			ret[dash.Name] = err.Error()
+			ret[dash.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 			continue
 		}
 
