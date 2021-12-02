@@ -17,12 +17,12 @@ func alertSubscribeGets(c *gin.Context) {
 	if err == nil {
 		ugcache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(lst); i++ {
-			lst[i].FillUserGroups(ugcache)
+			ginx.Dangerous(lst[i].FillUserGroups(ugcache))
 		}
 
 		rulecache := make(map[int64]string)
 		for i := 0; i < len(lst); i++ {
-			lst[i].FillRuleName(rulecache)
+			ginx.Dangerous(lst[i].FillRuleName(rulecache))
 		}
 	}
 	ginx.NewRender(c).Data(lst, err)
@@ -40,10 +40,10 @@ func alertSubscribeGet(c *gin.Context) {
 	}
 
 	ugcache := make(map[int64]*models.UserGroup)
-	sub.FillUserGroups(ugcache)
+	ginx.Dangerous(sub.FillUserGroups(ugcache))
 
 	rulecache := make(map[int64]string)
-	sub.FillRuleName(rulecache)
+	ginx.Dangerous(sub.FillRuleName(rulecache))
 
 	ginx.NewRender(c).Data(sub, nil)
 }
