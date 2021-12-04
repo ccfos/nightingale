@@ -2,10 +2,10 @@
 
 NOW = $(shell date -u '+%Y%m%d%I%M%S')
 
-RELEASE_VERSION = 5.0.0
+RELEASE_VERSION = 5.0.0-ga-01
 
 APP 			= n9e
-SERVER_BIN  	= ${APP}
+SERVER_BIN  	= $(APP)
 # RELEASE_ROOT 	= release
 # RELEASE_SERVER 	= release/${APP}
 # GIT_COUNT 		= $(shell git rev-list --all --count)
@@ -32,7 +32,6 @@ build:
 # clean:
 # 	rm -rf data release $(SERVER_BIN) internal/app/test/data cmd/${APP}/data
 
-# pack: build
-# 	rm -rf $(RELEASE_ROOT) && mkdir -p $(RELEASE_SERVER)
-# 	cp -r $(SERVER_BIN) configs $(RELEASE_SERVER)
-# 	cd $(RELEASE_ROOT) && tar -cvf $(APP).tar ${APP} && rm -rf ${APP}
+pack: build
+	rm -rf $(APP)-$(RELEASE_VERSION).tar.gz
+	tar -zcvf $(APP)-$(RELEASE_VERSION).tar.gz docker etc $(SERVER_BIN)
