@@ -104,7 +104,7 @@ CREATE TABLE `busi_group` (
     UNIQUE KEY (`name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-insert into busi_group(id, name, create_at, create_by, update_at, update_by) values(1, 'Default Business Group', unix_timestamp(now()), 'root', unix_timestamp(now()), 'root');
+insert into busi_group(id, name, create_at, create_by, update_at, update_by) values(1, 'Default Busi Group', unix_timestamp(now()), 'root', unix_timestamp(now()), 'root');
 
 CREATE TABLE `busi_group_member` (
     `id` bigint unsigned not null auto_increment,
