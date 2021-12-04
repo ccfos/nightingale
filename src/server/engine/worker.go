@@ -210,6 +210,7 @@ func (r RuleEval) judge(vectors []Vector) {
 		event := &models.AlertCurEvent{
 			TriggerTime: vectors[i].Timestamp,
 			TagsMap:     tagsMap,
+			GroupId:     r.rule.GroupId,
 		}
 
 		// isMuted only need TriggerTime and TagsMap
@@ -226,7 +227,6 @@ func (r RuleEval) judge(vectors []Vector) {
 		sort.Strings(tagsArr)
 
 		event.Cluster = r.rule.Cluster
-		event.GroupId = r.rule.GroupId
 		event.Hash = hash
 		event.RuleId = r.rule.Id
 		event.RuleName = r.rule.Name
