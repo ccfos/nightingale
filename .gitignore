@@ -44,6 +44,7 @@ _test
 .vscode
 .DS_Store
 .cache-loader
+.payload
 queries.active
 
 /n9e-*
