@@ -2,6 +2,7 @@ FROM ubuntu:21.04
 
 WORKDIR /app
 ADD n9e /app
+ADD pub /app/
 RUN chmod +x n9e
 
 EXPOSE 19000
