@@ -10,6 +10,14 @@ import (
 	"github.com/didi/nightingale/v5/src/models"
 )
 
+func checkBusiGroupPerm(c *gin.Context) {
+	me := c.MustGet("user").(*models.User)
+	bg := BusiGroup(ginx.UrlParamInt64(c, "id"))
+
+	can, err := me.CanDoBusiGroup(bg, ginx.UrlParamStr(c, "perm"))
+	ginx.NewRender(c).Data(can, err)
+}
+
 // Return all, front-end search and paging
 // I'm creator or member
 func userGroupGets(c *gin.Context) {

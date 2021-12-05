@@ -137,6 +137,7 @@ func configRoute(r *gin.Engine, version string) {
 		pages.DELETE("/user-group/:id", jwtAuth(), user(), userGroupWrite(), userGroupDel)
 		pages.POST("/user-group/:id/members", jwtAuth(), user(), userGroupWrite(), userGroupMemberAdd)
 		pages.DELETE("/user-group/:id/members", jwtAuth(), user(), userGroupWrite(), userGroupMemberDel)
+		pages.GET("/user-group/:id/perm/:perm", jwtAuth(), user(), checkBusiGroupPerm)
 
 		pages.POST("/busi-groups", jwtAuth(), user(), busiGroupAdd)
 		pages.GET("/busi-groups", jwtAuth(), user(), busiGroupGets)
