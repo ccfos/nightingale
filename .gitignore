@@ -37,6 +37,8 @@ _test
 /tmp
 /pub
 /n9e
+/docker/pub
+/docker/n9e
 
 .alerts
 .idea
