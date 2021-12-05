@@ -1,0 +1,20 @@
+[Unit]
+Description="telegraf"
+After=network.target
+
+[Service]
+Type=simple
+
+ExecStart=/opt/telegraf/usr/bin/telegraf --config etc/telegraf/telegraf.conf --output-filter opentsdb
+WorkingDirectory=/opt/telegraf
+
+Restart=on-failure
+SuccessExitStatus=0
+LimitNOFILE=65536
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=telegraf
+
+
+[Install]
+WantedBy=multi-user.target
