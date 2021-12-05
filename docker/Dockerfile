@@ -2,7 +2,8 @@ FROM ubuntu:21.04
 
 WORKDIR /app
 ADD n9e /app
-COPY pub /app/
+RUN mkdir -p /app/pub
+ADD pub /app/pub/
 RUN chmod +x n9e
 
 EXPOSE 19000
