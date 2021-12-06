@@ -1,1 +1,11 @@
 cpu_usage_idle: CPU空闲率（单位：%）
+cpu_usage_active: CPU使用率（单位：%）
+cpu_usage_system: CPU内核态时间占比（单位：%）
+cpu_usage_user: CPU用户态时间占比（单位：%）
+cpu_usage_nice: 低优先级用户态CPU时间占比，也就是进程nice值被调整为1-19之间的CPU时间。这里注意，nice可取值范围是-20到19，数值越大，优先级反而越低（单位：%）
+cpu_usage_iowait: CPU等待I/O的时间占比（单位：%）
+cpu_usage_irq: CPU处理硬中断的时间占比（单位：%）
+cpu_usage_softirq: CPU处理软中断的时间占比（单位：%）
+cpu_usage_steal: 在虚拟机环境下有该指标，表示CPU被其他虚拟机争用的时间占比，超过20就表示争抢严重（单位：%）
+cpu_usage_guest: 通过虚拟化运行其他操作系统的时间，也就是运行虚拟机的CPU时间占比（单位：%）
+cpu_usage_guest_nice: 以低优先级运行虚拟机的时间占比（单位：%）
