@@ -100,7 +100,7 @@ func configRoute(r *gin.Engine, version string) {
 
 	pages := r.Group(pagesPrefix)
 	{
-		pages.Any("/prometheus/*url", jwtAuth(), prometheusProxy)
+		pages.Any("/prometheus/*url", prometheusProxy)
 
 		pages.GET("/version", func(c *gin.Context) {
 			c.String(200, version)

@@ -39,6 +39,7 @@ _test
 /n9e
 /docker/pub
 /docker/n9e
+/docker/mysqldata
 
 .alerts
 .idea
