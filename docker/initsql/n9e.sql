@@ -93,6 +93,8 @@ insert into `role_operation`(role_name, operation) values('Standard', '/alert-mu
 insert into `role_operation`(role_name, operation) values('Standard', '/alert-subscribes');
 insert into `role_operation`(role_name, operation) values('Standard', '/alert-cur-events');
 insert into `role_operation`(role_name, operation) values('Standard', '/alert-his-events');
+insert into `role_operation`(role_name, operation) values('Standard', '/job-tpls');
+insert into `role_operation`(role_name, operation) values('Standard', '/job-tasks');
 insert into `role_operation`(role_name, operation) values('Standard', '/help/version');
 insert into `role_operation`(role_name, operation) values('Standard', '/help/contact');
 
