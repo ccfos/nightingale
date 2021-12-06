@@ -9,3 +9,23 @@ cpu_usage_softirq: CPU处理软中断的时间占比（单位：%）
 cpu_usage_steal: 在虚拟机环境下有该指标，表示CPU被其他虚拟机争用的时间占比，超过20就表示争抢严重（单位：%）
 cpu_usage_guest: 通过虚拟化运行其他操作系统的时间，也就是运行虚拟机的CPU时间占比（单位：%）
 cpu_usage_guest_nice: 以低优先级运行虚拟机的时间占比（单位：%）
+
+disk_free: 硬盘分区剩余量（单位：byte）
+disk_used: 硬盘分区使用量（单位：byte）
+disk_used_percent: 硬盘分区使用率（单位：%）
+disk_total: 硬盘分区总量（单位：byte）
+disk_inodes_free: 硬盘分区inode剩余量 
+disk_inodes_used: 硬盘分区inode使用量
+disk_inodes_total: 硬盘分区inode总量
+
+diskio_io_time: 从设备视角来看I/O请求总时间，队列中有I/O请求就计数（单位：毫秒），counter类型，需要用函数求rate才有使用价值
+diskio_iops_in_progress: 已经分配给设备驱动且尚未完成的IO请求，不包含在队列中但尚未分配给设备驱动的IO请求，gauge类型
+diskio_merged_reads: 相邻读请求merge读的次数，counter类型
+diskio_merged_writes: 相邻写请求merge写的次数，counter类型
+diskio_read_bytes: 读取的byte数量，counter类型，需要用函数求rate才有使用价值
+diskio_read_time: 读请求总时间（单位：毫秒），counter类型，需要用函数求rate才有使用价值
+diskio_reads: 读请求次数，counter类型，需要用函数求rate才有使用价值
+diskio_weighted_io_time: 从I/O请求视角来看I/O等待总时间，如果同时有多个I/O请求，时间会叠加（单位：毫秒）
+diskio_write_bytes: 写入的byte数量，counter类型，需要用函数求rate才有使用价值
+diskio_write_time: 写请求总时间（单位：毫秒），counter类型，需要用函数求rate才有使用价值
+diskio_writes: 写请求次数，counter类型，需要用函数求rate才有使用价值
