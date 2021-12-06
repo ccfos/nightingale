@@ -173,6 +173,16 @@ func (ws *WorkersType) Build(rids []int64) {
 }
 
 func (r RuleEval) judge(vectors []Vector) {
+	// 有可能rule的一些配置已经发生变化，比如告警接收人、callbacks等
+	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
+	// 所以，这里直接从memsto.AlertRuleCache中获取并覆盖
+	curRule := memsto.AlertRuleCache.Get(r.rule.Id)
+	if curRule == nil {
+		return
+	}
+
+	r.rule = curRule
+
 	count := len(vectors)
 	alertingKeys := make(map[string]struct{})
 	now := time.Now().Unix()
