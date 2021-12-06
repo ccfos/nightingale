@@ -2,9 +2,6 @@
 
 Nightingale, Prometheus enterprise edition
 
-## 注意
-
-v5正式版还没发布，预计12月中旬发布
 
 ## 文档
 
