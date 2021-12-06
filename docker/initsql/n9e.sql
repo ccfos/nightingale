@@ -76,21 +76,25 @@ CREATE TABLE `role_operation`(
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 -- Admin is special, who has no concrete operation but can do anything.
-insert into `role_operation`(role_name, operation) values('Guest', 'menu_metric_explorer');
-insert into `role_operation`(role_name, operation) values('Guest', 'menu_object_explorer');
-insert into `role_operation`(role_name, operation) values('Guest', 'menu_dashboards');
-insert into `role_operation`(role_name, operation) values('Standard', 'menu_metric_explorer');
-insert into `role_operation`(role_name, operation) values('Standard', 'menu_object_explorer');
-insert into `role_operation`(role_name, operation) values('Standard', 'menu_dashboards');
-insert into `role_operation`(role_name, operation) values('Standard', 'menu_users');
-insert into `role_operation`(role_name, operation) values('Standard', 'menu_user_groups');
-insert into `role_operation`(role_name, operation) values('Standard', 'menu_busi_groups');
-insert into `role_operation`(role_name, operation) values('Standard', 'menu_targets');
-insert into `role_operation`(role_name, operation) values('Standard', 'menu_alert_rules');
-insert into `role_operation`(role_name, operation) values('Standard', 'menu_alert_mutes');
-insert into `role_operation`(role_name, operation) values('Standard', 'menu_alert_subscribes');
-insert into `role_operation`(role_name, operation) values('Standard', 'menu_alert_cur_events');
-insert into `role_operation`(role_name, operation) values('Standard', 'menu_alert_his_events');
+insert into `role_operation`(role_name, operation) values('Guest', '/metric/explorer');
+insert into `role_operation`(role_name, operation) values('Guest', '/object/explorer');
+insert into `role_operation`(role_name, operation) values('Guest', '/dashboards');
+insert into `role_operation`(role_name, operation) values('Guest', '/help/version');
+insert into `role_operation`(role_name, operation) values('Guest', '/help/contact');
+insert into `role_operation`(role_name, operation) values('Standard', '/metric/explorer');
+insert into `role_operation`(role_name, operation) values('Standard', '/object/explorer');
+insert into `role_operation`(role_name, operation) values('Standard', '/dashboards');
+insert into `role_operation`(role_name, operation) values('Standard', '/users');
+insert into `role_operation`(role_name, operation) values('Standard', '/user-groups');
+insert into `role_operation`(role_name, operation) values('Standard', '/busi-groups');
+insert into `role_operation`(role_name, operation) values('Standard', '/targets');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-rules');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-mutes');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-subscribes');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-cur-events');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-his-events');
+insert into `role_operation`(role_name, operation) values('Standard', '/help/version');
+insert into `role_operation`(role_name, operation) values('Standard', '/help/contact');
 
 -- for alert_rule | collect_rule | mute | dashboard grouping
 CREATE TABLE `busi_group` (
