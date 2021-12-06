@@ -34,4 +34,4 @@ build:
 
 pack: build
 	rm -rf $(APP)-$(RELEASE_VERSION).tar.gz
-	tar -zcvf $(APP)-$(RELEASE_VERSION).tar.gz docker etc $(SERVER_BIN)
+	tar -zcvf $(APP)-$(RELEASE_VERSION).tar.gz docker etc $(SERVER_BIN) pub
