@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -173,7 +174,17 @@ func (bg *BusiGroup) AddMembers(members []BusiGroupMember, username string) erro
 
 func (bg *BusiGroup) DelMembers(members []BusiGroupMember, username string) error {
 	for i := 0; i < len(members); i++ {
-		err := BusiGroupMemberDel("busi_group_id = ? and user_group_id = ?", members[i].BusiGroupId, members[i].UserGroupId)
+		num, err := BusiGroupMemberCount("busi_group_id = ? and user_group_id <> ?", members[i].BusiGroupId, members[i].UserGroupId)
+		if err != nil {
+			return err
+		}
+
+		if num == 0 {
+			// 说明这是最后一个user-group，如果再删了，就没人可以管理这个busi-group了
+			return fmt.Errorf("The business group must retain at least one team")
+		}
+
+		err = BusiGroupMemberDel("busi_group_id = ? and user_group_id = ?", members[i].BusiGroupId, members[i].UserGroupId)
 		if err != nil {
 			return err
 		}
