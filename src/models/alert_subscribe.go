@@ -177,6 +177,7 @@ func (s *AlertSubscribe) FillUserGroups(cache map[int64]*UserGroup) error {
 	if delete {
 		// some user-group already deleted
 		DB().Model(s).Update("user_group_ids", strings.Join(exists, " "))
+		s.UserGroupIds = strings.Join(exists, " ")
 	}
 
 	return nil
