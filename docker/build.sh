@@ -9,7 +9,11 @@ tag=$1
 
 echo "tag: ${tag}"
 
-rm -rf n9e && cp ../n9e . && docker build -t nightingale:${tag} .
+rm -rf n9e pub
+cp ../n9e .
+cp -r ../pub .
+
+docker build -t nightingale:${tag} .
 
 docker tag nightingale:${tag} ulric2019/nightingale:${tag}
 docker push ulric2019/nightingale:${tag}
