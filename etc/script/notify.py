@@ -11,7 +11,8 @@ notify_channel_funcs = {
   "sms":"sms",
   "voice":"voice",
   "dingtalk":"dingtalk",
-  "wecom":"wecom"
+  "wecom":"wecom",
+  "feishu":"feishu"
 }
 
 mail_host = "smtp.163.com"
@@ -103,6 +104,45 @@ class Sender(object):
                 "msgtype": "text",
                 "text": {
                     "content": payload.get('tpls').get("dingtalk.tpl", "dingtalk.tpl not found")
+                },
+                "at": {
+                    "atMobiles": phones.keys(),
+                    "isAtAll": False
+                }
+            }
+            request = urllib2.Request(url, data=json.dumps(body))
+            request.add_header("Content-Type",'application/json;charset=utf-8')
+            request.get_method = lambda: method
+            try:
+                connection = opener.open(request)
+                print(connection.read())
+            except urllib2.HTTPError, error:
+                print(error)
+
+    @classmethod
+    def send_feishu(cls, payload):
+        users = payload.get('event').get("notify_users_obj")
+
+        tokens = {}
+        phones = {}
+
+        for u in users:
+            if u.get("phone"):
+                phones[u.get("phone")] = 1
+
+            contacts = u.get("contacts")
+            if contacts.get("feishu_robot_token", ""):
+                tokens[contacts.get("feishu_robot_token", "")] = 1
+
+        opener = urllib2.build_opener(urllib2.HTTPHandler())
+        method = "POST"
+
+        for t in tokens:
+            url = "https://open.feishu.cn/open-apis/bot/v2/hook/{}".format(t)
+            body = {
+                "msg_type": "text",
+                "content": {
+                    "text": payload.get('tpls').get("feishu.tpl", "feishu.tpl not found")
                 },
                 "at": {
                     "atMobiles": phones.keys(),
