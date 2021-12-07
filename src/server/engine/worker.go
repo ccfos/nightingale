@@ -198,16 +198,13 @@ func (r RuleEval) judge(vectors []Vector) {
 			tagsMap[string(label)] = string(value)
 		}
 
-		// handle target note and target_tags
+		// handle target note
 		targetIdent, has := vectors[i].Labels["ident"]
 		targetNote := ""
 		if has {
 			target, exists := memsto.TargetCache.Get(string(targetIdent))
 			if exists {
 				targetNote = target.Note
-				for label, value := range target.TagsMap {
-					tagsMap[label] = value
-				}
 			}
 		}
 
