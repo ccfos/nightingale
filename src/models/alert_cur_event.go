@@ -37,7 +37,7 @@ type AlertCurEvent struct {
 	TagsMap            map[string]string `json:"-" gorm:"-"`                // for internal usage
 	IsRecovered        bool              `json:"is_recovered" gorm:"-"`     // for notify.py
 	NotifyUsersObj     []*User           `json:"notify_users_obj" gorm:"-"` // for notify.py
-	LastEvalTime       int64             `json:"last_eval_time" gorm:"-"`   // for internal usage
+	LastEvalTime       int64             `json:"last_eval_time" gorm:"-"`   // for notify.py
 }
 
 func (e *AlertCurEvent) TableName() string {
@@ -80,6 +80,7 @@ func (e *AlertCurEvent) ToHis() *AlertHisEvent {
 		TriggerTime:      e.TriggerTime,
 		TriggerValue:     e.TriggerValue,
 		Tags:             e.Tags,
+		RecoverTime:      e.LastEvalTime,
 	}
 }
 

@@ -31,6 +31,7 @@ type AlertHisEvent struct {
 	TargetNote         string      `json:"target_note"`
 	TriggerTime        int64       `json:"trigger_time"`
 	TriggerValue       string      `json:"trigger_value"`
+	RecoverTime        int64       `json:"recover_time"`
 	Tags               string      `json:"-"`
 	TagsJSON           []string    `json:"tags" gorm:"-"`
 }

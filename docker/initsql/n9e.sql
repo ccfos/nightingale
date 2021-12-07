@@ -318,6 +318,7 @@ CREATE TABLE `alert_his_event` (
     `target_note` varchar(191) not null default '' comment 'target note',
     `trigger_time` bigint not null,
     `trigger_value` varchar(255) not null,
+    `recover_time` bigint not null default 0,
     `tags` varchar(1024) not null default '' comment 'merge data_tags rule_tags, split by ,,',
     PRIMARY KEY (`id`),
     KEY (`hash`),

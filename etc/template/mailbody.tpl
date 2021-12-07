@@ -162,6 +162,13 @@
                     <th>监控指标：</th>
                     <td>{{.TagsJSON}}</td>
                 </tr>
+
+                {{if .IsRecovered}}
+                <tr>
+                    <th>恢复时间：</th>
+                    <td>{{timeformat .LastEvalTime}}</td>
+                </tr>
+                {{else}}
                 <tr>
                     <th>触发时值：</th>
                     <td>{{.TriggerValue}}</td>
@@ -172,6 +179,8 @@
                         {{timeformat .TriggerTime}}
                     </td>
                 </tr>
+                {{end}}
+
                 <tr>
                     <th>PromQL：</th>
                     <td>
