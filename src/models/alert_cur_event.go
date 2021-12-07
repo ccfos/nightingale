@@ -54,8 +54,10 @@ func (e *AlertCurEvent) IncRepeatStep(step int64) error {
 
 func (e *AlertCurEvent) ToHis() *AlertHisEvent {
 	isRecovered := 0
+	var recoverTime int64 = 0
 	if e.IsRecovered {
 		isRecovered = 1
+		recoverTime = e.LastEvalTime
 	}
 
 	return &AlertHisEvent{
@@ -80,7 +82,7 @@ func (e *AlertCurEvent) ToHis() *AlertHisEvent {
 		TriggerTime:      e.TriggerTime,
 		TriggerValue:     e.TriggerValue,
 		Tags:             e.Tags,
-		RecoverTime:      e.LastEvalTime,
+		RecoverTime:      recoverTime,
 	}
 }
 
