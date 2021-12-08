@@ -17,3 +17,5 @@ docker build -t nightingale:${tag} .
 
 docker tag nightingale:${tag} ulric2019/nightingale:${tag}
 docker push ulric2019/nightingale:${tag}
+
+rm -rf n9e pub
