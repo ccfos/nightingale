@@ -326,6 +326,22 @@ func (r RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
 		if r.rule.NotifyRecovered == 1 {
 			event.IsRecovered = true
 			event.LastEvalTime = now
+			// 可能是因为调整了promql才恢复的，所以事件里边要体现最新的promql，否则用户会比较困惑
+			// 当然，其实rule的各个字段都可能发生变化了，都更新一下吧
+			event.RuleName = r.rule.Name
+			event.RuleNote = r.rule.Note
+			event.Severity = r.rule.Severity
+			event.PromForDuration = r.rule.PromForDuration
+			event.PromQl = r.rule.PromQl
+			event.PromEvalInterval = r.rule.PromEvalInterval
+			event.Callbacks = r.rule.Callbacks
+			event.CallbacksJSON = r.rule.CallbacksJSON
+			event.RunbookUrl = r.rule.RunbookUrl
+			event.NotifyRecovered = r.rule.NotifyRecovered
+			event.NotifyChannels = r.rule.NotifyChannels
+			event.NotifyChannelsJSON = r.rule.NotifyChannelsJSON
+			event.NotifyGroups = r.rule.NotifyGroups
+			event.NotifyGroupsJSON = r.rule.NotifyGroupsJSON
 			pushEventToQueue(event)
 		}
 	}
