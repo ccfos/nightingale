@@ -29,6 +29,7 @@ _test
 /build
 /dist
 /etc/*.local.yml
+/etc/*.local.conf
 /etc/plugins/*.local.yml
 /data*
 /tarball
