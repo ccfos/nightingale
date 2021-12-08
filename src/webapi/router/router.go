@@ -203,11 +203,9 @@ func configRoute(r *gin.Engine, version string) {
 
 		pages.GET("/busi-group/:id/alert-cur-events", jwtAuth(), user(), bgro(), alertCurEventGets)
 		pages.DELETE("/busi-group/:id/alert-cur-events", jwtAuth(), user(), bgrw(), alertCurEventDel)
-		pages.GET("/busi-group/:id/alert-cur-event/:eid", alertCurEventGet) // TODO delete
 		pages.GET("/alert-cur-event/:eid", alertCurEventGet)
 
 		pages.GET("/busi-group/:id/alert-his-events", jwtAuth(), user(), bgro(), alertHisEventGets)
-		pages.GET("/busi-group/:id/alert-his-event/:eid", alertHisEventGet) // TODO delete
 		pages.GET("/alert-his-event/:eid", alertHisEventGet)
 
 		pages.GET("/busi-group/:id/task-tpls", jwtAuth(), user(), bgro(), taskTplGets)
