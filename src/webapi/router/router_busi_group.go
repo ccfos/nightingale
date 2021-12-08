@@ -24,6 +24,18 @@ func busiGroupAdd(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "members empty")
 	}
 
+	rwhas := false
+	for i := 0; i < len(f.Members); i++ {
+		if f.Members[i].PermFlag == "rw" {
+			rwhas = true
+			break
+		}
+	}
+
+	if !rwhas {
+		ginx.Bomb(http.StatusBadRequest, "At least one team have rw permission")
+	}
+
 	username := c.MustGet("username").(string)
 	ginx.NewRender(c).Message(models.BusiGroupAdd(f.Name, f.Members, username))
 }
