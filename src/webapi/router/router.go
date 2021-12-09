@@ -100,7 +100,11 @@ func configRoute(r *gin.Engine, version string) {
 
 	pages := r.Group(pagesPrefix)
 	{
-		pages.Any("/prometheus/*url", prometheusProxy)
+		if config.C.AnonymousAccess.PromQuerier {
+			pages.Any("/prometheus/*url", prometheusProxy)
+		} else {
+			pages.Any("/prometheus/*url", jwtAuth(), prometheusProxy)
+		}
 
 		pages.GET("/version", func(c *gin.Context) {
 			c.String(200, version)
@@ -201,12 +205,17 @@ func configRoute(r *gin.Engine, version string) {
 		// pages.GET("/busi-group/:id/collect-rule/:crid", jwtAuth(), user(), bgro(), collectRuleGet)
 		// pages.PUT("/busi-group/:id/collect-rule/:crid", jwtAuth(), user(), bgrw(), collectRulePut)
 
+		pages.GET("/busi-group/:id/alert-his-events", jwtAuth(), user(), bgro(), alertHisEventGets)
 		pages.GET("/busi-group/:id/alert-cur-events", jwtAuth(), user(), bgro(), alertCurEventGets)
 		pages.DELETE("/busi-group/:id/alert-cur-events", jwtAuth(), user(), bgrw(), alertCurEventDel)
-		pages.GET("/alert-cur-event/:eid", alertCurEventGet)
 
-		pages.GET("/busi-group/:id/alert-his-events", jwtAuth(), user(), bgro(), alertHisEventGets)
-		pages.GET("/alert-his-event/:eid", alertHisEventGet)
+		if config.C.AnonymousAccess.AlertDetail {
+			pages.GET("/alert-cur-event/:eid", alertCurEventGet)
+			pages.GET("/alert-his-event/:eid", alertHisEventGet)
+		} else {
+			pages.GET("/alert-cur-event/:eid", jwtAuth(), alertCurEventGet)
+			pages.GET("/alert-his-event/:eid", jwtAuth(), alertHisEventGet)
+		}
 
 		pages.GET("/busi-group/:id/task-tpls", jwtAuth(), user(), bgro(), taskTplGets)
 		pages.POST("/busi-group/:id/task-tpls", jwtAuth(), user(), bgrw(), taskTplAdd)

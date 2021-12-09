@@ -74,22 +74,23 @@ func MustLoad(fpaths ...string) {
 }
 
 type Config struct {
-	RunMode        string
-	I18N           string
-	AdminRole      string
-	ContactKeys    []ContactKey
-	NotifyChannels []string
-	Log            logx.Config
-	HTTP           httpx.Config
-	JWTAuth        JWTAuth
-	BasicAuth      gin.Accounts
-	LDAP           ldapx.LdapSection
-	Redis          storage.RedisConfig
-	Gorm           storage.Gorm
-	MySQL          storage.MySQL
-	Postgres       storage.Postgres
-	Clusters       []prom.Options
-	Ibex           Ibex
+	RunMode         string
+	I18N            string
+	AdminRole       string
+	ContactKeys     []ContactKey
+	NotifyChannels  []string
+	Log             logx.Config
+	HTTP            httpx.Config
+	JWTAuth         JWTAuth
+	BasicAuth       gin.Accounts
+	AnonymousAccess AnonymousAccess
+	LDAP            ldapx.LdapSection
+	Redis           storage.RedisConfig
+	Gorm            storage.Gorm
+	MySQL           storage.MySQL
+	Postgres        storage.Postgres
+	Clusters        []prom.Options
+	Ibex            Ibex
 }
 
 type ContactKey struct {
@@ -102,6 +103,11 @@ type JWTAuth struct {
 	AccessExpired  int64
 	RefreshExpired int64
 	RedisKeyPrefix string
+}
+
+type AnonymousAccess struct {
+	PromQuerier bool
+	AlertDetail bool
 }
 
 type Ibex struct {
