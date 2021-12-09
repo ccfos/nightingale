@@ -134,8 +134,8 @@ func configRoute(r *gin.Engine, version string) {
 		pages.PUT("/user/:id/password", jwtAuth(), admin(), userPasswordPut)
 		pages.DELETE("/user/:id", jwtAuth(), admin(), userDel)
 
-		pages.GET("/user-groups", jwtAuth(), user(), perm("/user-groups"), userGroupGets)
-		pages.POST("/user-groups", jwtAuth(), user(), userGroupAdd)
+		pages.GET("/user-groups", jwtAuth(), user(), userGroupGets)
+		pages.POST("/user-groups", jwtAuth(), user(), perm("/user-groups"), userGroupAdd)
 		pages.GET("/user-group/:id", jwtAuth(), user(), userGroupGet)
 		pages.PUT("/user-group/:id", jwtAuth(), user(), userGroupWrite(), userGroupPut)
 		pages.DELETE("/user-group/:id", jwtAuth(), user(), userGroupWrite(), userGroupDel)
@@ -143,8 +143,8 @@ func configRoute(r *gin.Engine, version string) {
 		pages.DELETE("/user-group/:id/members", jwtAuth(), user(), userGroupWrite(), userGroupMemberDel)
 		pages.GET("/user-group/:id/perm/:perm", jwtAuth(), user(), checkBusiGroupPerm)
 
-		pages.POST("/busi-groups", jwtAuth(), user(), perm("/busi-groups"), busiGroupAdd)
 		pages.GET("/busi-groups", jwtAuth(), user(), busiGroupGets)
+		pages.POST("/busi-groups", jwtAuth(), user(), perm("/busi-groups"), busiGroupAdd)
 		pages.GET("/busi-groups/alertings", jwtAuth(), busiGroupAlertingsGets)
 		pages.GET("/busi-group/:id", jwtAuth(), user(), bgro(), busiGroupGet)
 		pages.PUT("/busi-group/:id", jwtAuth(), user(), bgrw(), busiGroupPut)
