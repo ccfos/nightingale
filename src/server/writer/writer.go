@@ -16,7 +16,6 @@ import (
 )
 
 type Options struct {
-	Name          string
 	Url           string
 	BasicAuthUser string
 	BasicAuthPass string
@@ -181,7 +180,7 @@ func Init(opts []Options, globalOpt GlobalOpt) error {
 			Client: cli,
 		}
 
-		Writers.Put(opts[i].Name, writer)
+		Writers.Put(opts[i].Url, writer)
 	}
 
 	go Writers.Writes()
