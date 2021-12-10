@@ -152,9 +152,9 @@ func configRoute(r *gin.Engine, version string) {
 		pages.DELETE("/busi-group/:id", jwtAuth(), user(), perm("/busi-groups/del"), bgrw(), busiGroupDel)
 		pages.GET("/busi-group/:id/perm/:perm", jwtAuth(), user(), checkBusiGroupPerm)
 
-		pages.GET("/targets", jwtAuth(), user(), perm("/targets"), targetGets)
+		pages.GET("/targets", jwtAuth(), user(), targetGets)
 		pages.DELETE("/targets", jwtAuth(), user(), perm("/targets/del"), targetDel)
-		pages.GET("/targets/tags", jwtAuth(), user(), perm("/targets"), targetGetTags)
+		pages.GET("/targets/tags", jwtAuth(), user(), targetGetTags)
 		pages.POST("/targets/tags", jwtAuth(), user(), perm("/targets/put"), targetBindTags)
 		pages.DELETE("/targets/tags", jwtAuth(), user(), perm("/targets/put"), targetUnbindTags)
 		pages.PUT("/targets/note", jwtAuth(), user(), perm("/targets/put"), targetUpdateNote)
