@@ -78,25 +78,51 @@ CREATE TABLE `role_operation`(
 -- Admin is special, who has no concrete operation but can do anything.
 insert into `role_operation`(role_name, operation) values('Guest', '/metric/explorer');
 insert into `role_operation`(role_name, operation) values('Guest', '/object/explorer');
-insert into `role_operation`(role_name, operation) values('Guest', '/dashboards');
 insert into `role_operation`(role_name, operation) values('Guest', '/help/version');
 insert into `role_operation`(role_name, operation) values('Guest', '/help/contact');
 insert into `role_operation`(role_name, operation) values('Standard', '/metric/explorer');
 insert into `role_operation`(role_name, operation) values('Standard', '/object/explorer');
-insert into `role_operation`(role_name, operation) values('Standard', '/dashboards');
-insert into `role_operation`(role_name, operation) values('Standard', '/users');
-insert into `role_operation`(role_name, operation) values('Standard', '/user-groups');
-insert into `role_operation`(role_name, operation) values('Standard', '/busi-groups');
-insert into `role_operation`(role_name, operation) values('Standard', '/targets');
-insert into `role_operation`(role_name, operation) values('Standard', '/alert-rules');
-insert into `role_operation`(role_name, operation) values('Standard', '/alert-mutes');
-insert into `role_operation`(role_name, operation) values('Standard', '/alert-subscribes');
-insert into `role_operation`(role_name, operation) values('Standard', '/alert-cur-events');
-insert into `role_operation`(role_name, operation) values('Standard', '/alert-his-events');
-insert into `role_operation`(role_name, operation) values('Standard', '/job-tpls');
-insert into `role_operation`(role_name, operation) values('Standard', '/job-tasks');
 insert into `role_operation`(role_name, operation) values('Standard', '/help/version');
 insert into `role_operation`(role_name, operation) values('Standard', '/help/contact');
+insert into `role_operation`(role_name, operation) values('Standard', '/users');
+insert into `role_operation`(role_name, operation) values('Standard', '/user-groups');
+insert into `role_operation`(role_name, operation) values('Standard', '/user-groups/add');
+insert into `role_operation`(role_name, operation) values('Standard', '/user-groups/put');
+insert into `role_operation`(role_name, operation) values('Standard', '/user-groups/del');
+insert into `role_operation`(role_name, operation) values('Standard', '/busi-groups');
+insert into `role_operation`(role_name, operation) values('Standard', '/busi-groups/add');
+insert into `role_operation`(role_name, operation) values('Standard', '/busi-groups/put');
+insert into `role_operation`(role_name, operation) values('Standard', '/busi-groups/del');
+insert into `role_operation`(role_name, operation) values('Standard', '/targets');
+insert into `role_operation`(role_name, operation) values('Standard', '/targets/add');
+insert into `role_operation`(role_name, operation) values('Standard', '/targets/put');
+insert into `role_operation`(role_name, operation) values('Standard', '/targets/del');
+insert into `role_operation`(role_name, operation) values('Standard', '/dashboards');
+insert into `role_operation`(role_name, operation) values('Standard', '/dashboards/add');
+insert into `role_operation`(role_name, operation) values('Standard', '/dashboards/put');
+insert into `role_operation`(role_name, operation) values('Standard', '/dashboards/del');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-rules');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-rules/add');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-rules/put');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-rules/del');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-mutes');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-mutes/add');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-mutes/del');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-subscribes');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-subscribes/add');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-subscribes/put');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-subscribes/del');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-cur-events');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-cur-events/del');
+insert into `role_operation`(role_name, operation) values('Standard', '/alert-his-events');
+insert into `role_operation`(role_name, operation) values('Standard', '/job-tpls');
+insert into `role_operation`(role_name, operation) values('Standard', '/job-tpls/add');
+insert into `role_operation`(role_name, operation) values('Standard', '/job-tpls/put');
+insert into `role_operation`(role_name, operation) values('Standard', '/job-tpls/del');
+insert into `role_operation`(role_name, operation) values('Standard', '/job-tasks');
+insert into `role_operation`(role_name, operation) values('Standard', '/job-tasks/add');
+insert into `role_operation`(role_name, operation) values('Standard', '/job-tasks/put');
+
 
 -- for alert_rule | collect_rule | mute | dashboard grouping
 CREATE TABLE `busi_group` (
