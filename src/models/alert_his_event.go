@@ -87,7 +87,7 @@ func (e *AlertHisEvent) FillNotifyGroups(cache map[int64]*UserGroup) error {
 }
 
 func AlertHisEventTotal(bgid, stime, etime int64, severity int, recovered int, clusters []string, query string) (int64, error) {
-	session := DB().Model(&AlertHisEvent{}).Where("trigger_time between ? and ? and group_id = ?", stime, etime, bgid)
+	session := DB().Model(&AlertHisEvent{}).Where("last_eval_time between ? and ? and group_id = ?", stime, etime, bgid)
 
 	if severity >= 0 {
 		session = session.Where("severity = ?", severity)
@@ -113,7 +113,7 @@ func AlertHisEventTotal(bgid, stime, etime int64, severity int, recovered int, c
 }
 
 func AlertHisEventGets(bgid, stime, etime int64, severity int, recovered int, clusters []string, query string, limit, offset int) ([]AlertHisEvent, error) {
-	session := DB().Where("trigger_time between ? and ? and group_id = ?", stime, etime, bgid)
+	session := DB().Where("last_eval_time between ? and ? and group_id = ?", stime, etime, bgid)
 
 	if severity >= 0 {
 		session = session.Where("severity = ?", severity)
