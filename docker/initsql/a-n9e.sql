@@ -345,6 +345,7 @@ CREATE TABLE `alert_his_event` (
     `trigger_time` bigint not null,
     `trigger_value` varchar(255) not null,
     `recover_time` bigint not null default 0,
+    `last_eval_time` bigint not null default 0 comment 'for time filter',
     `tags` varchar(1024) not null default '' comment 'merge data_tags rule_tags, split by ,,',
     PRIMARY KEY (`id`),
     KEY (`hash`),

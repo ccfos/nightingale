@@ -32,6 +32,7 @@ type AlertHisEvent struct {
 	TriggerTime        int64       `json:"trigger_time"`
 	TriggerValue       string      `json:"trigger_value"`
 	RecoverTime        int64       `json:"recover_time"`
+	LastEvalTime       int64       `json:"last_eval_time"`
 	Tags               string      `json:"-"`
 	TagsJSON           []string    `json:"tags" gorm:"-"`
 }
@@ -135,7 +136,7 @@ func AlertHisEventGets(bgid, stime, etime int64, severity int, recovered int, cl
 	}
 
 	var lst []AlertHisEvent
-	err := session.Order("trigger_time desc").Limit(limit).Offset(offset).Find(&lst).Error
+	err := session.Order("id desc").Limit(limit).Offset(offset).Find(&lst).Error
 
 	if err == nil {
 		for i := 0; i < len(lst); i++ {

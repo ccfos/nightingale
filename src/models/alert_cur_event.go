@@ -83,6 +83,7 @@ func (e *AlertCurEvent) ToHis() *AlertHisEvent {
 		TriggerValue:     e.TriggerValue,
 		Tags:             e.Tags,
 		RecoverTime:      recoverTime,
+		LastEvalTime:     e.LastEvalTime,
 	}
 }
 
@@ -192,7 +193,7 @@ func AlertCurEventGets(bgid, stime, etime int64, severity int, clusters []string
 	}
 
 	var lst []AlertCurEvent
-	err := session.Order("trigger_time desc").Limit(limit).Offset(offset).Find(&lst).Error
+	err := session.Order("id desc").Limit(limit).Offset(offset).Find(&lst).Error
 
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
