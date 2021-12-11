@@ -95,7 +95,8 @@ func targetBindTags(c *gin.Context) {
 			tagkey := strings.Split(f.Tags[j], "=")[0]
 			tagkeyPrefix := tagkey + "="
 			if strings.HasPrefix(target.Tags, tagkeyPrefix) {
-				ginx.Bomb(200, "duplicate tagkey(%s)", tagkey)
+				ginx.NewRender(c).Message("duplicate tagkey(%s)", tagkey)
+				return
 			}
 		}
 
