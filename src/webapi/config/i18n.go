@@ -41,6 +41,7 @@ var (
 		"No permission. You are not admin of BG(%s)":       "没有权限操作，您并非业务组(%s)的管理员",
 		"The business group must retain at least one team": "业务组下要保留至少一个团队",
 		"At least one team have rw permission":             "业务组下至少要有一个具备读写权限的团队",
+		"duplicate tagkey(%s)":                             "标签KEY(%s)重复了",
 	}
 	langDict = map[string]map[string]string{
 		"zh": dict,

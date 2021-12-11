@@ -90,6 +90,15 @@ func targetBindTags(c *gin.Context) {
 			continue
 		}
 
+		// 不能有同key的标签，否则附到时序数据上会产生覆盖，让人困惑
+		for j := 0; j < len(f.Tags); j++ {
+			tagkey := strings.Split(f.Tags[j], "=")[0]
+			tagkeyPrefix := tagkey + "="
+			if strings.HasPrefix(target.Tags, tagkeyPrefix) {
+				ginx.Bomb(200, "duplicate tagkey(%s)", tagkey)
+			}
+		}
+
 		ginx.Dangerous(target.AddTags(f.Tags))
 	}
 
