@@ -37,7 +37,18 @@ func busiGroupAdd(c *gin.Context) {
 	}
 
 	username := c.MustGet("username").(string)
-	ginx.NewRender(c).Message(models.BusiGroupAdd(f.Name, f.Members, username))
+	ginx.Dangerous(models.BusiGroupAdd(f.Name, f.Members, username))
+
+	// 如果创建成功，拿着name去查，应该可以查到
+	newbg, err := models.BusiGroupGet("name=?", f.Name)
+	ginx.Dangerous(err)
+
+	if newbg == nil {
+		ginx.NewRender(c).Message("Failed to create BusiGroup(%s)", f.Name)
+		return
+	}
+
+	ginx.NewRender(c).Data(newbg.Id, nil)
 }
 
 func busiGroupPut(c *gin.Context) {
