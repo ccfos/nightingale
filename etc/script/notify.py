@@ -24,6 +24,10 @@ mail_from = "ulricqin@163.com"
 class Sender(object):
     @classmethod
     def send_email(cls, payload):
+        if mail_user == "ulricqin" and mail_pass == "password":
+            print("invalid smtp configuration")
+            return
+
         users = payload.get('event').get("notify_users_obj")
 
         emails = {}
