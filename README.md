@@ -13,7 +13,7 @@ Nightingale, Prometheus enterprise edition
 
 - [x] deploy nightingale in docker
 - [x] export /metrics endpoint
-- [ ] notify.py support feishu
+- [x] notify.py support feishu
 - [ ] notify.py support sms
 - [ ] notify.py support voice
 - [ ] support remote write api
