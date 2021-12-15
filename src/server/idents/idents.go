@@ -3,7 +3,6 @@ package idents
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strconv"
 	"time"
 
@@ -92,20 +91,13 @@ func loopPushMetrics(ctx context.Context) {
 }
 
 func pushMetrics() {
-	servers, err := naming.ActiveServers(context.Background(), config.C.ClusterName)
+	isLeader, err := naming.IamLeader()
 	if err != nil {
-		logger.Errorf("handle_idents: failed to get active servers: %v", err)
+		logger.Errorf("handle_idents: %v", err)
 		return
 	}
 
-	if len(servers) == 0 {
-		logger.Errorf("handle_idents: active servers empty")
-		return
-	}
-
-	sort.Strings(servers)
-
-	if config.C.Heartbeat.Endpoint != servers[0] {
+	if !isLeader {
 		logger.Info("handle_idents: i am not leader")
 		return
 	}

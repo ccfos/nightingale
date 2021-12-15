@@ -187,6 +187,10 @@ func (r RuleEval) judge(vectors []Vector) {
 	alertingKeys := make(map[string]struct{})
 	now := time.Now().Unix()
 	for i := 0; i < count; i++ {
+		// compute hash
+		hash := str.MD5(fmt.Sprintf("%d_%s", r.rule.Id, vectors[i].Key))
+		alertingKeys[hash] = struct{}{}
+
 		// rule disabled in this time span?
 		if isNoneffective(vectors[i].Timestamp, r.rule) {
 			continue
@@ -225,10 +229,6 @@ func (r RuleEval) judge(vectors []Vector) {
 			logger.Infof("event_muted: rule_id=%d %s", r.rule.Id, vectors[i].Key)
 			continue
 		}
-
-		// compute hash
-		hash := str.MD5(fmt.Sprintf("%d_%s", r.rule.Id, vectors[i].Key))
-		alertingKeys[hash] = struct{}{}
 
 		tagsArr := labelMapToArr(tagsMap)
 		sort.Strings(tagsArr)

@@ -134,7 +134,7 @@ func (s Server) initialize() (func(), error) {
 	memsto.Sync()
 
 	// start heartbeat
-	if err = naming.Heartbeat(ctx, config.C.Heartbeat); err != nil {
+	if err = naming.Heartbeat(ctx); err != nil {
 		return fns.Ret(), err
 	}
 

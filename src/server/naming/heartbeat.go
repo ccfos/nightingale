@@ -10,34 +10,28 @@ import (
 
 	"github.com/toolkits/pkg/logger"
 
+	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
 // local servers
 var localss string
 
-type HeartbeatConfig struct {
-	IP       string
-	Interval int64
-	Endpoint string
-	Cluster  string
-}
-
-func Heartbeat(ctx context.Context, cfg HeartbeatConfig) error {
-	if err := heartbeat(ctx, cfg); err != nil {
+func Heartbeat(ctx context.Context) error {
+	if err := heartbeat(ctx); err != nil {
 		fmt.Println("failed to heartbeat:", err)
 		return err
 	}
 
-	go loopHeartbeat(ctx, cfg)
+	go loopHeartbeat(ctx)
 	return nil
 }
 
-func loopHeartbeat(ctx context.Context, cfg HeartbeatConfig) {
-	interval := time.Duration(cfg.Interval) * time.Millisecond
+func loopHeartbeat(ctx context.Context) {
+	interval := time.Duration(config.C.Heartbeat.Interval) * time.Millisecond
 	for {
 		time.Sleep(interval)
-		if err := heartbeat(ctx, cfg); err != nil {
+		if err := heartbeat(ctx); err != nil {
 			logger.Warning(err)
 		}
 	}
@@ -52,15 +46,15 @@ func redisKey(cluster string) string {
 	return fmt.Sprintf("/server/heartbeat/%s", cluster)
 }
 
-func heartbeat(ctx context.Context, cfg HeartbeatConfig) error {
+func heartbeat(ctx context.Context) error {
 	now := time.Now().Unix()
-	key := redisKey(cfg.Cluster)
-	err := storage.Redis.HSet(ctx, key, cfg.Endpoint, now).Err()
+	key := redisKey(config.C.ClusterName)
+	err := storage.Redis.HSet(ctx, key, config.C.Heartbeat.Endpoint, now).Err()
 	if err != nil {
 		return err
 	}
 
-	servers, err := ActiveServers(ctx, cfg.Cluster)
+	servers, err := ActiveServers(ctx, config.C.ClusterName)
 	if err != nil {
 		return err
 	}
