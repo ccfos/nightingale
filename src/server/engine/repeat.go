@@ -49,22 +49,15 @@ func repeat() {
 		event.DB2Mem()
 
 		// 重复通知的告警，应该用新的时间来判断是否生效和是否屏蔽，
-		// 不能使用TriggerTime，因为TriggerTime是触发时的时间，
-		// 先发了告警，又做了屏蔽，本质是不想发了，如果继续用TriggerTime判断
-		// 就还是会发，不符合预期，所以，这里伪装一下TriggerTime，
-		// 判断完了再卸掉伪装
-		realTriggerTime := event.TriggerTime
-		event.TriggerTime = event.NotifyRepeatNext
-
-		if isNoneffective(event.TriggerTime, rule) {
+		// 不能使用TriggerTime，因为TriggerTime是触发时的时间，是一个比较老的时间
+		// 先发了告警，又做了屏蔽，本质是不想发了，如果继续用TriggerTime判断，就还是会发，不符合预期
+		if isNoneffective(event.NotifyRepeatNext, rule) {
 			continue
 		}
 
-		if isMuted(event) {
+		if isMuted(event, event.NotifyRepeatNext) {
 			continue
 		}
-
-		event.TriggerTime = realTriggerTime
 
 		fillUsers(event)
 		notify(event)

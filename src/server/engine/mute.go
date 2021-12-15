@@ -5,14 +5,15 @@ import (
 	"github.com/didi/nightingale/v5/src/server/memsto"
 )
 
-func isMuted(event *models.AlertCurEvent) bool {
+// 如果传入了clock这个可选参数，就表示使用这个clock表示的时间，否则就从event的字段中取TriggerTime
+func isMuted(event *models.AlertCurEvent, clock ...int64) bool {
 	mutes, has := memsto.AlertMuteCache.Gets(event.GroupId)
 	if !has || len(mutes) == 0 {
 		return false
 	}
 
 	for i := 0; i < len(mutes); i++ {
-		if matchMute(event, mutes[i]) {
+		if matchMute(event, mutes[i], clock...) {
 			return true
 		}
 	}
@@ -20,8 +21,13 @@ func isMuted(event *models.AlertCurEvent) bool {
 	return false
 }
 
-func matchMute(event *models.AlertCurEvent, mute *models.AlertMute) bool {
-	if event.TriggerTime < mute.Btime || event.TriggerTime > mute.Etime {
+func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int64) bool {
+	ts := event.TriggerTime
+	if len(clock) > 0 {
+		ts = clock[0]
+	}
+
+	if ts < mute.Btime || ts > mute.Etime {
 		return false
 	}
 
