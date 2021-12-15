@@ -184,7 +184,7 @@
                 <tr>
                     <th>发送时间：</th>
                     <td>
-                        {{.timestamp}}
+                        {{timestamp}}
                     </td>
                 </tr>
 
