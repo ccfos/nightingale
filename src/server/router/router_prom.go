@@ -60,7 +60,7 @@ func remoteWrite(c *gin.Context) {
 	var (
 		now = time.Now().Unix()
 		ids = make(map[string]interface{})
-		lst = make([]interface{}, 0, count)
+		lst = make([]interface{}, count)
 	)
 
 	for i := 0; i < count; i++ {
