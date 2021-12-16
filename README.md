@@ -16,7 +16,7 @@ Nightingale, Prometheus enterprise edition
 - [x] notify.py support feishu
 - [ ] notify.py support sms
 - [ ] notify.py support voice
-- [ ] support remote write api
+- [x] support remote write api
 - [ ] support pushgateway api
 
 

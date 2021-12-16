@@ -58,18 +58,30 @@ func remoteWrite(c *gin.Context) {
 	}
 
 	var (
-		now = time.Now().Unix()
-		ids = make(map[string]interface{})
-		lst = make([]interface{}, count)
+		now   = time.Now().Unix()
+		ids   = make(map[string]interface{})
+		lst   = make([]interface{}, count)
+		ident string
 	)
 
 	for i := 0; i < count; i++ {
-		labels := req.Timeseries[i].GetLabels()
+		ident = ""
 
-		ident := ""
-		for _, label := range labels {
-			if label.GetName() == "ident" {
-				ident = label.GetValue()
+		// find ident label
+		for j := 0; j < len(req.Timeseries[i].Labels); j++ {
+			if req.Timeseries[i].Labels[j].Name == "ident" {
+				ident = req.Timeseries[i].Labels[j].Value
+			}
+		}
+
+		if ident == "" {
+			// not found, try agent_hostname
+			for j := 0; j < len(req.Timeseries[i].Labels); j++ {
+				// agent_hostname for grafana-agent
+				if req.Timeseries[i].Labels[j].Name == "agent_hostname" {
+					req.Timeseries[i].Labels[j].Name = "ident"
+					ident = req.Timeseries[i].Labels[j].Value
+				}
 			}
 		}
 
@@ -97,7 +109,7 @@ func remoteWrite(c *gin.Context) {
 	if writer.Writers.PushQueue(lst) {
 		c.String(200, "")
 	} else {
-		c.String(http.StatusInternalServerError, "wirter queue full")
+		c.String(http.StatusInternalServerError, "writer queue full")
 	}
 }
 

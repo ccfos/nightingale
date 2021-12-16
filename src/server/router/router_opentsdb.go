@@ -193,7 +193,7 @@ func handleOpenTSDB(c *gin.Context) {
 	if len(list) > 0 {
 		promstat.CounterSampleTotal.WithLabelValues(config.C.ClusterName, "opentsdb").Add(float64(len(list)))
 		if !writer.Writers.PushQueue(list) {
-			msg = "wirter queue full"
+			msg = "writer queue full"
 		}
 
 		idents.Idents.MSet(ids)
