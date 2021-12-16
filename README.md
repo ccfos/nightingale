@@ -7,7 +7,7 @@ Nightingale, Prometheus enterprise edition
 
 - 国外：[https://n9e.github.io/](https://n9e.github.io/)
 - 国内：[https://n9e.gitee.io/](https://n9e.gitee.io/)
-- [v4老文档](https://gitee.com/n9e/book/tree/master/content/v4/docs)
+- 老版：[https://gitee.com/n9e/book/tree/master/content/v4/docs](https://gitee.com/n9e/book/tree/master/content/v4/docs)
 
 ## TODO
 
