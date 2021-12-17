@@ -105,9 +105,10 @@ class Sender(object):
         for t in tokens:
             url = "https://oapi.dingtalk.com/robot/send?access_token={}".format(t)
             body = {
-                "msgtype": "text",
-                "text": {
-                    "content": payload.get('tpls').get("dingtalk.tpl", "dingtalk.tpl not found")
+                "msgtype": "markdown",
+                "markdown": {
+                    "title": "n9e notice",
+                    "text": payload.get('tpls').get("dingtalk.tpl", "dingtalk.tpl not found")
                 },
                 "at": {
                     "atMobiles": phones.keys(),
