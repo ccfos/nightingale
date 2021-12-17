@@ -86,7 +86,13 @@ class Sender(object):
 
     @classmethod
     def send_dingtalk(cls, payload):
-        users = payload.get('event').get("notify_users_obj")
+        event = payload.get('event')
+        users = event.get("notify_users_obj")
+
+        rule_name = event.get("rule_name")
+        event_state = "Triggered"
+        if event.get("is_recovered"):
+            event_state = "Recovered"
 
         tokens = {}
         phones = {}
@@ -107,8 +113,8 @@ class Sender(object):
             body = {
                 "msgtype": "markdown",
                 "markdown": {
-                    "title": "n9e notice",
-                    "text": payload.get('tpls').get("dingtalk.tpl", "dingtalk.tpl not found")
+                    "title": "{} - {}".format(event_state, rule_name),
+                    "text": payload.get('tpls').get("dingtalk.tpl", "dingtalk.tpl not found") + ' '.join(["@"+i for i in phones.keys()])
                 },
                 "at": {
                     "atMobiles": phones.keys(),
