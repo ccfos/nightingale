@@ -6,3 +6,4 @@
 > - {{if .IsRecovered}}**恢复时间**：{{timeformat .LastEvalTime}}{{else}}**触发时间**: {{timeformat .TriggerTime}}
 > - **触发时值**: {{.TriggerValue}}{{end}}
 > - **发送时间**: {{timestamp}}
+
