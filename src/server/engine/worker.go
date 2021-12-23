@@ -288,8 +288,18 @@ func labelMapToArr(m map[string]string) []string {
 }
 
 func (r RuleEval) handleNewEvent(event *models.AlertCurEvent) {
-	if _, has := r.fires[event.Hash]; has {
-		// fired before, nothing to do
+	if fired, has := r.fires[event.Hash]; has {
+		if r.rule.NotifyRepeatStep == 0 {
+			// 说明不想重复通知，那就直接返回了，nothing to do
+			return
+		}
+
+		// 之前发送过告警了，这次是否要继续发送，要看是否过了通道静默时间
+		if event.LastEvalTime > fired.LastEvalTime+int64(r.rule.NotifyRepeatStep) {
+			r.fires[event.Hash] = event
+			pushEventToQueue(event)
+		}
+
 		return
 	}
 

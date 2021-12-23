@@ -21,7 +21,7 @@ func Start(ctx context.Context) error {
 	go loopFilterRules(ctx)
 
 	// repeat notifier
-	go loopRepeat(ctx)
+	// go loopRepeat(ctx)
 
 	go reportQueueSize()
 
