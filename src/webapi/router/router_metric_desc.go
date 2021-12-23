@@ -12,7 +12,11 @@ import (
 )
 
 func metricsDescGetFile(c *gin.Context) {
-	fp := path.Join(runner.Cwd, "etc", "metrics.yaml")
+	fp := config.C.MetricsYamlFile
+	if fp == "" {
+		fp = path.Join(runner.Cwd, "etc", "metrics.yaml")
+	}
+
 	if !file.IsExist(fp) {
 		c.String(404, "%s not found", fp)
 		return

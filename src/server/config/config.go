@@ -113,6 +113,7 @@ type HeartbeatConfig struct {
 type Alerting struct {
 	NotifyScriptPath  string
 	NotifyConcurrency int
+	TemplatesDir      string
 	RedisPub          RedisPub
 }
 

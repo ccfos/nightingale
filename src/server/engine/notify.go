@@ -44,15 +44,17 @@ var fns = template.FuncMap{
 }
 
 func initTpls() error {
-	tplDir := path.Join(runner.Cwd, "etc", "template")
+	if config.C.Alerting.TemplatesDir == "" {
+		config.C.Alerting.TemplatesDir = path.Join(runner.Cwd, "etc", "template")
+	}
 
-	filenames, err := file.FilesUnder(tplDir)
+	filenames, err := file.FilesUnder(config.C.Alerting.TemplatesDir)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec FilesUnder")
 	}
 
 	if len(filenames) == 0 {
-		return errors.New("no tpl files under " + tplDir)
+		return errors.New("no tpl files under " + config.C.Alerting.TemplatesDir)
 	}
 
 	tplFiles := make([]string, 0, len(filenames))
@@ -63,11 +65,11 @@ func initTpls() error {
 	}
 
 	if len(tplFiles) == 0 {
-		return errors.New("no tpl files under " + tplDir)
+		return errors.New("no tpl files under " + config.C.Alerting.TemplatesDir)
 	}
 
 	for i := 0; i < len(tplFiles); i++ {
-		tplpath := path.Join(tplDir, tplFiles[i])
+		tplpath := path.Join(config.C.Alerting.TemplatesDir, tplFiles[i])
 
 		tpl, err := template.New(tplFiles[i]).Funcs(fns).ParseFiles(tplpath)
 		if err != nil {
