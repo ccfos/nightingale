@@ -20,9 +20,6 @@ func Start(ctx context.Context) error {
 	// filter my rules and start worker
 	go loopFilterRules(ctx)
 
-	// repeat notifier
-	// go loopRepeat(ctx)
-
 	go reportQueueSize()
 
 	return nil
