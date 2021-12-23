@@ -295,7 +295,7 @@ func (r RuleEval) handleNewEvent(event *models.AlertCurEvent) {
 		}
 
 		// 之前发送过告警了，这次是否要继续发送，要看是否过了通道静默时间
-		if event.LastEvalTime > fired.LastEvalTime+int64(r.rule.NotifyRepeatStep) {
+		if event.LastEvalTime > fired.LastEvalTime+int64(r.rule.NotifyRepeatStep)*60 {
 			r.fires[event.Hash] = event
 			pushEventToQueue(event)
 		}
