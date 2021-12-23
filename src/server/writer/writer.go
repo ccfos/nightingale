@@ -61,6 +61,8 @@ func (w WriterType) Write(items []*prompb.TimeSeries) {
 
 func (w WriterType) Post(req []byte) error {
 	httpReq, err := http.NewRequest("POST", w.Opts.Url, bytes.NewReader(req))
+	// "http://127.0.0.1:9090/api/v1/write"
+	logger.Infof("post to %s", w.Opts.Url)
 	if err != nil {
 		logger.Warningf("create remote write request got error: %s", err.Error())
 		return err
