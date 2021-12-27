@@ -148,6 +148,11 @@ func handleOpenTSDB(c *gin.Context) {
 		arr = []HTTPMetric{one}
 	}
 
+	if err != nil {
+		c.String(400, err.Error())
+		return
+	}
+
 	var (
 		succ int
 		fail int
