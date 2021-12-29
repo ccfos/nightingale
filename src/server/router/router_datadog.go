@@ -2,6 +2,7 @@ package router
 
 import (
 	"compress/gzip"
+	"compress/zlib"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -162,8 +163,18 @@ func datadogSeries(c *gin.Context) {
 	var bs []byte
 	var err error
 
-	if c.GetHeader("Content-Encoding") == "gzip" {
+	enc := c.GetHeader("Content-Encoding")
+
+	if enc == "gzip" {
 		r, err := gzip.NewReader(c.Request.Body)
+		if err != nil {
+			c.String(400, err.Error())
+			return
+		}
+		defer r.Close()
+		bs, err = ioutil.ReadAll(r)
+	} else if enc == "deflate" {
+		r, err := zlib.NewReader(c.Request.Body)
 		if err != nil {
 			c.String(400, err.Error())
 			return
