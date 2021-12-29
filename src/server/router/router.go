@@ -66,7 +66,7 @@ func configRoute(r *gin.Engine, version string) {
 	})
 
 	// use apiKey not basic auth
-	r.POST("/datadog/v1/series", datadogSeries)
+	r.POST("/datadog/api/v1/series", datadogSeries)
 
 	if len(config.C.BasicAuth) > 0 {
 		auth := gin.BasicAuth(config.C.BasicAuth)
