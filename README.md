@@ -10,7 +10,7 @@ Nightingale, Prometheus enterprise edition.
 
 - github: [https://n9e.github.io/](https://n9e.github.io/)
 - gitee: [https://n9e.gitee.io/](https://n9e.gitee.io/)
-- version 4: [https://n9e.didiyun.com/](https://n9e.didiyun.com/)
+- v4(old version): [https://n9e.didiyun.com/](https://n9e.didiyun.com/)
 
 ## TODO
 
@@ -25,4 +25,4 @@ Nightingale, Prometheus enterprise edition.
 
 ## Have questions?
 
-<img src="https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png" width="200">
+[Click me](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png)
