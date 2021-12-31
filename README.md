@@ -1,6 +1,6 @@
 ## Introduction
 
-Nightingale, Prometheus enterprise edition.
+💡 A Distributed and High-Performance Monitoring System. Prometheus enterprise edition.
 
 ## Architecture
 
