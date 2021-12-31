@@ -231,7 +231,10 @@ func configRoute(r *gin.Engine, version string) {
 		pages.PUT("/busi-group/:id/task/*url", jwtAuth(), user(), perm("/job-tasks/put"), bgrw(), taskProxy)
 	}
 
-	service := r.Group("/v1/n9e", gin.BasicAuth(config.C.BasicAuth))
+	service := r.Group("/v1/n9e")
+	if len(config.C.BasicAuth) > 0 {
+		service.Use(gin.BasicAuth(config.C.BasicAuth))
+	}
 	{
 		service.Any("/prometheus/*url", prometheusProxy)
 		service.POST("/users", userAddPost)
