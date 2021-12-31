@@ -23,6 +23,6 @@ Nightingale, Prometheus enterprise edition.
 - [ ] support pushgateway api
 
 
-## Have questions?
+## Any questions?
 
 [Click me](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png)
