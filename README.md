@@ -1,13 +1,16 @@
-## 简介
+## Introduction
 
-Nightingale, Prometheus enterprise edition
+Nightingale, Prometheus enterprise edition.
 
+## Architecture
 
-## 文档
+![n9e-architecture](doc/img/arch.png)
 
-- 国外：[https://n9e.github.io/](https://n9e.github.io/)
-- 国内：[https://n9e.gitee.io/](https://n9e.gitee.io/)
-- 老版：[https://gitee.com/n9e/book/tree/master/content/v4/docs](https://gitee.com/n9e/book/tree/master/content/v4/docs)
+## Docs
+
+- github: [https://n9e.github.io/](https://n9e.github.io/)
+- gitee: [https://n9e.gitee.io/](https://n9e.gitee.io/)
+- version 4: [https://n9e.didiyun.com/](https://n9e.didiyun.com/)
 
 ## TODO
 
@@ -20,6 +23,6 @@ Nightingale, Prometheus enterprise edition
 - [ ] support pushgateway api
 
 
-## 大本营
+## Have questions?
 
-微信公众号:`__n9e__`（夜莺监控），回复“加群”可以加入交流群，回复“星球”可加入知识星球提问题
+<img src="https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png" width="200">
