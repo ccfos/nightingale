@@ -6,6 +6,9 @@ import urllib2
 import smtplib
 from email.mime.text import MIMEText
 
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 notify_channel_funcs = {
   "email":"email",
   "sms":"sms",

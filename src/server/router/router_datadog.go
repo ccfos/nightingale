@@ -42,11 +42,11 @@ func (m *DatadogMetric) Clean() error {
 
 func (m *DatadogMetric) ToProm() (*prompb.TimeSeries, string, error) {
 	pt := &prompb.TimeSeries{}
-	for _, point := range m.Points {
+	for i := 0; i < len(m.Points); i++ {
 		pt.Samples = append(pt.Samples, prompb.Sample{
 			// use ms
-			Timestamp: int64(point[0]) * 1000,
-			Value:     point[1],
+			Timestamp: int64(m.Points[i][0]) * 1000,
+			Value:     m.Points[i][1],
 		})
 	}
 
