@@ -89,9 +89,8 @@ func loopSyncAlertMutes() {
 
 func syncAlertMutes() error {
 	start := time.Now()
-	btime := start.Unix() - int64(30)
 
-	stat, err := models.AlertMuteStatistics(config.C.ClusterName, btime)
+	stat, err := models.AlertMuteStatistics(config.C.ClusterName)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertMuteStatistics")
 	}
@@ -103,7 +102,7 @@ func syncAlertMutes() error {
 		return nil
 	}
 
-	lst, err := models.AlertMuteGetsByCluster(config.C.ClusterName, btime)
+	lst, err := models.AlertMuteGetsByCluster(config.C.ClusterName)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertMuteGetsByCluster")
 	}

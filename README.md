@@ -1,25 +1,28 @@
-## 简介
+## Introduction
 
-Nightingale, Prometheus enterprise edition
+💡 A Distributed and High-Performance Monitoring System. Prometheus enterprise edition.
 
+## Architecture
 
-## 文档
+![n9e-architecture](doc/img/arch.png)
 
-- 国外：[https://n9e.github.io/](https://n9e.github.io/)
-- 国内：[https://n9e.gitee.io/](https://n9e.gitee.io/)
-- [v4老文档](https://gitee.com/n9e/book/tree/master/content/v4/docs)
+## Docs
+
+- github: [https://n9e.github.io/](https://n9e.github.io/)
+- gitee: [https://n9e.gitee.io/](https://n9e.gitee.io/)
+- v4(old version): [https://n9e.didiyun.com/](https://n9e.didiyun.com/)
 
 ## TODO
 
 - [x] deploy nightingale in docker
 - [x] export /metrics endpoint
-- [ ] notify.py support feishu
+- [x] notify.py support feishu
 - [ ] notify.py support sms
 - [ ] notify.py support voice
-- [ ] support remote write api
+- [x] support remote write api
 - [ ] support pushgateway api
 
 
-## 大本营
+## Any questions?
 
-微信公众号:`__n9e__`（夜莺监控），回复“加群”可以加入交流群，回复“星球”可加入知识星球提问题
+[Click me](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png)

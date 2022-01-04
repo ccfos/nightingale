@@ -104,9 +104,8 @@ func AlertMuteDel(ids []int64) error {
 	return DB().Where("id in ?", ids).Delete(new(AlertMute)).Error
 }
 
-func AlertMuteStatistics(cluster string, btime int64) (*Statistics, error) {
-	session := DB().Model(&AlertMute{}).Select("count(*) as total", "max(create_at) as last_updated").Where("btime <= ?", btime)
-
+func AlertMuteStatistics(cluster string) (*Statistics, error) {
+	session := DB().Model(&AlertMute{}).Select("count(*) as total", "max(create_at) as last_updated")
 	if cluster != "" {
 		session = session.Where("cluster = ?", cluster)
 	}
@@ -120,7 +119,7 @@ func AlertMuteStatistics(cluster string, btime int64) (*Statistics, error) {
 	return stats[0], nil
 }
 
-func AlertMuteGetsByCluster(cluster string, btime int64) ([]*AlertMute, error) {
+func AlertMuteGetsByCluster(cluster string) ([]*AlertMute, error) {
 	// clean expired first
 	buf := int64(30)
 	err := DB().Where("etime < ?", time.Now().Unix()+buf).Delete(new(AlertMute)).Error
@@ -129,7 +128,7 @@ func AlertMuteGetsByCluster(cluster string, btime int64) ([]*AlertMute, error) {
 	}
 
 	// get my cluster's mutes
-	session := DB().Model(&AlertMute{}).Where("btime <= ?", btime)
+	session := DB().Model(&AlertMute{})
 	if cluster != "" {
 		session = session.Where("cluster = ?", cluster)
 	}

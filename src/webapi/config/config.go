@@ -77,6 +77,7 @@ type Config struct {
 	RunMode         string
 	I18N            string
 	AdminRole       string
+	MetricsYamlFile string
 	ContactKeys     []ContactKey
 	NotifyChannels  []string
 	Log             logx.Config

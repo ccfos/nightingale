@@ -2,7 +2,7 @@
 
 NOW = $(shell date -u '+%Y%m%d%I%M%S')
 
-RELEASE_VERSION = 5.0.0-ga-05
+RELEASE_VERSION = 5.2.0
 
 APP 			= n9e
 SERVER_BIN  	= $(APP)

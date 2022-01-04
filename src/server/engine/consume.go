@@ -58,36 +58,7 @@ func persist(event *models.AlertCurEvent) {
 
 	his := event.ToHis()
 
-	if has {
-		// 数据库里有这个事件，说明之前触发过了
-		if event.IsRecovered {
-			// 本次恢复了，把未恢复的事件删除，在全量告警里添加记录
-			err := models.AlertCurEventDelByHash(event.Hash)
-			if err != nil {
-				logger.Errorf("event_del_cur_fail: %v hash=%s", err, event.Hash)
-			}
-
-			if err := his.Add(); err != nil {
-				logger.Errorf(
-					"event_persist_his_fail: %v rule_id=%d hash=%s tags=%v timestamp=%d value=%s",
-					err,
-					event.RuleId,
-					event.Hash,
-					event.TagsJSON,
-					event.TriggerTime,
-					event.TriggerValue,
-				)
-			}
-		}
-		return
-	}
-
-	if event.IsRecovered {
-		// alert_cur_event表里没有数据，表示之前没告警，结果现在报了恢复，神奇....理论上不应该出现的
-		return
-	}
-
-	// 本次是告警，alert_cur_event表里也没有数据
+	// 不管是告警还是恢复，全量告警里都要记录
 	if err := his.Add(); err != nil {
 		logger.Errorf(
 			"event_persist_his_fail: %v rule_id=%d hash=%s tags=%v timestamp=%d value=%s",
@@ -98,6 +69,41 @@ func persist(event *models.AlertCurEvent) {
 			event.TriggerTime,
 			event.TriggerValue,
 		)
+	}
+
+	if has {
+		// 活跃告警表中有记录，删之
+		err = models.AlertCurEventDelByHash(event.Hash)
+		if err != nil {
+			logger.Errorf("event_del_cur_fail: %v hash=%s", err, event.Hash)
+			return
+		}
+
+		if !event.IsRecovered {
+			// 恢复事件，从活跃告警列表彻底删掉，告警事件，要重新加进来新的event
+			// use his id as cur id
+			event.Id = his.Id
+			if event.Id > 0 {
+				if err := event.Add(); err != nil {
+					logger.Errorf(
+						"event_persist_cur_fail: %v rule_id=%d hash=%s tags=%v timestamp=%d value=%s",
+						err,
+						event.RuleId,
+						event.Hash,
+						event.TagsJSON,
+						event.TriggerTime,
+						event.TriggerValue,
+					)
+				}
+			}
+		}
+
+		return
+	}
+
+	if event.IsRecovered {
+		// alert_cur_event表里没有数据，表示之前没告警，结果现在报了恢复，神奇....理论上不应该出现的
+		return
 	}
 
 	// use his id as cur id

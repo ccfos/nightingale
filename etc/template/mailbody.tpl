@@ -182,6 +182,13 @@
                 {{end}}
 
                 <tr>
+                    <th>发送时间：</th>
+                    <td>
+                        {{timestamp}}
+                    </td>
+                </tr>
+
+                <tr>
                     <th>PromQL：</th>
                     <td>
                         {{.PromQl}}

@@ -3,6 +3,7 @@ package writer
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -44,6 +45,10 @@ type WriterType struct {
 }
 
 func (w WriterType) Write(items []*prompb.TimeSeries) {
+	if len(items) == 0 {
+		return
+	}
+
 	req := &prompb.WriteRequest{
 		Timeseries: items,
 	}
@@ -56,6 +61,7 @@ func (w WriterType) Write(items []*prompb.TimeSeries) {
 
 	if err := w.Post(snappy.Encode(nil, data)); err != nil {
 		logger.Warningf("post to %s got error: %v", w.Opts.Url, err)
+		logger.Warning("example timeseries:", items[0].String())
 	}
 }
 
@@ -82,7 +88,7 @@ func (w WriterType) Post(req []byte) error {
 	}
 
 	if resp.StatusCode >= 400 {
-		logger.Warningf("push data with remote write request got status code: %v, response body: %s", resp.StatusCode, string(body))
+		err = fmt.Errorf("push data with remote write request got status code: %v, response body: %s", resp.StatusCode, string(body))
 		return err
 	}
 

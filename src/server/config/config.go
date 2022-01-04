@@ -12,7 +12,6 @@ import (
 
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
-	"github.com/didi/nightingale/v5/src/server/naming"
 	"github.com/didi/nightingale/v5/src/server/reader"
 	"github.com/didi/nightingale/v5/src/server/writer"
 	"github.com/didi/nightingale/v5/src/storage"
@@ -77,7 +76,6 @@ func MustLoad(fpaths ...string) {
 		}
 
 		C.Heartbeat.Endpoint = fmt.Sprintf("%s:%d", C.Heartbeat.IP, C.HTTP.Port)
-		C.Heartbeat.Cluster = C.ClusterName
 
 		C.Alerting.RedisPub.ChannelKey = C.Alerting.RedisPub.ChannelPrefix + C.ClusterName
 
@@ -93,7 +91,7 @@ type Config struct {
 	Log         logx.Config
 	HTTP        httpx.Config
 	BasicAuth   gin.Accounts
-	Heartbeat   naming.HeartbeatConfig
+	Heartbeat   HeartbeatConfig
 	Alerting    Alerting
 	NoData      NoData
 	Redis       storage.RedisConfig
@@ -106,9 +104,16 @@ type Config struct {
 	Ibex        Ibex
 }
 
+type HeartbeatConfig struct {
+	IP       string
+	Interval int64
+	Endpoint string
+}
+
 type Alerting struct {
 	NotifyScriptPath  string
 	NotifyConcurrency int
+	TemplatesDir      string
 	RedisPub          RedisPub
 }
 

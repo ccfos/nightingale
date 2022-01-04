@@ -187,6 +187,10 @@ func (r RuleEval) judge(vectors []Vector) {
 	alertingKeys := make(map[string]struct{})
 	now := time.Now().Unix()
 	for i := 0; i < count; i++ {
+		// compute hash
+		hash := str.MD5(fmt.Sprintf("%d_%s", r.rule.Id, vectors[i].Key))
+		alertingKeys[hash] = struct{}{}
+
 		// rule disabled in this time span?
 		if isNoneffective(vectors[i].Timestamp, r.rule) {
 			continue
@@ -225,10 +229,6 @@ func (r RuleEval) judge(vectors []Vector) {
 			logger.Infof("event_muted: rule_id=%d %s", r.rule.Id, vectors[i].Key)
 			continue
 		}
-
-		// compute hash
-		hash := str.MD5(fmt.Sprintf("%d_%s", r.rule.Id, vectors[i].Key))
-		alertingKeys[hash] = struct{}{}
 
 		tagsArr := labelMapToArr(tagsMap)
 		sort.Strings(tagsArr)
@@ -288,14 +288,8 @@ func labelMapToArr(m map[string]string) []string {
 }
 
 func (r RuleEval) handleNewEvent(event *models.AlertCurEvent) {
-	if _, has := r.fires[event.Hash]; has {
-		// fired before, nothing to do
-		return
-	}
-
 	if event.PromForDuration == 0 {
-		r.fires[event.Hash] = event
-		pushEventToQueue(event)
+		r.fireEvent(event)
 		return
 	}
 
@@ -307,6 +301,23 @@ func (r RuleEval) handleNewEvent(event *models.AlertCurEvent) {
 	}
 
 	if r.pendings[event.Hash].LastEvalTime-r.pendings[event.Hash].TriggerTime > int64(event.PromForDuration) {
+		r.fireEvent(event)
+	}
+}
+
+func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
+	if fired, has := r.fires[event.Hash]; has {
+		if r.rule.NotifyRepeatStep == 0 {
+			// 说明不想重复通知，那就直接返回了，nothing to do
+			return
+		}
+
+		// 之前发送过告警了，这次是否要继续发送，要看是否过了通道静默时间
+		if event.LastEvalTime > fired.LastEvalTime+int64(r.rule.NotifyRepeatStep)*60 {
+			r.fires[event.Hash] = event
+			pushEventToQueue(event)
+		}
+	} else {
 		r.fires[event.Hash] = event
 		pushEventToQueue(event)
 	}

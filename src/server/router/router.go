@@ -65,12 +65,17 @@ func configRoute(r *gin.Engine, version string) {
 		ginx.NewRender(c).Data(lst, err)
 	})
 
+	// use apiKey not basic auth
+	r.POST("/datadog/api/v1/series", datadogSeries)
+
 	if len(config.C.BasicAuth) > 0 {
 		auth := gin.BasicAuth(config.C.BasicAuth)
 		r.Use(auth)
 	}
 
 	r.POST("/opentsdb/put", handleOpenTSDB)
+	r.POST("/prometheus/v1/write", remoteWrite)
+	r.POST("/prometheus/v1/query", queryPromql)
 
 	r.GET("/memory/alert-rule", alertRuleGet)
 	r.GET("/memory/idents", identsGets)
@@ -79,8 +84,6 @@ func configRoute(r *gin.Engine, version string) {
 	r.GET("/memory/target", targetGet)
 	r.GET("/memory/user", userGet)
 	r.GET("/memory/user-group", userGroupGet)
-
-	r.POST("/prom/vectors", vectorsPost)
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 }
