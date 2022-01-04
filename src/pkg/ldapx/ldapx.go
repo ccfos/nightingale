@@ -19,6 +19,7 @@ type LdapSection struct {
 	CoverAttributes bool
 	TLS             bool
 	StartTLS        bool
+	DefaultRoles    []string
 }
 
 type LdapAttributes struct {
