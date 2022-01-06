@@ -238,5 +238,13 @@ func configRoute(r *gin.Engine, version string) {
 	{
 		service.Any("/prometheus/*url", prometheusProxy)
 		service.POST("/users", userAddPost)
+
+		service.GET("/targets", targetGets)
+		service.DELETE("/targets", targetDel)
+		service.GET("/targets/tags", targetGetTags)
+		service.POST("/targets/tags", targetBindTags)
+		service.DELETE("/targets/tags", targetUnbindTags)
+		service.PUT("/targets/note", targetUpdateNote)
+		service.PUT("/targets/bgid", targetUpdateBgid)
 	}
 }
