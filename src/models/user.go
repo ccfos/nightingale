@@ -259,10 +259,14 @@ func LdapLogin(username, pass string) (*User, error) {
 
 	now := time.Now().Unix()
 
+	if len(config.C.LDAP.DefaultRoles) == 0 {
+		config.C.LDAP.DefaultRoles = []string{"Standard"}
+	}
+
 	user.Password = "******"
 	user.Portrait = ""
-	user.Roles = "Standard"
-	user.RolesLst = []string{"Standard"}
+	user.Roles = strings.Join(config.C.LDAP.DefaultRoles, " ")
+	user.RolesLst = config.C.LDAP.DefaultRoles
 	user.Contacts = []byte("{}")
 	user.CreateAt = now
 	user.UpdateAt = now
