@@ -28,6 +28,7 @@ type AlertRule struct {
 	EnableEtime          string      `json:"enable_etime"`                 // e.g. 23:59
 	EnableDaysOfWeek     string      `json:"-"`                            // split by space: 0 1 2 3 4 5 6
 	EnableDaysOfWeekJSON []string    `json:"enable_days_of_week" gorm:"-"` // for fe
+	EnableInBG           int         `json:"enable_in_bg"`                 // 0: global 1: enable one busi-group
 	NotifyRecovered      int         `json:"notify_recovered"`             // whether notify when recovery
 	NotifyChannels       string      `json:"-"`                            // split by space: sms voice email dingtalk wecom
 	NotifyChannelsJSON   []string    `json:"notify_channels" gorm:"-"`     // for fe

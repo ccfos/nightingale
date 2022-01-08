@@ -207,6 +207,7 @@ CREATE TABLE `alert_rule` (
     `enable_stime` char(5) not null default '00:00',
     `enable_etime` char(5) not null default '23:59',
     `enable_days_of_week` varchar(32) not null default '' comment 'split by space: 0 1 2 3 4 5 6',
+    `enable_in_bg` tinyint(1) not null default 0 comment '1: only this bg 0: global',
     `notify_recovered` tinyint(1) not null comment 'whether notify when recovery',
     `notify_channels` varchar(255) not null default '' comment 'split by space: sms voice email dingtalk wecom',
     `notify_groups` varchar(255) not null default '' comment 'split by space: 233 43',

@@ -202,6 +202,12 @@ func (r RuleEval) judge(vectors []Vector) {
 			tagsMap[string(label)] = string(value)
 		}
 
+		// handle rule tags
+		for _, tag := range r.rule.AppendTagsJSON {
+			arr := strings.SplitN(tag, "=", 2)
+			tagsMap[arr[0]] = arr[1]
+		}
+
 		// handle target note
 		targetIdent, has := vectors[i].Labels["ident"]
 		targetNote := ""
@@ -209,13 +215,13 @@ func (r RuleEval) judge(vectors []Vector) {
 			target, exists := memsto.TargetCache.Get(string(targetIdent))
 			if exists {
 				targetNote = target.Note
-			}
-		}
 
-		// handle rule tags
-		for _, tag := range r.rule.AppendTagsJSON {
-			arr := strings.SplitN(tag, "=", 2)
-			tagsMap[arr[0]] = arr[1]
+				// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
+				// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
+				if r.rule.EnableInBG == 1 && target.GroupId != r.rule.GroupId {
+					continue
+				}
+			}
 		}
 
 		event := &models.AlertCurEvent{
