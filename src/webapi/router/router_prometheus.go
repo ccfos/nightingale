@@ -36,6 +36,8 @@ func prometheusProxy(c *gin.Context) {
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
 
+		req.Header.Set("Host", target.Host)
+
 		// fe request e.g. /api/n9e/prometheus/api/v1/query
 		index := strings.Index(req.URL.Path, "/prometheus")
 		if index == -1 {
