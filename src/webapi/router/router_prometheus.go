@@ -35,6 +35,7 @@ func prometheusProxy(c *gin.Context) {
 	director := func(req *http.Request) {
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
+		req.Host = target.Host
 
 		req.Header.Set("Host", target.Host)
 
