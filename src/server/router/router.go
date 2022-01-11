@@ -74,6 +74,7 @@ func configRoute(r *gin.Engine, version string) {
 	}
 
 	r.POST("/opentsdb/put", handleOpenTSDB)
+	r.POST("/openfalcon/push", falconPush)
 	r.POST("/prometheus/v1/write", remoteWrite)
 	r.POST("/prometheus/v1/query", queryPromql)
 
