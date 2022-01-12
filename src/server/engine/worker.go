@@ -330,6 +330,14 @@ func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
 }
 
 func (r RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
+	for hash := range r.pendings {
+		if _, has := alertingKeys[hash]; has {
+			continue
+		}
+
+		delete(r.pendings, hash)
+	}
+
 	for hash, event := range r.fires {
 		if _, has := alertingKeys[hash]; has {
 			continue
