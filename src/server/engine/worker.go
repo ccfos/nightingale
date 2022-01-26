@@ -343,6 +343,11 @@ func (r RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
 			continue
 		}
 
+		// 如果配置了留观时长，就不能立马恢复了
+		if r.rule.RecoverDuration > 0 && now-event.LastEvalTime <= r.rule.RecoverDuration {
+			continue
+		}
+
 		// 没查到触发阈值的vector，姑且就认为这个vector的值恢复了
 		// 我确实无法分辨，是prom中有值但是未满足阈值所以没返回，还是prom中确实丢了一些点导致没有数据可以返回，尴尬
 		delete(r.fires, hash)
