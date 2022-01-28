@@ -1,6 +1,6 @@
 ## Introduction
 
-💡 A Distributed and High-Performance Monitoring System. Prometheus enterprise edition.
+Nightingale is an enterprise-level cloud-native monitoring system, which can be used as drop-in replacement of Prometheus for alerting and management.
 
 ## Architecture
 
