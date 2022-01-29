@@ -256,7 +256,6 @@ func (r RuleEval) judge(vectors []Vector) {
 		event.NotifyChannelsJSON = r.rule.NotifyChannelsJSON
 		event.NotifyGroups = r.rule.NotifyGroups
 		event.NotifyGroupsJSON = r.rule.NotifyGroupsJSON
-		event.NotifyRepeatNext = now + int64(r.rule.NotifyRepeatStep*60)
 		event.TargetIdent = string(targetIdent)
 		event.TargetNote = targetNote
 		event.TriggerValue = readableValue(vectors[i].Value)
@@ -301,7 +300,7 @@ func (r RuleEval) handleNewEvent(event *models.AlertCurEvent) {
 
 	_, has := r.pendings[event.Hash]
 	if has {
-		r.pendings[event.Hash].LastEvalTime = event.TriggerTime
+		r.pendings[event.Hash].LastEvalTime = event.LastEvalTime
 	} else {
 		r.pendings[event.Hash] = event
 	}
@@ -313,19 +312,19 @@ func (r RuleEval) handleNewEvent(event *models.AlertCurEvent) {
 
 func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
 	if fired, has := r.fires[event.Hash]; has {
+		r.fires[event.Hash].LastEvalTime = event.LastEvalTime
+
 		if r.rule.NotifyRepeatStep == 0 {
 			// 说明不想重复通知，那就直接返回了，nothing to do
 			return
 		}
 
 		// 之前发送过告警了，这次是否要继续发送，要看是否过了通道静默时间
-		if event.LastEvalTime > fired.LastEvalTime+int64(r.rule.NotifyRepeatStep)*60 {
-			r.fires[event.Hash] = event
-			pushEventToQueue(event)
+		if event.LastEvalTime > fired.LastSentTime+int64(r.rule.NotifyRepeatStep)*60 {
+			r.pushEventToQueue(event)
 		}
 	} else {
-		r.fires[event.Hash] = event
-		pushEventToQueue(event)
+		r.pushEventToQueue(event)
 	}
 }
 
@@ -372,12 +371,17 @@ func (r RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
 			event.NotifyChannelsJSON = r.rule.NotifyChannelsJSON
 			event.NotifyGroups = r.rule.NotifyGroups
 			event.NotifyGroupsJSON = r.rule.NotifyGroupsJSON
-			pushEventToQueue(event)
+			r.pushEventToQueue(event)
 		}
 	}
 }
 
-func pushEventToQueue(event *models.AlertCurEvent) {
+func (r RuleEval) pushEventToQueue(event *models.AlertCurEvent) {
+	if !event.IsRecovered {
+		event.LastSentTime = event.LastEvalTime
+		r.fires[event.Hash] = event
+	}
+
 	promstat.CounterAlertsTotal.WithLabelValues(config.C.ClusterName).Inc()
 	logEvent(event, "push_queue")
 	if !EventQueue.PushFront(event) {
