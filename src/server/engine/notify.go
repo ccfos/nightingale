@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"html/template"
+	"io/ioutil"
+	"net/http"
 	"os/exec"
 	"path"
 	"strings"
@@ -119,6 +121,10 @@ func notify(event *models.AlertCurEvent) {
 		}
 	}
 
+	if config.C.Alerting.GlobalCallback.Enable {
+		DoGlobalCallback(event)
+	}
+
 	// no notify.py? do nothing
 	if config.C.Alerting.NotifyScriptPath == "" {
 		return
@@ -136,6 +142,55 @@ func notify(event *models.AlertCurEvent) {
 	if has {
 		handleSubscribes(*event, subs)
 	}
+}
+
+func DoGlobalCallback(event *models.AlertCurEvent) {
+	conf := config.C.Alerting.GlobalCallback
+	if conf.Url == "" {
+		return
+	}
+
+	bs, err := json.Marshal(event)
+	if err != nil {
+		return
+	}
+
+	bf := bytes.NewBuffer(bs)
+
+	req, err := http.NewRequest("POST", conf.Url, bf)
+	if err != nil {
+		logger.Warning("DoGlobalCallback failed to new request", err)
+		return
+	}
+
+	if conf.BasicAuthUser != "" && conf.BasicAuthPass != "" {
+		req.SetBasicAuth(conf.BasicAuthUser, conf.BasicAuthPass)
+	}
+
+	if len(conf.Headers) > 0 && len(conf.Headers)%2 == 0 {
+		for i := 0; i < len(conf.Headers); i += 2 {
+			req.Header.Set(conf.Headers[i], conf.Headers[i+1])
+		}
+	}
+
+	client := http.Client{
+		Timeout: conf.TimeoutDuration,
+	}
+
+	var resp *http.Response
+	resp, err = client.Do(req)
+	if err != nil {
+		logger.Warning("DoGlobalCallback failed to call url", err)
+		return
+	}
+
+	var body []byte
+	if resp.Body != nil {
+		defer resp.Body.Close()
+		body, err = ioutil.ReadAll(resp.Body)
+	}
+
+	logger.Debugf("DoGlobalCallback done, url: %s, response code: %d, body: %s", conf.Url, resp.StatusCode, string(body))
 }
 
 func handleSubscribes(event models.AlertCurEvent, subs []*models.AlertSubscribe) {

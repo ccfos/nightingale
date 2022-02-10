@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/koding/multiconfig"
@@ -76,8 +77,20 @@ func MustLoad(fpaths ...string) {
 		}
 
 		C.Heartbeat.Endpoint = fmt.Sprintf("%s:%d", C.Heartbeat.IP, C.HTTP.Port)
-
 		C.Alerting.RedisPub.ChannelKey = C.Alerting.RedisPub.ChannelPrefix + C.ClusterName
+
+		if C.Alerting.GlobalCallback.Enable {
+			if C.Alerting.GlobalCallback.Timeout == "" {
+				C.Alerting.GlobalCallback.TimeoutDuration = time.Second * 5
+			} else {
+				dur, err := time.ParseDuration(C.Alerting.GlobalCallback.Timeout)
+				if err != nil {
+					fmt.Println("failed to parse Alerting.GlobalCallback.Timeout")
+					os.Exit(1)
+				}
+				C.Alerting.GlobalCallback.TimeoutDuration = dur
+			}
+		}
 
 		fmt.Println("heartbeat.ip:", C.Heartbeat.IP)
 		fmt.Printf("heartbeat.interval: %dms\n", C.Heartbeat.Interval)
@@ -115,12 +128,23 @@ type Alerting struct {
 	NotifyConcurrency int
 	TemplatesDir      string
 	RedisPub          RedisPub
+	GlobalCallback    GlobalCallback
 }
 
 type RedisPub struct {
 	Enable        bool
 	ChannelPrefix string
 	ChannelKey    string
+}
+
+type GlobalCallback struct {
+	Enable          bool
+	Url             string
+	BasicAuthUser   string
+	BasicAuthPass   string
+	Timeout         string
+	TimeoutDuration time.Duration
+	Headers         []string
 }
 
 type NoData struct {
