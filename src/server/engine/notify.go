@@ -180,7 +180,7 @@ func DoGlobalCallback(event *models.AlertCurEvent) {
 	var resp *http.Response
 	resp, err = client.Do(req)
 	if err != nil {
-		logger.Warning("DoGlobalCallback failed to call url", err)
+		logger.Warning("DoGlobalCallback failed to call url, error: ", err)
 		return
 	}
 
