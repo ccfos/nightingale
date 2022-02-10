@@ -461,3 +461,27 @@ func (u *User) BusiGroups(limit int, query string) ([]BusiGroup, error) {
 	err = session.Where("id in ?", busiGroupIds).Where("name like ?", "%"+query+"%").Find(&lst).Error
 	return lst, err
 }
+
+func (u *User) UserGroups(limit int, query string) ([]UserGroup, error) {
+	session := DB().Order("name").Limit(limit)
+
+	var lst []UserGroup
+	if u.IsAdmin() {
+		err := session.Where("name like ?", "%"+query+"%").Find(&lst).Error
+		return lst, err
+	}
+
+	ids, err := MyGroupIds(u.Id)
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to get MyGroupIds")
+	}
+
+	session = session.Where("create_by = ? and name like ?", u.Username, "%"+query+"%")
+
+	if len(ids) > 0 {
+		session = session.Or("id in ?", ids)
+	}
+
+	err = session.Find(&lst).Error
+	return lst, err
+}

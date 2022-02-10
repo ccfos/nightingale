@@ -21,8 +21,12 @@ func checkBusiGroupPerm(c *gin.Context) {
 // Return all, front-end search and paging
 // I'm creator or member
 func userGroupGets(c *gin.Context) {
+	limit := ginx.QueryInt(c, "limit", defaultLimit)
+	query := ginx.QueryStr(c, "query", "")
+
 	me := c.MustGet("user").(*models.User)
-	lst, err := models.GroupsOf(me)
+	lst, err := me.UserGroups(limit, query)
+
 	ginx.NewRender(c).Data(lst, err)
 }
 

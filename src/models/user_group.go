@@ -81,22 +81,6 @@ func (ug *UserGroup) Del() error {
 	})
 }
 
-func GroupsOf(u *User) ([]UserGroup, error) {
-	ids, err := MyGroupIds(u.Id)
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to get MyGroupIds")
-	}
-
-	session := DB().Where("create_by = ?", u.Username)
-	if len(ids) > 0 {
-		session = session.Or("id in ?", ids)
-	}
-
-	var lst []UserGroup
-	err = session.Order("name").Find(&lst).Error
-	return lst, err
-}
-
 func UserGroupGet(where string, args ...interface{}) (*UserGroup, error) {
 	var lst []*UserGroup
 	err := DB().Where(where, args...).Find(&lst).Error
