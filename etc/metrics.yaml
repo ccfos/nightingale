@@ -29,3 +29,100 @@ diskio_weighted_io_time: 从I/O请求视角来看I/O等待总时间，如果同�
 diskio_write_bytes: 写入的byte数量，counter类型，需要用函数求rate才有使用价值
 diskio_write_time: 写请求总时间（单位：毫秒），counter类型，需要用函数求rate才有使用价值
 diskio_writes: 写请求次数，counter类型，需要用函数求rate才有使用价值
+
+kernel_boot_time: 内核启动时间
+kernel_context_switches: 内核上下文切换次数
+kernel_entropy_avail: linux系统内部的熵池
+kernel_interrupts: 内核中断次数
+kernel_processes_forked: fork的进程数
+
+mem_active: 活跃使用的内存总数(包括cache和buffer内存)
+mem_available: 应用程序可用内存数
+mem_available_percent: 内存剩余百分比(0~100)
+mem_buffered: 用来给文件做缓冲大小
+mem_cached: 被高速缓冲存储器（cache memory）用的内存的大小（等于 diskcache minus SwapCache ）
+mem_commit_limit: 根据超额分配比率（'vm.overcommit_ratio'），这是当前在系统上分配可用的内存总量，这个限制只是在模式2('vm.overcommit_memory')时启用
+mem_committed_as: 目前在系统上分配的内存量。是所有进程申请的内存的总和
+mem_dirty: 等待被写回到磁盘的内存大小
+mem_free: 空闲内存数
+mem_high_free: 未被使用的高位内存大小
+mem_high_total: 高位内存总大小（Highmem是指所有内存高于860MB的物理内存,Highmem区域供用户程序使用，或用于页面缓存。该区域不是直接映射到内核空间。内核必须使用不同的手法使用该段内存）
+mem_huge_page_size: 每个大页的大小
+mem_huge_pages_free: 池中尚未分配的 HugePages 数量
+mem_huge_pages_total: 预留HugePages的总个数
+mem_inactive: 空闲的内存数(包括free和avalible的内存)
+mem_low_free: 未被使用的低位大小
+mem_low_total: 低位内存总大小,低位可以达到高位内存一样的作用，而且它还能够被内核用来记录一些自己的数据结构
+mem_mapped: 设备和文件等映射的大小
+mem_page_tables: 管理内存分页页面的索引表的大小
+mem_shared: 多个进程共享的内存总额
+mem_slab: 内核数据结构缓存的大小，可以减少申请和释放内存带来的消耗
+mem_sreclaimable: 可收回Slab的大小
+mem_sunreclaim: 不可收回Slab的大小（SUnreclaim+SReclaimable＝Slab）
+mem_swap_cached: 被高速缓冲存储器（cache memory）用的交换空间的大小，已经被交换出来的内存，但仍然被存放在swapfile中。用来在需要的时候很快的被替换而不需要再次打开I/O端口
+mem_swap_free: 未被使用交换空间的大小
+mem_swap_total: 交换空间的总大小
+mem_total: 内存总数
+mem_used: 已用内存数
+mem_used_percent: 已用内存数百分比(0~100)
+mem_vmalloc_chunk: 最大的连续未被使用的vmalloc区域
+mem_vmalloc_totalL: 可以vmalloc虚拟内存大小
+mem_vmalloc_used: vmalloc已使用的虚拟内存大小
+mem_write_back: 正在被写回到磁盘的内存大小
+mem_write_back_tmp: FUSE用于临时写回缓冲区的内存
+
+net_bytes_recv: 网卡收包总数(bytes)
+net_bytes_sent: 网卡发包总数(bytes)
+net_drop_in: 网卡收丢包数量
+net_drop_out: 网卡发丢包数量
+net_err_in: 网卡收包错误数量
+net_err_out: 网卡发包错误数量
+net_packets_recv: 网卡收包数量
+net_packets_sent: 网卡发包数量
+
+netstat_tcp_established: ESTABLISHED状态的网络链接数
+netstat_tcp_fin_wait1: FIN_WAIT1状态的网络链接数
+netstat_tcp_fin_wait2: FIN_WAIT2状态的网络链接数
+netstat_tcp_last_ack: LAST_ACK状态的网络链接数
+netstat_tcp_listen: LISTEN状态的网络链接数
+netstat_tcp_syn_recv: SYN_RECV状态的网络链接数
+netstat_tcp_syn_sent: SYN_SENT状态的网络链接数
+netstat_tcp_time_wait: TIME_WAIT状态的网络链接数
+netstat_udp_socket: UDP状态的网络链接数
+
+processes_blocked: 不可中断的睡眠状态下的进程数('U','D','L')
+processes_dead: 回收中的进程数('X')
+processes_idle: 挂起的空闲进程数('I')
+processes_paging: 分页进程数('P')
+processes_running: 运行中的进程数('R')
+processes_sleeping: 可中断进程数('S')
+processes_stopped: 暂停状态进程数('T')
+processes_total: 总进程数
+processes_total_threads: 总线程数
+processes_unknown: 未知状态进程数
+processes_zombies: 僵尸态进程数('Z')
+
+swap_used_percent: Swap空间换出数据量
+
+system_load1: 1分钟平均load值
+system_load5: 5分钟平均load值
+system_load15: 15分钟平均load值
+system_n_users: 用户数
+system_n_cpus: CPU核数
+system_uptime: 系统启动时间
+
+nginx_accepts: 自nginx启动起,与客户端建立过得连接总数
+nginx_active: 当前nginx正在处理的活动连接数,等于Reading/Writing/Waiting总和
+nginx_handled: 自nginx启动起,处理过的客户端连接总数
+nginx_reading: 正在读取HTTP请求头部的连接总数
+nginx_requests: 自nginx启动起,处理过的客户端请求总数,由于存在HTTP Krrp-Alive请求,该值会大于handled值
+nginx_upstream_check_fall: upstream_check模块检测到后端失败的次数
+nginx_upstream_check_rise: upstream_check模块对后端的检测次数
+nginx_upstream_check_status_code: 后端upstream的状态,up为1,down为0
+nginx_waiting: 开启 keep-alive 的情况下,这个值等于 active – (reading+writing), 意思就是 Nginx 已经处理完正在等候下一次请求指令的驻留连接
+nginx_writing: 正在向客户端发送响应的连接总数
+
+http_response_content_length: HTTP消息实体的传输长度
+http_response_http_response_code: http响应状态码
+http_response_response_time: http响应用时
+http_response_result_code: url探测结果0为正常否则url无法访问
