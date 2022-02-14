@@ -19,6 +19,11 @@ build:
 
 # start:
 # 	@go run -ldflags "-X main.VERSION=$(RELEASE_TAG)" ./cmd/${APP}/main.go web -c ./configs/config.toml -m ./configs/model.conf --menu ./configs/menu.yaml
+run_webapi:
+	nohup ./n9e webapi > webapi.log 2>&1 &
+
+run_server:
+	nohup ./n9e server > server.log 2>&1 &
 
 # swagger:
 # 	@swag init --parseDependency --generalInfo ./cmd/${APP}/main.go --output ./internal/app/swagger
