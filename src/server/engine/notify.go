@@ -7,16 +7,17 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
 	"path"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
-	"github.com/toolkits/pkg/sys"
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/server/config"
@@ -248,7 +249,7 @@ func callScript(stdinBytes []byte) {
 		return
 	}
 
-	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(30)*time.Second)
+	err, isTimeout := wrapTimeout(cmd, time.Duration(30)*time.Second)
 
 	if isTimeout {
 		if err == nil {
@@ -268,4 +269,35 @@ func callScript(stdinBytes []byte) {
 	}
 
 	logger.Infof("event_notify: exec %s output: %s", fpath, buf.String())
+}
+
+func wrapTimeout(cmd *exec.Cmd, timeout time.Duration) (error, bool) {
+	var err error
+
+	done := make(chan error)
+	go func() {
+		done <- cmd.Wait()
+	}()
+
+	select {
+	case <-time.After(timeout):
+		go func() {
+			<-done // allow goroutine to exit
+		}()
+
+		// IMPORTANT: cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true} is necessary before cmd.Start()
+		// err = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		err = Kill()
+		return err, true
+	case err = <-done:
+		return err, false
+	}
+}
+
+func Kill() error {
+	p, err := os.FindProcess(os.Getpid())
+	if err != nil {
+		return err
+	}
+	return p.Signal(syscall.SIGTERM)
 }
