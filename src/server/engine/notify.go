@@ -7,11 +7,9 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"os/exec"
 	"path"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
@@ -235,7 +233,9 @@ func handleSubscribe(event models.AlertCurEvent, sub *models.AlertSubscribe) {
 
 func callScript(stdinBytes []byte) {
 	fpath := config.C.Alerting.NotifyScriptPath
-	cmd := exec.Command(fpath)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(30)*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, fpath)
 	cmd.Stdin = bytes.NewReader(stdinBytes)
 
 	// combine stdout and stderr
@@ -243,61 +243,21 @@ func callScript(stdinBytes []byte) {
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 
-	err := cmd.Start()
-	if err != nil {
-		logger.Errorf("event_notify: run cmd err: %v", err)
+	if err := cmd.Start(); err != nil {
+		logger.Errorf("event_notify: run command err: %v", err)
+		return
+	}
+	logger.Infof("event_notify: command Process pid: %d", cmd.Process.Pid)
+
+	if err := cmd.Wait(); err != nil {
+		logger.Errorf("event_notify: timeout and killed process %s", fpath)
 		return
 	}
 
-	err, isTimeout := wrapTimeout(cmd, time.Duration(30)*time.Second)
-
-	if isTimeout {
-		if err == nil {
-			logger.Errorf("event_notify: timeout and killed process %s", fpath)
-		}
-
-		if err != nil {
-			logger.Errorf("event_notify: kill process %s occur error %v", fpath, err)
-		}
-
-		return
-	}
-
-	if err != nil {
-		logger.Errorf("event_notify: exec script %s occur error: %v, output: %s", fpath, err, buf.String())
+	if err := ctx.Err(); err != nil {
+		logger.Errorf("event_notify: kill process %s occur error %v", fpath, err)
 		return
 	}
 
 	logger.Infof("event_notify: exec %s output: %s", fpath, buf.String())
-}
-
-func wrapTimeout(cmd *exec.Cmd, timeout time.Duration) (error, bool) {
-	var err error
-
-	done := make(chan error)
-	go func() {
-		done <- cmd.Wait()
-	}()
-
-	select {
-	case <-time.After(timeout):
-		go func() {
-			<-done // allow goroutine to exit
-		}()
-
-		// IMPORTANT: cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true} is necessary before cmd.Start()
-		// err = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-		err = Kill()
-		return err, true
-	case err = <-done:
-		return err, false
-	}
-}
-
-func Kill() error {
-	p, err := os.FindProcess(os.Getpid())
-	if err != nil {
-		return err
-	}
-	return p.Signal(syscall.SIGTERM)
 }
