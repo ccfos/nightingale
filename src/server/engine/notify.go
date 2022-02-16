@@ -18,6 +18,7 @@ import (
 	"github.com/toolkits/pkg/runner"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/pkg/sys"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
 	"github.com/didi/nightingale/v5/src/storage"
@@ -233,9 +234,7 @@ func handleSubscribe(event models.AlertCurEvent, sub *models.AlertSubscribe) {
 
 func callScript(stdinBytes []byte) {
 	fpath := config.C.Alerting.NotifyScriptPath
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(30)*time.Second)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, fpath)
+	cmd := exec.Command(fpath)
 	cmd.Stdin = bytes.NewReader(stdinBytes)
 
 	// combine stdout and stderr
@@ -243,19 +242,28 @@ func callScript(stdinBytes []byte) {
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 
-	if err := cmd.Start(); err != nil {
-		logger.Errorf("event_notify: run command err: %v", err)
-		return
-	}
-	logger.Infof("event_notify: command Process pid: %d", cmd.Process.Pid)
-
-	if err := cmd.Wait(); err != nil {
-		logger.Errorf("event_notify: timeout and killed process %s", fpath)
+	err := cmd.Start()
+	if err != nil {
+		logger.Errorf("event_notify: run cmd err: %v", err)
 		return
 	}
 
-	if err := ctx.Err(); err != nil {
-		logger.Errorf("event_notify: kill process %s occur error %v", fpath, err)
+	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(30)*time.Second)
+
+	if isTimeout {
+		if err == nil {
+			logger.Errorf("event_notify: timeout and killed process %s", fpath)
+		}
+
+		if err != nil {
+			logger.Errorf("event_notify: kill process %s occur error %v", fpath, err)
+		}
+
+		return
+	}
+
+	if err != nil {
+		logger.Errorf("event_notify: exec script %s occur error: %v, output: %s", fpath, err, buf.String())
 		return
 	}
 
