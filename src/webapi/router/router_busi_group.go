@@ -98,9 +98,10 @@ func busiGroupDel(c *gin.Context) {
 func busiGroupGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", defaultLimit)
 	query := ginx.QueryStr(c, "query", "")
+	all := ginx.QueryBool(c, "all", false)
 
 	me := c.MustGet("user").(*models.User)
-	lst, err := me.BusiGroups(limit, query)
+	lst, err := me.BusiGroups(limit, query, all)
 
 	ginx.NewRender(c).Data(lst, err)
 }

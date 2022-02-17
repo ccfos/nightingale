@@ -435,11 +435,11 @@ func (u *User) NopriIdents(idents []string) ([]string, error) {
 
 // 我是管理员，返回所有
 // 或者我是成员
-func (u *User) BusiGroups(limit int, query string) ([]BusiGroup, error) {
+func (u *User) BusiGroups(limit int, query string, all ...bool) ([]BusiGroup, error) {
 	session := DB().Order("name").Limit(limit)
 
 	var lst []BusiGroup
-	if u.IsAdmin() {
+	if u.IsAdmin() || (len(all) > 0 && all[0]) {
 		err := session.Where("name like ?", "%"+query+"%").Find(&lst).Error
 		return lst, err
 	}
