@@ -28,7 +28,7 @@ type FalconMetric struct {
 	Tags         string      `json:"tags"`
 }
 
-func (m *FalconMetric) Clean() error {
+func (m *FalconMetric) Clean(ts int64) error {
 	if m.Metric == "" {
 		return fmt.Errorf("metric is blank")
 	}
@@ -58,10 +58,9 @@ func (m *FalconMetric) Clean() error {
 	}
 
 	// If the timestamp is greater than 5 minutes, the current time shall prevail
-	now := time.Now().Unix()
-	diff := m.Timestamp - now
+	diff := m.Timestamp - ts
 	if diff > 300 {
-		m.Timestamp = now
+		m.Timestamp = ts
 	}
 	return nil
 }
@@ -186,7 +185,7 @@ func falconPush(c *gin.Context) {
 	)
 
 	for i := 0; i < len(arr); i++ {
-		if err := arr[i].Clean(); err != nil {
+		if err := arr[i].Clean(ts); err != nil {
 			fail++
 			continue
 		}
