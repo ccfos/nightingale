@@ -242,7 +242,7 @@ func callScript(stdinBytes []byte) {
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 
-	err := cmd.Start()
+	err := startCmd(cmd)
 	if err != nil {
 		logger.Errorf("event_notify: run cmd err: %v", err)
 		return

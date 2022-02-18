@@ -1,5 +1,3 @@
-// Windows environment variables.
-
 package sys
 
 import (

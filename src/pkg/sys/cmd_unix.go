@@ -1,6 +1,5 @@
-// +build aix darwin dragonfly freebsd js,wasm linux netbsd openbsd solaris plan9
-
-// Unix environment variables.
+//go:build !windows
+// +build !windows
 
 package sys
 
