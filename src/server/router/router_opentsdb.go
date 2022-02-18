@@ -57,6 +57,12 @@ func (m *HTTPMetric) Clean() error {
 		m.Timestamp /= 1000
 	}
 
+	// If the timestamp is greater than 5 minutes, the current time shall prevail
+	now := time.Now().Unix()
+	diff := m.Timestamp - now
+	if diff > 300 {
+		m.Timestamp = now
+	}
 	return nil
 }
 
