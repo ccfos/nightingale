@@ -28,7 +28,7 @@ type HTTPMetric struct {
 	Tags         map[string]string `json:"tags"`
 }
 
-func (m *HTTPMetric) Clean() error {
+func (m *HTTPMetric) Clean(ts int64) error {
 	if m.Metric == "" {
 		return fmt.Errorf("metric is blank")
 	}
@@ -57,6 +57,11 @@ func (m *HTTPMetric) Clean() error {
 		m.Timestamp /= 1000
 	}
 
+	// If the timestamp is greater than 5 minutes, the current time shall prevail
+	diff := m.Timestamp - ts
+	if diff > 300 {
+		m.Timestamp = ts
+	}
 	return nil
 }
 
@@ -163,7 +168,7 @@ func handleOpenTSDB(c *gin.Context) {
 	)
 
 	for i := 0; i < len(arr); i++ {
-		if err := arr[i].Clean(); err != nil {
+		if err := arr[i].Clean(ts); err != nil {
 			fail++
 			continue
 		}
