@@ -227,7 +227,7 @@ func configRoute(r *gin.Engine, version string) {
 
 		pages.GET("/busi-group/:id/tasks", jwtAuth(), user(), perm("/job-tasks"), bgro(), taskGets)
 		pages.POST("/busi-group/:id/tasks", jwtAuth(), user(), perm("/job-tasks/add"), bgrw(), taskAdd)
-		pages.GET("/busi-group/:id/task/*url", jwtAuth(), user(), perm("/job-tasks"), bgro(), taskProxy)
+		pages.GET("/busi-group/:id/task/*url", jwtAuth(), user(), perm("/job-tasks"), taskProxy)
 		pages.PUT("/busi-group/:id/task/*url", jwtAuth(), user(), perm("/job-tasks/put"), bgrw(), taskProxy)
 	}
 
