@@ -31,14 +31,14 @@ var fns = template.FuncMap{
 	"urlconvert": func(str string) interface{} { return template.URL(str) },
 	"timeformat": func(ts int64, pattern ...string) string {
 		defp := "2006-01-02 15:04:05"
-		if pattern != nil && len(pattern) > 0 {
+		if len(pattern) > 0 {
 			defp = pattern[0]
 		}
 		return time.Unix(ts, 0).Format(defp)
 	},
 	"timestamp": func(pattern ...string) string {
 		defp := "2006-01-02 15:04:05"
-		if pattern != nil && len(pattern) > 0 {
+		if len(pattern) > 0 {
 			defp = pattern[0]
 		}
 		return time.Now().Format(defp)
@@ -89,7 +89,7 @@ type Notice struct {
 	Tpls  map[string]string     `json:"tpls"`
 }
 
-func buildStdin(event *models.AlertCurEvent) ([]byte, error) {
+func genNotice(event *models.AlertCurEvent) Notice {
 	// build notice body with templates
 	ntpls := make(map[string]string)
 	for filename, tpl := range tpls {
@@ -101,36 +101,40 @@ func buildStdin(event *models.AlertCurEvent) ([]byte, error) {
 		}
 	}
 
-	return json.Marshal(Notice{Event: event, Tpls: ntpls})
+	return Notice{Event: event, Tpls: ntpls}
+}
+
+func alertingRedisPub(bs []byte) {
+	// pub all alerts to redis
+	if config.C.Alerting.RedisPub.Enable {
+		err := storage.Redis.Publish(context.Background(), config.C.Alerting.RedisPub.ChannelKey, bs).Err()
+		if err != nil {
+			logger.Errorf("event_notify: redis publish %s err: %v", config.C.Alerting.RedisPub.ChannelKey, err)
+		}
+	}
+}
+
+func handleNotice(notice Notice, bs []byte) {
+	alertingCallScript(bs)
+
+	// TODO 弄个channel发邮件，学习daemon写法
+	// 收集tokens、phones，发呗
 }
 
 func notify(event *models.AlertCurEvent) {
 	logEvent(event, "notify")
 
-	stdin, err := buildStdin(event)
+	notice := genNotice(event)
+	stdinBytes, err := json.Marshal(notice)
 	if err != nil {
-		logger.Errorf("event_notify: build stdin failed: %v", err)
+		logger.Errorf("event_notify: failed to marshal notice: %v", err)
 		return
 	}
 
-	// pub all alerts to redis
-	if config.C.Alerting.RedisPub.Enable {
-		err = storage.Redis.Publish(context.Background(), config.C.Alerting.RedisPub.ChannelKey, stdin).Err()
-		if err != nil {
-			logger.Errorf("event_notify: redis publish %s err: %v", config.C.Alerting.RedisPub.ChannelKey, err)
-		}
-	}
+	alertingRedisPub(stdinBytes)
+	alertingWebhook(event)
 
-	if config.C.Alerting.GlobalCallback.Enable {
-		DoGlobalCallback(event)
-	}
-
-	// no notify.py? do nothing
-	if config.C.Alerting.NotifyScriptPath == "" {
-		return
-	}
-
-	callScript(stdin)
+	handleNotice(notice, stdinBytes)
 
 	// handle alert subscribes
 	subs, has := memsto.AlertSubscribeCache.Get(event.RuleId)
@@ -144,8 +148,13 @@ func notify(event *models.AlertCurEvent) {
 	}
 }
 
-func DoGlobalCallback(event *models.AlertCurEvent) {
-	conf := config.C.Alerting.GlobalCallback
+func alertingWebhook(event *models.AlertCurEvent) {
+	conf := config.C.Alerting.Webhook
+
+	if !conf.Enable {
+		return
+	}
+
 	if conf.Url == "" {
 		return
 	}
@@ -159,7 +168,7 @@ func DoGlobalCallback(event *models.AlertCurEvent) {
 
 	req, err := http.NewRequest("POST", conf.Url, bf)
 	if err != nil {
-		logger.Warning("DoGlobalCallback failed to new request", err)
+		logger.Warning("alertingWebhook failed to new request", err)
 		return
 	}
 
@@ -180,17 +189,17 @@ func DoGlobalCallback(event *models.AlertCurEvent) {
 	var resp *http.Response
 	resp, err = client.Do(req)
 	if err != nil {
-		logger.Warning("DoGlobalCallback failed to call url, error: ", err)
+		logger.Warning("alertingWebhook failed to call url, error: ", err)
 		return
 	}
 
 	var body []byte
 	if resp.Body != nil {
 		defer resp.Body.Close()
-		body, err = ioutil.ReadAll(resp.Body)
+		body, _ = ioutil.ReadAll(resp.Body)
 	}
 
-	logger.Debugf("DoGlobalCallback done, url: %s, response code: %d, body: %s", conf.Url, resp.StatusCode, string(body))
+	logger.Debugf("alertingWebhook done, url: %s, response code: %d, body: %s", conf.Url, resp.StatusCode, string(body))
 }
 
 func handleSubscribes(event models.AlertCurEvent, subs []*models.AlertSubscribe) {
@@ -223,17 +232,27 @@ func handleSubscribe(event models.AlertCurEvent, sub *models.AlertSubscribe) {
 
 	fillUsers(&event)
 
-	stdin, err := buildStdin(&event)
+	notice := genNotice(&event)
+	stdinBytes, err := json.Marshal(notice)
 	if err != nil {
-		logger.Errorf("event_notify: build stdin failed when handle subscribe: %v", err)
+		logger.Errorf("event_notify: failed to marshal notice: %v", err)
 		return
 	}
 
-	callScript(stdin)
+	handleNotice(notice, stdinBytes)
 }
 
-func callScript(stdinBytes []byte) {
-	fpath := config.C.Alerting.NotifyScriptPath
+func alertingCallScript(stdinBytes []byte) {
+	if !config.C.Alerting.CallScript.Enable {
+		return
+	}
+
+	// no notify.py? do nothing
+	if config.C.Alerting.CallScript.ScriptPath == "" {
+		return
+	}
+
+	fpath := config.C.Alerting.CallScript.ScriptPath
 	cmd := exec.Command(fpath)
 	cmd.Stdin = bytes.NewReader(stdinBytes)
 

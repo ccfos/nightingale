@@ -79,16 +79,16 @@ func MustLoad(fpaths ...string) {
 		C.Heartbeat.Endpoint = fmt.Sprintf("%s:%d", C.Heartbeat.IP, C.HTTP.Port)
 		C.Alerting.RedisPub.ChannelKey = C.Alerting.RedisPub.ChannelPrefix + C.ClusterName
 
-		if C.Alerting.GlobalCallback.Enable {
-			if C.Alerting.GlobalCallback.Timeout == "" {
-				C.Alerting.GlobalCallback.TimeoutDuration = time.Second * 5
+		if C.Alerting.Webhook.Enable {
+			if C.Alerting.Webhook.Timeout == "" {
+				C.Alerting.Webhook.TimeoutDuration = time.Second * 5
 			} else {
-				dur, err := time.ParseDuration(C.Alerting.GlobalCallback.Timeout)
+				dur, err := time.ParseDuration(C.Alerting.Webhook.Timeout)
 				if err != nil {
-					fmt.Println("failed to parse Alerting.GlobalCallback.Timeout")
+					fmt.Println("failed to parse Alerting.Webhook.Timeout")
 					os.Exit(1)
 				}
-				C.Alerting.GlobalCallback.TimeoutDuration = dur
+				C.Alerting.Webhook.TimeoutDuration = dur
 			}
 		}
 
@@ -104,6 +104,7 @@ type Config struct {
 	Log         logx.Config
 	HTTP        httpx.Config
 	BasicAuth   gin.Accounts
+	SMTP        SMTPConfig
 	Heartbeat   HeartbeatConfig
 	Alerting    Alerting
 	NoData      NoData
@@ -123,12 +124,26 @@ type HeartbeatConfig struct {
 	Endpoint string
 }
 
+type SMTPConfig struct {
+	Host               string
+	Port               int
+	User               string
+	Pass               string
+	From               string
+	InsecureSkipVerify bool
+}
+
 type Alerting struct {
-	NotifyScriptPath  string
-	NotifyConcurrency int
 	TemplatesDir      string
+	NotifyConcurrency int
+	CallScript        CallScript
 	RedisPub          RedisPub
-	GlobalCallback    GlobalCallback
+	Webhook           Webhook
+}
+
+type CallScript struct {
+	Enable     bool
+	ScriptPath string
 }
 
 type RedisPub struct {
@@ -137,7 +152,7 @@ type RedisPub struct {
 	ChannelKey    string
 }
 
-type GlobalCallback struct {
+type Webhook struct {
 	Enable          bool
 	Url             string
 	BasicAuthUser   string
