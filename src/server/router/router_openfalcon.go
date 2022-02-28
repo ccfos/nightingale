@@ -52,6 +52,8 @@ func (m *FalconMetric) Clean(ts int64) error {
 		return fmt.Errorf("unparseable value %v", v)
 	}
 
+	m.Value, _ = strconv.ParseFloat(fmt.Sprintf("%.5f", m.Value), 64)
+
 	// if timestamp bigger than 32 bits, likely in milliseconds
 	if m.Timestamp > 0xffffffff {
 		m.Timestamp /= 1000
