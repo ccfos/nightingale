@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -51,6 +52,8 @@ func (m *HTTPMetric) Clean(ts int64) error {
 	default:
 		return fmt.Errorf("unparseable value %v", v)
 	}
+
+	m.Value = math.Round(m.Value*100000) / 100000
 
 	// if timestamp bigger than 32 bits, likely in milliseconds
 	if m.Timestamp > 0xffffffff {
