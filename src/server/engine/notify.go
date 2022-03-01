@@ -119,11 +119,6 @@ func alertingRedisPub(bs []byte) {
 func handleNotice(notice Notice, bs []byte) {
 	alertingCallScript(bs)
 
-	// 如果启用 Alerting.CallScript(notify.py)，不再继续执行内置发送
-	if config.C.Alerting.CallScript.Enable {
-		return
-	}
-
 	emailset := make(map[string]struct{})
 	phoneset := make(map[string]struct{})
 	wecomset := make(map[string]struct{})
