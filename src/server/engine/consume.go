@@ -155,3 +155,11 @@ func mapKeys(m map[int64]struct{}) []int64 {
 	}
 	return lst
 }
+
+func StringSetKeys(m map[string]struct{}) []string {
+	lst := make([]string, 0, len(m))
+	for k := range m {
+		lst = append(lst, k)
+	}
+	return lst
+}

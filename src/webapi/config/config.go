@@ -78,8 +78,8 @@ type Config struct {
 	I18N            string
 	AdminRole       string
 	MetricsYamlFile string
-	ContactKeys     []ContactKey
-	NotifyChannels  []string
+	ContactKeys     []LabelAndKey
+	NotifyChannels  []LabelAndKey
 	Log             logx.Config
 	HTTP            httpx.Config
 	JWTAuth         JWTAuth
@@ -94,9 +94,18 @@ type Config struct {
 	Ibex            Ibex
 }
 
-type ContactKey struct {
+type LabelAndKey struct {
 	Label string `json:"label"`
 	Key   string `json:"key"`
+}
+
+func LabelAndKeyHasKey(keys []LabelAndKey, key string) bool {
+	for i := 0; i < len(keys); i++ {
+		if keys[i].Key == key {
+			return true
+		}
+	}
+	return false
 }
 
 type JWTAuth struct {

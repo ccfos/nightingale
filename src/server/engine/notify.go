@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/tidwall/gjson"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
@@ -21,6 +22,7 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/sys"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
+	"github.com/didi/nightingale/v5/src/server/sender"
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
@@ -117,8 +119,110 @@ func alertingRedisPub(bs []byte) {
 func handleNotice(notice Notice, bs []byte) {
 	alertingCallScript(bs)
 
-	// TODO 弄个channel发邮件，学习daemon写法
-	// 收集tokens、phones，发呗
+	emailset := make(map[string]struct{})
+	phoneset := make(map[string]struct{})
+	wecomset := make(map[string]struct{})
+	dingtalkset := make(map[string]struct{})
+	feishuset := make(map[string]struct{})
+
+	for _, user := range notice.Event.NotifyUsersObj {
+		if user.Email != "" {
+			emailset[user.Email] = struct{}{}
+		}
+
+		if user.Phone != "" {
+			phoneset[user.Phone] = struct{}{}
+		}
+
+		bs, err := user.Contacts.MarshalJSON()
+		if err != nil {
+			logger.Errorf("handle_notice: failed to marshal contacts: %v", err)
+			continue
+		}
+
+		ret := gjson.GetBytes(bs, "dingtalk_robot_token")
+		if ret.Exists() {
+			dingtalkset[ret.String()] = struct{}{}
+		}
+
+		ret = gjson.GetBytes(bs, "wecom_robot_token")
+		if ret.Exists() {
+			wecomset[ret.String()] = struct{}{}
+		}
+
+		ret = gjson.GetBytes(bs, "feishu_robot_token")
+		if ret.Exists() {
+			feishuset[ret.String()] = struct{}{}
+		}
+	}
+
+	phones := StringSetKeys(phoneset)
+
+	for _, ch := range notice.Event.NotifyChannelsJSON {
+		switch ch {
+		case "email":
+			if len(emailset) == 0 {
+				continue
+			}
+
+			subject, has := notice.Tpls["subject.tpl"]
+			if !has {
+				subject = "subject.tpl not found"
+			}
+
+			content, has := notice.Tpls["mailbody.tpl"]
+			if !has {
+				content = "mailbody.tpl not found"
+			}
+
+			sender.WriteEmail(subject, content, StringSetKeys(emailset))
+		case "dingtalk":
+			if len(dingtalkset) == 0 {
+				continue
+			}
+
+			content, has := notice.Tpls["dingtalk.tpl"]
+			if !has {
+				content = "dingtalk.tpl not found"
+			}
+
+			sender.SendDingtalk(sender.DingtalkMessage{
+				Title:     notice.Event.RuleName,
+				Text:      content,
+				AtMobiles: phones,
+				Tokens:    StringSetKeys(dingtalkset),
+			})
+		case "wecom":
+			if len(wecomset) == 0 {
+				continue
+			}
+
+			content, has := notice.Tpls["wecom.tpl"]
+			if !has {
+				content = "wecom.tpl not found"
+			}
+			sender.SendWecom(sender.WecomMessage{
+				Text:   content,
+				Tokens: StringSetKeys(wecomset),
+			})
+		case "feishu":
+			if len(feishuset) == 0 {
+				continue
+			}
+
+			content, has := notice.Tpls["feishu.tpl"]
+			if !has {
+				content = "feishu.tpl not found"
+			}
+			sender.SendFeishu(sender.FeishuMessage{
+				Text:      content,
+				AtMobiles: phones,
+				Tokens:    StringSetKeys(feishuset),
+			})
+		default:
+			logger.Info("channel ", ch, " not supported by golang")
+		}
+	}
 }
 
 func notify(event *models.AlertCurEvent) {

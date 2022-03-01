@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"strings"
 	"time"
 
 	"github.com/didi/nightingale/v5/src/server/poster"
@@ -31,13 +32,18 @@ type dingtalk struct {
 }
 
 func SendDingtalk(message DingtalkMessage) {
+	ats := make([]string, len(message.AtMobiles))
+	for i := 0; i < len(message.AtMobiles); i++ {
+		ats[i] = "@" + message.AtMobiles[i]
+	}
+
 	for i := 0; i < len(message.Tokens); i++ {
 		url := "https://oapi.dingtalk.com/robot/send?access_token=" + message.Tokens[i]
 		body := dingtalk{
 			Msgtype: "markdown",
 			Markdown: dingtalkMarkdown{
 				Title: message.Title,
-				Text:  message.Text,
+				Text:  message.Text + " " + strings.Join(ats, " "),
 			},
 			At: dingtalkAt{
 				AtMobiles: message.AtMobiles,

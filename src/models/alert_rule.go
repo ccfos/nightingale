@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 
 	"github.com/didi/nightingale/v5/src/webapi/config"
@@ -101,7 +100,7 @@ func (ar *AlertRule) Verify() error {
 	if len(channels) > 0 {
 		nlst := make([]string, 0, len(channels))
 		for i := 0; i < len(channels); i++ {
-			if slice.ContainsString(config.C.NotifyChannels, channels[i]) {
+			if config.LabelAndKeyHasKey(config.C.NotifyChannels, channels[i]) {
 				nlst = append(nlst, channels[i])
 			}
 		}
