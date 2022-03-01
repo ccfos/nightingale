@@ -175,7 +175,7 @@ func handleNotice(notice Notice, bs []byte) {
 				content = "mailbody.tpl not found"
 			}
 
-			sender.WriteEmail(subject, content, StringSetKeys(emailset))
+			sender.SendEmail(subject, content, StringSetKeys(emailset))
 		case "dingtalk":
 			if len(dingtalkset) == 0 {
 				continue

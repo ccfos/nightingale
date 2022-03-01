@@ -9,7 +9,28 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-var mailch = make(chan *gomail.Message, 100000)
+var mailch chan *gomail.Message
+
+func SendEmail(subject, content string, tos []string) {
+	conf := config.C.SMTP
+
+	d := gomail.NewDialer(conf.Host, conf.Port, conf.User, conf.Pass)
+	if conf.InsecureSkipVerify {
+		d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
+	m := gomail.NewMessage()
+
+	m.SetHeader("From", config.C.SMTP.From)
+	m.SetHeader("To", tos...)
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/html", content)
+
+	err := d.DialAndSend(m)
+	if err != nil {
+		logger.Errorf("email_sender: failed to send: %v", err)
+	}
+}
 
 func WriteEmail(subject, content string, tos []string) {
 	m := gomail.NewMessage()
@@ -35,6 +56,8 @@ func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
 }
 
 func StartEmailSender() {
+	mailch = make(chan *gomail.Message, 100000)
+
 	conf := config.C.SMTP
 
 	d := gomail.NewDialer(conf.Host, conf.Port, conf.User, conf.Pass)
@@ -43,7 +66,7 @@ func StartEmailSender() {
 	}
 
 	var s gomail.SendCloser
-	open := false
+	var open bool
 	for {
 		select {
 		case m, ok := <-mailch:
