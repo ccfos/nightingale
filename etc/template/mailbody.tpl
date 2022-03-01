@@ -22,7 +22,7 @@
             border-radius: 2px 2px 0 0;
         }
         header .title {
-            font-size: 16px;
+            font-size: 14px;
             color: #333333;
             margin: 0;
         }
@@ -55,12 +55,16 @@
 
         .succ {
             background-color: green;
-            color: white;
+            color: #fff;
         }
 
         .fail {
             background-color: red;
-            color: white;
+            color: #fff;
+        }
+
+        .succ th, .succ td, .fail th, .fail td {
+            color: #fff;
         }
 
         table tbody tr th {
