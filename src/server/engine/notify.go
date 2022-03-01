@@ -119,6 +119,10 @@ func alertingRedisPub(bs []byte) {
 func handleNotice(notice Notice, bs []byte) {
 	alertingCallScript(bs)
 
+	if !config.C.Alerting.NotifyBuiltinEnable {
+		return
+	}
+
 	emailset := make(map[string]struct{})
 	phoneset := make(map[string]struct{})
 	wecomset := make(map[string]struct{})
