@@ -131,6 +131,7 @@ type SMTPConfig struct {
 	Pass               string
 	From               string
 	InsecureSkipVerify bool
+	Batch              int
 }
 
 type Alerting struct {

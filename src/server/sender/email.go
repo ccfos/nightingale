@@ -67,19 +67,45 @@ func StartEmailSender() {
 
 	var s gomail.SendCloser
 	var open bool
+	var size int
 	for {
 		select {
 		case m, ok := <-mailch:
 			if !ok {
 				return
 			}
+
 			if !open {
 				s = dialSmtp(d)
 				open = true
 			}
+
 			if err := gomail.Send(s, m); err != nil {
 				logger.Errorf("email_sender: failed to send: %s", err)
+
+				// close and retry
+				if err := s.Close(); err != nil {
+					logger.Warningf("email_sender: failed to close smtp connection: %s", err)
+				}
+
+				s = dialSmtp(d)
+				open = true
+
+				if err := gomail.Send(s, m); err != nil {
+					logger.Errorf("email_sender: failed to retry send: %s", err)
+				}
 			}
+
+			size++
+
+			if size >= conf.Batch {
+				if err := s.Close(); err != nil {
+					logger.Warningf("email_sender: failed to close smtp connection: %s", err)
+				}
+				open = false
+				size = 0
+			}
+
 		// Close the connection to the SMTP server if no email was sent in
 		// the last 30 seconds.
 		case <-time.After(30 * time.Second):
