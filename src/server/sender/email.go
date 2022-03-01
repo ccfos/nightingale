@@ -94,6 +94,8 @@ func StartEmailSender() {
 				if err := gomail.Send(s, m); err != nil {
 					logger.Errorf("email_sender: failed to retry send: %s", err)
 				}
+			} else {
+				logger.Infof("email_sender: result=succ subject=%v to=%v", m.GetHeader("Subject"), m.GetHeader("To"))
 			}
 
 			size++
