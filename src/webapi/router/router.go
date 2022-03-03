@@ -186,7 +186,7 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/busi-group/:id/alert-rules", jwtAuth(), user(), perm("/alert-rules/add"), bgrw(), alertRuleAdd)
 		pages.DELETE("/busi-group/:id/alert-rules", jwtAuth(), user(), perm("/alert-rules/del"), bgrw(), alertRuleDel)
 		pages.PUT("/busi-group/:id/alert-rules/fields", jwtAuth(), user(), perm("/alert-rules/put"), bgrw(), alertRulePutFields)
-		pages.PUT("/busi-group/:id/alert-rule/:arid", jwtAuth(), user(), perm("/alert-rules/put"), bgrw(), alertRulePut)
+		pages.PUT("/busi-group/:id/alert-rule/:arid", jwtAuth(), user(), perm("/alert-rules/put"), alertRulePut)
 		pages.GET("/alert-rule/:arid", jwtAuth(), user(), perm("/alert-rules"), alertRuleGet)
 
 		pages.GET("/busi-group/:id/alert-mutes", jwtAuth(), user(), perm("/alert-mutes"), bgro(), alertMuteGets)

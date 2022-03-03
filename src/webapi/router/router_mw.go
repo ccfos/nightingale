@@ -105,6 +105,7 @@ func bgro() gin.HandlerFunc {
 	}
 }
 
+// bgrw 逐步要被干掉，不安全
 func bgrw() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		me := c.MustGet("user").(*models.User)
@@ -120,6 +121,21 @@ func bgrw() gin.HandlerFunc {
 		c.Set("busi_group", bg)
 		c.Next()
 	}
+}
+
+// bgrwCheck 要逐渐替换掉bgrw方法，更安全
+func bgrwCheck(c *gin.Context, bgid int64) {
+	me := c.MustGet("user").(*models.User)
+	bg := BusiGroup(bgid)
+
+	can, err := me.CanDoBusiGroup(bg, "rw")
+	ginx.Dangerous(err)
+
+	if !can {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
+	}
+
+	c.Set("busi_group", bg)
 }
 
 func perm(operation string) gin.HandlerFunc {
