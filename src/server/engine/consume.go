@@ -44,9 +44,11 @@ func consume(events []interface{}, sema *semaphore.Semaphore) {
 func consumeOne(event *models.AlertCurEvent) {
 	logEvent(event, "consume")
 	persist(event)
-	fillUsers(event)
-	callback(event)
-	notify(event)
+	if event.NotifyRecovered == 1 {
+		fillUsers(event)
+		callback(event)
+		notify(event)
+	}
 }
 
 func persist(event *models.AlertCurEvent) {

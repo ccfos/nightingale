@@ -78,6 +78,8 @@ func alertRulePut(c *gin.Context) {
 		return
 	}
 
+	bgrwCheck(c, ar.GroupId)
+
 	f.UpdateBy = c.MustGet("username").(string)
 	ginx.NewRender(c).Message(ar.Update(f))
 }
