@@ -62,7 +62,11 @@ func configNoRoute(r *gin.Engine) {
 		suffix := arr[len(arr)-1]
 		switch suffix {
 		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map":
-			c.File(path.Join(strings.Split("pub/"+c.Request.URL.Path, "/")...))
+			if config.C.WEB.Enable && len(config.C.WEB.WebRes) != 0 {
+				c.File(path.Join(strings.Split("pub/"+config.C.WEB.WebRes+"/"+c.Request.URL.Path, "/")...))
+			}else {
+				c.File(path.Join(strings.Split("pub/"+c.Request.URL.Path, "/")...))
+			}
 		default:
 			c.File(path.Join("pub", "index.html"))
 		}

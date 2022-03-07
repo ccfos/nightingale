@@ -82,6 +82,7 @@ type Config struct {
 	NotifyChannels  []LabelAndKey
 	Log             logx.Config
 	HTTP            httpx.Config
+	WEB				WEB
 	JWTAuth         JWTAuth
 	BasicAuth       gin.Accounts
 	AnonymousAccess AnonymousAccess
@@ -126,6 +127,11 @@ type PassportAuth struct {
 	PassportKeyName		string
 	PassPortVerify		string
 	PassPortVerifyType	string
+}
+
+type WEB struct {
+	Enable 				bool
+	WebRes				string
 }
 
 type Ibex struct {
