@@ -7,6 +7,8 @@ import (
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
+const AdminRole = "Admin"
+
 func DB() *gorm.DB {
 	return storage.DB
 }

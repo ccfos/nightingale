@@ -169,7 +169,7 @@ func admin() gin.HandlerFunc {
 		roles := strings.Fields(user.Roles)
 		found := false
 		for i := 0; i < len(roles); i++ {
-			if roles[i] == config.C.AdminRole {
+			if roles[i] == models.AdminRole {
 				found = true
 				break
 			}

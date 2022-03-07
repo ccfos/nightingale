@@ -40,7 +40,7 @@ func (u *User) TableName() string {
 
 func (u *User) IsAdmin() bool {
 	for i := 0; i < len(u.RolesLst); i++ {
-		if u.RolesLst[i] == config.C.AdminRole {
+		if u.RolesLst[i] == AdminRole {
 			return true
 		}
 	}

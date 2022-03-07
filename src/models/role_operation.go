@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/toolkits/pkg/slice"
 )
 
@@ -25,7 +24,7 @@ func RoleHasOperation(roles []string, operation string) (bool, error) {
 func OperationsOfRole(roles []string) ([]string, error) {
 	session := DB().Model(&RoleOperation{}).Select("distinct(operation) as operation")
 
-	if !slice.ContainsString(roles, config.C.AdminRole) {
+	if !slice.ContainsString(roles, AdminRole) {
 		session = session.Where("role_name in ?", roles)
 	}
 
