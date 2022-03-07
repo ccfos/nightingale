@@ -159,6 +159,10 @@ func UserGetByUsername(username string) (*User, error) {
 	return UserGet("username=?", username)
 }
 
+func UserGetByEmail(email string) (*User, error) {
+	return UserGet("email=?", email)
+}
+
 func UserGetById(id int64) (*User, error) {
 	return UserGet("id=?", id)
 }
@@ -211,6 +215,27 @@ func PassLogin(username, pass string) (*User, error) {
 
 	if loginPass != user.Password {
 		return nil, fmt.Errorf("Username or password invalid")
+	}
+
+	return user, nil
+}
+
+// passport用户是否存在，用户信息同步自行实现
+func PassPortLogin(username,loginType string) (*User, error) {
+	var user *User
+	var err error
+	if loginType == "email" {
+		user, err = UserGetByEmail(username)
+	}else {
+		user, err = UserGetByUsername(username)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, fmt.Errorf("%v Username or Email invalid，请联系管理员添加！" , username)
 	}
 
 	return user, nil

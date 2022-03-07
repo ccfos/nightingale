@@ -86,6 +86,7 @@ type Config struct {
 	BasicAuth       gin.Accounts
 	AnonymousAccess AnonymousAccess
 	LDAP            ldapx.LdapSection
+	PassportAuth  	PassportAuth
 	Redis           storage.RedisConfig
 	Gorm            storage.Gorm
 	MySQL           storage.MySQL
@@ -118,6 +119,13 @@ type JWTAuth struct {
 type AnonymousAccess struct {
 	PromQuerier bool
 	AlertDetail bool
+}
+
+type PassportAuth struct {
+	Enable 				bool
+	PassportKeyName		string
+	PassPortVerify		string
+	PassPortVerifyType	string
 }
 
 type Ibex struct {

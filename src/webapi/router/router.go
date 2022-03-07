@@ -110,9 +110,15 @@ func configRoute(r *gin.Engine, version string) {
 			c.String(200, version)
 		})
 
-		pages.POST("/auth/login", loginPost)
-		pages.POST("/auth/logout", logoutPost)
-		pages.POST("/auth/refresh", refreshPost)
+		if config.C.PassportAuth.Enable {
+			pages.POST("/auth/login", loginPassportPost)
+			pages.POST("/auth/logout", logoutPassportPost)
+			pages.POST("/auth/refresh", refreshPassportPost)
+		}else {
+			pages.POST("/auth/login", loginPost)
+			pages.POST("/auth/logout", logoutPost)
+			pages.POST("/auth/refresh", refreshPost)
+		}
 
 		pages.GET("/metrics/desc", metricsDescGetFile)
 		pages.POST("/metrics/desc", metricsDescGetMap)
