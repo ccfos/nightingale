@@ -124,6 +124,8 @@ func configRoute(r *gin.Engine, version string) {
 			pages.POST("/auth/refresh", refreshPost)
 		}
 
+		pages.GET("/passport/authcheck/:passport_ticket", passportAuthCheckValid)
+
 		pages.GET("/metrics/desc", metricsDescGetFile)
 		pages.POST("/metrics/desc", metricsDescGetMap)
 

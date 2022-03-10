@@ -28,38 +28,13 @@ func loginPassportPost(c *gin.Context) {
 	}
 
 	// passport_ticket认证
-	passport_url := config.C.PassportAuth.PassPortVerify
-	if strings.Contains(passport_url, "?") {
-		passport_url = passport_url + "&"
-	}else {
-		passport_url = passport_url + "?"
-	}
-	passport_url = passport_url + "passport_type=query&" + config.C.PassportAuth.PassportKeyName + "=" + f.PassportTicket
-
-	tr := &http.Transport{DisableKeepAlives: true}
-	client := &http.Client{Transport: tr}
-
-	resp, err := client.Get(passport_url)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-
-	if err != nil {
-		ginx.NewRender(c).Message(err)
-		return
-	}
-
-	//fmt.Println(resp.StatusCode)
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		ginx.NewRender(c).Message(err)
-		return
-	}
-
-	username := string(body)
+	username,err := getUsernameByPassportTicket(f.PassportTicket)
 	if username == "0" {
 		ginx.NewRender(c).Message("PassPort 无此用户!")
+		return
+	}
+	if err != nil {
+		ginx.NewRender(c).Message(err)
 		return
 	}
 	user, err := models.PassPortLogin(username,config.C.PassportAuth.PassPortVerifyType)
@@ -167,4 +142,64 @@ func refreshPassportPost(c *gin.Context) {
 		// redirect to login page
 		ginx.NewRender(c, http.StatusUnauthorized).Message("refresh token expired")
 	}
+}
+
+func passportAuthCheckValid(c *gin.Context) {
+	ticket := ginx.UrlParamStr(c, "passport_ticket")
+	if len(ticket) == 0{
+		ginx.NewRender(c).Message("PassPort KEY不能为空！")
+		return
+	}
+
+	// passport_ticket认证
+	username,err := getUsernameByPassportTicket(ticket)
+	if username == "0" {
+		ginx.NewRender(c).Message("PassPort 无此用户!")
+		return
+	}
+	if err != nil {
+		ginx.NewRender(c).Message(err)
+		return
+	}
+
+	ginx.NewRender(c).Data(gin.H{
+		"username":  username,
+	}, nil)
+}
+
+
+func getUsernameByPassportTicket(passport_ticket string) (username string,err error) {
+	// passport_ticket认证
+	passport_url := config.C.PassportAuth.PassPortVerify
+	if strings.Contains(passport_url, "?") {
+		passport_url = passport_url + "&"
+	}else {
+		passport_url = passport_url + "?"
+	}
+	passport_url = passport_url + "passport_type=query&" + config.C.PassportAuth.PassportKeyName + "=" + passport_ticket
+
+	tr := &http.Transport{DisableKeepAlives: true}
+	client := &http.Client{Transport: tr}
+
+	resp, err := client.Get(passport_url)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+
+	if err != nil {
+		return "",err
+	}
+
+	//fmt.Println(resp.StatusCode)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "",err
+	}
+
+	username = string(body)
+	if username == "0" {
+		return username,nil
+	}
+	return username,nil
 }
