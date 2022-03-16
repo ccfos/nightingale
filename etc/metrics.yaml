@@ -126,3 +126,31 @@ http_response_content_length: HTTP消息实体的传输长度
 http_response_http_response_code: http响应状态码
 http_response_response_time: http响应用时
 http_response_result_code: url探测结果0为正常否则url无法访问
+
+# [mysqld_exporter]
+mysql_global_status_uptime: The number of seconds that the server has been up.(Gauge)
+mysql_global_status_queries: The number of statements executed by the server. This variable includes statements executed within stored programs, unlike the Questions variable. It does not count COM_PING or COM_STATISTICS commands.(Counter)
+mysql_global_variables_innodb_buffer_pool_size: The size in bytes of the buffer pool, the memory area where InnoDB caches table and index data. The default value is 134217728 bytes (128MB).(Gauge)
+mysql_global_status_threads_connected: The number of currently open connections.(Gauge)
+mysql_global_status_max_used_connections: The maximum number of connections that have been in use simultaneously since the server started.(Gauge)
+mysql_global_variables_max_connections: The maximum permitted number of simultaneous client connections.(Gauge)
+mysql_global_status_threads_running: The number of threads that are not sleeping.(Gauge)
+mysql_global_status_questions: The number of statements executed by the server. This includes only statements sent to the server by clients and not statements executed within stored programs, unlike the Queries variable. This variable does not count COM_PING, COM_STATISTICS, COM_STMT_PREPARE, COM_STMT_CLOSE, or COM_STMT_RESET commands.(Counter)
+mysql_global_variables_thread_cache_size: How many threads the server should cache for reuse.(Gauge)
+mysql_global_status_threads_cached: The number of threads in the thread cache.(Counter)
+mysql_global_status_threads_created: The number of threads created to handle connections. If Threads_created is big, you may want to increase the thread_cache_size value. The cache miss rate can be calculated as Threads_created/Connections.(Counter)
+mysql_global_status_created_tmp_tables: The number of internal temporary tables created by the server while executing statements.(Counter)
+mysql_global_status_created_tmp_disk_tables: The number of internal on-disk temporary tables created by the server while executing statements. You can compare the number of internal on-disk temporary tables created to the total number of internal temporary tables created by comparing Created_tmp_disk_tables and Created_tmp_tables values.(Counter)
+mysql_global_status_created_tmp_files: How many temporary files mysqld has created.(Counter)
+mysql_global_status_select_full_join: The number of joins that perform table scans because they do not use indexes. If this value is not 0, you should carefully check the indexes of your tables.(Counter)
+mysql_global_status_select_full_range_join: The number of joins that used a range search on a reference table.(Counter)
+mysql_global_status_select_range: The number of joins that used ranges on the first table. This is normally not a critical issue even if the value is quite large.(Counter)
+mysql_global_status_select_range_check: The number of joins without keys that check for key usage after each row. If this is not 0, you should carefully check the indexes of your tables.(Counter)
+mysql_global_status_select_scan: The number of joins that did a full scan of the first table.(Counter)
+mysql_global_status_sort_rows: The number of sorted rows.(Counter)
+mysql_global_status_sort_range: The number of sorts that were done using ranges.(Counter)
+mysql_global_status_sort_merge_passes: The number of merge passes that the sort algorithm has had to do. If this value is large, you should consider increasing the value of the sort_buffer_size system variable.(Counter)
+mysql_global_status_sort_scan: The number of sorts that were done by scanning the table.(Counter)
+mysql_global_status_slow_queries: The number of queries that have taken more than long_query_time seconds. This counter increments regardless of whether the slow query log is enabled.(Counter)
+mysql_global_status_aborted_connects: The number of failed attempts to connect to the MySQL server.(Counter)
+mysql_global_status_aborted_clients: The number of connections that were aborted because the client died without closing the connection properly.(Counter)
