@@ -131,7 +131,8 @@ http_response_result_code: url探测结果0为正常否则url无法访问
 mysql_global_status_uptime: The number of seconds that the server has been up.(Gauge)
 mysql_global_status_uptime_since_flush_status: The number of seconds since the most recent FLUSH STATUS statement.(Gauge)
 mysql_global_status_queries: The number of statements executed by the server. This variable includes statements executed within stored programs, unlike the Questions variable. It does not count COM_PING or COM_STATISTICS commands.(Counter)
-mysql_global_status_threads_connected: The number of currently open connections.(Gauge)
+mysql_global_status_threads_connected: The number of currently open connections.(Counter)
+mysql_global_status_connections: The number of connection attempts (successful or not) to the MySQL server.(Gauge)
 mysql_global_status_max_used_connections: The maximum number of connections that have been in use simultaneously since the server started.(Gauge)
 mysql_global_status_threads_running: The number of threads that are not sleeping.(Gauge)
 mysql_global_status_questions: The number of statements executed by the server. This includes only statements sent to the server by clients and not statements executed within stored programs, unlike the Queries variable. This variable does not count COM_PING, COM_STATISTICS, COM_STMT_PREPARE, COM_STMT_CLOSE, or COM_STMT_RESET commands.(Counter)
@@ -166,6 +167,8 @@ mysql_global_status_opened_tables: The number of tables that have been opened. I
 mysql_global_status_table_open_cache_hits: The number of hits for open tables cache lookups.(Counter)
 mysql_global_status_table_open_cache_misses: The number of misses for open tables cache lookups.(Counter)
 mysql_global_status_table_open_cache_overflows: The number of overflows for the open tables cache.(Counter)
+mysql_global_status_innodb_num_open_files: The number of files InnoDB currently holds open.(Gauge)
+
 mysql_global_variables_thread_cache_size: How many threads the server should cache for reuse.(Gauge)
 mysql_global_variables_max_connections: The maximum permitted number of simultaneous client connections.(Gauge)
 mysql_global_variables_innodb_buffer_pool_size: The size in bytes of the buffer pool, the memory area where InnoDB caches table and index data. The default value is 134217728 bytes (128MB).(Gauge)
@@ -173,4 +176,6 @@ mysql_global_variables_innodb_log_buffer_size: The size in bytes of the buffer t
 mysql_global_variables_key_buffer_size: Index blocks for MyISAM tables are buffered and are shared by all threads.(Gauge)
 mysql_global_variables_query_cache_size: The amount of memory allocated for caching query results.(Gauge)
 mysql_global_variables_table_open_cache: The number of open tables for all threads.(Gauge)
+mysql_global_variables_open_files_limit: The number of file descriptors available to mysqld from the operating system.(Gauge)
+
 
