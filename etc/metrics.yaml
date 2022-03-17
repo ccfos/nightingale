@@ -168,6 +168,9 @@ mysql_global_status_table_open_cache_hits: The number of hits for open tables ca
 mysql_global_status_table_open_cache_misses: The number of misses for open tables cache lookups.(Counter)
 mysql_global_status_table_open_cache_overflows: The number of overflows for the open tables cache.(Counter)
 mysql_global_status_innodb_num_open_files: The number of files InnoDB currently holds open.(Gauge)
+mysql_global_status_connection_errors_total: These variables provide information about errors that occur during the client connection process.(Counter)
+mysql_global_status_innodb_buffer_pool_read_requests: The number of logical read requests.(Counter)
+mysql_global_status_innodb_buffer_pool_reads: The number of logical reads that InnoDB could not satisfy from the buffer pool, and had to read directly from disk.(Counter)
 
 mysql_global_variables_thread_cache_size: How many threads the server should cache for reuse.(Gauge)
 mysql_global_variables_max_connections: The maximum permitted number of simultaneous client connections.(Gauge)
