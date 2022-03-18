@@ -177,7 +177,7 @@ CREATE TABLE `chart_group` (
 CREATE TABLE `chart` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint unsigned not null comment 'chart group id',
-    `configs` varchar(8192),
+    `configs` text,
     `weight` int not null default 0,
     PRIMARY KEY (`id`),
     KEY (`group_id`)

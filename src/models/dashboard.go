@@ -74,7 +74,12 @@ func (d *Dashboard) Del() error {
 	}
 
 	if len(cgids) == 0 {
-		return nil
+		return DB().Transaction(func(tx *gorm.DB) error {
+			if err := tx.Where("id=?", d.Id).Delete(&Dashboard{}).Error; err != nil {
+				return err
+			}
+			return nil
+		})
 	}
 
 	return DB().Transaction(func(tx *gorm.DB) error {
