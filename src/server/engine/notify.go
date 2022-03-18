@@ -119,9 +119,9 @@ func alertingRedisPub(bs []byte) {
 }
 
 func handleNotice(notice Notice, bs []byte) {
-	go alertingCallScript(bs)
+	alertingCallScript(bs)
 
-	go alertingCallPlugin(bs)
+	alertingCallPlugin(bs)
 
 	if !config.C.Alerting.NotifyBuiltinEnable {
 		return
@@ -407,7 +407,7 @@ type Notifier interface {
 }
 
 // call notify.so via golang plugin build
-// ig. etc/script/notify/notify.py
+// ig. etc/script/notify/notify.so
 func alertingCallPlugin(stdinBytes []byte) {
 	if runtime.GOOS == "windows" {
 		logger.Errorf("call notify plugin on unsupported os: %s", runtime.GOOS)
