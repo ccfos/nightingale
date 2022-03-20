@@ -139,6 +139,7 @@ type Alerting struct {
 	NotifyConcurrency   int
 	NotifyBuiltinEnable bool
 	CallScript          CallScript
+	CallPlugin          CallPlugin
 	RedisPub            RedisPub
 	Webhook             Webhook
 }
@@ -146,6 +147,12 @@ type Alerting struct {
 type CallScript struct {
 	Enable     bool
 	ScriptPath string
+}
+
+type CallPlugin struct {
+	Enable     bool
+	PluginPath string
+	Caller     string
 }
 
 type RedisPub struct {

@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"os/exec"
 	"path"
+	"plugin"
+	"runtime"
 	"strings"
 	"time"
 
@@ -118,6 +120,8 @@ func alertingRedisPub(bs []byte) {
 
 func handleNotice(notice Notice, bs []byte) {
 	alertingCallScript(bs)
+
+	alertingCallPlugin(bs)
 
 	if !config.C.Alerting.NotifyBuiltinEnable {
 		return
@@ -395,4 +399,38 @@ func alertingCallScript(stdinBytes []byte) {
 	}
 
 	logger.Infof("event_notify: exec %s output: %s", fpath, buf.String())
+}
+
+type Notifier interface {
+	Descript() string
+	Notify([]byte)
+}
+
+// call notify.so via golang plugin build
+// ig. etc/script/notify/notify.so
+func alertingCallPlugin(stdinBytes []byte) {
+	if runtime.GOOS == "windows" {
+		logger.Errorf("call notify plugin on unsupported os: %s", runtime.GOOS)
+		return
+	}
+	if !config.C.Alerting.CallPlugin.Enable {
+		return
+	}
+	p, err := plugin.Open(config.C.Alerting.CallPlugin.PluginPath)
+	if err != nil {
+		logger.Errorf("failed to open notify plugin: %v", err)
+		return
+	}
+	caller, err := p.Lookup(config.C.Alerting.CallPlugin.Caller)
+	if err != nil {
+		logger.Errorf("failed to load caller: %v", err)
+		return
+	}
+	notifier, ok := caller.(Notifier)
+	if !ok {
+		logger.Errorf("notifier interface not implemented): %v", err)
+		return
+	}
+	notifier.Notify(stdinBytes)
+	logger.Debugf("alertingCallPlugin done. %s", notifier.Descript())
 }
