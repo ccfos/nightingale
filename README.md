@@ -8,9 +8,7 @@ Nightingale is an enterprise-level cloud-native monitoring system, which can be 
 
 ## Docs
 
-- github: [https://n9e.github.io/](https://n9e.github.io/)
-- gitee: [https://n9e.gitee.io/](https://n9e.gitee.io/)
-- v4(old version): [https://n9e.didiyun.com/](https://n9e.didiyun.com/)
+[https://n9e.github.io/](https://n9e.github.io/)
 
 ## TODO
 
