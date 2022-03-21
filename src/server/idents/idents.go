@@ -12,6 +12,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/server/common"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
 	"github.com/didi/nightingale/v5/src/server/naming"
@@ -166,13 +167,7 @@ func pushMetrics() {
 				logger.Errorf("handle_idents: insert target(%s) fail: %v", active, err)
 			}
 		} else {
-			// target already exists
-			for label, value := range target.TagsMap {
-				pt.Labels = append(pt.Labels, &prompb.Label{
-					Name:  label,
-					Value: value,
-				})
-			}
+			common.AppendLabels(pt, target)
 		}
 
 		series = append(series, pt)
@@ -199,12 +194,7 @@ func pushMetrics() {
 			Value: ident,
 		})
 
-		for label, value := range dead.TagsMap {
-			pt.Labels = append(pt.Labels, &prompb.Label{
-				Name:  label,
-				Value: value,
-			})
-		}
+		common.AppendLabels(pt, dead)
 		series = append(series, pt)
 	}
 

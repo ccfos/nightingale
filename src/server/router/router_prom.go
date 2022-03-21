@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/ginx"
 
+	"github.com/didi/nightingale/v5/src/server/common"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/engine"
 	"github.com/didi/nightingale/v5/src/server/idents"
@@ -92,12 +93,7 @@ func remoteWrite(c *gin.Context) {
 			// fill tags
 			target, has := memsto.TargetCache.Get(ident)
 			if has {
-				for key, value := range target.TagsMap {
-					req.Timeseries[i].Labels = append(req.Timeseries[i].Labels, &prompb.Label{
-						Name:  key,
-						Value: value,
-					})
-				}
+				common.AppendLabels(req.Timeseries[i], target)
 			}
 		}
 

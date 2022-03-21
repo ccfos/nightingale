@@ -123,19 +123,6 @@ func syncTargets() error {
 			lst[i].TagsMap[arr[0]] = arr[1]
 		}
 
-		// handle BusiGroup's LabelValue
-		// BusiGroup的LabelValue就相当于一个特殊的标签来对待
-		if lst[i].GroupId > 0 {
-			bg := BusiGroupCache.GetByBusiGroupId(lst[i].GroupId)
-			if bg == nil {
-				return errors.New("busi group cache not ready")
-			}
-
-			if bg.LabelEnable == 1 {
-				lst[i].TagsMap["busigroup"] = bg.LabelValue
-			}
-		}
-
 		m[lst[i].Ident] = lst[i]
 	}
 

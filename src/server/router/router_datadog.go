@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/server/common"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/idents"
 	"github.com/didi/nightingale/v5/src/server/memsto"
@@ -238,12 +239,7 @@ func datadogSeries(c *gin.Context) {
 			// fill tags
 			target, has := memsto.TargetCache.Get(ident)
 			if has {
-				for key, value := range target.TagsMap {
-					pt.Labels = append(pt.Labels, &prompb.Label{
-						Name:  key,
-						Value: value,
-					})
-				}
+				common.AppendLabels(pt, target)
 			}
 		}
 
