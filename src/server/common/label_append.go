@@ -2,6 +2,7 @@ package common
 
 import (
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
 	"github.com/prometheus/prometheus/prompb"
 )
@@ -18,7 +19,7 @@ func AppendLabels(pt *prompb.TimeSeries, target *models.Target) {
 		})
 	}
 
-	if target.GroupId > 0 {
+	if target.GroupId > 0 && len(config.C.BusiGroupLabelKey) > 0 {
 		bg := memsto.BusiGroupCache.GetByBusiGroupId(target.GroupId)
 		if bg == nil {
 			return
@@ -29,7 +30,7 @@ func AppendLabels(pt *prompb.TimeSeries, target *models.Target) {
 		}
 
 		pt.Labels = append(pt.Labels, &prompb.Label{
-			Name:  "busigroup",
+			Name:  config.C.BusiGroupLabelKey,
 			Value: bg.LabelValue,
 		})
 	}
