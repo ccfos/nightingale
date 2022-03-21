@@ -128,6 +128,8 @@ insert into `role_operation`(role_name, operation) values('Standard', '/job-task
 CREATE TABLE `busi_group` (
     `id` bigint unsigned not null auto_increment,
     `name` varchar(191) not null,
+    `label_enable` tinyint(1) not null default 0,
+    `label_value` varchar(191) not null default '' comment 'if label_enable: label_value can not be blank',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,

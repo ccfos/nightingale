@@ -122,6 +122,13 @@ func syncTargets() error {
 			}
 			lst[i].TagsMap[arr[0]] = arr[1]
 		}
+
+		// handle BusiGroup's LabelValue
+		// BusiGroup的LabelValue就相当于一个特殊的标签来对待
+		if lst[i].GroupObj != nil && lst[i].GroupObj.LabelEnable == 1 {
+			lst[i].TagsMap["busigroup"] = lst[i].GroupObj.LabelValue
+		}
+
 		m[lst[i].Ident] = lst[i]
 	}
 

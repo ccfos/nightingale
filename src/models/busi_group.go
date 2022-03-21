@@ -9,13 +9,15 @@ import (
 )
 
 type BusiGroup struct {
-	Id         int64                   `json:"id" gorm:"primaryKey"`
-	Name       string                  `json:"name"`
-	CreateAt   int64                   `json:"create_at"`
-	CreateBy   string                  `json:"create_by"`
-	UpdateAt   int64                   `json:"update_at"`
-	UpdateBy   string                  `json:"update_by"`
-	UserGroups []UserGroupWithPermFlag `json:"user_groups" gorm:"-"`
+	Id          int64                   `json:"id" gorm:"primaryKey"`
+	Name        string                  `json:"name"`
+	LabelEnable int                     `json:"label_enable"`
+	LabelValue  string                  `json:"label_value"`
+	CreateAt    int64                   `json:"create_at"`
+	CreateBy    string                  `json:"create_by"`
+	UpdateAt    int64                   `json:"update_at"`
+	UpdateBy    string                  `json:"update_by"`
+	UserGroups  []UserGroupWithPermFlag `json:"user_groups" gorm:"-"`
 }
 
 type UserGroupWithPermFlag struct {
@@ -49,6 +51,21 @@ func (bg *BusiGroup) FillUserGroups() error {
 	}
 
 	return nil
+}
+
+func BusiGroupGetMap() (map[int64]*BusiGroup, error) {
+	var lst []*BusiGroup
+	err := DB().Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make(map[int64]*BusiGroup)
+	for i := 0; i < len(lst); i++ {
+		ret[lst[i].Id] = lst[i]
+	}
+
+	return ret, nil
 }
 
 func BusiGroupGet(where string, args ...interface{}) (*BusiGroup, error) {
@@ -196,8 +213,8 @@ func (bg *BusiGroup) DelMembers(members []BusiGroupMember, username string) erro
 	}).Error
 }
 
-func (bg *BusiGroup) Update(name string, updateBy string) error {
-	if bg.Name == name {
+func (bg *BusiGroup) Update(name string, labelEnable int, labelValue string, updateBy string) error {
+	if bg.Name == name && bg.LabelEnable == labelEnable && bg.LabelValue == labelValue {
 		return nil
 	}
 
@@ -210,14 +227,29 @@ func (bg *BusiGroup) Update(name string, updateBy string) error {
 		return errors.New("BusiGroup already exists")
 	}
 
+	if labelEnable == 1 {
+		exists, err = BusiGroupExists("label_enable = 1 and label_value = ? and id <> ?", labelValue, bg.Id)
+		if err != nil {
+			return errors.WithMessage(err, "failed to count BusiGroup")
+		}
+
+		if exists {
+			return errors.New("BusiGroup already exists")
+		}
+	} else {
+		labelValue = ""
+	}
+
 	return DB().Model(bg).Updates(map[string]interface{}{
-		"name":      name,
-		"update_at": time.Now().Unix(),
-		"update_by": updateBy,
+		"name":         name,
+		"label_enable": labelEnable,
+		"label_value":  labelValue,
+		"update_at":    time.Now().Unix(),
+		"update_by":    updateBy,
 	}).Error
 }
 
-func BusiGroupAdd(name string, members []BusiGroupMember, creator string) error {
+func BusiGroupAdd(name string, labelEnable int, labelValue string, members []BusiGroupMember, creator string) error {
 	exists, err := BusiGroupExists("name=?", name)
 	if err != nil {
 		return errors.WithMessage(err, "failed to count BusiGroup")
@@ -225,6 +257,19 @@ func BusiGroupAdd(name string, members []BusiGroupMember, creator string) error 
 
 	if exists {
 		return errors.New("BusiGroup already exists")
+	}
+
+	if labelEnable == 1 {
+		exists, err = BusiGroupExists("label_enable = 1 and label_value = ?", labelValue)
+		if err != nil {
+			return errors.WithMessage(err, "failed to count BusiGroup")
+		}
+
+		if exists {
+			return errors.New("BusiGroup already exists")
+		}
+	} else {
+		labelValue = ""
 	}
 
 	count := len(members)
@@ -241,11 +286,13 @@ func BusiGroupAdd(name string, members []BusiGroupMember, creator string) error 
 
 	now := time.Now().Unix()
 	obj := &BusiGroup{
-		Name:     name,
-		CreateAt: now,
-		CreateBy: creator,
-		UpdateAt: now,
-		UpdateBy: creator,
+		Name:        name,
+		LabelEnable: labelEnable,
+		LabelValue:  labelValue,
+		CreateAt:    now,
+		CreateBy:    creator,
+		UpdateAt:    now,
+		UpdateBy:    creator,
 	}
 
 	return DB().Transaction(func(tx *gorm.DB) error {

@@ -311,7 +311,7 @@ func createTokens(signingKey, userIdentity string) (*TokenDetails, error) {
 
 func verifyToken(signingKey, tokenString string) (*jwt.Token, error) {
 	if tokenString == "" {
-		return nil, fmt.Errorf("Bearer token not found")
+		return nil, fmt.Errorf("bearer token not found")
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {

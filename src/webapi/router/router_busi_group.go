@@ -12,8 +12,10 @@ import (
 )
 
 type busiGroupForm struct {
-	Name    string                   `json:"name" binding:"required"`
-	Members []models.BusiGroupMember `json:"members"`
+	Name        string                   `json:"name" binding:"required"`
+	LabelEnable int                      `json:"label_enable"`
+	LabelValue  string                   `json:"label_value"`
+	Members     []models.BusiGroupMember `json:"members"`
 }
 
 func busiGroupAdd(c *gin.Context) {
@@ -37,7 +39,7 @@ func busiGroupAdd(c *gin.Context) {
 	}
 
 	username := c.MustGet("username").(string)
-	ginx.Dangerous(models.BusiGroupAdd(f.Name, f.Members, username))
+	ginx.Dangerous(models.BusiGroupAdd(f.Name, f.LabelEnable, f.LabelValue, f.Members, username))
 
 	// 如果创建成功，拿着name去查，应该可以查到
 	newbg, err := models.BusiGroupGet("name=?", f.Name)
@@ -57,7 +59,7 @@ func busiGroupPut(c *gin.Context) {
 
 	username := c.MustGet("username").(string)
 	targetbg := c.MustGet("busi_group").(*models.BusiGroup)
-	ginx.NewRender(c).Message(targetbg.Update(f.Name, username))
+	ginx.NewRender(c).Message(targetbg.Update(f.Name, f.LabelEnable, f.LabelValue, username))
 }
 
 func busiGroupMemberAdd(c *gin.Context) {
