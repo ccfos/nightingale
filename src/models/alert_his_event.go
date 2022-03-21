@@ -10,6 +10,7 @@ type AlertHisEvent struct {
 	IsRecovered        int         `json:"is_recovered"`
 	Cluster            string      `json:"cluster"`
 	GroupId            int64       `json:"group_id"`
+	GroupName          string      `json:"group_name"` // busi group name
 	Hash               string      `json:"hash"`
 	RuleId             int64       `json:"rule_id"`
 	RuleName           string      `json:"rule_name"`

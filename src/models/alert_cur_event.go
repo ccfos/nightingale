@@ -9,8 +9,9 @@ import (
 type AlertCurEvent struct {
 	Id                 int64             `json:"id" gorm:"primaryKey"`
 	Cluster            string            `json:"cluster"`
-	GroupId            int64             `json:"group_id"` // busi group id
-	Hash               string            `json:"hash"`     // rule_id + vector_key
+	GroupId            int64             `json:"group_id"`   // busi group id
+	GroupName          string            `json:"group_name"` // busi group name
+	Hash               string            `json:"hash"`       // rule_id + vector_key
 	RuleId             int64             `json:"rule_id"`
 	RuleName           string            `json:"rule_name"`
 	RuleNote           string            `json:"rule_note"`
@@ -65,6 +66,7 @@ func (e *AlertCurEvent) ToHis() *AlertHisEvent {
 		IsRecovered:      isRecovered,
 		Cluster:          e.Cluster,
 		GroupId:          e.GroupId,
+		GroupName:        e.GroupName,
 		Hash:             e.Hash,
 		RuleId:           e.RuleId,
 		RuleName:         e.RuleName,
