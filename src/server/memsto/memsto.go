@@ -12,10 +12,11 @@ func exit(code int) {
 }
 
 func Sync() {
-	SyncTargets()
+	SyncBusiGroups()
 	SyncUsers()
 	SyncUserGroups()
 	SyncAlertMutes()
 	SyncAlertSubscribes()
 	SyncAlertRules()
+	SyncTargets()
 }

@@ -127,19 +127,6 @@ func TargetGetsByCluster(cluster string) ([]*Target, error) {
 
 	var lst []*Target
 	err := session.Find(&lst).Error
-	if err == nil {
-		bgcache, err := BusiGroupGetMap()
-		if err != nil {
-			return nil, err
-		}
-
-		for i := 0; i < len(lst); i++ {
-			err = lst[i].FillGroup(bgcache)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
 	return lst, err
 }
 

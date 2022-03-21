@@ -313,3 +313,15 @@ func BusiGroupAdd(name string, labelEnable int, labelValue string, members []Bus
 		return nil
 	})
 }
+
+func BusiGroupStatistics() (*Statistics, error) {
+	session := DB().Model(&BusiGroup{}).Select("count(*) as total", "max(update_at) as last_updated")
+
+	var stats []*Statistics
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return stats[0], nil
+}
