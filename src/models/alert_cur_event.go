@@ -99,7 +99,7 @@ func (e *AlertCurEvent) GetField(field string) string {
 	case "rule_name":
 		return e.RuleName
 	case "severity":
-		return fmt.Sprintf("S%d", e.Severity)
+		return fmt.Sprint(e.Severity)
 	case "runbook_url":
 		return e.RunbookUrl
 	case "target_ident":
