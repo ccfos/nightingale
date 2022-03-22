@@ -223,10 +223,6 @@ func dashboardImport(c *gin.Context) {
 	ginx.NewRender(c).Data(ret, nil)
 }
 
-type idForm struct {
-	Id int64 `json:"id" binding:"required"`
-}
-
 func dashboardClone(c *gin.Context) {
 	dash := Dashboard(ginx.UrlParamInt64(c, "did"))
 	user := c.MustGet("user").(*models.User)

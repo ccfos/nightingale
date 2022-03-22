@@ -217,6 +217,11 @@ func configRoute(r *gin.Engine, version string) {
 			pages.GET("/alert-his-event/:eid", jwtAuth(), alertHisEventGet)
 		}
 
+		pages.GET("/alert-aggr-views", jwtAuth(), alertAggrViewGets)
+		pages.DELETE("/alert-aggr-views", jwtAuth(), alertAggrViewDel)
+		pages.POST("/alert-aggr-views", jwtAuth(), alertAggrViewAdd)
+		pages.PUT("/alert-aggr-views", jwtAuth(), alertAggrViewPut)
+
 		pages.GET("/busi-group/:id/task-tpls", jwtAuth(), user(), perm("/job-tpls"), bgro(), taskTplGets)
 		pages.POST("/busi-group/:id/task-tpls", jwtAuth(), user(), perm("/job-tpls/add"), bgrw(), taskTplAdd)
 		pages.DELETE("/busi-group/:id/task-tpl/:tid", jwtAuth(), user(), perm("/job-tpls/del"), bgrw(), taskTplDel)

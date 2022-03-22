@@ -296,6 +296,22 @@ CREATE TABLE `target` (
 --     KEY (`group_id`, `type`, `name`)
 -- ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
+CREATE TABLE `alert_aggr_view` (
+    `id` bigint unsigned not null auto_increment,
+    `name` varchar(191) not null default '',
+    `rule` varchar(2048) not null default '',
+    `cate` tinyint(1) not null comment '0: preset 1: custom',
+    `user_id` bigint not null default 0,
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    PRIMARY KEY (`id`),
+    KEY (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
+
+insert into alert_aggr_view(name, rule, cate) values('GroupBy BusiGroup, Severity', 'field:group_name field:severity', 0);
+insert into alert_aggr_view(name, rule, cate) values('GroupBy Metric', 'tagkey:__name__', 0);
+
 CREATE TABLE `alert_cur_event` (
     `id` bigint unsigned not null comment 'use alert_his_event.id',
     `cluster` varchar(128) not null,

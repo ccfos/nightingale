@@ -45,7 +45,7 @@ func taskTplGet(c *gin.Context) {
 	ginx.NewRender(c).Data(gin.H{
 		"tpl":   tpl,
 		"hosts": hosts,
-	}, nil)
+	}, err)
 }
 
 type taskTplForm struct {
@@ -97,7 +97,8 @@ func taskTplPut(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if tpl == nil {
-		ginx.Dangerous("no such task template")
+		ginx.NewRender(c).Message("no such task template")
+		return
 	}
 
 	user := c.MustGet("user").(*models.User)
