@@ -53,8 +53,16 @@ func alertCurEventsCard(c *gin.Context) {
 	cardmap := make(map[string]*AlertCard)
 	for _, event := range list {
 		title := event.GenCardTitle(rules)
-		cardmap[title].Total++
-		cardmap[title].EventIds = append(cardmap[title].EventIds, event.Id)
+		if _, has := cardmap[title]; has {
+			cardmap[title].Total++
+			cardmap[title].EventIds = append(cardmap[title].EventIds, event.Id)
+		} else {
+			cardmap[title] = &AlertCard{
+				Total:    1,
+				EventIds: []int64{event.Id},
+				Title:    title,
+			}
+		}
 	}
 
 	titles := make([]string, 0, len(cardmap))
