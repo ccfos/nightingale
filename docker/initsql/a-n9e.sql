@@ -309,7 +309,7 @@ CREATE TABLE `alert_aggr_view` (
     KEY (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
-insert into alert_aggr_view(name, rule, cate) values('GroupBy BusiGroup, Severity', 'field:group_name field:severity', 0);
+insert into alert_aggr_view(name, rule, cate) values('GroupBy BusiGroup, Severity', 'field:group_name::field:severity', 0);
 insert into alert_aggr_view(name, rule, cate) values('GroupBy Metric', 'tagkey:__name__', 0);
 
 CREATE TABLE `alert_cur_event` (

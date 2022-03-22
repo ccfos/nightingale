@@ -1,6 +1,7 @@
 package router
 
 import (
+	"net/http"
 	"sort"
 	"strings"
 
@@ -10,30 +11,22 @@ import (
 	"github.com/didi/nightingale/v5/src/models"
 )
 
-func alertCurEventsCard(c *gin.Context) {
-	stime, etime := getTimeRange(c)
-	severity := ginx.QueryInt(c, "severity", -1)
-	query := ginx.QueryStr(c, "query", "")
-	busiGroupId := ginx.QueryInt64(c, "bgid", 0)
-	clusters := queryClusters(c)
-	aggrRules := strings.Fields(ginx.QueryStr(c, "rules", "")) // e.g. field:group_name field:severity tagkey:ident
+func parseAggrRules(c *gin.Context) []*models.AggrRule {
+	aggrRules := strings.Split(ginx.QueryStr(c, "rules", ""), "::") // e.g. field:group_name::field:severity::tagkey:ident
 
 	if len(aggrRules) == 0 {
-		ginx.NewRender(c).Message("rules empty")
-		return
+		ginx.Bomb(http.StatusBadRequest, "rules empty")
 	}
 
 	rules := make([]*models.AggrRule, len(aggrRules))
 	for i := 0; i < len(aggrRules); i++ {
 		pair := strings.Split(aggrRules[i], ":")
 		if len(pair) != 2 {
-			ginx.NewRender(c).Message("rules invalid")
-			return
+			ginx.Bomb(http.StatusBadRequest, "rules invalid")
 		}
 
 		if !(pair[0] == "field" || pair[0] == "tagkey") {
-			ginx.NewRender(c).Message("rules invalid")
-			return
+			ginx.Bomb(http.StatusBadRequest, "rules invalid")
 		}
 
 		rules[i] = &models.AggrRule{
@@ -42,37 +35,47 @@ func alertCurEventsCard(c *gin.Context) {
 		}
 	}
 
+	return rules
+}
+
+func alertCurEventsCard(c *gin.Context) {
+	stime, etime := getTimeRange(c)
+	severity := ginx.QueryInt(c, "severity", -1)
+	query := ginx.QueryStr(c, "query", "")
+	busiGroupId := ginx.QueryInt64(c, "bgid", 0)
+	clusters := queryClusters(c)
+	rules := parseAggrRules(c)
+
 	// 最多获取10000个，获取太多也没啥意义
 	list, err := models.AlertCurEventGets(busiGroupId, stime, etime, severity, clusters, query, 10000, 0)
 	ginx.Dangerous(err)
 
-	cardCount := make(map[string]int)
+	cardmap := make(map[string]*AlertCard)
 	for _, event := range list {
 		title := event.GenCardTitle(rules)
-		cardCount[title]++
+		cardmap[title].Total++
+		cardmap[title].EventIds = append(cardmap[title].EventIds, event.Id)
 	}
 
-	titles := make([]string, 0, len(cardCount))
-	for title := range cardCount {
+	titles := make([]string, 0, len(cardmap))
+	for title := range cardmap {
 		titles = append(titles, title)
 	}
 
 	sort.Strings(titles)
 
-	cards := make([]AlertCard, len(titles))
+	cards := make([]*AlertCard, len(titles))
 	for i := 0; i < len(titles); i++ {
-		cards[i] = AlertCard{
-			Title: titles[i],
-			Total: cardCount[titles[i]],
-		}
+		cards[i] = cardmap[titles[i]]
 	}
 
 	ginx.NewRender(c).Data(cards, nil)
 }
 
 type AlertCard struct {
-	Title string `json:"title"`
-	Total int    `json:"total"`
+	Title    string  `json:"title"`
+	Total    int     `json:"total"`
+	EventIds []int64 `json:"event_ids"`
 }
 
 func alertCurEventsCardDetails(c *gin.Context) {
