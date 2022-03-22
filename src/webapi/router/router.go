@@ -205,9 +205,10 @@ func configRoute(r *gin.Engine, version string) {
 		// pages.GET("/busi-group/:id/collect-rule/:crid", jwtAuth(), user(), bgro(), collectRuleGet)
 		// pages.PUT("/busi-group/:id/collect-rule/:crid", jwtAuth(), user(), bgrw(), collectRulePut)
 
+		// card逻辑fe改造完之后，这三个方法可以删除
 		pages.GET("/busi-group/:id/alert-his-events", jwtAuth(), user(), bgro(), alertHisEventGets)
 		pages.GET("/busi-group/:id/alert-cur-events", jwtAuth(), user(), bgro(), alertCurEventGets)
-		pages.DELETE("/busi-group/:id/alert-cur-events", jwtAuth(), user(), perm("/alert-cur-events/del"), bgrw(), alertCurEventDel)
+		pages.DELETE("/busi-group/:id/alert-cur-events", jwtAuth(), user(), perm("/alert-cur-events/del"), alertCurEventDel)
 
 		if config.C.AnonymousAccess.AlertDetail {
 			pages.GET("/alert-cur-event/:eid", alertCurEventGet)
@@ -216,6 +217,13 @@ func configRoute(r *gin.Engine, version string) {
 			pages.GET("/alert-cur-event/:eid", jwtAuth(), alertCurEventGet)
 			pages.GET("/alert-his-event/:eid", jwtAuth(), alertHisEventGet)
 		}
+
+		// card logic
+		pages.GET("/alert-cur-events/list", jwtAuth(), alertCurEventsList)
+		pages.GET("/alert-cur-events/card", jwtAuth(), alertCurEventsCard)
+		pages.GET("/alert-cur-events/card/details", jwtAuth(), alertCurEventsCardDetails)
+		pages.GET("/alert-his-events/list", jwtAuth(), alertHisEventsList)
+		pages.DELETE("/alert-cur-events", jwtAuth(), user(), perm("/alert-cur-events/del"), alertCurEventDel)
 
 		pages.GET("/alert-aggr-views", jwtAuth(), alertAggrViewGets)
 		pages.DELETE("/alert-aggr-views", jwtAuth(), alertAggrViewDel)

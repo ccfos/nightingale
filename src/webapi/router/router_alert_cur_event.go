@@ -1,7 +1,8 @@
 package router
 
 import (
-	"time"
+	"sort"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -9,19 +10,103 @@ import (
 	"github.com/didi/nightingale/v5/src/models"
 )
 
-func alertCurEventGets(c *gin.Context) {
-	stime := ginx.QueryInt64(c, "stime", 0)
-	etime := ginx.QueryInt64(c, "etime", 0)
-	hours := ginx.QueryInt64(c, "hours", 0)
-	now := time.Now().Unix()
-	if hours != 0 {
-		stime = now - 3600*hours
-		etime = now + 3600*24
+func alertCurEventsCard(c *gin.Context) {
+	stime, etime := getTimeRange(c)
+	severity := ginx.QueryInt(c, "severity", -1)
+	query := ginx.QueryStr(c, "query", "")
+	busiGroupId := ginx.QueryInt64(c, "bgid", 0)
+	clusters := queryClusters(c)
+	aggrRules := strings.Fields(ginx.QueryStr(c, "rules", "")) // e.g. field:group_name field:severity tagkey:ident
+
+	if len(aggrRules) == 0 {
+		ginx.NewRender(c).Message("rules empty")
+		return
 	}
 
-	if stime != 0 && etime == 0 {
-		etime = now + 3600*24
+	rules := make([]*models.AggrRule, len(aggrRules))
+	for i := 0; i < len(aggrRules); i++ {
+		pair := strings.Split(aggrRules[i], ":")
+		if len(pair) != 2 {
+			ginx.NewRender(c).Message("rules invalid")
+			return
+		}
+
+		if !(pair[0] == "field" || pair[0] == "tagkey") {
+			ginx.NewRender(c).Message("rules invalid")
+			return
+		}
+
+		rules[i] = &models.AggrRule{
+			Type:  pair[0],
+			Value: pair[1],
+		}
 	}
+
+	// 最多获取10000个，获取太多也没啥意义
+	list, err := models.AlertCurEventGets(busiGroupId, stime, etime, severity, clusters, query, 10000, 0)
+	ginx.Dangerous(err)
+
+	cardCount := make(map[string]int)
+	for _, event := range list {
+		title := event.GenCardTitle(rules)
+		cardCount[title]++
+	}
+
+	titles := make([]string, 0, len(cardCount))
+	for title := range cardCount {
+		titles = append(titles, title)
+	}
+
+	sort.Strings(titles)
+
+	cards := make([]AlertCard, len(titles))
+	for i := 0; i < len(titles); i++ {
+		cards[i] = AlertCard{
+			Title: titles[i],
+			Total: cardCount[titles[i]],
+		}
+	}
+
+	ginx.NewRender(c).Data(cards, nil)
+}
+
+type AlertCard struct {
+	Title string `json:"title"`
+	Total int    `json:"total"`
+}
+
+func alertCurEventsCardDetails(c *gin.Context) {
+
+}
+
+// 列表方式，拉取活跃告警
+func alertCurEventsList(c *gin.Context) {
+	stime, etime := getTimeRange(c)
+	severity := ginx.QueryInt(c, "severity", -1)
+	query := ginx.QueryStr(c, "query", "")
+	limit := ginx.QueryInt(c, "limit", 20)
+	busiGroupId := ginx.QueryInt64(c, "bgid", 0)
+	clusters := queryClusters(c)
+
+	total, err := models.AlertCurEventTotal(busiGroupId, stime, etime, severity, clusters, query)
+	ginx.Dangerous(err)
+
+	list, err := models.AlertCurEventGets(busiGroupId, stime, etime, severity, clusters, query, limit, ginx.Offset(c, limit))
+	ginx.Dangerous(err)
+
+	cache := make(map[int64]*models.UserGroup)
+	for i := 0; i < len(list); i++ {
+		list[i].FillNotifyGroups(cache)
+	}
+
+	ginx.NewRender(c).Data(gin.H{
+		"list":  list,
+		"total": total,
+	}, nil)
+}
+
+func alertCurEventGets(c *gin.Context) {
+	stime, etime := getTimeRange(c)
 
 	severity := ginx.QueryInt(c, "severity", -1)
 	query := ginx.QueryStr(c, "query", "")
@@ -50,6 +135,18 @@ func alertCurEventDel(c *gin.Context) {
 	var f idsForm
 	ginx.BindJSON(c, &f)
 	f.Verify()
+
+	set := make(map[int64]struct{})
+
+	for i := 0; i < len(f.Ids); i++ {
+		event, err := models.AlertCurEventGetById(f.Ids[i])
+		ginx.Dangerous(err)
+
+		if _, has := set[event.GroupId]; !has {
+			bgrwCheck(c, event.GroupId)
+			set[event.GroupId] = struct{}{}
+		}
+	}
 
 	ginx.NewRender(c).Message(models.AlertCurEventDel(f.Ids))
 }

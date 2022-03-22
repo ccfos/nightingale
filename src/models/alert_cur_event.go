@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -48,6 +49,62 @@ func (e *AlertCurEvent) TableName() string {
 
 func (e *AlertCurEvent) Add() error {
 	return Insert(e)
+}
+
+type AggrRule struct {
+	Type  string
+	Value string
+}
+
+func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule) string {
+	arr := make([]string, len(rules))
+	for i := 0; i < len(rules); i++ {
+		rule := rules[i]
+
+		if rule.Type == "field" {
+			arr[i] = e.GetField(rule.Value)
+		}
+
+		if rule.Type == "tagkey" {
+			arr[i] = e.GetTagValue(rule.Value)
+		}
+	}
+	return strings.Join(arr, "::")
+}
+
+func (e *AlertCurEvent) GetTagValue(tagkey string) string {
+	for _, tag := range e.TagsJSON {
+		i := strings.Index(tag, tagkey+"=")
+		if i >= 0 {
+			return tag[len(tagkey+"="):]
+		}
+	}
+	return ""
+}
+
+func (e *AlertCurEvent) GetField(field string) string {
+	switch field {
+	case "cluster":
+		return e.Cluster
+	case "group_id":
+		return fmt.Sprint(e.GroupId)
+	case "group_name":
+		return e.GroupName
+	case "rule_id":
+		return fmt.Sprint(e.RuleId)
+	case "rule_name":
+		return e.RuleName
+	case "severity":
+		return fmt.Sprintf("S%d", e.Severity)
+	case "runbook_url":
+		return e.RunbookUrl
+	case "target_ident":
+		return e.TargetIdent
+	case "target_note":
+		return e.TargetNote
+	default:
+		return ""
+	}
 }
 
 func (e *AlertCurEvent) IncRepeatStep(step int64) error {
@@ -155,7 +212,11 @@ func (e *AlertCurEvent) FillNotifyGroups(cache map[int64]*UserGroup) error {
 }
 
 func AlertCurEventTotal(bgid, stime, etime int64, severity int, clusters []string, query string) (int64, error) {
-	session := DB().Model(&AlertCurEvent{}).Where("trigger_time between ? and ? and group_id = ?", stime, etime, bgid)
+	session := DB().Model(&AlertCurEvent{}).Where("trigger_time between ? and ?", stime, etime)
+
+	if bgid > 0 {
+		session = session.Where("group_id = ?", bgid)
+	}
 
 	if severity >= 0 {
 		session = session.Where("severity = ?", severity)
@@ -177,7 +238,11 @@ func AlertCurEventTotal(bgid, stime, etime int64, severity int, clusters []strin
 }
 
 func AlertCurEventGets(bgid, stime, etime int64, severity int, clusters []string, query string, limit, offset int) ([]AlertCurEvent, error) {
-	session := DB().Where("trigger_time between ? and ? and group_id = ?", stime, etime, bgid)
+	session := DB().Where("trigger_time between ? and ?", stime, etime)
+
+	if bgid > 0 {
+		session = session.Where("group_id = ?", bgid)
+	}
 
 	if severity >= 0 {
 		session = session.Where("severity = ?", severity)
