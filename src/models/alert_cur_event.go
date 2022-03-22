@@ -350,6 +350,17 @@ func AlertCurEventGetAll(cluster string) ([]*AlertCurEvent, error) {
 	return lst, err
 }
 
+func AlertCurEventGetByIds(ids []int64) ([]*AlertCurEvent, error) {
+	var lst []*AlertCurEvent
+
+	if len(ids) == 0 {
+		return lst, nil
+	}
+
+	err := DB().Where("id in ?", ids).Order("id desc").Find(&lst).Error
+	return lst, err
+}
+
 func AlertCurEventGetByRule(ruleId int64) ([]*AlertCurEvent, error) {
 	var lst []*AlertCurEvent
 	err := DB().Where("rule_id=?", ruleId).Find(&lst).Error

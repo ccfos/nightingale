@@ -87,7 +87,11 @@ type AlertCard struct {
 }
 
 func alertCurEventsCardDetails(c *gin.Context) {
+	var f idsForm
+	ginx.BindJSON(c, &f)
 
+	lst, err := models.AlertCurEventGetByIds(f.Ids)
+	ginx.NewRender(c).Data(lst, err)
 }
 
 // 列表方式，拉取活跃告警

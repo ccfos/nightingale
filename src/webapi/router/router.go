@@ -221,7 +221,7 @@ func configRoute(r *gin.Engine, version string) {
 		// card logic
 		pages.GET("/alert-cur-events/list", jwtAuth(), alertCurEventsList)
 		pages.GET("/alert-cur-events/card", jwtAuth(), alertCurEventsCard)
-		pages.GET("/alert-cur-events/card/details", jwtAuth(), alertCurEventsCardDetails)
+		pages.POST("/alert-cur-events/card/details", jwtAuth(), alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", jwtAuth(), alertHisEventsList)
 		pages.DELETE("/alert-cur-events", jwtAuth(), user(), perm("/alert-cur-events/del"), alertCurEventDel)
 
