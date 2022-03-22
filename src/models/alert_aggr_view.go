@@ -2,9 +2,12 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/toolkits/pkg/slice"
 )
 
 // AlertAggrView 在告警聚合视图查看的时候，要存储一些聚合规则
@@ -32,6 +35,37 @@ func (v *AlertAggrView) Verify() error {
 	v.Rule = strings.TrimSpace(v.Rule)
 	if v.Rule == "" {
 		return errors.New("rule is blank")
+	}
+
+	var validFields = []string{
+		"cluster",
+		"group_id",
+		"group_name",
+		"rule_id",
+		"rule_name",
+		"severity",
+		"runbook_url",
+		"target_ident",
+		"target_note",
+	}
+
+	arr := strings.Fields(v.Rule)
+	for i := 0; i < len(arr); i++ {
+		pair := strings.Split(arr[i], ":")
+		if len(pair) != 2 {
+			return errors.New("rule invalid")
+		}
+
+		if !(pair[0] == "field" || pair[0] == "tagkey") {
+			return errors.New("rule invalid")
+		}
+
+		if pair[0] == "field" {
+			// 只支持有限的field
+			if !slice.ContainsString(validFields, pair[1]) {
+				return fmt.Errorf("unsupported field: %s", pair[1])
+			}
+		}
 	}
 
 	return nil
