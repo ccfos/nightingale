@@ -90,8 +90,15 @@ func alertCurEventsCardDetails(c *gin.Context) {
 	var f idsForm
 	ginx.BindJSON(c, &f)
 
-	lst, err := models.AlertCurEventGetByIds(f.Ids)
-	ginx.NewRender(c).Data(lst, err)
+	list, err := models.AlertCurEventGetByIds(f.Ids)
+	if err == nil {
+		cache := make(map[int64]*models.UserGroup)
+		for i := 0; i < len(list); i++ {
+			list[i].FillNotifyGroups(cache)
+		}
+	}
+
+	ginx.NewRender(c).Data(list, err)
 }
 
 // 列表方式，拉取活跃告警
