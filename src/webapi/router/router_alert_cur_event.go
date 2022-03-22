@@ -46,8 +46,8 @@ func alertCurEventsCard(c *gin.Context) {
 	clusters := queryClusters(c)
 	rules := parseAggrRules(c)
 
-	// 最多获取10000个，获取太多也没啥意义
-	list, err := models.AlertCurEventGets(busiGroupId, stime, etime, severity, clusters, query, 10000, 0)
+	// 最多获取50000个，获取太多也没啥意义
+	list, err := models.AlertCurEventGets(busiGroupId, stime, etime, severity, clusters, query, 50000, 0)
 	ginx.Dangerous(err)
 
 	cardmap := make(map[string]*AlertCard)
@@ -56,11 +56,15 @@ func alertCurEventsCard(c *gin.Context) {
 		if _, has := cardmap[title]; has {
 			cardmap[title].Total++
 			cardmap[title].EventIds = append(cardmap[title].EventIds, event.Id)
+			if event.Severity < cardmap[title].Severity {
+				cardmap[title].Severity = event.Severity
+			}
 		} else {
 			cardmap[title] = &AlertCard{
 				Total:    1,
 				EventIds: []int64{event.Id},
 				Title:    title,
+				Severity: event.Severity,
 			}
 		}
 	}
@@ -84,6 +88,7 @@ type AlertCard struct {
 	Title    string  `json:"title"`
 	Total    int     `json:"total"`
 	EventIds []int64 `json:"event_ids"`
+	Severity int     `json:"severity"`
 }
 
 func alertCurEventsCardDetails(c *gin.Context) {
