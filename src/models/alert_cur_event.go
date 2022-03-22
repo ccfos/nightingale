@@ -68,6 +68,10 @@ func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule) string {
 		if rule.Type == "tagkey" {
 			arr[i] = e.GetTagValue(rule.Value)
 		}
+
+		if len(arr[i]) == 0 {
+			arr[i] = "Null"
+		}
 	}
 	return strings.Join(arr, "::")
 }

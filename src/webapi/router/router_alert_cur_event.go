@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
@@ -47,9 +46,6 @@ func alertCurEventsCard(c *gin.Context) {
 	list, err := models.AlertCurEventGets(busiGroupId, stime, etime, severity, clusters, query, 10000, 0)
 	ginx.Dangerous(err)
 
-	fmt.Println(">>>> len:", len(list))
-	fmt.Println(">>>> list", list)
-
 	cardCount := make(map[string]int)
 	for _, event := range list {
 		title := event.GenCardTitle(rules)
@@ -62,8 +58,6 @@ func alertCurEventsCard(c *gin.Context) {
 	}
 
 	sort.Strings(titles)
-
-	fmt.Println(">>>> titles:", titles)
 
 	cards := make([]AlertCard, len(titles))
 	for i := 0; i < len(titles); i++ {
