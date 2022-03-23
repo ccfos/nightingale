@@ -74,24 +74,26 @@ func MustLoad(fpaths ...string) {
 }
 
 type Config struct {
-	RunMode         string
-	I18N            string
-	AdminRole       string
-	MetricsYamlFile string
-	ContactKeys     []LabelAndKey
-	NotifyChannels  []LabelAndKey
-	Log             logx.Config
-	HTTP            httpx.Config
-	JWTAuth         JWTAuth
-	BasicAuth       gin.Accounts
-	AnonymousAccess AnonymousAccess
-	LDAP            ldapx.LdapSection
-	Redis           storage.RedisConfig
-	Gorm            storage.Gorm
-	MySQL           storage.MySQL
-	Postgres        storage.Postgres
-	Clusters        []prom.Options
-	Ibex            Ibex
+	RunMode              string
+	I18N                 string
+	AdminRole            string
+	MetricsYamlFile      string
+	BuiltinAlertsDir     string
+	BuiltinDashboardsDir string
+	ContactKeys          []LabelAndKey
+	NotifyChannels       []LabelAndKey
+	Log                  logx.Config
+	HTTP                 httpx.Config
+	JWTAuth              JWTAuth
+	BasicAuth            gin.Accounts
+	AnonymousAccess      AnonymousAccess
+	LDAP                 ldapx.LdapSection
+	Redis                storage.RedisConfig
+	Gorm                 storage.Gorm
+	MySQL                storage.MySQL
+	Postgres             storage.Postgres
+	Clusters             []prom.Options
+	Ibex                 Ibex
 }
 
 type LabelAndKey struct {

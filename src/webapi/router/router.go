@@ -182,6 +182,8 @@ func configRoute(r *gin.Engine, version string) {
 		pages.GET("/share-charts", chartShareGets)
 		pages.POST("/share-charts", jwtAuth(), chartShareAdd)
 
+		pages.GET("/alert-rules/builtin/list", alertRuleBuiltinList)
+		pages.POST("/busi-group/:id/alert-rules/builtin", alertRuleBuiltinImport)
 		pages.GET("/busi-group/:id/alert-rules", jwtAuth(), user(), perm("/alert-rules"), alertRuleGets)
 		pages.POST("/busi-group/:id/alert-rules", jwtAuth(), user(), perm("/alert-rules/add"), bgrw(), alertRuleAdd)
 		pages.DELETE("/busi-group/:id/alert-rules", jwtAuth(), user(), perm("/alert-rules/del"), bgrw(), alertRuleDel)
