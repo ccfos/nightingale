@@ -31,7 +31,7 @@
           "weight": 1,
           "charts": [
             {
-              "configs": "{\"targets\":[{\"expr\":\"100 - (avg(irate(windows_cpu_time_total{instance=~\\\"$instance\\\",mode=\\\"idle\\\"}[2m])))*100\",\"legend\":\"CPU Util\"}],\"name\":\"Cpu Util\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"decimals\":2},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+              "configs": "{\"targets\":[{\"expr\":\"100 * sum by (instance) (rate(windows_cpu_time_total{mode != 'idle'}[5m])) / count by (instance) (windows_cpu_core_frequency_mhz) \",\"legend\":\"CPU Util\"}],\"name\":\"Cpu Util\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"decimals\":2},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
               "weight": 0
             },
             {
