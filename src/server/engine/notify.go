@@ -409,13 +409,15 @@ type Notifier interface {
 // call notify.so via golang plugin build
 // ig. etc/script/notify/notify.so
 func alertingCallPlugin(stdinBytes []byte) {
+	if !config.C.Alerting.CallPlugin.Enable {
+		return
+	}
+
 	if runtime.GOOS == "windows" {
 		logger.Errorf("call notify plugin on unsupported os: %s", runtime.GOOS)
 		return
 	}
-	if !config.C.Alerting.CallPlugin.Enable {
-		return
-	}
+
 	p, err := plugin.Open(config.C.Alerting.CallPlugin.PluginPath)
 	if err != nil {
 		logger.Errorf("failed to open notify plugin: %v", err)
