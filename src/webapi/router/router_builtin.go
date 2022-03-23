@@ -38,7 +38,8 @@ func alertRuleBuiltinList(c *gin.Context) {
 }
 
 type alertRuleBuiltinImportForm struct {
-	Name string `json:"name" binding:"required"`
+	Name    string `json:"name" binding:"required"`
+	Cluster string `json:"cluster" binding:"required"`
 }
 
 func alertRuleBuiltinImport(c *gin.Context) {
@@ -70,6 +71,7 @@ func alertRuleBuiltinImport(c *gin.Context) {
 	reterr := make(map[string]string)
 	for i := 0; i < count; i++ {
 		lst[i].Id = 0
+		lst[i].Cluster = f.Cluster
 		lst[i].GroupId = bgid
 		lst[i].CreateBy = username
 		lst[i].UpdateBy = username
