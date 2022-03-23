@@ -160,6 +160,8 @@ func configRoute(r *gin.Engine, version string) {
 		pages.PUT("/targets/note", jwtAuth(), user(), perm("/targets/put"), targetUpdateNote)
 		pages.PUT("/targets/bgid", jwtAuth(), user(), perm("/targets/put"), targetUpdateBgid)
 
+		pages.GET("/dashboards/builtin/list", dashboardBuiltinList)
+		pages.POST("/busi-group/:id/dashboards/builtin", jwtAuth(), user(), perm("/dashboards/add"), bgrw(), dashboardBuiltinImport)
 		pages.GET("/busi-group/:id/dashboards", jwtAuth(), user(), perm("/dashboards"), bgro(), dashboardGets)
 		pages.POST("/busi-group/:id/dashboards", jwtAuth(), user(), perm("/dashboards/add"), bgrw(), dashboardAdd)
 		pages.POST("/busi-group/:id/dashboards/export", jwtAuth(), user(), perm("/dashboards"), bgro(), dashboardExport)
@@ -183,7 +185,7 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/share-charts", jwtAuth(), chartShareAdd)
 
 		pages.GET("/alert-rules/builtin/list", alertRuleBuiltinList)
-		pages.POST("/busi-group/:id/alert-rules/builtin", alertRuleBuiltinImport)
+		pages.POST("/busi-group/:id/alert-rules/builtin", jwtAuth(), user(), perm("/alert-rules/add"), bgrw(), alertRuleBuiltinImport)
 		pages.GET("/busi-group/:id/alert-rules", jwtAuth(), user(), perm("/alert-rules"), alertRuleGets)
 		pages.POST("/busi-group/:id/alert-rules", jwtAuth(), user(), perm("/alert-rules/add"), bgrw(), alertRuleAdd)
 		pages.DELETE("/busi-group/:id/alert-rules", jwtAuth(), user(), perm("/alert-rules/del"), bgrw(), alertRuleDel)

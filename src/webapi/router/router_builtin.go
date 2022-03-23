@@ -84,3 +84,102 @@ func alertRuleBuiltinImport(c *gin.Context) {
 
 	ginx.NewRender(c).Data(reterr, nil)
 }
+
+func dashboardBuiltinList(c *gin.Context) {
+	fp := config.C.BuiltinAlertsDir
+	if fp == "" {
+		fp = path.Join(runner.Cwd, "etc", "dashboards")
+	}
+
+	files, err := file.DirsUnder(fp)
+	ginx.Dangerous(err)
+
+	names := make([]string, 0, len(files))
+
+	for _, f := range files {
+		if !strings.HasSuffix(f, ".json") {
+			continue
+		}
+
+		name := strings.TrimRight(f, ".json")
+		names = append(names, name)
+	}
+
+	ginx.NewRender(c).Data(names, nil)
+}
+
+type dashboardBuiltinImportForm struct {
+	Name string `json:"name" binding:"required"`
+}
+
+func dashboardBuiltinImport(c *gin.Context) {
+	var f dashboardBuiltinImportForm
+	ginx.BindJSON(c, &f)
+
+	dirpath := config.C.BuiltinAlertsDir
+	if dirpath == "" {
+		dirpath = path.Join(runner.Cwd, "etc", "dashboards")
+	}
+
+	jsonfile := path.Join(dirpath, f.Name+".json")
+	if !file.IsExist(jsonfile) {
+		ginx.Bomb(http.StatusBadRequest, "%s not found", jsonfile)
+	}
+
+	var dashPures []DashboardPure
+	ginx.Dangerous(file.ReadJson(jsonfile, &dashPures))
+
+	me := c.MustGet("user").(*models.User)
+	bg := c.MustGet("busi_group").(*models.BusiGroup)
+
+	ret := make(map[string]string)
+
+	for _, dashPure := range dashPures {
+		dash := &models.Dashboard{
+			Name:     dashPure.Name,
+			Tags:     dashPure.Tags,
+			Configs:  dashPure.Configs,
+			GroupId:  bg.Id,
+			CreateBy: me.Username,
+			UpdateBy: me.Username,
+		}
+
+		ret[dash.Name] = ""
+
+		err := dash.Add()
+		if err != nil {
+			ret[dash.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+			continue
+		}
+
+		for _, cgPure := range dashPure.ChartGroups {
+			cg := &models.ChartGroup{
+				Name:        cgPure.Name,
+				Weight:      cgPure.Weight,
+				DashboardId: dash.Id,
+			}
+
+			err := cg.Add()
+			if err != nil {
+				ret[dash.Name] = err.Error()
+				continue
+			}
+
+			for _, chartPure := range cgPure.Charts {
+				chart := &models.Chart{
+					Configs: chartPure.Configs,
+					Weight:  chartPure.Weight,
+					GroupId: cg.Id,
+				}
+
+				err := chart.Add()
+				if err != nil {
+					ret[dash.Name] = err.Error()
+					continue
+				}
+			}
+		}
+	}
+
+	ginx.NewRender(c).Data(ret, nil)
+}
