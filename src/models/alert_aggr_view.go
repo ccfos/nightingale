@@ -16,9 +16,8 @@ type AlertAggrView struct {
 	Name     string `json:"name"`
 	Rule     string `json:"rule"`
 	Cate     int    `json:"cate"`
-	UserId   int64  `json:"user_id"`
 	CreateAt int64  `json:"create_at"`
-	CreateBy string `json:"create_by"`
+	CreateBy int64  `json:"create_by"`
 	UpdateAt int64  `json:"update_at"`
 }
 
@@ -49,7 +48,7 @@ func (v *AlertAggrView) Verify() error {
 		"target_note",
 	}
 
-	arr := strings.Fields(v.Rule)
+	arr := strings.Split(v.Rule, "::")
 	for i := 0; i < len(arr); i++ {
 		pair := strings.Split(arr[i], ":")
 		if len(pair) != 2 {
@@ -96,17 +95,17 @@ func (v *AlertAggrView) Update(name, rule string) error {
 }
 
 // AlertAggrViewDel: userid for safe delete
-func AlertAggrViewDel(ids []int64, userId interface{}) error {
+func AlertAggrViewDel(ids []int64, createBy interface{}) error {
 	if len(ids) == 0 {
 		return nil
 	}
 
-	return DB().Where("id in ? and user_id = ?", ids, userId).Delete(new(AlertAggrView)).Error
+	return DB().Where("id in ? and create_by = ?", ids, createBy).Delete(new(AlertAggrView)).Error
 }
 
-func AlertAggrViewGets(userId interface{}) ([]AlertAggrView, error) {
+func AlertAggrViewGets(createBy interface{}) ([]AlertAggrView, error) {
 	var lst []AlertAggrView
-	err := DB().Where("user_id = ? or cate = 0", userId).Find(&lst).Error
+	err := DB().Where("create_by = ? or cate = 0", createBy).Find(&lst).Error
 	if err == nil && len(lst) > 0 {
 		sort.Slice(lst, func(i, j int) bool {
 			return lst[i].Name < lst[j].Name

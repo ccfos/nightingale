@@ -9,14 +9,14 @@ import (
 )
 
 // no param
-func alertAggrViewGets(c *gin.Context) {
-	lst, err := models.AlertAggrViewGets(c.MustGet("userid"))
+func metricViewGets(c *gin.Context) {
+	lst, err := models.MetricViewGets(c.MustGet("userid"))
 	ginx.NewRender(c).Data(lst, err)
 }
 
-// body: name, rule
-func alertAggrViewAdd(c *gin.Context) {
-	var f models.AlertAggrView
+// body: name, configs
+func metricViewAdd(c *gin.Context) {
+	var f models.MetricView
 	ginx.BindJSON(c, &f)
 
 	f.Id = 0
@@ -26,19 +26,19 @@ func alertAggrViewAdd(c *gin.Context) {
 }
 
 // body: ids
-func alertAggrViewDel(c *gin.Context) {
+func metricViewDel(c *gin.Context) {
 	var f idsForm
 	ginx.BindJSON(c, &f)
 
-	ginx.NewRender(c).Message(models.AlertAggrViewDel(f.Ids, c.MustGet("userid")))
+	ginx.NewRender(c).Message(models.MetricViewDel(f.Ids, c.MustGet("userid")))
 }
 
-// body: id, name, rule
-func alertAggrViewPut(c *gin.Context) {
-	var f models.AlertAggrView
+// body: id, name, configs
+func metricViewPut(c *gin.Context) {
+	var f models.MetricView
 	ginx.BindJSON(c, &f)
 
-	view, err := models.AlertAggrViewGet("id = ?", f.Id)
+	view, err := models.MetricViewGet("id = ?", f.Id)
 	ginx.Dangerous(err)
 
 	if view == nil {
@@ -52,5 +52,5 @@ func alertAggrViewPut(c *gin.Context) {
 		return
 	}
 
-	ginx.NewRender(c).Message(view.Update(f.Name, f.Rule))
+	ginx.NewRender(c).Message(view.Update(f.Name, f.Configs))
 }

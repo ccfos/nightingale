@@ -296,14 +296,25 @@ CREATE TABLE `target` (
 --     KEY (`group_id`, `type`, `name`)
 -- ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
+CREATE TABLE `metric_view` (
+    `id` bigint unsigned not null auto_increment,
+    `name` varchar(191) not null default '',
+    `cate` tinyint(1) not null comment '0: preset 1: custom',
+    `configs` varchar(8192) not null default '',
+    `create_at` bigint not null default 0,
+    `create_by` bigint not null default 0 comment 'user id',
+    `update_at` bigint not null default 0,
+    PRIMARY KEY (`id`),
+    KEY (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
+
 CREATE TABLE `alert_aggr_view` (
     `id` bigint unsigned not null auto_increment,
     `name` varchar(191) not null default '',
     `rule` varchar(2048) not null default '',
     `cate` tinyint(1) not null comment '0: preset 1: custom',
-    `user_id` bigint not null default 0,
     `create_at` bigint not null default 0,
-    `create_by` varchar(64) not null default '',
+    `create_by` bigint not null default 0 comment 'user id',
     `update_at` bigint not null default 0,
     PRIMARY KEY (`id`),
     KEY (`user_id`)

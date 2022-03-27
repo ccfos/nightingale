@@ -134,6 +134,11 @@ func configRoute(r *gin.Engine, version string) {
 		pages.PUT("/user/:id/password", jwtAuth(), admin(), userPasswordPut)
 		pages.DELETE("/user/:id", jwtAuth(), admin(), userDel)
 
+		pages.GET("/metric-views", jwtAuth(), metricViewGets)
+		pages.DELETE("/metric-views", jwtAuth(), metricViewDel)
+		pages.POST("/metric-views", jwtAuth(), metricViewAdd)
+		pages.PUT("/metric-views", jwtAuth(), metricViewPut)
+
 		pages.GET("/user-groups", jwtAuth(), user(), userGroupGets)
 		pages.POST("/user-groups", jwtAuth(), user(), perm("/user-groups/add"), userGroupAdd)
 		pages.GET("/user-group/:id", jwtAuth(), user(), userGroupGet)
