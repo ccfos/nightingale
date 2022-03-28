@@ -1,4 +1,4 @@
-package ssoc
+package oidcc
 
 import (
 	"context"

@@ -12,7 +12,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/src/models"
-	"github.com/didi/nightingale/v5/src/pkg/ssoc"
+	"github.com/didi/nightingale/v5/src/pkg/oidcc"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 )
 
@@ -158,12 +158,12 @@ func loginRedirect(c *gin.Context) {
 		}
 	}
 
-	if !config.C.SSO.Enable {
+	if !config.C.OIDC.Enable {
 		ginx.NewRender(c).Data("", nil)
 		return
 	}
 
-	redirect, err := ssoc.Authorize(redirect)
+	redirect, err := oidcc.Authorize(redirect)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(redirect, err)
@@ -185,7 +185,7 @@ func loginCallback(c *gin.Context) {
 		return
 	}
 
-	ret, err := ssoc.Callback(c.Request.Context(), code, state)
+	ret, err := oidcc.Callback(c.Request.Context(), code, state)
 	if err != nil {
 		logger.Debugf("sso.callback() get ret %+v error %v", ret, err)
 		ginx.NewRender(c).Data(CallbackOutput{}, err)
@@ -196,7 +196,7 @@ func loginCallback(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if user != nil {
-		if config.C.SSO.CoverAttributes {
+		if config.C.OIDC.CoverAttributes {
 			user.Nickname = ret.Nickname
 			user.Email = ret.Email
 			user.Phone = ret.Phone
@@ -211,8 +211,8 @@ func loginCallback(c *gin.Context) {
 			Phone:    ret.Phone,
 			Email:    ret.Email,
 			Portrait: "",
-			Roles:    strings.Join(config.C.SSO.DefaultRoles, " "),
-			RolesLst: config.C.SSO.DefaultRoles,
+			Roles:    strings.Join(config.C.OIDC.DefaultRoles, " "),
+			RolesLst: config.C.OIDC.DefaultRoles,
 			Contacts: []byte("{}"),
 			CreateAt: now,
 			UpdateAt: now,
