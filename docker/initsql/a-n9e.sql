@@ -305,7 +305,7 @@ CREATE TABLE `metric_view` (
     `create_by` bigint not null default 0 comment 'user id',
     `update_at` bigint not null default 0,
     PRIMARY KEY (`id`),
-    KEY (`user_id`)
+    KEY (`create_by`)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE `alert_aggr_view` (
@@ -317,7 +317,7 @@ CREATE TABLE `alert_aggr_view` (
     `create_by` bigint not null default 0 comment 'user id',
     `update_at` bigint not null default 0,
     PRIMARY KEY (`id`),
-    KEY (`user_id`)
+    KEY (`create_by`)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
 insert into alert_aggr_view(name, rule, cate) values('GroupBy BusiGroup, Severity', 'field:group_name::field:severity', 0);
