@@ -139,6 +139,52 @@ func (m *DatadogMetric) ToProm() (*prompb.TimeSeries, string, error) {
 	return pt, ident, nil
 }
 
+func datadogCheckRun(c *gin.Context) {
+	c.String(200, "not implemented")
+}
+
+func datadogValidate(c *gin.Context) {
+	c.String(200, "not implemented")
+}
+
+func datadogIntake(c *gin.Context) {
+	c.String(200, "not implemented")
+}
+
+func datadogMetadata(c *gin.Context) {
+	// body, err := readDatadogBody(c)
+	// fmt.Println("metadata:", string(body), err)
+	c.String(200, "not implemented")
+}
+
+func readDatadogBody(c *gin.Context) ([]byte, error) {
+	var bs []byte
+	var err error
+
+	enc := c.GetHeader("Content-Encoding")
+
+	if enc == "gzip" {
+		r, e := gzip.NewReader(c.Request.Body)
+		if e != nil {
+			return nil, e
+		}
+		defer r.Close()
+		bs, err = ioutil.ReadAll(r)
+	} else if enc == "deflate" {
+		r, e := zlib.NewReader(c.Request.Body)
+		if e != nil {
+			return nil, e
+		}
+		defer r.Close()
+		bs, err = ioutil.ReadAll(r)
+	} else {
+		defer c.Request.Body.Close()
+		bs, err = ioutil.ReadAll(c.Request.Body)
+	}
+
+	return bs, err
+}
+
 func datadogSeries(c *gin.Context) {
 	apiKey, has := c.GetQuery("api_key")
 	if !has {
@@ -161,32 +207,7 @@ func datadogSeries(c *gin.Context) {
 		}
 	}
 
-	var bs []byte
-	var err error
-
-	enc := c.GetHeader("Content-Encoding")
-
-	if enc == "gzip" {
-		r, err := gzip.NewReader(c.Request.Body)
-		if err != nil {
-			c.String(400, err.Error())
-			return
-		}
-		defer r.Close()
-		bs, err = ioutil.ReadAll(r)
-	} else if enc == "deflate" {
-		r, err := zlib.NewReader(c.Request.Body)
-		if err != nil {
-			c.String(400, err.Error())
-			return
-		}
-		defer r.Close()
-		bs, err = ioutil.ReadAll(r)
-	} else {
-		defer c.Request.Body.Close()
-		bs, err = ioutil.ReadAll(c.Request.Body)
-	}
-
+	bs, err := readDatadogBody(c)
 	if err != nil {
 		c.String(400, err.Error())
 		return

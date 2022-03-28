@@ -276,7 +276,7 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 			param.Path = path
 
 			// fmt.Fprint(out, formatter(param))
-			logger.Debug(formatter(param))
+			logger.Info(formatter(param))
 
 			// if c.Request.Method != "GET" {
 			// 	logger.Debug(readBody(rdr1))
