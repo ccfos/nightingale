@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/pkg/ssoc"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 )
 
@@ -135,4 +138,101 @@ func refreshPost(c *gin.Context) {
 		// redirect to login page
 		ginx.NewRender(c, http.StatusUnauthorized).Message("refresh token expired")
 	}
+}
+
+func loginRedirect(c *gin.Context) {
+	redirect := ginx.QueryStr(c, "redirect", "/")
+
+	v, exsits := c.Get("userid")
+	if exsits {
+		userid := v.(int64)
+		user, err := models.UserGetById(userid)
+		ginx.Dangerous(err)
+		if user == nil {
+			ginx.Bomb(200, "user not found")
+		}
+
+		if user.Username != "" { // alread login
+			ginx.NewRender(c).Data(redirect, nil)
+			return
+		}
+	}
+
+	if !config.C.SSO.Enable {
+		ginx.NewRender(c).Data("", nil)
+		return
+	}
+
+	redirect, err := ssoc.Authorize(redirect)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(redirect, err)
+}
+
+type CallbackOutput struct {
+	Redirect string       `json:"redirect"`
+	User     *models.User `json:"user"`
+}
+
+func loginCallback(c *gin.Context) {
+	code := ginx.QueryStr(c, "code", "")
+	state := ginx.QueryStr(c, "state", "")
+	redirect := ginx.QueryStr(c, "redirect", "")
+
+	if code == "" && redirect != "" {
+		logger.Debugf("sso.callback() can't get code and redirect is set")
+		ginx.NewRender(c).Data(CallbackOutput{Redirect: redirect}, nil)
+		return
+	}
+
+	ret, err := ssoc.Callback(c.Request.Context(), code, state)
+	if err != nil {
+		logger.Debugf("sso.callback() get ret %+v error %v", ret, err)
+		ginx.NewRender(c).Data(CallbackOutput{}, err)
+		return
+	}
+
+	user, err := models.UserGet("username=?", ret.Username)
+	ginx.Dangerous(err)
+
+	if user != nil {
+		if config.C.SSO.CoverAttributes {
+			user.Nickname = ret.Nickname
+			user.Email = ret.Email
+			user.Phone = ret.Phone
+			user.Update("email", "nickname", "phone")
+		}
+	} else {
+		now := time.Now().Unix()
+		user = &models.User{
+			Username: ret.Username,
+			Password: "******",
+			Nickname: ret.Nickname,
+			Phone:    ret.Phone,
+			Email:    ret.Email,
+			Portrait: "",
+			Roles:    strings.Join(config.C.SSO.DefaultRoles, " "),
+			RolesLst: config.C.SSO.DefaultRoles,
+			Contacts: []byte("{}"),
+			CreateAt: now,
+			UpdateAt: now,
+			CreateBy: "sso",
+			UpdateBy: "sso",
+		}
+
+		// create user from sso
+		ginx.Dangerous(user.Add())
+	}
+
+	// set user login state
+	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
+	ts, err := createTokens(config.C.JWTAuth.SigningKey, userIdentity)
+	ginx.Dangerous(err)
+	ginx.Dangerous(createAuth(c.Request.Context(), userIdentity, ts))
+
+	if redirect == "" {
+		redirect = "/"
+	}
+
+	ginx.NewRender(c).Data(CallbackOutput{Redirect: redirect, User: user}, nil)
 }

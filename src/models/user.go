@@ -89,6 +89,15 @@ func (u *User) Add() error {
 	return Insert(u)
 }
 
+func (u *User) Update(selectField interface{}, selectFields ...interface{}) error {
+	if err := u.Verify(); err != nil {
+		return err
+	}
+
+	u.UpdateAt = time.Now().Unix()
+	return DB().Model(u).Select(selectField, selectFields).Updates(u).Error
+}
+
 func (u *User) UpdateAllFields() error {
 	if err := u.Verify(); err != nil {
 		return err

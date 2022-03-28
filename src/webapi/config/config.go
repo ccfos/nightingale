@@ -12,6 +12,7 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/ldapx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
+	"github.com/didi/nightingale/v5/src/pkg/ssoc"
 	"github.com/didi/nightingale/v5/src/storage"
 	"github.com/didi/nightingale/v5/src/webapi/prom"
 )
@@ -94,6 +95,7 @@ type Config struct {
 	Postgres             storage.Postgres
 	Clusters             []prom.Options
 	Ibex                 Ibex
+	SSO                  ssoc.Config
 }
 
 type LabelAndKey struct {
