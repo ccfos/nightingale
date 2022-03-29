@@ -170,20 +170,15 @@ func loginRedirect(c *gin.Context) {
 }
 
 type CallbackOutput struct {
-	Redirect string       `json:"redirect"`
-	User     *models.User `json:"user"`
+	Redirect     string       `json:"redirect"`
+	User         *models.User `json:"user"`
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
 }
 
 func loginCallback(c *gin.Context) {
 	code := ginx.QueryStr(c, "code", "")
 	state := ginx.QueryStr(c, "state", "")
-	redirect := ginx.QueryStr(c, "redirect", "")
-
-	if code == "" && redirect != "" {
-		logger.Debugf("sso.callback() can't get code and redirect is set")
-		ginx.NewRender(c).Data(CallbackOutput{Redirect: redirect}, nil)
-		return
-	}
 
 	ret, err := oidcc.Callback(c.Request.Context(), code, state)
 	if err != nil {
@@ -230,9 +225,15 @@ func loginCallback(c *gin.Context) {
 	ginx.Dangerous(err)
 	ginx.Dangerous(createAuth(c.Request.Context(), userIdentity, ts))
 
-	if redirect == "" {
-		redirect = "/"
+	redirect := "/"
+	if ret.Redirect != "/login" {
+		redirect = ret.Redirect
 	}
 
-	ginx.NewRender(c).Data(CallbackOutput{Redirect: redirect, User: user}, nil)
+	ginx.NewRender(c).Data(CallbackOutput{
+		Redirect:     redirect,
+		User:         user,
+		AccessToken:  ts.AccessToken,
+		RefreshToken: ts.RefreshToken,
+	}, nil)
 }
