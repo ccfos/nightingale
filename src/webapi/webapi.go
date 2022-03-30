@@ -13,6 +13,7 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/ldapx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
+	"github.com/didi/nightingale/v5/src/pkg/oidcc"
 	"github.com/didi/nightingale/v5/src/storage"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/didi/nightingale/v5/src/webapi/prom"
@@ -89,6 +90,9 @@ func (a Webapi) initialize() (func(), error) {
 
 	// init ldap
 	ldapx.Init(config.C.LDAP)
+
+	// init oidc
+	oidcc.Init(config.C.OIDC)
 
 	// init logger
 	loggerClean, err := logx.Init(config.C.Log)

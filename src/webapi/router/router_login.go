@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/pkg/oidcc"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 )
 
@@ -135,4 +138,104 @@ func refreshPost(c *gin.Context) {
 		// redirect to login page
 		ginx.NewRender(c, http.StatusUnauthorized).Message("refresh token expired")
 	}
+}
+
+func loginRedirect(c *gin.Context) {
+	redirect := ginx.QueryStr(c, "redirect", "/")
+
+	v, exsits := c.Get("userid")
+	if exsits {
+		userid := v.(int64)
+		user, err := models.UserGetById(userid)
+		ginx.Dangerous(err)
+		if user == nil {
+			ginx.Bomb(200, "user not found")
+		}
+
+		if user.Username != "" { // alread login
+			ginx.NewRender(c).Data(redirect, nil)
+			return
+		}
+	}
+
+	if !config.C.OIDC.Enable {
+		ginx.NewRender(c).Data("", nil)
+		return
+	}
+
+	redirect, err := oidcc.Authorize(redirect)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(redirect, err)
+}
+
+type CallbackOutput struct {
+	Redirect     string       `json:"redirect"`
+	User         *models.User `json:"user"`
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
+}
+
+func loginCallback(c *gin.Context) {
+	code := ginx.QueryStr(c, "code", "")
+	state := ginx.QueryStr(c, "state", "")
+
+	ret, err := oidcc.Callback(c.Request.Context(), code, state)
+	if err != nil {
+		logger.Debugf("sso.callback() get ret %+v error %v", ret, err)
+		ginx.NewRender(c).Data(CallbackOutput{}, err)
+		return
+	}
+
+	user, err := models.UserGet("username=?", ret.Username)
+	ginx.Dangerous(err)
+
+	if user != nil {
+		if config.C.OIDC.CoverAttributes {
+			user.Nickname = ret.Nickname
+			user.Email = ret.Email
+			user.Phone = ret.Phone
+			user.UpdateAt = time.Now().Unix()
+
+			user.Update("email", "nickname", "phone", "update_at")
+		}
+	} else {
+		now := time.Now().Unix()
+		user = &models.User{
+			Username: ret.Username,
+			Password: "******",
+			Nickname: ret.Nickname,
+			Phone:    ret.Phone,
+			Email:    ret.Email,
+			Portrait: "",
+			Roles:    strings.Join(config.C.OIDC.DefaultRoles, " "),
+			RolesLst: config.C.OIDC.DefaultRoles,
+			Contacts: []byte("{}"),
+			CreateAt: now,
+			UpdateAt: now,
+			CreateBy: "oidc",
+			UpdateBy: "oidc",
+		}
+
+		// create user from oidc
+		ginx.Dangerous(user.Add())
+	}
+
+	// set user login state
+	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
+	ts, err := createTokens(config.C.JWTAuth.SigningKey, userIdentity)
+	ginx.Dangerous(err)
+	ginx.Dangerous(createAuth(c.Request.Context(), userIdentity, ts))
+
+	redirect := "/"
+	if ret.Redirect != "/login" {
+		redirect = ret.Redirect
+	}
+
+	ginx.NewRender(c).Data(CallbackOutput{
+		Redirect:     redirect,
+		User:         user,
+		AccessToken:  ts.AccessToken,
+		RefreshToken: ts.RefreshToken,
+	}, nil)
 }

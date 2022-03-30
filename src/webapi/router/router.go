@@ -114,6 +114,9 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/auth/logout", logoutPost)
 		pages.POST("/auth/refresh", refreshPost)
 
+		pages.GET("/auth/redirect", loginRedirect)
+		pages.GET("/auth/callback", loginCallback)
+
 		pages.GET("/metrics/desc", metricsDescGetFile)
 		pages.POST("/metrics/desc", metricsDescGetMap)
 
