@@ -10,7 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-ldap/ldap/v3 v3.4.1
 	github.com/go-redis/redis/v8 v8.11.3
-	github.com/gogo/protobuf v1.1.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/protobuf v1.5.2
 	github.com/golang/snappy v0.0.4
