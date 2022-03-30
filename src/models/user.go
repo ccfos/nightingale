@@ -94,7 +94,6 @@ func (u *User) Update(selectField interface{}, selectFields ...interface{}) erro
 		return err
 	}
 
-	u.UpdateAt = time.Now().Unix()
 	return DB().Model(u).Select(selectField, selectFields).Updates(u).Error
 }
 

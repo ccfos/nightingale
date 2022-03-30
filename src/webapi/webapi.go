@@ -91,7 +91,7 @@ func (a Webapi) initialize() (func(), error) {
 	// init ldap
 	ldapx.Init(config.C.LDAP)
 
-	// init ssoc
+	// init oidc
 	oidcc.Init(config.C.OIDC)
 
 	// init logger

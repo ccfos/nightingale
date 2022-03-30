@@ -29,18 +29,18 @@ type ssoClient struct {
 }
 
 type Config struct {
-	Enable          bool   `yaml:"enable"`
-	RedirectURL     string `yaml:"redirectURL"`
-	SsoAddr         string `yaml:"ssoAddr"`
-	ClientId        string `yaml:"clientId"`
-	ClientSecret    string `yaml:"clientSecret"`
-	CoverAttributes bool   `yaml:"coverAttributes"`
+	Enable          bool
+	RedirectURL     string
+	SsoAddr         string
+	ClientId        string
+	ClientSecret    string
+	CoverAttributes bool
 	Attributes      struct {
-		Nickname string `yaml:"nickname"`
-		Phone    string `yaml:"phone"`
-		Email    string `yaml:"email"`
-	} `yaml:"attributes"`
-	DefaultRoles []string `yaml:"defaultRoles"`
+		Nickname string
+		Phone    string
+		Email    string
+	}
+	DefaultRoles []string
 }
 
 var (
@@ -78,7 +78,7 @@ func Init(cf Config) {
 }
 
 func wrapStateKey(key string) string {
-	return "n9e_sso_" + key
+	return "n9e_oidc_" + key
 }
 
 // Authorize return the sso authorize location with state

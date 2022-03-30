@@ -195,7 +195,9 @@ func loginCallback(c *gin.Context) {
 			user.Nickname = ret.Nickname
 			user.Email = ret.Email
 			user.Phone = ret.Phone
-			user.Update("email", "nickname", "phone")
+			user.UpdateAt = time.Now().Unix()
+
+			user.Update("email", "nickname", "phone", "update_at")
 		}
 	} else {
 		now := time.Now().Unix()
@@ -211,11 +213,11 @@ func loginCallback(c *gin.Context) {
 			Contacts: []byte("{}"),
 			CreateAt: now,
 			UpdateAt: now,
-			CreateBy: "sso",
-			UpdateBy: "sso",
+			CreateBy: "oidc",
+			UpdateBy: "oidc",
 		}
 
-		// create user from sso
+		// create user from oidc
 		ginx.Dangerous(user.Add())
 	}
 
