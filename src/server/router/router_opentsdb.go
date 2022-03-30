@@ -125,9 +125,10 @@ func (m *HTTPMetric) ToProm() (*prompb.TimeSeries, error) {
 func handleOpenTSDB(c *gin.Context) {
 	var bs []byte
 	var err error
+	var r *gzip.Reader
 
 	if c.GetHeader("Content-Encoding") == "gzip" {
-		r, err := gzip.NewReader(c.Request.Body)
+		r, err = gzip.NewReader(c.Request.Body)
 		if err != nil {
 			c.String(400, err.Error())
 			return
