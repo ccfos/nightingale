@@ -350,3 +350,145 @@ windows_system_system_calls_total: Total number of system calls (WMI source is P
 windows_system_system_up_time: System boot time (WMI source is PerfOS_System.SystemUpTime)(gauge)
 windows_system_threads: Current number of threads (WMI source is PerfOS_System.Threads)(gauge)
 
+# [node_exporter]
+# SYSTEM
+# CPU context switch 次数
+node_context_switches_total: context_switches
+# Interrupts 次数
+node_intr_total: Interrupts
+# 运行的进程数
+node_procs_running: Processes in runnable state
+# 熵池大小
+node_entropy_available_bits: Entropy available to random number generators
+node_time_seconds: System time in seconds since epoch (1970)
+node_boot_time_seconds: Node boot time, in unixtime
+# CPU
+node_cpu_seconds_total: Seconds the CPUs spent in each mode
+node_load1: cpu load 1m
+node_load5: cpu load 5m
+node_load15: cpu load 15m
+
+# MEM
+# 内核态
+# 用户追踪已从交换区获取但尚未修改的页面的内存
+node_memory_SwapCached_bytes: Memory that keeps track of pages that have been fetched from swap but not yet been modified
+# 内核用于缓存数据结构供自己使用的内存
+node_memory_Slab_bytes: Memory used by the kernel to cache data structures for its own use
+# slab中可回收的部分
+node_memory_SReclaimable_bytes: SReclaimable - Part of Slab, that might be reclaimed, such as caches
+# slab中不可回收的部分
+node_memory_SUnreclaim_bytes: Part of Slab, that cannot be reclaimed on memory pressure
+# Vmalloc内存区的大小
+node_memory_VmallocTotal_bytes: Total size of vmalloc memory area
+# vmalloc已分配的内存，虚拟地址空间上的连续的内存
+node_memory_VmallocUsed_bytes: Amount of vmalloc area which is used
+# vmalloc区可用的连续最大快的大小，通过此指标可以知道vmalloc可分配连续内存的最大值
+node_memory_VmallocChunk_bytes: Largest contigious block of vmalloc area which is free
+# 内存的硬件故障删除掉的内存页的总大小
+node_memory_HardwareCorrupted_bytes: Amount of RAM that the kernel identified as corrupted / not working
+# 用于在虚拟和物理内存地址之间映射的内存
+node_memory_PageTables_bytes: Memory used to map between virtual and physical memory addresses (gauge)
+# 内核栈内存，常驻内存，不可回收
+node_memory_KernelStack_bytes: Kernel memory stack. This is not reclaimable
+# 用来访问高端内存，复制高端内存的临时buffer，称为“bounce buffering”，会降低I/O 性能
+node_memory_Bounce_bytes: Memory used for block device bounce buffers
+#用户态
+# 单个巨页大小
+node_memory_Hugepagesize_bytes: Huge Page size
+# 系统分配的常驻巨页数
+node_memory_HugePages_Total: Total size of the pool of huge pages
+# 系统空闲的巨页数
+node_memory_HugePages_Free: Huge pages in the pool that are not yet allocated
+# 进程已申请但未使用的巨页数
+node_memory_HugePages_Rsvd: Huge pages for which a commitment to allocate from the pool has been made, but no allocation
+# 超过系统设定的常驻HugePages数量的个数
+node_memory_HugePages_Surp: Huge pages in the pool above the value in /proc/sys/vm/nr_hugepages
+# 透明巨页 Transparent HugePages (THP)
+node_memory_AnonHugePages_bytes: Memory in anonymous huge pages
+# inactivelist中的File-backed内存
+node_memory_Inactive_file_bytes: File-backed memory on inactive LRU list
+# inactivelist中的Anonymous内存
+node_memory_Inactive_anon_bytes: Anonymous and swap cache on inactive LRU list, including tmpfs (shmem)
+# activelist中的File-backed内存
+node_memory_Active_file_bytes: File-backed memory on active LRU list
+# activelist中的Anonymous内存
+node_memory_Active_anon_bytes: Anonymous and swap cache on active least-recently-used (LRU) list, including tmpfs
+# 禁止换出的页，对应 Unevictable 链表
+node_memory_Unevictable_bytes: Amount of unevictable memory that can't be swapped out for a variety of reasons
+# 共享内存
+node_memory_Shmem_bytes: Used shared memory (shared between several processes, thus including RAM disks)
+# 匿名页内存大小
+node_memory_AnonPages_bytes: Memory in user pages not backed by files
+# 被关联的内存页大小
+node_memory_Mapped_bytes: Used memory in mapped pages files which have been mmaped, such as libraries
+# file-backed内存页缓存大小
+node_memory_Cached_bytes: Parked file data (file content) cache
+# 系统中有多少匿名页曾经被swap-out、现在又被swap-in并且swap-in之后页面中的内容一直没发生变化
+node_memory_SwapCached_bytes: Memory that keeps track of pages that have been fetched from swap but not yet been modified
+# 被mlock()系统调用锁定的内存大小
+node_memory_Mlocked_bytes: Size of pages locked to memory using the mlock() system call
+# 块设备(block device)所占用的缓存页
+node_memory_Buffers_bytes: Block device (e.g. harddisk) cache
+node_memory_SwapTotal_bytes: Memory information field SwapTotal_bytes
+node_memory_SwapFree_bytes: Memory information field SwapFree_bytes
+
+# DISK
+node_filesystem_files_free: Filesystem space available to non-root users in byte
+node_filesystem_free_bytes: Filesystem free space in bytes
+node_filesystem_size_bytes: Filesystem size in bytes
+node_filesystem_files_free: Filesystem total free file nodes
+node_filesystem_files: Filesystem total free file nodes
+node_filefd_maximum: Max open files
+node_filefd_allocated: Open files
+node_filesystem_readonly: Filesystem read-only status
+node_filesystem_device_error: Whether an error occurred while getting statistics for the given device
+node_disk_reads_completed_total: The total number of reads completed successfully
+node_disk_writes_completed_total: The total number of writes completed successfully
+node_disk_reads_merged_total: The number of reads merged
+node_disk_writes_merged_total: The number of writes merged
+node_disk_read_bytes_total: The total number of bytes read successfully
+node_disk_written_bytes_total: The total number of bytes written successfully
+node_disk_io_time_seconds_total: Total seconds spent doing I/Os
+node_disk_read_time_seconds_total: The total number of seconds spent by all reads
+node_disk_write_time_seconds_total: The total number of seconds spent by all writes
+node_disk_io_time_weighted_seconds_total: The weighted of seconds spent doing I/Os
+
+# NET
+node_network_receive_bytes_total: Network device statistic receive_bytes (counter)
+node_network_transmit_bytes_total: Network device statistic transmit_bytes (counter)
+node_network_receive_packets_total: Network device statistic receive_bytes
+node_network_transmit_packets_total: Network device statistic transmit_bytes
+node_network_receive_errs_total: Network device statistic receive_errs
+node_network_transmit_errs_total: Network device statistic transmit_errs
+node_network_receive_drop_total: Network device statistic receive_drop
+node_network_transmit_drop_total: Network device statistic transmit_drop
+node_nf_conntrack_entries: Number of currently allocated flow entries for connection tracking
+node_sockstat_TCP_alloc: Number of TCP sockets in state alloc
+node_sockstat_TCP_inuse: Number of TCP sockets in state inuse
+node_sockstat_TCP_orphan: Number of TCP sockets in state orphan
+node_sockstat_TCP_tw: Number of TCP sockets in state tw
+node_netstat_Tcp_CurrEstab: Statistic TcpCurrEstab
+node_sockstat_sockets_used: Number of IPv4 sockets in use
+
+# [kafka_exporter]
+kafka_brokers: count of kafka_brokers (gauge)
+kafka_topic_partitions: Number of partitions for this Topic (gauge)
+kafka_topic_partition_current_offset: Current Offset of a Broker at Topic/Partition (gauge)
+kafka_consumergroup_current_offset: Current Offset of a ConsumerGroup at Topic/Partition (gauge)
+kafka_consumer_lag_millis: Current approximation of consumer lag for a ConsumerGroup at Topic/Partition (gauge)
+kafka_topic_partition_under_replicated_partition: 1 if Topic/Partition is under Replicated
+
+# [zookeeper_exporter]
+zk_znode_count: The total count of znodes stored 
+zk_ephemerals_count: The number of Ephemerals nodes
+zk_watch_count: The number of watchers setup over Zookeeper nodes.
+zk_approximate_data_size: Size of data in bytes that a zookeeper server has in its data tree
+zk_outstanding_requests: Number of currently executing requests
+zk_packets_sent: Count of the number of zookeeper packets sent from a server
+zk_packets_received: Count of the number of zookeeper packets received by a server
+zk_num_alive_connections: Number of active clients connected to a zookeeper server
+zk_open_file_descriptor_count: Number of file descriptors that a zookeeper server has open
+zk_max_file_descriptor_count: Maximum number of file descriptors that a zookeeper server can open
+zk_avg_latency: Average time in milliseconds for requests to be processed
+zk_min_latency: Maximum time in milliseconds for a request to be processed
+zk_max_latency: Minimum time in milliseconds for a request to be processed
