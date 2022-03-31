@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/didi/nightingale/v5/src/server/poster"
+	"github.com/didi/nightingale/v5/src/server/common/poster"
 	"github.com/toolkits/pkg/logger"
 )
 

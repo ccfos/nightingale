@@ -9,9 +9,9 @@ import (
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/pkg/ibex"
+	"github.com/didi/nightingale/v5/src/server/common/poster"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
-	"github.com/didi/nightingale/v5/src/server/poster"
 )
 
 func callback(event *models.AlertCurEvent) {
