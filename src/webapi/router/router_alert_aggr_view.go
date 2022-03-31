@@ -21,8 +21,9 @@ func alertAggrViewAdd(c *gin.Context) {
 
 	f.Id = 0
 	f.CreateBy = c.MustGet("userid").(int64)
+	ginx.Dangerous(f.Add())
 
-	ginx.NewRender(c).Message(f.Add())
+	ginx.NewRender(c).Data(f, nil)
 }
 
 // body: ids
