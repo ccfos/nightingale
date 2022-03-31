@@ -60,6 +60,11 @@ func StartEmailSender() {
 
 	conf := config.C.SMTP
 
+	if conf.Host == "" || conf.Port == 0 {
+		logger.Warning("SMTP configurations invalid")
+		return
+	}
+
 	d := gomail.NewDialer(conf.Host, conf.Port, conf.User, conf.Pass)
 	if conf.InsecureSkipVerify {
 		d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
