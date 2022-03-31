@@ -22,9 +22,9 @@ import (
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/pkg/sys"
+	"github.com/didi/nightingale/v5/src/server/common/sender"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
-	"github.com/didi/nightingale/v5/src/server/sender"
 	"github.com/didi/nightingale/v5/src/storage"
 )
 

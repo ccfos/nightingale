@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/server/common/sender"
 	"github.com/didi/nightingale/v5/src/server/config"
-	"github.com/didi/nightingale/v5/src/server/sender"
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 )
 
