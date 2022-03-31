@@ -12,21 +12,21 @@ import (
 )
 
 func parseAggrRules(c *gin.Context) []*models.AggrRule {
-	aggrRules := strings.Split(ginx.QueryStr(c, "rules", ""), "::") // e.g. field:group_name::field:severity::tagkey:ident
+	aggrRules := strings.Split(ginx.QueryStr(c, "rule", ""), "::") // e.g. field:group_name::field:severity::tagkey:ident
 
 	if len(aggrRules) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "rules empty")
+		ginx.Bomb(http.StatusBadRequest, "rule empty")
 	}
 
 	rules := make([]*models.AggrRule, len(aggrRules))
 	for i := 0; i < len(aggrRules); i++ {
 		pair := strings.Split(aggrRules[i], ":")
 		if len(pair) != 2 {
-			ginx.Bomb(http.StatusBadRequest, "rules invalid")
+			ginx.Bomb(http.StatusBadRequest, "rule invalid")
 		}
 
 		if !(pair[0] == "field" || pair[0] == "tagkey") {
-			ginx.Bomb(http.StatusBadRequest, "rules invalid")
+			ginx.Bomb(http.StatusBadRequest, "rule invalid")
 		}
 
 		rules[i] = &models.AggrRule{
