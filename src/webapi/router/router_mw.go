@@ -67,6 +67,7 @@ func user() gin.HandlerFunc {
 		}
 
 		c.Set("user", user)
+		c.Set("isadmin", user.IsAdmin())
 		c.Next()
 	}
 }

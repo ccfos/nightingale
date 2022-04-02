@@ -20,7 +20,7 @@ func alertRuleBuiltinList(c *gin.Context) {
 		fp = path.Join(runner.Cwd, "etc", "alerts")
 	}
 
-	files, err := file.DirsUnder(fp)
+	files, err := file.FilesUnder(fp)
 	ginx.Dangerous(err)
 
 	names := make([]string, 0, len(files))
@@ -93,7 +93,7 @@ func dashboardBuiltinList(c *gin.Context) {
 		fp = path.Join(runner.Cwd, "etc", "dashboards")
 	}
 
-	files, err := file.DirsUnder(fp)
+	files, err := file.FilesUnder(fp)
 	ginx.Dangerous(err)
 
 	names := make([]string, 0, len(files))
