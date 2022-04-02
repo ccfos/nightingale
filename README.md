@@ -39,20 +39,20 @@
 
 ## 产品演示
 #### 您可以直接导入并生成 MySQL 相关的告警策略：
-![mysql-alerts](doc/img/mysql-alerts.png)
+<img src="doc/img/mysql-alerts.png" width="680">
 
 #### 您可以直接导入并生成主机相关的 dashboard：
-![node-dashboard](doc/img/n9e-node-dashboard.png)
+<img src="doc/img/n9e-node-dashboard.png" width="680">
 
 #### 您也可以在夜莺中方便的查看所有活跃的告警以及历史告警：
-![alert-events](https://n9e.github.io/intro/alert-events.png)
+<img src="https://n9e.github.io/intro/alert-events.png" width="680">
 
 ## 系统架构
 #### 一个典型的 Nightingale 部署架构:
-![n9e-architecture](https://n9e.github.io/intro/arch-system.png)
+<img src="https://n9e.github.io/intro/arch-system.png" width="680">
 
 #### 使用 VictoriaMetrics 作为时序数据库的典型部署架构:
-![using vm as backend](https://n9e.github.io/fc-monitoring-vm.png)
+<img src="https://n9e.github.io/fc-monitoring-vm.png" width="680">
 
 
 ## 联系我们和反馈问题
@@ -60,7 +60,7 @@
 - 您可以加入我们的微信群组——[Nightingale 微信群组](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png)；
 - 当然，推荐您关注夜莺监控公众号，及时获取相关产品动态 
 
-![云原生监控-夜莺](https://n9e.github.io/cloudmon.png)
+<img src="https://n9e.github.io/cloudmon.png" width="180">
 
 
 ## 参与到夜莺开源项目和社区
