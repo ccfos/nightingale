@@ -4,7 +4,7 @@ drop database if exists n9e_v5;
 create database n9e_v5;
 use n9e_v5;
 
-CREATE TABLE `user` (
+CREATE TABLE `users` (
     `id` bigint unsigned not null auto_increment,
     `username` varchar(64) not null comment 'login name, cannot rename',
     `nickname` varchar(64) not null comment 'display name, chinese name',
@@ -22,7 +22,7 @@ CREATE TABLE `user` (
     UNIQUE KEY (`username`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-insert into `user`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', unix_timestamp(now()), 'system', unix_timestamp(now()), 'system');
+insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', unix_timestamp(now()), 'system', unix_timestamp(now()), 'system');
 
 CREATE TABLE `user_group` (
     `id` bigint unsigned not null auto_increment,
