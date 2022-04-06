@@ -68,12 +68,21 @@ func MustLoad(fpaths ...string) {
 
 		if C.Heartbeat.IP == "" {
 			// auto detect
-			C.Heartbeat.IP = fmt.Sprint(GetOutboundIP())
+			// C.Heartbeat.IP = fmt.Sprint(GetOutboundIP())
+			// 自动获取IP在有些环境下容易出错，这里用hostname+pid来作唯一标识
 
-			if C.Heartbeat.IP == "" {
-				fmt.Println("heartbeat ip auto got is blank")
+			hostname, err := os.Hostname()
+			if err != nil {
+				fmt.Println("failed to get hostname:", err)
 				os.Exit(1)
 			}
+
+			C.Heartbeat.IP = hostname + "+" + fmt.Sprint(os.Getpid())
+
+			// if C.Heartbeat.IP == "" {
+			// 	fmt.Println("heartbeat ip auto got is blank")
+			// 	os.Exit(1)
+			// }
 		}
 
 		C.Heartbeat.Endpoint = fmt.Sprintf("%s:%d", C.Heartbeat.IP, C.HTTP.Port)
