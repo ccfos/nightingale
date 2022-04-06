@@ -308,6 +308,8 @@ CREATE TABLE `metric_view` (
     KEY (`create_by`)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
+insert into metric_view(name, cate, configs) values('Host View', 0, '{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabel":{"label":"ident"}}');
+
 CREATE TABLE `alert_aggr_view` (
     `id` bigint unsigned not null auto_increment,
     `name` varchar(191) not null default '',
