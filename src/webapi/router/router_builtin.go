@@ -118,7 +118,7 @@ func dashboardBuiltinImport(c *gin.Context) {
 	var f dashboardBuiltinImportForm
 	ginx.BindJSON(c, &f)
 
-	dirpath := config.C.BuiltinAlertsDir
+	dirpath := config.C.BuiltinDashboardsDir
 	if dirpath == "" {
 		dirpath = path.Join(runner.Cwd, "etc", "dashboards")
 	}
