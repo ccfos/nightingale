@@ -74,6 +74,9 @@ func MetricViewGets(createBy interface{}) ([]MetricView, error) {
 	err := DB().Where("create_by = ? or cate = 0", createBy).Find(&lst).Error
 	if err == nil && len(lst) > 0 {
 		sort.Slice(lst, func(i, j int) bool {
+			if lst[i].Cate < lst[j].Cate {
+				return true
+			}
 			return lst[i].Name < lst[j].Name
 		})
 	}
