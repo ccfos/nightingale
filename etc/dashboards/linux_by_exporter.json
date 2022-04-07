@@ -2,14 +2,14 @@
   {
     "name": "HOST - 模板",
     "tags": "Prometheus Host",
-    "configs": "{\"var\":[{\"name\":\"node\",\"definition\":\"label_values(node_cpu_seconds_total,  instance)\",\"selected\":\"$node\",\"options\":[\"tt-fc-es01.nj:12345\",\"tt-fc-es02.nj:12345\",\"tt-fc-dev01.nj:12345\",\"10.206.0.13:9100\"]}]}",
+    "configs": "{\"var\":[{\"name\":\"node\",\"definition\":\"label_values(node_cpu_seconds_total,  instance)\",\"selected\":\"$node\",\"options\":[\"tt-fc-es01.nj:12345\",\"tt-fc-es02.nj:12345\",\"tt-fc-dev01.nj:12345\",\"10.206.0.13:9100\"]}],\"links\":[{\"title\":\"n9e\",\"url\":\"https://n9e.gitee.io/\",\"targetBlank\":true},{\"title\":\"author\",\"url\":\"http://flashcat.cloud/\",\"targetBlank\":true}]}",
     "chart_groups": [
       {
         "name": "整体概况",
         "weight": 0,
         "charts": [
           {
-            "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"topk(10,100-(avg by (mode, instance)(rate(node_cpu_seconds_total{mode=\\\"idle\\\"}[1m])))*100)\",\"legend\":\"{{instance}}\"}],\"name\":\"cpu使用率 top10\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":1,\"w\":9,\"x\":3,\"y\":0,\"i\":\"0\"}}",
+            "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"topk(10,100-(avg by (mode, instance)(rate(node_cpu_seconds_total{mode=\\\"idle\\\"}[1m])))*100)\",\"legend\":\"{{instance}}\"}],\"name\":\"cpu使用率 top10\",\"links\":[],\"description\":\"\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":1,\"w\":9,\"x\":3,\"y\":0,\"i\":\"0\"}}",
             "weight": 0
           },
           {
