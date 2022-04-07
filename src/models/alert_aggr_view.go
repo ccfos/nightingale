@@ -106,11 +106,16 @@ func AlertAggrViewDel(ids []int64, createBy interface{}) error {
 func AlertAggrViewGets(createBy interface{}) ([]AlertAggrView, error) {
 	var lst []AlertAggrView
 	err := DB().Where("create_by = ? or cate = 0", createBy).Find(&lst).Error
-	if err == nil && len(lst) > 0 {
+	if err == nil && len(lst) > 1 {
 		sort.Slice(lst, func(i, j int) bool {
 			if lst[i].Cate < lst[j].Cate {
 				return true
 			}
+
+			if lst[i].Cate > lst[j].Cate {
+				return false
+			}
+
 			return lst[i].Name < lst[j].Name
 		})
 	}
