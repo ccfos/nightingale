@@ -358,6 +358,12 @@ func AlertCurEventGetByIds(ids []int64) ([]*AlertCurEvent, error) {
 	}
 
 	err := DB().Where("id in ?", ids).Order("id desc").Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
+
 	return lst, err
 }
 
