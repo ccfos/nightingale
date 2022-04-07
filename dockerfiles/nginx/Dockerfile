@@ -1,5 +1,6 @@
 FROM nginx
 WORKDIR /home/n9e
 COPY nginx.conf /etc/nginx
-ADD http://116.85.64.82/pub.tar.gz .
-RUN tar xvf pub.tar.gz
+ADD https://github.com/n9e/fe/releases/download/3.5.6/pub-3.5.6.zip .
+RUN apt update && apt install unzip
+RUN unzip pub-3.5.6.zip
