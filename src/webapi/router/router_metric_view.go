@@ -22,7 +22,9 @@ func metricViewAdd(c *gin.Context) {
 	f.Id = 0
 	f.CreateBy = c.MustGet("userid").(int64)
 
-	ginx.NewRender(c).Message(f.Add())
+	ginx.Dangerous(f.Add())
+
+	ginx.NewRender(c).Data(f, nil)
 }
 
 // body: ids
