@@ -308,7 +308,7 @@ CREATE TABLE `metric_view` (
     KEY (`create_by`)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
-insert into metric_view(name, cate, configs) values('Host View', 0, '{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabel":{"label":"ident"}}');
+insert into metric_view(name, cate, configs) values('Host View', 0, '{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}');
 
 CREATE TABLE `alert_aggr_view` (
     `id` bigint unsigned not null auto_increment,
@@ -322,8 +322,8 @@ CREATE TABLE `alert_aggr_view` (
     KEY (`create_by`)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
-insert into alert_aggr_view(name, rule, cate) values('GroupBy BusiGroup, Severity', 'field:group_name::field:severity', 0);
-insert into alert_aggr_view(name, rule, cate) values('GroupBy Metric', 'tagkey:__name__', 0);
+insert into alert_aggr_view(name, rule, cate) values('By BusiGroup, Severity', 'field:group_name::field:severity', 0);
+insert into alert_aggr_view(name, rule, cate) values('By rule_name', 'field:rule_name', 0);
 
 CREATE TABLE `alert_cur_event` (
     `id` bigint unsigned not null comment 'use alert_his_event.id',
