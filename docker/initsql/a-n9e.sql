@@ -323,7 +323,7 @@ CREATE TABLE `alert_aggr_view` (
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
 insert into alert_aggr_view(name, rule, cate) values('By BusiGroup, Severity', 'field:group_name::field:severity', 0);
-insert into alert_aggr_view(name, rule, cate) values('By rule_name', 'field:rule_name', 0);
+insert into alert_aggr_view(name, rule, cate) values('By RuleName', 'field:rule_name', 0);
 
 CREATE TABLE `alert_cur_event` (
     `id` bigint unsigned not null comment 'use alert_his_event.id',
