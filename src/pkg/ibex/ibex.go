@@ -103,9 +103,10 @@ func (i *Ibex) do() error {
 
 	var req *http.Request
 	var err error
+	var bs []byte
 
 	if i.inValue != nil {
-		bs, err := json.Marshal(i.inValue)
+		bs, err = json.Marshal(i.inValue)
 		if err != nil {
 			return err
 		}
