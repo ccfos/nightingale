@@ -30,7 +30,7 @@ func alertRuleBuiltinList(c *gin.Context) {
 			continue
 		}
 
-		name := strings.TrimRight(f, ".json")
+		name := strings.TrimSuffix(f, ".json")
 		names = append(names, name)
 	}
 
@@ -103,7 +103,7 @@ func dashboardBuiltinList(c *gin.Context) {
 			continue
 		}
 
-		name := strings.TrimRight(f, ".json")
+		name := strings.TrimSuffix(f, ".json")
 		names = append(names, name)
 	}
 
