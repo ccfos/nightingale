@@ -88,7 +88,7 @@ func alertRuleBuiltinImport(c *gin.Context) {
 }
 
 func dashboardBuiltinList(c *gin.Context) {
-	fp := config.C.BuiltinAlertsDir
+	fp := config.C.BuiltinDashboardsDir
 	if fp == "" {
 		fp = path.Join(runner.Cwd, "etc", "dashboards")
 	}
