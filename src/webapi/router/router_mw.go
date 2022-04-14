@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -195,7 +196,7 @@ func extractTokenMetadata(r *http.Request) (*AccessDetails, error) {
 	if ok && token.Valid {
 		accessUuid, ok := claims["access_uuid"].(string)
 		if !ok {
-			return nil, err
+			return nil, errors.New("failed to parse access_uuid from jwt")
 		}
 
 		return &AccessDetails{
