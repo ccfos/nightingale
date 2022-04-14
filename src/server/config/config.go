@@ -101,6 +101,18 @@ func MustLoad(fpaths ...string) {
 			}
 		}
 
+		if C.WriterOpt.QueueMaxSize <= 0 {
+			C.WriterOpt.QueueMaxSize = 10000000
+		}
+
+		if C.WriterOpt.QueuePopSize <= 0 {
+			C.WriterOpt.QueuePopSize = 1000
+		}
+
+		if C.WriterOpt.SleepInterval <= 0 {
+			C.WriterOpt.SleepInterval = 50
+		}
+
 		fmt.Println("heartbeat.ip:", C.Heartbeat.IP)
 		fmt.Printf("heartbeat.interval: %dms\n", C.Heartbeat.Interval)
 	})

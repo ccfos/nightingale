@@ -190,12 +190,10 @@ func handleOpenTSDB(c *gin.Context) {
 			if has {
 				common.AppendLabels(pt, target)
 			}
-			// 更改分发方式，通过ident分发
-			writer.Writers.PushIdentChan(host, pt)
+
+			writer.Writers.PushSample(host, pt)
 		} else {
-			// 如果没有则默认放入指标名前缀的chan中
-			ident := arr[i].Metric[0:strings.Index(arr[i].Metric, "_")]
-			writer.Writers.PushIdentChan(ident, pt)
+			writer.Writers.PushSample("default_hash_string", pt)
 		}
 
 		succ++
@@ -203,7 +201,6 @@ func handleOpenTSDB(c *gin.Context) {
 
 	if succ > 0 {
 		promstat.CounterSampleTotal.WithLabelValues(config.C.ClusterName, "opentsdb").Add(float64(succ))
-
 		idents.Idents.MSet(ids)
 	}
 
