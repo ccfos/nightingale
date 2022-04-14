@@ -36,9 +36,8 @@ type Options struct {
 }
 
 type GlobalOpt struct {
-	QueueMaxSize  int
-	QueuePopSize  int
-	SleepInterval int64
+	QueueMaxSize int
+	QueuePopSize int
 }
 
 type WriterType struct {
