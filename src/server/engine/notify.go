@@ -19,6 +19,7 @@ import (
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
+	"github.com/toolkits/pkg/slice"
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/pkg/sys"
@@ -123,7 +124,7 @@ func handleNotice(notice Notice, bs []byte) {
 
 	alertingCallPlugin(bs)
 
-	if !config.C.Alerting.NotifyBuiltinEnable {
+	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
 		return
 	}
 
@@ -173,6 +174,10 @@ func handleNotice(notice Notice, bs []byte) {
 				continue
 			}
 
+			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "email") {
+				continue
+			}
+
 			subject, has := notice.Tpls["subject.tpl"]
 			if !has {
 				subject = "subject.tpl not found"
@@ -186,6 +191,10 @@ func handleNotice(notice Notice, bs []byte) {
 			sender.WriteEmail(subject, content, StringSetKeys(emailset))
 		case "dingtalk":
 			if len(dingtalkset) == 0 {
+				continue
+			}
+
+			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "dingtalk") {
 				continue
 			}
 
@@ -205,6 +214,10 @@ func handleNotice(notice Notice, bs []byte) {
 				continue
 			}
 
+			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "wecom") {
+				continue
+			}
+
 			content, has := notice.Tpls["wecom.tpl"]
 			if !has {
 				content = "wecom.tpl not found"
@@ -215,6 +228,10 @@ func handleNotice(notice Notice, bs []byte) {
 			})
 		case "feishu":
 			if len(feishuset) == 0 {
+				continue
+			}
+
+			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "feishu") {
 				continue
 			}
 

@@ -153,13 +153,13 @@ type SMTPConfig struct {
 }
 
 type Alerting struct {
-	TemplatesDir        string
-	NotifyConcurrency   int
-	NotifyBuiltinEnable bool
-	CallScript          CallScript
-	CallPlugin          CallPlugin
-	RedisPub            RedisPub
-	Webhook             Webhook
+	TemplatesDir          string
+	NotifyConcurrency     int
+	NotifyBuiltinChannels []string
+	CallScript            CallScript
+	CallPlugin            CallPlugin
+	RedisPub              RedisPub
+	Webhook               Webhook
 }
 
 type CallScript struct {
