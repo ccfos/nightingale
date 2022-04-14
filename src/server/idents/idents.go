@@ -127,8 +127,6 @@ func pushMetrics() {
 		}
 	}
 
-	var series []interface{}
-
 	// 有心跳，target_up = 1
 	// 如果找到target，就把target的tags补充到series上
 	// 如果没有target，就在数据库创建target
@@ -170,7 +168,7 @@ func pushMetrics() {
 			common.AppendLabels(pt, target)
 		}
 
-		series = append(series, pt)
+		writer.Writers.PushSample(active, pt)
 	}
 
 	// 把actives传给TargetCache，看看除了active的部分，还有别的target么？有的话返回，设置target_up = 0
@@ -195,10 +193,6 @@ func pushMetrics() {
 		})
 
 		common.AppendLabels(pt, dead)
-		series = append(series, pt)
-	}
-
-	if !writer.Writers.PushQueue(series) {
-		logger.Errorf("handle_idents: writer queue full")
+		writer.Writers.PushSample(ident, pt)
 	}
 }

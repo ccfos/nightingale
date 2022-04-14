@@ -61,7 +61,6 @@ func remoteWrite(c *gin.Context) {
 	var (
 		now   = time.Now().Unix()
 		ids   = make(map[string]interface{})
-		lst   = make([]interface{}, count)
 		ident string
 	)
 
@@ -95,18 +94,15 @@ func remoteWrite(c *gin.Context) {
 			if has {
 				common.AppendLabels(req.Timeseries[i], target)
 			}
-		}
 
-		lst[i] = req.Timeseries[i]
+			writer.Writers.PushSample(ident, req.Timeseries[i])
+		} else {
+			writer.Writers.PushSample("default_hash_string", req.Timeseries[i])
+		}
 	}
 
 	promstat.CounterSampleTotal.WithLabelValues(config.C.ClusterName, "prometheus").Add(float64(count))
 	idents.Idents.MSet(ids)
-	if writer.Writers.PushQueue(lst) {
-		c.String(200, "")
-	} else {
-		c.String(http.StatusInternalServerError, "writer queue full")
-	}
 }
 
 // DecodeWriteRequest from an io.Reader into a prompb.WriteRequest, handling

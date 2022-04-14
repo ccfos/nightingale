@@ -15,7 +15,6 @@ import (
 	"github.com/golang/snappy"
 	"github.com/prometheus/client_golang/api"
 	"github.com/prometheus/prometheus/prompb"
-	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -106,18 +105,13 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 
 type WritersType struct {
 	globalOpt GlobalOpt
-	m         map[string]WriterType
-	queue     *list.SafeListLimited
+	backends  map[string]WriterType
 	chans     cmap.ConcurrentMap
 	sync.RWMutex
 }
 
 func (ws *WritersType) Put(name string, writer WriterType) {
-	ws.m[name] = writer
-}
-
-func (ws *WritersType) PushQueue(vs []interface{}) bool {
-	return ws.queue.PushFrontBatch(vs)
+	ws.backends[name] = writer
 }
 
 // PushSample Push one sample to chan, hash by ident
@@ -207,59 +201,23 @@ func (ws *WritersType) StartConsumer(ident string, ch chan *prompb.TimeSeries) {
 // @Author: quzhihao
 func (ws *WritersType) post(ident string, series []*prompb.TimeSeries) {
 	wg := sync.WaitGroup{}
-	wg.Add(len(ws.m))
+	wg.Add(len(ws.backends))
 
 	// maybe as backend hashstring
 	headers := map[string]string{"ident": ident}
-	for key := range ws.m {
+	for key := range ws.backends {
 		go func(key string) {
 			defer wg.Done()
-			ws.m[key].Write(series, headers)
+			ws.backends[key].Write(series, headers)
 		}(key)
 	}
 
 	wg.Wait()
 }
 
-func (ws *WritersType) Writes() {
-	batch := ws.globalOpt.QueuePopSize
-	if batch <= 0 {
-		batch = 2000
-	}
-
-	duration := time.Duration(ws.globalOpt.SleepInterval) * time.Millisecond
-
-	for {
-		items := ws.queue.PopBackBy(batch)
-		count := len(items)
-		if count == 0 {
-			time.Sleep(duration)
-			continue
-		}
-
-		series := make([]*prompb.TimeSeries, 0, count)
-		for i := 0; i < count; i++ {
-			item, ok := items[i].(*prompb.TimeSeries)
-			if !ok {
-				// in theory, it can be converted successfully
-				continue
-			}
-			series = append(series, item)
-		}
-
-		if len(series) == 0 {
-			continue
-		}
-
-		for key := range ws.m {
-			go ws.m[key].Write(series)
-		}
-	}
-}
-
 func NewWriters() WritersType {
 	return WritersType{
-		m: make(map[string]WriterType),
+		backends: make(map[string]WriterType),
 	}
 }
 
@@ -267,7 +225,6 @@ var Writers = NewWriters()
 
 func Init(opts []Options, globalOpt GlobalOpt) error {
 	Writers.globalOpt = globalOpt
-	Writers.queue = list.NewSafeListLimited(globalOpt.QueueMaxSize)
 	Writers.chans = cmap.New()
 
 	for i := 0; i < len(opts); i++ {
@@ -301,8 +258,6 @@ func Init(opts []Options, globalOpt GlobalOpt) error {
 
 		Writers.Put(opts[i].Url, writer)
 	}
-
-	go Writers.Writes()
 
 	return nil
 }
