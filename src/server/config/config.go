@@ -102,7 +102,7 @@ func MustLoad(fpaths ...string) {
 		}
 
 		if C.WriterOpt.QueueMaxSize <= 0 {
-			C.WriterOpt.QueueMaxSize = 10000000
+			C.WriterOpt.QueueMaxSize = 100000
 		}
 
 		if C.WriterOpt.QueuePopSize <= 0 {
