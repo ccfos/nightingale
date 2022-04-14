@@ -164,7 +164,6 @@ func handleOpenTSDB(c *gin.Context) {
 		succ int
 		fail int
 		msg  = "data pushed to queue"
-		list = make([]interface{}, 0, len(arr))
 		ts   = time.Now().Unix()
 		ids  = make(map[string]interface{})
 	)
@@ -191,17 +190,19 @@ func handleOpenTSDB(c *gin.Context) {
 			if has {
 				common.AppendLabels(pt, target)
 			}
+			// 更改分发方式，通过ident分发
+			writer.Writers.PushIdentChan(host, pt)
+		} else {
+			// 如果没有则默认放入指标名前缀的chan中
+			ident := arr[i].Metric[0:strings.Index(arr[i].Metric, "_")]
+			writer.Writers.PushIdentChan(ident, pt)
 		}
 
-		list = append(list, pt)
 		succ++
 	}
 
-	if len(list) > 0 {
-		promstat.CounterSampleTotal.WithLabelValues(config.C.ClusterName, "opentsdb").Add(float64(len(list)))
-		if !writer.Writers.PushQueue(list) {
-			msg = "writer queue full"
-		}
+	if succ > 0 {
+		promstat.CounterSampleTotal.WithLabelValues(config.C.ClusterName, "opentsdb").Add(float64(succ))
 
 		idents.Idents.MSet(ids)
 	}
