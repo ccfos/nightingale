@@ -81,6 +81,13 @@ func alertCurEventsCard(c *gin.Context) {
 		cards[i] = cardmap[titles[i]]
 	}
 
+	sort.SliceStable(cards, func(i, j int) bool {
+		if cards[i].Severity != cards[j].Severity {
+			return cards[i].Severity < cards[j].Severity
+		}
+		return cards[i].Total > cards[j].Total
+	})
+
 	ginx.NewRender(c).Data(cards, nil)
 }
 
