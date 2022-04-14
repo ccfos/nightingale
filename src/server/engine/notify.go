@@ -244,8 +244,6 @@ func handleNotice(notice Notice, bs []byte) {
 				AtMobiles: phones,
 				Tokens:    StringSetKeys(feishuset),
 			})
-		default:
-			logger.Info("channel ", ch, " not supported by golang")
 		}
 	}
 }
