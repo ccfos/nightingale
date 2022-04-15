@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type AlertCurEvent struct {
@@ -29,7 +28,6 @@ type AlertCurEvent struct {
 	NotifyGroups       string            `json:"-"`                          // for db
 	NotifyGroupsJSON   []string          `json:"notify_groups" gorm:"-"`     // for fe
 	NotifyGroupsObj    []*UserGroup      `json:"notify_groups_obj" gorm:"-"` // for fe
-	NotifyRepeatNext   int64             `json:"notify_repeat_next"`
 	TargetIdent        string            `json:"target_ident"`
 	TargetNote         string            `json:"target_note"`
 	TriggerTime        int64             `json:"trigger_time"`
@@ -109,10 +107,6 @@ func (e *AlertCurEvent) GetField(field string) string {
 	default:
 		return ""
 	}
-}
-
-func (e *AlertCurEvent) IncRepeatStep(step int64) error {
-	return DB().Model(e).Where("id=?", e.Id).Update("notify_repeat_next", time.Now().Unix()+step).Error
 }
 
 func (e *AlertCurEvent) ToHis() *AlertHisEvent {
@@ -370,18 +364,6 @@ func AlertCurEventGetByIds(ids []int64) ([]*AlertCurEvent, error) {
 func AlertCurEventGetByRule(ruleId int64) ([]*AlertCurEvent, error) {
 	var lst []*AlertCurEvent
 	err := DB().Where("rule_id=?", ruleId).Find(&lst).Error
-	return lst, err
-}
-
-func AlertCurEventNeedRepeat(cluster string) ([]*AlertCurEvent, error) {
-	session := DB().Model(&AlertCurEvent{}).Where("notify_repeat_next <= ?", time.Now().Unix())
-
-	if cluster != "" {
-		session = session.Where("cluster = ?", cluster)
-	}
-
-	var lst []*AlertCurEvent
-	err := session.Find(&lst).Error
 	return lst, err
 }
 
