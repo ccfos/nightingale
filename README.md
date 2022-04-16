@@ -2,7 +2,7 @@
 
  Nightingale is an enterprise-level cloud-native monitoring system, which can be used as drop-in replacement of Prometheus for alerting and management.   
 
-[English](https://github.com/didi/nightingale) | [中文](https://github.com/didi/nightingale/blob/main/README_ZH.md)
+[English](./README.md) | [中文](./README_ZH.md)
 
 ## Introduction
 Nightingale is an cloud-native monitoring system by All-In-On design, support enterprise-class functional features with an out-of-the-box experience. We recommend upgrading your `Prometheus` + `AlertManager` + `Grafana` combo solution to Nightingale.
