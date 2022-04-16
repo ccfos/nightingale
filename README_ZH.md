@@ -1,3 +1,6 @@
+# Nightingale
+[English](./README.md) | [中文](./README_ZH.md)
+
 ## 介绍
 
 > Nightingale is an enterprise-level cloud-native monitoring system, which can be used as drop-in replacement of Prometheus for alerting and management.
