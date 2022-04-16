@@ -168,7 +168,7 @@ func pushMetrics() {
 			common.AppendLabels(pt, target)
 		}
 
-		writer.Writers.PushSample(active, pt)
+		writer.Writers.PushSample("default_ident_target_up", pt)
 	}
 
 	// 把actives传给TargetCache，看看除了active的部分，还有别的target么？有的话返回，设置target_up = 0
@@ -193,6 +193,6 @@ func pushMetrics() {
 		})
 
 		common.AppendLabels(pt, dead)
-		writer.Writers.PushSample(ident, pt)
+		writer.Writers.PushSample("default_ident_target_up", pt)
 	}
 }
