@@ -9,7 +9,7 @@ Nightingale is an cloud-native monitoring system by All-In-On design, support en
 
 - **Support for multiple prometheus data sources management**: manage all alerts and dashboards in one centralized visually view;
 - **Out-of-the-box alert rule**: built-in multiple alert rules, reuse alert rules template by one-click import with detailed explanation of metrics;
-- **Multiple modes for visualizing data**: out-of-the-box dashboards, instance customize views,expression browser and grafana viewing is also supported;
+- **Multiple modes for visualizing data**: out-of-the-box dashboards, instance customize views, expression browser and Grafana integration;
 - **Multiple collection clients**: support using Promethues Exporter、Telegraf、Datadog Agent to collecting metrics;
 - **Integration of multiple storage**: support Prometheus, M3DB, VictoriaMetrics, Influxdb, TDEngine as storage solutions, and original support for PromQL;
 - **Fault self-healing**: support the ability to self-heal from failures by configuring webhook;
