@@ -6,6 +6,9 @@ import urllib2
 import smtplib
 from email.mime.text import MIMEText
 
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 notify_channel_funcs = {
   "email":"email",
   "sms":"sms",
@@ -86,7 +89,13 @@ class Sender(object):
 
     @classmethod
     def send_dingtalk(cls, payload):
-        users = payload.get('event').get("notify_users_obj")
+        event = payload.get('event')
+        users = event.get("notify_users_obj")
+
+        rule_name = event.get("rule_name")
+        event_state = "Triggered"
+        if event.get("is_recovered"):
+            event_state = "Recovered"
 
         tokens = {}
         phones = {}
@@ -105,9 +114,10 @@ class Sender(object):
         for t in tokens:
             url = "https://oapi.dingtalk.com/robot/send?access_token={}".format(t)
             body = {
-                "msgtype": "text",
-                "text": {
-                    "content": payload.get('tpls').get("dingtalk.tpl", "dingtalk.tpl not found")
+                "msgtype": "markdown",
+                "markdown": {
+                    "title": "{} - {}".format(event_state, rule_name),
+                    "text": payload.get('tpls').get("dingtalk.tpl", "dingtalk.tpl not found") + ' '.join(["@"+i for i in phones.keys()])
                 },
                 "at": {
                     "atMobiles": phones.keys(),
