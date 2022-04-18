@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"net/url"
 	"strings"
 	"time"
 
@@ -38,24 +39,38 @@ func SendDingtalk(message DingtalkMessage) {
 	}
 
 	for i := 0; i < len(message.Tokens); i++ {
-		url := "https://oapi.dingtalk.com/robot/send?access_token=" + message.Tokens[i]
+		u, err := url.Parse(message.Tokens[i])
+		if err != nil {
+			logger.Errorf("dingtalk_sender: failed to parse error=%v", err)
+		}
+
+		v, err := url.ParseQuery(u.RawQuery)
+		if err != nil {
+			logger.Errorf("dingtalk_sender: failed to parse query error=%v", err)
+		}
+
+		ur := "https://oapi.dingtalk.com/robot/send?access_token=" + u.Path
 		body := dingtalk{
 			Msgtype: "markdown",
 			Markdown: dingtalkMarkdown{
 				Title: message.Title,
-				Text:  message.Text + " " + strings.Join(ats, " "),
-			},
-			At: dingtalkAt{
-				AtMobiles: message.AtMobiles,
-				IsAtAll:   false,
+				Text:  message.Text,
 			},
 		}
 
-		res, code, err := poster.PostJSON(url, time.Second*5, body)
+		if v.Get("noat") != "1" {
+			body.Markdown.Text = message.Text + " " + strings.Join(ats, " ")
+			body.At = dingtalkAt{
+				AtMobiles: message.AtMobiles,
+				IsAtAll:   false,
+			}
+		}
+
+		res, code, err := poster.PostJSON(ur, time.Second*5, body)
 		if err != nil {
-			logger.Errorf("dingtalk_sender: result=fail url=%s code=%d error=%v response=%s", url, code, err, string(res))
+			logger.Errorf("dingtalk_sender: result=fail url=%s code=%d error=%v response=%s", ur, code, err, string(res))
 		} else {
-			logger.Infof("dingtalk_sender: result=succ url=%s code=%d response=%s", url, code, string(res))
+			logger.Infof("dingtalk_sender: result=succ url=%s code=%d response=%s", ur, code, string(res))
 		}
 	}
 }
