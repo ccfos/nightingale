@@ -17,8 +17,6 @@ import (
 	promstat "github.com/didi/nightingale/v5/src/webapi/stat"
 )
 
-var InternalServerError = "InternalServerError"
-
 func stat() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
