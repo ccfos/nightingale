@@ -109,6 +109,10 @@ func MustLoad(fpaths ...string) {
 			C.WriterOpt.QueuePopSize = 1000
 		}
 
+		if C.WriterOpt.QueueCount <= 0 {
+			C.WriterOpt.QueueCount = 100
+		}
+
 		fmt.Println("heartbeat.ip:", C.Heartbeat.IP)
 		fmt.Printf("heartbeat.interval: %dms\n", C.Heartbeat.Interval)
 	})
