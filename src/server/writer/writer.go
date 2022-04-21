@@ -199,19 +199,11 @@ func (ws *WritersType) StartConsumer(ident string, ch chan *prompb.TimeSeries) {
 // post post series to TSDB
 // @Author: quzhihao
 func (ws *WritersType) post(ident string, series []*prompb.TimeSeries) {
-	wg := sync.WaitGroup{}
-	wg.Add(len(ws.backends))
-
 	// maybe as backend hashstring
 	headers := map[string]string{"ident": ident}
 	for key := range ws.backends {
-		go func(key string) {
-			defer wg.Done()
-			ws.backends[key].Write(series, headers)
-		}(key)
+		go ws.backends[key].Write(series, headers)
 	}
-
-	wg.Wait()
 }
 
 func NewWriters() WritersType {
