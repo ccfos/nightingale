@@ -68,7 +68,7 @@ func logoutPost(c *gin.Context) {
 
 	delErr := deleteTokens(c.Request.Context(), metadata)
 	if delErr != nil {
-		ginx.NewRender(c).Message(InternalServerError)
+		ginx.NewRender(c).Message(http.StatusText(http.StatusInternalServerError))
 		return
 	}
 
@@ -118,7 +118,7 @@ func refreshPost(c *gin.Context) {
 		// Delete the previous Refresh Token
 		err = deleteAuth(c.Request.Context(), refreshUuid)
 		if err != nil {
-			ginx.NewRender(c, http.StatusUnauthorized).Message(InternalServerError)
+			ginx.NewRender(c, http.StatusUnauthorized).Message(http.StatusText(http.StatusInternalServerError))
 			return
 		}
 

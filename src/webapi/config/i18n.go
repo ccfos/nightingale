@@ -4,7 +4,7 @@ var (
 	dict = map[string]string{
 		"just a test":                                      "这只是一个测试",
 		"just a test: %s":                                  "这只是一个测试: %s",
-		"InternalServerError":                              "系统内部错误，请联系管理员",
+		"Internal Server Error":                            "系统内部错误，请联系管理员",
 		"Username or password invalid":                     "登录失败，请检查用户名和密码",
 		"Username is blank":                                "用户名不能为空",
 		"Username has invalid characters":                  "用户名含有非法字符",
