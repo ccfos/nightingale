@@ -11,12 +11,16 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
+	"github.com/didi/nightingale/v5/src/pkg/tls"
 )
 
 type RedisConfig struct {
 	Address  string
+	Username string
 	Password string
 	DB       int
+	UseTLS   bool
+	tls.ClientConfig
 }
 
 type DBConfig struct {
@@ -101,15 +105,27 @@ func newGormDB(cfg DBConfig) (*gorm.DB, error) {
 var Redis *redis.Client
 
 func InitRedis(cfg RedisConfig) (func(), error) {
-	Redis = redis.NewClient(&redis.Options{
+	redisOptions := &redis.Options{
 		Addr:     cfg.Address,
+		Username: cfg.Username,
 		Password: cfg.Password,
 		DB:       cfg.DB,
-	})
+	}
+
+	if cfg.UseTLS {
+		tlsConfig, err := cfg.TLSConfig()
+		if err != nil {
+			fmt.Println("failed to init redis tls config:", err)
+			os.Exit(1)
+		}
+		redisOptions.TLSConfig = tlsConfig
+	}
+
+	Redis = redis.NewClient(redisOptions)
 
 	err := Redis.Ping(context.Background()).Err()
 	if err != nil {
-		fmt.Println("ping redis failed:", err)
+		fmt.Println("failed to ping redis:", err)
 		os.Exit(1)
 	}
 
