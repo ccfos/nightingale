@@ -484,12 +484,10 @@ func (u *User) UserGroups(limit int, query string) ([]UserGroup, error) {
 		return nil, errors.WithMessage(err, "failed to get MyGroupIds")
 	}
 
-	session = session.Where("create_by = ? and name like ?", u.Username, "%"+query+"%")
-
-	if len(ids) > 0 {
-		session = session.Or("id in ?", ids)
+	if len(ids) == 0 {
+		return lst, nil
 	}
 
-	err = session.Find(&lst).Error
+	err = session.Where("id in ?", ids).Where("name like ?", "%"+query+"%").Find(&lst).Error
 	return lst, err
 }
