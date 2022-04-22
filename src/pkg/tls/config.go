@@ -18,7 +18,7 @@ type ClientConfig struct {
 	TLSKeyPwd          string
 	InsecureSkipVerify bool
 	ServerName         string
-	MinVersion         string
+	TLSMinVersion      string
 }
 
 // ServerConfig represents the standard server TLS config.
@@ -71,13 +71,13 @@ func (c *ClientConfig) TLSConfig() (*tls.Config, error) {
 		tlsConfig.ServerName = c.ServerName
 	}
 
-	if c.MinVersion == "1.0" {
+	if c.TLSMinVersion == "1.0" {
 		tlsConfig.MinVersion = tls.VersionTLS10
-	} else if c.MinVersion == "1.1" {
+	} else if c.TLSMinVersion == "1.1" {
 		tlsConfig.MinVersion = tls.VersionTLS11
-	} else if c.MinVersion == "1.2" {
+	} else if c.TLSMinVersion == "1.2" {
 		tlsConfig.MinVersion = tls.VersionTLS12
-	} else if c.MinVersion == "1.3" {
+	} else if c.TLSMinVersion == "1.3" {
 		tlsConfig.MinVersion = tls.VersionTLS13
 	}
 
