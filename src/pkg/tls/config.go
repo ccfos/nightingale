@@ -36,17 +36,6 @@ type ServerConfig struct {
 // TLSConfig returns a tls.Config, may be nil without error if TLS is not
 // configured.
 func (c *ClientConfig) TLSConfig() (*tls.Config, error) {
-	// This check returns a nil (aka, "use the default")
-	// tls.Config if no field is set that would have an effect on
-	// a TLS connection. That is, any of:
-	//     * client certificate settings,
-	//     * peer certificate authorities,
-	//     * disabled security, or
-	//     * an SNI server name.
-	if c.TLSCA == "" && c.TLSKey == "" && c.TLSCert == "" && !c.InsecureSkipVerify && c.ServerName == "" {
-		return nil, nil
-	}
-
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: c.InsecureSkipVerify,
 		Renegotiation:      tls.RenegotiateNever,
