@@ -44,11 +44,10 @@ func (v *MetricView) Add() error {
 	now := time.Now().Unix()
 	v.CreateAt = now
 	v.UpdateAt = now
-	v.Cate = 1
 	return Insert(v)
 }
 
-func (v *MetricView) Update(name, configs string) error {
+func (v *MetricView) Update(name, configs string, cate int) error {
 	if err := v.Verify(); err != nil {
 		return err
 	}
@@ -56,17 +55,22 @@ func (v *MetricView) Update(name, configs string) error {
 	v.UpdateAt = time.Now().Unix()
 	v.Name = name
 	v.Configs = configs
+	v.Cate = cate
 
-	return DB().Model(v).Select("name", "configs", "update_at").Updates(v).Error
+	return DB().Model(v).Select("name", "configs", "cate", "update_at").Updates(v).Error
 }
 
 // MetricViewDel: userid for safe delete
-func MetricViewDel(ids []int64, createBy interface{}) error {
+func MetricViewDel(ids []int64, createBy ...interface{}) error {
 	if len(ids) == 0 {
 		return nil
 	}
 
-	return DB().Where("id in ? and create_by = ?", ids, createBy).Delete(new(MetricView)).Error
+	if len(createBy) > 0 {
+		return DB().Where("id in ? and create_by = ?", ids, createBy[0]).Delete(new(MetricView)).Error
+	}
+
+	return DB().Where("id in ?", ids).Delete(new(MetricView)).Error
 }
 
 func MetricViewGets(createBy interface{}) ([]MetricView, error) {
