@@ -24,6 +24,18 @@ func alertRuleGets(c *gin.Context) {
 	ginx.NewRender(c).Data(ars, err)
 }
 
+func alertRuleGetsByCluster(c *gin.Context) {
+	cluster := ginx.QueryStr(c, "cluster", "")
+	ars, err := models.AlertRuleGetsByCluster(cluster)
+	if err == nil {
+		cache := make(map[int64]*models.UserGroup)
+		for i := 0; i < len(ars); i++ {
+			ars[i].FillNotifyGroups(cache)
+		}
+	}
+	ginx.NewRender(c).Data(ars, err)
+}
+
 // single or import
 func alertRuleAdd(c *gin.Context) {
 	var lst []models.AlertRule

@@ -269,5 +269,7 @@ func configRoute(r *gin.Engine, version string) {
 		service.DELETE("/targets/tags", targetUnbindTags)
 		service.PUT("/targets/note", targetUpdateNote)
 		service.PUT("/targets/bgid", targetUpdateBgid)
+
+		service.GET("/alert-rules", alertRuleGets)
 	}
 }

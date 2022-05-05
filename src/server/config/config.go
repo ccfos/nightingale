@@ -122,6 +122,7 @@ type Config struct {
 	RunMode           string
 	ClusterName       string
 	BusiGroupLabelKey string
+	AnomalyDataApi    []string
 	EngineDelay       int64
 	Log               logx.Config
 	HTTP              httpx.Config

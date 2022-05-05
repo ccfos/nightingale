@@ -3,11 +3,14 @@ package engine
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/str"
 
 	"github.com/didi/nightingale/v5/src/models"
@@ -88,6 +91,11 @@ func (r RuleEval) Start() {
 	}
 }
 
+type AnomalyPoint struct {
+	Data model.Value `json:"dat"`
+	Err  string      `json:"err"`
+}
+
 func (r RuleEval) Work() {
 	promql := strings.TrimSpace(r.rule.PromQl)
 	if promql == "" {
@@ -95,15 +103,36 @@ func (r RuleEval) Work() {
 		return
 	}
 
-	value, warnings, err := reader.Reader.Client.Query(context.Background(), promql, time.Now())
-	if err != nil {
-		logger.Errorf("rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
-		return
-	}
+	var value model.Value
+	var err error
+	if r.rule.Algorithm == "" {
+		var warnings reader.Warnings
+		value, warnings, err = reader.Reader.Client.Query(context.Background(), promql, time.Now())
+		if err != nil {
+			logger.Errorf("rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
+			return
+		}
 
-	if len(warnings) > 0 {
-		logger.Errorf("rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
-		return
+		if len(warnings) > 0 {
+			logger.Errorf("rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
+			return
+		}
+	} else {
+		var res AnomalyPoint
+		count := len(config.C.AnomalyDataApi)
+		for _, i := range rand.Perm(count) {
+			url := fmt.Sprintf("%s?rid=%d", config.C.AnomalyDataApi[i], r.rule.Id)
+			err = httplib.Get(url).SetTimeout(time.Duration(3000) * time.Millisecond).ToJSON(&res)
+			if err != nil {
+				logger.Errorf("curl %s fail: %v", url, err)
+				continue
+			}
+			if res.Err != "" {
+				logger.Errorf("curl %s fail: %s", url, res.Err)
+				continue
+			}
+			value = res.Data
+		}
 	}
 
 	r.judge(ConvertVectors(value))
