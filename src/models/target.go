@@ -36,7 +36,10 @@ func (t *Target) Add() error {
 		return Insert(t)
 	}
 
-	return nil
+	return DB().Model(&Target{}).Where("ident = ?", t.Ident).Updates(map[string]interface{}{
+		"cluster":   t.Cluster,
+		"update_at": t.UpdateAt,
+	}).Error
 }
 
 func (t *Target) FillGroup(cache map[int64]*BusiGroup) error {
