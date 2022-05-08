@@ -1,21 +1,21 @@
 package ormx
 
 import (
+	"time"
 	"fmt"
 	"strings"
-	"time"
-
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
 
-// Config GORM Config
-type Config struct {
+// DBConfig GORM DBConfig
+type DBConfig struct {
 	Debug        bool
 	DBType       string
 	DSN          string
+	DriverName   string
 	MaxLifetime  int
 	MaxOpenConns int
 	MaxIdleConns int
@@ -23,14 +23,24 @@ type Config struct {
 }
 
 // New Create gorm.DB instance
-func New(c Config) (*gorm.DB, error) {
+func New(c DBConfig) (*gorm.DB, error) {
 	var dialector gorm.Dialector
 
 	switch strings.ToLower(c.DBType) {
 	case "mysql":
-		dialector = mysql.Open(c.DSN)
+		dialector = mysql.New(
+			mysql.Config{
+				DriverName: c.DriverName,
+				DSN: c.DSN,
+			},
+		)
 	case "postgres":
-		dialector = postgres.Open(c.DSN)
+		dialector = postgres.New(
+			postgres.Config{
+				DriverName: c.DriverName,
+				DSN: c.DSN,
+			},
+		)
 	default:
 		return nil, fmt.Errorf("dialector(%s) not supported", c.DBType)
 	}
