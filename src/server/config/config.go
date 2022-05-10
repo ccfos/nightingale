@@ -15,6 +15,7 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/logx"
 	"github.com/didi/nightingale/v5/src/server/reader"
 	"github.com/didi/nightingale/v5/src/server/writer"
+	"github.com/didi/nightingale/v5/src/pkg/ormx"
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
@@ -132,9 +133,7 @@ type Config struct {
 	Alerting          Alerting
 	NoData            NoData
 	Redis             storage.RedisConfig
-	Gorm              storage.Gorm
-	MySQL             storage.MySQL
-	Postgres          storage.Postgres
+	DB                ormx.DBConfig
 	WriterOpt         writer.GlobalOpt
 	Writers           []writer.Options
 	Reader            reader.Options

@@ -36,6 +36,13 @@ func (t *Target) Add() error {
 		return Insert(t)
 	}
 
+	if obj.Cluster != t.Cluster {
+		return DB().Model(&Target{}).Where("ident = ?", t.Ident).Updates(map[string]interface{}{
+			"cluster":   t.Cluster,
+			"update_at": t.UpdateAt,
+		}).Error
+	}
+
 	return nil
 }
 

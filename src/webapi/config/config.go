@@ -13,6 +13,7 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/ldapx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
 	"github.com/didi/nightingale/v5/src/pkg/oidcc"
+	"github.com/didi/nightingale/v5/src/pkg/ormx"
 	"github.com/didi/nightingale/v5/src/storage"
 	"github.com/didi/nightingale/v5/src/webapi/prom"
 )
@@ -90,9 +91,7 @@ type Config struct {
 	AnonymousAccess      AnonymousAccess
 	LDAP                 ldapx.LdapSection
 	Redis                storage.RedisConfig
-	Gorm                 storage.Gorm
-	MySQL                storage.MySQL
-	Postgres             storage.Postgres
+	DB                	 ormx.DBConfig
 	Clusters             []prom.Options
 	Ibex                 Ibex
 	OIDC                 oidcc.Config
