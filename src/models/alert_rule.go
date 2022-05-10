@@ -14,42 +14,43 @@ import (
 )
 
 type AlertRule struct {
-	Id                   int64           `json:"id" gorm:"primaryKey"`
-	GroupId              int64           `json:"group_id"`                     // busi group id
-	Cluster              string          `json:"cluster"`                      // take effect by cluster
-	Name                 string          `json:"name"`                         // rule name
-	Note                 string          `json:"note"`                         // will sent in notify
-	Prod                 string          `json:"prod"`                         // product empty means n9e
-	Algorithm            string          `json:"algorithm"`                    // algorithm (''|holtwinters), empty means threshold
-	AlgoParams           json.RawMessage `json:"algo_params"`                  // params algorithm need
-	Delay                int             `json:"delay"`                        // Time (in seconds) to delay evaluation
-	Severity             int             `json:"severity"`                     // 0: Emergency 1: Warning 2: Notice
-	Disabled             int             `json:"disabled"`                     // 0: enabled, 1: disabled
-	PromForDuration      int             `json:"prom_for_duration"`            // prometheus for, unit:s
-	PromQl               string          `json:"prom_ql"`                      // just one ql
-	PromEvalInterval     int             `json:"prom_eval_interval"`           // unit:s
-	EnableStime          string          `json:"enable_stime"`                 // e.g. 00:00
-	EnableEtime          string          `json:"enable_etime"`                 // e.g. 23:59
-	EnableDaysOfWeek     string          `json:"-"`                            // split by space: 0 1 2 3 4 5 6
-	EnableDaysOfWeekJSON []string        `json:"enable_days_of_week" gorm:"-"` // for fe
-	EnableInBG           int             `json:"enable_in_bg"`                 // 0: global 1: enable one busi-group
-	NotifyRecovered      int             `json:"notify_recovered"`             // whether notify when recovery
-	NotifyChannels       string          `json:"-"`                            // split by space: sms voice email dingtalk wecom
-	NotifyChannelsJSON   []string        `json:"notify_channels" gorm:"-"`     // for fe
-	NotifyGroups         string          `json:"-"`                            // split by space: 233 43
-	NotifyGroupsObj      []UserGroup     `json:"notify_groups_obj" gorm:"-"`   // for fe
-	NotifyGroupsJSON     []string        `json:"notify_groups" gorm:"-"`       // for fe
-	NotifyRepeatStep     int             `json:"notify_repeat_step"`           // notify repeat interval, unit: min
-	RecoverDuration      int64           `json:"recover_duration"`             // unit: s
-	Callbacks            string          `json:"-"`                            // split by space: http://a.com/api/x http://a.com/api/y'
-	CallbacksJSON        []string        `json:"callbacks" gorm:"-"`           // for fe
-	RunbookUrl           string          `json:"runbook_url"`                  // sop url
-	AppendTags           string          `json:"-"`                            // split by space: service=n9e mod=api
-	AppendTagsJSON       []string        `json:"append_tags" gorm:"-"`         // for fe
-	CreateAt             int64           `json:"create_at"`
-	CreateBy             string          `json:"create_by"`
-	UpdateAt             int64           `json:"update_at"`
-	UpdateBy             string          `json:"update_by"`
+	Id                   int64       `json:"id" gorm:"primaryKey"`
+	GroupId              int64       `json:"group_id"`                     // busi group id
+	Cluster              string      `json:"cluster"`                      // take effect by cluster
+	Name                 string      `json:"name"`                         // rule name
+	Note                 string      `json:"note"`                         // will sent in notify
+	Prod                 string      `json:"prod"`                         // product empty means n9e
+	Algorithm            string      `json:"algorithm"`                    // algorithm (''|holtwinters), empty means threshold
+	AlgoParams           string      `json:"-" gorm:"algo_params"`         // params algorithm need
+	AlgoParamsJson       interface{} `json:"algo_params" gorm:"-"`         //
+	Delay                int         `json:"delay"`                        // Time (in seconds) to delay evaluation
+	Severity             int         `json:"severity"`                     // 0: Emergency 1: Warning 2: Notice
+	Disabled             int         `json:"disabled"`                     // 0: enabled, 1: disabled
+	PromForDuration      int         `json:"prom_for_duration"`            // prometheus for, unit:s
+	PromQl               string      `json:"prom_ql"`                      // just one ql
+	PromEvalInterval     int         `json:"prom_eval_interval"`           // unit:s
+	EnableStime          string      `json:"enable_stime"`                 // e.g. 00:00
+	EnableEtime          string      `json:"enable_etime"`                 // e.g. 23:59
+	EnableDaysOfWeek     string      `json:"-"`                            // split by space: 0 1 2 3 4 5 6
+	EnableDaysOfWeekJSON []string    `json:"enable_days_of_week" gorm:"-"` // for fe
+	EnableInBG           int         `json:"enable_in_bg"`                 // 0: global 1: enable one busi-group
+	NotifyRecovered      int         `json:"notify_recovered"`             // whether notify when recovery
+	NotifyChannels       string      `json:"-"`                            // split by space: sms voice email dingtalk wecom
+	NotifyChannelsJSON   []string    `json:"notify_channels" gorm:"-"`     // for fe
+	NotifyGroups         string      `json:"-"`                            // split by space: 233 43
+	NotifyGroupsObj      []UserGroup `json:"notify_groups_obj" gorm:"-"`   // for fe
+	NotifyGroupsJSON     []string    `json:"notify_groups" gorm:"-"`       // for fe
+	NotifyRepeatStep     int         `json:"notify_repeat_step"`           // notify repeat interval, unit: min
+	RecoverDuration      int64       `json:"recover_duration"`             // unit: s
+	Callbacks            string      `json:"-"`                            // split by space: http://a.com/api/x http://a.com/api/y'
+	CallbacksJSON        []string    `json:"callbacks" gorm:"-"`           // for fe
+	RunbookUrl           string      `json:"runbook_url"`                  // sop url
+	AppendTags           string      `json:"-"`                            // split by space: service=n9e mod=api
+	AppendTagsJSON       []string    `json:"append_tags" gorm:"-"`         // for fe
+	CreateAt             int64       `json:"create_at"`
+	CreateBy             string      `json:"create_by"`
+	UpdateAt             int64       `json:"update_at"`
+	UpdateBy             string      `json:"update_by"`
 }
 
 func (ar *AlertRule) TableName() string {
@@ -150,7 +151,11 @@ func (ar *AlertRule) Update(arf AlertRule) error {
 		}
 	}
 
-	arf.FE2DB()
+	err := arf.FE2DB()
+	if err != nil {
+		return err
+	}
+
 	arf.Id = ar.Id
 	arf.GroupId = ar.GroupId
 	arf.CreateAt = ar.CreateAt
@@ -208,12 +213,19 @@ func (ar *AlertRule) FillNotifyGroups(cache map[int64]*UserGroup) error {
 	return nil
 }
 
-func (ar *AlertRule) FE2DB() {
+func (ar *AlertRule) FE2DB() error {
 	ar.EnableDaysOfWeek = strings.Join(ar.EnableDaysOfWeekJSON, " ")
 	ar.NotifyChannels = strings.Join(ar.NotifyChannelsJSON, " ")
 	ar.NotifyGroups = strings.Join(ar.NotifyGroupsJSON, " ")
 	ar.Callbacks = strings.Join(ar.CallbacksJSON, " ")
 	ar.AppendTags = strings.Join(ar.AppendTagsJSON, " ")
+	algoParamsByte, err := json.Marshal(ar.AlgoParamsJson)
+	if err != nil {
+		return fmt.Errorf("marshal algo_params err:%v", err)
+	}
+
+	ar.AlgoParams = string(algoParamsByte)
+	return nil
 }
 
 func (ar *AlertRule) DB2FE() {
@@ -222,6 +234,7 @@ func (ar *AlertRule) DB2FE() {
 	ar.NotifyGroupsJSON = strings.Fields(ar.NotifyGroups)
 	ar.CallbacksJSON = strings.Fields(ar.Callbacks)
 	ar.AppendTagsJSON = strings.Fields(ar.AppendTags)
+	json.Unmarshal([]byte(ar.AlgoParams), &ar.AlgoParamsJson)
 }
 
 func AlertRuleDels(ids []int64, busiGroupId int64) error {

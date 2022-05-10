@@ -75,7 +75,11 @@ func alertRuleBuiltinImport(c *gin.Context) {
 		lst[i].GroupId = bgid
 		lst[i].CreateBy = username
 		lst[i].UpdateBy = username
-		lst[i].FE2DB()
+
+		if err := lst[i].FE2DB(); err != nil {
+			reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+			continue
+		}
 
 		if err := lst[i].Add(); err != nil {
 			reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())

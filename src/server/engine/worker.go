@@ -278,6 +278,8 @@ func (r RuleEval) judge(vectors []Vector) {
 		event.RuleId = r.rule.Id
 		event.RuleName = r.rule.Name
 		event.RuleNote = r.rule.Note
+		event.RuleProd = r.rule.Prod
+		event.RuleAlgo = r.rule.Algorithm
 		event.Severity = r.rule.Severity
 		event.PromForDuration = r.rule.PromForDuration
 		event.PromQl = r.rule.PromQl
@@ -392,6 +394,8 @@ func (r RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
 		// 当然，其实rule的各个字段都可能发生变化了，都更新一下吧
 		event.RuleName = r.rule.Name
 		event.RuleNote = r.rule.Note
+		event.RuleProd = r.rule.Prod
+		event.RuleAlgo = r.rule.Algorithm
 		event.Severity = r.rule.Severity
 		event.PromForDuration = r.rule.PromForDuration
 		event.PromQl = r.rule.PromQl

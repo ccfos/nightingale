@@ -15,6 +15,8 @@ type AlertCurEvent struct {
 	RuleId             int64             `json:"rule_id"`
 	RuleName           string            `json:"rule_name"`
 	RuleNote           string            `json:"rule_note"`
+	RuleProd           string            `json:"rule_prod"`
+	RuleAlgo           string            `json:"rule_algo"`
 	Severity           int               `json:"severity"`
 	PromForDuration    int               `json:"prom_for_duration"`
 	PromQl             string            `json:"prom_ql"`
@@ -125,6 +127,8 @@ func (e *AlertCurEvent) ToHis() *AlertHisEvent {
 		Hash:             e.Hash,
 		RuleId:           e.RuleId,
 		RuleName:         e.RuleName,
+		RuleProd:         e.RuleProd,
+		RuleAlgo:         e.RuleAlgo,
 		RuleNote:         e.RuleNote,
 		Severity:         e.Severity,
 		PromForDuration:  e.PromForDuration,
