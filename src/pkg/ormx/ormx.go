@@ -15,7 +15,6 @@ type DBConfig struct {
 	Debug        bool
 	DBType       string
 	DSN          string
-	DriverName   string
 	MaxLifetime  int
 	MaxOpenConns int
 	MaxIdleConns int
@@ -28,19 +27,9 @@ func New(c DBConfig) (*gorm.DB, error) {
 
 	switch strings.ToLower(c.DBType) {
 	case "mysql":
-		dialector = mysql.New(
-			mysql.Config{
-				DriverName: c.DriverName,
-				DSN: c.DSN,
-			},
-		)
+		dialector = mysql.Open(c.DSN)
 	case "postgres":
-		dialector = postgres.New(
-			postgres.Config{
-				DriverName: c.DriverName,
-				DSN: c.DSN,
-			},
-		)
+		dialector = postgres.Open(c.DSN)
 	default:
 		return nil, fmt.Errorf("dialector(%s) not supported", c.DBType)
 	}
