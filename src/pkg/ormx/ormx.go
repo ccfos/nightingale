@@ -1,18 +1,17 @@
 package ormx
 
 import (
+	"time"
 	"fmt"
 	"strings"
-	"time"
-
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
 
-// Config GORM Config
-type Config struct {
+// DBConfig GORM DBConfig
+type DBConfig struct {
 	Debug        bool
 	DBType       string
 	DSN          string
@@ -23,7 +22,7 @@ type Config struct {
 }
 
 // New Create gorm.DB instance
-func New(c Config) (*gorm.DB, error) {
+func New(c DBConfig) (*gorm.DB, error) {
 	var dialector gorm.Dialector
 
 	switch strings.ToLower(c.DBType) {
