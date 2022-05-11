@@ -63,6 +63,7 @@ services:
     environment:
       GIN_MODE: release
       TZ: Asia/Shanghai
+      WAIT_HOSTS: mysql:3306
     ports:
       - "10090:10090"
       - "20090:20090"
@@ -74,18 +75,18 @@ services:
       - mysql
     links:
       - mysql:mysql
-    command:
-      - "/app/ibex"
-      - "server"
+    command: >
+      sh -c "/wait && /app/ibex server"
 
   nwebapi:
-    image: ulric2019/nightingale:5.7.0
+    image: ulric2019/nightingale:5.7.1
     container_name: nwebapi
     hostname: nwebapi
     restart: always
     environment:
       GIN_MODE: release
       TZ: Asia/Shanghai
+      WAIT_HOSTS: mysql:3306, redis:6379
     volumes:
       - ./n9eetc:/app/etc
     ports:
@@ -102,18 +103,18 @@ services:
       - redis:redis
       - prometheus:prometheus
       - ibex:ibex
-    command:
-      - "/app/n9e"
-      - "webapi"
+    command: >
+      sh -c "/wait && /app/n9e webapi"
 
   nserver:
-    image: ulric2019/nightingale:5.7.0
+    image: ulric2019/nightingale:5.7.1
     container_name: nserver
     hostname: nserver
     restart: always
     environment:
       GIN_MODE: release
       TZ: Asia/Shanghai
+      WAIT_HOSTS: mysql:3306, redis:6379
     volumes:
       - ./n9eetc:/app/etc
     ports:
@@ -130,9 +131,8 @@ services:
       - redis:redis
       - prometheus:prometheus
       - ibex:ibex
-    command:
-      - "/app/n9e"
-      - "server"
+    command: >
+      sh -c "/wait && /app/n9e server"
 
   telegraf:
     image: "telegraf:1.20.3"

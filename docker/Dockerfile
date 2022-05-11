@@ -3,7 +3,8 @@ FROM python:2
 
 WORKDIR /app
 ADD n9e /app
-RUN mkdir -p /app/pub
+ADD http://download.flashcat.cloud/wait /wait
+RUN mkdir -p /app/pub && chmod +x /wait
 ADD pub /app/pub/
 RUN chmod +x n9e
 
