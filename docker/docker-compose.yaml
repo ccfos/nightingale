@@ -56,7 +56,7 @@ services:
       - "--query.lookback-delta=2m"
 
   ibex:
-    image: ulric2019/ibex:0.2
+    image: ulric2019/ibex:0.3
     container_name: ibex
     hostname: ibex
     restart: always
@@ -155,7 +155,7 @@ services:
       - nserver:nserver
 
   agentd:
-    image: ulric2019/ibex:0.2
+    image: ulric2019/ibex:0.3
     container_name: agentd
     hostname: agentd
     restart: always
