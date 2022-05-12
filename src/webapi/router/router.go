@@ -166,7 +166,7 @@ func configRoute(r *gin.Engine, version string) {
 		pages.PUT("/targets/note", jwtAuth(), user(), perm("/targets/put"), targetUpdateNote)
 		pages.PUT("/targets/bgid", jwtAuth(), user(), perm("/targets/put"), targetUpdateBgid)
 
-		pages.GET("/builtin-boards", dashboardBuiltinList)
+		pages.GET("/builtin-boards", builtinBoardGets)
 		pages.GET("/builtin-board/:name", builtinBoardGet)
 
 		pages.GET("/busi-group/:id/boards", jwtAuth(), user(), perm("/dashboards"), bgro(), boardGets)
@@ -179,12 +179,12 @@ func configRoute(r *gin.Engine, version string) {
 		pages.DELETE("/boards", jwtAuth(), user(), perm("/dashboards/del"), boardDel)
 
 		// migrate v5.8.0
-		pages.GET("/dashboards/ids", jwtAuth(), admin(), migrateDashboardIds)
+		pages.GET("/dashboards", jwtAuth(), admin(), migrateDashboards)
 		pages.GET("/dashboard/:id", jwtAuth(), admin(), migrateDashboardGet)
 		pages.PUT("/dashboard/:id/migrate", jwtAuth(), admin(), migrateDashboard)
 
 		// deprecated ↓
-		pages.GET("/dashboards/builtin/list", dashboardBuiltinList)
+		pages.GET("/dashboards/builtin/list", builtinBoardGets)
 		pages.POST("/busi-group/:id/dashboards/builtin", jwtAuth(), user(), perm("/dashboards/add"), bgrw(), dashboardBuiltinImport)
 		pages.GET("/busi-group/:id/dashboards", jwtAuth(), user(), perm("/dashboards"), bgro(), dashboardGets)
 		pages.POST("/busi-group/:id/dashboards", jwtAuth(), user(), perm("/dashboards/add"), bgrw(), dashboardAdd)

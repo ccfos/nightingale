@@ -10,16 +10,15 @@ import (
 )
 
 type Board struct {
-	Id       int64    `json:"id" gorm:"primaryKey"`
-	GroupId  int64    `json:"group_id"`
-	Name     string   `json:"name"`
-	Tags     string   `json:"-"`
-	TagsLst  []string `json:"tags" gorm:"-"`
-	CreateAt int64    `json:"create_at"`
-	CreateBy string   `json:"create_by"`
-	UpdateAt int64    `json:"update_at"`
-	UpdateBy string   `json:"update_by"`
-	Configs  string   `json:"configs" gorm:"-"`
+	Id       int64  `json:"id" gorm:"primaryKey"`
+	GroupId  int64  `json:"group_id"`
+	Name     string `json:"name"`
+	Tags     string `json:"tags"`
+	CreateAt int64  `json:"create_at"`
+	CreateBy string `json:"create_by"`
+	UpdateAt int64  `json:"update_at"`
+	UpdateBy string `json:"update_by"`
+	Configs  string `json:"configs" gorm:"-"`
 }
 
 func (b *Board) TableName() string {
@@ -41,15 +40,6 @@ func (b *Board) Verify() error {
 func (b *Board) Add() error {
 	if err := b.Verify(); err != nil {
 		return err
-	}
-
-	exists, err := BoardExists("group_id=? and name=?", b.GroupId, b.Name)
-	if err != nil {
-		return errors.WithMessage(err, "failed to count dashboard")
-	}
-
-	if exists {
-		return errors.New("Dashboard already exists")
 	}
 
 	now := time.Now().Unix()
@@ -93,8 +83,6 @@ func BoardGet(where string, args ...interface{}) (*Board, error) {
 		return nil, nil
 	}
 
-	lst[0].TagsLst = strings.Fields(lst[0].Tags)
-
 	payload, err := BoardPayloadGet(lst[0].Id)
 	if err != nil {
 		return nil, err
@@ -133,11 +121,5 @@ func BoardGets(groupId int64, query string) ([]Board, error) {
 
 	var objs []Board
 	err := session.Find(&objs).Error
-	if err == nil {
-		for i := 0; i < len(objs); i++ {
-			objs[i].TagsLst = strings.Fields(objs[i].Tags)
-		}
-	}
-
 	return objs, err
 }
