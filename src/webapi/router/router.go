@@ -166,7 +166,25 @@ func configRoute(r *gin.Engine, version string) {
 		pages.PUT("/targets/note", jwtAuth(), user(), perm("/targets/put"), targetUpdateNote)
 		pages.PUT("/targets/bgid", jwtAuth(), user(), perm("/targets/put"), targetUpdateBgid)
 
-		pages.GET("/dashboards/builtin/list", dashboardBuiltinList)
+		pages.GET("/builtin-boards", builtinBoardGets)
+		pages.GET("/builtin-board/:name", builtinBoardGet)
+
+		pages.GET("/busi-group/:id/boards", jwtAuth(), user(), perm("/dashboards"), bgro(), boardGets)
+		pages.POST("/busi-group/:id/boards", jwtAuth(), user(), perm("/dashboards/add"), bgrw(), boardAdd)
+		pages.POST("/busi-group/:id/board/:bid/clone", jwtAuth(), user(), perm("/dashboards/add"), bgrw(), boardClone)
+
+		pages.GET("/board/:bid", jwtAuth(), user(), boardGet)
+		pages.PUT("/board/:bid", jwtAuth(), user(), perm("/dashboards/put"), boardPut)
+		pages.PUT("/board/:bid/configs", jwtAuth(), user(), perm("/dashboards/put"), boardPutConfigs)
+		pages.DELETE("/boards", jwtAuth(), user(), perm("/dashboards/del"), boardDel)
+
+		// migrate v5.8.0
+		pages.GET("/dashboards", jwtAuth(), admin(), migrateDashboards)
+		pages.GET("/dashboard/:id", jwtAuth(), admin(), migrateDashboardGet)
+		pages.PUT("/dashboard/:id/migrate", jwtAuth(), admin(), migrateDashboard)
+
+		// deprecated ↓
+		pages.GET("/dashboards/builtin/list", builtinBoardGets)
 		pages.POST("/busi-group/:id/dashboards/builtin", jwtAuth(), user(), perm("/dashboards/add"), bgrw(), dashboardBuiltinImport)
 		pages.GET("/busi-group/:id/dashboards", jwtAuth(), user(), perm("/dashboards"), bgro(), dashboardGets)
 		pages.POST("/busi-group/:id/dashboards", jwtAuth(), user(), perm("/dashboards/add"), bgrw(), dashboardAdd)
@@ -186,6 +204,7 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/busi-group/:id/charts", jwtAuth(), user(), bgrw(), chartAdd)
 		pages.PUT("/busi-group/:id/charts", jwtAuth(), user(), bgrw(), chartPut)
 		pages.DELETE("/busi-group/:id/charts", jwtAuth(), user(), bgrw(), chartDel)
+		// deprecated ↑
 
 		pages.GET("/share-charts", chartShareGets)
 		pages.POST("/share-charts", jwtAuth(), chartShareAdd)

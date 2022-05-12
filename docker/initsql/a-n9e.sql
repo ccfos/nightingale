@@ -152,6 +152,28 @@ CREATE TABLE `busi_group_member` (
 
 insert into busi_group_member(busi_group_id, user_group_id, perm_flag) values(1, 1, "rw");
 
+-- for dashboard new version
+CREATE TABLE `board` (
+    `id` bigint unsigned not null auto_increment,
+    `group_id` bigint not null default 0 comment 'busi group id',
+    `name` varchar(191) not null,
+    `tags` varchar(255) not null comment 'split by space',
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY (`group_id`, `name`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- for dashboard new version
+CREATE TABLE `board_payload` (
+    `id` bigint unsigned not null comment 'dashboard id',
+    `payload` mediumtext not null,
+    UNIQUE KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- deprecated
 CREATE TABLE `dashboard` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
@@ -166,6 +188,7 @@ CREATE TABLE `dashboard` (
     UNIQUE KEY (`group_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+-- deprecated
 -- auto create the first subclass 'Default chart group' of dashboard
 CREATE TABLE `chart_group` (
     `id` bigint unsigned not null auto_increment,
@@ -176,6 +199,7 @@ CREATE TABLE `chart_group` (
     KEY (`dashboard_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+-- deprecated
 CREATE TABLE `chart` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint unsigned not null comment 'chart group id',
