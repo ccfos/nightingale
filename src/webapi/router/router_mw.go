@@ -140,6 +140,19 @@ func bgrwCheck(c *gin.Context, bgid int64) {
 	c.Set("busi_group", bg)
 }
 
+func bgrwChecks(c *gin.Context, bgids []int64) {
+	set := make(map[int64]struct{})
+
+	for i := 0; i < len(bgids); i++ {
+		if _, has := set[bgids[i]]; has {
+			continue
+		}
+
+		bgrwCheck(c, bgids[i])
+		set[bgids[i]] = struct{}{}
+	}
+}
+
 func perm(operation string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		me := c.MustGet("user").(*models.User)

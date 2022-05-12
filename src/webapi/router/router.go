@@ -209,17 +209,6 @@ func configRoute(r *gin.Engine, version string) {
 		pages.PUT("/busi-group/:id/alert-subscribes", jwtAuth(), user(), perm("/alert-subscribes/put"), bgrw(), alertSubscribePut)
 		pages.DELETE("/busi-group/:id/alert-subscribes", jwtAuth(), user(), perm("/alert-subscribes/del"), bgrw(), alertSubscribeDel)
 
-		// pages.GET("/busi-group/:id/collect-rules", jwtAuth(), user(), bgro(), collectRuleGets)
-		// pages.POST("/busi-group/:id/collect-rules", jwtAuth(), user(), bgrw(), collectRuleAdd)
-		// pages.DELETE("/busi-group/:id/collect-rules", jwtAuth(), user(), bgrw(), collectRuleDel)
-		// pages.GET("/busi-group/:id/collect-rule/:crid", jwtAuth(), user(), bgro(), collectRuleGet)
-		// pages.PUT("/busi-group/:id/collect-rule/:crid", jwtAuth(), user(), bgrw(), collectRulePut)
-
-		// card逻辑fe改造完之后，这三个方法可以删除
-		pages.GET("/busi-group/:id/alert-his-events", jwtAuth(), user(), bgro(), alertHisEventGets)
-		pages.GET("/busi-group/:id/alert-cur-events", jwtAuth(), user(), bgro(), alertCurEventGets)
-		pages.DELETE("/busi-group/:id/alert-cur-events", jwtAuth(), user(), perm("/alert-cur-events/del"), alertCurEventDel)
-
 		if config.C.AnonymousAccess.AlertDetail {
 			pages.GET("/alert-cur-event/:eid", alertCurEventGet)
 			pages.GET("/alert-his-event/:eid", alertHisEventGet)

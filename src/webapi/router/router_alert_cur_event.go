@@ -139,32 +139,6 @@ func alertCurEventsList(c *gin.Context) {
 	}, nil)
 }
 
-func alertCurEventGets(c *gin.Context) {
-	stime, etime := getTimeRange(c)
-
-	severity := ginx.QueryInt(c, "severity", -1)
-	query := ginx.QueryStr(c, "query", "")
-	limit := ginx.QueryInt(c, "limit", 20)
-	busiGroupId := ginx.UrlParamInt64(c, "id")
-	clusters := queryClusters(c)
-
-	total, err := models.AlertCurEventTotal(busiGroupId, stime, etime, severity, clusters, query)
-	ginx.Dangerous(err)
-
-	list, err := models.AlertCurEventGets(busiGroupId, stime, etime, severity, clusters, query, limit, ginx.Offset(c, limit))
-	ginx.Dangerous(err)
-
-	cache := make(map[int64]*models.UserGroup)
-	for i := 0; i < len(list); i++ {
-		list[i].FillNotifyGroups(cache)
-	}
-
-	ginx.NewRender(c).Data(gin.H{
-		"list":  list,
-		"total": total,
-	}, nil)
-}
-
 func alertCurEventDel(c *gin.Context) {
 	var f idsForm
 	ginx.BindJSON(c, &f)
