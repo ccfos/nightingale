@@ -52,33 +52,6 @@ func alertHisEventsList(c *gin.Context) {
 	}, nil)
 }
 
-func alertHisEventGets(c *gin.Context) {
-	stime, etime := getTimeRange(c)
-
-	severity := ginx.QueryInt(c, "severity", -1)
-	recovered := ginx.QueryInt(c, "is_recovered", -1)
-	query := ginx.QueryStr(c, "query", "")
-	limit := ginx.QueryInt(c, "limit", 20)
-	busiGroupId := ginx.UrlParamInt64(c, "id")
-	clusters := queryClusters(c)
-
-	total, err := models.AlertHisEventTotal(busiGroupId, stime, etime, severity, recovered, clusters, query)
-	ginx.Dangerous(err)
-
-	list, err := models.AlertHisEventGets(busiGroupId, stime, etime, severity, recovered, clusters, query, limit, ginx.Offset(c, limit))
-	ginx.Dangerous(err)
-
-	cache := make(map[int64]*models.UserGroup)
-	for i := 0; i < len(list); i++ {
-		list[i].FillNotifyGroups(cache)
-	}
-
-	ginx.NewRender(c).Data(gin.H{
-		"list":  list,
-		"total": total,
-	}, nil)
-}
-
 func alertHisEventGet(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
 	event, err := models.AlertHisEventGetById(eid)
