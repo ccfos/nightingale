@@ -169,9 +169,32 @@ func migrateDashboards(c *gin.Context) {
 }
 
 func migrateDashboardGet(c *gin.Context) {
-
+	dash := Dashboard(ginx.UrlParamInt64(c, "id"))
+	ginx.NewRender(c).Data(dash, nil)
 }
 
 func migrateDashboard(c *gin.Context) {
+	dash := Dashboard(ginx.UrlParamInt64(c, "id"))
 
+	var f boardForm
+	ginx.BindJSON(c, &f)
+
+	me := c.MustGet("user").(*models.User)
+
+	board := &models.Board{
+		GroupId:  dash.GroupId,
+		Name:     f.Name,
+		Tags:     f.Tags,
+		Configs:  f.Configs,
+		CreateBy: me.Username,
+		UpdateBy: me.Username,
+	}
+
+	ginx.Dangerous(board.Add())
+
+	if board.Configs != "" {
+		ginx.Dangerous(models.BoardPayloadSave(board.Id, board.Configs))
+	}
+
+	ginx.NewRender(c).Message(dash.Del())
 }
