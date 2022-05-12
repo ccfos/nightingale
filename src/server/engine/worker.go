@@ -92,8 +92,8 @@ func (r RuleEval) Start() {
 }
 
 type AnomalyPoint struct {
-	Data model.Value `json:"dat"`
-	Err  string      `json:"err"`
+	Data model.Vector `json:"data"`
+	Err  string       `json:"error"`
 }
 
 func (r RuleEval) Work() {
