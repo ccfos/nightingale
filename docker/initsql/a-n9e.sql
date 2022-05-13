@@ -224,7 +224,7 @@ CREATE TABLE `alert_rule` (
     `group_id` bigint not null default 0 comment 'busi group id',
     `cluster` varchar(128) not null,
     `name` varchar(255) not null,
-    `note` varchar(1024) not null,
+    `note` varchar(1024) not null default '',
     `prod` varchar(255) not null default '',
     `algorithm` varchar(255) not null default '',
     `algo_params` varchar(255),
