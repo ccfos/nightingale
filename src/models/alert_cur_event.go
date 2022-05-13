@@ -72,8 +72,13 @@ func (e *AlertCurEvent) ParseRuleNote() error {
 		return err
 	}
 
+	data := map[string]string{"value": e.TriggerValue}
+	for k, v := range e.TagsMap {
+		data[k] = v
+	}
+
 	var body bytes.Buffer
-	err = t.Execute(&body, e.TagsMap)
+	err = t.Execute(&body, data)
 	if err != nil {
 		return err
 	}
