@@ -1,9 +1,13 @@
 package models
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"strconv"
 	"strings"
+
+	"github.com/didi/nightingale/v5/src/pkg/tplx"
 )
 
 type AlertCurEvent struct {
@@ -54,6 +58,28 @@ func (e *AlertCurEvent) Add() error {
 type AggrRule struct {
 	Type  string
 	Value string
+}
+
+func (e *AlertCurEvent) ParseRuleNote() error {
+	e.RuleNote = strings.TrimSpace(e.RuleNote)
+
+	if e.RuleNote == "" {
+		return nil
+	}
+
+	t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(tplx.TemplateFuncMap).Parse(e.RuleNote)
+	if err != nil {
+		return err
+	}
+
+	var body bytes.Buffer
+	err = t.Execute(&body, e.TagsMap)
+	if err != nil {
+		return err
+	}
+
+	e.RuleNote = body.String()
+	return nil
 }
 
 func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule) string {
