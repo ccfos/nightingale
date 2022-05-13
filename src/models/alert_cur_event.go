@@ -60,6 +60,11 @@ type AggrRule struct {
 	Value string
 }
 
+var defs = []string{
+	"{{$labels := .TagsMap}}",
+	"{{$value := .TriggerValue}}",
+}
+
 func (e *AlertCurEvent) ParseRuleNote() error {
 	e.RuleNote = strings.TrimSpace(e.RuleNote)
 
@@ -67,18 +72,14 @@ func (e *AlertCurEvent) ParseRuleNote() error {
 		return nil
 	}
 
-	t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(tplx.TemplateFuncMap).Parse(e.RuleNote)
+	text := strings.Join(append(defs, e.RuleNote), "")
+	t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(tplx.TemplateFuncMap).Parse(text)
 	if err != nil {
 		return err
 	}
 
-	data := map[string]string{"value": e.TriggerValue}
-	for k, v := range e.TagsMap {
-		data[k] = v
-	}
-
 	var body bytes.Buffer
-	err = t.Execute(&body, data)
+	err = t.Execute(&body, e)
 	if err != nil {
 		return err
 	}
