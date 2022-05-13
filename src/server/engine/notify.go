@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -233,10 +232,6 @@ func handleNotice(notice Notice, bs []byte) {
 
 func notify(event *models.AlertCurEvent) {
 	logEvent(event, "notify")
-
-	if err := event.ParseRuleNote(); err != nil {
-		event.RuleNote = fmt.Sprintf("event_notify: failed to parse rule note: %v", err)
-	}
 
 	notice := genNotice(event)
 	stdinBytes, err := json.Marshal(notice)

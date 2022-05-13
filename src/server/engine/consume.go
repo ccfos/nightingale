@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -43,6 +44,11 @@ func consume(events []interface{}, sema *semaphore.Semaphore) {
 
 func consumeOne(event *models.AlertCurEvent) {
 	logEvent(event, "consume")
+
+	if err := event.ParseRuleNote(); err != nil {
+		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
+	}
+
 	persist(event)
 
 	if event.IsRecovered && event.NotifyRecovered == 0 {
