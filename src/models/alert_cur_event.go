@@ -60,16 +60,16 @@ type AggrRule struct {
 	Value string
 }
 
-var defs = []string{
-	"{{$labels := .TagsMap}}",
-	"{{$value := .TriggerValue}}",
-}
-
 func (e *AlertCurEvent) ParseRuleNote() error {
 	e.RuleNote = strings.TrimSpace(e.RuleNote)
 
 	if e.RuleNote == "" {
 		return nil
+	}
+
+	var defs = []string{
+		"{{$labels := .TagsMap}}",
+		"{{$value := .TriggerValue}}",
 	}
 
 	text := strings.Join(append(defs, e.RuleNote), "")
