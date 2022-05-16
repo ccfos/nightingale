@@ -275,6 +275,31 @@ func notify(event *models.AlertCurEvent) {
 	}
 }
 
+// notify to admin to handle the error
+func notifyToAdmin(e error) {
+
+	event := &models.AlertCurEvent{
+		IsRecovered: false,
+		Severity:    0,
+		RuleName:    e.Error(),
+		TriggerTime: time.Now().Unix(),
+	}
+
+	logEvent(event, "notifyToAdmin")
+
+	event.NotifyUsersObj = memsto.UserCache.GetAdminUsers()
+	event.NotifyChannelsJSON = config.C.Alerting.NotifyBuiltinChannels
+
+	notice := genNotice(event)
+	stdinBytes, err := json.Marshal(notice)
+	if err != nil {
+		logger.Errorf("event_notify: failed to marshal notice: %v", err)
+		return
+	}
+
+	handleNotice(notice, stdinBytes)
+}
+
 func alertingWebhook(event *models.AlertCurEvent) {
 	conf := config.C.Alerting.Webhook
 
