@@ -13,8 +13,8 @@ import (
 	"github.com/toolkits/pkg/ginx"
 
 	"github.com/didi/nightingale/v5/src/server/common"
+	"github.com/didi/nightingale/v5/src/server/common/conv"
 	"github.com/didi/nightingale/v5/src/server/config"
-	"github.com/didi/nightingale/v5/src/server/engine"
 	"github.com/didi/nightingale/v5/src/server/idents"
 	"github.com/didi/nightingale/v5/src/server/memsto"
 	"github.com/didi/nightingale/v5/src/server/reader"
@@ -41,7 +41,7 @@ func queryPromql(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, engine.ConvertVectors(value))
+	c.JSON(200, conv.ConvertVectors(value))
 }
 
 func remoteWrite(c *gin.Context) {

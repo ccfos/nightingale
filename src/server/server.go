@@ -20,6 +20,7 @@ import (
 	"github.com/didi/nightingale/v5/src/server/reader"
 	"github.com/didi/nightingale/v5/src/server/router"
 	"github.com/didi/nightingale/v5/src/server/stat"
+	"github.com/didi/nightingale/v5/src/server/usage"
 	"github.com/didi/nightingale/v5/src/server/writer"
 	"github.com/didi/nightingale/v5/src/storage"
 )
@@ -152,6 +153,10 @@ func (s Server) initialize() (func(), error) {
 
 	// register ident and nodata logic
 	idents.Handle(ctx)
+
+	if !config.C.DisableUsageReport {
+		go usage.Report()
+	}
 
 	// release all the resources
 	return fns.Ret(), nil

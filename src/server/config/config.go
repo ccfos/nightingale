@@ -119,25 +119,26 @@ func MustLoad(fpaths ...string) {
 }
 
 type Config struct {
-	RunMode           string
-	ClusterName       string
-	BusiGroupLabelKey string
-	EngineDelay       int64
-	Log               logx.Config
-	HTTP              httpx.Config
-	BasicAuth         gin.Accounts
-	SMTP              SMTPConfig
-	Heartbeat         HeartbeatConfig
-	Alerting          Alerting
-	NoData            NoData
-	Redis             storage.RedisConfig
-	Gorm              storage.Gorm
-	MySQL             storage.MySQL
-	Postgres          storage.Postgres
-	WriterOpt         writer.GlobalOpt
-	Writers           []writer.Options
-	Reader            reader.Options
-	Ibex              Ibex
+	RunMode            string
+	ClusterName        string
+	BusiGroupLabelKey  string
+	EngineDelay        int64
+	DisableUsageReport bool
+	Log                logx.Config
+	HTTP               httpx.Config
+	BasicAuth          gin.Accounts
+	SMTP               SMTPConfig
+	Heartbeat          HeartbeatConfig
+	Alerting           Alerting
+	NoData             NoData
+	Redis              storage.RedisConfig
+	Gorm               storage.Gorm
+	MySQL              storage.MySQL
+	Postgres           storage.Postgres
+	WriterOpt          writer.GlobalOpt
+	Writers            []writer.Options
+	Reader             reader.Options
+	Ibex               Ibex
 }
 
 type HeartbeatConfig struct {

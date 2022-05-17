@@ -11,6 +11,7 @@ import (
 	"github.com/toolkits/pkg/str"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/server/common/conv"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
 	"github.com/didi/nightingale/v5/src/server/naming"
@@ -106,7 +107,7 @@ func (r RuleEval) Work() {
 		return
 	}
 
-	r.judge(ConvertVectors(value))
+	r.judge(conv.ConvertVectors(value))
 }
 
 type WorkersType struct {
@@ -172,7 +173,7 @@ func (ws *WorkersType) Build(rids []int64) {
 	}
 }
 
-func (r RuleEval) judge(vectors []Vector) {
+func (r RuleEval) judge(vectors []conv.Vector) {
 	// 有可能rule的一些配置已经发生变化，比如告警接收人、callbacks等
 	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
 	// 所以，这里直接从memsto.AlertRuleCache中获取并覆盖
