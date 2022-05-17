@@ -101,8 +101,8 @@ func (r RuleEval) Work() {
 	value, warnings, err := reader.Reader.Client.Query(context.Background(), promql, time.Now())
 	if err != nil {
 		logger.Errorf("rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
-		// 告警逻辑出错，发告警信息给管理员
-		notifyToAdmin(err)
+		// 告警查询prometheus逻辑出错，发告警信息给管理员
+		notifyToAdmin(err, "查询prometheus出错")
 		return
 	}
 

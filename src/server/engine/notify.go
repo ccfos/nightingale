@@ -276,13 +276,13 @@ func notify(event *models.AlertCurEvent) {
 }
 
 // notify to admin to handle the error
-func notifyToAdmin(e error) {
-
+func notifyToAdmin(e error, title string) {
 	event := &models.AlertCurEvent{
-		IsRecovered: false,
-		Severity:    0,
-		RuleName:    e.Error(),
-		TriggerTime: time.Now().Unix(),
+		IsRecovered:  false,
+		Severity:     0,
+		RuleName:     title,
+		TriggerTime:  time.Now().Unix(),
+		TriggerValue: e.Error(),
 	}
 
 	logEvent(event, "notifyToAdmin")
