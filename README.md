@@ -1,3 +1,5 @@
+<img src="doc/img/ccf-n9e.png" width="240">
+
 # Nightingale
 
  Nightingale is an enterprise-level cloud-native monitoring system, which can be used as drop-in replacement of Prometheus for alerting and management.   
