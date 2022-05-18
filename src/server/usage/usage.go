@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/pkg/version"
 	"github.com/didi/nightingale/v5/src/server/common/conv"
 	"github.com/didi/nightingale/v5/src/server/reader"
 )
@@ -23,6 +24,7 @@ type Usage struct {
 	Samples    float64 `json:"samples"` // per second
 	Maintainer string  `json:"maintainer"`
 	Hostname   string  `json:"hostname"`
+	Version    string  `json:"version"`
 }
 
 func getSamples() (float64, error) {
@@ -67,6 +69,7 @@ func report() {
 		Samples:    sps,
 		Hostname:   hostname,
 		Maintainer: maintainer,
+		Version:    version.VERSION,
 	}
 
 	post(u)

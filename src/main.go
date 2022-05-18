@@ -7,17 +7,15 @@ import (
 	"github.com/toolkits/pkg/runner"
 	"github.com/urfave/cli/v2"
 
+	"github.com/didi/nightingale/v5/src/pkg/version"
 	"github.com/didi/nightingale/v5/src/server"
 	"github.com/didi/nightingale/v5/src/webapi"
 )
 
-// VERSION go build -ldflags "-X main.VERSION=x.x.x"
-var VERSION = "not specified"
-
 func main() {
 	app := cli.NewApp()
 	app.Name = "n9e"
-	app.Version = VERSION
+	app.Version = version.VERSION
 	app.Usage = "Nightingale, enterprise prometheus management"
 	app.Commands = []*cli.Command{
 		newWebapiCmd(),
@@ -44,7 +42,7 @@ func newWebapiCmd() *cli.Command {
 			if c.String("conf") != "" {
 				opts = append(opts, webapi.SetConfigFile(c.String("conf")))
 			}
-			opts = append(opts, webapi.SetVersion(VERSION))
+			opts = append(opts, webapi.SetVersion(version.VERSION))
 
 			webapi.Run(opts...)
 			return nil
@@ -70,7 +68,7 @@ func newServerCmd() *cli.Command {
 			if c.String("conf") != "" {
 				opts = append(opts, server.SetConfigFile(c.String("conf")))
 			}
-			opts = append(opts, server.SetVersion(VERSION))
+			opts = append(opts, server.SetVersion(version.VERSION))
 
 			server.Run(opts...)
 			return nil
