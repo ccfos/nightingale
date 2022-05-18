@@ -45,6 +45,7 @@ func filterRules() {
 		node, err := naming.HashRing.GetNode(fmt.Sprint(ids[i]))
 		if err != nil {
 			logger.Warning("failed to get node from hashring:", err)
+			notifyToAdmin(err, "HashRing.GetNode Error，ruleID="+fmt.Sprint(ids[i]))
 			continue
 		}
 
@@ -156,6 +157,7 @@ func (ws *WorkersType) Build(rids []int64) {
 		elst, err := models.AlertCurEventGetByRule(rules[hash].Id)
 		if err != nil {
 			logger.Errorf("worker_build: AlertCurEventGetByRule failed: %v", err)
+			notifyToAdmin(err, "AlertCurEventGetByRule Error，ruleID="+fmt.Sprint(rules[hash].Id))
 			continue
 		}
 
