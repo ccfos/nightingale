@@ -3,7 +3,7 @@ package sender
 import (
 	"time"
 
-	"github.com/didi/nightingale/v5/src/server/common/poster"
+	"github.com/didi/nightingale/v5/src/pkg/poster"
 	"github.com/toolkits/pkg/logger"
 )
 
