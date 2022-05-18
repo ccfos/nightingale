@@ -93,7 +93,7 @@ func (r RuleEval) Start() {
 }
 
 type AnomalyPoint struct {
-	Data model.Vector `json:"data"`
+	Data model.Matrix `json:"data"`
 	Err  string       `json:"error"`
 }
 
@@ -133,6 +133,7 @@ func (r RuleEval) Work() {
 				continue
 			}
 			value = res.Data
+			logger.Debugf("curl %s get: %+v", url, res.Data)
 		}
 	}
 
