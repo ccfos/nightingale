@@ -244,6 +244,17 @@ func handleNotice(notice Notice, bs []byte) {
 				AtMobiles: phones,
 				Tokens:    StringSetKeys(feishuset),
 			})
+		case "http":
+			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "http") {
+				continue
+			}
+			body := sender.ToBody(notice.Event)
+			httpContent, has := notice.Tpls["http.tpl"]
+			if !has {
+				httpContent = "http.tpl not found"
+			}
+			body.Content = httpContent
+			sender.SendHttp(*body)
 		}
 	}
 }

@@ -161,10 +161,15 @@ type Alerting struct {
 	TemplatesDir          string
 	NotifyConcurrency     int
 	NotifyBuiltinChannels []string
+	Http                  Http
 	CallScript            CallScript
 	CallPlugin            CallPlugin
 	RedisPub              RedisPub
 	Webhook               Webhook
+}
+
+type Http struct {
+	Url string
 }
 
 type CallScript struct {
