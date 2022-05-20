@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/pkg/version"
 	"github.com/didi/nightingale/v5/src/server/common/conv"
 	"github.com/didi/nightingale/v5/src/server/reader"
@@ -22,6 +23,7 @@ const (
 
 type Usage struct {
 	Samples    float64 `json:"samples"` // per second
+	Users      float64 `json:"users"`   // user total
 	Maintainer string  `json:"maintainer"`
 	Hostname   string  `json:"hostname"`
 	Version    string  `json:"version"`
@@ -63,10 +65,16 @@ func report() {
 		return
 	}
 
+	num, err := models.UserTotal("")
+	if err != nil {
+		return
+	}
+
 	maintainer := "blank"
 
 	u := Usage{
 		Samples:    sps,
+		Users:      float64(num),
 		Hostname:   hostname,
 		Maintainer: maintainer,
 		Version:    version.VERSION,
