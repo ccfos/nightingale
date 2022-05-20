@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -48,7 +49,11 @@ type targetTagsForm struct {
 	Tags   []string `json:"tags" binding:"required"`
 }
 
-func targetBindTags(c *gin.Context) {
+func (t targetTagsForm) Verify() {
+
+}
+
+func targetBindTagsByFE(c *gin.Context) {
 	var f targetTagsForm
 	ginx.BindJSON(c, &f)
 
@@ -58,33 +63,49 @@ func targetBindTags(c *gin.Context) {
 
 	checkTargetPerm(c, f.Idents)
 
-	// verify
+	ginx.NewRender(c).Message(targetBindTags(f))
+}
+
+func targetBindTagsByService(c *gin.Context) {
+	var f targetTagsForm
+	ginx.BindJSON(c, &f)
+
+	if len(f.Idents) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents empty")
+	}
+
+	ginx.NewRender(c).Message(targetBindTags(f))
+}
+
+func targetBindTags(f targetTagsForm) error {
 	for i := 0; i < len(f.Tags); i++ {
 		arr := strings.Split(f.Tags[i], "=")
 		if len(arr) != 2 {
-			ginx.Bomb(200, "invalid tag(%s)", f.Tags[i])
+			return fmt.Errorf("invalid tag(%s)", f.Tags[i])
 		}
 
 		if strings.TrimSpace(arr[0]) == "" || strings.TrimSpace(arr[1]) == "" {
-			ginx.Bomb(200, "invalid tag(%s)", f.Tags[i])
+			return fmt.Errorf("invalid tag(%s)", f.Tags[i])
 		}
 
 		if strings.IndexByte(arr[0], '.') != -1 {
-			ginx.Bomb(200, "invalid tagkey(%s): cannot contains .", arr[0])
+			return fmt.Errorf("invalid tagkey(%s): cannot contains . ", arr[0])
 		}
 
 		if strings.IndexByte(arr[0], '-') != -1 {
-			ginx.Bomb(200, "invalid tagkey(%s): cannot contains -", arr[0])
+			return fmt.Errorf("invalid tagkey(%s): cannot contains -", arr[0])
 		}
 
 		if !model.LabelNameRE.MatchString(arr[0]) {
-			ginx.Bomb(200, "invalid tagkey(%s)", arr[0])
+			return fmt.Errorf("invalid tagkey(%s)", arr[0])
 		}
 	}
 
 	for i := 0; i < len(f.Idents); i++ {
 		target, err := models.TargetGetByIdent(f.Idents[i])
-		ginx.Dangerous(err)
+		if err != nil {
+			return err
+		}
 
 		if target == nil {
 			continue
@@ -95,18 +116,19 @@ func targetBindTags(c *gin.Context) {
 			tagkey := strings.Split(f.Tags[j], "=")[0]
 			tagkeyPrefix := tagkey + "="
 			if strings.HasPrefix(target.Tags, tagkeyPrefix) {
-				ginx.NewRender(c).Message("duplicate tagkey(%s)", tagkey)
-				return
+				return fmt.Errorf("duplicate tagkey(%s)", tagkey)
 			}
 		}
 
-		ginx.Dangerous(target.AddTags(f.Tags))
+		err = target.AddTags(f.Tags)
+		if err != nil {
+			return err
+		}
 	}
-
-	ginx.NewRender(c).Message(nil)
+	return nil
 }
 
-func targetUnbindTags(c *gin.Context) {
+func targetUnbindTagsByFE(c *gin.Context) {
 	var f targetTagsForm
 	ginx.BindJSON(c, &f)
 
@@ -116,18 +138,37 @@ func targetUnbindTags(c *gin.Context) {
 
 	checkTargetPerm(c, f.Idents)
 
+	ginx.NewRender(c).Message(targetUnbindTags(f))
+}
+
+func targetUnbindTagsByService(c *gin.Context) {
+	var f targetTagsForm
+	ginx.BindJSON(c, &f)
+
+	if len(f.Idents) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents empty")
+	}
+
+	ginx.NewRender(c).Message(targetUnbindTags(f))
+}
+
+func targetUnbindTags(f targetTagsForm) error {
 	for i := 0; i < len(f.Idents); i++ {
 		target, err := models.TargetGetByIdent(f.Idents[i])
-		ginx.Dangerous(err)
+		if err != nil {
+			return err
+		}
 
 		if target == nil {
 			continue
 		}
 
-		ginx.Dangerous(target.DelTags(f.Tags))
+		err = target.DelTags(f.Tags)
+		if err != nil {
+			return err
+		}
 	}
-
-	ginx.NewRender(c).Message(nil)
+	return nil
 }
 
 type targetNoteForm struct {
@@ -144,6 +185,17 @@ func targetUpdateNote(c *gin.Context) {
 	}
 
 	checkTargetPerm(c, f.Idents)
+
+	ginx.NewRender(c).Message(models.TargetUpdateNote(f.Idents, f.Note))
+}
+
+func targetUpdateNoteByService(c *gin.Context) {
+	var f targetNoteForm
+	ginx.BindJSON(c, &f)
+
+	if len(f.Idents) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents empty")
+	}
 
 	ginx.NewRender(c).Message(models.TargetUpdateNote(f.Idents, f.Note))
 }

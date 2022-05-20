@@ -5,7 +5,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func logEvent(event *models.AlertCurEvent, location string, err ...error) {
+func LogEvent(event *models.AlertCurEvent, location string, err ...error) {
 	status := "triggered"
 	if event.IsRecovered {
 		status = "recovered"

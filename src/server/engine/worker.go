@@ -421,7 +421,7 @@ func (r RuleEval) pushEventToQueue(event *models.AlertCurEvent) {
 	}
 
 	promstat.CounterAlertsTotal.WithLabelValues(config.C.ClusterName).Inc()
-	logEvent(event, "push_queue")
+	LogEvent(event, "push_queue")
 	if !EventQueue.PushFront(event) {
 		logger.Warningf("event_push_queue: queue is full")
 	}

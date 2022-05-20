@@ -231,7 +231,7 @@ func handleNotice(notice Notice, bs []byte) {
 }
 
 func notify(event *models.AlertCurEvent) {
-	logEvent(event, "notify")
+	LogEvent(event, "notify")
 
 	notice := genNotice(event)
 	stdinBytes, err := json.Marshal(notice)
@@ -337,7 +337,7 @@ func handleSubscribe(event models.AlertCurEvent, sub *models.AlertSubscribe) {
 		return
 	}
 
-	logEvent(&event, "subscribe")
+	LogEvent(&event, "subscribe")
 
 	fillUsers(&event)
 

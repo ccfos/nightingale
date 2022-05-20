@@ -289,6 +289,20 @@ func AlertRuleGetsByCluster(cluster string) ([]*AlertRule, error) {
 	return lst, err
 }
 
+func AlertRulesGetByProds(prods []string) ([]*AlertRule, error) {
+	session := DB().Where("disabled = ? and prod IN (?)", 0, prods)
+
+	var lst []*AlertRule
+	err := session.Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
+
+	return lst, err
+}
+
 func AlertRuleGet(where string, args ...interface{}) (*AlertRule, error) {
 	var lst []*AlertRule
 	err := DB().Where(where, args...).Find(&lst).Error

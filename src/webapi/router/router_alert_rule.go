@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -24,9 +25,11 @@ func alertRuleGets(c *gin.Context) {
 	ginx.NewRender(c).Data(ars, err)
 }
 
-func alertRuleGetsByCluster(c *gin.Context) {
-	cluster := ginx.QueryStr(c, "cluster", "")
-	ars, err := models.AlertRuleGetsByCluster(cluster)
+func alertRulesGetByProds(c *gin.Context) {
+	prods := ginx.QueryStr(c, "prods", "")
+	arr := strings.Split(prods, ",")
+
+	ars, err := models.AlertRulesGetByProds(arr)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(ars); i++ {
@@ -37,7 +40,9 @@ func alertRuleGetsByCluster(c *gin.Context) {
 }
 
 // single or import
-func alertRuleAdd(c *gin.Context) {
+func alertRuleAddByFE(c *gin.Context) {
+	username := c.MustGet("username").(string)
+
 	var lst []models.AlertRule
 	ginx.BindJSON(c, &lst)
 
@@ -46,30 +51,48 @@ func alertRuleAdd(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "input json is empty")
 	}
 
-	username := c.MustGet("username").(string)
 	bgid := ginx.UrlParamInt64(c, "id")
+	reterr := alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
 
+	ginx.NewRender(c).Data(reterr, nil)
+}
+
+func alertRuleAddByService(c *gin.Context) {
+	var lst []models.AlertRule
+	ginx.BindJSON(c, &lst)
+
+	count := len(lst)
+	if count == 0 {
+		ginx.Bomb(http.StatusBadRequest, "input json is empty")
+	}
+	reterr := alertRuleAdd(lst, "", 0, c.GetHeader("X-Language"))
+	ginx.NewRender(c).Data(reterr, nil)
+}
+
+func alertRuleAdd(lst []models.AlertRule, username string, bgid int64, lang string) map[string]string {
+	count := len(lst)
 	// alert rule name -> error string
 	reterr := make(map[string]string)
 	for i := 0; i < count; i++ {
 		lst[i].Id = 0
 		lst[i].GroupId = bgid
-		lst[i].CreateBy = username
-		lst[i].UpdateBy = username
+		if username != "" {
+			lst[i].CreateBy = username
+			lst[i].UpdateBy = username
+		}
 
 		if err := lst[i].FE2DB(); err != nil {
-			reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+			reterr[lst[i].Name] = i18n.Sprintf(lang, err.Error())
 			continue
 		}
 
 		if err := lst[i].Add(); err != nil {
-			reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+			reterr[lst[i].Name] = i18n.Sprintf(lang, err.Error())
 		} else {
 			reterr[lst[i].Name] = ""
 		}
 	}
-
-	ginx.NewRender(c).Data(reterr, nil)
+	return reterr
 }
 
 func alertRuleDel(c *gin.Context) {
@@ -81,7 +104,7 @@ func alertRuleDel(c *gin.Context) {
 	ginx.NewRender(c).Message(models.AlertRuleDels(f.Ids, ginx.UrlParamInt64(c, "id")))
 }
 
-func alertRulePut(c *gin.Context) {
+func alertRulePutByFE(c *gin.Context) {
 	var f models.AlertRule
 	ginx.BindJSON(c, &f)
 
@@ -97,6 +120,21 @@ func alertRulePut(c *gin.Context) {
 	bgrwCheck(c, ar.GroupId)
 
 	f.UpdateBy = c.MustGet("username").(string)
+	ginx.NewRender(c).Message(ar.Update(f))
+}
+
+func alertRulePutByService(c *gin.Context) {
+	var f models.AlertRule
+	ginx.BindJSON(c, &f)
+
+	arid := ginx.UrlParamInt64(c, "arid")
+	ar, err := models.AlertRuleGetById(arid)
+	ginx.Dangerous(err)
+
+	if ar == nil {
+		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
+		return
+	}
 	ginx.NewRender(c).Message(ar.Update(f))
 }
 
