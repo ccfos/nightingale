@@ -14,6 +14,10 @@ type Vector struct {
 }
 
 func ConvertVectors(value model.Value) (lst []Vector) {
+	if value == nil {
+		return
+	}
+
 	switch value.Type() {
 	case model.ValVector:
 		items, ok := value.(model.Vector)

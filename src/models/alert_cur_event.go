@@ -1,9 +1,13 @@
 package models
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"strconv"
 	"strings"
+
+	"github.com/didi/nightingale/v5/src/pkg/tplx"
 )
 
 type AlertCurEvent struct {
@@ -15,6 +19,8 @@ type AlertCurEvent struct {
 	RuleId             int64             `json:"rule_id"`
 	RuleName           string            `json:"rule_name"`
 	RuleNote           string            `json:"rule_note"`
+	RuleProd           string            `json:"rule_prod"`
+	RuleAlgo           string            `json:"rule_algo"`
 	Severity           int               `json:"severity"`
 	PromForDuration    int               `json:"prom_for_duration"`
 	PromQl             string            `json:"prom_ql"`
@@ -52,6 +58,34 @@ func (e *AlertCurEvent) Add() error {
 type AggrRule struct {
 	Type  string
 	Value string
+}
+
+func (e *AlertCurEvent) ParseRuleNote() error {
+	e.RuleNote = strings.TrimSpace(e.RuleNote)
+
+	if e.RuleNote == "" {
+		return nil
+	}
+
+	var defs = []string{
+		"{{$labels := .TagsMap}}",
+		"{{$value := .TriggerValue}}",
+	}
+
+	text := strings.Join(append(defs, e.RuleNote), "")
+	t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(tplx.TemplateFuncMap).Parse(text)
+	if err != nil {
+		return err
+	}
+
+	var body bytes.Buffer
+	err = t.Execute(&body, e)
+	if err != nil {
+		return err
+	}
+
+	e.RuleNote = body.String()
+	return nil
 }
 
 func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule) string {
@@ -125,6 +159,8 @@ func (e *AlertCurEvent) ToHis() *AlertHisEvent {
 		Hash:             e.Hash,
 		RuleId:           e.RuleId,
 		RuleName:         e.RuleName,
+		RuleProd:         e.RuleProd,
+		RuleAlgo:         e.RuleAlgo,
 		RuleNote:         e.RuleNote,
 		Severity:         e.Severity,
 		PromForDuration:  e.PromForDuration,

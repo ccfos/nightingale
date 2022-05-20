@@ -91,4 +91,7 @@ func configRoute(r *gin.Engine, version string) {
 	r.GET("/memory/user-group", userGroupGet)
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+
+	service := r.Group("/v1/n9e")
+	service.POST("/event", pushEventToQueue)
 }

@@ -160,3 +160,9 @@ func DashboardGetsByIds(ids []int64) ([]Dashboard, error) {
 	err := DB().Where("id in ?", ids).Order("name").Find(&lst).Error
 	return lst, err
 }
+
+func DashboardGetAll() ([]Dashboard, error) {
+	var lst []Dashboard
+	err := DB().Find(&lst).Error
+	return lst, err
+}

@@ -152,6 +152,28 @@ CREATE TABLE `busi_group_member` (
 
 insert into busi_group_member(busi_group_id, user_group_id, perm_flag) values(1, 1, "rw");
 
+-- for dashboard new version
+CREATE TABLE `board` (
+    `id` bigint unsigned not null auto_increment,
+    `group_id` bigint not null default 0 comment 'busi group id',
+    `name` varchar(191) not null,
+    `tags` varchar(255) not null comment 'split by space',
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY (`group_id`, `name`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- for dashboard new version
+CREATE TABLE `board_payload` (
+    `id` bigint unsigned not null comment 'dashboard id',
+    `payload` mediumtext not null,
+    UNIQUE KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- deprecated
 CREATE TABLE `dashboard` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
@@ -166,6 +188,7 @@ CREATE TABLE `dashboard` (
     UNIQUE KEY (`group_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+-- deprecated
 -- auto create the first subclass 'Default chart group' of dashboard
 CREATE TABLE `chart_group` (
     `id` bigint unsigned not null auto_increment,
@@ -176,6 +199,7 @@ CREATE TABLE `chart_group` (
     KEY (`dashboard_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+-- deprecated
 CREATE TABLE `chart` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint unsigned not null comment 'chart group id',
@@ -200,7 +224,11 @@ CREATE TABLE `alert_rule` (
     `group_id` bigint not null default 0 comment 'busi group id',
     `cluster` varchar(128) not null,
     `name` varchar(255) not null,
-    `note` varchar(255) not null,
+    `note` varchar(1024) not null default '',
+    `prod` varchar(255) not null default '',
+    `algorithm` varchar(255) not null default '',
+    `algo_params` varchar(255),
+    `delay` int not null default 0,
     `severity` tinyint(1) not null comment '0:Emergency 1:Warning 2:Notice',
     `disabled` tinyint(1) not null comment '0:enabled 1:disabled',
     `prom_for_duration` int not null comment 'prometheus for, unit:s',
@@ -333,7 +361,9 @@ CREATE TABLE `alert_cur_event` (
     `hash` varchar(64) not null comment 'rule_id + vector_pk',
     `rule_id` bigint unsigned not null,
     `rule_name` varchar(255) not null,
-    `rule_note` varchar(512) not null default 'alert rule note',
+    `rule_note` varchar(2048) not null default 'alert rule note',
+    `rule_prod` varchar(255) not null default '',
+    `rule_algo` varchar(255) not null default '',
     `severity` tinyint(1) not null comment '0:Emergency 1:Warning 2:Notice',
     `prom_for_duration` int not null comment 'prometheus for, unit:s',
     `prom_ql` varchar(8192) not null comment 'promql',
@@ -365,7 +395,9 @@ CREATE TABLE `alert_his_event` (
     `hash` varchar(64) not null comment 'rule_id + vector_pk',
     `rule_id` bigint unsigned not null,
     `rule_name` varchar(255) not null,
-    `rule_note` varchar(512) not null default 'alert rule note',
+    `rule_note` varchar(2048) not null default 'alert rule note',
+    `rule_prod` varchar(255) not null default '',
+    `rule_algo` varchar(255) not null default '',
     `severity` tinyint(1) not null comment '0:Emergency 1:Warning 2:Notice',
     `prom_for_duration` int not null comment 'prometheus for, unit:s',
     `prom_ql` varchar(8192) not null comment 'promql',

@@ -75,7 +75,11 @@ func alertRuleBuiltinImport(c *gin.Context) {
 		lst[i].GroupId = bgid
 		lst[i].CreateBy = username
 		lst[i].UpdateBy = username
-		lst[i].FE2DB()
+
+		if err := lst[i].FE2DB(); err != nil {
+			reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+			continue
+		}
 
 		if err := lst[i].Add(); err != nil {
 			reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
@@ -87,7 +91,7 @@ func alertRuleBuiltinImport(c *gin.Context) {
 	ginx.NewRender(c).Data(reterr, nil)
 }
 
-func dashboardBuiltinList(c *gin.Context) {
+func builtinBoardGets(c *gin.Context) {
 	fp := config.C.BuiltinDashboardsDir
 	if fp == "" {
 		fp = path.Join(runner.Cwd, "etc", "dashboards")
@@ -109,6 +113,25 @@ func dashboardBuiltinList(c *gin.Context) {
 
 	ginx.NewRender(c).Data(names, nil)
 }
+
+// read the json file content
+func builtinBoardGet(c *gin.Context) {
+	name := ginx.UrlParamStr(c, "name")
+	dirpath := config.C.BuiltinDashboardsDir
+	if dirpath == "" {
+		dirpath = path.Join(runner.Cwd, "etc", "dashboards")
+	}
+
+	jsonfile := path.Join(dirpath, name+".json")
+	if !file.IsExist(jsonfile) {
+		ginx.Bomb(http.StatusBadRequest, "%s not found", jsonfile)
+	}
+
+	body, err := file.ReadString(jsonfile)
+	ginx.NewRender(c).Data(body, err)
+}
+
+// deprecated ↓
 
 type dashboardBuiltinImportForm struct {
 	Name string `json:"name" binding:"required"`

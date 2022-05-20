@@ -23,6 +23,7 @@ import (
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/pkg/sys"
+	"github.com/didi/nightingale/v5/src/pkg/tplx"
 	"github.com/didi/nightingale/v5/src/server/common/sender"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
@@ -30,25 +31,6 @@ import (
 )
 
 var tpls = make(map[string]*template.Template)
-
-var fns = template.FuncMap{
-	"unescaped":  func(str string) interface{} { return template.HTML(str) },
-	"urlconvert": func(str string) interface{} { return template.URL(str) },
-	"timeformat": func(ts int64, pattern ...string) string {
-		defp := "2006-01-02 15:04:05"
-		if len(pattern) > 0 {
-			defp = pattern[0]
-		}
-		return time.Unix(ts, 0).Format(defp)
-	},
-	"timestamp": func(pattern ...string) string {
-		defp := "2006-01-02 15:04:05"
-		if len(pattern) > 0 {
-			defp = pattern[0]
-		}
-		return time.Now().Format(defp)
-	},
-}
 
 func initTpls() error {
 	if config.C.Alerting.TemplatesDir == "" {
@@ -78,7 +60,7 @@ func initTpls() error {
 	for i := 0; i < len(tplFiles); i++ {
 		tplpath := path.Join(config.C.Alerting.TemplatesDir, tplFiles[i])
 
-		tpl, err := template.New(tplFiles[i]).Funcs(fns).ParseFiles(tplpath)
+		tpl, err := template.New(tplFiles[i]).Funcs(tplx.TemplateFuncMap).ParseFiles(tplpath)
 		if err != nil {
 			return errors.WithMessage(err, "failed to parse tpl: "+tplpath)
 		}
@@ -249,7 +231,7 @@ func handleNotice(notice Notice, bs []byte) {
 }
 
 func notify(event *models.AlertCurEvent) {
-	logEvent(event, "notify")
+	LogEvent(event, "notify")
 
 	notice := genNotice(event)
 	stdinBytes, err := json.Marshal(notice)
@@ -355,7 +337,7 @@ func handleSubscribe(event models.AlertCurEvent, sub *models.AlertSubscribe) {
 		return
 	}
 
-	logEvent(&event, "subscribe")
+	LogEvent(&event, "subscribe")
 
 	fillUsers(&event)
 

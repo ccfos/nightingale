@@ -161,12 +161,30 @@ func configRoute(r *gin.Engine, version string) {
 		pages.GET("/targets", jwtAuth(), user(), targetGets)
 		pages.DELETE("/targets", jwtAuth(), user(), perm("/targets/del"), targetDel)
 		pages.GET("/targets/tags", jwtAuth(), user(), targetGetTags)
-		pages.POST("/targets/tags", jwtAuth(), user(), perm("/targets/put"), targetBindTags)
-		pages.DELETE("/targets/tags", jwtAuth(), user(), perm("/targets/put"), targetUnbindTags)
+		pages.POST("/targets/tags", jwtAuth(), user(), perm("/targets/put"), targetBindTagsByFE)
+		pages.DELETE("/targets/tags", jwtAuth(), user(), perm("/targets/put"), targetUnbindTagsByFE)
 		pages.PUT("/targets/note", jwtAuth(), user(), perm("/targets/put"), targetUpdateNote)
 		pages.PUT("/targets/bgid", jwtAuth(), user(), perm("/targets/put"), targetUpdateBgid)
 
-		pages.GET("/dashboards/builtin/list", dashboardBuiltinList)
+		pages.GET("/builtin-boards", builtinBoardGets)
+		pages.GET("/builtin-board/:name", builtinBoardGet)
+
+		pages.GET("/busi-group/:id/boards", jwtAuth(), user(), perm("/dashboards"), bgro(), boardGets)
+		pages.POST("/busi-group/:id/boards", jwtAuth(), user(), perm("/dashboards/add"), bgrw(), boardAdd)
+		pages.POST("/busi-group/:id/board/:bid/clone", jwtAuth(), user(), perm("/dashboards/add"), bgrw(), boardClone)
+
+		pages.GET("/board/:bid", jwtAuth(), user(), boardGet)
+		pages.PUT("/board/:bid", jwtAuth(), user(), perm("/dashboards/put"), boardPut)
+		pages.PUT("/board/:bid/configs", jwtAuth(), user(), perm("/dashboards/put"), boardPutConfigs)
+		pages.DELETE("/boards", jwtAuth(), user(), perm("/dashboards/del"), boardDel)
+
+		// migrate v5.8.0
+		pages.GET("/dashboards", jwtAuth(), admin(), migrateDashboards)
+		pages.GET("/dashboard/:id", jwtAuth(), admin(), migrateDashboardGet)
+		pages.PUT("/dashboard/:id/migrate", jwtAuth(), admin(), migrateDashboard)
+
+		// deprecated ↓
+		pages.GET("/dashboards/builtin/list", builtinBoardGets)
 		pages.POST("/busi-group/:id/dashboards/builtin", jwtAuth(), user(), perm("/dashboards/add"), bgrw(), dashboardBuiltinImport)
 		pages.GET("/busi-group/:id/dashboards", jwtAuth(), user(), perm("/dashboards"), bgro(), dashboardGets)
 		pages.POST("/busi-group/:id/dashboards", jwtAuth(), user(), perm("/dashboards/add"), bgrw(), dashboardAdd)
@@ -186,6 +204,7 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/busi-group/:id/charts", jwtAuth(), user(), bgrw(), chartAdd)
 		pages.PUT("/busi-group/:id/charts", jwtAuth(), user(), bgrw(), chartPut)
 		pages.DELETE("/busi-group/:id/charts", jwtAuth(), user(), bgrw(), chartDel)
+		// deprecated ↑
 
 		pages.GET("/share-charts", chartShareGets)
 		pages.POST("/share-charts", jwtAuth(), chartShareAdd)
@@ -193,10 +212,10 @@ func configRoute(r *gin.Engine, version string) {
 		pages.GET("/alert-rules/builtin/list", alertRuleBuiltinList)
 		pages.POST("/busi-group/:id/alert-rules/builtin", jwtAuth(), user(), perm("/alert-rules/add"), bgrw(), alertRuleBuiltinImport)
 		pages.GET("/busi-group/:id/alert-rules", jwtAuth(), user(), perm("/alert-rules"), alertRuleGets)
-		pages.POST("/busi-group/:id/alert-rules", jwtAuth(), user(), perm("/alert-rules/add"), bgrw(), alertRuleAdd)
+		pages.POST("/busi-group/:id/alert-rules", jwtAuth(), user(), perm("/alert-rules/add"), bgrw(), alertRuleAddByFE)
 		pages.DELETE("/busi-group/:id/alert-rules", jwtAuth(), user(), perm("/alert-rules/del"), bgrw(), alertRuleDel)
 		pages.PUT("/busi-group/:id/alert-rules/fields", jwtAuth(), user(), perm("/alert-rules/put"), bgrw(), alertRulePutFields)
-		pages.PUT("/busi-group/:id/alert-rule/:arid", jwtAuth(), user(), perm("/alert-rules/put"), alertRulePut)
+		pages.PUT("/busi-group/:id/alert-rule/:arid", jwtAuth(), user(), perm("/alert-rules/put"), alertRulePutByFE)
 		pages.GET("/alert-rule/:arid", jwtAuth(), user(), perm("/alert-rules"), alertRuleGet)
 
 		pages.GET("/busi-group/:id/alert-mutes", jwtAuth(), user(), perm("/alert-mutes"), bgro(), alertMuteGets)
@@ -252,11 +271,16 @@ func configRoute(r *gin.Engine, version string) {
 		service.POST("/users", userAddPost)
 
 		service.GET("/targets", targetGets)
-		service.DELETE("/targets", targetDel)
 		service.GET("/targets/tags", targetGetTags)
-		service.POST("/targets/tags", targetBindTags)
-		service.DELETE("/targets/tags", targetUnbindTags)
-		service.PUT("/targets/note", targetUpdateNote)
-		service.PUT("/targets/bgid", targetUpdateBgid)
+		service.POST("/targets/tags", targetBindTagsByService)
+		service.DELETE("/targets/tags", targetUnbindTagsByService)
+		service.PUT("/targets/note", targetUpdateNoteByService)
+
+		service.GET("/alert-rules", alertRuleGets)
+		service.POST("/alert-rules", alertRuleAddByService)
+		service.DELETE("/alert-rules", alertRuleDel)
+		service.PUT("/alert-rule", alertRulePutByService)
+		service.GET("/alert-rule/:arid", alertRuleGet)
+		service.GET("/alert-rules-get-by-prod", alertRulesGetByProds)
 	}
 }

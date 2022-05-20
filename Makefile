@@ -2,7 +2,7 @@
 
 NOW = $(shell date -u '+%Y%m%d%I%M%S')
 
-RELEASE_VERSION = 5.7.1
+RELEASE_VERSION = 5.8.0
 
 APP 			= n9e
 SERVER_BIN  	= $(APP)
@@ -15,7 +15,7 @@ SERVER_BIN  	= $(APP)
 all: build
 
 build:
-	go build -ldflags "-w -s -X main.VERSION=$(RELEASE_VERSION)" -o $(SERVER_BIN) ./src
+	go build -ldflags "-w -s -X github.com/didi/nightingale/v5/src/pkg/version.VERSION=$(RELEASE_VERSION)" -o $(SERVER_BIN) ./src
 
 # start:
 # 	@go run -ldflags "-X main.VERSION=$(RELEASE_TAG)" ./cmd/${APP}/main.go web -c ./configs/config.toml -m ./configs/model.conf --menu ./configs/menu.yaml

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -18,6 +19,11 @@ type AlertRule struct {
 	Cluster              string      `json:"cluster"`                      // take effect by cluster
 	Name                 string      `json:"name"`                         // rule name
 	Note                 string      `json:"note"`                         // will sent in notify
+	Prod                 string      `json:"prod"`                         // product empty means n9e
+	Algorithm            string      `json:"algorithm"`                    // algorithm (''|holtwinters), empty means threshold
+	AlgoParams           string      `json:"-" gorm:"algo_params"`         // params algorithm need
+	AlgoParamsJson       interface{} `json:"algo_params" gorm:"-"`         //
+	Delay                int         `json:"delay"`                        // Time (in seconds) to delay evaluation
 	Severity             int         `json:"severity"`                     // 0: Emergency 1: Warning 2: Notice
 	Disabled             int         `json:"disabled"`                     // 0: enabled, 1: disabled
 	PromForDuration      int         `json:"prom_for_duration"`            // prometheus for, unit:s
@@ -145,7 +151,11 @@ func (ar *AlertRule) Update(arf AlertRule) error {
 		}
 	}
 
-	arf.FE2DB()
+	err := arf.FE2DB()
+	if err != nil {
+		return err
+	}
+
 	arf.Id = ar.Id
 	arf.GroupId = ar.GroupId
 	arf.CreateAt = ar.CreateAt
@@ -203,12 +213,19 @@ func (ar *AlertRule) FillNotifyGroups(cache map[int64]*UserGroup) error {
 	return nil
 }
 
-func (ar *AlertRule) FE2DB() {
+func (ar *AlertRule) FE2DB() error {
 	ar.EnableDaysOfWeek = strings.Join(ar.EnableDaysOfWeekJSON, " ")
 	ar.NotifyChannels = strings.Join(ar.NotifyChannelsJSON, " ")
 	ar.NotifyGroups = strings.Join(ar.NotifyGroupsJSON, " ")
 	ar.Callbacks = strings.Join(ar.CallbacksJSON, " ")
 	ar.AppendTags = strings.Join(ar.AppendTagsJSON, " ")
+	algoParamsByte, err := json.Marshal(ar.AlgoParamsJson)
+	if err != nil {
+		return fmt.Errorf("marshal algo_params err:%v", err)
+	}
+
+	ar.AlgoParams = string(algoParamsByte)
+	return nil
 }
 
 func (ar *AlertRule) DB2FE() {
@@ -217,6 +234,7 @@ func (ar *AlertRule) DB2FE() {
 	ar.NotifyGroupsJSON = strings.Fields(ar.NotifyGroups)
 	ar.CallbacksJSON = strings.Fields(ar.Callbacks)
 	ar.AppendTagsJSON = strings.Fields(ar.AppendTags)
+	json.Unmarshal([]byte(ar.AlgoParams), &ar.AlgoParamsJson)
 }
 
 func AlertRuleDels(ids []int64, busiGroupId int64) error {
@@ -254,11 +272,25 @@ func AlertRuleGets(groupId int64) ([]AlertRule, error) {
 }
 
 func AlertRuleGetsByCluster(cluster string) ([]*AlertRule, error) {
-	session := DB().Where("disabled = ?", 0)
+	session := DB().Where("disabled = ? and prod = ?", 0, "")
 
 	if cluster != "" {
 		session = session.Where("cluster = ?", cluster)
 	}
+
+	var lst []*AlertRule
+	err := session.Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
+
+	return lst, err
+}
+
+func AlertRulesGetByProds(prods []string) ([]*AlertRule, error) {
+	session := DB().Where("disabled = ? and prod IN (?)", 0, prods)
 
 	var lst []*AlertRule
 	err := session.Find(&lst).Error
@@ -306,7 +338,7 @@ func AlertRuleGetName(id int64) (string, error) {
 }
 
 func AlertRuleStatistics(cluster string) (*Statistics, error) {
-	session := DB().Model(&AlertRule{}).Select("count(*) as total", "max(update_at) as last_updated").Where("disabled = ?", 0)
+	session := DB().Model(&AlertRule{}).Select("count(*) as total", "max(update_at) as last_updated").Where("disabled = ? and prod = ?", 0, "")
 
 	if cluster != "" {
 		session = session.Where("cluster = ?", cluster)

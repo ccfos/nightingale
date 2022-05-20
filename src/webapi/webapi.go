@@ -101,11 +101,7 @@ func (a Webapi) initialize() (func(), error) {
 	}
 
 	// init database
-	if err = storage.InitDB(storage.DBConfig{
-		Gorm:     config.C.Gorm,
-		MySQL:    config.C.MySQL,
-		Postgres: config.C.Postgres,
-	}); err != nil {
+	if err = storage.InitDB(config.C.DB); err != nil {
 		return nil, err
 	}
 

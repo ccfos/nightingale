@@ -153,6 +153,20 @@ func bgrwChecks(c *gin.Context, bgids []int64) {
 	}
 }
 
+func bgroCheck(c *gin.Context, bgid int64) {
+	me := c.MustGet("user").(*models.User)
+	bg := BusiGroup(bgid)
+
+	can, err := me.CanDoBusiGroup(bg, "ro")
+	ginx.Dangerous(err)
+
+	if !can {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
+	}
+
+	c.Set("busi_group", bg)
+}
+
 func perm(operation string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		me := c.MustGet("user").(*models.User)
