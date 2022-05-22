@@ -53,7 +53,7 @@ func (cs *ClustersType) GetFromAPI(name string) (*ClusterType, bool) {
 	// 1. not found? return nil, false
 	// 2. found? new ClusterType, put, return
 	opt := config.ClusterOptions{
-		Name:                "",
+		Name:                name,
 		Prom:                "",
 		BasicAuthUser:       "",
 		BasicAuthPass:       "",
