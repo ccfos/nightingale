@@ -15,7 +15,6 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/oidcc"
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
 	"github.com/didi/nightingale/v5/src/storage"
-	"github.com/didi/nightingale/v5/src/webapi/prom"
 )
 
 var (
@@ -82,6 +81,8 @@ type Config struct {
 	MetricsYamlFile      string
 	BuiltinAlertsDir     string
 	BuiltinDashboardsDir string
+	ClustersFrom         string
+	ClustersFromAPIs     []string
 	ContactKeys          []LabelAndKey
 	NotifyChannels       []LabelAndKey
 	Log                  logx.Config
@@ -91,10 +92,24 @@ type Config struct {
 	AnonymousAccess      AnonymousAccess
 	LDAP                 ldapx.LdapSection
 	Redis                storage.RedisConfig
-	DB                	 ormx.DBConfig
-	Clusters             []prom.Options
+	DB                   ormx.DBConfig
+	Clusters             []ClusterOptions
 	Ibex                 Ibex
 	OIDC                 oidcc.Config
+}
+
+type ClusterOptions struct {
+	Name string
+	Prom string
+
+	BasicAuthUser string
+	BasicAuthPass string
+
+	Timeout     int64
+	DialTimeout int64
+	KeepAlive   int64
+
+	MaxIdleConnsPerHost int
 }
 
 type LabelAndKey struct {

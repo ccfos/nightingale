@@ -3,55 +3,48 @@ package prom
 import (
 	"net"
 	"net/http"
+	"sync"
 	"time"
+
+	"github.com/didi/nightingale/v5/src/webapi/config"
 )
 
-type Options struct {
-	Name string
-	Prom string
-
-	BasicAuthUser string
-	BasicAuthPass string
-
-	Timeout               int64
-	DialTimeout           int64
-	TLSHandshakeTimeout   int64
-	ExpectContinueTimeout int64
-	IdleConnTimeout       int64
-	KeepAlive             int64
-
-	MaxConnsPerHost     int
-	MaxIdleConns        int
-	MaxIdleConnsPerHost int
-}
-
 type ClusterType struct {
-	Opts      Options
+	Opts      config.ClusterOptions
 	Transport *http.Transport
 }
 
 type ClustersType struct {
-	M map[string]ClusterType
-}
-
-func NewClusters() ClustersType {
-	return ClustersType{
-		M: make(map[string]ClusterType),
-	}
+	datas map[string]ClusterType
+	mutex *sync.RWMutex
 }
 
 func (cs *ClustersType) Put(name string, cluster ClusterType) {
-	cs.M[name] = cluster
+	cs.mutex.Lock()
+	cs.datas[name] = cluster
+	cs.mutex.Unlock()
 }
 
 func (cs *ClustersType) Get(name string) (ClusterType, bool) {
-	c, has := cs.M[name]
+	cs.mutex.RLock()
+	defer cs.mutex.RUnlock()
+
+	c, has := cs.datas[name]
 	return c, has
 }
 
-var Clusters = NewClusters()
+var Clusters = ClustersType{
+	datas: make(map[string]ClusterType),
+	mutex: new(sync.RWMutex),
+}
 
-func Init(opts []Options) error {
+func Init() error {
+	if config.C.ClustersFrom != "" && config.C.ClustersFrom != "config" {
+		return nil
+	}
+
+	opts := config.C.Clusters
+
 	for i := 0; i < len(opts); i++ {
 		cluster := ClusterType{
 			Opts: opts[i],
@@ -59,16 +52,10 @@ func Init(opts []Options) error {
 				// TLSClientConfig: tlsConfig,
 				Proxy: http.ProxyFromEnvironment,
 				DialContext: (&net.Dialer{
-					Timeout:   time.Duration(opts[i].DialTimeout) * time.Millisecond,
-					KeepAlive: time.Duration(opts[i].KeepAlive) * time.Millisecond,
+					Timeout: time.Duration(opts[i].DialTimeout) * time.Millisecond,
 				}).DialContext,
 				ResponseHeaderTimeout: time.Duration(opts[i].Timeout) * time.Millisecond,
-				TLSHandshakeTimeout:   time.Duration(opts[i].TLSHandshakeTimeout) * time.Millisecond,
-				ExpectContinueTimeout: time.Duration(opts[i].ExpectContinueTimeout) * time.Millisecond,
-				MaxConnsPerHost:       opts[i].MaxConnsPerHost,
-				MaxIdleConns:          opts[i].MaxIdleConns,
 				MaxIdleConnsPerHost:   opts[i].MaxIdleConnsPerHost,
-				IdleConnTimeout:       time.Duration(opts[i].IdleConnTimeout) * time.Millisecond,
 			},
 		}
 		Clusters.Put(opts[i].Name, cluster)
