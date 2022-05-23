@@ -119,7 +119,7 @@ func loadClustersFromAPI() {
 	for _, i := range rand.Perm(count) {
 		url := urls[i]
 
-		res, err := httplib.Get(url).SetTimeout(time.Duration(3000) * time.Millisecond).Response()
+		res, err := httplib.Post(url).SetTimeout(time.Duration(3000) * time.Millisecond).Response()
 		if err != nil {
 			logger.Errorf("curl %s fail: %v", url, err)
 			continue
