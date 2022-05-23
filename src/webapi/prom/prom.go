@@ -82,18 +82,9 @@ func initClustersFromConfig() error {
 type DSReply struct {
 	RequestID string `json:"request_id"`
 	Data      struct {
-		P     int `json:"p"`
-		Limit int `json:"limit"`
-		Total int `json:"total"`
 		Items []struct {
-			ID             int    `json:"id"`
-			PluginID       int    `json:"plugin_id"`
-			Name           string `json:"name"`
-			Status         string `json:"status"`
-			Category       string `json:"category"`
-			PluginType     string `json:"plugin_type"`
-			PluginTypeName string `json:"plugin_type_name"`
-			Settings       struct {
+			Name     string `json:"name"`
+			Settings struct {
 				PrometheusAddr  string `json:"prometheus.addr"`
 				PrometheusBasic struct {
 					PrometheusUser string `json:"promethues.user"`
@@ -101,9 +92,6 @@ type DSReply struct {
 				} `json:"promethues.basic"`
 				PrometheusTimeout int64 `json:"prometheus.timeout"`
 			} `json:"settings,omitempty"`
-			CreatedAt int `json:"created_at"`
-			UpdatedAt int `json:"updated_at"`
-			LastTime  int `json:"last_time"`
 		} `json:"items"`
 	} `json:"data"`
 }
