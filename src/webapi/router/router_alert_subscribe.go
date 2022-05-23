@@ -76,6 +76,7 @@ func alertSubscribePut(c *gin.Context) {
 		ginx.Dangerous(fs[i].Update(
 			"rule_id",
 			"tags",
+			"cluster",
 			"redefine_severity",
 			"new_severity",
 			"redefine_channels",
