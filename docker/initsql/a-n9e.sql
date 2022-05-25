@@ -202,6 +202,7 @@ CREATE TABLE `chart_group` (
 -- deprecated
 CREATE TABLE `chart` (
     `id` bigint unsigned not null auto_increment,
+    `cid` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
     `group_id` bigint unsigned not null comment 'chart group id',
     `configs` text,
     `weight` int not null default 0,

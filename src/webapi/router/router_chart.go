@@ -7,6 +7,13 @@ import (
 	"github.com/didi/nightingale/v5/src/models"
 )
 
+type ChartFront struct {
+	Id 	string `json:"id"`
+	GroupId int64  `json:"group_id"`
+	Configs string `json:"configs"`
+	Weight  int    `json:"weight"`
+}
+
 func chartGets(c *gin.Context) {
 	lst, err := models.ChartsOf(ginx.QueryInt64(c, "cgid"))
 	ginx.NewRender(c).Data(lst, err)
@@ -23,11 +30,23 @@ func chartAdd(c *gin.Context) {
 }
 
 func chartPut(c *gin.Context) {
-	var arr []models.Chart
-	ginx.BindJSON(c, &arr)
+	var arr_tmp []ChartFront
+	ginx.BindJSON(c, &arr_tmp)
 
-	for i := 0; i < len(arr); i++ {
-		ginx.Dangerous(arr[i].Update("configs", "weight", "group_id"))
+	for i := 0; i < len(arr_tmp); i++ {
+		if len(arr_tmp[i].Id) > 0 {
+			chartitem := models.Chart{Cid:arr_tmp[i].Id,GroupId:arr_tmp[i].GroupId,Configs:arr_tmp[i].Configs,Weight:arr_tmp[i].Weight}
+			cg,err := models.GetChartByCid(chartitem.Cid)
+			if err != nil{
+				continue;
+			}
+			if cg.Id > 0 {
+				ginx.Dangerous(chartitem.Update("cid","configs", "weight", "group_id"))
+			}else {
+				chartitem.Id = 0
+				chartitem.Add()
+			}
+		}
 	}
 
 	ginx.NewRender(c).Message(nil)
