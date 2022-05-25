@@ -34,11 +34,12 @@ func alertHisEventsList(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
 	busiGroupId := ginx.QueryInt64(c, "bgid", 0)
 	clusters := queryClusters(c)
+	prod := ginx.QueryStr(c, "prod", "")
 
-	total, err := models.AlertHisEventTotal(busiGroupId, stime, etime, severity, recovered, clusters, query)
+	total, err := models.AlertHisEventTotal(prod, busiGroupId, stime, etime, severity, recovered, clusters, query)
 	ginx.Dangerous(err)
 
-	list, err := models.AlertHisEventGets(busiGroupId, stime, etime, severity, recovered, clusters, query, limit, ginx.Offset(c, limit))
+	list, err := models.AlertHisEventGets(prod, busiGroupId, stime, etime, severity, recovered, clusters, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)

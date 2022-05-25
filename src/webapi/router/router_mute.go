@@ -8,9 +8,17 @@ import (
 )
 
 // Return all, front-end search and paging
-func alertMuteGets(c *gin.Context) {
+func alertMuteGetsByBG(c *gin.Context) {
 	bgid := ginx.UrlParamInt64(c, "id")
-	lst, err := models.AlertMuteGets(bgid)
+	lst, err := models.AlertMuteGetsByBG(bgid)
+	ginx.NewRender(c).Data(lst, err)
+}
+
+func alertMuteGets(c *gin.Context) {
+	bgid := ginx.QueryInt64(c, "bgid", 0)
+	query := ginx.QueryStr(c, "query", "")
+	lst, err := models.AlertMuteGets(bgid, query)
+
 	ginx.NewRender(c).Data(lst, err)
 }
 
@@ -21,6 +29,14 @@ func alertMuteAdd(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	f.CreateBy = username
 	f.GroupId = ginx.UrlParamInt64(c, "id")
+
+	ginx.NewRender(c).Message(f.Add())
+}
+
+func alertMuteAddByService(c *gin.Context) {
+	var f models.AlertMute
+	ginx.BindJSON(c, &f)
+	f.GroupId = 0
 
 	ginx.NewRender(c).Message(f.Add())
 }

@@ -245,8 +245,8 @@ func (e *AlertCurEvent) FillNotifyGroups(cache map[int64]*UserGroup) error {
 	return nil
 }
 
-func AlertCurEventTotal(bgid, stime, etime int64, severity int, clusters []string, query string) (int64, error) {
-	session := DB().Model(&AlertCurEvent{}).Where("trigger_time between ? and ?", stime, etime)
+func AlertCurEventTotal(prod string, bgid, stime, etime int64, severity int, clusters []string, query string) (int64, error) {
+	session := DB().Model(&AlertCurEvent{}).Where("trigger_time between ? and ? and rule_prod = ?", stime, etime, prod)
 
 	if bgid > 0 {
 		session = session.Where("group_id = ?", bgid)
@@ -271,8 +271,8 @@ func AlertCurEventTotal(bgid, stime, etime int64, severity int, clusters []strin
 	return Count(session)
 }
 
-func AlertCurEventGets(bgid, stime, etime int64, severity int, clusters []string, query string, limit, offset int) ([]AlertCurEvent, error) {
-	session := DB().Where("trigger_time between ? and ?", stime, etime)
+func AlertCurEventGets(prod string, bgid, stime, etime int64, severity int, clusters []string, query string, limit, offset int) ([]AlertCurEvent, error) {
+	session := DB().Where("trigger_time between ? and ? and rule_prod = ?", stime, etime, prod)
 
 	if bgid > 0 {
 		session = session.Where("group_id = ?", bgid)

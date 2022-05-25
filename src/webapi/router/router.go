@@ -218,7 +218,7 @@ func configRoute(r *gin.Engine, version string) {
 		pages.PUT("/busi-group/:id/alert-rule/:arid", jwtAuth(), user(), perm("/alert-rules/put"), alertRulePutByFE)
 		pages.GET("/alert-rule/:arid", jwtAuth(), user(), perm("/alert-rules"), alertRuleGet)
 
-		pages.GET("/busi-group/:id/alert-mutes", jwtAuth(), user(), perm("/alert-mutes"), bgro(), alertMuteGets)
+		pages.GET("/busi-group/:id/alert-mutes", jwtAuth(), user(), perm("/alert-mutes"), bgro(), alertMuteGetsByBG)
 		pages.POST("/busi-group/:id/alert-mutes", jwtAuth(), user(), perm("/alert-mutes/add"), bgrw(), alertMuteAdd)
 		pages.DELETE("/busi-group/:id/alert-mutes", jwtAuth(), user(), perm("/alert-mutes/del"), bgrw(), alertMuteDel)
 
@@ -279,8 +279,15 @@ func configRoute(r *gin.Engine, version string) {
 		service.GET("/alert-rules", alertRuleGets)
 		service.POST("/alert-rules", alertRuleAddByService)
 		service.DELETE("/alert-rules", alertRuleDel)
-		service.PUT("/alert-rule", alertRulePutByService)
+		service.PUT("/alert-rule/:arid", alertRulePutByService)
 		service.GET("/alert-rule/:arid", alertRuleGet)
 		service.GET("/alert-rules-get-by-prod", alertRulesGetByProds)
+
+		service.GET("/alert-mutes", alertMuteGets)
+		service.POST("/alert-mutes", alertMuteAddByService)
+		service.DELETE("/alert-mutes", alertMuteDel)
+
+		pages.GET("/alert-cur-events", alertCurEventsList)
+		pages.GET("/alert-his-events", alertHisEventsList)
 	}
 }
