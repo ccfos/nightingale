@@ -41,6 +41,7 @@ func chartPut(c *gin.Context) {
 				continue;
 			}
 			if cg.Id > 0 {
+				chartitem.Id = cg.Id
 				ginx.Dangerous(chartitem.Update("cid","configs", "weight", "group_id"))
 			}else {
 				chartitem.Id = 0
