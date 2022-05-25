@@ -36,13 +36,28 @@ func (m *AlertMute) TableName() string {
 	return "alert_mute"
 }
 
-func AlertMuteGets(groupId int64) (lst []AlertMute, err error) {
+func AlertMuteGets(bgid int64, query string) (lst []AlertMute, err error) {
+	session := DB().Where("group_id = ?", bgid)
+
+	if query != "" {
+		arr := strings.Fields(query)
+		for i := 0; i < len(arr); i++ {
+			qarg := "%\"" + arr[i] + "\"%"
+			session = session.Where("tags like ?", qarg, qarg)
+		}
+	}
+
+	err = session.Order("id desc").Find(&lst).Error
+	return
+}
+
+func AlertMuteGetsByBG(groupId int64) (lst []AlertMute, err error) {
 	err = DB().Where("group_id=?", groupId).Order("id desc").Find(&lst).Error
 	return
 }
 
 func (m *AlertMute) Verify() error {
-	if m.GroupId <= 0 {
+	if m.GroupId < 0 {
 		return errors.New("group_id invalid")
 	}
 
