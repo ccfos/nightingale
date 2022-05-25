@@ -115,7 +115,7 @@ func (a Webapi) initialize() (func(), error) {
 	models.InitRoot()
 
 	// init prometheus proxy config
-	if err = prom.Init(config.C.Clusters); err != nil {
+	if err = prom.Init(); err != nil {
 		return nil, err
 	}
 
