@@ -3,7 +3,6 @@ package engine
 import (
 	"time"
 
-	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/server/common/sender"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
@@ -13,27 +12,15 @@ import (
 
 // notify to maintainer to handle the error
 func notifyToMaintainer(e error, title string) {
-	event := &models.AlertCurEvent{
-		IsRecovered:  false,
-		Severity:     0,
-		RuleName:     title,
-		TriggerTime:  time.Now().Unix(),
-		TriggerValue: e.Error(),
-	}
-	maintainerUsers := memsto.UserCache.GetMaintainerUsers()
-	if len(maintainerUsers) == 0 {
+
+	logger.Errorf("notifyToMaintainer，title=%s, error=s%", title, e.Error())
+
+	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
 		return
 	}
-	event.NotifyUsersObj = maintainerUsers
-	event.NotifyChannelsJSON = config.C.Alerting.NotifyBuiltinChannels
 
-	LogEvent(event, "notifyToMaintainer")
-	alertingWebhook(event)
-	handleNoticeToMaintainer(e, title, event)
-}
-
-func handleNoticeToMaintainer(e error, title string, event *models.AlertCurEvent) {
-	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
+	maintainerUsers := memsto.UserCache.GetMaintainerUsers()
+	if len(maintainerUsers) == 0 {
 		return
 	}
 
@@ -43,7 +30,7 @@ func handleNoticeToMaintainer(e error, title string, event *models.AlertCurEvent
 	dingtalkset := make(map[string]struct{})
 	feishuset := make(map[string]struct{})
 
-	for _, user := range event.NotifyUsersObj {
+	for _, user := range maintainerUsers {
 		if user.Email != "" {
 			emailset[user.Email] = struct{}{}
 		}
