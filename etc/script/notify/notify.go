@@ -37,8 +37,8 @@ func (n *N9EPlugin) Notify(bs []byte) {
 	}
 }
 
-// will be loaded for alertingCall
-var n9eCaller = N9EPlugin{
+// will be loaded for alertingCall , The first letter must be capitalized to be exported
+var N9eCaller = N9EPlugin{
 	Name:        "n9e",
 	Description: "演示告警通过动态链接库方式通知",
 	BuildAt:     time.Now().Local().Format("2006/01/02 15:04:05"),
