@@ -13,7 +13,7 @@ import (
 // notify to maintainer to handle the error
 func notifyToMaintainer(e error, title string) {
 
-	logger.Errorf("notifyToMaintainer，title=%s, error=s%", title, e.Error())
+	logger.Errorf("notifyToMaintainer，title:%s, error:%v", title, e)
 
 	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
 		return
@@ -70,13 +70,13 @@ func notifyToMaintainer(e error, title string) {
 			if len(emailset) == 0 {
 				continue
 			}
-			content := "规则名称: " + title + "\n触发时值: " + e.Error() + "\n发送时间: " + triggerTime
+			content := "【内部处理错误】当前标题: " + title + "\n【内部处理错误】当前异常: " + e.Error() + "\n【内部处理错误】发送时间: " + triggerTime
 			sender.WriteEmail(title, content, StringSetKeys(emailset))
 		case "dingtalk":
 			if len(dingtalkset) == 0 {
 				continue
 			}
-			content := "**规则名称**: " + title + "\n**触发时值**: " + e.Error() + "\n**发送时间: **" + triggerTime
+			content := "**【内部处理错误】当前标题: **" + title + "\n**【内部处理错误】当前异常: **" + e.Error() + "\n**【内部处理错误】发送时间: **" + triggerTime
 			sender.SendDingtalk(sender.DingtalkMessage{
 				Title:     title,
 				Text:      content,
@@ -87,7 +87,7 @@ func notifyToMaintainer(e error, title string) {
 			if len(wecomset) == 0 {
 				continue
 			}
-			content := "**规则名称**: " + title + "\n**触发时值**: " + e.Error() + "\n**发送时间: **" + triggerTime
+			content := "**【内部处理错误】当前标题: **" + title + "\n**【内部处理错误】当前异常: **" + e.Error() + "\n**【内部处理错误】发送时间: **" + triggerTime
 			sender.SendWecom(sender.WecomMessage{
 				Text:   content,
 				Tokens: StringSetKeys(wecomset),
@@ -97,7 +97,7 @@ func notifyToMaintainer(e error, title string) {
 				continue
 			}
 
-			content := "规则名称: " + title + "\n触发时值: " + e.Error() + "\n发送时间: " + triggerTime
+			content := "【内部处理错误】当前标题: " + title + "\n【内部处理错误】当前异常: " + e.Error() + "\n【内部处理错误】发送时间: " + triggerTime
 			sender.SendFeishu(sender.FeishuMessage{
 				Text:      content,
 				AtMobiles: phones,
