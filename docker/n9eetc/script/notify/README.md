@@ -29,7 +29,7 @@ type inter interface {
 [Alerting.CallPlugin]
 Enable = false
 PluginPath = "./etc/script/notify.so"
-# 注意此处caller必须在notify.so中作为变量暴露
-Caller = "n9eCaller"
+# 注意此处caller必须在notify.so中作为变量暴露,首字母必须大写才能暴露
+Caller = "N9eCaller"
 ```
 
