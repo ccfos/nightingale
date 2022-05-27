@@ -17,21 +17,22 @@ import (
 )
 
 type User struct {
-	Id       int64        `json:"id" gorm:"primaryKey"`
-	Username string       `json:"username"`
-	Nickname string       `json:"nickname"`
-	Password string       `json:"-"`
-	Phone    string       `json:"phone"`
-	Email    string       `json:"email"`
-	Portrait string       `json:"portrait"`
-	Roles    string       `json:"-"`              // 这个字段写入数据库
-	RolesLst []string     `json:"roles" gorm:"-"` // 这个字段和前端交互
-	Contacts ormx.JSONObj `json:"contacts"`       // 内容为 map[string]string 结构
-	CreateAt int64        `json:"create_at"`
-	CreateBy string       `json:"create_by"`
-	UpdateAt int64        `json:"update_at"`
-	UpdateBy string       `json:"update_by"`
-	Admin    bool         `json:"admin" gorm:"-"` // 方便前端使用
+	Id         int64        `json:"id" gorm:"primaryKey"`
+	Username   string       `json:"username"`
+	Nickname   string       `json:"nickname"`
+	Password   string       `json:"-"`
+	Phone      string       `json:"phone"`
+	Email      string       `json:"email"`
+	Portrait   string       `json:"portrait"`
+	Roles      string       `json:"-"`              // 这个字段写入数据库
+	RolesLst   []string     `json:"roles" gorm:"-"` // 这个字段和前端交互
+	Contacts   ormx.JSONObj `json:"contacts"`       // 内容为 map[string]string 结构
+	Maintainer int          `json:"maintainer"`     // 是否给管理员发消息 0:not send 1:send
+	CreateAt   int64        `json:"create_at"`
+	CreateBy   string       `json:"create_by"`
+	UpdateAt   int64        `json:"update_at"`
+	UpdateBy   string       `json:"update_by"`
+	Admin      bool         `json:"admin" gorm:"-"` // 方便前端使用
 }
 
 func (u *User) TableName() string {

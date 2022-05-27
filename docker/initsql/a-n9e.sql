@@ -14,6 +14,7 @@ CREATE TABLE `users` (
     `portrait` varchar(255) not null default '' comment 'portrait image url',
     `roles` varchar(255) not null comment 'Admin | Standard | Guest, split by space',
     `contacts` varchar(1024) comment 'json e.g. {wecom:xx, dingtalk_robot_token:yy}',
+    `maintainer` tinyint(1) not null default 0,
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
