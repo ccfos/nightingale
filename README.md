@@ -1,6 +1,5 @@
 <img src="doc/img/ccf-n9e.png" width="240">
 
-# Nightingale
 [English](./README.md) | [中文](./README_ZH.md)
 
 ## 介绍
