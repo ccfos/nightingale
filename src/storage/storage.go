@@ -48,7 +48,7 @@ var Redis interface {
 
 func InitRedis(cfg RedisConfig) (func(), error) {
 	switch cfg.RedisType {
-	case "standalone":
+	case "standalone", "":
 		redisOptions := &redis.Options{
 			Addr:     cfg.Address,
 			Username: cfg.Username,
