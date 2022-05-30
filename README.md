@@ -1,6 +1,6 @@
 <img src="doc/img/ccf-n9e.png" width="240">
 
-[English](./README.md) | [中文](./README_ZH.md)
+[English](./README_EN.md) | [中文](./README.md)
 
 ## 介绍
 
