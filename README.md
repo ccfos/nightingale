@@ -1,75 +1,80 @@
 <img src="doc/img/ccf-n9e.png" width="240">
 
 # Nightingale
-
- Nightingale is an enterprise-level cloud-native monitoring system, which can be used as drop-in replacement of Prometheus for alerting and management.   
-
 [English](./README.md) | [中文](./README_ZH.md)
 
-## Introduction
-Nightingale is an cloud-native monitoring system by All-In-On design, support enterprise-class functional features with an out-of-the-box experience. We recommend upgrading your `Prometheus` + `AlertManager` + `Grafana` combo solution to Nightingale.
+## 介绍
 
-- **Multiple prometheus data sources management**: manage all alerts and dashboards in one centralized visually view;
-- **Out-of-the-box alert rule**: built-in multiple alert rules, reuse alert rules template by one-click import with detailed explanation of metrics;
-- **Multiple modes for visualizing data**: out-of-the-box dashboards, instance customize views, expression browser and Grafana integration;
-- **Multiple collection clients**: support using Promethues Exporter、Telegraf、Datadog Agent to collecting metrics;
-- **Integration of multiple storage**: support Prometheus, M3DB, VictoriaMetrics, Influxdb, TDEngine as storage solutions, and original support for PromQL;
-- **Fault self-healing**: support the ability to self-heal from failures by configuring webhook;
+> Nightingale is an enterprise-level cloud-native monitoring system, which can be used as drop-in replacement of Prometheus for alerting and management.
+>
+>夜莺是一款开源的云原生监控系统，采用 All-In-One 的设计，提供企业级的功能特性，开箱即用的产品体验。推荐升级您的 `Prometheus` + `AlertManager` + `Grafana` 组合方案到夜莺。
 
-#### If you are using Prometheus and have one or more of the following requirement scenarios, it is recommended that you upgrade to Nightingale:
-
-- Multiple systems such as Prometheus, Alertmanager, Grafana, etc. are fragmented and lack a unified view and cannot be used out of the box;
-- The way to manage Prometheus and Alertmanager by modifying configuration files has a big learning curve and is difficult to collaborate;
-- Too much data to scale-up your Prometheus cluster;
-- Multiple Prometheus clusters running in production environments, which faced high management and usage costs;
-
-#### If you are using Zabbix and have the following scenarios, it is recommended that you upgrade to Nightingale:
-
-- Monitoring too much data and wanting a better scalable solution;
-- A high learning curve and a desire for better efficiency of collaborative use in a multi-person, multi-team model;
-- Microservice and cloud-native architectures with variable monitoring data lifecycles and high monitoring data dimension bases, which are not easily adaptable to the Zabbix data model;
+- 内置丰富的Dashboard、好用实用的告警管理、自定义视图、故障自愈；
+- Dashboard和告警策略支持一键导入，详细的指标分类和解释；
+- 支持多 Prometheus 数据源管理，以一个集中的视图来管理所有的告警和dashboard；
+- 支持 Prometheus、M3DB、VictoriaMetrics、Influxdb、TDEngine 等多种时序库作为存储方案；
+- 原生支持 PromQL；
+- 支持 Exporter 作为数据采集方案；
+- 支持 Telegraf 作为监控数据采集方案；
+- 支持对接 Grafana 作为补充可视化方案；
 
 
-#### If you are using [open-falcon](https://github.com/open-falcon/falcon-plus), we recommend you to upgrade to Nightingale：
-- For more information about open-falcon and Nightingale, please refer to read [Ten features and trends of cloud-native monitoring](https://mp.weixin.qq.com/s?__biz=MzkzNjI5OTM5Nw==&mid=2247483738&idx=1&sn=e8bdbb974a2cd003c1abcc2b5405dd18&chksm=c2a19fb0f5d616a63185cd79277a79a6b80118ef2185890d0683d2bb20451bd9303c78d083c5#rd)。
+#### 如果您在使用 Prometheus 过程中，有以下的一个或者多个需求场景，推荐您升级到夜莺：
 
-## Quickstart
+- Prometheus、Alertmanager、Grafana 等多个系统较为割裂，缺乏统一视图，无法开箱即用;
+- 通过修改配置文件来管理 Prometheus、Alertmanager 的方式，学习曲线大，协同有难度;
+- 数据量过大而无法扩展您的 Prometheus 集群；
+- 生产环境运行多套 Prometheus 集群，面临管理和使用成本高的问题；
+
+#### 如果您在使用Zabbix，有以下的场景，推荐您升级到夜莺：
+
+- 监控的数据量太大，希望有更好的扩展解决方案；
+- 学习曲线高，多人多团队模式下，希望有更好的协同使用效率；
+- 微服务和云原生架构下，监控数据的生命周期多变、监控数据维度基数高，Zabbix数据模型不易适配；
+
+
+#### 如果您在使用[open-falcon](https://github.com/open-falcon/falcon-plus)，我们更推荐您升级到夜莺：
+- 关于open-falcon和夜莺的详细介绍，请参考阅读[云原生监控的十个特点和趋势](https://mp.weixin.qq.com/s?__biz=MzkzNjI5OTM5Nw==&mid=2247483738&idx=1&sn=e8bdbb974a2cd003c1abcc2b5405dd18&chksm=c2a19fb0f5d616a63185cd79277a79a6b80118ef2185890d0683d2bb20451bd9303c78d083c5#rd)。
+
+## 快速安装部署
 - [n9e.github.io/quickstart](https://n9e.github.io/quickstart/)
 
-## Documentation
+## 详细文档
 - [n9e.github.io](https://n9e.github.io/)
 
-## Example of use
-#### You can import and set MySQL-related alert rules:
+## 产品演示
+#### 您可以直接导入并生成 MySQL 相关的告警策略：
 <img src="doc/img/mysql-alerts.png" width="680">
 
-#### You can import and set the host-related dashboard：
+#### 您可以直接导入并生成主机相关的 dashboard：
 <img src="doc/img/n9e-node-dashboard.png" width="680">
 
-#### You can also easily view all active alerts and historical alerts in Nightingale:
+#### 您也可以在夜莺中方便的查看所有活跃的告警以及历史告警：
 <img src="https://n9e.github.io/intro/alert-events.png" width="680">
 
-## System Architecture
-#### A typical Nightingale deployment architecture:
+## 系统架构
+#### 一个典型的 Nightingale 部署架构:
 <img src="https://n9e.github.io/intro/arch-system.png" width="680">
 
-#### Typical deployment architecture using VictoriaMetrics as storage:
+#### 使用 VictoriaMetrics 作为时序数据库的典型部署架构:
 <img src="https://n9e.github.io/fc-monitoring-vm.png" width="680">
 
-## Contact us and feedback questions
-- We recommend that you use [github issue](https://github.com/didi/nightingale/issues) as the preferred channel for issue feedback and requirement submission;
-- You can join our WeChat group - [Nightingale WeChat Group](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png);
+
+## 联系我们和反馈问题
+- 我们推荐您优先使用[github issue](https://github.com/didi/nightingale/issues)作为首选问题反馈和需求提交的通道；
+- 您可以加入我们的微信群组——[Nightingale 微信群组](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png)；
+- 当然，推荐您关注夜莺监控公众号，及时获取相关产品动态 
 
 <img src="https://n9e.github.io/cloudmon.png" width="180">
 
 
-## Contributing
-We welcome your participation in the Nightingale open source project and open source community in a variety of ways:
-- Feedback on problems and bugs  => [github issue](https://github.com/didi/nightingale/issues)
-- Additional and improved documentation => [n9e.github.io](https://n9e.github.io/)
-- Share your best practices and insights on using Nightingale => [User Story](https://github.com/didi/nightingale/issues/897)
-- Join our community events => [Nightingale wechat group](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png)
-- Submit code to make Nightingale better =>[github PR](https://github.com/didi/nightingale/pulls)
+## 参与到夜莺开源项目和社区
+我们欢迎您以各种方式参与到夜莺开源项目和开源社区中来，工作包括不限于：
+- 反馈使用中遇到的问题和Bug => [github issue](https://github.com/didi/nightingale/issues)
+- 补充和完善文档 => [n9e.github.io](https://n9e.github.io/)
+- 分享您在使用夜莺监控过程中的最佳实践和经验心得 => [夜莺User Story](https://github.com/didi/nightingale/issues/897)
+- 参与我们的社区活动 => [Nightingale 微信群组](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png)
+- 提交代码，让夜莺监控更快、更稳、更好用 =>[github PR](https://github.com/didi/nightingale/pulls)
 
 ## TODO
 - [x] deploy nightingale in docker
@@ -81,4 +86,4 @@ We welcome your participation in the Nightingale open source project and open so
 - [ ] support pushgateway api
 
 ## License
-Nightingale with [Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE) open source license.
+夜莺监控，采用[Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE)开源许可证。
