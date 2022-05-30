@@ -59,30 +59,29 @@
 <img src="https://n9e.github.io/fc-monitoring-vm.png" width="680">
 
 
+## FAQ
+
+[https://github.com/ccfos/nightingale/wiki/faq](https://github.com/ccfos/nightingale/wiki/faq)
+
 ## 联系我们和反馈问题
-- 我们推荐您优先使用[github issue](https://github.com/didi/nightingale/issues)作为首选问题反馈和需求提交的通道；
-- 您可以加入我们的微信群组——[Nightingale 微信群组](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png)；
-- 当然，推荐您关注夜莺监控公众号，及时获取相关产品动态 
+
+- 我们推荐您优先使用[github issue](https://github.com/didi/nightingale/issues)作为首选问题反馈和需求提交的通道
+- 加入微信群组，请先添加微信：borgmon 备注：夜莺加群
+- 当然，推荐您关注夜莺监控公众号，及时获取相关产品动态，了解答疑方式
 
 <img src="https://n9e.github.io/cloudmon.png" width="180">
 
 
 ## 参与到夜莺开源项目和社区
+
 我们欢迎您以各种方式参与到夜莺开源项目和开源社区中来，工作包括不限于：
+
 - 反馈使用中遇到的问题和Bug => [github issue](https://github.com/didi/nightingale/issues)
 - 补充和完善文档 => [n9e.github.io](https://n9e.github.io/)
-- 分享您在使用夜莺监控过程中的最佳实践和经验心得 => [夜莺User Story](https://github.com/didi/nightingale/issues/897)
-- 参与我们的社区活动 => [Nightingale 微信群组](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png)
+- 分享您在使用夜莺监控过程中的最佳实践和经验心得 => [夜莺User Story](https://github.com/didi/nightingale/issues/897) | [经验分享文章链接](https://github.com/ccfos/nightingale/wiki/usecase)
 - 提交代码，让夜莺监控更快、更稳、更好用 =>[github PR](https://github.com/didi/nightingale/pulls)
 
-## TODO
-- [x] deploy nightingale in docker
-- [x] export /metrics endpoint
-- [x] notify.py support feishu
-- [ ] notify.py support sms
-- [ ] notify.py support voice
-- [x] support remote write api
-- [ ] support pushgateway api
 
 ## License
-夜莺监控，采用[Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE)开源许可证。
+
+[Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE)
