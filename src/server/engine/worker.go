@@ -39,6 +39,7 @@ func loopFilterRules(ctx context.Context) {
 
 func filterRules() {
 	ids := memsto.AlertRuleCache.GetRuleIds()
+	logger.Infof("AlertRuleCache.GetRuleIds success，ids.len: %d", len(ids))
 
 	count := len(ids)
 	mines := make([]int64, 0, count)
@@ -83,6 +84,7 @@ func (r RuleEval) Start() {
 			return
 		default:
 			r.Work()
+			logger.Infof("rule executed，rule_id=%d", r.RuleID())
 			interval := r.rule.PromEvalInterval
 			if interval <= 0 {
 				interval = 10
@@ -111,6 +113,8 @@ func (r RuleEval) Work() {
 		value, warnings, err = reader.Reader.Client.Query(context.Background(), promql, time.Now())
 		if err != nil {
 			logger.Errorf("rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
+			// 告警查询prometheus逻辑出错，发告警信息给管理员
+			notifyToMaintainer(err, "查询prometheus出错")
 			return
 		}
 
@@ -182,6 +186,7 @@ func (ws *WorkersType) Build(rids []int64) {
 		elst, err := models.AlertCurEventGetByRule(rules[hash].Id)
 		if err != nil {
 			logger.Errorf("worker_build: AlertCurEventGetByRule failed: %v", err)
+			notifyToMaintainer(err, "AlertCurEventGetByRule Error，ruleID="+fmt.Sprint(rules[hash].Id))
 			continue
 		}
 

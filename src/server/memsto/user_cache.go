@@ -78,6 +78,24 @@ func (uc *UserCacheType) GetByUserIds(ids []int64) []*models.User {
 	return users
 }
 
+func (uc *UserCacheType) GetMaintainerUsers() []*models.User {
+	uc.RLock()
+	defer uc.RUnlock()
+
+	var users []*models.User
+	for _, v := range uc.users {
+		if v.Maintainer == 1 {
+			users = append(users, v)
+		}
+	}
+
+	if users == nil {
+		users = []*models.User{}
+	}
+
+	return users
+}
+
 func SyncUsers() {
 	err := syncUsers()
 	if err != nil {
