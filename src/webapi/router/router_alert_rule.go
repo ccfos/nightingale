@@ -65,8 +65,31 @@ func alertRuleAddByService(c *gin.Context) {
 	if count == 0 {
 		ginx.Bomb(http.StatusBadRequest, "input json is empty")
 	}
-	reterr := alertRuleAdd(lst, "", 0, c.GetHeader("X-Language"))
+	reterr := alertRuleAddForService(lst, c.GetHeader("X-Language"))
 	ginx.NewRender(c).Data(reterr, nil)
+}
+
+func alertRuleAddForService(lst []models.AlertRule, lang string) map[string]string {
+	count := len(lst)
+	// alert rule name -> error string
+	reterr := make(map[string]string)
+	for i := 0; i < count; i++ {
+		lst[i].Id = 0
+		if lst[i].GroupId == 0 {
+			lst[i].GroupId = 1
+		}
+		if err := lst[i].FE2DB(); err != nil {
+			reterr[lst[i].Name] = i18n.Sprintf(lang, err.Error())
+			continue
+		}
+
+		if err := lst[i].Add(); err != nil {
+			reterr[lst[i].Name] = i18n.Sprintf(lang, err.Error())
+		} else {
+			reterr[lst[i].Name] = ""
+		}
+	}
+	return reterr
 }
 
 func alertRuleAdd(lst []models.AlertRule, username string, bgid int64, lang string) map[string]string {
