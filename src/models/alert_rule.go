@@ -24,7 +24,7 @@ type AlertRule struct {
 	AlgoParams           string      `json:"-" gorm:"algo_params"`         // params algorithm need
 	AlgoParamsJson       interface{} `json:"algo_params" gorm:"-"`         //
 	Delay                int         `json:"delay"`                        // Time (in seconds) to delay evaluation
-	Severity             int         `json:"severity"`                     // 0: Emergency 1: Warning 2: Notice
+	Severity             int         `json:"severity"`                     // 1: Emergency 2: Warning 3: Notice
 	Disabled             int         `json:"disabled"`                     // 0: enabled, 1: disabled
 	PromForDuration      int         `json:"prom_for_duration"`            // prometheus for, unit:s
 	PromQl               string      `json:"prom_ql"`                      // just one ql
@@ -58,7 +58,7 @@ func (ar *AlertRule) TableName() string {
 }
 
 func (ar *AlertRule) Verify() error {
-	if ar.GroupId <= 0 {
+	if ar.GroupId < 0 {
 		return fmt.Errorf("GroupId(%d) invalid", ar.GroupId)
 	}
 

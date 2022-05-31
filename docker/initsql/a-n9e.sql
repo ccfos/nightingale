@@ -230,7 +230,7 @@ CREATE TABLE `alert_rule` (
     `algorithm` varchar(255) not null default '',
     `algo_params` varchar(255),
     `delay` int not null default 0,
-    `severity` tinyint(1) not null comment '0:Emergency 1:Warning 2:Notice',
+    `severity` tinyint(1) not null comment '1:Emergency 2:Warning 3:Notice',
     `disabled` tinyint(1) not null comment '0:enabled 1:disabled',
     `prom_for_duration` int not null comment 'prometheus for, unit:s',
     `prom_ql` varchar(8192) not null comment 'promql',
