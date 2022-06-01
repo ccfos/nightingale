@@ -278,7 +278,7 @@ func configRoute(r *gin.Engine, version string) {
 
 		service.GET("/alert-rules", alertRuleGets)
 		service.POST("/alert-rules", alertRuleAddByService)
-		service.DELETE("/alert-rules", alertRuleDel)
+		service.DELETE("/alert-rules/busi-group/:id", alertRuleDel)
 		service.PUT("/alert-rule/:arid", alertRulePutByService)
 		service.GET("/alert-rule/:arid", alertRuleGet)
 		service.GET("/alert-rules-get-by-prod", alertRulesGetByProds)
