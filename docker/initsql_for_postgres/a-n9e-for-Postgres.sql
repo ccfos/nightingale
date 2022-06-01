@@ -9,6 +9,7 @@ CREATE TABLE users (
     portrait varchar(255) not null default '' ,
     roles varchar(255) not null ,
     contacts varchar(1024) ,
+    maintainer smallint not null default 0,
     create_at bigint not null default 0,
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
