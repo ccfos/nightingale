@@ -129,6 +129,13 @@ func alertRuleDel(c *gin.Context) {
 	ginx.NewRender(c).Message(models.AlertRuleDels(f.Ids, ginx.UrlParamInt64(c, "id")))
 }
 
+func alertRuleDelByService(c *gin.Context) {
+	var f idsForm
+	ginx.BindJSON(c, &f)
+	f.Verify()
+	ginx.NewRender(c).Message(models.AlertRuleDels(f.Ids))
+}
+
 func alertRulePutByFE(c *gin.Context) {
 	var f models.AlertRule
 	ginx.BindJSON(c, &f)
