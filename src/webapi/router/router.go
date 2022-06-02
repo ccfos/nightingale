@@ -277,7 +277,7 @@ func configRoute(r *gin.Engine, version string) {
 		service.PUT("/targets/note", targetUpdateNoteByService)
 
 		service.POST("/alert-rules", alertRuleAddByService)
-		service.DELETE("/alert-rules", alertRuleDel)
+		service.DELETE("/alert-rules", alertRuleDelByService)
 		service.PUT("/alert-rule/:arid", alertRulePutByService)
 		service.GET("/alert-rule/:arid", alertRuleGet)
 		service.GET("/alert-rules", alertRulesGetByService)

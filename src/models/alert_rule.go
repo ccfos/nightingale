@@ -237,9 +237,13 @@ func (ar *AlertRule) DB2FE() {
 	json.Unmarshal([]byte(ar.AlgoParams), &ar.AlgoParamsJson)
 }
 
-func AlertRuleDels(ids []int64, busiGroupId int64) error {
+func AlertRuleDels(ids []int64, bgid ...int64) error {
 	for i := 0; i < len(ids); i++ {
-		ret := DB().Where("id = ? and group_id=?", ids[i], busiGroupId).Delete(&AlertRule{})
+		session := DB().Where("id = ?", ids[i])
+		if len(bgid) > 0 {
+			session = session.Where("group_id = ?", bgid[0])
+		}
+		ret := session.Delete(&AlertRule{})
 		if ret.Error != nil {
 			return ret.Error
 		}
