@@ -22,6 +22,7 @@ type TagFilter struct {
 type AlertMute struct {
 	Id       int64        `json:"id" gorm:"primaryKey"`
 	GroupId  int64        `json:"group_id"`
+	Prod     string       `json:"prod"` // product empty means n9e
 	Cluster  string       `json:"cluster"`
 	Tags     ormx.JSONArr `json:"tags"`
 	Cause    string       `json:"cause"`
@@ -36,14 +37,14 @@ func (m *AlertMute) TableName() string {
 	return "alert_mute"
 }
 
-func AlertMuteGets(bgid int64, query string) (lst []AlertMute, err error) {
-	session := DB().Where("group_id = ?", bgid)
+func AlertMuteGets(prods []string, bgid int64, query string) (lst []AlertMute, err error) {
+	session := DB().Where("group_id = ? and prod in (?)", bgid, prods)
 
 	if query != "" {
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
-			qarg := "%\"" + arr[i] + "\"%"
-			session = session.Where("tags like ?", qarg, qarg)
+			qarg := "%" + arr[i] + "%"
+			session = session.Where("cause like ?", qarg, qarg)
 		}
 	}
 

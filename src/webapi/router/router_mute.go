@@ -1,6 +1,8 @@
 package router
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 
@@ -15,9 +17,10 @@ func alertMuteGetsByBG(c *gin.Context) {
 }
 
 func alertMuteGets(c *gin.Context) {
+	prods := strings.Fields(ginx.QueryStr(c, "prods", ""))
 	bgid := ginx.QueryInt64(c, "bgid", 0)
 	query := ginx.QueryStr(c, "query", "")
-	lst, err := models.AlertMuteGets(bgid, query)
+	lst, err := models.AlertMuteGets(prods, bgid, query)
 
 	ginx.NewRender(c).Data(lst, err)
 }

@@ -233,7 +233,7 @@ CREATE TABLE `alert_rule` (
     `severity` tinyint(1) not null comment '1:Emergency 2:Warning 3:Notice',
     `disabled` tinyint(1) not null comment '0:enabled 1:disabled',
     `prom_for_duration` int not null comment 'prometheus for, unit:s',
-    `prom_ql` varchar(8192) not null comment 'promql',
+    `prom_ql` text not null comment 'promql',
     `prom_eval_interval` int not null comment 'evaluate interval',
     `enable_stime` char(5) not null default '00:00',
     `enable_etime` char(5) not null default '23:59',
@@ -259,6 +259,7 @@ CREATE TABLE `alert_rule` (
 CREATE TABLE `alert_mute` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
+    `prod` varchar(255) not null default '',
     `cluster` varchar(128) not null,
     `tags` varchar(4096) not null default '' comment 'json,map,tagkey->regexp|value',
     `cause` varchar(255) not null default '',

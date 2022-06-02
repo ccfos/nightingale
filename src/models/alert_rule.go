@@ -289,8 +289,16 @@ func AlertRuleGetsByCluster(cluster string) ([]*AlertRule, error) {
 	return lst, err
 }
 
-func AlertRulesGetByProds(prods []string) ([]*AlertRule, error) {
-	session := DB().Where("disabled = ? and prod IN (?)", 0, prods)
+func AlertRulesGetsBy(prods []string, query string) ([]*AlertRule, error) {
+	session := DB().Where("disabled = ? and prod in (?)", 0, prods)
+
+	if query != "" {
+		arr := strings.Fields(query)
+		for i := 0; i < len(arr); i++ {
+			qarg := "%" + arr[i] + "%"
+			session = session.Where("append_tags like ?", qarg)
+		}
+	}
 
 	var lst []*AlertRule
 	err := session.Find(&lst).Error
