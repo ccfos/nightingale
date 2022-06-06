@@ -236,7 +236,7 @@ CREATE TABLE alert_rule (
 	severity int2 NOT NULL,
 	disabled int2 NOT NULL,
 	prom_for_duration int4 NOT NULL,
-	prom_ql varchar(8192) NOT NULL,
+	prom_ql text NOT NULL,
 	prom_eval_interval int4 NOT NULL,
 	enable_stime bpchar(5) NOT NULL DEFAULT '00:00'::bpchar,
 	enable_etime bpchar(5) NOT NULL DEFAULT '23:59'::bpchar,
@@ -284,6 +284,7 @@ COMMENT ON COLUMN alert_rule.append_tags IS 'split by space: service=n9e mod=api
 CREATE TABLE alert_mute (
     id bigserial,
     group_id bigint not null default 0 ,
+    prod varchar(255) NOT NULL DEFAULT '' ,
     cluster varchar(128) not null,
     tags varchar(4096) not null default '' ,
     cause varchar(255) not null default '',
