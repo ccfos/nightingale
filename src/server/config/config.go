@@ -14,7 +14,6 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
-	"github.com/didi/nightingale/v5/src/server/reader"
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
@@ -136,8 +135,25 @@ type Config struct {
 	DB                 ormx.DBConfig
 	WriterOpt          WriterGlobalOpt
 	Writers            []WriterOptions
-	Reader             reader.Options
+	Reader             ReaderOptions
 	Ibex               Ibex
+}
+
+type ReaderOptions struct {
+	Url           string
+	BasicAuthUser string
+	BasicAuthPass string
+
+	Timeout               int64
+	DialTimeout           int64
+	TLSHandshakeTimeout   int64
+	ExpectContinueTimeout int64
+	IdleConnTimeout       int64
+	KeepAlive             int64
+
+	MaxConnsPerHost     int
+	MaxIdleConns        int
+	MaxIdleConnsPerHost int
 }
 
 type WriterOptions struct {

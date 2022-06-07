@@ -5,34 +5,18 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/prometheus/client_golang/api"
 )
 
-type Options struct {
-	Url           string
-	BasicAuthUser string
-	BasicAuthPass string
-
-	Timeout               int64
-	DialTimeout           int64
-	TLSHandshakeTimeout   int64
-	ExpectContinueTimeout int64
-	IdleConnTimeout       int64
-	KeepAlive             int64
-
-	MaxConnsPerHost     int
-	MaxIdleConns        int
-	MaxIdleConnsPerHost int
-}
-
 type ReaderType struct {
-	Opts   Options
+	Opts   config.ReaderOptions
 	Client API
 }
 
 var Reader ReaderType
 
-func Init(opts Options) error {
+func Init(opts config.ReaderOptions) error {
 	cli, err := api.NewClient(api.Config{
 		Address: opts.Url,
 		RoundTripper: &http.Transport{
