@@ -15,7 +15,6 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/logx"
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
 	"github.com/didi/nightingale/v5/src/server/reader"
-	"github.com/didi/nightingale/v5/src/server/writer"
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
@@ -135,10 +134,33 @@ type Config struct {
 	NoData             NoData
 	Redis              storage.RedisConfig
 	DB                 ormx.DBConfig
-	WriterOpt          writer.GlobalOpt
-	Writers            []writer.Options
+	WriterOpt          WriterGlobalOpt
+	Writers            []WriterOptions
 	Reader             reader.Options
 	Ibex               Ibex
+}
+
+type WriterOptions struct {
+	Url           string
+	BasicAuthUser string
+	BasicAuthPass string
+
+	Timeout               int64
+	DialTimeout           int64
+	TLSHandshakeTimeout   int64
+	ExpectContinueTimeout int64
+	IdleConnTimeout       int64
+	KeepAlive             int64
+
+	MaxConnsPerHost     int
+	MaxIdleConns        int
+	MaxIdleConnsPerHost int
+}
+
+type WriterGlobalOpt struct {
+	QueueCount   int
+	QueueMaxSize int
+	QueuePopSize int
 }
 
 type HeartbeatConfig struct {
