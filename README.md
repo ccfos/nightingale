@@ -42,16 +42,11 @@
 - [n9e.github.io](https://n9e.github.io/)
 
 ## 产品演示
-#### 您可以直接导入并生成 MySQL 相关的告警策略：
-<img src="doc/img/mysql-alerts.png" width="680">
 
-#### 您可以直接导入并生成主机相关的 dashboard：
-<img src="doc/img/n9e-node-dashboard.png" width="680">
-
-#### 您也可以在夜莺中方便的查看所有活跃的告警以及历史告警：
-<img src="doc/img/alert-events.png" width="680">
+<img src="doc/img/intro.gif" width="680">
 
 ## 系统架构
+
 #### 一个典型的 Nightingale 部署架构:
 <img src="doc/img/arch-system.png" width="680">
 
