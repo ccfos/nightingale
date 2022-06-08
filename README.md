@@ -36,7 +36,7 @@
 - 关于open-falcon和夜莺的详细介绍，请参考阅读[云原生监控的十个特点和趋势](https://mp.weixin.qq.com/s?__biz=MzkzNjI5OTM5Nw==&mid=2247483738&idx=1&sn=e8bdbb974a2cd003c1abcc2b5405dd18&chksm=c2a19fb0f5d616a63185cd79277a79a6b80118ef2185890d0683d2bb20451bd9303c78d083c5#rd)。
 
 ## 快速安装部署
-- [n9e.github.io/quickstart](https://n9e.github.io/quickstart/)
+- [n9e.github.io/quickstart](https://n9e.github.io/docs/install/compose/)
 
 ## 详细文档
 - [n9e.github.io](https://n9e.github.io/)

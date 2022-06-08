@@ -32,7 +32,7 @@ Nightingale is an cloud-native monitoring system by All-In-On design, support en
 - For more information about open-falcon and Nightingale, please refer to read [Ten features and trends of cloud-native monitoring](https://mp.weixin.qq.com/s?__biz=MzkzNjI5OTM5Nw==&mid=2247483738&idx=1&sn=e8bdbb974a2cd003c1abcc2b5405dd18&chksm=c2a19fb0f5d616a63185cd79277a79a6b80118ef2185890d0683d2bb20451bd9303c78d083c5#rd)。
 
 ## Quickstart
-- [n9e.github.io/quickstart](https://n9e.github.io/quickstart/)
+- [n9e.github.io/quickstart](https://n9e.github.io/docs/install/compose/)
 
 ## Documentation
 - [n9e.github.io](https://n9e.github.io/)
