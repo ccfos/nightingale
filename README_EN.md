@@ -38,14 +38,8 @@ Nightingale is an cloud-native monitoring system by All-In-On design, support en
 - [n9e.github.io](https://n9e.github.io/)
 
 ## Example of use
-#### You can import and set MySQL-related alert rules:
-<img src="doc/img/mysql-alerts.png" width="680">
 
-#### You can import and set the host-related dashboard：
-<img src="doc/img/n9e-node-dashboard.png" width="680">
-
-#### You can also easily view all active alerts and historical alerts in Nightingale:
-<img src="doc/img/alert-events.png" width="680">
+<img src="doc/img/intro.gif" width="680">
 
 ## System Architecture
 #### A typical Nightingale deployment architecture:
