@@ -56,7 +56,7 @@
 <img src="doc/img/arch-system.png" width="680">
 
 #### 使用 VictoriaMetrics 作为时序数据库的典型部署架构:
-<img src="doc/img/vm-cluster-arch.png" width="680">
+<img src="doc/img/install-vm.png" width="680">
 
 
 ## FAQ

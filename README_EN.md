@@ -52,7 +52,7 @@ Nightingale is an cloud-native monitoring system by All-In-On design, support en
 <img src="doc/img/arch-system.png" width="680">
 
 #### Typical deployment architecture using VictoriaMetrics as storage:
-<img src="doc/img/vm-cluster-arch.png" width="680">
+<img src="doc/img/install-vm.png" width="680">
 
 ## Contact us and feedback questions
 - We recommend that you use [github issue](https://github.com/didi/nightingale/issues) as the preferred channel for issue feedback and requirement submission;
