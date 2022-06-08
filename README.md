@@ -73,7 +73,7 @@
 
 - 反馈使用中遇到的问题和Bug => [github issue](https://github.com/didi/nightingale/issues)
 - 补充和完善文档 => [n9e.github.io](https://n9e.github.io/)
-- 分享您在使用夜莺监控过程中的最佳实践和经验心得 => [夜莺User Story](https://github.com/didi/nightingale/issues/897) | [经验分享文章链接](https://github.com/ccfos/nightingale/wiki/usecase)
+- 分享您在使用夜莺监控过程中的最佳实践和经验心得 => [夜莺User Story](https://github.com/didi/nightingale/issues/897) | [经验分享文章链接](https://n9e.github.io/docs/prologue/share/)
 - 提交代码，让夜莺监控更快、更稳、更好用 =>[github PR](https://github.com/didi/nightingale/pulls)
 
 
