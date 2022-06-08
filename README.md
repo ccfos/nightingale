@@ -49,14 +49,14 @@
 <img src="doc/img/n9e-node-dashboard.png" width="680">
 
 #### 您也可以在夜莺中方便的查看所有活跃的告警以及历史告警：
-<img src="https://n9e.github.io/intro/alert-events.png" width="680">
+<img src="doc/img/alert-events.png" width="680">
 
 ## 系统架构
 #### 一个典型的 Nightingale 部署架构:
-<img src="https://n9e.github.io/intro/arch-system.png" width="680">
+<img src="doc/img/arch-system.png" width="680">
 
 #### 使用 VictoriaMetrics 作为时序数据库的典型部署架构:
-<img src="https://n9e.github.io/fc-monitoring-vm.png" width="680">
+<img src="doc/img/vm-cluster-arch.png" width="680">
 
 
 ## FAQ
@@ -69,7 +69,7 @@
 - 加入微信群组，请先添加微信：borgmon 备注：夜莺加群
 - 当然，推荐您关注夜莺监控公众号，及时获取相关产品动态，了解答疑方式
 
-<img src="https://n9e.github.io/cloudmon.png" width="180">
+<img src="doc/img/wx.jpg" width="180">
 
 
 ## 参与到夜莺开源项目和社区
