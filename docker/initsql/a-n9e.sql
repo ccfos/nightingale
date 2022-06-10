@@ -243,6 +243,7 @@ CREATE TABLE `alert_rule` (
     `notify_channels` varchar(255) not null default '' comment 'split by space: sms voice email dingtalk wecom',
     `notify_groups` varchar(255) not null default '' comment 'split by space: 233 43',
     `notify_repeat_step` int not null default 0 comment 'unit: min',
+    `notify_max_number` int not null default 0 comment '',
     `recover_duration` int not null default 0 comment 'unit: s',
     `callbacks` varchar(255) not null default '' comment 'split by space: http://a.com/api/x http://a.com/api/y',
     `runbook_url` varchar(255),

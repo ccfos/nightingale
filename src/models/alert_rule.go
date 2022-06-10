@@ -41,6 +41,7 @@ type AlertRule struct {
 	NotifyGroupsObj      []UserGroup `json:"notify_groups_obj" gorm:"-"`   // for fe
 	NotifyGroupsJSON     []string    `json:"notify_groups" gorm:"-"`       // for fe
 	NotifyRepeatStep     int         `json:"notify_repeat_step"`           // notify repeat interval, unit: min
+	NotifyMaxNumber      int         `json:"notify_max_number"`            // notify: max number
 	RecoverDuration      int64       `json:"recover_duration"`             // unit: s
 	Callbacks            string      `json:"-"`                            // split by space: http://a.com/api/x http://a.com/api/y'
 	CallbacksJSON        []string    `json:"callbacks" gorm:"-"`           // for fe
