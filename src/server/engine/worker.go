@@ -39,7 +39,7 @@ func loopFilterRules(ctx context.Context) {
 
 func filterRules() {
 	ids := memsto.AlertRuleCache.GetRuleIds()
-	logger.Infof("AlertRuleCache.GetRuleIds success，ids.len: %d", len(ids))
+	logger.Debugf("AlertRuleCache.GetRuleIds success，ids.len: %d", len(ids))
 
 	count := len(ids)
 	mines := make([]int64, 0, count)
