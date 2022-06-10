@@ -82,7 +82,7 @@ func (v *AlertAggrView) Add() error {
 	return Insert(v)
 }
 
-func (v *AlertAggrView) Update(name, rule string) error {
+func (v *AlertAggrView) Update(name, rule string, cate int) error {
 	if err := v.Verify(); err != nil {
 		return err
 	}
@@ -90,17 +90,22 @@ func (v *AlertAggrView) Update(name, rule string) error {
 	v.UpdateAt = time.Now().Unix()
 	v.Name = name
 	v.Rule = rule
+	v.Cate = cate
 
-	return DB().Model(v).Select("name", "rule", "update_at").Updates(v).Error
+	return DB().Model(v).Select("name", "rule", "cate", "update_at").Updates(v).Error
 }
 
 // AlertAggrViewDel: userid for safe delete
-func AlertAggrViewDel(ids []int64, createBy interface{}) error {
+func AlertAggrViewDel(ids []int64, createBy ...interface{}) error {
 	if len(ids) == 0 {
 		return nil
 	}
 
-	return DB().Where("id in ? and create_by = ?", ids, createBy).Delete(new(AlertAggrView)).Error
+	if len(createBy) > 0 {
+		return DB().Where("id in ? and create_by = ?", ids, createBy).Delete(new(AlertAggrView)).Error
+	}
+
+	return DB().Where("id in ?", ids).Delete(new(AlertAggrView)).Error
 }
 
 func AlertAggrViewGets(createBy interface{}) ([]AlertAggrView, error) {
