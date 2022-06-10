@@ -379,6 +379,7 @@ func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
 
 		}
 	} else {
+		event.NotifyCurNumber = 1
 		r.pushEventToQueue(event)
 	}
 }
