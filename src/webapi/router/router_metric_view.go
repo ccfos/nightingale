@@ -37,6 +37,7 @@ func metricViewAdd(c *gin.Context) {
 func metricViewDel(c *gin.Context) {
 	var f idsForm
 	ginx.BindJSON(c, &f)
+	f.Verify()
 
 	me := c.MustGet("user").(*models.User)
 	if me.IsAdmin() {

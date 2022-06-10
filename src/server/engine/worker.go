@@ -84,7 +84,7 @@ func (r RuleEval) Start() {
 			return
 		default:
 			r.Work()
-			logger.Infof("rule executed，rule_id=%d", r.RuleID())
+			logger.Debugf("rule executed，rule_id=%d", r.RuleID())
 			interval := r.rule.PromEvalInterval
 			if interval <= 0 {
 				interval = 10
