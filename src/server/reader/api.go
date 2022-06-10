@@ -925,6 +925,16 @@ func (h *apiClientImpl) Do(ctx context.Context, req *http.Request) (*http.Respon
 		req.SetBasicAuth(Reader.Opts.BasicAuthUser, Reader.Opts.BasicAuthPass)
 	}
 
+	headerCount := len(Reader.Opts.Headers)
+	if headerCount > 0 && headerCount%2 == 0 {
+		for i := 0; i < len(Reader.Opts.Headers); i += 2 {
+			req.Header.Add(Reader.Opts.Headers[i], Reader.Opts.Headers[i+1])
+			if Reader.Opts.Headers[i] == "Host" {
+				req.Host = Reader.Opts.Headers[i+1]
+			}
+		}
+	}
+
 	resp, body, err := h.client.Do(ctx, req)
 	if err != nil {
 		return resp, body, nil, err

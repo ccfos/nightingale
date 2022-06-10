@@ -105,6 +105,8 @@ type ClusterOptions struct {
 	BasicAuthUser string
 	BasicAuthPass string
 
+	Headers []string
+
 	Timeout     int64
 	DialTimeout int64
 	KeepAlive   int64

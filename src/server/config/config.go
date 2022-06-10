@@ -154,6 +154,8 @@ type ReaderOptions struct {
 	MaxConnsPerHost     int
 	MaxIdleConns        int
 	MaxIdleConnsPerHost int
+
+	Headers []string
 }
 
 type WriterOptions struct {
@@ -171,6 +173,8 @@ type WriterOptions struct {
 	MaxConnsPerHost     int
 	MaxIdleConns        int
 	MaxIdleConnsPerHost int
+
+	Headers []string
 }
 
 type WriterGlobalOpt struct {

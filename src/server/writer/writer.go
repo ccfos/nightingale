@@ -66,6 +66,16 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 		httpReq.SetBasicAuth(w.Opts.BasicAuthUser, w.Opts.BasicAuthPass)
 	}
 
+	headerCount := len(w.Opts.Headers)
+	if headerCount > 0 && headerCount%2 == 0 {
+		for i := 0; i < len(w.Opts.Headers); i += 2 {
+			httpReq.Header.Add(w.Opts.Headers[i], w.Opts.Headers[i+1])
+			if w.Opts.Headers[i] == "Host" {
+				httpReq.Host = w.Opts.Headers[i+1]
+			}
+		}
+	}
+
 	resp, body, err := w.Client.Do(context.Background(), httpReq)
 	if err != nil {
 		logger.Warningf("push data with remote write request got error: %v, response body: %s", err, string(body))
