@@ -1,0 +1,119 @@
+[
+    {
+      "name": "MySQL Overview - 模板",
+      "tags": "Prometheus MySQL",
+      "configs": "{\"var\":[{\"name\":\"instance\",\"definition\":\"label_values(mysql_global_status_uptime, instance)\"}]}",
+      "chart_groups": [
+        {
+          "name": "Basic Info",
+          "weight": 0,
+          "charts": [
+            {
+              "configs": "{\"targets\":[{\"expr\":\"min(mysql_global_status_uptime{instance=~\\\"$instance\\\"})\"}],\"name\":\"MySQL Uptime\",\"custom\":{\"textMode\":\"value\",\"colorMode\":\"value\",\"calc\":\"lastNotNull\",\"colSpan\":1,\"textSize\":{}},\"options\":{\"valueMappings\":[{\"type\":\"range\",\"match\":{\"to\":1800},\"result\":{\"color\":\"#ec7718\"}},{\"type\":\"range\",\"match\":{\"from\":1800},\"result\":{\"color\":\"#369603\"}}],\"standardOptions\":{\"util\":\"humantimeSeconds\"}},\"version\":\"2.0.0\",\"type\":\"stat\",\"layout\":{\"h\":1,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+              "weight": 0
+            },
+            {
+              "configs": "{\"targets\":[{\"expr\":\"rate(mysql_global_status_queries{instance=~\\\"$instance\\\"}[5m])\"}],\"name\":\"Current QPS\",\"description\":\"mysql_global_status_queries\",\"custom\":{\"textMode\":\"value\",\"colorMode\":\"value\",\"calc\":\"lastNotNull\",\"colSpan\":1,\"textSize\":{}},\"options\":{\"valueMappings\":[{\"type\":\"range\",\"match\":{\"to\":100},\"result\":{\"color\":\"#05a31f\"}},{\"type\":\"range\",\"match\":{\"from\":100},\"result\":{\"color\":\"#ea3939\"}}],\"standardOptions\":{\"decimals\":2}},\"version\":\"2.0.0\",\"type\":\"stat\",\"layout\":{\"h\":1,\"w\":6,\"x\":6,\"y\":0,\"i\":\"1\"}}",
+              "weight": 0
+            },
+            {
+              "configs": "{\"targets\":[{\"expr\":\"avg(mysql_global_variables_innodb_buffer_pool_size{instance=~\\\"$instance\\\"})\"}],\"name\":\"InnoDB Buffer Pool\",\"description\":\"**InnoDB Buffer Pool Size**\\n\\nInnoDB maintains a storage area called the buffer pool for caching data and indexes in memory.  Knowing how the InnoDB buffer pool works, and taking advantage of it to keep frequently accessed data in memory, is one of the most important aspects of MySQL tuning. The goal is to keep the working set in memory. In most cases, this should be between 60%-90% of available memory on a dedicated database host, but depends on many factors.\",\"custom\":{\"textMode\":\"value\",\"colorMode\":\"value\",\"calc\":\"lastNotNull\",\"colSpan\":1,\"textSize\":{}},\"options\":{\"standardOptions\":{\"util\":\"bytesIEC\"}},\"version\":\"2.0.0\",\"type\":\"stat\",\"layout\":{\"h\":1,\"w\":6,\"x\":12,\"y\":0,\"i\":\"2\"}}",
+              "weight": 0
+            },
+            {
+              "configs": "{\"targets\":[{\"expr\":\"sum(increase(mysql_global_status_table_locks_waited{instance=~\\\"$instance\\\"}[5m]))\"}],\"name\":\"Table Locks Waited(5min)\",\"description\":\"**Table Locks**\\n\\nMySQL takes a number of different locks for varying reasons. In this graph we see how many Table level locks MySQL has requested from the storage engine. In the case of InnoDB, many times the locks could actually be row locks as it only takes table level locks in a few specific cases.\\n\\nIt is most useful to compare Locks Immediate and Locks Waited. If Locks waited is rising, it means you have lock contention. Otherwise, Locks Immediate rising and falling is normal activity.\",\"custom\":{\"textMode\":\"value\",\"colorMode\":\"value\",\"calc\":\"lastNotNull\",\"colSpan\":1,\"textSize\":{}},\"options\":{\"valueMappings\":[{\"type\":\"range\",\"match\":{\"from\":1},\"result\":{\"color\":\"#e70d0d\"}},{\"type\":\"range\",\"match\":{\"to\":1},\"result\":{\"color\":\"#53b503\"}}],\"standardOptions\":{}},\"version\":\"2.0.0\",\"type\":\"stat\",\"layout\":{\"h\":1,\"w\":6,\"x\":18,\"y\":0,\"i\":\"3\"}}",
+              "weight": 0
+            }
+          ]
+        },
+        {
+          "name": "Connections",
+          "weight": 1,
+          "charts": [
+            {
+              "configs": "{\"targets\":[{\"expr\":\"sum(mysql_global_status_threads_connected{instance=~\\\"$instance\\\"})\",\"legend\":\"Connections\"},{\"expr\":\"sum(mysql_global_status_max_used_connections{instance=~\\\"$instance\\\"})\",\"legend\":\"Max Used Connections\"},{\"expr\":\"sum(mysql_global_variables_max_connections{instance=~\\\"$instance\\\"})\",\"legend\":\"Max Connections\"},{\"expr\":\"sum(rate(mysql_global_status_aborted_connects{instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Aborted Connections\"}],\"name\":\"MySQL Connections\",\"description\":\"**Max Connections** \\n\\nMax Connections is the maximum permitted number of simultaneous client connections. By default, this is 151. Increasing this value increases the number of file descriptors that mysqld requires. If the required number of descriptors are not available, the server reduces the value of Max Connections.\\n\\nmysqld actually permits Max Connections + 1 clients to connect. The extra connection is reserved for use by accounts that have the SUPER privilege, such as root.\\n\\nMax Used Connections is the maximum number of connections that have been in use simultaneously since the server started.\\n\\nConnections is the number of connection attempts (successful or not) to the MySQL server.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+              "weight": 0
+            },
+            {
+              "configs": "{\"targets\":[{\"expr\":\"sum(mysql_global_status_threads_connected{instance=~\\\"$instance\\\"})\",\"legend\":\"Threads Connected\"},{\"expr\":\"sum(mysql_global_status_threads_running{instance=~\\\"$instance\\\"})\",\"legend\":\"Threads Running\"}],\"name\":\"MySQL Client Thread Activity\",\"description\":\"Threads Connected is the number of open connections, while Threads Running is the number of threads not sleeping.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":12,\"y\":0,\"i\":\"1\"}}",
+              "weight": 0
+            }
+          ]
+        },
+        {
+          "name": "Query Performance",
+          "weight": 2,
+          "charts": [
+            {
+              "configs": "{\"targets\":[{\"expr\":\"sum(rate(mysql_global_status_created_tmp_tables{instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Created Tmp Tables\"},{\"expr\":\"sum(rate(mysql_global_status_created_tmp_disk_tables{instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Created Tmp Disk Tables\"},{\"expr\":\"sum(rate(mysql_global_status_created_tmp_files{instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Created Tmp Files\"}],\"name\":\"MySQL Temporary Objects\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.64,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+              "weight": 0
+            },
+            {
+              "configs": "{\"targets\":[{\"expr\":\"sum(rate(mysql_global_status_select_full_join{ instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Select Full Join\"},{\"expr\":\"sum(rate(mysql_global_status_select_full_range_join{ instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Select Full Range Join\"},{\"expr\":\"sum(rate(mysql_global_status_select_range{ instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Select Range\"},{\"expr\":\"sum(rate(mysql_global_status_select_range_check{ instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Select Range Check\"},{\"expr\":\"sum(rate(mysql_global_status_select_scan{ instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Select Scan\"}],\"name\":\"MySQL Select Types\",\"description\":\"**MySQL Select Types**\\n\\nAs with most relational databases, selecting based on indexes is more efficient than scanning an entire table's data. Here we see the counters for selects not done with indexes.\\n\\n* ***Select Scan*** is how many queries caused full table scans, in which all the data in the table had to be read and either discarded or returned.\\n* ***Select Range*** is how many queries used a range scan, which means MySQL scanned all rows in a given range.\\n* ***Select Full Join*** is the number of joins that are not joined on an index, this is usually a huge performance hit.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"stack\":\"off\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.41},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":12,\"y\":0,\"i\":\"1\"}}",
+              "weight": 0
+            },
+            {
+              "configs": "{\"targets\":[{\"expr\":\"sum(rate(mysql_global_status_sort_rows{instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Sort Rows\"},{\"expr\":\"sum(rate(mysql_global_status_sort_range{instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Sort Range\"},{\"expr\":\"sum(rate(mysql_global_status_sort_merge_passes{instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Sort Merge Passes\"},{\"expr\":\"sum(rate(mysql_global_status_sort_scan{instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Sort Scan\"}],\"name\":\"MySQL Sorts\",\"description\":\"**MySQL Sorts**\\n\\nDue to a query's structure, order, or other requirements, MySQL sorts the rows before returning them. For example, if a table is ordered 1 to 10 but you want the results reversed, MySQL then has to sort the rows to return 10 to 1.\\n\\nThis graph also shows when sorts had to scan a whole table or a given range of a table in order to return the results and which could not have been sorted via an index.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":0,\"y\":2,\"i\":\"2\"}}",
+              "weight": 0
+            },
+            {
+              "configs": "{\"targets\":[{\"expr\":\"sum(rate(mysql_global_status_slow_queries{instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Slow Queries\"}],\"name\":\"MySQL Slow Queries\",\"description\":\"**MySQL Slow Queries**\\n\\nSlow queries are defined as queries being slower than the long_query_time setting. For example, if you have long_query_time set to 3, all queries that take longer than 3 seconds to complete will show on this graph.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"bars\",\"stack\":\"off\",\"fillOpacity\":0.81},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":12,\"y\":2,\"i\":\"3\"}}",
+              "weight": 0
+            }
+          ]
+        },
+        {
+          "name": "Network",
+          "weight": 3,
+          "charts": [
+            {
+              "configs": "{\"targets\":[{\"expr\":\"sum(rate(mysql_global_status_bytes_received{instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Inbound\"},{\"expr\":\"sum(rate(mysql_global_status_bytes_sent{instance=~\\\"$instance\\\"}[5m]))\",\"legend\":\"Outbound\"}],\"name\":\"MySQL Network Traffic\",\"description\":\"**MySQL Network Traffic**\\n\\nHere we can see how much network traffic is generated by MySQL. Outbound is network traffic sent from MySQL and Inbound is network traffic MySQL has received.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"util\":\"bytesSI\",\"decimals\":2},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":24,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+              "weight": 0
+            }
+          ]
+        },
+        {
+          "name": "Commands, Handlers",
+          "weight": 4,
+          "charts": [
+            {
+              "configs": "{\"targets\":[{\"expr\":\"topk(10, rate(mysql_global_status_commands_total{instance=~\\\"$instance\\\"}[5m])>0)\",\"legend\":\"Com_{{command}}\"}],\"name\":\"Top Command Counters\",\"description\":\"**Top Command Counters**\\n\\nThe Com_{{xxx}} statement counter variables indicate the number of times each xxx statement has been executed. There is one status variable for each type of statement. For example, Com_delete and Com_update count [``DELETE``](https://dev.mysql.com/doc/refman/5.7/en/delete.html) and [``UPDATE``](https://dev.mysql.com/doc/refman/5.7/en/update.html) statements, respectively. Com_delete_multi and Com_update_multi are similar but apply to [``DELETE``](https://dev.mysql.com/doc/refman/5.7/en/delete.html) and [``UPDATE``](https://dev.mysql.com/doc/refman/5.7/en/update.html) statements that use multiple-table syntax.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"decimals\":2},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.2,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":24,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+              "weight": 0
+            },
+            {
+              "configs": "{\"targets\":[{\"expr\":\"rate(mysql_global_status_handlers_total{instance=~\\\"$instance\\\", handler!~\\\"commit|rollback|savepoint.*|prepare\\\"}[5m])\",\"legend\":\"{{handler}}\"}],\"name\":\"MySQL Handlers\",\"description\":\"**MySQL Handlers**\\n\\nHandler statistics are internal statistics on how MySQL is selecting, updating, inserting, and modifying rows, tables, and indexes.\\n\\nThis is in fact the layer between the Storage Engine and MySQL.\\n\\n* `read_rnd_next` is incremented when the server performs a full table scan and this is a counter you don't really want to see with a high value.\\n* `read_key` is incremented when a read is done with an index.\\n* `read_next` is incremented when the storage engine is asked to 'read the next index entry'. A high value means a lot of index scans are being done.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"decimals\":3},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":0,\"y\":2,\"i\":\"1\"}}",
+              "weight": 0
+            },
+            {
+              "configs": "{\"targets\":[{\"expr\":\"rate(mysql_global_status_handlers_total{instance=~\\\"$instance\\\", handler=~\\\"commit|rollback|savepoint.*|prepare\\\"}[5m])\",\"legend\":\"{{handler}}\"}],\"name\":\"MySQL Transaction Handlers\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":12,\"y\":2,\"i\":\"2\"}}",
+              "weight": 0
+            }
+          ]
+        },
+        {
+          "name": "Open Files",
+          "weight": 5,
+          "charts": [
+            {
+              "configs": "{\"targets\":[{\"expr\":\"mysql_global_variables_open_files_limit{instance=~\\\"$instance\\\"}\",\"legend\":\"Open Files Limit\"},{\"expr\":\"mysql_global_status_open_files{instance=~\\\"$instance\\\"}\",\"legend\":\"Open Files\"}],\"name\":\"MySQL Open Files\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":24,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+              "weight": 0
+            }
+          ]
+        },
+        {
+          "name": "Table Openings",
+          "weight": 6,
+          "charts": [
+            {
+              "configs": "{\"targets\":[{\"expr\":\"rate(mysql_global_status_table_open_cache_hits{instance=~\\\"$instance\\\"}[5m])\\n/\\n(\\nrate(mysql_global_status_table_open_cache_hits{instance=~\\\"$instance\\\"}[5m])\\n+\\nrate(mysql_global_status_table_open_cache_misses{instance=~\\\"$instance\\\"}[5m])\\n)\",\"legend\":\"Table Open Cache Hit Ratio\"}],\"name\":\"Table Open Cache Hit Ratio  Mysql 5.6.6+\",\"description\":\"**MySQL Table Open Cache Status**\\n\\nThe recommendation is to set the `table_open_cache_instances` to a loose correlation to virtual CPUs, keeping in mind that more instances means the cache is split more times. If you have a cache set to 500 but it has 10 instances, each cache will only have 50 cached.\\n\\nThe `table_definition_cache` and `table_open_cache` can be left as default as they are auto-sized MySQL 5.6 and above (ie: do not set them to any value).\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"util\":\"percentUnit\"},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":0,\"y\":0,\"i\":\"0\"}}",
+              "weight": 0
+            },
+            {
+              "configs": "{\"targets\":[{\"expr\":\"mysql_global_status_open_tables{instance=~\\\"$instance\\\"}\",\"legend\":\"Open Tables\"},{\"expr\":\"mysql_global_variables_table_open_cache{instance=~\\\"$instance\\\"}\",\"legend\":\"Table Open Cache\"}],\"name\":\"MySQL Open Tables\",\"description\":\"**MySQL Open Tables**\\n\\nThe recommendation is to set the `table_open_cache_instances` to a loose correlation to virtual CPUs, keeping in mind that more instances means the cache is split more times. If you have a cache set to 500 but it has 10 instances, each cache will only have 50 cached.\\n\\nThe `table_definition_cache` and `table_open_cache` can be left as default as they are auto-sized MySQL 5.6 and above (ie: do not set them to any value).\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":12,\"y\":0,\"i\":\"1\"}}",
+              "weight": 0
+            }
+          ]
+        }
+      ]
+    }
+  ]
