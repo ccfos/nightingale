@@ -246,6 +246,7 @@ CREATE TABLE alert_rule (
 	notify_channels varchar(255) NOT NULL DEFAULT ''::character varying,
 	notify_groups varchar(255) NOT NULL DEFAULT ''::character varying,
 	notify_repeat_step int4 NOT NULL DEFAULT 0,
+	notify_max_number int4 not null default 0,
 	recover_duration int4 NOT NULL DEFAULT 0,
 	callbacks varchar(255) NOT NULL DEFAULT ''::character varying,
 	runbook_url varchar(255) NULL,
