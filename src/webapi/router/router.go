@@ -244,9 +244,9 @@ func configRoute(r *gin.Engine, version string) {
 		pages.DELETE("/alert-cur-events", jwtAuth(), user(), perm("/alert-cur-events/del"), alertCurEventDel)
 
 		pages.GET("/alert-aggr-views", jwtAuth(), alertAggrViewGets)
-		pages.DELETE("/alert-aggr-views", jwtAuth(), alertAggrViewDel)
-		pages.POST("/alert-aggr-views", jwtAuth(), alertAggrViewAdd)
-		pages.PUT("/alert-aggr-views", jwtAuth(), alertAggrViewPut)
+		pages.DELETE("/alert-aggr-views", jwtAuth(), user(), alertAggrViewDel)
+		pages.POST("/alert-aggr-views", jwtAuth(), user(), alertAggrViewAdd)
+		pages.PUT("/alert-aggr-views", jwtAuth(), user(), alertAggrViewPut)
 
 		pages.GET("/busi-group/:id/task-tpls", jwtAuth(), user(), perm("/job-tpls"), bgro(), taskTplGets)
 		pages.POST("/busi-group/:id/task-tpls", jwtAuth(), user(), perm("/job-tpls/add"), bgrw(), taskTplAdd)
