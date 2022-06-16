@@ -75,7 +75,7 @@ func MetricViewDel(ids []int64, createBy ...interface{}) error {
 
 func MetricViewGets(createBy interface{}) ([]MetricView, error) {
 	var lst []MetricView
-	err := DB().Raw("select m.*  from metric_view as m, users as u where m.cate=0 or m.create_by = ? or u.id=? and u.roles='Admin'", createBy).Scan(&lst).Error
+	err := DB().Raw("select m.*  from metric_view as m, users as u where m.cate=0 or m.create_by = ? or u.id=? and u.roles='Admin'", createBy).Find(&lst).Error
 	if err == nil && len(lst) > 1 {
 		sort.Slice(lst, func(i, j int) bool {
 			if lst[i].Cate < lst[j].Cate {
