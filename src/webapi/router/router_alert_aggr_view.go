@@ -69,5 +69,5 @@ func alertAggrViewPut(c *gin.Context) {
 		}
 	}
 
-	ginx.NewRender(c).Message(view.Update(f.Name, f.Rule, f.Cate))
+	ginx.NewRender(c).Message(view.Update(f.Name, f.Rule, f.Cate, me.Id))
 }

@@ -82,7 +82,7 @@ func (v *AlertAggrView) Add() error {
 	return Insert(v)
 }
 
-func (v *AlertAggrView) Update(name, rule string, cate int) error {
+func (v *AlertAggrView) Update(name, rule string, cate int, createBy int64) error {
 	if err := v.Verify(); err != nil {
 		return err
 	}
@@ -92,7 +92,11 @@ func (v *AlertAggrView) Update(name, rule string, cate int) error {
 	v.Rule = rule
 	v.Cate = cate
 
-	return DB().Model(v).Select("name", "rule", "cate", "update_at").Updates(v).Error
+	if v.CreateBy == 0 {
+		v.CreateBy = createBy
+	}
+
+	return DB().Model(v).Select("name", "rule", "cate", "update_at", "create_by").Updates(v).Error
 }
 
 // AlertAggrViewDel: userid for safe delete

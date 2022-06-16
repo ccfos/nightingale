@@ -71,5 +71,5 @@ func metricViewPut(c *gin.Context) {
 		}
 	}
 
-	ginx.NewRender(c).Message(view.Update(f.Name, f.Configs, f.Cate))
+	ginx.NewRender(c).Message(view.Update(f.Name, f.Configs, f.Cate, me.Id))
 }

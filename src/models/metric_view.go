@@ -47,7 +47,7 @@ func (v *MetricView) Add() error {
 	return Insert(v)
 }
 
-func (v *MetricView) Update(name, configs string, cate int) error {
+func (v *MetricView) Update(name, configs string, cate int, createBy int64) error {
 	if err := v.Verify(); err != nil {
 		return err
 	}
@@ -57,7 +57,11 @@ func (v *MetricView) Update(name, configs string, cate int) error {
 	v.Configs = configs
 	v.Cate = cate
 
-	return DB().Model(v).Select("name", "configs", "cate", "update_at").Updates(v).Error
+	if v.CreateBy == 0 {
+		v.CreateBy = createBy
+	}
+
+	return DB().Model(v).Select("name", "configs", "cate", "update_at", "create_by").Updates(v).Error
 }
 
 // MetricViewDel: userid for safe delete
