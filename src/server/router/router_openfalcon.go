@@ -206,11 +206,9 @@ func falconPush(c *gin.Context) {
 			if has {
 				common.AppendLabels(pt, target)
 			}
-
-			writer.Writers.PushSample(ident, pt)
-		} else {
-			writer.Writers.PushSample("default_hash_string", pt)
 		}
+
+		writer.Writers.PushSample(arr[i].Metric, pt)
 
 		succ++
 	}

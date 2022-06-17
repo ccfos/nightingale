@@ -59,9 +59,10 @@ func remoteWrite(c *gin.Context) {
 	}
 
 	var (
-		now   = time.Now().Unix()
-		ids   = make(map[string]interface{})
-		ident string
+		now    = time.Now().Unix()
+		ids    = make(map[string]interface{})
+		ident  string
+		metric string
 	)
 
 	for i := 0; i < count; i++ {
@@ -71,6 +72,10 @@ func remoteWrite(c *gin.Context) {
 		for j := 0; j < len(req.Timeseries[i].Labels); j++ {
 			if req.Timeseries[i].Labels[j].Name == "ident" {
 				ident = req.Timeseries[i].Labels[j].Value
+			}
+
+			if req.Timeseries[i].Labels[j].Name == "__name__" {
+				metric = req.Timeseries[i].Labels[j].Value
 			}
 		}
 
@@ -94,11 +99,9 @@ func remoteWrite(c *gin.Context) {
 			if has {
 				common.AppendLabels(req.Timeseries[i], target)
 			}
-
-			writer.Writers.PushSample(ident, req.Timeseries[i])
-		} else {
-			writer.Writers.PushSample("default_hash_string", req.Timeseries[i])
 		}
+
+		writer.Writers.PushSample(metric, req.Timeseries[i])
 	}
 
 	promstat.CounterSampleTotal.WithLabelValues(config.C.ClusterName, "prometheus").Add(float64(count))
