@@ -22,6 +22,14 @@ import (
 	"github.com/didi/nightingale/v5/src/server/writer"
 )
 
+var promMetricFilter map[string]bool = map[string]bool{
+	"up":                                    true,
+	"scrape_series_added":                   true,
+	"scrape_samples_post_metric_relabeling": true,
+	"scrape_samples_scraped":                true,
+	"scrape_duration_seconds":               true,
+}
+
 type promqlForm struct {
 	PromQL string `json:"promql"`
 }
@@ -88,6 +96,14 @@ func remoteWrite(c *gin.Context) {
 					ident = req.Timeseries[i].Labels[j].Value
 				}
 			}
+		}
+
+		// 当数据是通过prometheus抓取（也许直接remote write到夜莺）的时候，prometheus会自动产生部分系统指标
+		// 例如最典型的有up指标，是prometheus为exporter生成的指标，即使exporter挂掉的时候也会送up=0的指标
+		// 此类指标当剔除，否则会导致redis数据中时间戳被意外更新，导致由此类指标中携带的ident的相关target_up指标无法变为实际的0值
+		// 更多详细信息：https://prometheus.io/docs/concepts/jobs_instances/#automatically-generated-labels-and-time-series
+		if _, has := promMetricFilter[metric]; has {
+			ident = ""
 		}
 
 		if len(ident) > 0 {
