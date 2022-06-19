@@ -163,6 +163,10 @@ func (ar *AlertRule) Update(arf AlertRule) error {
 	arf.CreateBy = ar.CreateBy
 	arf.UpdateAt = time.Now().Unix()
 
+	err = arf.Verify()
+	if err != nil {
+		return err
+	}
 	return DB().Model(ar).Select("*").Updates(arf).Error
 }
 
