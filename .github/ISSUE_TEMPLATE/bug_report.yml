@@ -29,7 +29,7 @@ body:
     attributes:
       label: System info
       description: Include nightingale version, operating system, and other relevant details
-      placeholder: ex. categraf 0.1.0, Ubuntu 20.04, Docker 20.10.8, n9e 5.9.2 n9e-fe 5.5.0
+      placeholder: ex. n9e 5.9.2, n9e-fe 5.5.0, categraf 0.1.0, Ubuntu 20.04, Docker 20.10.8
     validations:
       required: true
   - type: textarea
