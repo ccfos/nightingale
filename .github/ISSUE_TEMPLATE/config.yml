@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Nightingale community
-    url: https://n9e.didiyun.com/community/
-    about: List of communication channels for the Nightingale community.
+  - name: Nightingale docs
+    url: https://n9e.github.io/
+    about: You may want to read through the document before asking questions.
