@@ -1,0 +1,35 @@
+[logs]
+## key 占位符
+api_key = "ef4ahfbwzwwtlwfpbertgq1i6mq0ab1q"
+## 是否开启日志采集
+enable = false
+## 接受日志的server地址
+send_to = "127.0.0.1:17878"
+## 发送日志的协议 http/tcp
+send_type = "http"
+## 是否压缩发送
+use_compress = false
+## 是否采用ssl
+send_with_tls = false
+##
+batch_wait = 5
+## 日志offset信息保存目录
+run_path = "/opt/categraf/run"
+## 最多同时采集多少个日志文件
+open_files_limit = 100
+## 定期扫描目录下是否有新增日志
+scan_period = 10
+##
+frame_size = 10
+##
+collect_container_all = true
+  ## 全局的处理规则
+  [[logs.Processing_rules]]
+  ## 单个日志采集配置
+  [[logs.items]]
+  ## file/journald
+  type = "file"
+  ## type=file时 path必填，type=journald时 port必填
+  path = "/opt/tomcat/logs/*.txt"
+  source = "tomcat"
+  service = "my_service"

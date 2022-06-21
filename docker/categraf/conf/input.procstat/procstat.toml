@@ -1,0 +1,31 @@
+# # collect interval
+# interval = 15
+
+# [[instances]]
+# # executable name (ie, pgrep <search_exec_substring>)
+# search_exec_substring = "nginx"
+
+# # pattern as argument for pgrep (ie, pgrep -f <search_cmdline_substring>)
+# search_cmdline_substring = "n9e server"
+
+# # windows service name
+# search_win_service = ""
+
+# # append some labels for series
+# labels = { region="cloud", product="n9e" }
+
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+# # mode to use when calculating CPU usage. can be one of 'solaris' or 'irix'
+# mode = "irix"
+
+# gather_more_metrics = [
+#     "threads",
+#     "fd",
+#     "io",
+#     "uptime",
+#     "cpu",
+#     "mem",
+#     "limit"
+# ]
