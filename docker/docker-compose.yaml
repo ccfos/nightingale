@@ -135,7 +135,7 @@ services:
       sh -c "/wait && /app/n9e server"
 
   categraf:
-    image: "flashcatcloud/categraf:v0.1.3"
+    image: "flashcatcloud/categraf:v0.1.6"
     container_name: "categraf"
     hostname: "categraf01"
     restart: always
