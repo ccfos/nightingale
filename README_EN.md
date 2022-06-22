@@ -50,9 +50,9 @@ Nightingale is an cloud-native monitoring system by All-In-On design, support en
 
 ## Contact us and feedback questions
 - We recommend that you use [github issue](https://github.com/didi/nightingale/issues) as the preferred channel for issue feedback and requirement submission;
-- You can join our WeChat group - [Nightingale WeChat Group](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png);
+- You can join our WeChat group
 
-<img src="doc/img/wx.jpg" width="180">
+<img src="doc/img/n9e-vx-new.png" width="180">
 
 
 ## Contributing

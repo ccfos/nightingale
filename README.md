@@ -77,9 +77,9 @@ Nightingale 可以接收各种采集器上报的监控数据，转存到时序�
 ## 联系我们
 
 - 加入微信群组，请先添加微信：borgmon 备注：夜莺加群
-- 推荐您关注夜莺监控公众号，及时获取相关产品动态，了解答疑方式
+- 推荐您关注夜莺监控公众号，及时获取相关产品动态
 
-<img src="doc/img/wx.jpg" width="180">
+<img src="doc/img/n9e-vx-new.png" width="180">
 
 
 ## License
