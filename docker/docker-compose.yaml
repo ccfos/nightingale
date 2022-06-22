@@ -134,18 +134,16 @@ services:
     command: >
       sh -c "/wait && /app/n9e server"
 
-  telegraf:
-    image: "telegraf:1.20.3"
-    container_name: "telegraf"
-    hostname: "telegraf01"
+  categraf:
+    image: "flashcatcloud/categraf:v0.1.3"
+    container_name: "categraf"
+    hostname: "categraf01"
     restart: always
     environment:
       TZ: Asia/Shanghai
     volumes:
-      - ./telegrafetc/telegraf.conf:/etc/telegraf/telegraf.conf
+      - ./categraf/conf:/etc/categraf/conf
     ports:
-      - "8125:8125/udp"
-      - "8092:8092/udp"
       - "8094:8094/tcp"
     networks:
       - nightingale
