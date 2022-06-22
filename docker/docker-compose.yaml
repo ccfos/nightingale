@@ -141,8 +141,13 @@ services:
     restart: always
     environment:
       TZ: Asia/Shanghai
+      HOST_PROC: /hostfs/proc
+      HOST_SYS: /hostfs/sys
+      HOST_MOUNT_PREFIX: /hostfs
     volumes:
       - ./categraf/conf:/etc/categraf/conf
+      - /:/hostfs
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8094:8094/tcp"
     networks:
