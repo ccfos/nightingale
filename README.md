@@ -40,8 +40,6 @@
 - [快速安装](https://n9e.github.io/docs/install/compose/)
 - [详细文档](https://n9e.github.io/)
 - [网友分享](https://n9e.github.io/docs/prologue/share/)
-- [常见问题](https://www.gitlink.org.cn/ccfos/nightingale/wiki)
-- [提问](https://github.com/didi/nightingale/issues)
 
 ## 产品演示
 
