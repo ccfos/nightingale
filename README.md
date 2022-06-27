@@ -66,15 +66,15 @@ Nightingale 可以接收各种采集器上报的监控数据，转存到时序�
 
 我们欢迎您以各种方式参与到夜莺开源项目和开源社区中来，工作包括不限于：
 
-- 反馈使用中遇到的问题和Bug => [github issue](https://github.com/didi/nightingale/issues)
 - 补充和完善文档 => [n9e.github.io](https://n9e.github.io/)
 - 分享您在使用夜莺监控过程中的最佳实践和经验心得 => [文章分享](https://n9e.github.io/docs/prologue/share/)
+- 提交产品建议 =》 [github issue](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Ffeature&template=enhancement.md)
 - 提交代码，让夜莺监控更快、更稳、更好用 => [github pull request](https://github.com/didi/nightingale/pulls)
 
 
 ## 联系我们
 
-- [❓关于如何答疑](doc/support.md)
+- [❓有安装使用上的问题可以通过这里的途径来解决](doc/support.md)
 - 推荐您关注夜莺监控公众号，及时获取相关产品动态
 
 <img src="doc/img/n9e-vx-new.png" width="180">
