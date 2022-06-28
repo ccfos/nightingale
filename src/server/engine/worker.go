@@ -347,8 +347,7 @@ func (r RuleEval) handleNewEvent(event *models.AlertCurEvent) {
 	} else {
 		r.pendings[event.Hash] = event
 	}
-
-	if r.pendings[event.Hash].LastEvalTime-r.pendings[event.Hash].TriggerTime > int64(event.PromForDuration) {
+	if r.pendings[event.Hash].LastEvalTime-r.pendings[event.Hash].TriggerTime+int64(event.PromEvalInterval) >= int64(event.PromForDuration) {
 		r.fireEvent(event)
 	}
 }
@@ -399,7 +398,7 @@ func (r RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
 		}
 
 		// 如果配置了留观时长，就不能立马恢复了
-		if r.rule.RecoverDuration > 0 && now-event.LastEvalTime <= r.rule.RecoverDuration {
+		if r.rule.RecoverDuration > 0 && now-event.LastEvalTime < r.rule.RecoverDuration {
 			continue
 		}
 
