@@ -143,8 +143,8 @@ func refreshPost(c *gin.Context) {
 func loginRedirect(c *gin.Context) {
 	redirect := ginx.QueryStr(c, "redirect", "/")
 
-	v, exsits := c.Get("userid")
-	if exsits {
+	v, exists := c.Get("userid")
+	if exists {
 		userid := v.(int64)
 		user, err := models.UserGetById(userid)
 		ginx.Dangerous(err)
