@@ -39,7 +39,6 @@ func alertMuteAdd(c *gin.Context) {
 func alertMuteAddByService(c *gin.Context) {
 	var f models.AlertMute
 	ginx.BindJSON(c, &f)
-	f.GroupId = 0
 
 	ginx.NewRender(c).Message(f.Add())
 }
