@@ -37,7 +37,7 @@
 
 ## 资料链接
 
-- [快速安装](https://n9e.github.io/docs/install/compose/)
+- [快速安装](https://mp.weixin.qq.com/s/iEC4pfL1TgjMDOWYh8H-FA)
 - [详细文档](https://n9e.github.io/)
 - [网友分享](https://n9e.github.io/docs/prologue/share/)
 
