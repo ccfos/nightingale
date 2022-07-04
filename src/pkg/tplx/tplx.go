@@ -16,6 +16,7 @@ var TemplateFuncMap = template.FuncMap{
 	"match":               regexp.MatchString,
 	"toUpper":             strings.ToUpper,
 	"toLower":             strings.ToLower,
+	"contains":            strings.Contains,
 	"humanize":            Humanize,
 	"humanize1024":        Humanize1024,
 	"humanizeDuration":    HumanizeDuration,
