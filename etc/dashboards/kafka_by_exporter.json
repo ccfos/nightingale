@@ -1,63 +1,360 @@
-[
-    {
-      "name": "Kafka - 模板",
-      "tags": "Kafka Prometheus ",
-      "configs": "{\"var\":[{\"name\":\"instance\",\"definition\":\"label_values(kafka_brokers,  instance)\"},{\"name\":\"job\",\"definition\":\"label_values(kafka_brokers,  job)\"}]}",
-      "chart_groups": [
-        {
-          "name": "overview",
-          "weight": 0,
-          "charts": [
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"count(count by (topic) (kafka_topic_partitions))\"}],\"name\":\"topics\",\"custom\":{\"textMode\":\"value\",\"colorMode\":\"value\",\"calc\":\"lastNotNull\",\"colSpan\":1,\"textSize\":{\"value\":50}},\"options\":{\"standardOptions\":{}},\"version\":\"2.0.0\",\"type\":\"stat\",\"layout\":{\"h\":1,\"w\":8,\"x\":8,\"y\":0,\"i\":\"0\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"kafka_brokers\"}],\"name\":\"brokers\",\"custom\":{\"textMode\":\"value\",\"colorMode\":\"value\",\"calc\":\"lastNotNull\",\"colSpan\":1,\"textSize\":{\"value\":50}},\"options\":{\"standardOptions\":{}},\"version\":\"2.0.0\",\"type\":\"stat\",\"layout\":{\"h\":1,\"w\":8,\"x\":0,\"y\":0,\"i\":\"1\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"sum(kafka_topic_partitions)\"}],\"name\":\"partitions\",\"custom\":{\"textMode\":\"value\",\"colorMode\":\"value\",\"calc\":\"lastNotNull\",\"colSpan\":1,\"textSize\":{\"value\":50}},\"options\":{\"standardOptions\":{}},\"version\":\"2.0.0\",\"type\":\"stat\",\"layout\":{\"h\":1,\"w\":8,\"x\":16,\"y\":0,\"i\":\"2\"}}",
-              "weight": 0
-            }
-          ]
-        },
-        {
-          "name": "throughput",
-          "weight": 1,
-          "charts": [
-            {
-              "configs": "{\"targets\":[{\"expr\":\"sum(rate(kafka_topic_partition_current_offset{instance=\\\"$instance\\\"}[1m])) by (topic)\"}],\"name\":\"Message in per second\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":0,\"y\":0,\"i\":\"0\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"expr\":\"sum(kafka_consumer_lag_millis{instance=\\\"$instance\\\"}) by (consumergroup, topic) \",\"legend\":\"{{consumergroup}} (topic: {{topic}})\"}],\"name\":\"Latency by Consumer Group\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"util\":\"humantimeMilliseconds\"},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":0,\"y\":2,\"i\":\"1\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"expr\":\"sum(rate(kafka_consumergroup_current_offset{instance=\\\"$instance\\\"}[1m])) by (topic)\"}],\"name\":\"Message consume per second\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":12,\"y\":0,\"i\":\"2\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"expr\":\"sum(kafka_topic_partition_current_offset{instance=\\\"$instance\\\"}) by (topic) - sum(kafka_consumergroup_current_offset{instance=\\\"$instance\\\"}) by (topic) \",\"legend\":\"{{consumergroup}} (topic: {{topic}})\"}],\"name\":\"Lag by Consumer Group\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":12,\"y\":2,\"i\":\"3\"}}",
-              "weight": 0
-            }
-          ]
-        },
-        {
-          "name": "patition/replicate",
-          "weight": 2,
-          "charts": [
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"kafka_topic_partitions{instance=\\\"$instance\\\"}\",\"legend\":\"{{topic}}\"}],\"name\":\"Partitions per Topic\",\"custom\":{\"showHeader\":true,\"calc\":\"lastNotNull\",\"displayMode\":\"seriesToRows\"},\"options\":{\"standardOptions\":{}},\"overrides\":[{}],\"version\":\"2.0.0\",\"type\":\"table\",\"layout\":{\"h\":2,\"w\":12,\"x\":0,\"y\":0,\"i\":\"0\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"kafka_topic_partition_under_replicated_partition\",\"legend\":\"{{topic}}-{{partition}}\"}],\"name\":\"Under Replicated\",\"description\":\"副本不同步预案\\n1. Restart the Zookeeper leader.\\n2. Restart the broker\\\\brokers that are not replicating some of the partitions.\",\"custom\":{\"showHeader\":true,\"calc\":\"lastNotNull\",\"displayMode\":\"seriesToRows\"},\"options\":{\"standardOptions\":{}},\"overrides\":[{}],\"version\":\"2.0.0\",\"type\":\"table\",\"layout\":{\"h\":2,\"w\":12,\"x\":12,\"y\":0,\"i\":\"1\"}}",
-              "weight": 0
-            }
-          ]
-        }
+{
+  "name": "Kafka - 模板",
+  "tags": "Kafka Prometheus ",
+  "configs": {
+      "var": [
+          {
+              "name": "instance",
+              "definition": "label_values(kafka_brokers,  instance)",
+              "type": "query"
+          }
+      ],
+      "panels": [
+          {
+              "id": "6fac3216-f9e2-45c5-8037-959ab3c98de5",
+              "type": "row",
+              "name": "overview",
+              "layout": {
+                  "h": 1,
+                  "w": 24,
+                  "x": 0,
+                  "y": 0,
+                  "i": "6fac3216-f9e2-45c5-8037-959ab3c98de5",
+                  "isResizable": false
+              },
+              "collapsed": true,
+              "panels": []
+          },
+          {
+              "targets": [
+                  {
+                      "refId": "A",
+                      "expr": "kafka_brokers{instance=\"$instance\"}"
+                  }
+              ],
+              "name": "brokers",
+              "custom": {
+                  "textMode": "value",
+                  "colorMode": "value",
+                  "calc": "lastNotNull",
+                  "colSpan": 1,
+                  "textSize": {
+                      "value": 50
+                  }
+              },
+              "options": {
+                  "standardOptions": {}
+              },
+              "version": "2.0.0",
+              "type": "stat",
+              "layout": {
+                  "h": 3,
+                  "w": 6,
+                  "x": 0,
+                  "y": 1,
+                  "i": "b10ab025-2795-4ea1-b537-d03948324ea8",
+                  "isResizable": true
+              },
+              "id": "b10ab025-2795-4ea1-b537-d03948324ea8"
+          },
+          {
+              "targets": [
+                  {
+                      "refId": "A",
+                      "expr": "count(count by (topic) (kafka_topic_partitions{instance=\"$instance\"}))"
+                  }
+              ],
+              "name": "topics",
+              "custom": {
+                  "textMode": "value",
+                  "colorMode": "value",
+                  "calc": "lastNotNull",
+                  "colSpan": 1,
+                  "textSize": {
+                      "value": 50
+                  }
+              },
+              "options": {
+                  "standardOptions": {}
+              },
+              "version": "2.0.0",
+              "type": "stat",
+              "layout": {
+                  "h": 3,
+                  "w": 6,
+                  "x": 6,
+                  "y": 1,
+                  "i": "8845f449-cb6c-4fa6-9930-351f106f9e52",
+                  "isResizable": true
+              },
+              "id": "8845f449-cb6c-4fa6-9930-351f106f9e52"
+          },
+          {
+              "targets": [
+                  {
+                      "refId": "A",
+                      "expr": "sum(kafka_topic_partitions{instance=\"$instance\"})",
+                      "legend": ""
+                  }
+              ],
+              "name": "partitions",
+              "custom": {
+                  "textMode": "value",
+                  "colorMode": "value",
+                  "calc": "lastNotNull",
+                  "colSpan": 1,
+                  "textSize": {
+                      "value": 50
+                  }
+              },
+              "options": {
+                  "standardOptions": {}
+              },
+              "version": "2.0.0",
+              "type": "stat",
+              "layout": {
+                  "h": 3,
+                  "w": 6,
+                  "x": 12,
+                  "y": 1,
+                  "i": "cc26ea7b-8860-45cd-9f62-90f42bd195f5",
+                  "isResizable": true
+              },
+              "id": "cc26ea7b-8860-45cd-9f62-90f42bd195f5"
+          },
+          {
+              "targets": [
+                  {
+                      "refId": "A",
+                      "expr": "sum(kafka_topic_partition_replicas{instance=~\"$instance\"})"
+                  }
+              ],
+              "name": "Replicas",
+              "custom": {
+                  "textMode": "valueAndName",
+                  "colorMode": "value",
+                  "calc": "lastNotNull",
+                  "colSpan": 1,
+                  "textSize": {}
+              },
+              "options": {
+                  "standardOptions": {}
+              },
+              "version": "2.0.0",
+              "type": "stat",
+              "layout": {
+                  "h": 3,
+                  "w": 6,
+                  "x": 18,
+                  "y": 1,
+                  "i": "98cd9cee-69ad-4533-9eed-e307a24fffa6",
+                  "isResizable": true
+              },
+              "id": "98cd9cee-69ad-4533-9eed-e307a24fffa6"
+          },
+          {
+              "id": "79a8e48a-fdf0-4c7e-bae4-478f7b294751",
+              "type": "row",
+              "name": "throughput",
+              "layout": {
+                  "h": 1,
+                  "w": 24,
+                  "x": 0,
+                  "y": 4,
+                  "i": "79a8e48a-fdf0-4c7e-bae4-478f7b294751",
+                  "isResizable": false
+              }
+          },
+          {
+              "targets": [
+                  {
+                      "expr": "sum(rate(kafka_topic_partition_current_offset{instance=\"$instance\"}[1m])) by (topic)"
+                  }
+              ],
+              "name": "Messages produced per second",
+              "options": {
+                  "tooltip": {
+                      "mode": "all",
+                      "sort": "desc"
+                  },
+                  "legend": {
+                      "displayMode": "hidden"
+                  },
+                  "standardOptions": {},
+                  "thresholds": {}
+              },
+              "custom": {
+                  "drawStyle": "lines",
+                  "lineInterpolation": "smooth",
+                  "fillOpacity": 0.5,
+                  "stack": "off"
+              },
+              "version": "2.0.0",
+              "type": "timeseries",
+              "layout": {
+                  "h": 7,
+                  "w": 8,
+                  "x": 0,
+                  "y": 5,
+                  "i": "3ceedd68-54d0-44db-9390-ceb2299619e5",
+                  "isResizable": true
+              },
+              "id": "3ceedd68-54d0-44db-9390-ceb2299619e5"
+          },
+          {
+              "targets": [
+                  {
+                      "expr": "sum(rate(kafka_consumergroup_current_offset{instance=\"$instance\"}[1m])) by (topic)"
+                  }
+              ],
+              "name": "Messages consumed per second",
+              "options": {
+                  "tooltip": {
+                      "mode": "all",
+                      "sort": "desc"
+                  },
+                  "legend": {
+                      "displayMode": "hidden"
+                  },
+                  "standardOptions": {},
+                  "thresholds": {}
+              },
+              "custom": {
+                  "drawStyle": "lines",
+                  "lineInterpolation": "smooth",
+                  "fillOpacity": 0.5,
+                  "stack": "off"
+              },
+              "version": "2.0.0",
+              "type": "timeseries",
+              "layout": {
+                  "h": 7,
+                  "w": 8,
+                  "x": 8,
+                  "y": 5,
+                  "i": "a43a7752-00e6-41fb-9055-e04d17e22d99",
+                  "isResizable": true
+              },
+              "id": "a43a7752-00e6-41fb-9055-e04d17e22d99"
+          },
+          {
+              "targets": [
+                  {
+                      "expr": "sum(kafka_consumer_lag_millis{instance=\"$instance\"}) by (consumergroup, topic) ",
+                      "legend": "{{consumergroup}} (topic: {{topic}})"
+                  }
+              ],
+              "name": "Latency by Consumer Group",
+              "options": {
+                  "tooltip": {
+                      "mode": "all",
+                      "sort": "desc"
+                  },
+                  "legend": {
+                      "displayMode": "hidden"
+                  },
+                  "standardOptions": {
+                      "util": "milliseconds"
+                  },
+                  "thresholds": {}
+              },
+              "custom": {
+                  "drawStyle": "lines",
+                  "lineInterpolation": "smooth",
+                  "fillOpacity": 0.5,
+                  "stack": "off"
+              },
+              "version": "2.0.0",
+              "type": "timeseries",
+              "layout": {
+                  "h": 7,
+                  "w": 8,
+                  "x": 16,
+                  "y": 5,
+                  "i": "422193ca-facf-450c-b7cb-4975447f3ffc",
+                  "isResizable": true
+              },
+              "id": "422193ca-facf-450c-b7cb-4975447f3ffc"
+          },
+          {
+              "id": "e85fc913-f075-4284-a9bc-75e481039372",
+              "type": "row",
+              "name": "patition/replicate",
+              "layout": {
+                  "h": 1,
+                  "w": 24,
+                  "x": 0,
+                  "y": 12,
+                  "i": "e85fc913-f075-4284-a9bc-75e481039372",
+                  "isResizable": false
+              }
+          },
+          {
+              "targets": [
+                  {
+                      "refId": "A",
+                      "expr": "kafka_topic_partitions{instance=\"$instance\"}",
+                      "legend": "{{topic}}"
+                  }
+              ],
+              "name": "Partitions per Topic",
+              "custom": {
+                  "showHeader": true,
+                  "calc": "lastNotNull",
+                  "displayMode": "seriesToRows"
+              },
+              "options": {
+                  "standardOptions": {}
+              },
+              "overrides": [
+                  {}
+              ],
+              "version": "2.0.0",
+              "type": "table",
+              "layout": {
+                  "h": 7,
+                  "w": 12,
+                  "x": 0,
+                  "y": 13,
+                  "i": "8d50a6ec-9dde-4239-830d-d3568d0e8748",
+                  "isResizable": true
+              },
+              "id": "8d50a6ec-9dde-4239-830d-d3568d0e8748"
+          },
+          {
+              "targets": [
+                  {
+                      "refId": "A",
+                      "expr": "kafka_topic_partition_under_replicated_partition",
+                      "legend": "{{topic}}-{{partition}}"
+                  }
+              ],
+              "name": "Partitions Under Replicated",
+              "description": "副本不同步预案\n1. Restart the Zookeeper leader.\n2. Restart the broker\\brokers that are not replicating some of the partitions.",
+              "custom": {
+                  "showHeader": true,
+                  "colorMode": "value",
+                  "calc": "lastNotNull",
+                  "displayMode": "seriesToRows"
+              },
+              "options": {
+                  "standardOptions": {}
+              },
+              "overrides": [
+                  {}
+              ],
+              "version": "2.0.0",
+              "type": "table",
+              "layout": {
+                  "h": 7,
+                  "w": 12,
+                  "x": 12,
+                  "y": 13,
+                  "i": "9aaf3255-8281-47f3-996b-8585e0f68c05",
+                  "isResizable": true
+              },
+              "id": "9aaf3255-8281-47f3-996b-8585e0f68c05"
+          }
       ]
-    }
-  ]
+  }
+}
