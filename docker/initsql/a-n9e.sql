@@ -350,21 +350,21 @@ insert into metric_view(name, cate, configs) values('Host View', 0, '{"filters":
 DROP TABLE IF EXISTS `recording_rule`;
 
 CREATE TABLE `recording_rule` (
-    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-    `group_id` bigint NOT NULL DEFAULT '0' COMMENT 'group_id',
-    `cluster` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-    `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-    `prom_ql` varchar(8192) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'promql',
-    `prom_eval_interval` int NOT NULL COMMENT 'evaluate interval',
-    `append_tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'split by space: service=n9e mod=api',
-    `create_at` bigint DEFAULT '0',
-    `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '',
-    `update_at` bigint DEFAULT '0',
-    `update_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '',
+    `id` bigint unsigned not null auto_increment,
+    `group_id` bigint not null default '0' comment 'group_id',
+    `cluster` varchar(128) not null,
+    `name` varchar(255) not null comment 'new metric name',
+    `prom_ql` varchar(8192) not null comment 'promql',
+    `prom_eval_interval` int not null comment 'evaluate interval',
+    `append_tags` varchar(255) default '' comment 'split by space: service=n9e mod=api',
+    `create_at` bigint default '0',
+    `create_by` varchar(64) default '',
+    `update_at` bigint default '0',
+    `update_by` varchar(64) default '',
     PRIMARY KEY (`id`),
-    KEY `group_id` (`group_id`) USING BTREE,
-    KEY `update_at` (`update_at`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    KEY `group_id` (`group_id`),
+    KEY `update_at` (`update_at`)
+) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE `alert_aggr_view` (
     `id` bigint unsigned not null auto_increment,
