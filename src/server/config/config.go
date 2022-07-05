@@ -136,7 +136,6 @@ type Config struct {
 	WriterOpt          WriterGlobalOpt
 	Writers            []WriterOptions
 	Reader             ReaderOptions
-	Writer             WriterOptions
 	Ibex               Ibex
 }
 

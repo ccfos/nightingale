@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/server/writer"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/httplib"
@@ -20,7 +21,6 @@ import (
 	"github.com/didi/nightingale/v5/src/server/naming"
 	"github.com/didi/nightingale/v5/src/server/reader"
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
-	"github.com/didi/nightingale/v5/src/server/writer"
 )
 
 func loopFilterRules(ctx context.Context) {
@@ -559,5 +559,10 @@ func (r RecordingRuleEval) Work() {
 		logger.Errorf("rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
 		return
 	}
-	writer.Writer.Write(conv.ConvertToTimeSeries(value, r.rule))
+	ts := conv.ConvertToTimeSeries(value, r.rule)
+	if len(ts) != 0 {
+		for _, v := range ts {
+			writer.Writers.PushSample("recording_rules", v)
+		}
+	}
 }

@@ -181,7 +181,6 @@ func NewWriters() WritersType {
 }
 
 var Writers = NewWriters()
-var Writer WriterType
 
 func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 	Writers.globalOpt = globalOpt
@@ -225,35 +224,5 @@ func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 		Writers.Put(opts[i].Url, writer)
 	}
 
-	return nil
-}
-
-func InitWriter(opts config.WriterOptions) error {
-
-	cli, err := api.NewClient(api.Config{
-		Address: opts.Url,
-		RoundTripper: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   time.Duration(opts.DialTimeout) * time.Millisecond,
-				KeepAlive: time.Duration(opts.KeepAlive) * time.Millisecond,
-			}).DialContext,
-			ResponseHeaderTimeout: time.Duration(opts.Timeout) * time.Millisecond,
-			TLSHandshakeTimeout:   time.Duration(opts.TLSHandshakeTimeout) * time.Millisecond,
-			ExpectContinueTimeout: time.Duration(opts.ExpectContinueTimeout) * time.Millisecond,
-			MaxConnsPerHost:       opts.MaxConnsPerHost,
-			MaxIdleConns:          opts.MaxIdleConns,
-			MaxIdleConnsPerHost:   opts.MaxIdleConnsPerHost,
-			IdleConnTimeout:       time.Duration(opts.IdleConnTimeout) * time.Millisecond,
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	Writer = WriterType{
-		Opts:   opts,
-		Client: cli,
-	}
 	return nil
 }

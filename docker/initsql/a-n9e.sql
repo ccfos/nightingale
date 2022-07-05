@@ -354,6 +354,7 @@ CREATE TABLE `recording_rule` (
     `group_id` bigint not null default '0' comment 'group_id',
     `cluster` varchar(128) not null,
     `name` varchar(255) not null comment 'new metric name',
+    `note` varchar(255) not null comment 'rule note',
     `prom_ql` varchar(8192) not null comment 'promql',
     `prom_eval_interval` int not null comment 'evaluate interval',
     `append_tags` varchar(255) default '' comment 'split by space: service=n9e mod=api',

@@ -122,11 +122,6 @@ func (s Server) initialize() (func(), error) {
 		return fns.Ret(), err
 	}
 
-	// init prometheus remote only one writer for recording rule
-	if err = writer.InitWriter(config.C.Writer); err != nil {
-		return fns.Ret(), err
-	}
-
 	// init prometheus remote reader
 	if err = reader.Init(config.C.Reader); err != nil {
 		return fns.Ret(), err

@@ -13,9 +13,9 @@ import (
 type RecordingRule struct {
 	Id               int64    `json:"id" gorm:"primreyKey"`
 	GroupId          int64    `json:"group_id"`             // busi group id
-	Cluster          string   `json:"-"`                    // take effect by cluster
-	ClusterJSON      []string `json:"cluster" gorm:"-"`     // for fe
+	Cluster          string   `json:"cluster"`              // take effect by cluster
 	Name             string   `json:"name"`                 // recording name
+	Note             string   `json:"note"`                 // note
 	PromQl           string   `json:"prom_ql"`              // just one ql for promql
 	PromEvalInterval int      `json:"prom_eval_interval"`   // unit:s
 	AppendTags       string   `json:"-"`                    // split by space: service=n9e mod=api
@@ -31,12 +31,12 @@ func (re *RecordingRule) TableName() string {
 }
 
 func (re *RecordingRule) FE2DB() {
-	re.Cluster = strings.Join(re.ClusterJSON, " ")
+	//re.Cluster = strings.Join(re.ClusterJSON, " ")
 	re.AppendTags = strings.Join(re.AppendTagsJSON, " ")
 }
 
 func (re *RecordingRule) DB2FE() {
-	re.ClusterJSON = strings.Fields(re.Cluster)
+	//re.ClusterJSON = strings.Fields(re.Cluster)
 	re.AppendTagsJSON = strings.Fields(re.AppendTags)
 }
 func (re *RecordingRule) Verify() error {
@@ -168,7 +168,7 @@ func RecordingRuleGetById(id int64) (*RecordingRule, error) {
 func RecordingRuleGetsByCluster(cluster string) ([]*RecordingRule, error) {
 	session := DB()
 	if cluster != "" {
-		session = DB().Where("cluster like ?", "%"+cluster+"%")
+		session = DB().Where("cluster = ?", cluster)
 	}
 
 	var lst []*RecordingRule
@@ -185,7 +185,7 @@ func RecordingRuleGetsByCluster(cluster string) ([]*RecordingRule, error) {
 func RecordingRuleStatistics(cluster string) (*Statistics, error) {
 	session := DB().Model(&RecordingRule{}).Select("count(*) as total", "max(update_at) as last_updated")
 	if cluster != "" {
-		session = session.Where("cluster like ?", "%"+cluster+"%")
+		session = session.Where("cluster = ?", cluster)
 	}
 
 	var stats []*Statistics
