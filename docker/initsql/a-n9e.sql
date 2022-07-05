@@ -123,7 +123,10 @@ insert into `role_operation`(role_name, operation) values('Standard', '/job-tpls
 insert into `role_operation`(role_name, operation) values('Standard', '/job-tasks');
 insert into `role_operation`(role_name, operation) values('Standard', '/job-tasks/add');
 insert into `role_operation`(role_name, operation) values('Standard', '/job-tasks/put');
-
+insert into `role_operation`(role_name, operation) values('Standard', '/recording-rules');
+insert into `role_operation`(role_name, operation) values('Standard', '/recording-rules/add');
+insert into `role_operation`(role_name, operation) values('Standard', '/recording-rules/put');
+insert into `role_operation`(role_name, operation) values('Standard', '/recording-rules/del');
 
 -- for alert_rule | collect_rule | mute | dashboard grouping
 CREATE TABLE `busi_group` (
@@ -340,6 +343,28 @@ CREATE TABLE `metric_view` (
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
 insert into metric_view(name, cate, configs) values('Host View', 0, '{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}');
+
+-- ----------------------------
+-- Table structure for recording_rule
+-- ----------------------------
+DROP TABLE IF EXISTS `recording_rule`;
+
+CREATE TABLE `recording_rule` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `group_id` bigint NOT NULL DEFAULT '0' COMMENT 'group_id',
+    `cluster` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+    `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+    `prom_ql` varchar(8192) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'promql',
+    `prom_eval_interval` int NOT NULL COMMENT 'evaluate interval',
+    `append_tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'split by space: service=n9e mod=api',
+    `create_at` bigint DEFAULT '0',
+    `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '',
+    `update_at` bigint DEFAULT '0',
+    `update_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '',
+    PRIMARY KEY (`id`),
+    KEY `group_id` (`group_id`) USING BTREE,
+    KEY `update_at` (`update_at`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `alert_aggr_view` (
     `id` bigint unsigned not null auto_increment,

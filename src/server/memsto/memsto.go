@@ -19,4 +19,5 @@ func Sync() {
 	SyncAlertSubscribes()
 	SyncAlertRules()
 	SyncTargets()
+	SyncRecordingRules()
 }

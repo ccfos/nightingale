@@ -15,13 +15,13 @@ func (j *JSONObj) Scan(value interface{}) error {
 	// 判断是不是byte类型
 	bytes, ok := value.([]byte)
 	if !ok {
-	   // 判断是不是string类型
-	   strings, ok := value.(string)
-	   if !ok {
-	      return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
-	   }
-	   // string类型转byte[]
-	   bytes = []byte(strings)
+		// 判断是不是string类型
+		strings, ok := value.(string)
+		if !ok {
+			return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
+		}
+		// string类型转byte[]
+		bytes = []byte(strings)
 	}
 
 	result := json.RawMessage{}
