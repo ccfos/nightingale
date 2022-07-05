@@ -365,6 +365,7 @@ func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
 		if event.LastEvalTime > fired.LastSentTime+int64(r.rule.NotifyRepeatStep)*60 {
 			if r.rule.NotifyMaxNumber == 0 {
 				// 最大可以发送次数如果是0，表示不想限制最大发送次数，一直发即可
+				event.NotifyCurNumber = fired.NotifyCurNumber + 1
 				r.pushEventToQueue(event)
 			} else {
 				// 有最大发送次数的限制，就要看已经发了几次了，是否达到了最大发送次数
