@@ -16,13 +16,13 @@ func recordingRuleGets(c *gin.Context) {
 }
 
 func recordingRuleGet(c *gin.Context) {
-	arid := ginx.UrlParamInt64(c, "arid")
+	rrid := ginx.UrlParamInt64(c, "rrid")
 
-	ar, err := models.RecordingRuleGetById(arid)
+	ar, err := models.RecordingRuleGetById(rrid)
 	ginx.Dangerous(err)
 
 	if ar == nil {
-		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
+		ginx.NewRender(c, http.StatusNotFound).Message("No such recoding rule")
 		return
 	}
 
@@ -62,12 +62,12 @@ func recordingRulePutByFE(c *gin.Context) {
 	var f models.RecordingRule
 	ginx.BindJSON(c, &f)
 
-	arid := ginx.UrlParamInt64(c, "arid")
-	ar, err := models.RecordingRuleGetById(arid)
+	rrid := ginx.UrlParamInt64(c, "rrid")
+	ar, err := models.RecordingRuleGetById(rrid)
 	ginx.Dangerous(err)
 
 	if ar == nil {
-		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
+		ginx.NewRender(c, http.StatusNotFound).Message("No such recoding rule")
 		return
 	}
 

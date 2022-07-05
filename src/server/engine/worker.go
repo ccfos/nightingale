@@ -546,24 +546,24 @@ func (r RecordingRuleEval) Start() {
 func (r RecordingRuleEval) Work() {
 	promql := strings.TrimSpace(r.rule.PromQl)
 	if promql == "" {
-		logger.Errorf("rule_eval:%d promql is blank", r.RuleID())
+		logger.Errorf("recording_rule_eval:%d promql is blank", r.RuleID())
 		return
 	}
 
 	value, warnings, err := reader.Reader.Client.Query(context.Background(), promql, time.Now())
 	if err != nil {
-		logger.Errorf("rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
+		logger.Errorf("recording_rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
 		return
 	}
 
 	if len(warnings) > 0 {
-		logger.Errorf("rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
+		logger.Errorf("recording_rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
 		return
 	}
 	ts := conv.ConvertToTimeSeries(value, r.rule)
 	if len(ts) != 0 {
 		for _, v := range ts {
-			writer.Writers.PushSample("recording_rules", v)
+			writer.Writers.PushSample(r.rule.Name, v)
 		}
 	}
 }

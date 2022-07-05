@@ -94,7 +94,7 @@ func syncRecordingRules() error {
 	if !RecordingRuleCache.StatChanged(stat.Total, stat.LastUpdated) {
 		promstat.GaugeCronDuration.WithLabelValues(config.C.ClusterName, "sync_recording_rules").Set(0)
 		promstat.GaugeSyncNumber.WithLabelValues(config.C.ClusterName, "sync_recording_rules").Set(0)
-		logger.Debug("alert rules not changed")
+		logger.Debug("recoding rules not changed")
 		return nil
 	}
 
