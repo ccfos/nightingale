@@ -79,7 +79,7 @@ services:
       sh -c "/wait && /app/ibex server"
 
   nwebapi:
-    image: ulric2019/nightingale:5.9.3
+    image: ulric2019/nightingale:5.9.4
     container_name: nwebapi
     hostname: nwebapi
     restart: always
@@ -107,7 +107,7 @@ services:
       sh -c "/wait && /app/n9e webapi"
 
   nserver:
-    image: ulric2019/nightingale:5.9.3
+    image: ulric2019/nightingale:5.9.4
     container_name: nserver
     hostname: nserver
     restart: always

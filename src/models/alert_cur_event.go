@@ -38,14 +38,14 @@ type AlertCurEvent struct {
 	TargetNote         string            `json:"target_note"`
 	TriggerTime        int64             `json:"trigger_time"`
 	TriggerValue       string            `json:"trigger_value"`
-	Tags               string            `json:"-"`                          // for db
-	TagsJSON           []string          `json:"tags" gorm:"-"`              // for fe
-	TagsMap            map[string]string `json:"-" gorm:"-"`                 // for internal usage
-	IsRecovered        bool              `json:"is_recovered" gorm:"-"`      // for notify.py
-	NotifyUsersObj     []*User           `json:"notify_users_obj" gorm:"-"`  // for notify.py
-	LastEvalTime       int64             `json:"last_eval_time" gorm:"-"`    // for notify.py 上次计算的时间
-	LastSentTime       int64             `json:"last_sent_time" gorm:"-"`    // 上次发送时间
-	NotifyCurNumber    int               `json:"notify_cur_number" gorm:"-"` // notify: current number
+	Tags               string            `json:"-"`                         // for db
+	TagsJSON           []string          `json:"tags" gorm:"-"`             // for fe
+	TagsMap            map[string]string `json:"-" gorm:"-"`                // for internal usage
+	IsRecovered        bool              `json:"is_recovered" gorm:"-"`     // for notify.py
+	NotifyUsersObj     []*User           `json:"notify_users_obj" gorm:"-"` // for notify.py
+	LastEvalTime       int64             `json:"last_eval_time" gorm:"-"`   // for notify.py 上次计算的时间
+	LastSentTime       int64             `json:"last_sent_time" gorm:"-"`   // 上次发送时间
+	NotifyCurNumber    int               `json:"notify_cur_number"`         // notify: current number
 }
 
 func (e *AlertCurEvent) TableName() string {
@@ -179,6 +179,7 @@ func (e *AlertCurEvent) ToHis() *AlertHisEvent {
 		Tags:             e.Tags,
 		RecoverTime:      recoverTime,
 		LastEvalTime:     e.LastEvalTime,
+		NotifyCurNumber:  e.NotifyCurNumber,
 	}
 }
 
