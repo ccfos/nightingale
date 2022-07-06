@@ -16,6 +16,7 @@ type RecordingRule struct {
 	Cluster          string   `json:"cluster"`              // take effect by cluster
 	Name             string   `json:"name"`                 // new metric name
 	Note             string   `json:"note"`                 // note
+	Disabled         int      `json:"disabled"`             // 0: enabled, 1: disabled
 	PromQl           string   `json:"prom_ql"`              // just one ql for promql
 	PromEvalInterval int      `json:"prom_eval_interval"`   // unit:s
 	AppendTags       string   `json:"-"`                    // split by space: service=n9e mod=api
@@ -63,7 +64,8 @@ func (re *RecordingRule) Verify() error {
 	re.AppendTags = strings.TrimSpace(re.AppendTags)
 	rer := strings.Fields(re.AppendTags)
 	for i := 0; i < len(rer); i++ {
-		if len(strings.Split(rer[i], "=")) != 2 || !model.LabelNameRE.MatchString(strings.Split(rer[i], "=")[0]) {
+		pair := strings.Split(rer[i], "=")
+		if len(pair) != 2 || !model.LabelNameRE.MatchString(pair[0]) {
 			return fmt.Errorf("AppendTags(%s) invalid", rer[i])
 		}
 	}
@@ -171,7 +173,7 @@ func RecordingRuleGetById(id int64) (*RecordingRule, error) {
 func RecordingRuleGetsByCluster(cluster string) ([]*RecordingRule, error) {
 	session := DB()
 	if cluster != "" {
-		session = DB().Where("cluster = ?", cluster)
+		session = session.Where("cluster = ?", cluster)
 	}
 
 	var lst []*RecordingRule
