@@ -344,11 +344,6 @@ CREATE TABLE `metric_view` (
 
 insert into metric_view(name, cate, configs) values('Host View', 0, '{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}');
 
--- ----------------------------
--- Table structure for recording_rule
--- ----------------------------
-DROP TABLE IF EXISTS `recording_rule`;
-
 CREATE TABLE `recording_rule` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default '0' comment 'group_id',
