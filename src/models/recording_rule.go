@@ -6,15 +6,15 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/toolkits/pkg/str"
+	"github.com/prometheus/common/model"
 )
 
 // A RecordingRule records its vector expression into new timeseries.
 type RecordingRule struct {
-	Id               int64    `json:"id" gorm:"primreyKey"`
+	Id               int64    `json:"id" gorm:"primaryKey"`
 	GroupId          int64    `json:"group_id"`             // busi group id
 	Cluster          string   `json:"cluster"`              // take effect by cluster
-	Name             string   `json:"name"`                 // recording name
+	Name             string   `json:"name"`                 // new metric name
 	Note             string   `json:"note"`                 // note
 	PromQl           string   `json:"prom_ql"`              // just one ql for promql
 	PromEvalInterval int      `json:"prom_eval_interval"`   // unit:s
@@ -40,7 +40,7 @@ func (re *RecordingRule) DB2FE() {
 	re.AppendTagsJSON = strings.Fields(re.AppendTags)
 }
 func (re *RecordingRule) Verify() error {
-	if re.GroupId <= 0 {
+	if re.GroupId < 0 {
 		return fmt.Errorf("GroupId(%d) invalid", re.GroupId)
 	}
 
@@ -48,7 +48,7 @@ func (re *RecordingRule) Verify() error {
 		return errors.New("cluster is blank")
 	}
 
-	if str.Dangerous(re.Name) {
+	if !model.MetricNameRE.MatchString(re.Name) {
 		return errors.New("Name has invalid chreacters")
 	}
 
@@ -63,7 +63,7 @@ func (re *RecordingRule) Verify() error {
 	re.AppendTags = strings.TrimSpace(re.AppendTags)
 	rer := strings.Fields(re.AppendTags)
 	for i := 0; i < len(rer); i++ {
-		if len(strings.Split(rer[i], "=")) != 2 {
+		if len(strings.Split(rer[i], "=")) != 2 || !model.LabelNameRE.MatchString(strings.Split(rer[i], "=")[0]) {
 			return fmt.Errorf("AppendTags(%s) invalid", rer[i])
 		}
 	}
@@ -109,7 +109,10 @@ func (re *RecordingRule) Update(ref RecordingRule) error {
 	ref.CreateAt = re.CreateAt
 	ref.CreateBy = re.CreateBy
 	ref.UpdateAt = time.Now().Unix()
-
+	err := ref.Verify()
+	if err != nil {
+		return err
+	}
 	return DB().Model(re).Select("*").Updates(ref).Error
 }
 

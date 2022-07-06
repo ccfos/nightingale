@@ -22,7 +22,7 @@ func recordingRuleGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if ar == nil {
-		ginx.NewRender(c, http.StatusNotFound).Message("No such recoding rule")
+		ginx.NewRender(c, http.StatusNotFound).Message("No such recording rule")
 		return
 	}
 
@@ -67,7 +67,7 @@ func recordingRulePutByFE(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if ar == nil {
-		ginx.NewRender(c, http.StatusNotFound).Message("No such recoding rule")
+		ginx.NewRender(c, http.StatusNotFound).Message("No such recording rule")
 		return
 	}
 
