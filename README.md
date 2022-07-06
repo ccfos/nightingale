@@ -2,7 +2,7 @@
 
 [English](./README_EN.md) | [中文](./README.md)
 
-夜莺是一款开源的云原生监控系统，采用 All-In-One 的设计，提供企业级的功能特性，开箱即用的产品体验。推荐升级您的 Prometheus + AlertManager + Grafana 组合方案到夜莺 (Nightingale is an enterprise-level cloud-native monitoring system, which can be used as drop-in replacement of Prometheus for alerting and management)。
+> 夜莺是一款开源的云原生监控系统，采用 All-In-One 的设计，提供企业级的功能特性，开箱即用的产品体验。推荐升级您的 Prometheus + AlertManager + Grafana 组合方案到夜莺。
 
 **夜莺监控具有以下特点:**
 
@@ -74,7 +74,7 @@ Nightingale 可以接收各种采集器上报的监控数据（比如 [Categraf]
 
 # 如何参与
 
-开源项目要更有生命力，离不开开放的治理架构和源源不断的开发者和用户共同参与，我们致力于建立开放、中立的开源治理架构，吸纳更多来自高校、企业等各方面对云原生监控感兴趣、有热情的计算机专业人士，打造专业、有活力的开发者社区。关于**《夜莺开源项目和社区治理架构（草案）》**，请查阅 [doc/community-governance.md)](./doc/community-governance.md)。
+开源项目要更有生命力，离不开开放的治理架构和源源不断的开发者和用户共同参与，我们致力于建立开放、中立的开源治理架构，吸纳更多来自企业、高校等各方面对云原生监控感兴趣、有热情的计算机专业人士，打造专业、有活力的开发者社区。关于《夜莺开源项目和社区治理架构（草案）》，请查阅 [doc/community-governance.md](./doc/community-governance.md).
 
 **我们欢迎您以各种方式参与到夜莺开源项目和开源社区中来，工作包括不限于**：
 - 补充和完善文档 => [n9e.github.io](https://n9e.github.io/)；
