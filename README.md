@@ -45,17 +45,17 @@
 - Categraf 是夜莺监控的默认采集器，采用开放插件机制和 all-in-one 的设计，同时支持 metric、log、trace、event 的采集。Categraf 不仅可以采集 CPU、内存、网络等系统层面的指标，也集成了众多开源组件的采集能力，支持K8s生态。Categraf 内置了对应的仪表盘和告警规则，开箱即用。
  
 
-# 资料链接
+## 资料链接
 
 - [快速安装](https://mp.weixin.qq.com/s/iEC4pfL1TgjMDOWYh8H-FA)
 - [详细文档](https://n9e.github.io/)
 - [社区分享](https://n9e.github.io/docs/prologue/share/)
 
-# 产品演示
+## 产品演示
 
 <img src="doc/img/intro.gif" width="680">
 
-# 架构介绍
+## 架构介绍
 
 <img src="doc/img/arch-product.png" width="680">
 
@@ -72,7 +72,7 @@ Nightingale 可以接收各种采集器上报的监控数据（比如 [Categraf]
 如果单机版本的 Prometheus 性能不够或容灾较差，我们推荐使用 [VictoriaMetrics](https://github.com/VictoriaMetrics/VictoriaMetrics)，VictoriaMetrics 架构较为简单，性能优异，易于部署和运维，架构图如上。VictoriaMetrics 更详尽的文档，还请参考其[官网](https://victoriametrics.com/)。
 
 
-# 如何参与
+## 如何参与
 
 开源项目要更有生命力，离不开开放的治理架构和源源不断的开发者和用户共同参与，我们致力于建立开放、中立的开源治理架构，吸纳更多来自企业、高校等各方面对云原生监控感兴趣、有热情的计算机专业人士，打造专业、有活力的开发者社区。关于《夜莺开源项目和社区治理架构（草案）》，请查阅 [doc/community-governance.md](./doc/community-governance.md).
 
@@ -90,11 +90,13 @@ Nightingale 可以接收各种采集器上报的监控数据（比如 [Categraf]
 4. 最后，我们推荐你加入微信群，针对相关开放式问题，相互交流咨询 (请先加好友：[UlricGO](https://www.gitlink.org.cn/UlricQin/gist/tree/master/self.jpeg) 备注：夜莺加群+姓名+公司，交流群里会有开发者团队和专业、热心的群友回答问题)；
 
 
-# 联系我们
+## 联系我们
 - 推荐您关注夜莺监控公众号，及时获取相关产品和社区动态
 
 <img src="doc/img/n9e-vx-new.png" width="180">
 
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/ccfos/nightingale.svg)](https://starchart.cc/ccfos/nightingale)
 
-# License
+## License
 - [Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE)
