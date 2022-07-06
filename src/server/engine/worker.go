@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/server/writer"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/httplib"
@@ -33,6 +34,7 @@ func loopFilterRules(ctx context.Context) {
 			return
 		case <-time.After(duration):
 			filterRules()
+			filterRecordingRules()
 		}
 	}
 }
@@ -145,10 +147,11 @@ func (r RuleEval) Work() {
 }
 
 type WorkersType struct {
-	rules map[string]RuleEval
+	rules       map[string]RuleEval
+	recordRules map[string]RecordingRuleEval
 }
 
-var Workers = &WorkersType{rules: make(map[string]RuleEval)}
+var Workers = &WorkersType{rules: make(map[string]RuleEval), recordRules: make(map[string]RecordingRuleEval)}
 
 func (ws *WorkersType) Build(rids []int64) {
 	rules := make(map[string]*models.AlertRule)
@@ -205,6 +208,49 @@ func (ws *WorkersType) Build(rids []int64) {
 
 		go re.Start()
 		Workers.rules[hash] = re
+	}
+}
+
+func (ws *WorkersType) BuildRe(rids []int64) {
+	rules := make(map[string]*models.RecordingRule)
+
+	for i := 0; i < len(rids); i++ {
+		rule := memsto.RecordingRuleCache.Get(rids[i])
+		if rule == nil {
+			continue
+		}
+
+		hash := str.MD5(fmt.Sprintf("%d_%d_%s_%s",
+			rule.Id,
+			rule.PromEvalInterval,
+			rule.PromQl,
+			rule.AppendTags,
+		))
+
+		rules[hash] = rule
+	}
+
+	// stop old
+	for hash := range Workers.recordRules {
+		if _, has := rules[hash]; !has {
+			Workers.recordRules[hash].Stop()
+			delete(Workers.recordRules, hash)
+		}
+	}
+
+	// start new
+	for hash := range rules {
+		if _, has := Workers.recordRules[hash]; has {
+			// already exists
+			continue
+		}
+		re := RecordingRuleEval{
+			rule: rules[hash],
+			quit: make(chan struct{}),
+		}
+
+		go re.Start()
+		Workers.recordRules[hash] = re
 	}
 }
 
@@ -442,5 +488,82 @@ func (r RuleEval) pushEventToQueue(event *models.AlertCurEvent) {
 	LogEvent(event, "push_queue")
 	if !EventQueue.PushFront(event) {
 		logger.Warningf("event_push_queue: queue is full")
+	}
+}
+func filterRecordingRules() {
+	ids := memsto.RecordingRuleCache.GetRuleIds()
+
+	count := len(ids)
+	mines := make([]int64, 0, count)
+
+	for i := 0; i < count; i++ {
+		node, err := naming.HashRing.GetNode(fmt.Sprint(ids[i]))
+		if err != nil {
+			logger.Warning("failed to get node from hashring:", err)
+			continue
+		}
+
+		if node == config.C.Heartbeat.Endpoint {
+			mines = append(mines, ids[i])
+		}
+	}
+
+	Workers.BuildRe(mines)
+}
+
+type RecordingRuleEval struct {
+	rule *models.RecordingRule
+	quit chan struct{}
+}
+
+func (r RecordingRuleEval) Stop() {
+	logger.Infof("recording_rule_eval:%d stopping", r.RuleID())
+	close(r.quit)
+}
+
+func (r RecordingRuleEval) RuleID() int64 {
+	return r.rule.Id
+}
+
+func (r RecordingRuleEval) Start() {
+	logger.Infof("recording_rule_eval:%d started", r.RuleID())
+	for {
+		select {
+		case <-r.quit:
+			// logger.Infof("rule_eval:%d stopped", r.RuleID())
+			return
+		default:
+			r.Work()
+			interval := r.rule.PromEvalInterval
+			if interval <= 0 {
+				interval = 10
+			}
+			time.Sleep(time.Duration(interval) * time.Second)
+		}
+	}
+}
+
+func (r RecordingRuleEval) Work() {
+	promql := strings.TrimSpace(r.rule.PromQl)
+	if promql == "" {
+		logger.Errorf("recording_rule_eval:%d promql is blank", r.RuleID())
+		return
+	}
+
+	value, warnings, err := reader.Reader.Client.Query(context.Background(), promql, time.Now())
+	if err != nil {
+		logger.Errorf("recording_rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
+		return
+	}
+
+	if len(warnings) > 0 {
+		logger.Errorf("recording_rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
+		return
+	}
+	ts := conv.ConvertToTimeSeries(value, r.rule)
+	if len(ts) != 0 {
+		for _, v := range ts {
+			writer.Writers.PushSample(r.rule.Name, v)
+		}
 	}
 }

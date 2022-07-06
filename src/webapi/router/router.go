@@ -218,6 +218,13 @@ func configRoute(r *gin.Engine, version string) {
 		pages.PUT("/busi-group/:id/alert-rule/:arid", jwtAuth(), user(), perm("/alert-rules/put"), alertRulePutByFE)
 		pages.GET("/alert-rule/:arid", jwtAuth(), user(), perm("/alert-rules"), alertRuleGet)
 
+		pages.GET("/busi-group/:id/recording-rules", jwtAuth(), user(), perm("/recording-rules"), recordingRuleGets)
+		pages.POST("/busi-group/:id/recording-rules", jwtAuth(), user(), perm("/recording-rules/add"), bgrw(), recordingRuleAddByFE)
+		pages.DELETE("/busi-group/:id/recording-rules", jwtAuth(), user(), perm("/recording-rules/del"), bgrw(), recordingRuleDel)
+		pages.PUT("/busi-group/:id/recording-rule/:rrid", jwtAuth(), user(), perm("/recording-rules/put"), bgrw(), recordingRulePutByFE)
+		pages.GET("/recording-rule/:rrid", jwtAuth(), user(), perm("/recording-rules"), recordingRuleGet)
+		pages.PUT("/busi-group/:id/recording-rules/fields", jwtAuth(), user(), perm("/recording-rules/put"), recordingRulePutFields)
+
 		pages.GET("/busi-group/:id/alert-mutes", jwtAuth(), user(), perm("/alert-mutes"), bgro(), alertMuteGetsByBG)
 		pages.POST("/busi-group/:id/alert-mutes", jwtAuth(), user(), perm("/alert-mutes/add"), bgrw(), alertMuteAdd)
 		pages.DELETE("/busi-group/:id/alert-mutes", jwtAuth(), user(), perm("/alert-mutes/del"), bgrw(), alertMuteDel)
