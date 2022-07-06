@@ -2,28 +2,26 @@
 
 [English](./README_EN.md) | [中文](./README.md)
 
-Nightingale is an enterprise-level cloud-native monitoring system, which can be used as drop-in replacement of Prometheus for alerting and management.
+夜莺是一款开源的云原生监控系统，采用 All-In-One 的设计，提供企业级的功能特性，开箱即用的产品体验。推荐升级您的 Prometheus + AlertManager + Grafana 组合方案到夜莺 (Nightingale is an enterprise-level cloud-native monitoring system, which can be used as drop-in replacement of Prometheus for alerting and management)。
 
-夜莺是一款开源的云原生监控系统，采用 All-In-One 的设计，提供企业级的功能特性，开箱即用的产品体验。推荐升级您的 `Prometheus` + `AlertManager` + `Grafana` 组合方案到夜莺。
+**夜莺监控具有以下特点:**
 
-# 夜莺监控具有以下特点
-
-##### 开箱即用
+#### 1. 开箱即用
 支持 Docker、Helm Chart 等多种部署方式，内置多种监控大盘、快捷视图、告警规则模板，导入即可快速使用，活跃、专业的社区用户也在持续迭代和沉淀更多的最佳实践于产品中；
 
-##### 兼容并包
+#### 2. 兼容并包
 支持 [Categraf](https://github.com/flashcatcloud/categraf)、Telegraf、Grafana-agent 等多种采集器，支持 Prometheus、VictoriaMetrics、M3DB 等各种时序数据库，支持对接 Grafana，与云原生生态无缝集成；
 
-##### 开放社区
+#### 3. 开放社区
 托管于[中国计算机学会开源发展委员会](https://www.ccf.org.cn/kyfzwyh/)，有[快猫星云](https://flashcat.cloud)的持续投入，和数千名社区用户的积极参与，以及夜莺监控项目清晰明确的定位，都保证了夜莺开源社区健康、长久的发展；
 
-##### 高性能
+#### 4. 高性能
 得益于夜莺的多数据源管理引擎，和夜莺引擎侧优秀的架构设计，借助于高性能时序库，可以满足数亿时间线的采集、存储、告警分析场景，节省大量成本；
 
-##### 高可用
+#### 5. 高可用
 夜莺监控组件均可水平扩展，无单点，已在上千家企业部署落地，经受了严苛的生产实践检验。众多互联网头部公司，夜莺集群机器达百台，处理十亿级时间线，重度使用夜莺监控；
 
-##### 灵活扩展
+#### 6. 灵活扩展
 夜莺监控，可部署在1核1G的云主机，可在上百台机器部署集群，可运行在K8s中；也可将时序库、告警引擎等组件下沉到各机房、各region，兼顾边缘部署和中心化管理；
 
 
@@ -38,10 +36,10 @@ Nightingale is an enterprise-level cloud-native monitoring system, which can be 
 
 - 监控的数据量太大，希望有更好的扩展解决方案；
 - 学习曲线高，多人多团队模式下，希望有更好的协同使用效率；
-- 微服务和云原生架构下，监控数据的生命周期多变、监控数据维度基数高，Zabbix数据模型不易适配；
+- 微服务和云原生架构下，监控数据的生命周期多变、监控数据维度基数高，Zabbix 数据模型不易适配；
 
 #### 如果您在使用 [open-falcon](https://github.com/open-falcon/falcon-plus)，我们更推荐您升级到夜莺：
-- 关于open-falcon和夜莺的详细介绍，请参考阅读[云原生监控的十个特点和趋势](https://mp.weixin.qq.com/s?__biz=MzkzNjI5OTM5Nw==&mid=2247483738&idx=1&sn=e8bdbb974a2cd003c1abcc2b5405dd18&chksm=c2a19fb0f5d616a63185cd79277a79a6b80118ef2185890d0683d2bb20451bd9303c78d083c5#rd)。
+- 关于open-falcon和夜莺的详细介绍，请参考阅读[《云原生监控的十个特点和趋势》](https://mp.weixin.qq.com/s?__biz=MzkzNjI5OTM5Nw==&mid=2247483738&idx=1&sn=e8bdbb974a2cd003c1abcc2b5405dd18&chksm=c2a19fb0f5d616a63185cd79277a79a6b80118ef2185890d0683d2bb20451bd9303c78d083c5#rd)。
 
 #### 我们推荐您使用 [Categraf](https://github.com/flashcatcloud/categraf) 作为首选的监控数据采集器：
 - Categraf 是夜莺监控的默认采集器，采用开放插件机制和 all-in-one 的设计，同时支持 metric、log、trace、event 的采集。Categraf 不仅可以采集 CPU、内存、网络等系统层面的指标，也集成了众多开源组件的采集能力，支持K8s生态。Categraf 内置了对应的仪表盘和告警规则，开箱即用。
@@ -76,7 +74,7 @@ Nightingale 可以接收各种采集器上报的监控数据（比如 [Categraf]
 
 # 如何参与
 
-开源项目要更有生命力，离不开开放的治理架构和源源不断的开发者和用户共同参与，我们致力于建立开放、中立的开源治理架构，吸纳更多来自高校、企业等各方面对云原生监控感兴趣、有热情的计算机专业人士，打造专业、有活力的开发者社区。关于**夜莺开源项目和社区治理架构（草案）**，请查阅 [doc/community-governance.md)](./doc/community-governance.md)。
+开源项目要更有生命力，离不开开放的治理架构和源源不断的开发者和用户共同参与，我们致力于建立开放、中立的开源治理架构，吸纳更多来自高校、企业等各方面对云原生监控感兴趣、有热情的计算机专业人士，打造专业、有活力的开发者社区。关于**《夜莺开源项目和社区治理架构（草案）》**，请查阅 [doc/community-governance.md)](./doc/community-governance.md)。
 
 **我们欢迎您以各种方式参与到夜莺开源项目和开源社区中来，工作包括不限于**：
 - 补充和完善文档 => [n9e.github.io](https://n9e.github.io/)；
