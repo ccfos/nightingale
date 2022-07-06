@@ -350,6 +350,7 @@ CREATE TABLE `recording_rule` (
     `cluster` varchar(128) not null,
     `name` varchar(255) not null comment 'new metric name',
     `note` varchar(255) not null comment 'rule note',
+    `disabled` tinyint(1) not null comment '0:enabled 1:disabled',
     `prom_ql` varchar(8192) not null comment 'promql',
     `prom_eval_interval` int not null comment 'evaluate interval',
     `append_tags` varchar(255) default '' comment 'split by space: service=n9e mod=api',

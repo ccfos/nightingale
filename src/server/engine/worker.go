@@ -220,6 +220,10 @@ func (ws *WorkersType) BuildRe(rids []int64) {
 			continue
 		}
 
+		if rule.Disabled == 1 {
+			continue
+		}
+
 		hash := str.MD5(fmt.Sprintf("%d_%d_%s_%s",
 			rule.Id,
 			rule.PromEvalInterval,
