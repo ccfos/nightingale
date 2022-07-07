@@ -16,6 +16,8 @@ import (
 	"github.com/prometheus/client_golang/api"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/logger"
+
+	promstat "github.com/didi/nightingale/v5/src/server/stat"
 )
 
 type WriterType struct {
@@ -192,6 +194,8 @@ func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 		go Writers.StartConsumer(i, Writers.chans[i])
 	}
 
+	go reportChanSize()
+
 	for i := 0; i < len(opts); i++ {
 		cli, err := api.NewClient(api.Config{
 			Address: opts[i].Url,
@@ -225,4 +229,14 @@ func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 	}
 
 	return nil
+}
+
+func reportChanSize() {
+	for {
+		time.Sleep(time.Second * 3)
+		for i, c := range Writers.chans {
+			size := len(c)
+			promstat.GaugeSampleQueueSize.WithLabelValues(config.C.ClusterName, fmt.Sprint(i)).Set(float64(size))
+		}
+	}
 }
