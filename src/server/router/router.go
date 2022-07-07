@@ -106,7 +106,7 @@ func stat() gin.HandlerFunc {
 
 		code := fmt.Sprintf("%d", c.Writer.Status())
 		method := c.Request.Method
-		labels := []string{"n9e-server", code, c.FullPath(), method}
+		labels := []string{code, c.FullPath(), method}
 
 		promstat.RequestDuration.WithLabelValues(labels...).Observe(time.Since(start).Seconds())
 	}

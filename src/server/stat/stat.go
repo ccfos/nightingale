@@ -61,18 +61,22 @@ var (
 	// 一些重要的请求，比如接收数据的请求，应该统计一下延迟情况
 	RequestDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Buckets: []float64{.01, .1, 1},
-			Name:    "http_request_duration_seconds",
-			Help:    "HTTP request latencies in seconds.",
-		}, []string{"service", "code", "path", "method"},
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Buckets:   []float64{.01, .1, 1},
+			Name:      "http_request_duration_seconds",
+			Help:      "HTTP request latencies in seconds.",
+		}, []string{"code", "path", "method"},
 	)
 
 	// 发往后端TSDB，延迟如何
 	ForwardDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Buckets: []float64{.1, 1, 10},
-			Name:    "forward_duration_seconds",
-			Help:    "Forward samples to TSDB. latencies in seconds.",
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Buckets:   []float64{.1, 1, 10},
+			Name:      "forward_duration_seconds",
+			Help:      "Forward samples to TSDB. latencies in seconds.",
 		}, []string{"cluster", "channel_number"},
 	)
 )
