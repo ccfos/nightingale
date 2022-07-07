@@ -108,6 +108,6 @@ func stat() gin.HandlerFunc {
 		method := c.Request.Method
 		labels := []string{"n9e-server", code, c.FullPath(), method}
 
-		promstat.RequestDuration.WithLabelValues(labels...).Observe(float64(time.Since(start).Seconds()))
+		promstat.RequestDuration.WithLabelValues(labels...).Observe(time.Since(start).Seconds())
 	}
 }

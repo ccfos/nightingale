@@ -155,6 +155,11 @@ func (ws *WritersType) StartConsumer(index int, ch chan *prompb.TimeSeries) {
 // post post series to TSDB
 // @Author: quzhihao
 func (ws *WritersType) post(index int, series []*prompb.TimeSeries) {
+	start := time.Now()
+	defer func() {
+		promstat.ForwardDuration.WithLabelValues(config.C.ClusterName, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
+	}()
+
 	header := map[string]string{"hash": fmt.Sprintf("%s-%d", config.C.Heartbeat.Endpoint, index)}
 	if len(ws.backends) == 1 {
 		for key := range ws.backends {

@@ -66,6 +66,15 @@ var (
 			Help:    "HTTP request latencies in seconds.",
 		}, []string{"service", "code", "path", "method"},
 	)
+
+	// 发往后端TSDB，延迟如何
+	ForwardDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Buckets: []float64{.1, 1, 10},
+			Name:    "forward_duration_seconds",
+			Help:    "Forward samples to TSDB. latencies in seconds.",
+		}, []string{"cluster", "channel_number"},
+	)
 )
 
 func Init() {
@@ -78,5 +87,6 @@ func Init() {
 		GaugeAlertQueueSize,
 		GaugeSampleQueueSize,
 		RequestDuration,
+		ForwardDuration,
 	)
 }
