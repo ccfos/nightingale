@@ -232,8 +232,11 @@ func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 }
 
 func reportChanSize() {
-	for i, c := range Writers.chans {
-		size := len(c)
-		promstat.GaugeSampleQueueSize.WithLabelValues(config.C.ClusterName, fmt.Sprint(i)).Set(float64(size))
+	for {
+		time.Sleep(time.Second * 3)
+		for i, c := range Writers.chans {
+			size := len(c)
+			promstat.GaugeSampleQueueSize.WithLabelValues(config.C.ClusterName, fmt.Sprint(i)).Set(float64(size))
+		}
 	}
 }
