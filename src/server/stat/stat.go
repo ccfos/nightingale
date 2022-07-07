@@ -67,5 +67,6 @@ func Init() {
 		CounterSampleTotal,
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
+		GaugeSampleQueueSize,
 	)
 }
