@@ -30,8 +30,9 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 	if ts < mute.Btime || ts > mute.Etime {
 		return false
 	}
-
-	return matchTags(event.TagsMap, mute.ITags)
+	tg := event.TagsMap
+	tg["alertname"] = event.RuleName
+	return matchTags(tg, mute.ITags)
 }
 
 func matchTags(eventTagsMap map[string]string, itags []models.TagFilter) bool {

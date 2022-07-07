@@ -314,6 +314,7 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 			TriggerTime: vectors[i].Timestamp,
 			TagsMap:     tagsMap,
 			GroupId:     r.rule.GroupId,
+			RuleName:    r.rule.Name,
 		}
 
 		bg := memsto.BusiGroupCache.GetByBusiGroupId(r.rule.GroupId)
@@ -321,7 +322,7 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 			event.GroupName = bg.Name
 		}
 
-		// isMuted only need TriggerTime and TagsMap
+		// isMuted only need TriggerTime RuleName and TagsMap
 		if isMuted(event) {
 			logger.Infof("event_muted: rule_id=%d %s", r.rule.Id, vectors[i].Key)
 			continue
