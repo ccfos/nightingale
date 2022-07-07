@@ -31,7 +31,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		return false
 	}
 	tg := event.TagsMap
-	tg["alertname"] = event.RuleName
+	tg["rulename"] = event.RuleName
 	return matchTags(tg, mute.ITags)
 }
 
