@@ -126,7 +126,36 @@ insert into role_operation(role_name, operation) values('Standard', '/job-tpls/d
 insert into role_operation(role_name, operation) values('Standard', '/job-tasks');
 insert into role_operation(role_name, operation) values('Standard', '/job-tasks/add');
 insert into role_operation(role_name, operation) values('Standard', '/job-tasks/put');
+insert into role_operation(role_name, operation) values('Standard', '/recording-rules');
+insert into role_operation(role_name, operation) values('Standard', '/recording-rules/add');
+insert into role_operation(role_name, operation) values('Standard', '/recording-rules/put');
+insert into role_operation(role_name, operation) values('Standard', '/recording-rules/del');
 
+CREATE TABLE recording_rule (
+    id bigserial NOT NULL,
+    group_id bigint not null default 0,
+    cluster varchar(128) not null,
+    name varchar(255) not null,
+    note varchar(255) not null,
+    disabled smallint not null,
+    prom_ql varchar(8192) not null,
+    prom_eval_interval int not null,
+    append_tags varchar(255) default '',
+    create_at bigint default 0,
+    create_by varchar(64) default '',
+    update_at bigint default 0,
+    update_by varchar(64) default '',
+    CONSTRAINT recording_rule_pk PRIMARY KEY (id)
+) ;
+CREATE INDEX recording_rule_group_id_idx ON recording_rule (group_id);
+CREATE INDEX recording_rule_update_at_idx ON recording_rule (update_at);
+COMMENT ON COLUMN recording_rule.group_id IS 'group_id';
+COMMENT ON COLUMN recording_rule.name IS 'new metric name';
+COMMENT ON COLUMN recording_rule.note IS 'rule note';
+COMMENT ON COLUMN recording_rule.disabled IS '0:enabled 1:disabled';
+COMMENT ON COLUMN recording_rule.prom_ql IS 'promql';
+COMMENT ON COLUMN recording_rule.prom_eval_interval IS 'evaluate interval';
+COMMENT ON COLUMN recording_rule.append_tags IS 'split by space: service=n9e mod=api';
 
 -- for alert_rule | collect_rule | mute | dashboard grouping
 CREATE TABLE busi_group (
