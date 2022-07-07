@@ -49,6 +49,14 @@ var (
 		Name:      "alert_queue_size",
 		Help:      "The size of alert queue.",
 	}, []string{"cluster"})
+
+	// 数据转发队列，各个队列的长度
+	GaugeSampleQueueSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "sample_queue_size",
+		Help:      "The size of sample queue.",
+	}, []string{"cluster", "channel_number"})
 )
 
 func Init() {
