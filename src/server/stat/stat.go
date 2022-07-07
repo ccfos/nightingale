@@ -57,6 +57,15 @@ var (
 		Name:      "sample_queue_size",
 		Help:      "The size of sample queue.",
 	}, []string{"cluster", "channel_number"})
+
+	// 一些重要的请求，比如接收数据的请求，应该统计一下延迟情况
+	RequestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Buckets: []float64{.01, .1, 1},
+			Name:    "http_request_duration_seconds",
+			Help:    "HTTP request latencies in seconds.",
+		}, []string{"service", "code", "path", "method"},
+	)
 )
 
 func Init() {
@@ -68,5 +77,6 @@ func Init() {
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
 		GaugeSampleQueueSize,
+		RequestDuration,
 	)
 }
