@@ -24,6 +24,43 @@ type AccessDetails struct {
 	UserIdentity string
 }
 
+func handleProxyUser(c *gin.Context) *models.User {
+	headerUserNameKey := config.C.ProxyAuth.HeaderUserNameKey
+	username := c.GetHeader(headerUserNameKey)
+	if username == "" {
+		ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+	}
+
+	user, err := models.UserGetByUsername(username)
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, err.Error())
+	}
+
+	if user == nil {
+		now := time.Now().Unix()
+		user = &models.User{
+			Username: username,
+			Nickname: username,
+			Roles:    strings.Join(config.C.ProxyAuth.DefaultRoles, " "),
+			CreateAt: now,
+			UpdateAt: now,
+			CreateBy: "system",
+			UpdateBy: "system",
+		}
+		err = user.Add()
+	}
+	return user
+}
+
+func proxyAuth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := handleProxyUser(c)
+		c.Set("userid", user.Id)
+		c.Set("username", user)
+		c.Next()
+	}
+}
+
 func jwtAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		metadata, err := extractTokenMetadata(c.Request)
@@ -51,6 +88,35 @@ func jwtAuth() gin.HandlerFunc {
 		c.Set("username", arr[1])
 
 		c.Next()
+	}
+}
+
+func auth() gin.HandlerFunc {
+	if config.C.ProxyAuth.Enable {
+		return proxyAuth()
+	} else {
+		return jwtAuth()
+	}
+}
+
+// if proxy auth is enabled, mock jwt login/logout/refresh request
+func jwtMock() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !config.C.ProxyAuth.Enable {
+			c.Next()
+			return
+		}
+		if strings.Contains(c.FullPath(), "logout") {
+			ginx.Bomb(http.StatusBadRequest, "logout is not supported when proxy auth is enabled")
+		}
+		user := handleProxyUser(c)
+		ginx.NewRender(c).Data(gin.H{
+			"user":          user,
+			"access_token":  "",
+			"refresh_token": "",
+		}, nil)
+		c.Abort()
+		return
 	}
 }
 
