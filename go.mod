@@ -19,7 +19,7 @@ require (
 	github.com/mattn/go-isatty v0.0.12
 	github.com/orcaman/concurrent-map v0.0.0-20210501183033-44dafcb38ecc
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang vv1.12.2
+	github.com/prometheus/client_golang v1.12.2
 	github.com/prometheus/common v0.26.0
 	github.com/prometheus/prometheus v2.5.0+incompatible
 	github.com/tidwall/gjson v1.14.0
