@@ -7,7 +7,6 @@ import (
 	"hash/crc32"
 	"net"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/didi/nightingale/v5/src/server/config"
@@ -161,23 +160,9 @@ func (ws *WritersType) post(index int, series []*prompb.TimeSeries) {
 	}()
 
 	header := map[string]string{"hash": fmt.Sprintf("%s-%d", config.C.Heartbeat.Endpoint, index)}
-	if len(ws.backends) == 1 {
-		for key := range ws.backends {
-			ws.backends[key].Write(series, header)
-		}
-		return
-	}
 
-	if len(ws.backends) > 1 {
-		wg := new(sync.WaitGroup)
-		for key := range ws.backends {
-			wg.Add(1)
-			go func(wg *sync.WaitGroup, backend WriterType, items []*prompb.TimeSeries, header map[string]string) {
-				defer wg.Done()
-				backend.Write(series, header)
-			}(wg, ws.backends[key], series, header)
-		}
-		wg.Wait()
+	for key := range ws.backends {
+		go ws.backends[key].Write(series, header)
 	}
 }
 
