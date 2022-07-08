@@ -24,10 +24,15 @@ type WriterType struct {
 	Client api.Client
 }
 
-func (w WriterType) Write(items []*prompb.TimeSeries, headers ...map[string]string) {
+func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[string]string) {
 	if len(items) == 0 {
 		return
 	}
+
+	start := time.Now()
+	defer func() {
+		promstat.ForwardDuration.WithLabelValues(config.C.ClusterName, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
+	}()
 
 	req := &prompb.WriteRequest{
 		Timeseries: items,
@@ -154,15 +159,10 @@ func (ws *WritersType) StartConsumer(index int, ch chan *prompb.TimeSeries) {
 // post post series to TSDB
 // @Author: quzhihao
 func (ws *WritersType) post(index int, series []*prompb.TimeSeries) {
-	start := time.Now()
-	defer func() {
-		promstat.ForwardDuration.WithLabelValues(config.C.ClusterName, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
-	}()
-
 	header := map[string]string{"hash": fmt.Sprintf("%s-%d", config.C.Heartbeat.Endpoint, index)}
 
 	for key := range ws.backends {
-		go ws.backends[key].Write(series, header)
+		go ws.backends[key].Write(index, series, header)
 	}
 }
 
