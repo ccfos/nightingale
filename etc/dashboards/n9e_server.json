@@ -1,0 +1,232 @@
+{
+    "name": "夜莺大盘",
+    "tags": "",
+    "configs": {
+        "var": [],
+        "panels": [
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(n9e_server_samples_received_total[1m])"
+                    }
+                ],
+                "name": "每秒接收的数据点个数",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0,
+                    "i": "53fcb9dc-23f9-41e0-bc5e-121eed14c3a4",
+                    "isResizable": true
+                },
+                "id": "53fcb9dc-23f9-41e0-bc5e-121eed14c3a4"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(n9e_server_alerts_total[10m])"
+                    }
+                ],
+                "name": "每秒产生的告警事件个数",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0,
+                    "i": "47fc6252-9cc8-4b53-8e27-0c5c59a47269",
+                    "isResizable": true
+                },
+                "id": "f70dcb8b-b58b-4ef9-9e48-f230d9e17140"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "n9e_server_alert_queue_size"
+                    }
+                ],
+                "name": "告警事件内存队列长度",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 4,
+                    "i": "ad1af16c-de0c-45f4-8875-cea4e85d51d0",
+                    "isResizable": true
+                },
+                "id": "caf23e58-d907-42b0-9ed6-722c8c6f3c5f"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "n9e_server_http_request_duration_seconds_sum/n9e_server_http_request_duration_seconds_count"
+                    }
+                ],
+                "name": "数据接收接口平均响应时间（单位：秒）",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "noraml"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 4,
+                    "i": "64c3abc2-404c-4462-a82f-c109a21dac91",
+                    "isResizable": true
+                },
+                "id": "6b8d2db1-efca-4b9e-b429-57a9d2272bc5"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "n9e_server_sample_queue_size"
+                    }
+                ],
+                "name": "内存数据队列长度",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 8,
+                    "i": "1c7da942-58c2-40dc-b42f-983e4a35b89b",
+                    "isResizable": true
+                },
+                "id": "bd41677d-40d3-482e-bb6e-fbd25df46d87"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "avg(n9e_server_forward_duration_seconds_sum/n9e_server_forward_duration_seconds_count)"
+                    }
+                ],
+                "name": "数据发往TSDB平均耗时（单位：秒）",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "noraml"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 8,
+                    "i": "eed94a0b-954f-48ac-82e5-a2eada1c8a3d",
+                    "isResizable": true
+                },
+                "id": "c8642e72-f384-46a5-8410-1e6be2953c3c"
+            }
+        ],
+        "version": "2.0.0"
+    }
+}
