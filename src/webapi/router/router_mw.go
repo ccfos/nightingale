@@ -29,15 +29,11 @@ func handleProxyUser(c *gin.Context) *models.User {
 	username := c.GetHeader(headerUserNameKey)
 	if username == "" {
 		ginx.Bomb(http.StatusUnauthorized, "unauthorized")
-		c.Abort()
-		return nil
 	}
 
 	user, err := models.UserGetByUsername(username)
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, err.Error())
-		c.Abort()
-		return nil
 	}
 
 	if user == nil {
@@ -111,9 +107,7 @@ func jwtMock() gin.HandlerFunc {
 			return
 		}
 		if strings.Contains(c.FullPath(), "logout") {
-			ginx.NewRender(c, http.StatusBadRequest).Message("logout is not supported when proxy auth is enabled")
-			c.Abort()
-			return
+			ginx.Bomb(http.StatusBadRequest, "logout is not supported when proxy auth is enabled")
 		}
 		user := handleProxyUser(c)
 		ginx.NewRender(c).Data(gin.H{
