@@ -49,6 +49,36 @@ var (
 		Name:      "alert_queue_size",
 		Help:      "The size of alert queue.",
 	}, []string{"cluster"})
+
+	// 数据转发队列，各个队列的长度
+	GaugeSampleQueueSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "sample_queue_size",
+		Help:      "The size of sample queue.",
+	}, []string{"cluster", "channel_number"})
+
+	// 一些重要的请求，比如接收数据的请求，应该统计一下延迟情况
+	RequestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Buckets:   []float64{.01, .1, 1},
+			Name:      "http_request_duration_seconds",
+			Help:      "HTTP request latencies in seconds.",
+		}, []string{"code", "path", "method"},
+	)
+
+	// 发往后端TSDB，延迟如何
+	ForwardDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Buckets:   []float64{.1, 1, 10},
+			Name:      "forward_duration_seconds",
+			Help:      "Forward samples to TSDB. latencies in seconds.",
+		}, []string{"cluster", "channel_number"},
+	)
 )
 
 func Init() {
@@ -59,5 +89,8 @@ func Init() {
 		CounterSampleTotal,
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
+		GaugeSampleQueueSize,
+		RequestDuration,
+		ForwardDuration,
 	)
 }

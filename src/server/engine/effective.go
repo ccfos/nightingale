@@ -29,9 +29,5 @@ func isNoneffective(timestamp int64, alertRule *models.AlertRule) bool {
 
 	alertRule.EnableDaysOfWeek = strings.Replace(alertRule.EnableDaysOfWeek, "7", "0", 1)
 
-	if !strings.Contains(alertRule.EnableDaysOfWeek, triggerWeek) {
-		return true
-	}
-
-	return false
+	return !strings.Contains(alertRule.EnableDaysOfWeek, triggerWeek)
 }

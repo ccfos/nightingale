@@ -123,7 +123,10 @@ insert into `role_operation`(role_name, operation) values('Standard', '/job-tpls
 insert into `role_operation`(role_name, operation) values('Standard', '/job-tasks');
 insert into `role_operation`(role_name, operation) values('Standard', '/job-tasks/add');
 insert into `role_operation`(role_name, operation) values('Standard', '/job-tasks/put');
-
+insert into `role_operation`(role_name, operation) values('Standard', '/recording-rules');
+insert into `role_operation`(role_name, operation) values('Standard', '/recording-rules/add');
+insert into `role_operation`(role_name, operation) values('Standard', '/recording-rules/put');
+insert into `role_operation`(role_name, operation) values('Standard', '/recording-rules/del');
 
 -- for alert_rule | collect_rule | mute | dashboard grouping
 CREATE TABLE `busi_group` (
@@ -341,6 +344,25 @@ CREATE TABLE `metric_view` (
 
 insert into metric_view(name, cate, configs) values('Host View', 0, '{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}');
 
+CREATE TABLE `recording_rule` (
+    `id` bigint unsigned not null auto_increment,
+    `group_id` bigint not null default '0' comment 'group_id',
+    `cluster` varchar(128) not null,
+    `name` varchar(255) not null comment 'new metric name',
+    `note` varchar(255) not null comment 'rule note',
+    `disabled` tinyint(1) not null comment '0:enabled 1:disabled',
+    `prom_ql` varchar(8192) not null comment 'promql',
+    `prom_eval_interval` int not null comment 'evaluate interval',
+    `append_tags` varchar(255) default '' comment 'split by space: service=n9e mod=api',
+    `create_at` bigint default '0',
+    `create_by` varchar(64) default '',
+    `update_at` bigint default '0',
+    `update_by` varchar(64) default '',
+    PRIMARY KEY (`id`),
+    KEY `group_id` (`group_id`),
+    KEY `update_at` (`update_at`)
+) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
+
 CREATE TABLE `alert_aggr_view` (
     `id` bigint unsigned not null auto_increment,
     `name` varchar(191) not null default '',
@@ -377,6 +399,7 @@ CREATE TABLE `alert_cur_event` (
     `notify_channels` varchar(255) not null default '' comment 'split by space: sms voice email dingtalk wecom',
     `notify_groups` varchar(255) not null default '' comment 'split by space: 233 43',
     `notify_repeat_next` bigint not null default 0 comment 'next timestamp to notify, get repeat settings from rule',
+    `notify_cur_number` int not null default 0 comment '',
     `target_ident` varchar(191) not null default '' comment 'target ident, also in tags',
     `target_note` varchar(191) not null default '' comment 'target note',
     `trigger_time` bigint not null,
@@ -410,6 +433,7 @@ CREATE TABLE `alert_his_event` (
     `notify_recovered` tinyint(1) not null comment 'whether notify when recovery',
     `notify_channels` varchar(255) not null default '' comment 'split by space: sms voice email dingtalk wecom',
     `notify_groups` varchar(255) not null default '' comment 'split by space: 233 43',
+    `notify_cur_number` int not null default 0 comment '',
     `target_ident` varchar(191) not null default '' comment 'target ident, also in tags',
     `target_note` varchar(191) not null default '' comment 'target note',
     `trigger_time` bigint not null,

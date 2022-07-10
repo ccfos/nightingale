@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/server/writer"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/httplib"
@@ -33,6 +34,7 @@ func loopFilterRules(ctx context.Context) {
 			return
 		case <-time.After(duration):
 			filterRules()
+			filterRecordingRules()
 		}
 	}
 }
@@ -145,10 +147,11 @@ func (r RuleEval) Work() {
 }
 
 type WorkersType struct {
-	rules map[string]RuleEval
+	rules       map[string]RuleEval
+	recordRules map[string]RecordingRuleEval
 }
 
-var Workers = &WorkersType{rules: make(map[string]RuleEval)}
+var Workers = &WorkersType{rules: make(map[string]RuleEval), recordRules: make(map[string]RecordingRuleEval)}
 
 func (ws *WorkersType) Build(rids []int64) {
 	rules := make(map[string]*models.AlertRule)
@@ -208,6 +211,53 @@ func (ws *WorkersType) Build(rids []int64) {
 	}
 }
 
+func (ws *WorkersType) BuildRe(rids []int64) {
+	rules := make(map[string]*models.RecordingRule)
+
+	for i := 0; i < len(rids); i++ {
+		rule := memsto.RecordingRuleCache.Get(rids[i])
+		if rule == nil {
+			continue
+		}
+
+		if rule.Disabled == 1 {
+			continue
+		}
+
+		hash := str.MD5(fmt.Sprintf("%d_%d_%s_%s",
+			rule.Id,
+			rule.PromEvalInterval,
+			rule.PromQl,
+			rule.AppendTags,
+		))
+
+		rules[hash] = rule
+	}
+
+	// stop old
+	for hash := range Workers.recordRules {
+		if _, has := rules[hash]; !has {
+			Workers.recordRules[hash].Stop()
+			delete(Workers.recordRules, hash)
+		}
+	}
+
+	// start new
+	for hash := range rules {
+		if _, has := Workers.recordRules[hash]; has {
+			// already exists
+			continue
+		}
+		re := RecordingRuleEval{
+			rule: rules[hash],
+			quit: make(chan struct{}),
+		}
+
+		go re.Start()
+		Workers.recordRules[hash] = re
+	}
+}
+
 func (r RuleEval) judge(vectors []conv.Vector) {
 	// 有可能rule的一些配置已经发生变化，比如告警接收人、callbacks等
 	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
@@ -244,6 +294,8 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 			tagsMap[arr[0]] = arr[1]
 		}
 
+		tagsMap["rulename"] = r.rule.Name
+
 		// handle target note
 		targetIdent, has := vectors[i].Labels["ident"]
 		targetNote := ""
@@ -264,6 +316,7 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 			TriggerTime: vectors[i].Timestamp,
 			TagsMap:     tagsMap,
 			GroupId:     r.rule.GroupId,
+			RuleName:    r.rule.Name,
 		}
 
 		bg := memsto.BusiGroupCache.GetByBusiGroupId(r.rule.GroupId)
@@ -271,7 +324,7 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 			event.GroupName = bg.Name
 		}
 
-		// isMuted only need TriggerTime and TagsMap
+		// isMuted only need TriggerTime RuleName and TagsMap
 		if isMuted(event) {
 			logger.Infof("event_muted: rule_id=%d %s", r.rule.Id, vectors[i].Key)
 			continue
@@ -365,6 +418,7 @@ func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
 		if event.LastEvalTime > fired.LastSentTime+int64(r.rule.NotifyRepeatStep)*60 {
 			if r.rule.NotifyMaxNumber == 0 {
 				// 最大可以发送次数如果是0，表示不想限制最大发送次数，一直发即可
+				event.NotifyCurNumber = fired.NotifyCurNumber + 1
 				r.pushEventToQueue(event)
 			} else {
 				// 有最大发送次数的限制，就要看已经发了几次了，是否达到了最大发送次数
@@ -441,5 +495,82 @@ func (r RuleEval) pushEventToQueue(event *models.AlertCurEvent) {
 	LogEvent(event, "push_queue")
 	if !EventQueue.PushFront(event) {
 		logger.Warningf("event_push_queue: queue is full")
+	}
+}
+func filterRecordingRules() {
+	ids := memsto.RecordingRuleCache.GetRuleIds()
+
+	count := len(ids)
+	mines := make([]int64, 0, count)
+
+	for i := 0; i < count; i++ {
+		node, err := naming.HashRing.GetNode(fmt.Sprint(ids[i]))
+		if err != nil {
+			logger.Warning("failed to get node from hashring:", err)
+			continue
+		}
+
+		if node == config.C.Heartbeat.Endpoint {
+			mines = append(mines, ids[i])
+		}
+	}
+
+	Workers.BuildRe(mines)
+}
+
+type RecordingRuleEval struct {
+	rule *models.RecordingRule
+	quit chan struct{}
+}
+
+func (r RecordingRuleEval) Stop() {
+	logger.Infof("recording_rule_eval:%d stopping", r.RuleID())
+	close(r.quit)
+}
+
+func (r RecordingRuleEval) RuleID() int64 {
+	return r.rule.Id
+}
+
+func (r RecordingRuleEval) Start() {
+	logger.Infof("recording_rule_eval:%d started", r.RuleID())
+	for {
+		select {
+		case <-r.quit:
+			// logger.Infof("rule_eval:%d stopped", r.RuleID())
+			return
+		default:
+			r.Work()
+			interval := r.rule.PromEvalInterval
+			if interval <= 0 {
+				interval = 10
+			}
+			time.Sleep(time.Duration(interval) * time.Second)
+		}
+	}
+}
+
+func (r RecordingRuleEval) Work() {
+	promql := strings.TrimSpace(r.rule.PromQl)
+	if promql == "" {
+		logger.Errorf("recording_rule_eval:%d promql is blank", r.RuleID())
+		return
+	}
+
+	value, warnings, err := reader.Reader.Client.Query(context.Background(), promql, time.Now())
+	if err != nil {
+		logger.Errorf("recording_rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
+		return
+	}
+
+	if len(warnings) > 0 {
+		logger.Errorf("recording_rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
+		return
+	}
+	ts := conv.ConvertToTimeSeries(value, r.rule)
+	if len(ts) != 0 {
+		for _, v := range ts {
+			writer.Writers.PushSample(r.rule.Name, v)
+		}
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"hash/crc32"
 	"net"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/didi/nightingale/v5/src/server/config"
@@ -16,6 +15,8 @@ import (
 	"github.com/prometheus/client_golang/api"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/logger"
+
+	promstat "github.com/didi/nightingale/v5/src/server/stat"
 )
 
 type WriterType struct {
@@ -23,10 +24,15 @@ type WriterType struct {
 	Client api.Client
 }
 
-func (w WriterType) Write(items []*prompb.TimeSeries, headers ...map[string]string) {
+func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[string]string) {
 	if len(items) == 0 {
 		return
 	}
+
+	start := time.Now()
+	defer func() {
+		promstat.ForwardDuration.WithLabelValues(config.C.ClusterName, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
+	}()
 
 	req := &prompb.WriteRequest{
 		Timeseries: items,
@@ -154,23 +160,9 @@ func (ws *WritersType) StartConsumer(index int, ch chan *prompb.TimeSeries) {
 // @Author: quzhihao
 func (ws *WritersType) post(index int, series []*prompb.TimeSeries) {
 	header := map[string]string{"hash": fmt.Sprintf("%s-%d", config.C.Heartbeat.Endpoint, index)}
-	if len(ws.backends) == 1 {
-		for key := range ws.backends {
-			ws.backends[key].Write(series, header)
-		}
-		return
-	}
 
-	if len(ws.backends) > 1 {
-		wg := new(sync.WaitGroup)
-		for key := range ws.backends {
-			wg.Add(1)
-			go func(wg *sync.WaitGroup, backend WriterType, items []*prompb.TimeSeries, header map[string]string) {
-				defer wg.Done()
-				backend.Write(series, header)
-			}(wg, ws.backends[key], series, header)
-		}
-		wg.Wait()
+	for key := range ws.backends {
+		go ws.backends[key].Write(index, series, header)
 	}
 }
 
@@ -191,6 +183,8 @@ func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 		Writers.chans[i] = make(chan *prompb.TimeSeries, Writers.globalOpt.QueueMaxSize)
 		go Writers.StartConsumer(i, Writers.chans[i])
 	}
+
+	go reportChanSize()
 
 	for i := 0; i < len(opts); i++ {
 		cli, err := api.NewClient(api.Config{
@@ -225,4 +219,14 @@ func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 	}
 
 	return nil
+}
+
+func reportChanSize() {
+	for {
+		time.Sleep(time.Second * 3)
+		for i, c := range Writers.chans {
+			size := len(c)
+			promstat.GaugeSampleQueueSize.WithLabelValues(config.C.ClusterName, fmt.Sprint(i)).Set(float64(size))
+		}
+	}
 }

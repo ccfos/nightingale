@@ -34,31 +34,36 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 	return matchTags(event.TagsMap, mute.ITags)
 }
 
+func matchTag(value string, filter models.TagFilter) bool {
+	switch filter.Func {
+	case "==":
+		return filter.Value == value
+	case "!=":
+		return filter.Value != value
+	case "in":
+		_, has := filter.Vset[value]
+		return has
+	case "not in":
+		_, has := filter.Vset[value]
+		return !has
+	case "=~":
+		return filter.Regexp.MatchString(value)
+	case "!~":
+		return !filter.Regexp.MatchString(value)
+	}
+	// unexpect func
+	return false
+}
+
 func matchTags(eventTagsMap map[string]string, itags []models.TagFilter) bool {
-	for i := 0; i < len(itags); i++ {
-		filter := itags[i]
-		value, exists := eventTagsMap[filter.Key]
-		if !exists {
+	for _, filter := range itags {
+		value, has := eventTagsMap[filter.Key]
+		if !has {
 			return false
 		}
-
-		if filter.Func == "==" {
-			// ==
-			if filter.Value != value {
-				return false
-			}
-		} else if filter.Func == "in" {
-			// in
-			if _, has := filter.Vset[value]; !has {
-				return false
-			}
-		} else {
-			// =~
-			if !filter.Regexp.MatchString(value) {
-				return false
-			}
+		if !matchTag(value, filter) {
+			return false
 		}
 	}
-
 	return true
 }

@@ -52,6 +52,24 @@ func queryPromql(c *gin.Context) {
 	c.JSON(200, conv.ConvertVectors(value))
 }
 
+func duplicateLabelKey(series *prompb.TimeSeries) bool {
+	if series == nil {
+		return false
+	}
+
+	labelKeys := make(map[string]struct{})
+
+	for j := 0; j < len(series.Labels); j++ {
+		if _, has := labelKeys[series.Labels[j].Name]; has {
+			return true
+		} else {
+			labelKeys[series.Labels[j].Name] = struct{}{}
+		}
+	}
+
+	return false
+}
+
 func remoteWrite(c *gin.Context) {
 	req, err := DecodeWriteRequest(c.Request.Body)
 	if err != nil {
@@ -74,6 +92,10 @@ func remoteWrite(c *gin.Context) {
 	)
 
 	for i := 0; i < count; i++ {
+		if duplicateLabelKey(req.Timeseries[i]) {
+			continue
+		}
+
 		ident = ""
 
 		// find ident label

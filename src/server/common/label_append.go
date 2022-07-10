@@ -12,11 +12,25 @@ func AppendLabels(pt *prompb.TimeSeries, target *models.Target) {
 		return
 	}
 
+	labelKeys := make(map[string]struct{})
+	for j := 0; j < len(pt.Labels); j++ {
+		labelKeys[pt.Labels[j].Name] = struct{}{}
+	}
+
 	for key, value := range target.TagsMap {
+		if _, has := labelKeys[key]; has {
+			continue
+		}
+
 		pt.Labels = append(pt.Labels, &prompb.Label{
 			Name:  key,
 			Value: value,
 		})
+	}
+
+	// e.g. busigroup=cloud
+	if _, has := labelKeys[config.C.BusiGroupLabelKey]; has {
+		return
 	}
 
 	if target.GroupId > 0 && len(config.C.BusiGroupLabelKey) > 0 {

@@ -87,9 +87,9 @@ type DSReply struct {
 			Settings struct {
 				PrometheusAddr  string `json:"prometheus.addr"`
 				PrometheusBasic struct {
-					PrometheusUser string `json:"promethues.user"`
-					PrometheusPass string `json:"promethues.password"`
-				} `json:"promethues.basic"`
+					PrometheusUser string `json:"prometheus.user"`
+					PrometheusPass string `json:"prometheus.password"`
+				} `json:"prometheus.basic"`
 				PrometheusTimeout int64 `json:"prometheus.timeout"`
 			} `json:"settings,omitempty"`
 		} `json:"items"`
@@ -137,6 +137,7 @@ func loadClustersFromAPI() {
 			logger.Errorf("read response body of %s fail: %v", url, err)
 			continue
 		}
+		logger.Debugf("curl %s success, response: %s", url, string(jsonBytes))
 
 		err = json.Unmarshal(jsonBytes, &reply)
 		if err != nil {
