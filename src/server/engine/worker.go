@@ -294,6 +294,8 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 			tagsMap[arr[0]] = arr[1]
 		}
 
+		tagsMap["rulename"] = r.rule.Name
+
 		// handle target note
 		targetIdent, has := vectors[i].Labels["ident"]
 		targetNote := ""
