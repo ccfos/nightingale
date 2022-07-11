@@ -6,6 +6,7 @@ import (
 
 	"github.com/didi/nightingale/v5/src/server/idents"
 	"github.com/didi/nightingale/v5/src/server/memsto"
+	"github.com/didi/nightingale/v5/src/server/naming"
 )
 
 func alertRuleGet(c *gin.Context) {
@@ -42,4 +43,10 @@ func userGroupGet(c *gin.Context) {
 	id := ginx.QueryInt64(c, "id")
 	ug := memsto.UserGroupCache.GetByUserGroupId(id)
 	c.JSON(200, gin.H{"id": id, "user_group": ug})
+}
+
+func alertRuleNodeGet(c *gin.Context) {
+	id := ginx.QueryStr(c, "id")
+	node, _ := naming.HashRing.GetNode(id)
+	c.JSON(200, gin.H{"id": id, "node": node})
 }
