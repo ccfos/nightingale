@@ -1,6 +1,8 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 
@@ -45,8 +47,13 @@ func userGroupGet(c *gin.Context) {
 	c.JSON(200, gin.H{"id": id, "user_group": ug})
 }
 
-func alertRuleNodeGet(c *gin.Context) {
+func alertRuleLocationGet(c *gin.Context) {
 	id := ginx.QueryStr(c, "id")
-	node, _ := naming.HashRing.GetNode(id)
+	node, err := naming.HashRing.GetNode(id)
+	if err != nil {
+		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	c.JSON(200, gin.H{"id": id, "node": node})
 }

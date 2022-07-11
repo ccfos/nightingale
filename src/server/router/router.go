@@ -86,13 +86,13 @@ func configRoute(r *gin.Engine, version string) {
 	r.POST("/prometheus/v1/query", stat(), queryPromql)
 
 	r.GET("/memory/alert-rule", alertRuleGet)
+	r.GET("/memory/alert-rule-location", alertRuleLocationGet)
 	r.GET("/memory/idents", identsGets)
 	r.GET("/memory/alert-mutes", mutesGets)
 	r.GET("/memory/alert-subscribes", subscribesGets)
 	r.GET("/memory/target", targetGet)
 	r.GET("/memory/user", userGet)
 	r.GET("/memory/user-group", userGroupGet)
-	r.GET("/memory/node/alert-rule", alertRuleNodeGet)
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
