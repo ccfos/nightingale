@@ -88,12 +88,12 @@ func (m *AlertMute) Parse() error {
 	}
 
 	for i := 0; i < len(m.ITags); i++ {
-		if m.ITags[i].Func == "=~" {
+		if m.ITags[i].Func == "=~" || m.ITags[i].Func == "!~" {
 			m.ITags[i].Regexp, err = regexp.Compile(m.ITags[i].Value)
 			if err != nil {
 				return err
 			}
-		} else if m.ITags[i].Func == "in" {
+		} else if m.ITags[i].Func == "in" || m.ITags[i].Func == "not in" {
 			arr := strings.Fields(m.ITags[i].Value)
 			m.ITags[i].Vset = make(map[string]struct{})
 			for j := 0; j < len(arr); j++ {
