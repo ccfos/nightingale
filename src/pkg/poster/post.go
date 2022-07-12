@@ -19,6 +19,11 @@ func PostJSON(url string, timeout time.Duration, v interface{}) (response []byte
 	bf := bytes.NewBuffer(bs)
 
 	client := http.Client{
+		Transport: &http.Transport{
+			MaxConnsPerHost:     500,
+			MaxIdleConns:        20,
+			MaxIdleConnsPerHost: 20,
+		},
 		Timeout: timeout,
 	}
 
