@@ -275,12 +275,9 @@ func AlertRuleExists(id, groupId int64, cluster, name string) (bool, error) {
 	}
 
 	// match cluster
-	for _, v := range lst {
-		clusters := strings.Fields(v.Cluster)
-		for _, c := range clusters {
-			if c == cluster {
-				return true, nil
-			}
+	for _, r := range lst {
+		if MatchCluster(r.Cluster, cluster) {
+			return true, nil
 		}
 	}
 	return false, nil
@@ -304,7 +301,7 @@ func AlertRuleGetsByCluster(cluster string) ([]*AlertRule, error) {
 	session := DB().Where("disabled = ? and prod = ?", 0, "")
 
 	if cluster != "" {
-		session = session.Where("cluster like ?", "%"+cluster+"%")
+		session = session.Where("(cluster like ? or cluster like ?)", "%"+cluster+"%", "%"+ClusterAll+"%")
 	}
 
 	var lst []*AlertRule
@@ -326,12 +323,9 @@ func AlertRuleGetsByCluster(cluster string) ([]*AlertRule, error) {
 
 	lr := make([]*AlertRule, 0, len(lst))
 	for _, r := range lst {
-		clusters := strings.Fields(r.Cluster)
-		for _, c := range clusters {
-			if c == cluster {
-				r.DB2FE()
-				lr = append(lr, r)
-			}
+		if MatchCluster(r.Cluster, cluster) {
+			r.DB2FE()
+			lr = append(lr, r)
 		}
 	}
 
@@ -399,7 +393,7 @@ func AlertRuleStatistics(cluster string) (*Statistics, error) {
 
 	if cluster != "" {
 		//  简略的判断，当一个clustername是另一个clustername的substring的时候，会出现stats与预期不符，不影响使用
-		session = session.Where("cluster like ?", "%"+cluster+"%")
+		session = session.Where("(cluster like ? or cluster like ?)", "%"+cluster+"%", "%"+ClusterAll+"%")
 	}
 
 	var stats []*Statistics
