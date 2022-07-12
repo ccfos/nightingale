@@ -60,3 +60,13 @@ func MatchCluster(ruleCluster, targetCluster string) bool {
 	}
 	return false
 }
+
+func IsClusterAll(ruleCluster string) bool {
+	clusters := strings.Fields(ruleCluster)
+	for _, c := range clusters {
+		if c == ClusterAll {
+			return true
+		}
+	}
+	return false
+}
