@@ -206,7 +206,7 @@ func AlertSubscribeStatistics(cluster string) (*Statistics, error) {
 	session := DB().Model(&AlertSubscribe{}).Select("count(*) as total", "max(update_at) as last_updated")
 
 	if cluster != "" {
-		session = session.Where("(cluster like ? or cluster like ?)", "%"+cluster+"%", "%"+ClusterAll+"%")
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var stats []*Statistics
@@ -222,7 +222,7 @@ func AlertSubscribeGetsByCluster(cluster string) ([]*AlertSubscribe, error) {
 	// get my cluster's subscribes
 	session := DB().Model(&AlertSubscribe{})
 	if cluster != "" {
-		session = session.Where("(cluster like ? or cluster like ?)", "%"+cluster+"%", "%"+ClusterAll+"%")
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var lst []*AlertSubscribe
