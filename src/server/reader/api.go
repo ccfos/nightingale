@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	. "github.com/didi/nightingale/v5/src/pkg/common"
 	"math"
 	"net/http"
 	"net/url"
@@ -116,34 +117,8 @@ func marshalPointJSONIsEmpty(ptr unsafe.Pointer) bool {
 	return false
 }
 
-const (
-	statusAPIError = 422
-
-	apiPrefix = "/api/v1"
-
-	epAlerts          = apiPrefix + "/alerts"
-	epAlertManagers   = apiPrefix + "/alertmanagers"
-	epQuery           = apiPrefix + "/query"
-	epQueryRange      = apiPrefix + "/query_range"
-	epLabels          = apiPrefix + "/labels"
-	epLabelValues     = apiPrefix + "/label/:name/values"
-	epSeries          = apiPrefix + "/series"
-	epTargets         = apiPrefix + "/targets"
-	epTargetsMetadata = apiPrefix + "/targets/metadata"
-	epMetadata        = apiPrefix + "/metadata"
-	epRules           = apiPrefix + "/rules"
-	epSnapshot        = apiPrefix + "/admin/tsdb/snapshot"
-	epDeleteSeries    = apiPrefix + "/admin/tsdb/delete_series"
-	epCleanTombstones = apiPrefix + "/admin/tsdb/clean_tombstones"
-	epConfig          = apiPrefix + "/status/config"
-	epFlags           = apiPrefix + "/status/flags"
-)
-
 // AlertState models the state of an alert.
 type AlertState string
-
-// ErrorType models the different API error types.
-type ErrorType string
 
 // HealthStatus models the health status of a scrape target.
 type HealthStatus string
@@ -162,15 +137,6 @@ const (
 	AlertStateFiring   AlertState = "firing"
 	AlertStateInactive AlertState = "inactive"
 	AlertStatePending  AlertState = "pending"
-
-	// Possible values for ErrorType.
-	ErrBadData     ErrorType = "bad_data"
-	ErrTimeout     ErrorType = "timeout"
-	ErrCanceled    ErrorType = "canceled"
-	ErrExec        ErrorType = "execution"
-	ErrBadResponse ErrorType = "bad_response"
-	ErrServer      ErrorType = "server_error"
-	ErrClient      ErrorType = "client_error"
 
 	// Possible values for HealthStatus.
 	HealthGood    HealthStatus = "up"
@@ -196,17 +162,6 @@ const (
 	MetricTypeStateset       MetricType = "stateset"
 	MetricTypeUnknown        MetricType = "unknown"
 )
-
-// Error is an error returned by the API.
-type Error struct {
-	Type   ErrorType
-	Msg    string
-	Detail string
-}
-
-func (e *Error) Error() string {
-	return fmt.Sprintf("%s: %s", e.Type, e.Msg)
-}
 
 // Range represents a sliced time range.
 type Range struct {
@@ -571,7 +526,7 @@ type httpAPI struct {
 }
 
 func (h *httpAPI) Alerts(ctx context.Context) (AlertsResult, error) {
-	u := h.client.URL(epAlerts, nil)
+	u := h.client.URL(EpAlerts, nil)
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
@@ -588,7 +543,7 @@ func (h *httpAPI) Alerts(ctx context.Context) (AlertsResult, error) {
 }
 
 func (h *httpAPI) AlertManagers(ctx context.Context) (AlertManagersResult, error) {
-	u := h.client.URL(epAlertManagers, nil)
+	u := h.client.URL(EpAlertManagers, nil)
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
@@ -605,7 +560,7 @@ func (h *httpAPI) AlertManagers(ctx context.Context) (AlertManagersResult, error
 }
 
 func (h *httpAPI) CleanTombstones(ctx context.Context) error {
-	u := h.client.URL(epCleanTombstones, nil)
+	u := h.client.URL(EpCleanTombstones, nil)
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), nil)
 	if err != nil {
@@ -617,7 +572,7 @@ func (h *httpAPI) CleanTombstones(ctx context.Context) error {
 }
 
 func (h *httpAPI) Config(ctx context.Context) (ConfigResult, error) {
-	u := h.client.URL(epConfig, nil)
+	u := h.client.URL(EpConfig, nil)
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
@@ -634,7 +589,7 @@ func (h *httpAPI) Config(ctx context.Context) (ConfigResult, error) {
 }
 
 func (h *httpAPI) DeleteSeries(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) error {
-	u := h.client.URL(epDeleteSeries, nil)
+	u := h.client.URL(EpDeleteSeries, nil)
 	q := u.Query()
 
 	for _, m := range matches {
@@ -656,7 +611,7 @@ func (h *httpAPI) DeleteSeries(ctx context.Context, matches []string, startTime 
 }
 
 func (h *httpAPI) Flags(ctx context.Context) (FlagsResult, error) {
-	u := h.client.URL(epFlags, nil)
+	u := h.client.URL(EpFlags, nil)
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
@@ -673,7 +628,7 @@ func (h *httpAPI) Flags(ctx context.Context) (FlagsResult, error) {
 }
 
 func (h *httpAPI) LabelNames(ctx context.Context) ([]string, Warnings, error) {
-	u := h.client.URL(epLabels, nil)
+	u := h.client.URL(EpLabels, nil)
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, nil, err
@@ -687,7 +642,7 @@ func (h *httpAPI) LabelNames(ctx context.Context) ([]string, Warnings, error) {
 }
 
 func (h *httpAPI) LabelValues(ctx context.Context, label string, matchs []string) (model.LabelValues, Warnings, error) {
-	u := h.client.URL(epLabelValues, map[string]string{"name": label})
+	u := h.client.URL(EpLabelValues, map[string]string{"name": label})
 	q := u.Query()
 
 	for _, m := range matchs {
@@ -708,7 +663,7 @@ func (h *httpAPI) LabelValues(ctx context.Context, label string, matchs []string
 }
 
 func (h *httpAPI) Query(ctx context.Context, query string, ts time.Time) (model.Value, Warnings, error) {
-	u := h.client.URL(epQuery, nil)
+	u := h.client.URL(EpQuery, nil)
 	q := u.Query()
 
 	q.Set("query", query)
@@ -730,7 +685,7 @@ func (h *httpAPI) Query(ctx context.Context, query string, ts time.Time) (model.
 }
 
 func (h *httpAPI) QueryRange(ctx context.Context, query string, r Range) (model.Value, Warnings, error) {
-	u := h.client.URL(epQueryRange, nil)
+	u := h.client.URL(EpQueryRange, nil)
 	q := u.Query()
 
 	q.Set("query", query)
@@ -749,7 +704,7 @@ func (h *httpAPI) QueryRange(ctx context.Context, query string, r Range) (model.
 }
 
 func (h *httpAPI) Series(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]model.LabelSet, Warnings, error) {
-	u := h.client.URL(epSeries, nil)
+	u := h.client.URL(EpSeries, nil)
 	q := u.Query()
 
 	for _, m := range matches {
@@ -776,7 +731,7 @@ func (h *httpAPI) Series(ctx context.Context, matches []string, startTime time.T
 }
 
 func (h *httpAPI) Snapshot(ctx context.Context, skipHead bool) (SnapshotResult, error) {
-	u := h.client.URL(epSnapshot, nil)
+	u := h.client.URL(EpSnapshot, nil)
 	q := u.Query()
 
 	q.Set("skip_head", strconv.FormatBool(skipHead))
@@ -798,7 +753,7 @@ func (h *httpAPI) Snapshot(ctx context.Context, skipHead bool) (SnapshotResult, 
 }
 
 func (h *httpAPI) Rules(ctx context.Context) (RulesResult, error) {
-	u := h.client.URL(epRules, nil)
+	u := h.client.URL(EpRules, nil)
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
@@ -815,7 +770,7 @@ func (h *httpAPI) Rules(ctx context.Context) (RulesResult, error) {
 }
 
 func (h *httpAPI) Targets(ctx context.Context) (TargetsResult, error) {
-	u := h.client.URL(epTargets, nil)
+	u := h.client.URL(EpTargets, nil)
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
@@ -832,7 +787,7 @@ func (h *httpAPI) Targets(ctx context.Context) (TargetsResult, error) {
 }
 
 func (h *httpAPI) TargetsMetadata(ctx context.Context, matchTarget string, metric string, limit string) ([]MetricMetadata, error) {
-	u := h.client.URL(epTargetsMetadata, nil)
+	u := h.client.URL(EpTargetsMetadata, nil)
 	q := u.Query()
 
 	q.Set("match_target", matchTarget)
@@ -856,7 +811,7 @@ func (h *httpAPI) TargetsMetadata(ctx context.Context, matchTarget string, metri
 }
 
 func (h *httpAPI) Metadata(ctx context.Context, metric string, limit string) (map[string][]Metadata, error) {
-	u := h.client.URL(epMetadata, nil)
+	u := h.client.URL(EpMetadata, nil)
 	q := u.Query()
 
 	q.Set("metric", metric)
@@ -893,29 +848,6 @@ type apiClientImpl struct {
 	client api.Client
 }
 
-type apiResponse struct {
-	Status    string          `json:"status"`
-	Data      json.RawMessage `json:"data"`
-	ErrorType ErrorType       `json:"errorType"`
-	Error     string          `json:"error"`
-	Warnings  []string        `json:"warnings,omitempty"`
-}
-
-func apiError(code int) bool {
-	// These are the codes that Prometheus sends when it returns an error.
-	return code == statusAPIError || code == http.StatusBadRequest
-}
-
-func errorTypeAndMsgFor(resp *http.Response) (ErrorType, string) {
-	switch resp.StatusCode / 100 {
-	case 4:
-		return ErrClient, fmt.Sprintf("client error: %d", resp.StatusCode)
-	case 5:
-		return ErrServer, fmt.Sprintf("server error: %d", resp.StatusCode)
-	}
-	return ErrBadResponse, fmt.Sprintf("bad response code %d", resp.StatusCode)
-}
-
 func (h *apiClientImpl) URL(ep string, args map[string]string) *url.URL {
 	return h.client.URL(ep, args)
 }
@@ -942,8 +874,8 @@ func (h *apiClientImpl) Do(ctx context.Context, req *http.Request) (*http.Respon
 
 	code := resp.StatusCode
 
-	if code/100 != 2 && !apiError(code) {
-		errorType, errorMsg := errorTypeAndMsgFor(resp)
+	if code/100 != 2 && !ApiError(code) {
+		errorType, errorMsg := ErrorTypeAndMsgFor(resp)
 		return resp, body, nil, &Error{
 			Type:   errorType,
 			Msg:    errorMsg,
@@ -951,7 +883,7 @@ func (h *apiClientImpl) Do(ctx context.Context, req *http.Request) (*http.Respon
 		}
 	}
 
-	var result apiResponse
+	var result ApiResponse
 
 	if http.StatusNoContent != code {
 		if jsonErr := json.Unmarshal(body, &result); jsonErr != nil {
@@ -962,14 +894,14 @@ func (h *apiClientImpl) Do(ctx context.Context, req *http.Request) (*http.Respon
 		}
 	}
 
-	if apiError(code) != (result.Status == "error") {
+	if ApiError(code) != (result.Status == "error") {
 		err = &Error{
 			Type: ErrBadResponse,
 			Msg:  "inconsistent body for response code",
 		}
 	}
 
-	if apiError(code) && result.Status == "error" {
+	if ApiError(code) && result.Status == "error" {
 		err = &Error{
 			Type: result.ErrorType,
 			Msg:  result.Error,

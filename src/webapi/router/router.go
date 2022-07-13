@@ -98,6 +98,9 @@ func configRoute(r *gin.Engine, version string) {
 
 	pages := r.Group(pagesPrefix)
 	{
+
+		pages.POST("/query-range-batch", promBatchQueryRange)
+
 		if config.C.AnonymousAccess.PromQuerier {
 			pages.Any("/prometheus/*url", prometheusProxy)
 		} else {

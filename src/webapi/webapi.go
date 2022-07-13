@@ -2,6 +2,7 @@ package webapi
 
 import (
 	"fmt"
+	"github.com/didi/nightingale/v5/src/webapi/reader"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -116,6 +117,10 @@ func (a Webapi) initialize() (func(), error) {
 
 	// init prometheus proxy config
 	if err = prom.Init(); err != nil {
+		return nil, err
+	}
+
+	if err = reader.Init(); err != nil {
 		return nil, err
 	}
 
