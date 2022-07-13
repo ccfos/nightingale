@@ -1,6 +1,8 @@
 package models
 
 import (
+	"strings"
+
 	"github.com/toolkits/pkg/str"
 	"gorm.io/gorm"
 
@@ -8,6 +10,9 @@ import (
 )
 
 const AdminRole = "Admin"
+
+// if rule's cluster field contains `ClusterAll`, means it take effect in all clusters
+const ClusterAll = "$all"
 
 func DB() *gorm.DB {
 	return storage.DB
@@ -41,4 +46,27 @@ func CryptoPass(raw string) (string, error) {
 type Statistics struct {
 	Total       int64 `gorm:"total"`
 	LastUpdated int64 `gorm:"last_updated"`
+}
+
+func MatchCluster(ruleCluster, targetCluster string) bool {
+	if targetCluster == ClusterAll {
+		return true
+	}
+	clusters := strings.Fields(ruleCluster)
+	for _, c := range clusters {
+		if c == ClusterAll || c == targetCluster {
+			return true
+		}
+	}
+	return false
+}
+
+func IsClusterAll(ruleCluster string) bool {
+	clusters := strings.Fields(ruleCluster)
+	for _, c := range clusters {
+		if c == ClusterAll {
+			return true
+		}
+	}
+	return false
 }
