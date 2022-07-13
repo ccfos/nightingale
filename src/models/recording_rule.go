@@ -194,7 +194,7 @@ func RecordingRuleGetById(id int64) (*RecordingRule, error) {
 }
 
 func RecordingRuleGetsByCluster(cluster string) ([]*RecordingRule, error) {
-	session := DB().Where("disabled = ? and prod = ?", 0, "")
+	session := DB().Where("disabled = ?", 0)
 
 	if cluster != "" {
 		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
