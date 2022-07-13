@@ -67,6 +67,10 @@ func (ar *AlertRule) Verify() error {
 		return errors.New("cluster is blank")
 	}
 
+	if IsClusterAll(ar.Cluster) {
+		ar.Cluster = ClusterAll
+	}
+
 	if str.Dangerous(ar.Name) {
 		return errors.New("Name has invalid characters")
 	}
@@ -301,7 +305,7 @@ func AlertRuleGetsByCluster(cluster string) ([]*AlertRule, error) {
 	session := DB().Where("disabled = ? and prod = ?", 0, "")
 
 	if cluster != "" {
-		session = session.Where("(cluster like ? or cluster like ?)", "%"+cluster+"%", "%"+ClusterAll+"%")
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var lst []*AlertRule
@@ -393,7 +397,7 @@ func AlertRuleStatistics(cluster string) (*Statistics, error) {
 
 	if cluster != "" {
 		//  简略的判断，当一个clustername是另一个clustername的substring的时候，会出现stats与预期不符，不影响使用
-		session = session.Where("(cluster like ? or cluster like ?)", "%"+cluster+"%", "%"+ClusterAll+"%")
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var stats []*Statistics

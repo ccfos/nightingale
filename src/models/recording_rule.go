@@ -50,6 +50,10 @@ func (re *RecordingRule) Verify() error {
 		return errors.New("cluster is blank")
 	}
 
+	if IsClusterAll(re.Cluster) {
+		re.Cluster = ClusterAll
+	}
+
 	if !model.MetricNameRE.MatchString(re.Name) {
 		return errors.New("Name has invalid chreacters")
 	}
@@ -193,7 +197,7 @@ func RecordingRuleGetsByCluster(cluster string) ([]*RecordingRule, error) {
 	session := DB().Where("disabled = ? and prod = ?", 0, "")
 
 	if cluster != "" {
-		session = session.Where("(cluster like ? or cluster like ?)", "%"+cluster+"%", "%"+ClusterAll+"%")
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var lst []*RecordingRule
@@ -228,7 +232,7 @@ func RecordingRuleStatistics(cluster string) (*Statistics, error) {
 	session := DB().Model(&RecordingRule{}).Select("count(*) as total", "max(update_at) as last_updated")
 	if cluster != "" {
 		// 简略的判断，当一个clustername是另一个clustername的substring的时候，会出现stats与预期不符，不影响使用
-		session = session.Where("(cluster like ? or cluster like ?)", "%"+cluster+"%", "%"+ClusterAll+"%")
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var stats []*Statistics
