@@ -2,6 +2,8 @@ package router
 
 import (
 	"context"
+	"errors"
+
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -14,7 +16,6 @@ import (
 	. "github.com/didi/nightingale/v5/src/pkg/prom"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/didi/nightingale/v5/src/webapi/prom"
-	"github.com/didi/nightingale/v5/src/webapi/reader"
 	"github.com/prometheus/common/model"
 )
 
@@ -30,8 +31,7 @@ type batchQueryForm struct {
 }
 
 type batchQueryRes struct {
-	Status string        `json:"status"`
-	Data   []model.Value `json:"data"`
+	Data []model.Value `json:"data"`
 }
 
 func promBatchQueryRange(c *gin.Context) {
@@ -48,8 +48,23 @@ func promBatchQueryRange(c *gin.Context) {
 }
 
 func prometheusProxy(c *gin.Context) {
+	xcluster := c.GetHeader("X-Cluster")
+	if xcluster == "" {
+		c.String(http.StatusBadRequest, "X-Cluster missed")
+		return
+	}
 
-	target, cluster := getClusterAndTarget(c)
+	cluster, exists := prom.Clusters.Get(xcluster)
+	if !exists {
+		c.String(http.StatusBadRequest, "No such cluster: %s", xcluster)
+		return
+	}
+
+	target, err := url.Parse(cluster.Opts.Prom)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "invalid prometheus url: %s", cluster.Opts.Prom)
+		return
+	}
 
 	director := func(req *http.Request) {
 		req.URL.Scheme = target.Scheme
@@ -113,12 +128,14 @@ func clustersGets(c *gin.Context) {
 	ginx.NewRender(c).Data(names, nil)
 }
 
-func batchQueryRange(cluster string, data []queryFormItem) (batchQueryRes, error) {
+func batchQueryRange(clusterName string, data []queryFormItem) (batchQueryRes, error) {
 
 	var res batchQueryRes
 
-	client := reader.Reader.Clients[cluster]
-
+	clusterType, exist := prom.Clusters.Get(clusterName)
+	if !exist {
+		return batchQueryRes{}, errors.New("cluster client not exist")
+	}
 	for _, item := range data {
 
 		r := Range{
@@ -126,35 +143,11 @@ func batchQueryRange(cluster string, data []queryFormItem) (batchQueryRes, error
 			End:   time.Unix(item.End, 0),
 			Step:  time.Duration(item.Step) * time.Second,
 		}
-		resp, _, err := client.QueryRange(context.Background(), item.Query, r)
+		resp, _, err := clusterType.PromClient.QueryRange(context.Background(), item.Query, r)
 		if err != nil {
 			return res, err
 		}
 		res.Data = append(res.Data, resp)
 	}
-	res.Status = "success"
 	return res, nil
-}
-
-func getClusterAndTarget(c *gin.Context) (*url.URL, *prom.ClusterType) {
-
-	xcluster := c.GetHeader("X-Cluster")
-
-	if xcluster == "" {
-		c.String(http.StatusBadRequest, "X-Cluster missed")
-		return nil, nil
-	}
-
-	cluster, exists := prom.Clusters.Get(xcluster)
-	if !exists {
-		c.String(http.StatusBadRequest, "No such cluster: %s", xcluster)
-		return nil, nil
-	}
-
-	target, err := url.Parse(cluster.Opts.Prom)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "invalid prometheus url: %s", cluster.Opts.Prom)
-		return nil, nil
-	}
-	return target, cluster
 }

@@ -11,14 +11,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/pkg/prom"
 	"github.com/didi/nightingale/v5/src/webapi/config"
+	"github.com/prometheus/client_golang/api"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/httplib"
 )
 
 type ClusterType struct {
-	Opts      config.ClusterOptions
-	Transport *http.Transport
+	Opts       config.ClusterOptions
+	Transport  *http.Transport
+	PromClient prom.API
 }
 
 type ClustersType struct {
@@ -74,17 +77,34 @@ func initClustersFromConfig() error {
 	opts := config.C.Clusters
 
 	for i := 0; i < len(opts); i++ {
+		transport := &http.Transport{
+			// TLSClientConfig: tlsConfig,
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout: time.Duration(opts[i].DialTimeout) * time.Millisecond,
+			}).DialContext,
+			ResponseHeaderTimeout: time.Duration(opts[i].Timeout) * time.Millisecond,
+			MaxIdleConnsPerHost:   opts[i].MaxIdleConnsPerHost,
+		}
+
+		cli, err := api.NewClient(api.Config{
+			Address:      opts[i].Prom,
+			RoundTripper: transport,
+		})
+
+		if err != nil {
+			logger.Errorf("new client fail: %v", err)
+			continue
+		}
+
 		cluster := &ClusterType{
-			Opts: opts[i],
-			Transport: &http.Transport{
-				// TLSClientConfig: tlsConfig,
-				Proxy: http.ProxyFromEnvironment,
-				DialContext: (&net.Dialer{
-					Timeout: time.Duration(opts[i].DialTimeout) * time.Millisecond,
-				}).DialContext,
-				ResponseHeaderTimeout: time.Duration(opts[i].Timeout) * time.Millisecond,
-				MaxIdleConnsPerHost:   opts[i].MaxIdleConnsPerHost,
-			},
+			Opts:      opts[i],
+			Transport: transport,
+			PromClient: prom.NewAPI(cli, prom.ClientOptions{
+				BasicAuthUser: opts[i].BasicAuthUser,
+				BasicAuthPass: opts[i].BasicAuthPass,
+				Headers:       opts[i].Headers,
+			}),
 		}
 		Clusters.Put(opts[i].Name, cluster)
 	}
@@ -186,17 +206,34 @@ func loadClustersFromAPI() {
 				MaxIdleConnsPerHost: 32,
 			}
 
+			transport := &http.Transport{
+				// TLSClientConfig: tlsConfig,
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{
+					Timeout: time.Duration(opt.DialTimeout) * time.Millisecond,
+				}).DialContext,
+				ResponseHeaderTimeout: time.Duration(opt.Timeout) * time.Millisecond,
+				MaxIdleConnsPerHost:   opt.MaxIdleConnsPerHost,
+			}
+
+			cli, err := api.NewClient(api.Config{
+				Address:      opt.Prom,
+				RoundTripper: transport,
+			})
+
+			if err != nil {
+				logger.Errorf("new client fail: %v", err)
+				continue
+			}
+
 			cluster := &ClusterType{
-				Opts: opt,
-				Transport: &http.Transport{
-					// TLSClientConfig: tlsConfig,
-					Proxy: http.ProxyFromEnvironment,
-					DialContext: (&net.Dialer{
-						Timeout: time.Duration(opt.DialTimeout) * time.Millisecond,
-					}).DialContext,
-					ResponseHeaderTimeout: time.Duration(opt.Timeout) * time.Millisecond,
-					MaxIdleConnsPerHost:   opt.MaxIdleConnsPerHost,
-				},
+				Opts:      opt,
+				Transport: transport,
+				PromClient: prom.NewAPI(cli, prom.ClientOptions{
+					BasicAuthUser: opt.BasicAuthUser,
+					BasicAuthPass: opt.BasicAuthPass,
+					Headers:       opt.Headers,
+				}),
 			}
 
 			Clusters.Put(item.Name, cluster)

@@ -2,7 +2,6 @@ package webapi
 
 import (
 	"fmt"
-	"github.com/didi/nightingale/v5/src/webapi/reader"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -120,7 +119,7 @@ func (a Webapi) initialize() (func(), error) {
 		return nil, err
 	}
 	// init reader clients
-	if err = reader.Init(); err != nil {
+	if err = prom.Init(); err != nil {
 		return nil, err
 	}
 
