@@ -13,7 +13,7 @@ import (
 type RecordingRule struct {
 	Id               int64    `json:"id" gorm:"primaryKey"`
 	GroupId          int64    `json:"group_id"`             // busi group id
-	Cluster          string   `json:"cluster"`              // take effect by cluster
+	Cluster          string   `json:"cluster"`              // take effect by cluster, seperated by space
 	Name             string   `json:"name"`                 // new metric name
 	Note             string   `json:"note"`                 // note
 	Disabled         int      `json:"disabled"`             // 0: enabled, 1: disabled
@@ -40,6 +40,7 @@ func (re *RecordingRule) DB2FE() {
 	//re.ClusterJSON = strings.Fields(re.Cluster)
 	re.AppendTagsJSON = strings.Fields(re.AppendTags)
 }
+
 func (re *RecordingRule) Verify() error {
 	if re.GroupId < 0 {
 		return fmt.Errorf("GroupId(%d) invalid", re.GroupId)
@@ -47,6 +48,10 @@ func (re *RecordingRule) Verify() error {
 
 	if re.Cluster == "" {
 		return errors.New("cluster is blank")
+	}
+
+	if IsClusterAll(re.Cluster) {
+		re.Cluster = ClusterAll
 	}
 
 	if !model.MetricNameRE.MatchString(re.Name) {
@@ -78,7 +83,7 @@ func (re *RecordingRule) Add() error {
 		return err
 	}
 
-	exists, err := RecordingRuleExists("group_id=? and cluster=? and name=?", re.GroupId, re.Cluster, re.Name)
+	exists, err := RecordingRuleExists(0, re.GroupId, re.Cluster, re.Name)
 	if err != nil {
 		return err
 	}
@@ -96,7 +101,7 @@ func (re *RecordingRule) Add() error {
 
 func (re *RecordingRule) Update(ref RecordingRule) error {
 	if re.Name != ref.Name {
-		exists, err := RecordingRuleExists("group_id=? and cluster=? and name=? and id <> ?", re.GroupId, re.Cluster, ref.Name, re.Id)
+		exists, err := RecordingRuleExists(re.Id, re.GroupId, re.Cluster, ref.Name)
 		if err != nil {
 			return err
 		}
@@ -133,9 +138,27 @@ func RecordingRuleDels(ids []int64, groupId int64) error {
 	return nil
 }
 
-func RecordingRuleExists(where string, regs ...interface{}) (bool, error) {
-	return Exists(DB().Model(&RecordingRule{}).Where(where, regs...))
+func RecordingRuleExists(id, groupId int64, cluster, name string) (bool, error) {
+	session := DB().Where("id <> ? and group_id = ? and name =? ", id, groupId, name)
+
+	var lst []RecordingRule
+	err := session.Find(&lst).Error
+	if err != nil {
+		return false, err
+	}
+	if len(lst) == 0 {
+		return false, nil
+	}
+
+	// match cluster
+	for _, r := range lst {
+		if MatchCluster(r.Cluster, cluster) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
+
 func RecordingRuleGets(groupId int64) ([]RecordingRule, error) {
 	session := DB().Where("group_id=?", groupId).Order("name")
 
@@ -171,26 +194,45 @@ func RecordingRuleGetById(id int64) (*RecordingRule, error) {
 }
 
 func RecordingRuleGetsByCluster(cluster string) ([]*RecordingRule, error) {
-	session := DB()
+	session := DB().Where("disabled = ?", 0)
+
 	if cluster != "" {
-		session = session.Where("cluster = ?", cluster)
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var lst []*RecordingRule
 	err := session.Find(&lst).Error
-	if err == nil {
+	if err != nil {
+		return lst, err
+	}
+
+	if len(lst) == 0 {
+		return lst, nil
+	}
+
+	if cluster == "" {
 		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()
 		}
+		return lst, nil
 	}
 
-	return lst, err
+	lr := make([]*RecordingRule, 0, len(lst))
+	for _, r := range lst {
+		if MatchCluster(r.Cluster, cluster) {
+			r.DB2FE()
+			lr = append(lr, r)
+		}
+	}
+
+	return lr, err
 }
 
 func RecordingRuleStatistics(cluster string) (*Statistics, error) {
 	session := DB().Model(&RecordingRule{}).Select("count(*) as total", "max(update_at) as last_updated")
 	if cluster != "" {
-		session = session.Where("cluster = ?", cluster)
+		// 简略的判断，当一个clustername是另一个clustername的substring的时候，会出现stats与预期不符，不影响使用
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var stats []*Statistics
