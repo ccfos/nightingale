@@ -117,8 +117,10 @@ func batchQueryRange(cluster string, data []queryFormItem) (batchQueryRes, error
 
 	var res batchQueryRes
 
+	client := reader.Reader.Clients[cluster]
+
 	for _, item := range data {
-		client := reader.Reader.Clients[cluster]
+
 		r := Range{
 			Start: time.Unix(item.Start, 0),
 			End:   time.Unix(item.End, 0),
