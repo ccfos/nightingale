@@ -1,6 +1,7 @@
 package reader
 
 import (
+	"github.com/didi/nightingale/v5/src/pkg/prom"
 	"net"
 	"net/http"
 	"time"
@@ -11,7 +12,7 @@ import (
 
 type ReaderType struct {
 	Opts   config.ReaderOptions
-	Client API
+	Client prom.API
 }
 
 var Reader ReaderType
@@ -41,8 +42,12 @@ func Init(opts config.ReaderOptions) error {
 	}
 
 	Reader = ReaderType{
-		Opts:   opts,
-		Client: NewAPI(cli),
+		Opts: opts,
+		Client: prom.NewAPI(cli, prom.ClientOptions{
+			BasicAuthUser: opts.BasicAuthUser,
+			BasicAuthPass: opts.BasicAuthPass,
+			Headers:       opts.Headers,
+		}),
 	}
 
 	return nil

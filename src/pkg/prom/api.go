@@ -13,13 +13,12 @@
 
 // Package v1 provides bindings to the Prometheus HTTP API v1:
 // http://prometheus.io/docs/querying/api/
-package reader
+package prom
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	. "github.com/didi/nightingale/v5/src/pkg/common"
 	"math"
 	"net/http"
 	"net/url"
@@ -132,7 +131,40 @@ type RuleHealth string
 // MetricType models the type of a metric.
 type MetricType string
 
+// ErrorType models the different API error types.
+type ErrorType string
+
 const (
+	statusAPIError = 422
+
+	apiPrefix = "/api/v1"
+
+	EpAlerts          = apiPrefix + "/alerts"
+	EpAlertManagers   = apiPrefix + "/alertmanagers"
+	EpQuery           = apiPrefix + "/query"
+	EpQueryRange      = apiPrefix + "/query_range"
+	EpLabels          = apiPrefix + "/labels"
+	EpLabelValues     = apiPrefix + "/label/:name/values"
+	EpSeries          = apiPrefix + "/series"
+	EpTargets         = apiPrefix + "/targets"
+	EpTargetsMetadata = apiPrefix + "/targets/metadata"
+	EpMetadata        = apiPrefix + "/metadata"
+	EpRules           = apiPrefix + "/rules"
+	EpSnapshot        = apiPrefix + "/admin/tsdb/snapshot"
+	EpDeleteSeries    = apiPrefix + "/admin/tsdb/delete_series"
+	EpCleanTombstones = apiPrefix + "/admin/tsdb/clean_tombstones"
+	EpConfig          = apiPrefix + "/status/config"
+	EpFlags           = apiPrefix + "/status/flags"
+
+	// Possible values for ErrorType.
+	ErrBadData     ErrorType = "bad_data"
+	ErrTimeout     ErrorType = "timeout"
+	ErrCanceled    ErrorType = "canceled"
+	ErrExec        ErrorType = "execution"
+	ErrBadResponse ErrorType = "bad_response"
+	ErrServer      ErrorType = "server_error"
+	ErrClient      ErrorType = "client_error"
+
 	// Possible values for AlertState.
 	AlertStateFiring   AlertState = "firing"
 	AlertStateInactive AlertState = "inactive"
@@ -162,6 +194,40 @@ const (
 	MetricTypeStateset       MetricType = "stateset"
 	MetricTypeUnknown        MetricType = "unknown"
 )
+
+type ApiResponse struct {
+	Status    string          `json:"status"`
+	Data      json.RawMessage `json:"data"`
+	ErrorType ErrorType       `json:"errorType"`
+	Error     string          `json:"error"`
+	Warnings  []string        `json:"warnings,omitempty"`
+}
+
+// Error is an error returned by the API.
+type Error struct {
+	Type   ErrorType
+	Msg    string
+	Detail string
+}
+
+func (e *Error) Error() string {
+	return fmt.Sprintf("%s: %s", e.Type, e.Msg)
+}
+
+func ApiError(code int) bool {
+	// These are the codes that Prometheus sends when it returns an error.
+	return code == statusAPIError || code == http.StatusBadRequest
+}
+
+func ErrorTypeAndMsgFor(resp *http.Response) (ErrorType, string) {
+	switch resp.StatusCode / 100 {
+	case 4:
+		return ErrClient, fmt.Sprintf("client error: %d", resp.StatusCode)
+	case 5:
+		return ErrServer, fmt.Sprintf("server error: %d", resp.StatusCode)
+	}
+	return ErrBadResponse, fmt.Sprintf("bad response code %d", resp.StatusCode)
+}
 
 // Range represents a sliced time range.
 type Range struct {
@@ -513,10 +579,11 @@ func (qr *queryResult) UnmarshalJSON(b []byte) error {
 // NewAPI returns a new API for the client.
 //
 // It is safe to use the returned API from multiple goroutines.
-func NewAPI(c api.Client) API {
+func NewAPI(c api.Client, opt ClientOptions) API {
 	return &httpAPI{
 		client: &apiClientImpl{
 			client: c,
+			opt:    opt,
 		},
 	}
 }
@@ -846,6 +913,7 @@ type apiClient interface {
 
 type apiClientImpl struct {
 	client api.Client
+	opt    ClientOptions
 }
 
 func (h *apiClientImpl) URL(ep string, args map[string]string) *url.URL {
@@ -853,16 +921,16 @@ func (h *apiClientImpl) URL(ep string, args map[string]string) *url.URL {
 }
 
 func (h *apiClientImpl) Do(ctx context.Context, req *http.Request) (*http.Response, []byte, Warnings, error) {
-	if Reader.Opts.BasicAuthUser != "" && Reader.Opts.BasicAuthPass != "" {
-		req.SetBasicAuth(Reader.Opts.BasicAuthUser, Reader.Opts.BasicAuthPass)
+	if h.opt.BasicAuthUser != "" && h.opt.BasicAuthPass != "" {
+		req.SetBasicAuth(h.opt.BasicAuthUser, h.opt.BasicAuthPass)
 	}
 
-	headerCount := len(Reader.Opts.Headers)
+	headerCount := len(h.opt.Headers)
 	if headerCount > 0 && headerCount%2 == 0 {
-		for i := 0; i < len(Reader.Opts.Headers); i += 2 {
-			req.Header.Add(Reader.Opts.Headers[i], Reader.Opts.Headers[i+1])
-			if Reader.Opts.Headers[i] == "Host" {
-				req.Host = Reader.Opts.Headers[i+1]
+		for i := 0; i < len(h.opt.Headers); i += 2 {
+			req.Header.Add(h.opt.Headers[i], h.opt.Headers[i+1])
+			if h.opt.Headers[i] == "Host" {
+				req.Host = h.opt.Headers[i+1]
 			}
 		}
 	}
