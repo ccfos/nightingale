@@ -39,6 +39,19 @@ func (cs *ClustersType) Get(name string) (*ClusterType, bool) {
 	return c, has
 }
 
+func (cs *ClustersType) GetClusters() []*ClusterType {
+	cs.mutex.Lock()
+	clusterTypes := make([]*ClusterType, 0, len(cs.datas))
+	for k := range cs.datas {
+		c, has := cs.datas[k]
+		if has {
+			clusterTypes = append(clusterTypes, c)
+		}
+	}
+	cs.mutex.Unlock()
+	return clusterTypes
+}
+
 var Clusters = ClustersType{
 	datas: make(map[string]*ClusterType),
 	mutex: new(sync.RWMutex),

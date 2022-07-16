@@ -2,9 +2,6 @@ package router
 
 import (
 	"context"
-	. "github.com/didi/nightingale/v5/src/pkg/prom"
-	"github.com/didi/nightingale/v5/src/webapi/reader"
-	"github.com/prometheus/common/model"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -14,8 +11,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 
+	. "github.com/didi/nightingale/v5/src/pkg/prom"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/didi/nightingale/v5/src/webapi/prom"
+	"github.com/didi/nightingale/v5/src/webapi/reader"
+	"github.com/prometheus/common/model"
 )
 
 type queryFormItem struct {

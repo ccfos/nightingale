@@ -116,24 +116,6 @@ func marshalPointJSONIsEmpty(ptr unsafe.Pointer) bool {
 	return false
 }
 
-// AlertState models the state of an alert.
-type AlertState string
-
-// HealthStatus models the health status of a scrape target.
-type HealthStatus string
-
-// RuleType models the type of a rule.
-type RuleType string
-
-// RuleHealth models the health status of a rule.
-type RuleHealth string
-
-// MetricType models the type of a metric.
-type MetricType string
-
-// ErrorType models the different API error types.
-type ErrorType string
-
 const (
 	statusAPIError = 422
 
@@ -155,6 +137,31 @@ const (
 	epCleanTombstones = apiPrefix + "/admin/tsdb/clean_tombstones"
 	epConfig          = apiPrefix + "/status/config"
 	epFlags           = apiPrefix + "/status/flags"
+)
+
+// AlertState models the state of an alert.
+type AlertState string
+
+// ErrorType models the different API error types.
+type ErrorType string
+
+// HealthStatus models the health status of a scrape target.
+type HealthStatus string
+
+// RuleType models the type of a rule.
+type RuleType string
+
+// RuleHealth models the health status of a rule.
+type RuleHealth string
+
+// MetricType models the type of a metric.
+type MetricType string
+
+const (
+	// Possible values for AlertState.
+	AlertStateFiring   AlertState = "firing"
+	AlertStateInactive AlertState = "inactive"
+	AlertStatePending  AlertState = "pending"
 
 	// Possible values for ErrorType.
 	ErrBadData     ErrorType = "bad_data"
@@ -164,11 +171,6 @@ const (
 	ErrBadResponse ErrorType = "bad_response"
 	ErrServer      ErrorType = "server_error"
 	ErrClient      ErrorType = "client_error"
-
-	// Possible values for AlertState.
-	AlertStateFiring   AlertState = "firing"
-	AlertStateInactive AlertState = "inactive"
-	AlertStatePending  AlertState = "pending"
 
 	// Possible values for HealthStatus.
 	HealthGood    HealthStatus = "up"

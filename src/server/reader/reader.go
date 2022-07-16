@@ -1,11 +1,11 @@
 package reader
 
 import (
-	"github.com/didi/nightingale/v5/src/pkg/prom"
 	"net"
 	"net/http"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/pkg/prom"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/prometheus/client_golang/api"
 )
