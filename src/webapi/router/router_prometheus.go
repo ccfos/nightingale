@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"errors"
 
 	"net/http"
 	"net/http/httputil"
@@ -13,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 
-	. "github.com/didi/nightingale/v5/src/pkg/prom"
+	pkgprom "github.com/didi/nightingale/v5/src/pkg/prom"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/didi/nightingale/v5/src/webapi/prom"
 	"github.com/prometheus/common/model"
@@ -30,14 +29,8 @@ type batchQueryForm struct {
 	Queries []queryFormItem `json:"queries" binding:"required"`
 }
 
-type batchQueryRes struct {
-	Data []model.Value `json:"data"`
-}
-
 func promBatchQueryRange(c *gin.Context) {
-
 	xcluster := c.GetHeader("X-Cluster")
-
 	if xcluster == "" {
 		c.String(500, "X-Cluster is blank")
 		return
@@ -46,12 +39,35 @@ func promBatchQueryRange(c *gin.Context) {
 	var f batchQueryForm
 	err := c.BindJSON(&f)
 	if err != nil {
-		c.String(500, "%s", err.Error())
+		c.String(500, err.Error())
 		return
 	}
-	res, err := batchQueryRange(xcluster, f.Queries)
 
-	ginx.NewRender(c).Data(res, err)
+	cluster, exist := prom.Clusters.Get(xcluster)
+	if !exist {
+		c.String(http.StatusBadRequest, "cluster(%s) not found", xcluster)
+		return
+	}
+
+	var lst []model.Value
+
+	for _, item := range f.Queries {
+		r := pkgprom.Range{
+			Start: time.Unix(item.Start, 0),
+			End:   time.Unix(item.End, 0),
+			Step:  time.Duration(item.Step) * time.Second,
+		}
+
+		resp, _, err := cluster.PromClient.QueryRange(context.Background(), item.Query, r)
+		if err != nil {
+			c.String(500, err.Error())
+			return
+		}
+
+		lst = append(lst, resp)
+	}
+
+	c.JSON(200, lst)
 }
 
 func prometheusProxy(c *gin.Context) {
@@ -133,28 +149,4 @@ func clustersGets(c *gin.Context) {
 		names = append(names, config.C.Clusters[i].Name)
 	}
 	ginx.NewRender(c).Data(names, nil)
-}
-
-func batchQueryRange(clusterName string, data []queryFormItem) (batchQueryRes, error) {
-
-	var res batchQueryRes
-
-	clusterType, exist := prom.Clusters.Get(clusterName)
-	if !exist {
-		return batchQueryRes{}, errors.New("cluster client not exist")
-	}
-	for _, item := range data {
-
-		r := Range{
-			Start: time.Unix(item.Start, 0),
-			End:   time.Unix(item.End, 0),
-			Step:  time.Duration(item.Step) * time.Second,
-		}
-		resp, _, err := clusterType.PromClient.QueryRange(context.Background(), item.Query, r)
-		if err != nil {
-			return res, err
-		}
-		res.Data = append(res.Data, resp)
-	}
-	return res, nil
 }

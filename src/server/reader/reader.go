@@ -10,12 +10,7 @@ import (
 	"github.com/prometheus/client_golang/api"
 )
 
-type ReaderType struct {
-	Opts   config.ReaderOptions
-	Client prom.API
-}
-
-var Reader ReaderType
+var Client prom.API
 
 func Init(opts config.ReaderOptions) error {
 	cli, err := api.NewClient(api.Config{
@@ -41,14 +36,11 @@ func Init(opts config.ReaderOptions) error {
 		return err
 	}
 
-	Reader = ReaderType{
-		Opts: opts,
-		Client: prom.NewAPI(cli, prom.ClientOptions{
-			BasicAuthUser: opts.BasicAuthUser,
-			BasicAuthPass: opts.BasicAuthPass,
-			Headers:       opts.Headers,
-		}),
-	}
+	Client = prom.NewAPI(cli, prom.ClientOptions{
+		BasicAuthUser: opts.BasicAuthUser,
+		BasicAuthPass: opts.BasicAuthPass,
+		Headers:       opts.Headers,
+	})
 
 	return nil
 }

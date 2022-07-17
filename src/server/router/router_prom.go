@@ -38,7 +38,7 @@ func queryPromql(c *gin.Context) {
 	var f promqlForm
 	ginx.BindJSON(c, &f)
 
-	value, warnings, err := reader.Reader.Client.Query(c.Request.Context(), f.PromQL, time.Now())
+	value, warnings, err := reader.Client.Query(c.Request.Context(), f.PromQL, time.Now())
 	if err != nil {
 		c.String(500, "promql:%s error:%v", f.PromQL, err)
 		return
