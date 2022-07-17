@@ -37,10 +37,17 @@ type batchQueryRes struct {
 func promBatchQueryRange(c *gin.Context) {
 
 	xcluster := c.GetHeader("X-Cluster")
+
+	if xcluster == "" {
+		c.String(500, "X-Cluster is blank")
+		return
+	}
+
 	var f batchQueryForm
 	err := c.BindJSON(&f)
 	if err != nil {
 		c.String(500, "%s", err.Error())
+		return
 	}
 	res, err := batchQueryRange(xcluster, f.Queries)
 

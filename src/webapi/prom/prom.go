@@ -42,19 +42,6 @@ func (cs *ClustersType) Get(name string) (*ClusterType, bool) {
 	return c, has
 }
 
-func (cs *ClustersType) GetClusters() []*ClusterType {
-	cs.mutex.Lock()
-	clusterTypes := make([]*ClusterType, 0, len(cs.datas))
-	for k := range cs.datas {
-		c, has := cs.datas[k]
-		if has {
-			clusterTypes = append(clusterTypes, c)
-		}
-	}
-	cs.mutex.Unlock()
-	return clusterTypes
-}
-
 var Clusters = ClustersType{
 	datas: make(map[string]*ClusterType),
 	mutex: new(sync.RWMutex),
@@ -77,35 +64,7 @@ func initClustersFromConfig() error {
 	opts := config.C.Clusters
 
 	for i := 0; i < len(opts); i++ {
-		transport := &http.Transport{
-			// TLSClientConfig: tlsConfig,
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout: time.Duration(opts[i].DialTimeout) * time.Millisecond,
-			}).DialContext,
-			ResponseHeaderTimeout: time.Duration(opts[i].Timeout) * time.Millisecond,
-			MaxIdleConnsPerHost:   opts[i].MaxIdleConnsPerHost,
-		}
-
-		cli, err := api.NewClient(api.Config{
-			Address:      opts[i].Prom,
-			RoundTripper: transport,
-		})
-
-		if err != nil {
-			logger.Errorf("new client fail: %v", err)
-			continue
-		}
-
-		cluster := &ClusterType{
-			Opts:      opts[i],
-			Transport: transport,
-			PromClient: prom.NewAPI(cli, prom.ClientOptions{
-				BasicAuthUser: opts[i].BasicAuthUser,
-				BasicAuthPass: opts[i].BasicAuthPass,
-				Headers:       opts[i].Headers,
-			}),
-		}
+		cluster := newClusterTypeByOption(opts[i])
 		Clusters.Put(opts[i].Name, cluster)
 	}
 
@@ -206,38 +165,42 @@ func loadClustersFromAPI() {
 				MaxIdleConnsPerHost: 32,
 			}
 
-			transport := &http.Transport{
-				// TLSClientConfig: tlsConfig,
-				Proxy: http.ProxyFromEnvironment,
-				DialContext: (&net.Dialer{
-					Timeout: time.Duration(opt.DialTimeout) * time.Millisecond,
-				}).DialContext,
-				ResponseHeaderTimeout: time.Duration(opt.Timeout) * time.Millisecond,
-				MaxIdleConnsPerHost:   opt.MaxIdleConnsPerHost,
-			}
-
-			cli, err := api.NewClient(api.Config{
-				Address:      opt.Prom,
-				RoundTripper: transport,
-			})
-
-			if err != nil {
-				logger.Errorf("new client fail: %v", err)
-				continue
-			}
-
-			cluster := &ClusterType{
-				Opts:      opt,
-				Transport: transport,
-				PromClient: prom.NewAPI(cli, prom.ClientOptions{
-					BasicAuthUser: opt.BasicAuthUser,
-					BasicAuthPass: opt.BasicAuthPass,
-					Headers:       opt.Headers,
-				}),
-			}
+			cluster := newClusterTypeByOption(opt)
 
 			Clusters.Put(item.Name, cluster)
 			continue
 		}
 	}
+}
+
+func newClusterTypeByOption(opt config.ClusterOptions) *ClusterType {
+	transport := &http.Transport{
+		// TLSClientConfig: tlsConfig,
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout: time.Duration(opt.DialTimeout) * time.Millisecond,
+		}).DialContext,
+		ResponseHeaderTimeout: time.Duration(opt.Timeout) * time.Millisecond,
+		MaxIdleConnsPerHost:   opt.MaxIdleConnsPerHost,
+	}
+
+	cli, err := api.NewClient(api.Config{
+		Address:      opt.Prom,
+		RoundTripper: transport,
+	})
+
+	if err != nil {
+		logger.Errorf("new client fail: %v", err)
+	}
+
+	cluster := &ClusterType{
+		Opts:      opt,
+		Transport: transport,
+		PromClient: prom.NewAPI(cli, prom.ClientOptions{
+			BasicAuthUser: opt.BasicAuthUser,
+			BasicAuthPass: opt.BasicAuthPass,
+			Headers:       opt.Headers,
+		}),
+	}
+	return cluster
 }

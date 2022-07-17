@@ -118,10 +118,6 @@ func (a Webapi) initialize() (func(), error) {
 	if err = prom.Init(); err != nil {
 		return nil, err
 	}
-	// init reader clients
-	if err = prom.Init(); err != nil {
-		return nil, err
-	}
 
 	stat.Init()
 
