@@ -2,9 +2,7 @@ package router
 
 import (
 	"context"
-	. "github.com/didi/nightingale/v5/src/pkg/prom"
-	"github.com/didi/nightingale/v5/src/webapi/reader"
-	"github.com/prometheus/common/model"
+
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -14,8 +12,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 
+	pkgprom "github.com/didi/nightingale/v5/src/pkg/prom"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/didi/nightingale/v5/src/webapi/prom"
+	"github.com/prometheus/common/model"
 )
 
 type queryFormItem struct {
@@ -29,27 +29,65 @@ type batchQueryForm struct {
 	Queries []queryFormItem `json:"queries" binding:"required"`
 }
 
-type batchQueryRes struct {
-	Status string        `json:"status"`
-	Data   []model.Value `json:"data"`
-}
-
 func promBatchQueryRange(c *gin.Context) {
-
 	xcluster := c.GetHeader("X-Cluster")
+	if xcluster == "" {
+		c.String(500, "X-Cluster is blank")
+		return
+	}
+
 	var f batchQueryForm
 	err := c.BindJSON(&f)
 	if err != nil {
-		c.String(500, "%s", err.Error())
+		c.String(500, err.Error())
+		return
 	}
-	res, err := batchQueryRange(xcluster, f.Queries)
 
-	ginx.NewRender(c).Data(res, err)
+	cluster, exist := prom.Clusters.Get(xcluster)
+	if !exist {
+		c.String(http.StatusBadRequest, "cluster(%s) not found", xcluster)
+		return
+	}
+
+	var lst []model.Value
+
+	for _, item := range f.Queries {
+		r := pkgprom.Range{
+			Start: time.Unix(item.Start, 0),
+			End:   time.Unix(item.End, 0),
+			Step:  time.Duration(item.Step) * time.Second,
+		}
+
+		resp, _, err := cluster.PromClient.QueryRange(context.Background(), item.Query, r)
+		if err != nil {
+			c.String(500, err.Error())
+			return
+		}
+
+		lst = append(lst, resp)
+	}
+
+	c.JSON(200, lst)
 }
 
 func prometheusProxy(c *gin.Context) {
+	xcluster := c.GetHeader("X-Cluster")
+	if xcluster == "" {
+		c.String(http.StatusBadRequest, "X-Cluster missed")
+		return
+	}
 
-	target, cluster := getClusterAndTarget(c)
+	cluster, exists := prom.Clusters.Get(xcluster)
+	if !exists {
+		c.String(http.StatusBadRequest, "No such cluster: %s", xcluster)
+		return
+	}
+
+	target, err := url.Parse(cluster.Opts.Prom)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "invalid prometheus url: %s", cluster.Opts.Prom)
+		return
+	}
 
 	director := func(req *http.Request) {
 		req.URL.Scheme = target.Scheme
@@ -111,50 +149,4 @@ func clustersGets(c *gin.Context) {
 		names = append(names, config.C.Clusters[i].Name)
 	}
 	ginx.NewRender(c).Data(names, nil)
-}
-
-func batchQueryRange(cluster string, data []queryFormItem) (batchQueryRes, error) {
-
-	var res batchQueryRes
-
-	client := reader.Reader.Clients[cluster]
-
-	for _, item := range data {
-
-		r := Range{
-			Start: time.Unix(item.Start, 0),
-			End:   time.Unix(item.End, 0),
-			Step:  time.Duration(item.Step) * time.Second,
-		}
-		resp, _, err := client.QueryRange(context.Background(), item.Query, r)
-		if err != nil {
-			return res, err
-		}
-		res.Data = append(res.Data, resp)
-	}
-	res.Status = "success"
-	return res, nil
-}
-
-func getClusterAndTarget(c *gin.Context) (*url.URL, *prom.ClusterType) {
-
-	xcluster := c.GetHeader("X-Cluster")
-
-	if xcluster == "" {
-		c.String(http.StatusBadRequest, "X-Cluster missed")
-		return nil, nil
-	}
-
-	cluster, exists := prom.Clusters.Get(xcluster)
-	if !exists {
-		c.String(http.StatusBadRequest, "No such cluster: %s", xcluster)
-		return nil, nil
-	}
-
-	target, err := url.Parse(cluster.Opts.Prom)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "invalid prometheus url: %s", cluster.Opts.Prom)
-		return nil, nil
-	}
-	return target, cluster
 }

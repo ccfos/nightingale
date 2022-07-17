@@ -1,21 +1,16 @@
 package reader
 
 import (
-	"github.com/didi/nightingale/v5/src/pkg/prom"
 	"net"
 	"net/http"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/pkg/prom"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/prometheus/client_golang/api"
 )
 
-type ReaderType struct {
-	Opts   config.ReaderOptions
-	Client prom.API
-}
-
-var Reader ReaderType
+var Client prom.API
 
 func Init(opts config.ReaderOptions) error {
 	cli, err := api.NewClient(api.Config{
@@ -41,14 +36,11 @@ func Init(opts config.ReaderOptions) error {
 		return err
 	}
 
-	Reader = ReaderType{
-		Opts: opts,
-		Client: prom.NewAPI(cli, prom.ClientOptions{
-			BasicAuthUser: opts.BasicAuthUser,
-			BasicAuthPass: opts.BasicAuthPass,
-			Headers:       opts.Headers,
-		}),
-	}
+	Client = prom.NewAPI(cli, prom.ClientOptions{
+		BasicAuthUser: opts.BasicAuthUser,
+		BasicAuthPass: opts.BasicAuthPass,
+		Headers:       opts.Headers,
+	})
 
 	return nil
 }
