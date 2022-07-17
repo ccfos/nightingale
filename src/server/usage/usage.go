@@ -30,7 +30,7 @@ type Usage struct {
 }
 
 func getSamples() (float64, error) {
-	value, warns, err := reader.Reader.Client.Query(context.Background(), request, time.Now())
+	value, warns, err := reader.Client.Query(context.Background(), request, time.Now())
 	if err != nil {
 		return 0, err
 	}

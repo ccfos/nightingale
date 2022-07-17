@@ -22,8 +22,8 @@ type TagFilter struct {
 type AlertMute struct {
 	Id       int64        `json:"id" gorm:"primaryKey"`
 	GroupId  int64        `json:"group_id"`
-	Prod     string       `json:"prod"` // product empty means n9e
-	Cluster  string       `json:"cluster"`
+	Prod     string       `json:"prod"`    // product empty means n9e
+	Cluster  string       `json:"cluster"` // take effect by clusters, seperated by space
 	Tags     ormx.JSONArr `json:"tags"`
 	Cause    string       `json:"cause"`
 	Btime    int64        `json:"btime"`
@@ -44,7 +44,7 @@ func AlertMuteGets(prods []string, bgid int64, query string) (lst []AlertMute, e
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
 			qarg := "%" + arr[i] + "%"
-			session = session.Where("cause like ?", qarg, qarg)
+			session = session.Where("cause like ?", qarg)
 		}
 	}
 
@@ -64,6 +64,10 @@ func (m *AlertMute) Verify() error {
 
 	if m.Cluster == "" {
 		return errors.New("cluster invalid")
+	}
+
+	if IsClusterAll(m.Cluster) {
+		m.Cluster = ClusterAll
 	}
 
 	if m.Etime <= m.Btime {
@@ -88,12 +92,12 @@ func (m *AlertMute) Parse() error {
 	}
 
 	for i := 0; i < len(m.ITags); i++ {
-		if m.ITags[i].Func == "=~" {
+		if m.ITags[i].Func == "=~" || m.ITags[i].Func == "!~" {
 			m.ITags[i].Regexp, err = regexp.Compile(m.ITags[i].Value)
 			if err != nil {
 				return err
 			}
-		} else if m.ITags[i].Func == "in" {
+		} else if m.ITags[i].Func == "in" || m.ITags[i].Func == "not in" {
 			arr := strings.Fields(m.ITags[i].Value)
 			m.ITags[i].Vset = make(map[string]struct{})
 			for j := 0; j < len(arr); j++ {
@@ -123,7 +127,7 @@ func AlertMuteDel(ids []int64) error {
 func AlertMuteStatistics(cluster string) (*Statistics, error) {
 	session := DB().Model(&AlertMute{}).Select("count(*) as total", "max(create_at) as last_updated")
 	if cluster != "" {
-		session = session.Where("cluster = ?", cluster)
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var stats []*Statistics
@@ -146,10 +150,19 @@ func AlertMuteGetsByCluster(cluster string) ([]*AlertMute, error) {
 	// get my cluster's mutes
 	session := DB().Model(&AlertMute{})
 	if cluster != "" {
-		session = session.Where("cluster = ?", cluster)
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var lst []*AlertMute
+	var mlst []*AlertMute
 	err = session.Find(&lst).Error
-	return lst, err
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range lst {
+		if MatchCluster(m.Cluster, cluster) {
+			mlst = append(mlst, m)
+		}
+	}
+	return mlst, err
 }

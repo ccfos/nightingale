@@ -14,7 +14,7 @@ import (
 type AlertSubscribe struct {
 	Id               int64        `json:"id" gorm:"primaryKey"`
 	GroupId          int64        `json:"group_id"`
-	Cluster          string       `json:"cluster"`
+	Cluster          string       `json:"cluster"` // take effect by clusters, seperated by space
 	RuleId           int64        `json:"rule_id"`
 	RuleName         string       `json:"rule_name" gorm:"-"` // for fe
 	Tags             ormx.JSONArr `json:"tags"`
@@ -57,6 +57,10 @@ func AlertSubscribeGet(where string, args ...interface{}) (*AlertSubscribe, erro
 func (s *AlertSubscribe) Verify() error {
 	if s.Cluster == "" {
 		return errors.New("cluster invalid")
+	}
+
+	if IsClusterAll(s.Cluster) {
+		s.Cluster = ClusterAll
 	}
 
 	if err := s.Parse(); err != nil {
@@ -202,7 +206,7 @@ func AlertSubscribeStatistics(cluster string) (*Statistics, error) {
 	session := DB().Model(&AlertSubscribe{}).Select("count(*) as total", "max(update_at) as last_updated")
 
 	if cluster != "" {
-		session = session.Where("cluster = ?", cluster)
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var stats []*Statistics
@@ -218,10 +222,19 @@ func AlertSubscribeGetsByCluster(cluster string) ([]*AlertSubscribe, error) {
 	// get my cluster's subscribes
 	session := DB().Model(&AlertSubscribe{})
 	if cluster != "" {
-		session = session.Where("cluster = ?", cluster)
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var lst []*AlertSubscribe
+	var slst []*AlertSubscribe
 	err := session.Find(&lst).Error
-	return lst, err
+	if err != nil {
+		return nil, err
+	}
+	for _, s := range lst {
+		if MatchCluster(s.Cluster, cluster) {
+			slst = append(slst, s)
+		}
+	}
+	return slst, err
 }

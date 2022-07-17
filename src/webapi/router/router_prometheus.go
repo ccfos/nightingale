@@ -1,17 +1,74 @@
 package router
 
 import (
+	"context"
+
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 
+	pkgprom "github.com/didi/nightingale/v5/src/pkg/prom"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/didi/nightingale/v5/src/webapi/prom"
+	"github.com/prometheus/common/model"
 )
+
+type queryFormItem struct {
+	Start int64  `json:"start" binding:"required"`
+	End   int64  `json:"end" binding:"required"`
+	Step  int64  `json:"step" binding:"required"`
+	Query string `json:"query" binding:"required"`
+}
+
+type batchQueryForm struct {
+	Queries []queryFormItem `json:"queries" binding:"required"`
+}
+
+func promBatchQueryRange(c *gin.Context) {
+	xcluster := c.GetHeader("X-Cluster")
+	if xcluster == "" {
+		c.String(500, "X-Cluster is blank")
+		return
+	}
+
+	var f batchQueryForm
+	err := c.BindJSON(&f)
+	if err != nil {
+		c.String(500, err.Error())
+		return
+	}
+
+	cluster, exist := prom.Clusters.Get(xcluster)
+	if !exist {
+		c.String(http.StatusBadRequest, "cluster(%s) not found", xcluster)
+		return
+	}
+
+	var lst []model.Value
+
+	for _, item := range f.Queries {
+		r := pkgprom.Range{
+			Start: time.Unix(item.Start, 0),
+			End:   time.Unix(item.End, 0),
+			Step:  time.Duration(item.Step) * time.Second,
+		}
+
+		resp, _, err := cluster.PromClient.QueryRange(context.Background(), item.Query, r)
+		if err != nil {
+			c.String(500, err.Error())
+			return
+		}
+
+		lst = append(lst, resp)
+	}
+
+	c.JSON(200, lst)
+}
 
 func prometheusProxy(c *gin.Context) {
 	xcluster := c.GetHeader("X-Cluster")

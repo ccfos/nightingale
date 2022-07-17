@@ -13,7 +13,7 @@
 
 // Package v1 provides bindings to the Prometheus HTTP API v1:
 // http://prometheus.io/docs/querying/api/
-package reader
+package prom
 
 import (
 	"context"
@@ -558,10 +558,11 @@ func (qr *queryResult) UnmarshalJSON(b []byte) error {
 // NewAPI returns a new API for the client.
 //
 // It is safe to use the returned API from multiple goroutines.
-func NewAPI(c api.Client) API {
+func NewAPI(c api.Client, opt ClientOptions) API {
 	return &httpAPI{
 		client: &apiClientImpl{
 			client: c,
+			opt:    opt,
 		},
 	}
 }
@@ -891,6 +892,7 @@ type apiClient interface {
 
 type apiClientImpl struct {
 	client api.Client
+	opt    ClientOptions
 }
 
 type apiResponse struct {
@@ -921,16 +923,16 @@ func (h *apiClientImpl) URL(ep string, args map[string]string) *url.URL {
 }
 
 func (h *apiClientImpl) Do(ctx context.Context, req *http.Request) (*http.Response, []byte, Warnings, error) {
-	if Reader.Opts.BasicAuthUser != "" && Reader.Opts.BasicAuthPass != "" {
-		req.SetBasicAuth(Reader.Opts.BasicAuthUser, Reader.Opts.BasicAuthPass)
+	if h.opt.BasicAuthUser != "" && h.opt.BasicAuthPass != "" {
+		req.SetBasicAuth(h.opt.BasicAuthUser, h.opt.BasicAuthPass)
 	}
 
-	headerCount := len(Reader.Opts.Headers)
+	headerCount := len(h.opt.Headers)
 	if headerCount > 0 && headerCount%2 == 0 {
-		for i := 0; i < len(Reader.Opts.Headers); i += 2 {
-			req.Header.Add(Reader.Opts.Headers[i], Reader.Opts.Headers[i+1])
-			if Reader.Opts.Headers[i] == "Host" {
-				req.Host = Reader.Opts.Headers[i+1]
+		for i := 0; i < len(h.opt.Headers); i += 2 {
+			req.Header.Add(h.opt.Headers[i], h.opt.Headers[i+1])
+			if h.opt.Headers[i] == "Host" {
+				req.Host = h.opt.Headers[i+1]
 			}
 		}
 	}

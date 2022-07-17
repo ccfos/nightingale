@@ -16,7 +16,7 @@ import (
 type AlertRule struct {
 	Id                   int64       `json:"id" gorm:"primaryKey"`
 	GroupId              int64       `json:"group_id"`                     // busi group id
-	Cluster              string      `json:"cluster"`                      // take effect by cluster
+	Cluster              string      `json:"cluster"`                      // take effect by clusters, seperated by space
 	Name                 string      `json:"name"`                         // rule name
 	Note                 string      `json:"note"`                         // will sent in notify
 	Prod                 string      `json:"prod"`                         // product empty means n9e
@@ -65,6 +65,10 @@ func (ar *AlertRule) Verify() error {
 
 	if ar.Cluster == "" {
 		return errors.New("cluster is blank")
+	}
+
+	if IsClusterAll(ar.Cluster) {
+		ar.Cluster = ClusterAll
 	}
 
 	if str.Dangerous(ar.Name) {
@@ -124,7 +128,7 @@ func (ar *AlertRule) Add() error {
 		return err
 	}
 
-	exists, err := AlertRuleExists("group_id=? and cluster=? and name=?", ar.GroupId, ar.Cluster, ar.Name)
+	exists, err := AlertRuleExists(0, ar.GroupId, ar.Cluster, ar.Name)
 	if err != nil {
 		return err
 	}
@@ -142,7 +146,7 @@ func (ar *AlertRule) Add() error {
 
 func (ar *AlertRule) Update(arf AlertRule) error {
 	if ar.Name != arf.Name {
-		exists, err := AlertRuleExists("group_id=? and cluster=? and name=? and id <> ?", ar.GroupId, ar.Cluster, arf.Name, ar.Id)
+		exists, err := AlertRuleExists(ar.Id, ar.GroupId, ar.Cluster, arf.Name)
 		if err != nil {
 			return err
 		}
@@ -262,8 +266,25 @@ func AlertRuleDels(ids []int64, bgid ...int64) error {
 	return nil
 }
 
-func AlertRuleExists(where string, args ...interface{}) (bool, error) {
-	return Exists(DB().Model(&AlertRule{}).Where(where, args...))
+func AlertRuleExists(id, groupId int64, cluster, name string) (bool, error) {
+	session := DB().Where("id <> ? and group_id = ? and name = ?", id, groupId, name)
+
+	var lst []AlertRule
+	err := session.Find(&lst).Error
+	if err != nil {
+		return false, err
+	}
+	if len(lst) == 0 {
+		return false, nil
+	}
+
+	// match cluster
+	for _, r := range lst {
+		if MatchCluster(r.Cluster, cluster) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func AlertRuleGets(groupId int64) ([]AlertRule, error) {
@@ -284,18 +305,35 @@ func AlertRuleGetsByCluster(cluster string) ([]*AlertRule, error) {
 	session := DB().Where("disabled = ? and prod = ?", 0, "")
 
 	if cluster != "" {
-		session = session.Where("cluster = ?", cluster)
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var lst []*AlertRule
 	err := session.Find(&lst).Error
-	if err == nil {
+	if err != nil {
+		return lst, err
+	}
+
+	if len(lst) == 0 {
+		return lst, nil
+	}
+
+	if cluster == "" {
 		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()
 		}
+		return lst, nil
 	}
 
-	return lst, err
+	lr := make([]*AlertRule, 0, len(lst))
+	for _, r := range lst {
+		if MatchCluster(r.Cluster, cluster) {
+			r.DB2FE()
+			lr = append(lr, r)
+		}
+	}
+
+	return lr, err
 }
 
 func AlertRulesGetsBy(prods []string, query string) ([]*AlertRule, error) {
@@ -358,7 +396,8 @@ func AlertRuleStatistics(cluster string) (*Statistics, error) {
 	session := DB().Model(&AlertRule{}).Select("count(*) as total", "max(update_at) as last_updated").Where("disabled = ? and prod = ?", 0, "")
 
 	if cluster != "" {
-		session = session.Where("cluster = ?", cluster)
+		//  简略的判断，当一个clustername是另一个clustername的substring的时候，会出现stats与预期不符，不影响使用
+		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var stats []*Statistics
