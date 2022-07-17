@@ -64,7 +64,7 @@ func initClustersFromConfig() error {
 	opts := config.C.Clusters
 
 	for i := 0; i < len(opts); i++ {
-		cluster := newClusterTypeByOption(opts[i])
+		cluster := newClusterByOption(opts[i])
 		Clusters.Put(opts[i].Name, cluster)
 	}
 
@@ -165,15 +165,13 @@ func loadClustersFromAPI() {
 				MaxIdleConnsPerHost: 32,
 			}
 
-			cluster := newClusterTypeByOption(opt)
-
-			Clusters.Put(item.Name, cluster)
+			Clusters.Put(item.Name, newClusterByOption(opt))
 			continue
 		}
 	}
 }
 
-func newClusterTypeByOption(opt config.ClusterOptions) *ClusterType {
+func newClusterByOption(opt config.ClusterOptions) *ClusterType {
 	transport := &http.Transport{
 		// TLSClientConfig: tlsConfig,
 		Proxy: http.ProxyFromEnvironment,
@@ -202,5 +200,6 @@ func newClusterTypeByOption(opt config.ClusterOptions) *ClusterType {
 			Headers:       opt.Headers,
 		}),
 	}
+
 	return cluster
 }
