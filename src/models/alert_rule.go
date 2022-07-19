@@ -337,7 +337,7 @@ func AlertRuleGetsByCluster(cluster string) ([]*AlertRule, error) {
 }
 
 func AlertRulesGetsBy(prods []string, query string) ([]*AlertRule, error) {
-	session := DB().Where("disabled = ? and prod in (?)", 0, prods)
+	session := DB().Where("prod in (?)", prods)
 
 	if query != "" {
 		arr := strings.Fields(query)
