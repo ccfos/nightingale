@@ -326,7 +326,7 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 		}
 
 		// isMuted only need TriggerTime RuleName and TagsMap
-		if isMuted(event) {
+		if IsMuted(event) {
 			logger.Infof("event_muted: rule_id=%d %s", r.rule.Id, vectors[i].Key)
 			continue
 		}

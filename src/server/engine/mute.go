@@ -6,7 +6,7 @@ import (
 )
 
 // 如果传入了clock这个可选参数，就表示使用这个clock表示的时间，否则就从event的字段中取TriggerTime
-func isMuted(event *models.AlertCurEvent, clock ...int64) bool {
+func IsMuted(event *models.AlertCurEvent, clock ...int64) bool {
 	mutes, has := memsto.AlertMuteCache.Gets(event.GroupId)
 	if !has || len(mutes) == 0 {
 		return false

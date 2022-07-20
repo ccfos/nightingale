@@ -36,6 +36,13 @@ func pushEventToQueue(c *gin.Context) {
 		event.TagsMap[arr[0]] = arr[1]
 	}
 
+	// isMuted only need TriggerTime RuleName and TagsMap
+	if engine.IsMuted(event) {
+		logger.Infof("event_muted: rule_id=%d %s", event.RuleId, event.Hash)
+		ginx.NewRender(c).Message(nil)
+		return
+	}
+
 	if err := event.ParseRuleNote(); err != nil {
 		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
 	}
