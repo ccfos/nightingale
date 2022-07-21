@@ -11,6 +11,7 @@ import (
 type inter interface {
 	Descript() string
 	Notify([]byte)
+	NotifyMaintainer([]byte)
 }
 
 // N9E complete
@@ -35,6 +36,13 @@ func (n *N9EPlugin) Notify(bs []byte) {
 			fmt.Printf("do something...")
 		}
 	}
+}
+
+func (n *N9EPlugin) NotifyMaintainer(bs []byte) {
+	fmt.Println("do something... begin")
+	result := string(bs)
+	fmt.Println("%T",result)
+	fmt.Println("do something... end")
 }
 
 // will be loaded for alertingCall , The first letter must be capitalized to be exported
