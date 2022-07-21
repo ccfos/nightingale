@@ -401,6 +401,7 @@ func alertingCallScript(stdinBytes []byte) {
 type Notifier interface {
 	Descript() string
 	Notify([]byte)
+	NotifyMaintainer([]byte)
 }
 
 // call notify.so via golang plugin build
