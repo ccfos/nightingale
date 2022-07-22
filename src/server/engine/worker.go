@@ -116,8 +116,7 @@ func (r RuleEval) Work() {
 		value, warnings, err = reader.Client.Query(context.Background(), promql, time.Now())
 		if err != nil {
 			logger.Errorf("rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
-			// 告警查询prometheus逻辑出错，发告警信息给管理员
-			notifyToMaintainer(err, "查询prometheus出错")
+			notifyToMaintainer(err, "failed to query prometheus")
 			return
 		}
 
@@ -190,7 +189,6 @@ func (ws *WorkersType) Build(rids []int64) {
 		elst, err := models.AlertCurEventGetByRule(rules[hash].Id)
 		if err != nil {
 			logger.Errorf("worker_build: AlertCurEventGetByRule failed: %v", err)
-			notifyToMaintainer(err, "AlertCurEventGetByRule Error，ruleID="+fmt.Sprint(rules[hash].Id))
 			continue
 		}
 

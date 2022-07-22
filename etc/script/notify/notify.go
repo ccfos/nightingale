@@ -41,13 +41,13 @@ func (n *N9EPlugin) Notify(bs []byte) {
 func (n *N9EPlugin) NotifyMaintainer(bs []byte) {
 	fmt.Println("do something... begin")
 	result := string(bs)
-	fmt.Println("%T",result)
+	fmt.Println(result)
 	fmt.Println("do something... end")
 }
 
 // will be loaded for alertingCall , The first letter must be capitalized to be exported
 var N9eCaller = N9EPlugin{
-	Name:        "n9e",
-	Description: "演示告警通过动态链接库方式通知",
+	Name:        "N9EPlugin",
+	Description: "Notification by lib",
 	BuildAt:     time.Now().Local().Format("2006/01/02 15:04:05"),
 }
