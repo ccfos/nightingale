@@ -2,8 +2,11 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
+	"plugin"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -11,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/koding/multiconfig"
 
+	"github.com/didi/nightingale/v5/src/notifier"
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
@@ -98,6 +102,33 @@ func MustLoad(fpaths ...string) {
 				}
 				C.Alerting.Webhook.TimeoutDuration = dur
 			}
+		}
+
+		if C.Alerting.CallPlugin.Enable {
+			if runtime.GOOS == "windows" {
+				fmt.Println("notify plugin on unsupported os:", runtime.GOOS)
+				os.Exit(1)
+			}
+
+			p, err := plugin.Open(C.Alerting.CallPlugin.PluginPath)
+			if err != nil {
+				fmt.Println("failed to load plugin:", err)
+				os.Exit(1)
+			}
+
+			caller, err := p.Lookup(C.Alerting.CallPlugin.Caller)
+			if err != nil {
+				fmt.Println("failed to lookup plugin Caller:", err)
+				os.Exit(1)
+			}
+
+			ins, ok := caller.(notifier.Notifier)
+			if !ok {
+				log.Println("notifier interface not implemented")
+				os.Exit(1)
+			}
+
+			notifier.Instance = ins
 		}
 
 		if C.WriterOpt.QueueMaxSize <= 0 {

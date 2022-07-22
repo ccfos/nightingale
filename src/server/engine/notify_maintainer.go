@@ -2,11 +2,11 @@ package engine
 
 import (
 	"encoding/json"
-	"plugin"
 	"runtime"
 	"time"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/notifier"
 	"github.com/didi/nightingale/v5/src/server/common/sender"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
@@ -14,13 +14,13 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-type NoticeMaintainer struct {
-	NotifyUsersObj []*models.User `json:"notify_user_obj" gorm:"-"`
-	Title          string         `json:"title"`
-	Content        string         `json:"content"`
+type MaintainMessage struct {
+	Tos     []*models.User `json:"tos"`
+	Title   string         `json:"title"`
+	Content string         `json:"content"`
 }
 
-func noticeCallPlugin(stdinBytes []byte) {
+func notifyMaintainerWithPlugin(e error, title, triggerTime string, users []*models.User) {
 	if !config.C.Alerting.CallPlugin.Enable {
 		return
 	}
@@ -30,56 +30,48 @@ func noticeCallPlugin(stdinBytes []byte) {
 		return
 	}
 
-	p, err := plugin.Open(config.C.Alerting.CallPlugin.PluginPath)
+	stdinBytes, err := json.Marshal(MaintainMessage{
+		Tos:     users,
+		Title:   title,
+		Content: "Title: " + title + "\nContent: " + e.Error() + "\nTime: " + triggerTime,
+	})
+
 	if err != nil {
-		logger.Errorf("failed to open notify plugin: %v", err)
+		logger.Error("failed to marshal MaintainMessage:", err)
 		return
 	}
-	caller, err := p.Lookup(config.C.Alerting.CallPlugin.Caller)
-	if err != nil {
-		logger.Errorf("failed to load caller: %v", err)
-		return
-	}
-	notifier, ok := caller.(Notifier)
-	if !ok {
-		logger.Errorf("notifier interface not implemented): %v", err)
-		return
-	}
-	notifier.NotifyMaintainer(stdinBytes)
-	logger.Debugf("noticeCallPlugin done. %s", notifier.Descript())
+
+	notifier.Instance.NotifyMaintainer(stdinBytes)
+	logger.Debugf("notify maintainer with plugin done")
 }
 
 // notify to maintainer to handle the error
 func notifyToMaintainer(e error, title string) {
+	logger.Errorf("notifyToMaintainer, title:%s, error:%v", title, e)
 
-	logger.Errorf("notifyToMaintainer，title:%s, error:%v", title, e)
-
-	var noticeMaintainer NoticeMaintainer
-	maintainerUsers := memsto.UserCache.GetMaintainerUsers()
-	if len(maintainerUsers) == 0 {
+	users := memsto.UserCache.GetMaintainerUsers()
+	if len(users) == 0 {
 		return
 	}
-	triggerTime := time.Now().Format("2006/01/02 - 15:04:05")
-	noticeMaintainer.NotifyUsersObj = maintainerUsers
-	noticeMaintainer.Content = "【内部处理错误】当前标题: " + title + "\n【内部处理错误】当前异常: " + e.Error() + "\n【内部处理错误】发送时间: " + triggerTime
-	noticeMaintainer.Title = title
-	stdinBytes, err := json.Marshal(noticeMaintainer)
-	if err != nil {
-		logger.Errorf("notifyToMaintainer: failed to marshal noticeMaintainer: %v", err)
-	} else {
-		noticeCallPlugin(stdinBytes)
-	}
 
+	triggerTime := time.Now().Format("2006/01/02 - 15:04:05")
+
+	notifyMaintainerWithPlugin(e, title, triggerTime, users)
+	notifyMaintainerWithBuiltin(e, title, triggerTime, users)
+}
+
+func notifyMaintainerWithBuiltin(e error, title, triggerTime string, users []*models.User) {
 	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
 		return
 	}
+
 	emailset := make(map[string]struct{})
 	phoneset := make(map[string]struct{})
 	wecomset := make(map[string]struct{})
 	dingtalkset := make(map[string]struct{})
 	feishuset := make(map[string]struct{})
 
-	for _, user := range maintainerUsers {
+	for _, user := range users {
 		if user.Email != "" {
 			emailset[user.Email] = struct{}{}
 		}
@@ -118,13 +110,13 @@ func notifyToMaintainer(e error, title string) {
 			if len(emailset) == 0 {
 				continue
 			}
-			content := "【内部处理错误】当前标题: " + title + "\n【内部处理错误】当前异常: " + e.Error() + "\n【内部处理错误】发送时间: " + triggerTime
+			content := "Title: " + title + "\nContent: " + e.Error() + "\nTime: " + triggerTime
 			sender.WriteEmail(title, content, StringSetKeys(emailset))
 		case "dingtalk":
 			if len(dingtalkset) == 0 {
 				continue
 			}
-			content := "**【内部处理错误】当前标题: **" + title + "\n**【内部处理错误】当前异常: **" + e.Error() + "\n**【内部处理错误】发送时间: **" + triggerTime
+			content := "**Title: **" + title + "\n**Content: **" + e.Error() + "\n**Time: **" + triggerTime
 			sender.SendDingtalk(sender.DingtalkMessage{
 				Title:     title,
 				Text:      content,
@@ -135,7 +127,7 @@ func notifyToMaintainer(e error, title string) {
 			if len(wecomset) == 0 {
 				continue
 			}
-			content := "**【内部处理错误】当前标题: **" + title + "\n**【内部处理错误】当前异常: **" + e.Error() + "\n**【内部处理错误】发送时间: **" + triggerTime
+			content := "**Title: **" + title + "\n**Content: **" + e.Error() + "\n**Time: **" + triggerTime
 			sender.SendWecom(sender.WecomMessage{
 				Text:   content,
 				Tokens: StringSetKeys(wecomset),
@@ -145,7 +137,7 @@ func notifyToMaintainer(e error, title string) {
 				continue
 			}
 
-			content := "【内部处理错误】当前标题: " + title + "\n【内部处理错误】当前异常: " + e.Error() + "\n【内部处理错误】发送时间: " + triggerTime
+			content := "Title: " + title + "\nContent: " + e.Error() + "\nTime: " + triggerTime
 			sender.SendFeishu(sender.FeishuMessage{
 				Text:      content,
 				AtMobiles: phones,
