@@ -1,8 +1,12 @@
 package engine
 
 import (
+	"encoding/json"
+	"plugin"
+	"runtime"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/server/common/sender"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
@@ -10,20 +14,65 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+type NoticeMaintainer struct {
+	NotifyUsersObj []*models.User `json:"notify_user_obj" gorm:"-"`
+	Title          string         `json:"title"`
+	Content        string         `json:"content"`
+}
+
+func noticeCallPlugin(stdinBytes []byte) {
+	if !config.C.Alerting.CallPlugin.Enable {
+		return
+	}
+
+	if runtime.GOOS == "windows" {
+		logger.Errorf("call notify plugin on unsupported os: %s", runtime.GOOS)
+		return
+	}
+
+	p, err := plugin.Open(config.C.Alerting.CallPlugin.PluginPath)
+	if err != nil {
+		logger.Errorf("failed to open notify plugin: %v", err)
+		return
+	}
+	caller, err := p.Lookup(config.C.Alerting.CallPlugin.Caller)
+	if err != nil {
+		logger.Errorf("failed to load caller: %v", err)
+		return
+	}
+	notifier, ok := caller.(Notifier)
+	if !ok {
+		logger.Errorf("notifier interface not implemented): %v", err)
+		return
+	}
+	notifier.NotifyMaintainer(stdinBytes)
+	logger.Debugf("noticeCallPlugin done. %s", notifier.Descript())
+}
+
 // notify to maintainer to handle the error
 func notifyToMaintainer(e error, title string) {
 
 	logger.Errorf("notifyToMaintainer，title:%s, error:%v", title, e)
 
-	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
-		return
-	}
-
+	var noticeMaintainer NoticeMaintainer
 	maintainerUsers := memsto.UserCache.GetMaintainerUsers()
 	if len(maintainerUsers) == 0 {
 		return
 	}
+	triggerTime := time.Now().Format("2006/01/02 - 15:04:05")
+	noticeMaintainer.NotifyUsersObj = maintainerUsers
+	noticeMaintainer.Content = "【内部处理错误】当前标题: " + title + "\n【内部处理错误】当前异常: " + e.Error() + "\n【内部处理错误】发送时间: " + triggerTime
+	noticeMaintainer.Title = title
+	stdinBytes, err := json.Marshal(noticeMaintainer)
+	if err != nil {
+		logger.Errorf("notifyToMaintainer: failed to marshal noticeMaintainer: %v", err)
+	} else {
+		noticeCallPlugin(stdinBytes)
+	}
 
+	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
+		return
+	}
 	emailset := make(map[string]struct{})
 	phoneset := make(map[string]struct{})
 	wecomset := make(map[string]struct{})
@@ -62,7 +111,6 @@ func notifyToMaintainer(e error, title string) {
 	}
 
 	phones := StringSetKeys(phoneset)
-	triggerTime := time.Now().Format("2006/01/02 - 15:04:05")
 
 	for _, ch := range config.C.Alerting.NotifyBuiltinChannels {
 		switch ch {
