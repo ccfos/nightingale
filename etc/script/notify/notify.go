@@ -7,13 +7,6 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-// the caller can be called for alerting notify by complete this interface
-type inter interface {
-	Descript() string
-	Notify([]byte)
-	NotifyMaintainer([]byte)
-}
-
 // N9E complete
 type N9EPlugin struct {
 	Name        string
@@ -48,6 +41,6 @@ func (n *N9EPlugin) NotifyMaintainer(bs []byte) {
 // will be loaded for alertingCall , The first letter must be capitalized to be exported
 var N9eCaller = N9EPlugin{
 	Name:        "N9EPlugin",
-	Description: "Notification by lib",
+	Description: "Notify by lib",
 	BuildAt:     time.Now().Local().Format("2006/01/02 15:04:05"),
 }
