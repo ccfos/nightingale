@@ -2,7 +2,6 @@ package engine
 
 import (
 	"encoding/json"
-	"runtime"
 	"time"
 
 	"github.com/didi/nightingale/v5/src/models"
@@ -22,11 +21,6 @@ type MaintainMessage struct {
 
 func notifyMaintainerWithPlugin(e error, title, triggerTime string, users []*models.User) {
 	if !config.C.Alerting.CallPlugin.Enable {
-		return
-	}
-
-	if runtime.GOOS == "windows" {
-		logger.Errorf("call notify plugin on unsupported os: %s", runtime.GOOS)
 		return
 	}
 
