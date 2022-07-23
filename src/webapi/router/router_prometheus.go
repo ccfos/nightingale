@@ -32,21 +32,15 @@ type batchQueryForm struct {
 func promBatchQueryRange(c *gin.Context) {
 	xcluster := c.GetHeader("X-Cluster")
 	if xcluster == "" {
-		c.String(500, "X-Cluster is blank")
-		return
+		ginx.Bomb(http.StatusBadRequest, "header(X-Cluster) is blank")
 	}
 
 	var f batchQueryForm
-	err := c.BindJSON(&f)
-	if err != nil {
-		c.String(500, err.Error())
-		return
-	}
+	ginx.Dangerous(c.BindJSON(&f))
 
 	cluster, exist := prom.Clusters.Get(xcluster)
 	if !exist {
-		c.String(http.StatusBadRequest, "cluster(%s) not found", xcluster)
-		return
+		ginx.Bomb(http.StatusBadRequest, "cluster(%s) not found", xcluster)
 	}
 
 	var lst []model.Value
@@ -59,15 +53,12 @@ func promBatchQueryRange(c *gin.Context) {
 		}
 
 		resp, _, err := cluster.PromClient.QueryRange(context.Background(), item.Query, r)
-		if err != nil {
-			c.String(500, err.Error())
-			return
-		}
+		ginx.Dangerous(err)
 
 		lst = append(lst, resp)
 	}
 
-	c.JSON(200, lst)
+	ginx.NewRender(c).Data(lst, nil)
 }
 
 func prometheusProxy(c *gin.Context) {

@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"os/exec"
 	"path"
-	"plugin"
-	"runtime"
 	"strings"
 	"time"
 
@@ -22,6 +20,7 @@ import (
 	"github.com/toolkits/pkg/slice"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/notifier"
 	"github.com/didi/nightingale/v5/src/pkg/sys"
 	"github.com/didi/nightingale/v5/src/pkg/tplx"
 	"github.com/didi/nightingale/v5/src/server/common/sender"
@@ -103,7 +102,6 @@ func alertingRedisPub(bs []byte) {
 
 func handleNotice(notice Notice, bs []byte) {
 	alertingCallScript(bs)
-
 	alertingCallPlugin(bs)
 
 	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
@@ -398,11 +396,6 @@ func alertingCallScript(stdinBytes []byte) {
 	logger.Infof("event_notify: exec %s output: %s", fpath, buf.String())
 }
 
-type Notifier interface {
-	Descript() string
-	Notify([]byte)
-}
-
 // call notify.so via golang plugin build
 // ig. etc/script/notify/notify.so
 func alertingCallPlugin(stdinBytes []byte) {
@@ -410,26 +403,8 @@ func alertingCallPlugin(stdinBytes []byte) {
 		return
 	}
 
-	if runtime.GOOS == "windows" {
-		logger.Errorf("call notify plugin on unsupported os: %s", runtime.GOOS)
-		return
-	}
-
-	p, err := plugin.Open(config.C.Alerting.CallPlugin.PluginPath)
-	if err != nil {
-		logger.Errorf("failed to open notify plugin: %v", err)
-		return
-	}
-	caller, err := p.Lookup(config.C.Alerting.CallPlugin.Caller)
-	if err != nil {
-		logger.Errorf("failed to load caller: %v", err)
-		return
-	}
-	notifier, ok := caller.(Notifier)
-	if !ok {
-		logger.Errorf("notifier interface not implemented): %v", err)
-		return
-	}
-	notifier.Notify(stdinBytes)
-	logger.Debugf("alertingCallPlugin done. %s", notifier.Descript())
+	logger.Debugf("alertingCallPlugin begin")
+	logger.Debugf("payload:", string(stdinBytes))
+	notifier.Instance.Notify(stdinBytes)
+	logger.Debugf("alertingCallPlugin done")
 }

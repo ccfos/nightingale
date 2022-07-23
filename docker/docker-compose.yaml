@@ -6,6 +6,7 @@ networks:
 
 services:
   mysql:
+    platform: linux/x86_64
     image: "mysql:5.7"
     container_name: mysql
     hostname: mysql
