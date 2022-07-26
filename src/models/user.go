@@ -462,7 +462,7 @@ func (u *User) BusiGroups(limit int, query string, all ...bool) ([]BusiGroup, er
 				return lst, err
 			}
 
-			err = session.Where("id=?", t.GroupId).Find(&lst).Error
+			err = DB().Order("name").Limit(limit).Where("id=?", t.GroupId).Find(&lst).Error
 		}
 
 		return lst, err
