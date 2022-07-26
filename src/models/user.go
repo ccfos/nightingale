@@ -450,6 +450,21 @@ func (u *User) BusiGroups(limit int, query string, all ...bool) ([]BusiGroup, er
 	var lst []BusiGroup
 	if u.IsAdmin() || (len(all) > 0 && all[0]) {
 		err := session.Where("name like ?", "%"+query+"%").Find(&lst).Error
+		if err != nil {
+			return lst, err
+		}
+
+		if len(lst) == 0 && len(query) > 0 {
+			// 隐藏功能，一般人不告诉，哈哈。query可能是给的ident，所以上面的sql没有查到，当做ident来查一下试试
+			var t *Target
+			t, err = TargetGet("ident=?", query)
+			if err != nil {
+				return lst, err
+			}
+
+			err = session.Where("id=?", t.GroupId).Find(&lst).Error
+		}
+
 		return lst, err
 	}
 
