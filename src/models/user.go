@@ -483,6 +483,22 @@ func (u *User) BusiGroups(limit int, query string, all ...bool) ([]BusiGroup, er
 	}
 
 	err = session.Where("id in ?", busiGroupIds).Where("name like ?", "%"+query+"%").Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(lst) == 0 && len(query) > 0 {
+		var t *Target
+		t, err = TargetGet("ident=?", query)
+		if err != nil {
+			return lst, err
+		}
+
+		if slice.ContainsInt64(busiGroupIds, t.GroupId) {
+			err = DB().Order("name").Limit(limit).Where("id=?", t.GroupId).Find(&lst).Error
+		}
+	}
+
 	return lst, err
 }
 
