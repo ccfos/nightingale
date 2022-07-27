@@ -51,6 +51,17 @@ func boardGet(c *gin.Context) {
 	ginx.NewRender(c).Data(board, nil)
 }
 
+func boardPureGet(c *gin.Context) {
+	board, err := models.BoardGetByID(ginx.UrlParamInt64(c, "bid"))
+	ginx.Dangerous(err)
+
+	if board == nil {
+		ginx.Bomb(http.StatusNotFound, "No such dashboard")
+	}
+
+	ginx.NewRender(c).Data(board, nil)
+}
+
 // bgrwCheck
 func boardDel(c *gin.Context) {
 	var f idsForm
