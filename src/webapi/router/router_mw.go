@@ -59,7 +59,7 @@ func proxyAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := handleProxyUser(c)
 		c.Set("userid", user.Id)
-		c.Set("username", user)
+		c.Set("username", user.Username)
 		c.Next()
 	}
 }
