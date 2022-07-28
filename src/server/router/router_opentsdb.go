@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/src/server/common"
 	"github.com/didi/nightingale/v5/src/server/config"
@@ -140,6 +141,8 @@ func handleOpenTSDB(c *gin.Context) {
 		bs, err = ioutil.ReadAll(c.Request.Body)
 	}
 
+	logger.Debugf("recv opentsdb msg: %s", string(bs))
+
 	if err != nil {
 		c.String(400, err.Error())
 		return
@@ -156,6 +159,7 @@ func handleOpenTSDB(c *gin.Context) {
 	}
 
 	if err != nil {
+		logger.Errorf("opentsdb msg format error: %s", err.Error())
 		c.String(400, err.Error())
 		return
 	}
@@ -170,12 +174,14 @@ func handleOpenTSDB(c *gin.Context) {
 
 	for i := 0; i < len(arr); i++ {
 		if err := arr[i].Clean(ts); err != nil {
+			logger.Errorf("opentsdb msg clean error: %s", err.Error())
 			fail++
 			continue
 		}
 
 		pt, err := arr[i].ToProm()
 		if err != nil {
+			logger.Errorf("opentsdb msg to tsdb error: %s", err.Error())
 			fail++
 			continue
 		}
