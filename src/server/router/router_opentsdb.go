@@ -173,6 +173,9 @@ func handleOpenTSDB(c *gin.Context) {
 	for i := 0; i < len(arr); i++ {
 		if err := arr[i].Clean(ts); err != nil {
 			logger.Debugf("opentsdb msg clean error: %s", err.Error())
+			if fail == 0 {
+				msg = fmt.Sprintf("%s , Error clean: %s", msg, err.Error())
+			}
 			fail++
 			continue
 		}
@@ -180,6 +183,9 @@ func handleOpenTSDB(c *gin.Context) {
 		pt, err := arr[i].ToProm()
 		if err != nil {
 			logger.Debugf("opentsdb msg to tsdb error: %s", err.Error())
+			if fail == 0 {
+				msg = fmt.Sprintf("%s , Error toprom: %s", msg, err.Error())
+			}
 			fail++
 			continue
 		}
