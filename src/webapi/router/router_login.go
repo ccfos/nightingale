@@ -31,6 +31,7 @@ func loginPost(c *gin.Context) {
 		if config.C.LDAP.Enable {
 			user, err = models.LdapLogin(f.Username, f.Password)
 			if err != nil {
+				logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
 				ginx.NewRender(c).Message(err)
 				return
 			}
