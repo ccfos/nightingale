@@ -80,7 +80,7 @@ services:
       sh -c "/wait && /app/ibex server"
 
   nwebapi:
-    image: ulric2019/nightingale:5.9.4
+    image: flashcatcloud/nightingale:latest
     container_name: nwebapi
     hostname: nwebapi
     restart: always
@@ -108,7 +108,7 @@ services:
       sh -c "/wait && /app/n9e webapi"
 
   nserver:
-    image: ulric2019/nightingale:5.9.4
+    image: flashcatcloud/nightingale:latest
     container_name: nserver
     hostname: nserver
     restart: always
@@ -136,7 +136,7 @@ services:
       sh -c "/wait && /app/n9e server"
 
   categraf:
-    image: "flashcatcloud/categraf:v0.1.9"
+    image: "flashcatcloud/categraf:latest"
     container_name: "categraf"
     hostname: "categraf01"
     restart: always
