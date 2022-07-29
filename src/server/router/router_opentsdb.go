@@ -141,8 +141,6 @@ func handleOpenTSDB(c *gin.Context) {
 		bs, err = ioutil.ReadAll(c.Request.Body)
 	}
 
-	logger.Debugf("recv opentsdb msg: %s", string(bs))
-
 	if err != nil {
 		c.String(400, err.Error())
 		return
@@ -206,6 +204,10 @@ func handleOpenTSDB(c *gin.Context) {
 	if succ > 0 {
 		promstat.CounterSampleTotal.WithLabelValues(config.C.ClusterName, "opentsdb").Add(float64(succ))
 		idents.Idents.MSet(ids)
+	}
+
+	if fail > 0 {
+		logger.Debugf("opentsdb msg process error , msg is : %s", string(bs))
 	}
 
 	c.JSON(200, gin.H{
