@@ -65,6 +65,9 @@ func initClustersFromConfig() error {
 
 	for i := 0; i < len(opts); i++ {
 		cluster := newClusterByOption(opts[i])
+		if cluster == nil {
+			continue
+		}
 		Clusters.Put(opts[i].Name, cluster)
 	}
 
@@ -165,7 +168,17 @@ func loadClustersFromAPI() {
 				MaxIdleConnsPerHost: 32,
 			}
 
-			Clusters.Put(item.Name, newClusterByOption(opt))
+			if strings.HasPrefix(opt.Prom, "https") {
+				opt.UseTLS = true
+				opt.InsecureSkipVerify = true
+			}
+
+			cluster := newClusterByOption(opt)
+			if cluster == nil {
+				continue
+			}
+
+			Clusters.Put(item.Name, cluster)
 			continue
 		}
 	}
@@ -173,13 +186,21 @@ func loadClustersFromAPI() {
 
 func newClusterByOption(opt config.ClusterOptions) *ClusterType {
 	transport := &http.Transport{
-		// TLSClientConfig: tlsConfig,
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			Timeout: time.Duration(opt.DialTimeout) * time.Millisecond,
 		}).DialContext,
 		ResponseHeaderTimeout: time.Duration(opt.Timeout) * time.Millisecond,
 		MaxIdleConnsPerHost:   opt.MaxIdleConnsPerHost,
+	}
+
+	if opt.UseTLS {
+		tlsConfig, err := opt.TLSConfig()
+		if err != nil {
+			logger.Errorf("new cluster %s fail: %v", opt.Name, err)
+			return nil
+		}
+		transport.TLSClientConfig = tlsConfig
 	}
 
 	cli, err := api.NewClient(api.Config{
@@ -189,6 +210,7 @@ func newClusterByOption(opt config.ClusterOptions) *ClusterType {
 
 	if err != nil {
 		logger.Errorf("new client fail: %v", err)
+		return nil
 	}
 
 	cluster := &ClusterType{

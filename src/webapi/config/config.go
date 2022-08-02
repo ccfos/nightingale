@@ -14,6 +14,7 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/logx"
 	"github.com/didi/nightingale/v5/src/pkg/oidcc"
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
+	"github.com/didi/nightingale/v5/src/pkg/tls"
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
@@ -111,6 +112,9 @@ type ClusterOptions struct {
 	Timeout     int64
 	DialTimeout int64
 	KeepAlive   int64
+
+	UseTLS bool
+	tls.ClientConfig
 
 	MaxIdleConnsPerHost int
 }
