@@ -10,7 +10,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func PostJSON(url string, timeout time.Duration, v interface{}, retreis ...int) (response []byte, code int, err error) {
+func PostJSON(url string, timeout time.Duration, v interface{}, retries ...int) (response []byte, code int, err error) {
 	var bs []byte
 
 	bs, err = json.Marshal(v)
@@ -29,21 +29,21 @@ func PostJSON(url string, timeout time.Duration, v interface{}, retreis ...int) 
 
 	var resp *http.Response
 
-	if len(retreis) > 0 {
-		for i := 0; i < retreis[0]; i++ {
+	if len(retries) > 0 {
+		for i := 0; i < retries[0]; i++ {
 			resp, err = client.Do(req)
 			if err == nil {
 				break
 			}
 
 			tryagain := ""
-			if i+1 < retreis[0] {
+			if i+1 < retries[0] {
 				tryagain = " try again"
 			}
 
 			logger.Warningf("failed to curl %s error: %s"+tryagain, url, err)
 
-			if i+1 < retreis[0] {
+			if i+1 < retries[0] {
 				time.Sleep(time.Millisecond * 200)
 			}
 		}
