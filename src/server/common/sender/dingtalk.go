@@ -66,7 +66,7 @@ func SendDingtalk(message DingtalkMessage) {
 			}
 		}
 
-		res, code, err := poster.PostJSON(ur, time.Second*5, body)
+		res, code, err := poster.PostJSON(ur, time.Second*5, body, 3)
 		if err != nil {
 			logger.Errorf("dingtalk_sender: result=fail url=%s code=%d error=%v response=%s", ur, code, err, string(res))
 		} else {
