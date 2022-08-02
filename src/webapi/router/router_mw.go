@@ -119,7 +119,6 @@ func jwtMock() gin.HandlerFunc {
 			"refresh_token": "",
 		}, nil)
 		c.Abort()
-		return
 	}
 }
 

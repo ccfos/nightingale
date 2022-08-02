@@ -32,7 +32,7 @@ func callback(event *models.AlertCurEvent) {
 			url = "http://" + url
 		}
 
-		resp, code, err := poster.PostJSON(url, 5*time.Second, event)
+		resp, code, err := poster.PostJSON(url, 5*time.Second, event, 3)
 		if err != nil {
 			logger.Errorf("event_callback(rule_id=%d url=%s) fail, resp: %s, err: %v, code: %d", event.RuleId, url, string(resp), err, code)
 		} else {
