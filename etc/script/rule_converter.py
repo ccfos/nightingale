@@ -41,7 +41,7 @@ def convert_alert(rule, interval):
     if 'labels' in rule:
         for k, v in rule['labels'].items():
             if k != 'severity':
-                append_tags.append('{}={},'.format(k, v))
+                append_tags.append('{}={}'.format(k, v))
                 continue
             if v == 'critical':
                 severity = 1
