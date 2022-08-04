@@ -146,11 +146,11 @@ def main():
         # alert_rules, record_rules = deal_configmap(rule_config)
         alert_rules, record_rules = deal_group(rule_config)
 
-        with open("alert-rules.json", 'w') as f:
-            json.dump(alert_rules, f, indent=2, ensure_ascii=False)
+        with open("alert-rules.json", 'w') as fw:
+            json.dump(alert_rules, fw, indent=2, ensure_ascii=False)
 
-        with open("record-rules.json", 'w') as f:
-            json.dump(record_rules, f, indent=2, ensure_ascii=False)
+        with open("record-rules.json", 'w') as fw:
+            json.dump(record_rules, fw, indent=2, ensure_ascii=False)
 
 
 if __name__ == '__main__':
