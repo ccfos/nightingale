@@ -418,6 +418,7 @@ func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
 			if r.rule.NotifyMaxNumber == 0 {
 				// 最大可以发送次数如果是0，表示不想限制最大发送次数，一直发即可
 				event.NotifyCurNumber = fired.NotifyCurNumber + 1
+				event.FirstTriggerTime = fired.FirstTriggerTime
 				r.pushEventToQueue(event)
 			} else {
 				// 有最大发送次数的限制，就要看已经发了几次了，是否达到了最大发送次数
@@ -425,6 +426,7 @@ func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
 					return
 				} else {
 					event.NotifyCurNumber = fired.NotifyCurNumber + 1
+					event.FirstTriggerTime = fired.FirstTriggerTime
 					r.pushEventToQueue(event)
 				}
 			}
@@ -432,6 +434,7 @@ func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
 		}
 	} else {
 		event.NotifyCurNumber = 1
+		event.FirstTriggerTime = event.TriggerTime
 		r.pushEventToQueue(event)
 	}
 }
