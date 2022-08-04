@@ -38,7 +38,8 @@ type AlertHisEvent struct {
 	LastEvalTime       int64       `json:"last_eval_time"`
 	Tags               string      `json:"-"`
 	TagsJSON           []string    `json:"tags" gorm:"-"`
-	NotifyCurNumber    int         `json:"notify_cur_number"` // notify: current number
+	NotifyCurNumber    int         `json:"notify_cur_number"`  // notify: current number
+	FirstTriggerTime   int64       `json:"first_trigger_time"` // 连续告警的首次告警时间
 }
 
 func (e *AlertHisEvent) TableName() string {
