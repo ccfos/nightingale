@@ -45,10 +45,11 @@ def convert_alert(rule, interval):
                 continue
             if v == 'critical':
                 severity = 1
-            if v == 'warning':
-                severity = 2
             elif v == 'info':
                 severity = 3
+            # elif v == 'warning':
+            #     severity = 2
+
 
     n9e_alert_rule = {
         "name": name,
@@ -102,6 +103,20 @@ def convert_record(rule, interval):
     return n9e_record_rule
 
 
+'''
+example of rule group file
+---
+groups:
+- name: example
+  rules:
+  - alert: HighRequestLatency
+    expr: job:request_latency_seconds:mean5m{job="myjob"} > 0.5
+    for: 10m
+    labels:
+      severity: page
+    annotations:
+      summary: High request latency
+'''
 def deal_group(group):
     """
     parse single prometheus/vmalert rule group
@@ -123,6 +138,27 @@ def deal_group(group):
     return alert_rules, record_rules
 
 
+'''
+example of k8s rule configmap
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rulefiles-0
+data:
+  etcdrules.yaml: |
+    groups:
+    - name: etcd
+      rules:
+      - alert: etcdInsufficientMembers
+        annotations:
+          message: 'etcd cluster "{{ $labels.job }}": insufficient members ({{ $value}}).'
+        expr: sum(up{job=~".*etcd.*"} == bool 1) by (job) < ((count(up{job=~".*etcd.*"})
+          by (job) + 1) / 2)
+        for: 3m
+        labels:
+          severity: critical
+'''
 def deal_configmap(rule_configmap):
     """
     parse rule configmap from k8s
