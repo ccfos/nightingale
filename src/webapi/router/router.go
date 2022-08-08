@@ -37,12 +37,12 @@ func languageDetector() gin.HandlerFunc {
 		if headerKey != "" {
 			lang := c.GetHeader(headerKey)
 			if lang != "" {
-				if strings.HasSuffix(lang, "*") || strings.HasPrefix(lang, "zh") {
-					c.Header("X-Language", "zh")
+				if strings.HasPrefix(lang, "*") || strings.HasPrefix(lang, "zh") {
+					c.Request.Header.Set("X-Language", "zh")
 				} else if strings.HasPrefix(lang, "en") {
-					c.Header("X-Language", "en")
+					c.Request.Header.Set("X-Language", "en")
 				} else {
-					c.Header("X-Language", lang)
+					c.Request.Header.Set("X-Language", lang)
 				}
 			}
 		}
