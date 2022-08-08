@@ -31,6 +31,25 @@ func stat() gin.HandlerFunc {
 	}
 }
 
+func languageDetector() gin.HandlerFunc {
+	headerKey := config.C.I18NHeaderKey
+	return func(c *gin.Context) {
+		if headerKey != "" {
+			lang := c.GetHeader(headerKey)
+			if lang != "" {
+				if strings.HasSuffix(lang, "*") || strings.HasPrefix(lang, "zh") {
+					c.Header("X-Language", "zh")
+				} else if strings.HasPrefix(lang, "en") {
+					c.Header("X-Language", "en")
+				} else {
+					c.Header("X-Language", lang)
+				}
+			}
+		}
+		c.Next()
+	}
+}
+
 func New(version string) *gin.Engine {
 	gin.SetMode(config.C.RunMode)
 
@@ -41,6 +60,7 @@ func New(version string) *gin.Engine {
 	r := gin.New()
 
 	r.Use(stat())
+	r.Use(languageDetector())
 	r.Use(aop.Recovery())
 
 	// whether print access log

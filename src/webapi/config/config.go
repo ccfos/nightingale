@@ -78,6 +78,7 @@ func MustLoad(fpaths ...string) {
 type Config struct {
 	RunMode              string
 	I18N                 string
+	I18NHeaderKey        string
 	AdminRole            string
 	MetricsYamlFile      string
 	BuiltinAlertsDir     string
