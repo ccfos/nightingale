@@ -7,8 +7,10 @@ import (
 	"hash/crc32"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
@@ -20,11 +22,32 @@ import (
 )
 
 type WriterType struct {
-	Opts   config.WriterOptions
-	Client api.Client
+	Opts       config.WriterOptions
+	Client     api.Client
+	relabelMux sync.Mutex
+}
+
+func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSeries {
+	w.relabelMux.Lock()
+	defer w.relabelMux.Unlock()
+
+	ritems := make([]*prompb.TimeSeries, 0, len(items))
+	for _, item := range items {
+		lbls := models.Process(item.Labels, w.Opts.WriteRelabels...)
+		if len(lbls) == 0 {
+			continue
+		}
+		ritems = append(ritems, item)
+	}
+	return ritems
 }
 
 func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[string]string) {
+	if len(items) == 0 {
+		return
+	}
+
+	items = w.writeRelabel(items)
 	if len(items) == 0 {
 		return
 	}

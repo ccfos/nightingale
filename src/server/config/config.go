@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/koding/multiconfig"
 
+	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/notifier"
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
@@ -143,6 +144,26 @@ func MustLoad(fpaths ...string) {
 			C.WriterOpt.QueueCount = 100
 		}
 
+		for _, write := range C.Writers {
+			for _, relabel := range write.WriteRelabels {
+				if relabel.Regex == "" {
+					relabel.Regex = "(.*)"
+				}
+
+				if relabel.Separator == "" {
+					relabel.Separator = ";"
+				}
+
+				if relabel.Action == "" {
+					relabel.Action = "replace"
+				}
+
+				if relabel.Replacement == "" {
+					relabel.Replacement = "$1"
+				}
+			}
+		}
+
 		fmt.Println("heartbeat.ip:", C.Heartbeat.IP)
 		fmt.Printf("heartbeat.interval: %dms\n", C.Heartbeat.Interval)
 	})
@@ -206,6 +227,8 @@ type WriterOptions struct {
 	MaxIdleConnsPerHost int
 
 	Headers []string
+
+	WriteRelabels []*models.RelabelConfig
 }
 
 type WriterGlobalOpt struct {
