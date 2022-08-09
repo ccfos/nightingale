@@ -99,6 +99,7 @@ type Config struct {
 	Clusters             []ClusterOptions
 	Ibex                 Ibex
 	OIDC                 oidcc.Config
+	TargetMetrics        map[string]string
 }
 
 type ClusterOptions struct {

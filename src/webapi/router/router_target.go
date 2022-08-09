@@ -13,12 +13,9 @@ import (
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/server/common/conv"
+	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/didi/nightingale/v5/src/webapi/prom"
 )
-
-var promqlLoadPerCore = `max(max_over_time(system_load_norm_1{ident=~"(%s)"}[%dm])) by (ident)`
-var promqlMemUtil = `100-max(max_over_time(mem_available_percent{ident=~"(%s)"}[%dm])) by (ident)`
-var promqlTargetUp = `max(max_over_time(target_up{ident=~"(%s)"}[%dm])) by (ident)`
 
 func targetGets(c *gin.Context) {
 	bgid := ginx.QueryInt64(c, "bgid", -1)
@@ -62,7 +59,7 @@ func targetGets(c *gin.Context) {
 			}
 
 			// load per core
-			promql := fmt.Sprintf(promqlLoadPerCore, strings.Join(targetArr, "|"), mins)
+			promql := fmt.Sprintf(config.C.TargetMetrics["LoadPerCore"], strings.Join(targetArr, "|"), mins)
 			values, err := instantQuery(c, cc, promql, now)
 			ginx.Dangerous(err)
 
@@ -75,7 +72,7 @@ func targetGets(c *gin.Context) {
 			}
 
 			// mem util
-			promql = fmt.Sprintf(promqlMemUtil, strings.Join(targetArr, "|"), mins)
+			promql = fmt.Sprintf(config.C.TargetMetrics["MemUtil"], strings.Join(targetArr, "|"), mins)
 			values, err = instantQuery(c, cc, promql, now)
 			ginx.Dangerous(err)
 
@@ -88,7 +85,7 @@ func targetGets(c *gin.Context) {
 			}
 
 			// target up
-			promql = fmt.Sprintf(promqlTargetUp, strings.Join(targetArr, "|"), mins)
+			promql = fmt.Sprintf(config.C.TargetMetrics["TargetUp"], strings.Join(targetArr, "|"), mins)
 			values, err = instantQuery(c, cc, promql, now)
 			ginx.Dangerous(err)
 
