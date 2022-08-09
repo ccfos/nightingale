@@ -17,7 +17,7 @@ import (
 )
 
 var promqlLoadPerCore = `max(max_over_time(system_load_norm_1{ident=~"(%s)"}[%dm])) by (ident)`
-var promqlMemUtil = `max(max_over_time(mem_available_percent{ident=~"(%s)"}[%dm])) by (ident)`
+var promqlMemUtil = `100-max(max_over_time(mem_available_percent{ident=~"(%s)"}[%dm])) by (ident)`
 var promqlTargetUp = `max(max_over_time(target_up{ident=~"(%s)"}[%dm])) by (ident)`
 
 func targetGets(c *gin.Context) {
