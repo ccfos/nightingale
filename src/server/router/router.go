@@ -98,8 +98,7 @@ func configRoute(r *gin.Engine, version string) {
 
 	service := r.Group("/v1/n9e")
 	service.POST("/event", pushEventToQueue)
-	service.POST("/make-alert-event", makeAlertEvent)
-	service.POST("/make-recover-event", recoveryEvent)
+	service.POST("/make-event", makeEvent)
 	service.POST("/judge-event", judgeEvent)
 }
 

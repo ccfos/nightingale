@@ -74,6 +74,7 @@ func pushEventToQueue(c *gin.Context) {
 }
 
 type eventForm struct {
+	Alert   bool          `json:"alert"`
 	Vectors []conv.Vector `json:"vectors"`
 	RuleId  int64         `json:"rule_id"`
 }
@@ -89,30 +90,25 @@ func judgeEvent(c *gin.Context) {
 	ginx.NewRender(c).Message(nil)
 }
 
-func makeAlertEvent(c *gin.Context) {
-	var form eventForm
-	ginx.BindJSON(c, &form)
-	re, exists := engine.RuleEvalForExternal.Get(form.RuleId)
-	if !exists {
-		ginx.Bomb(200, "rule not exists")
-	}
+func makeEvent(c *gin.Context) {
+	var events []*eventForm
+	ginx.BindJSON(c, &events)
 	now := time.Now().Unix()
 
-	re.MakeNewEvent(now, form.Vectors)
-	ginx.NewRender(c).Message(nil)
-}
+	for i := 0; i < len(events); i++ {
+		re, exists := engine.RuleEvalForExternal.Get(events[i].RuleId)
+		if !exists {
+			ginx.Bomb(200, "rule not exists")
+		}
 
-func recoveryEvent(c *gin.Context) {
-	var form eventForm
-	ginx.BindJSON(c, &form)
-	re, exists := engine.RuleEvalForExternal.Get(form.RuleId)
-	if !exists {
-		ginx.Bomb(200, "rule not exists")
-	}
-	now := time.Now().Unix()
-	for _, vector := range form.Vectors {
-		hash := str.MD5(fmt.Sprintf("%d_%s", form.RuleId, vector.Key))
-		re.RecoverEvent(hash, now)
+		if events[i].Alert {
+			re.MakeNewEvent(now, events[i].Vectors)
+		} else {
+			for _, vector := range events[i].Vectors {
+				hash := str.MD5(fmt.Sprintf("%d_%s", events[i].RuleId, vector.Key))
+				re.RecoverEvent(hash, now)
+			}
+		}
 	}
 	ginx.NewRender(c).Message(nil)
 }

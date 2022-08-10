@@ -446,13 +446,17 @@ func (r *RuleEval) handleNewEvent(event *models.AlertCurEvent) {
 		return
 	}
 
+	var preTriggerTime int64
 	preEvent, has := r.pendings.Get(event.Hash)
 	if has {
 		r.pendings.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+		preTriggerTime = preEvent.TriggerTime
 	} else {
 		r.pendings.Set(event.Hash, event)
+		preTriggerTime = event.TriggerTime
 	}
-	if event.LastEvalTime-preEvent.TriggerTime+int64(event.PromEvalInterval) >= int64(event.PromForDuration) {
+
+	if event.LastEvalTime-preTriggerTime+int64(event.PromEvalInterval) >= int64(event.PromForDuration) {
 		r.fireEvent(event)
 	}
 }
@@ -714,6 +718,9 @@ func (re *RuleEvalForExternalType) Build() {
 
 func (re *RuleEvalForExternalType) Get(rid int64) (RuleEval, bool) {
 	rule := memsto.AlertRuleCache.Get(rid)
+	if rule == nil {
+		return RuleEval{}, false
+	}
 	hash := str.MD5(fmt.Sprintf("%d_%d_%s",
 		rule.Id,
 		rule.PromEvalInterval,
