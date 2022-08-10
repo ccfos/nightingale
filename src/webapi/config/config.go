@@ -2,12 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/koding/multiconfig"
 	"os"
 	"strings"
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/koding/multiconfig"
 
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/ldapx"
