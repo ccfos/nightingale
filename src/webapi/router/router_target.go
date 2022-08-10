@@ -80,8 +80,8 @@ func targetGets(c *gin.Context) {
 							t.MemUtil = values[ident]
 						case "TargetUp":
 							t.TargetUp = values[ident]
-						case "DiskUsedPercent":
-							t.DiskUsedPercent = values[ident]
+						case "DiskUtil":
+							t.DiskUtil = values[ident]
 						}
 					}
 				}
