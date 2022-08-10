@@ -2,14 +2,12 @@ package config
 
 import (
 	"fmt"
+	"github.com/koding/multiconfig"
 	"os"
-	"path"
 	"strings"
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/koding/multiconfig"
-	"github.com/toolkits/pkg/runner"
 
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/ldapx"
@@ -101,14 +99,6 @@ type Config struct {
 	Clusters             []ClusterOptions
 	Ibex                 Ibex
 	OIDC                 oidcc.Config
-}
-
-func (c *Config) MetricsYamlFilePath() string {
-	fp := C.MetricsYamlFile
-	if fp == "" {
-		fp = path.Join(runner.Cwd, "etc", "metrics.yaml")
-	}
-	return fp
 }
 
 type ClusterOptions struct {

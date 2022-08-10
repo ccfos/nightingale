@@ -1,16 +1,17 @@
 package config
 
 import (
+	"path"
+
 	"github.com/toolkits/pkg/file"
+	"github.com/toolkits/pkg/runner"
 )
 
-// CommonDesc , As load map happens before read map, there is no necessary to use concurrent map for metric desc store
-type CommonDesc map[string]string
-
+// metricDesc , As load map happens before read map, there is no necessary to use concurrent map for metric desc store
 type metricDesc struct {
-	CommonDesc `yaml:",inline"`
-	Zh         map[string]string `yaml:"zh"`
-	En         map[string]string `yaml:"en"`
+	CommonDesc map[string]string `yaml:",inline" json:"common"`
+	Zh         map[string]string `yaml:"zh" json:"zh"`
+	En         map[string]string `yaml:"en" json:"en"`
 }
 
 var MetricDesc metricDesc
@@ -33,10 +34,12 @@ func GetMetricDesc(lang, metric string) string {
 }
 
 func loadMetricsYaml() error {
-	fp := C.MetricsYamlFilePath()
+	fp := C.MetricsYamlFile
+	if fp == "" {
+		fp = path.Join(runner.Cwd, "etc", "metrics.yaml")
+	}
 	if !file.IsExist(fp) {
 		return nil
 	}
-
 	return file.ReadYaml(fp, &MetricDesc)
 }
