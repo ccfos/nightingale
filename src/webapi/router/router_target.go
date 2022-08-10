@@ -1,21 +1,27 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/ginx"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/server/common/conv"
+	"github.com/didi/nightingale/v5/src/webapi/config"
+	"github.com/didi/nightingale/v5/src/webapi/prom"
 )
 
 func targetGets(c *gin.Context) {
 	bgid := ginx.QueryInt64(c, "bgid", -1)
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 30)
+	mins := ginx.QueryInt(c, "mins", 2)
 	clusters := queryClusters(c)
 
 	total, err := models.TargetTotal(bgid, clusters, query)
@@ -26,8 +32,70 @@ func targetGets(c *gin.Context) {
 
 	if err == nil {
 		cache := make(map[int64]*models.BusiGroup)
+		targetsMap := make(map[string]*models.Target)
 		for i := 0; i < len(list); i++ {
 			ginx.Dangerous(list[i].FillGroup(cache))
+			targetsMap[list[i].Cluster+list[i].Ident] = list[i]
+		}
+
+		now := time.Now()
+
+		// query LoadPerCore / MemUtil / TargetUp from prometheus
+		// map key: cluster, map value: ident list
+		targets := make(map[string][]string)
+		for i := 0; i < len(list); i++ {
+			targets[list[i].Cluster] = append(targets[list[i].Cluster], list[i].Ident)
+		}
+
+		for cluster := range targets {
+			cc, has := prom.Clusters.Get(cluster)
+			if !has {
+				continue
+			}
+
+			targetArr := targets[cluster]
+			if len(targetArr) == 0 {
+				continue
+			}
+
+			// load per core
+			promql := fmt.Sprintf(config.C.TargetMetrics["LoadPerCore"], strings.Join(targetArr, "|"), mins)
+			values, err := instantQuery(c, cc, promql, now)
+			ginx.Dangerous(err)
+
+			for ident := range values {
+				mapkey := cluster + ident
+				t, has := targetsMap[mapkey]
+				if has {
+					t.LoadPerCore = values[ident]
+				}
+			}
+
+			// mem util
+			promql = fmt.Sprintf(config.C.TargetMetrics["MemUtil"], strings.Join(targetArr, "|"), mins)
+			values, err = instantQuery(c, cc, promql, now)
+			ginx.Dangerous(err)
+
+			for ident := range values {
+				mapkey := cluster + ident
+				t, has := targetsMap[mapkey]
+				if has {
+					t.MemUtil = values[ident]
+				}
+			}
+
+			// target up
+			promql = fmt.Sprintf(config.C.TargetMetrics["TargetUp"], strings.Join(targetArr, "|"), mins)
+			values, err = instantQuery(c, cc, promql, now)
+			ginx.Dangerous(err)
+
+			for ident := range values {
+				mapkey := cluster + ident
+				t, has := targetsMap[mapkey]
+				if has {
+					t.TargetUp = values[ident]
+				}
+			}
 		}
 	}
 
@@ -35,6 +103,29 @@ func targetGets(c *gin.Context) {
 		"list":  list,
 		"total": total,
 	}, nil)
+}
+
+func instantQuery(ctx context.Context, c *prom.ClusterType, promql string, ts time.Time) (map[string]float64, error) {
+	ret := make(map[string]float64)
+
+	val, warnings, err := c.PromClient.Query(ctx, promql, ts)
+	if err != nil {
+		return ret, err
+	}
+
+	if len(warnings) > 0 {
+		return ret, fmt.Errorf("instant query occur warnings, promql: %s, warnings: %v", promql, warnings)
+	}
+
+	vectors := conv.ConvertVectors(val)
+	for i := range vectors {
+		ident, has := vectors[i].Labels["ident"]
+		if has {
+			ret[string(ident)] = vectors[i].Value
+		}
+	}
+
+	return ret, nil
 }
 
 func targetGetTags(c *gin.Context) {

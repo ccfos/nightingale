@@ -20,6 +20,10 @@ type Target struct {
 	TagsJSON []string          `json:"tags" gorm:"-"`
 	TagsMap  map[string]string `json:"-" gorm:"-"` // internal use, append tags to series
 	UpdateAt int64             `json:"update_at"`
+
+	LoadPerCore float64 `json:"load_per_core" gorm:"-"`
+	MemUtil     float64 `json:"mem_util" gorm:"-"`
+	TargetUp    float64 `json:"target_up" gorm:"-"`
 }
 
 func (t *Target) TableName() string {
