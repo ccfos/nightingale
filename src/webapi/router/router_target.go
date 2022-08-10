@@ -58,10 +58,11 @@ func targetGets(c *gin.Context) {
 				continue
 			}
 
+			targetRe := strings.Join(targetArr, "|")
 			valuesMap := make(map[string]map[string]float64)
 
 			for metric, ql := range config.C.TargetMetrics {
-				promql := fmt.Sprintf(ql, strings.Join(targetArr, "|"), mins)
+				promql := fmt.Sprintf(ql, targetRe, mins)
 				values, err := instantQuery(context.Background(), cc, promql, now)
 				ginx.Dangerous(err)
 				valuesMap[metric] = values
