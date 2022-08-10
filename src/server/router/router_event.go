@@ -102,10 +102,10 @@ func makeEvent(c *gin.Context) {
 		}
 
 		if events[i].Alert {
-			go re.MakeNewEvent(now, events[i].Vectors)
+			go re.MakeNewEvent("http", now, events[i].Vectors)
 		} else {
+			logger.Errorf("handle event recover:%+v", events[i])
 			for _, vector := range events[i].Vectors {
-				logger.Errorf("handle event recover:%+v", events[i])
 				hash := str.MD5(fmt.Sprintf("%d_%s", events[i].RuleId, vector.Key))
 				go re.RecoverEvent(hash, now)
 			}

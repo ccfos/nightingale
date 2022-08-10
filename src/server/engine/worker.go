@@ -305,19 +305,26 @@ func (ws *WorkersType) BuildRe(rids []int64) {
 func (r *RuleEval) Judge(vectors []conv.Vector) {
 	now := time.Now().Unix()
 
-	alertingKeys := r.MakeNewEvent(now, vectors)
+	alertingKeys := r.MakeNewEvent("inner", now, vectors)
 
 	// handle recovered events
 	r.recoverRule(alertingKeys, now)
 }
 
-func (r *RuleEval) MakeNewEvent(now int64, vectors []conv.Vector) map[string]struct{} {
+func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) map[string]struct{} {
 	// 有可能rule的一些配置已经发生变化，比如告警接收人、callbacks等
 	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
 	// 所以，这里直接从memsto.AlertRuleCache中获取并覆盖
+	if from != "inner" {
+		logger.Errorf("handle event:%+v", vectors)
+	}
+
 	curRule := memsto.AlertRuleCache.Get(r.rule.Id)
 	if curRule == nil {
 		return map[string]struct{}{}
+	}
+	if from != "inner" {
+		logger.Errorf("handle event:%+v", vectors)
 	}
 
 	r.rule = curRule
@@ -325,7 +332,9 @@ func (r *RuleEval) MakeNewEvent(now int64, vectors []conv.Vector) map[string]str
 	count := len(vectors)
 	alertingKeys := make(map[string]struct{})
 	for i := 0; i < count; i++ {
-		logger.Errorf("handle event:%+v", vectors[i])
+		if from != "inner" {
+			logger.Errorf("handle event:%+v", vectors[i])
+		}
 		// compute hash
 		hash := str.MD5(fmt.Sprintf("%d_%s", r.rule.Id, vectors[i].Key))
 		alertingKeys[hash] = struct{}{}
@@ -413,8 +422,13 @@ func (r *RuleEval) MakeNewEvent(now int64, vectors []conv.Vector) map[string]str
 		event.IsRecovered = false
 		event.LastEvalTime = now
 
-		logger.Errorf("handle event:%+v", event)
+		if from != "inner" {
+			logger.Errorf("handle event:%+v", event)
+		}
 		r.handleNewEvent(event)
+		if from != "inner" {
+			logger.Errorf("handle event:%+v", event)
+		}
 	}
 
 	return alertingKeys
@@ -457,15 +471,12 @@ func (r *RuleEval) handleNewEvent(event *models.AlertCurEvent) {
 		preTriggerTime = event.TriggerTime
 	}
 
-	logger.Errorf("handle event:%+v", event)
 	if event.LastEvalTime-preTriggerTime+int64(event.PromEvalInterval) >= int64(event.PromForDuration) {
-		logger.Errorf("handle event:%+v", event)
 		r.fireEvent(event)
 	}
 }
 
 func (r *RuleEval) fireEvent(event *models.AlertCurEvent) {
-	logger.Errorf("handle event:%+v", event)
 	if fired, has := r.fires.Get(event.Hash); has {
 		r.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 
@@ -524,10 +535,10 @@ func (r *RuleEval) RecoverEvent(hash string, now int64) {
 		return
 	}
 	r.recoverEvent(hash, event, time.Now().Unix())
+	logger.Errorf("handle event recover done:%+v", event)
 }
 
 func (r *RuleEval) recoverEvent(hash string, event *models.AlertCurEvent, now int64) {
-	logger.Errorf("handle event recover:%+v", event)
 	// 如果配置了留观时长，就不能立马恢复了
 	if r.rule.RecoverDuration > 0 && now-event.LastEvalTime < r.rule.RecoverDuration {
 		return
