@@ -324,8 +324,8 @@ func (r *RuleEval) MakeNewEvent(now int64, vectors []conv.Vector) map[string]str
 
 	count := len(vectors)
 	alertingKeys := make(map[string]struct{})
-
 	for i := 0; i < count; i++ {
+		logger.Errorf("handle event:%+v", vectors[i])
 		// compute hash
 		hash := str.MD5(fmt.Sprintf("%d_%s", r.rule.Id, vectors[i].Key))
 		alertingKeys[hash] = struct{}{}
@@ -413,6 +413,7 @@ func (r *RuleEval) MakeNewEvent(now int64, vectors []conv.Vector) map[string]str
 		event.IsRecovered = false
 		event.LastEvalTime = now
 
+		logger.Errorf("handle event:%+v", event)
 		r.handleNewEvent(event)
 	}
 
@@ -456,12 +457,15 @@ func (r *RuleEval) handleNewEvent(event *models.AlertCurEvent) {
 		preTriggerTime = event.TriggerTime
 	}
 
+	logger.Errorf("handle event:%+v", event)
 	if event.LastEvalTime-preTriggerTime+int64(event.PromEvalInterval) >= int64(event.PromForDuration) {
+		logger.Errorf("handle event:%+v", event)
 		r.fireEvent(event)
 	}
 }
 
 func (r *RuleEval) fireEvent(event *models.AlertCurEvent) {
+	logger.Errorf("handle event:%+v", event)
 	if fired, has := r.fires.Get(event.Hash); has {
 		r.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 
@@ -515,6 +519,7 @@ func (r *RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
 
 func (r *RuleEval) RecoverEvent(hash string, now int64) {
 	event, has := r.fires.Get(hash)
+	logger.Errorf("handle event recover:%+v", event)
 	if !has {
 		return
 	}
@@ -522,6 +527,7 @@ func (r *RuleEval) RecoverEvent(hash string, now int64) {
 }
 
 func (r *RuleEval) recoverEvent(hash string, event *models.AlertCurEvent, now int64) {
+	logger.Errorf("handle event recover:%+v", event)
 	// 如果配置了留观时长，就不能立马恢复了
 	if r.rule.RecoverDuration > 0 && now-event.LastEvalTime < r.rule.RecoverDuration {
 		return

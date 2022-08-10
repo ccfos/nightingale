@@ -94,19 +94,20 @@ func makeEvent(c *gin.Context) {
 	var events []*eventForm
 	ginx.BindJSON(c, &events)
 	now := time.Now().Unix()
-
 	for i := 0; i < len(events); i++ {
+		logger.Error("handle event:", events[i])
 		re, exists := engine.RuleEvalForExternal.Get(events[i].RuleId)
 		if !exists {
 			ginx.Bomb(200, "rule not exists")
 		}
 
 		if events[i].Alert {
-			re.MakeNewEvent(now, events[i].Vectors)
+			go re.MakeNewEvent(now, events[i].Vectors)
 		} else {
 			for _, vector := range events[i].Vectors {
+				logger.Errorf("handle event recover:%+v", events[i])
 				hash := str.MD5(fmt.Sprintf("%d_%s", events[i].RuleId, vector.Key))
-				re.RecoverEvent(hash, now)
+				go re.RecoverEvent(hash, now)
 			}
 		}
 	}
