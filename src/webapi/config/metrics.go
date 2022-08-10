@@ -3,28 +3,43 @@ package config
 import (
 	"path"
 
-	cmap "github.com/orcaman/concurrent-map"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/runner"
 )
 
-var Metrics = cmap.New()
+// metricDesc , As load map happens before read map, there is no necessary to use concurrent map for metric desc store
+type metricDesc struct {
+	CommonDesc map[string]string `yaml:",inline" json:"common"`
+	Zh         map[string]string `yaml:"zh" json:"zh"`
+	En         map[string]string `yaml:"en" json:"en"`
+}
+
+var MetricDesc metricDesc
+
+// GetMetricDesc , if metric is not registered, empty string will be returned
+func GetMetricDesc(lang, metric string) string {
+	var m map[string]string
+	if lang == "zh" {
+		m = MetricDesc.Zh
+	} else {
+		m = MetricDesc.En
+	}
+	if m != nil {
+		if desc, has := m[metric]; has {
+			return desc
+		}
+	}
+
+	return MetricDesc.CommonDesc[metric]
+}
 
 func loadMetricsYaml() error {
-	fp := path.Join(runner.Cwd, "etc", "metrics.yaml")
+	fp := C.MetricsYamlFile
+	if fp == "" {
+		fp = path.Join(runner.Cwd, "etc", "metrics.yaml")
+	}
 	if !file.IsExist(fp) {
 		return nil
 	}
-
-	nmap := make(map[string]string)
-	err := file.ReadYaml(fp, &nmap)
-	if err != nil {
-		return err
-	}
-
-	for key, val := range nmap {
-		Metrics.Set(key, val)
-	}
-
-	return nil
+	return file.ReadYaml(fp, &MetricDesc)
 }
