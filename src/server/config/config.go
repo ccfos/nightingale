@@ -146,9 +146,16 @@ func MustLoad(fpaths ...string) {
 
 		for _, write := range C.Writers {
 			for _, relabel := range write.WriteRelabels {
-				if relabel.Regex == "" {
-					relabel.Regex = "(.*)"
+				regex, ok := relabel.Regex.(string)
+				if !ok {
+					log.Println("Regex field must be a string")
+					os.Exit(1)
 				}
+
+				if regex == "" {
+					regex = "(.*)"
+				}
+				relabel.Regex = models.MustNewRegexp(regex)
 
 				if relabel.Separator == "" {
 					relabel.Separator = ";"

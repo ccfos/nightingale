@@ -7,7 +7,6 @@ import (
 	"hash/crc32"
 	"net"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/didi/nightingale/v5/src/models"
@@ -22,15 +21,11 @@ import (
 )
 
 type WriterType struct {
-	Opts       config.WriterOptions
-	Client     api.Client
-	relabelMux sync.Mutex
+	Opts   config.WriterOptions
+	Client api.Client
 }
 
 func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSeries {
-	w.relabelMux.Lock()
-	defer w.relabelMux.Unlock()
-
 	ritems := make([]*prompb.TimeSeries, 0, len(items))
 	for _, item := range items {
 		lbls := models.Process(item.Labels, w.Opts.WriteRelabels...)

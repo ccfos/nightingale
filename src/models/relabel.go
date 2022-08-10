@@ -32,7 +32,7 @@ type Regexp struct {
 type RelabelConfig struct {
 	SourceLabels model.LabelNames
 	Separator    string
-	Regex        string
+	Regex        interface{}
 	Modulus      uint64
 	TargetLabel  string
 	Replacement  string
@@ -111,7 +111,7 @@ func relabel(lset []*prompb.Label, cfg *RelabelConfig) []*prompb.Label {
 		values = append(values, getValue(lset, ln))
 	}
 
-	regx := MustNewRegexp(cfg.Regex)
+	regx := cfg.Regex.(Regexp)
 
 	val := strings.Join(values, cfg.Separator)
 	lb := newBuilder(lset)
@@ -126,7 +126,6 @@ func relabel(lset []*prompb.Label, cfg *RelabelConfig) []*prompb.Label {
 		}
 	case Replace:
 		indexes := regx.FindStringSubmatchIndex(val)
-		// If there is no match no replacement must take place.
 		if indexes == nil {
 			break
 		}
