@@ -1,4 +1,5 @@
-FROM python:2
+FROM python:2.7.8-slim
+#FROM python:2
 #FROM ubuntu:21.04
 
 WORKDIR /app
