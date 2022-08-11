@@ -731,10 +731,10 @@ func (re *RuleEvalForExternalType) Get(rid int64) (RuleEval, bool) {
 	))
 
 	re.RLock()
+	defer re.RUnlock()
 	if ret, has := re.rules[hash]; has {
 		// already exists
 		return ret, has
 	}
-	re.RUnlock()
 	return RuleEval{}, false
 }
