@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/toolkits/pkg/i18n"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
@@ -75,6 +76,9 @@ EXIT:
 			break EXIT
 		case syscall.SIGHUP:
 			// reload configuration?
+			logger.Info("start reload configs")
+			engine.Reload()
+			logger.Info("reload configs finished")
 		default:
 			break EXIT
 		}

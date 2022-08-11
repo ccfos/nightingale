@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -29,9 +30,12 @@ import (
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
-var tpls = make(map[string]*template.Template)
+var (
+	tpls   map[string]*template.Template
+	rwLock sync.RWMutex
+)
 
-func initTpls() error {
+func reloadTpls() error {
 	if config.C.Alerting.TemplatesDir == "" {
 		config.C.Alerting.TemplatesDir = path.Join(runner.Cwd, "etc", "template")
 	}
@@ -56,6 +60,7 @@ func initTpls() error {
 		return errors.New("no tpl files under " + config.C.Alerting.TemplatesDir)
 	}
 
+	tmpTpls := make(map[string]*template.Template)
 	for i := 0; i < len(tplFiles); i++ {
 		tplpath := path.Join(config.C.Alerting.TemplatesDir, tplFiles[i])
 
@@ -64,9 +69,12 @@ func initTpls() error {
 			return errors.WithMessage(err, "failed to parse tpl: "+tplpath)
 		}
 
-		tpls[tplFiles[i]] = tpl
+		tmpTpls[tplFiles[i]] = tpl
 	}
 
+	rwLock.Lock()
+	tpls = tmpTpls
+	rwLock.Unlock()
 	return nil
 }
 
@@ -78,6 +86,9 @@ type Notice struct {
 func genNotice(event *models.AlertCurEvent) Notice {
 	// build notice body with templates
 	ntpls := make(map[string]string)
+
+	rwLock.RLock()
+	defer rwLock.RUnlock()
 	for filename, tpl := range tpls {
 		var body bytes.Buffer
 		if err := tpl.Execute(&body, event); err != nil {
