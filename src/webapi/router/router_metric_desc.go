@@ -1,35 +1,14 @@
 package router
 
 import (
-	"path"
-
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/runner"
 
 	"github.com/didi/nightingale/v5/src/webapi/config"
 )
 
 func metricsDescGetFile(c *gin.Context) {
-	fp := config.C.MetricsYamlFile
-	if fp == "" {
-		fp = path.Join(runner.Cwd, "etc", "metrics.yaml")
-	}
-
-	if !file.IsExist(fp) {
-		c.String(404, "%s not found", fp)
-		return
-	}
-
-	ret := make(map[string]string)
-	err := file.ReadYaml(fp, &ret)
-	if err != nil {
-		c.String(500, err.Error())
-		return
-	}
-
-	c.JSON(200, ret)
+	c.JSON(200, config.MetricDesc)
 }
 
 // 前端传过来一个metric数组，后端去查询有没有对应的释义，返回map
@@ -38,13 +17,8 @@ func metricsDescGetMap(c *gin.Context) {
 	ginx.BindJSON(c, &arr)
 
 	ret := make(map[string]string)
-	for i := 0; i < len(arr); i++ {
-		desc, has := config.Metrics.Get(arr[i])
-		if !has {
-			ret[arr[i]] = ""
-		} else {
-			ret[arr[i]] = desc.(string)
-		}
+	for _, key := range arr {
+		ret[key] = config.GetMetricDesc(c.GetHeader("X-Language"), key)
 	}
 
 	ginx.NewRender(c).Data(ret, nil)

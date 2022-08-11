@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
@@ -24,7 +25,24 @@ type WriterType struct {
 	Client api.Client
 }
 
+func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSeries {
+	ritems := make([]*prompb.TimeSeries, 0, len(items))
+	for _, item := range items {
+		lbls := models.Process(item.Labels, w.Opts.WriteRelabels...)
+		if len(lbls) == 0 {
+			continue
+		}
+		ritems = append(ritems, item)
+	}
+	return ritems
+}
+
 func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[string]string) {
+	if len(items) == 0 {
+		return
+	}
+
+	items = w.writeRelabel(items)
 	if len(items) == 0 {
 		return
 	}
