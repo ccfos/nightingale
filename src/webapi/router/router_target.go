@@ -40,7 +40,7 @@ func targetGets(c *gin.Context) {
 
 		now := time.Now()
 
-		// query LoadPerCore / MemUtil / TargetUp from prometheus
+		// query LoadPerCore / MemUtil / TargetUp / DiskUsedPercent from prometheus
 		// map key: cluster, map value: ident list
 		targets := make(map[string][]string)
 		for i := 0; i < len(list); i++ {
@@ -58,42 +58,32 @@ func targetGets(c *gin.Context) {
 				continue
 			}
 
-			// load per core
-			promql := fmt.Sprintf(config.C.TargetMetrics["LoadPerCore"], strings.Join(targetArr, "|"), mins)
-			values, err := instantQuery(c, cc, promql, now)
-			ginx.Dangerous(err)
+			targetRe := strings.Join(targetArr, "|")
+			valuesMap := make(map[string]map[string]float64)
 
-			for ident := range values {
-				mapkey := cluster + ident
-				t, has := targetsMap[mapkey]
-				if has {
-					t.LoadPerCore = values[ident]
-				}
+			for metric, ql := range config.C.TargetMetrics {
+				promql := fmt.Sprintf(ql, targetRe, mins)
+				values, err := instantQuery(context.Background(), cc, promql, now)
+				ginx.Dangerous(err)
+				valuesMap[metric] = values
 			}
 
-			// mem util
-			promql = fmt.Sprintf(config.C.TargetMetrics["MemUtil"], strings.Join(targetArr, "|"), mins)
-			values, err = instantQuery(c, cc, promql, now)
-			ginx.Dangerous(err)
-
-			for ident := range values {
-				mapkey := cluster + ident
-				t, has := targetsMap[mapkey]
-				if has {
-					t.MemUtil = values[ident]
-				}
-			}
-
-			// target up
-			promql = fmt.Sprintf(config.C.TargetMetrics["TargetUp"], strings.Join(targetArr, "|"), mins)
-			values, err = instantQuery(c, cc, promql, now)
-			ginx.Dangerous(err)
-
-			for ident := range values {
-				mapkey := cluster + ident
-				t, has := targetsMap[mapkey]
-				if has {
-					t.TargetUp = values[ident]
+			// handle values
+			for metric, values := range valuesMap {
+				for ident := range values {
+					mapkey := cluster + ident
+					if t, has := targetsMap[mapkey]; has {
+						switch metric {
+						case "LoadPerCore":
+							t.LoadPerCore = values[ident]
+						case "MemUtil":
+							t.MemUtil = values[ident]
+						case "TargetUp":
+							t.TargetUp = values[ident]
+						case "DiskUtil":
+							t.DiskUtil = values[ident]
+						}
+					}
 				}
 			}
 		}
