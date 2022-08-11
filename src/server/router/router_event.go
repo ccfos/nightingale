@@ -95,8 +95,8 @@ func makeEvent(c *gin.Context) {
 	ginx.BindJSON(c, &events)
 	now := time.Now().Unix()
 	for i := 0; i < len(events); i++ {
-		logger.Error("handle event:", events[i])
 		re, exists := engine.RuleEvalForExternal.Get(events[i].RuleId)
+		logger.Debugf("handle event:%+v exists:%v", events[i], exists)
 		if !exists {
 			ginx.Bomb(200, "rule not exists")
 		}
@@ -104,7 +104,6 @@ func makeEvent(c *gin.Context) {
 		if events[i].Alert {
 			go re.MakeNewEvent("http", now, events[i].Vectors)
 		} else {
-			logger.Errorf("handle event recover:%+v", events[i])
 			for _, vector := range events[i].Vectors {
 				hash := str.MD5(fmt.Sprintf("%d_%s", events[i].RuleId, vector.Key))
 				go re.RecoverEvent(hash, now)

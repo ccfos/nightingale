@@ -315,16 +315,9 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) m
 	// 有可能rule的一些配置已经发生变化，比如告警接收人、callbacks等
 	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
 	// 所以，这里直接从memsto.AlertRuleCache中获取并覆盖
-	if from != "inner" {
-		logger.Errorf("handle event:%+v", vectors)
-	}
-
 	curRule := memsto.AlertRuleCache.Get(r.rule.Id)
 	if curRule == nil {
 		return map[string]struct{}{}
-	}
-	if from != "inner" {
-		logger.Errorf("handle event:%+v", vectors)
 	}
 
 	r.rule = curRule
@@ -332,9 +325,6 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) m
 	count := len(vectors)
 	alertingKeys := make(map[string]struct{})
 	for i := 0; i < count; i++ {
-		if from != "inner" {
-			logger.Errorf("handle event:%+v", vectors[i])
-		}
 		// compute hash
 		hash := str.MD5(fmt.Sprintf("%d_%s", r.rule.Id, vectors[i].Key))
 		alertingKeys[hash] = struct{}{}
@@ -421,14 +411,12 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) m
 		event.Tags = strings.Join(tagsArr, ",,")
 		event.IsRecovered = false
 		event.LastEvalTime = now
+		if from != "inner" {
+			event.LastEvalTime = event.TriggerTime
+		}
 
-		if from != "inner" {
-			logger.Errorf("handle event:%+v", event)
-		}
 		r.handleNewEvent(event)
-		if from != "inner" {
-			logger.Errorf("handle event:%+v", event)
-		}
+
 	}
 
 	return alertingKeys
@@ -530,12 +518,10 @@ func (r *RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
 
 func (r *RuleEval) RecoverEvent(hash string, now int64) {
 	event, has := r.fires.Get(hash)
-	logger.Errorf("handle event recover:%+v", event)
 	if !has {
 		return
 	}
 	r.recoverEvent(hash, event, time.Now().Unix())
-	logger.Errorf("handle event recover done:%+v", event)
 }
 
 func (r *RuleEval) recoverEvent(hash string, event *models.AlertCurEvent, now int64) {
