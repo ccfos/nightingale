@@ -150,7 +150,7 @@ services:
       - /:/hostfs
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - "8094:8094/tcp"
+      - "9100:9100/tcp"
     networks:
       - nightingale
     depends_on:
