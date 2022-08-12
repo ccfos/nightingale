@@ -91,6 +91,10 @@ zh:
   netstat_tcp_time_wait: TIME_WAIT状态的网络链接数
   netstat_udp_socket: UDP状态的网络链接数
 
+  #[ping]
+  ping_percent_packet_loss: ping数据包丢失百分比(%)
+  ping_result_code: ping返回码('0','1')
+  
   processes_blocked: 不可中断的睡眠状态下的进程数('U','D','L')
   processes_dead: 回收中的进程数('X')
   processes_idle: 挂起的空闲进程数('I')
