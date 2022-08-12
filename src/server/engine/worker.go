@@ -298,10 +298,12 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 		// handle target note
 		targetIdent, has := vectors[i].Labels["ident"]
 		targetNote := ""
+		targetCluster := ""
 		if has {
 			target, exists := memsto.TargetCache.Get(string(targetIdent))
 			if exists {
 				targetNote = target.Note
+				targetCluster = target.Cluster
 
 				// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 				// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
@@ -332,7 +334,7 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 		tagsArr := labelMapToArr(tagsMap)
 		sort.Strings(tagsArr)
 
-		event.Cluster = r.rule.Cluster
+		event.Cluster = targetCluster
 		event.Hash = hash
 		event.RuleId = r.rule.Id
 		event.RuleName = r.rule.Name
