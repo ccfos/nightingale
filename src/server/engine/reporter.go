@@ -30,7 +30,7 @@ func Report(errorType ErrorType) {
 	rp.report(errorType)
 }
 
-func (r *reporter) clear() map[ErrorType]uint64 {
+func (r *reporter) reset() map[ErrorType]uint64 {
 	r.Lock()
 	defer r.Unlock()
 	if len(r.em) == 0 {
@@ -53,11 +53,10 @@ func (r *reporter) report(errorType ErrorType) {
 }
 
 func (r *reporter) Start() {
-	r.clear()
 	for {
 		select {
 		case <-time.After(time.Minute):
-			cur := r.clear()
+			cur := r.reset()
 			if cur != nil {
 				r.cb(cur)
 			}
