@@ -76,9 +76,7 @@ EXIT:
 			break EXIT
 		case syscall.SIGHUP:
 			// reload configuration?
-			logger.Info("start reload configs")
-			engine.Reload()
-			logger.Info("reload configs finished")
+			reload()
 		default:
 			break EXIT
 		}
@@ -147,7 +145,7 @@ func (s Server) initialize() (func(), error) {
 	stat.Init()
 
 	// init http server
-	r := router.New(s.Version)
+	r := router.New(s.Version, reload)
 	httpClean := httpx.Init(config.C.HTTP, r)
 	fns.Add(httpClean)
 
@@ -176,4 +174,10 @@ func (fs *Functions) Ret() func() {
 			fs.List[i]()
 		}
 	}
+}
+
+func reload() {
+	logger.Info("start reload configs")
+	engine.Reload()
+	logger.Info("reload configs finished")
 }

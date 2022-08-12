@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/toolkits/pkg/logger"
@@ -26,6 +27,18 @@ func Start(ctx context.Context) error {
 	go reportQueueSize()
 
 	go sender.StartEmailSender()
+
+	go initReporter(func(em map[ErrorType]uint64) {
+		if len(em) == 0 {
+			return
+		}
+		title := fmt.Sprintf("server %s has some errors, please check server logs for detail", config.C.Heartbeat.IP)
+		msg := ""
+		for k, v := range em {
+			msg += fmt.Sprintf("error: %s, count: %d\n", k, v)
+		}
+		notifyToMaintainer(title, msg)
+	})
 
 	return nil
 }
