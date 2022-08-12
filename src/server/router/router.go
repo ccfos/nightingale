@@ -18,7 +18,7 @@ import (
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 )
 
-func New(version string) *gin.Engine {
+func New(version string, reloadFunc func()) *gin.Engine {
 	gin.SetMode(config.C.RunMode)
 
 	loggerMid := aop.Logger()
@@ -37,12 +37,12 @@ func New(version string) *gin.Engine {
 		r.Use(loggerMid)
 	}
 
-	configRoute(r, version)
+	configRoute(r, version, reloadFunc)
 
 	return r
 }
 
-func configRoute(r *gin.Engine, version string) {
+func configRoute(r *gin.Engine, version string, reloadFunc func()) {
 	if config.C.HTTP.PProf {
 		pprof.Register(r, "/api/debug/pprof")
 	}
@@ -61,6 +61,11 @@ func configRoute(r *gin.Engine, version string) {
 
 	r.GET("/version", func(c *gin.Context) {
 		c.String(200, version)
+	})
+
+	r.POST("/-/reload", func(c *gin.Context) {
+		reloadFunc()
+		c.String(200, "reload success")
 	})
 
 	r.GET("/servers/active", func(c *gin.Context) {
