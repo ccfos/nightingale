@@ -87,7 +87,7 @@ func (r RuleEval) Start() {
 			return
 		default:
 			r.Work()
-			logger.Debugf("rule executed, rule_id=%d", r.RuleID())
+			logger.Debugf("rule executed, rule_eval:%d", r.RuleID())
 			interval := r.rule.PromEvalInterval
 			if interval <= 0 {
 				interval = 10
@@ -125,6 +125,7 @@ func (r RuleEval) Work() {
 			logger.Errorf("rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
 			return
 		}
+		logger.Debugf("rule_eval:%d promql:%s, value:%v", r.RuleID(), promql, value)
 	} else {
 		var res AnomalyPoint
 		count := len(config.C.AnomalyDataApi)
@@ -279,6 +280,7 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 
 		// rule disabled in this time span?
 		if isNoneffective(vectors[i].Timestamp, r.rule) {
+			logger.Debugf("event_disabled: rule_eval:%d rule:%v timestamp:%d", r.rule.Id, r.rule, vectors[i].Timestamp)
 			continue
 		}
 
@@ -309,6 +311,7 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 				// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 				// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
 				if r.rule.EnableInBG == 1 && target.GroupId != r.rule.GroupId {
+					logger.Debugf("event_enable_in_bg: rule_eval:%d", r.rule.Id)
 					continue
 				}
 			}
