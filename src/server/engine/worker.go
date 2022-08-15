@@ -140,10 +140,6 @@ func (r *RuleEval) RuleID() int64 {
 	return r.rule.Id
 }
 
-func (r *RuleEval) RuleDS() string {
-	return r.rule.Prod
-}
-
 func (r *RuleEval) Start() {
 	logger.Infof("rule_eval:%d started", r.RuleID())
 	for {
