@@ -34,13 +34,12 @@ Committer 承担以下一个或多个职责：
 Committer 记录并公示于 **[COMMITTERS](./committers.md)** 列表，并获得 **[CCF ODC](https://www.ccf.org.cn/kyfzwyh/)** 颁发的电子证书，以及享有夜莺开源社区的各种权益和福利。
 
 
-### 项目管委会成员(PMC Member) 
+### 项目管委会(PMC) 
 
-> 项目管委会成员，从 Contributor 或者 Committer 中选举产生，他们拥有 [CCFOS/NIGHTINGALE](https://github.com/ccfos/nightingale) 代码仓库的写操作权限，拥有 ccf.org.cn 为后缀的邮箱地址（待上线），拥有 Nightingale 社区相关事务的投票权、以及提名 Committer 候选人的权利。 项目管委会作为一个实体，为整个项目的发展全权负责。项目管委会成员记录并公示于 **[PMC](./pmc.md)** 列表。
+> 项目管委会作为一个实体，来管理和领导夜莺项目，为整个项目的发展全权负责。项目管委会相关内容记录并公示于文件[PMC](./pmc.md).
 
-### 项目管委会主席(PMC Chair)
-
-> 项目管委会主席采用任命制，由 **[CCF ODC](https://www.ccf.org.cn/kyfzwyh/)** 从项目管委会成员中任命产生。项目管委会作为一个统一的实体，来管理和领导夜莺项目。管委会主席是 CCF ODC 和项目管委会之间的沟通桥梁，履行特定的项目管理职责。
+- 项目管委会成员(PMC Member)，从 Contributor 或者 Committer 中选举产生，他们拥有 [CCFOS/NIGHTINGALE](https://github.com/ccfos/nightingale) 代码仓库的写操作权限，拥有 ccf.org.cn 为后缀的邮箱地址（待上线），拥有 Nightingale 社区相关事务的投票权、以及提名 Committer 候选人的权利。
+- 项目管委会主席(PMC Chair)，由 **[CCF ODC](https://www.ccf.org.cn/kyfzwyh/)** 从项目管委会成员中任命产生。管委会主席是 CCF ODC 和项目管委会之间的沟通桥梁，履行特定的项目管理职责。
 
 ## 沟通机制(Communication)
 1. 我们推荐使用邮件列表来反馈建议（待发布）；
