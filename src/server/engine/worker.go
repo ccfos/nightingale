@@ -303,19 +303,22 @@ func (ws *WorkersType) BuildRe(rids []int64) {
 func (r *RuleEval) Judge(vectors []conv.Vector) {
 	now := time.Now().Unix()
 
-	alertingKeys := r.MakeNewEvent("inner", now, vectors)
+	alertingKeys, ruleExists := r.MakeNewEvent("inner", now, vectors)
+	if !ruleExists {
+		return
+	}
 
 	// handle recovered events
 	r.recoverRule(alertingKeys, now)
 }
 
-func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) map[string]struct{} {
+func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) (map[string]struct{}, bool) {
 	// 有可能rule的一些配置已经发生变化，比如告警接收人、callbacks等
 	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
 	// 所以，这里直接从memsto.AlertRuleCache中获取并覆盖
 	curRule := memsto.AlertRuleCache.Get(r.rule.Id)
 	if curRule == nil {
-		return map[string]struct{}{}
+		return map[string]struct{}{}, false
 	}
 
 	r.rule = curRule
@@ -421,7 +424,7 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) m
 
 	}
 
-	return alertingKeys
+	return alertingKeys, true
 }
 
 func readableValue(value float64) string {
@@ -653,14 +656,14 @@ func (r RecordingRuleEval) Work() {
 
 type RuleEvalForExternalType struct {
 	sync.RWMutex
-	rules map[string]RuleEval
+	rules map[int64]RuleEval
 }
 
-var RuleEvalForExternal = RuleEvalForExternalType{rules: make(map[string]RuleEval)}
+var RuleEvalForExternal = RuleEvalForExternalType{rules: make(map[int64]RuleEval)}
 
 func (re *RuleEvalForExternalType) Build() {
 	rids := memsto.AlertRuleCache.GetRuleIds()
-	rules := make(map[string]*models.AlertRule)
+	rules := make(map[int64]*models.AlertRule)
 
 	for i := 0; i < len(rids); i++ {
 		rule := memsto.AlertRuleCache.Get(rids[i])
@@ -668,35 +671,30 @@ func (re *RuleEvalForExternalType) Build() {
 			continue
 		}
 
-		hash := str.MD5(fmt.Sprintf("%d_%d_%s",
-			rule.Id,
-			rule.PromEvalInterval,
-			rule.PromQl,
-		))
-
 		re.Lock()
-		rules[hash] = rule
+		rules[rule.Id] = rule
 		re.Unlock()
 	}
 
 	// stop old
-	for hash := range re.rules {
-		if _, has := rules[hash]; !has {
+	for rid := range re.rules {
+		if _, has := rules[rid]; !has {
 			re.Lock()
-			delete(re.rules, hash)
+			delete(re.rules, rid)
 			re.Unlock()
 		}
 	}
 
 	// start new
 	re.Lock()
-	for hash := range rules {
-		if _, has := re.rules[hash]; has {
+	defer re.Unlock()
+	for rid := range rules {
+		if _, has := re.rules[rid]; has {
 			// already exists
 			continue
 		}
 
-		elst, err := models.AlertCurEventGetByRule(rules[hash].Id)
+		elst, err := models.AlertCurEventGetByRule(rules[rid].Id)
 		if err != nil {
 			logger.Errorf("worker_build: AlertCurEventGetByRule failed: %v", err)
 			continue
@@ -710,15 +708,14 @@ func (re *RuleEvalForExternalType) Build() {
 		fires := NewAlertCurEventMap()
 		fires.SetAll(firemap)
 		newRe := RuleEval{
-			rule:     rules[hash],
+			rule:     rules[rid],
 			quit:     make(chan struct{}),
 			fires:    fires,
 			pendings: NewAlertCurEventMap(),
 		}
 
-		re.rules[hash] = newRe
+		re.rules[rid] = newRe
 	}
-	re.Unlock()
 }
 
 func (re *RuleEvalForExternalType) Get(rid int64) (RuleEval, bool) {
@@ -726,15 +723,10 @@ func (re *RuleEvalForExternalType) Get(rid int64) (RuleEval, bool) {
 	if rule == nil {
 		return RuleEval{}, false
 	}
-	hash := str.MD5(fmt.Sprintf("%d_%d_%s",
-		rule.Id,
-		rule.PromEvalInterval,
-		rule.PromQl,
-	))
 
 	re.RLock()
 	defer re.RUnlock()
-	if ret, has := re.rules[hash]; has {
+	if ret, has := re.rules[rid]; has {
 		// already exists
 		return ret, has
 	}
