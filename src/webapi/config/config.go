@@ -113,7 +113,6 @@ type ClusterOptions struct {
 
 	Timeout     int64
 	DialTimeout int64
-	KeepAlive   int64
 
 	UseTLS bool
 	tls.ClientConfig

@@ -30,6 +30,10 @@ type Usage struct {
 }
 
 func getSamples() (float64, error) {
+	if reader.Client == nil {
+		return 0, fmt.Errorf("reader.Client is nil")
+	}
+
 	value, warns, err := reader.Client.Query(context.Background(), request, time.Now())
 	if err != nil {
 		return 0, err
@@ -55,10 +59,7 @@ func Report() {
 }
 
 func report() {
-	sps, err := getSamples()
-	if err != nil {
-		return
-	}
+	sps, _ := getSamples()
 
 	hostname, err := os.Hostname()
 	if err != nil {

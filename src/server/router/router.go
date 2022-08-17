@@ -69,7 +69,7 @@ func configRoute(r *gin.Engine, version string, reloadFunc func()) {
 	})
 
 	r.GET("/servers/active", func(c *gin.Context) {
-		lst, err := naming.ActiveServers(c.Request.Context(), config.C.ClusterName)
+		lst, err := naming.ActiveServers()
 		ginx.NewRender(c).Data(lst, err)
 	})
 

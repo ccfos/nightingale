@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 	"sync"
@@ -163,6 +164,11 @@ func (r *RuleEval) Work() {
 	promql := strings.TrimSpace(r.rule.PromQl)
 	if promql == "" {
 		logger.Errorf("rule_eval:%d promql is blank", r.RuleID())
+		return
+	}
+
+	if reader.Client == nil {
+		logger.Error("reader.Client is nil")
 		return
 	}
 
@@ -633,6 +639,11 @@ func (r RecordingRuleEval) Work() {
 	promql := strings.TrimSpace(r.rule.PromQl)
 	if promql == "" {
 		logger.Errorf("recording_rule_eval:%d promql is blank", r.RuleID())
+		return
+	}
+
+	if reader.Client == nil {
+		log.Println("reader.Client is nil")
 		return
 	}
 

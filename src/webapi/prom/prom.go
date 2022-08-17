@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/pkg/prom"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/prometheus/client_golang/api"
@@ -29,10 +30,44 @@ type ClustersType struct {
 	mutex *sync.RWMutex
 }
 
+type PromOption struct {
+	Url                 string
+	User                string
+	Pass                string
+	Headers             []string
+	Timeout             int64
+	DialTimeout         int64
+	MaxIdleConnsPerHost int
+}
+
 func (cs *ClustersType) Put(name string, cluster *ClusterType) {
 	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+
 	cs.datas[name] = cluster
-	cs.mutex.Unlock()
+
+	// 把配置信息写入DB一份，这样n9e-server就可以直接从DB读取了
+	po := PromOption{
+		Url:                 cluster.Opts.Prom,
+		User:                cluster.Opts.BasicAuthUser,
+		Pass:                cluster.Opts.BasicAuthPass,
+		Headers:             cluster.Opts.Headers,
+		Timeout:             cluster.Opts.Timeout,
+		DialTimeout:         cluster.Opts.DialTimeout,
+		MaxIdleConnsPerHost: cluster.Opts.MaxIdleConnsPerHost,
+	}
+
+	bs, err := json.Marshal(po)
+	if err != nil {
+		logger.Fatal("failed to marshal PromOption:", err)
+		return
+	}
+
+	key := "prom." + name + ".option"
+	err = models.ConfigsSet(key, string(bs))
+	if err != nil {
+		logger.Fatal("failed to set PromOption ", key, " to database, error: ", err)
+	}
 }
 
 func (cs *ClustersType) Get(name string) (*ClusterType, bool) {
