@@ -81,7 +81,11 @@ func MustLoad(fpaths ...string) {
 				os.Exit(1)
 			}
 
-			C.Heartbeat.IP = hostname + "+" + fmt.Sprint(os.Getpid())
+			if strings.Contains(hostname, "localhost") {
+				fmt.Println("Warning! hostname contains substring localhost, setting a more unique hostname is recommended")
+			}
+
+			C.Heartbeat.IP = hostname
 
 			// if C.Heartbeat.IP == "" {
 			// 	fmt.Println("heartbeat ip auto got is blank")
@@ -315,7 +319,7 @@ func (c *Config) IsDebugMode() bool {
 
 // Get preferred outbound ip of this machine
 func GetOutboundIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
+	conn, err := net.Dial("udp", "223.5.5.5:80")
 	if err != nil {
 		fmt.Println("auto get outbound ip fail:", err)
 		os.Exit(1)
