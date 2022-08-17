@@ -26,10 +26,10 @@ func alertRuleGets(c *gin.Context) {
 }
 
 func alertRulesGetByService(c *gin.Context) {
-	prods := strings.Fields(ginx.QueryStr(c, "prods", ""))
+	prods := strings.Split(ginx.QueryStr(c, "prods", ""), ",")
 	query := ginx.QueryStr(c, "query", "")
-
-	ars, err := models.AlertRulesGetsBy(prods, query)
+	algorithm := ginx.QueryStr(c, "algorithm", "")
+	ars, err := models.AlertRulesGetsBy(prods, query, algorithm)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(ars); i++ {

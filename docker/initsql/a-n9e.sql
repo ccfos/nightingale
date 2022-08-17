@@ -52,7 +52,7 @@ insert into user_group_member(group_id, user_id) values(1, 1);
 CREATE TABLE `configs` (
     `id` bigint unsigned not null auto_increment,
     `ckey` varchar(191) not null,
-    `cval` varchar(1024) not null default '',
+    `cval` varchar(4096) not null default '',
     PRIMARY KEY (`id`),
     UNIQUE KEY (`ckey`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
@@ -499,4 +499,14 @@ CREATE TABLE `task_record`
     PRIMARY KEY (`id`),
     KEY (`create_at`, `group_id`),
     KEY (`create_by`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `alerting_engines`
+(
+    `id` int unsigned NOT NULL AUTO_INCREMENT,
+    `instance` varchar(128) not null default '' comment 'instance identification, e.g. 10.9.0.9:9090',
+    `cluster` varchar(128) not null default '' comment 'target reader cluster',
+    `clock` bigint not null,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY (`instance`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
