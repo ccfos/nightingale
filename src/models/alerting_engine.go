@@ -50,7 +50,7 @@ func AlertingEngineGets(where string, args ...interface{}) ([]*AlertingEngines, 
 func AlertingEngineGetsInstances(where string, args ...interface{}) ([]string, error) {
 	var arr []string
 	var err error
-	session := DB().Order("instance")
+	session := DB().Model(new(AlertingEngines)).Order("instance")
 	if where == "" {
 		err = session.Pluck("instance", &arr).Error
 	} else {
