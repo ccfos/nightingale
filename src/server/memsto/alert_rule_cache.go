@@ -89,6 +89,7 @@ func syncAlertRules() error {
 
 	stat, err := models.AlertRuleStatistics(config.C.ClusterName)
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec AlertRuleStatistics")
 	}
 
@@ -101,6 +102,7 @@ func syncAlertRules() error {
 
 	lst, err := models.AlertRuleGetsByCluster(config.C.ClusterName)
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec AlertRuleGetsByCluster")
 	}
 

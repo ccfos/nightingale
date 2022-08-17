@@ -81,7 +81,7 @@ var (
 	)
 )
 
-func Init() {
+func Init(cb func(em map[ErrorType]uint64)) {
 	// Register the summary and the histogram with Prometheus's default registry.
 	prometheus.MustRegister(
 		GaugeCronDuration,
@@ -93,4 +93,7 @@ func Init() {
 		RequestDuration,
 		ForwardDuration,
 	)
+
+	go initReporter(cb)
+
 }

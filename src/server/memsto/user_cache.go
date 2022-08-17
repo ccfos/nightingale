@@ -99,6 +99,7 @@ func (uc *UserCacheType) GetMaintainerUsers() []*models.User {
 func SyncUsers() {
 	err := syncUsers()
 	if err != nil {
+
 		fmt.Println("failed to sync users:", err)
 		exit(1)
 	}
@@ -133,6 +134,7 @@ func syncUsers() error {
 
 	lst, err := models.UserGetAll()
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec UserGetAll")
 	}
 

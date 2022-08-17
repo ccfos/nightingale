@@ -142,7 +142,17 @@ func (s Server) initialize() (func(), error) {
 		return fns.Ret(), err
 	}
 
-	stat.Init()
+	stat.Init(func(em map[stat.ErrorType]uint64) {
+		if len(em) == 0 {
+			return
+		}
+		title := fmt.Sprintf("server %s has some errors, please check server logs for detail", config.C.Heartbeat.IP)
+		msg := ""
+		for k, v := range em {
+			msg += fmt.Sprintf("error: %s, count: %d\n", k, v)
+		}
+		engine.NotifyToMaintainer(title, msg)
+	})
 
 	// init http server
 	r := router.New(s.Version, reload)

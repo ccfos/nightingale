@@ -92,6 +92,7 @@ func syncAlertMutes() error {
 
 	stat, err := models.AlertMuteStatistics(config.C.ClusterName)
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec AlertMuteStatistics")
 	}
 
@@ -104,6 +105,7 @@ func syncAlertMutes() error {
 
 	lst, err := models.AlertMuteGetsByCluster(config.C.ClusterName)
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec AlertMuteGetsByCluster")
 	}
 

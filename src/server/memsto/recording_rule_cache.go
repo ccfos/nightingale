@@ -88,6 +88,7 @@ func syncRecordingRules() error {
 
 	stat, err := models.RecordingRuleStatistics(config.C.ClusterName)
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec RecordingRuleStatistics")
 	}
 
@@ -100,6 +101,7 @@ func syncRecordingRules() error {
 
 	lst, err := models.RecordingRuleGetsByCluster(config.C.ClusterName)
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec RecordingRuleGetsByCluster")
 	}
 

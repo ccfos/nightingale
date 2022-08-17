@@ -3,6 +3,7 @@ package naming
 import (
 	"sync"
 
+	"github.com/didi/nightingale/v5/src/server/stat"
 	"github.com/toolkits/pkg/consistent"
 	"github.com/toolkits/pkg/logger"
 )
@@ -21,7 +22,11 @@ func (chr *ConsistentHashRing) GetNode(pk string) (string, error) {
 	chr.RLock()
 	defer chr.RUnlock()
 
-	return chr.ring.Get(pk)
+	rv, err := chr.ring.Get(pk)
+	if err != nil {
+		stat.ReportError(stat.RedisOperateError)
+	}
+	return rv, err
 }
 
 func (chr *ConsistentHashRing) Set(r *consistent.Consistent) {

@@ -116,8 +116,8 @@ func (r RuleEval) Work() {
 		value, warnings, err = reader.Client.Query(context.Background(), promql, time.Now())
 		if err != nil {
 			logger.Errorf("rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
-			//notifyToMaintainer(err, "failed to query prometheus")
-			Report(QueryPrometheusError)
+			//NotifyToMaintainer(err, "failed to query prometheus")
+			promstat.ReportError(promstat.QueryPrometheusError)
 			return
 		}
 

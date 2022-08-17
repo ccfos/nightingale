@@ -95,6 +95,7 @@ func syncAlertSubscribes() error {
 
 	stat, err := models.AlertSubscribeStatistics(config.C.ClusterName)
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec AlertSubscribeStatistics")
 	}
 
@@ -107,6 +108,7 @@ func syncAlertSubscribes() error {
 
 	lst, err := models.AlertSubscribeGetsByCluster(config.C.ClusterName)
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec AlertSubscribeGetsByCluster")
 	}
 

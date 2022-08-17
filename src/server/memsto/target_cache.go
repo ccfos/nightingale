@@ -96,6 +96,7 @@ func syncTargets() error {
 
 	stat, err := models.TargetStatistics(config.C.ClusterName)
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec TargetStatistics")
 	}
 
@@ -108,6 +109,7 @@ func syncTargets() error {
 
 	lst, err := models.TargetGetsByCluster(config.C.ClusterName)
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec TargetGetsByCluster")
 	}
 

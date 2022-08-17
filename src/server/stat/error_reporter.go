@@ -1,4 +1,4 @@
-package engine
+package stat
 
 import (
 	"sync"
@@ -10,6 +10,8 @@ type ErrorType string
 // register new error here
 const (
 	QueryPrometheusError ErrorType = "QueryPrometheusError"
+	RedisOperateError    ErrorType = "RedisOperateError"
+	DbOperateError       ErrorType = "DbOperateError"
 	RuntimeError         ErrorType = "RuntimeError"
 )
 
@@ -26,7 +28,7 @@ func initReporter(cb func(em map[ErrorType]uint64)) {
 	rp.Start()
 }
 
-func Report(errorType ErrorType) {
+func ReportError(errorType ErrorType) {
 	rp.report(errorType)
 }
 

@@ -76,6 +76,7 @@ func syncBusiGroups() error {
 
 	stat, err := models.BusiGroupStatistics()
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec BusiGroupStatistics")
 	}
 
@@ -88,6 +89,7 @@ func syncBusiGroups() error {
 
 	m, err := models.BusiGroupGetMap()
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec BusiGroupGetMap")
 	}
 

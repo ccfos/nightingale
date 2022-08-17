@@ -20,8 +20,8 @@ type MaintainMessage struct {
 }
 
 // notify to maintainer to handle the error
-func notifyToMaintainer(title, msg string) {
-	logger.Errorf("notifyToMaintainer, msg: %s", msg)
+func NotifyToMaintainer(title, msg string) {
+	logger.Errorf("NotifyToMaintainer, msg: %s", msg)
 
 	users := memsto.UserCache.GetMaintainerUsers()
 	if len(users) == 0 {

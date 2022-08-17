@@ -11,6 +11,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/src/server/config"
+	"github.com/didi/nightingale/v5/src/server/stat"
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
@@ -19,6 +20,7 @@ var localss string
 
 func Heartbeat(ctx context.Context) error {
 	if err := heartbeat(ctx); err != nil {
+		stat.ReportError(stat.RedisOperateError)
 		fmt.Println("failed to heartbeat:", err)
 		return err
 	}
@@ -38,10 +40,11 @@ func loopHeartbeat(ctx context.Context) {
 }
 
 // hash struct:
-// /server/heartbeat/Default -> {
-//     10.2.3.4:19000 => $timestamp
-//     10.2.3.5:19000 => $timestamp
-// }
+//
+//	/server/heartbeat/Default -> {
+//	    10.2.3.4:19000 => $timestamp
+//	    10.2.3.5:19000 => $timestamp
+//	}
 func redisKey(cluster string) string {
 	return fmt.Sprintf("/server/heartbeat/%s", cluster)
 }
@@ -51,6 +54,7 @@ func heartbeat(ctx context.Context) error {
 	key := redisKey(config.C.ClusterName)
 	err := storage.Redis.HSet(ctx, key, config.C.Heartbeat.Endpoint, now).Err()
 	if err != nil {
+		stat.ReportError(stat.RedisOperateError)
 		return err
 	}
 
@@ -73,6 +77,7 @@ func clearDeadServer(ctx context.Context, cluster, endpoint string) {
 	key := redisKey(cluster)
 	err := storage.Redis.HDel(ctx, key, endpoint).Err()
 	if err != nil {
+		stat.ReportError(stat.RedisOperateError)
 		logger.Warningf("failed to hdel %s %s, error: %v", key, endpoint, err)
 	}
 }
@@ -80,6 +85,7 @@ func clearDeadServer(ctx context.Context, cluster, endpoint string) {
 func ActiveServers(ctx context.Context, cluster string) ([]string, error) {
 	ret, err := storage.Redis.HGetAll(ctx, redisKey(cluster)).Result()
 	if err != nil {
+		stat.ReportError(stat.RedisOperateError)
 		return nil, err
 	}
 

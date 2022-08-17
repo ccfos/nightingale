@@ -103,6 +103,7 @@ func syncUserGroups() error {
 
 	stat, err := models.UserGroupStatistics()
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec UserGroupStatistics")
 	}
 
@@ -115,6 +116,7 @@ func syncUserGroups() error {
 
 	lst, err := models.UserGroupGetAll()
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec UserGroupGetAll")
 	}
 
@@ -126,6 +128,7 @@ func syncUserGroups() error {
 	// fill user ids
 	members, err := models.UserGroupMemberGetAll()
 	if err != nil {
+		promstat.ReportError(promstat.DbOperateError)
 		return errors.WithMessage(err, "failed to exec UserGroupMemberGetAll")
 	}
 
