@@ -500,3 +500,13 @@ CREATE TABLE `task_record`
     KEY (`create_at`, `group_id`),
     KEY (`create_by`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `alerting_engines`
+(
+    `id` int unsigned NOT NULL AUTO_INCREMENT,
+    `instance` varchar(128) not null default '' comment 'instance identification, e.g. 10.9.0.9:9090',
+    `cluster` varchar(128) not null default '' comment 'target reader cluster',
+    `clock` bigint not null,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY (`instance`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

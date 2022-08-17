@@ -71,7 +71,7 @@ func (m *AlertMute) Verify() error {
 	}
 
 	if m.Etime <= m.Btime {
-		return fmt.Errorf("Oops... etime(%d) <= btime(%d)", m.Etime, m.Btime)
+		return fmt.Errorf("oops... etime(%d) <= btime(%d)", m.Etime, m.Btime)
 	}
 
 	if err := m.Parse(); err != nil {
