@@ -52,7 +52,7 @@ insert into user_group_member(group_id, user_id) values(1, 1);
 CREATE TABLE `configs` (
     `id` bigint unsigned not null auto_increment,
     `ckey` varchar(191) not null,
-    `cval` varchar(1024) not null default '',
+    `cval` varchar(4096) not null default '',
     PRIMARY KEY (`id`),
     UNIQUE KEY (`ckey`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
