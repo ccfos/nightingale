@@ -1,7 +1,6 @@
 package naming
 
 import (
-	"context"
 	"sort"
 
 	"github.com/didi/nightingale/v5/src/server/config"
@@ -9,7 +8,7 @@ import (
 )
 
 func IamLeader() (bool, error) {
-	servers, err := ActiveServers(context.Background(), config.C.ClusterName)
+	servers, err := ActiveServers()
 	if err != nil {
 		logger.Errorf("failed to get active servers: %v", err)
 		return false, err

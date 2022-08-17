@@ -38,12 +38,25 @@ func AlertingEngineGetCluster(instance string) (string, error) {
 func AlertingEngineGets(where string, args ...interface{}) ([]*AlertingEngines, error) {
 	var objs []*AlertingEngines
 	var err error
+	session := DB().Order("instance")
 	if where == "" {
-		err = DB().Find(&objs).Error
+		err = session.Find(&objs).Error
 	} else {
-		err = DB().Where(where, args...).Find(&objs).Error
+		err = session.Where(where, args...).Find(&objs).Error
 	}
 	return objs, err
+}
+
+func AlertingEngineGetsInstances(where string, args ...interface{}) ([]string, error) {
+	var arr []string
+	var err error
+	session := DB().Order("instance")
+	if where == "" {
+		err = session.Pluck("instance", &arr).Error
+	} else {
+		err = session.Where(where, args...).Pluck("instance", &arr).Error
+	}
+	return arr, err
 }
 
 func AlertingEngineHeartbeat(instance string) error {
