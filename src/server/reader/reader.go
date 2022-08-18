@@ -33,6 +33,12 @@ func Init() error {
 
 func initFromConfig() error {
 	opts := config.C.Reader
+
+	if opts.Url == "" {
+		logger.Warning("reader url is blank")
+		return nil
+	}
+
 	cli, err := api.NewClient(api.Config{
 		Address: opts.Url,
 		RoundTripper: &http.Transport{

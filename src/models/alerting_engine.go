@@ -47,6 +47,19 @@ func AlertingEngineGets(where string, args ...interface{}) ([]*AlertingEngines, 
 	return objs, err
 }
 
+func AlertingEngineGet(where string, args ...interface{}) (*AlertingEngines, error) {
+	lst, err := AlertingEngineGets(where, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(lst) == 0 {
+		return nil, nil
+	}
+
+	return lst[0], nil
+}
+
 func AlertingEngineGetsInstances(where string, args ...interface{}) ([]string, error) {
 	var arr []string
 	var err error
