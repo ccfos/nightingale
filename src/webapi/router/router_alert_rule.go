@@ -29,7 +29,12 @@ func alertRulesGetByService(c *gin.Context) {
 	prods := strings.Split(ginx.QueryStr(c, "prods", ""), ",")
 	query := ginx.QueryStr(c, "query", "")
 	algorithm := ginx.QueryStr(c, "algorithm", "")
-	cates := strings.Split(ginx.QueryStr(c, "cates", ""), ",")
+	cate := ginx.QueryStr(c, "cate", "$all")
+	cates := []string{}
+	if cate != "$all" {
+		cates = strings.Split(cate, ",")
+	}
+
 	disabled := ginx.QueryInt(c, "disabled", -1)
 	ars, err := models.AlertRulesGetsBy(prods, query, algorithm, cates, disabled)
 	if err == nil {
