@@ -29,6 +29,7 @@ func alertRulesGetByService(c *gin.Context) {
 	prods := strings.Split(ginx.QueryStr(c, "prods", ""), ",")
 	query := ginx.QueryStr(c, "query", "")
 	algorithm := ginx.QueryStr(c, "algorithm", "")
+	cluster := ginx.QueryStr(c, "cluster", "")
 	cate := ginx.QueryStr(c, "cate", "$all")
 	cates := []string{}
 	if cate != "$all" {
@@ -36,7 +37,7 @@ func alertRulesGetByService(c *gin.Context) {
 	}
 
 	disabled := ginx.QueryInt(c, "disabled", -1)
-	ars, err := models.AlertRulesGetsBy(prods, query, algorithm, cates, disabled)
+	ars, err := models.AlertRulesGetsBy(prods, query, algorithm, cluster, cates, disabled)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(ars); i++ {
