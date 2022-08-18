@@ -337,7 +337,7 @@ func AlertRuleGetsByCluster(cluster string) ([]*AlertRule, error) {
 	return lr, err
 }
 
-func AlertRulesGetsBy(prods []string, query, algorithm string) ([]*AlertRule, error) {
+func AlertRulesGetsBy(prods []string, query, algorithm string, cates []string, disabled int) ([]*AlertRule, error) {
 	session := DB().Where("prod in (?)", prods)
 
 	if query != "" {
@@ -350,6 +350,14 @@ func AlertRulesGetsBy(prods []string, query, algorithm string) ([]*AlertRule, er
 
 	if algorithm != "" {
 		session = session.Where("algorithm = ?", algorithm)
+	}
+
+	if len(cates) != 0 {
+		session = session.Where("cate in (?)", cates)
+	}
+
+	if disabled != -1 {
+		session = session.Where("disabled = ?", disabled)
 	}
 
 	var lst []*AlertRule
