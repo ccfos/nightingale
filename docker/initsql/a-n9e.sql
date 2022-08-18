@@ -226,6 +226,7 @@ CREATE TABLE `chart_share` (
 CREATE TABLE `alert_rule` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
+    `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `name` varchar(255) not null,
     `note` varchar(1024) not null default '',
