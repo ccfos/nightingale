@@ -168,7 +168,7 @@ func (r *RuleEval) Work() {
 
 	var value model.Value
 	var err error
-	if r.rule.Algorithm == "" {
+	if r.rule.Algorithm == "" && (r.rule.Cate == "" || r.rule.Cate == "prometheus") {
 		var warnings prom.Warnings
 		value, warnings, err = reader.Client.Query(context.Background(), promql, time.Now())
 		if err != nil {

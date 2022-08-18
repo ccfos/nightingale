@@ -16,6 +16,7 @@ import (
 type AlertRule struct {
 	Id                   int64       `json:"id" gorm:"primaryKey"`
 	GroupId              int64       `json:"group_id"`                     // busi group id
+	Cate                 string      `json:"cate"`                         // alert rule cate (prometheus|elasticsearch)
 	Cluster              string      `json:"cluster"`                      // take effect by clusters, seperated by space
 	Name                 string      `json:"name"`                         // rule name
 	Note                 string      `json:"note"`                         // will sent in notify
