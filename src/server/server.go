@@ -125,7 +125,7 @@ func (s Server) initialize() (func(), error) {
 	}
 
 	// init prometheus remote reader
-	if err = reader.Init(config.C.Reader); err != nil {
+	if err = reader.Init(); err != nil {
 		return fns.Ret(), err
 	}
 

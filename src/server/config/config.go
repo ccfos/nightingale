@@ -70,6 +70,10 @@ func MustLoad(fpaths ...string) {
 			C.EngineDelay = 120
 		}
 
+		if C.ReaderFrom == "" {
+			C.ReaderFrom = "config"
+		}
+
 		if C.Heartbeat.IP == "" {
 			// auto detect
 			// C.Heartbeat.IP = fmt.Sprint(GetOutboundIP())
@@ -186,6 +190,7 @@ type Config struct {
 	BusiGroupLabelKey  string
 	EngineDelay        int64
 	DisableUsageReport bool
+	ReaderFrom         string
 	Log                logx.Config
 	HTTP               httpx.Config
 	BasicAuth          gin.Accounts
@@ -206,15 +211,9 @@ type ReaderOptions struct {
 	BasicAuthUser string
 	BasicAuthPass string
 
-	Timeout               int64
-	DialTimeout           int64
-	TLSHandshakeTimeout   int64
-	ExpectContinueTimeout int64
-	IdleConnTimeout       int64
-	KeepAlive             int64
+	Timeout     int64
+	DialTimeout int64
 
-	MaxConnsPerHost     int
-	MaxIdleConns        int
 	MaxIdleConnsPerHost int
 
 	Headers []string
