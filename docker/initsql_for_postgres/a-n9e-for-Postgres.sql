@@ -54,7 +54,7 @@ insert into user_group_member(group_id, user_id) values(1, 1);
 CREATE TABLE configs (
     id bigserial,
     ckey varchar(191) not null,
-    cval varchar(1024) not null default ''
+    cval varchar(4096) not null default ''
 ) ;
 ALTER TABLE configs ADD CONSTRAINT configs_pk PRIMARY KEY (id);
 ALTER TABLE configs ADD CONSTRAINT configs_un UNIQUE (ckey);
@@ -580,3 +580,15 @@ CREATE INDEX task_record_create_by_idx ON task_record (create_by);
 
 COMMENT ON COLUMN task_record.id IS 'ibex task id';
 COMMENT ON COLUMN task_record.group_id IS 'busi group id';
+
+CREATE TABLE alerting_engines
+(
+    id bigserial NOT NULL,
+    instance varchar(128) not null default '',
+    cluster varchar(128) not null default '',
+    clock bigint not null
+) ;
+ALTER TABLE alerting_engines ADD CONSTRAINT alerting_engines_pk PRIMARY KEY (id);
+ALTER TABLE alerting_engines ADD CONSTRAINT alerting_engines_un UNIQUE (instance);
+COMMENT ON COLUMN alerting_engines.instance IS 'instance identification, e.g. 10.9.0.9:9090';
+COMMENT ON COLUMN alerting_engines.cluster IS 'target reader cluster';
