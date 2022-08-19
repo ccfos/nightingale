@@ -106,6 +106,7 @@ func makeEvent(c *gin.Context) {
 		} else {
 			for _, vector := range events[i].Vectors {
 				hash := str.MD5(fmt.Sprintf("%d_%s", events[i].RuleId, vector.Key))
+				now := vector.Timestamp
 				go re.RecoverEvent(hash, now)
 			}
 		}
