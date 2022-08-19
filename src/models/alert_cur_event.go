@@ -156,6 +156,7 @@ func (e *AlertCurEvent) ToHis() *AlertHisEvent {
 
 	return &AlertHisEvent{
 		IsRecovered:      isRecovered,
+		Cate:             e.Cate,
 		Cluster:          e.Cluster,
 		GroupId:          e.GroupId,
 		GroupName:        e.GroupName,
