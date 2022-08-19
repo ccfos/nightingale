@@ -396,7 +396,11 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) (
 		tagsArr := labelMapToArr(tagsMap)
 		sort.Strings(tagsArr)
 
+		if targetCluster == "" {
+			targetCluster = config.C.ClusterName
+		}
 		event.Cluster = targetCluster
+		event.Cate = r.rule.Cate
 		event.Hash = hash
 		event.RuleId = r.rule.Id
 		event.RuleName = r.rule.Name
