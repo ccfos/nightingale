@@ -536,7 +536,7 @@ func (r *RuleEval) RecoverEvent(hash string, now int64) {
 	if !has {
 		return
 	}
-	r.recoverEvent(hash, event, time.Now().Unix())
+	r.recoverEvent(hash, event, now)
 }
 
 func (r *RuleEval) recoverEvent(hash string, event *models.AlertCurEvent, now int64) {
