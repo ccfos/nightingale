@@ -12,6 +12,7 @@ import (
 
 type AlertCurEvent struct {
 	Id                 int64             `json:"id" gorm:"primaryKey"`
+	Cate               string            `json:"cate"`
 	Cluster            string            `json:"cluster"`
 	GroupId            int64             `json:"group_id"`   // busi group id
 	GroupName          string            `json:"group_name"` // busi group name

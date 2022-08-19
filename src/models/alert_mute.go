@@ -22,6 +22,7 @@ type TagFilter struct {
 type AlertMute struct {
 	Id       int64        `json:"id" gorm:"primaryKey"`
 	GroupId  int64        `json:"group_id"`
+	Cate     string       `json:"cate"`
 	Prod     string       `json:"prod"`    // product empty means n9e
 	Cluster  string       `json:"cluster"` // take effect by clusters, seperated by space
 	Tags     ormx.JSONArr `json:"tags"`

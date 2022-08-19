@@ -14,6 +14,7 @@ import (
 type AlertSubscribe struct {
 	Id               int64        `json:"id" gorm:"primaryKey"`
 	GroupId          int64        `json:"group_id"`
+	Cate             string       `json:"cate"`
 	Cluster          string       `json:"cluster"` // take effect by clusters, seperated by space
 	RuleId           int64        `json:"rule_id"`
 	RuleName         string       `json:"rule_name" gorm:"-"` // for fe

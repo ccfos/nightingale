@@ -7,6 +7,7 @@ import (
 
 type AlertHisEvent struct {
 	Id                 int64       `json:"id" gorm:"primaryKey"`
+	Cate               string      `json:"cate"`
 	IsRecovered        int         `json:"is_recovered"`
 	Cluster            string      `json:"cluster"`
 	GroupId            int64       `json:"group_id"`
