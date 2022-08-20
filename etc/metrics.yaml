@@ -1,131 +1,383 @@
-cpu_usage_idle: CPU空闲率（单位：%）
-cpu_usage_active: CPU使用率（单位：%）
-cpu_usage_system: CPU内核态时间占比（单位：%）
-cpu_usage_user: CPU用户态时间占比（单位：%）
-cpu_usage_nice: 低优先级用户态CPU时间占比，也就是进程nice值被调整为1-19之间的CPU时间。这里注意，nice可取值范围是-20到19，数值越大，优先级反而越低（单位：%）
-cpu_usage_iowait: CPU等待I/O的时间占比（单位：%）
-cpu_usage_irq: CPU处理硬中断的时间占比（单位：%）
-cpu_usage_softirq: CPU处理软中断的时间占比（单位：%）
-cpu_usage_steal: 在虚拟机环境下有该指标，表示CPU被其他虚拟机争用的时间占比，超过20就表示争抢严重（单位：%）
-cpu_usage_guest: 通过虚拟化运行其他操作系统的时间，也就是运行虚拟机的CPU时间占比（单位：%）
-cpu_usage_guest_nice: 以低优先级运行虚拟机的时间占比（单位：%）
+zh:
+  cpu_usage_idle: CPU空闲率（单位：%）
+  cpu_usage_active: CPU使用率（单位：%）
+  cpu_usage_system: CPU内核态时间占比（单位：%）
+  cpu_usage_user: CPU用户态时间占比（单位：%）
+  cpu_usage_nice: 低优先级用户态CPU时间占比，也就是进程nice值被调整为1-19之间的CPU时间。这里注意，nice可取值范围是-20到19，数值越大，优先级反而越低（单位：%）
+  cpu_usage_iowait: CPU等待I/O的时间占比（单位：%）
+  cpu_usage_irq: CPU处理硬中断的时间占比（单位：%）
+  cpu_usage_softirq: CPU处理软中断的时间占比（单位：%）
+  cpu_usage_steal: 在虚拟机环境下有该指标，表示CPU被其他虚拟机争用的时间占比，超过20就表示争抢严重（单位：%）
+  cpu_usage_guest: 通过虚拟化运行其他操作系统的时间，也就是运行虚拟机的CPU时间占比（单位：%）
+  cpu_usage_guest_nice: 以低优先级运行虚拟机的时间占比（单位：%）
 
-disk_free: 硬盘分区剩余量（单位：byte）
-disk_used: 硬盘分区使用量（单位：byte）
-disk_used_percent: 硬盘分区使用率（单位：%）
-disk_total: 硬盘分区总量（单位：byte）
-disk_inodes_free: 硬盘分区inode剩余量 
-disk_inodes_used: 硬盘分区inode使用量
-disk_inodes_total: 硬盘分区inode总量
+  disk_free: 硬盘分区剩余量（单位：byte）
+  disk_used: 硬盘分区使用量（单位：byte）
+  disk_used_percent: 硬盘分区使用率（单位：%）
+  disk_total: 硬盘分区总量（单位：byte）
+  disk_inodes_free: 硬盘分区inode剩余量
+  disk_inodes_used: 硬盘分区inode使用量
+  disk_inodes_total: 硬盘分区inode总量
 
-diskio_io_time: 从设备视角来看I/O请求总时间，队列中有I/O请求就计数（单位：毫秒），counter类型，需要用函数求rate才有使用价值
-diskio_iops_in_progress: 已经分配给设备驱动且尚未完成的IO请求，不包含在队列中但尚未分配给设备驱动的IO请求，gauge类型
-diskio_merged_reads: 相邻读请求merge读的次数，counter类型
-diskio_merged_writes: 相邻写请求merge写的次数，counter类型
-diskio_read_bytes: 读取的byte数量，counter类型，需要用函数求rate才有使用价值
-diskio_read_time: 读请求总时间（单位：毫秒），counter类型，需要用函数求rate才有使用价值
-diskio_reads: 读请求次数，counter类型，需要用函数求rate才有使用价值
-diskio_weighted_io_time: 从I/O请求视角来看I/O等待总时间，如果同时有多个I/O请求，时间会叠加（单位：毫秒）
-diskio_write_bytes: 写入的byte数量，counter类型，需要用函数求rate才有使用价值
-diskio_write_time: 写请求总时间（单位：毫秒），counter类型，需要用函数求rate才有使用价值
-diskio_writes: 写请求次数，counter类型，需要用函数求rate才有使用价值
+  diskio_io_time: 从设备视角来看I/O请求总时间，队列中有I/O请求就计数（单位：毫秒），counter类型，需要用函数求rate才有使用价值
+  diskio_iops_in_progress: 已经分配给设备驱动且尚未完成的IO请求，不包含在队列中但尚未分配给设备驱动的IO请求，gauge类型
+  diskio_merged_reads: 相邻读请求merge读的次数，counter类型
+  diskio_merged_writes: 相邻写请求merge写的次数，counter类型
+  diskio_read_bytes: 读取的byte数量，counter类型，需要用函数求rate才有使用价值
+  diskio_read_time: 读请求总时间（单位：毫秒），counter类型，需要用函数求rate才有使用价值
+  diskio_reads: 读请求次数，counter类型，需要用函数求rate才有使用价值
+  diskio_weighted_io_time: 从I/O请求视角来看I/O等待总时间，如果同时有多个I/O请求，时间会叠加（单位：毫秒）
+  diskio_write_bytes: 写入的byte数量，counter类型，需要用函数求rate才有使用价值
+  diskio_write_time: 写请求总时间（单位：毫秒），counter类型，需要用函数求rate才有使用价值
+  diskio_writes: 写请求次数，counter类型，需要用函数求rate才有使用价值
 
-kernel_boot_time: 内核启动时间
-kernel_context_switches: 内核上下文切换次数
-kernel_entropy_avail: linux系统内部的熵池
-kernel_interrupts: 内核中断次数
-kernel_processes_forked: fork的进程数
+  kernel_boot_time: 内核启动时间
+  kernel_context_switches: 内核上下文切换次数
+  kernel_entropy_avail: linux系统内部的熵池
+  kernel_interrupts: 内核中断次数
+  kernel_processes_forked: fork的进程数
 
-mem_active: 活跃使用的内存总数(包括cache和buffer内存)
-mem_available: 应用程序可用内存数
-mem_available_percent: 内存剩余百分比(0~100)
-mem_buffered: 用来给文件做缓冲大小
-mem_cached: 被高速缓冲存储器（cache memory）用的内存的大小（等于 diskcache minus SwapCache ）
-mem_commit_limit: 根据超额分配比率（'vm.overcommit_ratio'），这是当前在系统上分配可用的内存总量，这个限制只是在模式2('vm.overcommit_memory')时启用
-mem_committed_as: 目前在系统上分配的内存量。是所有进程申请的内存的总和
-mem_dirty: 等待被写回到磁盘的内存大小
-mem_free: 空闲内存数
-mem_high_free: 未被使用的高位内存大小
-mem_high_total: 高位内存总大小（Highmem是指所有内存高于860MB的物理内存,Highmem区域供用户程序使用，或用于页面缓存。该区域不是直接映射到内核空间。内核必须使用不同的手法使用该段内存）
-mem_huge_page_size: 每个大页的大小
-mem_huge_pages_free: 池中尚未分配的 HugePages 数量
-mem_huge_pages_total: 预留HugePages的总个数
-mem_inactive: 空闲的内存数(包括free和avalible的内存)
-mem_low_free: 未被使用的低位大小
-mem_low_total: 低位内存总大小,低位可以达到高位内存一样的作用，而且它还能够被内核用来记录一些自己的数据结构
-mem_mapped: 设备和文件等映射的大小
-mem_page_tables: 管理内存分页页面的索引表的大小
-mem_shared: 多个进程共享的内存总额
-mem_slab: 内核数据结构缓存的大小，可以减少申请和释放内存带来的消耗
-mem_sreclaimable: 可收回Slab的大小
-mem_sunreclaim: 不可收回Slab的大小（SUnreclaim+SReclaimable＝Slab）
-mem_swap_cached: 被高速缓冲存储器（cache memory）用的交换空间的大小，已经被交换出来的内存，但仍然被存放在swapfile中。用来在需要的时候很快的被替换而不需要再次打开I/O端口
-mem_swap_free: 未被使用交换空间的大小
-mem_swap_total: 交换空间的总大小
-mem_total: 内存总数
-mem_used: 已用内存数
-mem_used_percent: 已用内存数百分比(0~100)
-mem_vmalloc_chunk: 最大的连续未被使用的vmalloc区域
-mem_vmalloc_totalL: 可以vmalloc虚拟内存大小
-mem_vmalloc_used: vmalloc已使用的虚拟内存大小
-mem_write_back: 正在被写回到磁盘的内存大小
-mem_write_back_tmp: FUSE用于临时写回缓冲区的内存
+  mem_active: 活跃使用的内存总数(包括cache和buffer内存)
+  mem_available: 应用程序可用内存数
+  mem_available_percent: 内存剩余百分比(0~100)
+  mem_buffered: 用来给文件做缓冲大小
+  mem_cached: 被高速缓冲存储器（cache memory）用的内存的大小（等于 diskcache minus SwapCache ）
+  mem_commit_limit: 根据超额分配比率（'vm.overcommit_ratio'），这是当前在系统上分配可用的内存总量，这个限制只是在模式2('vm.overcommit_memory')时启用
+  mem_committed_as: 目前在系统上分配的内存量。是所有进程申请的内存的总和
+  mem_dirty: 等待被写回到磁盘的内存大小
+  mem_free: 空闲内存数
+  mem_high_free: 未被使用的高位内存大小
+  mem_high_total: 高位内存总大小（Highmem是指所有内存高于860MB的物理内存,Highmem区域供用户程序使用，或用于页面缓存。该区域不是直接映射到内核空间。内核必须使用不同的手法使用该段内存）
+  mem_huge_page_size: 每个大页的大小
+  mem_huge_pages_free: 池中尚未分配的 HugePages 数量
+  mem_huge_pages_total: 预留HugePages的总个数
+  mem_inactive: 空闲的内存数(包括free和avalible的内存)
+  mem_low_free: 未被使用的低位大小
+  mem_low_total: 低位内存总大小,低位可以达到高位内存一样的作用，而且它还能够被内核用来记录一些自己的数据结构
+  mem_mapped: 设备和文件等映射的大小
+  mem_page_tables: 管理内存分页页面的索引表的大小
+  mem_shared: 多个进程共享的内存总额
+  mem_slab: 内核数据结构缓存的大小，可以减少申请和释放内存带来的消耗
+  mem_sreclaimable: 可收回Slab的大小
+  mem_sunreclaim: 不可收回Slab的大小（SUnreclaim+SReclaimable＝Slab）
+  mem_swap_cached: 被高速缓冲存储器（cache memory）用的交换空间的大小，已经被交换出来的内存，但仍然被存放在swapfile中。用来在需要的时候很快的被替换而不需要再次打开I/O端口
+  mem_swap_free: 未被使用交换空间的大小
+  mem_swap_total: 交换空间的总大小
+  mem_total: 内存总数
+  mem_used: 已用内存数
+  mem_used_percent: 已用内存数百分比(0~100)
+  mem_vmalloc_chunk: 最大的连续未被使用的vmalloc区域
+  mem_vmalloc_totalL: 可以vmalloc虚拟内存大小
+  mem_vmalloc_used: vmalloc已使用的虚拟内存大小
+  mem_write_back: 正在被写回到磁盘的内存大小
+  mem_write_back_tmp: FUSE用于临时写回缓冲区的内存
 
-net_bytes_recv: 网卡收包总数(bytes)
-net_bytes_sent: 网卡发包总数(bytes)
-net_drop_in: 网卡收丢包数量
-net_drop_out: 网卡发丢包数量
-net_err_in: 网卡收包错误数量
-net_err_out: 网卡发包错误数量
-net_packets_recv: 网卡收包数量
-net_packets_sent: 网卡发包数量
+  net_bytes_recv: 网卡收包总数(bytes)
+  net_bytes_sent: 网卡发包总数(bytes)
+  net_drop_in: 网卡收丢包数量
+  net_drop_out: 网卡发丢包数量
+  net_err_in: 网卡收包错误数量
+  net_err_out: 网卡发包错误数量
+  net_packets_recv: 网卡收包数量
+  net_packets_sent: 网卡发包数量
 
-netstat_tcp_established: ESTABLISHED状态的网络链接数
-netstat_tcp_fin_wait1: FIN_WAIT1状态的网络链接数
-netstat_tcp_fin_wait2: FIN_WAIT2状态的网络链接数
-netstat_tcp_last_ack: LAST_ACK状态的网络链接数
-netstat_tcp_listen: LISTEN状态的网络链接数
-netstat_tcp_syn_recv: SYN_RECV状态的网络链接数
-netstat_tcp_syn_sent: SYN_SENT状态的网络链接数
-netstat_tcp_time_wait: TIME_WAIT状态的网络链接数
-netstat_udp_socket: UDP状态的网络链接数
+  netstat_tcp_established: ESTABLISHED状态的网络链接数
+  netstat_tcp_fin_wait1: FIN_WAIT1状态的网络链接数
+  netstat_tcp_fin_wait2: FIN_WAIT2状态的网络链接数
+  netstat_tcp_last_ack: LAST_ACK状态的网络链接数
+  netstat_tcp_listen: LISTEN状态的网络链接数
+  netstat_tcp_syn_recv: SYN_RECV状态的网络链接数
+  netstat_tcp_syn_sent: SYN_SENT状态的网络链接数
+  netstat_tcp_time_wait: TIME_WAIT状态的网络链接数
+  netstat_udp_socket: UDP状态的网络链接数
 
-processes_blocked: 不可中断的睡眠状态下的进程数('U','D','L')
-processes_dead: 回收中的进程数('X')
-processes_idle: 挂起的空闲进程数('I')
-processes_paging: 分页进程数('P')
-processes_running: 运行中的进程数('R')
-processes_sleeping: 可中断进程数('S')
-processes_stopped: 暂停状态进程数('T')
-processes_total: 总进程数
-processes_total_threads: 总线程数
-processes_unknown: 未知状态进程数
-processes_zombies: 僵尸态进程数('Z')
+  #[ping]
+  ping_percent_packet_loss: ping数据包丢失百分比(%)
+  ping_result_code: ping返回码('0','1')
 
-swap_used_percent: Swap空间换出数据量
+  processes_blocked: 不可中断的睡眠状态下的进程数('U','D','L')
+  processes_dead: 回收中的进程数('X')
+  processes_idle: 挂起的空闲进程数('I')
+  processes_paging: 分页进程数('P')
+  processes_running: 运行中的进程数('R')
+  processes_sleeping: 可中断进程数('S')
+  processes_stopped: 暂停状态进程数('T')
+  processes_total: 总进程数
+  processes_total_threads: 总线程数
+  processes_unknown: 未知状态进程数
+  processes_zombies: 僵尸态进程数('Z')
 
-system_load1: 1分钟平均load值
-system_load5: 5分钟平均load值
-system_load15: 15分钟平均load值
-system_n_users: 用户数
-system_n_cpus: CPU核数
-system_uptime: 系统启动时间
+  swap_used_percent: Swap空间换出数据量
 
-nginx_accepts: 自nginx启动起,与客户端建立过得连接总数
-nginx_active: 当前nginx正在处理的活动连接数,等于Reading/Writing/Waiting总和
-nginx_handled: 自nginx启动起,处理过的客户端连接总数
-nginx_reading: 正在读取HTTP请求头部的连接总数
-nginx_requests: 自nginx启动起,处理过的客户端请求总数,由于存在HTTP Krrp-Alive请求,该值会大于handled值
-nginx_upstream_check_fall: upstream_check模块检测到后端失败的次数
-nginx_upstream_check_rise: upstream_check模块对后端的检测次数
-nginx_upstream_check_status_code: 后端upstream的状态,up为1,down为0
-nginx_waiting: 开启 keep-alive 的情况下,这个值等于 active – (reading+writing), 意思就是 Nginx 已经处理完正在等候下一次请求指令的驻留连接
-nginx_writing: 正在向客户端发送响应的连接总数
+  system_load1: 1分钟平均load值
+  system_load5: 5分钟平均load值
+  system_load15: 15分钟平均load值
+  system_n_users: 用户数
+  system_n_cpus: CPU核数
+  system_uptime: 系统启动时间
 
-http_response_content_length: HTTP消息实体的传输长度
-http_response_http_response_code: http响应状态码
-http_response_response_time: http响应用时
-http_response_result_code: url探测结果0为正常否则url无法访问
+  nginx_accepts: 自nginx启动起,与客户端建立过得连接总数
+  nginx_active: 当前nginx正在处理的活动连接数,等于Reading/Writing/Waiting总和
+  nginx_handled: 自nginx启动起,处理过的客户端连接总数
+  nginx_reading: 正在读取HTTP请求头部的连接总数
+  nginx_requests: 自nginx启动起,处理过的客户端请求总数,由于存在HTTP Krrp-Alive请求,该值会大于handled值
+  nginx_upstream_check_fall: upstream_check模块检测到后端失败的次数
+  nginx_upstream_check_rise: upstream_check模块对后端的检测次数
+  nginx_upstream_check_status_code: 后端upstream的状态,up为1,down为0
+  nginx_waiting: 开启 keep-alive 的情况下,这个值等于 active – (reading+writing), 意思就是 Nginx 已经处理完正在等候下一次请求指令的驻留连接
+  nginx_writing: 正在向客户端发送响应的连接总数
+
+  http_response_content_length: HTTP消息实体的传输长度
+  http_response_http_response_code: http响应状态码
+  http_response_response_time: http响应用时
+  http_response_result_code: url探测结果0为正常否则url无法访问
+
+  # [aws cloudwatch rds]
+  cloudwatch_aws_rds_bin_log_disk_usage_average: rds 磁盘使用平均值
+  cloudwatch_aws_rds_bin_log_disk_usage_maximum: rds 磁盘使用量最大值
+  cloudwatch_aws_rds_bin_log_disk_usage_minimum: rds binlog 磁盘使用量最低
+  cloudwatch_aws_rds_bin_log_disk_usage_sample_count: rds binlog 磁盘使用情况样本计数
+  cloudwatch_aws_rds_bin_log_disk_usage_sum: rds binlog 磁盘使用总和
+  cloudwatch_aws_rds_burst_balance_average: rds 突发余额平均值
+  cloudwatch_aws_rds_burst_balance_maximum: rds 突发余额最大值
+  cloudwatch_aws_rds_burst_balance_minimum: rds 突发余额最低
+  cloudwatch_aws_rds_burst_balance_sample_count: rds 突发平衡样本计数
+  cloudwatch_aws_rds_burst_balance_sum: rds 突发余额总和
+  cloudwatch_aws_rds_cpu_utilization_average: rds cpu 利用率平均值
+  cloudwatch_aws_rds_cpu_utilization_maximum: rds cpu 利用率最大值
+  cloudwatch_aws_rds_cpu_utilization_minimum: rds cpu 利用率最低
+  cloudwatch_aws_rds_cpu_utilization_sample_count: rds cpu 利用率样本计数
+  cloudwatch_aws_rds_cpu_utilization_sum: rds cpu 利用率总和
+  cloudwatch_aws_rds_database_connections_average: rds 数据库连接平均值
+  cloudwatch_aws_rds_database_connections_maximum: rds 数据库连接数最大值
+  cloudwatch_aws_rds_database_connections_minimum: rds 数据库连接最小
+  cloudwatch_aws_rds_database_connections_sample_count: rds 数据库连接样本数
+  cloudwatch_aws_rds_database_connections_sum: rds 数据库连接总和
+  cloudwatch_aws_rds_db_load_average: rds db 平均负载
+  cloudwatch_aws_rds_db_load_cpu_average: rds db 负载 cpu 平均值
+  cloudwatch_aws_rds_db_load_cpu_maximum: rds db 负载 cpu 最大值
+  cloudwatch_aws_rds_db_load_cpu_minimum: rds db 负载 cpu 最小值
+  cloudwatch_aws_rds_db_load_cpu_sample_count: rds db 加载 CPU 样本数
+  cloudwatch_aws_rds_db_load_cpu_sum: rds db 加载cpu总和
+  cloudwatch_aws_rds_db_load_maximum: rds 数据库负载最大值
+  cloudwatch_aws_rds_db_load_minimum: rds 数据库负载最小值
+  cloudwatch_aws_rds_db_load_non_cpu_average: rds 加载非 CPU 平均值
+  cloudwatch_aws_rds_db_load_non_cpu_maximum: rds 加载非 cpu 最大值
+  cloudwatch_aws_rds_db_load_non_cpu_minimum: rds 加载非 cpu 最小值
+  cloudwatch_aws_rds_db_load_non_cpu_sample_count: rds 加载非 cpu 样本计数
+  cloudwatch_aws_rds_db_load_non_cpu_sum: rds 加载非cpu总和
+  cloudwatch_aws_rds_db_load_sample_count: rds db 加载样本计数
+  cloudwatch_aws_rds_db_load_sum: rds db 负载总和
+  cloudwatch_aws_rds_disk_queue_depth_average: rds 磁盘队列深度平均值
+  cloudwatch_aws_rds_disk_queue_depth_maximum: rds 磁盘队列深度最大值
+  cloudwatch_aws_rds_disk_queue_depth_minimum: rds 磁盘队列深度最小值
+  cloudwatch_aws_rds_disk_queue_depth_sample_count: rds 磁盘队列深度样本计数
+  cloudwatch_aws_rds_disk_queue_depth_sum: rds 磁盘队列深度总和
+  cloudwatch_aws_rds_ebs_byte_balance__average: rds ebs 字节余额平均值
+  cloudwatch_aws_rds_ebs_byte_balance__maximum: rds ebs 字节余额最大值
+  cloudwatch_aws_rds_ebs_byte_balance__minimum: rds ebs 字节余额最低
+  cloudwatch_aws_rds_ebs_byte_balance__sample_count: rds ebs 字节余额样本数
+  cloudwatch_aws_rds_ebs_byte_balance__sum: rds ebs 字节余额总和
+  cloudwatch_aws_rds_ebsio_balance__average: rds ebsio 余额平均值
+  cloudwatch_aws_rds_ebsio_balance__maximum: rds ebsio 余额最大值
+  cloudwatch_aws_rds_ebsio_balance__minimum: rds ebsio 余额最低
+  cloudwatch_aws_rds_ebsio_balance__sample_count: rds ebsio 平衡样本计数
+  cloudwatch_aws_rds_ebsio_balance__sum: rds ebsio 余额总和
+  cloudwatch_aws_rds_free_storage_space_average: rds 免费存储空间平均
+  cloudwatch_aws_rds_free_storage_space_maximum: rds 最大可用存储空间
+  cloudwatch_aws_rds_free_storage_space_minimum: rds 最低可用存储空间
+  cloudwatch_aws_rds_free_storage_space_sample_count: rds 可用存储空间样本数
+  cloudwatch_aws_rds_free_storage_space_sum: rds 免费存储空间总和
+  cloudwatch_aws_rds_freeable_memory_average: rds 可用内存平均值
+  cloudwatch_aws_rds_freeable_memory_maximum: rds 最大可用内存
+  cloudwatch_aws_rds_freeable_memory_minimum: rds 最小可用内存
+  cloudwatch_aws_rds_freeable_memory_sample_count: rds 可释放内存样本数
+  cloudwatch_aws_rds_freeable_memory_sum: rds 可释放内存总和
+  cloudwatch_aws_rds_lvm_read_iops_average: rds lvm 读取 iops 平均值
+  cloudwatch_aws_rds_lvm_read_iops_maximum: rds lvm 读取 iops 最大值
+  cloudwatch_aws_rds_lvm_read_iops_minimum: rds lvm 读取 iops 最低
+  cloudwatch_aws_rds_lvm_read_iops_sample_count: rds lvm 读取 iops 样本计数
+  cloudwatch_aws_rds_lvm_read_iops_sum: rds lvm 读取 iops 总和
+  cloudwatch_aws_rds_lvm_write_iops_average: rds lvm 写入 iops 平均值
+  cloudwatch_aws_rds_lvm_write_iops_maximum: rds lvm 写入 iops 最大值
+  cloudwatch_aws_rds_lvm_write_iops_minimum: rds lvm 写入 iops 最低
+  cloudwatch_aws_rds_lvm_write_iops_sample_count: rds lvm 写入 iops 样本计数
+  cloudwatch_aws_rds_lvm_write_iops_sum: rds lvm 写入 iops 总和
+  cloudwatch_aws_rds_network_receive_throughput_average: rds 网络接收吞吐量平均
+  cloudwatch_aws_rds_network_receive_throughput_maximum: rds 网络接收吞吐量最大值
+  cloudwatch_aws_rds_network_receive_throughput_minimum: rds 网络接收吞吐量最小值
+  cloudwatch_aws_rds_network_receive_throughput_sample_count: rds 网络接收吞吐量样本计数
+  cloudwatch_aws_rds_network_receive_throughput_sum: rds 网络接收吞吐量总和
+  cloudwatch_aws_rds_network_transmit_throughput_average: rds 网络传输吞吐量平均值
+  cloudwatch_aws_rds_network_transmit_throughput_maximum: rds 网络传输吞吐量最大
+  cloudwatch_aws_rds_network_transmit_throughput_minimum: rds 网络传输吞吐量最小值
+  cloudwatch_aws_rds_network_transmit_throughput_sample_count: rds 网络传输吞吐量样本计数
+  cloudwatch_aws_rds_network_transmit_throughput_sum: rds 网络传输吞吐量总和
+  cloudwatch_aws_rds_read_iops_average: rds 读取 iops 平均值
+  cloudwatch_aws_rds_read_iops_maximum: rds 最大读取 iops
+  cloudwatch_aws_rds_read_iops_minimum: rds 读取 iops 最低
+  cloudwatch_aws_rds_read_iops_sample_count: rds 读取 iops 样本计数
+  cloudwatch_aws_rds_read_iops_sum: rds 读取 iops 总和
+  cloudwatch_aws_rds_read_latency_average: rds 读取延迟平均值
+  cloudwatch_aws_rds_read_latency_maximum: rds 读取延迟最大值
+  cloudwatch_aws_rds_read_latency_minimum: rds 最小读取延迟
+  cloudwatch_aws_rds_read_latency_sample_count: rds 读取延迟样本计数
+  cloudwatch_aws_rds_read_latency_sum: rds 读取延迟总和
+  cloudwatch_aws_rds_read_throughput_average: rds 读取吞吐量平均值
+  cloudwatch_aws_rds_read_throughput_maximum: rds 最大读取吞吐量
+  cloudwatch_aws_rds_read_throughput_minimum: rds 最小读取吞吐量
+  cloudwatch_aws_rds_read_throughput_sample_count: rds 读取吞吐量样本计数
+  cloudwatch_aws_rds_read_throughput_sum: rds 读取吞吐量总和
+  cloudwatch_aws_rds_swap_usage_average: rds 交换使用平均值
+  cloudwatch_aws_rds_swap_usage_maximum: rds 交换使用最大值
+  cloudwatch_aws_rds_swap_usage_minimum: rds 交换使用量最低
+  cloudwatch_aws_rds_swap_usage_sample_count: rds 交换使用示例计数
+  cloudwatch_aws_rds_swap_usage_sum: rds 交换使用总和
+  cloudwatch_aws_rds_write_iops_average: rds 写入 iops 平均值
+  cloudwatch_aws_rds_write_iops_maximum: rds 写入 iops 最大值
+  cloudwatch_aws_rds_write_iops_minimum: rds 写入 iops 最低
+  cloudwatch_aws_rds_write_iops_sample_count: rds 写入 iops 样本计数
+  cloudwatch_aws_rds_write_iops_sum: rds 写入 iops 总和
+  cloudwatch_aws_rds_write_latency_average: rds 写入延迟平均值
+  cloudwatch_aws_rds_write_latency_maximum: rds 最大写入延迟
+  cloudwatch_aws_rds_write_latency_minimum: rds 写入延迟最小值
+  cloudwatch_aws_rds_write_latency_sample_count: rds 写入延迟样本计数
+  cloudwatch_aws_rds_write_latency_sum: rds 写入延迟总和
+  cloudwatch_aws_rds_write_throughput_average: rds 写入吞吐量平均值
+  cloudwatch_aws_rds_write_throughput_maximum: rds 最大写入吞吐量
+  cloudwatch_aws_rds_write_throughput_minimum: rds 写入吞吐量最小值
+  cloudwatch_aws_rds_write_throughput_sample_count: rds 写入吞吐量样本计数
+  cloudwatch_aws_rds_write_throughput_sum: rds 写入吞吐量总和
+
+en:
+  cpu_usage_idle: "CPU idle rate(unit：%)"
+  cpu_usage_active: "CPU usage rate(unit：%)"
+  cpu_usage_system: "CPU kernel state time proportion(unit：%)"
+  cpu_usage_user: "CPU user attitude time proportion(unit：%)"
+  cpu_usage_nice: "The proportion of low priority CPU time, that is, the process NICE value is adjusted to the CPU time between 1-19. Note here that the value range of NICE is -20 to 19, the larger the value, the lower the priority, the lower the priority(unit：%)"
+  cpu_usage_iowait: "CPU waiting for I/O time proportion(unit：%)"
+  cpu_usage_irq: "CPU processing hard interrupt time proportion(unit：%)"
+  cpu_usage_softirq: "CPU processing soft interrupt time proportion(unit：%)"
+  cpu_usage_steal: "In the virtual machine environment, there is this indicator, which means that the CPU is used by other virtual machines for the proportion of time.(unit：%)"
+  cpu_usage_guest: "The time to run other operating systems by virtualization, that is, the proportion of CPU time running the virtual machine(unit：%)"
+  cpu_usage_guest_nice: "The proportion of time to run the virtual machine at low priority(unit：%)"
+
+  disk_free: "The remaining amount of the hard disk partition (unit: byte)"
+  disk_used: "Hard disk partitional use (unit: byte)"
+  disk_used_percent: "Hard disk partitional use rate (unit:%)"
+  disk_total: "Total amount of hard disk partition (unit: byte)"
+  disk_inodes_free: "Hard disk partition INODE remaining amount"
+  disk_inodes_used: "Hard disk partition INODE usage amount"
+  disk_inodes_total: "The total amount of hard disk partition INODE"
+
+  diskio_io_time: "From the perspective of the device perspective, the total time of I/O request, the I/O request in the queue is count (unit: millisecond), the counter type, you need to use the function to find the value"
+  diskio_iops_in_progress: "IO requests that have been assigned to device -driven and have not yet been completed, not included in the queue but not yet assigned to the device -driven IO request, Gauge type"
+  diskio_merged_reads: "The number of times of adjacent reading request Merge, the counter type"
+  diskio_merged_writes: "The number of times the request Merge writes, the counter type"
+  diskio_read_bytes: "The number of byte reads, the counter type, you need to use the function to find the Rate to use the value"
+  diskio_read_time: "The total time of reading request (unit: millisecond), the counter type, you need to use the function to find the Rate to have the value of use"
+  diskio_reads: "Read the number of requests, the counter type, you need to use the function to find the Rate to use the value"
+  diskio_weighted_io_time: "From the perspective of the I/O request perspective, I/O wait for the total time. If there are multiple I/O requests at the same time, the time will be superimposed (unit: millisecond)"
+  diskio_write_bytes: "The number of bytes written, the counter type, you need to use the function to find the Rate to use the value"
+  diskio_write_time: "The total time of the request (unit: millisecond), the counter type, you need to use the function to find the rate to have the value of use"
+  diskio_writes: "Write the number of requests, the counter type, you need to use the function to find the rate to use value"
+
+  kernel_boot_time: "Kernel startup time"
+  kernel_context_switches: "Number of kernel context switching times"
+  kernel_entropy_avail: "Entropy pool inside the Linux system"
+  kernel_interrupts: "Number of kernel interruption"
+  kernel_processes_forked: "ForK's process number"
+
+  mem_active: "The total number of memory (including Cache and BUFFER memory)"
+  mem_available: "Application can use memory numbers"
+  mem_available_percent: "Memory remaining percentage (0 ~ 100)"
+  mem_buffered: "Used to make buffer size for the file"
+  mem_cached: "The size of the memory used by the cache memory (equal to diskcache minus Swap Cache )"
+  mem_commit_limit: "According to the over allocation ratio ('vm.overCommit _ Ratio'), this is the current total memory that can be allocated on the system."
+  mem_committed_as: "Currently allocated on the system. It is the sum of the memory of all process applications"
+  mem_dirty: "Waiting to be written back to the memory size of the disk"
+  mem_free: "Senior memory number"
+  mem_high_free: "Unused high memory size"
+  mem_high_total: "The total memory size of the high memory (Highmem refers to all the physical memory that is higher than 860 MB of memory, the HighMem area is used for user programs, or for page cache. This area is not directly mapped to the kernel space. The kernels must use different methods to use this section of memory. )"
+  mem_huge_page_size: "The size of each big page"
+  mem_huge_pages_free: "The number of Huge Pages in the pool that have not been allocated"
+  mem_huge_pages_total: "Reserve the total number of Huge Pages"
+  mem_inactive: "Free memory (including the memory of free and avalible)"
+  mem_low_free: "Unused low size"
+  mem_low_total: "The total size of the low memory memory can achieve the same role of high memory, and it can be used by the kernel to record some of its own data structure"
+  mem_mapped: "The size of the mapping of equipment and files"
+  mem_page_tables: "The size of the index table of the management of the memory paging page"
+  mem_shared: "The total memory shared by multiple processes"
+  mem_slab: "The size of the kernel data structure cache can reduce the consumption of application and release memory"
+  mem_sreclaimable: "The size of the SLAB can be recovered"
+  mem_sunreclaim: "The size of the SLAB cannot be recovered(SUnreclaim+SReclaimable＝Slab)"
+  mem_swap_cached: "The size of the swap space used by the cache memory (cache memory), the memory that has been swapped out, but is still stored in the swapfile. Used to be quickly replaced when needed without opening the I/O port again"
+  mem_swap_free: "The size of the switching space is not used"
+  mem_swap_total: "The total size of the exchange space"
+  mem_total: "Total memory"
+  mem_used: "Memory number"
+  mem_used_percent: "The memory has been used by several percentage (0 ~ 100)"
+  mem_vmalloc_chunk: "The largest continuous unused vmalloc area"
+  mem_vmalloc_totalL: "You can vmalloc virtual memory size"
+  mem_vmalloc_used: "Vmalloc's virtual memory size"
+  mem_write_back: "The memory size of the disk is being written back to the disk"
+  mem_write_back_tmp: "Fuse is used to temporarily write back the memory of the buffer area"
+
+  net_bytes_recv: "The total number of packaging of the network card (bytes)"
+  net_bytes_sent: "Total number of network cards (bytes)"
+  net_drop_in: "The number of packets for network cards"
+  net_drop_out: "The number of packets issued by the network card"
+  net_err_in: "The number of incorrect packets of the network card"
+  net_err_out: "Number of incorrect number of network cards"
+  net_packets_recv: "Net card collection quantity"
+  net_packets_sent: "Number of network card issuance"
+
+  netstat_tcp_established: "ESTABLISHED status network link number"
+  netstat_tcp_fin_wait1: "FIN _ WAIT1 status network link number"
+  netstat_tcp_fin_wait2: "FIN _ WAIT2 status number of network links"
+  netstat_tcp_last_ack: "LAST_ ACK status number of network links"
+  netstat_tcp_listen: "Number of network links in Listen status"
+  netstat_tcp_syn_recv: "SYN _ RECV status number of network links"
+  netstat_tcp_syn_sent: "SYN _ SENT status number of network links"
+  netstat_tcp_time_wait: "Time _ WAIT status network link number"
+  netstat_udp_socket: "Number of network links in UDP status"
+
+  processes_blocked: "The number of processes in the unreprudible sleep state('U','D','L')"
+  processes_dead: "Number of processes in recycling('X')"
+  processes_idle: "Number of idle processes hanging('I')"
+  processes_paging: "Number of paging processes('P')"
+  processes_running: "Number of processes during operation('R')"
+  processes_sleeping: "Can interrupt the number of processes('S')"
+  processes_stopped: "Pushing status process number('T')"
+  processes_total: "Total process number"
+  processes_total_threads: "Number of threads"
+  processes_unknown: "Unknown status process number"
+  processes_zombies: "Number of zombies('Z')"
+
+  swap_used_percent: "SWAP space replace the data volume"
+
+  system_load1: "1 minute average load value"
+  system_load5: "5 minutes average load value"
+  system_load15: "15 minutes average load value"
+  system_n_users: "User number"
+  system_n_cpus: "CPU nuclear number"
+  system_uptime: "System startup time"
+
+  nginx_accepts: "Since Nginx started, the total number of connections has been established with the client"
+  nginx_active: "The current number of activity connections that Nginx is being processed is equal to Reading/Writing/Waiting"
+  nginx_handled: "Starting from Nginx, the total number of client connections that have been processed"
+  nginx_reading: "Reading the total number of connections on the http request header"
+  nginx_requests: "Since nginx is started, the total number of client requests processed, due to the existence of HTTP Krrp - Alive requests, this value will be greater than the handled value"
+  nginx_upstream_check_fall: "UPStream_CHECK module detects the number of back -end failures"
+  nginx_upstream_check_rise: "UPSTREAM _ Check module to detect the number of back -end"
+  nginx_upstream_check_status_code: "The state of the backstream is 1, and the down is 0"
+  nginx_waiting: "When keep-alive is enabled, this value is equal to active – (reading+writing), which means that Nginx has processed the resident connection that is waiting for the next request command"
+  nginx_writing: "The total number of connections to send a response to the client"
+
+  http_response_content_length: "HTTP message entity transmission length"
+  http_response_http_response_code: "http response status code"
+  http_response_response_time: "When http ring application"
+  http_response_result_code: "URL detection result 0 is normal, otherwise the URL cannot be accessed"
 
 # [mysqld_exporter]
 mysql_global_status_uptime: The number of seconds that the server has been up.(Gauge)
@@ -237,7 +489,7 @@ redis_last_key_groups_scrape_duration_milliseconds: Duration of the last key gro
 redis_last_slow_execution_duration_seconds: The amount of time needed for last slow execution, in seconds.
 redis_latest_fork_seconds: The amount of time needed for last fork, in seconds.
 redis_lazyfree_pending_objects: The number of objects waiting to be freed (as a result of calling UNLINK, or FLUSHDB and FLUSHALL with the ASYNC option).
-redis_master_repl_offset: The server's current replication offset. 
+redis_master_repl_offset: The server's current replication offset.
 redis_mem_clients_normal: Memory used by normal clients.(Gauge)
 redis_mem_clients_slaves: Memory used by replica clients - Starting Redis 7.0, replica buffers share memory with the replication backlog, so this field can show 0 when replicas don't trigger an increase of memory usage.
 redis_mem_fragmentation_bytes: Delta between used_memory_rss and used_memory. Note that when the total fragmentation bytes is low (few megabytes), a high ratio (e.g. 1.5 and above) is not an indication of an issue.
@@ -370,8 +622,6 @@ node_load15: cpu load 15m
 
 # MEM
 # 内核态
-# 用户追踪已从交换区获取但尚未修改的页面的内存
-node_memory_SwapCached_bytes: Memory that keeps track of pages that have been fetched from swap but not yet been modified
 # 内核用于缓存数据结构供自己使用的内存
 node_memory_Slab_bytes: Memory used by the kernel to cache data structures for its own use
 # slab中可回收的部分
@@ -433,7 +683,7 @@ node_memory_SwapTotal_bytes: Memory information field SwapTotal_bytes
 node_memory_SwapFree_bytes: Memory information field SwapFree_bytes
 
 # DISK
-node_filesystem_files_free: Filesystem space available to non-root users in byte
+node_filesystem_avail_bytes: Filesystem space available to non-root users in byte
 node_filesystem_free_bytes: Filesystem free space in bytes
 node_filesystem_size_bytes: Filesystem size in bytes
 node_filesystem_files_free: Filesystem total free file nodes
@@ -479,7 +729,7 @@ kafka_consumer_lag_millis: Current approximation of consumer lag for a ConsumerG
 kafka_topic_partition_under_replicated_partition: 1 if Topic/Partition is under Replicated
 
 # [zookeeper_exporter]
-zk_znode_count: The total count of znodes stored 
+zk_znode_count: The total count of znodes stored
 zk_ephemerals_count: The number of Ephemerals nodes
 zk_watch_count: The number of watchers setup over Zookeeper nodes.
 zk_approximate_data_size: Size of data in bytes that a zookeeper server has in its data tree

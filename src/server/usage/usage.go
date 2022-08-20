@@ -30,6 +30,10 @@ type Usage struct {
 }
 
 func getSamples() (float64, error) {
+	if reader.Client == nil {
+		return 0, fmt.Errorf("reader.Client is nil")
+	}
+
 	value, warns, err := reader.Client.Query(context.Background(), request, time.Now())
 	if err != nil {
 		return 0, err
@@ -55,7 +59,8 @@ func Report() {
 }
 
 func report() {
-	sps, err := getSamples()
+	// sps, _ := getSamples()
+	tnum, err := models.TargetTotalCount()
 	if err != nil {
 		return
 	}
@@ -65,7 +70,7 @@ func report() {
 		return
 	}
 
-	num, err := models.UserTotal("")
+	unum, err := models.UserTotal("")
 	if err != nil {
 		return
 	}
@@ -73,8 +78,8 @@ func report() {
 	maintainer := "blank"
 
 	u := Usage{
-		Samples:    sps,
-		Users:      float64(num),
+		Samples:    float64(tnum),
+		Users:      float64(unum),
 		Hostname:   hostname,
 		Maintainer: maintainer,
 		Version:    version.VERSION,

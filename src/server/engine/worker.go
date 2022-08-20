@@ -3,15 +3,15 @@ package engine
 import (
 	"context"
 	"fmt"
-	"math/rand"
+	"log"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/didi/nightingale/v5/src/server/writer"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/str"
 
 	"github.com/didi/nightingale/v5/src/models"
@@ -60,25 +60,88 @@ func filterRules() {
 	}
 
 	Workers.Build(mines)
+	RuleEvalForExternal.Build()
 }
 
 type RuleEval struct {
 	rule     *models.AlertRule
-	fires    map[string]*models.AlertCurEvent
-	pendings map[string]*models.AlertCurEvent
+	fires    *AlertCurEventMap
+	pendings *AlertCurEventMap
 	quit     chan struct{}
 }
 
-func (r RuleEval) Stop() {
+type AlertCurEventMap struct {
+	sync.RWMutex
+	Data map[string]*models.AlertCurEvent
+}
+
+func (a *AlertCurEventMap) SetAll(data map[string]*models.AlertCurEvent) {
+	a.Lock()
+	defer a.Unlock()
+	a.Data = data
+}
+
+func (a *AlertCurEventMap) Set(key string, value *models.AlertCurEvent) {
+	a.Lock()
+	defer a.Unlock()
+	a.Data[key] = value
+}
+
+func (a *AlertCurEventMap) Get(key string) (*models.AlertCurEvent, bool) {
+	a.RLock()
+	defer a.RUnlock()
+	event, exists := a.Data[key]
+	return event, exists
+}
+
+func (a *AlertCurEventMap) UpdateLastEvalTime(key string, lastEvalTime int64) {
+	a.Lock()
+	defer a.Unlock()
+	event, exists := a.Data[key]
+	if !exists {
+		return
+	}
+	event.LastEvalTime = lastEvalTime
+}
+
+func (a *AlertCurEventMap) Delete(key string) {
+	a.Lock()
+	defer a.Unlock()
+	delete(a.Data, key)
+}
+
+func (a *AlertCurEventMap) Keys() []string {
+	a.RLock()
+	defer a.RUnlock()
+	keys := make([]string, 0, len(a.Data))
+	for k := range a.Data {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func (a *AlertCurEventMap) GetAll() map[string]*models.AlertCurEvent {
+	a.RLock()
+	defer a.RUnlock()
+	return a.Data
+}
+
+func NewAlertCurEventMap() *AlertCurEventMap {
+	return &AlertCurEventMap{
+		Data: make(map[string]*models.AlertCurEvent),
+	}
+}
+
+func (r *RuleEval) Stop() {
 	logger.Infof("rule_eval:%d stopping", r.RuleID())
 	close(r.quit)
 }
 
-func (r RuleEval) RuleID() int64 {
+func (r *RuleEval) RuleID() int64 {
 	return r.rule.Id
 }
 
-func (r RuleEval) Start() {
+func (r *RuleEval) Start() {
 	logger.Infof("rule_eval:%d started", r.RuleID())
 	for {
 		select {
@@ -87,7 +150,7 @@ func (r RuleEval) Start() {
 			return
 		default:
 			r.Work()
-			logger.Debugf("rule executed，rule_id=%d", r.RuleID())
+			logger.Debugf("rule executed, rule_eval:%d", r.RuleID())
 			interval := r.rule.PromEvalInterval
 			if interval <= 0 {
 				interval = 10
@@ -97,15 +160,15 @@ func (r RuleEval) Start() {
 	}
 }
 
-type AnomalyPoint struct {
-	Data model.Matrix `json:"data"`
-	Err  string       `json:"error"`
-}
-
-func (r RuleEval) Work() {
+func (r *RuleEval) Work() {
 	promql := strings.TrimSpace(r.rule.PromQl)
 	if promql == "" {
 		logger.Errorf("rule_eval:%d promql is blank", r.RuleID())
+		return
+	}
+
+	if reader.Client == nil {
+		logger.Error("reader.Client is nil")
 		return
 	}
 
@@ -116,7 +179,8 @@ func (r RuleEval) Work() {
 		value, warnings, err = reader.Client.Query(context.Background(), promql, time.Now())
 		if err != nil {
 			logger.Errorf("rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
-			notifyToMaintainer(err, "failed to query prometheus")
+			//notifyToMaintainer(err, "failed to query prometheus")
+			Report(QueryPrometheusError)
 			return
 		}
 
@@ -124,34 +188,18 @@ func (r RuleEval) Work() {
 			logger.Errorf("rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
 			return
 		}
-	} else {
-		var res AnomalyPoint
-		count := len(config.C.AnomalyDataApi)
-		for _, i := range rand.Perm(count) {
-			url := fmt.Sprintf("%s?rid=%d", config.C.AnomalyDataApi[i], r.rule.Id)
-			err = httplib.Get(url).SetTimeout(time.Duration(3000) * time.Millisecond).ToJSON(&res)
-			if err != nil {
-				logger.Errorf("curl %s fail: %v", url, err)
-				continue
-			}
-			if res.Err != "" {
-				logger.Errorf("curl %s fail: %s", url, res.Err)
-				continue
-			}
-			value = res.Data
-			logger.Debugf("curl %s get: %+v", url, res.Data)
-		}
+		logger.Debugf("rule_eval:%d promql:%s, value:%v", r.RuleID(), promql, value)
 	}
 
-	r.judge(conv.ConvertVectors(value))
+	r.Judge(conv.ConvertVectors(value))
 }
 
 type WorkersType struct {
-	rules       map[string]RuleEval
+	rules       map[string]*RuleEval
 	recordRules map[string]RecordingRuleEval
 }
 
-var Workers = &WorkersType{rules: make(map[string]RuleEval), recordRules: make(map[string]RecordingRuleEval)}
+var Workers = &WorkersType{rules: make(map[string]*RuleEval), recordRules: make(map[string]RecordingRuleEval)}
 
 func (ws *WorkersType) Build(rids []int64) {
 	rules := make(map[string]*models.AlertRule)
@@ -197,12 +245,13 @@ func (ws *WorkersType) Build(rids []int64) {
 			elst[i].DB2Mem()
 			firemap[elst[i].Hash] = elst[i]
 		}
-
-		re := RuleEval{
+		fires := NewAlertCurEventMap()
+		fires.SetAll(firemap)
+		re := &RuleEval{
 			rule:     rules[hash],
 			quit:     make(chan struct{}),
-			fires:    firemap,
-			pendings: make(map[string]*models.AlertCurEvent),
+			fires:    fires,
+			pendings: NewAlertCurEventMap(),
 		}
 
 		go re.Start()
@@ -257,20 +306,31 @@ func (ws *WorkersType) BuildRe(rids []int64) {
 	}
 }
 
-func (r RuleEval) judge(vectors []conv.Vector) {
+func (r *RuleEval) Judge(vectors []conv.Vector) {
+	now := time.Now().Unix()
+
+	alertingKeys, ruleExists := r.MakeNewEvent("inner", now, vectors)
+	if !ruleExists {
+		return
+	}
+
+	// handle recovered events
+	r.recoverRule(alertingKeys, now)
+}
+
+func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) (map[string]struct{}, bool) {
 	// 有可能rule的一些配置已经发生变化，比如告警接收人、callbacks等
 	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
 	// 所以，这里直接从memsto.AlertRuleCache中获取并覆盖
 	curRule := memsto.AlertRuleCache.Get(r.rule.Id)
 	if curRule == nil {
-		return
+		return map[string]struct{}{}, false
 	}
 
 	r.rule = curRule
 
 	count := len(vectors)
 	alertingKeys := make(map[string]struct{})
-	now := time.Now().Unix()
 	for i := 0; i < count; i++ {
 		// compute hash
 		hash := str.MD5(fmt.Sprintf("%d_%s", r.rule.Id, vectors[i].Key))
@@ -278,6 +338,7 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 
 		// rule disabled in this time span?
 		if isNoneffective(vectors[i].Timestamp, r.rule) {
+			logger.Debugf("event_disabled: rule_eval:%d rule:%v timestamp:%d", r.rule.Id, r.rule, vectors[i].Timestamp)
 			continue
 		}
 
@@ -298,14 +359,17 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 		// handle target note
 		targetIdent, has := vectors[i].Labels["ident"]
 		targetNote := ""
+		targetCluster := ""
 		if has {
 			target, exists := memsto.TargetCache.Get(string(targetIdent))
 			if exists {
 				targetNote = target.Note
+				targetCluster = target.Cluster
 
 				// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 				// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
 				if r.rule.EnableInBG == 1 && target.GroupId != r.rule.GroupId {
+					logger.Debugf("event_enable_in_bg: rule_eval:%d", r.rule.Id)
 					continue
 				}
 			}
@@ -324,7 +388,7 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 		}
 
 		// isMuted only need TriggerTime RuleName and TagsMap
-		if isMuted(event) {
+		if IsMuted(event) {
 			logger.Infof("event_muted: rule_id=%d %s", r.rule.Id, vectors[i].Key)
 			continue
 		}
@@ -332,7 +396,7 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 		tagsArr := labelMapToArr(tagsMap)
 		sort.Strings(tagsArr)
 
-		event.Cluster = r.rule.Cluster
+		event.Cluster = targetCluster
 		event.Hash = hash
 		event.RuleId = r.rule.Id
 		event.RuleName = r.rule.Name
@@ -358,12 +422,15 @@ func (r RuleEval) judge(vectors []conv.Vector) {
 		event.Tags = strings.Join(tagsArr, ",,")
 		event.IsRecovered = false
 		event.LastEvalTime = now
+		if from != "inner" {
+			event.LastEvalTime = event.TriggerTime
+		}
 
 		r.handleNewEvent(event)
+
 	}
 
-	// handle recovered events
-	r.recoverRule(alertingKeys, now)
+	return alertingKeys, true
 }
 
 func readableValue(value float64) string {
@@ -387,26 +454,30 @@ func labelMapToArr(m map[string]string) []string {
 	return labelStrings
 }
 
-func (r RuleEval) handleNewEvent(event *models.AlertCurEvent) {
+func (r *RuleEval) handleNewEvent(event *models.AlertCurEvent) {
 	if event.PromForDuration == 0 {
 		r.fireEvent(event)
 		return
 	}
 
-	_, has := r.pendings[event.Hash]
+	var preTriggerTime int64
+	preEvent, has := r.pendings.Get(event.Hash)
 	if has {
-		r.pendings[event.Hash].LastEvalTime = event.LastEvalTime
+		r.pendings.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+		preTriggerTime = preEvent.TriggerTime
 	} else {
-		r.pendings[event.Hash] = event
+		r.pendings.Set(event.Hash, event)
+		preTriggerTime = event.TriggerTime
 	}
-	if r.pendings[event.Hash].LastEvalTime-r.pendings[event.Hash].TriggerTime+int64(event.PromEvalInterval) >= int64(event.PromForDuration) {
+
+	if event.LastEvalTime-preTriggerTime+int64(event.PromEvalInterval) >= int64(event.PromForDuration) {
 		r.fireEvent(event)
 	}
 }
 
-func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
-	if fired, has := r.fires[event.Hash]; has {
-		r.fires[event.Hash].LastEvalTime = event.LastEvalTime
+func (r *RuleEval) fireEvent(event *models.AlertCurEvent) {
+	if fired, has := r.fires.Get(event.Hash); has {
+		r.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 
 		if r.rule.NotifyRepeatStep == 0 {
 			// 说明不想重复通知，那就直接返回了，nothing to do
@@ -418,6 +489,7 @@ func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
 			if r.rule.NotifyMaxNumber == 0 {
 				// 最大可以发送次数如果是0，表示不想限制最大发送次数，一直发即可
 				event.NotifyCurNumber = fired.NotifyCurNumber + 1
+				event.FirstTriggerTime = fired.FirstTriggerTime
 				r.pushEventToQueue(event)
 			} else {
 				// 有最大发送次数的限制，就要看已经发了几次了，是否达到了最大发送次数
@@ -425,6 +497,7 @@ func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
 					return
 				} else {
 					event.NotifyCurNumber = fired.NotifyCurNumber + 1
+					event.FirstTriggerTime = fired.FirstTriggerTime
 					r.pushEventToQueue(event)
 				}
 			}
@@ -432,62 +505,74 @@ func (r RuleEval) fireEvent(event *models.AlertCurEvent) {
 		}
 	} else {
 		event.NotifyCurNumber = 1
+		event.FirstTriggerTime = event.TriggerTime
 		r.pushEventToQueue(event)
 	}
 }
 
-func (r RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
-	for hash := range r.pendings {
+func (r *RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
+	for _, hash := range r.pendings.Keys() {
 		if _, has := alertingKeys[hash]; has {
 			continue
 		}
-
-		delete(r.pendings, hash)
+		r.pendings.Delete(hash)
 	}
 
-	for hash, event := range r.fires {
+	for hash, event := range r.fires.GetAll() {
 		if _, has := alertingKeys[hash]; has {
 			continue
 		}
 
-		// 如果配置了留观时长，就不能立马恢复了
-		if r.rule.RecoverDuration > 0 && now-event.LastEvalTime < r.rule.RecoverDuration {
-			continue
-		}
-
-		// 没查到触发阈值的vector，姑且就认为这个vector的值恢复了
-		// 我确实无法分辨，是prom中有值但是未满足阈值所以没返回，还是prom中确实丢了一些点导致没有数据可以返回，尴尬
-		delete(r.fires, hash)
-		delete(r.pendings, hash)
-
-		event.IsRecovered = true
-		event.LastEvalTime = now
-		// 可能是因为调整了promql才恢复的，所以事件里边要体现最新的promql，否则用户会比较困惑
-		// 当然，其实rule的各个字段都可能发生变化了，都更新一下吧
-		event.RuleName = r.rule.Name
-		event.RuleNote = r.rule.Note
-		event.RuleProd = r.rule.Prod
-		event.RuleAlgo = r.rule.Algorithm
-		event.Severity = r.rule.Severity
-		event.PromForDuration = r.rule.PromForDuration
-		event.PromQl = r.rule.PromQl
-		event.PromEvalInterval = r.rule.PromEvalInterval
-		event.Callbacks = r.rule.Callbacks
-		event.CallbacksJSON = r.rule.CallbacksJSON
-		event.RunbookUrl = r.rule.RunbookUrl
-		event.NotifyRecovered = r.rule.NotifyRecovered
-		event.NotifyChannels = r.rule.NotifyChannels
-		event.NotifyChannelsJSON = r.rule.NotifyChannelsJSON
-		event.NotifyGroups = r.rule.NotifyGroups
-		event.NotifyGroupsJSON = r.rule.NotifyGroupsJSON
-		r.pushEventToQueue(event)
+		r.recoverEvent(hash, event, now)
 	}
 }
 
-func (r RuleEval) pushEventToQueue(event *models.AlertCurEvent) {
+func (r *RuleEval) RecoverEvent(hash string, now int64) {
+	event, has := r.fires.Get(hash)
+	if !has {
+		return
+	}
+	r.recoverEvent(hash, event, time.Now().Unix())
+}
+
+func (r *RuleEval) recoverEvent(hash string, event *models.AlertCurEvent, now int64) {
+	// 如果配置了留观时长，就不能立马恢复了
+	if r.rule.RecoverDuration > 0 && now-event.LastEvalTime < r.rule.RecoverDuration {
+		return
+	}
+
+	// 没查到触发阈值的vector，姑且就认为这个vector的值恢复了
+	// 我确实无法分辨，是prom中有值但是未满足阈值所以没返回，还是prom中确实丢了一些点导致没有数据可以返回，尴尬
+	r.fires.Delete(hash)
+	r.pendings.Delete(hash)
+
+	event.IsRecovered = true
+	event.LastEvalTime = now
+	// 可能是因为调整了promql才恢复的，所以事件里边要体现最新的promql，否则用户会比较困惑
+	// 当然，其实rule的各个字段都可能发生变化了，都更新一下吧
+	event.RuleName = r.rule.Name
+	event.RuleNote = r.rule.Note
+	event.RuleProd = r.rule.Prod
+	event.RuleAlgo = r.rule.Algorithm
+	event.Severity = r.rule.Severity
+	event.PromForDuration = r.rule.PromForDuration
+	event.PromQl = r.rule.PromQl
+	event.PromEvalInterval = r.rule.PromEvalInterval
+	event.Callbacks = r.rule.Callbacks
+	event.CallbacksJSON = r.rule.CallbacksJSON
+	event.RunbookUrl = r.rule.RunbookUrl
+	event.NotifyRecovered = r.rule.NotifyRecovered
+	event.NotifyChannels = r.rule.NotifyChannels
+	event.NotifyChannelsJSON = r.rule.NotifyChannelsJSON
+	event.NotifyGroups = r.rule.NotifyGroups
+	event.NotifyGroupsJSON = r.rule.NotifyGroupsJSON
+	r.pushEventToQueue(event)
+}
+
+func (r *RuleEval) pushEventToQueue(event *models.AlertCurEvent) {
 	if !event.IsRecovered {
 		event.LastSentTime = event.LastEvalTime
-		r.fires[event.Hash] = event
+		r.fires.Set(event.Hash, event)
 	}
 
 	promstat.CounterAlertsTotal.WithLabelValues(config.C.ClusterName).Inc()
@@ -496,6 +581,7 @@ func (r RuleEval) pushEventToQueue(event *models.AlertCurEvent) {
 		logger.Warningf("event_push_queue: queue is full")
 	}
 }
+
 func filterRecordingRules() {
 	ids := memsto.RecordingRuleCache.GetRuleIds()
 
@@ -556,6 +642,11 @@ func (r RecordingRuleEval) Work() {
 		return
 	}
 
+	if reader.Client == nil {
+		log.Println("reader.Client is nil")
+		return
+	}
+
 	value, warnings, err := reader.Client.Query(context.Background(), promql, time.Now())
 	if err != nil {
 		logger.Errorf("recording_rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
@@ -572,4 +663,83 @@ func (r RecordingRuleEval) Work() {
 			writer.Writers.PushSample(r.rule.Name, v)
 		}
 	}
+}
+
+type RuleEvalForExternalType struct {
+	sync.RWMutex
+	rules map[int64]RuleEval
+}
+
+var RuleEvalForExternal = RuleEvalForExternalType{rules: make(map[int64]RuleEval)}
+
+func (re *RuleEvalForExternalType) Build() {
+	rids := memsto.AlertRuleCache.GetRuleIds()
+	rules := make(map[int64]*models.AlertRule)
+
+	for i := 0; i < len(rids); i++ {
+		rule := memsto.AlertRuleCache.Get(rids[i])
+		if rule == nil {
+			continue
+		}
+
+		re.Lock()
+		rules[rule.Id] = rule
+		re.Unlock()
+	}
+
+	// stop old
+	for rid := range re.rules {
+		if _, has := rules[rid]; !has {
+			re.Lock()
+			delete(re.rules, rid)
+			re.Unlock()
+		}
+	}
+
+	// start new
+	re.Lock()
+	defer re.Unlock()
+	for rid := range rules {
+		if _, has := re.rules[rid]; has {
+			// already exists
+			continue
+		}
+
+		elst, err := models.AlertCurEventGetByRule(rules[rid].Id)
+		if err != nil {
+			logger.Errorf("worker_build: AlertCurEventGetByRule failed: %v", err)
+			continue
+		}
+
+		firemap := make(map[string]*models.AlertCurEvent)
+		for i := 0; i < len(elst); i++ {
+			elst[i].DB2Mem()
+			firemap[elst[i].Hash] = elst[i]
+		}
+		fires := NewAlertCurEventMap()
+		fires.SetAll(firemap)
+		newRe := RuleEval{
+			rule:     rules[rid],
+			quit:     make(chan struct{}),
+			fires:    fires,
+			pendings: NewAlertCurEventMap(),
+		}
+
+		re.rules[rid] = newRe
+	}
+}
+
+func (re *RuleEvalForExternalType) Get(rid int64) (RuleEval, bool) {
+	rule := memsto.AlertRuleCache.Get(rid)
+	if rule == nil {
+		return RuleEval{}, false
+	}
+
+	re.RLock()
+	defer re.RUnlock()
+	if ret, has := re.rules[rid]; has {
+		// already exists
+		return ret, has
+	}
+	return RuleEval{}, false
 }

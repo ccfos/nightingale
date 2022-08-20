@@ -46,6 +46,7 @@ type AlertCurEvent struct {
 	LastEvalTime       int64             `json:"last_eval_time" gorm:"-"`   // for notify.py 上次计算的时间
 	LastSentTime       int64             `json:"last_sent_time" gorm:"-"`   // 上次发送时间
 	NotifyCurNumber    int               `json:"notify_cur_number"`         // notify: current number
+	FirstTriggerTime   int64             `json:"first_trigger_time"`        // 连续告警的首次告警时间
 }
 
 func (e *AlertCurEvent) TableName() string {
@@ -180,6 +181,7 @@ func (e *AlertCurEvent) ToHis() *AlertHisEvent {
 		RecoverTime:      recoverTime,
 		LastEvalTime:     e.LastEvalTime,
 		NotifyCurNumber:  e.NotifyCurNumber,
+		FirstTriggerTime: e.FirstTriggerTime,
 	}
 }
 

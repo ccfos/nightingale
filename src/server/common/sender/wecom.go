@@ -31,7 +31,7 @@ func SendWecom(message WecomMessage) {
 			},
 		}
 
-		res, code, err := poster.PostJSON(url, time.Second*5, body)
+		res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
 		if err != nil {
 			logger.Errorf("wecom_sender: result=fail url=%s code=%d error=%v response=%s", url, code, err, string(res))
 		} else {

@@ -13,10 +13,10 @@ import (
 
 type TagFilter struct {
 	Key    string              `json:"key"`   // tag key
-	Func   string              `json:"func"`  // == | =~ | in
+	Func   string              `json:"func"`  // `==` | `=~` | `in` | `!=` | `!~` | `not in`
 	Value  string              `json:"value"` // tag value
-	Regexp *regexp.Regexp      // parse value to regexp if func = '=~'
-	Vset   map[string]struct{} // parse value to regexp if func = 'in'
+	Regexp *regexp.Regexp      // parse value to regexp if func = '=~' or '!~'
+	Vset   map[string]struct{} // parse value to regexp if func = 'in' or 'not in'
 }
 
 type AlertMute struct {
@@ -71,7 +71,7 @@ func (m *AlertMute) Verify() error {
 	}
 
 	if m.Etime <= m.Btime {
-		return fmt.Errorf("Oops... etime(%d) <= btime(%d)", m.Etime, m.Btime)
+		return fmt.Errorf("oops... etime(%d) <= btime(%d)", m.Etime, m.Btime)
 	}
 
 	if err := m.Parse(); err != nil {

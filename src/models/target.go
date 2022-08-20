@@ -20,6 +20,11 @@ type Target struct {
 	TagsJSON []string          `json:"tags" gorm:"-"`
 	TagsMap  map[string]string `json:"-" gorm:"-"` // internal use, append tags to series
 	UpdateAt int64             `json:"update_at"`
+
+	TargetUp    float64 `json:"target_up" gorm:"-"`
+	LoadPerCore float64 `json:"load_per_core" gorm:"-"`
+	MemUtil     float64 `json:"mem_util" gorm:"-"`
+	DiskUtil    float64 `json:"disk_util" gorm:"-"`
 }
 
 func (t *Target) TableName() string {
@@ -109,6 +114,10 @@ func buildTargetWhere(bgid int64, clusters []string, query string) *gorm.DB {
 	}
 
 	return session
+}
+
+func TargetTotalCount() (int64, error) {
+	return Count(DB().Model(new(Target)))
 }
 
 func TargetTotal(bgid int64, clusters []string, query string) (int64, error) {
