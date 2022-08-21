@@ -531,12 +531,20 @@ func (r *RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
 	}
 }
 
-func (r *RuleEval) RecoverEvent(hash string, now int64) {
+func (r *RuleEval) RecoverEvent(hash string, now int64, value float64) {
+	curRule := memsto.AlertRuleCache.Get(r.rule.Id)
+	if curRule == nil {
+		return
+	}
+	r.rule = curRule
+
 	r.pendings.Delete(hash)
 	event, has := r.fires.Get(hash)
 	if !has {
 		return
 	}
+
+	event.TriggerValue = fmt.Sprintf("%.5f", value)
 	r.recoverEvent(hash, event, now)
 }
 
