@@ -321,5 +321,6 @@ func configRoute(r *gin.Engine, version string) {
 
 		service.GET("/alert-cur-events", alertCurEventsList)
 		service.GET("/alert-his-events", alertHisEventsList)
+		service.GET("/alert-his-event/:eid", alertHisEventGet)
 	}
 }

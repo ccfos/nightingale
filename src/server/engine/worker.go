@@ -174,7 +174,7 @@ func (r *RuleEval) Work() {
 
 	var value model.Value
 	var err error
-	if r.rule.Algorithm == "" {
+	if r.rule.Algorithm == "" && (r.rule.Cate == "" || r.rule.Cate == "prometheus") {
 		var warnings prom.Warnings
 		value, warnings, err = reader.Client.Query(context.Background(), promql, time.Now())
 		if err != nil {
@@ -359,12 +359,10 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) (
 		// handle target note
 		targetIdent, has := vectors[i].Labels["ident"]
 		targetNote := ""
-		targetCluster := ""
 		if has {
 			target, exists := memsto.TargetCache.Get(string(targetIdent))
 			if exists {
 				targetNote = target.Note
-				targetCluster = target.Cluster
 
 				// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 				// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
@@ -396,7 +394,8 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) (
 		tagsArr := labelMapToArr(tagsMap)
 		sort.Strings(tagsArr)
 
-		event.Cluster = targetCluster
+		event.Cluster = config.C.ClusterName
+		event.Cate = r.rule.Cate
 		event.Hash = hash
 		event.RuleId = r.rule.Id
 		event.RuleName = r.rule.Name
@@ -527,12 +526,21 @@ func (r *RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
 	}
 }
 
-func (r *RuleEval) RecoverEvent(hash string, now int64) {
+func (r *RuleEval) RecoverEvent(hash string, now int64, value float64) {
+	curRule := memsto.AlertRuleCache.Get(r.rule.Id)
+	if curRule == nil {
+		return
+	}
+	r.rule = curRule
+
+	r.pendings.Delete(hash)
 	event, has := r.fires.Get(hash)
 	if !has {
 		return
 	}
-	r.recoverEvent(hash, event, time.Now().Unix())
+
+	event.TriggerValue = fmt.Sprintf("%.5f", value)
+	r.recoverEvent(hash, event, now)
 }
 
 func (r *RuleEval) recoverEvent(hash string, event *models.AlertCurEvent, now int64) {

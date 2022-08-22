@@ -46,9 +46,14 @@ func alertCurEventsCard(c *gin.Context) {
 	clusters := queryClusters(c)
 	rules := parseAggrRules(c)
 	prod := ginx.QueryStr(c, "prod", "")
+	cate := ginx.QueryStr(c, "cate", "$all")
+	cates := []string{}
+	if cate != "$all" {
+		cates = strings.Split(cate, ",")
+	}
 
 	// 最多获取50000个，获取太多也没啥意义
-	list, err := models.AlertCurEventGets(prod, busiGroupId, stime, etime, severity, clusters, query, 50000, 0)
+	list, err := models.AlertCurEventGets(prod, busiGroupId, stime, etime, severity, clusters, cates, query, 50000, 0)
 	ginx.Dangerous(err)
 
 	cardmap := make(map[string]*AlertCard)
@@ -123,11 +128,16 @@ func alertCurEventsList(c *gin.Context) {
 	busiGroupId := ginx.QueryInt64(c, "bgid", 0)
 	clusters := queryClusters(c)
 	prod := ginx.QueryStr(c, "prod", "")
+	cate := ginx.QueryStr(c, "cate", "$all")
+	cates := []string{}
+	if cate != "$all" {
+		cates = strings.Split(cate, ",")
+	}
 
-	total, err := models.AlertCurEventTotal(prod, busiGroupId, stime, etime, severity, clusters, query)
+	total, err := models.AlertCurEventTotal(prod, busiGroupId, stime, etime, severity, clusters, cates, query)
 	ginx.Dangerous(err)
 
-	list, err := models.AlertCurEventGets(prod, busiGroupId, stime, etime, severity, clusters, query, limit, ginx.Offset(c, limit))
+	list, err := models.AlertCurEventGets(prod, busiGroupId, stime, etime, severity, clusters, cates, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)
