@@ -7,6 +7,7 @@ import (
 
 type AlertHisEvent struct {
 	Id                 int64       `json:"id" gorm:"primaryKey"`
+	Cate               string      `json:"cate"`
 	IsRecovered        int         `json:"is_recovered"`
 	Cluster            string      `json:"cluster"`
 	GroupId            int64       `json:"group_id"`
@@ -91,7 +92,7 @@ func (e *AlertHisEvent) FillNotifyGroups(cache map[int64]*UserGroup) error {
 	return nil
 }
 
-func AlertHisEventTotal(prod string, bgid, stime, etime int64, severity int, recovered int, clusters []string, query string) (int64, error) {
+func AlertHisEventTotal(prod string, bgid, stime, etime int64, severity int, recovered int, clusters, cates []string, query string) (int64, error) {
 	session := DB().Model(&AlertHisEvent{}).Where("last_eval_time between ? and ? and rule_prod = ?", stime, etime, prod)
 
 	if bgid > 0 {
@@ -110,6 +111,10 @@ func AlertHisEventTotal(prod string, bgid, stime, etime int64, severity int, rec
 		session = session.Where("cluster in ?", clusters)
 	}
 
+	if len(cates) > 0 {
+		session = session.Where("cate in ?", cates)
+	}
+
 	if query != "" {
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
@@ -121,7 +126,7 @@ func AlertHisEventTotal(prod string, bgid, stime, etime int64, severity int, rec
 	return Count(session)
 }
 
-func AlertHisEventGets(prod string, bgid, stime, etime int64, severity int, recovered int, clusters []string, query string, limit, offset int) ([]AlertHisEvent, error) {
+func AlertHisEventGets(prod string, bgid, stime, etime int64, severity int, recovered int, clusters, cates []string, query string, limit, offset int) ([]AlertHisEvent, error) {
 	session := DB().Where("last_eval_time between ? and ? and rule_prod = ?", stime, etime, prod)
 
 	if bgid > 0 {
@@ -138,6 +143,10 @@ func AlertHisEventGets(prod string, bgid, stime, etime int64, severity int, reco
 
 	if len(clusters) > 0 {
 		session = session.Where("cluster in ?", clusters)
+	}
+
+	if len(cates) > 0 {
+		session = session.Where("cate in ?", cates)
 	}
 
 	if query != "" {

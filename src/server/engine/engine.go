@@ -53,6 +53,10 @@ func Reload() {
 func reportQueueSize() {
 	for {
 		time.Sleep(time.Second)
-		promstat.GaugeAlertQueueSize.WithLabelValues(config.C.ClusterName).Set(float64(EventQueue.Len()))
+		clusterName := config.ReaderClient.GetClusterName()
+		if clusterName == "" {
+			continue
+		}
+		promstat.GaugeAlertQueueSize.WithLabelValues(clusterName).Set(float64(EventQueue.Len()))
 	}
 }

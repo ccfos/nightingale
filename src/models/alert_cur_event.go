@@ -12,6 +12,7 @@ import (
 
 type AlertCurEvent struct {
 	Id                 int64             `json:"id" gorm:"primaryKey"`
+	Cate               string            `json:"cate"`
 	Cluster            string            `json:"cluster"`
 	GroupId            int64             `json:"group_id"`   // busi group id
 	GroupName          string            `json:"group_name"` // busi group name
@@ -155,6 +156,7 @@ func (e *AlertCurEvent) ToHis() *AlertHisEvent {
 
 	return &AlertHisEvent{
 		IsRecovered:      isRecovered,
+		Cate:             e.Cate,
 		Cluster:          e.Cluster,
 		GroupId:          e.GroupId,
 		GroupName:        e.GroupName,
@@ -249,7 +251,7 @@ func (e *AlertCurEvent) FillNotifyGroups(cache map[int64]*UserGroup) error {
 	return nil
 }
 
-func AlertCurEventTotal(prod string, bgid, stime, etime int64, severity int, clusters []string, query string) (int64, error) {
+func AlertCurEventTotal(prod string, bgid, stime, etime int64, severity int, clusters, cates []string, query string) (int64, error) {
 	session := DB().Model(&AlertCurEvent{}).Where("trigger_time between ? and ? and rule_prod = ?", stime, etime, prod)
 
 	if bgid > 0 {
@@ -264,6 +266,10 @@ func AlertCurEventTotal(prod string, bgid, stime, etime int64, severity int, clu
 		session = session.Where("cluster in ?", clusters)
 	}
 
+	if len(cates) > 0 {
+		session = session.Where("cate in ?", cates)
+	}
+
 	if query != "" {
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
@@ -275,7 +281,7 @@ func AlertCurEventTotal(prod string, bgid, stime, etime int64, severity int, clu
 	return Count(session)
 }
 
-func AlertCurEventGets(prod string, bgid, stime, etime int64, severity int, clusters []string, query string, limit, offset int) ([]AlertCurEvent, error) {
+func AlertCurEventGets(prod string, bgid, stime, etime int64, severity int, clusters, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
 	session := DB().Where("trigger_time between ? and ? and rule_prod = ?", stime, etime, prod)
 
 	if bgid > 0 {
@@ -288,6 +294,10 @@ func AlertCurEventGets(prod string, bgid, stime, etime int64, severity int, clus
 
 	if len(clusters) > 0 {
 		session = session.Where("cluster in ?", clusters)
+	}
+
+	if len(cates) > 0 {
+		session = session.Where("cate in ?", cates)
 	}
 
 	if query != "" {
