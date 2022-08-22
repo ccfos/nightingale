@@ -128,6 +128,15 @@ func (bg *BusiGroup) Del() error {
 		return errors.New("Some dashboards still in the BusiGroup")
 	}
 
+	has, err = Exists(DB().Model(&Board{}).Where("group_id=?", bg.Id))
+	if err != nil {
+		return err
+	}
+
+	if has {
+		return errors.New("Some dashboards still in the BusiGroup")
+	}
+
 	has, err = Exists(DB().Model(&TaskTpl{}).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
