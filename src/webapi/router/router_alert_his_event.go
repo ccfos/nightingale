@@ -1,6 +1,7 @@
 package router
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -35,11 +36,16 @@ func alertHisEventsList(c *gin.Context) {
 	busiGroupId := ginx.QueryInt64(c, "bgid", 0)
 	clusters := queryClusters(c)
 	prod := ginx.QueryStr(c, "prod", "")
+	cate := ginx.QueryStr(c, "cate", "$all")
+	cates := []string{}
+	if cate != "$all" {
+		cates = strings.Split(cate, ",")
+	}
 
-	total, err := models.AlertHisEventTotal(prod, busiGroupId, stime, etime, severity, recovered, clusters, query)
+	total, err := models.AlertHisEventTotal(prod, busiGroupId, stime, etime, severity, recovered, clusters, cates, query)
 	ginx.Dangerous(err)
 
-	list, err := models.AlertHisEventGets(prod, busiGroupId, stime, etime, severity, recovered, clusters, query, limit, ginx.Offset(c, limit))
+	list, err := models.AlertHisEventGets(prod, busiGroupId, stime, etime, severity, recovered, clusters, cates, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)
