@@ -27,6 +27,15 @@ var AlertSubscribeCache = AlertSubscribeCacheType{
 	subs:            make(map[int64][]*models.AlertSubscribe),
 }
 
+func (c *AlertSubscribeCacheType) Reset() {
+	c.Lock()
+	defer c.Unlock()
+
+	c.statTotal = -1
+	c.statLastUpdated = -1
+	c.subs = make(map[int64][]*models.AlertSubscribe)
+}
+
 func (c *AlertSubscribeCacheType) StatChanged(total, lastUpdated int64) bool {
 	if c.statTotal == total && c.statLastUpdated == lastUpdated {
 		return false
@@ -95,7 +104,9 @@ func syncAlertSubscribes() error {
 
 	clusterName := config.ReaderClient.GetClusterName()
 	if clusterName == "" {
-		return errors.New("cluster name is blank")
+		AlertSubscribeCache.Reset()
+		logger.Warning("cluster name is blank")
+		return nil
 	}
 
 	stat, err := models.AlertSubscribeStatistics(clusterName)

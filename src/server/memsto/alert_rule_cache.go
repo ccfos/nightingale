@@ -27,6 +27,15 @@ var AlertRuleCache = AlertRuleCacheType{
 	rules:           make(map[int64]*models.AlertRule),
 }
 
+func (arc *AlertRuleCacheType) Reset() {
+	arc.Lock()
+	defer arc.Unlock()
+
+	arc.statTotal = -1
+	arc.statLastUpdated = -1
+	arc.rules = make(map[int64]*models.AlertRule)
+}
+
 func (arc *AlertRuleCacheType) StatChanged(total, lastUpdated int64) bool {
 	if arc.statTotal == total && arc.statLastUpdated == lastUpdated {
 		return false
@@ -89,7 +98,9 @@ func syncAlertRules() error {
 
 	clusterName := config.ReaderClient.GetClusterName()
 	if clusterName == "" {
-		return errors.New("cluster name is blank")
+		AlertRuleCache.Reset()
+		logger.Warning("cluster name is blank")
+		return nil
 	}
 
 	stat, err := models.AlertRuleStatistics(clusterName)

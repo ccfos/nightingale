@@ -31,6 +31,15 @@ var TargetCache = TargetCacheType{
 	targets:         make(map[string]*models.Target),
 }
 
+func (tc *TargetCacheType) Reset() {
+	tc.Lock()
+	defer tc.Unlock()
+
+	tc.statTotal = -1
+	tc.statLastUpdated = -1
+	tc.targets = make(map[string]*models.Target)
+}
+
 func (tc *TargetCacheType) StatChanged(total, lastUpdated int64) bool {
 	if tc.statTotal == total && tc.statLastUpdated == lastUpdated {
 		return false
@@ -96,7 +105,9 @@ func syncTargets() error {
 
 	clusterName := config.ReaderClient.GetClusterName()
 	if clusterName == "" {
-		return errors.New("cluster name is blank")
+		TargetCache.Reset()
+		logger.Warning("cluster name is blank")
+		return nil
 	}
 
 	stat, err := models.TargetStatistics(clusterName)

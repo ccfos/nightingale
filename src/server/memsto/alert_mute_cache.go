@@ -27,6 +27,15 @@ var AlertMuteCache = AlertMuteCacheType{
 	mutes:           make(map[int64][]*models.AlertMute),
 }
 
+func (amc *AlertMuteCacheType) Reset() {
+	amc.Lock()
+	defer amc.Unlock()
+
+	amc.statTotal = -1
+	amc.statLastUpdated = -1
+	amc.mutes = make(map[int64][]*models.AlertMute)
+}
+
 func (amc *AlertMuteCacheType) StatChanged(total, lastUpdated int64) bool {
 	if amc.statTotal == total && amc.statLastUpdated == lastUpdated {
 		return false
@@ -92,7 +101,9 @@ func syncAlertMutes() error {
 
 	clusterName := config.ReaderClient.GetClusterName()
 	if clusterName == "" {
-		return errors.New("cluster name is blank")
+		AlertMuteCache.Reset()
+		logger.Warning("cluster name is blank")
+		return nil
 	}
 
 	stat, err := models.AlertMuteStatistics(clusterName)

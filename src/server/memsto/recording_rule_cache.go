@@ -26,6 +26,15 @@ var RecordingRuleCache = RecordingRuleCacheType{
 	rules:           make(map[int64]*models.RecordingRule),
 }
 
+func (rrc *RecordingRuleCacheType) Reset() {
+	rrc.Lock()
+	defer rrc.Unlock()
+
+	rrc.statTotal = -1
+	rrc.statLastUpdated = -1
+	rrc.rules = make(map[int64]*models.RecordingRule)
+}
+
 func (rrc *RecordingRuleCacheType) StatChanged(total, lastUpdated int64) bool {
 	if rrc.statTotal == total && rrc.statLastUpdated == lastUpdated {
 		return false
@@ -88,7 +97,9 @@ func syncRecordingRules() error {
 
 	clusterName := config.ReaderClient.GetClusterName()
 	if clusterName == "" {
-		return errors.New("cluster name is blank")
+		RecordingRuleCache.Reset()
+		logger.Warning("cluster name is blank")
+		return nil
 	}
 
 	stat, err := models.RecordingRuleStatistics(clusterName)
