@@ -18,7 +18,6 @@ import (
 	"github.com/didi/nightingale/v5/src/server/idents"
 	"github.com/didi/nightingale/v5/src/server/memsto"
 	"github.com/didi/nightingale/v5/src/server/naming"
-	"github.com/didi/nightingale/v5/src/server/reader"
 	"github.com/didi/nightingale/v5/src/server/router"
 	"github.com/didi/nightingale/v5/src/server/stat"
 	"github.com/didi/nightingale/v5/src/server/usage"
@@ -125,7 +124,7 @@ func (s Server) initialize() (func(), error) {
 	}
 
 	// init prometheus remote reader
-	if err = reader.Init(); err != nil {
+	if err = config.InitReader(); err != nil {
 		return fns.Ret(), err
 	}
 

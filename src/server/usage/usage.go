@@ -2,7 +2,6 @@ package usage
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,8 +11,6 @@ import (
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/pkg/version"
-	"github.com/didi/nightingale/v5/src/server/common/conv"
-	"github.com/didi/nightingale/v5/src/server/reader"
 )
 
 const (
@@ -29,28 +26,6 @@ type Usage struct {
 	Version    string  `json:"version"`
 }
 
-func getSamples() (float64, error) {
-	if reader.Client == nil {
-		return 0, fmt.Errorf("reader.Client is nil")
-	}
-
-	value, warns, err := reader.Client.Query(context.Background(), request, time.Now())
-	if err != nil {
-		return 0, err
-	}
-
-	if len(warns) > 0 {
-		return 0, fmt.Errorf("occur some warnings: %v", warns)
-	}
-
-	lst := conv.ConvertVectors(value)
-	if len(lst) == 0 {
-		return 0, fmt.Errorf("convert result is empty")
-	}
-
-	return lst[0].Value, nil
-}
-
 func Report() {
 	for {
 		time.Sleep(time.Minute * 10)
@@ -59,7 +34,6 @@ func Report() {
 }
 
 func report() {
-	// sps, _ := getSamples()
 	tnum, err := models.TargetTotalCount()
 	if err != nil {
 		return

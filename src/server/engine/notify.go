@@ -101,12 +101,13 @@ func genNotice(event *models.AlertCurEvent) Notice {
 	return Notice{Event: event, Tpls: ntpls}
 }
 
-func alertingRedisPub(bs []byte) {
+func alertingRedisPub(clusterName string, bs []byte) {
+	channelKey := config.C.Alerting.RedisPub.ChannelPrefix + clusterName
 	// pub all alerts to redis
 	if config.C.Alerting.RedisPub.Enable {
-		err := storage.Redis.Publish(context.Background(), config.C.Alerting.RedisPub.ChannelKey, bs).Err()
+		err := storage.Redis.Publish(context.Background(), channelKey, bs).Err()
 		if err != nil {
-			logger.Errorf("event_notify: redis publish %s err: %v", config.C.Alerting.RedisPub.ChannelKey, err)
+			logger.Errorf("event_notify: redis publish %s err: %v", channelKey, err)
 		}
 	}
 }
@@ -249,7 +250,7 @@ func notify(event *models.AlertCurEvent) {
 		return
 	}
 
-	alertingRedisPub(stdinBytes)
+	alertingRedisPub(event.Cluster, stdinBytes)
 	alertingWebhook(event)
 
 	handleNotice(notice, stdinBytes)

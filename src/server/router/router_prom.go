@@ -17,7 +17,6 @@ import (
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/idents"
 	"github.com/didi/nightingale/v5/src/server/memsto"
-	"github.com/didi/nightingale/v5/src/server/reader"
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 	"github.com/didi/nightingale/v5/src/server/writer"
 )
@@ -38,12 +37,12 @@ func queryPromql(c *gin.Context) {
 	var f promqlForm
 	ginx.BindJSON(c, &f)
 
-	if reader.Client == nil {
-		c.String(500, "reader.Client is nil")
+	if config.ReaderClient.IsNil() {
+		c.String(500, "reader client is nil")
 		return
 	}
 
-	value, warnings, err := reader.Client.Query(c.Request.Context(), f.PromQL, time.Now())
+	value, warnings, err := config.ReaderClient.GetCli().Query(c.Request.Context(), f.PromQL, time.Now())
 	if err != nil {
 		c.String(500, "promql:%s error:%v", f.PromQL, err)
 		return
@@ -147,7 +146,11 @@ func remoteWrite(c *gin.Context) {
 		writer.Writers.PushSample(metric, req.Timeseries[i])
 	}
 
-	promstat.CounterSampleTotal.WithLabelValues(config.C.ClusterName, "prometheus").Add(float64(count))
+	cn := config.ReaderClient.GetClusterName()
+	if cn != "" {
+		promstat.CounterSampleTotal.WithLabelValues(cn, "prometheus").Add(float64(count))
+	}
+
 	idents.Idents.MSet(ids)
 }
 
