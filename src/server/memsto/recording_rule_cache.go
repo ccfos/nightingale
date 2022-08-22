@@ -26,6 +26,15 @@ var RecordingRuleCache = RecordingRuleCacheType{
 	rules:           make(map[int64]*models.RecordingRule),
 }
 
+func (rrc *RecordingRuleCacheType) Reset() {
+	rrc.Lock()
+	defer rrc.Unlock()
+
+	rrc.statTotal = -1
+	rrc.statLastUpdated = -1
+	rrc.rules = make(map[int64]*models.RecordingRule)
+}
+
 func (rrc *RecordingRuleCacheType) StatChanged(total, lastUpdated int64) bool {
 	if rrc.statTotal == total && rrc.statLastUpdated == lastUpdated {
 		return false
@@ -86,19 +95,26 @@ func loopSyncRecordingRules() {
 func syncRecordingRules() error {
 	start := time.Now()
 
-	stat, err := models.RecordingRuleStatistics(config.C.ClusterName)
+	clusterName := config.ReaderClient.GetClusterName()
+	if clusterName == "" {
+		RecordingRuleCache.Reset()
+		logger.Warning("cluster name is blank")
+		return nil
+	}
+
+	stat, err := models.RecordingRuleStatistics(clusterName)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec RecordingRuleStatistics")
 	}
 
 	if !RecordingRuleCache.StatChanged(stat.Total, stat.LastUpdated) {
-		promstat.GaugeCronDuration.WithLabelValues(config.C.ClusterName, "sync_recording_rules").Set(0)
-		promstat.GaugeSyncNumber.WithLabelValues(config.C.ClusterName, "sync_recording_rules").Set(0)
+		promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_recording_rules").Set(0)
+		promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_recording_rules").Set(0)
 		logger.Debug("recoding rules not changed")
 		return nil
 	}
 
-	lst, err := models.RecordingRuleGetsByCluster(config.C.ClusterName)
+	lst, err := models.RecordingRuleGetsByCluster(clusterName)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec RecordingRuleGetsByCluster")
 	}
@@ -111,8 +127,8 @@ func syncRecordingRules() error {
 	RecordingRuleCache.Set(m, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	promstat.GaugeCronDuration.WithLabelValues(config.C.ClusterName, "sync_recording_rules").Set(float64(ms))
-	promstat.GaugeSyncNumber.WithLabelValues(config.C.ClusterName, "sync_recording_rules").Set(float64(len(m)))
+	promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_recording_rules").Set(float64(ms))
+	promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_recording_rules").Set(float64(len(m)))
 	logger.Infof("timer: sync recording rules done, cost: %dms, number: %d", ms, len(m))
 
 	return nil

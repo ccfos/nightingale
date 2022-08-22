@@ -27,6 +27,15 @@ var AlertSubscribeCache = AlertSubscribeCacheType{
 	subs:            make(map[int64][]*models.AlertSubscribe),
 }
 
+func (c *AlertSubscribeCacheType) Reset() {
+	c.Lock()
+	defer c.Unlock()
+
+	c.statTotal = -1
+	c.statLastUpdated = -1
+	c.subs = make(map[int64][]*models.AlertSubscribe)
+}
+
 func (c *AlertSubscribeCacheType) StatChanged(total, lastUpdated int64) bool {
 	if c.statTotal == total && c.statLastUpdated == lastUpdated {
 		return false
@@ -93,19 +102,26 @@ func loopSyncAlertSubscribes() {
 func syncAlertSubscribes() error {
 	start := time.Now()
 
-	stat, err := models.AlertSubscribeStatistics(config.C.ClusterName)
+	clusterName := config.ReaderClient.GetClusterName()
+	if clusterName == "" {
+		AlertSubscribeCache.Reset()
+		logger.Warning("cluster name is blank")
+		return nil
+	}
+
+	stat, err := models.AlertSubscribeStatistics(clusterName)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertSubscribeStatistics")
 	}
 
 	if !AlertSubscribeCache.StatChanged(stat.Total, stat.LastUpdated) {
-		promstat.GaugeCronDuration.WithLabelValues(config.C.ClusterName, "sync_alert_subscribes").Set(0)
-		promstat.GaugeSyncNumber.WithLabelValues(config.C.ClusterName, "sync_alert_subscribes").Set(0)
+		promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_alert_subscribes").Set(0)
+		promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_alert_subscribes").Set(0)
 		logger.Debug("alert subscribes not changed")
 		return nil
 	}
 
-	lst, err := models.AlertSubscribeGetsByCluster(config.C.ClusterName)
+	lst, err := models.AlertSubscribeGetsByCluster(clusterName)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertSubscribeGetsByCluster")
 	}
@@ -125,8 +141,8 @@ func syncAlertSubscribes() error {
 	AlertSubscribeCache.Set(subs, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	promstat.GaugeCronDuration.WithLabelValues(config.C.ClusterName, "sync_alert_subscribes").Set(float64(ms))
-	promstat.GaugeSyncNumber.WithLabelValues(config.C.ClusterName, "sync_alert_subscribes").Set(float64(len(lst)))
+	promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_alert_subscribes").Set(float64(ms))
+	promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_alert_subscribes").Set(float64(len(lst)))
 	logger.Infof("timer: sync subscribes done, cost: %dms, number: %d", ms, len(lst))
 
 	return nil
