@@ -16,6 +16,7 @@ import (
 type AlertRule struct {
 	Id                   int64       `json:"id" gorm:"primaryKey"`
 	GroupId              int64       `json:"group_id"`                     // busi group id
+	Cate                 string      `json:"cate"`                         // alert rule cate (prometheus|elasticsearch)
 	Cluster              string      `json:"cluster"`                      // take effect by clusters, seperated by space
 	Name                 string      `json:"name"`                         // rule name
 	Note                 string      `json:"note"`                         // will sent in notify
@@ -336,7 +337,7 @@ func AlertRuleGetsByCluster(cluster string) ([]*AlertRule, error) {
 	return lr, err
 }
 
-func AlertRulesGetsBy(prods []string, query, algorithm string) ([]*AlertRule, error) {
+func AlertRulesGetsBy(prods []string, query, algorithm, cluster string, cates []string, disabled int) ([]*AlertRule, error) {
 	session := DB().Where("prod in (?)", prods)
 
 	if query != "" {
@@ -349,6 +350,18 @@ func AlertRulesGetsBy(prods []string, query, algorithm string) ([]*AlertRule, er
 
 	if algorithm != "" {
 		session = session.Where("algorithm = ?", algorithm)
+	}
+
+	if cluster != "" {
+		session = session.Where("cluster like ?", "%"+cluster+"%")
+	}
+
+	if len(cates) != 0 {
+		session = session.Where("cate in (?)", cates)
+	}
+
+	if disabled != -1 {
+		session = session.Where("disabled = ?", disabled)
 	}
 
 	var lst []*AlertRule

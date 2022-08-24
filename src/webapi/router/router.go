@@ -290,6 +290,9 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/busi-group/:id/tasks", auth(), user(), perm("/job-tasks/add"), bgrw(), taskAdd)
 		pages.GET("/busi-group/:id/task/*url", auth(), user(), perm("/job-tasks"), taskProxy)
 		pages.PUT("/busi-group/:id/task/*url", auth(), user(), perm("/job-tasks/put"), bgrw(), taskProxy)
+
+		pages.GET("/servers", auth(), admin(), serversGet)
+		pages.PUT("/server/:id", auth(), admin(), serverBindCluster)
 	}
 
 	service := r.Group("/v1/n9e")
@@ -318,5 +321,6 @@ func configRoute(r *gin.Engine, version string) {
 
 		service.GET("/alert-cur-events", alertCurEventsList)
 		service.GET("/alert-his-events", alertHisEventsList)
+		service.GET("/alert-his-event/:eid", alertHisEventGet)
 	}
 }

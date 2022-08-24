@@ -63,7 +63,11 @@ func pushEventToQueue(c *gin.Context) {
 	event.NotifyChannels = strings.Join(event.NotifyChannelsJSON, " ")
 	event.NotifyGroups = strings.Join(event.NotifyGroupsJSON, " ")
 
-	promstat.CounterAlertsTotal.WithLabelValues(config.C.ClusterName).Inc()
+	cn := config.ReaderClient.GetClusterName()
+	if cn != "" {
+		promstat.CounterAlertsTotal.WithLabelValues(cn).Inc()
+	}
+
 	engine.LogEvent(event, "http_push_queue")
 	if !engine.EventQueue.PushFront(event) {
 		msg := fmt.Sprintf("event:%+v push_queue err: queue is full", event)
@@ -77,6 +81,7 @@ type eventForm struct {
 	Alert   bool          `json:"alert"`
 	Vectors []conv.Vector `json:"vectors"`
 	RuleId  int64         `json:"rule_id"`
+	Cluster string        `json:"cluster"`
 }
 
 func judgeEvent(c *gin.Context) {
@@ -86,7 +91,7 @@ func judgeEvent(c *gin.Context) {
 	if !exists {
 		ginx.Bomb(200, "rule not exists")
 	}
-	re.Judge(form.Vectors)
+	re.Judge(form.Cluster, form.Vectors)
 	ginx.NewRender(c).Message(nil)
 }
 
@@ -102,11 +107,12 @@ func makeEvent(c *gin.Context) {
 		}
 
 		if events[i].Alert {
-			go re.MakeNewEvent("http", now, events[i].Vectors)
+			go re.MakeNewEvent("http", now, events[i].Cluster, events[i].Vectors)
 		} else {
 			for _, vector := range events[i].Vectors {
 				hash := str.MD5(fmt.Sprintf("%d_%s", events[i].RuleId, vector.Key))
-				go re.RecoverEvent(hash, now)
+				now := vector.Timestamp
+				go re.RecoverEvent(hash, now, vector.Value)
 			}
 		}
 	}

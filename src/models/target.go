@@ -116,6 +116,10 @@ func buildTargetWhere(bgid int64, clusters []string, query string) *gorm.DB {
 	return session
 }
 
+func TargetTotalCount() (int64, error) {
+	return Count(DB().Model(new(Target)))
+}
+
 func TargetTotal(bgid int64, clusters []string, query string) (int64, error) {
 	return Count(buildTargetWhere(bgid, clusters, query))
 }

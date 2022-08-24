@@ -98,7 +98,6 @@ func MustLoad(fpaths ...string) {
 		}
 
 		C.Heartbeat.Endpoint = fmt.Sprintf("%s:%d", C.Heartbeat.IP, C.HTTP.Port)
-		C.Alerting.RedisPub.ChannelKey = C.Alerting.RedisPub.ChannelPrefix + C.ClusterName
 
 		if C.Alerting.Webhook.Enable {
 			if C.Alerting.Webhook.Timeout == "" {
@@ -188,10 +187,10 @@ type Config struct {
 	RunMode            string
 	ClusterName        string
 	BusiGroupLabelKey  string
-	AnomalyDataApi     []string
 	EngineDelay        int64
 	DisableUsageReport bool
 	ReaderFrom         string
+	ForceUseServerTS   bool
 	Log                logx.Config
 	HTTP               httpx.Config
 	BasicAuth          gin.Accounts
@@ -203,21 +202,8 @@ type Config struct {
 	DB                 ormx.DBConfig
 	WriterOpt          WriterGlobalOpt
 	Writers            []WriterOptions
-	Reader             ReaderOptions
+	Reader             PromOption
 	Ibex               Ibex
-}
-
-type ReaderOptions struct {
-	Url           string
-	BasicAuthUser string
-	BasicAuthPass string
-
-	Timeout     int64
-	DialTimeout int64
-
-	MaxIdleConnsPerHost int
-
-	Headers []string
 }
 
 type WriterOptions struct {

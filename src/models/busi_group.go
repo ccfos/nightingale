@@ -119,7 +119,7 @@ func (bg *BusiGroup) Del() error {
 		return errors.New("Some targets still in the BusiGroup")
 	}
 
-	has, err = Exists(DB().Model(&Dashboard{}).Where("group_id=?", bg.Id))
+	has, err = Exists(DB().Model(&Board{}).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}

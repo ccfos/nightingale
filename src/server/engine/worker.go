@@ -20,7 +20,6 @@ import (
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
 	"github.com/didi/nightingale/v5/src/server/naming"
-	"github.com/didi/nightingale/v5/src/server/reader"
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 )
 
@@ -167,16 +166,18 @@ func (r *RuleEval) Work() {
 		return
 	}
 
-	if reader.Client == nil {
-		logger.Error("reader.Client is nil")
+	if config.ReaderClient.IsNil() {
+		logger.Error("reader client is nil")
 		return
 	}
 
+	clusterName, readerClient := config.ReaderClient.Get()
+
 	var value model.Value
 	var err error
-	if r.rule.Algorithm == "" {
+	if r.rule.Algorithm == "" && (r.rule.Cate == "" || r.rule.Cate == "prometheus") {
 		var warnings prom.Warnings
-		value, warnings, err = reader.Client.Query(context.Background(), promql, time.Now())
+		value, warnings, err = readerClient.Query(context.Background(), promql, time.Now())
 		if err != nil {
 			logger.Errorf("rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
 			//notifyToMaintainer(err, "failed to query prometheus")
@@ -191,7 +192,7 @@ func (r *RuleEval) Work() {
 		logger.Debugf("rule_eval:%d promql:%s, value:%v", r.RuleID(), promql, value)
 	}
 
-	r.Judge(conv.ConvertVectors(value))
+	r.Judge(clusterName, conv.ConvertVectors(value))
 }
 
 type WorkersType struct {
@@ -306,10 +307,10 @@ func (ws *WorkersType) BuildRe(rids []int64) {
 	}
 }
 
-func (r *RuleEval) Judge(vectors []conv.Vector) {
+func (r *RuleEval) Judge(clusterName string, vectors []conv.Vector) {
 	now := time.Now().Unix()
 
-	alertingKeys, ruleExists := r.MakeNewEvent("inner", now, vectors)
+	alertingKeys, ruleExists := r.MakeNewEvent("inner", now, clusterName, vectors)
 	if !ruleExists {
 		return
 	}
@@ -318,7 +319,7 @@ func (r *RuleEval) Judge(vectors []conv.Vector) {
 	r.recoverRule(alertingKeys, now)
 }
 
-func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) (map[string]struct{}, bool) {
+func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vectors []conv.Vector) (map[string]struct{}, bool) {
 	// 有可能rule的一些配置已经发生变化，比如告警接收人、callbacks等
 	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
 	// 所以，这里直接从memsto.AlertRuleCache中获取并覆盖
@@ -359,12 +360,10 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) (
 		// handle target note
 		targetIdent, has := vectors[i].Labels["ident"]
 		targetNote := ""
-		targetCluster := ""
 		if has {
 			target, exists := memsto.TargetCache.Get(string(targetIdent))
 			if exists {
 				targetNote = target.Note
-				targetCluster = target.Cluster
 
 				// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 				// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
@@ -396,7 +395,8 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, vectors []conv.Vector) (
 		tagsArr := labelMapToArr(tagsMap)
 		sort.Strings(tagsArr)
 
-		event.Cluster = targetCluster
+		event.Cluster = clusterName
+		event.Cate = r.rule.Cate
 		event.Hash = hash
 		event.RuleId = r.rule.Id
 		event.RuleName = r.rule.Name
@@ -527,12 +527,21 @@ func (r *RuleEval) recoverRule(alertingKeys map[string]struct{}, now int64) {
 	}
 }
 
-func (r *RuleEval) RecoverEvent(hash string, now int64) {
+func (r *RuleEval) RecoverEvent(hash string, now int64, value float64) {
+	curRule := memsto.AlertRuleCache.Get(r.rule.Id)
+	if curRule == nil {
+		return
+	}
+	r.rule = curRule
+
+	r.pendings.Delete(hash)
 	event, has := r.fires.Get(hash)
 	if !has {
 		return
 	}
-	r.recoverEvent(hash, event, time.Now().Unix())
+
+	event.TriggerValue = fmt.Sprintf("%.5f", value)
+	r.recoverEvent(hash, event, now)
 }
 
 func (r *RuleEval) recoverEvent(hash string, event *models.AlertCurEvent, now int64) {
@@ -575,7 +584,7 @@ func (r *RuleEval) pushEventToQueue(event *models.AlertCurEvent) {
 		r.fires.Set(event.Hash, event)
 	}
 
-	promstat.CounterAlertsTotal.WithLabelValues(config.C.ClusterName).Inc()
+	promstat.CounterAlertsTotal.WithLabelValues(event.Cluster).Inc()
 	LogEvent(event, "push_queue")
 	if !EventQueue.PushFront(event) {
 		logger.Warningf("event_push_queue: queue is full")
@@ -642,12 +651,12 @@ func (r RecordingRuleEval) Work() {
 		return
 	}
 
-	if reader.Client == nil {
-		log.Println("reader.Client is nil")
+	if config.ReaderClient.IsNil() {
+		log.Println("reader client is nil")
 		return
 	}
 
-	value, warnings, err := reader.Client.Query(context.Background(), promql, time.Now())
+	value, warnings, err := config.ReaderClient.GetCli().Query(context.Background(), promql, time.Now())
 	if err != nil {
 		logger.Errorf("recording_rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
 		return
