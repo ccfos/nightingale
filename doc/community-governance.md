@@ -26,6 +26,7 @@
 
 年度累计向 [CCFOS/NIGHTINGALE](https://github.com/ccfos/nightingale "CCFOS/NIGHTINGALE") 提交 **5** 个PR（被合并），或者因为其他贡献被**项目管委会**一致认可，将会自动进入到 **[ACTIVE CONTRIBUTORS](https://github.com/ccfos/nightingale/blob/main/doc/active-contributors.md "ACTIVE CONTRIBUTORS")** 列表，并获得夜莺开源社区颁发的证书，享有夜莺开源社区一定的权益和福利。
 
+所有向 [CCFOS/NIGHTINGALE](https://github.com/ccfos/nightingale "CCFOS/NIGHTINGALE") 提交过PR（被合并），或者做出过重要贡献的 Contributor，都会被永久记载于 [CONTRIBUTORS](https://github.com/ccfos/nightingale/blob/main/doc/contributors.md "CONTRIBUTORS") 列表。
 
 ### Committer|提交者
 
