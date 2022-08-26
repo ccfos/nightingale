@@ -99,6 +99,10 @@ func MustLoad(fpaths ...string) {
 
 		C.Heartbeat.Endpoint = fmt.Sprintf("%s:%d", C.Heartbeat.IP, C.HTTP.Port)
 
+		if C.Heartbeat.Cluster == "" {
+			C.Heartbeat.Cluster= C.ClusterName
+		}
+
 		if C.Alerting.Webhook.Enable {
 			if C.Alerting.Webhook.Timeout == "" {
 				C.Alerting.Webhook.TimeoutDuration = time.Second * 5
@@ -237,6 +241,7 @@ type HeartbeatConfig struct {
 	IP       string
 	Interval int64
 	Endpoint string
+	Cluster  string
 }
 
 type SMTPConfig struct {

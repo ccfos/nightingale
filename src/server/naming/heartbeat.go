@@ -1,5 +1,6 @@
 package naming
 
+
 import (
 	"context"
 	"fmt"
@@ -37,7 +38,7 @@ func loopHeartbeat() {
 }
 
 func heartbeat() error {
-	err := models.AlertingEngineHeartbeat(config.C.Heartbeat.Endpoint)
+	err := models.AlertingEngineHeartbeat(config.C.Heartbeat.Endpoint,config.C.Heartbeat.Cluster)
 	if err != nil {
 		return err
 	}
