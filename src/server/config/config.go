@@ -74,6 +74,11 @@ func MustLoad(fpaths ...string) {
 			C.ReaderFrom = "config"
 		}
 
+		if C.ReaderFrom == "config" && C.ClusterName == "" {
+			fmt.Println("configuration ClusterName is blank")
+			os.Exit(1)
+		}
+
 		if C.Heartbeat.IP == "" {
 			// auto detect
 			// C.Heartbeat.IP = fmt.Sprint(GetOutboundIP())
