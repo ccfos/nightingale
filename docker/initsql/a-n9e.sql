@@ -41,6 +41,7 @@ CREATE TABLE `user_group` (
 insert into user_group(id, name, create_at, create_by, update_at, update_by) values(1, 'demo-root-group', unix_timestamp(now()), 'root', unix_timestamp(now()), 'root');
 
 CREATE TABLE `user_group_member` (
+    `id` bigint unsigned not null auto_increment,
     `group_id` bigint unsigned not null,
     `user_id` bigint unsigned not null,
     KEY (`group_id`),
@@ -70,6 +71,7 @@ insert into `role`(name, note) values('Standard', 'Ordinary user role');
 insert into `role`(name, note) values('Guest', 'Readonly user role');
 
 CREATE TABLE `role_operation`(
+    `id` bigint unsigned not null auto_increment,
     `role_name` varchar(128) not null,
     `operation` varchar(191) not null,
     KEY (`role_name`),
