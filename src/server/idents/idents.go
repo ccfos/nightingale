@@ -49,7 +49,7 @@ func toRedis() {
 
 	// clean old idents
 	for key, at := range items {
-		if at.(int64) < now-10 {
+		if at.(int64) < now-config.C.NoData.Interval {
 			Idents.Remove(key)
 		} else {
 			// use now as timestamp to redis
