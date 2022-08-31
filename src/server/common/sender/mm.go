@@ -17,7 +17,6 @@ type mm struct {
 	Channel  string `json:"channel"`
 	Username string `json:"username"`
 	Text     string `json:"text"`
-	Props    string `json:"props"`
 }
 
 func SendMM(message MatterMostMessage) {
