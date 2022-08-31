@@ -64,6 +64,7 @@ func notifyMaintainerWithBuiltin(title, msg, triggerTime string, users []*models
 	wecomset := make(map[string]struct{})
 	dingtalkset := make(map[string]struct{})
 	feishuset := make(map[string]struct{})
+	mmset := make(map[string]struct{})
 
 	for _, user := range users {
 		if user.Email != "" {
@@ -93,6 +94,11 @@ func notifyMaintainerWithBuiltin(title, msg, triggerTime string, users []*models
 		ret = gjson.GetBytes(bs, "feishu_robot_token")
 		if ret.Exists() {
 			feishuset[ret.String()] = struct{}{}
+		}
+
+		ret = gjson.GetBytes(bs, "mm_webhook_url")
+		if ret.Exists() {
+			mmset[ret.String()] = struct{}{}
 		}
 	}
 
@@ -136,6 +142,15 @@ func notifyMaintainerWithBuiltin(title, msg, triggerTime string, users []*models
 				Text:      content,
 				AtMobiles: phones,
 				Tokens:    StringSetKeys(feishuset),
+			})
+		case "mm":
+			if len(mmset) == 0 {
+				continue
+			}
+			content := "**Title: **" + title + "\n**Content: **" + msg + "\n**Time: **" + triggerTime
+			sender.SendMM(sender.MatterMostMessage{
+				Text:   content,
+				Tokens: StringSetKeys(mmset),
 			})
 		}
 	}
