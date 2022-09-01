@@ -72,7 +72,7 @@ func AlertingEngineGetsInstances(where string, args ...interface{}) ([]string, e
 	return arr, err
 }
 
-func AlertingEngineHeartbeat(instance string) error {
+func AlertingEngineHeartbeat(instance, cluster string) error {
 	var total int64
 	err := DB().Model(new(AlertingEngines)).Where("instance=?", instance).Count(&total).Error
 	if err != nil {
@@ -83,6 +83,7 @@ func AlertingEngineHeartbeat(instance string) error {
 		// insert
 		err = DB().Create(&AlertingEngines{
 			Instance: instance,
+			Cluster:  cluster,
 			Clock:    time.Now().Unix(),
 		}).Error
 	} else {

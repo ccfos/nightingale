@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"strings"
 	"time"
 
 	"github.com/didi/nightingale/v5/src/pkg/poster"
@@ -31,6 +32,9 @@ type feishu struct {
 func SendFeishu(message FeishuMessage) {
 	for i := 0; i < len(message.Tokens); i++ {
 		url := "https://open.feishu.cn/open-apis/bot/v2/hook/" + message.Tokens[i]
+		if strings.HasPrefix(message.Tokens[i], "https://") {
+			url = message.Tokens[i]
+		}
 		body := feishu{
 			Msgtype: "text",
 			Content: feishuContent{

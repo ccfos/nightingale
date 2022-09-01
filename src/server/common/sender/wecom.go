@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"strings"
 	"time"
 
 	"github.com/didi/nightingale/v5/src/pkg/poster"
@@ -24,6 +25,9 @@ type wecom struct {
 func SendWecom(message WecomMessage) {
 	for i := 0; i < len(message.Tokens); i++ {
 		url := "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=" + message.Tokens[i]
+		if strings.HasPrefix(message.Tokens[i], "https://") {
+			url = message.Tokens[i]
+		}
 		body := wecom{
 			Msgtype: "markdown",
 			Markdown: wecomMarkdown{
