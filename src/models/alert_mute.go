@@ -126,13 +126,20 @@ func AlertMuteDel(ids []int64) error {
 }
 
 func AlertMuteStatistics(cluster string) (*Statistics, error) {
+	// clean expired first
+	buf := int64(30)
+	err := DB().Where("etime < ?", time.Now().Unix()-buf).Delete(new(AlertMute)).Error
+	if err != nil {
+		return nil, err
+	}
+
 	session := DB().Model(&AlertMute{}).Select("count(*) as total", "max(create_at) as last_updated")
 	if cluster != "" {
 		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var stats []*Statistics
-	err := session.Find(&stats).Error
+	err = session.Find(&stats).Error
 	if err != nil {
 		return nil, err
 	}
@@ -141,13 +148,6 @@ func AlertMuteStatistics(cluster string) (*Statistics, error) {
 }
 
 func AlertMuteGetsByCluster(cluster string) ([]*AlertMute, error) {
-	// clean expired first
-	buf := int64(30)
-	err := DB().Where("etime < ?", time.Now().Unix()+buf).Delete(new(AlertMute)).Error
-	if err != nil {
-		return nil, err
-	}
-
 	// get my cluster's mutes
 	session := DB().Model(&AlertMute{})
 	if cluster != "" {
@@ -156,7 +156,7 @@ func AlertMuteGetsByCluster(cluster string) ([]*AlertMute, error) {
 
 	var lst []*AlertMute
 	var mlst []*AlertMute
-	err = session.Find(&lst).Error
+	err := session.Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
