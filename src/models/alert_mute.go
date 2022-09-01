@@ -128,7 +128,7 @@ func AlertMuteDel(ids []int64) error {
 func AlertMuteStatistics(cluster string) (*Statistics, error) {
 	// clean expired first
 	buf := int64(30)
-	err := DB().Where("etime < ?", time.Now().Unix()+buf).Delete(new(AlertMute)).Error
+	err := DB().Where("etime < ?", time.Now().Unix()-buf).Delete(new(AlertMute)).Error
 	if err != nil {
 		return nil, err
 	}
