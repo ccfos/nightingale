@@ -50,6 +50,9 @@ func SendDingtalk(message DingtalkMessage) {
 		}
 
 		ur := "https://oapi.dingtalk.com/robot/send?access_token=" + u.Path
+		if strings.HasPrefix(message.Tokens[i], "https://") {
+			ur = message.Tokens[i]
+		}
 		body := dingtalk{
 			Msgtype: "markdown",
 			Markdown: dingtalkMarkdown{
@@ -66,7 +69,7 @@ func SendDingtalk(message DingtalkMessage) {
 			}
 		}
 
-		res, code, err := poster.PostJSON(ur, time.Second*5, body)
+		res, code, err := poster.PostJSON(ur, time.Second*5, body, 3)
 		if err != nil {
 			logger.Errorf("dingtalk_sender: result=fail url=%s code=%d error=%v response=%s", ur, code, err, string(res))
 		} else {

@@ -83,14 +83,15 @@ func (re *RecordingRule) Add() error {
 		return err
 	}
 
-	exists, err := RecordingRuleExists(0, re.GroupId, re.Cluster, re.Name)
-	if err != nil {
-		return err
-	}
-
-	if exists {
-		return errors.New("RecordingRule already exists")
-	}
+	// 由于实际场景中会出现name重复的recording rule，所以不需要检查重复
+	//exists, err := RecordingRuleExists(0, re.GroupId, re.Cluster, re.Name)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//if exists {
+	//	return errors.New("RecordingRule already exists")
+	//}
 
 	now := time.Now().Unix()
 	re.CreateAt = now
@@ -100,15 +101,16 @@ func (re *RecordingRule) Add() error {
 }
 
 func (re *RecordingRule) Update(ref RecordingRule) error {
-	if re.Name != ref.Name {
-		exists, err := RecordingRuleExists(re.Id, re.GroupId, re.Cluster, ref.Name)
-		if err != nil {
-			return err
-		}
-		if exists {
-			return errors.New("RecordingRule already exists")
-		}
-	}
+	// 由于实际场景中会出现name重复的recording rule，所以不需要检查重复
+	//if re.Name != ref.Name {
+	//	exists, err := RecordingRuleExists(re.Id, re.GroupId, re.Cluster, ref.Name)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	if exists {
+	//		return errors.New("RecordingRule already exists")
+	//	}
+	//}
 
 	ref.FE2DB()
 	ref.Id = re.Id

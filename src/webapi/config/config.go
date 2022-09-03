@@ -14,6 +14,7 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/logx"
 	"github.com/didi/nightingale/v5/src/pkg/oidcc"
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
+	"github.com/didi/nightingale/v5/src/pkg/tls"
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
@@ -77,6 +78,7 @@ func MustLoad(fpaths ...string) {
 type Config struct {
 	RunMode              string
 	I18N                 string
+	I18NHeaderKey        string
 	AdminRole            string
 	MetricsYamlFile      string
 	BuiltinAlertsDir     string
@@ -97,6 +99,7 @@ type Config struct {
 	Clusters             []ClusterOptions
 	Ibex                 Ibex
 	OIDC                 oidcc.Config
+	TargetMetrics        map[string]string
 }
 
 type ClusterOptions struct {
@@ -110,7 +113,9 @@ type ClusterOptions struct {
 
 	Timeout     int64
 	DialTimeout int64
-	KeepAlive   int64
+
+	UseTLS bool
+	tls.ClientConfig
 
 	MaxIdleConnsPerHost int
 }

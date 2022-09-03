@@ -79,9 +79,14 @@ func syncBusiGroups() error {
 		return errors.WithMessage(err, "failed to exec BusiGroupStatistics")
 	}
 
+	clusterName := config.ReaderClient.GetClusterName()
+
 	if !BusiGroupCache.StatChanged(stat.Total, stat.LastUpdated) {
-		promstat.GaugeCronDuration.WithLabelValues(config.C.ClusterName, "sync_busi_groups").Set(0)
-		promstat.GaugeSyncNumber.WithLabelValues(config.C.ClusterName, "sync_busi_groups").Set(0)
+		if clusterName != "" {
+			promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_busi_groups").Set(0)
+			promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_busi_groups").Set(0)
+		}
+
 		logger.Debug("busi_group not changed")
 		return nil
 	}
@@ -94,8 +99,11 @@ func syncBusiGroups() error {
 	BusiGroupCache.Set(m, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	promstat.GaugeCronDuration.WithLabelValues(config.C.ClusterName, "sync_busi_groups").Set(float64(ms))
-	promstat.GaugeSyncNumber.WithLabelValues(config.C.ClusterName, "sync_busi_groups").Set(float64(len(m)))
+	if clusterName != "" {
+		promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_busi_groups").Set(float64(ms))
+		promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_busi_groups").Set(float64(len(m)))
+	}
+
 	logger.Infof("timer: sync busi groups done, cost: %dms, number: %d", ms, len(m))
 
 	return nil

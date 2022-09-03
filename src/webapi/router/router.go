@@ -31,6 +31,25 @@ func stat() gin.HandlerFunc {
 	}
 }
 
+func languageDetector() gin.HandlerFunc {
+	headerKey := config.C.I18NHeaderKey
+	return func(c *gin.Context) {
+		if headerKey != "" {
+			lang := c.GetHeader(headerKey)
+			if lang != "" {
+				if strings.HasPrefix(lang, "*") || strings.HasPrefix(lang, "zh") {
+					c.Request.Header.Set("X-Language", "zh")
+				} else if strings.HasPrefix(lang, "en") {
+					c.Request.Header.Set("X-Language", "en")
+				} else {
+					c.Request.Header.Set("X-Language", lang)
+				}
+			}
+		}
+		c.Next()
+	}
+}
+
 func New(version string) *gin.Engine {
 	gin.SetMode(config.C.RunMode)
 
@@ -41,6 +60,7 @@ func New(version string) *gin.Engine {
 	r := gin.New()
 
 	r.Use(stat())
+	r.Use(languageDetector())
 	r.Use(aop.Recovery())
 
 	// whether print access log
@@ -98,14 +118,11 @@ func configRoute(r *gin.Engine, version string) {
 
 	pages := r.Group(pagesPrefix)
 	{
-
 		if config.C.AnonymousAccess.PromQuerier {
 			pages.Any("/prometheus/*url", prometheusProxy)
-
 			pages.POST("/query-range-batch", promBatchQueryRange)
 		} else {
 			pages.Any("/prometheus/*url", auth(), prometheusProxy)
-
 			pages.POST("/query-range-batch", auth(), promBatchQueryRange)
 		}
 
@@ -179,6 +196,7 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/busi-group/:id/board/:bid/clone", auth(), user(), perm("/dashboards/add"), bgrw(), boardClone)
 
 		pages.GET("/board/:bid", auth(), user(), boardGet)
+		pages.GET("/board/:bid/pure", boardPureGet)
 		pages.PUT("/board/:bid", auth(), user(), perm("/dashboards/put"), boardPut)
 		pages.PUT("/board/:bid/configs", auth(), user(), perm("/dashboards/put"), boardPutConfigs)
 		pages.DELETE("/boards", auth(), user(), perm("/dashboards/del"), boardDel)
@@ -272,6 +290,9 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/busi-group/:id/tasks", auth(), user(), perm("/job-tasks/add"), bgrw(), taskAdd)
 		pages.GET("/busi-group/:id/task/*url", auth(), user(), perm("/job-tasks"), taskProxy)
 		pages.PUT("/busi-group/:id/task/*url", auth(), user(), perm("/job-tasks/put"), bgrw(), taskProxy)
+
+		pages.GET("/servers", auth(), admin(), serversGet)
+		pages.PUT("/server/:id", auth(), admin(), serverBindCluster)
 	}
 
 	service := r.Group("/v1/n9e")
@@ -300,5 +321,6 @@ func configRoute(r *gin.Engine, version string) {
 
 		service.GET("/alert-cur-events", alertCurEventsList)
 		service.GET("/alert-his-events", alertHisEventsList)
+		service.GET("/alert-his-event/:eid", alertHisEventGet)
 	}
 }

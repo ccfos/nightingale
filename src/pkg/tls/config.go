@@ -12,25 +12,26 @@ import (
 
 // ClientConfig represents the standard client TLS config.
 type ClientConfig struct {
-	TLSCA              string
-	TLSCert            string
-	TLSKey             string
-	TLSKeyPwd          string
-	InsecureSkipVerify bool
-	ServerName         string
-	TLSMinVersion      string
+	TLSCA              string `toml:"tls_ca"`
+	TLSCert            string `toml:"tls_cert"`
+	TLSKey             string `toml:"tls_key"`
+	TLSKeyPwd          string `toml:"tls_key_pwd"`
+	InsecureSkipVerify bool   `toml:"insecure_skip_verify"`
+	ServerName         string `toml:"tls_server_name"`
+	TLSMinVersion      string `toml:"tls_min_version"`
+	TLSMaxVersion      string `toml:"tls_max_version"`
 }
 
 // ServerConfig represents the standard server TLS config.
 type ServerConfig struct {
-	TLSCert            string
-	TLSKey             string
-	TLSKeyPwd          string
-	TLSAllowedCACerts  []string
-	TLSCipherSuites    []string
-	TLSMinVersion      string
-	TLSMaxVersion      string
-	TLSAllowedDNSNames []string
+	TLSCert            string   `toml:"tls_cert"`
+	TLSKey             string   `toml:"tls_key"`
+	TLSKeyPwd          string   `toml:"tls_key_pwd"`
+	TLSAllowedCACerts  []string `toml:"tls_allowed_cacerts"`
+	TLSCipherSuites    []string `toml:"tls_cipher_suites"`
+	TLSMinVersion      string   `toml:"tls_min_version"`
+	TLSMaxVersion      string   `toml:"tls_max_version"`
+	TLSAllowedDNSNames []string `toml:"tls_allowed_dns_names"`
 }
 
 // TLSConfig returns a tls.Config, may be nil without error if TLS is not
@@ -68,6 +69,16 @@ func (c *ClientConfig) TLSConfig() (*tls.Config, error) {
 		tlsConfig.MinVersion = tls.VersionTLS12
 	} else if c.TLSMinVersion == "1.3" {
 		tlsConfig.MinVersion = tls.VersionTLS13
+	}
+
+	if c.TLSMaxVersion == "1.0" {
+		tlsConfig.MaxVersion = tls.VersionTLS10
+	} else if c.TLSMaxVersion == "1.1" {
+		tlsConfig.MaxVersion = tls.VersionTLS11
+	} else if c.TLSMaxVersion == "1.2" {
+		tlsConfig.MaxVersion = tls.VersionTLS12
+	} else if c.TLSMaxVersion == "1.3" {
+		tlsConfig.MaxVersion = tls.VersionTLS13
 	}
 
 	return tlsConfig, nil

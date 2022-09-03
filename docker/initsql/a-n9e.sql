@@ -41,10 +41,12 @@ CREATE TABLE `user_group` (
 insert into user_group(id, name, create_at, create_by, update_at, update_by) values(1, 'demo-root-group', unix_timestamp(now()), 'root', unix_timestamp(now()), 'root');
 
 CREATE TABLE `user_group_member` (
+    `id` bigint unsigned not null auto_increment,
     `group_id` bigint unsigned not null,
     `user_id` bigint unsigned not null,
     KEY (`group_id`),
-    KEY (`user_id`)
+    KEY (`user_id`),
+    PRIMARY KEY(`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 insert into user_group_member(group_id, user_id) values(1, 1);
@@ -52,7 +54,7 @@ insert into user_group_member(group_id, user_id) values(1, 1);
 CREATE TABLE `configs` (
     `id` bigint unsigned not null auto_increment,
     `ckey` varchar(191) not null,
-    `cval` varchar(1024) not null default '',
+    `cval` varchar(4096) not null default '',
     PRIMARY KEY (`id`),
     UNIQUE KEY (`ckey`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
@@ -70,10 +72,12 @@ insert into `role`(name, note) values('Standard', 'Ordinary user role');
 insert into `role`(name, note) values('Guest', 'Readonly user role');
 
 CREATE TABLE `role_operation`(
+    `id` bigint unsigned not null auto_increment,
     `role_name` varchar(128) not null,
     `operation` varchar(191) not null,
     KEY (`role_name`),
-    KEY (`operation`)
+    KEY (`operation`),
+    PRIMARY KEY(`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 -- Admin is special, who has no concrete operation but can do anything.
@@ -226,6 +230,7 @@ CREATE TABLE `chart_share` (
 CREATE TABLE `alert_rule` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
+    `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `name` varchar(255) not null,
     `note` varchar(1024) not null default '',
@@ -264,6 +269,7 @@ CREATE TABLE `alert_mute` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
     `prod` varchar(255) not null default '',
+    `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `tags` varchar(4096) not null default '' comment 'json,map,tagkey->regexp|value',
     `cause` varchar(255) not null default '',
@@ -279,6 +285,7 @@ CREATE TABLE `alert_mute` (
 CREATE TABLE `alert_subscribe` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
+    `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `rule_id` bigint not null default 0,
     `tags` varchar(4096) not null default '' comment 'json,map,tagkey->regexp|value',
@@ -380,6 +387,7 @@ insert into alert_aggr_view(name, rule, cate) values('By RuleName', 'field:rule_
 
 CREATE TABLE `alert_cur_event` (
     `id` bigint unsigned not null comment 'use alert_his_event.id',
+    `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `group_id` bigint unsigned not null comment 'busi group id of rule',
     `group_name` varchar(255) not null default '' comment 'busi group name',
@@ -402,6 +410,7 @@ CREATE TABLE `alert_cur_event` (
     `notify_cur_number` int not null default 0 comment '',
     `target_ident` varchar(191) not null default '' comment 'target ident, also in tags',
     `target_note` varchar(191) not null default '' comment 'target note',
+    `first_trigger_time` bigint,
     `trigger_time` bigint not null,
     `trigger_value` varchar(255) not null,
     `tags` varchar(1024) not null default '' comment 'merge data_tags rule_tags, split by ,,',
@@ -415,6 +424,7 @@ CREATE TABLE `alert_cur_event` (
 CREATE TABLE `alert_his_event` (
     `id` bigint unsigned not null AUTO_INCREMENT,
     `is_recovered` tinyint(1) not null,
+    `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `group_id` bigint unsigned not null comment 'busi group id of rule',
     `group_name` varchar(255) not null default '' comment 'busi group name',
@@ -436,6 +446,7 @@ CREATE TABLE `alert_his_event` (
     `notify_cur_number` int not null default 0 comment '',
     `target_ident` varchar(191) not null default '' comment 'target ident, also in tags',
     `target_note` varchar(191) not null default '' comment 'target note',
+    `first_trigger_time` bigint,
     `trigger_time` bigint not null,
     `trigger_value` varchar(255) not null,
     `recover_time` bigint not null default 0,
@@ -497,4 +508,14 @@ CREATE TABLE `task_record`
     PRIMARY KEY (`id`),
     KEY (`create_at`, `group_id`),
     KEY (`create_by`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `alerting_engines`
+(
+    `id` int unsigned NOT NULL AUTO_INCREMENT,
+    `instance` varchar(128) not null default '' comment 'instance identification, e.g. 10.9.0.9:9090',
+    `cluster` varchar(128) not null default '' comment 'target reader cluster',
+    `clock` bigint not null,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY (`instance`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

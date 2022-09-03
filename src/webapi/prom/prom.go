@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/pkg/prom"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/prometheus/client_golang/api"
@@ -29,10 +30,44 @@ type ClustersType struct {
 	mutex *sync.RWMutex
 }
 
+type PromOption struct {
+	Url                 string
+	User                string
+	Pass                string
+	Headers             []string
+	Timeout             int64
+	DialTimeout         int64
+	MaxIdleConnsPerHost int
+}
+
 func (cs *ClustersType) Put(name string, cluster *ClusterType) {
 	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+
 	cs.datas[name] = cluster
-	cs.mutex.Unlock()
+
+	// 把配置信息写入DB一份，这样n9e-server就可以直接从DB读取了
+	po := PromOption{
+		Url:                 cluster.Opts.Prom,
+		User:                cluster.Opts.BasicAuthUser,
+		Pass:                cluster.Opts.BasicAuthPass,
+		Headers:             cluster.Opts.Headers,
+		Timeout:             cluster.Opts.Timeout,
+		DialTimeout:         cluster.Opts.DialTimeout,
+		MaxIdleConnsPerHost: cluster.Opts.MaxIdleConnsPerHost,
+	}
+
+	bs, err := json.Marshal(po)
+	if err != nil {
+		logger.Fatal("failed to marshal PromOption:", err)
+		return
+	}
+
+	key := "prom." + name + ".option"
+	err = models.ConfigsSet(key, string(bs))
+	if err != nil {
+		logger.Fatal("failed to set PromOption ", key, " to database, error: ", err)
+	}
 }
 
 func (cs *ClustersType) Get(name string) (*ClusterType, bool) {
@@ -65,6 +100,9 @@ func initClustersFromConfig() error {
 
 	for i := 0; i < len(opts); i++ {
 		cluster := newClusterByOption(opts[i])
+		if cluster == nil {
+			continue
+		}
 		Clusters.Put(opts[i].Name, cluster)
 	}
 
@@ -165,7 +203,17 @@ func loadClustersFromAPI() {
 				MaxIdleConnsPerHost: 32,
 			}
 
-			Clusters.Put(item.Name, newClusterByOption(opt))
+			if strings.HasPrefix(opt.Prom, "https") {
+				opt.UseTLS = true
+				opt.InsecureSkipVerify = true
+			}
+
+			cluster := newClusterByOption(opt)
+			if cluster == nil {
+				continue
+			}
+
+			Clusters.Put(item.Name, cluster)
 			continue
 		}
 	}
@@ -173,13 +221,21 @@ func loadClustersFromAPI() {
 
 func newClusterByOption(opt config.ClusterOptions) *ClusterType {
 	transport := &http.Transport{
-		// TLSClientConfig: tlsConfig,
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			Timeout: time.Duration(opt.DialTimeout) * time.Millisecond,
 		}).DialContext,
 		ResponseHeaderTimeout: time.Duration(opt.Timeout) * time.Millisecond,
 		MaxIdleConnsPerHost:   opt.MaxIdleConnsPerHost,
+	}
+
+	if opt.UseTLS {
+		tlsConfig, err := opt.TLSConfig()
+		if err != nil {
+			logger.Errorf("new cluster %s fail: %v", opt.Name, err)
+			return nil
+		}
+		transport.TLSClientConfig = tlsConfig
 	}
 
 	cli, err := api.NewClient(api.Config{
@@ -189,6 +245,7 @@ func newClusterByOption(opt config.ClusterOptions) *ClusterType {
 
 	if err != nil {
 		logger.Errorf("new client fail: %v", err)
+		return nil
 	}
 
 	cluster := &ClusterType{

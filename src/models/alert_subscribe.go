@@ -14,6 +14,7 @@ import (
 type AlertSubscribe struct {
 	Id               int64        `json:"id" gorm:"primaryKey"`
 	GroupId          int64        `json:"group_id"`
+	Cate             string       `json:"cate"`
 	Cluster          string       `json:"cluster"` // take effect by clusters, seperated by space
 	RuleId           int64        `json:"rule_id"`
 	RuleName         string       `json:"rule_name" gorm:"-"` // for fe
@@ -88,12 +89,12 @@ func (s *AlertSubscribe) Parse() error {
 	}
 
 	for i := 0; i < len(s.ITags); i++ {
-		if s.ITags[i].Func == "=~" {
+		if s.ITags[i].Func == "=~" || s.ITags[i].Func == "!~" {
 			s.ITags[i].Regexp, err = regexp.Compile(s.ITags[i].Value)
 			if err != nil {
 				return err
 			}
-		} else if s.ITags[i].Func == "in" {
+		} else if s.ITags[i].Func == "in" || s.ITags[i].Func == "not in" {
 			arr := strings.Fields(s.ITags[i].Value)
 			s.ITags[i].Vset = make(map[string]struct{})
 			for j := 0; j < len(arr); j++ {

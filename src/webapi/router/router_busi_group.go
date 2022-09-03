@@ -69,6 +69,12 @@ func busiGroupMemberAdd(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	targetbg := c.MustGet("busi_group").(*models.BusiGroup)
 
+	for i := 0; i < len(members); i++ {
+		if members[i].BusiGroupId != targetbg.Id {
+			ginx.Bomb(http.StatusBadRequest, "business group id invalid")
+		}
+	}
+
 	ginx.NewRender(c).Message(targetbg.AddMembers(members, username))
 }
 
@@ -78,6 +84,12 @@ func busiGroupMemberDel(c *gin.Context) {
 
 	username := c.MustGet("username").(string)
 	targetbg := c.MustGet("busi_group").(*models.BusiGroup)
+
+	for i := 0; i < len(members); i++ {
+		if members[i].BusiGroupId != targetbg.Id {
+			ginx.Bomb(http.StatusBadRequest, "business group id invalid")
+		}
+	}
 
 	ginx.NewRender(c).Message(targetbg.DelMembers(members, username))
 }

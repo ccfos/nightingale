@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,6 +32,7 @@ func loginPost(c *gin.Context) {
 		if config.C.LDAP.Enable {
 			user, err = models.LdapLogin(f.Username, f.Password)
 			if err != nil {
+				logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
 				ginx.NewRender(c).Message(err)
 				return
 			}
@@ -112,6 +114,24 @@ func refreshPost(c *gin.Context) {
 		if !ok {
 			// Theoretically impossible
 			ginx.NewRender(c, http.StatusUnauthorized).Message("failed to parse user_identity from jwt")
+			return
+		}
+
+		userid, err := strconv.ParseInt(strings.Split(userIdentity, "-")[0], 10, 64)
+		if err != nil {
+			ginx.NewRender(c, http.StatusUnauthorized).Message("failed to parse user_identity from jwt")
+			return
+		}
+
+		u, err := models.UserGetById(userid)
+		if err != nil {
+			ginx.NewRender(c, http.StatusInternalServerError).Message("failed to query user by id")
+			return
+		}
+
+		if u == nil {
+			// user already deleted
+			ginx.NewRender(c, http.StatusUnauthorized).Message("user already deleted")
 			return
 		}
 

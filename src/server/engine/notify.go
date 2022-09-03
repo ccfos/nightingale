@@ -9,9 +9,8 @@ import (
 	"net/http"
 	"os/exec"
 	"path"
-	"plugin"
-	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -22,6 +21,7 @@ import (
 	"github.com/toolkits/pkg/slice"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/notifier"
 	"github.com/didi/nightingale/v5/src/pkg/sys"
 	"github.com/didi/nightingale/v5/src/pkg/tplx"
 	"github.com/didi/nightingale/v5/src/server/common/sender"
@@ -30,9 +30,12 @@ import (
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
-var tpls = make(map[string]*template.Template)
+var (
+	tpls   map[string]*template.Template
+	rwLock sync.RWMutex
+)
 
-func initTpls() error {
+func reloadTpls() error {
 	if config.C.Alerting.TemplatesDir == "" {
 		config.C.Alerting.TemplatesDir = path.Join(runner.Cwd, "etc", "template")
 	}
@@ -57,6 +60,7 @@ func initTpls() error {
 		return errors.New("no tpl files under " + config.C.Alerting.TemplatesDir)
 	}
 
+	tmpTpls := make(map[string]*template.Template)
 	for i := 0; i < len(tplFiles); i++ {
 		tplpath := path.Join(config.C.Alerting.TemplatesDir, tplFiles[i])
 
@@ -65,9 +69,12 @@ func initTpls() error {
 			return errors.WithMessage(err, "failed to parse tpl: "+tplpath)
 		}
 
-		tpls[tplFiles[i]] = tpl
+		tmpTpls[tplFiles[i]] = tpl
 	}
 
+	rwLock.Lock()
+	tpls = tmpTpls
+	rwLock.Unlock()
 	return nil
 }
 
@@ -79,6 +86,9 @@ type Notice struct {
 func genNotice(event *models.AlertCurEvent) Notice {
 	// build notice body with templates
 	ntpls := make(map[string]string)
+
+	rwLock.RLock()
+	defer rwLock.RUnlock()
 	for filename, tpl := range tpls {
 		var body bytes.Buffer
 		if err := tpl.Execute(&body, event); err != nil {
@@ -91,19 +101,19 @@ func genNotice(event *models.AlertCurEvent) Notice {
 	return Notice{Event: event, Tpls: ntpls}
 }
 
-func alertingRedisPub(bs []byte) {
+func alertingRedisPub(clusterName string, bs []byte) {
+	channelKey := config.C.Alerting.RedisPub.ChannelPrefix + clusterName
 	// pub all alerts to redis
 	if config.C.Alerting.RedisPub.Enable {
-		err := storage.Redis.Publish(context.Background(), config.C.Alerting.RedisPub.ChannelKey, bs).Err()
+		err := storage.Redis.Publish(context.Background(), channelKey, bs).Err()
 		if err != nil {
-			logger.Errorf("event_notify: redis publish %s err: %v", config.C.Alerting.RedisPub.ChannelKey, err)
+			logger.Errorf("event_notify: redis publish %s err: %v", channelKey, err)
 		}
 	}
 }
 
 func handleNotice(notice Notice, bs []byte) {
 	alertingCallScript(bs)
-
 	alertingCallPlugin(bs)
 
 	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
@@ -115,6 +125,7 @@ func handleNotice(notice Notice, bs []byte) {
 	wecomset := make(map[string]struct{})
 	dingtalkset := make(map[string]struct{})
 	feishuset := make(map[string]struct{})
+	mmset := make(map[string]struct{})
 
 	for _, user := range notice.Event.NotifyUsersObj {
 		if user.Email != "" {
@@ -144,6 +155,11 @@ func handleNotice(notice Notice, bs []byte) {
 		ret = gjson.GetBytes(bs, "feishu_robot_token")
 		if ret.Exists() {
 			feishuset[ret.String()] = struct{}{}
+		}
+
+		ret = gjson.GetBytes(bs, "mm_webhook_url")
+		if ret.Exists() {
+			mmset[ret.String()] = struct{}{}
 		}
 	}
 
@@ -226,6 +242,23 @@ func handleNotice(notice Notice, bs []byte) {
 				AtMobiles: phones,
 				Tokens:    StringSetKeys(feishuset),
 			})
+		case "mm":
+			if len(mmset) == 0 {
+				continue
+			}
+			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "mm") {
+				continue
+			}
+
+			content, has := notice.Tpls["mm.tpl"]
+			if !has {
+				content = "mm.tpl not found"
+			}
+
+			sender.SendMM(sender.MatterMostMessage{
+				Text:   content,
+				Tokens: StringSetKeys(mmset),
+			})
 		}
 	}
 }
@@ -240,7 +273,7 @@ func notify(event *models.AlertCurEvent) {
 		return
 	}
 
-	alertingRedisPub(stdinBytes)
+	alertingRedisPub(event.Cluster, stdinBytes)
 	alertingWebhook(event)
 
 	handleNotice(notice, stdinBytes)
@@ -398,11 +431,6 @@ func alertingCallScript(stdinBytes []byte) {
 	logger.Infof("event_notify: exec %s output: %s", fpath, buf.String())
 }
 
-type Notifier interface {
-	Descript() string
-	Notify([]byte)
-}
-
 // call notify.so via golang plugin build
 // ig. etc/script/notify/notify.so
 func alertingCallPlugin(stdinBytes []byte) {
@@ -410,26 +438,8 @@ func alertingCallPlugin(stdinBytes []byte) {
 		return
 	}
 
-	if runtime.GOOS == "windows" {
-		logger.Errorf("call notify plugin on unsupported os: %s", runtime.GOOS)
-		return
-	}
-
-	p, err := plugin.Open(config.C.Alerting.CallPlugin.PluginPath)
-	if err != nil {
-		logger.Errorf("failed to open notify plugin: %v", err)
-		return
-	}
-	caller, err := p.Lookup(config.C.Alerting.CallPlugin.Caller)
-	if err != nil {
-		logger.Errorf("failed to load caller: %v", err)
-		return
-	}
-	notifier, ok := caller.(Notifier)
-	if !ok {
-		logger.Errorf("notifier interface not implemented): %v", err)
-		return
-	}
-	notifier.Notify(stdinBytes)
-	logger.Debugf("alertingCallPlugin done. %s", notifier.Descript())
+	logger.Debugf("alertingCallPlugin begin")
+	logger.Debugf("payload:", string(stdinBytes))
+	notifier.Instance.Notify(stdinBytes)
+	logger.Debugf("alertingCallPlugin done")
 }

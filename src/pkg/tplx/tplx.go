@@ -2,11 +2,13 @@ package tplx
 
 import (
 	"html/template"
+	"net/url"
 	"regexp"
 	"strings"
 )
 
 var TemplateFuncMap = template.FuncMap{
+	"escape":              url.PathEscape,
 	"unescaped":           Unescaped,
 	"urlconvert":          Urlconvert,
 	"timeformat":          Timeformat,

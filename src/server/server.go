@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/toolkits/pkg/i18n"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
@@ -17,7 +18,6 @@ import (
 	"github.com/didi/nightingale/v5/src/server/idents"
 	"github.com/didi/nightingale/v5/src/server/memsto"
 	"github.com/didi/nightingale/v5/src/server/naming"
-	"github.com/didi/nightingale/v5/src/server/reader"
 	"github.com/didi/nightingale/v5/src/server/router"
 	"github.com/didi/nightingale/v5/src/server/stat"
 	"github.com/didi/nightingale/v5/src/server/usage"
@@ -75,6 +75,7 @@ EXIT:
 			break EXIT
 		case syscall.SIGHUP:
 			// reload configuration?
+			reload()
 		default:
 			break EXIT
 		}
@@ -123,7 +124,7 @@ func (s Server) initialize() (func(), error) {
 	}
 
 	// init prometheus remote reader
-	if err = reader.Init(config.C.Reader); err != nil {
+	if err = config.InitReader(); err != nil {
 		return fns.Ret(), err
 	}
 
@@ -143,7 +144,7 @@ func (s Server) initialize() (func(), error) {
 	stat.Init()
 
 	// init http server
-	r := router.New(s.Version)
+	r := router.New(s.Version, reload)
 	httpClean := httpx.Init(config.C.HTTP, r)
 	fns.Add(httpClean)
 
@@ -172,4 +173,10 @@ func (fs *Functions) Ret() func() {
 			fs.List[i]()
 		}
 	}
+}
+
+func reload() {
+	logger.Info("start reload configs")
+	engine.Reload()
+	logger.Info("reload configs finished")
 }

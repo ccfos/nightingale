@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
@@ -24,15 +25,45 @@ type WriterType struct {
 	Client api.Client
 }
 
+func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSeries {
+	ritems := make([]*prompb.TimeSeries, 0, len(items))
+	for _, item := range items {
+		lbls := models.Process(item.Labels, w.Opts.WriteRelabels...)
+		if len(lbls) == 0 {
+			continue
+		}
+		ritems = append(ritems, item)
+	}
+	return ritems
+}
+
 func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[string]string) {
+	if len(items) == 0 {
+		return
+	}
+
+	items = w.writeRelabel(items)
 	if len(items) == 0 {
 		return
 	}
 
 	start := time.Now()
 	defer func() {
-		promstat.ForwardDuration.WithLabelValues(config.C.ClusterName, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
+		cn := config.ReaderClient.GetClusterName()
+		if cn != "" {
+			promstat.ForwardDuration.WithLabelValues(cn, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
+		}
 	}()
+
+	if config.C.ForceUseServerTS {
+		ts := start.UnixMilli()
+		for i := 0; i < len(items); i++ {
+			if len(items[i].Samples) == 0 {
+				continue
+			}
+			items[i].Samples[0].Timestamp = ts
+		}
+	}
 
 	req := &prompb.WriteRequest{
 		Timeseries: items,
@@ -222,11 +253,16 @@ func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 }
 
 func reportChanSize() {
+	clusterName := config.ReaderClient.GetClusterName()
+	if clusterName == "" {
+		return
+	}
+
 	for {
 		time.Sleep(time.Second * 3)
 		for i, c := range Writers.chans {
 			size := len(c)
-			promstat.GaugeSampleQueueSize.WithLabelValues(config.C.ClusterName, fmt.Sprint(i)).Set(float64(size))
+			promstat.GaugeSampleQueueSize.WithLabelValues(clusterName, fmt.Sprint(i)).Set(float64(size))
 		}
 	}
 }

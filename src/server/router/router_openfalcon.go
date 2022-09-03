@@ -214,7 +214,11 @@ func falconPush(c *gin.Context) {
 	}
 
 	if succ > 0 {
-		promstat.CounterSampleTotal.WithLabelValues(config.C.ClusterName, "openfalcon").Add(float64(succ))
+		cn := config.ReaderClient.GetClusterName()
+		if cn != "" {
+			promstat.CounterSampleTotal.WithLabelValues(cn, "openfalcon").Add(float64(succ))
+		}
+
 		idents.Idents.MSet(ids)
 	}
 

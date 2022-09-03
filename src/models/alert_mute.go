@@ -13,15 +13,16 @@ import (
 
 type TagFilter struct {
 	Key    string              `json:"key"`   // tag key
-	Func   string              `json:"func"`  // == | =~ | in
+	Func   string              `json:"func"`  // `==` | `=~` | `in` | `!=` | `!~` | `not in`
 	Value  string              `json:"value"` // tag value
-	Regexp *regexp.Regexp      // parse value to regexp if func = '=~'
-	Vset   map[string]struct{} // parse value to regexp if func = 'in'
+	Regexp *regexp.Regexp      // parse value to regexp if func = '=~' or '!~'
+	Vset   map[string]struct{} // parse value to regexp if func = 'in' or 'not in'
 }
 
 type AlertMute struct {
 	Id       int64        `json:"id" gorm:"primaryKey"`
 	GroupId  int64        `json:"group_id"`
+	Cate     string       `json:"cate"`
 	Prod     string       `json:"prod"`    // product empty means n9e
 	Cluster  string       `json:"cluster"` // take effect by clusters, seperated by space
 	Tags     ormx.JSONArr `json:"tags"`
@@ -71,7 +72,7 @@ func (m *AlertMute) Verify() error {
 	}
 
 	if m.Etime <= m.Btime {
-		return fmt.Errorf("Oops... etime(%d) <= btime(%d)", m.Etime, m.Btime)
+		return fmt.Errorf("oops... etime(%d) <= btime(%d)", m.Etime, m.Btime)
 	}
 
 	if err := m.Parse(); err != nil {
@@ -125,13 +126,20 @@ func AlertMuteDel(ids []int64) error {
 }
 
 func AlertMuteStatistics(cluster string) (*Statistics, error) {
+	// clean expired first
+	buf := int64(30)
+	err := DB().Where("etime < ?", time.Now().Unix()-buf).Delete(new(AlertMute)).Error
+	if err != nil {
+		return nil, err
+	}
+
 	session := DB().Model(&AlertMute{}).Select("count(*) as total", "max(create_at) as last_updated")
 	if cluster != "" {
 		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var stats []*Statistics
-	err := session.Find(&stats).Error
+	err = session.Find(&stats).Error
 	if err != nil {
 		return nil, err
 	}
@@ -140,13 +148,6 @@ func AlertMuteStatistics(cluster string) (*Statistics, error) {
 }
 
 func AlertMuteGetsByCluster(cluster string) ([]*AlertMute, error) {
-	// clean expired first
-	buf := int64(30)
-	err := DB().Where("etime < ?", time.Now().Unix()+buf).Delete(new(AlertMute)).Error
-	if err != nil {
-		return nil, err
-	}
-
 	// get my cluster's mutes
 	session := DB().Model(&AlertMute{})
 	if cluster != "" {
@@ -155,7 +156,7 @@ func AlertMuteGetsByCluster(cluster string) ([]*AlertMute, error) {
 
 	var lst []*AlertMute
 	var mlst []*AlertMute
-	err = session.Find(&lst).Error
+	err := session.Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}

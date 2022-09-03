@@ -41,15 +41,19 @@ func toRedis() {
 		return
 	}
 
+	if config.ReaderClient.IsNil() {
+		return
+	}
+
 	now := time.Now().Unix()
 
 	// clean old idents
 	for key, at := range items {
-		if at.(int64) < now-10 {
+		if at.(int64) < now-config.C.NoData.Interval {
 			Idents.Remove(key)
 		} else {
 			// use now as timestamp to redis
-			err := storage.Redis.HSet(context.Background(), redisKey(config.C.ClusterName), key, now).Err()
+			err := storage.Redis.HSet(context.Background(), redisKey(config.ReaderClient.GetClusterName()), key, now).Err()
 			if err != nil {
 				logger.Errorf("redis hset idents failed: %v", err)
 			}
@@ -103,8 +107,14 @@ func pushMetrics() {
 		return
 	}
 
+	clusterName := config.ReaderClient.GetClusterName()
+	if clusterName == "" {
+		logger.Warning("cluster name is blank")
+		return
+	}
+
 	// get all the target heartbeat timestamp
-	ret, err := storage.Redis.HGetAll(context.Background(), redisKey(config.C.ClusterName)).Result()
+	ret, err := storage.Redis.HGetAll(context.Background(), redisKey(clusterName)).Result()
 	if err != nil {
 		logger.Errorf("handle_idents: redis hgetall fail: %v", err)
 		return
@@ -121,7 +131,7 @@ func pushMetrics() {
 		}
 
 		if now-clock > dur {
-			clearDeadIdent(context.Background(), config.C.ClusterName, ident)
+			clearDeadIdent(context.Background(), clusterName, ident)
 		} else {
 			actives[ident] = struct{}{}
 		}
@@ -153,7 +163,7 @@ func pushMetrics() {
 		if !has {
 			// target not exists
 			target = &models.Target{
-				Cluster:  config.C.ClusterName,
+				Cluster:  clusterName,
 				Ident:    active,
 				Tags:     "",
 				TagsJSON: []string{},
