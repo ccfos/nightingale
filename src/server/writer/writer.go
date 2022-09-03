@@ -55,6 +55,16 @@ func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[
 		}
 	}()
 
+	if config.C.ForceUseServerTS {
+		ts := start.UnixMilli()
+		for i := 0; i < len(items); i++ {
+			if len(items[i].Samples) == 0 {
+				continue
+			}
+			items[i].Samples[0].Timestamp = ts
+		}
+	}
+
 	req := &prompb.WriteRequest{
 		Timeseries: items,
 	}

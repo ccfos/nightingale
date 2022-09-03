@@ -50,6 +50,9 @@ func SendDingtalk(message DingtalkMessage) {
 		}
 
 		ur := "https://oapi.dingtalk.com/robot/send?access_token=" + u.Path
+		if strings.HasPrefix(message.Tokens[i], "https://") {
+			ur = message.Tokens[i]
+		}
 		body := dingtalk{
 			Msgtype: "markdown",
 			Markdown: dingtalkMarkdown{

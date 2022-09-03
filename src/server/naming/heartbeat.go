@@ -37,7 +37,12 @@ func loopHeartbeat() {
 }
 
 func heartbeat() error {
-	err := models.AlertingEngineHeartbeat(config.C.Heartbeat.Endpoint)
+	cluster := ""
+	if config.C.ReaderFrom == "config" {
+		cluster = config.C.ClusterName
+	}
+
+	err := models.AlertingEngineHeartbeat(config.C.Heartbeat.Endpoint, cluster)
 	if err != nil {
 		return err
 	}

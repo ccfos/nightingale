@@ -23,6 +23,11 @@ class Sender(object):
     def send_feishu(cls, payload):
         # already done in go code
         pass
+    
+    @classmethod
+    def send_mm(cls, payload):
+        # already done in go code
+        pass
 
     @classmethod
     def send_sms(cls, payload):

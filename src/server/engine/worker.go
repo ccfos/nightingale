@@ -358,7 +358,7 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vect
 		tagsMap["rulename"] = r.rule.Name
 
 		// handle target note
-		targetIdent, has := vectors[i].Labels["ident"]
+		targetIdent, has := tagsMap["ident"]
 		targetNote := ""
 		if has {
 			target, exists := memsto.TargetCache.Get(string(targetIdent))

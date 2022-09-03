@@ -25,6 +25,11 @@ class Sender(object):
         pass
 
     @classmethod
+    def send_mm(cls, payload):
+        # already done in go code
+        pass
+
+    @classmethod
     def send_sms(cls, payload):
         users = payload.get('event').get("notify_users_obj")
         phones = {}
