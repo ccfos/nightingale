@@ -269,6 +269,7 @@ CREATE TABLE `alert_mute` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
     `prod` varchar(255) not null default '',
+    `name` varchar(255) not null,
     `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `tags` varchar(4096) not null default '' comment 'json,map,tagkey->regexp|value',
@@ -277,6 +278,8 @@ CREATE TABLE `alert_mute` (
     `etime` bigint not null default 0 comment 'end time',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
     PRIMARY KEY (`id`),
     KEY (`create_at`),
     KEY (`group_id`)
