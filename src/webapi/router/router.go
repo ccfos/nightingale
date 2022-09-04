@@ -251,7 +251,7 @@ func configRoute(r *gin.Engine, version string) {
 		pages.GET("/busi-group/:id/alert-mutes", auth(), user(), perm("/alert-mutes"), bgro(), alertMuteGetsByBG)
 		pages.POST("/busi-group/:id/alert-mutes", auth(), user(), perm("/alert-mutes/add"), bgrw(), alertMuteAdd)
 		pages.DELETE("/busi-group/:id/alert-mutes", auth(), user(), perm("/alert-mutes/del"), bgrw(), alertMuteDel)
-		pages.PUT("/busi-group/:id/alert-mutes/:amid", auth(), user(), perm("/alert-mutes/put"), bgrw(), alertMutePutByFE)
+		pages.PUT("/busi-group/:id/alert-mute/:amid", auth(), user(), perm("/alert-mutes/put"), alertMutePutByFE)
 		pages.PUT("/busi-group/:id/alert-mutes/fields", auth(), user(), perm("/alert-mutes/put"), bgrw(), alertMutePutFields)
 
 		pages.GET("/busi-group/:id/alert-subscribes", auth(), user(), perm("/alert-subscribes"), bgro(), alertSubscribeGets)

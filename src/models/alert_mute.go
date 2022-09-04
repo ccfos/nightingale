@@ -22,7 +22,7 @@ type TagFilter struct {
 type AlertMute struct {
 	Id       int64        `json:"id" gorm:"primaryKey"`
 	GroupId  int64        `json:"group_id"`
-	Name     string       `json:"name"` // name
+	Note     string       `json:"note"`
 	Cate     string       `json:"cate"`
 	Prod     string       `json:"prod"`    // product empty means n9e
 	Cluster  string       `json:"cluster"` // take effect by clusters, seperated by space
@@ -30,7 +30,7 @@ type AlertMute struct {
 	Cause    string       `json:"cause"`
 	Btime    int64        `json:"btime"`
 	Etime    int64        `json:"etime"`
-	Disabled int          `json:"disabled"` // 0: enabled, 1: disabled
+	Disabled int          `json:"disabled"` // 0: enable	d, 1: disabled
 	CreateBy string       `json:"create_by"`
 	UpdateBy string       `json:"update_by"`
 	CreateAt int64        `json:"create_at"`
