@@ -22,6 +22,10 @@ func IsMuted(event *models.AlertCurEvent, clock ...int64) bool {
 }
 
 func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int64) bool {
+	if mute.Disabled == 1 {
+		return false
+	}
+
 	ts := event.TriggerTime
 	if len(clock) > 0 {
 		ts = clock[0]

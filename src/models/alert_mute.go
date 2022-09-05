@@ -22,6 +22,7 @@ type TagFilter struct {
 type AlertMute struct {
 	Id       int64        `json:"id" gorm:"primaryKey"`
 	GroupId  int64        `json:"group_id"`
+	Note     string       `json:"note"`
 	Cate     string       `json:"cate"`
 	Prod     string       `json:"prod"`    // product empty means n9e
 	Cluster  string       `json:"cluster"` // take effect by clusters, seperated by space
@@ -29,13 +30,34 @@ type AlertMute struct {
 	Cause    string       `json:"cause"`
 	Btime    int64        `json:"btime"`
 	Etime    int64        `json:"etime"`
+	Disabled int          `json:"disabled"` // 0: enabled, 1: disabled
 	CreateBy string       `json:"create_by"`
+	UpdateBy string       `json:"update_by"`
 	CreateAt int64        `json:"create_at"`
+	UpdateAt int64        `json:"update_at"`
 	ITags    []TagFilter  `json:"-" gorm:"-"` // inner tags
 }
 
 func (m *AlertMute) TableName() string {
 	return "alert_mute"
+}
+
+func AlertMuteGetById(id int64) (*AlertMute, error) {
+	return AlertMuteGet("id=?", id)
+}
+
+func AlertMuteGet(where string, args ...interface{}) (*AlertMute, error) {
+	var lst []*AlertMute
+	err := DB().Where(where, args...).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(lst) == 0 {
+		return nil, nil
+	}
+
+	return lst[0], nil
 }
 
 func AlertMuteGets(prods []string, bgid int64, query string) (lst []AlertMute, err error) {
@@ -116,6 +138,25 @@ func (m *AlertMute) Add() error {
 	}
 	m.CreateAt = time.Now().Unix()
 	return Insert(m)
+}
+
+func (m *AlertMute) Update(arm AlertMute) error {
+
+	arm.Id = m.Id
+	arm.GroupId = m.GroupId
+	arm.CreateAt = m.CreateAt
+	arm.CreateBy = m.CreateBy
+	arm.UpdateAt = time.Now().Unix()
+
+	err := arm.Verify()
+	if err != nil {
+		return err
+	}
+	return DB().Model(m).Select("*").Updates(arm).Error
+}
+
+func (m *AlertMute) UpdateFieldsMap(fields map[string]interface{}) error {
+	return DB().Model(m).Updates(fields).Error
 }
 
 func AlertMuteDel(ids []int64) error {
