@@ -74,13 +74,14 @@ func ConfigsSet(ckey, cval string) error {
 	return err
 }
 
-func ConfigsGets(prefix string) ([]*Configs, error) {
+func ConfigsGets(prefix string, limit, offset int) ([]*Configs, error) {
 	var objs []*Configs
 	session := DB()
 	if prefix != "" {
 		session = session.Where("ckey like ?", prefix+"%")
 	}
-	err := session.Find(&objs).Error
+
+	err := session.Order("id desc").Limit(limit).Offset(offset).Find(&objs).Error
 	return objs, err
 }
 

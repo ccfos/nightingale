@@ -9,7 +9,8 @@ import (
 
 func configsGet(c *gin.Context) {
 	prefix := ginx.QueryStr(c, "prefix", "")
-	configs, err := models.ConfigsGets(prefix)
+	limit := ginx.QueryInt(c, "limit", 10)
+	configs, err := models.ConfigsGets(prefix, limit, ginx.Offset(c, limit))
 	ginx.NewRender(c).Data(configs, err)
 }
 
