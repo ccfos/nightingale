@@ -276,7 +276,7 @@ CREATE TABLE `alert_mute` (
     `cause` varchar(255) not null default '',
     `btime` bigint not null default 0 comment 'begin time',
     `etime` bigint not null default 0 comment 'end time',
-    `disabled` tinyint(1) not null comment '0:enabled 1:disabled',
+    `disabled` tinyint(1) not null default 0 comment '0:enabled 1:disabled',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
