@@ -74,6 +74,16 @@ func ConfigsSet(ckey, cval string) error {
 	return err
 }
 
+func ConfigGet(id int64) (*Configs, error) {
+	var objs []*Configs
+	err := DB().Where("id=?", id).Find(&objs).Error
+
+	if len(objs) == 0 {
+		return nil, nil
+	}
+	return objs[0], err
+}
+
 func ConfigsGets(prefix string, limit, offset int) ([]*Configs, error) {
 	var objs []*Configs
 	session := DB()

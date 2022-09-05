@@ -14,6 +14,12 @@ func configsGet(c *gin.Context) {
 	ginx.NewRender(c).Data(configs, err)
 }
 
+func configGet(c *gin.Context) {
+	id := ginx.UrlParamInt64(c, "id")
+	configs, err := models.ConfigGet(id)
+	ginx.NewRender(c).Data(configs, err)
+}
+
 func configsDel(c *gin.Context) {
 	var f idsForm
 	ginx.BindJSON(c, &f)
