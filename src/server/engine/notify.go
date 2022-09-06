@@ -351,6 +351,10 @@ func handleSubscribes(event models.AlertCurEvent, subs []*models.AlertSubscribe)
 }
 
 func handleSubscribe(event models.AlertCurEvent, sub *models.AlertSubscribe) {
+	if sub.IsDisabled() {
+		return
+	}
+
 	if !matchTags(event.TagsMap, sub.ITags) {
 		return
 	}

@@ -288,6 +288,8 @@ CREATE TABLE `alert_mute` (
 
 CREATE TABLE `alert_subscribe` (
     `id` bigint unsigned not null auto_increment,
+    `name` varchar(255) not null default '',
+    `disabled` tinyint(1) not null default 0 comment '0:enabled 1:disabled',
     `group_id` bigint not null default 0 comment 'busi group id',
     `cate` varchar(128) not null,
     `cluster` varchar(128) not null,

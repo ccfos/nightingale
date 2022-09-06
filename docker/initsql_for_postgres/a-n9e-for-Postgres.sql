@@ -339,6 +339,8 @@ COMMENT ON COLUMN alert_mute.etime IS 'end time';
 
 CREATE TABLE alert_subscribe (
     id bigserial,
+    "name" varchar(255) NOT NULL default '',
+    disabled int2 NOT NULL default 0 ,
     group_id bigint not null default 0 ,
     cate varchar(128) not null default '' ,
     cluster varchar(128) not null,
@@ -357,6 +359,7 @@ CREATE TABLE alert_subscribe (
 ALTER TABLE alert_subscribe ADD CONSTRAINT alert_subscribe_pk PRIMARY KEY (id);
 CREATE INDEX alert_subscribe_group_id_idx ON alert_subscribe (group_id);
 CREATE INDEX alert_subscribe_update_at_idx ON alert_subscribe (update_at);
+COMMENT ON COLUMN alert_subscribe.disabled IS '0:enabled 1:disabled';
 COMMENT ON COLUMN alert_subscribe.group_id IS 'busi group id';
 COMMENT ON COLUMN alert_subscribe.tags IS 'json,map,tagkey->regexp|value';
 COMMENT ON COLUMN alert_subscribe.redefine_severity IS 'is redefine severity?';

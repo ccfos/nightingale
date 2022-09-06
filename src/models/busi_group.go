@@ -101,7 +101,7 @@ func (bg *BusiGroup) Del() error {
 		return errors.New("Some alert mutes still in the BusiGroup")
 	}
 
-	has, err = Exists(DB().Model(&AlertSubscribe{}).Where("group_id=?", bg.Id))
+	has, err = Exists(DB().Model(&AlertSubscribe{}).Where("disabled = 0 and group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}
