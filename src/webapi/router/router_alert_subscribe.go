@@ -74,6 +74,8 @@ func alertSubscribePut(c *gin.Context) {
 		fs[i].UpdateBy = username
 		fs[i].UpdateAt = timestamp
 		ginx.Dangerous(fs[i].Update(
+			"name",
+			"disabled",
 			"cluster",
 			"rule_id",
 			"tags",
