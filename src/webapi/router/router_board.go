@@ -13,6 +13,7 @@ type boardForm struct {
 	Name    string `json:"name"`
 	Tags    string `json:"tags"`
 	Configs string `json:"configs"`
+	Public  int    `json:"public"`
 }
 
 func boardAdd(c *gin.Context) {
@@ -53,6 +54,17 @@ func boardGet(c *gin.Context) {
 
 func boardPureGet(c *gin.Context) {
 	board, err := models.BoardGetByID(ginx.UrlParamInt64(c, "bid"))
+	ginx.Dangerous(err)
+
+	if board == nil {
+		ginx.Bomb(http.StatusNotFound, "No such dashboard")
+	}
+
+	ginx.NewRender(c).Data(board, nil)
+}
+
+func boardPublicGet(c *gin.Context) {
+	board, err := models.BoardGet("public = 1 AND id = ?", ginx.UrlParamInt64(c, "bid"))
 	ginx.Dangerous(err)
 
 	if board == nil {
@@ -137,6 +149,25 @@ func boardPutConfigs(c *gin.Context) {
 	ginx.Dangerous(models.BoardPayloadSave(bo.Id, f.Configs))
 
 	ginx.NewRender(c).Data(bo, nil)
+}
+
+// bgrwCheck
+func boardPutPublic(c *gin.Context) {
+	var f boardForm
+	ginx.BindJSON(c, &f)
+
+	me := c.MustGet("user").(*models.User)
+	bo := Board(ginx.UrlParamInt64(c, "bid"))
+
+	// check permission
+	bgrwCheck(c, bo.GroupId)
+
+	bo.Public = f.Public
+	bo.UpdateBy = me.Username
+	bo.UpdateAt = time.Now().Unix()
+
+	err := bo.Update("public", "update_by", "update_at")
+	ginx.NewRender(c).Data(bo, err)
 }
 
 func boardGets(c *gin.Context) {

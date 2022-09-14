@@ -19,6 +19,7 @@ type Board struct {
 	UpdateAt int64  `json:"update_at"`
 	UpdateBy string `json:"update_by"`
 	Configs  string `json:"configs" gorm:"-"`
+	Public   int    `json:"public"` // 0: false, 1: true
 }
 
 func (b *Board) TableName() string {

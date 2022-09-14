@@ -197,8 +197,10 @@ func configRoute(r *gin.Engine, version string) {
 
 		pages.GET("/board/:bid", auth(), user(), boardGet)
 		pages.GET("/board/:bid/pure", boardPureGet)
+		pages.GET("/board/:bid/public", boardPublicGet)
 		pages.PUT("/board/:bid", auth(), user(), perm("/dashboards/put"), boardPut)
 		pages.PUT("/board/:bid/configs", auth(), user(), perm("/dashboards/put"), boardPutConfigs)
+		pages.PUT("/board/:bid/public", auth(), user(), perm("/dashboards/put"), boardPutPublic)
 		pages.DELETE("/boards", auth(), user(), perm("/dashboards/del"), boardDel)
 
 		// migrate v5.8.0
