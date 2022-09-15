@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
@@ -49,22 +50,30 @@ func boardGet(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "No such dashboard")
 	}
 
-	ginx.NewRender(c).Data(board, nil)
-}
+	if board.Public == 0 {
+		if config.C.ProxyAuth.Enable {
+			proxyAuth()(c)
+		} else {
+			jwtAuth()(c)
+		}
+		user()(c)
 
-func boardPureGet(c *gin.Context) {
-	board, err := models.BoardGetByID(ginx.UrlParamInt64(c, "bid"))
-	ginx.Dangerous(err)
+		me := c.MustGet("user").(*models.User)
+		bg := BusiGroup(board.GroupId)
 
-	if board == nil {
-		ginx.Bomb(http.StatusNotFound, "No such dashboard")
+		can, err := me.CanDoBusiGroup(bg)
+		ginx.Dangerous(err)
+
+		if !can {
+			ginx.Bomb(http.StatusForbidden, "forbidden")
+		}
 	}
 
 	ginx.NewRender(c).Data(board, nil)
 }
 
-func boardPublicGet(c *gin.Context) {
-	board, err := models.BoardGet("public = 1 AND id = ?", ginx.UrlParamInt64(c, "bid"))
+func boardPureGet(c *gin.Context) {
+	board, err := models.BoardGetByID(ginx.UrlParamInt64(c, "bid"))
 	ginx.Dangerous(err)
 
 	if board == nil {

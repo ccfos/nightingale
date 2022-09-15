@@ -195,9 +195,8 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/busi-group/:id/boards", auth(), user(), perm("/dashboards/add"), bgrw(), boardAdd)
 		pages.POST("/busi-group/:id/board/:bid/clone", auth(), user(), perm("/dashboards/add"), bgrw(), boardClone)
 
-		pages.GET("/board/:bid", auth(), user(), boardGet)
+		pages.GET("/board/:bid", boardGet)
 		pages.GET("/board/:bid/pure", boardPureGet)
-		pages.GET("/board/:bid/public", boardPublicGet)
 		pages.PUT("/board/:bid", auth(), user(), perm("/dashboards/put"), boardPut)
 		pages.PUT("/board/:bid/configs", auth(), user(), perm("/dashboards/put"), boardPutConfigs)
 		pages.PUT("/board/:bid/public", auth(), user(), perm("/dashboards/put"), boardPutPublic)
