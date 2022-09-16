@@ -74,7 +74,62 @@ func ConfigsSet(ckey, cval string) error {
 	return err
 }
 
-func ConfigsGets(ckeys []string) (map[string]string, error) {
+func ConfigGet(id int64) (*Configs, error) {
+	var objs []*Configs
+	err := DB().Where("id=?", id).Find(&objs).Error
+
+	if len(objs) == 0 {
+		return nil, nil
+	}
+	return objs[0], err
+}
+
+func ConfigsGets(prefix string, limit, offset int) ([]*Configs, error) {
+	var objs []*Configs
+	session := DB()
+	if prefix != "" {
+		session = session.Where("ckey like ?", prefix+"%")
+	}
+
+	err := session.Order("id desc").Limit(limit).Offset(offset).Find(&objs).Error
+	return objs, err
+}
+
+func (c *Configs) Add() error {
+	num, err := Count(DB().Model(&Configs{}).Where("ckey=?", c.Ckey))
+	if err != nil {
+		return errors.WithMessage(err, "failed to count configs")
+	}
+	if num > 0 {
+		return errors.WithMessage(err, "key is exists")
+	}
+
+	// insert
+	err = DB().Create(&Configs{
+		Ckey: c.Ckey,
+		Cval: c.Cval,
+	}).Error
+	return err
+}
+
+func (c *Configs) Update() error {
+	num, err := Count(DB().Model(&Configs{}).Where("id<>? and ckey=?", c.Id, c.Ckey))
+	if err != nil {
+		return errors.WithMessage(err, "failed to count configs")
+	}
+	if num > 0 {
+		return errors.WithMessage(err, "key is exists")
+	}
+
+	err = DB().Model(&Configs{}).Where("id=?", c.Id).Updates(c).Error
+	return err
+}
+
+func ConfigsDel(ids []int64) error {
+	return DB().Where("id in ?", ids).Delete(&Configs{}).Error
+}
+
+func ConfigsGetsByKey(ckeys []string) (map[string]string, error) {
 	var objs []Configs
 	err := DB().Where("ckey in ?", ckeys).Find(&objs).Error
 	if err != nil {
