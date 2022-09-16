@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/v5/src/models"
-	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
@@ -51,22 +50,10 @@ func boardGet(c *gin.Context) {
 	}
 
 	if board.Public == 0 {
-		if config.C.ProxyAuth.Enable {
-			proxyAuth()(c)
-		} else {
-			jwtAuth()(c)
-		}
+		auth()(c)
 		user()(c)
 
-		me := c.MustGet("user").(*models.User)
-		bg := BusiGroup(board.GroupId)
-
-		can, err := me.CanDoBusiGroup(bg)
-		ginx.Dangerous(err)
-
-		if !can {
-			ginx.Bomb(http.StatusForbidden, "forbidden")
-		}
+		bgroCheck(c, board.GroupId)
 	}
 
 	ginx.NewRender(c).Data(board, nil)
