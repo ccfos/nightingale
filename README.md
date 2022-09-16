@@ -96,9 +96,8 @@
 
 **尊重、认可和记录每一位贡献者的工作**是夜莺开源社区的第一指导原则，我们提倡**高效的提问**，这既是对开发者时间的尊重，也是对整个社区知识沉淀的贡献：
 - 提问之前请先查阅 [FAQ](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq) 
-- 提问之前请先搜索 [github issue](https://github.com/ccfos/nightingale/issues)
-- 我们优先推荐通过提交 github issue 来提问，如果[有问题点击这里](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&template=bug_report.yml) | [有需求建议点击这里](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Ffeature&template=enhancement.md)
-- 最后，我们推荐你加入微信群，针对相关开放式问题，相互交流咨询 (请先加好友：[UlricGO](https://www.gitlink.org.cn/UlricQin/gist/tree/master/self.jpeg) 备注：夜莺加群+姓名+公司，交流群里会有开发者团队和专业、热心的群友回答问题)
+- 我们使用[GitHub Discussions](https://github.com/ccfos/nightingale/discussions)作为交流论坛，有问题可以到这里搜索、提问
+- 我们也推荐你加入微信群，和其他夜莺用户交流经验 (请先加好友：[UlricGO](https://www.gitlink.org.cn/UlricQin/gist/tree/master/self.jpeg) 备注：夜莺加群+姓名+公司，交流群里会有热心的群友)
 
 
 ## Who is using
