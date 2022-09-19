@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os/exec"
 	"path"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -86,6 +87,20 @@ type Notice struct {
 func genNotice(event *models.AlertCurEvent) Notice {
 	// build notice body with templates
 	ntpls := make(map[string]string)
+
+	labelStrings := make([]string, 0, len(event.TagsJSON))
+	for _, item := range event.TagsJSON {
+		arr := strings.Split(item, "=")
+		if len(arr) != 2 {
+			continue
+		}
+		if arr[0] == "rulename" {
+			continue
+		}
+		labelStrings = append(labelStrings, item)
+	}
+	sort.Strings(labelStrings)
+	event.TagsJSON = labelStrings
 
 	rwLock.RLock()
 	defer rwLock.RUnlock()
