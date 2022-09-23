@@ -371,7 +371,7 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vect
 					logger.Debugf("event_enable_in_bg: rule_eval:%d", r.rule.Id)
 					continue
 				}
-			} else {
+			} else if strings.Contains(r.rule.PromQl, "target_up") {
 				// target 已经不存在了，可能是被删除了
 				continue
 			}
