@@ -184,6 +184,9 @@ func pushMetrics() {
 	// 把actives传给TargetCache，看看除了active的部分，还有别的target么？有的话返回，设置target_up = 0
 	deads := memsto.TargetCache.GetDeads(actives)
 	for ident, dead := range deads {
+		if ident == "" {
+			continue
+		}
 		// build metrics
 		pt := &prompb.TimeSeries{}
 		pt.Samples = append(pt.Samples, prompb.Sample{
