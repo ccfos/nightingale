@@ -87,8 +87,9 @@ func AlertingEngineHeartbeat(instance, cluster string) error {
 			Clock:    time.Now().Unix(),
 		}).Error
 	} else {
-		// update
-		err = DB().Model(new(AlertingEngines)).Where("instance=?", instance).Update("clock", time.Now().Unix()).Error
+		// updates
+		fields := map[string]interface{}{"clock": time.Now().Unix(), "cluster": cluster}
+		err = DB().Model(new(AlertingEngines)).Where("instance=?", instance).Updates(fields).Error
 	}
 
 	return err
