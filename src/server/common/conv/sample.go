@@ -96,6 +96,9 @@ func labelsToLabelsProto(labels model.Metric, rule *models.RecordingRule) (resul
 	}
 	result = append(result, nameLs)
 	for k, v := range labels {
+		if k == LabelName {
+			continue
+		}
 		if model.LabelNameRE.MatchString(string(k)) {
 			result = append(result, &prompb.Label{
 				Name:  string(k),
