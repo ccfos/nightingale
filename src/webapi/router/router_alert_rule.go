@@ -209,7 +209,8 @@ func alertRulePutFields(c *gin.Context) {
 			if callbacks, has := f.Fields["callbacks"]; has {
 				callback := callbacks.(string)
 				if !strings.Contains(ar.Callbacks, callback) {
-					f.Fields["callbacks"] = ar.Callbacks + " " + callback
+					ginx.Dangerous(ar.UpdateFieldsMap(map[string]interface{}{"callbacks": ar.Callbacks + " " + callback}))
+					continue
 				}
 			}
 		}
@@ -217,7 +218,9 @@ func alertRulePutFields(c *gin.Context) {
 		if f.Action == "callback_del" {
 			// 删除一个 callback 地址
 			if callbacks, has := f.Fields["callbacks"]; has {
-				f.Fields["callbacks"] = strings.ReplaceAll(ar.Callbacks, callbacks.(string), "")
+				callback := callbacks.(string)
+				ginx.Dangerous(ar.UpdateFieldsMap(map[string]interface{}{"callbacks": strings.ReplaceAll(ar.Callbacks, callback, "")}))
+				continue
 			}
 		}
 
