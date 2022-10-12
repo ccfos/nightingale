@@ -181,6 +181,7 @@ func alertRulePutByService(c *gin.Context) {
 type alertRuleFieldForm struct {
 	Ids    []int64                `json:"ids"`
 	Fields map[string]interface{} `json:"fields"`
+	Action string                 `json:"action"`
 }
 
 // update one field: cluster note severity disabled prom_eval_interval prom_for_duration notify_channels notify_groups notify_recovered notify_repeat_step callbacks runbook_url append_tags
@@ -201,6 +202,23 @@ func alertRulePutFields(c *gin.Context) {
 
 		if ar == nil {
 			continue
+		}
+
+		if f.Action == "callback_add" {
+			// 增加一个 callback 地址
+			if callbacks, has := f.Fields["callbacks"]; has {
+				callback := callbacks.(string)
+				if !strings.Contains(ar.Callbacks, callback) {
+					f.Fields["callbacks"] = ar.Callbacks + " " + callback
+				}
+			}
+		}
+
+		if f.Action == "callback_del" {
+			// 删除一个 callback 地址
+			if callbacks, has := f.Fields["callbacks"]; has {
+				f.Fields["callbacks"] = strings.ReplaceAll(ar.Callbacks, callbacks.(string), "")
+			}
 		}
 
 		ginx.Dangerous(ar.UpdateFieldsMap(f.Fields))
