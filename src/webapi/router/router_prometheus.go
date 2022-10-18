@@ -112,7 +112,7 @@ func prometheusProxy(c *gin.Context) {
 		headerCount := len(cluster.Opts.Headers)
 		if headerCount > 0 && headerCount%2 == 0 {
 			for i := 0; i < len(cluster.Opts.Headers); i += 2 {
-				req.Header.Add(cluster.Opts.Headers[i], cluster.Opts.Headers[i+1])
+				req.Header.Set(cluster.Opts.Headers[i], cluster.Opts.Headers[i+1])
 				if cluster.Opts.Headers[i] == "Host" {
 					req.Host = cluster.Opts.Headers[i+1]
 				}
