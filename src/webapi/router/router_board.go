@@ -6,11 +6,13 @@ import (
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/toolkits/pkg/ginx"
 )
 
 type boardForm struct {
 	Name    string `json:"name"`
+	Ident   string `json:"ident"`
 	Tags    string `json:"tags"`
 	Configs string `json:"configs"`
 	Public  int    `json:"public"`
@@ -25,6 +27,7 @@ func boardAdd(c *gin.Context) {
 	board := &models.Board{
 		GroupId:  ginx.UrlParamInt64(c, "id"),
 		Name:     f.Name,
+		Ident:    f.Ident,
 		Tags:     f.Tags,
 		Configs:  f.Configs,
 		CreateBy: me.Username,
@@ -42,7 +45,8 @@ func boardAdd(c *gin.Context) {
 }
 
 func boardGet(c *gin.Context) {
-	board, err := models.BoardGet("id = ?", ginx.UrlParamInt64(c, "bid"))
+	bid := ginx.UrlParamStr(c, "bid")
+	board, err := models.BoardGet("id = ? or ident = ?", bid, bid)
 	ginx.Dangerous(err)
 
 	if board == nil {
@@ -117,12 +121,20 @@ func boardPut(c *gin.Context) {
 	// check permission
 	bgrwCheck(c, bo.GroupId)
 
+	can, err := bo.CanRenameIdent(f.Ident)
+	ginx.Dangerous(err)
+
+	if !can {
+		ginx.Bomb(http.StatusOK, "Ident duplicate")
+	}
+
 	bo.Name = f.Name
+	bo.Ident = f.Ident
 	bo.Tags = f.Tags
 	bo.UpdateBy = me.Username
 	bo.UpdateAt = time.Now().Unix()
 
-	err := bo.Update("name", "tags", "update_by", "update_at")
+	err = bo.Update("name", "ident", "tags", "update_by", "update_at")
 	ginx.NewRender(c).Data(bo, err)
 }
 
@@ -184,6 +196,10 @@ func boardClone(c *gin.Context) {
 		GroupId:  bo.GroupId,
 		CreateBy: me.Username,
 		UpdateBy: me.Username,
+	}
+
+	if bo.Ident != "" {
+		newBoard.Ident = uuid.NewString()
 	}
 
 	ginx.Dangerous(newBoard.Add())

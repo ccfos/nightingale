@@ -30,6 +30,7 @@ var (
 		"Name is blank":                                    "名称不能为空",
 		"Name has invalid characters":                      "名称含有非法字符",
 		"Dashboard already exists":                         "监控大盘已存在",
+		"Ident duplicate":                                  "英文标识已存在",
 		"No such dashboard":                                "监控大盘不存在",
 		"AlertRule already exists":                         "告警规则已存在，不能重复创建",
 		"No such AlertRule":                                "告警规则不存在",
