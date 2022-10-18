@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -120,7 +121,8 @@ type DSReply struct {
 					PrometheusUser string `json:"prometheus.user"`
 					PrometheusPass string `json:"prometheus.password"`
 				} `json:"prometheus.basic"`
-				PrometheusTimeout int64 `json:"prometheus.timeout"`
+				Headers           map[string]string `json:"prometheus.headers"`
+				PrometheusTimeout int64             `json:"prometheus.timeout"`
 			} `json:"settings,omitempty"`
 		} `json:"items"`
 	} `json:"data"`
@@ -192,7 +194,8 @@ func loadClustersFromAPI() {
 			old.Opts.BasicAuthUser != item.Settings.PrometheusBasic.PrometheusUser ||
 			old.Opts.BasicAuthPass != item.Settings.PrometheusBasic.PrometheusPass ||
 			old.Opts.Timeout != item.Settings.PrometheusTimeout ||
-			old.Opts.Prom != item.Settings.PrometheusAddr {
+			old.Opts.Prom != item.Settings.PrometheusAddr ||
+			!equalHeader(old.Opts.Headers, transformHeader(item.Settings.Headers)) {
 			opt := config.ClusterOptions{
 				Name:                item.Name,
 				Prom:                item.Settings.PrometheusAddr,
@@ -201,6 +204,7 @@ func loadClustersFromAPI() {
 				Timeout:             item.Settings.PrometheusTimeout,
 				DialTimeout:         5000,
 				MaxIdleConnsPerHost: 32,
+				Headers:             transformHeader(item.Settings.Headers),
 			}
 
 			if strings.HasPrefix(opt.Prom, "https") {
@@ -259,4 +263,30 @@ func newClusterByOption(opt config.ClusterOptions) *ClusterType {
 	}
 
 	return cluster
+}
+
+func equalHeader(a, b []string) bool {
+	sort.Strings(a)
+	sort.Strings(b)
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func transformHeader(header map[string]string) []string {
+	var headers []string
+	for k, v := range header {
+		headers = append(headers, k)
+		headers = append(headers, v)
+	}
+	return headers
 }
