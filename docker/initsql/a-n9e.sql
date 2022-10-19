@@ -165,6 +165,7 @@ CREATE TABLE `board` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
     `name` varchar(191) not null,
+    `ident` varchar(200) not null default '',
     `tags` varchar(255) not null comment 'split by space',
     `public` tinyint(1) not null default 0 comment '0:false 1:true',
     `create_at` bigint not null default 0,
@@ -172,7 +173,8 @@ CREATE TABLE `board` (
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
     PRIMARY KEY (`id`),
-    UNIQUE KEY (`group_id`, `name`)
+    UNIQUE KEY (`group_id`, `name`),
+    KEY(`ident`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 -- for dashboard new version
