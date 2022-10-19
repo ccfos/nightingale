@@ -28,6 +28,7 @@ import (
 type Server struct {
 	ConfigFile string
 	Version    string
+	Key        string
 }
 
 type ServerOption func(*Server)
@@ -41,6 +42,12 @@ func SetConfigFile(f string) ServerOption {
 func SetVersion(v string) ServerOption {
 	return func(s *Server) {
 		s.Version = v
+	}
+}
+
+func SetKey(k string) ServerOption {
+	return func(s *Server) {
+		s.Key = k
 	}
 }
 
@@ -92,7 +99,7 @@ func (s Server) initialize() (func(), error) {
 	fns.Add(cancel)
 
 	// parse config file
-	config.MustLoad(s.ConfigFile)
+	config.MustLoad(s.Key, s.ConfigFile)
 
 	// init i18n
 	i18n.Init()

@@ -24,6 +24,7 @@ import (
 type Webapi struct {
 	ConfigFile string
 	Version    string
+	Key        string
 }
 
 type WebapiOption func(*Webapi)
@@ -37,6 +38,12 @@ func SetConfigFile(f string) WebapiOption {
 func SetVersion(v string) WebapiOption {
 	return func(s *Webapi) {
 		s.Version = v
+	}
+}
+
+func SetKey(k string) WebapiOption {
+	return func(s *Webapi) {
+		s.Key = k
 	}
 }
 
@@ -83,7 +90,7 @@ EXIT:
 
 func (a Webapi) initialize() (func(), error) {
 	// parse config file
-	config.MustLoad(a.ConfigFile)
+	config.MustLoad(a.Key, a.ConfigFile)
 
 	// init i18n
 	i18n.Init(config.C.I18N)

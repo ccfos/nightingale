@@ -19,6 +19,7 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
+	"github.com/didi/nightingale/v5/src/pkg/secu"
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
@@ -27,7 +28,61 @@ var (
 	once sync.Once
 )
 
-func MustLoad(fpaths ...string) {
+func DealConfigCrypto(key string) {
+	decryptDsn, err := secu.DealWithDecrypt(C.DB.DSN, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the db dsn", err)
+		os.Exit(1)
+	}
+	C.DB.DSN = decryptDsn
+
+	decryptRedisPwd, err := secu.DealWithDecrypt(C.Redis.Password, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the redis password", err)
+		os.Exit(1)
+	}
+	C.Redis.Password = decryptRedisPwd
+
+	decryptSmtpPwd, err := secu.DealWithDecrypt(C.SMTP.Pass, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the smtp password", err)
+		os.Exit(1)
+	}
+	C.SMTP.Pass = decryptSmtpPwd
+
+	decryptHookPwd, err := secu.DealWithDecrypt(C.Alerting.Webhook.BasicAuthPass, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the alert webhook password", err)
+		os.Exit(1)
+	}
+	C.Alerting.Webhook.BasicAuthPass = decryptHookPwd
+
+	decryptIbexPwd, err := secu.DealWithDecrypt(C.Ibex.BasicAuthPass, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the ibex password", err)
+		os.Exit(1)
+	}
+	C.Ibex.BasicAuthPass = decryptIbexPwd
+
+	decryptReaderPwd, err := secu.DealWithDecrypt(C.Reader.BasicAuthPass, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the reader password", err)
+		os.Exit(1)
+	}
+	C.Reader.BasicAuthPass = decryptReaderPwd
+
+	for index, v := range C.Writers {
+		decryptWriterPwd, err := secu.DealWithDecrypt(v.BasicAuthPass, key)
+		if err != nil {
+			fmt.Printf("failed to decrypt the writer password: %s , error: %s", v.BasicAuthPass, err.Error())
+			os.Exit(1)
+		}
+		C.Writers[index].BasicAuthPass = decryptWriterPwd
+	}
+
+}
+
+func MustLoad(key string, fpaths ...string) {
 	once.Do(func() {
 		loaders := []multiconfig.Loader{
 			&multiconfig.TagLoader{},
@@ -65,6 +120,8 @@ func MustLoad(fpaths ...string) {
 			Validator: multiconfig.MultiValidator(&multiconfig.RequiredValidator{}),
 		}
 		m.MustLoad(C)
+
+		DealConfigCrypto(key)
 
 		if C.EngineDelay == 0 {
 			C.EngineDelay = 120

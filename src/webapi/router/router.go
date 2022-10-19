@@ -331,5 +331,8 @@ func configRoute(r *gin.Engine, version string) {
 		service.PUT("/configs", configsPut)
 		service.POST("/configs", configsPost)
 		service.DELETE("/configs", configsDel)
+
+		service.POST("/conf-prop/encrypt", confPropEncrypt)
+		service.POST("/conf-prop/decrypt", confPropDecrypt)
 	}
 }
