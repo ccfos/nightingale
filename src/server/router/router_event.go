@@ -46,7 +46,7 @@ func pushEventToQueue(c *gin.Context) {
 		return
 	}
 
-	if err := event.ParseRuleNote(); err != nil {
+	if err := event.ParseRule("rule_note"); err != nil {
 		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
 	}
 
