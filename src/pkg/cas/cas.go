@@ -15,11 +15,11 @@ import (
 )
 
 type Config struct {
-	Enable           bool
-	CASServer        string
-	CASLoginCallback string
-	CoverAttributes  bool
-	Attributes       struct {
+	Enable          bool
+	SsoAddr         string
+	RedirectURL     string
+	CoverAttributes bool
+	Attributes      struct {
 		Nickname string
 		Phone    string
 		Email    string
@@ -28,8 +28,10 @@ type Config struct {
 }
 
 type ssoClient struct {
-	config     Config
-	attributes struct {
+	config       Config
+	ssoAddr      string
+	callbackAddr string
+	attributes   struct {
 		username string
 		nickname string
 		phone    string
@@ -47,6 +49,8 @@ func Init(cf Config) {
 	}
 	cli = ssoClient{}
 	cli.config = cf
+	cli.ssoAddr = cf.SsoAddr
+	cli.callbackAddr = cf.RedirectURL
 	cli.attributes.username = "47"
 	cli.attributes.nickname = cf.Attributes.Nickname
 	cli.attributes.phone = cf.Attributes.Phone
@@ -78,11 +82,11 @@ func wrapStateKey(key string) string {
 
 func (cli *ssoClient) genRedirectURL(state string) string {
 	var buf bytes.Buffer
-	buf.WriteString(cli.config.CASServer + "login")
+	buf.WriteString(cli.ssoAddr + "login")
 	v := url.Values{
-		"service": {cli.config.CASLoginCallback},
+		"service": {cli.callbackAddr},
 	}
-	if strings.Contains(cli.config.CASServer, "?") {
+	if strings.Contains(cli.ssoAddr, "?") {
 		buf.WriteByte('&')
 	} else {
 		buf.WriteByte('?')
@@ -102,12 +106,12 @@ type CallbackOutput struct {
 }
 
 func ValidateServiceTicket(ctx context.Context, ticket, state string) (ret *CallbackOutput, err error) {
-	casUrl, err := url.Parse(cli.config.CASServer)
+	casUrl, err := url.Parse(cli.config.SsoAddr)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	serviceUrl, err := url.Parse(cli.config.CASLoginCallback)
+	serviceUrl, err := url.Parse(cli.callbackAddr)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -124,9 +128,12 @@ func ValidateServiceTicket(ctx context.Context, ticket, state string) (ret *Call
 	}
 	ret = &CallbackOutput{}
 	ret.Username = authRet.User
-	ret.Nickname = cli.attributes.nickname
-	ret.Email = cli.attributes.nickname
-	ret.Phone = cli.attributes.phone
+	ret.Nickname = authRet.Attributes.Get(cli.attributes.nickname)
+	logger.Debugf("CAS Authentication Response's Attributes--[Nickname]: %s", ret.Nickname)
+	ret.Email = authRet.Attributes.Get(cli.attributes.email)
+	logger.Debugf("CAS Authentication Response's Attributes--[Email]: %s", ret.Email)
+	ret.Phone = authRet.Attributes.Get(cli.attributes.phone)
+	logger.Debugf("CAS Authentication Response's Attributes--[Phone]: %s", ret.Phone)
 	ret.Redirect, err = fetchRedirect(ctx, state)
 	if err != nil {
 		logger.Debugf("get redirect err:%s state:%s", state, err)
