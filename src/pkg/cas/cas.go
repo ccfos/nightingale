@@ -32,7 +32,6 @@ type ssoClient struct {
 	ssoAddr      string
 	callbackAddr string
 	attributes   struct {
-		username string
 		nickname string
 		phone    string
 		email    string
@@ -51,7 +50,6 @@ func Init(cf Config) {
 	cli.config = cf
 	cli.ssoAddr = cf.SsoAddr
 	cli.callbackAddr = cf.RedirectURL
-	cli.attributes.username = "47"
 	cli.attributes.nickname = cf.Attributes.Nickname
 	cli.attributes.phone = cf.Attributes.Phone
 	cli.attributes.email = cf.Attributes.Email
