@@ -13,6 +13,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/pkg/cas"
 	"github.com/didi/nightingale/v5/src/pkg/oidcc"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 )
@@ -258,4 +259,109 @@ func loginCallback(c *gin.Context) {
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	}, nil)
+}
+
+type RedirectOutput struct {
+	Redirect string `json:"redirect"`
+	State    string `json:"state"`
+}
+
+func loginRedirectCas(c *gin.Context) {
+	redirect := ginx.QueryStr(c, "redirect", "/")
+
+	v, exists := c.Get("userid")
+	if exists {
+		userid := v.(int64)
+		user, err := models.UserGetById(userid)
+		ginx.Dangerous(err)
+		if user == nil {
+			ginx.Bomb(200, "user not found")
+		}
+
+		if user.Username != "" { // already login
+			ginx.NewRender(c).Data(redirect, nil)
+			return
+		}
+	}
+
+	if !config.C.CAS.Enable {
+		logger.Error("cas is not enable")
+		ginx.NewRender(c).Data("", nil)
+		return
+	}
+
+	redirect, state, err := cas.Authorize(redirect)
+
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(RedirectOutput{
+		Redirect: redirect,
+		State:    state,
+	}, err)
+}
+
+func loginCallbackCas(c *gin.Context) {
+	ticket := ginx.QueryStr(c, "ticket", "")
+	state := ginx.QueryStr(c, "state", "")
+	ret, err := cas.ValidateServiceTicket(c.Request.Context(), ticket, state)
+	if err != nil {
+		logger.Errorf("ValidateServiceTicket: %s", err)
+		ginx.NewRender(c).Data("", err)
+	}
+	user, err := models.UserGet("username=?", ret.Username)
+	if err != nil {
+		logger.Errorf("UserGet: %s", err)
+	}
+	ginx.Dangerous(err)
+	if user != nil {
+		if config.C.CAS.CoverAttributes {
+			user.Nickname = ret.Nickname
+			user.Email = ret.Email
+			user.Phone = ret.Phone
+			user.UpdateAt = time.Now().Unix()
+			ginx.Dangerous(user.Update("email", "nickname", "phone", "update_at"))
+		}
+	} else {
+		now := time.Now().Unix()
+		user = &models.User{
+			Username: ret.Username,
+			Password: "******",
+			Nickname: ret.Nickname,
+			Phone:    ret.Phone,
+			Email:    ret.Email,
+			CreateAt: now,
+			UpdateAt: now,
+			CreateBy: "CAS",
+			UpdateBy: "CAS",
+		}
+		// create user from cas
+		ginx.Dangerous(user.Add())
+	}
+
+	// set user login state
+	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
+	ts, err := createTokens(config.C.JWTAuth.SigningKey, userIdentity)
+	if err != nil {
+		logger.Errorf("createTokens: %s", err)
+	}
+	ginx.Dangerous(err)
+	ginx.Dangerous(createAuth(c.Request.Context(), userIdentity, ts))
+
+	redirect := "/"
+	if ret.Redirect != "/login" {
+		redirect = ret.Redirect
+	}
+	ginx.NewRender(c).Data(CallbackOutput{
+		Redirect:     redirect,
+		User:         user,
+		AccessToken:  ts.AccessToken,
+		RefreshToken: ts.RefreshToken,
+	}, nil)
+}
+
+func loginRedirectOAuth(c *gin.Context) {
+
+}
+
+func loginCallbackOAuth(c *gin.Context) {
+
 }

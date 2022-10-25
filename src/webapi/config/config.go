@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/koding/multiconfig"
 
+	"github.com/didi/nightingale/v5/src/pkg/cas"
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/ldapx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
@@ -135,6 +136,7 @@ type Config struct {
 	Clusters             []ClusterOptions
 	Ibex                 Ibex
 	OIDC                 oidcc.Config
+	CAS                  cas.Config
 	TargetMetrics        map[string]string
 }
 
