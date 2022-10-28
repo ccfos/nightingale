@@ -16,7 +16,10 @@ import (
 	"github.com/didi/nightingale/v5/src/server/naming"
 
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
+	jsoniter "github.com/json-iterator/go"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func New(version string, reloadFunc func()) *gin.Engine {
 	gin.SetMode(config.C.RunMode)
