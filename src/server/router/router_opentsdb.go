@@ -2,7 +2,6 @@ package router
 
 import (
 	"compress/gzip"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"strconv"

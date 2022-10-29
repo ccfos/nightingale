@@ -3,7 +3,6 @@ package router
 import (
 	"compress/gzip"
 	"compress/zlib"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"

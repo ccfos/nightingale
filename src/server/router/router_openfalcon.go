@@ -2,7 +2,6 @@ package router
 
 import (
 	"compress/gzip"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -140,6 +139,7 @@ func (m *FalconMetric) ToProm() (*prompb.TimeSeries, string, error) {
 }
 
 func falconPush(c *gin.Context) {
+
 	var bs []byte
 	var err error
 	var r *gzip.Reader
