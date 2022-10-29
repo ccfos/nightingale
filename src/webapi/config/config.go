@@ -13,6 +13,7 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/ldapx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
+	"github.com/didi/nightingale/v5/src/pkg/oauth2x"
 	"github.com/didi/nightingale/v5/src/pkg/oidcc"
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
 	"github.com/didi/nightingale/v5/src/pkg/secu"
@@ -137,6 +138,7 @@ type Config struct {
 	Ibex                 Ibex
 	OIDC                 oidcc.Config
 	CAS                  cas.Config
+	OAuth                oauth2x.Config
 	TargetMetrics        map[string]string
 }
 

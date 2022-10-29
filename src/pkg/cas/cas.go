@@ -18,6 +18,7 @@ type Config struct {
 	Enable          bool
 	SsoAddr         string
 	RedirectURL     string
+	DisplayName     string
 	CoverAttributes bool
 	Attributes      struct {
 		Nickname string
@@ -31,6 +32,7 @@ type ssoClient struct {
 	config       Config
 	ssoAddr      string
 	callbackAddr string
+	displayName  string
 	attributes   struct {
 		nickname string
 		phone    string
@@ -50,9 +52,14 @@ func Init(cf Config) {
 	cli.config = cf
 	cli.ssoAddr = cf.SsoAddr
 	cli.callbackAddr = cf.RedirectURL
+	cli.displayName = cf.DisplayName
 	cli.attributes.nickname = cf.Attributes.Nickname
 	cli.attributes.phone = cf.Attributes.Phone
 	cli.attributes.email = cf.Attributes.Email
+}
+
+func GetDisplayName() string {
+	return cli.displayName
 }
 
 // Authorize return the cas authorize location and state
