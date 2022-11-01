@@ -51,6 +51,7 @@ type Config struct {
 	DefaultRoles    []string
 	UserinfoIsArray bool
 	UserinfoPrefix  string
+	Scopes          []string
 }
 
 var (
@@ -82,7 +83,7 @@ func Init(cf Config) {
 			TokenURL: cf.TokenAddr,
 		},
 		RedirectURL: cf.RedirectURL,
-		Scopes:      []string{"profile", "email", "phone"},
+		Scopes:      cf.Scopes,
 	}
 }
 
@@ -124,12 +125,12 @@ func Callback(ctx context.Context, code, state string) (*CallbackOutput, error) 
 
 	ret.Redirect, err = fetchRedirect(ctx, state)
 	if err != nil {
-		logger.Debugf("get redirect err:%v code:%s state:%s", code, state, err)
+		logger.Errorf("get redirect err:%v code:%s state:%s", code, state, err)
 	}
 
 	err = deleteRedirect(ctx, state)
 	if err != nil {
-		logger.Debugf("delete redirect err:%v code:%s state:%s", code, state, err)
+		logger.Errorf("delete redirect err:%v code:%s state:%s", code, state, err)
 	}
 	return ret, nil
 }

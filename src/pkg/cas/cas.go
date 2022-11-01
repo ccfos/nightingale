@@ -3,7 +3,6 @@ package cas
 import (
 	"bytes"
 	"context"
-	"log"
 	"net/url"
 	"strings"
 	"time"
@@ -113,12 +112,12 @@ type CallbackOutput struct {
 func ValidateServiceTicket(ctx context.Context, ticket, state string) (ret *CallbackOutput, err error) {
 	casUrl, err := url.Parse(cli.config.SsoAddr)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err)
 		return
 	}
 	serviceUrl, err := url.Parse(cli.callbackAddr)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err)
 		return
 	}
 	resOptions := &cas.RestOptions{

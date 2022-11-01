@@ -307,6 +307,7 @@ func loginCallbackCas(c *gin.Context) {
 	if err != nil {
 		logger.Errorf("ValidateServiceTicket: %s", err)
 		ginx.NewRender(c).Data("", err)
+		return
 	}
 	user, err := models.UserGet("username=?", ret.Username)
 	if err != nil {
