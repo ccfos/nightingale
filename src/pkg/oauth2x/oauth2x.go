@@ -1,32 +1,35 @@
-package oidcc
+package oauth2x
 
 import (
 	"context"
 	"fmt"
-	"log"
+	"io/ioutil"
+	"net/http"
 	"time"
 
 	"github.com/didi/nightingale/v5/src/storage"
-
-	oidc "github.com/coreos/go-oidc"
-	"github.com/google/uuid"
 	"github.com/toolkits/pkg/logger"
+
+	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/oauth2"
 )
 
 type ssoClient struct {
-	verifier        *oidc.IDTokenVerifier
 	config          oauth2.Config
 	ssoAddr         string
+	userInfoAddr    string
 	callbackAddr    string
-	coverAttributes bool
 	displayName     string
+	coverAttributes bool
 	attributes      struct {
 		username string
 		nickname string
 		phone    string
 		email    string
 	}
+	userinfoIsArray bool
+	userinfoPrefix  string
 }
 
 type Config struct {
@@ -34,15 +37,21 @@ type Config struct {
 	DisplayName     string
 	RedirectURL     string
 	SsoAddr         string
+	TokenAddr       string
+	UserInfoAddr    string
 	ClientId        string
 	ClientSecret    string
 	CoverAttributes bool
 	Attributes      struct {
+		Username string
 		Nickname string
 		Phone    string
 		Email    string
 	}
-	DefaultRoles []string
+	DefaultRoles    []string
+	UserinfoIsArray bool
+	UserinfoPrefix  string
+	Scopes          []string
 }
 
 var (
@@ -55,28 +64,26 @@ func Init(cf Config) {
 	}
 
 	cli.ssoAddr = cf.SsoAddr
+	cli.userInfoAddr = cf.UserInfoAddr
 	cli.callbackAddr = cf.RedirectURL
+	cli.displayName = cf.DisplayName
 	cli.coverAttributes = cf.CoverAttributes
-	cli.attributes.username = "sub"
+	cli.attributes.username = cf.Attributes.Username
 	cli.attributes.nickname = cf.Attributes.Nickname
 	cli.attributes.phone = cf.Attributes.Phone
 	cli.attributes.email = cf.Attributes.Email
-	cli.displayName = cf.DisplayName
-	provider, err := oidc.NewProvider(context.Background(), cf.SsoAddr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	oidcConfig := &oidc.Config{
-		ClientID: cf.ClientId,
-	}
+	cli.userinfoIsArray = cf.UserinfoIsArray
+	cli.userinfoPrefix = cf.UserinfoPrefix
 
-	cli.verifier = provider.Verifier(oidcConfig)
 	cli.config = oauth2.Config{
 		ClientID:     cf.ClientId,
 		ClientSecret: cf.ClientSecret,
-		Endpoint:     provider.Endpoint(),
-		RedirectURL:  cf.RedirectURL,
-		Scopes:       []string{oidc.ScopeOpenID, "profile", "email", "phone"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  cf.SsoAddr,
+			TokenURL: cf.TokenAddr,
+		},
+		RedirectURL: cf.RedirectURL,
+		Scopes:      cf.Scopes,
 	}
 }
 
@@ -85,7 +92,7 @@ func GetDisplayName() string {
 }
 
 func wrapStateKey(key string) string {
-	return "n9e_oidc_" + key
+	return "n9e_oauth_" + key
 }
 
 // Authorize return the sso authorize location with state
@@ -109,7 +116,7 @@ func deleteRedirect(ctx context.Context, state string) error {
 	return storage.Redis.Del(ctx, wrapStateKey(state)).Err()
 }
 
-// Callback 用 code 兑换 accessToken 以及 用户信息,
+// Callback 用 code 兑换 accessToken 以及 用户信息
 func Callback(ctx context.Context, code, state string) (*CallbackOutput, error) {
 	ret, err := exchangeUser(code)
 	if err != nil {
@@ -118,12 +125,12 @@ func Callback(ctx context.Context, code, state string) (*CallbackOutput, error) 
 
 	ret.Redirect, err = fetchRedirect(ctx, state)
 	if err != nil {
-		logger.Debugf("get redirect err:%v code:%s state:%s", code, state, err)
+		logger.Errorf("get redirect err:%v code:%s state:%s", code, state, err)
 	}
 
 	err = deleteRedirect(ctx, state)
 	if err != nil {
-		logger.Debugf("delete redirect err:%v code:%s state:%s", code, state, err)
+		logger.Errorf("delete redirect err:%v code:%s state:%s", code, state, err)
 	}
 	return ret, nil
 }
@@ -142,36 +149,57 @@ func exchangeUser(code string) (*CallbackOutput, error) {
 	ctx := context.Background()
 	oauth2Token, err := cli.config.Exchange(ctx, code)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to exchange token: %s", err)
+		return nil, fmt.Errorf("failed to exchange token: %s", err)
 	}
 
-	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
-	if !ok {
-		return nil, fmt.Errorf("No id_token field in oauth2 token.")
-	}
-	idToken, err := cli.verifier.Verify(ctx, rawIDToken)
+	userInfo, err := getUserInfo(cli.userInfoAddr, oauth2Token.AccessToken)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to verify ID Token: %s", err)
-	}
-
-	data := map[string]interface{}{}
-	if err := idToken.Claims(&data); err != nil {
-		return nil, err
-	}
-
-	v := func(k string) string {
-		if in := data[k]; in == nil {
-			return ""
-		} else {
-			return in.(string)
-		}
+		logger.Errorf("failed to get user info: %s", err)
+		return nil, fmt.Errorf("failed to get user info: %s", err)
 	}
 
 	return &CallbackOutput{
 		AccessToken: oauth2Token.AccessToken,
-		Username:    v(cli.attributes.username),
-		Nickname:    v(cli.attributes.nickname),
-		Phone:       v(cli.attributes.phone),
-		Email:       v(cli.attributes.email),
+		Username:    getUserinfoField(userInfo, cli.userinfoIsArray, cli.userinfoPrefix, cli.attributes.username),
+		Nickname:    getUserinfoField(userInfo, cli.userinfoIsArray, cli.userinfoPrefix, cli.attributes.nickname),
+		Phone:       getUserinfoField(userInfo, cli.userinfoIsArray, cli.userinfoPrefix, cli.attributes.phone),
+		Email:       getUserinfoField(userInfo, cli.userinfoIsArray, cli.userinfoPrefix, cli.attributes.email),
 	}, nil
+}
+
+func getUserInfo(userInfoAddr, accessToken string) ([]byte, error) {
+	r, err := http.NewRequest("GET", userInfoAddr, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	r.Header.Add("Authorization", "Bearer "+accessToken)
+
+	resp, err := http.DefaultClient.Do(r)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return nil, nil
+	}
+	return body, err
+}
+
+func getUserinfoField(input []byte, isArray bool, prefix, field string) string {
+	if prefix == "" {
+		if isArray {
+			return jsoniter.Get(input, 0).Get(field).ToString()
+		} else {
+			return jsoniter.Get(input, field).ToString()
+		}
+	} else {
+		if isArray {
+			return jsoniter.Get(input, prefix, 0).Get(field).ToString()
+		} else {
+			return jsoniter.Get(input, prefix).Get(field).ToString()
+		}
+	}
 }

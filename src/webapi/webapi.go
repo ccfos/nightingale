@@ -10,9 +10,11 @@ import (
 	"github.com/toolkits/pkg/i18n"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/pkg/cas"
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/ldapx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
+	"github.com/didi/nightingale/v5/src/pkg/oauth2x"
 	"github.com/didi/nightingale/v5/src/pkg/oidcc"
 	"github.com/didi/nightingale/v5/src/storage"
 	"github.com/didi/nightingale/v5/src/webapi/config"
@@ -100,6 +102,12 @@ func (a Webapi) initialize() (func(), error) {
 
 	// init oidc
 	oidcc.Init(config.C.OIDC)
+
+	// init cas
+	cas.Init(config.C.CAS)
+
+	// init oauth
+	oauth2x.Init(config.C.OAuth)
 
 	// init logger
 	loggerClean, err := logx.Init(config.C.Log)

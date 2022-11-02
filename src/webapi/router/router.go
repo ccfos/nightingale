@@ -134,8 +134,13 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/auth/logout", jwtMock(), logoutPost)
 		pages.POST("/auth/refresh", jwtMock(), refreshPost)
 
+		pages.GET("/auth/sso-config", ssoConfigGet)
 		pages.GET("/auth/redirect", loginRedirect)
+		pages.GET("/auth/redirect/cas", loginRedirectCas)
+		pages.GET("/auth/redirect/oauth", loginRedirectOAuth)
 		pages.GET("/auth/callback", loginCallback)
+		pages.GET("/auth/callback/cas", loginCallbackCas)
+		pages.GET("/auth/callback/oauth", loginCallbackOAuth)
 
 		pages.GET("/metrics/desc", metricsDescGetFile)
 		pages.POST("/metrics/desc", metricsDescGetMap)

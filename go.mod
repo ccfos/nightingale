@@ -23,7 +23,7 @@ require (
 	github.com/prometheus/common v0.32.1
 	github.com/prometheus/prometheus v2.5.0+incompatible
 	github.com/tidwall/gjson v1.14.0
-	github.com/toolkits/pkg v1.2.9
+	github.com/toolkits/pkg v1.3.1-0.20220824084030-9f9f830a05d5
 	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
