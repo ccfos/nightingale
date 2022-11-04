@@ -31,6 +31,15 @@ var TargetCache = TargetCacheType{
 	targets:         make(map[string]*models.Target),
 }
 
+func (tc *TargetCacheType) Reset() {
+	tc.Lock()
+	defer tc.Unlock()
+
+	tc.statTotal = -1
+	tc.statLastUpdated = -1
+	tc.targets = make(map[string]*models.Target)
+}
+
 func (tc *TargetCacheType) StatChanged(total, lastUpdated int64) bool {
 	if tc.statTotal == total && tc.statLastUpdated == lastUpdated {
 		return false
@@ -94,19 +103,26 @@ func loopSyncTargets() {
 func syncTargets() error {
 	start := time.Now()
 
-	stat, err := models.TargetStatistics(config.C.ClusterName)
+	clusterName := config.ReaderClient.GetClusterName()
+	if clusterName == "" {
+		TargetCache.Reset()
+		logger.Warning("cluster name is blank")
+		return nil
+	}
+
+	stat, err := models.TargetStatistics(clusterName)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec TargetStatistics")
 	}
 
 	if !TargetCache.StatChanged(stat.Total, stat.LastUpdated) {
-		promstat.GaugeCronDuration.WithLabelValues(config.C.ClusterName, "sync_targets").Set(0)
-		promstat.GaugeSyncNumber.WithLabelValues(config.C.ClusterName, "sync_targets").Set(0)
+		promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_targets").Set(0)
+		promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_targets").Set(0)
 		logger.Debug("targets not changed")
 		return nil
 	}
 
-	lst, err := models.TargetGetsByCluster(config.C.ClusterName)
+	lst, err := models.TargetGetsByCluster(clusterName)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec TargetGetsByCluster")
 	}
@@ -129,8 +145,8 @@ func syncTargets() error {
 	TargetCache.Set(m, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	promstat.GaugeCronDuration.WithLabelValues(config.C.ClusterName, "sync_targets").Set(float64(ms))
-	promstat.GaugeSyncNumber.WithLabelValues(config.C.ClusterName, "sync_targets").Set(float64(len(lst)))
+	promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_targets").Set(float64(ms))
+	promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_targets").Set(float64(len(lst)))
 	logger.Infof("timer: sync targets done, cost: %dms, number: %d", ms, len(lst))
 
 	return nil

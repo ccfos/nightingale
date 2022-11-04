@@ -225,7 +225,7 @@ func bgroCheck(c *gin.Context, bgid int64) {
 	me := c.MustGet("user").(*models.User)
 	bg := BusiGroup(bgid)
 
-	can, err := me.CanDoBusiGroup(bg, "ro")
+	can, err := me.CanDoBusiGroup(bg)
 	ginx.Dangerous(err)
 
 	if !can {

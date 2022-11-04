@@ -7,10 +7,12 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/pkg/prom"
 	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/prometheus/client_golang/api"
@@ -29,10 +31,44 @@ type ClustersType struct {
 	mutex *sync.RWMutex
 }
 
+type PromOption struct {
+	Url                 string
+	User                string
+	Pass                string
+	Headers             []string
+	Timeout             int64
+	DialTimeout         int64
+	MaxIdleConnsPerHost int
+}
+
 func (cs *ClustersType) Put(name string, cluster *ClusterType) {
 	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+
 	cs.datas[name] = cluster
-	cs.mutex.Unlock()
+
+	// 把配置信息写入DB一份，这样n9e-server就可以直接从DB读取了
+	po := PromOption{
+		Url:                 cluster.Opts.Prom,
+		User:                cluster.Opts.BasicAuthUser,
+		Pass:                cluster.Opts.BasicAuthPass,
+		Headers:             cluster.Opts.Headers,
+		Timeout:             cluster.Opts.Timeout,
+		DialTimeout:         cluster.Opts.DialTimeout,
+		MaxIdleConnsPerHost: cluster.Opts.MaxIdleConnsPerHost,
+	}
+
+	bs, err := json.Marshal(po)
+	if err != nil {
+		logger.Fatal("failed to marshal PromOption:", err)
+		return
+	}
+
+	key := "prom." + name + ".option"
+	err = models.ConfigsSet(key, string(bs))
+	if err != nil {
+		logger.Fatal("failed to set PromOption ", key, " to database, error: ", err)
+	}
 }
 
 func (cs *ClustersType) Get(name string) (*ClusterType, bool) {
@@ -85,7 +121,8 @@ type DSReply struct {
 					PrometheusUser string `json:"prometheus.user"`
 					PrometheusPass string `json:"prometheus.password"`
 				} `json:"prometheus.basic"`
-				PrometheusTimeout int64 `json:"prometheus.timeout"`
+				Headers           map[string]string `json:"prometheus.headers"`
+				PrometheusTimeout int64             `json:"prometheus.timeout"`
 			} `json:"settings,omitempty"`
 		} `json:"items"`
 	} `json:"data"`
@@ -157,7 +194,8 @@ func loadClustersFromAPI() {
 			old.Opts.BasicAuthUser != item.Settings.PrometheusBasic.PrometheusUser ||
 			old.Opts.BasicAuthPass != item.Settings.PrometheusBasic.PrometheusPass ||
 			old.Opts.Timeout != item.Settings.PrometheusTimeout ||
-			old.Opts.Prom != item.Settings.PrometheusAddr {
+			old.Opts.Prom != item.Settings.PrometheusAddr ||
+			!equalHeader(old.Opts.Headers, transformHeader(item.Settings.Headers)) {
 			opt := config.ClusterOptions{
 				Name:                item.Name,
 				Prom:                item.Settings.PrometheusAddr,
@@ -166,6 +204,7 @@ func loadClustersFromAPI() {
 				Timeout:             item.Settings.PrometheusTimeout,
 				DialTimeout:         5000,
 				MaxIdleConnsPerHost: 32,
+				Headers:             transformHeader(item.Settings.Headers),
 			}
 
 			if strings.HasPrefix(opt.Prom, "https") {
@@ -224,4 +263,30 @@ func newClusterByOption(opt config.ClusterOptions) *ClusterType {
 	}
 
 	return cluster
+}
+
+func equalHeader(a, b []string) bool {
+	sort.Strings(a)
+	sort.Strings(b)
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func transformHeader(header map[string]string) []string {
+	var headers []string
+	for k, v := range header {
+		headers = append(headers, k)
+		headers = append(headers, v)
+	}
+	return headers
 }

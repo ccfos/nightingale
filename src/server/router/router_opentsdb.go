@@ -2,7 +2,6 @@ package router
 
 import (
 	"compress/gzip"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -208,7 +207,10 @@ func handleOpenTSDB(c *gin.Context) {
 	}
 
 	if succ > 0 {
-		promstat.CounterSampleTotal.WithLabelValues(config.C.ClusterName, "opentsdb").Add(float64(succ))
+		cn := config.ReaderClient.GetClusterName()
+		if cn != "" {
+			promstat.CounterSampleTotal.WithLabelValues(cn, "opentsdb").Add(float64(succ))
+		}
 		idents.Idents.MSet(ids)
 	}
 

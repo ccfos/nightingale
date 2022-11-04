@@ -19,6 +19,7 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
+	"github.com/didi/nightingale/v5/src/pkg/secu"
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
@@ -27,7 +28,61 @@ var (
 	once sync.Once
 )
 
-func MustLoad(fpaths ...string) {
+func DealConfigCrypto(key string) {
+	decryptDsn, err := secu.DealWithDecrypt(C.DB.DSN, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the db dsn", err)
+		os.Exit(1)
+	}
+	C.DB.DSN = decryptDsn
+
+	decryptRedisPwd, err := secu.DealWithDecrypt(C.Redis.Password, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the redis password", err)
+		os.Exit(1)
+	}
+	C.Redis.Password = decryptRedisPwd
+
+	decryptSmtpPwd, err := secu.DealWithDecrypt(C.SMTP.Pass, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the smtp password", err)
+		os.Exit(1)
+	}
+	C.SMTP.Pass = decryptSmtpPwd
+
+	decryptHookPwd, err := secu.DealWithDecrypt(C.Alerting.Webhook.BasicAuthPass, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the alert webhook password", err)
+		os.Exit(1)
+	}
+	C.Alerting.Webhook.BasicAuthPass = decryptHookPwd
+
+	decryptIbexPwd, err := secu.DealWithDecrypt(C.Ibex.BasicAuthPass, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the ibex password", err)
+		os.Exit(1)
+	}
+	C.Ibex.BasicAuthPass = decryptIbexPwd
+
+	decryptReaderPwd, err := secu.DealWithDecrypt(C.Reader.BasicAuthPass, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the reader password", err)
+		os.Exit(1)
+	}
+	C.Reader.BasicAuthPass = decryptReaderPwd
+
+	for index, v := range C.Writers {
+		decryptWriterPwd, err := secu.DealWithDecrypt(v.BasicAuthPass, key)
+		if err != nil {
+			fmt.Printf("failed to decrypt the writer password: %s , error: %s", v.BasicAuthPass, err.Error())
+			os.Exit(1)
+		}
+		C.Writers[index].BasicAuthPass = decryptWriterPwd
+	}
+
+}
+
+func MustLoad(key string, fpaths ...string) {
 	once.Do(func() {
 		loaders := []multiconfig.Loader{
 			&multiconfig.TagLoader{},
@@ -66,8 +121,19 @@ func MustLoad(fpaths ...string) {
 		}
 		m.MustLoad(C)
 
+		DealConfigCrypto(key)
+
 		if C.EngineDelay == 0 {
 			C.EngineDelay = 120
+		}
+
+		if C.ReaderFrom == "" {
+			C.ReaderFrom = "config"
+		}
+
+		if C.ReaderFrom == "config" && C.ClusterName == "" {
+			fmt.Println("configuration ClusterName is blank")
+			os.Exit(1)
 		}
 
 		if C.Heartbeat.IP == "" {
@@ -81,7 +147,11 @@ func MustLoad(fpaths ...string) {
 				os.Exit(1)
 			}
 
-			C.Heartbeat.IP = hostname + "+" + fmt.Sprint(os.Getpid())
+			if strings.Contains(hostname, "localhost") {
+				fmt.Println("Warning! hostname contains substring localhost, setting a more unique hostname is recommended")
+			}
+
+			C.Heartbeat.IP = hostname
 
 			// if C.Heartbeat.IP == "" {
 			// 	fmt.Println("heartbeat ip auto got is blank")
@@ -90,7 +160,6 @@ func MustLoad(fpaths ...string) {
 		}
 
 		C.Heartbeat.Endpoint = fmt.Sprintf("%s:%d", C.Heartbeat.IP, C.HTTP.Port)
-		C.Alerting.RedisPub.ChannelKey = C.Alerting.RedisPub.ChannelPrefix + C.ClusterName
 
 		if C.Alerting.Webhook.Enable {
 			if C.Alerting.Webhook.Timeout == "" {
@@ -180,9 +249,10 @@ type Config struct {
 	RunMode            string
 	ClusterName        string
 	BusiGroupLabelKey  string
-	AnomalyDataApi     []string
 	EngineDelay        int64
 	DisableUsageReport bool
+	ReaderFrom         string
+	ForceUseServerTS   bool
 	Log                logx.Config
 	HTTP               httpx.Config
 	BasicAuth          gin.Accounts
@@ -194,27 +264,8 @@ type Config struct {
 	DB                 ormx.DBConfig
 	WriterOpt          WriterGlobalOpt
 	Writers            []WriterOptions
-	Reader             ReaderOptions
+	Reader             PromOption
 	Ibex               Ibex
-}
-
-type ReaderOptions struct {
-	Url           string
-	BasicAuthUser string
-	BasicAuthPass string
-
-	Timeout               int64
-	DialTimeout           int64
-	TLSHandshakeTimeout   int64
-	ExpectContinueTimeout int64
-	IdleConnTimeout       int64
-	KeepAlive             int64
-
-	MaxConnsPerHost     int
-	MaxIdleConns        int
-	MaxIdleConnsPerHost int
-
-	Headers []string
 }
 
 type WriterOptions struct {
@@ -315,7 +366,7 @@ func (c *Config) IsDebugMode() bool {
 
 // Get preferred outbound ip of this machine
 func GetOutboundIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
+	conn, err := net.Dial("udp", "223.5.5.5:80")
 	if err != nil {
 		fmt.Println("auto get outbound ip fail:", err)
 		os.Exit(1)

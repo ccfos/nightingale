@@ -19,7 +19,22 @@ type MaintainMessage struct {
 	Content string         `json:"content"`
 }
 
-func notifyMaintainerWithPlugin(e error, title, triggerTime string, users []*models.User) {
+// notify to maintainer to handle the error
+func notifyToMaintainer(title, msg string) {
+	logger.Errorf("notifyToMaintainer, msg: %s", msg)
+
+	users := memsto.UserCache.GetMaintainerUsers()
+	if len(users) == 0 {
+		return
+	}
+
+	triggerTime := time.Now().Format("2006/01/02 - 15:04:05")
+
+	notifyMaintainerWithPlugin(title, msg, triggerTime, users)
+	notifyMaintainerWithBuiltin(title, msg, triggerTime, users)
+}
+
+func notifyMaintainerWithPlugin(title, msg, triggerTime string, users []*models.User) {
 	if !config.C.Alerting.CallPlugin.Enable {
 		return
 	}
@@ -27,7 +42,7 @@ func notifyMaintainerWithPlugin(e error, title, triggerTime string, users []*mod
 	stdinBytes, err := json.Marshal(MaintainMessage{
 		Tos:     users,
 		Title:   title,
-		Content: "Title: " + title + "\nContent: " + e.Error() + "\nTime: " + triggerTime,
+		Content: "Title: " + title + "\nContent: " + msg + "\nTime: " + triggerTime,
 	})
 
 	if err != nil {
@@ -39,22 +54,7 @@ func notifyMaintainerWithPlugin(e error, title, triggerTime string, users []*mod
 	logger.Debugf("notify maintainer with plugin done")
 }
 
-// notify to maintainer to handle the error
-func notifyToMaintainer(e error, title string) {
-	logger.Errorf("notifyToMaintainer, title:%s, error:%v", title, e)
-
-	users := memsto.UserCache.GetMaintainerUsers()
-	if len(users) == 0 {
-		return
-	}
-
-	triggerTime := time.Now().Format("2006/01/02 - 15:04:05")
-
-	notifyMaintainerWithPlugin(e, title, triggerTime, users)
-	notifyMaintainerWithBuiltin(e, title, triggerTime, users)
-}
-
-func notifyMaintainerWithBuiltin(e error, title, triggerTime string, users []*models.User) {
+func notifyMaintainerWithBuiltin(title, msg, triggerTime string, users []*models.User) {
 	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
 		return
 	}
@@ -64,6 +64,7 @@ func notifyMaintainerWithBuiltin(e error, title, triggerTime string, users []*mo
 	wecomset := make(map[string]struct{})
 	dingtalkset := make(map[string]struct{})
 	feishuset := make(map[string]struct{})
+	mmset := make(map[string]struct{})
 
 	for _, user := range users {
 		if user.Email != "" {
@@ -94,6 +95,11 @@ func notifyMaintainerWithBuiltin(e error, title, triggerTime string, users []*mo
 		if ret.Exists() {
 			feishuset[ret.String()] = struct{}{}
 		}
+
+		ret = gjson.GetBytes(bs, "mm_webhook_url")
+		if ret.Exists() {
+			mmset[ret.String()] = struct{}{}
+		}
 	}
 
 	phones := StringSetKeys(phoneset)
@@ -104,13 +110,13 @@ func notifyMaintainerWithBuiltin(e error, title, triggerTime string, users []*mo
 			if len(emailset) == 0 {
 				continue
 			}
-			content := "Title: " + title + "\nContent: " + e.Error() + "\nTime: " + triggerTime
+			content := "Title: " + title + "\nContent: " + msg + "\nTime: " + triggerTime
 			sender.WriteEmail(title, content, StringSetKeys(emailset))
 		case "dingtalk":
 			if len(dingtalkset) == 0 {
 				continue
 			}
-			content := "**Title: **" + title + "\n**Content: **" + e.Error() + "\n**Time: **" + triggerTime
+			content := "**Title: **" + title + "\n**Content: **" + msg + "\n**Time: **" + triggerTime
 			sender.SendDingtalk(sender.DingtalkMessage{
 				Title:     title,
 				Text:      content,
@@ -121,7 +127,7 @@ func notifyMaintainerWithBuiltin(e error, title, triggerTime string, users []*mo
 			if len(wecomset) == 0 {
 				continue
 			}
-			content := "**Title: **" + title + "\n**Content: **" + e.Error() + "\n**Time: **" + triggerTime
+			content := "**Title: **" + title + "\n**Content: **" + msg + "\n**Time: **" + triggerTime
 			sender.SendWecom(sender.WecomMessage{
 				Text:   content,
 				Tokens: StringSetKeys(wecomset),
@@ -131,11 +137,20 @@ func notifyMaintainerWithBuiltin(e error, title, triggerTime string, users []*mo
 				continue
 			}
 
-			content := "Title: " + title + "\nContent: " + e.Error() + "\nTime: " + triggerTime
+			content := "Title: " + title + "\nContent: " + msg + "\nTime: " + triggerTime
 			sender.SendFeishu(sender.FeishuMessage{
 				Text:      content,
 				AtMobiles: phones,
 				Tokens:    StringSetKeys(feishuset),
+			})
+		case "mm":
+			if len(mmset) == 0 {
+				continue
+			}
+			content := "**Title: **" + title + "\n**Content: **" + msg + "\n**Time: **" + triggerTime
+			sender.SendMM(sender.MatterMostMessage{
+				Text:   content,
+				Tokens: StringSetKeys(mmset),
 			})
 		}
 	}

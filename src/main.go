@@ -34,6 +34,11 @@ func newWebapiCmd() *cli.Command {
 				Aliases: []string{"c"},
 				Usage:   "specify configuration file(.json,.yaml,.toml)",
 			},
+			&cli.StringFlag{
+				Name:    "key",
+				Aliases: []string{"k"},
+				Usage:   "specify the secret key for configuration file field encryption",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			printEnv()
@@ -43,6 +48,9 @@ func newWebapiCmd() *cli.Command {
 				opts = append(opts, webapi.SetConfigFile(c.String("conf")))
 			}
 			opts = append(opts, webapi.SetVersion(version.VERSION))
+			if c.String("key") != "" {
+				opts = append(opts, webapi.SetKey(c.String("key")))
+			}
 
 			webapi.Run(opts...)
 			return nil
@@ -60,6 +68,11 @@ func newServerCmd() *cli.Command {
 				Aliases: []string{"c"},
 				Usage:   "specify configuration file(.json,.yaml,.toml)",
 			},
+			&cli.StringFlag{
+				Name:    "key",
+				Aliases: []string{"k"},
+				Usage:   "specify the secret key for configuration file field encryption",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			printEnv()
@@ -69,6 +82,9 @@ func newServerCmd() *cli.Command {
 				opts = append(opts, server.SetConfigFile(c.String("conf")))
 			}
 			opts = append(opts, server.SetVersion(version.VERSION))
+			if c.String("key") != "" {
+				opts = append(opts, server.SetKey(c.String("key")))
+			}
 
 			server.Run(opts...)
 			return nil

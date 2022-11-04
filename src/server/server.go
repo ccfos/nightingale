@@ -18,7 +18,6 @@ import (
 	"github.com/didi/nightingale/v5/src/server/idents"
 	"github.com/didi/nightingale/v5/src/server/memsto"
 	"github.com/didi/nightingale/v5/src/server/naming"
-	"github.com/didi/nightingale/v5/src/server/reader"
 	"github.com/didi/nightingale/v5/src/server/router"
 	"github.com/didi/nightingale/v5/src/server/stat"
 	"github.com/didi/nightingale/v5/src/server/usage"
@@ -29,6 +28,7 @@ import (
 type Server struct {
 	ConfigFile string
 	Version    string
+	Key        string
 }
 
 type ServerOption func(*Server)
@@ -42,6 +42,12 @@ func SetConfigFile(f string) ServerOption {
 func SetVersion(v string) ServerOption {
 	return func(s *Server) {
 		s.Version = v
+	}
+}
+
+func SetKey(k string) ServerOption {
+	return func(s *Server) {
+		s.Key = k
 	}
 }
 
@@ -76,9 +82,7 @@ EXIT:
 			break EXIT
 		case syscall.SIGHUP:
 			// reload configuration?
-			logger.Info("start reload configs")
-			engine.Reload()
-			logger.Info("reload configs finished")
+			reload()
 		default:
 			break EXIT
 		}
@@ -95,7 +99,7 @@ func (s Server) initialize() (func(), error) {
 	fns.Add(cancel)
 
 	// parse config file
-	config.MustLoad(s.ConfigFile)
+	config.MustLoad(s.Key, s.ConfigFile)
 
 	// init i18n
 	i18n.Init()
@@ -127,7 +131,7 @@ func (s Server) initialize() (func(), error) {
 	}
 
 	// init prometheus remote reader
-	if err = reader.Init(config.C.Reader); err != nil {
+	if err = config.InitReader(); err != nil {
 		return fns.Ret(), err
 	}
 
@@ -147,7 +151,7 @@ func (s Server) initialize() (func(), error) {
 	stat.Init()
 
 	// init http server
-	r := router.New(s.Version)
+	r := router.New(s.Version, reload)
 	httpClean := httpx.Init(config.C.HTTP, r)
 	fns.Add(httpClean)
 
@@ -176,4 +180,10 @@ func (fs *Functions) Ret() func() {
 			fs.List[i]()
 		}
 	}
+}
+
+func reload() {
+	logger.Info("start reload configs")
+	engine.Reload()
+	logger.Info("reload configs finished")
 }

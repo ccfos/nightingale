@@ -13,12 +13,14 @@ type Board struct {
 	Id       int64  `json:"id" gorm:"primaryKey"`
 	GroupId  int64  `json:"group_id"`
 	Name     string `json:"name"`
+	Ident    string `json:"ident"`
 	Tags     string `json:"tags"`
 	CreateAt int64  `json:"create_at"`
 	CreateBy string `json:"create_by"`
 	UpdateAt int64  `json:"update_at"`
 	UpdateBy string `json:"update_by"`
 	Configs  string `json:"configs" gorm:"-"`
+	Public   int    `json:"public"` // 0: false, 1: true
 }
 
 func (b *Board) TableName() string {
@@ -37,9 +39,34 @@ func (b *Board) Verify() error {
 	return nil
 }
 
+func (b *Board) CanRenameIdent(ident string) (bool, error) {
+	if ident == "" {
+		return true, nil
+	}
+
+	cnt, err := Count(DB().Model(b).Where("ident=? and id <> ?", ident, b.Id))
+	if err != nil {
+		return false, err
+	}
+
+	return cnt == 0, nil
+}
+
 func (b *Board) Add() error {
 	if err := b.Verify(); err != nil {
 		return err
+	}
+
+	if b.Ident != "" {
+		// ident duplicate check
+		cnt, err := Count(DB().Model(b).Where("ident=?", b.Ident))
+		if err != nil {
+			return err
+		}
+
+		if cnt > 0 {
+			return errors.New("Ident duplicate")
+		}
 	}
 
 	now := time.Now().Unix()

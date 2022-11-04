@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"math"
+	"reflect"
 	"regexp"
 	"strconv"
 	"time"
@@ -31,6 +32,10 @@ func Timestamp(pattern ...string) string {
 		defp = pattern[0]
 	}
 	return time.Now().Format(defp)
+}
+
+func Now() time.Time {
+	return time.Now()
 }
 
 func Args(args ...interface{}) map[string]interface{} {
@@ -95,11 +100,27 @@ func Humanize1024(s string) string {
 	return fmt.Sprintf("%.4g%s", v, prefix)
 }
 
+func ToString(v interface{}) string {
+	return fmt.Sprint(v)
+}
+
 func HumanizeDuration(s string) string {
 	v, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return s
 	}
+	return HumanizeDurationFloat64(v)
+}
+
+func HumanizeDurationInterface(i interface{}) string {
+	f, err := ToFloat64(i)
+	if err != nil {
+		return ToString(i)
+	}
+	return HumanizeDurationFloat64(f)
+}
+
+func HumanizeDurationFloat64(v float64) string {
 	if math.IsNaN(v) || math.IsInf(v, 0) {
 		return fmt.Sprintf("%.4g", v)
 	}
@@ -154,4 +175,180 @@ func HumanizePercentageH(s string) string {
 		return s
 	}
 	return fmt.Sprintf("%.2f%%", v)
+}
+
+// Add returns the sum of a and b.
+func Add(a, b interface{}) (interface{}, error) {
+	av := reflect.ValueOf(a)
+	bv := reflect.ValueOf(b)
+
+	switch av.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		switch bv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return av.Int() + bv.Int(), nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return av.Int() + int64(bv.Uint()), nil
+		case reflect.Float32, reflect.Float64:
+			return float64(av.Int()) + bv.Float(), nil
+		default:
+			return nil, fmt.Errorf("add: unknown type for %q (%T)", bv, b)
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		switch bv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return int64(av.Uint()) + bv.Int(), nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return av.Uint() + bv.Uint(), nil
+		case reflect.Float32, reflect.Float64:
+			return float64(av.Uint()) + bv.Float(), nil
+		default:
+			return nil, fmt.Errorf("add: unknown type for %q (%T)", bv, b)
+		}
+	case reflect.Float32, reflect.Float64:
+		switch bv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return av.Float() + float64(bv.Int()), nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return av.Float() + float64(bv.Uint()), nil
+		case reflect.Float32, reflect.Float64:
+			return av.Float() + bv.Float(), nil
+		default:
+			return nil, fmt.Errorf("add: unknown type for %q (%T)", bv, b)
+		}
+	default:
+		return nil, fmt.Errorf("add: unknown type for %q (%T)", av, a)
+	}
+}
+
+// Subtract returns the difference of b from a.
+func Subtract(a, b interface{}) (interface{}, error) {
+	av := reflect.ValueOf(a)
+	bv := reflect.ValueOf(b)
+
+	switch av.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		switch bv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return av.Int() - bv.Int(), nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return av.Int() - int64(bv.Uint()), nil
+		case reflect.Float32, reflect.Float64:
+			return float64(av.Int()) - bv.Float(), nil
+		default:
+			return nil, fmt.Errorf("subtract: unknown type for %q (%T)", bv, b)
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		switch bv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return int64(av.Uint()) - bv.Int(), nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return av.Uint() - bv.Uint(), nil
+		case reflect.Float32, reflect.Float64:
+			return float64(av.Uint()) - bv.Float(), nil
+		default:
+			return nil, fmt.Errorf("subtract: unknown type for %q (%T)", bv, b)
+		}
+	case reflect.Float32, reflect.Float64:
+		switch bv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return av.Float() - float64(bv.Int()), nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return av.Float() - float64(bv.Uint()), nil
+		case reflect.Float32, reflect.Float64:
+			return av.Float() - bv.Float(), nil
+		default:
+			return nil, fmt.Errorf("subtract: unknown type for %q (%T)", bv, b)
+		}
+	default:
+		return nil, fmt.Errorf("subtract: unknown type for %q (%T)", av, a)
+	}
+}
+
+// Multiply returns the product of a and b.
+func Multiply(a, b interface{}) (interface{}, error) {
+	av := reflect.ValueOf(a)
+	bv := reflect.ValueOf(b)
+
+	switch av.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		switch bv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return av.Int() * bv.Int(), nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return av.Int() * int64(bv.Uint()), nil
+		case reflect.Float32, reflect.Float64:
+			return float64(av.Int()) * bv.Float(), nil
+		default:
+			return nil, fmt.Errorf("multiply: unknown type for %q (%T)", bv, b)
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		switch bv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return int64(av.Uint()) * bv.Int(), nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return av.Uint() * bv.Uint(), nil
+		case reflect.Float32, reflect.Float64:
+			return float64(av.Uint()) * bv.Float(), nil
+		default:
+			return nil, fmt.Errorf("multiply: unknown type for %q (%T)", bv, b)
+		}
+	case reflect.Float32, reflect.Float64:
+		switch bv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return av.Float() * float64(bv.Int()), nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return av.Float() * float64(bv.Uint()), nil
+		case reflect.Float32, reflect.Float64:
+			return av.Float() * bv.Float(), nil
+		default:
+			return nil, fmt.Errorf("multiply: unknown type for %q (%T)", bv, b)
+		}
+	default:
+		return nil, fmt.Errorf("multiply: unknown type for %q (%T)", av, a)
+	}
+}
+
+// Divide returns the division of b from a.
+func Divide(a, b interface{}) (interface{}, error) {
+	av := reflect.ValueOf(a)
+	bv := reflect.ValueOf(b)
+
+	switch av.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		switch bv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return av.Int() / bv.Int(), nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return av.Int() / int64(bv.Uint()), nil
+		case reflect.Float32, reflect.Float64:
+			return float64(av.Int()) / bv.Float(), nil
+		default:
+			return nil, fmt.Errorf("divide: unknown type for %q (%T)", bv, b)
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		switch bv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return int64(av.Uint()) / bv.Int(), nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return av.Uint() / bv.Uint(), nil
+		case reflect.Float32, reflect.Float64:
+			return float64(av.Uint()) / bv.Float(), nil
+		default:
+			return nil, fmt.Errorf("divide: unknown type for %q (%T)", bv, b)
+		}
+	case reflect.Float32, reflect.Float64:
+		switch bv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return av.Float() / float64(bv.Int()), nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return av.Float() / float64(bv.Uint()), nil
+		case reflect.Float32, reflect.Float64:
+			return av.Float() / bv.Float(), nil
+		default:
+			return nil, fmt.Errorf("divide: unknown type for %q (%T)", bv, b)
+		}
+	default:
+		return nil, fmt.Errorf("divide: unknown type for %q (%T)", av, a)
+	}
 }

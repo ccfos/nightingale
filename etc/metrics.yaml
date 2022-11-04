@@ -91,6 +91,10 @@ zh:
   netstat_tcp_time_wait: TIME_WAIT状态的网络链接数
   netstat_udp_socket: UDP状态的网络链接数
 
+  #[ping]
+  ping_percent_packet_loss: ping数据包丢失百分比(%)
+  ping_result_code: ping返回码('0','1')
+
   processes_blocked: 不可中断的睡眠状态下的进程数('U','D','L')
   processes_dead: 回收中的进程数('X')
   processes_idle: 挂起的空闲进程数('I')
@@ -127,6 +131,123 @@ zh:
   http_response_http_response_code: http响应状态码
   http_response_response_time: http响应用时
   http_response_result_code: url探测结果0为正常否则url无法访问
+
+  # [aws cloudwatch rds]
+  cloudwatch_aws_rds_bin_log_disk_usage_average: rds 磁盘使用平均值
+  cloudwatch_aws_rds_bin_log_disk_usage_maximum: rds 磁盘使用量最大值
+  cloudwatch_aws_rds_bin_log_disk_usage_minimum: rds binlog 磁盘使用量最低
+  cloudwatch_aws_rds_bin_log_disk_usage_sample_count: rds binlog 磁盘使用情况样本计数
+  cloudwatch_aws_rds_bin_log_disk_usage_sum: rds binlog 磁盘使用总和
+  cloudwatch_aws_rds_burst_balance_average: rds 突发余额平均值
+  cloudwatch_aws_rds_burst_balance_maximum: rds 突发余额最大值
+  cloudwatch_aws_rds_burst_balance_minimum: rds 突发余额最低
+  cloudwatch_aws_rds_burst_balance_sample_count: rds 突发平衡样本计数
+  cloudwatch_aws_rds_burst_balance_sum: rds 突发余额总和
+  cloudwatch_aws_rds_cpu_utilization_average: rds cpu 利用率平均值
+  cloudwatch_aws_rds_cpu_utilization_maximum: rds cpu 利用率最大值
+  cloudwatch_aws_rds_cpu_utilization_minimum: rds cpu 利用率最低
+  cloudwatch_aws_rds_cpu_utilization_sample_count: rds cpu 利用率样本计数
+  cloudwatch_aws_rds_cpu_utilization_sum: rds cpu 利用率总和
+  cloudwatch_aws_rds_database_connections_average: rds 数据库连接平均值
+  cloudwatch_aws_rds_database_connections_maximum: rds 数据库连接数最大值
+  cloudwatch_aws_rds_database_connections_minimum: rds 数据库连接最小
+  cloudwatch_aws_rds_database_connections_sample_count: rds 数据库连接样本数
+  cloudwatch_aws_rds_database_connections_sum: rds 数据库连接总和
+  cloudwatch_aws_rds_db_load_average: rds db 平均负载
+  cloudwatch_aws_rds_db_load_cpu_average: rds db 负载 cpu 平均值
+  cloudwatch_aws_rds_db_load_cpu_maximum: rds db 负载 cpu 最大值
+  cloudwatch_aws_rds_db_load_cpu_minimum: rds db 负载 cpu 最小值
+  cloudwatch_aws_rds_db_load_cpu_sample_count: rds db 加载 CPU 样本数
+  cloudwatch_aws_rds_db_load_cpu_sum: rds db 加载cpu总和
+  cloudwatch_aws_rds_db_load_maximum: rds 数据库负载最大值
+  cloudwatch_aws_rds_db_load_minimum: rds 数据库负载最小值
+  cloudwatch_aws_rds_db_load_non_cpu_average: rds 加载非 CPU 平均值
+  cloudwatch_aws_rds_db_load_non_cpu_maximum: rds 加载非 cpu 最大值
+  cloudwatch_aws_rds_db_load_non_cpu_minimum: rds 加载非 cpu 最小值
+  cloudwatch_aws_rds_db_load_non_cpu_sample_count: rds 加载非 cpu 样本计数
+  cloudwatch_aws_rds_db_load_non_cpu_sum: rds 加载非cpu总和
+  cloudwatch_aws_rds_db_load_sample_count: rds db 加载样本计数
+  cloudwatch_aws_rds_db_load_sum: rds db 负载总和
+  cloudwatch_aws_rds_disk_queue_depth_average: rds 磁盘队列深度平均值
+  cloudwatch_aws_rds_disk_queue_depth_maximum: rds 磁盘队列深度最大值
+  cloudwatch_aws_rds_disk_queue_depth_minimum: rds 磁盘队列深度最小值
+  cloudwatch_aws_rds_disk_queue_depth_sample_count: rds 磁盘队列深度样本计数
+  cloudwatch_aws_rds_disk_queue_depth_sum: rds 磁盘队列深度总和
+  cloudwatch_aws_rds_ebs_byte_balance__average: rds ebs 字节余额平均值
+  cloudwatch_aws_rds_ebs_byte_balance__maximum: rds ebs 字节余额最大值
+  cloudwatch_aws_rds_ebs_byte_balance__minimum: rds ebs 字节余额最低
+  cloudwatch_aws_rds_ebs_byte_balance__sample_count: rds ebs 字节余额样本数
+  cloudwatch_aws_rds_ebs_byte_balance__sum: rds ebs 字节余额总和
+  cloudwatch_aws_rds_ebsio_balance__average: rds ebsio 余额平均值
+  cloudwatch_aws_rds_ebsio_balance__maximum: rds ebsio 余额最大值
+  cloudwatch_aws_rds_ebsio_balance__minimum: rds ebsio 余额最低
+  cloudwatch_aws_rds_ebsio_balance__sample_count: rds ebsio 平衡样本计数
+  cloudwatch_aws_rds_ebsio_balance__sum: rds ebsio 余额总和
+  cloudwatch_aws_rds_free_storage_space_average: rds 免费存储空间平均
+  cloudwatch_aws_rds_free_storage_space_maximum: rds 最大可用存储空间
+  cloudwatch_aws_rds_free_storage_space_minimum: rds 最低可用存储空间
+  cloudwatch_aws_rds_free_storage_space_sample_count: rds 可用存储空间样本数
+  cloudwatch_aws_rds_free_storage_space_sum: rds 免费存储空间总和
+  cloudwatch_aws_rds_freeable_memory_average: rds 可用内存平均值
+  cloudwatch_aws_rds_freeable_memory_maximum: rds 最大可用内存
+  cloudwatch_aws_rds_freeable_memory_minimum: rds 最小可用内存
+  cloudwatch_aws_rds_freeable_memory_sample_count: rds 可释放内存样本数
+  cloudwatch_aws_rds_freeable_memory_sum: rds 可释放内存总和
+  cloudwatch_aws_rds_lvm_read_iops_average: rds lvm 读取 iops 平均值
+  cloudwatch_aws_rds_lvm_read_iops_maximum: rds lvm 读取 iops 最大值
+  cloudwatch_aws_rds_lvm_read_iops_minimum: rds lvm 读取 iops 最低
+  cloudwatch_aws_rds_lvm_read_iops_sample_count: rds lvm 读取 iops 样本计数
+  cloudwatch_aws_rds_lvm_read_iops_sum: rds lvm 读取 iops 总和
+  cloudwatch_aws_rds_lvm_write_iops_average: rds lvm 写入 iops 平均值
+  cloudwatch_aws_rds_lvm_write_iops_maximum: rds lvm 写入 iops 最大值
+  cloudwatch_aws_rds_lvm_write_iops_minimum: rds lvm 写入 iops 最低
+  cloudwatch_aws_rds_lvm_write_iops_sample_count: rds lvm 写入 iops 样本计数
+  cloudwatch_aws_rds_lvm_write_iops_sum: rds lvm 写入 iops 总和
+  cloudwatch_aws_rds_network_receive_throughput_average: rds 网络接收吞吐量平均
+  cloudwatch_aws_rds_network_receive_throughput_maximum: rds 网络接收吞吐量最大值
+  cloudwatch_aws_rds_network_receive_throughput_minimum: rds 网络接收吞吐量最小值
+  cloudwatch_aws_rds_network_receive_throughput_sample_count: rds 网络接收吞吐量样本计数
+  cloudwatch_aws_rds_network_receive_throughput_sum: rds 网络接收吞吐量总和
+  cloudwatch_aws_rds_network_transmit_throughput_average: rds 网络传输吞吐量平均值
+  cloudwatch_aws_rds_network_transmit_throughput_maximum: rds 网络传输吞吐量最大
+  cloudwatch_aws_rds_network_transmit_throughput_minimum: rds 网络传输吞吐量最小值
+  cloudwatch_aws_rds_network_transmit_throughput_sample_count: rds 网络传输吞吐量样本计数
+  cloudwatch_aws_rds_network_transmit_throughput_sum: rds 网络传输吞吐量总和
+  cloudwatch_aws_rds_read_iops_average: rds 读取 iops 平均值
+  cloudwatch_aws_rds_read_iops_maximum: rds 最大读取 iops
+  cloudwatch_aws_rds_read_iops_minimum: rds 读取 iops 最低
+  cloudwatch_aws_rds_read_iops_sample_count: rds 读取 iops 样本计数
+  cloudwatch_aws_rds_read_iops_sum: rds 读取 iops 总和
+  cloudwatch_aws_rds_read_latency_average: rds 读取延迟平均值
+  cloudwatch_aws_rds_read_latency_maximum: rds 读取延迟最大值
+  cloudwatch_aws_rds_read_latency_minimum: rds 最小读取延迟
+  cloudwatch_aws_rds_read_latency_sample_count: rds 读取延迟样本计数
+  cloudwatch_aws_rds_read_latency_sum: rds 读取延迟总和
+  cloudwatch_aws_rds_read_throughput_average: rds 读取吞吐量平均值
+  cloudwatch_aws_rds_read_throughput_maximum: rds 最大读取吞吐量
+  cloudwatch_aws_rds_read_throughput_minimum: rds 最小读取吞吐量
+  cloudwatch_aws_rds_read_throughput_sample_count: rds 读取吞吐量样本计数
+  cloudwatch_aws_rds_read_throughput_sum: rds 读取吞吐量总和
+  cloudwatch_aws_rds_swap_usage_average: rds 交换使用平均值
+  cloudwatch_aws_rds_swap_usage_maximum: rds 交换使用最大值
+  cloudwatch_aws_rds_swap_usage_minimum: rds 交换使用量最低
+  cloudwatch_aws_rds_swap_usage_sample_count: rds 交换使用示例计数
+  cloudwatch_aws_rds_swap_usage_sum: rds 交换使用总和
+  cloudwatch_aws_rds_write_iops_average: rds 写入 iops 平均值
+  cloudwatch_aws_rds_write_iops_maximum: rds 写入 iops 最大值
+  cloudwatch_aws_rds_write_iops_minimum: rds 写入 iops 最低
+  cloudwatch_aws_rds_write_iops_sample_count: rds 写入 iops 样本计数
+  cloudwatch_aws_rds_write_iops_sum: rds 写入 iops 总和
+  cloudwatch_aws_rds_write_latency_average: rds 写入延迟平均值
+  cloudwatch_aws_rds_write_latency_maximum: rds 最大写入延迟
+  cloudwatch_aws_rds_write_latency_minimum: rds 写入延迟最小值
+  cloudwatch_aws_rds_write_latency_sample_count: rds 写入延迟样本计数
+  cloudwatch_aws_rds_write_latency_sum: rds 写入延迟总和
+  cloudwatch_aws_rds_write_throughput_average: rds 写入吞吐量平均值
+  cloudwatch_aws_rds_write_throughput_maximum: rds 最大写入吞吐量
+  cloudwatch_aws_rds_write_throughput_minimum: rds 写入吞吐量最小值
+  cloudwatch_aws_rds_write_throughput_sample_count: rds 写入吞吐量样本计数
+  cloudwatch_aws_rds_write_throughput_sum: rds 写入吞吐量总和
 
 en:
   cpu_usage_idle: "CPU idle rate(unit：%)"
@@ -368,7 +489,7 @@ redis_last_key_groups_scrape_duration_milliseconds: Duration of the last key gro
 redis_last_slow_execution_duration_seconds: The amount of time needed for last slow execution, in seconds.
 redis_latest_fork_seconds: The amount of time needed for last fork, in seconds.
 redis_lazyfree_pending_objects: The number of objects waiting to be freed (as a result of calling UNLINK, or FLUSHDB and FLUSHALL with the ASYNC option).
-redis_master_repl_offset: The server's current replication offset. 
+redis_master_repl_offset: The server's current replication offset.
 redis_mem_clients_normal: Memory used by normal clients.(Gauge)
 redis_mem_clients_slaves: Memory used by replica clients - Starting Redis 7.0, replica buffers share memory with the replication backlog, so this field can show 0 when replicas don't trigger an increase of memory usage.
 redis_mem_fragmentation_bytes: Delta between used_memory_rss and used_memory. Note that when the total fragmentation bytes is low (few megabytes), a high ratio (e.g. 1.5 and above) is not an indication of an issue.
@@ -608,7 +729,7 @@ kafka_consumer_lag_millis: Current approximation of consumer lag for a ConsumerG
 kafka_topic_partition_under_replicated_partition: 1 if Topic/Partition is under Replicated
 
 # [zookeeper_exporter]
-zk_znode_count: The total count of znodes stored 
+zk_znode_count: The total count of znodes stored
 zk_ephemerals_count: The number of Ephemerals nodes
 zk_watch_count: The number of watchers setup over Zookeeper nodes.
 zk_approximate_data_size: Size of data in bytes that a zookeeper server has in its data tree

@@ -26,10 +26,18 @@ func alertRuleGets(c *gin.Context) {
 }
 
 func alertRulesGetByService(c *gin.Context) {
-	prods := strings.Fields(ginx.QueryStr(c, "prods", ""))
+	prods := strings.Split(ginx.QueryStr(c, "prods", ""), ",")
 	query := ginx.QueryStr(c, "query", "")
+	algorithm := ginx.QueryStr(c, "algorithm", "")
+	cluster := ginx.QueryStr(c, "cluster", "")
+	cate := ginx.QueryStr(c, "cate", "$all")
+	cates := []string{}
+	if cate != "$all" {
+		cates = strings.Split(cate, ",")
+	}
 
-	ars, err := models.AlertRulesGetsBy(prods, query)
+	disabled := ginx.QueryInt(c, "disabled", -1)
+	ars, err := models.AlertRulesGetsBy(prods, query, algorithm, cluster, cates, disabled)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(ars); i++ {
@@ -173,6 +181,7 @@ func alertRulePutByService(c *gin.Context) {
 type alertRuleFieldForm struct {
 	Ids    []int64                `json:"ids"`
 	Fields map[string]interface{} `json:"fields"`
+	Action string                 `json:"action"`
 }
 
 // update one field: cluster note severity disabled prom_eval_interval prom_for_duration notify_channels notify_groups notify_recovered notify_repeat_step callbacks runbook_url append_tags
@@ -193,6 +202,26 @@ func alertRulePutFields(c *gin.Context) {
 
 		if ar == nil {
 			continue
+		}
+
+		if f.Action == "callback_add" {
+			// 增加一个 callback 地址
+			if callbacks, has := f.Fields["callbacks"]; has {
+				callback := callbacks.(string)
+				if !strings.Contains(ar.Callbacks, callback) {
+					ginx.Dangerous(ar.UpdateFieldsMap(map[string]interface{}{"callbacks": ar.Callbacks + " " + callback}))
+					continue
+				}
+			}
+		}
+
+		if f.Action == "callback_del" {
+			// 删除一个 callback 地址
+			if callbacks, has := f.Fields["callbacks"]; has {
+				callback := callbacks.(string)
+				ginx.Dangerous(ar.UpdateFieldsMap(map[string]interface{}{"callbacks": strings.ReplaceAll(ar.Callbacks, callback, "")}))
+				continue
+			}
 		}
 
 		ginx.Dangerous(ar.UpdateFieldsMap(f.Fields))

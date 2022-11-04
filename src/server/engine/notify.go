@@ -101,12 +101,13 @@ func genNotice(event *models.AlertCurEvent) Notice {
 	return Notice{Event: event, Tpls: ntpls}
 }
 
-func alertingRedisPub(bs []byte) {
+func alertingRedisPub(clusterName string, bs []byte) {
+	channelKey := config.C.Alerting.RedisPub.ChannelPrefix + clusterName
 	// pub all alerts to redis
 	if config.C.Alerting.RedisPub.Enable {
-		err := storage.Redis.Publish(context.Background(), config.C.Alerting.RedisPub.ChannelKey, bs).Err()
+		err := storage.Redis.Publish(context.Background(), channelKey, bs).Err()
 		if err != nil {
-			logger.Errorf("event_notify: redis publish %s err: %v", config.C.Alerting.RedisPub.ChannelKey, err)
+			logger.Errorf("event_notify: redis publish %s err: %v", channelKey, err)
 		}
 	}
 }
@@ -124,6 +125,7 @@ func handleNotice(notice Notice, bs []byte) {
 	wecomset := make(map[string]struct{})
 	dingtalkset := make(map[string]struct{})
 	feishuset := make(map[string]struct{})
+	mmset := make(map[string]struct{})
 
 	for _, user := range notice.Event.NotifyUsersObj {
 		if user.Email != "" {
@@ -153,6 +155,11 @@ func handleNotice(notice Notice, bs []byte) {
 		ret = gjson.GetBytes(bs, "feishu_robot_token")
 		if ret.Exists() {
 			feishuset[ret.String()] = struct{}{}
+		}
+
+		ret = gjson.GetBytes(bs, "mm_webhook_url")
+		if ret.Exists() {
+			mmset[ret.String()] = struct{}{}
 		}
 	}
 
@@ -235,6 +242,23 @@ func handleNotice(notice Notice, bs []byte) {
 				AtMobiles: phones,
 				Tokens:    StringSetKeys(feishuset),
 			})
+		case "mm":
+			if len(mmset) == 0 {
+				continue
+			}
+			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "mm") {
+				continue
+			}
+
+			content, has := notice.Tpls["mm.tpl"]
+			if !has {
+				content = "mm.tpl not found"
+			}
+
+			sender.SendMM(sender.MatterMostMessage{
+				Text:   content,
+				Tokens: StringSetKeys(mmset),
+			})
 		}
 	}
 }
@@ -249,7 +273,7 @@ func notify(event *models.AlertCurEvent) {
 		return
 	}
 
-	alertingRedisPub(stdinBytes)
+	alertingRedisPub(event.Cluster, stdinBytes)
 	alertingWebhook(event)
 
 	handleNotice(notice, stdinBytes)
@@ -327,6 +351,10 @@ func handleSubscribes(event models.AlertCurEvent, subs []*models.AlertSubscribe)
 }
 
 func handleSubscribe(event models.AlertCurEvent, sub *models.AlertSubscribe) {
+	if sub.IsDisabled() {
+		return
+	}
+
 	if !matchTags(event.TagsMap, sub.ITags) {
 		return
 	}

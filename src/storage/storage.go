@@ -9,7 +9,7 @@ import (
 
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
 	"github.com/didi/nightingale/v5/src/pkg/tls"
-	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -38,7 +38,7 @@ var Redis interface {
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
 	Get(ctx context.Context, key string) *redis.StringCmd
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
-	HGetAll(ctx context.Context, key string) *redis.StringStringMapCmd
+	HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd
 	HSet(ctx context.Context, key string, values ...interface{}) *redis.IntCmd
 	HDel(ctx context.Context, key string, fields ...string) *redis.IntCmd
 	Close() error

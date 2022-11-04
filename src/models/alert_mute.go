@@ -22,19 +22,42 @@ type TagFilter struct {
 type AlertMute struct {
 	Id       int64        `json:"id" gorm:"primaryKey"`
 	GroupId  int64        `json:"group_id"`
+	Note     string       `json:"note"`
+	Cate     string       `json:"cate"`
 	Prod     string       `json:"prod"`    // product empty means n9e
 	Cluster  string       `json:"cluster"` // take effect by clusters, seperated by space
 	Tags     ormx.JSONArr `json:"tags"`
 	Cause    string       `json:"cause"`
 	Btime    int64        `json:"btime"`
 	Etime    int64        `json:"etime"`
+	Disabled int          `json:"disabled"` // 0: enabled, 1: disabled
 	CreateBy string       `json:"create_by"`
+	UpdateBy string       `json:"update_by"`
 	CreateAt int64        `json:"create_at"`
+	UpdateAt int64        `json:"update_at"`
 	ITags    []TagFilter  `json:"-" gorm:"-"` // inner tags
 }
 
 func (m *AlertMute) TableName() string {
 	return "alert_mute"
+}
+
+func AlertMuteGetById(id int64) (*AlertMute, error) {
+	return AlertMuteGet("id=?", id)
+}
+
+func AlertMuteGet(where string, args ...interface{}) (*AlertMute, error) {
+	var lst []*AlertMute
+	err := DB().Where(where, args...).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(lst) == 0 {
+		return nil, nil
+	}
+
+	return lst[0], nil
 }
 
 func AlertMuteGets(prods []string, bgid int64, query string) (lst []AlertMute, err error) {
@@ -71,7 +94,7 @@ func (m *AlertMute) Verify() error {
 	}
 
 	if m.Etime <= m.Btime {
-		return fmt.Errorf("Oops... etime(%d) <= btime(%d)", m.Etime, m.Btime)
+		return fmt.Errorf("oops... etime(%d) <= btime(%d)", m.Etime, m.Btime)
 	}
 
 	if err := m.Parse(); err != nil {
@@ -117,6 +140,25 @@ func (m *AlertMute) Add() error {
 	return Insert(m)
 }
 
+func (m *AlertMute) Update(arm AlertMute) error {
+
+	arm.Id = m.Id
+	arm.GroupId = m.GroupId
+	arm.CreateAt = m.CreateAt
+	arm.CreateBy = m.CreateBy
+	arm.UpdateAt = time.Now().Unix()
+
+	err := arm.Verify()
+	if err != nil {
+		return err
+	}
+	return DB().Model(m).Select("*").Updates(arm).Error
+}
+
+func (m *AlertMute) UpdateFieldsMap(fields map[string]interface{}) error {
+	return DB().Model(m).Updates(fields).Error
+}
+
 func AlertMuteDel(ids []int64) error {
 	if len(ids) == 0 {
 		return nil
@@ -125,13 +167,20 @@ func AlertMuteDel(ids []int64) error {
 }
 
 func AlertMuteStatistics(cluster string) (*Statistics, error) {
-	session := DB().Model(&AlertMute{}).Select("count(*) as total", "max(create_at) as last_updated")
+	// clean expired first
+	buf := int64(30)
+	err := DB().Where("etime < ?", time.Now().Unix()-buf).Delete(new(AlertMute)).Error
+	if err != nil {
+		return nil, err
+	}
+
+	session := DB().Model(&AlertMute{}).Select("count(*) as total", "max(update_at) as last_updated")
 	if cluster != "" {
 		session = session.Where("(cluster like ? or cluster = ?)", "%"+cluster+"%", ClusterAll)
 	}
 
 	var stats []*Statistics
-	err := session.Find(&stats).Error
+	err = session.Find(&stats).Error
 	if err != nil {
 		return nil, err
 	}
@@ -140,13 +189,6 @@ func AlertMuteStatistics(cluster string) (*Statistics, error) {
 }
 
 func AlertMuteGetsByCluster(cluster string) ([]*AlertMute, error) {
-	// clean expired first
-	buf := int64(30)
-	err := DB().Where("etime < ?", time.Now().Unix()+buf).Delete(new(AlertMute)).Error
-	if err != nil {
-		return nil, err
-	}
-
 	// get my cluster's mutes
 	session := DB().Model(&AlertMute{})
 	if cluster != "" {
@@ -155,7 +197,7 @@ func AlertMuteGetsByCluster(cluster string) ([]*AlertMute, error) {
 
 	var lst []*AlertMute
 	var mlst []*AlertMute
-	err = session.Find(&lst).Error
+	err := session.Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}

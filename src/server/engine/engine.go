@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/toolkits/pkg/logger"
@@ -27,6 +28,18 @@ func Start(ctx context.Context) error {
 
 	go sender.StartEmailSender()
 
+	go initReporter(func(em map[ErrorType]uint64) {
+		if len(em) == 0 {
+			return
+		}
+		title := fmt.Sprintf("server %s has some errors, please check server logs for detail", config.C.Heartbeat.IP)
+		msg := ""
+		for k, v := range em {
+			msg += fmt.Sprintf("error: %s, count: %d\n", k, v)
+		}
+		notifyToMaintainer(title, msg)
+	})
+
 	return nil
 }
 
@@ -40,6 +53,10 @@ func Reload() {
 func reportQueueSize() {
 	for {
 		time.Sleep(time.Second)
-		promstat.GaugeAlertQueueSize.WithLabelValues(config.C.ClusterName).Set(float64(EventQueue.Len()))
+		clusterName := config.ReaderClient.GetClusterName()
+		if clusterName == "" {
+			continue
+		}
+		promstat.GaugeAlertQueueSize.WithLabelValues(clusterName).Set(float64(EventQueue.Len()))
 	}
 }

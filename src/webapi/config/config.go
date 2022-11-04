@@ -9,11 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/koding/multiconfig"
 
+	"github.com/didi/nightingale/v5/src/pkg/cas"
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/ldapx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
+	"github.com/didi/nightingale/v5/src/pkg/oauth2x"
 	"github.com/didi/nightingale/v5/src/pkg/oidcc"
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
+	"github.com/didi/nightingale/v5/src/pkg/secu"
 	"github.com/didi/nightingale/v5/src/pkg/tls"
 	"github.com/didi/nightingale/v5/src/storage"
 )
@@ -23,7 +26,40 @@ var (
 	once sync.Once
 )
 
-func MustLoad(fpaths ...string) {
+func DealConfigCrypto(key string) {
+	decryptDsn, err := secu.DealWithDecrypt(C.DB.DSN, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the db dsn", err)
+		os.Exit(1)
+	}
+	C.DB.DSN = decryptDsn
+
+	decryptRedisPwd, err := secu.DealWithDecrypt(C.Redis.Password, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the redis password", err)
+		os.Exit(1)
+	}
+	C.Redis.Password = decryptRedisPwd
+
+	decryptIbexPwd, err := secu.DealWithDecrypt(C.Ibex.BasicAuthPass, key)
+	if err != nil {
+		fmt.Println("failed to decrypt the ibex password", err)
+		os.Exit(1)
+	}
+	C.Ibex.BasicAuthPass = decryptIbexPwd
+
+	for index, v := range C.Clusters {
+		decryptClusterPwd, err := secu.DealWithDecrypt(v.BasicAuthPass, key)
+		if err != nil {
+			fmt.Printf("failed to decrypt the clusters password: %s , error: %s", v.BasicAuthPass, err.Error())
+			os.Exit(1)
+		}
+		C.Clusters[index].BasicAuthPass = decryptClusterPwd
+	}
+
+}
+
+func MustLoad(key string, fpaths ...string) {
 	once.Do(func() {
 		loaders := []multiconfig.Loader{
 			&multiconfig.TagLoader{},
@@ -63,6 +99,8 @@ func MustLoad(fpaths ...string) {
 
 		m.MustLoad(C)
 
+		DealConfigCrypto(key)
+
 		if !strings.HasPrefix(C.Ibex.Address, "http") {
 			C.Ibex.Address = "http://" + C.Ibex.Address
 		}
@@ -99,6 +137,8 @@ type Config struct {
 	Clusters             []ClusterOptions
 	Ibex                 Ibex
 	OIDC                 oidcc.Config
+	CAS                  cas.Config
+	OAuth                oauth2x.Config
 	TargetMetrics        map[string]string
 }
 
@@ -113,7 +153,6 @@ type ClusterOptions struct {
 
 	Timeout     int64
 	DialTimeout int64
-	KeepAlive   int64
 
 	UseTLS bool
 	tls.ClientConfig

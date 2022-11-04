@@ -12,6 +12,7 @@ import (
 
 type AlertCurEvent struct {
 	Id                 int64             `json:"id" gorm:"primaryKey"`
+	Cate               string            `json:"cate"`
 	Cluster            string            `json:"cluster"`
 	GroupId            int64             `json:"group_id"`   // busi group id
 	GroupName          string            `json:"group_name"` // busi group name
@@ -62,10 +63,11 @@ type AggrRule struct {
 	Value string
 }
 
-func (e *AlertCurEvent) ParseRuleNote() error {
-	e.RuleNote = strings.TrimSpace(e.RuleNote)
+func (e *AlertCurEvent) ParseRule(field string) error {
+	f := e.GetField(field)
+	f = strings.TrimSpace(f)
 
-	if e.RuleNote == "" {
+	if f == "" {
 		return nil
 	}
 
@@ -74,7 +76,7 @@ func (e *AlertCurEvent) ParseRuleNote() error {
 		"{{$value := .TriggerValue}}",
 	}
 
-	text := strings.Join(append(defs, e.RuleNote), "")
+	text := strings.Join(append(defs, f), "")
 	t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(tplx.TemplateFuncMap).Parse(text)
 	if err != nil {
 		return err
@@ -86,7 +88,13 @@ func (e *AlertCurEvent) ParseRuleNote() error {
 		return err
 	}
 
-	e.RuleNote = body.String()
+	if field == "rule_name" {
+		e.RuleName = body.String()
+	}
+
+	if field == "rule_note" {
+		e.RuleNote = body.String()
+	}
 	return nil
 }
 
@@ -132,6 +140,8 @@ func (e *AlertCurEvent) GetField(field string) string {
 		return fmt.Sprint(e.RuleId)
 	case "rule_name":
 		return e.RuleName
+	case "rule_note":
+		return e.RuleNote
 	case "severity":
 		return fmt.Sprint(e.Severity)
 	case "runbook_url":
@@ -155,6 +165,7 @@ func (e *AlertCurEvent) ToHis() *AlertHisEvent {
 
 	return &AlertHisEvent{
 		IsRecovered:      isRecovered,
+		Cate:             e.Cate,
 		Cluster:          e.Cluster,
 		GroupId:          e.GroupId,
 		GroupName:        e.GroupName,
@@ -249,7 +260,7 @@ func (e *AlertCurEvent) FillNotifyGroups(cache map[int64]*UserGroup) error {
 	return nil
 }
 
-func AlertCurEventTotal(prod string, bgid, stime, etime int64, severity int, clusters []string, query string) (int64, error) {
+func AlertCurEventTotal(prod string, bgid, stime, etime int64, severity int, clusters, cates []string, query string) (int64, error) {
 	session := DB().Model(&AlertCurEvent{}).Where("trigger_time between ? and ? and rule_prod = ?", stime, etime, prod)
 
 	if bgid > 0 {
@@ -264,6 +275,10 @@ func AlertCurEventTotal(prod string, bgid, stime, etime int64, severity int, clu
 		session = session.Where("cluster in ?", clusters)
 	}
 
+	if len(cates) > 0 {
+		session = session.Where("cate in ?", cates)
+	}
+
 	if query != "" {
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
@@ -275,7 +290,7 @@ func AlertCurEventTotal(prod string, bgid, stime, etime int64, severity int, clu
 	return Count(session)
 }
 
-func AlertCurEventGets(prod string, bgid, stime, etime int64, severity int, clusters []string, query string, limit, offset int) ([]AlertCurEvent, error) {
+func AlertCurEventGets(prod string, bgid, stime, etime int64, severity int, clusters, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
 	session := DB().Where("trigger_time between ? and ? and rule_prod = ?", stime, etime, prod)
 
 	if bgid > 0 {
@@ -288,6 +303,10 @@ func AlertCurEventGets(prod string, bgid, stime, etime int64, severity int, clus
 
 	if len(clusters) > 0 {
 		session = session.Where("cluster in ?", clusters)
+	}
+
+	if len(cates) > 0 {
+		session = session.Where("cate in ?", cates)
 	}
 
 	if query != "" {

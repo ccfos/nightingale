@@ -134,8 +134,13 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/auth/logout", jwtMock(), logoutPost)
 		pages.POST("/auth/refresh", jwtMock(), refreshPost)
 
+		pages.GET("/auth/sso-config", ssoConfigGet)
 		pages.GET("/auth/redirect", loginRedirect)
+		pages.GET("/auth/redirect/cas", loginRedirectCas)
+		pages.GET("/auth/redirect/oauth", loginRedirectOAuth)
 		pages.GET("/auth/callback", loginCallback)
+		pages.GET("/auth/callback/cas", loginCallbackCas)
+		pages.GET("/auth/callback/oauth", loginCallbackOAuth)
 
 		pages.GET("/metrics/desc", metricsDescGetFile)
 		pages.POST("/metrics/desc", metricsDescGetMap)
@@ -195,10 +200,11 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/busi-group/:id/boards", auth(), user(), perm("/dashboards/add"), bgrw(), boardAdd)
 		pages.POST("/busi-group/:id/board/:bid/clone", auth(), user(), perm("/dashboards/add"), bgrw(), boardClone)
 
-		pages.GET("/board/:bid", auth(), user(), boardGet)
+		pages.GET("/board/:bid", boardGet)
 		pages.GET("/board/:bid/pure", boardPureGet)
 		pages.PUT("/board/:bid", auth(), user(), perm("/dashboards/put"), boardPut)
 		pages.PUT("/board/:bid/configs", auth(), user(), perm("/dashboards/put"), boardPutConfigs)
+		pages.PUT("/board/:bid/public", auth(), user(), perm("/dashboards/put"), boardPutPublic)
 		pages.DELETE("/boards", auth(), user(), perm("/dashboards/del"), boardDel)
 
 		// migrate v5.8.0
@@ -251,6 +257,8 @@ func configRoute(r *gin.Engine, version string) {
 		pages.GET("/busi-group/:id/alert-mutes", auth(), user(), perm("/alert-mutes"), bgro(), alertMuteGetsByBG)
 		pages.POST("/busi-group/:id/alert-mutes", auth(), user(), perm("/alert-mutes/add"), bgrw(), alertMuteAdd)
 		pages.DELETE("/busi-group/:id/alert-mutes", auth(), user(), perm("/alert-mutes/del"), bgrw(), alertMuteDel)
+		pages.PUT("/busi-group/:id/alert-mute/:amid", auth(), user(), perm("/alert-mutes/put"), alertMutePutByFE)
+		pages.PUT("/busi-group/:id/alert-mutes/fields", auth(), user(), perm("/alert-mutes/put"), bgrw(), alertMutePutFields)
 
 		pages.GET("/busi-group/:id/alert-subscribes", auth(), user(), perm("/alert-subscribes"), bgro(), alertSubscribeGets)
 		pages.GET("/alert-subscribe/:sid", auth(), user(), perm("/alert-subscribes"), alertSubscribeGet)
@@ -290,6 +298,9 @@ func configRoute(r *gin.Engine, version string) {
 		pages.POST("/busi-group/:id/tasks", auth(), user(), perm("/job-tasks/add"), bgrw(), taskAdd)
 		pages.GET("/busi-group/:id/task/*url", auth(), user(), perm("/job-tasks"), taskProxy)
 		pages.PUT("/busi-group/:id/task/*url", auth(), user(), perm("/job-tasks/put"), bgrw(), taskProxy)
+
+		pages.GET("/servers", auth(), admin(), serversGet)
+		pages.PUT("/server/:id", auth(), admin(), serverBindCluster)
 	}
 
 	service := r.Group("/v1/n9e")
@@ -318,5 +329,15 @@ func configRoute(r *gin.Engine, version string) {
 
 		service.GET("/alert-cur-events", alertCurEventsList)
 		service.GET("/alert-his-events", alertHisEventsList)
+		service.GET("/alert-his-event/:eid", alertHisEventGet)
+
+		service.GET("/config/:id", configGet)
+		service.GET("/configs", configsGet)
+		service.PUT("/configs", configsPut)
+		service.POST("/configs", configsPost)
+		service.DELETE("/configs", configsDel)
+
+		service.POST("/conf-prop/encrypt", confPropEncrypt)
+		service.POST("/conf-prop/decrypt", confPropDecrypt)
 	}
 }

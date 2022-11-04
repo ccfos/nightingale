@@ -95,7 +95,7 @@ func (u *User) Update(selectField interface{}, selectFields ...interface{}) erro
 		return err
 	}
 
-	return DB().Model(u).Select(selectField, selectFields).Updates(u).Error
+	return DB().Model(u).Select(selectField, selectFields...).Updates(u).Error
 }
 
 func (u *User) UpdateAllFields() error {
@@ -460,6 +460,10 @@ func (u *User) BusiGroups(limit int, query string, all ...bool) ([]BusiGroup, er
 			t, err = TargetGet("ident=?", query)
 			if err != nil {
 				return lst, err
+			}
+
+			if t == nil {
+				return lst, nil
 			}
 
 			err = DB().Order("name").Limit(limit).Where("id=?", t.GroupId).Find(&lst).Error

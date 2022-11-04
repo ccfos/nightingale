@@ -10,9 +10,11 @@ import (
 	"github.com/toolkits/pkg/i18n"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/pkg/cas"
 	"github.com/didi/nightingale/v5/src/pkg/httpx"
 	"github.com/didi/nightingale/v5/src/pkg/ldapx"
 	"github.com/didi/nightingale/v5/src/pkg/logx"
+	"github.com/didi/nightingale/v5/src/pkg/oauth2x"
 	"github.com/didi/nightingale/v5/src/pkg/oidcc"
 	"github.com/didi/nightingale/v5/src/storage"
 	"github.com/didi/nightingale/v5/src/webapi/config"
@@ -24,6 +26,7 @@ import (
 type Webapi struct {
 	ConfigFile string
 	Version    string
+	Key        string
 }
 
 type WebapiOption func(*Webapi)
@@ -37,6 +40,12 @@ func SetConfigFile(f string) WebapiOption {
 func SetVersion(v string) WebapiOption {
 	return func(s *Webapi) {
 		s.Version = v
+	}
+}
+
+func SetKey(k string) WebapiOption {
+	return func(s *Webapi) {
+		s.Key = k
 	}
 }
 
@@ -83,7 +92,7 @@ EXIT:
 
 func (a Webapi) initialize() (func(), error) {
 	// parse config file
-	config.MustLoad(a.ConfigFile)
+	config.MustLoad(a.Key, a.ConfigFile)
 
 	// init i18n
 	i18n.Init(config.C.I18N)
@@ -93,6 +102,12 @@ func (a Webapi) initialize() (func(), error) {
 
 	// init oidc
 	oidcc.Init(config.C.OIDC)
+
+	// init cas
+	cas.Init(config.C.CAS)
+
+	// init oauth
+	oauth2x.Init(config.C.OAuth)
 
 	// init logger
 	loggerClean, err := logx.Init(config.C.Log)

@@ -13,7 +13,10 @@ import (
 
 type AlertSubscribe struct {
 	Id               int64        `json:"id" gorm:"primaryKey"`
+	Name             string       `json:"name"`     // AlertSubscribe name
+	Disabled         int          `json:"disabled"` // 0: enabled, 1: disabled
 	GroupId          int64        `json:"group_id"`
+	Cate             string       `json:"cate"`
 	Cluster          string       `json:"cluster"` // take effect by clusters, seperated by space
 	RuleId           int64        `json:"rule_id"`
 	RuleName         string       `json:"rule_name" gorm:"-"` // for fe
@@ -52,6 +55,10 @@ func AlertSubscribeGet(where string, args ...interface{}) (*AlertSubscribe, erro
 	}
 
 	return lst[0], nil
+}
+
+func (s *AlertSubscribe) IsDisabled() bool {
+	return s.Disabled == 1
 }
 
 func (s *AlertSubscribe) Verify() error {

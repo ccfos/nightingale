@@ -3,7 +3,6 @@ package router
 import (
 	"compress/gzip"
 	"compress/zlib"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -269,7 +268,10 @@ func datadogSeries(c *gin.Context) {
 	}
 
 	if succ > 0 {
-		promstat.CounterSampleTotal.WithLabelValues(config.C.ClusterName, "datadog").Add(float64(succ))
+		cn := config.ReaderClient.GetClusterName()
+		if cn != "" {
+			promstat.CounterSampleTotal.WithLabelValues(cn, "datadog").Add(float64(succ))
+		}
 		idents.Idents.MSet(ids)
 	}
 
