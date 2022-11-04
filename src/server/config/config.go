@@ -312,6 +312,7 @@ type SMTPConfig struct {
 }
 
 type Alerting struct {
+	Timeout               int64
 	TemplatesDir          string
 	NotifyConcurrency     int
 	NotifyBuiltinChannels []string
