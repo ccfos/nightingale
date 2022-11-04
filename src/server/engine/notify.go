@@ -398,6 +398,10 @@ func alertingCallScript(stdinBytes []byte) {
 		return
 	}
 
+	if config.C.Alerting.Timeout == 0 {
+		config.C.Alerting.Timeout = 30000
+	}
+
 	fpath := config.C.Alerting.CallScript.ScriptPath
 	cmd := exec.Command(fpath)
 	cmd.Stdin = bytes.NewReader(stdinBytes)
@@ -413,7 +417,7 @@ func alertingCallScript(stdinBytes []byte) {
 		return
 	}
 
-	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(30)*time.Second)
+	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.C.Alerting.Timeout)*time.Millisecond)
 
 	if isTimeout {
 		if err == nil {
