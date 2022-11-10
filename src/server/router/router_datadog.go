@@ -16,14 +16,17 @@ import (
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 	"github.com/didi/nightingale/v5/src/server/writer"
 	"github.com/gin-gonic/gin"
+	"github.com/mailru/easyjson"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
 )
 
+//easyjson:json
 type TimeSeries struct {
 	Series []*DatadogMetric `json:"series"`
 }
 
+//easyjson:json
 type DatadogMetric struct {
 	Metric string         `json:"metric"`
 	Points []DatadogPoint `json:"points"`
@@ -31,6 +34,7 @@ type DatadogMetric struct {
 	Tags   []string       `json:"tags,omitempty"`
 }
 
+//easyjson:json
 type DatadogPoint [2]float64
 
 func (m *DatadogMetric) Clean() error {
@@ -213,7 +217,7 @@ func datadogSeries(c *gin.Context) {
 	}
 
 	var series TimeSeries
-	err = json.Unmarshal(bs, &series)
+	err = easyjson.Unmarshal(bs, &series)
 	if err != nil {
 		c.String(400, err.Error())
 		return
