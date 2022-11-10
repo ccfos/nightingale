@@ -15,10 +15,12 @@ import (
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 	"github.com/didi/nightingale/v5/src/server/writer"
 	"github.com/gin-gonic/gin"
+	"github.com/mailru/easyjson"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
 )
 
+//easyjson:json
 type FalconMetric struct {
 	Metric       string      `json:"metric"`
 	Endpoint     string      `json:"endpoint"`
@@ -27,6 +29,9 @@ type FalconMetric struct {
 	Value        float64     `json:"-"`
 	Tags         string      `json:"tags"`
 }
+
+//easyjson:json
+type FalconMetricArr []FalconMetric
 
 func (m *FalconMetric) Clean(ts int64) error {
 	if m.Metric == "" {
@@ -162,13 +167,13 @@ func falconPush(c *gin.Context) {
 		return
 	}
 
-	var arr []FalconMetric
+	var arr FalconMetricArr
 
 	if bs[0] == '[' {
-		err = json.Unmarshal(bs, &arr)
+		err = easyjson.Unmarshal(bs, &arr)
 	} else {
 		var one FalconMetric
-		err = json.Unmarshal(bs, &one)
+		err = easyjson.Unmarshal(bs, &one)
 		arr = []FalconMetric{one}
 	}
 
