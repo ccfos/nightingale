@@ -34,9 +34,22 @@ func (l *LogSampleCacheType) Get() map[string]map[string]struct{} {
 func (l *LogSampleCacheType) Exists(key, value string) bool {
 	l.RLock()
 	defer l.RUnlock()
+
+	// * 匹配所有
+	_, exists := l.m["*"]
+	if exists {
+		return true
+	}
+
 	valueMap, exists := l.m[key]
 	if !exists {
 		return false
+	}
+
+	// * 匹配所有
+	_, exists = valueMap["*"]
+	if exists {
+		return true
 	}
 
 	_, exists = valueMap[value]
