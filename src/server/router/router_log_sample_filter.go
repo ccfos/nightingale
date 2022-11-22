@@ -30,10 +30,26 @@ func LogSample(remoteAddr string, v *prompb.TimeSeries) {
 		return
 	}
 
-	for j := 0; j < len(v.Labels); j++ {
-		if exists := memsto.LogSampleCache.Exists(v.Labels[j].Name, v.Labels[j].Value); exists {
-			logger.Debugf("recv sample from:%s sample:%s", remoteAddr, v.String())
-			break
+	labelMap := make(map[string]string)
+	for i := 0; i < len(v.Labels); i++ {
+		labelMap[v.Labels[i].Name] = v.Labels[i].Value
+	}
+
+	filterMap := memsto.LogSampleCache.Get()
+	for k, v := range filterMap {
+		// 在指标 labels 中找过滤的 label key ，如果找不到，直接返回
+		lableValue, exists := labelMap[k]
+		if !exists {
+			return
+		}
+
+		// key 存在，在过滤条件中找指标的 label value，如果找不到，直接返回
+		_, exists = v[lableValue]
+		if !exists {
+			return
 		}
 	}
+
+	// 每个过滤条件都在 指标的 labels 中找到了
+	logger.Debugf("recv sample from:%s sample:%s", remoteAddr, v.String())
 }
