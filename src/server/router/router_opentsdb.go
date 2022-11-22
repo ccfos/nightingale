@@ -207,6 +207,7 @@ func handleOpenTSDB(c *gin.Context) {
 			}
 		}
 
+		LogSample(c.Request.RemoteAddr, pt)
 		writer.Writers.PushSample(arr[i].Metric, pt)
 
 		succ++

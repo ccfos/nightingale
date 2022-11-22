@@ -266,6 +266,7 @@ func datadogSeries(c *gin.Context) {
 			}
 		}
 
+		LogSample(c.Request.RemoteAddr, pt)
 		writer.Writers.PushSample(item.Metric, pt)
 
 		succ++

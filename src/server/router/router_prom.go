@@ -143,6 +143,7 @@ func remoteWrite(c *gin.Context) {
 			}
 		}
 
+		LogSample(c.Request.RemoteAddr, req.Timeseries[i])
 		writer.Writers.PushSample(metric, req.Timeseries[i])
 	}
 
