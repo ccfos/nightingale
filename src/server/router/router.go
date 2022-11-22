@@ -101,6 +101,10 @@ func configRoute(r *gin.Engine, version string, reloadFunc func()) {
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
+	r.GET("/log-sample-filter", logSampleFilterGet)
+	r.POST("/log-sample-filter", logSampleFilterAdd)
+	r.DELETE("/log-sample-filter", logSampleFilterDel)
+
 	service := r.Group("/v1/n9e")
 	service.POST("/event", pushEventToQueue)
 	service.POST("/make-event", makeEvent)
