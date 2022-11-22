@@ -6,7 +6,7 @@ import (
 
 type LogSampleCacheType struct {
 	sync.RWMutex
-	m map[string]map[string]struct{} // key: ident
+	m map[string]map[string]struct{} // map[labelName]map[labelValue]struct{}
 }
 
 var LogSampleCache = LogSampleCacheType{
