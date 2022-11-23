@@ -208,7 +208,15 @@ func handleOpenTSDB(c *gin.Context) {
 		}
 
 		LogSample(c.Request.RemoteAddr, pt)
-		writer.Writers.PushSample(arr[i].Metric, pt)
+		if config.C.WriterOpt.ShardingKey == "ident" {
+			if host == "" {
+				writer.Writers.PushSample("-", pt)
+			} else {
+				writer.Writers.PushSample(host, pt)
+			}
+		} else {
+			writer.Writers.PushSample(arr[i].Metric, pt)
+		}
 
 		succ++
 	}

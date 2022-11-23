@@ -202,7 +202,7 @@ func MustLoad(key string, fpaths ...string) {
 		}
 
 		if C.WriterOpt.QueueMaxSize <= 0 {
-			C.WriterOpt.QueueMaxSize = 100000
+			C.WriterOpt.QueueMaxSize = 10000000
 		}
 
 		if C.WriterOpt.QueuePopSize <= 0 {
@@ -210,7 +210,11 @@ func MustLoad(key string, fpaths ...string) {
 		}
 
 		if C.WriterOpt.QueueCount <= 0 {
-			C.WriterOpt.QueueCount = 100
+			C.WriterOpt.QueueCount = 1000
+		}
+
+		if C.WriterOpt.ShardingKey == "" {
+			C.WriterOpt.ShardingKey = "ident"
 		}
 
 		for _, write := range C.Writers {
@@ -293,6 +297,7 @@ type WriterGlobalOpt struct {
 	QueueCount   int
 	QueueMaxSize int
 	QueuePopSize int
+	ShardingKey  string
 }
 
 type HeartbeatConfig struct {

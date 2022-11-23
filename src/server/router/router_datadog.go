@@ -267,7 +267,15 @@ func datadogSeries(c *gin.Context) {
 		}
 
 		LogSample(c.Request.RemoteAddr, pt)
-		writer.Writers.PushSample(item.Metric, pt)
+		if config.C.WriterOpt.ShardingKey == "ident" {
+			if ident == "" {
+				writer.Writers.PushSample("-", pt)
+			} else {
+				writer.Writers.PushSample(ident, pt)
+			}
+		} else {
+			writer.Writers.PushSample(item.Metric, pt)
+		}
 
 		succ++
 	}

@@ -144,7 +144,16 @@ func remoteWrite(c *gin.Context) {
 		}
 
 		LogSample(c.Request.RemoteAddr, req.Timeseries[i])
-		writer.Writers.PushSample(metric, req.Timeseries[i])
+
+		if config.C.WriterOpt.ShardingKey == "ident" {
+			if ident == "" {
+				writer.Writers.PushSample("-", req.Timeseries[i])
+			} else {
+				writer.Writers.PushSample(ident, req.Timeseries[i])
+			}
+		} else {
+			writer.Writers.PushSample(metric, req.Timeseries[i])
+		}
 	}
 
 	cn := config.ReaderClient.GetClusterName()

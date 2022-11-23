@@ -214,7 +214,15 @@ func falconPush(c *gin.Context) {
 		}
 
 		LogSample(c.Request.RemoteAddr, pt)
-		writer.Writers.PushSample(arr[i].Metric, pt)
+		if config.C.WriterOpt.ShardingKey == "ident" {
+			if ident == "" {
+				writer.Writers.PushSample("-", pt)
+			} else {
+				writer.Writers.PushSample(ident, pt)
+			}
+		} else {
+			writer.Writers.PushSample(arr[i].Metric, pt)
+		}
 
 		succ++
 	}
