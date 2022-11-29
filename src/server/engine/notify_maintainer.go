@@ -65,6 +65,7 @@ func notifyMaintainerWithBuiltin(title, msg, triggerTime string, users []*models
 	dingtalkset := make(map[string]struct{})
 	feishuset := make(map[string]struct{})
 	mmset := make(map[string]struct{})
+	telegramset := make(map[string]struct{})
 
 	for _, user := range users {
 		if user.Email != "" {
@@ -99,6 +100,11 @@ func notifyMaintainerWithBuiltin(title, msg, triggerTime string, users []*models
 		ret = gjson.GetBytes(bs, "mm_webhook_url")
 		if ret.Exists() {
 			mmset[ret.String()] = struct{}{}
+		}
+
+		ret = gjson.GetBytes(bs, "telegram_robot_token")
+		if ret.Exists() {
+			telegramset[ret.String()] = struct{}{}
 		}
 	}
 
@@ -151,6 +157,15 @@ func notifyMaintainerWithBuiltin(title, msg, triggerTime string, users []*models
 			sender.SendMM(sender.MatterMostMessage{
 				Text:   content,
 				Tokens: StringSetKeys(mmset),
+			})
+		case "telegram":
+			if len(telegramset) == 0 {
+				continue
+			}
+			content := "**Title: **" + title + "\n**Content: **" + msg + "\n**Time: **" + triggerTime
+			sender.SendTelegram(sender.TelegramMessage{
+				Text:   content,
+				Tokens: StringSetKeys(telegramset),
 			})
 		}
 	}
