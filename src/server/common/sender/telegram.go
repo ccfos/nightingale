@@ -20,7 +20,7 @@ type telegram struct {
 
 func SendTelegram(message TelegramMessage) {
 	for i := 0; i < len(message.Tokens); i++ {
-		if !strings.Contains(message.Tokens[i], "/") && strings.HasPrefix(message.Tokens[i], "https://") {
+		if !strings.Contains(message.Tokens[i], "/") && !strings.HasPrefix(message.Tokens[i], "https://") {
 			logger.Errorf("telegram_sender: result=fail invalid token=%s", message.Tokens[i])
 			continue
 		}
@@ -29,6 +29,10 @@ func SendTelegram(message TelegramMessage) {
 			url = message.Tokens[i]
 		} else {
 			array := strings.Split(message.Tokens[i], "/")
+			if len(array) != 2 {
+				logger.Errorf("telegram_sender: result=fail invalid token=%s", message.Tokens[i])
+				continue
+			}
 			botToken := array[0]
 			chatId := array[1]
 			url = "https://api.telegram.org/bot" + botToken + "/sendMessage?chat_id=" + chatId
