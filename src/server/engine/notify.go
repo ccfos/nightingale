@@ -126,6 +126,7 @@ func handleNotice(notice Notice, bs []byte) {
 	dingtalkset := make(map[string]struct{})
 	feishuset := make(map[string]struct{})
 	mmset := make(map[string]struct{})
+	telegramset := make(map[string]struct{})
 
 	for _, user := range notice.Event.NotifyUsersObj {
 		if user.Email != "" {
@@ -160,6 +161,11 @@ func handleNotice(notice Notice, bs []byte) {
 		ret = gjson.GetBytes(bs, "mm_webhook_url")
 		if ret.Exists() {
 			mmset[ret.String()] = struct{}{}
+		}
+
+		ret = gjson.GetBytes(bs, "telegram_robot_token")
+		if ret.Exists() {
+			telegramset[ret.String()] = struct{}{}
 		}
 	}
 
@@ -258,6 +264,23 @@ func handleNotice(notice Notice, bs []byte) {
 			sender.SendMM(sender.MatterMostMessage{
 				Text:   content,
 				Tokens: StringSetKeys(mmset),
+			})
+		case "telegram":
+			if len(telegramset) == 0 {
+				continue
+			}
+
+			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "telegram") {
+				continue
+			}
+
+			content, has := notice.Tpls["telegram.tpl"]
+			if !has {
+				content = "telegram.tpl not found"
+			}
+			sender.SendTelegram(sender.TelegramMessage{
+				Text:   content,
+				Tokens: StringSetKeys(telegramset),
 			})
 		}
 	}
