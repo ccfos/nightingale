@@ -53,14 +53,3 @@ func (chr *ClusterHashRingType) Set(cluster string, r *consistent.Consistent) {
 	defer chr.RUnlock()
 	chr.Rings[cluster] = r
 }
-
-// func (chr *ClusterHashRingType) GetRing(cluster string) *consistent.Consistent {
-// 	chr.RLock()
-// 	defer chr.RUnlock()
-// 	_, exists := chr.Rings[cluster]
-// 	if !exists {
-// 		chr.Rings[cluster] = NewConsistentHashRing(int32(NodeReplicas), []string{})
-// 	}
-
-// 	return chr.Rings[cluster]
-// }
