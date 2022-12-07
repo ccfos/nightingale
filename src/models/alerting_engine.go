@@ -100,9 +100,7 @@ func AlertingEngineHeartbeatWithCluster(instance, cluster string) error {
 }
 
 func AlertingEngineHeartbeat(instance string) error {
-	var err error
-	// cluster 为空，表示 cluster 在页面配置，按照 instance 更新心跳
 	fields := map[string]interface{}{"clock": time.Now().Unix()}
-	err = DB().Model(new(AlertingEngines)).Where("instance=?", instance).Updates(fields).Error
+	err := DB().Model(new(AlertingEngines)).Where("instance=?", instance).Updates(fields).Error
 	return err
 }
