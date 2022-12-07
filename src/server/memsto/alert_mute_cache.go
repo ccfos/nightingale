@@ -107,12 +107,12 @@ func syncAlertMutes() error {
 	}
 
 	var clusterName string
-	// 只有一个集群，使用单集群模式，如果大于1个集群，则获取全部的规则
 	if len(clusterNames) == 1 {
+		// 兼容老版本监控数据上报
 		clusterName = clusterNames[0]
 	}
 
-	stat, err := models.AlertMuteStatistics(clusterName)
+	stat, err := models.AlertMuteStatistics("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertMuteStatistics")
 	}
@@ -124,7 +124,7 @@ func syncAlertMutes() error {
 		return nil
 	}
 
-	lst, err := models.AlertMuteGetsByCluster(clusterName)
+	lst, err := models.AlertMuteGetsByCluster("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertMuteGetsByCluster")
 	}

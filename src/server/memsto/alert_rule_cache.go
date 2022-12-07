@@ -104,12 +104,12 @@ func syncAlertRules() error {
 	}
 
 	var clusterName string
-	// 只有一个集群，使用单集群模式，如果大于1个集群，则获取全部的告警规则
 	if len(clusterNames) == 1 {
+		// 兼容老版本监控数据上报
 		clusterName = clusterNames[0]
 	}
 
-	stat, err := models.AlertRuleStatistics(clusterName)
+	stat, err := models.AlertRuleStatistics("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertRuleStatistics")
 	}
@@ -121,7 +121,7 @@ func syncAlertRules() error {
 		return nil
 	}
 
-	lst, err := models.AlertRuleGetsByCluster(clusterName)
+	lst, err := models.AlertRuleGetsByCluster("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertRuleGetsByCluster")
 	}

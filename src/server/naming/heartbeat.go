@@ -42,9 +42,8 @@ func heartbeat() error {
 	var err error
 	if config.C.ReaderFrom == "config" {
 		// 在配置文件维护实例和集群的对应关系
-		clusters = strings.Split(config.C.ClusterName, " ")
-		for i := 0; i < len(clusters); i++ {
-			err := models.AlertingEngineHeartbeat(config.C.Heartbeat.Endpoint, clusters[i])
+		for i := 0; i < len(config.C.Readers); i++ {
+			err := models.AlertingEngineHeartbeatWithCluster(config.C.Heartbeat.Endpoint, config.C.Readers[i].ClusterName)
 			if err != nil {
 				return err
 			}
@@ -57,16 +56,15 @@ func heartbeat() error {
 		}
 		if len(clusters) == 0 {
 			// 实例刚刚部署，还没有在页面配置 cluster 的情况，先使用配置文件中的 cluster 上报心跳
-			clusters = strings.Split(config.C.ClusterName, " ")
-			for i := 0; i < len(clusters); i++ {
-				err := models.AlertingEngineHeartbeat(config.C.Heartbeat.Endpoint, clusters[i])
+			for i := 0; i < len(config.C.Readers); i++ {
+				err := models.AlertingEngineHeartbeatWithCluster(config.C.Heartbeat.Endpoint, config.C.Readers[i].ClusterName)
 				if err != nil {
 					return err
 				}
 			}
 		}
 
-		err := models.AlertingEngineHeartbeat(config.C.Heartbeat.Endpoint, "")
+		err := models.AlertingEngineHeartbeat(config.C.Heartbeat.Endpoint)
 		if err != nil {
 			return err
 		}

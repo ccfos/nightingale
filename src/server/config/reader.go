@@ -17,7 +17,19 @@ import (
 func InitReader() error {
 	rf := strings.ToLower(strings.TrimSpace(C.ReaderFrom))
 	if rf == "" || rf == "config" {
-		return setClientFromPromOption(C.ClusterName, C.Reader)
+		if len(C.Readers) == 0 {
+			C.Reader.ClusterName = C.ClusterName
+			C.Readers = append(C.Readers, C.Reader)
+		}
+
+		for _, reader := range C.Readers {
+			err := setClientFromPromOption(reader.ClusterName, reader)
+			if err != nil {
+				logger.Errorf("failed to setClientFromPromOption: %v", err)
+				continue
+			}
+		}
+		return nil
 	}
 
 	if rf == "database" {
@@ -55,12 +67,6 @@ func loadFromDatabase() {
 		cval, err := models.ConfigsGet(ckey)
 		if err != nil {
 			logger.Errorf("failed to get ckey: %s, error: %v", ckey, err)
-			continue
-		}
-
-		if cval == "" {
-			logger.Warningf("failed to get ckey: %s, cval: %s is null", ckey, cval)
-			ReaderClients.Del(cluster)
 			continue
 		}
 

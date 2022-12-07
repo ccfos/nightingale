@@ -62,17 +62,6 @@ func RebuildConsistentHashRing(cluster string, nodes []string) {
 	logger.Infof("hash ring %s rebuild %+v", cluster, r.Members())
 }
 
-func (chr *ClusterHashRingType) Add(cluster string, replicas int32, nodes []string) {
-	chr.Lock()
-	defer chr.Unlock()
-	_, exists := chr.Rings[cluster]
-	if exists {
-		return
-	}
-
-	chr.Rings[cluster] = NewConsistentHashRing(replicas, nodes)
-}
-
 func (chr *ClusterHashRingType) GetRing(cluster string) *consistent.Consistent {
 	chr.RLock()
 	defer chr.RUnlock()

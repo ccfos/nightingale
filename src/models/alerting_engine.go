@@ -91,17 +91,9 @@ func AlertingEngineGetsInstances(where string, args ...interface{}) ([]string, e
 	return arr, err
 }
 
-func AlertingEngineHeartbeat(instance, cluster string) error {
-	var err error
-	if cluster == "" {
-		// cluster 为空，表示 cluster 在页面配置，按照 instance 更新心跳
-		fields := map[string]interface{}{"clock": time.Now().Unix()}
-		err = DB().Model(new(AlertingEngines)).Where("instance=?", instance).Updates(fields).Error
-		return err
-	}
-
+func AlertingEngineHeartbeatWithCluster(instance, cluster string) error {
 	var total int64
-	err = DB().Model(new(AlertingEngines)).Where("instance=? and cluster=?", instance, cluster).Count(&total).Error
+	err := DB().Model(new(AlertingEngines)).Where("instance=? and cluster=?", instance, cluster).Count(&total).Error
 	if err != nil {
 		return err
 	}
@@ -115,9 +107,17 @@ func AlertingEngineHeartbeat(instance, cluster string) error {
 		}).Error
 	} else {
 		// updates
-		fields := map[string]interface{}{"clock": time.Now().Unix(), "cluster": cluster}
-		err = DB().Model(new(AlertingEngines)).Where("instance=?", instance).Updates(fields).Error
+		fields := map[string]interface{}{"clock": time.Now().Unix()}
+		err = DB().Model(new(AlertingEngines)).Where("instance=? and cluster=?", instance, cluster).Updates(fields).Error
 	}
 
+	return err
+}
+
+func AlertingEngineHeartbeat(instance string) error {
+	var err error
+	// cluster 为空，表示 cluster 在页面配置，按照 instance 更新心跳
+	fields := map[string]interface{}{"clock": time.Now().Unix()}
+	err = DB().Model(new(AlertingEngines)).Where("instance=?", instance).Updates(fields).Error
 	return err
 }

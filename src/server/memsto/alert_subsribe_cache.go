@@ -110,12 +110,12 @@ func syncAlertSubscribes() error {
 	}
 
 	var clusterName string
-	// 只有一个集群，使用单集群模式，如果大于1个集群，则获取全部的规则
 	if len(clusterNames) == 1 {
+		// 兼容老版本监控数据上报
 		clusterName = clusterNames[0]
 	}
 
-	stat, err := models.AlertSubscribeStatistics(clusterName)
+	stat, err := models.AlertSubscribeStatistics("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertSubscribeStatistics")
 	}
@@ -127,7 +127,7 @@ func syncAlertSubscribes() error {
 		return nil
 	}
 
-	lst, err := models.AlertSubscribeGetsByCluster(clusterName)
+	lst, err := models.AlertSubscribeGetsByCluster("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertSubscribeGetsByCluster")
 	}

@@ -41,13 +41,18 @@ func loopFilterRules(ctx context.Context) {
 
 func filterRules() {
 	ids := memsto.AlertRuleCache.GetRuleIds()
-	logger.Debugf("AlertRuleCache.GetRuleIds success，ids.len: %d", len(ids))
+	logger.Debugf("AlertRuleCache.GetRuleIds success, ids.len: %d", len(ids))
 
 	count := len(ids)
 	mines := make([]int64, 0, count)
 
 	for i := 0; i < count; i++ {
 		rule := memsto.AlertRuleCache.Get(ids[i])
+
+		if config.ReaderClients.IsNil(rule.Cluster) {
+			// 没有这个集群的配置，跳过
+			continue
+		}
 
 		node, err := naming.ClusterHashRing.GetNode(rule.Cluster, fmt.Sprint(ids[i]))
 		if err != nil {
@@ -604,6 +609,12 @@ func filterRecordingRules() {
 
 	for i := 0; i < count; i++ {
 		rule := memsto.RecordingRuleCache.Get(ids[i])
+
+		if config.ReaderClients.IsNil(rule.Cluster) {
+			// 没有这个集群的配置，跳过
+			continue
+		}
+
 		node, err := naming.ClusterHashRing.GetNode(rule.Cluster, fmt.Sprint(ids[i]))
 		if err != nil {
 			logger.Warning("failed to get node from hashring:", err)
