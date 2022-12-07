@@ -7,8 +7,8 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func IamLeader() (bool, error) {
-	servers, err := ActiveServers()
+func IamLeader(cluster string) (bool, error) {
+	servers, err := ActiveServers(cluster)
 	if err != nil {
 		logger.Errorf("failed to get active servers: %v", err)
 		return false, err

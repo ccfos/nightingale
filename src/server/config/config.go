@@ -269,6 +269,7 @@ type Config struct {
 	WriterOpt          WriterGlobalOpt
 	Writers            []WriterOptions
 	Reader             PromOption
+	Readers            []PromOption
 	Ibex               Ibex
 }
 

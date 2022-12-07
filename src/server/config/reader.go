@@ -38,57 +38,59 @@ func initFromDatabase() error {
 }
 
 func loadFromDatabase() {
-	cluster, err := models.AlertingEngineGetCluster(C.Heartbeat.Endpoint)
+	clusters, err := models.AlertingEngineGetClusters(C.Heartbeat.Endpoint)
 	if err != nil {
 		logger.Errorf("failed to get current cluster, error: %v", err)
 		return
 	}
 
-	if cluster == "" {
-		ReaderClient.Reset()
+	if len(clusters) == 0 {
+		ReaderClients.Reset()
 		logger.Warning("no datasource binded to me")
 		return
 	}
 
-	ckey := "prom." + cluster + ".option"
-	cval, err := models.ConfigsGet(ckey)
-	if err != nil {
-		logger.Errorf("failed to get ckey: %s, error: %v", ckey, err)
-		return
-	}
-
-	if cval == "" {
-		ReaderClient.Reset()
-		return
-	}
-
-	var po PromOption
-	err = json.Unmarshal([]byte(cval), &po)
-	if err != nil {
-		logger.Errorf("failed to unmarshal PromOption: %s", err)
-		return
-	}
-
-	if ReaderClient.IsNil() {
-		// first time
-		if err = setClientFromPromOption(cluster, po); err != nil {
-			logger.Errorf("failed to setClientFromPromOption: %v", err)
-			return
+	for _, cluster := range clusters {
+		ckey := "prom." + cluster + ".option"
+		cval, err := models.ConfigsGet(ckey)
+		if err != nil {
+			logger.Errorf("failed to get ckey: %s, error: %v", ckey, err)
+			continue
 		}
 
-		PromOptions.Sets(cluster, po)
-		return
-	}
-
-	localPo, has := PromOptions.Get(cluster)
-	if !has || !localPo.Equal(po) {
-		if err = setClientFromPromOption(cluster, po); err != nil {
-			logger.Errorf("failed to setClientFromPromOption: %v", err)
-			return
+		if cval == "" {
+			logger.Warningf("failed to get ckey: %s, cval: %s is null", ckey, cval)
+			ReaderClients.Del(cluster)
+			continue
 		}
 
-		PromOptions.Sets(cluster, po)
-		return
+		var po PromOption
+		err = json.Unmarshal([]byte(cval), &po)
+		if err != nil {
+			logger.Errorf("failed to unmarshal PromOption: %s", err)
+			continue
+		}
+
+		if ReaderClients.IsNil(cluster) {
+			// first time
+			if err = setClientFromPromOption(cluster, po); err != nil {
+				logger.Errorf("failed to setClientFromPromOption: %v", err)
+				continue
+			}
+
+			PromOptions.Sets(cluster, po)
+			continue
+		}
+
+		localPo, has := PromOptions.Get(cluster)
+		if !has || !localPo.Equal(po) {
+			if err = setClientFromPromOption(cluster, po); err != nil {
+				logger.Errorf("failed to setClientFromPromOption: %v", err)
+				continue
+			}
+
+			PromOptions.Sets(cluster, po)
+		}
 	}
 }
 
@@ -121,7 +123,7 @@ func setClientFromPromOption(clusterName string, po PromOption) error {
 		return fmt.Errorf("failed to newClientFromPromOption: %v", err)
 	}
 
-	ReaderClient.Set(clusterName, prom.NewAPI(cli, prom.ClientOptions{
+	ReaderClients.Set(clusterName, prom.NewAPI(cli, prom.ClientOptions{
 		BasicAuthUser: po.BasicAuthUser,
 		BasicAuthPass: po.BasicAuthPass,
 		Headers:       po.Headers,

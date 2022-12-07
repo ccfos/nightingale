@@ -7,7 +7,6 @@ import (
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/server/common/conv"
-	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/engine"
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 
@@ -67,10 +66,7 @@ func pushEventToQueue(c *gin.Context) {
 	event.NotifyChannels = strings.Join(event.NotifyChannelsJSON, " ")
 	event.NotifyGroups = strings.Join(event.NotifyGroupsJSON, " ")
 
-	cn := config.ReaderClient.GetClusterName()
-	if cn != "" {
-		promstat.CounterAlertsTotal.WithLabelValues(cn).Inc()
-	}
+	promstat.CounterAlertsTotal.WithLabelValues(event.Cluster).Inc()
 
 	engine.LogEvent(event, "http_push_queue")
 	if !engine.EventQueue.PushFront(event) {

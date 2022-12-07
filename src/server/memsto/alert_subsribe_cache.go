@@ -102,11 +102,17 @@ func loopSyncAlertSubscribes() {
 func syncAlertSubscribes() error {
 	start := time.Now()
 
-	clusterName := config.ReaderClient.GetClusterName()
-	if clusterName == "" {
+	clusterNames := config.ReaderClients.GetClusterNames()
+	if len(clusterNames) == 0 {
 		AlertSubscribeCache.Reset()
-		logger.Warning("cluster name is blank")
+		logger.Warning("cluster is blank")
 		return nil
+	}
+
+	var clusterName string
+	// 只有一个集群，使用单集群模式，如果大于1个集群，则获取全部的规则
+	if len(clusterNames) == 1 {
+		clusterName = clusterNames[0]
 	}
 
 	stat, err := models.AlertSubscribeStatistics(clusterName)

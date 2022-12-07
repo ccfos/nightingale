@@ -222,7 +222,7 @@ func handleOpenTSDB(c *gin.Context) {
 	}
 
 	if succ > 0 {
-		cn := config.ReaderClient.GetClusterName()
+		cn := config.C.ClusterName
 		if cn != "" {
 			promstat.CounterSampleTotal.WithLabelValues(cn, "opentsdb").Add(float64(succ))
 		}

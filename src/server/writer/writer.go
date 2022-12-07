@@ -49,7 +49,7 @@ func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[
 
 	start := time.Now()
 	defer func() {
-		cn := config.ReaderClient.GetClusterName()
+		cn := config.C.ClusterName
 		if cn != "" {
 			promstat.ForwardDuration.WithLabelValues(cn, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
 		}
@@ -218,7 +218,7 @@ func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 }
 
 func reportChanSize() {
-	clusterName := config.ReaderClient.GetClusterName()
+	clusterName := config.C.ClusterName
 	if clusterName == "" {
 		return
 	}

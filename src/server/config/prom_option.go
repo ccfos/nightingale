@@ -3,6 +3,7 @@ package config
 import "sync"
 
 type PromOption struct {
+	ClusterName   string
 	Url           string
 	BasicAuthUser string
 	BasicAuthPass string

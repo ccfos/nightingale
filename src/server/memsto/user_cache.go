@@ -124,7 +124,7 @@ func syncUsers() error {
 		return errors.WithMessage(err, "failed to exec UserStatistics")
 	}
 
-	clusterName := config.ReaderClient.GetClusterName()
+	clusterName := config.C.ClusterName
 
 	if !UserCache.StatChanged(stat.Total, stat.LastUpdated) {
 		if clusterName != "" {

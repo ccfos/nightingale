@@ -47,7 +47,9 @@ func filterRules() {
 	mines := make([]int64, 0, count)
 
 	for i := 0; i < count; i++ {
-		node, err := naming.HashRing.GetNode(fmt.Sprint(ids[i]))
+		rule := memsto.AlertRuleCache.Get(ids[i])
+
+		node, err := naming.ClusterHashRing.GetNode(rule.Cluster, fmt.Sprint(ids[i]))
 		if err != nil {
 			logger.Warning("failed to get node from hashring:", err)
 			continue
@@ -166,12 +168,12 @@ func (r *RuleEval) Work() {
 		return
 	}
 
-	if config.ReaderClient.IsNil() {
+	if config.ReaderClients.IsNil(r.rule.Cluster) {
 		logger.Error("reader client is nil")
 		return
 	}
 
-	clusterName, readerClient := config.ReaderClient.Get()
+	readerClient := config.ReaderClients.GetCli(r.rule.Cluster)
 
 	var value model.Value
 	var err error
@@ -192,7 +194,7 @@ func (r *RuleEval) Work() {
 		logger.Debugf("rule_eval:%d promql:%s, value:%v", r.RuleID(), promql, value)
 	}
 
-	r.Judge(clusterName, conv.ConvertVectors(value))
+	r.Judge(r.rule.Cluster, conv.ConvertVectors(value))
 }
 
 type WorkersType struct {
@@ -601,7 +603,8 @@ func filterRecordingRules() {
 	mines := make([]int64, 0, count)
 
 	for i := 0; i < count; i++ {
-		node, err := naming.HashRing.GetNode(fmt.Sprint(ids[i]))
+		rule := memsto.RecordingRuleCache.Get(ids[i])
+		node, err := naming.ClusterHashRing.GetNode(rule.Cluster, fmt.Sprint(ids[i]))
 		if err != nil {
 			logger.Warning("failed to get node from hashring:", err)
 			continue
@@ -654,12 +657,12 @@ func (r RecordingRuleEval) Work() {
 		return
 	}
 
-	if config.ReaderClient.IsNil() {
+	if config.ReaderClients.IsNil(r.rule.Cluster) {
 		log.Println("reader client is nil")
 		return
 	}
 
-	value, warnings, err := config.ReaderClient.GetCli().Query(context.Background(), promql, time.Now())
+	value, warnings, err := config.ReaderClients.GetCli(r.rule.Cluster).Query(context.Background(), promql, time.Now())
 	if err != nil {
 		logger.Errorf("recording_rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
 		return

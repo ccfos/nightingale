@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -48,8 +49,9 @@ func userGroupGet(c *gin.Context) {
 }
 
 func alertRuleLocationGet(c *gin.Context) {
-	id := ginx.QueryStr(c, "id")
-	node, err := naming.HashRing.GetNode(id)
+	id := ginx.QueryInt64(c, "id")
+	rule := memsto.AlertRuleCache.Get(id)
+	node, err := naming.ClusterHashRing.GetNode(rule.Cluster, strconv.FormatInt(id, 10))
 	if err != nil {
 		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
 		return

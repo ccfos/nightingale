@@ -14,8 +14,13 @@ type ConsistentHashRing struct {
 	ring *consistent.Consistent
 }
 
+type ClusterHashRingType struct {
+	sync.RWMutex
+	Rings map[string]*ConsistentHashRing
+}
+
 // for alert_rule sharding
-var HashRing = NewConsistentHashRing(int32(NodeReplicas), []string{})
+var ClusterHashRing = ClusterHashRingType{Rings: make(map[string]*ConsistentHashRing)}
 
 func (chr *ConsistentHashRing) GetNode(pk string) (string, error) {
 	chr.RLock()
@@ -46,14 +51,46 @@ func NewConsistentHashRing(replicas int32, nodes []string) *ConsistentHashRing {
 	return ret
 }
 
-func RebuildConsistentHashRing(nodes []string) {
+func RebuildConsistentHashRing(cluster string, nodes []string) {
 	r := consistent.New()
 	r.NumberOfReplicas = NodeReplicas
 	for i := 0; i < len(nodes); i++ {
 		r.Add(nodes[i])
 	}
 
-	HashRing.Set(r)
+	ClusterHashRing.GetRing(cluster).Set(nodes)
+	logger.Infof("hash ring %s rebuild %+v", cluster, r.Members())
+}
 
-	logger.Infof("hash ring rebuild %+v", r.Members())
+func (chr *ClusterHashRingType) Add(cluster string, replicas int32, nodes []string) {
+	chr.Lock()
+	defer chr.Unlock()
+	_, exists := chr.Rings[cluster]
+	if exists {
+		return
+	}
+
+	chr.Rings[cluster] = NewConsistentHashRing(replicas, nodes)
+}
+
+func (chr *ClusterHashRingType) GetRing(cluster string) *consistent.Consistent {
+	chr.RLock()
+	defer chr.RUnlock()
+	_, exists := chr.Rings[cluster]
+	if !exists {
+		chr.Rings[cluster] = NewConsistentHashRing(int32(NodeReplicas), []string{})
+	}
+
+	return chr.Rings[cluster].GetRing()
+}
+
+func (chr *ClusterHashRingType) GetNode(cluster, pk string) (string, error) {
+	chr.RLock()
+	defer chr.RUnlock()
+	_, exists := chr.Rings[cluster]
+	if !exists {
+		chr.Rings[cluster] = NewConsistentHashRing(int32(NodeReplicas), []string{})
+	}
+
+	return chr.Rings[cluster].GetNode(pk)
 }

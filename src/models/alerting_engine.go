@@ -34,6 +34,25 @@ func AlertingEngineGetCluster(instance string) (string, error) {
 	return objs[0].Cluster, nil
 }
 
+// AlertingEngineGetCluster 根据实例名获取对应的集群名字
+func AlertingEngineGetClusters(instance string) ([]string, error) {
+	var objs []AlertingEngines
+	err := DB().Where("instance=?", instance).Find(&objs).Error
+	if err != nil {
+		return []string{}, err
+	}
+
+	if len(objs) == 0 {
+		return []string{}, nil
+	}
+	var clusters []string
+	for i := 0; i < len(objs); i++ {
+		clusters = append(clusters, objs[i].Cluster)
+	}
+
+	return clusters, nil
+}
+
 // AlertingEngineGets 拉取列表数据，用户要在页面上看到所有 n9e-server 实例列表，然后为其分配 cluster
 func AlertingEngineGets(where string, args ...interface{}) ([]*AlertingEngines, error) {
 	var objs []*AlertingEngines
@@ -73,8 +92,16 @@ func AlertingEngineGetsInstances(where string, args ...interface{}) ([]string, e
 }
 
 func AlertingEngineHeartbeat(instance, cluster string) error {
+	var err error
+	if cluster == "" {
+		// cluster 为空，表示 cluster 在页面配置，按照 instance 更新心跳
+		fields := map[string]interface{}{"clock": time.Now().Unix()}
+		err = DB().Model(new(AlertingEngines)).Where("instance=?", instance).Updates(fields).Error
+		return err
+	}
+
 	var total int64
-	err := DB().Model(new(AlertingEngines)).Where("instance=?", instance).Count(&total).Error
+	err = DB().Model(new(AlertingEngines)).Where("instance=? and cluster=?", instance, cluster).Count(&total).Error
 	if err != nil {
 		return err
 	}

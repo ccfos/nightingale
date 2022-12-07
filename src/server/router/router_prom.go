@@ -37,12 +37,12 @@ func queryPromql(c *gin.Context) {
 	var f promqlForm
 	ginx.BindJSON(c, &f)
 
-	if config.ReaderClient.IsNil() {
+	if config.ReaderClients.IsNil(config.C.ClusterName) {
 		c.String(500, "reader client is nil")
 		return
 	}
 
-	value, warnings, err := config.ReaderClient.GetCli().Query(c.Request.Context(), f.PromQL, time.Now())
+	value, warnings, err := config.ReaderClients.GetCli(config.C.ClusterName).Query(c.Request.Context(), f.PromQL, time.Now())
 	if err != nil {
 		c.String(500, "promql:%s error:%v", f.PromQL, err)
 		return
@@ -160,7 +160,7 @@ func remoteWrite(c *gin.Context) {
 		}
 	}
 
-	cn := config.ReaderClient.GetClusterName()
+	cn := config.C.ClusterName
 	if cn != "" {
 		promstat.CounterSampleTotal.WithLabelValues(cn, "prometheus").Add(float64(count))
 	}
