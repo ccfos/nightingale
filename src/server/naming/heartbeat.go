@@ -93,12 +93,8 @@ func heartbeat() error {
 }
 
 func ActiveServers(cluster string) ([]string, error) {
-	var err error
 	if cluster == "" {
-		cluster, err = models.AlertingEngineGetCluster(config.C.Heartbeat.Endpoint)
-		if err != nil {
-			return nil, err
-		}
+		return nil, fmt.Errorf("cluster is empty")
 	}
 
 	// 30秒内有心跳，就认为是活的

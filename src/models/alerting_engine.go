@@ -20,21 +20,6 @@ func (e *AlertingEngines) UpdateCluster(c string) error {
 }
 
 // AlertingEngineGetCluster 根据实例名获取对应的集群名字
-func AlertingEngineGetCluster(instance string) (string, error) {
-	var objs []AlertingEngines
-	err := DB().Where("instance=?", instance).Find(&objs).Error
-	if err != nil {
-		return "", err
-	}
-
-	if len(objs) == 0 {
-		return "", nil
-	}
-
-	return objs[0].Cluster, nil
-}
-
-// AlertingEngineGetCluster 根据实例名获取对应的集群名字
 func AlertingEngineGetClusters(instance string) ([]string, error) {
 	var objs []AlertingEngines
 	err := DB().Where("instance=?", instance).Find(&objs).Error

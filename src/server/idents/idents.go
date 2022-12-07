@@ -90,24 +90,13 @@ func loopPushMetrics(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-time.After(duration):
-			PushMetrics()
+			pushMetrics()
 		}
 	}
 }
 
-func PushMetrics() {
-	clusterNames := config.ReaderClients.GetClusterNames()
-	if len(clusterNames) == 0 {
-		logger.Warning("cluster name is blank")
-		return
-	}
-
-	for _, clusterName := range clusterNames {
-		pushMetrics(clusterName)
-	}
-}
-
-func pushMetrics(clusterName string) {
+func pushMetrics() {
+	clusterName := config.C.ClusterName
 	isLeader, err := naming.IamLeader(clusterName)
 	if err != nil {
 		logger.Errorf("handle_idents: %v", err)
