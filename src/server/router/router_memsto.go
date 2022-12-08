@@ -3,10 +3,13 @@ package router
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 
+	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/idents"
 	"github.com/didi/nightingale/v5/src/server/memsto"
 	"github.com/didi/nightingale/v5/src/server/naming"
@@ -51,11 +54,26 @@ func userGroupGet(c *gin.Context) {
 func alertRuleLocationGet(c *gin.Context) {
 	id := ginx.QueryInt64(c, "id")
 	rule := memsto.AlertRuleCache.Get(id)
-	node, err := naming.ClusterHashRing.GetNode(rule.Cluster, strconv.FormatInt(id, 10))
-	if err != nil {
-		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+	if rule == nil {
+		http.Error(c.Writer, "rule not found", http.StatusNotFound)
 		return
 	}
+	var clusters []string
+	if rule.Cluster == models.ClusterAll {
+		clusters = config.ReaderClients.GetClusterNames()
+	} else {
+		clusters = strings.Fields(rule.Cluster)
+	}
 
-	c.JSON(200, gin.H{"id": id, "node": node})
+	var arr []gin.H
+	for _, cluster := range clusters {
+		node, err := naming.ClusterHashRing.GetNode(cluster, strconv.FormatInt(id, 10))
+		if err != nil {
+			http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		arr = append(arr, gin.H{"id": id, "cluster": cluster, "node": node})
+	}
+
+	c.JSON(200, gin.H{"list": arr})
 }

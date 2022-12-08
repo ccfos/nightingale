@@ -54,6 +54,10 @@ func filterRules() {
 
 	for i := 0; i < count; i++ {
 		rule := memsto.AlertRuleCache.Get(ids[i])
+		if rule == nil {
+			logger.Debugf("AlertRuleCache.Get(%d) failed", ids[i])
+			continue
+		}
 
 		var clusters []string
 		if rule.Cluster == models.ClusterAll {
@@ -68,9 +72,9 @@ func filterRules() {
 				continue
 			}
 
-			node, err := naming.ClusterHashRing.GetNode(rule.Cluster, fmt.Sprint(ids[i]))
+			node, err := naming.ClusterHashRing.GetNode(cluster, fmt.Sprint(ids[i]))
 			if err != nil {
-				logger.Warning("failed to get node from hashring:", err)
+				logger.Warningf("rid:%d cluster:%s failed to get node from hashring:", ids[i], cluster, err)
 				continue
 			}
 
@@ -289,7 +293,7 @@ func (ws *WorkersType) BuildRe(ris []*RuleSimpleInfo) {
 	rules := make(map[string]*RuleSimpleInfo)
 
 	for i := 0; i < len(ris); i++ {
-		rule := memsto.AlertRuleCache.Get(ris[i].Id)
+		rule := memsto.RecordingRuleCache.Get(ris[i].Id)
 		if rule == nil {
 			continue
 		}
@@ -623,7 +627,11 @@ func filterRecordingRules() {
 	mines := make([]*RuleSimpleInfo, 0, count)
 
 	for i := 0; i < count; i++ {
-		rule := memsto.AlertRuleCache.Get(ids[i])
+		rule := memsto.RecordingRuleCache.Get(ids[i])
+		if rule == nil {
+			logger.Debugf("rule %d not found", ids[i])
+			continue
+		}
 
 		var clusters []string
 		if rule.Cluster == models.ClusterAll {
@@ -638,7 +646,7 @@ func filterRecordingRules() {
 				continue
 			}
 
-			node, err := naming.ClusterHashRing.GetNode(rule.Cluster, fmt.Sprint(ids[i]))
+			node, err := naming.ClusterHashRing.GetNode(cluster, fmt.Sprint(ids[i]))
 			if err != nil {
 				logger.Warning("failed to get node from hashring:", err)
 				continue
@@ -803,6 +811,10 @@ func (re *RuleEvalForExternalType) Get(rid int64, cluster string) (RuleEval, boo
 	re.RLock()
 	defer re.RUnlock()
 	rule := memsto.AlertRuleCache.Get(rid)
+	if rule == nil {
+		return RuleEval{}, false
+	}
+
 	hash := str.MD5(fmt.Sprintf("%d_%d_%s_%s",
 		rule.Id,
 		rule.PromEvalInterval,
