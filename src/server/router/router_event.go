@@ -87,7 +87,7 @@ type eventForm struct {
 func judgeEvent(c *gin.Context) {
 	var form eventForm
 	ginx.BindJSON(c, &form)
-	re, exists := engine.RuleEvalForExternal.Get(form.RuleId)
+	re, exists := engine.RuleEvalForExternal.Get(form.RuleId, form.Cluster)
 	if !exists {
 		ginx.Bomb(200, "rule not exists")
 	}
@@ -100,7 +100,7 @@ func makeEvent(c *gin.Context) {
 	ginx.BindJSON(c, &events)
 	now := time.Now().Unix()
 	for i := 0; i < len(events); i++ {
-		re, exists := engine.RuleEvalForExternal.Get(events[i].RuleId)
+		re, exists := engine.RuleEvalForExternal.Get(events[i].RuleId, events[i].Cluster)
 		logger.Debugf("handle event:%+v exists:%v", events[i], exists)
 		if !exists {
 			ginx.Bomb(200, "rule not exists")
@@ -110,7 +110,7 @@ func makeEvent(c *gin.Context) {
 			go re.MakeNewEvent("http", now, events[i].Cluster, events[i].Vectors)
 		} else {
 			for _, vector := range events[i].Vectors {
-				hash := str.MD5(fmt.Sprintf("%d_%s", events[i].RuleId, vector.Key))
+				hash := str.MD5(fmt.Sprintf("%d_%s_%s", events[i].RuleId, vector.Key, events[i].Cluster))
 				now := vector.Timestamp
 				go re.RecoverEvent(hash, now, vector.Value)
 			}
