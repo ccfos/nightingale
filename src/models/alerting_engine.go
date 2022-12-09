@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type AlertingEngines struct {
 	Id       int64  `json:"id" gorm:"primaryKey"`
@@ -15,8 +18,43 @@ func (e *AlertingEngines) TableName() string {
 
 // UpdateCluster 页面上用户会给各个n9e-server分配要关联的目标集群是什么
 func (e *AlertingEngines) UpdateCluster(c string) error {
+	count, err := Count(DB().Model(&AlertingEngines{}).Where("id<>? and instance=? and cluster=?", e.Id, e.Instance, c))
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		return fmt.Errorf("instance %s and cluster %s already exists", e.Instance, c)
+	}
+
 	e.Cluster = c
 	return DB().Model(e).Select("cluster").Updates(e).Error
+}
+
+func AlertingEngineAdd(instance, cluster string) error {
+	count, err := Count(DB().Model(&AlertingEngines{}).Where("instance=? and cluster=?", instance, cluster))
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		return fmt.Errorf("instance %s and cluster %s already exists", instance, cluster)
+	}
+
+	err = DB().Create(&AlertingEngines{
+		Instance: instance,
+		Cluster:  cluster,
+		Clock:    time.Now().Unix(),
+	}).Error
+
+	return err
+}
+
+func AlertingEngineDel(ids []int64) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	return DB().Where("id in ?", ids).Delete(new(AlertingEngines)).Error
 }
 
 // AlertingEngineGetCluster 根据实例名获取对应的集群名字

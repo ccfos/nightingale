@@ -74,7 +74,7 @@ func filterRules() {
 
 			node, err := naming.ClusterHashRing.GetNode(cluster, fmt.Sprint(ids[i]))
 			if err != nil {
-				logger.Warningf("rid:%d cluster:%s failed to get node from hashring:", ids[i], cluster, err)
+				logger.Warningf("rid:%d cluster:%s failed to get node from hashring:%v", ids[i], cluster, err)
 				continue
 			}
 

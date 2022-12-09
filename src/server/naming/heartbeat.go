@@ -43,9 +43,11 @@ func heartbeat() error {
 	if config.C.ReaderFrom == "config" {
 		// 在配置文件维护实例和集群的对应关系
 		for i := 0; i < len(config.C.Readers); i++ {
+			clusters = append(clusters, config.C.Readers[i].ClusterName)
 			err := models.AlertingEngineHeartbeatWithCluster(config.C.Heartbeat.Endpoint, config.C.Readers[i].ClusterName)
 			if err != nil {
-				return err
+				logger.Warningf("heartbeat with cluster %s err:%v", config.C.Readers[i].ClusterName, err)
+				continue
 			}
 		}
 	} else {
@@ -59,7 +61,8 @@ func heartbeat() error {
 			for i := 0; i < len(config.C.Readers); i++ {
 				err := models.AlertingEngineHeartbeatWithCluster(config.C.Heartbeat.Endpoint, config.C.Readers[i].ClusterName)
 				if err != nil {
-					return err
+					logger.Warningf("heartbeat with cluster %s err:%v", config.C.Readers[i].ClusterName, err)
+					continue
 				}
 			}
 		}
