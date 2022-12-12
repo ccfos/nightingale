@@ -224,10 +224,9 @@ func MustLoad(key string, fpaths ...string) {
 			C.WriterOpt.ShardingKey = "ident"
 		}
 
-		for _, write := range C.Writers {
-
-			if write.Name == "" {
-				write.Name = C.ClusterName
+		for i, write := range C.Writers {
+			if C.Writers[i].Name == "" {
+				C.Writers[i].Name = C.ClusterName
 			}
 
 			for _, relabel := range write.WriteRelabels {

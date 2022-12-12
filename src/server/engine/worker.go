@@ -719,7 +719,7 @@ func (r RecordingRuleEval) Work() {
 	ts := conv.ConvertToTimeSeries(value, r.rule)
 	if len(ts) != 0 {
 		for _, v := range ts {
-			writer.Writers.PushSample(r.rule.Name, v)
+			writer.Writers.PushSample(r.rule.Name, v, r.cluster)
 		}
 	}
 }
