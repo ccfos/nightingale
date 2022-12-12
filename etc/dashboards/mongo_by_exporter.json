@@ -1,109 +1,1151 @@
-[
-    {
-      "name": "MongoDB Overview - 模板",
-      "tags": "Prometheus MongoDB",
-      "configs": "{\"var\":[{\"name\":\"instance\",\"definition\":\"label_values(mongodb_up,instance)\"}]}",
-      "chart_groups": [
-        {
-          "name": "Basic Info",
-          "weight": 0,
-          "charts": [
+{
+    "name": "MongoDB Overview - 模板",
+    "tags": "Prometheus MongoDB",
+    "configs": {
+        "var": [
             {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"mongodb_up{instance=\\\"$instance\\\"}\",\"time\":{\"num\":1,\"unit\":\"hour\",\"description\":\"小时\"}}],\"name\":\"Up\",\"description\":\"实例数\",\"custom\":{\"textMode\":\"value\",\"colorMode\":\"value\",\"calc\":\"lastNotNull\",\"colSpan\":1,\"textSize\":{}},\"options\":{\"valueMappings\":[{\"type\":\"range\",\"match\":{\"from\":1},\"result\":{\"color\":\"#53b503\"}},{\"type\":\"range\",\"match\":{\"special\":null,\"from\":0,\"to\":1},\"result\":{\"color\":\"#e70d0d\"}}],\"standardOptions\":{}},\"version\":\"2.0.0\",\"type\":\"stat\",\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"mongodb_instance_uptime_seconds{instance='$instance'}\",\"time\":{\"num\":1,\"unit\":\"hour\",\"description\":\"小时\"}}],\"name\":\"Uptime\",\"description\":\"启用时长\",\"custom\":{\"textMode\":\"value\",\"colorMode\":\"value\",\"calc\":\"lastNotNull\",\"colSpan\":1,\"textSize\":{\"title\":null}},\"options\":{\"valueMappings\":[{\"type\":\"range\",\"match\":{\"to\":1800},\"result\":{\"color\":\"#ec7718\"}},{\"type\":\"range\",\"match\":{\"from\":1800},\"result\":{\"color\":\"#53b503\"}}],\"standardOptions\":{\"util\":\"humantimeSeconds\"}},\"version\":\"2.0.0\",\"type\":\"stat\",\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":0,\"i\":\"1\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"mongodb_memory{instance='$instance'} * 1024 * 1024\",\"legend\":\"{{type}}\"}],\"name\":\"Memory\",\"description\":\"内存占用（MiB）\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"util\":\"bytesIEC\"},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":0,\"i\":\"2\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"rate(mongodb_extra_info_page_faults_total{instance=\\\"$instance\\\"}[5m])\",\"legend\":\"{{type}}\"}],\"name\":\"Page Faults\",\"description\":\"页缺失中断次数 Page faults indicate that requests are processed from disk either because an index is missing or there is not enough memory for the data set. Consider increasing memory or sharding out.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"util\":\"none\",\"decimals\":null},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":0,\"i\":\"3\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"rate(mongodb_ss_network_bytesOut{instance='$instance'}[5m])\",\"legend\":\"bytesOut\"},{\"expr\":\"rate(mongodb_ss_network_bytesIn{instance='$instance'}[5m])\",\"refId\":\"B\",\"legend\":\"bytesIn\"}],\"name\":\"Network I/O\",\"description\":\"网络流量（byte）\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"util\":\"bytesSI\"},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":2,\"i\":\"4\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"mongodb_connections{instance=\\\"$instance\\\", state=\\\"current\\\"}\",\"legend\":\"Connections\"}],\"name\":\"Connections\",\"description\":\"连接数 Keep in mind the hard limit on the maximum number of connections set by your distribution.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":2,\"i\":\"5\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"rate(mongodb_asserts_total{instance=\\\"$instance\\\"}[5m])\",\"legend\":\"{{type}}\"}],\"name\":\"Assert Events\",\"description\":\"断言错误次数 Asserts are not important by themselves, but you can correlate spikes with other graphs.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":2,\"i\":\"6\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"mongodb_mongod_global_lock_current_queue{instance=\\\"$instance\\\"}\",\"legend\":\"{{type}}\"}],\"name\":\"Lock Queue\",\"description\":\"等待获取锁操作数量 Any number of queued operations for long periods of time is an indication of possible issues. Find the cause and fix it before requests get stuck in the queue.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":2,\"i\":\"7\"}}",
-              "weight": 0
+                "name": "instance",
+                "type": "query",
+                "definition": "label_values(mongodb_ss_uptime,instance)"
             }
-          ]
-        },
-        {
-          "name": "Operation Info",
-          "weight": 1,
-          "charts": [
+        ],
+        "version": "2.0.0",
+        "panels": [
             {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"rate(mongodb_op_counters_total{instance=\\\"$instance\\\", type!=\\\"command\\\"}[5m])\",\"legend\":\"{{type}}\"},{\"expr\":\"rate(mongodb_mongod_op_counters_repl_total{instance=\\\"$instance\\\", type!~\\\"(command|query|getmore)\\\"}[5m]) or \\nrate(mongodb_mongos_op_counters_repl_total{instance=\\\"$instance\\\", type!~\\\"(command|query|getmore)\\\"}[5m])\",\"refId\":\"B\",\"legend\":\"repl_{{type}}\"},{\"expr\":\"rate(mongodb_mongod_metrics_ttl_deleted_documents_total{instance=\\\"$instance\\\"}[5m]) or \\nrate(mongodb_mongos_metrics_ttl_deleted_documents_total{instance=\\\"$instance\\\"}[5m])\",\"refId\":\"C\",\"legend\":\"ttl_delete\"}],\"name\":\"Command Operations\",\"description\":\"接收请求数 Shows how many times a command is executed per second on average during the selected interval.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"desc\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":0,\"y\":0,\"i\":\"0\"}}",
-              "weight": 0
+                "id": "939298f2-b21f-4e2f-9142-c10946cc4032",
+                "type": "row",
+                "name": "Basic Info",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "939298f2-b21f-4e2f-9142-c10946cc4032",
+                    "isResizable": false
+                },
+                "collapsed": true
             },
             {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"rate(mongodb_mongod_metrics_document_total{instance=\\\"$instance\\\"}[5m])\",\"legend\":\"{{state}}\"}],\"name\":\"Document Operations\",\"description\":\"文档操作数 When used in combination with 'Command Operations', this graph can help identify write amplification. For example, when one insert or update command actually inserts or updates hundreds, thousands, or even millions of documents.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":12,\"y\":0,\"i\":\"1\"}}",
-              "weight": 0
+                "type": "stat",
+                "id": "91970d24-3f04-4424-a1ed-73e7d28f5706",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 0,
+                    "y": 1,
+                    "i": "91970d24-3f04-4424-a1ed-73e7d28f5706",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mongodb_up{instance=\"$instance\"}"
+                    }
+                ],
+                "name": "Up",
+                "description": "实例数",
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "special",
+                            "match": {
+                                "from": 1,
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#53b503",
+                                "text": "UP"
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
             },
             {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"rate(mongodb_mongod_op_latencies_latency_total{instance='$instance'}[5m]) / rate(mongodb_mongod_op_latencies_ops_total{instance='$instance'}[5m]) / 1000\",\"legend\":\"{{type}}\"}],\"name\":\"Response Time\",\"description\":\"操作详情耗时（毫秒）\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"util\":\"milliseconds\"},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":8,\"x\":0,\"y\":2,\"i\":\"2\"}}",
-              "weight": 0
+                "type": "stat",
+                "id": "c7b52e8e-b417-4c61-a15e-e2f186fccd67",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 6,
+                    "y": 1,
+                    "i": "c7b52e8e-b417-4c61-a15e-e2f186fccd67",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mongodb_ss_uptime{instance=\"$instance\"}"
+                    }
+                ],
+                "name": "Uptime",
+                "description": "启用时长",
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {
+                        "title": null
+                    }
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "match": {
+                                "to": 1800
+                            },
+                            "result": {
+                                "color": "#ec7718"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 1800
+                            },
+                            "result": {
+                                "color": "#53b503"
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "humantimeSeconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
             },
             {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"sum(increase(mongodb_mongod_metrics_query_executor_total{instance=\\\"$instance\\\", state=\\\"scanned_objects\\\"}[5m])) / sum(increase(mongodb_mongod_metrics_document_total{instance=\\\"$instance\\\", state=\\\"returned\\\"}[5m]))\",\"legend\":\"Document\"},{\"expr\":\"sum(increase(mongodb_mongod_metrics_query_executor_total{instance=\\\"$instance\\\", state=\\\"scanned\\\"}[5m])) / sum(increase(mongodb_mongod_metrics_document_total{instance=\\\"$instance\\\", state=\\\"returned\\\"}[5m]))\",\"refId\":\"B\",\"legend\":\"Index\"}],\"name\":\"Query Efficiency\",\"description\":\"查询效率\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"util\":\"percentUnit\"},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":8,\"x\":8,\"y\":2,\"i\":\"3\"}}",
-              "weight": 0
+                "type": "timeseries",
+                "id": "8446dded-9e11-4ee9-bdad-769b193ddf3e",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 12,
+                    "y": 1,
+                    "i": "8446dded-9e11-4ee9-bdad-769b193ddf3e",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mongodb_ss_mem_resident{cluster='$cluster'} * 1024 * 1024",
+                        "legend": "{{type}}"
+                    }
+                ],
+                "name": "Memory",
+                "description": "内存占用（MiB）",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
             },
             {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"mongodb_mongod_metrics_cursor_open{instance=\\\"$instance\\\"}\",\"legend\":\"{{state}}\"}],\"name\":\"Cursors\",\"description\":\"游标数量 Helps identify why connections are increasing. Shows active cursors compared to cursors being automatically killed after 10 minutes due to an application not closing the connection.\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":8,\"x\":16,\"y\":2,\"i\":\"4\"}}",
-              "weight": 0
+                "type": "timeseries",
+                "id": "3eda28e7-2480-4ddc-b346-89ced1c33034",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 18,
+                    "y": 1,
+                    "i": "3eda28e7-2480-4ddc-b346-89ced1c33034",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mongodb_ss_extra_info_page_faults{instance=\"$instance\"}[5m])",
+                        "legend": "{{type}}"
+                    }
+                ],
+                "name": "Page Faults",
+                "description": "页缺失中断次数 Page faults indicate that requests are processed from disk either because an index is missing or there is not enough memory for the data set. Consider increasing memory or sharding out.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": null
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "528d0485-f947-470d-95f3-59eae157ebb6",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 0,
+                    "y": 8,
+                    "i": "528d0485-f947-470d-95f3-59eae157ebb6",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mongodb_ss_network_bytesOut{cluster='$cluster'}[5m])",
+                        "legend": "bytesOut"
+                    },
+                    {
+                        "expr": "rate(mongodb_ss_network_bytesIn{instance='$instance'}[5m])",
+                        "refId": "B",
+                        "legend": "bytesIn"
+                    }
+                ],
+                "name": "Network I/O",
+                "description": "网络流量（byte）",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "067e97c3-4e57-447f-a9dc-a49627b6ce18",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 6,
+                    "y": 8,
+                    "i": "067e97c3-4e57-447f-a9dc-a49627b6ce18",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mongodb_ss_connections{instance=\"$instance\", conn_type=\"current\"}",
+                        "legend": "Connections"
+                    }
+                ],
+                "name": "Connections",
+                "description": "连接数 Keep in mind the hard limit on the maximum number of connections set by your distribution.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "9e9b7356-cf0e-4e5f-95f5-00258c576bf4",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 12,
+                    "y": 8,
+                    "i": "9e9b7356-cf0e-4e5f-95f5-00258c576bf4",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mongodb_ss_asserts{instance=\"$instance\"}[5m])",
+                        "legend": "{{assert_type}}"
+                    }
+                ],
+                "name": "Assert Events",
+                "description": "断言错误次数 Asserts are not important by themselves, but you can correlate spikes with other graphs.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "2698f0f8-a76a-499b-99cf-30504f0f4db6",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 18,
+                    "y": 8,
+                    "i": "2698f0f8-a76a-499b-99cf-30504f0f4db6",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mongodb_ss_globalLock_currentQueue{instance=\"$instance\"}",
+                        "legend": "{{count_type}}"
+                    }
+                ],
+                "name": "Lock Queue",
+                "description": "等待获取锁操作数量 Any number of queued operations for long periods of time is an indication of possible issues. Find the cause and fix it before requests get stuck in the queue.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "id": "2bdb8cc9-92f4-449e-8f70-a4c470a21604",
+                "type": "row",
+                "name": "Operation Info",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 15,
+                    "i": "2bdb8cc9-92f4-449e-8f70-a4c470a21604",
+                    "isResizable": false
+                },
+                "collapsed": true
+            },
+            {
+                "type": "timeseries",
+                "id": "c2819508-95e7-4c63-aeae-ce19f92469cd",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 16,
+                    "i": "c2819508-95e7-4c63-aeae-ce19f92469cd",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mongodb_ss_opcounters{instance=\"$instance\", legacy_op_type!=\"command\"}[5m])",
+                        "legend": "{{legacy_op_type}}"
+                    },
+                    {
+                        "expr": "rate(mongodb_ss_opcountersRepl{instance=\"$instance\", legacy_op_type!~\"(command|query|getmore)\"}[5m]) or \nrate(mongodb_ss_opcountersRepl{instance=\"$instance\", legacy_op_type!~\"(command|query|getmore)\"}[5m])",
+                        "refId": "B",
+                        "legend": "repl_{{legacy_op_type}}"
+                    },
+                    {
+                        "expr": "rate(mongodb_ss_metrics_ttl_deletedDocuments{instance=\"$instance\"}[5m]) or \nrate(mongodb_ss_metrics_ttl_deletedDocuments{instance=\"$instance\"}[5m])",
+                        "refId": "C",
+                        "legend": "ttl_delete"
+                    }
+                ],
+                "name": "Command Operations",
+                "description": "接收请求数 Shows how many times a command is executed per second on average during the selected interval.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "7030d97a-d69f-4916-a415-ec57503ab1ed",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 16,
+                    "i": "7030d97a-d69f-4916-a415-ec57503ab1ed",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mongodb_ss_metric_document{instance=\"$instance\"}[5m])",
+                        "legend": ""
+                    }
+                ],
+                "name": "Document Operations",
+                "description": "文档操作数 When used in combination with 'Command Operations', this graph can help identify write amplification. For example, when one insert or update command actually inserts or updates hundreds, thousands, or even millions of documents.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "1c3b73d5-c25c-449f-995d-26acc9c621e1",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 23,
+                    "i": "1c3b73d5-c25c-449f-995d-26acc9c621e1",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mongodb_ss_opLatencies_latency{cluster='$cluster'}[5m]) / rate(mongodb_ss_opLatencies_latency{cluster='$cluster'}[5m]) / 1000",
+                        "legend": "{{op_type}}"
+                    }
+                ],
+                "name": "Response Time",
+                "description": "操作详情耗时（毫秒）",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "e642183c-8ba2-4f60-abc6-c65de49e7577",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 23,
+                    "i": "e642183c-8ba2-4f60-abc6-c65de49e7577",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(increase(mongodb_ss_metrics_queryExecutor_scannedObjects{instance=\"$instance\"}[5m])) / sum(increase(mongodb_ss_metrics_document{instance=\"$instance\", doc_op_type=\"returned\"}[5m]))",
+                        "legend": "Document"
+                    },
+                    {
+                        "expr": "sum(increase(mongodb_ss_metrics_queryExecutor_scanned{instance=\"$instance\"}[5m])) / sum(increase(mongodb_ss_metrics_document{instance=\"$instance\", doc_op_type=\"returned\"}[5m]))",
+                        "refId": "B",
+                        "legend": "Index"
+                    }
+                ],
+                "name": "Query Efficiency",
+                "description": "查询效率",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "8b5a4f44-3291-4822-ab73-f56be6c62674",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 23,
+                    "i": "8b5a4f44-3291-4822-ab73-f56be6c62674",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mongodb_ss_metrics_cursor_open{instance=\"$instance\"}",
+                        "legend": "{{csr_type}}"
+                    }
+                ],
+                "name": "Cursors",
+                "description": "游标数量 Helps identify why connections are increasing. Shows active cursors compared to cursors being automatically killed after 10 minutes due to an application not closing the connection.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "id": "06946b19-94b4-4f72-bd87-70f87989257d",
+                "type": "row",
+                "name": "Cache Info",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 30,
+                    "i": "06946b19-94b4-4f72-bd87-70f87989257d",
+                    "isResizable": false
+                },
+                "collapsed": true,
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "bb0ae571-43a1-430b-8f63-256f6f1ebee6",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 0,
+                    "y": 31,
+                    "i": "bb0ae571-43a1-430b-8f63-256f6f1ebee6",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mongodb_ss_wt_cache_bytes_currently_in_the_cache{cluster='$cluster'}",
+                        "legend": "total"
+                    },
+                    {
+                        "expr": "mongodb_ss_wt_cache_tracked_dirty_bytes_in_the_cache{cluster='$cluster'}",
+                        "refId": "B",
+                        "legend": "dirty"
+                    },
+                    {
+                        "expr": "mongodb_ss_wt_cache_tracked_bytes_belonging_to_internal_pages_in_the_cache{cluster='$cluster'}",
+                        "refId": "C",
+                        "legend": "internal_pages"
+                    },
+                    {
+                        "expr": "mongodb_ss_wt_cache_tracked_bytes_belonging_to_leaf_pages_in_the_cache{cluster='$cluster'}",
+                        "refId": "D",
+                        "legend": "leaf_pages"
+                    }
+                ],
+                "name": "Cache Size",
+                "description": "缓存大小（byte）",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "f1ffd169-2a1a-42bc-9647-0e6621be0fef",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 6,
+                    "y": 31,
+                    "i": "f1ffd169-2a1a-42bc-9647-0e6621be0fef",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mongodb_ss_wt_cache_bytes_read_into_cache{cluster='$cluster'}[5m])",
+                        "legend": "read"
+                    },
+                    {
+                        "expr": "rate(mongodb_ss_wt_cache_bytes_written_from_cache{cluster='$cluster'}[5m])",
+                        "refId": "B",
+                        "legend": "written"
+                    }
+                ],
+                "name": "Cache I/O",
+                "description": "写入或读取的缓存数据大小（byte）",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "43ee140d-ae6d-474a-9892-fa4743d7f97e",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 12,
+                    "y": 31,
+                    "i": "43ee140d-ae6d-474a-9892-fa4743d7f97e",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "100 * sum(mongodb_ss_wt_cache_tracked_dirty_pages_in_the_cache{cluster='$cluster'}) / sum(mongodb_ss_wt_cache_pages_currently_held_in_the_cache{cluster='$cluster'})",
+                        "legend": "dirty rate"
+                    }
+                ],
+                "name": "Cache Dirty Pages Rate",
+                "description": "缓存脏页占比",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "1a22c31a-859a-400c-af2a-ae83c308d0f2",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 18,
+                    "y": 31,
+                    "i": "1a22c31a-859a-400c-af2a-ae83c308d0f2",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mongodb_mongod_wiredtiger_cache_evicted_total{cluster='$cluster'}[5m])",
+                        "legend": "evicted pages"
+                    }
+                ],
+                "name": "Cache Evicted Pages",
+                "description": "缓存剔除页数量",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "id": "b0016f4a-c565-4276-a08d-bacdf94b6b5a",
+                "type": "row",
+                "name": "ReplSet Info",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 45,
+                    "i": "b0016f4a-c565-4276-a08d-bacdf94b6b5a",
+                    "isResizable": false
+                },
+                "collapsed": true
+            },
+            {
+                "type": "stat",
+                "id": "6187ceee-7c25-43f2-be1b-c44ad612ab52",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 46,
+                    "i": "6187ceee-7c25-43f2-be1b-c44ad612ab52",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "time() - mongodb_mongod_replset_member_election_date"
+                    }
+                ],
+                "name": "Replset Election",
+                "description": "副本集选主时间",
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "match": {
+                                "to": 1800
+                            },
+                            "result": {
+                                "color": "#f24526"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 1800
+                            },
+                            "result": {
+                                "color": "#53b503"
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "seconds",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mongodb_mongod_replset_member_replication_lag{instance=\"$instance\"}",
+                        "legend": "lag"
+                    }
+                ],
+                "name": "Replset Lag Seconds",
+                "description": "副本集成员主从同步延迟",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 46,
+                    "i": "f73fd0cd-ecbe-41f0-a2dc-4e02f7eaef1c",
+                    "isResizable": true
+                },
+                "id": "f73fd0cd-ecbe-41f0-a2dc-4e02f7eaef1c"
             }
-          ]
-        },
-        {
-          "name": "Cache Info",
-          "weight": 2,
-          "charts": [
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"mongodb_mongod_wiredtiger_cache_bytes{instance='$instance'}\",\"legend\":\"{{type}}\"}],\"name\":\"Cache Size\",\"description\":\"缓存大小（byte）\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"util\":\"bytesIEC\"},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":6,\"x\":0,\"y\":0,\"i\":\"0\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"rate(mongodb_mongod_wiredtiger_cache_bytes_total{instance='$instance'}[5m])\",\"legend\":\"{{type}}\"}],\"name\":\"Cache I/O\",\"description\":\"写入或读取的缓存数据大小（byte）\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"util\":\"bytesSI\"},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":6,\"x\":6,\"y\":0,\"i\":\"1\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"100 * sum(mongodb_mongod_wiredtiger_cache_pages{instance='$instance',type=\\\"dirty\\\"}) / sum(mongodb_mongod_wiredtiger_cache_pages{instance='$instance',type=\\\"total\\\"})\",\"legend\":\"dirty rate\"}],\"name\":\"Cache Dirty Pages Rate\",\"description\":\"缓存脏页占比\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"util\":\"percent\"},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":6,\"x\":12,\"y\":0,\"i\":\"2\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"rate(mongodb_mongod_wiredtiger_cache_evicted_total{instance='$instance'}[5m])\",\"legend\":\"evicted pages\"}],\"name\":\"Cache Evicted Pages\",\"description\":\"缓存剔除页数量\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":6,\"x\":18,\"y\":0,\"i\":\"3\"}}",
-              "weight": 0
-            }
-          ]
-        },
-        {
-          "name": "ReplSet Info",
-          "weight": 3,
-          "charts": [
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"time() - mongodb_mongod_replset_member_election_date\"}],\"name\":\"Replset Election\",\"description\":\"副本集选主时间\",\"custom\":{\"textMode\":\"value\",\"colorMode\":\"value\",\"calc\":\"lastNotNull\",\"colSpan\":1,\"textSize\":{}},\"options\":{\"valueMappings\":[{\"type\":\"range\",\"match\":{\"to\":1800},\"result\":{\"color\":\"#f24526\"}},{\"type\":\"range\",\"match\":{\"from\":1800},\"result\":{\"color\":\"#53b503\"}}],\"standardOptions\":{\"util\":\"seconds\",\"decimals\":1}},\"version\":\"2.0.0\",\"type\":\"stat\",\"layout\":{\"h\":2,\"w\":12,\"x\":0,\"y\":0,\"i\":\"0\"}}",
-              "weight": 0
-            },
-            {
-              "configs": "{\"targets\":[{\"refId\":\"A\",\"expr\":\"mongodb_mongod_replset_member_replication_lag{instance=\\\"$instance\\\"}\",\"legend\":\"lag\"}],\"name\":\"Replset Lag Seconds\",\"description\":\"副本集成员主从同步延迟\",\"options\":{\"tooltip\":{\"mode\":\"all\",\"sort\":\"none\"},\"legend\":{\"displayMode\":\"hidden\"},\"standardOptions\":{\"util\":\"seconds\"},\"thresholds\":{}},\"custom\":{\"drawStyle\":\"lines\",\"lineInterpolation\":\"smooth\",\"fillOpacity\":0.5,\"stack\":\"off\"},\"version\":\"2.0.0\",\"type\":\"timeseries\",\"layout\":{\"h\":2,\"w\":12,\"x\":12,\"y\":0,\"i\":\"1\"}}",
-              "weight": 0
-            }
-          ]
-        }
-      ]
+        ]
     }
-  ]
+}
