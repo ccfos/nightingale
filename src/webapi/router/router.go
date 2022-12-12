@@ -310,6 +310,7 @@ func configRoute(r *gin.Engine, version string) {
 	{
 		service.Any("/prometheus/*url", prometheusProxy)
 		service.POST("/users", userAddPost)
+		service.GET("/users", userFindAll)
 
 		service.GET("/targets", targetGets)
 		service.GET("/targets/tags", targetGetTags)

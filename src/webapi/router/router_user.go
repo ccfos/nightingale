@@ -11,6 +11,22 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
 )
 
+func userFindAll(c *gin.Context) {
+	limit := ginx.QueryInt(c, "limit", 20)
+	query := ginx.QueryStr(c, "query", "")
+
+	total, err := models.UserTotal(query)
+	ginx.Dangerous(err)
+
+	list, err := models.UserGets(query, limit, ginx.Offset(c, limit))
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(gin.H{
+		"list":  list,
+		"total": total,
+	}, nil)
+}
+
 func userGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
 	query := ginx.QueryStr(c, "query", "")
