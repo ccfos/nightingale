@@ -225,6 +225,11 @@ func MustLoad(key string, fpaths ...string) {
 		}
 
 		for _, write := range C.Writers {
+
+			if write.Name == "" {
+				write.Name = C.ClusterName
+			}
+
 			for _, relabel := range write.WriteRelabels {
 				regex, ok := relabel.Regex.(string)
 				if !ok {
@@ -281,6 +286,7 @@ type Config struct {
 }
 
 type WriterOptions struct {
+	Name          string
 	Url           string
 	BasicAuthUser string
 	BasicAuthPass string

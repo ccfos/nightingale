@@ -84,6 +84,7 @@ func loadFromDatabase() {
 				continue
 			}
 
+			logger.Info("setClientFromPromOption success: ", cluster)
 			PromOptions.Sets(cluster, po)
 			continue
 		}
