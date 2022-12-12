@@ -62,7 +62,9 @@ func loadFromDatabase() {
 		return
 	}
 
+	newCluster := make(map[string]struct{})
 	for _, cluster := range clusters {
+		newCluster[cluster] = struct{}{}
 		ckey := "prom." + cluster + ".option"
 		cval, err := models.ConfigsGet(ckey)
 		if err != nil {
@@ -102,6 +104,16 @@ func loadFromDatabase() {
 			}
 
 			PromOptions.Sets(cluster, po)
+		}
+	}
+
+	// delete useless cluster
+	oldClusters := ReaderClients.GetClusterNames()
+	for _, oldCluster := range oldClusters {
+		if _, has := newCluster[oldCluster]; !has {
+			ReaderClients.Del(oldCluster)
+			PromOptions.Del(oldCluster)
+			logger.Info("delete cluster: ", oldCluster)
 		}
 	}
 }

@@ -59,3 +59,9 @@ func (pc *PromClientMap) Reset() {
 
 	pc.Clients = make(map[string]prom.API)
 }
+
+func (pc *PromClientMap) Del(cluster string) {
+	pc.Lock()
+	defer pc.Unlock()
+	delete(pc.Clients, cluster)
+}

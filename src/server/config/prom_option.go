@@ -71,6 +71,12 @@ func (pos *PromOptionsStruct) Sets(clusterName string, po PromOption) {
 	pos.Unlock()
 }
 
+func (pos *PromOptionsStruct) Del(clusterName string) {
+	pos.Lock()
+	delete(pos.Data, clusterName)
+	pos.Unlock()
+}
+
 func (pos *PromOptionsStruct) Get(clusterName string) (PromOption, bool) {
 	pos.RLock()
 	defer pos.RUnlock()
