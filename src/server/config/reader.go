@@ -70,6 +70,11 @@ func loadFromDatabase() {
 			continue
 		}
 
+		if cval == "" {
+			logger.Warningf("ckey: %s is empty", ckey)
+			continue
+		}
+
 		var po PromOption
 		err = json.Unmarshal([]byte(cval), &po)
 		if err != nil {
