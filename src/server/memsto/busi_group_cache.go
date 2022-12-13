@@ -79,7 +79,7 @@ func syncBusiGroups() error {
 		return errors.WithMessage(err, "failed to exec BusiGroupStatistics")
 	}
 
-	clusterName := config.ReaderClient.GetClusterName()
+	clusterName := config.C.ClusterName
 
 	if !BusiGroupCache.StatChanged(stat.Total, stat.LastUpdated) {
 		if clusterName != "" {

@@ -610,6 +610,5 @@ CREATE TABLE alerting_engines
     clock bigint not null
 ) ;
 ALTER TABLE alerting_engines ADD CONSTRAINT alerting_engines_pk PRIMARY KEY (id);
-ALTER TABLE alerting_engines ADD CONSTRAINT alerting_engines_un UNIQUE (instance);
 COMMENT ON COLUMN alerting_engines.instance IS 'instance identification, e.g. 10.9.0.9:9090';
 COMMENT ON COLUMN alerting_engines.cluster IS 'target reader cluster';

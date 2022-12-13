@@ -102,14 +102,20 @@ func loopSyncAlertSubscribes() {
 func syncAlertSubscribes() error {
 	start := time.Now()
 
-	clusterName := config.ReaderClient.GetClusterName()
-	if clusterName == "" {
+	clusterNames := config.ReaderClients.GetClusterNames()
+	if len(clusterNames) == 0 {
 		AlertSubscribeCache.Reset()
-		logger.Warning("cluster name is blank")
+		logger.Warning("cluster is blank")
 		return nil
 	}
 
-	stat, err := models.AlertSubscribeStatistics(clusterName)
+	var clusterName string
+	if len(clusterNames) == 1 {
+		// 兼容老版本监控数据上报
+		clusterName = clusterNames[0]
+	}
+
+	stat, err := models.AlertSubscribeStatistics("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertSubscribeStatistics")
 	}
@@ -121,7 +127,7 @@ func syncAlertSubscribes() error {
 		return nil
 	}
 
-	lst, err := models.AlertSubscribeGetsByCluster(clusterName)
+	lst, err := models.AlertSubscribeGetsByCluster("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertSubscribeGetsByCluster")
 	}

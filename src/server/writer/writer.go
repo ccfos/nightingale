@@ -37,7 +37,7 @@ func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSerie
 	return ritems
 }
 
-func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[string]string) {
+func (w WriterType) Write(cluster string, index int, items []*prompb.TimeSeries, headers ...map[string]string) {
 	if len(items) == 0 {
 		return
 	}
@@ -49,9 +49,8 @@ func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[
 
 	start := time.Now()
 	defer func() {
-		cn := config.ReaderClient.GetClusterName()
-		if cn != "" {
-			promstat.ForwardDuration.WithLabelValues(cn, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
+		if cluster != "" {
+			promstat.ForwardDuration.WithLabelValues(cluster, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
 		}
 	}()
 
@@ -130,17 +129,28 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 type WritersType struct {
 	globalOpt config.WriterGlobalOpt
 	backends  map[string]WriterType
-	queues    map[int]*SafeListLimited
+	queues    map[string]map[int]*SafeListLimited
 }
 
 func (ws *WritersType) Put(name string, writer WriterType) {
 	ws.backends[name] = writer
 }
 
-func (ws *WritersType) PushSample(ident string, v interface{}) {
+func (ws *WritersType) PushSample(ident string, v interface{}, clusters ...string) {
 	hashkey := crc32.ChecksumIEEE([]byte(ident)) % uint32(ws.globalOpt.QueueCount)
 
-	c, ok := ws.queues[int(hashkey)]
+	cluster := config.C.ClusterName
+	if len(clusters) > 0 {
+		cluster = clusters[0]
+	}
+
+	if _, ok := ws.queues[cluster]; !ok {
+		// 待写入的集群不存在
+		logger.Warningf("Write cluster:%s not found, v:%+v", cluster, v)
+		return
+	}
+
+	c, ok := ws.queues[cluster][int(hashkey)]
 	if ok {
 		succ := c.PushFront(v)
 		if !succ {
@@ -149,7 +159,7 @@ func (ws *WritersType) PushSample(ident string, v interface{}) {
 	}
 }
 
-func (ws *WritersType) StartConsumer(index int, ch *SafeListLimited) {
+func (ws *WritersType) StartConsumer(index int, ch *SafeListLimited, clusterName string) {
 	for {
 		series := ch.PopBack(ws.globalOpt.QueuePopSize)
 		if len(series) == 0 {
@@ -158,7 +168,10 @@ func (ws *WritersType) StartConsumer(index int, ch *SafeListLimited) {
 		}
 
 		for key := range ws.backends {
-			go ws.backends[key].Write(index, series)
+			if ws.backends[key].Opts.Name != clusterName {
+				continue
+			}
+			go ws.backends[key].Write(clusterName, index, series)
 		}
 	}
 }
@@ -173,11 +186,15 @@ var Writers = NewWriters()
 
 func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 	Writers.globalOpt = globalOpt
-	Writers.queues = make(map[int]*SafeListLimited)
-
-	for i := 0; i < globalOpt.QueueCount; i++ {
-		Writers.queues[i] = NewSafeListLimited(Writers.globalOpt.QueueMaxSize)
-		go Writers.StartConsumer(i, Writers.queues[i])
+	Writers.queues = make(map[string]map[int]*SafeListLimited)
+	for _, opt := range opts {
+		if _, ok := Writers.queues[opt.Name]; !ok {
+			Writers.queues[opt.Name] = make(map[int]*SafeListLimited)
+			for i := 0; i < globalOpt.QueueCount; i++ {
+				Writers.queues[opt.Name][i] = NewSafeListLimited(Writers.globalOpt.QueueMaxSize)
+				go Writers.StartConsumer(i, Writers.queues[opt.Name][i], opt.Name)
+			}
+		}
 	}
 
 	go reportChanSize()
@@ -218,16 +235,18 @@ func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 }
 
 func reportChanSize() {
-	clusterName := config.ReaderClient.GetClusterName()
+	clusterName := config.C.ClusterName
 	if clusterName == "" {
 		return
 	}
 
 	for {
 		time.Sleep(time.Second * 3)
-		for i, c := range Writers.queues {
-			size := c.Len()
-			promstat.GaugeSampleQueueSize.WithLabelValues(clusterName, fmt.Sprint(i)).Set(float64(size))
+		for cluster, m := range Writers.queues {
+			for i, c := range m {
+				size := c.Len()
+				promstat.GaugeSampleQueueSize.WithLabelValues(cluster, fmt.Sprint(i)).Set(float64(size))
+			}
 		}
 	}
 }

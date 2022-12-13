@@ -281,7 +281,7 @@ func datadogSeries(c *gin.Context) {
 	}
 
 	if succ > 0 {
-		cn := config.ReaderClient.GetClusterName()
+		cn := config.C.ClusterName
 		if cn != "" {
 			promstat.CounterSampleTotal.WithLabelValues(cn, "datadog").Add(float64(succ))
 		}

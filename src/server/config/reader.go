@@ -17,7 +17,19 @@ import (
 func InitReader() error {
 	rf := strings.ToLower(strings.TrimSpace(C.ReaderFrom))
 	if rf == "" || rf == "config" {
-		return setClientFromPromOption(C.ClusterName, C.Reader)
+		if len(C.Readers) == 0 {
+			C.Reader.ClusterName = C.ClusterName
+			C.Readers = append(C.Readers, C.Reader)
+		}
+
+		for _, reader := range C.Readers {
+			err := setClientFromPromOption(reader.ClusterName, reader)
+			if err != nil {
+				logger.Errorf("failed to setClientFromPromOption: %v", err)
+				continue
+			}
+		}
+		return nil
 	}
 
 	if rf == "database" {
@@ -38,57 +50,71 @@ func initFromDatabase() error {
 }
 
 func loadFromDatabase() {
-	cluster, err := models.AlertingEngineGetCluster(C.Heartbeat.Endpoint)
+	clusters, err := models.AlertingEngineGetClusters(C.Heartbeat.Endpoint)
 	if err != nil {
 		logger.Errorf("failed to get current cluster, error: %v", err)
 		return
 	}
 
-	if cluster == "" {
-		ReaderClient.Reset()
+	if len(clusters) == 0 {
+		ReaderClients.Reset()
 		logger.Warning("no datasource binded to me")
 		return
 	}
 
-	ckey := "prom." + cluster + ".option"
-	cval, err := models.ConfigsGet(ckey)
-	if err != nil {
-		logger.Errorf("failed to get ckey: %s, error: %v", ckey, err)
-		return
-	}
-
-	if cval == "" {
-		ReaderClient.Reset()
-		return
-	}
-
-	var po PromOption
-	err = json.Unmarshal([]byte(cval), &po)
-	if err != nil {
-		logger.Errorf("failed to unmarshal PromOption: %s", err)
-		return
-	}
-
-	if ReaderClient.IsNil() {
-		// first time
-		if err = setClientFromPromOption(cluster, po); err != nil {
-			logger.Errorf("failed to setClientFromPromOption: %v", err)
-			return
+	newCluster := make(map[string]struct{})
+	for _, cluster := range clusters {
+		newCluster[cluster] = struct{}{}
+		ckey := "prom." + cluster + ".option"
+		cval, err := models.ConfigsGet(ckey)
+		if err != nil {
+			logger.Errorf("failed to get ckey: %s, error: %v", ckey, err)
+			continue
 		}
 
-		PromOptions.Sets(cluster, po)
-		return
-	}
-
-	localPo, has := PromOptions.Get(cluster)
-	if !has || !localPo.Equal(po) {
-		if err = setClientFromPromOption(cluster, po); err != nil {
-			logger.Errorf("failed to setClientFromPromOption: %v", err)
-			return
+		if cval == "" {
+			logger.Warningf("ckey: %s is empty", ckey)
+			continue
 		}
 
-		PromOptions.Sets(cluster, po)
-		return
+		var po PromOption
+		err = json.Unmarshal([]byte(cval), &po)
+		if err != nil {
+			logger.Errorf("failed to unmarshal PromOption: %s", err)
+			continue
+		}
+
+		if ReaderClients.IsNil(cluster) {
+			// first time
+			if err = setClientFromPromOption(cluster, po); err != nil {
+				logger.Errorf("failed to setClientFromPromOption: %v", err)
+				continue
+			}
+
+			logger.Info("setClientFromPromOption success: ", cluster)
+			PromOptions.Sets(cluster, po)
+			continue
+		}
+
+		localPo, has := PromOptions.Get(cluster)
+		if !has || !localPo.Equal(po) {
+			if err = setClientFromPromOption(cluster, po); err != nil {
+				logger.Errorf("failed to setClientFromPromOption: %v", err)
+				continue
+			}
+
+			PromOptions.Sets(cluster, po)
+		}
+	}
+
+	// delete useless cluster
+	oldClusters := ReaderClients.GetClusterNames()
+	for _, oldCluster := range oldClusters {
+		if _, has := newCluster[oldCluster]; !has {
+			ReaderClients.Del(oldCluster)
+			PromOptions.Del(oldCluster)
+			logger.Info("delete cluster: ", oldCluster)
+		}
 	}
 }
 
@@ -121,7 +147,7 @@ func setClientFromPromOption(clusterName string, po PromOption) error {
 		return fmt.Errorf("failed to newClientFromPromOption: %v", err)
 	}
 
-	ReaderClient.Set(clusterName, prom.NewAPI(cli, prom.ClientOptions{
+	ReaderClients.Set(clusterName, prom.NewAPI(cli, prom.ClientOptions{
 		BasicAuthUser: po.BasicAuthUser,
 		BasicAuthPass: po.BasicAuthPass,
 		Headers:       po.Headers,

@@ -103,7 +103,7 @@ func loopSyncTargets() {
 func syncTargets() error {
 	start := time.Now()
 
-	clusterName := config.ReaderClient.GetClusterName()
+	clusterName := config.C.ClusterName
 	if clusterName == "" {
 		TargetCache.Reset()
 		logger.Warning("cluster name is blank")

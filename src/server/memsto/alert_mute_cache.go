@@ -99,14 +99,20 @@ func loopSyncAlertMutes() {
 func syncAlertMutes() error {
 	start := time.Now()
 
-	clusterName := config.ReaderClient.GetClusterName()
-	if clusterName == "" {
-		AlertMuteCache.Reset()
-		logger.Warning("cluster name is blank")
+	clusterNames := config.ReaderClients.GetClusterNames()
+	if len(clusterNames) == 0 {
+		AlertRuleCache.Reset()
+		logger.Warning("cluster is blank")
 		return nil
 	}
 
-	stat, err := models.AlertMuteStatistics(clusterName)
+	var clusterName string
+	if len(clusterNames) == 1 {
+		// 兼容老版本监控数据上报
+		clusterName = clusterNames[0]
+	}
+
+	stat, err := models.AlertMuteStatistics("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertMuteStatistics")
 	}
@@ -118,7 +124,7 @@ func syncAlertMutes() error {
 		return nil
 	}
 
-	lst, err := models.AlertMuteGetsByCluster(clusterName)
+	lst, err := models.AlertMuteGetsByCluster("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertMuteGetsByCluster")
 	}

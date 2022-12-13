@@ -9,51 +9,47 @@ import (
 
 const NodeReplicas = 500
 
-type ConsistentHashRing struct {
+type ClusterHashRingType struct {
 	sync.RWMutex
-	ring *consistent.Consistent
+	Rings map[string]*consistent.Consistent
 }
 
 // for alert_rule sharding
-var HashRing = NewConsistentHashRing(int32(NodeReplicas), []string{})
+var ClusterHashRing = ClusterHashRingType{Rings: make(map[string]*consistent.Consistent)}
 
-func (chr *ConsistentHashRing) GetNode(pk string) (string, error) {
-	chr.RLock()
-	defer chr.RUnlock()
-
-	return chr.ring.Get(pk)
-}
-
-func (chr *ConsistentHashRing) Set(r *consistent.Consistent) {
-	chr.Lock()
-	defer chr.Unlock()
-	chr.ring = r
-}
-
-func (chr *ConsistentHashRing) GetRing() *consistent.Consistent {
-	chr.RLock()
-	defer chr.RUnlock()
-
-	return chr.ring
-}
-
-func NewConsistentHashRing(replicas int32, nodes []string) *ConsistentHashRing {
-	ret := &ConsistentHashRing{ring: consistent.New()}
-	ret.ring.NumberOfReplicas = int(replicas)
+func NewConsistentHashRing(replicas int32, nodes []string) *consistent.Consistent {
+	ret := consistent.New()
+	ret.NumberOfReplicas = int(replicas)
 	for i := 0; i < len(nodes); i++ {
-		ret.ring.Add(nodes[i])
+		ret.Add(nodes[i])
 	}
 	return ret
 }
 
-func RebuildConsistentHashRing(nodes []string) {
+func RebuildConsistentHashRing(cluster string, nodes []string) {
 	r := consistent.New()
 	r.NumberOfReplicas = NodeReplicas
 	for i := 0; i < len(nodes); i++ {
 		r.Add(nodes[i])
 	}
 
-	HashRing.Set(r)
+	ClusterHashRing.Set(cluster, r)
+	logger.Infof("hash ring %s rebuild %+v", cluster, r.Members())
+}
 
-	logger.Infof("hash ring rebuild %+v", r.Members())
+func (chr *ClusterHashRingType) GetNode(cluster, pk string) (string, error) {
+	chr.RLock()
+	defer chr.RUnlock()
+	_, exists := chr.Rings[cluster]
+	if !exists {
+		chr.Rings[cluster] = NewConsistentHashRing(int32(NodeReplicas), []string{})
+	}
+
+	return chr.Rings[cluster].Get(pk)
+}
+
+func (chr *ClusterHashRingType) Set(cluster string, r *consistent.Consistent) {
+	chr.RLock()
+	defer chr.RUnlock()
+	chr.Rings[cluster] = r
 }

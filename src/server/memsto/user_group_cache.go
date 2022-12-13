@@ -106,8 +106,7 @@ func syncUserGroups() error {
 		return errors.WithMessage(err, "failed to exec UserGroupStatistics")
 	}
 
-	clusterName := config.ReaderClient.GetClusterName()
-
+	clusterName := config.C.ClusterName
 	if !UserGroupCache.StatChanged(stat.Total, stat.LastUpdated) {
 		if clusterName != "" {
 			promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_user_groups").Set(0)

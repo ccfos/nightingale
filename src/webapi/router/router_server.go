@@ -13,7 +13,8 @@ func serversGet(c *gin.Context) {
 }
 
 type serverBindClusterForm struct {
-	Cluster string `json:"cluster"`
+	Cluster  string `json:"cluster"`
+	Instance string `json:"instance"`
 }
 
 // 用户为某个 n9e-server 分配一个集群，也可以清空，设置cluster为空字符串即可
@@ -32,4 +33,19 @@ func serverBindCluster(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 
 	ginx.NewRender(c).Message(ae.UpdateCluster(f.Cluster))
+}
+
+func serverAddCluster(c *gin.Context) {
+	var f serverBindClusterForm
+	ginx.BindJSON(c, &f)
+
+	ginx.NewRender(c).Message(models.AlertingEngineAdd(f.Instance, f.Cluster))
+}
+
+func serverDelCluster(c *gin.Context) {
+	var f idsForm
+	ginx.BindJSON(c, &f)
+	f.Verify()
+
+	ginx.NewRender(c).Message(models.AlertingEngineDel(f.Ids))
 }

@@ -14,9 +14,10 @@ import (
 )
 
 // local servers
-var localss string
+var localss map[string]string
 
 func Heartbeat(ctx context.Context) error {
+	localss = make(map[string]string)
 	if err := heartbeat(); err != nil {
 		fmt.Println("failed to heartbeat:", err)
 		return err
@@ -37,35 +38,66 @@ func loopHeartbeat() {
 }
 
 func heartbeat() error {
-	cluster := ""
+	var clusters []string
+	var err error
 	if config.C.ReaderFrom == "config" {
-		cluster = config.C.ClusterName
+		// 在配置文件维护实例和集群的对应关系
+		for i := 0; i < len(config.C.Readers); i++ {
+			clusters = append(clusters, config.C.Readers[i].ClusterName)
+			err := models.AlertingEngineHeartbeatWithCluster(config.C.Heartbeat.Endpoint, config.C.Readers[i].ClusterName)
+			if err != nil {
+				logger.Warningf("heartbeat with cluster %s err:%v", config.C.Readers[i].ClusterName, err)
+				continue
+			}
+		}
+	} else {
+		// 在页面上维护实例和集群的对应关系
+		clusters, err = models.AlertingEngineGetClusters(config.C.Heartbeat.Endpoint)
+		if err != nil {
+			return err
+		}
+		if len(clusters) == 0 {
+			// 实例刚刚部署，还没有在页面配置 cluster 的情况，先使用配置文件中的 cluster 上报心跳
+			for i := 0; i < len(config.C.Readers); i++ {
+				err := models.AlertingEngineHeartbeatWithCluster(config.C.Heartbeat.Endpoint, config.C.Readers[i].ClusterName)
+				if err != nil {
+					logger.Warningf("heartbeat with cluster %s err:%v", config.C.Readers[i].ClusterName, err)
+					continue
+				}
+			}
+		}
+
+		err := models.AlertingEngineHeartbeat(config.C.Heartbeat.Endpoint)
+		if err != nil {
+			return err
+		}
 	}
 
-	err := models.AlertingEngineHeartbeat(config.C.Heartbeat.Endpoint, cluster)
-	if err != nil {
-		return err
-	}
+	for i := 0; i < len(clusters); i++ {
+		servers, err := ActiveServers(clusters[i])
+		if err != nil {
+			logger.Warningf("hearbeat %s get active server err:", clusters[i], err)
+			continue
+		}
 
-	servers, err := ActiveServers()
-	if err != nil {
-		return err
-	}
+		sort.Strings(servers)
+		newss := strings.Join(servers, " ")
 
-	sort.Strings(servers)
-	newss := strings.Join(servers, " ")
-	if newss != localss {
-		RebuildConsistentHashRing(servers)
-		localss = newss
+		oldss, exists := localss[clusters[i]]
+		if exists && oldss == newss {
+			continue
+		}
+
+		RebuildConsistentHashRing(clusters[i], servers)
+		localss[clusters[i]] = newss
 	}
 
 	return nil
 }
 
-func ActiveServers() ([]string, error) {
-	cluster, err := models.AlertingEngineGetCluster(config.C.Heartbeat.Endpoint)
-	if err != nil {
-		return nil, err
+func ActiveServers(cluster string) ([]string, error) {
+	if cluster == "" {
+		return nil, fmt.Errorf("cluster is empty")
 	}
 
 	// 30秒内有心跳，就认为是活的

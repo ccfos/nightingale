@@ -41,7 +41,7 @@ func toRedis() {
 		return
 	}
 
-	if config.ReaderClient.IsNil() {
+	if config.ReaderClients.IsNil(config.C.ClusterName) {
 		return
 	}
 
@@ -53,7 +53,7 @@ func toRedis() {
 			Idents.Remove(key)
 		} else {
 			// use now as timestamp to redis
-			err := storage.Redis.HSet(context.Background(), redisKey(config.ReaderClient.GetClusterName()), key, now).Err()
+			err := storage.Redis.HSet(context.Background(), redisKey(config.C.ClusterName), key, now).Err()
 			if err != nil {
 				logger.Errorf("redis hset idents failed: %v", err)
 			}
@@ -96,7 +96,8 @@ func loopPushMetrics(ctx context.Context) {
 }
 
 func pushMetrics() {
-	isLeader, err := naming.IamLeader()
+	clusterName := config.C.ClusterName
+	isLeader, err := naming.IamLeader(clusterName)
 	if err != nil {
 		logger.Errorf("handle_idents: %v", err)
 		return
@@ -104,12 +105,6 @@ func pushMetrics() {
 
 	if !isLeader {
 		logger.Info("handle_idents: i am not leader")
-		return
-	}
-
-	clusterName := config.ReaderClient.GetClusterName()
-	if clusterName == "" {
-		logger.Warning("cluster name is blank")
 		return
 	}
 

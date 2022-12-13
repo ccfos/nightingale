@@ -420,9 +420,9 @@ func AlertCurEventGetByIds(ids []int64) ([]*AlertCurEvent, error) {
 	return lst, err
 }
 
-func AlertCurEventGetByRule(ruleId int64) ([]*AlertCurEvent, error) {
+func AlertCurEventGetByRuleIdAndCluster(ruleId int64, cluster string) ([]*AlertCurEvent, error) {
 	var lst []*AlertCurEvent
-	err := DB().Where("rule_id=?", ruleId).Find(&lst).Error
+	err := DB().Where("rule_id=? and cluster=?", ruleId, cluster).Find(&lst).Error
 	return lst, err
 }
 

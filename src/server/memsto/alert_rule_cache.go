@@ -96,14 +96,20 @@ func loopSyncAlertRules() {
 func syncAlertRules() error {
 	start := time.Now()
 
-	clusterName := config.ReaderClient.GetClusterName()
-	if clusterName == "" {
+	clusterNames := config.ReaderClients.GetClusterNames()
+	if len(clusterNames) == 0 {
 		AlertRuleCache.Reset()
-		logger.Warning("cluster name is blank")
+		logger.Warning("cluster is blank")
 		return nil
 	}
 
-	stat, err := models.AlertRuleStatistics(clusterName)
+	var clusterName string
+	if len(clusterNames) == 1 {
+		// 兼容老版本监控数据上报
+		clusterName = clusterNames[0]
+	}
+
+	stat, err := models.AlertRuleStatistics("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertRuleStatistics")
 	}
@@ -115,7 +121,7 @@ func syncAlertRules() error {
 		return nil
 	}
 
-	lst, err := models.AlertRuleGetsByCluster(clusterName)
+	lst, err := models.AlertRuleGetsByCluster("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertRuleGetsByCluster")
 	}
