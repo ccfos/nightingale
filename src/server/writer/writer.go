@@ -168,7 +168,7 @@ func (ws *WritersType) StartConsumer(index int, ch *SafeListLimited, clusterName
 		}
 
 		for key := range ws.backends {
-			if ws.backends[key].Opts.Name != clusterName {
+			if ws.backends[key].Opts.ClusterName != clusterName {
 				continue
 			}
 			go ws.backends[key].Write(clusterName, index, series)
@@ -188,11 +188,11 @@ func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 	Writers.globalOpt = globalOpt
 	Writers.queues = make(map[string]map[int]*SafeListLimited)
 	for _, opt := range opts {
-		if _, ok := Writers.queues[opt.Name]; !ok {
-			Writers.queues[opt.Name] = make(map[int]*SafeListLimited)
+		if _, ok := Writers.queues[opt.ClusterName]; !ok {
+			Writers.queues[opt.ClusterName] = make(map[int]*SafeListLimited)
 			for i := 0; i < globalOpt.QueueCount; i++ {
-				Writers.queues[opt.Name][i] = NewSafeListLimited(Writers.globalOpt.QueueMaxSize)
-				go Writers.StartConsumer(i, Writers.queues[opt.Name][i], opt.Name)
+				Writers.queues[opt.ClusterName][i] = NewSafeListLimited(Writers.globalOpt.QueueMaxSize)
+				go Writers.StartConsumer(i, Writers.queues[opt.ClusterName][i], opt.ClusterName)
 			}
 		}
 	}

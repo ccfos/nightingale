@@ -225,8 +225,8 @@ func MustLoad(key string, fpaths ...string) {
 		}
 
 		for i, write := range C.Writers {
-			if C.Writers[i].Name == "" {
-				C.Writers[i].Name = C.ClusterName
+			if C.Writers[i].ClusterName == "" {
+				C.Writers[i].ClusterName = C.ClusterName
 			}
 
 			for _, relabel := range write.WriteRelabels {
@@ -285,7 +285,7 @@ type Config struct {
 }
 
 type WriterOptions struct {
-	Name          string
+	ClusterName   string
 	Url           string
 	BasicAuthUser string
 	BasicAuthPass string
