@@ -43,12 +43,12 @@ var (
 	}, []string{"cluster"})
 
 	// 内存中的告警事件队列的长度
-	GaugeAlertQueueSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	GaugeAlertQueueSize = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "alert_queue_size",
 		Help:      "The size of alert queue.",
-	}, []string{})
+	})
 
 	// 数据转发队列，各个队列的长度
 	GaugeSampleQueueSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{

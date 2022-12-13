@@ -54,6 +54,6 @@ func reportQueueSize() {
 	for {
 		time.Sleep(time.Second)
 
-		promstat.GaugeAlertQueueSize.WithLabelValues().Set(float64(EventQueue.Len()))
+		promstat.GaugeAlertQueueSize.Set(float64(EventQueue.Len()))
 	}
 }
