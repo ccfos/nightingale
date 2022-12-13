@@ -37,7 +37,7 @@ func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSerie
 	return ritems
 }
 
-func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[string]string) {
+func (w WriterType) Write(cluster string, index int, items []*prompb.TimeSeries, headers ...map[string]string) {
 	if len(items) == 0 {
 		return
 	}
@@ -49,9 +49,8 @@ func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[
 
 	start := time.Now()
 	defer func() {
-		cn := config.C.ClusterName
-		if cn != "" {
-			promstat.ForwardDuration.WithLabelValues(cn, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
+		if cluster != "" {
+			promstat.ForwardDuration.WithLabelValues(cluster, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
 		}
 	}()
 
@@ -172,7 +171,7 @@ func (ws *WritersType) StartConsumer(index int, ch *SafeListLimited, clusterName
 			if ws.backends[key].Opts.Name != clusterName {
 				continue
 			}
-			go ws.backends[key].Write(index, series)
+			go ws.backends[key].Write(clusterName, index, series)
 		}
 	}
 }
