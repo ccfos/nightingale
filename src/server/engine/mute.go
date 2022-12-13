@@ -36,7 +36,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 	// 如果不是全局的，判断 cluster
 	if mute.Cluster != models.ClusterAll {
 		// event.Cluster 是一个字符串，可能是多个cluster的组合，比如"cluster1 cluster2"
-		clusters := strings.Split(mute.Cluster, " ")
+		clusters := strings.Fields(mute.Cluster)
 		cm := make(map[string]struct{}, len(clusters))
 		for i := 0; i < len(clusters); i++ {
 			cm[clusters[i]] = struct{}{}
