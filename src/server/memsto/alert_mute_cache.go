@@ -106,20 +106,14 @@ func syncAlertMutes() error {
 		return nil
 	}
 
-	var clusterName string
-	if len(clusterNames) == 1 {
-		// 兼容老版本监控数据上报
-		clusterName = clusterNames[0]
-	}
-
 	stat, err := models.AlertMuteStatistics("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertMuteStatistics")
 	}
 
 	if !AlertMuteCache.StatChanged(stat.Total, stat.LastUpdated) {
-		promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_alert_mutes").Set(0)
-		promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_alert_mutes").Set(0)
+		promstat.GaugeCronDuration.WithLabelValues("sync_alert_mutes").Set(0)
+		promstat.GaugeSyncNumber.WithLabelValues("sync_alert_mutes").Set(0)
 		logger.Debug("alert mutes not changed")
 		return nil
 	}
@@ -144,8 +138,8 @@ func syncAlertMutes() error {
 	AlertMuteCache.Set(oks, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_alert_mutes").Set(float64(ms))
-	promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_alert_mutes").Set(float64(len(lst)))
+	promstat.GaugeCronDuration.WithLabelValues("sync_alert_mutes").Set(float64(ms))
+	promstat.GaugeSyncNumber.WithLabelValues("sync_alert_mutes").Set(float64(len(lst)))
 	logger.Infof("timer: sync mutes done, cost: %dms, number: %d", ms, len(lst))
 
 	return nil

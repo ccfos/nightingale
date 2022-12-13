@@ -103,20 +103,14 @@ func syncAlertRules() error {
 		return nil
 	}
 
-	var clusterName string
-	if len(clusterNames) == 1 {
-		// 兼容老版本监控数据上报
-		clusterName = clusterNames[0]
-	}
-
 	stat, err := models.AlertRuleStatistics("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertRuleStatistics")
 	}
 
 	if !AlertRuleCache.StatChanged(stat.Total, stat.LastUpdated) {
-		promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_alert_rules").Set(0)
-		promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_alert_rules").Set(0)
+		promstat.GaugeCronDuration.WithLabelValues("sync_alert_rules").Set(0)
+		promstat.GaugeSyncNumber.WithLabelValues("sync_alert_rules").Set(0)
 		logger.Debug("alert rules not changed")
 		return nil
 	}
@@ -134,8 +128,8 @@ func syncAlertRules() error {
 	AlertRuleCache.Set(m, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_alert_rules").Set(float64(ms))
-	promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_alert_rules").Set(float64(len(m)))
+	promstat.GaugeCronDuration.WithLabelValues("sync_alert_rules").Set(float64(ms))
+	promstat.GaugeSyncNumber.WithLabelValues("sync_alert_rules").Set(float64(len(m)))
 	logger.Infof("timer: sync rules done, cost: %dms, number: %d", ms, len(m))
 
 	return nil

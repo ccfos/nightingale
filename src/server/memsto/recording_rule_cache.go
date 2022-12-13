@@ -114,8 +114,8 @@ func syncRecordingRules() error {
 	}
 
 	if !RecordingRuleCache.StatChanged(stat.Total, stat.LastUpdated) {
-		promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_recording_rules").Set(0)
-		promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_recording_rules").Set(0)
+		promstat.GaugeCronDuration.WithLabelValues("sync_recording_rules").Set(0)
+		promstat.GaugeSyncNumber.WithLabelValues("sync_recording_rules").Set(0)
 		logger.Debug("recoding rules not changed")
 		return nil
 	}
@@ -133,8 +133,8 @@ func syncRecordingRules() error {
 	RecordingRuleCache.Set(m, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_recording_rules").Set(float64(ms))
-	promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_recording_rules").Set(float64(len(m)))
+	promstat.GaugeCronDuration.WithLabelValues("sync_recording_rules").Set(float64(ms))
+	promstat.GaugeSyncNumber.WithLabelValues("sync_recording_rules").Set(float64(len(m)))
 	logger.Infof("timer: sync recording rules done, cost: %dms, number: %d", ms, len(m))
 
 	return nil
