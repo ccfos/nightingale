@@ -12,13 +12,17 @@ func AppendLabels(pt *prompb.TimeSeries, target *models.Target) {
 		return
 	}
 
-	labelKeys := make(map[string]struct{})
+	labelKeys := make(map[string]int)
 	for j := 0; j < len(pt.Labels); j++ {
-		labelKeys[pt.Labels[j].Name] = struct{}{}
+		labelKeys[pt.Labels[j].Name] = j
 	}
 
 	for key, value := range target.TagsMap {
-		if _, has := labelKeys[key]; has {
+		if index, has := labelKeys[key]; has {
+			// overwrite labels
+			if config.C.LabelRewrite {
+				pt.Labels[index].Value = value
+			}
 			continue
 		}
 
@@ -32,7 +36,7 @@ func AppendLabels(pt *prompb.TimeSeries, target *models.Target) {
 	if _, has := labelKeys[config.C.BusiGroupLabelKey]; has {
 		return
 	}
-
+	// 将业务组名称作为tag附加到数据上
 	if target.GroupId > 0 && len(config.C.BusiGroupLabelKey) > 0 {
 		bg := memsto.BusiGroupCache.GetByBusiGroupId(target.GroupId)
 		if bg == nil {

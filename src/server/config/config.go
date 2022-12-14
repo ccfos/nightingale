@@ -256,6 +256,7 @@ type Config struct {
 	EngineDelay        int64
 	DisableUsageReport bool
 	ReaderFrom         string
+	LabelRewrite	   bool
 	ForceUseServerTS   bool
 	Log                logx.Config
 	HTTP               httpx.Config
