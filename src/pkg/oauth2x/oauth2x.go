@@ -20,7 +20,7 @@ type ssoClient struct {
 	config          oauth2.Config
 	ssoAddr         string
 	userInfoAddr    string
-	TranTokenMethod int
+	TranTokenMethod string
 	callbackAddr    string
 	displayName     string
 	coverAttributes bool
@@ -41,7 +41,7 @@ type Config struct {
 	SsoAddr         string
 	TokenAddr       string
 	UserInfoAddr    string
-	TranTokenMethod int
+	TranTokenMethod string
 	ClientId        string
 	ClientSecret    string
 	CoverAttributes bool
@@ -170,10 +170,9 @@ func exchangeUser(code string) (*CallbackOutput, error) {
 	}, nil
 }
 
-func getUserInfo(userInfoAddr, accessToken string, TranTokenMethod int) ([]byte, error) {
-	logger.Errorf("getUserInfo: %s", userInfoAddr)
+func getUserInfo(userInfoAddr, accessToken string, TranTokenMethod string) ([]byte, error) {
 	var req *http.Request
-	if TranTokenMethod == 1 {
+	if TranTokenMethod == "formdata" {
 		body := bytes.NewBuffer([]byte("access_token=" + accessToken))
 		r, err := http.NewRequest("POST", userInfoAddr, body)
 		if err != nil {
@@ -181,7 +180,7 @@ func getUserInfo(userInfoAddr, accessToken string, TranTokenMethod int) ([]byte,
 		}
 		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		req = r
-	} else if TranTokenMethod == 2 {
+	} else if TranTokenMethod == "querystring" {
 		r, err := http.NewRequest("GET", userInfoAddr+"?access_token="+accessToken, nil)
 		if err != nil {
 			return nil, err
