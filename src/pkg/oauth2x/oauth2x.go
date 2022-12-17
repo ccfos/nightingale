@@ -1,6 +1,7 @@
 package oauth2x
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -19,6 +20,7 @@ type ssoClient struct {
 	config          oauth2.Config
 	ssoAddr         string
 	userInfoAddr    string
+	TranTokenMethod string
 	callbackAddr    string
 	displayName     string
 	coverAttributes bool
@@ -39,6 +41,7 @@ type Config struct {
 	SsoAddr         string
 	TokenAddr       string
 	UserInfoAddr    string
+	TranTokenMethod string
 	ClientId        string
 	ClientSecret    string
 	CoverAttributes bool
@@ -65,6 +68,7 @@ func Init(cf Config) {
 
 	cli.ssoAddr = cf.SsoAddr
 	cli.userInfoAddr = cf.UserInfoAddr
+	cli.TranTokenMethod = cf.TranTokenMethod
 	cli.callbackAddr = cf.RedirectURL
 	cli.displayName = cf.DisplayName
 	cli.coverAttributes = cf.CoverAttributes
@@ -122,7 +126,6 @@ func Callback(ctx context.Context, code, state string) (*CallbackOutput, error) 
 	if err != nil {
 		return nil, fmt.Errorf("ilegal user:%v", err)
 	}
-
 	ret.Redirect, err = fetchRedirect(ctx, state)
 	if err != nil {
 		logger.Errorf("get redirect err:%v code:%s state:%s", code, state, err)
@@ -152,7 +155,7 @@ func exchangeUser(code string) (*CallbackOutput, error) {
 		return nil, fmt.Errorf("failed to exchange token: %s", err)
 	}
 
-	userInfo, err := getUserInfo(cli.userInfoAddr, oauth2Token.AccessToken)
+	userInfo, err := getUserInfo(cli.userInfoAddr, oauth2Token.AccessToken, cli.TranTokenMethod)
 	if err != nil {
 		logger.Errorf("failed to get user info: %s", err)
 		return nil, fmt.Errorf("failed to get user info: %s", err)
@@ -167,15 +170,32 @@ func exchangeUser(code string) (*CallbackOutput, error) {
 	}, nil
 }
 
-func getUserInfo(userInfoAddr, accessToken string) ([]byte, error) {
-	r, err := http.NewRequest("GET", userInfoAddr, nil)
-	if err != nil {
-		return nil, err
+func getUserInfo(userInfoAddr, accessToken string, TranTokenMethod string) ([]byte, error) {
+	var req *http.Request
+	if TranTokenMethod == "formdata" {
+		body := bytes.NewBuffer([]byte("access_token=" + accessToken))
+		r, err := http.NewRequest("POST", userInfoAddr, body)
+		if err != nil {
+			return nil, err
+		}
+		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		req = r
+	} else if TranTokenMethod == "querystring" {
+		r, err := http.NewRequest("GET", userInfoAddr+"?access_token="+accessToken, nil)
+		if err != nil {
+			return nil, err
+		}
+		r.Header.Add("Authorization", "Bearer "+accessToken)
+		req = r
+	} else {
+		r, err := http.NewRequest("GET", userInfoAddr, nil)
+		if err != nil {
+			return nil, err
+		}
+		r.Header.Add("Authorization", "Bearer "+accessToken)
+		req = r
 	}
-
-	r.Header.Add("Authorization", "Bearer "+accessToken)
-
-	resp, err := http.DefaultClient.Do(r)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
