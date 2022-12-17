@@ -238,6 +238,11 @@ func AlertSubscribeGetsByCluster(cluster string) ([]*AlertSubscribe, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if cluster == "" {
+		return lst, nil
+	}
+
 	for _, s := range lst {
 		if MatchCluster(s.Cluster, cluster) {
 			slst = append(slst, s)

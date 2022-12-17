@@ -201,6 +201,11 @@ func AlertMuteGetsByCluster(cluster string) ([]*AlertMute, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if cluster == "" {
+		return lst, nil
+	}
+
 	for _, m := range lst {
 		if MatchCluster(m.Cluster, cluster) {
 			mlst = append(mlst, m)
