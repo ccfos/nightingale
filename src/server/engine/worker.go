@@ -408,6 +408,7 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vect
 			TagsMap:     tagsMap,
 			GroupId:     r.rule.GroupId,
 			RuleName:    r.rule.Name,
+			Cluster:     clusterName,
 		}
 
 		bg := memsto.BusiGroupCache.GetByBusiGroupId(r.rule.GroupId)
@@ -415,7 +416,7 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vect
 			event.GroupName = bg.Name
 		}
 
-		// isMuted only need TriggerTime RuleName and TagsMap
+		// isMuted need TriggerTime RuleName TagsMap and clusterName
 		if IsMuted(event) {
 			logger.Infof("event_muted: rule_id=%d %s", r.rule.Id, vectors[i].Key)
 			continue
@@ -424,7 +425,6 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vect
 		tagsArr := labelMapToArr(tagsMap)
 		sort.Strings(tagsArr)
 
-		event.Cluster = clusterName
 		event.Cate = r.rule.Cate
 		event.Hash = hash
 		event.RuleId = r.rule.Id

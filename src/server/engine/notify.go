@@ -378,6 +378,20 @@ func handleSubscribe(event models.AlertCurEvent, sub *models.AlertSubscribe) {
 		return
 	}
 
+	// 如果不是全局的，判断 cluster
+	if sub.Cluster != models.ClusterAll {
+		// sub.Cluster 是一个字符串，可能是多个cluster的组合，比如"cluster1 cluster2"
+		clusters := strings.Fields(sub.Cluster)
+		cm := make(map[string]struct{}, len(clusters))
+		for i := 0; i < len(clusters); i++ {
+			cm[clusters[i]] = struct{}{}
+		}
+
+		if _, has := cm[event.Cluster]; !has {
+			return
+		}
+	}
+
 	if !matchTags(event.TagsMap, sub.ITags) {
 		return
 	}
