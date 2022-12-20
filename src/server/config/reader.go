@@ -103,7 +103,7 @@ func loadFromDatabase() {
 				continue
 			}
 
-			PromOptions.Sets(cluster, po)
+			PromOptions.Set(cluster, po)
 		}
 	}
 
