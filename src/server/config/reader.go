@@ -147,6 +147,7 @@ func setClientFromPromOption(clusterName string, po PromOption) error {
 		return fmt.Errorf("failed to newClientFromPromOption: %v", err)
 	}
 
+	logger.Debugf("setClientFromPromOption: %s, %+v", clusterName, po)
 	ReaderClients.Set(clusterName, prom.NewAPI(cli, prom.ClientOptions{
 		BasicAuthUser: po.BasicAuthUser,
 		BasicAuthPass: po.BasicAuthPass,
