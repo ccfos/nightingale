@@ -92,7 +92,7 @@ func loadFromDatabase() {
 			}
 
 			logger.Info("setClientFromPromOption success: ", cluster)
-			PromOptions.Sets(cluster, po)
+			PromOptions.Set(cluster, po)
 			continue
 		}
 
