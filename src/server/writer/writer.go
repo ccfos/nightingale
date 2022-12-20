@@ -154,7 +154,7 @@ func (ws *WritersType) PushSample(ident string, v interface{}, clusters ...strin
 	if ok {
 		succ := c.PushFront(v)
 		if !succ {
-			logger.Warningf("Write channel(%s) full, current channel size: %d", ident, c.Len())
+			logger.Warningf("Write cluster:%s channel(%s) full, current channel size: %d", cluster, ident, c.Len())
 		}
 	}
 }

@@ -92,7 +92,7 @@ func loadFromDatabase() {
 			}
 
 			logger.Info("setClientFromPromOption success: ", cluster)
-			PromOptions.Sets(cluster, po)
+			PromOptions.Set(cluster, po)
 			continue
 		}
 
@@ -103,7 +103,7 @@ func loadFromDatabase() {
 				continue
 			}
 
-			PromOptions.Sets(cluster, po)
+			PromOptions.Set(cluster, po)
 		}
 	}
 
@@ -147,6 +147,7 @@ func setClientFromPromOption(clusterName string, po PromOption) error {
 		return fmt.Errorf("failed to newClientFromPromOption: %v", err)
 	}
 
+	logger.Debugf("setClientFromPromOption: %s, %+v", clusterName, po)
 	ReaderClients.Set(clusterName, prom.NewAPI(cli, prom.ClientOptions{
 		BasicAuthUser: po.BasicAuthUser,
 		BasicAuthPass: po.BasicAuthPass,

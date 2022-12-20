@@ -206,17 +206,17 @@ func (r *RuleEval) Work() {
 		var warnings prom.Warnings
 		value, warnings, err = readerClient.Query(context.Background(), promql, time.Now())
 		if err != nil {
-			logger.Errorf("rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
+			logger.Errorf("rule_eval:%d cluster:%s promql:%s, error:%v", r.RuleID(), r.cluster, promql, err)
 			//notifyToMaintainer(err, "failed to query prometheus")
 			Report(QueryPrometheusError)
 			return
 		}
 
 		if len(warnings) > 0 {
-			logger.Errorf("rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
+			logger.Errorf("rule_eval:%d cluster:%s promql:%s, warnings:%v", r.RuleID(), r.cluster, promql, warnings)
 			return
 		}
-		logger.Debugf("rule_eval:%d promql:%s, value:%v", r.RuleID(), promql, value)
+		logger.Debugf("rule_eval:%d cluster:%s promql:%s, value:%v", r.RuleID(), r.cluster, promql, value)
 	}
 
 	r.Judge(r.cluster, conv.ConvertVectors(value))
@@ -365,7 +365,7 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vect
 
 		// rule disabled in this time span?
 		if isNoneffective(vectors[i].Timestamp, r.rule) {
-			logger.Debugf("event_disabled: rule_eval:%d rule:%v timestamp:%d", r.rule.Id, r.rule, vectors[i].Timestamp)
+			logger.Debugf("event_disabled: rule_eval:%d cluster:%s rule:%v timestamp:%d", r.rule.Id, r.cluster, r.rule, vectors[i].Timestamp)
 			continue
 		}
 
@@ -394,7 +394,7 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vect
 				// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 				// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
 				if r.rule.EnableInBG == 1 && target.GroupId != r.rule.GroupId {
-					logger.Debugf("event_enable_in_bg: rule_eval:%d", r.rule.Id)
+					logger.Debugf("event_enable_in_bg: rule_eval:%d cluster:%s", r.rule.Id, r.cluster)
 					continue
 				}
 			} else if strings.Contains(r.rule.PromQl, "target_up") {
@@ -418,7 +418,7 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vect
 
 		// isMuted need TriggerTime RuleName TagsMap and clusterName
 		if IsMuted(event) {
-			logger.Infof("event_muted: rule_id=%d %s", r.rule.Id, vectors[i].Key)
+			logger.Infof("event_muted: rule_id=%d %s cluster:%s", r.rule.Id, vectors[i].Key, r.cluster)
 			continue
 		}
 
@@ -708,12 +708,12 @@ func (r RecordingRuleEval) Work() {
 
 	value, warnings, err := config.ReaderClients.GetCli(r.cluster).Query(context.Background(), promql, time.Now())
 	if err != nil {
-		logger.Errorf("recording_rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
+		logger.Errorf("recording_rule_eval:%d cluster:%s promql:%s, error:%v", r.RuleID(), r.cluster, promql, err)
 		return
 	}
 
 	if len(warnings) > 0 {
-		logger.Errorf("recording_rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
+		logger.Errorf("recording_rule_eval:%d cluster:%s promql:%s, warnings:%v", r.RuleID(), r.cluster, promql, warnings)
 		return
 	}
 	ts := conv.ConvertToTimeSeries(value, r.rule)
