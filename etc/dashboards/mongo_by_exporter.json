@@ -1,12 +1,23 @@
 {
-    "name": "MongoDB Overview - 模板",
+    "name": "MongoDB",
     "tags": "Prometheus MongoDB",
     "configs": {
         "var": [
             {
+                "name": "cluster",
+                "type": "query",
+                "definition": "label_values(mongodb_ss_uptime,cluster)"
+            },
+            {
+                "name": "cl_role",
+                "type": "query",
+                "definition": "label_values(mongodb_ss_uptime{cluster=~\"$cluster\", ident=~\"n9ecollector\"}, cl_role)"
+            },
+            {
                 "name": "instance",
                 "type": "query",
-                "definition": "label_values(mongodb_ss_uptime,instance)"
+                "definition": "label_values(mongodb_ss_uptime{cluster=~\"$cluster\", ident=~\"n9ecollector\", cl_role=~\"$cl_role\"}, instance)",
+                "multi": false
             }
         ],
         "version": "2.0.0",
@@ -40,7 +51,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "mongodb_up{instance=\"$instance\"}"
+                        "expr": "mongodb_up{cluster=\"$cluster\", instance=\"$instance\"}"
                     }
                 ],
                 "name": "Up",
@@ -96,7 +107,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "mongodb_ss_uptime{instance=\"$instance\"}"
+                        "expr": "mongodb_ss_uptime{cluster=\"$cluster\", instance=\"$instance\"}"
                     }
                 ],
                 "name": "Uptime",
@@ -161,8 +172,8 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "mongodb_ss_mem_resident{cluster='$cluster'} * 1024 * 1024",
-                        "legend": "{{type}}"
+                        "expr": "mongodb_ss_mem_resident{cluster='$cluster', cl_role=\"mongos\"} * 1024 * 1024",
+                        "legend": "{{instance}}"
                     }
                 ],
                 "name": "Memory",
@@ -216,8 +227,8 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "rate(mongodb_ss_extra_info_page_faults{instance=\"$instance\"}[5m])",
-                        "legend": "{{type}}"
+                        "expr": "rate(mongodb_ss_extra_info_page_faults{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}[5m])",
+                        "legend": "page faults"
                     }
                 ],
                 "name": "Page Faults",
@@ -272,11 +283,11 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "rate(mongodb_ss_network_bytesOut{cluster='$cluster'}[5m])",
+                        "expr": "rate(mongodb_ss_network_bytesOut{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}[5m])",
                         "legend": "bytesOut"
                     },
                     {
-                        "expr": "rate(mongodb_ss_network_bytesIn{instance='$instance'}[5m])",
+                        "expr": "rate(mongodb_ss_network_bytesIn{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}[5m])",
                         "refId": "B",
                         "legend": "bytesIn"
                     }
@@ -332,7 +343,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "mongodb_ss_connections{instance=\"$instance\", conn_type=\"current\"}",
+                        "expr": "mongodb_ss_connections{cluster=\"$cluster\", conn_type=\"current\", cl_role=~\"$cl_role\", instance=~\"$instance\"}",
                         "legend": "Connections"
                     }
                 ],
@@ -385,7 +396,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "rate(mongodb_ss_asserts{instance=\"$instance\"}[5m])",
+                        "expr": "rate(mongodb_ss_asserts{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}[5m])",
                         "legend": "{{assert_type}}"
                     }
                 ],
@@ -438,7 +449,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "mongodb_ss_globalLock_currentQueue{instance=\"$instance\"}",
+                        "expr": "mongodb_ss_globalLock_currentQueue{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}",
                         "legend": "{{count_type}}"
                     }
                 ],
@@ -505,16 +516,16 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "rate(mongodb_ss_opcounters{instance=\"$instance\", legacy_op_type!=\"command\"}[5m])",
+                        "expr": "rate(mongodb_ss_opcounters{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\", legacy_op_type!=\"command\"}[1m])",
                         "legend": "{{legacy_op_type}}"
                     },
                     {
-                        "expr": "rate(mongodb_ss_opcountersRepl{instance=\"$instance\", legacy_op_type!~\"(command|query|getmore)\"}[5m]) or \nrate(mongodb_ss_opcountersRepl{instance=\"$instance\", legacy_op_type!~\"(command|query|getmore)\"}[5m])",
+                        "expr": "rate(mongodb_ss_opcountersRepl{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\", legacy_op_type!~\"(command|query|getmore)\"}[1m])",
                         "refId": "B",
                         "legend": "repl_{{legacy_op_type}}"
                     },
                     {
-                        "expr": "rate(mongodb_ss_metrics_ttl_deletedDocuments{instance=\"$instance\"}[5m]) or \nrate(mongodb_ss_metrics_ttl_deletedDocuments{instance=\"$instance\"}[5m])",
+                        "expr": "rate(mongodb_ss_metrics_ttl_deletedDocuments{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}[1m])",
                         "refId": "C",
                         "legend": "ttl_delete"
                     }
@@ -568,8 +579,8 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "rate(mongodb_ss_metric_document{instance=\"$instance\"}[5m])",
-                        "legend": ""
+                        "expr": "rate(mongodb_ss_metrics_document{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}[5m])",
+                        "legend": "{{doc_op_type}}"
                     }
                 ],
                 "name": "Document Operations",
@@ -621,7 +632,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "rate(mongodb_ss_opLatencies_latency{cluster='$cluster'}[5m]) / rate(mongodb_ss_opLatencies_latency{cluster='$cluster'}[5m]) / 1000",
+                        "expr": "rate(mongodb_ss_opLatencies_latency{cluster=~\"$cluster\", instance=~\"$instance\"}[1m]) / rate(mongodb_ss_opLatencies_ops{cluster=~\"$cluster\", instance=~\"$instance\"}[1m]) / 1000",
                         "legend": "{{op_type}}"
                     }
                 ],
@@ -676,11 +687,11 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "sum(increase(mongodb_ss_metrics_queryExecutor_scannedObjects{instance=\"$instance\"}[5m])) / sum(increase(mongodb_ss_metrics_document{instance=\"$instance\", doc_op_type=\"returned\"}[5m]))",
+                        "expr": "sum(increase(mongodb_ss_metrics_queryExecutor_scannedObjects{cluster=\"$cluster\"}[5m])) / sum(increase(mongodb_ss_metrics_document{cluster=\"$cluster\", doc_op_type=\"returned\"}[5m]))",
                         "legend": "Document"
                     },
                     {
-                        "expr": "sum(increase(mongodb_ss_metrics_queryExecutor_scanned{instance=\"$instance\"}[5m])) / sum(increase(mongodb_ss_metrics_document{instance=\"$instance\", doc_op_type=\"returned\"}[5m]))",
+                        "expr": "sum(increase(mongodb_ss_metrics_queryExecutor_scanned{cluster=\"$cluster\"}[5m])) / sum(increase(mongodb_ss_metrics_document{cluster=\"$cluster\", doc_op_type=\"returned\"}[5m]))",
                         "refId": "B",
                         "legend": "Index"
                     }
@@ -736,7 +747,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "mongodb_ss_metrics_cursor_open{instance=\"$instance\"}",
+                        "expr": "mongodb_ss_metrics_cursor_open{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}",
                         "legend": "{{csr_type}}"
                     }
                 ],
@@ -804,21 +815,21 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "mongodb_ss_wt_cache_bytes_currently_in_the_cache{cluster='$cluster'}",
+                        "expr": "mongodb_ss_wt_cache_bytes_currently_in_the_cache{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}",
                         "legend": "total"
                     },
                     {
-                        "expr": "mongodb_ss_wt_cache_tracked_dirty_bytes_in_the_cache{cluster='$cluster'}",
+                        "expr": "mongodb_ss_wt_cache_tracked_dirty_bytes_in_the_cache{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}",
                         "refId": "B",
                         "legend": "dirty"
                     },
                     {
-                        "expr": "mongodb_ss_wt_cache_tracked_bytes_belonging_to_internal_pages_in_the_cache{cluster='$cluster'}",
+                        "expr": "mongodb_ss_wt_cache_tracked_bytes_belonging_to_internal_pages_in_the_cache{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}",
                         "refId": "C",
                         "legend": "internal_pages"
                     },
                     {
-                        "expr": "mongodb_ss_wt_cache_tracked_bytes_belonging_to_leaf_pages_in_the_cache{cluster='$cluster'}",
+                        "expr": "mongodb_ss_wt_cache_tracked_bytes_belonging_to_leaf_pages_in_the_cache{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}",
                         "refId": "D",
                         "legend": "leaf_pages"
                     }
@@ -874,11 +885,11 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "rate(mongodb_ss_wt_cache_bytes_read_into_cache{cluster='$cluster'}[5m])",
+                        "expr": "rate(mongodb_ss_wt_cache_bytes_read_into_cache{cluster=~\"$cluster\", instance=~\"$instance\"}[5m])",
                         "legend": "read"
                     },
                     {
-                        "expr": "rate(mongodb_ss_wt_cache_bytes_written_from_cache{cluster='$cluster'}[5m])",
+                        "expr": "rate(mongodb_ss_wt_cache_bytes_written_from_cache{cluster=~\"$cluster\", instance=~\"$instance\"}[5m])",
                         "refId": "B",
                         "legend": "written"
                     }
@@ -934,7 +945,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "100 * sum(mongodb_ss_wt_cache_tracked_dirty_pages_in_the_cache{cluster='$cluster'}) / sum(mongodb_ss_wt_cache_pages_currently_held_in_the_cache{cluster='$cluster'})",
+                        "expr": "100 * sum(mongodb_ss_wt_cache_tracked_dirty_pages_in_the_cache{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"}) / sum(mongodb_ss_wt_cache_pages_currently_held_in_the_cache{cluster=\"$cluster\", cl_role=~\"$cl_role\", instance=~\"$instance\"})",
                         "legend": "dirty rate"
                     }
                 ],
@@ -989,7 +1000,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "rate(mongodb_mongod_wiredtiger_cache_evicted_total{cluster='$cluster'}[5m])",
+                        "expr": "rate(mongodb_mongod_wiredtiger_cache_evicted_total{cluster=~\"$cluster\", instance=~\"$instance\"}[5m])",
                         "legend": "evicted pages"
                     }
                 ],
@@ -1035,7 +1046,7 @@
                     "h": 1,
                     "w": 24,
                     "x": 0,
-                    "y": 45,
+                    "y": 38,
                     "i": "b0016f4a-c565-4276-a08d-bacdf94b6b5a",
                     "isResizable": false
                 },
@@ -1048,7 +1059,7 @@
                     "h": 7,
                     "w": 12,
                     "x": 0,
-                    "y": 46,
+                    "y": 39,
                     "i": "6187ceee-7c25-43f2-be1b-c44ad612ab52",
                     "isResizable": true
                 },
@@ -1056,7 +1067,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "time() - mongodb_mongod_replset_member_election_date"
+                        "expr": "time() - mongodb_mongod_replset_member_election_date{cluster=\"$cluster\", instance=\"$instance\"}"
                     }
                 ],
                 "name": "Replset Election",
@@ -1106,11 +1117,22 @@
                 }
             },
             {
+                "type": "timeseries",
+                "id": "f73fd0cd-ecbe-41f0-a2dc-4e02f7eaef1c",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 39,
+                    "i": "f73fd0cd-ecbe-41f0-a2dc-4e02f7eaef1c",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "mongodb_mongod_replset_member_replication_lag{instance=\"$instance\"}",
-                        "legend": "lag"
+                        "expr": "mongodb_mongod_replset_member_replication_lag{cluster=\"$cluster\"}",
+                        "legend": "{{set}} {{name}}"
                     }
                 ],
                 "name": "Replset Lag Seconds",
@@ -1126,25 +1148,28 @@
                     "standardOptions": {
                         "util": "seconds"
                     },
-                    "thresholds": {}
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
                 },
                 "custom": {
                     "drawStyle": "lines",
                     "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
                     "fillOpacity": 0.5,
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 7,
-                    "w": 12,
-                    "x": 12,
-                    "y": 46,
-                    "i": "f73fd0cd-ecbe-41f0-a2dc-4e02f7eaef1c",
-                    "isResizable": true
-                },
-                "id": "f73fd0cd-ecbe-41f0-a2dc-4e02f7eaef1c"
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
             }
         ]
     }
