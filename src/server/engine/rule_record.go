@@ -45,7 +45,6 @@ func (rrc *RecordRuleContext) Hash() string {
 }
 
 func (rrc *RecordRuleContext) Init() {
-
 }
 
 func (rrc *RecordRuleContext) Start() {

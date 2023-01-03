@@ -120,7 +120,7 @@ func (arc *AlertRuleContext) HandleVectors(vectors []conv.Vector, from string) {
 	for _, vector := range vectors {
 		alertVector := NewAlertVector(arc, rule, vector, from)
 		event := alertVector.BuildEvent(now)
-		if !AlertFilters.Filter(rule, event) {
+		if AlertMuteStrategies.IsMuted(rule, event) {
 			continue
 		}
 		alertingKeys[alertVector.Hash()] = struct{}{}
