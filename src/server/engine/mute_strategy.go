@@ -15,9 +15,9 @@ var AlertMuteStrategies = AlertMuteStrategiesType{&TimeEffectiveMuteStrategy{}, 
 
 type AlertMuteStrategiesType []AlertMuteStrategy
 
-func (fs AlertMuteStrategiesType) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
-	for _, f := range fs {
-		if f.IsMuted(rule, event) {
+func (ss AlertMuteStrategiesType) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
+	for _, s := range ss {
+		if s.IsMuted(rule, event) {
 			return true
 		}
 	}
@@ -65,7 +65,7 @@ func (s *BgNotMatchMuteStrategy) IsMuted(rule *models.AlertRule, event *models.A
 	}
 
 	if rule.EnableInBG == 0 {
-		return true
+		return false
 	}
 
 	target, exists := memsto.TargetCache.Get(ident)
