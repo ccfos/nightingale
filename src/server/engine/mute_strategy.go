@@ -11,7 +11,11 @@ import (
 	"github.com/didi/nightingale/v5/src/server/memsto"
 )
 
-var AlertMuteStrategies = AlertMuteStrategiesType{&TimeNonEffectiveMuteStrategy{}, &BgNotMatchMuteStrategy{}, &EventMuteStrategy{}}
+var AlertMuteStrategies = AlertMuteStrategiesType{
+	&TimeNonEffectiveMuteStrategy{},
+	&BgNotMatchMuteStrategy{},
+	&EventMuteStrategy{},
+}
 
 type AlertMuteStrategiesType []AlertMuteStrategy
 
@@ -59,13 +63,13 @@ func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *mo
 type BgNotMatchMuteStrategy struct{}
 
 func (s *BgNotMatchMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
-	ident, has := event.TagsMap["ident"]
-	if !has {
+	// 没有开启BG内部告警,直接不过滤
+	if rule.EnableInBG == 0 {
 		return false
 	}
 
-	// 没有开启BG内部告警,直接不过滤
-	if rule.EnableInBG == 0 {
+	ident, has := event.TagsMap["ident"]
+	if !has {
 		return false
 	}
 
