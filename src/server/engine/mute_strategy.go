@@ -11,7 +11,7 @@ import (
 	"github.com/didi/nightingale/v5/src/server/memsto"
 )
 
-var AlertMuteStrategies = AlertMuteStrategiesType{&TimeEffectiveMuteStrategy{}, &BgNotMatchMuteStrategy{}, &MuteStrategy{}}
+var AlertMuteStrategies = AlertMuteStrategiesType{&TimeNonEffectiveMuteStrategy{}, &BgNotMatchMuteStrategy{}, &EventMuteStrategy{}}
 
 type AlertMuteStrategiesType []AlertMuteStrategy
 
@@ -29,10 +29,10 @@ type AlertMuteStrategy interface {
 	IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool
 }
 
-// TimeEffectiveMuteStrategy 根据规则配置的告警时间过滤,如果产生的告警不在规则配置的告警时间内,则不告警
-type TimeEffectiveMuteStrategy struct{}
+// TimeNonEffectiveMuteStrategy 根据规则配置的告警时间过滤,如果产生的告警不在规则配置的告警时间内,则不告警
+type TimeNonEffectiveMuteStrategy struct{}
 
-func (s *TimeEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
+func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	if rule.Disabled == 1 {
 		return true
 	}
@@ -64,6 +64,7 @@ func (s *BgNotMatchMuteStrategy) IsMuted(rule *models.AlertRule, event *models.A
 		return false
 	}
 
+	// 没有开启BG内部告警,直接不过滤
 	if rule.EnableInBG == 0 {
 		return false
 	}
@@ -85,8 +86,8 @@ func (s *BgNotMatchMuteStrategy) IsMuted(rule *models.AlertRule, event *models.A
 	return false
 }
 
-type MuteStrategy struct{}
+type EventMuteStrategy struct{}
 
-func (s *MuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
+func (s *EventMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	return IsMuted(event)
 }

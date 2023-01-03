@@ -249,16 +249,18 @@ func (arc *AlertRuleContext) Stop() {
 }
 
 func (arc *AlertRuleContext) recoverAlertCurEventFromDb() {
+	arc.pendings = NewAlertCurEventMap(nil)
+
 	curEvents, err := models.AlertCurEventGetByRuleIdAndCluster(arc.rule.Id, arc.cluster)
 	if err != nil {
 		logger.Errorf("recover event from db for rule:%s failed, err:%s", arc.Key(), err)
+		arc.fires = NewAlertCurEventMap(nil)
 		return
 	}
 
 	fireMap := make(map[string]*models.AlertCurEvent)
-	for _, e := range curEvents {
-		fireMap[e.Hash] = e
+	for _, event := range curEvents {
+		fireMap[event.Hash] = event
 	}
 	arc.fires = NewAlertCurEventMap(fireMap)
-	arc.pendings = NewAlertCurEventMap(nil)
 }
