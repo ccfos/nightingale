@@ -49,7 +49,7 @@ func (arc *AlertRuleContext) Hash() string {
 }
 
 func (arc *AlertRuleContext) Init() {
-	arc.recoverFromDb()
+	arc.recoverAlertCurEventFromDb()
 }
 
 func (arc *AlertRuleContext) Start() {
@@ -248,7 +248,7 @@ func (arc *AlertRuleContext) Stop() {
 	close(arc.quit)
 }
 
-func (arc *AlertRuleContext) recoverFromDb() {
+func (arc *AlertRuleContext) recoverAlertCurEventFromDb() {
 	curEvents, err := models.AlertCurEventGetByRuleIdAndCluster(arc.rule.Id, arc.cluster)
 	if err != nil {
 		logger.Errorf("recover event from db for rule:%s failed, err:%s", arc.Key(), err)
