@@ -69,6 +69,7 @@ func (rh *RuleHolder) SyncAlertRules() {
 			if !rule.IsPrometheusRule() {
 				externalRule := NewAlertRuleContext(rule, cluster)
 				externalAllRules[externalRule.Key()] = externalRule
+				continue
 			}
 
 			// hash ring not hit
@@ -76,10 +77,8 @@ func (rh *RuleHolder) SyncAlertRules() {
 				continue
 			}
 
-			if rule.IsPrometheusRule() {
-				alertRule := NewAlertRuleContext(rule, cluster)
-				alertRules[alertRule.Hash()] = alertRule
-			}
+			alertRule := NewAlertRuleContext(rule, cluster)
+			alertRules[alertRule.Hash()] = alertRule
 		}
 	}
 

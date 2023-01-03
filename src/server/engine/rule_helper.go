@@ -186,6 +186,5 @@ func labelMapToArr(m map[string]string) []string {
 	if numLabels > 1 {
 		sort.Strings(labelStrings)
 	}
-
 	return labelStrings
 }
