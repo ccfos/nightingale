@@ -87,7 +87,7 @@ type AlertVector struct {
 	Vector conv.Vector
 	From   string
 
-	eventTags  map[string]string
+	tagsMap    map[string]string
 	tagsArr    []string
 	target     string
 	targetNote string
@@ -104,7 +104,7 @@ func NewAlertVector(ctx *AlertRuleContext, rule *models.AlertRule, vector conv.V
 		Vector: vector,
 		From:   from,
 	}
-	av.fillEventTags()
+	av.fillTags()
 	av.mayHandleIdent()
 	av.mayHandleGroup()
 	return av
@@ -114,7 +114,7 @@ func (av *AlertVector) Hash() string {
 	return str.MD5(fmt.Sprintf("%d_%s_%s", av.Rule.Id, av.Vector.Key, av.Ctx.cluster))
 }
 
-func (av *AlertVector) fillEventTags() {
+func (av *AlertVector) fillTags() {
 	// handle series tags
 	tagsMap := make(map[string]string)
 	for label, value := range av.Vector.Labels {
@@ -128,7 +128,7 @@ func (av *AlertVector) fillEventTags() {
 	}
 
 	tagsMap["rulename"] = av.Rule.Name
-	av.eventTags = tagsMap
+	av.tagsMap = tagsMap
 
 	// handle tagsArr
 	av.tagsArr = labelMapToArr(tagsMap)
@@ -136,7 +136,7 @@ func (av *AlertVector) fillEventTags() {
 
 func (av *AlertVector) mayHandleIdent() {
 	// handle ident
-	if ident, has := av.eventTags["ident"]; has {
+	if ident, has := av.tagsMap["ident"]; has {
 		if target, exists := memsto.TargetCache.Get(ident); exists {
 			av.target = target.Ident
 			av.targetNote = target.Note
@@ -155,7 +155,7 @@ func (av *AlertVector) mayHandleGroup() {
 func (av *AlertVector) BuildEvent(now int64) *models.AlertCurEvent {
 	event := av.Rule.GenerateNewEvent()
 	event.TriggerTime = av.Vector.Timestamp
-	event.TagsMap = av.eventTags
+	event.TagsMap = av.tagsMap
 	event.Cluster = av.Ctx.cluster
 	event.Hash = av.Hash()
 	event.TargetIdent = av.target
