@@ -157,7 +157,6 @@ func (av *AlertVector) BuildEvent(now int64) *models.AlertCurEvent {
 	event.TriggerTime = av.Vector.Timestamp
 	event.TagsMap = av.eventTags
 	event.Cluster = av.Ctx.cluster
-	event.TargetNote = av.targetNote
 	event.Hash = av.Hash()
 	event.TargetIdent = av.target
 	event.TargetNote = av.targetNote
