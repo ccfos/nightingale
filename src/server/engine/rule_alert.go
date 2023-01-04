@@ -97,6 +97,11 @@ func (arc *AlertRuleContext) Eval() {
 		logger.Errorf("rule_eval:%s rule not found", arc.Key())
 		return
 	}
+
+	// 如果是单个goroutine执行, 完全可以考虑把cachedRule赋值给arc.rule, 不会有问题
+	// 但是在externalRule的场景中, 会调用HandleVectors/RecoverSingle;就行不通了,还是在需要的时候从cache中拿rule吧
+	// arc.rule = cachedRule
+
 	// 如果cache中的规则由prometheus规则改为其他类型，也没必要再去prometheus查询了
 	if cachedRule.IsPrometheusRule() {
 		var warnings prom.Warnings
