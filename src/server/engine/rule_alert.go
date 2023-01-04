@@ -35,6 +35,10 @@ func NewAlertRuleContext(rule *models.AlertRule, cluster string) *AlertRuleConte
 	}
 }
 
+func (arc *AlertRuleContext) RuleFromCache() *models.AlertRule {
+	return memsto.AlertRuleCache.Get(arc.rule.Id)
+}
+
 func (arc *AlertRuleContext) Key() string {
 	return fmt.Sprintf("alert-%s-%d", arc.cluster, arc.rule.Id)
 }
@@ -87,7 +91,14 @@ func (arc *AlertRuleContext) Eval() {
 
 	var value model.Value
 	var err error
-	if arc.rule.IsPrometheusRule() {
+
+	cachedRule := arc.RuleFromCache()
+	if cachedRule == nil {
+		logger.Errorf("rule_eval:%s rule not found", arc.Key())
+		return
+	}
+	// 如果cache中的规则由prometheus规则改为其他类型，也没必要再去prometheus查询了
+	if cachedRule.IsPrometheusRule() {
 		var warnings prom.Warnings
 		value, warnings, err = readerClient.Query(context.Background(), promql, time.Now())
 		if err != nil {
@@ -110,17 +121,17 @@ func (arc *AlertRuleContext) HandleVectors(vectors []conv.Vector, from string) {
 	// 有可能rule的一些配置已经发生变化，比如告警接收人、callbacks等
 	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
 	// 所以，这里直接从memsto.AlertRuleCache中获取并覆盖
-	rule := memsto.AlertRuleCache.Get(arc.rule.Id)
-	if rule == nil {
+	cachedRule := arc.RuleFromCache()
+	if cachedRule == nil {
 		logger.Errorf("rule_eval:%s rule not found", arc.Key())
 		return
 	}
 	now := time.Now().Unix()
 	alertingKeys := map[string]struct{}{}
 	for _, vector := range vectors {
-		alertVector := NewAlertVector(arc, rule, vector, from)
+		alertVector := NewAlertVector(arc, cachedRule, vector, from)
 		event := alertVector.BuildEvent(now)
-		if AlertMuteStrategies.IsMuted(rule, event) {
+		if AlertMuteStrategies.IsMuted(cachedRule, event) {
 			continue
 		}
 		alertingKeys[alertVector.Hash()] = struct{}{}
@@ -147,12 +158,16 @@ func (arc *AlertRuleContext) HandleRecover(alertingKeys map[string]struct{}, now
 }
 
 func (arc *AlertRuleContext) RecoverSingle(hash string, now int64, value *string) {
+	cachedRule := arc.RuleFromCache()
+	if cachedRule == nil {
+		return
+	}
 	event, has := arc.fires.Get(hash)
 	if !has {
 		return
 	}
 	// 如果配置了留观时长，就不能立马恢复了
-	if arc.rule.RecoverDuration > 0 && now-event.LastEvalTime < arc.rule.RecoverDuration {
+	if cachedRule.RecoverDuration > 0 && now-event.LastEvalTime < cachedRule.RecoverDuration {
 		return
 	}
 	if value != nil {
@@ -166,7 +181,7 @@ func (arc *AlertRuleContext) RecoverSingle(hash string, now int64, value *string
 
 	// 可能是因为调整了promql才恢复的，所以事件里边要体现最新的promql，否则用户会比较困惑
 	// 当然，其实rule的各个字段都可能发生变化了，都更新一下吧
-	arc.rule.UpdateEvent(event)
+	cachedRule.UpdateEvent(event)
 	event.IsRecovered = true
 	event.LastEvalTime = now
 	arc.pushEventToQueue(event)
@@ -197,24 +212,29 @@ func (arc *AlertRuleContext) handleEvent(event *models.AlertCurEvent) {
 }
 
 func (arc *AlertRuleContext) fireEvent(event *models.AlertCurEvent) {
+	// As arc.rule maybe outdated, use rule from cache
+	cachedRule := arc.RuleFromCache()
+	if cachedRule == nil {
+		return
+	}
 	if fired, has := arc.fires.Get(event.Hash); has {
 		arc.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 
-		if arc.rule.NotifyRepeatStep == 0 {
+		if cachedRule.NotifyRepeatStep == 0 {
 			// 说明不想重复通知，那就直接返回了，nothing to do
 			return
 		}
 
 		// 之前发送过告警了，这次是否要继续发送，要看是否过了通道静默时间
-		if event.LastEvalTime > fired.LastSentTime+int64(arc.rule.NotifyRepeatStep)*60 {
-			if arc.rule.NotifyMaxNumber == 0 {
+		if event.LastEvalTime > fired.LastSentTime+int64(cachedRule.NotifyRepeatStep)*60 {
+			if cachedRule.NotifyMaxNumber == 0 {
 				// 最大可以发送次数如果是0，表示不想限制最大发送次数，一直发即可
 				event.NotifyCurNumber = fired.NotifyCurNumber + 1
 				event.FirstTriggerTime = fired.FirstTriggerTime
 				arc.pushEventToQueue(event)
 			} else {
 				// 有最大发送次数的限制，就要看已经发了几次了，是否达到了最大发送次数
-				if fired.NotifyCurNumber >= arc.rule.NotifyMaxNumber {
+				if fired.NotifyCurNumber >= cachedRule.NotifyMaxNumber {
 					return
 				} else {
 					event.NotifyCurNumber = fired.NotifyCurNumber + 1
@@ -260,7 +280,9 @@ func (arc *AlertRuleContext) recoverAlertCurEventFromDb() {
 
 	fireMap := make(map[string]*models.AlertCurEvent)
 	for _, event := range curEvents {
+		event.DB2Mem()
 		fireMap[event.Hash] = event
 	}
+
 	arc.fires = NewAlertCurEventMap(fireMap)
 }

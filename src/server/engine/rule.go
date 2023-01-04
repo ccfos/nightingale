@@ -27,8 +27,6 @@ var ruleHolder = &RuleHolder{
 }
 
 type RuleHolder struct {
-	alertLock    sync.Mutex
-	recordLock   sync.Mutex
 	externalLock sync.RWMutex
 
 	// key: hash
@@ -82,7 +80,6 @@ func (rh *RuleHolder) SyncAlertRules() {
 		}
 	}
 
-	rh.alertLock.Lock()
 	for hash, rule := range alertRules {
 		if _, has := rh.alertRules[hash]; !has {
 			rule.Init()
@@ -97,7 +94,6 @@ func (rh *RuleHolder) SyncAlertRules() {
 			delete(rh.alertRules, hash)
 		}
 	}
-	rh.alertLock.Unlock()
 
 	rh.externalLock.Lock()
 	rh.externalAlertRules = externalAllRules
@@ -126,9 +122,6 @@ func (rh *RuleHolder) SyncRecordRules() {
 			recordRules[recordRule.Hash()] = recordRule
 		}
 	}
-
-	rh.recordLock.Lock()
-	defer rh.recordLock.Unlock()
 
 	for hash, rule := range recordRules {
 		if _, has := rh.recordRules[hash]; !has {

@@ -58,7 +58,6 @@ func (pc *PromClientMap) IsNil(cluster string) bool {
 func (pc *PromClientMap) Hit(cluster string) []string {
 	pc.RLock()
 	defer pc.RUnlock()
-
 	clusters := make([]string, 0, len(pc.Clients))
 	if cluster == models.ClusterAll {
 		for c := range pc.Clients {
