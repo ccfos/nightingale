@@ -61,7 +61,7 @@ func (rh *RuleHolder) SyncAlertRules() {
 	for _, id := range ids {
 		rule := memsto.AlertRuleCache.Get(id)
 		if rule == nil {
-			return
+			continue
 		}
 		ruleClusters := config.ReaderClients.Hit(rule.Cluster)
 		for _, cluster := range ruleClusters {
@@ -115,7 +115,7 @@ func (rh *RuleHolder) SyncRecordRules() {
 	for _, id := range ids {
 		rule := memsto.RecordingRuleCache.Get(id)
 		if rule == nil {
-			return
+			continue
 		}
 		ruleClusters := config.ReaderClients.Hit(rule.Cluster)
 		for _, cluster := range ruleClusters {
