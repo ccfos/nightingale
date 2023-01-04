@@ -13,6 +13,7 @@ import (
 
 var AlertMuteStrategies = AlertMuteStrategiesType{
 	&TimeNonEffectiveMuteStrategy{},
+	&IdentDeletedMuteStrategy{},
 	&BgNotMatchMuteStrategy{},
 	&EventMuteStrategy{},
 }
@@ -59,6 +60,26 @@ func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *mo
 	return !strings.Contains(rule.EnableDaysOfWeek, triggerWeek)
 }
 
+// IdentDeletedMuteStrategy 根据ident是否存在过滤,如果ident不存在,则target_up的告警直接过滤掉
+type IdentDeletedMuteStrategy struct{}
+
+func (s *IdentDeletedMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
+	ident, has := event.TagsMap["ident"]
+	if !has {
+		return false
+	}
+	_, exists := memsto.TargetCache.Get(ident)
+	if !exists {
+		// 如果是target_up的告警,且ident已经被删了,直接过滤掉
+		// 这里的判断有点太粗暴了,但是目前没有更好的办法
+		if strings.Contains(rule.PromQl, "target_up") {
+			logger.Debugf("[%T] mute: rule_eval:%d cluster:%s ident:%s", s, rule.Id, event.Cluster, ident)
+			return true
+		}
+	}
+	return false
+}
+
 // BgNotMatchMuteStrategy 当规则开启只在bg内部告警时,对于非bg内部的机器过滤
 type BgNotMatchMuteStrategy struct{}
 
@@ -78,12 +99,7 @@ func (s *BgNotMatchMuteStrategy) IsMuted(rule *models.AlertRule, event *models.A
 		// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 		// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
 		if target.GroupId != rule.GroupId {
-			logger.Debugf("event_enable_in_bg: rule_eval:%d cluster:%s", rule.Id, event.Cluster)
-			return true
-		}
-	} else {
-		if strings.Contains(rule.PromQl, "target_up") {
-			// target 已经不存在了，可能是被删除了
+			logger.Debugf("[%T] mute: rule_eval:%d cluster:%s", s, rule.Id, event.Cluster)
 			return true
 		}
 	}
