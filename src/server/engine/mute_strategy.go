@@ -13,7 +13,7 @@ import (
 
 var AlertMuteStrategies = AlertMuteStrategiesType{
 	&TimeNonEffectiveMuteStrategy{},
-	&IdentDeletedMuteStrategy{},
+	&IdentNotExistsMuteStrategy{},
 	&BgNotMatchMuteStrategy{},
 	&EventMuteStrategy{},
 }
@@ -60,17 +60,17 @@ func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *mo
 	return !strings.Contains(rule.EnableDaysOfWeek, triggerWeek)
 }
 
-// IdentDeletedMuteStrategy 根据ident是否存在过滤,如果ident不存在,则target_up的告警直接过滤掉
-type IdentDeletedMuteStrategy struct{}
+// IdentNotExistsMuteStrategy 根据ident是否存在过滤,如果ident不存在,则target_up的告警直接过滤掉
+type IdentNotExistsMuteStrategy struct{}
 
-func (s *IdentDeletedMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
+func (s *IdentNotExistsMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	ident, has := event.TagsMap["ident"]
 	if !has {
 		return false
 	}
 	_, exists := memsto.TargetCache.Get(ident)
 	if !exists {
-		// 如果是target_up的告警,且ident已经被删了,直接过滤掉
+		// 如果是target_up的告警,且ident已经不存在了,直接过滤掉
 		// 这里的判断有点太粗暴了,但是目前没有更好的办法
 		if strings.Contains(rule.PromQl, "target_up") {
 			logger.Debugf("[%T] mute: rule_eval:%d cluster:%s ident:%s", s, rule.Id, event.Cluster, ident)
