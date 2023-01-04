@@ -69,13 +69,11 @@ func (s *IdentNotExistsMuteStrategy) IsMuted(rule *models.AlertRule, event *mode
 		return false
 	}
 	_, exists := memsto.TargetCache.Get(ident)
-	if !exists {
-		// 如果是target_up的告警,且ident已经不存在了,直接过滤掉
-		// 这里的判断有点太粗暴了,但是目前没有更好的办法
-		if strings.Contains(rule.PromQl, "target_up") {
-			logger.Debugf("[%T] mute: rule_eval:%d cluster:%s ident:%s", s, rule.Id, event.Cluster, ident)
-			return true
-		}
+	// 如果是target_up的告警,且ident已经不存在了,直接过滤掉
+	// 这里的判断有点太粗暴了,但是目前没有更好的办法
+	if !exists && strings.Contains(rule.PromQl, "target_up") {
+		logger.Debugf("[%T] mute: rule_eval:%d cluster:%s ident:%s", s, rule.Id, event.Cluster, ident)
+		return true
 	}
 	return false
 }
@@ -95,13 +93,11 @@ func (s *BgNotMatchMuteStrategy) IsMuted(rule *models.AlertRule, event *models.A
 	}
 
 	target, exists := memsto.TargetCache.Get(ident)
-	if exists {
-		// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
-		// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
-		if target.GroupId != rule.GroupId {
-			logger.Debugf("[%T] mute: rule_eval:%d cluster:%s", s, rule.Id, event.Cluster)
-			return true
-		}
+	// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
+	// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
+	if exists && target.GroupId != rule.GroupId {
+		logger.Debugf("[%T] mute: rule_eval:%d cluster:%s", s, rule.Id, event.Cluster)
+		return true
 	}
 	return false
 }

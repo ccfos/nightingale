@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/toolkits/pkg/logger"
-
 	"github.com/didi/nightingale/v5/src/server/common/sender"
 	"github.com/didi/nightingale/v5/src/server/config"
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
+	"github.com/toolkits/pkg/container/list"
+	"github.com/toolkits/pkg/logger"
 )
+
+var EventQueue = list.NewSafeListLimited(10000000)
 
 func Start(ctx context.Context) error {
 	err := reloadTpls()
