@@ -106,7 +106,7 @@ func syncAlertMutes() error {
 		return nil
 	}
 
-	stat, err := models.AlertMuteStatistics("")
+	stat, err := models.AlertMuteStatistics(config.C.ClusterName)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertMuteStatistics")
 	}
@@ -118,7 +118,7 @@ func syncAlertMutes() error {
 		return nil
 	}
 
-	lst, err := models.AlertMuteGetsByCluster("")
+	lst, err := models.AlertMuteGetsByCluster(config.C.ClusterName)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertMuteGetsByCluster")
 	}
