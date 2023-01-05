@@ -20,6 +20,7 @@ type ssoClient struct {
 	ssoAddr         string
 	callbackAddr    string
 	coverAttributes bool
+	displayName     string
 	attributes      struct {
 		username string
 		nickname string
@@ -30,6 +31,7 @@ type ssoClient struct {
 
 type Config struct {
 	Enable          bool
+	DisplayName     string
 	RedirectURL     string
 	SsoAddr         string
 	ClientId        string
@@ -59,6 +61,7 @@ func Init(cf Config) {
 	cli.attributes.nickname = cf.Attributes.Nickname
 	cli.attributes.phone = cf.Attributes.Phone
 	cli.attributes.email = cf.Attributes.Email
+	cli.displayName = cf.DisplayName
 	provider, err := oidc.NewProvider(context.Background(), cf.SsoAddr)
 	if err != nil {
 		log.Fatal(err)
@@ -75,6 +78,10 @@ func Init(cf Config) {
 		RedirectURL:  cf.RedirectURL,
 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email", "phone"},
 	}
+}
+
+func GetDisplayName() string {
+	return cli.displayName
 }
 
 func wrapStateKey(key string) string {

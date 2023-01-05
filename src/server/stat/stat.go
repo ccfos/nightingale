@@ -16,7 +16,7 @@ var (
 		Subsystem: subsystem,
 		Name:      "cron_duration",
 		Help:      "Cron method use duration, unit: ms.",
-	}, []string{"cluster", "name"})
+	}, []string{"name"})
 
 	// 从数据库同步数据的时候，同步的条数
 	GaugeSyncNumber = prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -24,7 +24,7 @@ var (
 		Subsystem: subsystem,
 		Name:      "cron_sync_number",
 		Help:      "Cron sync number.",
-	}, []string{"cluster", "name"})
+	}, []string{"name"})
 
 	// 从各个接收接口接收到的监控数据总量
 	CounterSampleTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -43,12 +43,12 @@ var (
 	}, []string{"cluster"})
 
 	// 内存中的告警事件队列的长度
-	GaugeAlertQueueSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	GaugeAlertQueueSize = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "alert_queue_size",
 		Help:      "The size of alert queue.",
-	}, []string{"cluster"})
+	})
 
 	// 数据转发队列，各个队列的长度
 	GaugeSampleQueueSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{

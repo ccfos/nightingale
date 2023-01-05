@@ -144,7 +144,14 @@ func boardPutConfigs(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 
 	me := c.MustGet("user").(*models.User)
-	bo := Board(ginx.UrlParamInt64(c, "bid"))
+
+	bid := ginx.UrlParamStr(c, "bid")
+	bo, err := models.BoardGet("id = ? or ident = ?", bid, bid)
+	ginx.Dangerous(err)
+
+	if bo == nil {
+		ginx.Bomb(http.StatusNotFound, "No such dashboard")
+	}
 
 	// check permission
 	bgrwCheck(c, bo.GroupId)

@@ -39,22 +39,48 @@ func loopFilterRules(ctx context.Context) {
 	}
 }
 
+// 一个规则可能会在多个集群中生效，所以这里要把规则拆分成多个，此结构记录 id 和 cluster 的对应关系
+type RuleSimpleInfo struct {
+	Id      int64
+	Cluster string
+}
+
 func filterRules() {
 	ids := memsto.AlertRuleCache.GetRuleIds()
-	logger.Debugf("AlertRuleCache.GetRuleIds success，ids.len: %d", len(ids))
+	logger.Debugf("AlertRuleCache.GetRuleIds success, ids.len: %d", len(ids))
 
 	count := len(ids)
-	mines := make([]int64, 0, count)
+	mines := make([]*RuleSimpleInfo, 0, count)
 
 	for i := 0; i < count; i++ {
-		node, err := naming.HashRing.GetNode(fmt.Sprint(ids[i]))
-		if err != nil {
-			logger.Warning("failed to get node from hashring:", err)
+		rule := memsto.AlertRuleCache.Get(ids[i])
+		if rule == nil {
+			logger.Debugf("AlertRuleCache.Get(%d) failed", ids[i])
 			continue
 		}
 
-		if node == config.C.Heartbeat.Endpoint {
-			mines = append(mines, ids[i])
+		var clusters []string
+		if rule.Cluster == models.ClusterAll {
+			clusters = config.ReaderClients.GetClusterNames()
+		} else {
+			clusters = strings.Fields(rule.Cluster)
+		}
+
+		for _, cluster := range clusters {
+			if config.ReaderClients.IsNil(cluster) {
+				// 没有这个集群的配置，跳过
+				continue
+			}
+
+			node, err := naming.ClusterHashRing.GetNode(cluster, fmt.Sprint(ids[i]))
+			if err != nil {
+				logger.Warningf("rid:%d cluster:%s failed to get node from hashring:%v", ids[i], cluster, err)
+				continue
+			}
+
+			if node == config.C.Heartbeat.Endpoint {
+				mines = append(mines, &RuleSimpleInfo{Id: ids[i], Cluster: cluster})
+			}
 		}
 	}
 
@@ -63,6 +89,7 @@ func filterRules() {
 }
 
 type RuleEval struct {
+	cluster  string
 	rule     *models.AlertRule
 	fires    *AlertCurEventMap
 	pendings *AlertCurEventMap
@@ -166,12 +193,12 @@ func (r *RuleEval) Work() {
 		return
 	}
 
-	if config.ReaderClient.IsNil() {
+	if config.ReaderClients.IsNil(r.cluster) {
 		logger.Error("reader client is nil")
 		return
 	}
 
-	clusterName, readerClient := config.ReaderClient.Get()
+	readerClient := config.ReaderClients.GetCli(r.cluster)
 
 	var value model.Value
 	var err error
@@ -179,20 +206,20 @@ func (r *RuleEval) Work() {
 		var warnings prom.Warnings
 		value, warnings, err = readerClient.Query(context.Background(), promql, time.Now())
 		if err != nil {
-			logger.Errorf("rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
+			logger.Errorf("rule_eval:%d cluster:%s promql:%s, error:%v", r.RuleID(), r.cluster, promql, err)
 			//notifyToMaintainer(err, "failed to query prometheus")
 			Report(QueryPrometheusError)
 			return
 		}
 
 		if len(warnings) > 0 {
-			logger.Errorf("rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
+			logger.Errorf("rule_eval:%d cluster:%s promql:%s, warnings:%v", r.RuleID(), r.cluster, promql, warnings)
 			return
 		}
-		logger.Debugf("rule_eval:%d promql:%s, value:%v", r.RuleID(), promql, value)
+		logger.Debugf("rule_eval:%d cluster:%s promql:%s, value:%v", r.RuleID(), r.cluster, promql, value)
 	}
 
-	r.Judge(clusterName, conv.ConvertVectors(value))
+	r.Judge(r.cluster, conv.ConvertVectors(value))
 }
 
 type WorkersType struct {
@@ -202,22 +229,23 @@ type WorkersType struct {
 
 var Workers = &WorkersType{rules: make(map[string]*RuleEval), recordRules: make(map[string]RecordingRuleEval)}
 
-func (ws *WorkersType) Build(rids []int64) {
-	rules := make(map[string]*models.AlertRule)
+func (ws *WorkersType) Build(ris []*RuleSimpleInfo) {
+	rules := make(map[string]*RuleSimpleInfo)
 
-	for i := 0; i < len(rids); i++ {
-		rule := memsto.AlertRuleCache.Get(rids[i])
+	for i := 0; i < len(ris); i++ {
+		rule := memsto.AlertRuleCache.Get(ris[i].Id)
 		if rule == nil {
 			continue
 		}
 
-		hash := str.MD5(fmt.Sprintf("%d_%d_%s",
+		hash := str.MD5(fmt.Sprintf("%d_%d_%s_%s",
 			rule.Id,
 			rule.PromEvalInterval,
 			rule.PromQl,
+			ris[i].Cluster,
 		))
 
-		rules[hash] = rule
+		rules[hash] = ris[i]
 	}
 
 	// stop old
@@ -235,7 +263,7 @@ func (ws *WorkersType) Build(rids []int64) {
 			continue
 		}
 
-		elst, err := models.AlertCurEventGetByRule(rules[hash].Id)
+		elst, err := models.AlertCurEventGetByRuleIdAndCluster(rules[hash].Id, rules[hash].Cluster)
 		if err != nil {
 			logger.Errorf("worker_build: AlertCurEventGetByRule failed: %v", err)
 			continue
@@ -249,10 +277,11 @@ func (ws *WorkersType) Build(rids []int64) {
 		fires := NewAlertCurEventMap()
 		fires.SetAll(firemap)
 		re := &RuleEval{
-			rule:     rules[hash],
+			rule:     memsto.AlertRuleCache.Get(rules[hash].Id),
 			quit:     make(chan struct{}),
 			fires:    fires,
 			pendings: NewAlertCurEventMap(),
+			cluster:  rules[hash].Cluster,
 		}
 
 		go re.Start()
@@ -260,16 +289,12 @@ func (ws *WorkersType) Build(rids []int64) {
 	}
 }
 
-func (ws *WorkersType) BuildRe(rids []int64) {
-	rules := make(map[string]*models.RecordingRule)
+func (ws *WorkersType) BuildRe(ris []*RuleSimpleInfo) {
+	rules := make(map[string]*RuleSimpleInfo)
 
-	for i := 0; i < len(rids); i++ {
-		rule := memsto.RecordingRuleCache.Get(rids[i])
+	for i := 0; i < len(ris); i++ {
+		rule := memsto.RecordingRuleCache.Get(ris[i].Id)
 		if rule == nil {
-			continue
-		}
-
-		if rule.Disabled == 1 {
 			continue
 		}
 
@@ -277,10 +302,10 @@ func (ws *WorkersType) BuildRe(rids []int64) {
 			rule.Id,
 			rule.PromEvalInterval,
 			rule.PromQl,
-			rule.AppendTags,
+			ris[i].Cluster,
 		))
 
-		rules[hash] = rule
+		rules[hash] = ris[i]
 	}
 
 	// stop old
@@ -298,8 +323,9 @@ func (ws *WorkersType) BuildRe(rids []int64) {
 			continue
 		}
 		re := RecordingRuleEval{
-			rule: rules[hash],
-			quit: make(chan struct{}),
+			rule:    memsto.RecordingRuleCache.Get(rules[hash].Id),
+			quit:    make(chan struct{}),
+			cluster: rules[hash].Cluster,
 		}
 
 		go re.Start()
@@ -334,12 +360,12 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vect
 	alertingKeys := make(map[string]struct{})
 	for i := 0; i < count; i++ {
 		// compute hash
-		hash := str.MD5(fmt.Sprintf("%d_%s", r.rule.Id, vectors[i].Key))
+		hash := str.MD5(fmt.Sprintf("%d_%s_%s", r.rule.Id, vectors[i].Key, r.cluster))
 		alertingKeys[hash] = struct{}{}
 
 		// rule disabled in this time span?
 		if isNoneffective(vectors[i].Timestamp, r.rule) {
-			logger.Debugf("event_disabled: rule_eval:%d rule:%v timestamp:%d", r.rule.Id, r.rule, vectors[i].Timestamp)
+			logger.Debugf("event_disabled: rule_eval:%d cluster:%s rule:%v timestamp:%d", r.rule.Id, r.cluster, r.rule, vectors[i].Timestamp)
 			continue
 		}
 
@@ -368,7 +394,7 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vect
 				// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 				// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
 				if r.rule.EnableInBG == 1 && target.GroupId != r.rule.GroupId {
-					logger.Debugf("event_enable_in_bg: rule_eval:%d", r.rule.Id)
+					logger.Debugf("event_enable_in_bg: rule_eval:%d cluster:%s", r.rule.Id, r.cluster)
 					continue
 				}
 			} else if strings.Contains(r.rule.PromQl, "target_up") {
@@ -382,6 +408,7 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vect
 			TagsMap:     tagsMap,
 			GroupId:     r.rule.GroupId,
 			RuleName:    r.rule.Name,
+			Cluster:     clusterName,
 		}
 
 		bg := memsto.BusiGroupCache.GetByBusiGroupId(r.rule.GroupId)
@@ -389,16 +416,15 @@ func (r *RuleEval) MakeNewEvent(from string, now int64, clusterName string, vect
 			event.GroupName = bg.Name
 		}
 
-		// isMuted only need TriggerTime RuleName and TagsMap
+		// isMuted need TriggerTime RuleName TagsMap and clusterName
 		if IsMuted(event) {
-			logger.Infof("event_muted: rule_id=%d %s", r.rule.Id, vectors[i].Key)
+			logger.Infof("event_muted: rule_id=%d %s cluster:%s", r.rule.Id, vectors[i].Key, r.cluster)
 			continue
 		}
 
 		tagsArr := labelMapToArr(tagsMap)
 		sort.Strings(tagsArr)
 
-		event.Cluster = clusterName
 		event.Cate = r.rule.Cate
 		event.Hash = hash
 		event.RuleId = r.rule.Id
@@ -598,17 +624,37 @@ func filterRecordingRules() {
 	ids := memsto.RecordingRuleCache.GetRuleIds()
 
 	count := len(ids)
-	mines := make([]int64, 0, count)
+	mines := make([]*RuleSimpleInfo, 0, count)
 
 	for i := 0; i < count; i++ {
-		node, err := naming.HashRing.GetNode(fmt.Sprint(ids[i]))
-		if err != nil {
-			logger.Warning("failed to get node from hashring:", err)
+		rule := memsto.RecordingRuleCache.Get(ids[i])
+		if rule == nil {
+			logger.Debugf("rule %d not found", ids[i])
 			continue
 		}
 
-		if node == config.C.Heartbeat.Endpoint {
-			mines = append(mines, ids[i])
+		var clusters []string
+		if rule.Cluster == models.ClusterAll {
+			clusters = config.ReaderClients.GetClusterNames()
+		} else {
+			clusters = strings.Fields(rule.Cluster)
+		}
+
+		for _, cluster := range clusters {
+			if config.ReaderClients.IsNil(cluster) {
+				// 没有这个集群的配置，跳过
+				continue
+			}
+
+			node, err := naming.ClusterHashRing.GetNode(cluster, fmt.Sprint(ids[i]))
+			if err != nil {
+				logger.Warning("failed to get node from hashring:", err)
+				continue
+			}
+
+			if node == config.C.Heartbeat.Endpoint {
+				mines = append(mines, &RuleSimpleInfo{Id: ids[i], Cluster: cluster})
+			}
 		}
 	}
 
@@ -616,8 +662,9 @@ func filterRecordingRules() {
 }
 
 type RecordingRuleEval struct {
-	rule *models.RecordingRule
-	quit chan struct{}
+	cluster string
+	rule    *models.RecordingRule
+	quit    chan struct{}
 }
 
 func (r RecordingRuleEval) Stop() {
@@ -654,39 +701,39 @@ func (r RecordingRuleEval) Work() {
 		return
 	}
 
-	if config.ReaderClient.IsNil() {
+	if config.ReaderClients.IsNil(r.cluster) {
 		log.Println("reader client is nil")
 		return
 	}
 
-	value, warnings, err := config.ReaderClient.GetCli().Query(context.Background(), promql, time.Now())
+	value, warnings, err := config.ReaderClients.GetCli(r.cluster).Query(context.Background(), promql, time.Now())
 	if err != nil {
-		logger.Errorf("recording_rule_eval:%d promql:%s, error:%v", r.RuleID(), promql, err)
+		logger.Errorf("recording_rule_eval:%d cluster:%s promql:%s, error:%v", r.RuleID(), r.cluster, promql, err)
 		return
 	}
 
 	if len(warnings) > 0 {
-		logger.Errorf("recording_rule_eval:%d promql:%s, warnings:%v", r.RuleID(), promql, warnings)
+		logger.Errorf("recording_rule_eval:%d cluster:%s promql:%s, warnings:%v", r.RuleID(), r.cluster, promql, warnings)
 		return
 	}
 	ts := conv.ConvertToTimeSeries(value, r.rule)
 	if len(ts) != 0 {
 		for _, v := range ts {
-			writer.Writers.PushSample(r.rule.Name, v)
+			writer.Writers.PushSample(r.rule.Name, v, r.cluster)
 		}
 	}
 }
 
 type RuleEvalForExternalType struct {
 	sync.RWMutex
-	rules map[int64]RuleEval
+	rules map[string]RuleEval // key: hash of ruleid_promevalinterval_promql_cluster
 }
 
-var RuleEvalForExternal = RuleEvalForExternalType{rules: make(map[int64]RuleEval)}
+var RuleEvalForExternal = RuleEvalForExternalType{rules: make(map[string]RuleEval)}
 
 func (re *RuleEvalForExternalType) Build() {
 	rids := memsto.AlertRuleCache.GetRuleIds()
-	rules := make(map[int64]*models.AlertRule)
+	rules := make(map[string]*RuleSimpleInfo)
 
 	for i := 0; i < len(rids); i++ {
 		rule := memsto.AlertRuleCache.Get(rids[i])
@@ -694,16 +741,34 @@ func (re *RuleEvalForExternalType) Build() {
 			continue
 		}
 
-		re.Lock()
-		rules[rule.Id] = rule
-		re.Unlock()
+		var clusters []string
+		if rule.Cluster == models.ClusterAll {
+			clusters = config.ReaderClients.GetClusterNames()
+		} else {
+			clusters = strings.Fields(rule.Cluster)
+		}
+
+		for _, cluster := range clusters {
+			hash := str.MD5(fmt.Sprintf("%d_%d_%s_%s",
+				rule.Id,
+				rule.PromEvalInterval,
+				rule.PromQl,
+				cluster,
+			))
+			re.Lock()
+			rules[hash] = &RuleSimpleInfo{
+				Id:      rule.Id,
+				Cluster: cluster,
+			}
+			re.Unlock()
+		}
 	}
 
 	// stop old
-	for rid := range re.rules {
-		if _, has := rules[rid]; !has {
+	for oldHash := range re.rules {
+		if _, has := rules[oldHash]; !has {
 			re.Lock()
-			delete(re.rules, rid)
+			delete(re.rules, oldHash)
 			re.Unlock()
 		}
 	}
@@ -711,13 +776,13 @@ func (re *RuleEvalForExternalType) Build() {
 	// start new
 	re.Lock()
 	defer re.Unlock()
-	for rid := range rules {
-		if _, has := re.rules[rid]; has {
+	for hash, ruleSimple := range rules {
+		if _, has := re.rules[hash]; has {
 			// already exists
 			continue
 		}
 
-		elst, err := models.AlertCurEventGetByRule(rules[rid].Id)
+		elst, err := models.AlertCurEventGetByRuleIdAndCluster(ruleSimple.Id, ruleSimple.Cluster)
 		if err != nil {
 			logger.Errorf("worker_build: AlertCurEventGetByRule failed: %v", err)
 			continue
@@ -731,27 +796,35 @@ func (re *RuleEvalForExternalType) Build() {
 		fires := NewAlertCurEventMap()
 		fires.SetAll(firemap)
 		newRe := RuleEval{
-			rule:     rules[rid],
+			rule:     memsto.AlertRuleCache.Get(ruleSimple.Id),
 			quit:     make(chan struct{}),
 			fires:    fires,
 			pendings: NewAlertCurEventMap(),
+			cluster:  ruleSimple.Cluster,
 		}
 
-		re.rules[rid] = newRe
+		re.rules[hash] = newRe
 	}
 }
 
-func (re *RuleEvalForExternalType) Get(rid int64) (RuleEval, bool) {
+func (re *RuleEvalForExternalType) Get(rid int64, cluster string) (RuleEval, bool) {
+	re.RLock()
+	defer re.RUnlock()
 	rule := memsto.AlertRuleCache.Get(rid)
 	if rule == nil {
 		return RuleEval{}, false
 	}
 
-	re.RLock()
-	defer re.RUnlock()
-	if ret, has := re.rules[rid]; has {
-		// already exists
+	hash := str.MD5(fmt.Sprintf("%d_%d_%s_%s",
+		rule.Id,
+		rule.PromEvalInterval,
+		rule.PromQl,
+		cluster,
+	))
+
+	if ret, has := re.rules[hash]; has {
 		return ret, has
 	}
+
 	return RuleEval{}, false
 }

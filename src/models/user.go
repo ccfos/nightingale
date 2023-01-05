@@ -512,6 +512,23 @@ func (u *User) UserGroups(limit int, query string) ([]UserGroup, error) {
 	var lst []UserGroup
 	if u.IsAdmin() {
 		err := session.Where("name like ?", "%"+query+"%").Find(&lst).Error
+		if err != nil {
+			return lst, err
+		}
+
+		if len(lst) == 0 && len(query) > 0 {
+			// 隐藏功能，一般人不告诉，哈哈。query可能是给的用户名，所以上面的sql没有查到，当做user来查一下试试
+			user, err := UserGetByUsername(query)
+			if user == nil {
+				return lst, err
+			}
+			var ids []int64
+			ids, err = MyGroupIds(user.Id)
+			if err != nil || len(ids) == 0 {
+				return lst, err
+			}
+			lst, err = UserGroupGetByIds(ids)
+		}
 		return lst, err
 	}
 

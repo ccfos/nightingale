@@ -16,6 +16,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.12
 	github.com/koding/multiconfig v0.0.0-20171124222453-69c27309b2d7
+	github.com/mailru/easyjson v0.7.7
 	github.com/mattn/go-isatty v0.0.12
 	github.com/orcaman/concurrent-map v0.0.0-20210501183033-44dafcb38ecc
 	github.com/pkg/errors v0.9.1
@@ -23,7 +24,7 @@ require (
 	github.com/prometheus/common v0.32.1
 	github.com/prometheus/prometheus v2.5.0+incompatible
 	github.com/tidwall/gjson v1.14.0
-	github.com/toolkits/pkg v1.2.9
+	github.com/toolkits/pkg v1.3.1-0.20220824084030-9f9f830a05d5
 	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
@@ -58,6 +59,7 @@ require (
 	github.com/jackc/pgx/v4 v4.13.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
+	github.com/josharian/intern v1.0.0 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

@@ -95,11 +95,17 @@ func loopSyncRecordingRules() {
 func syncRecordingRules() error {
 	start := time.Now()
 
-	clusterName := config.ReaderClient.GetClusterName()
-	if clusterName == "" {
+	clusterNames := config.ReaderClients.GetClusterNames()
+	if len(clusterNames) == 0 {
 		RecordingRuleCache.Reset()
-		logger.Warning("cluster name is blank")
+		logger.Warning("cluster is blank")
 		return nil
+	}
+
+	var clusterName string
+	// 只有一个集群，使用单集群模式，如果大于1个集群，则获取全部的规则
+	if len(clusterNames) == 1 {
+		clusterName = clusterNames[0]
 	}
 
 	stat, err := models.RecordingRuleStatistics(clusterName)
@@ -108,8 +114,8 @@ func syncRecordingRules() error {
 	}
 
 	if !RecordingRuleCache.StatChanged(stat.Total, stat.LastUpdated) {
-		promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_recording_rules").Set(0)
-		promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_recording_rules").Set(0)
+		promstat.GaugeCronDuration.WithLabelValues("sync_recording_rules").Set(0)
+		promstat.GaugeSyncNumber.WithLabelValues("sync_recording_rules").Set(0)
 		logger.Debug("recoding rules not changed")
 		return nil
 	}
@@ -127,8 +133,8 @@ func syncRecordingRules() error {
 	RecordingRuleCache.Set(m, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_recording_rules").Set(float64(ms))
-	promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_recording_rules").Set(float64(len(m)))
+	promstat.GaugeCronDuration.WithLabelValues("sync_recording_rules").Set(float64(ms))
+	promstat.GaugeSyncNumber.WithLabelValues("sync_recording_rules").Set(float64(len(m)))
 	logger.Infof("timer: sync recording rules done, cost: %dms, number: %d", ms, len(m))
 
 	return nil

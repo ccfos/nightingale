@@ -19,8 +19,11 @@ import (
 	"github.com/didi/nightingale/v5/src/server/memsto"
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 	"github.com/didi/nightingale/v5/src/server/writer"
+	"github.com/mailru/easyjson"
+	_ "github.com/mailru/easyjson/gen"
 )
 
+// easyjson:json
 type HTTPMetric struct {
 	Metric       string            `json:"metric"`
 	Timestamp    int64             `json:"timestamp"`
@@ -28,6 +31,9 @@ type HTTPMetric struct {
 	Value        float64           `json:"-"`
 	Tags         map[string]string `json:"tags"`
 }
+
+//easyjson:json
+type HTTPMetricArr []HTTPMetric
 
 func (m *HTTPMetric) Clean(ts int64) error {
 	if m.Metric == "" {
@@ -145,13 +151,13 @@ func handleOpenTSDB(c *gin.Context) {
 		return
 	}
 
-	var arr []HTTPMetric
+	var arr HTTPMetricArr
 
 	if bs[0] == '[' {
-		err = json.Unmarshal(bs, &arr)
+		err = easyjson.Unmarshal(bs, &arr)
 	} else {
 		var one HTTPMetric
-		err = json.Unmarshal(bs, &one)
+		err = easyjson.Unmarshal(bs, &one)
 		arr = []HTTPMetric{one}
 	}
 
@@ -201,13 +207,22 @@ func handleOpenTSDB(c *gin.Context) {
 			}
 		}
 
-		writer.Writers.PushSample(arr[i].Metric, pt)
+		LogSample(c.Request.RemoteAddr, pt)
+		if config.C.WriterOpt.ShardingKey == "ident" {
+			if host == "" {
+				writer.Writers.PushSample("-", pt)
+			} else {
+				writer.Writers.PushSample(host, pt)
+			}
+		} else {
+			writer.Writers.PushSample(arr[i].Metric, pt)
+		}
 
 		succ++
 	}
 
 	if succ > 0 {
-		cn := config.ReaderClient.GetClusterName()
+		cn := config.C.ClusterName
 		if cn != "" {
 			promstat.CounterSampleTotal.WithLabelValues(cn, "opentsdb").Add(float64(succ))
 		}

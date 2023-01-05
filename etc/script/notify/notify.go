@@ -23,6 +23,7 @@ func (n *N9EPlugin) Notify(bs []byte) {
 		"dingtalk_robot_token",
 		"wecom_robot_token",
 		"feishu_robot_token",
+		"telegram_robot_token",
 	}
 	for _, ch := range channels {
 		if ret := gjson.GetBytes(bs, ch); ret.Exists() {

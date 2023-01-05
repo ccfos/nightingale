@@ -6,40 +6,38 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/prom"
 )
 
-type PromClient struct {
-	prom.API
-	ClusterName string
+type PromClientMap struct {
 	sync.RWMutex
+	Clients map[string]prom.API
 }
 
-var ReaderClient *PromClient = &PromClient{}
+var ReaderClients *PromClientMap = &PromClientMap{Clients: make(map[string]prom.API)}
 
-func (pc *PromClient) Set(clusterName string, c prom.API) {
+func (pc *PromClientMap) Set(clusterName string, c prom.API) {
 	pc.Lock()
 	defer pc.Unlock()
-	pc.ClusterName = clusterName
-	pc.API = c
+	pc.Clients[clusterName] = c
 }
 
-func (pc *PromClient) Get() (string, prom.API) {
+func (pc *PromClientMap) GetClusterNames() []string {
 	pc.RLock()
 	defer pc.RUnlock()
-	return pc.ClusterName, pc.API
+	var clusterNames []string
+	for k := range pc.Clients {
+		clusterNames = append(clusterNames, k)
+	}
+
+	return clusterNames
 }
 
-func (pc *PromClient) GetClusterName() string {
+func (pc *PromClientMap) GetCli(cluster string) prom.API {
 	pc.RLock()
 	defer pc.RUnlock()
-	return pc.ClusterName
+	c := pc.Clients[cluster]
+	return c
 }
 
-func (pc *PromClient) GetCli() prom.API {
-	pc.RLock()
-	defer pc.RUnlock()
-	return pc.API
-}
-
-func (pc *PromClient) IsNil() bool {
+func (pc *PromClientMap) IsNil(cluster string) bool {
 	if pc == nil {
 		return true
 	}
@@ -47,13 +45,23 @@ func (pc *PromClient) IsNil() bool {
 	pc.RLock()
 	defer pc.RUnlock()
 
-	return pc.API == nil
+	c, exists := pc.Clients[cluster]
+	if !exists {
+		return true
+	}
+
+	return c == nil
 }
 
-func (pc *PromClient) Reset() {
+func (pc *PromClientMap) Reset() {
 	pc.Lock()
 	defer pc.Unlock()
 
-	pc.ClusterName = ""
-	pc.API = nil
+	pc.Clients = make(map[string]prom.API)
+}
+
+func (pc *PromClientMap) Del(cluster string) {
+	pc.Lock()
+	defer pc.Unlock()
+	delete(pc.Clients, cluster)
 }

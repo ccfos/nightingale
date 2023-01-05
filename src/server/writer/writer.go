@@ -37,7 +37,7 @@ func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSerie
 	return ritems
 }
 
-func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[string]string) {
+func (w WriterType) Write(cluster string, index int, items []*prompb.TimeSeries, headers ...map[string]string) {
 	if len(items) == 0 {
 		return
 	}
@@ -49,9 +49,8 @@ func (w WriterType) Write(index int, items []*prompb.TimeSeries, headers ...map[
 
 	start := time.Now()
 	defer func() {
-		cn := config.ReaderClient.GetClusterName()
-		if cn != "" {
-			promstat.ForwardDuration.WithLabelValues(cn, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
+		if cluster != "" {
+			promstat.ForwardDuration.WithLabelValues(cluster, fmt.Sprint(index)).Observe(time.Since(start).Seconds())
 		}
 	}()
 
@@ -130,70 +129,50 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 type WritersType struct {
 	globalOpt config.WriterGlobalOpt
 	backends  map[string]WriterType
-	chans     map[int]chan *prompb.TimeSeries
+	queues    map[string]map[int]*SafeListLimited
 }
 
 func (ws *WritersType) Put(name string, writer WriterType) {
 	ws.backends[name] = writer
 }
 
-// PushSample Push one sample to chan, hash by ident
-// @Author: quzhihao
-func (ws *WritersType) PushSample(ident string, v interface{}) {
+func (ws *WritersType) PushSample(ident string, v interface{}, clusters ...string) {
 	hashkey := crc32.ChecksumIEEE([]byte(ident)) % uint32(ws.globalOpt.QueueCount)
 
-	c, ok := ws.chans[int(hashkey)]
+	cluster := config.C.ClusterName
+	if len(clusters) > 0 {
+		cluster = clusters[0]
+	}
+
+	if _, ok := ws.queues[cluster]; !ok {
+		// 待写入的集群不存在
+		logger.Warningf("Write cluster:%s not found, v:%+v", cluster, v)
+		return
+	}
+
+	c, ok := ws.queues[cluster][int(hashkey)]
 	if ok {
-		select {
-		case c <- v.(*prompb.TimeSeries):
-		default:
-			logger.Warningf("Write channel(%s) full, current channel size: %d", ident, len(c))
+		succ := c.PushFront(v)
+		if !succ {
+			logger.Warningf("Write cluster:%s channel(%s) full, current channel size: %d", cluster, ident, c.Len())
 		}
 	}
 }
 
-// StartConsumer every ident channel has a consumer, start it
-// @Author: quzhihao
-func (ws *WritersType) StartConsumer(index int, ch chan *prompb.TimeSeries) {
-	var (
-		batch        = ws.globalOpt.QueuePopSize
-		series       = make([]*prompb.TimeSeries, 0, batch)
-		batchCounter int
-	)
-
+func (ws *WritersType) StartConsumer(index int, ch *SafeListLimited, clusterName string) {
 	for {
-		select {
-		case item := <-ch:
-			// has data, no need to close
-			series = append(series, item)
-
-			batchCounter++
-			if batchCounter >= ws.globalOpt.QueuePopSize {
-				ws.post(index, series)
-
-				// reset
-				batchCounter = 0
-				series = make([]*prompb.TimeSeries, 0, batch)
-			}
-		case <-time.After(time.Second):
-			if len(series) > 0 {
-				ws.post(index, series)
-
-				// reset
-				batchCounter = 0
-				series = make([]*prompb.TimeSeries, 0, batch)
-			}
+		series := ch.PopBack(ws.globalOpt.QueuePopSize)
+		if len(series) == 0 {
+			time.Sleep(time.Millisecond * 400)
+			continue
 		}
-	}
-}
 
-// post post series to TSDB
-// @Author: quzhihao
-func (ws *WritersType) post(index int, series []*prompb.TimeSeries) {
-	header := map[string]string{"hash": fmt.Sprintf("%s-%d", config.C.Heartbeat.Endpoint, index)}
-
-	for key := range ws.backends {
-		go ws.backends[key].Write(index, series, header)
+		for key := range ws.backends {
+			if ws.backends[key].Opts.ClusterName != clusterName {
+				continue
+			}
+			go ws.backends[key].Write(clusterName, index, series)
+		}
 	}
 }
 
@@ -207,12 +186,15 @@ var Writers = NewWriters()
 
 func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 	Writers.globalOpt = globalOpt
-	Writers.chans = make(map[int]chan *prompb.TimeSeries)
-
-	// init channels
-	for i := 0; i < globalOpt.QueueCount; i++ {
-		Writers.chans[i] = make(chan *prompb.TimeSeries, Writers.globalOpt.QueueMaxSize)
-		go Writers.StartConsumer(i, Writers.chans[i])
+	Writers.queues = make(map[string]map[int]*SafeListLimited)
+	for _, opt := range opts {
+		if _, ok := Writers.queues[opt.ClusterName]; !ok {
+			Writers.queues[opt.ClusterName] = make(map[int]*SafeListLimited)
+			for i := 0; i < globalOpt.QueueCount; i++ {
+				Writers.queues[opt.ClusterName][i] = NewSafeListLimited(Writers.globalOpt.QueueMaxSize)
+				go Writers.StartConsumer(i, Writers.queues[opt.ClusterName][i], opt.ClusterName)
+			}
+		}
 	}
 
 	go reportChanSize()
@@ -253,16 +235,18 @@ func Init(opts []config.WriterOptions, globalOpt config.WriterGlobalOpt) error {
 }
 
 func reportChanSize() {
-	clusterName := config.ReaderClient.GetClusterName()
+	clusterName := config.C.ClusterName
 	if clusterName == "" {
 		return
 	}
 
 	for {
 		time.Sleep(time.Second * 3)
-		for i, c := range Writers.chans {
-			size := len(c)
-			promstat.GaugeSampleQueueSize.WithLabelValues(clusterName, fmt.Sprint(i)).Set(float64(size))
+		for cluster, m := range Writers.queues {
+			for i, c := range m {
+				size := c.Len()
+				promstat.GaugeSampleQueueSize.WithLabelValues(cluster, fmt.Sprint(i)).Set(float64(size))
+			}
 		}
 	}
 }

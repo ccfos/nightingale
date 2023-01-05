@@ -3,6 +3,7 @@ package config
 import "sync"
 
 type PromOption struct {
+	ClusterName   string
 	Url           string
 	BasicAuthUser string
 	BasicAuthPass string
@@ -64,9 +65,9 @@ func (pos *PromOptionsStruct) Set(clusterName string, po PromOption) {
 	pos.Unlock()
 }
 
-func (pos *PromOptionsStruct) Sets(clusterName string, po PromOption) {
+func (pos *PromOptionsStruct) Del(clusterName string) {
 	pos.Lock()
-	pos.Data = map[string]PromOption{clusterName: po}
+	delete(pos.Data, clusterName)
 	pos.Unlock()
 }
 

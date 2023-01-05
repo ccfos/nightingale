@@ -126,6 +126,7 @@ func handleNotice(notice Notice, bs []byte) {
 	dingtalkset := make(map[string]struct{})
 	feishuset := make(map[string]struct{})
 	mmset := make(map[string]struct{})
+	telegramset := make(map[string]struct{})
 
 	for _, user := range notice.Event.NotifyUsersObj {
 		if user.Email != "" {
@@ -160,6 +161,11 @@ func handleNotice(notice Notice, bs []byte) {
 		ret = gjson.GetBytes(bs, "mm_webhook_url")
 		if ret.Exists() {
 			mmset[ret.String()] = struct{}{}
+		}
+
+		ret = gjson.GetBytes(bs, "telegram_robot_token")
+		if ret.Exists() {
+			telegramset[ret.String()] = struct{}{}
 		}
 	}
 
@@ -259,6 +265,23 @@ func handleNotice(notice Notice, bs []byte) {
 				Text:   content,
 				Tokens: StringSetKeys(mmset),
 			})
+		case "telegram":
+			if len(telegramset) == 0 {
+				continue
+			}
+
+			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "telegram") {
+				continue
+			}
+
+			content, has := notice.Tpls["telegram.tpl"]
+			if !has {
+				content = "telegram.tpl not found"
+			}
+			sender.SendTelegram(sender.TelegramMessage{
+				Text:   content,
+				Tokens: StringSetKeys(telegramset),
+			})
 		}
 	}
 }
@@ -355,6 +378,20 @@ func handleSubscribe(event models.AlertCurEvent, sub *models.AlertSubscribe) {
 		return
 	}
 
+	// 如果不是全局的，判断 cluster
+	if sub.Cluster != models.ClusterAll {
+		// sub.Cluster 是一个字符串，可能是多个cluster的组合，比如"cluster1 cluster2"
+		clusters := strings.Fields(sub.Cluster)
+		cm := make(map[string]struct{}, len(clusters))
+		for i := 0; i < len(clusters); i++ {
+			cm[clusters[i]] = struct{}{}
+		}
+
+		if _, has := cm[event.Cluster]; !has {
+			return
+		}
+	}
+
 	if !matchTags(event.TagsMap, sub.ITags) {
 		return
 	}
@@ -398,6 +435,10 @@ func alertingCallScript(stdinBytes []byte) {
 		return
 	}
 
+	if config.C.Alerting.Timeout == 0 {
+		config.C.Alerting.Timeout = 30000
+	}
+
 	fpath := config.C.Alerting.CallScript.ScriptPath
 	cmd := exec.Command(fpath)
 	cmd.Stdin = bytes.NewReader(stdinBytes)
@@ -413,7 +454,7 @@ func alertingCallScript(stdinBytes []byte) {
 		return
 	}
 
-	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(30)*time.Second)
+	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.C.Alerting.Timeout)*time.Millisecond)
 
 	if isTimeout {
 		if err == nil {

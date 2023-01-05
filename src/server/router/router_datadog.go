@@ -16,14 +16,17 @@ import (
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 	"github.com/didi/nightingale/v5/src/server/writer"
 	"github.com/gin-gonic/gin"
+	"github.com/mailru/easyjson"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
 )
 
+//easyjson:json
 type TimeSeries struct {
 	Series []*DatadogMetric `json:"series"`
 }
 
+//easyjson:json
 type DatadogMetric struct {
 	Metric string         `json:"metric"`
 	Points []DatadogPoint `json:"points"`
@@ -31,6 +34,7 @@ type DatadogMetric struct {
 	Tags   []string       `json:"tags,omitempty"`
 }
 
+//easyjson:json
 type DatadogPoint [2]float64
 
 func (m *DatadogMetric) Clean() error {
@@ -213,7 +217,7 @@ func datadogSeries(c *gin.Context) {
 	}
 
 	var series TimeSeries
-	err = json.Unmarshal(bs, &series)
+	err = easyjson.Unmarshal(bs, &series)
 	if err != nil {
 		c.String(400, err.Error())
 		return
@@ -262,13 +266,22 @@ func datadogSeries(c *gin.Context) {
 			}
 		}
 
-		writer.Writers.PushSample(item.Metric, pt)
+		LogSample(c.Request.RemoteAddr, pt)
+		if config.C.WriterOpt.ShardingKey == "ident" {
+			if ident == "" {
+				writer.Writers.PushSample("-", pt)
+			} else {
+				writer.Writers.PushSample(ident, pt)
+			}
+		} else {
+			writer.Writers.PushSample(item.Metric, pt)
+		}
 
 		succ++
 	}
 
 	if succ > 0 {
-		cn := config.ReaderClient.GetClusterName()
+		cn := config.C.ClusterName
 		if cn != "" {
 			promstat.CounterSampleTotal.WithLabelValues(cn, "datadog").Add(float64(succ))
 		}

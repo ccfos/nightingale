@@ -102,26 +102,26 @@ func loopSyncAlertSubscribes() {
 func syncAlertSubscribes() error {
 	start := time.Now()
 
-	clusterName := config.ReaderClient.GetClusterName()
-	if clusterName == "" {
+	clusterNames := config.ReaderClients.GetClusterNames()
+	if len(clusterNames) == 0 {
 		AlertSubscribeCache.Reset()
-		logger.Warning("cluster name is blank")
+		logger.Warning("cluster is blank")
 		return nil
 	}
 
-	stat, err := models.AlertSubscribeStatistics(clusterName)
+	stat, err := models.AlertSubscribeStatistics("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertSubscribeStatistics")
 	}
 
 	if !AlertSubscribeCache.StatChanged(stat.Total, stat.LastUpdated) {
-		promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_alert_subscribes").Set(0)
-		promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_alert_subscribes").Set(0)
+		promstat.GaugeCronDuration.WithLabelValues("sync_alert_subscribes").Set(0)
+		promstat.GaugeSyncNumber.WithLabelValues("sync_alert_subscribes").Set(0)
 		logger.Debug("alert subscribes not changed")
 		return nil
 	}
 
-	lst, err := models.AlertSubscribeGetsByCluster(clusterName)
+	lst, err := models.AlertSubscribeGetsByCluster("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertSubscribeGetsByCluster")
 	}
@@ -141,8 +141,8 @@ func syncAlertSubscribes() error {
 	AlertSubscribeCache.Set(subs, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_alert_subscribes").Set(float64(ms))
-	promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_alert_subscribes").Set(float64(len(lst)))
+	promstat.GaugeCronDuration.WithLabelValues("sync_alert_subscribes").Set(float64(ms))
+	promstat.GaugeSyncNumber.WithLabelValues("sync_alert_subscribes").Set(float64(len(lst)))
 	logger.Infof("timer: sync subscribes done, cost: %dms, number: %d", ms, len(lst))
 
 	return nil

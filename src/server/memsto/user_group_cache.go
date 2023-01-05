@@ -9,7 +9,6 @@ import (
 	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/src/models"
-	"github.com/didi/nightingale/v5/src/server/config"
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 )
 
@@ -106,13 +105,9 @@ func syncUserGroups() error {
 		return errors.WithMessage(err, "failed to exec UserGroupStatistics")
 	}
 
-	clusterName := config.ReaderClient.GetClusterName()
-
 	if !UserGroupCache.StatChanged(stat.Total, stat.LastUpdated) {
-		if clusterName != "" {
-			promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_user_groups").Set(0)
-			promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_user_groups").Set(0)
-		}
+		promstat.GaugeCronDuration.WithLabelValues("sync_user_groups").Set(0)
+		promstat.GaugeSyncNumber.WithLabelValues("sync_user_groups").Set(0)
 
 		logger.Debug("user_group not changed")
 		return nil
@@ -150,10 +145,8 @@ func syncUserGroups() error {
 	UserGroupCache.Set(m, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	if clusterName != "" {
-		promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_user_groups").Set(float64(ms))
-		promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_user_groups").Set(float64(len(m)))
-	}
+	promstat.GaugeCronDuration.WithLabelValues("sync_user_groups").Set(float64(ms))
+	promstat.GaugeSyncNumber.WithLabelValues("sync_user_groups").Set(float64(len(m)))
 
 	logger.Infof("timer: sync user groups done, cost: %dms, number: %d", ms, len(m))
 

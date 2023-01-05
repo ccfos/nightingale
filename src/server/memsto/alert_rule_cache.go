@@ -96,26 +96,26 @@ func loopSyncAlertRules() {
 func syncAlertRules() error {
 	start := time.Now()
 
-	clusterName := config.ReaderClient.GetClusterName()
-	if clusterName == "" {
+	clusterNames := config.ReaderClients.GetClusterNames()
+	if len(clusterNames) == 0 {
 		AlertRuleCache.Reset()
-		logger.Warning("cluster name is blank")
+		logger.Warning("cluster is blank")
 		return nil
 	}
 
-	stat, err := models.AlertRuleStatistics(clusterName)
+	stat, err := models.AlertRuleStatistics("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertRuleStatistics")
 	}
 
 	if !AlertRuleCache.StatChanged(stat.Total, stat.LastUpdated) {
-		promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_alert_rules").Set(0)
-		promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_alert_rules").Set(0)
+		promstat.GaugeCronDuration.WithLabelValues("sync_alert_rules").Set(0)
+		promstat.GaugeSyncNumber.WithLabelValues("sync_alert_rules").Set(0)
 		logger.Debug("alert rules not changed")
 		return nil
 	}
 
-	lst, err := models.AlertRuleGetsByCluster(clusterName)
+	lst, err := models.AlertRuleGetsByCluster("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertRuleGetsByCluster")
 	}
@@ -128,8 +128,8 @@ func syncAlertRules() error {
 	AlertRuleCache.Set(m, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_alert_rules").Set(float64(ms))
-	promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_alert_rules").Set(float64(len(m)))
+	promstat.GaugeCronDuration.WithLabelValues("sync_alert_rules").Set(float64(ms))
+	promstat.GaugeSyncNumber.WithLabelValues("sync_alert_rules").Set(float64(len(m)))
 	logger.Infof("timer: sync rules done, cost: %dms, number: %d", ms, len(m))
 
 	return nil

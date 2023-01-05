@@ -103,7 +103,7 @@ func loopSyncTargets() {
 func syncTargets() error {
 	start := time.Now()
 
-	clusterName := config.ReaderClient.GetClusterName()
+	clusterName := config.C.ClusterName
 	if clusterName == "" {
 		TargetCache.Reset()
 		logger.Warning("cluster name is blank")
@@ -116,8 +116,8 @@ func syncTargets() error {
 	}
 
 	if !TargetCache.StatChanged(stat.Total, stat.LastUpdated) {
-		promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_targets").Set(0)
-		promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_targets").Set(0)
+		promstat.GaugeCronDuration.WithLabelValues("sync_targets").Set(0)
+		promstat.GaugeSyncNumber.WithLabelValues("sync_targets").Set(0)
 		logger.Debug("targets not changed")
 		return nil
 	}
@@ -145,8 +145,8 @@ func syncTargets() error {
 	TargetCache.Set(m, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	promstat.GaugeCronDuration.WithLabelValues(clusterName, "sync_targets").Set(float64(ms))
-	promstat.GaugeSyncNumber.WithLabelValues(clusterName, "sync_targets").Set(float64(len(lst)))
+	promstat.GaugeCronDuration.WithLabelValues("sync_targets").Set(float64(ms))
+	promstat.GaugeSyncNumber.WithLabelValues("sync_targets").Set(float64(len(lst)))
 	logger.Infof("timer: sync targets done, cost: %dms, number: %d", ms, len(lst))
 
 	return nil

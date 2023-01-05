@@ -59,9 +59,8 @@
 
 ## Getting Started
 
-- [快速安装](https://mp.weixin.qq.com/s/iEC4pfL1TgjMDOWYh8H-FA)
-- [详细文档](https://n9e.github.io/)
-- [社区分享](https://n9e.github.io/docs/prologue/share/)
+- [国外文档](https://n9e.github.io/)
+- [国内文档](http://n9e.flashcat.cloud/)
 
 ## Screenshots
 
