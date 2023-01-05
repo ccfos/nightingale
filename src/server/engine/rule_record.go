@@ -44,8 +44,7 @@ func (rrc *RecordRuleContext) Hash() string {
 	))
 }
 
-func (rrc *RecordRuleContext) Init() {
-}
+func (rrc *RecordRuleContext) Prepare() {}
 
 func (rrc *RecordRuleContext) Start() {
 	logger.Infof("eval:%s started", rrc.Key())

@@ -14,7 +14,7 @@ import (
 type RuleContext interface {
 	Key() string
 	Hash() string
-	Init()
+	Prepare()
 	Start()
 	Eval()
 	Stop()
@@ -82,7 +82,7 @@ func (rh *RuleHolder) SyncAlertRules() {
 
 	for hash, rule := range alertRules {
 		if _, has := rh.alertRules[hash]; !has {
-			rule.Init()
+			rule.Prepare()
 			rule.Start()
 			rh.alertRules[hash] = rule
 		}
@@ -101,7 +101,7 @@ func (rh *RuleHolder) SyncAlertRules() {
 
 	// external的rule，每次都全量Init，尽可能保证数据的一致性
 	for _, externalRule := range externalAllRules {
-		externalRule.Init()
+		externalRule.Prepare()
 	}
 }
 
@@ -125,6 +125,7 @@ func (rh *RuleHolder) SyncRecordRules() {
 
 	for hash, rule := range recordRules {
 		if _, has := rh.recordRules[hash]; !has {
+			rule.Prepare()
 			rule.Start()
 			rh.recordRules[hash] = rule
 		}

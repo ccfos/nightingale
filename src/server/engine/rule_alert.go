@@ -52,7 +52,7 @@ func (arc *AlertRuleContext) Hash() string {
 	))
 }
 
-func (arc *AlertRuleContext) Init() {
+func (arc *AlertRuleContext) Prepare() {
 	arc.recoverAlertCurEventFromDb()
 }
 
@@ -136,10 +136,11 @@ func (arc *AlertRuleContext) HandleVectors(vectors []conv.Vector, from string) {
 	for _, vector := range vectors {
 		alertVector := NewAlertVector(arc, cachedRule, vector, from)
 		event := alertVector.BuildEvent(now)
+		// 如果event被mute了,本质也是fire的状态,这里无论如何都添加到alertingKeys中,防止fire的事件自动恢复了
+		alertingKeys[alertVector.Hash()] = struct{}{}
 		if AlertMuteStrategies.IsMuted(cachedRule, event) {
 			continue
 		}
-		alertingKeys[alertVector.Hash()] = struct{}{}
 		arc.handleEvent(event)
 	}
 
