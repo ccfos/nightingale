@@ -3,9 +3,9 @@ package models
 import (
 	"bytes"
 	"fmt"
-	"html/template"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/didi/nightingale/v5/src/pkg/tplx"
 )
