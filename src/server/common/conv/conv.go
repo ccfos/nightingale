@@ -1,7 +1,9 @@
 package conv
 
 import (
+	"fmt"
 	"math"
+	"strings"
 
 	"github.com/prometheus/common/model"
 )
@@ -11,6 +13,12 @@ type Vector struct {
 	Labels    model.Metric `json:"labels"`
 	Timestamp int64        `json:"timestamp"`
 	Value     float64      `json:"value"`
+}
+
+func (v *Vector) ReadableValue() string {
+	ret := fmt.Sprintf("%.5f", v.Value)
+	ret = strings.TrimRight(ret, "0")
+	return strings.TrimRight(ret, ".")
 }
 
 func ConvertVectors(value model.Value) (lst []Vector) {

@@ -3,17 +3,16 @@ package router
 import (
 	"fmt"
 	"strings"
-	"time"
-
-	"github.com/didi/nightingale/v5/src/models"
-	"github.com/didi/nightingale/v5/src/server/common/conv"
-	"github.com/didi/nightingale/v5/src/server/engine"
-	promstat "github.com/didi/nightingale/v5/src/server/stat"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/str"
+
+	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/server/common/conv"
+	"github.com/didi/nightingale/v5/src/server/engine"
+	"github.com/didi/nightingale/v5/src/server/memsto"
+	promstat "github.com/didi/nightingale/v5/src/server/stat"
 )
 
 func pushEventToQueue(c *gin.Context) {
@@ -21,6 +20,11 @@ func pushEventToQueue(c *gin.Context) {
 	ginx.BindJSON(c, &event)
 	if event.RuleId == 0 {
 		ginx.Bomb(200, "event is illegal")
+	}
+
+	rule := memsto.AlertRuleCache.Get(event.Id)
+	if rule == nil {
+		ginx.Bomb(200, "rule not exists")
 	}
 
 	event.TagsMap = make(map[string]string)
@@ -39,7 +43,7 @@ func pushEventToQueue(c *gin.Context) {
 	}
 
 	// isMuted only need TriggerTime RuleName and TagsMap
-	if engine.IsMuted(event) {
+	if engine.AlertMuteStrategies.IsMuted(rule, event) {
 		logger.Infof("event_muted: rule_id=%d %s", event.RuleId, event.Hash)
 		ginx.NewRender(c).Message(nil)
 		return
@@ -87,32 +91,32 @@ type eventForm struct {
 func judgeEvent(c *gin.Context) {
 	var form eventForm
 	ginx.BindJSON(c, &form)
-	re, exists := engine.RuleEvalForExternal.Get(form.RuleId, form.Cluster)
+	ruleContext, exists := engine.GetExternalAlertRule(form.Cluster, form.RuleId)
 	if !exists {
 		ginx.Bomb(200, "rule not exists")
 	}
-	re.Judge(form.Cluster, form.Vectors)
+	ruleContext.HandleVectors(form.Vectors, "http")
 	ginx.NewRender(c).Message(nil)
 }
 
 func makeEvent(c *gin.Context) {
 	var events []*eventForm
 	ginx.BindJSON(c, &events)
-	now := time.Now().Unix()
+	//now := time.Now().Unix()
 	for i := 0; i < len(events); i++ {
-		re, exists := engine.RuleEvalForExternal.Get(events[i].RuleId, events[i].Cluster)
+		ruleContext, exists := engine.GetExternalAlertRule(events[i].Cluster, events[i].RuleId)
 		logger.Debugf("handle event:%+v exists:%v", events[i], exists)
 		if !exists {
 			ginx.Bomb(200, "rule not exists")
 		}
 
 		if events[i].Alert {
-			go re.MakeNewEvent("http", now, events[i].Cluster, events[i].Vectors)
+			go ruleContext.HandleVectors(events[i].Vectors, "http")
 		} else {
 			for _, vector := range events[i].Vectors {
-				hash := str.MD5(fmt.Sprintf("%d_%s_%s", events[i].RuleId, vector.Key, events[i].Cluster))
-				now := vector.Timestamp
-				go re.RecoverEvent(hash, now, vector.Value)
+				alertVector := engine.NewAlertVector(ruleContext, nil, vector, "http")
+				readableString := vector.ReadableValue()
+				go ruleContext.RecoverSingle(alertVector.Hash(), vector.Timestamp, &readableString)
 			}
 		}
 	}
