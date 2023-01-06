@@ -214,11 +214,19 @@ func loginCallback(c *gin.Context) {
 
 	if user != nil {
 		if config.C.OIDC.CoverAttributes {
-			user.Nickname = ret.Nickname
-			user.Email = ret.Email
-			user.Phone = ret.Phone
-			user.UpdateAt = time.Now().Unix()
+			if ret.Nickname != "" {
+				user.Nickname = ret.Nickname
+			}
 
+			if ret.Email != "" {
+				user.Email = ret.Email
+			}
+
+			if ret.Phone != "" {
+				user.Phone = ret.Phone
+			}
+
+			user.UpdateAt = time.Now().Unix()
 			user.Update("email", "nickname", "phone", "update_at")
 		}
 	} else {
