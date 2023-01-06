@@ -136,7 +136,9 @@ func (m *AlertMute) Add() error {
 	if err := m.Verify(); err != nil {
 		return err
 	}
-	m.CreateAt = time.Now().Unix()
+	now := time.Now().Unix()
+	m.CreateAt = now
+	m.UpdateAt = now
 	return Insert(m)
 }
 

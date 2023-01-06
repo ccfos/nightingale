@@ -425,3 +425,38 @@ func AlertRuleStatistics(cluster string) (*Statistics, error) {
 
 	return stats[0], nil
 }
+
+func (ar *AlertRule) IsPrometheusRule() bool {
+	return ar.Algorithm == "" && (ar.Cate == "" || strings.ToLower(ar.Cate) == "prometheus")
+}
+
+func (ar *AlertRule) GenerateNewEvent() *AlertCurEvent {
+	event := &AlertCurEvent{}
+	ar.UpdateEvent(event)
+	return event
+}
+
+func (ar *AlertRule) UpdateEvent(event *AlertCurEvent) {
+	if event == nil {
+		return
+	}
+	event.GroupId = ar.GroupId
+	event.Cate = ar.Cate
+	event.RuleId = ar.Id
+	event.RuleName = ar.Name
+	event.RuleNote = ar.Note
+	event.RuleProd = ar.Prod
+	event.RuleAlgo = ar.Algorithm
+	event.Severity = ar.Severity
+	event.PromForDuration = ar.PromForDuration
+	event.PromQl = ar.PromQl
+	event.PromEvalInterval = ar.PromEvalInterval
+	event.Callbacks = ar.Callbacks
+	event.CallbacksJSON = ar.CallbacksJSON
+	event.RunbookUrl = ar.RunbookUrl
+	event.NotifyRecovered = ar.NotifyRecovered
+	event.NotifyChannels = ar.NotifyChannels
+	event.NotifyChannelsJSON = ar.NotifyChannelsJSON
+	event.NotifyGroups = ar.NotifyGroups
+	event.NotifyGroupsJSON = ar.NotifyGroupsJSON
+}
