@@ -142,13 +142,13 @@ func makeEvent(c *gin.Context) {
 	ginx.NewRender(c).Message(nil)
 }
 
-// 将 event 转发到其他实例处理
+// event 不归本实例处理，转发给对应的实例
 func forwardEvent(event *eventForm, instance string) error {
 	ur := fmt.Sprintf("http://%s/v1/n9e/make-event", instance)
-	res, code, err := poster.PostJSON(ur, time.Second*5, event, 3)
+	res, code, err := poster.PostJSON(ur, time.Second*5, []*eventForm{event}, 3)
 	if err != nil {
 		return err
 	}
-	logger.Infof("forward event: result=succ url=%s code=%d response=%s", ur, code, string(res))
+	logger.Infof("forward event: result=succ url=%s code=%d event:%v response=%s", ur, code, event, string(res))
 	return nil
 }
