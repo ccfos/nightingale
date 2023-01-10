@@ -73,7 +73,7 @@ func loadFromDatabase() {
 		}
 
 		if cval == "" {
-			logger.Warningf("ckey: %s is empty", ckey)
+			logger.Debugf("ckey: %s is empty", ckey)
 			continue
 		}
 
