@@ -76,9 +76,10 @@ func persist(event *models.AlertCurEvent) {
 	// 不管是告警还是恢复，全量告警里都要记录
 	if err := his.Add(); err != nil {
 		logger.Errorf(
-			"event_persist_his_fail: %v rule_id=%d hash=%s tags=%v timestamp=%d value=%s",
+			"event_persist_his_fail: %v rule_id=%d cluster:%s hash=%s tags=%v timestamp=%d value=%s",
 			err,
 			event.RuleId,
+			event.Cluster,
 			event.Hash,
 			event.TagsJSON,
 			event.TriggerTime,
@@ -101,9 +102,10 @@ func persist(event *models.AlertCurEvent) {
 			if event.Id > 0 {
 				if err := event.Add(); err != nil {
 					logger.Errorf(
-						"event_persist_cur_fail: %v rule_id=%d hash=%s tags=%v timestamp=%d value=%s",
+						"event_persist_cur_fail: %v rule_id=%d cluster:%s hash=%s tags=%v timestamp=%d value=%s",
 						err,
 						event.RuleId,
+						event.Cluster,
 						event.Hash,
 						event.TagsJSON,
 						event.TriggerTime,
@@ -126,9 +128,10 @@ func persist(event *models.AlertCurEvent) {
 	if event.Id > 0 {
 		if err := event.Add(); err != nil {
 			logger.Errorf(
-				"event_persist_cur_fail: %v rule_id=%d hash=%s tags=%v timestamp=%d value=%s",
+				"event_persist_cur_fail: %v rule_id=%d cluster:%s hash=%s tags=%v timestamp=%d value=%s",
 				err,
 				event.RuleId,
+				event.Cluster,
 				event.Hash,
 				event.TagsJSON,
 				event.TriggerTime,

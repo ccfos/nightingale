@@ -46,8 +46,7 @@ func pushEventToQueue(c *gin.Context) {
 		event.TagsMap[arr[0]] = arr[1]
 	}
 
-	// isMuted only need TriggerTime RuleName and TagsMap
-	if engine.AlertMuteStrategies.IsMuted(rule, event) {
+	if engine.EventMuteStra.IsMuted(rule, event) {
 		logger.Infof("event_muted: rule_id=%d %s", event.RuleId, event.Hash)
 		ginx.NewRender(c).Message(nil)
 		return

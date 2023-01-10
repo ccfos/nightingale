@@ -104,6 +104,8 @@ func (s *BgNotMatchMuteStrategy) IsMuted(rule *models.AlertRule, event *models.A
 
 type EventMuteStrategy struct{}
 
+var EventMuteStra = new(EventMuteStrategy)
+
 func (s *EventMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	mutes, has := memsto.AlertMuteCache.Gets(event.GroupId)
 	if !has || len(mutes) == 0 {

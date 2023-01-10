@@ -3,7 +3,6 @@ package engine
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -73,7 +72,7 @@ func (rrc *RecordRuleContext) Eval() {
 	}
 
 	if config.ReaderClients.IsNil(rrc.cluster) {
-		log.Println("reader client is nil")
+		logger.Errorf("eval:%s reader client is nil", rrc.Key())
 		return
 	}
 

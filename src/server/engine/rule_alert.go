@@ -78,12 +78,12 @@ func (arc *AlertRuleContext) Start() {
 func (arc *AlertRuleContext) Eval() {
 	promql := strings.TrimSpace(arc.rule.PromQl)
 	if promql == "" {
-		logger.Errorf("%d promql is blank", arc.Key())
+		logger.Errorf("rule_eval:%s promql is blank", arc.Key())
 		return
 	}
 
 	if config.ReaderClients.IsNil(arc.cluster) {
-		logger.Error("reader client is nil")
+		logger.Errorf("rule_eval:%s error reader client is nil", arc.Key())
 		return
 	}
 
@@ -117,7 +117,7 @@ func (arc *AlertRuleContext) Eval() {
 			logger.Errorf("rule_eval:%s promql:%s, warnings:%v", arc.Key(), promql, warnings)
 			return
 		}
-		logger.Debugf("rule_eval:%s cluster:%s promql:%s, value:%v", arc.Key(), promql, value)
+		logger.Debugf("rule_eval:%s promql:%s, value:%v", arc.Key(), promql, value)
 	}
 	arc.HandleVectors(conv.ConvertVectors(value), "inner")
 }
@@ -265,7 +265,7 @@ func (arc *AlertRuleContext) pushEventToQueue(event *models.AlertCurEvent) {
 	promstat.CounterAlertsTotal.WithLabelValues(event.Cluster).Inc()
 	LogEvent(event, "push_queue")
 	if !EventQueue.PushFront(event) {
-		logger.Warningf("event_push_queue: queue is full")
+		logger.Warningf("event_push_queue: queue is full, event:%+v", event)
 	}
 }
 
