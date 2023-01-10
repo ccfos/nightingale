@@ -77,7 +77,7 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 	}
 
 	text := strings.Join(append(defs, f), "")
-	t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(tplx.TemplateFuncMap).Parse(text)
+	t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
 	if err != nil {
 		return err
 	}
