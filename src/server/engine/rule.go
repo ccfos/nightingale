@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -61,15 +62,24 @@ func (rh *RuleHolder) SyncAlertRules() {
 		if rule == nil {
 			continue
 		}
-		ruleClusters := config.ReaderClients.Hit(rule.Cluster)
-		for _, cluster := range ruleClusters {
-			// 如果rule不是通过prometheus engine来告警的，则创建为externalRule
-			if !rule.IsPrometheusRule() {
+
+		// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
+		if !rule.IsPrometheusRule() {
+			ruleClusters := strings.Fields(rule.Cluster)
+			for _, cluster := range ruleClusters {
+				// hash ring not hit
+				if !naming.ClusterHashRing.IsHit(cluster, fmt.Sprintf("%d", rule.Id), config.C.Heartbeat.Endpoint) {
+					continue
+				}
+
 				externalRule := NewAlertRuleContext(rule, cluster)
 				externalAllRules[externalRule.Key()] = externalRule
-				continue
 			}
+			continue
+		}
 
+		ruleClusters := config.ReaderClients.Hit(rule.Cluster)
+		for _, cluster := range ruleClusters {
 			// hash ring not hit
 			if !naming.ClusterHashRing.IsHit(cluster, fmt.Sprintf("%d", rule.Id), config.C.Heartbeat.Endpoint) {
 				continue
@@ -95,14 +105,22 @@ func (rh *RuleHolder) SyncAlertRules() {
 		}
 	}
 
-	rh.externalLock.Lock()
-	rh.externalAlertRules = externalAllRules
-	rh.externalLock.Unlock()
-
-	// external的rule，每次都全量Init，尽可能保证数据的一致性
-	for _, externalRule := range externalAllRules {
-		externalRule.Prepare()
+	for hash, rule := range externalAllRules {
+		rh.externalLock.Lock()
+		if _, has := rh.externalAlertRules[hash]; !has {
+			rule.Prepare()
+			rh.externalAlertRules[hash] = rule
+		}
+		rh.externalLock.Unlock()
 	}
+
+	rh.externalLock.Lock()
+	for hash := range rh.externalAlertRules {
+		if _, has := externalAllRules[hash]; !has {
+			delete(rh.externalAlertRules, hash)
+		}
+	}
+	rh.externalLock.Unlock()
 }
 
 func (rh *RuleHolder) SyncRecordRules() {

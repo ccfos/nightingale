@@ -51,7 +51,7 @@ func (chr *ClusterHashRingType) GetNode(cluster, pk string) (string, error) {
 func (chr *ClusterHashRingType) IsHit(cluster string, pk string, currentNode string) bool {
 	node, err := chr.GetNode(cluster, pk)
 	if err != nil {
-		logger.Warning("failed to get node from hashring:", err)
+		logger.Warningf("cluster:%s pk:%s failed to get node from hashring:%v", cluster, pk, err)
 		return false
 	}
 	return node == currentNode

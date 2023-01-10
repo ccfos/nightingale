@@ -3,15 +3,19 @@ package router
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/pkg/poster"
 	"github.com/didi/nightingale/v5/src/server/common/conv"
+	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/engine"
 	"github.com/didi/nightingale/v5/src/server/memsto"
+	"github.com/didi/nightingale/v5/src/server/naming"
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 )
 
@@ -104,6 +108,21 @@ func makeEvent(c *gin.Context) {
 	ginx.BindJSON(c, &events)
 	//now := time.Now().Unix()
 	for i := 0; i < len(events); i++ {
+		node, err := naming.ClusterHashRing.GetNode(events[i].Cluster, fmt.Sprintf("%d", events[i].RuleId))
+		if err != nil {
+			logger.Warningf("event:%+v get node err:%v", events[i], err)
+			ginx.Bomb(200, "event node not exists")
+		}
+
+		if node != config.C.Heartbeat.Endpoint {
+			err := forwardEvent(events[i], node)
+			if err != nil {
+				logger.Warningf("event:%+v forward err:%v", events[i], err)
+				ginx.Bomb(200, "event forward error")
+			}
+			continue
+		}
+
 		ruleContext, exists := engine.GetExternalAlertRule(events[i].Cluster, events[i].RuleId)
 		logger.Debugf("handle event:%+v exists:%v", events[i], exists)
 		if !exists {
@@ -121,4 +140,15 @@ func makeEvent(c *gin.Context) {
 		}
 	}
 	ginx.NewRender(c).Message(nil)
+}
+
+// event 不归本实例处理，转发给对应的实例
+func forwardEvent(event *eventForm, instance string) error {
+	ur := fmt.Sprintf("http://%s/v1/n9e/make-event", instance)
+	res, code, err := poster.PostJSON(ur, time.Second*5, []*eventForm{event}, 3)
+	if err != nil {
+		return err
+	}
+	logger.Infof("forward event: result=succ url=%s code=%d event:%v response=%s", ur, code, event, string(res))
+	return nil
 }

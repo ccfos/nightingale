@@ -14,7 +14,6 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/aop"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/naming"
-
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 )
 
