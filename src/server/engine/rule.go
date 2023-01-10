@@ -106,12 +106,12 @@ func (rh *RuleHolder) SyncAlertRules() {
 	}
 
 	for hash, rule := range externalAllRules {
-		rh.externalLock.RLock()
+		rh.externalLock.Lock()
 		if _, has := rh.externalAlertRules[hash]; !has {
 			rule.Prepare()
 			rh.externalAlertRules[hash] = rule
 		}
-		rh.externalLock.RUnlock()
+		rh.externalLock.Unlock()
 	}
 
 	rh.externalLock.Lock()
