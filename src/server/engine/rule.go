@@ -63,7 +63,7 @@ func (rh *RuleHolder) SyncAlertRules() {
 			continue
 		}
 
-		// 如果rule不是通过prometheus engine来告警的，则创建为externalRule
+		// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
 		if !rule.IsPrometheusRule() {
 			ruleClusters := strings.Fields(rule.Cluster)
 			for _, cluster := range ruleClusters {
