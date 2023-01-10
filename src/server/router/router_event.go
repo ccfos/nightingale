@@ -14,7 +14,6 @@ import (
 	"github.com/didi/nightingale/v5/src/server/common/conv"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/engine"
-	"github.com/didi/nightingale/v5/src/server/memsto"
 	"github.com/didi/nightingale/v5/src/server/naming"
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 )
@@ -24,11 +23,6 @@ func pushEventToQueue(c *gin.Context) {
 	ginx.BindJSON(c, &event)
 	if event.RuleId == 0 {
 		ginx.Bomb(200, "event is illegal")
-	}
-
-	rule := memsto.AlertRuleCache.Get(event.Id)
-	if rule == nil {
-		ginx.Bomb(200, "rule not exists")
 	}
 
 	event.TagsMap = make(map[string]string)
@@ -46,7 +40,7 @@ func pushEventToQueue(c *gin.Context) {
 		event.TagsMap[arr[0]] = arr[1]
 	}
 
-	if engine.EventMuteStra.IsMuted(rule, event) {
+	if engine.EventMuteStra.IsMuted(nil, event) {
 		logger.Infof("event_muted: rule_id=%d %s", event.RuleId, event.Hash)
 		ginx.NewRender(c).Message(nil)
 		return
