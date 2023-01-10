@@ -74,8 +74,8 @@ func (rh *RuleHolder) SyncAlertRules() {
 
 				externalRule := NewAlertRuleContext(rule, cluster)
 				externalAllRules[externalRule.Key()] = externalRule
-				continue
 			}
+			continue
 		}
 
 		ruleClusters := config.ReaderClients.Hit(rule.Cluster)
