@@ -263,3 +263,17 @@ func (s *AlertSubscribe) MatchCluster(cluster string) bool {
 	}
 	return false
 }
+
+func (s *AlertSubscribe) ModifyEvent(event *AlertCurEvent) {
+	if s.RedefineSeverity == 1 {
+		event.Severity = s.NewSeverity
+	}
+
+	if s.RedefineChannels == 1 {
+		event.NotifyChannels = s.NewChannels
+		event.NotifyChannelsJSON = strings.Fields(s.NewChannels)
+	}
+
+	event.NotifyGroups = s.UserGroupIds
+	event.NotifyGroupsJSON = strings.Fields(s.UserGroupIds)
+}

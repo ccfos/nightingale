@@ -1,8 +1,9 @@
 package engine
 
 import (
-	"github.com/didi/nightingale/v5/src/models"
 	"github.com/toolkits/pkg/logger"
+
+	"github.com/didi/nightingale/v5/src/models"
 )
 
 func LogEvent(event *models.AlertCurEvent, location string, err ...error) {

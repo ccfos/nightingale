@@ -2,9 +2,11 @@ package config
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net"
 	"os"
+	"path"
 	"plugin"
 	"runtime"
 	"strings"
@@ -13,6 +15,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/koding/multiconfig"
+	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/file"
+	"github.com/toolkits/pkg/runner"
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/notifier"
@@ -20,6 +25,7 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/logx"
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
 	"github.com/didi/nightingale/v5/src/pkg/secu"
+	"github.com/didi/nightingale/v5/src/pkg/tplx"
 	"github.com/didi/nightingale/v5/src/storage"
 )
 
@@ -208,6 +214,10 @@ func MustLoad(key string, fpaths ...string) {
 			notifier.Instance = ins
 		}
 
+		if C.Alerting.TemplatesDir == "" {
+			C.Alerting.TemplatesDir = path.Join(runner.Cwd, "etc", "template")
+		}
+
 		if C.WriterOpt.QueueMaxSize <= 0 {
 			C.WriterOpt.QueueMaxSize = 10000000
 		}
@@ -267,7 +277,7 @@ type Config struct {
 	EngineDelay        int64
 	DisableUsageReport bool
 	ReaderFrom         string
-	LabelRewrite	   bool
+	LabelRewrite       bool
 	ForceUseServerTS   bool
 	Log                logx.Config
 	HTTP               httpx.Config
@@ -339,6 +349,39 @@ type Alerting struct {
 	CallPlugin            CallPlugin
 	RedisPub              RedisPub
 	Webhook               Webhook
+}
+
+func (a *Alerting) ListTpls() (map[string]*template.Template, error) {
+	filenames, err := file.FilesUnder(a.TemplatesDir)
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to exec FilesUnder")
+	}
+
+	if len(filenames) == 0 {
+		return nil, errors.New("no tpl files under " + a.TemplatesDir)
+	}
+
+	tplFiles := make([]string, 0, len(filenames))
+	for i := 0; i < len(filenames); i++ {
+		if strings.HasSuffix(filenames[i], ".tpl") {
+			tplFiles = append(tplFiles, filenames[i])
+		}
+	}
+
+	if len(tplFiles) == 0 {
+		return nil, errors.New("no tpl files under " + a.TemplatesDir)
+	}
+
+	tpls := make(map[string]*template.Template)
+	for _, tplFile := range tplFiles {
+		tplpath := path.Join(a.TemplatesDir, tplFile)
+		tpl, err := template.New(tplFile).Funcs(tplx.TemplateFuncMap).ParseFiles(tplpath)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to parse tpl: "+tplpath)
+		}
+		tpls[tplFile] = tpl
+	}
+	return tpls, nil
 }
 
 type CallScript struct {

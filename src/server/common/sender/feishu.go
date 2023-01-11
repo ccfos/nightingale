@@ -11,12 +11,6 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/poster"
 )
 
-type FeishuMessage struct {
-	Text      string
-	AtMobiles []string
-	Tokens    []string
-}
-
 type feishuContent struct {
 	Text string `json:"text"`
 }

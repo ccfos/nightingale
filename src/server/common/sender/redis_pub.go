@@ -10,6 +10,9 @@ import (
 )
 
 func PublishToRedis(clusterName string, bs []byte) {
+	if len(bs) == 0 {
+		return
+	}
 	channelKey := config.C.Alerting.RedisPub.ChannelPrefix + clusterName
 	// pub all alerts to redis
 	if config.C.Alerting.RedisPub.Enable {

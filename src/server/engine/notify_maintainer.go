@@ -28,12 +28,13 @@ func notifyToMaintainer(title, msg string) {
 	}
 
 	triggerTime := time.Now().Format("2006/01/02 - 15:04:05")
+	msg = "Title: " + title + "\nContent: " + msg + "\nTime: " + triggerTime
 
-	notifyMaintainerWithPlugin(title, msg, triggerTime, users)
-	notifyMaintainerWithBuiltin(title, msg, triggerTime, users)
+	notifyMaintainerWithPlugin(title, msg, users)
+	notifyMaintainerWithBuiltin(title, msg, users)
 }
 
-func notifyMaintainerWithPlugin(title, msg, triggerTime string, users []*models.User) {
+func notifyMaintainerWithPlugin(title, msg string, users []*models.User) {
 	if !config.C.Alerting.CallPlugin.Enable {
 		return
 	}
@@ -41,7 +42,7 @@ func notifyMaintainerWithPlugin(title, msg, triggerTime string, users []*models.
 	stdinBytes, err := json.Marshal(MaintainMessage{
 		Tos:     users,
 		Title:   title,
-		Content: "Title: " + title + "\nContent: " + msg + "\nTime: " + triggerTime,
+		Content: msg,
 	})
 
 	if err != nil {
@@ -53,11 +54,7 @@ func notifyMaintainerWithPlugin(title, msg, triggerTime string, users []*models.
 	logger.Debugf("notify maintainer with plugin done")
 }
 
-func notifyMaintainerWithBuiltin(title, msg, triggerTime string, users []*models.User) {
-	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
-		return
-	}
-
+func notifyMaintainerWithBuiltin(title, msg string, users []*models.User) {
 	subscription := NewSubscriptionFromUsers(users)
 	for channel, uids := range subscription.ToChannelUserMap() {
 		currentUsers := memsto.UserCache.GetByUserIds(uids)
@@ -65,9 +62,9 @@ func notifyMaintainerWithBuiltin(title, msg, triggerTime string, users []*models
 		s := Senders[channel]
 		rwLock.RUnlock()
 		if s == nil {
-			// todo
+			logger.Warningf("no sender for channel: %s", channel)
 			continue
 		}
-		go s.SendRaw(currentUsers, "notify maintainer", "Title: "+title+"\nContent: "+msg+"\nTime: "+triggerTime)
+		go s.SendRaw(currentUsers, title, msg)
 	}
 }

@@ -5,15 +5,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/toolkits/pkg/logger"
+
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/pkg/poster"
-	"github.com/toolkits/pkg/logger"
 )
-
-type WecomMessage struct {
-	Text   string
-	Tokens []string
-}
 
 type wecomMarkdown struct {
 	Content string `json:"content"`

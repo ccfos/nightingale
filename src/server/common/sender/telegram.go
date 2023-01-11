@@ -1,13 +1,14 @@
 package sender
 
 import (
-	"github.com/didi/nightingale/v5/src/models"
 	"html/template"
 	"strings"
 	"time"
 
-	"github.com/didi/nightingale/v5/src/pkg/poster"
 	"github.com/toolkits/pkg/logger"
+
+	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/pkg/poster"
 )
 
 type TelegramMessage struct {

@@ -11,13 +11,6 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/poster"
 )
 
-type DingtalkMessage struct {
-	Title     string
-	Text      string
-	AtMobiles []string
-	Tokens    []string
-}
-
 type dingtalkMarkdown struct {
 	Title string `json:"title"`
 	Text  string `json:"text"`

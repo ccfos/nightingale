@@ -2,23 +2,31 @@ package sender
 
 import (
 	"bytes"
-	"github.com/didi/nightingale/v5/src/server/config"
-	"github.com/toolkits/pkg/slice"
 	"html/template"
 
+	"github.com/toolkits/pkg/slice"
+
 	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/server/config"
+	"github.com/didi/nightingale/v5/src/server/memsto"
 )
 
-type MessageContext struct {
-	Users []*models.User
-	Rule  *models.AlertRule
-	Event *models.AlertCurEvent
-}
+type (
+	// Sender 发送消息通知的接口
+	Sender interface {
+		Send(ctx MessageContext)
 
-type Sender interface {
-	Send(ctx MessageContext)
-	SendRaw(users []*models.User, title, message string)
-}
+		// SendRaw 发送原始消息,目前在notifyMaintainer时使用
+		SendRaw(users []*models.User, title, message string)
+	}
+
+	// MessageContext 一个event所生成的告警通知的上下文
+	MessageContext struct {
+		Users []*models.User
+		Rule  *models.AlertRule
+		Event *models.AlertCurEvent
+	}
+)
 
 func NewSender(key string, tpls map[string]*template.Template) Sender {
 	if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, key) {
@@ -40,6 +48,15 @@ func NewSender(key string, tpls map[string]*template.Template) Sender {
 		return &TelegramSender{tpl: tpls["telegram.tpl"]}
 	}
 	return nil
+}
+
+func BuildMessageContext(rule *models.AlertRule, event *models.AlertCurEvent, uids []int64) MessageContext {
+	users := memsto.UserCache.GetByUserIds(uids)
+	return MessageContext{
+		Rule:  rule,
+		Event: event,
+		Users: users,
+	}
 }
 
 func BuildTplMessage(tpl *template.Template, event *models.AlertCurEvent) string {
