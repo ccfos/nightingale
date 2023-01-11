@@ -580,7 +580,7 @@ func (u *User) ExtractToken(key string) (string, bool) {
 		ret := gjson.GetBytes(bs, "mm_robot_token")
 		return ret.String(), ret.Exists()
 	case Telegram:
-		ret := gjson.GetBytes(bs, "telgram_robot_token")
+		ret := gjson.GetBytes(bs, "telegram_robot_token")
 		return ret.String(), ret.Exists()
 	case Email:
 		return u.Email, u.Email != ""
@@ -604,7 +604,7 @@ func (u *User) ExtractAllToken() map[string]string {
 	ret[Dingtalk] = gjson.GetBytes(bs, "dingtalk_robot_token").String()
 	ret[Wecom] = gjson.GetBytes(bs, "wecom_robot_token").String()
 	ret[Feishu] = gjson.GetBytes(bs, "feishu_robot_token").String()
-	ret[Mm] = gjson.GetBytes(bs, "mm_robot_token").String()
-	ret[Telegram] = gjson.GetBytes(bs, "telgram_robot_token").String()
+	ret[Mm] = gjson.GetBytes(bs, "mm_webhook_url").String()
+	ret[Telegram] = gjson.GetBytes(bs, "telegram_robot_token").String()
 	return ret
 }
