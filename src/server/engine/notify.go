@@ -14,20 +14,17 @@ import (
 )
 
 var (
-	rwLock sync.RWMutex
-	tpls   map[string]*template.Template
-
+	rwLock  sync.RWMutex
+	tpls    map[string]*template.Template
 	Senders map[string]sender.Sender
 
 	// 处理事件到subscription关系,处理的subscription用OrMerge进行合并
 	routers []Router
-
 	// 额外去掉一些订阅,处理的subscription用AndMerge进行合并, 如设置 channel=false,合并后不通过这个channel发送
 	interceptors []Router
 
 	// 额外的订阅event逻辑处理
-	subscribeRouters []Router
-
+	subscribeRouters      []Router
 	subscribeInterceptors []Router
 )
 
@@ -61,6 +58,9 @@ func reloadTpls() error {
 	return nil
 }
 
+// HandleEventNotify 处理event事件的主逻辑
+// event: 告警/恢复事件
+// isSubscribe: 告警事件是否由subscribe的配置产生
 func HandleEventNotify(event *models.AlertCurEvent, isSubscribe bool) {
 	rule := memsto.AlertRuleCache.Get(event.RuleId)
 	if rule == nil {
@@ -94,15 +94,17 @@ func HandleEventNotify(event *models.AlertCurEvent, isSubscribe bool) {
 	// 处理事件发送,这里用一个goroutine处理一个event的所有发送事件
 	go Send(rule, event, subscription, isSubscribe)
 
-	// 如果是sub规则出现的event,不用再进行后续的处理
-	if isSubscribe {
-		return
+	// 如果是不是订阅规则出现的event,则需要处理订阅规则的event
+	if !isSubscribe {
+		handleSubs(event)
 	}
+}
 
+func handleSubs(event *models.AlertCurEvent) {
 	// handle alert subscribes
 	subscribes := make([]*models.AlertSubscribe, 0)
 	// rule specific subscribes
-	if subs, has := memsto.AlertSubscribeCache.Get(rule.Id); has {
+	if subs, has := memsto.AlertSubscribeCache.Get(event.RuleId); has {
 		subscribes = append(subscribes, subs...)
 	}
 	// global subscribes
@@ -114,6 +116,7 @@ func HandleEventNotify(event *models.AlertCurEvent, isSubscribe bool) {
 	}
 }
 
+// handleSub 处理订阅规则的event,注意这里event要使用值传递,因为后面会修改event的状态
 func handleSub(sub *models.AlertSubscribe, event models.AlertCurEvent) {
 	if sub.IsDisabled() || !sub.MatchCluster(event.Cluster) {
 		return
@@ -141,16 +144,10 @@ func Send(rule *models.AlertRule, event *models.AlertCurEvent, subscription *Sub
 	}
 
 	// handle event callbacks
-	callbacks := subscription.ToCallbackList()
-	if len(callbacks) > 0 {
-		sender.SendCallbacks(subscription.ToCallbackList(), event)
-	}
+	sender.SendCallbacks(subscription.ToCallbackList(), event)
 
 	// handle global webhooks
-	webhooks := subscription.ToWebhookList()
-	if len(webhooks) > 0 {
-		sender.SendWebhooks(subscription.ToWebhookList(), event)
-	}
+	sender.SendWebhooks(subscription.ToWebhookList(), event)
 
 	noticeBytes := genNoticeBytes(event)
 
