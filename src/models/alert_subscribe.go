@@ -250,3 +250,16 @@ func AlertSubscribeGetsByCluster(cluster string) ([]*AlertSubscribe, error) {
 	}
 	return slst, err
 }
+
+func (s *AlertSubscribe) MatchCluster(cluster string) bool {
+	if s.Cluster == ClusterAll {
+		return true
+	}
+	clusters := strings.Fields(s.Cluster)
+	for _, c := range clusters {
+		if c == cluster {
+			return true
+		}
+	}
+	return false
+}

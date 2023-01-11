@@ -1,6 +1,8 @@
 package sender
 
 import (
+	"github.com/didi/nightingale/v5/src/models"
+	"html/template"
 	"strings"
 	"time"
 
@@ -16,6 +18,41 @@ type TelegramMessage struct {
 type telegram struct {
 	ParseMode string `json:"parse_mode"`
 	Text      string `json:"text"`
+}
+
+type TelegramSender struct {
+	tpl *template.Template
+}
+
+func (ts *TelegramSender) Send(ctx MessageContext) {
+	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
+		return
+	}
+	tokens := ts.extract(ctx.Users)
+	message := BuildTplMessage(ts.tpl, ctx.Event)
+
+	SendTelegram(TelegramMessage{
+		Text:   message,
+		Tokens: tokens,
+	})
+}
+
+func (ts *TelegramSender) SendRaw(users []*models.User, title, message string) {
+	tokens := ts.extract(users)
+	SendTelegram(TelegramMessage{
+		Text:   message,
+		Tokens: tokens,
+	})
+}
+
+func (ts *TelegramSender) extract(users []*models.User) []string {
+	tokens := make([]string, 0, len(users))
+	for _, user := range users {
+		if token, has := user.ExtractToken("telegram"); has {
+			tokens = append(tokens, token)
+		}
+	}
+	return tokens
 }
 
 func SendTelegram(message TelegramMessage) {

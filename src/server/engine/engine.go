@@ -20,11 +20,10 @@ func Start(ctx context.Context) error {
 		return err
 	}
 
+	initRouters()
+
 	// start loop consumer
 	go loopConsume(ctx)
-
-	// filter my rules and start worker
-	//go loopFilterRules(ctx)
 
 	go ruleHolder.LoopSyncRules(ctx)
 

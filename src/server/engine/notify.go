@@ -2,38 +2,56 @@ package engine
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"html/template"
-	"io/ioutil"
-	"net/http"
-	"os/exec"
 	"path"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/pkg/errors"
-	"github.com/tidwall/gjson"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
-	"github.com/toolkits/pkg/slice"
 
 	"github.com/didi/nightingale/v5/src/models"
-	"github.com/didi/nightingale/v5/src/notifier"
-	"github.com/didi/nightingale/v5/src/pkg/sys"
 	"github.com/didi/nightingale/v5/src/pkg/tplx"
 	"github.com/didi/nightingale/v5/src/server/common/sender"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
-	"github.com/didi/nightingale/v5/src/storage"
 )
 
 var (
-	tpls   map[string]*template.Template
 	rwLock sync.RWMutex
+	tpls   map[string]*template.Template
+
+	Senders map[string]sender.Sender
+
+	// 处理事件到subscription关系,处理的subscription用OrMerge进行合并
+	routers []Router
+
+	// 额外去掉一些订阅,处理的subscription用AndMerge进行合并, 如设置 channel=false,合并后不通过这个channel发送
+	// 目前还不需要这块的逻辑，暂时注释掉
+	//interceptors []Router
+
+	// 额外的订阅event逻辑处理
+	subscribeRouters []Router
+
+	//subcribeInterceptors []Router
 )
+
+func initRouters() {
+	routers = make([]Router, 0)
+	routers = append(routers, GroupRouter)
+	routers = append(routers, GlobalWebhookRouter)
+	routers = append(routers, EventCallbacksRouter)
+
+	//interceptors = make([]Router, 0)
+
+	subscribeRouters = make([]Router, 0)
+	subscribeRouters = append(subscribeRouters, GroupRouter)
+
+	//subcribeInterceptors = make([]Router, 0)
+}
 
 func reloadTpls() error {
 	if config.C.Alerting.TemplatesDir == "" {
@@ -61,337 +79,85 @@ func reloadTpls() error {
 	}
 
 	tmpTpls := make(map[string]*template.Template)
-	for i := 0; i < len(tplFiles); i++ {
-		tplpath := path.Join(config.C.Alerting.TemplatesDir, tplFiles[i])
-
-		tpl, err := template.New(tplFiles[i]).Funcs(tplx.TemplateFuncMap).ParseFiles(tplpath)
+	for _, tplFile := range tplFiles {
+		tplpath := path.Join(config.C.Alerting.TemplatesDir, tplFile)
+		tpl, err := template.New(tplFile).Funcs(tplx.TemplateFuncMap).ParseFiles(tplpath)
 		if err != nil {
 			return errors.WithMessage(err, "failed to parse tpl: "+tplpath)
 		}
+		tmpTpls[tplFile] = tpl
+	}
 
-		tmpTpls[tplFiles[i]] = tpl
+	senders := map[string]sender.Sender{
+		models.Email:    sender.NewSender(models.Email, tmpTpls),
+		models.Dingtalk: sender.NewSender(models.Dingtalk, tmpTpls),
+		models.Wecom:    sender.NewSender(models.Wecom, tmpTpls),
+		models.Feishu:   sender.NewSender(models.Feishu, tmpTpls),
+		models.Mm:       sender.NewSender(models.Mm, tmpTpls),
+		models.Telegram: sender.NewSender(models.Telegram, tmpTpls),
 	}
 
 	rwLock.Lock()
 	tpls = tmpTpls
+	Senders = senders
 	rwLock.Unlock()
 	return nil
 }
 
-type Notice struct {
-	Event *models.AlertCurEvent `json:"event"`
-	Tpls  map[string]string     `json:"tpls"`
-}
-
-func genNotice(event *models.AlertCurEvent) Notice {
-	// build notice body with templates
-	ntpls := make(map[string]string)
-
-	rwLock.RLock()
-	defer rwLock.RUnlock()
-	for filename, tpl := range tpls {
-		var body bytes.Buffer
-		if err := tpl.Execute(&body, event); err != nil {
-			ntpls[filename] = err.Error()
-		} else {
-			ntpls[filename] = body.String()
-		}
-	}
-
-	return Notice{Event: event, Tpls: ntpls}
-}
-
-func alertingRedisPub(clusterName string, bs []byte) {
-	channelKey := config.C.Alerting.RedisPub.ChannelPrefix + clusterName
-	// pub all alerts to redis
-	if config.C.Alerting.RedisPub.Enable {
-		err := storage.Redis.Publish(context.Background(), channelKey, bs).Err()
-		if err != nil {
-			logger.Errorf("event_notify: redis publish %s err: %v", channelKey, err)
-		}
-	}
-}
-
-func handleNotice(notice Notice, bs []byte) {
-	alertingCallScript(bs)
-	alertingCallPlugin(bs)
-
-	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
+func HandleEventNotify(event *models.AlertCurEvent, isSubscribe bool) {
+	rule := memsto.AlertRuleCache.Get(event.RuleId)
+	if rule == nil {
 		return
 	}
+	var (
+		handlers []Router
+		//interceptorHandlers []Router
+	)
+	fillUsers(event)
 
-	emailset := make(map[string]struct{})
-	phoneset := make(map[string]struct{})
-	wecomset := make(map[string]struct{})
-	dingtalkset := make(map[string]struct{})
-	feishuset := make(map[string]struct{})
-	mmset := make(map[string]struct{})
-	telegramset := make(map[string]struct{})
-
-	for _, user := range notice.Event.NotifyUsersObj {
-		if user.Email != "" {
-			emailset[user.Email] = struct{}{}
-		}
-
-		if user.Phone != "" {
-			phoneset[user.Phone] = struct{}{}
-		}
-
-		bs, err := user.Contacts.MarshalJSON()
-		if err != nil {
-			logger.Errorf("handle_notice: failed to marshal contacts: %v", err)
-			continue
-		}
-
-		ret := gjson.GetBytes(bs, "dingtalk_robot_token")
-		if ret.Exists() {
-			dingtalkset[ret.String()] = struct{}{}
-		}
-
-		ret = gjson.GetBytes(bs, "wecom_robot_token")
-		if ret.Exists() {
-			wecomset[ret.String()] = struct{}{}
-		}
-
-		ret = gjson.GetBytes(bs, "feishu_robot_token")
-		if ret.Exists() {
-			feishuset[ret.String()] = struct{}{}
-		}
-
-		ret = gjson.GetBytes(bs, "mm_webhook_url")
-		if ret.Exists() {
-			mmset[ret.String()] = struct{}{}
-		}
-
-		ret = gjson.GetBytes(bs, "telegram_robot_token")
-		if ret.Exists() {
-			telegramset[ret.String()] = struct{}{}
-		}
+	if isSubscribe {
+		handlers = subscribeRouters
+		//interceptorHandlers = subcribeInterceptors
+	} else {
+		handlers = routers
+		//interceptorHandlers = interceptors
 	}
 
-	phones := StringSetKeys(phoneset)
-
-	for _, ch := range notice.Event.NotifyChannelsJSON {
-		switch ch {
-		case "email":
-			if len(emailset) == 0 {
-				continue
-			}
-
-			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "email") {
-				continue
-			}
-
-			subject, has := notice.Tpls["subject.tpl"]
-			if !has {
-				subject = "subject.tpl not found"
-			}
-
-			content, has := notice.Tpls["mailbody.tpl"]
-			if !has {
-				content = "mailbody.tpl not found"
-			}
-
-			sender.WriteEmail(subject, content, StringSetKeys(emailset))
-		case "dingtalk":
-			if len(dingtalkset) == 0 {
-				continue
-			}
-
-			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "dingtalk") {
-				continue
-			}
-
-			content, has := notice.Tpls["dingtalk.tpl"]
-			if !has {
-				content = "dingtalk.tpl not found"
-			}
-
-			sender.SendDingtalk(sender.DingtalkMessage{
-				Title:     notice.Event.RuleName,
-				Text:      content,
-				AtMobiles: phones,
-				Tokens:    StringSetKeys(dingtalkset),
-			})
-		case "wecom":
-			if len(wecomset) == 0 {
-				continue
-			}
-
-			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "wecom") {
-				continue
-			}
-
-			content, has := notice.Tpls["wecom.tpl"]
-			if !has {
-				content = "wecom.tpl not found"
-			}
-			sender.SendWecom(sender.WecomMessage{
-				Text:   content,
-				Tokens: StringSetKeys(wecomset),
-			})
-		case "feishu":
-			if len(feishuset) == 0 {
-				continue
-			}
-
-			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "feishu") {
-				continue
-			}
-
-			content, has := notice.Tpls["feishu.tpl"]
-			if !has {
-				content = "feishu.tpl not found"
-			}
-			sender.SendFeishu(sender.FeishuMessage{
-				Text:      content,
-				AtMobiles: phones,
-				Tokens:    StringSetKeys(feishuset),
-			})
-		case "mm":
-			if len(mmset) == 0 {
-				continue
-			}
-			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "mm") {
-				continue
-			}
-
-			content, has := notice.Tpls["mm.tpl"]
-			if !has {
-				content = "mm.tpl not found"
-			}
-
-			sender.SendMM(sender.MatterMostMessage{
-				Text:   content,
-				Tokens: StringSetKeys(mmset),
-			})
-		case "telegram":
-			if len(telegramset) == 0 {
-				continue
-			}
-
-			if !slice.ContainsString(config.C.Alerting.NotifyBuiltinChannels, "telegram") {
-				continue
-			}
-
-			content, has := notice.Tpls["telegram.tpl"]
-			if !has {
-				content = "telegram.tpl not found"
-			}
-			sender.SendTelegram(sender.TelegramMessage{
-				Text:   content,
-				Tokens: StringSetKeys(telegramset),
-			})
-		}
+	subscription := NewSubscription()
+	// 处理订阅关系
+	for _, handler := range handlers {
+		subscription.OrMerge(handler(rule, event, subscription))
 	}
-}
 
-func notify(event *models.AlertCurEvent) {
-	LogEvent(event, "notify")
+	// 处理移除订阅关系的逻辑,比如员工离职，临时静默某个通道的策略等
+	//for _, handler := range interceptorHandlers {
+	//	subscription.AndMerge(handler(rule, event, subscription))
+	//}
+	Send(rule, event, subscription, isSubscribe)
 
-	notice := genNotice(event)
-	stdinBytes, err := json.Marshal(notice)
-	if err != nil {
-		logger.Errorf("event_notify: failed to marshal notice: %v", err)
+	// 如果是sub规则出现的event,不用再进行后续的处理
+	if isSubscribe {
 		return
 	}
-
-	alertingRedisPub(event.Cluster, stdinBytes)
-	alertingWebhook(event)
-
-	handleNotice(notice, stdinBytes)
 
 	// handle alert subscribes
-	subs, has := memsto.AlertSubscribeCache.Get(event.RuleId)
-	if has {
-		handleSubscribes(*event, subs)
-	}
-
-	subs, has = memsto.AlertSubscribeCache.Get(0)
-	if has {
-		handleSubscribes(*event, subs)
-	}
-}
-
-func alertingWebhook(event *models.AlertCurEvent) {
-	conf := config.C.Alerting.Webhook
-
-	if !conf.Enable {
-		return
-	}
-
-	if conf.Url == "" {
-		return
-	}
-
-	bs, err := json.Marshal(event)
-	if err != nil {
-		return
-	}
-
-	bf := bytes.NewBuffer(bs)
-
-	req, err := http.NewRequest("POST", conf.Url, bf)
-	if err != nil {
-		logger.Warning("alertingWebhook failed to new request", err)
-		return
-	}
-
-	if conf.BasicAuthUser != "" && conf.BasicAuthPass != "" {
-		req.SetBasicAuth(conf.BasicAuthUser, conf.BasicAuthPass)
-	}
-
-	if len(conf.Headers) > 0 && len(conf.Headers)%2 == 0 {
-		for i := 0; i < len(conf.Headers); i += 2 {
-			req.Header.Set(conf.Headers[i], conf.Headers[i+1])
+	if subs, has := memsto.AlertSubscribeCache.Get(rule.Id); has {
+		for _, sub := range subs {
+			handleSub(sub, *event)
 		}
 	}
 
-	client := http.Client{
-		Timeout: conf.TimeoutDuration,
-	}
-
-	var resp *http.Response
-	resp, err = client.Do(req)
-	if err != nil {
-		logger.Warning("alertingWebhook failed to call url, error: ", err)
-		return
-	}
-
-	var body []byte
-	if resp.Body != nil {
-		defer resp.Body.Close()
-		body, _ = ioutil.ReadAll(resp.Body)
-	}
-
-	logger.Debugf("alertingWebhook done, url: %s, response code: %d, body: %s", conf.Url, resp.StatusCode, string(body))
-}
-
-func handleSubscribes(event models.AlertCurEvent, subs []*models.AlertSubscribe) {
-	for i := 0; i < len(subs); i++ {
-		handleSubscribe(event, subs[i])
+	if subs, has := memsto.AlertSubscribeCache.Get(0); has {
+		for _, sub := range subs {
+			handleSub(sub, *event)
+		}
 	}
 }
 
-func handleSubscribe(event models.AlertCurEvent, sub *models.AlertSubscribe) {
-	if sub.IsDisabled() {
+func handleSub(sub *models.AlertSubscribe, event models.AlertCurEvent) {
+	if sub.IsDisabled() || !sub.MatchCluster(event.Cluster) {
 		return
 	}
-
-	// 如果不是全局的，判断 cluster
-	if sub.Cluster != models.ClusterAll {
-		// sub.Cluster 是一个字符串，可能是多个cluster的组合，比如"cluster1 cluster2"
-		clusters := strings.Fields(sub.Cluster)
-		cm := make(map[string]struct{}, len(clusters))
-		for i := 0; i < len(clusters); i++ {
-			cm[clusters[i]] = struct{}{}
-		}
-
-		if _, has := cm[event.Cluster]; !has {
-			return
-		}
-	}
-
 	if !matchTags(event.TagsMap, sub.ITags) {
 		return
 	}
@@ -412,79 +178,74 @@ func handleSubscribe(event models.AlertCurEvent, sub *models.AlertSubscribe) {
 	}
 
 	LogEvent(&event, "subscribe")
+	HandleEventNotify(&event, true)
+}
 
-	fillUsers(&event)
+func BuildMessageContext(rule *models.AlertRule, event *models.AlertCurEvent, uids []int64) sender.MessageContext {
+	users := memsto.UserCache.GetByUserIds(uids)
+	return sender.MessageContext{
+		Rule:  rule,
+		Event: event,
+		Users: users,
+	}
+}
 
-	notice := genNotice(&event)
+func Send(rule *models.AlertRule, event *models.AlertCurEvent, subscription *Subscription, isSubscribe bool) {
+	for channel, uids := range subscription.ToChannelUserMap() {
+		ctx := BuildMessageContext(rule, event, uids)
+		rwLock.RLock()
+		s := Senders[channel]
+		rwLock.RUnlock()
+		if s == nil {
+			// todo
+			continue
+		}
+		go s.Send(ctx)
+	}
+
+	// handle event callbacks
+	go sender.SendCallbacks(subscription.ToCallbackList(), event)
+
+	// handle global webhooks
+	go sender.SendWebhooks(subscription.ToWebhookList(), event)
+
+	noticeBytes := genNoticeBytes(event)
+
+	// handle plugin call
+	go sender.MayPluginNotify(noticeBytes)
+
+	if !isSubscribe {
+		// handle redis pub
+		go sender.PublishToRedis(event.Cluster, noticeBytes)
+	}
+}
+
+type Notice struct {
+	Event *models.AlertCurEvent `json:"event"`
+	Tpls  map[string]string     `json:"tpls"`
+}
+
+func genNoticeBytes(event *models.AlertCurEvent) []byte {
+	// build notice body with templates
+	ntpls := make(map[string]string)
+
+	rwLock.RLock()
+	defer rwLock.RUnlock()
+	for filename, tpl := range tpls {
+		var body bytes.Buffer
+		if err := tpl.Execute(&body, event); err != nil {
+			ntpls[filename] = err.Error()
+		} else {
+			ntpls[filename] = body.String()
+		}
+	}
+
+	notice := Notice{Event: event, Tpls: ntpls}
 	stdinBytes, err := json.Marshal(notice)
 	if err != nil {
 		logger.Errorf("event_notify: failed to marshal notice: %v", err)
-		return
+		return nil
 	}
 
-	handleNotice(notice, stdinBytes)
-}
-
-func alertingCallScript(stdinBytes []byte) {
-	if !config.C.Alerting.CallScript.Enable {
-		return
-	}
-
-	// no notify.py? do nothing
-	if config.C.Alerting.CallScript.ScriptPath == "" {
-		return
-	}
-
-	if config.C.Alerting.Timeout == 0 {
-		config.C.Alerting.Timeout = 30000
-	}
-
-	fpath := config.C.Alerting.CallScript.ScriptPath
-	cmd := exec.Command(fpath)
-	cmd.Stdin = bytes.NewReader(stdinBytes)
-
-	// combine stdout and stderr
-	var buf bytes.Buffer
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
-
-	err := startCmd(cmd)
-	if err != nil {
-		logger.Errorf("event_notify: run cmd err: %v", err)
-		return
-	}
-
-	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.C.Alerting.Timeout)*time.Millisecond)
-
-	if isTimeout {
-		if err == nil {
-			logger.Errorf("event_notify: timeout and killed process %s", fpath)
-		}
-
-		if err != nil {
-			logger.Errorf("event_notify: kill process %s occur error %v", fpath, err)
-		}
-
-		return
-	}
-
-	if err != nil {
-		logger.Errorf("event_notify: exec script %s occur error: %v, output: %s", fpath, err, buf.String())
-		return
-	}
-
-	logger.Infof("event_notify: exec %s output: %s", fpath, buf.String())
-}
-
-// call notify.so via golang plugin build
-// ig. etc/script/notify/notify.so
-func alertingCallPlugin(stdinBytes []byte) {
-	if !config.C.Alerting.CallPlugin.Enable {
-		return
-	}
-
-	logger.Debugf("alertingCallPlugin begin")
-	logger.Debugf("payload:", string(stdinBytes))
-	notifier.Instance.Notify(stdinBytes)
-	logger.Debugf("alertingCallPlugin done")
+	return stdinBytes
 }

@@ -1,4 +1,4 @@
-package engine
+package sender
 
 import (
 	"strconv"
@@ -14,8 +14,7 @@ import (
 	"github.com/didi/nightingale/v5/src/server/memsto"
 )
 
-func callback(event *models.AlertCurEvent) {
-	urls := strings.Fields(event.Callbacks)
+func SendCallbacks(urls []string, event *models.AlertCurEvent) {
 	for _, url := range urls {
 		if url == "" {
 			continue

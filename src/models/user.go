@@ -2,11 +2,14 @@ package models
 
 import (
 	"fmt"
+
 	"os"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/tidwall/gjson"
+	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 	"gorm.io/gorm"
@@ -14,6 +17,15 @@ import (
 	"github.com/didi/nightingale/v5/src/pkg/ldapx"
 	"github.com/didi/nightingale/v5/src/pkg/ormx"
 	"github.com/didi/nightingale/v5/src/webapi/config"
+)
+
+const (
+	Dingtalk = "dingtalk"
+	Wecom    = "wecom"
+	Feishu   = "feishu"
+	Mm       = "mm"
+	Telegram = "telegram"
+	Email    = "email"
 )
 
 type User struct {
@@ -545,4 +557,54 @@ func (u *User) UserGroups(limit int, query string) ([]UserGroup, error) {
 
 	err = session.Where("name like ?", "%"+query+"%").Find(&lst).Error
 	return lst, err
+}
+
+func (u *User) ExtractToken(key string) (string, bool) {
+	bs, err := u.Contacts.MarshalJSON()
+	if err != nil {
+		logger.Errorf("handle_notice: failed to marshal contacts: %v", err)
+		return "", false
+	}
+
+	switch key {
+	case Dingtalk:
+		ret := gjson.GetBytes(bs, "dingtalk_robot_token")
+		return ret.String(), ret.Exists()
+	case Wecom:
+		ret := gjson.GetBytes(bs, "wecom_robot_token")
+		return ret.String(), ret.Exists()
+	case Feishu:
+		ret := gjson.GetBytes(bs, "feishu_robot_token")
+		return ret.String(), ret.Exists()
+	case Mm:
+		ret := gjson.GetBytes(bs, "mm_robot_token")
+		return ret.String(), ret.Exists()
+	case Telegram:
+		ret := gjson.GetBytes(bs, "telgram_robot_token")
+		return ret.String(), ret.Exists()
+	case Email:
+		return u.Email, u.Email != ""
+	default:
+		return "", false
+	}
+}
+
+func (u *User) ExtractAllToken() map[string]string {
+	ret := make(map[string]string)
+	if u.Email != "" {
+		ret[Email] = u.Email
+	}
+
+	bs, err := u.Contacts.MarshalJSON()
+	if err != nil {
+		logger.Errorf("handle_notice: failed to marshal contacts: %v", err)
+		return ret
+	}
+
+	ret[Dingtalk] = gjson.GetBytes(bs, "dingtalk_robot_token").String()
+	ret[Wecom] = gjson.GetBytes(bs, "wecom_robot_token").String()
+	ret[Feishu] = gjson.GetBytes(bs, "feishu_robot_token").String()
+	ret[Mm] = gjson.GetBytes(bs, "mm_robot_token").String()
+	ret[Telegram] = gjson.GetBytes(bs, "telgram_robot_token").String()
+	return ret
 }

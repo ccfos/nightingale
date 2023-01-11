@@ -59,9 +59,7 @@ func consumeOne(event *models.AlertCurEvent) {
 		return
 	}
 
-	fillUsers(event)
-	callback(event)
-	notify(event)
+	HandleEventNotify(event, false)
 }
 
 func persist(event *models.AlertCurEvent) {
@@ -146,7 +144,6 @@ func fillUsers(e *models.AlertCurEvent) {
 		if err != nil {
 			continue
 		}
-
 		gids = append(gids, gid)
 	}
 
