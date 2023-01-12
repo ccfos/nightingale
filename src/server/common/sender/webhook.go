@@ -36,6 +36,10 @@ func SendWebhooks(webhooks []config.Webhook, event *models.AlertCurEvent) {
 
 		if len(conf.Headers) > 0 && len(conf.Headers)%2 == 0 {
 			for i := 0; i < len(conf.Headers); i += 2 {
+				if conf.Headers[i] == "host" {
+					req.Host = conf.Headers[i+1]
+					continue
+				}
 				req.Header.Set(conf.Headers[i], conf.Headers[i+1])
 			}
 		}
@@ -47,7 +51,7 @@ func SendWebhooks(webhooks []config.Webhook, event *models.AlertCurEvent) {
 		var resp *http.Response
 		resp, err = client.Do(req)
 		if err != nil {
-			logger.Warning("alertingWebhook failed to call url, error: ", err)
+			logger.Warningf("WebhookCallError, ruleId: [%d], eventId: [%d], url: [%s], error: [%s]", event.RuleId, event.Id, conf.Url, err)
 			continue
 		}
 

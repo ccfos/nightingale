@@ -174,49 +174,7 @@ func MustLoad(key string, fpaths ...string) {
 
 		C.Heartbeat.Endpoint = fmt.Sprintf("%s:%d", C.Heartbeat.IP, C.HTTP.Port)
 
-		if C.Alerting.Webhook.Enable {
-			if C.Alerting.Webhook.Timeout == "" {
-				C.Alerting.Webhook.TimeoutDuration = time.Second * 5
-			} else {
-				dur, err := time.ParseDuration(C.Alerting.Webhook.Timeout)
-				if err != nil {
-					fmt.Println("failed to parse Alerting.Webhook.Timeout")
-					os.Exit(1)
-				}
-				C.Alerting.Webhook.TimeoutDuration = dur
-			}
-		}
-
-		if C.Alerting.CallPlugin.Enable {
-			if runtime.GOOS == "windows" {
-				fmt.Println("notify plugin on unsupported os:", runtime.GOOS)
-				os.Exit(1)
-			}
-
-			p, err := plugin.Open(C.Alerting.CallPlugin.PluginPath)
-			if err != nil {
-				fmt.Println("failed to load plugin:", err)
-				os.Exit(1)
-			}
-
-			caller, err := p.Lookup(C.Alerting.CallPlugin.Caller)
-			if err != nil {
-				fmt.Println("failed to lookup plugin Caller:", err)
-				os.Exit(1)
-			}
-
-			ins, ok := caller.(notifier.Notifier)
-			if !ok {
-				log.Println("notifier interface not implemented")
-				os.Exit(1)
-			}
-
-			notifier.Instance = ins
-		}
-
-		if C.Alerting.TemplatesDir == "" {
-			C.Alerting.TemplatesDir = path.Join(runner.Cwd, "etc", "template")
-		}
+		C.Alerting.check()
 
 		if C.WriterOpt.QueueMaxSize <= 0 {
 			C.WriterOpt.QueueMaxSize = 10000000
@@ -349,6 +307,56 @@ type Alerting struct {
 	CallPlugin            CallPlugin
 	RedisPub              RedisPub
 	Webhook               Webhook
+}
+
+func (a *Alerting) check() {
+	if a.Webhook.Enable {
+		if a.Webhook.Timeout == "" {
+			a.Webhook.TimeoutDuration = time.Second * 5
+		} else {
+			dur, err := time.ParseDuration(C.Alerting.Webhook.Timeout)
+			if err != nil {
+				fmt.Println("failed to parse Alerting.Webhook.Timeout")
+				os.Exit(1)
+			}
+			a.Webhook.TimeoutDuration = dur
+		}
+	}
+
+	if a.CallPlugin.Enable {
+		if runtime.GOOS == "windows" {
+			fmt.Println("notify plugin on unsupported os:", runtime.GOOS)
+			os.Exit(1)
+		}
+
+		p, err := plugin.Open(a.CallPlugin.PluginPath)
+		if err != nil {
+			fmt.Println("failed to load plugin:", err)
+			os.Exit(1)
+		}
+
+		caller, err := p.Lookup(a.CallPlugin.Caller)
+		if err != nil {
+			fmt.Println("failed to lookup plugin Caller:", err)
+			os.Exit(1)
+		}
+
+		ins, ok := caller.(notifier.Notifier)
+		if !ok {
+			log.Println("notifier interface not implemented")
+			os.Exit(1)
+		}
+
+		notifier.Instance = ins
+	}
+
+	if a.TemplatesDir == "" {
+		a.TemplatesDir = path.Join(runner.Cwd, "etc", "template")
+	}
+
+	if a.Timeout == 0 {
+		a.Timeout = 30000
+	}
 }
 
 func (a *Alerting) ListTpls() (map[string]*template.Template, error) {

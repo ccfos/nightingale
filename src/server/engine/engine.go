@@ -20,8 +20,6 @@ func Start(ctx context.Context) error {
 		return err
 	}
 
-	initRouters()
-
 	// start loop consumer
 	go loopConsume(ctx)
 

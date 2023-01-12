@@ -19,22 +19,15 @@ var (
 	Senders map[string]sender.Sender
 
 	// 处理事件到subscription关系,处理的subscription用OrMerge进行合并
-	routers []Router
+	routers = []Router{GroupRouter, GlobalWebhookRouter, EventCallbacksRouter}
 	// 额外去掉一些订阅,处理的subscription用AndMerge进行合并, 如设置 channel=false,合并后不通过这个channel发送
+	// 如果实现了相关Router,可以添加到interceptors中
 	interceptors []Router
 
 	// 额外的订阅event逻辑处理
-	subscribeRouters      []Router
+	subscribeRouters      = []Router{GroupRouter}
 	subscribeInterceptors []Router
 )
-
-func initRouters() {
-	routers = []Router{GroupRouter, GlobalWebhookRouter, EventCallbacksRouter}
-	interceptors = []Router{}
-
-	subscribeRouters = []Router{GroupRouter}
-	subscribeInterceptors = []Router{}
-}
 
 func reloadTpls() error {
 	tmpTpls, err := config.C.Alerting.ListTpls()

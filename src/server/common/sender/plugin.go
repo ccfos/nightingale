@@ -21,17 +21,9 @@ func MayPluginNotify(noticeBytes []byte) {
 }
 
 func alertingCallScript(stdinBytes []byte) {
-	if !config.C.Alerting.CallScript.Enable {
+	// not enable or no notify.py? do nothing
+	if !config.C.Alerting.CallScript.Enable || config.C.Alerting.CallScript.ScriptPath == "" {
 		return
-	}
-
-	// no notify.py? do nothing
-	if config.C.Alerting.CallScript.ScriptPath == "" {
-		return
-	}
-
-	if config.C.Alerting.Timeout == 0 {
-		config.C.Alerting.Timeout = 30000
 	}
 
 	fpath := config.C.Alerting.CallScript.ScriptPath
