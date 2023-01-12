@@ -25,6 +25,12 @@ const (
 	Mm       = "mm"
 	Telegram = "telegram"
 	Email    = "email"
+
+	DingtalkKey = "dingtalk_robot_token"
+	WecomKey    = "wecom_robot_token"
+	FeishuKey   = "feishu_robot_token"
+	MmKey       = "mm_webhook_url"
+	TelegramKey = "telegram_robot_token"
 )
 
 type User struct {
@@ -567,19 +573,19 @@ func (u *User) ExtractToken(key string) (string, bool) {
 
 	switch key {
 	case Dingtalk:
-		ret := gjson.GetBytes(bs, "dingtalk_robot_token")
+		ret := gjson.GetBytes(bs, DingtalkKey)
 		return ret.String(), ret.Exists()
 	case Wecom:
-		ret := gjson.GetBytes(bs, "wecom_robot_token")
+		ret := gjson.GetBytes(bs, WecomKey)
 		return ret.String(), ret.Exists()
 	case Feishu:
-		ret := gjson.GetBytes(bs, "feishu_robot_token")
+		ret := gjson.GetBytes(bs, FeishuKey)
 		return ret.String(), ret.Exists()
 	case Mm:
-		ret := gjson.GetBytes(bs, "mm_robot_token")
+		ret := gjson.GetBytes(bs, MmKey)
 		return ret.String(), ret.Exists()
 	case Telegram:
-		ret := gjson.GetBytes(bs, "telegram_robot_token")
+		ret := gjson.GetBytes(bs, TelegramKey)
 		return ret.String(), ret.Exists()
 	case Email:
 		return u.Email, u.Email != ""
@@ -600,10 +606,10 @@ func (u *User) ExtractAllToken() map[string]string {
 		return ret
 	}
 
-	ret[Dingtalk] = gjson.GetBytes(bs, "dingtalk_robot_token").String()
-	ret[Wecom] = gjson.GetBytes(bs, "wecom_robot_token").String()
-	ret[Feishu] = gjson.GetBytes(bs, "feishu_robot_token").String()
-	ret[Mm] = gjson.GetBytes(bs, "mm_webhook_url").String()
-	ret[Telegram] = gjson.GetBytes(bs, "telegram_robot_token").String()
+	ret[Dingtalk] = gjson.GetBytes(bs, DingtalkKey).String()
+	ret[Wecom] = gjson.GetBytes(bs, WecomKey).String()
+	ret[Feishu] = gjson.GetBytes(bs, FeishuKey).String()
+	ret[Mm] = gjson.GetBytes(bs, MmKey).String()
+	ret[Telegram] = gjson.GetBytes(bs, TelegramKey).String()
 	return ret
 }
