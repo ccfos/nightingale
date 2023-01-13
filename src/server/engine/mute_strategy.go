@@ -53,7 +53,7 @@ func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *mo
 	length := len(enableDaysOfWeek)
 	result := make([]interface{}, length)
 	// enableStime,enableEtime,enableDaysOfWeek三者长度肯定相同，这里循环一个即可
-	for i := 0; i < len(enableDaysOfWeek); i++ {
+	for i := 0; i < length; i++ {
 		result[i] = false
 		enableDaysOfWeek[i] = strings.Replace(enableDaysOfWeek[i], "7", "0", 1)
 		if !strings.Contains(enableDaysOfWeek[i], triggerWeek) {
