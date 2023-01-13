@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/slice"
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/server/memsto"
@@ -48,21 +49,27 @@ func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *mo
 
 	enableStime := strings.Fields(rule.EnableStime)
 	enableEtime := strings.Fields(rule.EnableEtime)
-	// EnableStime 的长度肯定等于 EnableEtime 的长度，这里循环一个即可
-	for i := 0; i < len(enableStime); i++ {
+	enableDaysOfWeek := strings.Split(rule.EnableDaysOfWeek, ";")
+	length := len(enableDaysOfWeek)
+	result := make([]interface{}, length)
+	// enableStime,enableEtime,enableDaysOfWeek三者长度肯定相同，这里循环一个即可
+	for i := 0; i < len(enableDaysOfWeek); i++ {
+		result[i] = false
+		enableDaysOfWeek[i] = strings.Replace(enableDaysOfWeek[i], "7", "0", 1)
+		if !strings.Contains(enableDaysOfWeek[i], triggerWeek) {
+			result[i] = true
+		}
 		if enableStime[i] <= enableEtime[i] {
 			if triggerTime < enableStime[i] || triggerTime > enableEtime[i] {
-				return true
+				result[i] = true
 			}
 		} else {
 			if triggerTime < enableStime[i] && triggerTime > enableEtime[i] {
-				return true
+				result[i] = true
 			}
 		}
 	}
-
-	rule.EnableDaysOfWeek = strings.Replace(rule.EnableDaysOfWeek, "7", "0", 1)
-	return !strings.Contains(rule.EnableDaysOfWeek, triggerWeek)
+	return !slice.Contains(result, false)
 }
 
 // IdentNotExistsMuteStrategy 根据ident是否存在过滤,如果ident不存在,则target_up的告警直接过滤掉
