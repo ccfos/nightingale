@@ -46,13 +46,18 @@ func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *mo
 	triggerTime := tm.Format("15:04")
 	triggerWeek := strconv.Itoa(int(tm.Weekday()))
 
-	if rule.EnableStime <= rule.EnableEtime {
-		if triggerTime < rule.EnableStime || triggerTime > rule.EnableEtime {
-			return true
-		}
-	} else {
-		if triggerTime < rule.EnableStime && triggerTime > rule.EnableEtime {
-			return true
+	enableStime := strings.Fields(rule.EnableStime)
+	enableEtime := strings.Fields(rule.EnableEtime)
+	// EnableStime 的长度肯定等于 EnableEtime 的长度，这里循环一个即可
+	for i := 0; i < len(enableStime); i++ {
+		if enableStime[i] <= enableEtime[i] {
+			if triggerTime < enableStime[i] || triggerTime > enableEtime[i] {
+				return true
+			}
+		} else {
+			if triggerTime < enableStime[i] && triggerTime > enableEtime[i] {
+				return true
+			}
 		}
 	}
 
