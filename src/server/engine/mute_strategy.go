@@ -51,25 +51,25 @@ func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *mo
 	enableEtime := strings.Fields(rule.EnableEtime)
 	enableDaysOfWeek := strings.Split(rule.EnableDaysOfWeek, ";")
 	length := len(enableDaysOfWeek)
-	result := make([]interface{}, length)
 	// enableStime,enableEtime,enableDaysOfWeek三者长度肯定相同，这里循环一个即可
 	for i := 0; i < length; i++ {
-		result[i] = false
 		enableDaysOfWeek[i] = strings.Replace(enableDaysOfWeek[i], "7", "0", 1)
 		if !strings.Contains(enableDaysOfWeek[i], triggerWeek) {
-			result[i] = true
+			continue
 		}
 		if enableStime[i] <= enableEtime[i] {
 			if triggerTime < enableStime[i] || triggerTime > enableEtime[i] {
-				result[i] = true
+				continue
 			}
 		} else {
 			if triggerTime < enableStime[i] && triggerTime > enableEtime[i] {
-				result[i] = true
+				continue
 			}
 		}
+		// 到这里说明当前时刻在告警规则的某组生效时间范围内，直接返回 false
+		return false
 	}
-	return !slice.Contains(result, false)
+	return true
 }
 
 // IdentNotExistsMuteStrategy 根据ident是否存在过滤,如果ident不存在,则target_up的告警直接过滤掉
