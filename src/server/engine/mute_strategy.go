@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/slice"
 
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/server/memsto"
