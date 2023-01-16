@@ -104,12 +104,10 @@ func remoteWrite(c *gin.Context) {
 
 		// find ident label
 		for j := 0; j < len(req.Timeseries[i].Labels); j++ {
-			if req.Timeseries[i].Labels[j].Name == "host" {
-				req.Timeseries[i].Labels[j].Name = "ident"
-			}
-
 			if req.Timeseries[i].Labels[j].Name == "ident" {
 				ident = req.Timeseries[i].Labels[j].Value
+			} else if req.Timeseries[i].Labels[j].Name == "host" {
+				req.Timeseries[i].Labels[j].Name = "ident"
 			}
 
 			if req.Timeseries[i].Labels[j].Name == "__name__" {
