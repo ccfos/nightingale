@@ -107,7 +107,7 @@ func remoteWrite(c *gin.Context) {
 			if req.Timeseries[i].Labels[j].Name == "ident" {
 				ident = req.Timeseries[i].Labels[j].Value
 			} else if req.Timeseries[i].Labels[j].Name == "host" {
-				req.Timeseries[i].Labels[j].Name = "ident"
+				ident = req.Timeseries[i].Labels[j].Value
 			}
 
 			if req.Timeseries[i].Labels[j].Name == "__name__" {
