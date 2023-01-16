@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/toolkits/pkg/logger"
+
 	"github.com/didi/nightingale/v5/src/models"
 	"github.com/didi/nightingale/v5/src/notifier"
-	"github.com/didi/nightingale/v5/src/server/common/sender"
 	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/didi/nightingale/v5/src/server/memsto"
-	"github.com/tidwall/gjson"
-	"github.com/toolkits/pkg/logger"
 )
 
 type MaintainMessage struct {
@@ -29,12 +28,13 @@ func notifyToMaintainer(title, msg string) {
 	}
 
 	triggerTime := time.Now().Format("2006/01/02 - 15:04:05")
+	msg = "Title: " + title + "\nContent: " + msg + "\nTime: " + triggerTime
 
-	notifyMaintainerWithPlugin(title, msg, triggerTime, users)
-	notifyMaintainerWithBuiltin(title, msg, triggerTime, users)
+	notifyMaintainerWithPlugin(title, msg, users)
+	notifyMaintainerWithBuiltin(title, msg, users)
 }
 
-func notifyMaintainerWithPlugin(title, msg, triggerTime string, users []*models.User) {
+func notifyMaintainerWithPlugin(title, msg string, users []*models.User) {
 	if !config.C.Alerting.CallPlugin.Enable {
 		return
 	}
@@ -42,7 +42,7 @@ func notifyMaintainerWithPlugin(title, msg, triggerTime string, users []*models.
 	stdinBytes, err := json.Marshal(MaintainMessage{
 		Tos:     users,
 		Title:   title,
-		Content: "Title: " + title + "\nContent: " + msg + "\nTime: " + triggerTime,
+		Content: msg,
 	})
 
 	if err != nil {
@@ -54,119 +54,17 @@ func notifyMaintainerWithPlugin(title, msg, triggerTime string, users []*models.
 	logger.Debugf("notify maintainer with plugin done")
 }
 
-func notifyMaintainerWithBuiltin(title, msg, triggerTime string, users []*models.User) {
-	if len(config.C.Alerting.NotifyBuiltinChannels) == 0 {
-		return
-	}
-
-	emailset := make(map[string]struct{})
-	phoneset := make(map[string]struct{})
-	wecomset := make(map[string]struct{})
-	dingtalkset := make(map[string]struct{})
-	feishuset := make(map[string]struct{})
-	mmset := make(map[string]struct{})
-	telegramset := make(map[string]struct{})
-
-	for _, user := range users {
-		if user.Email != "" {
-			emailset[user.Email] = struct{}{}
-		}
-
-		if user.Phone != "" {
-			phoneset[user.Phone] = struct{}{}
-		}
-
-		bs, err := user.Contacts.MarshalJSON()
-		if err != nil {
-			logger.Errorf("handle_notice: failed to marshal contacts: %v", err)
+func notifyMaintainerWithBuiltin(title, msg string, users []*models.User) {
+	subscription := NewSubscriptionFromUsers(users)
+	for channel, uids := range subscription.ToChannelUserMap() {
+		currentUsers := memsto.UserCache.GetByUserIds(uids)
+		rwLock.RLock()
+		s := Senders[channel]
+		rwLock.RUnlock()
+		if s == nil {
+			logger.Warningf("no sender for channel: %s", channel)
 			continue
 		}
-
-		ret := gjson.GetBytes(bs, "dingtalk_robot_token")
-		if ret.Exists() {
-			dingtalkset[ret.String()] = struct{}{}
-		}
-
-		ret = gjson.GetBytes(bs, "wecom_robot_token")
-		if ret.Exists() {
-			wecomset[ret.String()] = struct{}{}
-		}
-
-		ret = gjson.GetBytes(bs, "feishu_robot_token")
-		if ret.Exists() {
-			feishuset[ret.String()] = struct{}{}
-		}
-
-		ret = gjson.GetBytes(bs, "mm_webhook_url")
-		if ret.Exists() {
-			mmset[ret.String()] = struct{}{}
-		}
-
-		ret = gjson.GetBytes(bs, "telegram_robot_token")
-		if ret.Exists() {
-			telegramset[ret.String()] = struct{}{}
-		}
-	}
-
-	phones := StringSetKeys(phoneset)
-
-	for _, ch := range config.C.Alerting.NotifyBuiltinChannels {
-		switch ch {
-		case "email":
-			if len(emailset) == 0 {
-				continue
-			}
-			content := "Title: " + title + "\nContent: " + msg + "\nTime: " + triggerTime
-			sender.WriteEmail(title, content, StringSetKeys(emailset))
-		case "dingtalk":
-			if len(dingtalkset) == 0 {
-				continue
-			}
-			content := "**Title: **" + title + "\n**Content: **" + msg + "\n**Time: **" + triggerTime
-			sender.SendDingtalk(sender.DingtalkMessage{
-				Title:     title,
-				Text:      content,
-				AtMobiles: phones,
-				Tokens:    StringSetKeys(dingtalkset),
-			})
-		case "wecom":
-			if len(wecomset) == 0 {
-				continue
-			}
-			content := "**Title: **" + title + "\n**Content: **" + msg + "\n**Time: **" + triggerTime
-			sender.SendWecom(sender.WecomMessage{
-				Text:   content,
-				Tokens: StringSetKeys(wecomset),
-			})
-		case "feishu":
-			if len(feishuset) == 0 {
-				continue
-			}
-
-			content := "Title: " + title + "\nContent: " + msg + "\nTime: " + triggerTime
-			sender.SendFeishu(sender.FeishuMessage{
-				Text:      content,
-				AtMobiles: phones,
-				Tokens:    StringSetKeys(feishuset),
-			})
-		case "mm":
-			if len(mmset) == 0 {
-				continue
-			}
-			content := "**Title: **" + title + "\n**Content: **" + msg + "\n**Time: **" + triggerTime
-			sender.SendMM(sender.MatterMostMessage{
-				Text:   content,
-				Tokens: StringSetKeys(mmset),
-			})
-		case "telegram":
-			if len(telegramset) == 0 {
-				continue
-			}
-			content := "**Title: **" + title + "\n**Content: **" + msg + "\n**Time: **" + triggerTime
-			sender.SendTelegram(sender.TelegramMessage{
-				Text:   content,
-				Tokens: StringSetKeys(telegramset),
-			})
-		}
+		go s.SendRaw(currentUsers, title, msg)
 	}
 }
