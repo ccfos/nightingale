@@ -11,29 +11,22 @@ import (
 	"github.com/didi/nightingale/v5/src/server/memsto"
 )
 
-type EventMuteStrategyFunc func(rule *models.AlertRule, event *models.AlertCurEvent) bool
+type MuteStrategyFunc func(rule *models.AlertRule, event *models.AlertCurEvent) bool
 
-var AlertMuteStrategies = AlertMuteStrategiesType{
+var AlertMuteStrategies = []MuteStrategyFunc{
 	TimeNonEffectiveMuteStrategy,
 	IdentNotExistsMuteStrategy,
 	BgNotMatchMuteStrategy,
 	EventMuteStrategy,
 }
 
-type AlertMuteStrategiesType []EventMuteStrategyFunc
-
-func (ss AlertMuteStrategiesType) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
-	for _, s := range ss {
-		if s(rule, event) {
+func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
+	for _, strategyFunc := range AlertMuteStrategies {
+		if strategyFunc(rule, event) {
 			return true
 		}
 	}
 	return false
-}
-
-// AlertMuteStrategy 是过滤event的抽象,当返回true时,表示该告警时间由于某些原因不需要告警
-type AlertMuteStrategy interface {
-	IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool
 }
 
 // TimeNonEffectiveMuteStrategy 根据规则配置的告警时间过滤,如果产生的告警不在规则配置的告警时间内,则不告警
