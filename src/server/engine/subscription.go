@@ -82,10 +82,10 @@ func (s *Subscription) OrMerge(other *Subscription) {
 
 // AndMerge 将channelMap中的bool值按照and的逻辑进行合并,可以单独将人/通道维度的通知移除
 // 常用的场景有:
-//
-//		人员离职了不需要发送告警了
-//		某个告警通道进行维护,暂时不需要发送告警了
-//	 业务值班的重定向逻辑，将高等级的告警额外发送给应急人员等,可以结合业务需求自己实现router
+// 1. 人员离职了不需要发送告警了
+// 2. 某个告警通道进行维护,暂时不需要发送告警了
+// 3. 业务值班的重定向逻辑，将高等级的告警额外发送给应急人员等
+// 可以结合业务需求自己实现router
 func (s *Subscription) AndMerge(other *Subscription) {
 	s.merge(other, NotifyChannels.AndMerge)
 }
@@ -109,6 +109,7 @@ func (s *Subscription) merge(other *Subscription, f func(NotifyChannels, NotifyC
 	}
 }
 
+// ToChannelUserMap userMap(map[uid][channel]bool) 转换为 map[channel][]uid 的结构
 func (s *Subscription) ToChannelUserMap() map[string][]int64 {
 	m := make(map[string][]int64)
 	for uid, nc := range s.userMap {

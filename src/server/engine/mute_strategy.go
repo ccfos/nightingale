@@ -11,33 +11,26 @@ import (
 	"github.com/didi/nightingale/v5/src/server/memsto"
 )
 
-var AlertMuteStrategies = AlertMuteStrategiesType{
-	&TimeNonEffectiveMuteStrategy{},
-	&IdentNotExistsMuteStrategy{},
-	&BgNotMatchMuteStrategy{},
-	&EventMuteStrategy{},
+type MuteStrategyFunc func(rule *models.AlertRule, event *models.AlertCurEvent) bool
+
+var AlertMuteStrategies = []MuteStrategyFunc{
+	TimeNonEffectiveMuteStrategy,
+	IdentNotExistsMuteStrategy,
+	BgNotMatchMuteStrategy,
+	EventMuteStrategy,
 }
 
-type AlertMuteStrategiesType []AlertMuteStrategy
-
-func (ss AlertMuteStrategiesType) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
-	for _, s := range ss {
-		if s.IsMuted(rule, event) {
+func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
+	for _, strategyFunc := range AlertMuteStrategies {
+		if strategyFunc(rule, event) {
 			return true
 		}
 	}
 	return false
 }
 
-// AlertMuteStrategy 是过滤event的抽象,当返回true时,表示该告警时间由于某些原因不需要告警
-type AlertMuteStrategy interface {
-	IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool
-}
-
 // TimeNonEffectiveMuteStrategy 根据规则配置的告警时间过滤,如果产生的告警不在规则配置的告警时间内,则不告警
-type TimeNonEffectiveMuteStrategy struct{}
-
-func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
+func TimeNonEffectiveMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	if rule.Disabled == 1 {
 		return true
 	}
@@ -72,9 +65,7 @@ func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *mo
 }
 
 // IdentNotExistsMuteStrategy 根据ident是否存在过滤,如果ident不存在,则target_up的告警直接过滤掉
-type IdentNotExistsMuteStrategy struct{}
-
-func (s *IdentNotExistsMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
+func IdentNotExistsMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	ident, has := event.TagsMap["ident"]
 	if !has {
 		return false
@@ -83,16 +74,14 @@ func (s *IdentNotExistsMuteStrategy) IsMuted(rule *models.AlertRule, event *mode
 	// 如果是target_up的告警,且ident已经不存在了,直接过滤掉
 	// 这里的判断有点太粗暴了,但是目前没有更好的办法
 	if !exists && strings.Contains(rule.PromQl, "target_up") {
-		logger.Debugf("[%T] mute: rule_eval:%d cluster:%s ident:%s", s, rule.Id, event.Cluster, ident)
+		logger.Debugf("[%s] mute: rule_eval:%d cluster:%s ident:%s", "IdentNotExistsMuteStrategy", rule.Id, event.Cluster, ident)
 		return true
 	}
 	return false
 }
 
 // BgNotMatchMuteStrategy 当规则开启只在bg内部告警时,对于非bg内部的机器过滤
-type BgNotMatchMuteStrategy struct{}
-
-func (s *BgNotMatchMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
+func BgNotMatchMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	// 没有开启BG内部告警,直接不过滤
 	if rule.EnableInBG == 0 {
 		return false
@@ -107,17 +96,13 @@ func (s *BgNotMatchMuteStrategy) IsMuted(rule *models.AlertRule, event *models.A
 	// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 	// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
 	if exists && target.GroupId != rule.GroupId {
-		logger.Debugf("[%T] mute: rule_eval:%d cluster:%s", s, rule.Id, event.Cluster)
+		logger.Debugf("[%s] mute: rule_eval:%d cluster:%s", "BgNotMatchMuteStrategy", rule.Id, event.Cluster)
 		return true
 	}
 	return false
 }
 
-type EventMuteStrategy struct{}
-
-var EventMuteStra = new(EventMuteStrategy)
-
-func (s *EventMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
+func EventMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	mutes, has := memsto.AlertMuteCache.Gets(event.GroupId)
 	if !has || len(mutes) == 0 {
 		return false

@@ -77,7 +77,7 @@ func (fs *FeishuSender) extract(users []*models.User) ([]string, []string) {
 		if user.Phone != "" {
 			ats = append(ats, user.Phone)
 		}
-		if token, has := user.ExtractToken("feishu"); has {
+		if token, has := user.ExtractToken(models.Feishu); has {
 			url := token
 			if !strings.HasPrefix(token, "https://") {
 				url = "https://open.feishu.cn/open-apis/bot/v2/hook/" + token

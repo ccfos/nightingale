@@ -13,12 +13,14 @@ func PublishToRedis(clusterName string, bs []byte) {
 	if len(bs) == 0 {
 		return
 	}
-	channelKey := config.C.Alerting.RedisPub.ChannelPrefix + clusterName
+	if !config.C.Alerting.RedisPub.Enable {
+		return
+	}
+
 	// pub all alerts to redis
-	if config.C.Alerting.RedisPub.Enable {
-		err := storage.Redis.Publish(context.Background(), channelKey, bs).Err()
-		if err != nil {
-			logger.Errorf("event_notify: redis publish %s err: %v", channelKey, err)
-		}
+	channelKey := config.C.Alerting.RedisPub.ChannelPrefix + clusterName
+	err := storage.Redis.Publish(context.Background(), channelKey, bs).Err()
+	if err != nil {
+		logger.Errorf("event_notify: redis publish %s err: %v", channelKey, err)
 	}
 }

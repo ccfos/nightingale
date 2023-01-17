@@ -49,7 +49,7 @@ func (ts *TelegramSender) SendRaw(users []*models.User, title, message string) {
 func (ts *TelegramSender) extract(users []*models.User) []string {
 	tokens := make([]string, 0, len(users))
 	for _, user := range users {
-		if token, has := user.ExtractToken("telegram"); has {
+		if token, has := user.ExtractToken(models.Telegram); has {
 			tokens = append(tokens, token)
 		}
 	}
