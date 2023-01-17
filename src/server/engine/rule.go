@@ -12,6 +12,7 @@ import (
 	"github.com/didi/nightingale/v5/src/server/naming"
 )
 
+// RuleContext is the interface for alert rule and record rule
 type RuleContext interface {
 	Key() string
 	Hash() string
@@ -27,15 +28,14 @@ var ruleHolder = &RuleHolder{
 	externalAlertRules: make(map[string]*AlertRuleContext),
 }
 
+// RuleHolder is the global rule holder
 type RuleHolder struct {
-	externalLock sync.RWMutex
-
 	// key: hash
-	alertRules map[string]RuleContext
-	// key: hash
+	alertRules  map[string]RuleContext
 	recordRules map[string]RuleContext
 
-	// key: key
+	// key: hash
+	externalLock       sync.RWMutex
 	externalAlertRules map[string]*AlertRuleContext
 }
 
@@ -63,30 +63,22 @@ func (rh *RuleHolder) SyncAlertRules() {
 			continue
 		}
 
-		// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
-		if !rule.IsPrometheusRule() {
-			ruleClusters := strings.Fields(rule.Cluster)
-			for _, cluster := range ruleClusters {
-				// hash ring not hit
-				if !naming.ClusterHashRing.IsHit(cluster, fmt.Sprintf("%d", rule.Id), config.C.Heartbeat.Endpoint) {
-					continue
-				}
-
-				externalRule := NewAlertRuleContext(rule, cluster)
-				externalAllRules[externalRule.Key()] = externalRule
-			}
-			continue
-		}
-
-		ruleClusters := config.ReaderClients.Hit(rule.Cluster)
+		ruleClusters := strings.Fields(rule.Cluster)
 		for _, cluster := range ruleClusters {
 			// hash ring not hit
 			if !naming.ClusterHashRing.IsHit(cluster, fmt.Sprintf("%d", rule.Id), config.C.Heartbeat.Endpoint) {
 				continue
 			}
 
-			alertRule := NewAlertRuleContext(rule, cluster)
-			alertRules[alertRule.Hash()] = alertRule
+			if rule.IsPrometheusRule() {
+				// 正常的告警规则
+				alertRule := NewAlertRuleContext(rule, cluster)
+				alertRules[alertRule.Hash()] = alertRule
+			} else {
+				// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
+				externalRule := NewAlertRuleContext(rule, cluster)
+				externalAllRules[externalRule.Hash()] = externalRule
+			}
 		}
 	}
 
@@ -105,16 +97,14 @@ func (rh *RuleHolder) SyncAlertRules() {
 		}
 	}
 
+	rh.externalLock.Lock()
 	for hash, rule := range externalAllRules {
-		rh.externalLock.Lock()
 		if _, has := rh.externalAlertRules[hash]; !has {
 			rule.Prepare()
 			rh.externalAlertRules[hash] = rule
 		}
-		rh.externalLock.Unlock()
 	}
 
-	rh.externalLock.Lock()
 	for hash := range rh.externalAlertRules {
 		if _, has := externalAllRules[hash]; !has {
 			delete(rh.externalAlertRules, hash)
