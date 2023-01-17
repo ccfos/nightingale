@@ -58,7 +58,7 @@ func (ms *MmSender) SendRaw(users []*models.User, title, message string) {
 func (ms *MmSender) extract(users []*models.User) []string {
 	tokens := make([]string, 0, len(users))
 	for _, user := range users {
-		if token, has := user.ExtractToken("mm"); has {
+		if token, has := user.ExtractToken(models.Mm); has {
 			tokens = append(tokens, token)
 		}
 	}
@@ -66,7 +66,6 @@ func (ms *MmSender) extract(users []*models.User) []string {
 }
 
 func SendMM(message MatterMostMessage) {
-
 	for i := 0; i < len(message.Tokens); i++ {
 		u, err := url.Parse(message.Tokens[i])
 		if err != nil {

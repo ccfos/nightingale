@@ -57,7 +57,7 @@ func (ws *WecomSender) SendRaw(users []*models.User, title, message string) {
 func (ws *WecomSender) extract(users []*models.User) []string {
 	urls := make([]string, 0, len(users))
 	for _, user := range users {
-		if token, has := user.ExtractToken("wecom"); has {
+		if token, has := user.ExtractToken(models.Wecom); has {
 			url := token
 			if !strings.HasPrefix(token, "https://") {
 				url = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=" + token
