@@ -3,7 +3,6 @@ package engine
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -34,7 +33,7 @@ type RuleHolder struct {
 	alertRules  map[string]RuleContext
 	recordRules map[string]RuleContext
 
-	// key: hash
+	// key: key of rule
 	externalLock       sync.RWMutex
 	externalAlertRules map[string]*AlertRuleContext
 }
@@ -62,8 +61,7 @@ func (rh *RuleHolder) SyncAlertRules() {
 		if rule == nil {
 			continue
 		}
-
-		ruleClusters := strings.Fields(rule.Cluster)
+		ruleClusters := config.ReaderClients.Hit(rule.Cluster)
 		for _, cluster := range ruleClusters {
 			// hash ring not hit
 			if !naming.ClusterHashRing.IsHit(cluster, fmt.Sprintf("%d", rule.Id), config.C.Heartbeat.Endpoint) {
@@ -77,7 +75,7 @@ func (rh *RuleHolder) SyncAlertRules() {
 			} else {
 				// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
 				externalRule := NewAlertRuleContext(rule, cluster)
-				externalAllRules[externalRule.Hash()] = externalRule
+				externalAllRules[externalRule.Key()] = externalRule
 			}
 		}
 	}
@@ -98,16 +96,21 @@ func (rh *RuleHolder) SyncAlertRules() {
 	}
 
 	rh.externalLock.Lock()
-	for hash, rule := range externalAllRules {
-		if _, has := rh.externalAlertRules[hash]; !has {
-			rule.Prepare()
-			rh.externalAlertRules[hash] = rule
+	for key, rule := range externalAllRules {
+		if curRule, has := rh.externalAlertRules[key]; has {
+			// rule存在,且hash一致,认为没有变更,这里可以根据需求单独实现一个关联数据更多的hash函数
+			if rule.Hash() == curRule.Hash() {
+				continue
+			}
 		}
+		// 现有规则中没有rule以及有rule但hash不一致的场景，需要触发rule的update
+		rule.Prepare()
+		rh.externalAlertRules[key] = rule
 	}
 
-	for hash := range rh.externalAlertRules {
-		if _, has := externalAllRules[hash]; !has {
-			delete(rh.externalAlertRules, hash)
+	for key := range rh.externalAlertRules {
+		if _, has := externalAllRules[key]; !has {
+			delete(rh.externalAlertRules, key)
 		}
 	}
 	rh.externalLock.Unlock()
@@ -148,9 +151,12 @@ func (rh *RuleHolder) SyncRecordRules() {
 }
 
 func GetExternalAlertRule(cluster string, id int64) (*AlertRuleContext, bool) {
-	key := fmt.Sprintf("alert-%s-%d", cluster, id)
 	ruleHolder.externalLock.RLock()
 	defer ruleHolder.externalLock.RUnlock()
-	rule, has := ruleHolder.externalAlertRules[key]
+	rule, has := ruleHolder.externalAlertRules[ruleKey(cluster, id)]
 	return rule, has
+}
+
+func ruleKey(cluster string, id int64) string {
+	return fmt.Sprintf("alert-%s-%d", cluster, id)
 }
