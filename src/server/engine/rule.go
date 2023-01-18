@@ -3,7 +3,6 @@ package engine
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/didi/nightingale/v5/src/server/naming"
 )
 
+// RuleContext is the interface for alert rule and record rule
 type RuleContext interface {
 	Key() string
 	Hash() string
@@ -27,15 +27,14 @@ var ruleHolder = &RuleHolder{
 	externalAlertRules: make(map[string]*AlertRuleContext),
 }
 
+// RuleHolder is the global rule holder
 type RuleHolder struct {
-	externalLock sync.RWMutex
-
 	// key: hash
-	alertRules map[string]RuleContext
-	// key: hash
+	alertRules  map[string]RuleContext
 	recordRules map[string]RuleContext
 
-	// key: key
+	// key: key of rule
+	externalLock       sync.RWMutex
 	externalAlertRules map[string]*AlertRuleContext
 }
 
@@ -62,31 +61,30 @@ func (rh *RuleHolder) SyncAlertRules() {
 		if rule == nil {
 			continue
 		}
-
-		// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
-		if !rule.IsPrometheusRule() {
-			ruleClusters := strings.Fields(rule.Cluster)
-			for _, cluster := range ruleClusters {
-				// hash ring not hit
-				if !naming.ClusterHashRing.IsHit(cluster, fmt.Sprintf("%d", rule.Id), config.C.Heartbeat.Endpoint) {
-					continue
-				}
-
-				externalRule := NewAlertRuleContext(rule, cluster)
-				externalAllRules[externalRule.Key()] = externalRule
-			}
-			continue
-		}
-
+		
+		
 		ruleClusters := config.ReaderClients.Hit(rule.Cluster)
+		if !rule.IsPrometheusRule() {
+		        // 非 Prometheus 的规则, 不支持 $all, 直接从 rule.Cluster 解析
+			ruleClusters = strings.Fields(rule.Cluster)
+		}
+		
+		
 		for _, cluster := range ruleClusters {
 			// hash ring not hit
 			if !naming.ClusterHashRing.IsHit(cluster, fmt.Sprintf("%d", rule.Id), config.C.Heartbeat.Endpoint) {
 				continue
 			}
 
-			alertRule := NewAlertRuleContext(rule, cluster)
-			alertRules[alertRule.Hash()] = alertRule
+			if rule.IsPrometheusRule() {
+				// 正常的告警规则
+				alertRule := NewAlertRuleContext(rule, cluster)
+				alertRules[alertRule.Hash()] = alertRule
+			} else {
+				// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
+				externalRule := NewAlertRuleContext(rule, cluster)
+				externalAllRules[externalRule.Key()] = externalRule
+			}
 		}
 	}
 
@@ -105,19 +103,22 @@ func (rh *RuleHolder) SyncAlertRules() {
 		}
 	}
 
-	for hash, rule := range externalAllRules {
-		rh.externalLock.Lock()
-		if _, has := rh.externalAlertRules[hash]; !has {
-			rule.Prepare()
-			rh.externalAlertRules[hash] = rule
+	rh.externalLock.Lock()
+	for key, rule := range externalAllRules {
+		if curRule, has := rh.externalAlertRules[key]; has {
+			// rule存在,且hash一致,认为没有变更,这里可以根据需求单独实现一个关联数据更多的hash函数
+			if rule.Hash() == curRule.Hash() {
+				continue
+			}
 		}
-		rh.externalLock.Unlock()
+		// 现有规则中没有rule以及有rule但hash不一致的场景，需要触发rule的update
+		rule.Prepare()
+		rh.externalAlertRules[key] = rule
 	}
 
-	rh.externalLock.Lock()
-	for hash := range rh.externalAlertRules {
-		if _, has := externalAllRules[hash]; !has {
-			delete(rh.externalAlertRules, hash)
+	for key := range rh.externalAlertRules {
+		if _, has := externalAllRules[key]; !has {
+			delete(rh.externalAlertRules, key)
 		}
 	}
 	rh.externalLock.Unlock()
@@ -158,9 +159,12 @@ func (rh *RuleHolder) SyncRecordRules() {
 }
 
 func GetExternalAlertRule(cluster string, id int64) (*AlertRuleContext, bool) {
-	key := fmt.Sprintf("alert-%s-%d", cluster, id)
 	ruleHolder.externalLock.RLock()
 	defer ruleHolder.externalLock.RUnlock()
-	rule, has := ruleHolder.externalAlertRules[key]
+	rule, has := ruleHolder.externalAlertRules[ruleKey(cluster, id)]
 	return rule, has
+}
+
+func ruleKey(cluster string, id int64) string {
+	return fmt.Sprintf("alert-%s-%d", cluster, id)
 }

@@ -40,7 +40,7 @@ func (arc *AlertRuleContext) RuleFromCache() *models.AlertRule {
 }
 
 func (arc *AlertRuleContext) Key() string {
-	return fmt.Sprintf("alert-%s-%d", arc.cluster, arc.rule.Id)
+	return ruleKey(arc.cluster, arc.rule.Id)
 }
 
 func (arc *AlertRuleContext) Hash() string {
