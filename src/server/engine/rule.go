@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -61,15 +62,13 @@ func (rh *RuleHolder) SyncAlertRules() {
 		if rule == nil {
 			continue
 		}
-		
-		
+
 		ruleClusters := config.ReaderClients.Hit(rule.Cluster)
 		if !rule.IsPrometheusRule() {
-		        // 非 Prometheus 的规则, 不支持 $all, 直接从 rule.Cluster 解析
+			// 非 Prometheus 的规则, 不支持 $all, 直接从 rule.Cluster 解析
 			ruleClusters = strings.Fields(rule.Cluster)
 		}
-		
-		
+
 		for _, cluster := range ruleClusters {
 			// hash ring not hit
 			if !naming.ClusterHashRing.IsHit(cluster, fmt.Sprintf("%d", rule.Id), config.C.Heartbeat.Endpoint) {
