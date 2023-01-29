@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/didi/nightingale/v5/src/models"
-	"github.com/didi/nightingale/v5/src/server/config"
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
@@ -95,20 +94,7 @@ func loopSyncRecordingRules() {
 func syncRecordingRules() error {
 	start := time.Now()
 
-	clusterNames := config.ReaderClients.GetClusterNames()
-	if len(clusterNames) == 0 {
-		RecordingRuleCache.Reset()
-		logger.Warning("cluster is blank")
-		return nil
-	}
-
-	var clusterName string
-	// 只有一个集群，使用单集群模式，如果大于1个集群，则获取全部的规则
-	if len(clusterNames) == 1 {
-		clusterName = clusterNames[0]
-	}
-
-	stat, err := models.RecordingRuleStatistics(clusterName)
+	stat, err := models.RecordingRuleStatistics("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec RecordingRuleStatistics")
 	}
@@ -120,7 +106,7 @@ func syncRecordingRules() error {
 		return nil
 	}
 
-	lst, err := models.RecordingRuleGetsByCluster(clusterName)
+	lst, err := models.RecordingRuleGetsByCluster("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec RecordingRuleGetsByCluster")
 	}

@@ -57,14 +57,12 @@ func heartbeat() error {
 			return err
 		}
 		if len(clusters) == 0 {
-			// 实例刚刚部署，还没有在页面配置 cluster 的情况，先使用配置文件中的 cluster 上报心跳
-			for i := 0; i < len(config.C.Readers); i++ {
-				err := models.AlertingEngineHeartbeatWithCluster(config.C.Heartbeat.Endpoint, config.C.Readers[i].ClusterName)
-				if err != nil {
-					logger.Warningf("heartbeat with cluster %s err:%v", config.C.Readers[i].ClusterName, err)
-					continue
-				}
+			// 告警引擎页面还没有配置集群，先上报一个空的集群，让 n9e-server 实例在页面上显示出来
+			err := models.AlertingEngineHeartbeatWithCluster(config.C.Heartbeat.Endpoint, "")
+			if err != nil {
+				logger.Warningf("heartbeat with cluster %s err:%v", "", err)
 			}
+			logger.Warningf("heartbeat %s no cluster", config.C.Heartbeat.Endpoint)
 		}
 
 		err := models.AlertingEngineHeartbeat(config.C.Heartbeat.Endpoint)
