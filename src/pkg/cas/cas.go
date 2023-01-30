@@ -86,7 +86,15 @@ func wrapStateKey(key string) string {
 
 func (cli *ssoClient) genRedirectURL(state string) string {
 	var buf bytes.Buffer
-	buf.WriteString(cli.ssoAddr + "login")
+
+	ssoAddr, err := url.Parse(cli.config.SsoAddr)
+	ssoAddr.Path = "login"
+	if err != nil {
+		logger.Error(err)
+		return buf.String()
+	}
+
+	buf.WriteString(ssoAddr.String())
 	v := url.Values{
 		"service": {cli.callbackAddr},
 	}
