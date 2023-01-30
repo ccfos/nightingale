@@ -1,6 +1,10 @@
 package config
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/didi/nightingale/v5/src/pkg/tls"
+)
 
 type PromOption struct {
 	ClusterName   string
@@ -10,6 +14,9 @@ type PromOption struct {
 
 	Timeout     int64
 	DialTimeout int64
+
+	UseTLS bool
+	tls.ClientConfig
 
 	MaxIdleConnsPerHost int
 
