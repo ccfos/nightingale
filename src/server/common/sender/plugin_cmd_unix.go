@@ -1,7 +1,7 @@
 //go:build !windows
 // +build !windows
 
-package engine
+package sender
 
 import (
 	"os/exec"

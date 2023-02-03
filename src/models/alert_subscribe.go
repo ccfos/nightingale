@@ -250,3 +250,30 @@ func AlertSubscribeGetsByCluster(cluster string) ([]*AlertSubscribe, error) {
 	}
 	return slst, err
 }
+
+func (s *AlertSubscribe) MatchCluster(cluster string) bool {
+	if s.Cluster == ClusterAll {
+		return true
+	}
+	clusters := strings.Fields(s.Cluster)
+	for _, c := range clusters {
+		if c == cluster {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *AlertSubscribe) ModifyEvent(event *AlertCurEvent) {
+	if s.RedefineSeverity == 1 {
+		event.Severity = s.NewSeverity
+	}
+
+	if s.RedefineChannels == 1 {
+		event.NotifyChannels = s.NewChannels
+		event.NotifyChannelsJSON = strings.Fields(s.NewChannels)
+	}
+
+	event.NotifyGroups = s.UserGroupIds
+	event.NotifyGroupsJSON = strings.Fields(s.UserGroupIds)
+}

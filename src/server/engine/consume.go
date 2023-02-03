@@ -59,9 +59,7 @@ func consumeOne(event *models.AlertCurEvent) {
 		return
 	}
 
-	fillUsers(event)
-	callback(event)
-	notify(event)
+	HandleEventNotify(event, false)
 }
 
 func persist(event *models.AlertCurEvent) {
@@ -149,7 +147,6 @@ func fillUsers(e *models.AlertCurEvent) {
 		if err != nil {
 			continue
 		}
-
 		gids = append(gids, gid)
 	}
 
@@ -168,14 +165,6 @@ func fillUsers(e *models.AlertCurEvent) {
 
 func mapKeys(m map[int64]struct{}) []int64 {
 	lst := make([]int64, 0, len(m))
-	for k := range m {
-		lst = append(lst, k)
-	}
-	return lst
-}
-
-func StringSetKeys(m map[string]struct{}) []string {
-	lst := make([]string, 0, len(m))
 	for k := range m {
 		lst = append(lst, k)
 	}

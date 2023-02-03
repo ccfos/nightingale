@@ -1,4 +1,4 @@
-package engine
+package sender
 
 import "os/exec"
 

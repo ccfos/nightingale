@@ -40,7 +40,7 @@ func pushEventToQueue(c *gin.Context) {
 		event.TagsMap[arr[0]] = arr[1]
 	}
 
-	if engine.EventMuteStra.IsMuted(nil, event) {
+	if engine.EventMuteStrategy(nil, event) {
 		logger.Infof("event_muted: rule_id=%d %s", event.RuleId, event.Hash)
 		ginx.NewRender(c).Message(nil)
 		return

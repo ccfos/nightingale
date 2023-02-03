@@ -1,20 +1,15 @@
 package sender
 
 import (
-	"net/url"
+	"html/template"
 	"strings"
 	"time"
 
-	"github.com/didi/nightingale/v5/src/pkg/poster"
 	"github.com/toolkits/pkg/logger"
-)
 
-type DingtalkMessage struct {
-	Title     string
-	Text      string
-	AtMobiles []string
-	Tokens    []string
-}
+	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/pkg/poster"
+)
 
 type dingtalkMarkdown struct {
 	Title string `json:"title"`
@@ -32,48 +27,91 @@ type dingtalk struct {
 	At       dingtalkAt       `json:"at"`
 }
 
-func SendDingtalk(message DingtalkMessage) {
-	ats := make([]string, len(message.AtMobiles))
-	for i := 0; i < len(message.AtMobiles); i++ {
-		ats[i] = "@" + message.AtMobiles[i]
+type DingtalkSender struct {
+	tpl *template.Template
+}
+
+func (ds *DingtalkSender) Send(ctx MessageContext) {
+	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
+		return
 	}
 
-	for i := 0; i < len(message.Tokens); i++ {
-		u, err := url.Parse(message.Tokens[i])
-		if err != nil {
-			logger.Errorf("dingtalk_sender: failed to parse error=%v", err)
-		}
+	urls, ats := ds.extract(ctx.Users)
+	if len(urls) == 0 {
+		return
+	}
+	message := BuildTplMessage(ds.tpl, ctx.Event)
 
-		v, err := url.ParseQuery(u.RawQuery)
-		if err != nil {
-			logger.Errorf("dingtalk_sender: failed to parse query error=%v", err)
-		}
-
-		ur := "https://oapi.dingtalk.com/robot/send?access_token=" + u.Path
-		if strings.HasPrefix(message.Tokens[i], "https://") {
-			ur = message.Tokens[i]
-		}
-		body := dingtalk{
-			Msgtype: "markdown",
-			Markdown: dingtalkMarkdown{
-				Title: message.Title,
-				Text:  message.Text,
-			},
-		}
-
-		if v.Get("noat") != "1" {
-			body.Markdown.Text = message.Text + " " + strings.Join(ats, " ")
-			body.At = dingtalkAt{
-				AtMobiles: message.AtMobiles,
-				IsAtAll:   false,
+	for _, url := range urls {
+		var body dingtalk
+		// NoAt in url
+		if strings.Contains(url, "noat=1") {
+			body = dingtalk{
+				Msgtype: "markdown",
+				Markdown: dingtalkMarkdown{
+					Title: ctx.Rule.Name,
+					Text:  message,
+				},
+			}
+		} else {
+			body = dingtalk{
+				Msgtype: "markdown",
+				Markdown: dingtalkMarkdown{
+					Title: ctx.Rule.Name,
+					Text:  message + " " + strings.Join(ats, " "),
+				},
+				At: dingtalkAt{
+					AtMobiles: ats,
+					IsAtAll:   false,
+				},
 			}
 		}
+		ds.doSend(url, body)
+	}
+}
 
-		res, code, err := poster.PostJSON(ur, time.Second*5, body, 3)
-		if err != nil {
-			logger.Errorf("dingtalk_sender: result=fail url=%s code=%d error=%v response=%s", ur, code, err, string(res))
-		} else {
-			logger.Infof("dingtalk_sender: result=succ url=%s code=%d response=%s", ur, code, string(res))
+func (ds *DingtalkSender) SendRaw(users []*models.User, title, message string) {
+	if len(users) == 0 {
+		return
+	}
+	urls, _ := ds.extract(users)
+	body := dingtalk{
+		Msgtype: "markdown",
+		Markdown: dingtalkMarkdown{
+			Title: title,
+			Text:  message,
+		},
+	}
+	for _, url := range urls {
+		ds.doSend(url, body)
+	}
+}
+
+// extract urls and ats from Users
+func (ds *DingtalkSender) extract(users []*models.User) ([]string, []string) {
+	urls := make([]string, 0, len(users))
+	ats := make([]string, 0, len(users))
+
+	for _, user := range users {
+		if user.Phone != "" {
+			ats = append(ats, "@"+user.Phone)
 		}
+		if token, has := user.ExtractToken(models.Dingtalk); has {
+			url := token
+			if !strings.HasPrefix(token, "https://") {
+				url = "https://oapi.dingtalk.com/robot/send?access_token=" + token
+			}
+			urls = append(urls, url)
+		}
+	}
+	return urls, ats
+}
+
+func (ds *DingtalkSender) doSend(url string, body dingtalk) {
+	res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
+	if err != nil {
+		logger.Errorf("dingtalk_sender: result=fail url=%s code=%d error=%v response=%s", url, code, err, string(res))
+	} else {
+		logger.Infof("dingtalk_sender: result=succ url=%s code=%d response=%s", url, code, string(res))
 	}
 }

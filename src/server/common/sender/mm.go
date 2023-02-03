@@ -1,12 +1,15 @@
 package sender
 
 import (
+	"html/template"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/didi/nightingale/v5/src/pkg/poster"
 	"github.com/toolkits/pkg/logger"
+
+	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/pkg/poster"
 )
 
 type MatterMostMessage struct {
@@ -20,16 +23,49 @@ type mm struct {
 	Text     string `json:"text"`
 }
 
-func MapStrToStr(arr []string, fn func(s string) string) []string {
-	var newArray = []string{}
-	for _, it := range arr {
-		newArray = append(newArray, fn(it))
+type MmSender struct {
+	tpl *template.Template
+}
+
+func (ms *MmSender) Send(ctx MessageContext) {
+	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
+		return
 	}
-	return newArray
+
+	urls := ms.extract(ctx.Users)
+	if len(urls) == 0 {
+		return
+	}
+	message := BuildTplMessage(ms.tpl, ctx.Event)
+
+	SendMM(MatterMostMessage{
+		Text:   message,
+		Tokens: urls,
+	})
+}
+
+func (ms *MmSender) SendRaw(users []*models.User, title, message string) {
+	urls := ms.extract(users)
+	if len(urls) == 0 {
+		return
+	}
+	SendMM(MatterMostMessage{
+		Text:   message,
+		Tokens: urls,
+	})
+}
+
+func (ms *MmSender) extract(users []*models.User) []string {
+	tokens := make([]string, 0, len(users))
+	for _, user := range users {
+		if token, has := user.ExtractToken(models.Mm); has {
+			tokens = append(tokens, token)
+		}
+	}
+	return tokens
 }
 
 func SendMM(message MatterMostMessage) {
-
 	for i := 0; i < len(message.Tokens); i++ {
 		u, err := url.Parse(message.Tokens[i])
 		if err != nil {
@@ -70,4 +106,12 @@ func SendMM(message MatterMostMessage) {
 			}
 		}
 	}
+}
+
+func MapStrToStr(arr []string, fn func(s string) string) []string {
+	var newArray = []string{}
+	for _, it := range arr {
+		newArray = append(newArray, fn(it))
+	}
+	return newArray
 }

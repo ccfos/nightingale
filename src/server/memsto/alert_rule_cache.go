@@ -9,7 +9,6 @@ import (
 	"github.com/toolkits/pkg/logger"
 
 	"github.com/didi/nightingale/v5/src/models"
-	"github.com/didi/nightingale/v5/src/server/config"
 	promstat "github.com/didi/nightingale/v5/src/server/stat"
 )
 
@@ -95,14 +94,6 @@ func loopSyncAlertRules() {
 
 func syncAlertRules() error {
 	start := time.Now()
-
-	clusterNames := config.ReaderClients.GetClusterNames()
-	if len(clusterNames) == 0 {
-		AlertRuleCache.Reset()
-		logger.Warning("cluster is blank")
-		return nil
-	}
-
 	stat, err := models.AlertRuleStatistics("")
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AlertRuleStatistics")

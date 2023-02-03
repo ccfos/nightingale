@@ -2,14 +2,53 @@ package sender
 
 import (
 	"crypto/tls"
+	"html/template"
 	"time"
 
-	"github.com/didi/nightingale/v5/src/server/config"
 	"github.com/toolkits/pkg/logger"
 	"gopkg.in/gomail.v2"
+
+	"github.com/didi/nightingale/v5/src/models"
+	"github.com/didi/nightingale/v5/src/server/config"
 )
 
 var mailch chan *gomail.Message
+
+type EmailSender struct {
+	subjectTpl *template.Template
+	contentTpl *template.Template
+}
+
+func (es *EmailSender) Send(ctx MessageContext) {
+	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
+		return
+	}
+	tos := es.extract(ctx.Users)
+	var subject string
+
+	if es.subjectTpl != nil {
+		subject = BuildTplMessage(es.subjectTpl, ctx.Event)
+	} else {
+		subject = ctx.Rule.Name
+	}
+	content := BuildTplMessage(es.contentTpl, ctx.Event)
+	WriteEmail(subject, content, tos)
+}
+
+func (es *EmailSender) SendRaw(users []*models.User, title, message string) {
+	tos := es.extract(users)
+	WriteEmail(title, message, tos)
+}
+
+func (es *EmailSender) extract(users []*models.User) []string {
+	tos := make([]string, 0, len(users))
+	for _, u := range users {
+		if u.Email != "" {
+			tos = append(tos, u.Email)
+		}
+	}
+	return tos
+}
 
 func SendEmail(subject, content string, tos []string) {
 	conf := config.C.SMTP

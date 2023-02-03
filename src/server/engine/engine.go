@@ -23,9 +23,6 @@ func Start(ctx context.Context) error {
 	// start loop consumer
 	go loopConsume(ctx)
 
-	// filter my rules and start worker
-	//go loopFilterRules(ctx)
-
 	go ruleHolder.LoopSyncRules(ctx)
 
 	go reportQueueSize()
