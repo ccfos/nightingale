@@ -64,11 +64,7 @@
 
 ## Screenshots
 
-<video width="480" controls>
-  <source src="https://fcpub-1301667576.cos.ap-nanjing.myqcloud.com/n9e-screenshots.mp4" type="video/mp4">
-</video>
-
-
+https://user-images.githubusercontent.com/792850/216888712-2565fcea-9df5-47bd-a49e-d60af9bd76e8.mp4
 
 ## Architecture
 
