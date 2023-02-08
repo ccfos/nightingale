@@ -238,12 +238,15 @@ func (ar *AlertRule) FE2DB() error {
 	}
 
 	if len(ar.EnableDaysOfWeeksJSON) > 0 {
-		ar.EnableDaysOfWeek = strings.Join(ar.EnableDaysOfWeeksJSON[0], " ")
-		for i := 1; i < len(ar.EnableDaysOfWeeksJSON); i++ {
-			if i == len(ar.EnableDaysOfWeeksJSON)-1 {
-				ar.EnableDaysOfWeek += strings.Join(ar.EnableDaysOfWeeksJSON[i], " ")
+		for i := 0; i < len(ar.EnableDaysOfWeeksJSON); i++ {
+			if len(ar.EnableDaysOfWeeksJSON) == 1 {
+				ar.EnableDaysOfWeek = strings.Join(ar.EnableDaysOfWeeksJSON[i], " ")
 			} else {
-				ar.EnableDaysOfWeek += strings.Join(ar.EnableDaysOfWeeksJSON[i], " ") + ";"
+				if i == len(ar.EnableDaysOfWeeksJSON)-1 {
+					ar.EnableDaysOfWeek += strings.Join(ar.EnableDaysOfWeeksJSON[i], " ")
+				} else {
+					ar.EnableDaysOfWeek += strings.Join(ar.EnableDaysOfWeeksJSON[i], " ") + ";"
+				}
 			}
 		}
 	} else {
