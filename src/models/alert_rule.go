@@ -14,47 +14,50 @@ import (
 )
 
 type AlertRule struct {
-	Id                   int64       `json:"id" gorm:"primaryKey"`
-	GroupId              int64       `json:"group_id"`                     // busi group id
-	Cate                 string      `json:"cate"`                         // alert rule cate (prometheus|elasticsearch)
-	Cluster              string      `json:"cluster"`                      // take effect by clusters, seperated by space
-	Name                 string      `json:"name"`                         // rule name
-	Note                 string      `json:"note"`                         // will sent in notify
-	Prod                 string      `json:"prod"`                         // product empty means n9e
-	Algorithm            string      `json:"algorithm"`                    // algorithm (''|holtwinters), empty means threshold
-	AlgoParams           string      `json:"-" gorm:"algo_params"`         // params algorithm need
-	AlgoParamsJson       interface{} `json:"algo_params" gorm:"-"`         //
-	Delay                int         `json:"delay"`                        // Time (in seconds) to delay evaluation
-	Severity             int         `json:"severity"`                     // 1: Emergency 2: Warning 3: Notice
-	Disabled             int         `json:"disabled"`                     // 0: enabled, 1: disabled
-	PromForDuration      int         `json:"prom_for_duration"`            // prometheus for, unit:s
-	PromQl               string      `json:"prom_ql"`                      // just one ql
-	PromEvalInterval     int         `json:"prom_eval_interval"`           // unit:s
-	EnableStime          string      `json:"-"`                            // split by space: "00:00 10:00 12:00"
-	EnableStimeJSON      []string    `json:"enable_stime" gorm:"-"`        // for fe
-	EnableEtime          string      `json:"-"`                            // split by space: "00:00 10:00 12:00"
-	EnableEtimeJSON      []string    `json:"enable_etime" gorm:"-"`        // for fe
-	EnableDaysOfWeek     string      `json:"-"`                            // eg: "0 1 2 3 4 5 6 ; 0 1 2"
-	EnableDaysOfWeekJSON [][]string  `json:"enable_days_of_week" gorm:"-"` // for fe
-	EnableInBG           int         `json:"enable_in_bg"`                 // 0: global 1: enable one busi-group
-	NotifyRecovered      int         `json:"notify_recovered"`             // whether notify when recovery
-	NotifyChannels       string      `json:"-"`                            // split by space: sms voice email dingtalk wecom
-	NotifyChannelsJSON   []string    `json:"notify_channels" gorm:"-"`     // for fe
-	NotifyGroups         string      `json:"-"`                            // split by space: 233 43
-	NotifyGroupsObj      []UserGroup `json:"notify_groups_obj" gorm:"-"`   // for fe
-	NotifyGroupsJSON     []string    `json:"notify_groups" gorm:"-"`       // for fe
-	NotifyRepeatStep     int         `json:"notify_repeat_step"`           // notify repeat interval, unit: min
-	NotifyMaxNumber      int         `json:"notify_max_number"`            // notify: max number
-	RecoverDuration      int64       `json:"recover_duration"`             // unit: s
-	Callbacks            string      `json:"-"`                            // split by space: http://a.com/api/x http://a.com/api/y'
-	CallbacksJSON        []string    `json:"callbacks" gorm:"-"`           // for fe
-	RunbookUrl           string      `json:"runbook_url"`                  // sop url
-	AppendTags           string      `json:"-"`                            // split by space: service=n9e mod=api
-	AppendTagsJSON       []string    `json:"append_tags" gorm:"-"`         // for fe
-	CreateAt             int64       `json:"create_at"`
-	CreateBy             string      `json:"create_by"`
-	UpdateAt             int64       `json:"update_at"`
-	UpdateBy             string      `json:"update_by"`
+	Id                    int64       `json:"id" gorm:"primaryKey"`
+	GroupId               int64       `json:"group_id"`                      // busi group id
+	Cate                  string      `json:"cate"`                          // alert rule cate (prometheus|elasticsearch)
+	Cluster               string      `json:"cluster"`                       // take effect by clusters, seperated by space
+	Name                  string      `json:"name"`                          // rule name
+	Note                  string      `json:"note"`                          // will sent in notify
+	Prod                  string      `json:"prod"`                          // product empty means n9e
+	Algorithm             string      `json:"algorithm"`                     // algorithm (''|holtwinters), empty means threshold
+	AlgoParams            string      `json:"-" gorm:"algo_params"`          // params algorithm need
+	AlgoParamsJson        interface{} `json:"algo_params" gorm:"-"`          //
+	Delay                 int         `json:"delay"`                         // Time (in seconds) to delay evaluation
+	Severity              int         `json:"severity"`                      // 1: Emergency 2: Warning 3: Notice
+	Disabled              int         `json:"disabled"`                      // 0: enabled, 1: disabled
+	PromForDuration       int         `json:"prom_for_duration"`             // prometheus for, unit:s
+	PromQl                string      `json:"prom_ql"`                       // just one ql
+	PromEvalInterval      int         `json:"prom_eval_interval"`            // unit:s
+	EnableStime           string      `json:"-"`                             // split by space: "00:00 10:00 12:00"
+	EnableStimeJSON       string      `json:"enable_stime" gorm:"-"`         // for fe
+	EnableStimesJSON      []string    `json:"enable_stimes" gorm:"-"`        // for fe
+	EnableEtime           string      `json:"-"`                             // split by space: "00:00 10:00 12:00"
+	EnableEtimeJSON       string      `json:"enable_etime" gorm:"-"`         // for fe
+	EnableEtimesJSON      []string    `json:"enable_etimes" gorm:"-"`        // for fe
+	EnableDaysOfWeek      string      `json:"-"`                             // eg: "0 1 2 3 4 5 6 ; 0 1 2"
+	EnableDaysOfWeekJSON  []string    `json:"enable_days_of_week" gorm:"-"`  // for fe
+	EnableDaysOfWeeksJSON [][]string  `json:"enable_days_of_weeks" gorm:"-"` // for fe
+	EnableInBG            int         `json:"enable_in_bg"`                  // 0: global 1: enable one busi-group
+	NotifyRecovered       int         `json:"notify_recovered"`              // whether notify when recovery
+	NotifyChannels        string      `json:"-"`                             // split by space: sms voice email dingtalk wecom
+	NotifyChannelsJSON    []string    `json:"notify_channels" gorm:"-"`      // for fe
+	NotifyGroups          string      `json:"-"`                             // split by space: 233 43
+	NotifyGroupsObj       []UserGroup `json:"notify_groups_obj" gorm:"-"`    // for fe
+	NotifyGroupsJSON      []string    `json:"notify_groups" gorm:"-"`        // for fe
+	NotifyRepeatStep      int         `json:"notify_repeat_step"`            // notify repeat interval, unit: min
+	NotifyMaxNumber       int         `json:"notify_max_number"`             // notify: max number
+	RecoverDuration       int64       `json:"recover_duration"`              // unit: s
+	Callbacks             string      `json:"-"`                             // split by space: http://a.com/api/x http://a.com/api/y'
+	CallbacksJSON         []string    `json:"callbacks" gorm:"-"`            // for fe
+	RunbookUrl            string      `json:"runbook_url"`                   // sop url
+	AppendTags            string      `json:"-"`                             // split by space: service=n9e mod=api
+	AppendTagsJSON        []string    `json:"append_tags" gorm:"-"`          // for fe
+	CreateAt              int64       `json:"create_at"`
+	CreateBy              string      `json:"create_by"`
+	UpdateAt              int64       `json:"update_at"`
+	UpdateBy              string      `json:"update_by"`
 }
 
 func (ar *AlertRule) TableName() string {
@@ -226,19 +229,30 @@ func (ar *AlertRule) FillNotifyGroups(cache map[int64]*UserGroup) error {
 }
 
 func (ar *AlertRule) FE2DB() error {
-	ar.EnableStime = strings.Join(ar.EnableStimeJSON, " ")
-	ar.EnableEtime = strings.Join(ar.EnableEtimeJSON, " ")
-	for i := 0; i < len(ar.EnableDaysOfWeekJSON); i++ {
-		if len(ar.EnableDaysOfWeekJSON) == 1 {
-			ar.EnableDaysOfWeek = strings.Join(ar.EnableDaysOfWeekJSON[i], " ")
-		} else {
-			if i == len(ar.EnableDaysOfWeekJSON)-1 {
-				ar.EnableDaysOfWeek += strings.Join(ar.EnableDaysOfWeekJSON[i], " ")
+	if len(ar.EnableStimesJSON) > 0 {
+		ar.EnableStime = strings.Join(ar.EnableStimesJSON, " ")
+		ar.EnableEtime = strings.Join(ar.EnableEtimesJSON, " ")
+	} else {
+		ar.EnableStime = ar.EnableStimeJSON
+		ar.EnableEtime = ar.EnableEtimeJSON
+	}
+
+	if len(ar.EnableDaysOfWeeksJSON) > 0 {
+		for i := 0; i < len(ar.EnableDaysOfWeeksJSON); i++ {
+			if len(ar.EnableDaysOfWeeksJSON) == 1 {
+				ar.EnableDaysOfWeek = strings.Join(ar.EnableDaysOfWeeksJSON[i], " ")
 			} else {
-				ar.EnableDaysOfWeek += strings.Join(ar.EnableDaysOfWeekJSON[i], " ") + ";"
+				if i == len(ar.EnableDaysOfWeeksJSON)-1 {
+					ar.EnableDaysOfWeek += strings.Join(ar.EnableDaysOfWeeksJSON[i], " ")
+				} else {
+					ar.EnableDaysOfWeek += strings.Join(ar.EnableDaysOfWeeksJSON[i], " ") + ";"
+				}
 			}
 		}
+	} else {
+		ar.EnableDaysOfWeek = strings.Join(ar.EnableDaysOfWeekJSON, " ")
 	}
+
 	ar.NotifyChannels = strings.Join(ar.NotifyChannelsJSON, " ")
 	ar.NotifyGroups = strings.Join(ar.NotifyGroupsJSON, " ")
 	ar.Callbacks = strings.Join(ar.CallbacksJSON, " ")
@@ -253,12 +267,21 @@ func (ar *AlertRule) FE2DB() error {
 }
 
 func (ar *AlertRule) DB2FE() {
-	ar.EnableStimeJSON = strings.Fields(ar.EnableStime)
-	ar.EnableEtimeJSON = strings.Fields(ar.EnableEtime)
+	ar.EnableStimesJSON = strings.Fields(ar.EnableStime)
+	ar.EnableEtimesJSON = strings.Fields(ar.EnableEtime)
+	if len(ar.EnableEtimesJSON) > 0 {
+		ar.EnableStimeJSON = ar.EnableStimesJSON[0]
+		ar.EnableEtimeJSON = ar.EnableEtimesJSON[0]
+	}
+
 	cache := strings.Split(ar.EnableDaysOfWeek, ";")
 	for i := 0; i < len(cache); i++ {
-		ar.EnableDaysOfWeekJSON = append(ar.EnableDaysOfWeekJSON, strings.Fields(cache[i]))
+		ar.EnableDaysOfWeeksJSON = append(ar.EnableDaysOfWeeksJSON, strings.Fields(cache[i]))
 	}
+	if len(ar.EnableDaysOfWeeksJSON) > 0 {
+		ar.EnableDaysOfWeekJSON = ar.EnableDaysOfWeeksJSON[0]
+	}
+
 	ar.NotifyChannelsJSON = strings.Fields(ar.NotifyChannels)
 	ar.NotifyGroupsJSON = strings.Fields(ar.NotifyGroups)
 	ar.CallbacksJSON = strings.Fields(ar.Callbacks)
