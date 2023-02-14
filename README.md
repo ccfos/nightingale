@@ -17,9 +17,11 @@
   <img alt="GitHub contributors" src="https://img.shields.io/github/contributors-anon/ccfos/nightingale"/></a>
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
 </p>
-<p align="center"><b>All-in-one</b> 的开源云原生监控系统</p>
-<p align="center"><b>开箱即用</b>，集数据采集、可视化、监控告警于一体</p>
-<p align="center">推荐升级您的 <b>Prometheus + AlertManager + Grafana</b> 组合方案到夜莺监控</p>
+<p align="center">
+  <b>All-in-one</b> 的开源云原生监控系统 <br/>
+  <b>开箱即用</b>，集数据采集、可视化、监控告警于一体 <br/>
+  推荐升级您的 <b>Prometheus + AlertManager + Grafana</b> 组合方案到夜莺！
+</p>
 
 [English](./README_EN.md) | [中文](./README.md)
 
