@@ -1,7 +1,6 @@
 <p align="center">
   <a href="https://github.com/ccfos/nightingale">
     <img src="doc/img/nightingale_logo_h.png" alt="nightingale - cloud native monitoring" width="240" /></a>
-  <p align="center">夜莺是一款开源的云原生监控系统，采用 All-in-one 的设计理念，集数据采集、可视化、监控告警于一体，开箱即用。推荐升级您的 Prometheus + AlertManager + Grafana 组合方案到夜莺监控。</p>
 </p>
 
 <p align="center">
@@ -11,13 +10,20 @@
 <a href="https://hub.docker.com/u/flashcatcloud">
   <img alt="Docker pulls" src="https://img.shields.io/docker/pulls/flashcatcloud/nightingale"/></a>
 <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/ccfos/nightingale">
+<img alt="GitHub Repo issues" src="https://img.shields.io/github/issues/ccfos/nightingale">
+<img alt="GitHub Repo issues closed" src="https://img.shields.io/github/issues-closed/ccfos/nightingale">
 <img alt="GitHub forks" src="https://img.shields.io/github/forks/ccfos/nightingale">
 <a href="https://github.com/ccfos/nightingale/graphs/contributors">
   <img alt="GitHub contributors" src="https://img.shields.io/github/contributors-anon/ccfos/nightingale"/></a>
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
 </p>
+<p align="center"><b>All-in-one</b> 的开源云原生监控系统</p>
+<p align="center"><b>开箱即用</b>，集数据采集、可视化、监控告警于一体</p>
+<p align="center">推荐升级您的 <b>Prometheus + AlertManager + Grafana</b> 组合方案到夜莺监控</p>
 
 [English](./README_EN.md) | [中文](./README.md)
+
+
 
 ## Highlighted Features
 
@@ -27,10 +33,10 @@
   - 可视化的告警配置和管理，支持丰富的告警规则，提供屏蔽规则、订阅规则的配置能力，支持告警多种送达渠道，支持告警自愈、告警事件管理等；
 - **云原生**
   - 以交钥匙的方式快速构建企业级的云原生监控体系，支持 [Categraf](https://github.com/flashcatcloud/categraf)、Telegraf、Grafana-agent 等多种采集器，支持 Prometheus、VictoriaMetrics、M3DB、ElasticSearch 等多种数据库，兼容支持导入 Grafana 仪表盘，**与云原生生态无缝集成**；
-- **高性能，高可用**
+- **高性能 高可用**
   - 得益于夜莺的多数据源管理引擎，和夜莺引擎侧优秀的架构设计，借助于高性能时序库，可以满足数亿时间线的采集、存储、告警分析场景，节省大量成本；
   - 夜莺监控组件均可水平扩展，无单点，已在上千家企业部署落地，经受了严苛的生产实践检验。众多互联网头部公司，夜莺集群机器达百台，处理数亿级时间线，重度使用夜莺监控；
-- **灵活扩展，中心化管理**
+- **灵活扩展 中心化管理**
   - 夜莺监控，可部署在 1 核 1G 的云主机，可在上百台机器集群化部署，可运行在 K8s 中；也可将时序库、告警引擎等组件下沉到各机房、各 Region，兼顾边缘部署和中心化统一管理，**解决数据割裂，缺乏统一视图的难题**；
 - **开放社区**
   - 托管于[中国计算机学会开源发展委员会](https://www.ccf.org.cn/kyfzwyh/)，有[快猫星云](https://flashcat.cloud)和众多公司的持续投入，和数千名社区用户的积极参与，以及夜莺监控项目清晰明确的定位，都保证了夜莺开源社区健康、长久的发展。活跃、专业的社区用户也在持续迭代和沉淀更多的最佳实践于产品中；
@@ -48,19 +54,20 @@
 - 学习曲线高，多人多团队模式下，希望有更好的协同使用效率；
 - 微服务和云原生架构下，监控数据的生命周期多变、监控数据维度基数高，Zabbix 数据模型不易适配；
 
-**如果您在使用 [Open-Falcon](https://github.com/open-falcon/falcon-plus)，我们更推荐您升级到夜莺：**
+> 了解更多Zabbix和夜莺监控的对比，推荐您进一步阅读[《Zabbix 和夜莺监控选型对比》](https://flashcat.cloud/blog/zabbx-vs-nightingale/)
 
-- 关于 Open-Falcon 和夜莺的详细介绍，请参考阅读：[云原生监控的十个特点和趋势](https://mp.weixin.qq.com/s?__biz=MzkzNjI5OTM5Nw==&mid=2247483738&idx=1&sn=e8bdbb974a2cd003c1abcc2b5405dd18&chksm=c2a19fb0f5d616a63185cd79277a79a6b80118ef2185890d0683d2bb20451bd9303c78d083c5#rd)。
+**如果您在使用 [Open-Falcon](https://github.com/open-falcon/falcon-plus)，我们推荐您升级到夜莺：**
+
+- 关于 Open-Falcon 和夜莺的详细介绍，请参考阅读：[《云原生监控的十个特点和趋势》](http://flashcat.cloud/blog/10-trends-of-cloudnative-monitoring/)
 
 **我们推荐您使用 [Categraf](https://github.com/flashcatcloud/categraf) 作为首选的监控数据采集器**：
 
-- [Categraf](https://github.com/flashcatcloud/categraf) 是夜莺监控的默认采集器，采用开放插件机制和 all-in-one 的设计，同时支持 metric、log、trace、event 的采集。Categraf 不仅可以采集 CPU、内存、网络等系统层面的指标，也集成了众多开源组件的采集能力，支持K8s生态。Categraf 内置了对应的仪表盘和告警规则，开箱即用。
+- [Categraf](https://github.com/flashcatcloud/categraf) 是夜莺监控的默认采集器，采用开放插件机制和 All-in-one 的设计理念，同时支持 metric、log、trace、event 的采集。Categraf 不仅可以采集 CPU、内存、网络等系统层面的指标，也集成了众多开源组件的采集能力，支持K8s生态。Categraf 内置了对应的仪表盘和告警规则，开箱即用。
  
 
 ## Getting Started
 
-- [国外文档](https://n9e.github.io/)
-- [国内文档](http://n9e.flashcat.cloud/)
+[国外文档](https://n9e.github.io/) |  [国内文档](http://n9e.flashcat.cloud/)
 
 ## Screenshots
 
@@ -98,11 +105,11 @@ https://user-images.githubusercontent.com/792850/216888712-2565fcea-9df5-47bd-a4
 - 我们也推荐你加入微信群，和其他夜莺用户交流经验 (请先加好友：[UlricGO](https://www.gitlink.org.cn/UlricQin/gist/tree/master/self.jpeg) 备注：夜莺加群+姓名+公司)
 
 
-## Who is using
+## Who is using Nightingale
 
 您可以通过在 **[Who is Using Nightingale](https://github.com/ccfos/nightingale/issues/897)** 登记您的使用情况，分享您的使用经验。
 
-## Stargazers
+## Stargazers over time
 [![Stargazers over time](https://starchart.cc/ccfos/nightingale.svg)](https://starchart.cc/ccfos/nightingale)
 
 ## Contributors
