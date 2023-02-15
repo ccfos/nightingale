@@ -36,7 +36,7 @@ services:
       - nightingale
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:v2.37.5
     container_name: prometheus
     hostname: prometheus
     restart: always
@@ -53,7 +53,7 @@ services:
       - "--storage.tsdb.path=/prometheus"
       - "--web.console.libraries=/usr/share/prometheus/console_libraries"
       - "--web.console.templates=/usr/share/prometheus/consoles"
-      - "--enable-feature=remote-write-receiver"
+      - "--web.enable-remote-write-receiver"
       - "--query.lookback-delta=2m"
 
   ibex:
