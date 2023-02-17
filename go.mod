@@ -6,7 +6,7 @@ require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/pprof v1.3.0
-	github.com/gin-gonic/gin v1.7.4
+	github.com/gin-gonic/gin v1.7.7
 	github.com/go-ldap/ldap/v3 v3.4.1
 	github.com/go-redis/redis/v9 v9.0.0-rc.1
 	github.com/gogo/protobuf v1.3.2
