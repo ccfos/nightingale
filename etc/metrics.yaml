@@ -1,4 +1,6 @@
 zh:
+  ip_conntrack_count: 连接跟踪表条目总数（单位：int, count）
+  ip_conntrack_max: 连接跟踪表最大容量（单位：int, size）
   cpu_usage_idle: CPU空闲率（单位：%）
   cpu_usage_active: CPU使用率（单位：%）
   cpu_usage_system: CPU内核态时间占比（单位：%）
@@ -250,6 +252,8 @@ zh:
   cloudwatch_aws_rds_write_throughput_sum: rds 写入吞吐量总和
 
 en:
+  ip_conntrack_count: the number of entries in the conntrack table（unit：int, count）
+  ip_conntrack_max: the max capacity of the conntrack table（unit：int, size）
   cpu_usage_idle: "CPU idle rate(unit：%)"
   cpu_usage_active: "CPU usage rate(unit：%)"
   cpu_usage_system: "CPU kernel state time proportion(unit：%)"
