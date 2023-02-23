@@ -1,5 +1,11 @@
+# coding=utf-8
+import re
+import os
+import sys
+import glob
 import json
 import yaml
+import argparse
 
 '''
 将promtheus/vmalert的rule转换为n9e中的rule
@@ -21,7 +27,7 @@ def convert_interval(interval):
     return int(interval)
 
 
-def convert_alert(rule, interval):
+def convert_alert(rule, interval, ruletmpl):
     name = rule['alert']
     prom_ql = rule['expr']
     if 'for' in rule:
@@ -40,22 +46,32 @@ def convert_alert(rule, interval):
     severity = 2
     if 'labels' in rule:
         for k, v in rule['labels'].items():
-            if k != 'severity':
+            # expr 经常包含空格，跳过这个标签
+            if k == 'expr' or  k == 'env' :
+                continue
+            if k != 'severity' and k != 'level' :
                 append_tags.append('{}={}'.format(k, v))
                 continue
             if v == 'critical':
                 severity = 1
-            elif v == 'info':
+            elif v == 'info' or v == 'warning':
                 severity = 3
             # elif v == 'warning':
             #     severity = 2
+    if len(ruletmpl['tags']) >= 1:
+        for k, v in ruletmpl['tags'].items():
+            append_tags.append('{}={}'.format(k, v))
+    
+    disabled = 1
+    if ruletmpl['enable']:
+        disabled = 0
 
 
     n9e_alert_rule = {
         "name": name,
         "note": note,
         "severity": severity,
-        "disabled": 0,
+        "disabled": disabled,
         "prom_for_duration": prom_for_duration,
         "prom_ql": prom_ql,
         "prom_eval_interval": prom_eval_interval,
@@ -82,7 +98,7 @@ def convert_alert(rule, interval):
     return n9e_alert_rule
 
 
-def convert_record(rule, interval):
+def convert_record(rule, interval, ruletmpl):
     name = rule['record']
     prom_ql = rule['expr']
     prom_eval_interval = convert_interval(interval)
@@ -90,12 +106,24 @@ def convert_record(rule, interval):
     append_tags = []
     if 'labels' in rule:
         for k, v in rule['labels'].items():
+            # expr 经常包含空格，跳过这个标签
+            if k == 'expr':
+                continue
             append_tags.append('{}={}'.format(k, v))
+
+    if len(ruletmpl['tags']) >= 1:
+        for k, v in ruletmpl['tags'].items():
+            append_tags.append('{}={}'.format(k, v))
+    # record flag
+    append_tags.append('{}={}'.format("record", "True"))   
+    disabled = 1
+    if ruletmpl['enable'] :
+        disabled = 0
 
     n9e_record_rule = {
         "name": name,
         "note": note,
-        "disabled": 0,
+        "disabled": disabled,
         "prom_ql": prom_ql,
         "prom_eval_interval": prom_eval_interval,
         "append_tags": append_tags
@@ -117,23 +145,26 @@ groups:
     annotations:
       summary: High request latency
 '''
-def deal_group(group):
+def deal_group(group,ruletmpl):
     """
     parse single prometheus/vmalert rule group
     """
     alert_rules = []
     record_rules = []
-
+    if not group.has_key('groups'):
+        return [], []
     for rule_segment in group['groups']:
         if 'interval' in rule_segment:
             interval = rule_segment['interval']
         else:
             interval = '15s'
+        if rule_segment['rules'] is None:
+            continue
         for rule in rule_segment['rules']:
             if 'alert' in rule:
-                alert_rules.append(convert_alert(rule, interval))
+                alert_rules.append(convert_alert(rule, interval,ruletmpl))
             else:
-                record_rules.append(convert_record(rule, interval))
+                record_rules.append(convert_record(rule, interval,ruletmpl))
 
     return alert_rules, record_rules
 
@@ -173,20 +204,97 @@ def deal_configmap(rule_configmap):
 
     return all_alert_rules, all_record_rules
 
+def findFiles(args):
+    """
+    find rules files
+    """
+    rule_files = []
+    dir_list = []
+    if args.files is not None:
+        rule_files.extend(args.files.split(","))
+    if args.directories is not None:
+        dir_list.extend(args.directories.split(","))
+    if dir_list != []:
+        for dir in dir_list:
+            abs_directory = os.path.abspath(dir)
+            pattern = os.path.join(dir, "*.y*ml")
+            files = glob.glob(pattern)
+            abs_files = [os.path.abspath(f) for f in files]
+            rule_files.extend(abs_files)
+
+    if rule_files == []:
+        print("没有找到指定文件")
+        sys.exit()
+    return rule_files
+
+def converter(rule_files,alert_file,record_file,append,ruletmpl):
+    """
+    转换规则
+    """
+    mode = 'w'
+    if append:
+        mode = 'aw'
+    all_alert_rules = []
+    all_record_rules = []
+
+    for file in rule_files:
+        with open(file, 'r') as f:
+            rule_config = yaml.load(f, Loader=yaml.FullLoader)
+            
+            # 如果文件是k8s中的configmap,使用下面的方法
+            # alert_rules, record_rules = deal_configmap(rule_config)
+            alert_rules, record_rules = deal_group(rule_config,ruletmpl)
+            all_alert_rules.extend(alert_rules)
+            all_record_rules.extend(record_rules)
+    
+    with open(alert_file, mode) as fw:
+        json.dump(all_alert_rules, fw, indent=2, ensure_ascii=False)
+
+    with open(record_file, mode) as fw:
+        json.dump(all_record_rules, fw, indent=2, ensure_ascii=False)
+            
 
 def main():
-    with open(rule_file, 'r') as f:
-        rule_config = yaml.load(f, Loader=yaml.FullLoader)
-        
-        # 如果文件是k8s中的configmap,使用下面的方法
-        # alert_rules, record_rules = deal_configmap(rule_config)
-        alert_rules, record_rules = deal_group(rule_config)
+    parser = argparse.ArgumentParser(description='将promtheus/vmalert的rule转换为n9e中的rule')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-f', '--files', type=str, help='指定文件，多个文件用逗号分隔')
+    group.add_argument('-d', '--directories', type=str, help='指定目录，多个目录用逗号分隔')
+    parser.add_argument('-a', '--append', action='store_true', help='追加写入模式')
+    parser.add_argument('-t', '--tags', type=str, help='指定标签，多个标签用逗号分隔，标签格式必须符合要求`key=value`且不重复')
+    parser.add_argument('-o', '--outfile', type=str, help='指定输出文件名的前缀，文件名不能包含特殊字符')
+    parser.add_argument('--enable', action='store_true', help='启用规则,默认为不启用')
+    parser.set_defaults(append=False)
 
-        with open("alert-rules.json", 'w') as fw:
-            json.dump(alert_rules, fw, indent=2, ensure_ascii=False)
+    args = parser.parse_args()
 
-        with open("record-rules.json", 'w') as fw:
-            json.dump(record_rules, fw, indent=2, ensure_ascii=False)
+    if args.outfile:
+        alert_rules_file = args.outfile+"_alert.json"
+        record_rules_file = args.outfile+"_record.json"
+    else:
+        alert_rules_file = "alert-rules.json"
+        record_rules_file = "record-rules.json"
+    
+    if args.files or args.directories:
+        # 生成rule文件列表
+        rule_file = findFiles(args)
+    ruletmpl = { 'tags': '', 'enable': 0}
+    if args.enable:
+        ruletmpl['enable']= 1
+    if args.tags is not None:
+        pattern = r"\b(\w+)=(\w+)\b"
+        matches = re.findall(pattern, args.tags)
+        tags = {}
+        for match in matches:
+            key, value = match
+            tags[key] = value
+        ruletmpl['tags']= tags
+
+    print('Inputfile:', rule_file)
+    print('Outputfile: ', alert_rules_file, record_rules_file)
+    print('Append:', args.append)
+    print('Tags:', args.tags)
+
+    converter(rule_file,alert_rules_file,record_rules_file,args.append,ruletmpl)
 
 
 if __name__ == '__main__':
