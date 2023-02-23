@@ -106,23 +106,18 @@ func remoteWrite(c *gin.Context) {
 		for j := 0; j < len(req.Timeseries[i].Labels); j++ {
 			if req.Timeseries[i].Labels[j].Name == "ident" {
 				ident = req.Timeseries[i].Labels[j].Value
+			} else if req.Timeseries[i].Labels[j].Name == "agent_hostname" {
+				// agent_hostname for grafana-agent and categraf
+				req.Timeseries[i].Labels[j].Name = "ident"
+				ident = req.Timeseries[i].Labels[j].Value
 			} else if req.Timeseries[i].Labels[j].Name == "host" {
+				// telegraf, output plugin: http, format: prometheusremotewrite
+				req.Timeseries[i].Labels[j].Name = "ident"
 				ident = req.Timeseries[i].Labels[j].Value
 			}
 
 			if req.Timeseries[i].Labels[j].Name == "__name__" {
 				metric = req.Timeseries[i].Labels[j].Value
-			}
-		}
-
-		if ident == "" {
-			// not found, try agent_hostname
-			for j := 0; j < len(req.Timeseries[i].Labels); j++ {
-				// agent_hostname for grafana-agent
-				if req.Timeseries[i].Labels[j].Name == "agent_hostname" {
-					req.Timeseries[i].Labels[j].Name = "ident"
-					ident = req.Timeseries[i].Labels[j].Value
-				}
 			}
 		}
 
