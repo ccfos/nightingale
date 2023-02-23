@@ -11,5 +11,5 @@
 **触发时间:** {{timeformat .TriggerTime}}
 **发送时间:** {{timestamp}}
 **触发时值:** {{.TriggerValue}}
-{{if .RuleNote }}**告警描述:**{{.RuleNote}}**{{end}}
+{{if .RuleNote }}**告警描述:** **{{.RuleNote}}**{{end}}
 {{- end -}}
