@@ -16,11 +16,6 @@ type feishuCardContent struct {
 	Text string `json:"text"`
 }
 
-type feishuCardAt struct {
-	AtMobiles []string `json:"atMobiles"`
-	IsAtAll   bool     `json:"isAtAll"`
-}
-
 type Conf struct {
 	WideScreenMode bool `json:"wide_screen_mode"`
 	EnableForward  bool `json:"enable_forward"`
@@ -57,8 +52,6 @@ type Cards struct {
 type feishuCard struct {
 	Msgtype string            `json:"msg_type"`
 	Content feishuCardContent `json:"content"`
-	At      feishuCardAt      `json:"at"`
-	Email   string            `json:"email"` //@所使用字段
 	Card    Cards             `json:"card"`
 }
 
