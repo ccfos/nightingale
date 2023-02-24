@@ -47,7 +47,7 @@ def convert_alert(rule, interval, ruletmpl):
     if 'labels' in rule:
         for k, v in rule['labels'].items():
             # expr 经常包含空格，跳过这个标签
-            if k == 'expr' or  k == 'env' :
+            if k == 'expr' or ruletmpl['skiptags'].has_key(k):
                 continue
             if k != 'severity' and k != 'level' :
                 append_tags.append('{}={}'.format(k, v))
@@ -107,7 +107,7 @@ def convert_record(rule, interval, ruletmpl):
     if 'labels' in rule:
         for k, v in rule['labels'].items():
             # expr 经常包含空格，跳过这个标签
-            if k == 'expr':
+            if k == 'expr' or ruletmpl['skiptags'].has_key(k):
                 continue
             append_tags.append('{}={}'.format(k, v))
 
@@ -261,6 +261,7 @@ def main():
     group.add_argument('-d', '--directories', type=str, help='指定目录，多个目录用逗号分隔')
     parser.add_argument('-a', '--append', action='store_true', help='追加写入模式')
     parser.add_argument('-t', '--tags', type=str, help='指定标签，多个标签用逗号分隔，标签格式必须符合要求`key=value`且不重复')
+    parser.add_argument('-s', '--skiptags', type=str, help='指定需要过滤的标签，多个标签用逗号分隔')
     parser.add_argument('-o', '--outfile', type=str, help='指定输出文件名的前缀，文件名不能包含特殊字符')
     parser.add_argument('--enable', action='store_true', help='启用规则,默认为不启用')
     parser.set_defaults(append=False)
@@ -277,7 +278,7 @@ def main():
     if args.files or args.directories:
         # 生成rule文件列表
         rule_file = findFiles(args)
-    ruletmpl = { 'tags': '', 'enable': 0}
+    ruletmpl = { 'tags': '', 'enable': 0, 'skiptags': {}}
     if args.enable:
         ruletmpl['enable']= 1
     if args.tags is not None:
@@ -288,11 +289,18 @@ def main():
             key, value = match
             tags[key] = value
         ruletmpl['tags']= tags
+    if args.skiptags is not None:
+        matches = args.skiptags.split(",")
+        skiptags = {}
+        for match in matches:
+            skiptags[match] = ''
+        ruletmpl['skiptags']= skiptags
 
     print('Inputfile:', rule_file)
     print('Outputfile: ', alert_rules_file, record_rules_file)
     print('Append:', args.append)
     print('Tags:', args.tags)
+    print('SkipTags:', args.skiptags)
 
     converter(rule_file,alert_rules_file,record_rules_file,args.append,ruletmpl)
 
