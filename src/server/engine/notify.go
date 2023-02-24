@@ -36,12 +36,13 @@ func reloadTpls() error {
 	}
 
 	senders := map[string]sender.Sender{
-		models.Email:    sender.NewSender(models.Email, tmpTpls),
-		models.Dingtalk: sender.NewSender(models.Dingtalk, tmpTpls),
-		models.Wecom:    sender.NewSender(models.Wecom, tmpTpls),
-		models.Feishu:   sender.NewSender(models.Feishu, tmpTpls),
-		models.Mm:       sender.NewSender(models.Mm, tmpTpls),
-		models.Telegram: sender.NewSender(models.Telegram, tmpTpls),
+		models.Email:      sender.NewSender(models.Email, tmpTpls),
+		models.Dingtalk:   sender.NewSender(models.Dingtalk, tmpTpls),
+		models.Wecom:      sender.NewSender(models.Wecom, tmpTpls),
+		models.Feishu:     sender.NewSender(models.Feishu, tmpTpls),
+		models.FeishuCard: sender.NewSender(models.FeishuCard, tmpTpls),
+		models.Mm:         sender.NewSender(models.Mm, tmpTpls),
+		models.Telegram:   sender.NewSender(models.Telegram, tmpTpls),
 	}
 
 	rwLock.Lock()

@@ -19,12 +19,13 @@ import (
 )
 
 const (
-	Dingtalk = "dingtalk"
-	Wecom    = "wecom"
-	Feishu   = "feishu"
-	Mm       = "mm"
-	Telegram = "telegram"
-	Email    = "email"
+	Dingtalk   = "dingtalk"
+	Wecom      = "wecom"
+	Feishu     = "feishu"
+	FeishuCard = "feishucard"
+	Mm         = "mm"
+	Telegram   = "telegram"
+	Email      = "email"
 
 	DingtalkKey = "dingtalk_robot_token"
 	WecomKey    = "wecom_robot_token"
@@ -581,6 +582,9 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	case Feishu:
 		ret := gjson.GetBytes(bs, FeishuKey)
 		return ret.String(), ret.Exists()
+	case FeishuCard:
+		ret := gjson.GetBytes(bs, FeishuKey)
+		return ret.String(), ret.Exists()
 	case Mm:
 		ret := gjson.GetBytes(bs, MmKey)
 		return ret.String(), ret.Exists()
@@ -609,6 +613,7 @@ func (u *User) ExtractAllToken() map[string]string {
 	ret[Dingtalk] = gjson.GetBytes(bs, DingtalkKey).String()
 	ret[Wecom] = gjson.GetBytes(bs, WecomKey).String()
 	ret[Feishu] = gjson.GetBytes(bs, FeishuKey).String()
+	ret[FeishuCard] = gjson.GetBytes(bs, FeishuKey).String()
 	ret[Mm] = gjson.GetBytes(bs, MmKey).String()
 	ret[Telegram] = gjson.GetBytes(bs, TelegramKey).String()
 	return ret
