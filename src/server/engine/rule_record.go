@@ -78,12 +78,12 @@ func (rrc *RecordRuleContext) Eval() {
 
 	value, warnings, err := config.ReaderClients.GetCli(rrc.cluster).Query(context.Background(), promql, time.Now())
 	if err != nil {
-		logger.Errorf("eval:%d promql:%s, error:%v", rrc.Key(), promql, err)
+		logger.Errorf("eval:%s promql:%s, error:%v", rrc.Key(), promql, err)
 		return
 	}
 
 	if len(warnings) > 0 {
-		logger.Errorf("eval:%d promql:%s, warnings:%v", rrc.Key(), promql, warnings)
+		logger.Errorf("eval:%s promql:%s, warnings:%v", rrc.Key(), promql, warnings)
 		return
 	}
 	ts := conv.ConvertToTimeSeries(value, rrc.rule)
