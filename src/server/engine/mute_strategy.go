@@ -23,6 +23,7 @@ type AlertMuteStrategiesType []AlertMuteStrategy
 func (ss AlertMuteStrategiesType) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	for _, s := range ss {
 		if s.IsMuted(rule, event) {
+			logger.Debugf("[%T] mute: rule:%+v event:%+v", s, rule, event)
 			return true
 		}
 	}
