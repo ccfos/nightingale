@@ -49,12 +49,12 @@ func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *mo
 
 	if rule.EnableStime <= rule.EnableEtime {
 		if triggerTime < rule.EnableStime || triggerTime > rule.EnableEtime {
-			logger.Debugf("[%T] mute: rule:%d triggerTime:%s rule.EnableStime:%d rule.EnableEtime:%d", s, rule.Id, triggerTime, rule.EnableStime, rule.EnableEtime)
+			logger.Debugf("[%T] mute: rule:%d triggerTime:%s rule.EnableStime:%s rule.EnableEtime:%s", s, rule.Id, triggerTime, rule.EnableStime, rule.EnableEtime)
 			return true
 		}
 	} else {
 		if triggerTime < rule.EnableStime && triggerTime > rule.EnableEtime {
-			logger.Debugf("[%T] mute: rule:%d triggerTime:%s rule.EnableStime:%d rule.EnableEtime:%d", s, rule.Id, triggerTime, rule.EnableStime, rule.EnableEtime)
+			logger.Debugf("[%T] mute: rule:%d triggerTime:%s rule.EnableStime:%s rule.EnableEtime:%s", s, rule.Id, triggerTime, rule.EnableStime, rule.EnableEtime)
 			return true
 		}
 	}
