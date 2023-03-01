@@ -139,6 +139,7 @@ func (arc *AlertRuleContext) HandleVectors(vectors []conv.Vector, from string) {
 		// 如果event被mute了,本质也是fire的状态,这里无论如何都添加到alertingKeys中,防止fire的事件自动恢复了
 		alertingKeys[alertVector.Hash()] = struct{}{}
 		if AlertMuteStrategies.IsMuted(cachedRule, event) {
+			logger.Debugf("rule_eval:%s event:%+v is muted", arc.Key(), event)
 			continue
 		}
 		arc.handleEvent(event)
@@ -166,6 +167,7 @@ func (arc *AlertRuleContext) HandleRecover(alertingKeys map[string]struct{}, now
 func (arc *AlertRuleContext) RecoverSingle(hash string, now int64, value *string) {
 	cachedRule := arc.RuleFromCache()
 	if cachedRule == nil {
+		logger.Errorf("rule_eval:%s rule not found", arc.Key())
 		return
 	}
 	event, has := arc.fires.Get(hash)
@@ -195,6 +197,7 @@ func (arc *AlertRuleContext) RecoverSingle(hash string, now int64, value *string
 
 func (arc *AlertRuleContext) handleEvent(event *models.AlertCurEvent) {
 	if event == nil {
+		logger.Debugf("rule_eval:%s event:%+v is nil", arc.Key(), event)
 		return
 	}
 	if event.PromForDuration == 0 {
@@ -221,6 +224,7 @@ func (arc *AlertRuleContext) fireEvent(event *models.AlertCurEvent) {
 	// As arc.rule maybe outdated, use rule from cache
 	cachedRule := arc.RuleFromCache()
 	if cachedRule == nil {
+		logger.Errorf("rule_eval:%s event:%+v is nil", arc.Key(), event)
 		return
 	}
 	if fired, has := arc.fires.Get(event.Hash); has {
@@ -228,6 +232,7 @@ func (arc *AlertRuleContext) fireEvent(event *models.AlertCurEvent) {
 
 		if cachedRule.NotifyRepeatStep == 0 {
 			// 说明不想重复通知，那就直接返回了，nothing to do
+			logger.Debugf("rule_eval:%s event:%+v nothing to do", arc.Key(), event)
 			return
 		}
 
@@ -241,6 +246,7 @@ func (arc *AlertRuleContext) fireEvent(event *models.AlertCurEvent) {
 			} else {
 				// 有最大发送次数的限制，就要看已经发了几次了，是否达到了最大发送次数
 				if fired.NotifyCurNumber >= cachedRule.NotifyMaxNumber {
+					logger.Debugf("rule_eval:%s event:%+v notify to max number", arc.Key(), event)
 					return
 				} else {
 					event.NotifyCurNumber = fired.NotifyCurNumber + 1
