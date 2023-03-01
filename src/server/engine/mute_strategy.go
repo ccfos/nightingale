@@ -39,6 +39,7 @@ type TimeNonEffectiveMuteStrategy struct{}
 
 func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	if rule.Disabled == 1 {
+		logger.Debugf("[%T] mute: rule_disabled:%d cluster:%s", s, rule.Id, event.Cluster)
 		return true
 	}
 
@@ -48,10 +49,12 @@ func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *mo
 
 	if rule.EnableStime <= rule.EnableEtime {
 		if triggerTime < rule.EnableStime || triggerTime > rule.EnableEtime {
+			logger.Debugf("[%T] mute: rule:%d triggerTime:%s rule.EnableStime:%d rule.EnableEtime:%d", s, rule.Id, triggerTime, rule.EnableStime, rule.EnableEtime)
 			return true
 		}
 	} else {
 		if triggerTime < rule.EnableStime && triggerTime > rule.EnableEtime {
+			logger.Debugf("[%T] mute: rule:%d triggerTime:%s rule.EnableStime:%d rule.EnableEtime:%d", s, rule.Id, triggerTime, rule.EnableStime, rule.EnableEtime)
 			return true
 		}
 	}
@@ -114,6 +117,7 @@ func (s *EventMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertC
 
 	for i := 0; i < len(mutes); i++ {
 		if matchMute(event, mutes[i]) {
+			logger.Debugf("[%T] mute: rule:%d mute:%+v event:%+v", s, rule.Id, mutes[i], event)
 			return true
 		}
 	}
