@@ -127,7 +127,6 @@ func (s *EventMuteStrategy) IsMuted(rule *models.AlertRule, event *models.AlertC
 
 	for i := 0; i < len(mutes); i++ {
 		if matchMute(event, mutes[i]) {
-			logger.Debugf("[%T] mute: rule:%d mute:%+v event:%+v", s, rule.Id, mutes[i], event)
 			return true
 		}
 	}
