@@ -48,20 +48,29 @@ func (s *TimeNonEffectiveMuteStrategy) IsMuted(rule *models.AlertRule, event *mo
 	triggerTime := tm.Format("15:04")
 	triggerWeek := strconv.Itoa(int(tm.Weekday()))
 
-	if rule.EnableStime <= rule.EnableEtime {
-		if triggerTime < rule.EnableStime || triggerTime > rule.EnableEtime {
-			logger.Debugf("[%T] mute: rule:%d triggerTime:%s rule.EnableStime:%s rule.EnableEtime:%s", s, rule.Id, triggerTime, rule.EnableStime, rule.EnableEtime)
-			return true
+	enableStime := strings.Fields(rule.EnableStime)
+	enableEtime := strings.Fields(rule.EnableEtime)
+	enableDaysOfWeek := strings.Split(rule.EnableDaysOfWeek, ";")
+	length := len(enableDaysOfWeek)
+	// enableStime,enableEtime,enableDaysOfWeek三者长度肯定相同，这里循环一个即可
+	for i := 0; i < length; i++ {
+		enableDaysOfWeek[i] = strings.Replace(enableDaysOfWeek[i], "7", "0", 1)
+		if !strings.Contains(enableDaysOfWeek[i], triggerWeek) {
+			continue
 		}
-	} else {
-		if triggerTime < rule.EnableStime && triggerTime > rule.EnableEtime {
-			logger.Debugf("[%T] mute: rule:%d triggerTime:%s rule.EnableStime:%s rule.EnableEtime:%s", s, rule.Id, triggerTime, rule.EnableStime, rule.EnableEtime)
-			return true
+		if enableStime[i] <= enableEtime[i] {
+			if triggerTime < enableStime[i] || triggerTime > enableEtime[i] {
+				continue
+			}
+		} else {
+			if triggerTime < enableStime[i] && triggerTime > enableEtime[i] {
+				continue
+			}
 		}
+		// 到这里说明当前时刻在告警规则的某组生效时间范围内，直接返回 false
+		return false
 	}
-
-	rule.EnableDaysOfWeek = strings.Replace(rule.EnableDaysOfWeek, "7", "0", 1)
-	return !strings.Contains(rule.EnableDaysOfWeek, triggerWeek)
+	return true
 }
 
 // IdentNotExistsMuteStrategy 根据ident是否存在过滤,如果ident不存在,则target_up的告警直接过滤掉

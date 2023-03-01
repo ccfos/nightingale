@@ -30,10 +30,12 @@ type AlertRule struct {
 	PromForDuration      int         `json:"prom_for_duration"`            // prometheus for, unit:s
 	PromQl               string      `json:"prom_ql"`                      // just one ql
 	PromEvalInterval     int         `json:"prom_eval_interval"`           // unit:s
-	EnableStime          string      `json:"enable_stime"`                 // e.g. 00:00
-	EnableEtime          string      `json:"enable_etime"`                 // e.g. 23:59
-	EnableDaysOfWeek     string      `json:"-"`                            // split by space: 0 1 2 3 4 5 6
-	EnableDaysOfWeekJSON []string    `json:"enable_days_of_week" gorm:"-"` // for fe
+	EnableStime          string      `json:"-"`                            // split by space: "00:00 10:00 12:00"
+	EnableStimeJSON      []string    `json:"enable_stime" gorm:"-"`        // for fe
+	EnableEtime          string      `json:"-"`                            // split by space: "00:00 10:00 12:00"
+	EnableEtimeJSON      []string    `json:"enable_etime" gorm:"-"`        // for fe
+	EnableDaysOfWeek     string      `json:"-"`                            // eg: "0 1 2 3 4 5 6 ; 0 1 2"
+	EnableDaysOfWeekJSON [][]string  `json:"enable_days_of_week" gorm:"-"` // for fe
 	EnableInBG           int         `json:"enable_in_bg"`                 // 0: global 1: enable one busi-group
 	NotifyRecovered      int         `json:"notify_recovered"`             // whether notify when recovery
 	NotifyChannels       string      `json:"-"`                            // split by space: sms voice email dingtalk wecom
@@ -224,7 +226,19 @@ func (ar *AlertRule) FillNotifyGroups(cache map[int64]*UserGroup) error {
 }
 
 func (ar *AlertRule) FE2DB() error {
-	ar.EnableDaysOfWeek = strings.Join(ar.EnableDaysOfWeekJSON, " ")
+	ar.EnableStime = strings.Join(ar.EnableStimeJSON, " ")
+	ar.EnableEtime = strings.Join(ar.EnableEtimeJSON, " ")
+	for i := 0; i < len(ar.EnableDaysOfWeekJSON); i++ {
+		if len(ar.EnableDaysOfWeekJSON) == 1 {
+			ar.EnableDaysOfWeek = strings.Join(ar.EnableDaysOfWeekJSON[i], " ")
+		} else {
+			if i == len(ar.EnableDaysOfWeekJSON)-1 {
+				ar.EnableDaysOfWeek += strings.Join(ar.EnableDaysOfWeekJSON[i], " ")
+			} else {
+				ar.EnableDaysOfWeek += strings.Join(ar.EnableDaysOfWeekJSON[i], " ") + ";"
+			}
+		}
+	}
 	ar.NotifyChannels = strings.Join(ar.NotifyChannelsJSON, " ")
 	ar.NotifyGroups = strings.Join(ar.NotifyGroupsJSON, " ")
 	ar.Callbacks = strings.Join(ar.CallbacksJSON, " ")
@@ -239,7 +253,13 @@ func (ar *AlertRule) FE2DB() error {
 }
 
 func (ar *AlertRule) DB2FE() {
-	ar.EnableDaysOfWeekJSON = strings.Fields(ar.EnableDaysOfWeek)
+	ar.EnableStimeJSON = strings.Fields(ar.EnableStime)
+	ar.EnableEtimeJSON = strings.Fields(ar.EnableEtime)
+	cache := strings.Split(ar.EnableDaysOfWeek, ";")
+	for i := 0; i < len(cache); i++ {
+		ar.EnableDaysOfWeekJSON = append(ar.EnableDaysOfWeekJSON, strings.Fields(cache[i]))
+	}
+
 	ar.NotifyChannelsJSON = strings.Fields(ar.NotifyChannels)
 	ar.NotifyGroupsJSON = strings.Fields(ar.NotifyGroups)
 	ar.CallbacksJSON = strings.Fields(ar.Callbacks)
