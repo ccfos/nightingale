@@ -188,9 +188,6 @@ CREATE TABLE `board` (
     KEY(`ident`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-alter table board add built_in tinyint(1) not null default 0 comment '0:false 1:true';
-alter table board add hide tinyint(1) not null default 0 comment '0:false 1:true';
-     
 -- for dashboard new version
 CREATE TABLE `board_payload` (
     `id` bigint unsigned not null comment 'dashboard id',
@@ -245,8 +242,6 @@ CREATE TABLE `chart_share` (
     key (`create_at`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-alter table chart_share add datasource_id bigint unsigned not null default 0;
-
 CREATE TABLE `alert_rule` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
@@ -288,10 +283,6 @@ CREATE TABLE `alert_rule` (
     KEY (`update_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
-alter table alert_rule add datasource_ids varchar(255) not null default '';
-alter table alert_rule add rule_config text not null comment 'rule_config';
-alter table alert_rule add annotations text not null comment 'annotations';
-
 CREATE TABLE `alert_mute` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
@@ -315,10 +306,6 @@ CREATE TABLE `alert_mute` (
     KEY (`create_at`),
     KEY (`group_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-
-alter table alert_mute add datasource_ids varchar(255) not null default '';
-alter table alert_mute add periodic_mutes varchar(4096) not null default '';
-alter table alert_mute add mute_time_type tinyint(1) not null default 0;
 
 CREATE TABLE `alert_subscribe` (
     `id` bigint unsigned not null auto_increment,
@@ -347,12 +334,6 @@ CREATE TABLE `alert_subscribe` (
     KEY (`update_at`),
     KEY (`group_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-
-alter table `alert_subscribe` add datasource_ids varchar(255) not null default '';
-alter table `alert_subscribe` add prod varchar(255) not null default '';
-alter table `alert_subscribe` add webhooks text not null default '';
-alter table `alert_subscribe` add redefine_webhooks tinyint(1) default 0;
-alter table `alert_subscribe` add for_duration bigint not null default 0;
   
 CREATE TABLE `target` (
     `id` bigint unsigned not null auto_increment,
@@ -372,9 +353,6 @@ CREATE TABLE `target` (
     KEY (`offset`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-alter table `target` add datasource_id bigint unsigned not null default 0;
-alter table `target` add offset bigint not null default 0;
-alter table `target` modify cluster varchar(128) not null default '';
 
 
 -- case1: target_idents; case2: target_tags
@@ -432,8 +410,6 @@ CREATE TABLE `recording_rule` (
     KEY `update_at` (`update_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
-alter table recording_rule add datasource_ids varchar(255) default '';
-
 CREATE TABLE `alert_aggr_view` (
     `id` bigint unsigned not null auto_increment,
     `name` varchar(191) not null default '',
@@ -488,10 +464,6 @@ CREATE TABLE `alert_cur_event` (
     KEY (`notify_repeat_next`)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
-alter table alert_cur_event add datasource_id bigint unsigned not null default 0;
-alter table alert_cur_event add annotations text not null comment 'annotations';
-alter table alert_cur_event add rule_config text not null comment 'rule_config';
-
 CREATE TABLE `alert_his_event` (
     `id` bigint unsigned not null AUTO_INCREMENT,
     `is_recovered` tinyint(1) not null,
@@ -531,11 +503,6 @@ CREATE TABLE `alert_his_event` (
     KEY (`rule_id`),
     KEY (`trigger_time`, `group_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
-
-alter table alert_his_event add datasource_id bigint unsigned not null default 0;
-alter table alert_his_event add annotations text not null comment 'annotations';
-alter table alert_his_event add rule_config text not null comment 'rule_config';
-
 
 CREATE TABLE `task_tpl`
 (
@@ -599,7 +566,6 @@ CREATE TABLE `alerting_engines`
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-alter table alerting_engines add datasource_id bigint unsigned not null default 0;
 
 CREATE TABLE `datasource`
 (
@@ -619,6 +585,7 @@ CREATE TABLE `datasource`
     `created_by` varchar(64) not null default '',
     `updated_at` bigint not null default 0,
     `updated_by` varchar(64) not null default '',
+    UNIQUE KEY (`name`),
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4; 
   
