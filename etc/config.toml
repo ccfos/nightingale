@@ -17,7 +17,7 @@ Output = "stdout"
 
 [DB]
 # postgres: host=%s port=%s user=%s dbname=%s password=%s sslmode=%s
-DSN="root:Qzbr6EGAvVNkA7RF@tcp(10.206.0.16:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local&allowNativePasswords=true"
+DSN="root:1234@tcp(127.0.0.1:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local&allowNativePasswords=true"
 # enable debug mode or not
 Debug = false
 # mysql postgres
@@ -35,7 +35,7 @@ TablePrefix = ""
 
 [Redis]
 # address, ip:port or ip1:port,ip2:port for cluster and sentinel(SentinelAddrs)
-Address = "10.206.0.16:6379"
+Address = "127.0.0.1:6379"
 # Username = ""
 # Password = ""
 # DB = 0
@@ -240,7 +240,7 @@ LabelRewrite = true
 # ShardingKey = "ident"
 
 [[Pushgw.Writers]] 
-Url = "http://10.206.0.13:8480/insert/0/prometheus/api/v1/write"
+Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"
 # Basic auth username
 BasicAuthUser = ""
 # Basic auth password
