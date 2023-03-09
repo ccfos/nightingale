@@ -90,6 +90,15 @@ ClusterName = "default"
 Timeout=30000
 NotifyConcurrency = 10
 
+[Alert.SMTP]
+Host = "smtp.163.com"
+Port = 994
+User = "username"
+Pass = "password"
+From = "username@163.com"
+InsecureSkipVerify = true
+Batch = 5
+
 [Center]
 MetricsYamlFile = "./etc/metrics.yaml"
 I18NHeaderKey = "X-Language"

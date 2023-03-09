@@ -12,7 +12,6 @@ import (
 var (
 	upgrade     = flag.Bool("upgrade", false, "Upgrade the database.")
 	showVersion = flag.Bool("version", false, "Show version.")
-	sqlFile     = flag.String("sql", "", "Specify the sql file to be executed.")
 	configDir   = flag.String("config", "", "Specify configuration directory.(env:N9E_CONFIGS)")
 )
 
@@ -25,17 +24,12 @@ func main() {
 	}
 
 	if *upgrade {
-		if *sqlFile == "" {
-			fmt.Println("Please specify the sql file to be executed.")
-			os.Exit(1)
-		}
-
 		if *configDir == "" {
 			fmt.Println("Please specify the configuration directory.")
 			os.Exit(1)
 		}
 
-		err := cli.Upgrade(*configDir, *sqlFile)
+		err := cli.Upgrade(*configDir)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
