@@ -207,7 +207,7 @@ Phone = "phone_number"
 Email = "email"
 
 [Pushgw]
-DatasourceId = 3
+DatasourceId = 1
 # use target labels in database instead of in series
 LabelRewrite = true
 # # default busigroup key name
