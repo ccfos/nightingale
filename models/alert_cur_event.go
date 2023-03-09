@@ -504,7 +504,18 @@ func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 		}
 		lst[i].DatasourceId = ds.Id
 
-		err = lst[i].UpdateFieldsMap(ctx, map[string]interface{}{"datasource_id": lst[i].DatasourceId})
+		ruleConfig := PromRuleConfig{
+			Queries: []PromQuery{
+				{
+					PromQl:   lst[i].PromQl,
+					Severity: lst[i].Severity,
+				},
+			},
+		}
+		b, _ := json.Marshal(ruleConfig)
+		lst[i].RuleConfig = string(b)
+
+		err = lst[i].UpdateFieldsMap(ctx, map[string]interface{}{"datasource_id": lst[i].DatasourceId, "rule_config": lst[i].RuleConfig})
 		if err != nil {
 			logger.Errorf("update alert rule:%d datasource ids failed, %v", lst[i].Id, err)
 		}

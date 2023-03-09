@@ -693,6 +693,17 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 		}
 		lst[i].DatasourceIds = string(b)
 
+		ruleConfig := PromRuleConfig{
+			Queries: []PromQuery{
+				{
+					PromQl:   lst[i].PromQl,
+					Severity: lst[i].Severity,
+				},
+			},
+		}
+		b, _ = json.Marshal(ruleConfig)
+		lst[i].RuleConfig = string(b)
+
 		m := make(map[string]string)
 		if lst[i].RunbookUrl != "" {
 			m["runbook_url"] = lst[i].RunbookUrl
@@ -705,7 +716,7 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 			lst[i].Annotations = string(b)
 		}
 
-		err = lst[i].UpdateFieldsMap(ctx, map[string]interface{}{"datasource_ids": lst[i].DatasourceIds, "annotations": lst[i].Annotations})
+		err = lst[i].UpdateFieldsMap(ctx, map[string]interface{}{"datasource_ids": lst[i].DatasourceIds, "annotations": lst[i].Annotations, "rule_config": lst[i].RuleConfig})
 		if err != nil {
 			logger.Errorf("update alert rule:%d datasource ids failed, %v", lst[i].Id, err)
 		}
