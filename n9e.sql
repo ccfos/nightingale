@@ -323,7 +323,7 @@ CREATE TABLE `alert_subscribe` (
     `redefine_channels` tinyint(1) default 0 comment 'is redefine channels?',
     `new_channels` varchar(255) not null default '' comment 'split by space: sms voice email dingtalk wecom',
     `user_group_ids` varchar(250) not null comment 'split by space 1 34 5, notify cc to user_group_ids',
-    `webhooks` text not null default '',
+    `webhooks` text not null,
     `redefine_webhooks` tinyint(1) default 0,
     `for_duration` bigint not null default 0,
     `create_at` bigint not null default 0,
