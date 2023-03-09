@@ -12,7 +12,7 @@ import (
 var (
 	upgrade     = flag.Bool("upgrade", false, "Upgrade the database.")
 	showVersion = flag.Bool("version", false, "Show version.")
-	configDir   = flag.String("config", "", "Specify configuration directory.(env:N9E_CONFIGS)")
+	configFile  = flag.String("config", "", "Specify webapi.conf of v5.x version")
 )
 
 func main() {
@@ -24,12 +24,12 @@ func main() {
 	}
 
 	if *upgrade {
-		if *configDir == "" {
+		if *configFile == "" {
 			fmt.Println("Please specify the configuration directory.")
 			os.Exit(1)
 		}
 
-		err := cli.Upgrade(*configDir)
+		err := cli.Upgrade(*configFile)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
