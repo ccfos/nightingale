@@ -41,6 +41,7 @@ _test
 /docker/pub
 /docker/n9e
 /docker/mysqldata
+/etc.local
 
 .alerts
 .idea

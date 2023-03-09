@@ -1,14 +1,16 @@
+package cconf
+
+const EVENT_EXAMPLE = `
 {
     "id": 1000000,
     "cate": "prometheus",
-    "cluster": "",
-    "datasource_id": 3,
+    "datasource_id": 1,
     "group_id": 1,
     "group_name": "Default Busi Group",
     "hash": "2cb966f9ba1cdc7af94c3796e855955a",
     "rule_id": 23,
-    "rule_name": "测试",
-    "rule_note": "测试",
+    "rule_name": "测试告警",
+    "rule_note": "测试告警",
     "rule_prod": "metric",
     "rule_algo": "",
     "severity": 0,
@@ -30,8 +32,7 @@
         "dc=qcloud-dev",
         "device=vda1",
         "fstype=ext4",
-        "ident=tt-fc-dev00.nj",
-        "rulename=测试"
+        "ident=tt-fc-dev00.nj"
     ],
     "is_recovered": false,
     "notify_users_obj": null,
@@ -40,3 +41,4 @@
     "notify_cur_number": 1,
     "first_trigger_time": 1677229517
 }
+`

@@ -14,6 +14,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
+	"github.com/ccfos/nightingale/v6/pkg/i18nx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
@@ -23,8 +24,6 @@ import (
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	centerrt "github.com/ccfos/nightingale/v6/center/router"
 	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
-
-	"github.com/toolkits/pkg/i18n"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -41,7 +40,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	i18n.Init()
+	i18nx.Init()
 
 	db, err := storage.New(config.DB)
 	if err != nil {

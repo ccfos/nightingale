@@ -1,3 +1,6 @@
+package i18nx
+
+const I18N = `
 {
     "zh": {
       "Username or password invalid": "用户名或密码错误",
@@ -47,3 +50,4 @@
       "admin role can not be modified":"管理员角色不允许修改"
     }
 }
+`

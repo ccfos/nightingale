@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"html/template"
 
+	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/ginx"
 )
 
@@ -33,13 +33,8 @@ func (rt *Router) notifyTplUpdate(c *gin.Context) {
 }
 
 func (rt *Router) notifyTplPreview(c *gin.Context) {
-	b, err := file.ToBytes("./etc/event.json")
-	if err != nil {
-		ginx.NewRender(c).Message(err.Error())
-		return
-	}
 	var event models.AlertCurEvent
-	err = json.Unmarshal(b, &event)
+	err := json.Unmarshal([]byte(cconf.EVENT_EXAMPLE), &event)
 	if err != nil {
 		ginx.NewRender(c).Message(err.Error())
 		return
