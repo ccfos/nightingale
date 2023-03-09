@@ -95,18 +95,6 @@ func Upgrade(configFile string) error {
 		return err
 	}
 
-	// alert cur event
-	err = models.AlertCurEventUpgradeToV6(ctx, m)
-	if err != nil {
-		return err
-	}
-
-	// alert his event
-	err = models.AlertHisEventUpgradeToV6(ctx, m)
-	if err != nil {
-		return err
-	}
-
 	// target
 	err = models.TargetUpgradeToV6(ctx, m)
 	if err != nil {
@@ -119,5 +107,16 @@ func Upgrade(configFile string) error {
 		return err
 	}
 
+	// alert cur event
+	err = models.AlertCurEventUpgradeToV6(ctx, m)
+	if err != nil {
+		return err
+	}
+
+	// alert his event
+	err = models.AlertHisEventUpgradeToV6(ctx, m)
+	if err != nil {
+		return err
+	}
 	return nil
 }

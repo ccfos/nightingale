@@ -216,7 +216,7 @@ func (m *AlertHisEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]inte
 
 func AlertHisEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 	var lst []*AlertHisEvent
-	err := DB(ctx).Where("trigger_time > ?", time.Now().Unix()-3600*24*30).Find(&lst).Error
+	err := DB(ctx).Where("trigger_time > ?", time.Now().Unix()-3600*24*30).Limit(10000).Order("id desc").Find(&lst).Error
 	if err != nil {
 		return err
 	}
