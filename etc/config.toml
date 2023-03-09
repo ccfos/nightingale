@@ -89,19 +89,6 @@ ClusterName = "default"
 # timeout settings, unit: ms, default: 30000ms
 Timeout=30000
 NotifyConcurrency = 10
-[Alert.Alerting.CallScript]
-# built in sending capability in go code
-# so, no need enable script sender
-Enable = false
-ScriptPath = "./etc/script/notify.py"
-
-[[Alert.Alerting.Webhooks]]
-Enable = false
-Url = "http://a.com/n9e/callback"
-BasicAuthUser = ""
-BasicAuthPass = ""
-Timeout = "5s"
-Headers = ["Content-Type", "application/json", "X-From", "N9E"]
 
 [Center]
 MetricsYamlFile = "./etc/metrics.yaml"
