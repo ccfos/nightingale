@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/toolkits/pkg/logger"
@@ -215,7 +216,7 @@ func (m *AlertHisEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]inte
 
 func AlertHisEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 	var lst []*AlertHisEvent
-	err := DB(ctx).Find(&lst).Error
+	err := DB(ctx).Where("trigger_time > ?", time.Now().Unix()-3600*24*30).Find(&lst).Error
 	if err != nil {
 		return err
 	}
@@ -238,7 +239,20 @@ func AlertHisEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 		b, _ := json.Marshal(ruleConfig)
 		lst[i].RuleConfig = string(b)
 
-		err = lst[i].UpdateFieldsMap(ctx, map[string]interface{}{"datasource_id": lst[i].DatasourceId, "rule_config": lst[i].RuleConfig})
+		if lst[i].RuleProd == "" {
+			lst[i].RuleProd = METRIC
+		}
+
+		if lst[i].Cate == "" {
+			lst[i].Cate = PROMETHEUS
+		}
+
+		err = lst[i].UpdateFieldsMap(ctx, map[string]interface{}{
+			"datasource_id": lst[i].DatasourceId,
+			"rule_config":   lst[i].RuleConfig,
+			"rule_prod":     lst[i].RuleProd,
+			"cate":          lst[i].Cate,
+		})
 		if err != nil {
 			logger.Errorf("update alert rule:%d datasource ids failed, %v", lst[i].Id, err)
 		}

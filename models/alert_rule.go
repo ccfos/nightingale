@@ -716,7 +716,21 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 			lst[i].Annotations = string(b)
 		}
 
-		err = lst[i].UpdateFieldsMap(ctx, map[string]interface{}{"datasource_ids": lst[i].DatasourceIds, "annotations": lst[i].Annotations, "rule_config": lst[i].RuleConfig})
+		if lst[i].Prod == "" {
+			lst[i].Prod = METRIC
+		}
+
+		if lst[i].Cate == "" {
+			lst[i].Cate = PROMETHEUS
+		}
+
+		err = lst[i].UpdateFieldsMap(ctx, map[string]interface{}{
+			"datasource_ids": lst[i].DatasourceIds,
+			"annotations":    lst[i].Annotations,
+			"rule_config":    lst[i].RuleConfig,
+			"prod":           lst[i].Prod,
+			"cate":           PROMETHEUS,
+		})
 		if err != nil {
 			logger.Errorf("update alert rule:%d datasource ids failed, %v", lst[i].Id, err)
 		}
