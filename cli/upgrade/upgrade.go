@@ -20,6 +20,15 @@ func Upgrade(configFile string) error {
 
 	ctx := ctx.NewContext(context.Background(), db)
 	for _, cluster := range config.Clusters {
+		count, err := models.GetDatasourcesCountBy(ctx, "", "", cluster.Name)
+		if err != nil {
+			logger.Errorf("get datasource %s count error: %v", cluster.Name, err)
+			continue
+		}
+		if count > 0 {
+			continue
+		}
+
 		header := make(map[string]string)
 		headerCount := len(cluster.Headers)
 		if headerCount > 0 && headerCount%2 == 0 {
@@ -53,7 +62,8 @@ func Upgrade(configFile string) error {
 			AuthJson:       authJosn,
 			ClusterName:    "default",
 		}
-		err := datasrouce.Add(ctx)
+
+		err = datasrouce.Add(ctx)
 		if err != nil {
 			logger.Errorf("add datasource %s error: %v", cluster.Name, err)
 		}
