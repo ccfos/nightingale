@@ -76,10 +76,6 @@ CREATE TABLE `notify_tpl` (
     `id` bigint unsigned not null auto_increment,
     `channel` varchar(32) not null,
     `name` varchar(255) not null,
-    `contact_key` varchar(255) not null,
-    `contact_key_name` varchar(255) not null,
-    `hide_contact` int not null default 0,
-    `hide_channel` int not null default 0,
     `content` text not null,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`channel`)
