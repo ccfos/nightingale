@@ -4,6 +4,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gogo/protobuf/proto"
@@ -17,6 +18,32 @@ var promMetricFilter map[string]bool = map[string]bool{
 	"scrape_samples_post_metric_relabeling": true,
 	"scrape_samples_scraped":                true,
 	"scrape_duration_seconds":               true,
+}
+
+func extractIdentFromTimeSeries(s *prompb.TimeSeries) string {
+	for i := 0; i < len(s.Labels); i++ {
+		if s.Labels[i].Name == "ident" {
+			return s.Labels[i].Value
+		}
+	}
+
+	// agent_hostname for grafana-agent and categraf
+	for i := 0; i < len(s.Labels); i++ {
+		if s.Labels[i].Name == "agent_hostname" {
+			s.Labels[i].Name = "ident"
+			return s.Labels[i].Value
+		}
+	}
+
+	// telegraf, output plugin: http, format: prometheusremotewrite
+	for i := 0; i < len(s.Labels); i++ {
+		if s.Labels[i].Name == "host" {
+			s.Labels[i].Name = "ident"
+			return s.Labels[i].Value
+		}
+	}
+
+	return ""
 }
 
 func duplicateLabelKey(series *prompb.TimeSeries) bool {
@@ -52,6 +79,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 	}
 
 	var (
+		now    = time.Now().Unix()
 		ids    = make(map[string]int64)
 		ident  string
 		metric string
@@ -62,40 +90,19 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 			continue
 		}
 
-		ident = ""
+		ident = extractIdentFromTimeSeries(req.Timeseries[i])
 
-		// find ident label
-		for j := 0; j < len(req.Timeseries[i].Labels); j++ {
-			if req.Timeseries[i].Labels[j].Name == "host" {
-				req.Timeseries[i].Labels[j].Name = "ident"
-			}
-
-			if req.Timeseries[i].Labels[j].Name == "ident" {
-				ident = req.Timeseries[i].Labels[j].Value
-			}
-
-			if req.Timeseries[i].Labels[j].Name == "__name__" {
-				metric = req.Timeseries[i].Labels[j].Value
-			}
-		}
-
-		if ident == "" {
-			// not found, try agent_hostname
-			for j := 0; j < len(req.Timeseries[i].Labels); j++ {
-				// agent_hostname for grafana-agent
-				if req.Timeseries[i].Labels[j].Name == "agent_hostname" {
-					req.Timeseries[i].Labels[j].Name = "ident"
-					ident = req.Timeseries[i].Labels[j].Value
-				}
-			}
+		// 当数据是通过prometheus抓取（也许直接remote write到夜莺）的时候，prometheus会自动产生部分系统指标
+		// 例如最典型的有up指标，是prometheus为exporter生成的指标，即使exporter挂掉的时候也会送up=0的指标
+		// 此类指标当剔除，否则会导致redis数据中时间戳被意外更新，导致由此类指标中携带的ident的相关target_up指标无法变为实际的0值
+		// 更多详细信息：https://prometheus.io/docs/concepts/jobs_instances/#automatically-generated-labels-and-time-series
+		if _, has := promMetricFilter[metric]; has {
+			ident = ""
 		}
 
 		if len(ident) > 0 {
 			// register host
-			// https://prometheus.io/docs/concepts/jobs_instances/#automatically-generated-labels-and-time-series
-			if _, has := promMetricFilter[metric]; !has {
-				ids[ident] = getTs(req.Timeseries[i])
-			}
+			ids[ident] = now
 
 			// fill tags
 			target, has := rt.TargetCache.Get(ident)
