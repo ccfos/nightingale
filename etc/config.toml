@@ -1,0 +1,271 @@
+[Global]
+RunMode = "release"
+
+[Log]
+# log write dir
+Dir = "logs"
+# log level: DEBUG INFO WARNING ERROR
+Level = "DEBUG"
+# stdout, stderr, file
+Output = "stdout"
+# # rotate by time
+# KeepHours: 4
+# # rotate by size
+# RotateNum = 3
+# # unit: MB
+# RotateSize = 256
+
+[DB]
+# postgres: host=%s port=%s user=%s dbname=%s password=%s sslmode=%s
+DSN="root:Qzbr6EGAvVNkA7RF@tcp(10.206.0.16:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local&allowNativePasswords=true"
+# enable debug mode or not
+Debug = false
+# mysql postgres
+DBType = "mysql"
+# unit: s
+MaxLifetime = 7200
+# max open connections
+MaxOpenConns = 150
+# max idle connections
+MaxIdleConns = 50
+# table prefix
+TablePrefix = ""
+# enable auto migrate or not
+# EnableAutoMigrate = false
+
+[Redis]
+# address, ip:port or ip1:port,ip2:port for cluster and sentinel(SentinelAddrs)
+Address = "10.206.0.16:6379"
+# Username = ""
+# Password = ""
+# DB = 0
+# UseTLS = false
+# TLSMinVersion = "1.2"
+# standalone cluster sentinel
+RedisType = "standalone"
+# Mastername for sentinel type
+# MasterName = "mymaster"
+# SentinelUsername = ""
+# SentinelPassword = ""
+
+[HTTP]
+# http listening address
+Host = "0.0.0.0"
+# http listening port
+Port = 17000
+# https cert file path
+CertFile = ""
+# https key file path
+KeyFile = ""
+# whether print access log
+PrintAccessLog = false
+# whether enable pprof
+PProf = false
+# expose prometheus /metrics?
+ExposeMetrics = true
+# http graceful shutdown timeout, unit: s
+ShutdownTimeout = 30
+# max content length: 64M
+MaxContentLength = 67108864
+# http server read timeout, unit: s
+ReadTimeout = 20
+# http server write timeout, unit: s
+WriteTimeout = 40
+# http server idle timeout, unit: s
+IdleTimeout = 120
+
+# [HTTP.BasicAuth]
+# username = "password"
+
+[Alert]
+[Alert.Heartbeat]
+# auto detect if blank
+IP = ""
+# unit ms
+Interval = 1000
+ClusterName = "default"
+
+[Alert.Alerting]
+# timeout settings, unit: ms, default: 30000ms
+Timeout=30000
+NotifyConcurrency = 10
+[Alert.Alerting.CallScript]
+# built in sending capability in go code
+# so, no need enable script sender
+Enable = false
+ScriptPath = "./etc/script/notify.py"
+
+[[Alert.Alerting.Webhooks]]
+Enable = false
+Url = "http://a.com/n9e/callback"
+BasicAuthUser = ""
+BasicAuthPass = ""
+Timeout = "5s"
+Headers = ["Content-Type", "application/json", "X-From", "N9E"]
+
+[Center]
+MetricsYamlFile = "./etc/metrics.yaml"
+I18NHeaderKey = "X-Language"
+
+[Center.JWTAuth]
+# signing key
+SigningKey = "5b94a0fd640fe2765af826acfe42d151"
+# unit: min
+AccessExpired = 1500
+# unit: min
+RefreshExpired = 10080
+RedisKeyPrefix = "/jwt/"
+
+[Center.ProxyAuth]
+# if proxy auth enabled, jwt auth is disabled
+Enable = false
+# username key in http proxy header
+HeaderUserNameKey = "X-User-Name"
+DefaultRoles = ["Standard"]
+
+[Center.BasicAuth]
+user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[Center.AnonymousAccess]
+PromQuerier = true
+AlertDetail = true
+
+[Center.Ibex]
+Address = "http://127.0.0.1:10090"
+# basic auth
+BasicAuthUser = "ibex"
+BasicAuthPass = "ibex"
+# unit: ms
+Timeout = 3000
+
+[Center.TargetMetrics]
+TargetUp = '''max(max_over_time(target_up{ident=~"(%s)"}[%dm])) by (ident)'''
+LoadPerCore = '''max(max_over_time(system_load_norm_1{ident=~"(%s)"}[%dm])) by (ident)'''
+MemUtil = '''100-max(max_over_time(mem_available_percent{ident=~"(%s)"}[%dm])) by (ident)'''
+DiskUtil = '''max(max_over_time(disk_used_percent{ident=~"(%s)", path="/"}[%dm])) by (ident)'''
+
+[Center.LDAP]
+Enable = false
+Host = "ldap.example.org"
+Port = 389
+BaseDn = "dc=example,dc=org"
+# AD: manange@example.org
+BindUser = "cn=manager,dc=example,dc=org"
+BindPass = "*******"
+# openldap format e.g. (&(uid=%s))
+# AD format e.g. (&(sAMAccountName=%s))
+AuthFilter = "(&(uid=%s))"
+CoverAttributes = true
+TLS = false
+StartTLS = true
+# ldap user default roles
+DefaultRoles = ["Standard"]
+
+[Center.LDAP.Attributes]
+Nickname = "cn"
+Phone = "mobile"
+Email = "mail"
+
+[Center.OIDC]
+Enable = false
+DisplayName = "OIDC登录"
+RedirectURL = "http://n9e.com/callback"
+SsoAddr = "http://sso.example.org"
+ClientId = ""
+ClientSecret = ""
+CoverAttributes = true
+DefaultRoles = ["Standard"]
+
+[Center.OIDC.Attributes]
+Nickname = "nickname"
+Phone = "phone_number"
+Email = "email"
+
+[Center.CAS]
+Enable = false
+DisplayName = "CAS登录"
+SsoAddr = "https://cas.example.com/cas/"
+RedirectURL = "http://127.0.0.1:18000/callback/cas"
+CoverAttributes = false
+# cas user default roles
+DefaultRoles = ["Standard"]
+
+[Center.CAS.Attributes]
+Nickname = "nickname"
+Phone = "phone_number"
+Email = "email"
+
+[Center.OAuth]
+Enable = false
+DisplayName = "OAuth2登录"
+RedirectURL = "http://127.0.0.1:18000/callback/oauth"
+SsoAddr = "https://sso.example.com/oauth2/authorize"
+TokenAddr = "https://sso.example.com/oauth2/token"
+UserInfoAddr = "https://api.example.com/api/v1/user/info"
+# "header"  "querystring" "formdata"
+TranTokenMethod = "header"
+ClientId = ""
+ClientSecret = ""
+CoverAttributes = true
+DefaultRoles = ["Standard"]
+UserinfoIsArray = false
+UserinfoPrefix = "data"
+Scopes = ["profile", "email", "phone"]
+
+[Center.OAuth.Attributes]
+# Username must be defined
+Username = "username"
+Nickname = "nickname"
+Phone = "phone_number"
+Email = "email"
+
+[Pushgw]
+DatasourceId = 3
+# use target labels in database instead of in series
+LabelRewrite = true
+# # default busigroup key name
+# BusiGroupLabelKey = "busigroup"
+# ForceUseServerTS = false
+
+# [Pushgw.DebugSample]
+# ident = "xx"
+# __name__ = "xx"
+
+# [Pushgw.WriterOpt]
+# # Writer Options
+# QueueCount = 1000
+# QueueMaxSize = 1000000
+# QueuePopSize = 1000
+# # ident or metric
+# ShardingKey = "ident"
+
+[[Pushgw.Writers]] 
+Url = "http://10.206.0.13:8480/insert/0/prometheus/api/v1/write"
+# Basic auth username
+BasicAuthUser = ""
+# Basic auth password
+BasicAuthPass = ""
+# timeout settings, unit: ms
+Headers = ["X-From", "n9e"]
+Timeout = 10000
+DialTimeout = 3000
+TLSHandshakeTimeout = 30000
+ExpectContinueTimeout = 1000
+IdleConnTimeout = 90000
+# time duration, unit: ms
+KeepAlive = 30000
+MaxConnsPerHost = 0
+MaxIdleConns = 100
+MaxIdleConnsPerHost = 100
+## Optional TLS Config
+# UseTLS = false
+# TLSCA = "/etc/n9e/ca.pem"
+# TLSCert = "/etc/n9e/cert.pem"
+# TLSKey = "/etc/n9e/key.pem"
+# InsecureSkipVerify = false
+# [[Writers.WriteRelabels]]
+# Action = "replace"
+# SourceLabels = ["__address__"]
+# Regex = "([^:]+)(?::\\d+)?"
+# Replacement = "$1:80"
+# TargetLabel = "__address__"

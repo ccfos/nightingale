@@ -1,5 +1,0 @@
-# # collect interval
-# interval = 15
-
-# # whether collect metric: system_n_users
-# collect_user_number = false

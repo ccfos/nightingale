@@ -1,6 +1,0 @@
-# # collect interval
-# interval = 15
-
-# # By default, categraf will gather stats for all devices including disk partitions.
-# # Setting devices will restrict the stats to the specified devices.
-# devices = ["sda", "sdb", "vd*"]

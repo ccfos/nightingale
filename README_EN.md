@@ -49,7 +49,7 @@ Nightingale is an cloud-native monitoring system by All-In-On design, support en
 <img src="doc/img/install-vm.png" width="680">
 
 ## Contact us and feedback questions
-- We recommend that you use [github issue](https://github.com/didi/nightingale/issues) as the preferred channel for issue feedback and requirement submission;
+- We recommend that you use [github issue](https://github.com/ccfos/nightingale/issues) as the preferred channel for issue feedback and requirement submission;
 - You can join our WeChat group
 
 <img src="doc/img/n9e-vx-new.png" width="180">
@@ -57,12 +57,12 @@ Nightingale is an cloud-native monitoring system by All-In-On design, support en
 
 ## Contributing
 We welcome your participation in the Nightingale open source project and open source community in a variety of ways:
-- Feedback on problems and bugs  => [github issue](https://github.com/didi/nightingale/issues)
+- Feedback on problems and bugs  => [github issue](https://github.com/ccfos/nightingale/issues)
 - Additional and improved documentation => [n9e.github.io](https://n9e.github.io/)
-- Share your best practices and insights on using Nightingale => [User Story](https://github.com/didi/nightingale/issues/897)
-- Join our community events => [Nightingale wechat group](https://s3-gz01.didistatic.com/n9e-pub/image/n9e-wx.png)
-- Submit code to make Nightingale better =>[github PR](https://github.com/didi/nightingale/pulls)
+- Share your best practices and insights on using Nightingale => [User Story](https://github.com/ccfos/nightingale/issues/897)
+- Join our community events => [Nightingale wechat group](https://s3-gz01.ccfosstatic.com/n9e-pub/image/n9e-wx.png)
+- Submit code to make Nightingale better =>[github PR](https://github.com/ccfos/nightingale/pulls)
 
 
 ## License
-Nightingale with [Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE) open source license.
+Nightingale with [Apache License V2.0](https://github.com/ccfos/nightingale/blob/main/LICENSE) open source license.

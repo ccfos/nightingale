@@ -1,8 +1,0 @@
-# # collect interval
-# interval = 15
-
-# # whether collect protocol stats on Linux
-# collect_protocol_stats = false
-
-# # setting interfaces will tell categraf to gather these explicit interfaces
-# interfaces = ["eth0"]

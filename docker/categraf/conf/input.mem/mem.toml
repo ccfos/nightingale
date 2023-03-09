@@ -1,5 +1,0 @@
-# # collect interval
-# interval = 15
-
-# # whether collect platform specified metrics
-collect_platform_fields = true

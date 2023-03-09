@@ -42,7 +42,7 @@ class Sender(object):
             return
 
         recipients = emails.keys()
-        mail_body = payload.get('tpls').get("mailbody.tpl", "mailbody.tpl not found")
+        mail_body = payload.get('tpls').get("email.tpl", "email.tpl not found")
         message = MIMEText(mail_body, 'html', 'utf-8')
         message['From'] = mail_from
         message['To'] = ", ".join(recipients)

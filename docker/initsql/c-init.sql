@@ -1,3 +1,0 @@
-GRANT ALL ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY '1234';
-GRANT ALL ON *.* TO 'root'@'localhost' IDENTIFIED BY '1234';
-GRANT ALL ON *.* TO 'root'@'%' IDENTIFIED BY '1234';

@@ -91,7 +91,7 @@
 - 补充和完善文档 => [n9e.github.io](https://n9e.github.io/)
 - 分享您在使用夜莺监控过程中的最佳实践和经验心得 => [文章分享](https://n9e.github.io/docs/prologue/share/)
 - 提交产品建议 =》 [github issue](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Ffeature&template=enhancement.md)
-- 提交代码，让夜莺监控更快、更稳、更好用 => [github pull request](https://github.com/didi/nightingale/pulls)
+- 提交代码，让夜莺监控更快、更稳、更好用 => [github pull request](https://github.com/ccfos/nightingale/pulls)
 
 **尊重、认可和记录每一位贡献者的工作**是夜莺开源社区的第一指导原则，我们提倡**高效的提问**，这既是对开发者时间的尊重，也是对整个社区知识沉淀的贡献：
 - 提问之前请先查阅 [FAQ](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq) 
@@ -112,7 +112,7 @@
 </a>
 
 ## License
-[Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE)
+[Apache License V2.0](https://github.com/ccfos/nightingale/blob/main/LICENSE)
 
 ## Contact Us
 推荐您关注夜莺监控公众号，及时获取相关产品和社区动态：
