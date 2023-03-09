@@ -325,7 +325,7 @@ CREATE TABLE `alert_subscribe` (
     `user_group_ids` varchar(250) not null comment 'split by space 1 34 5, notify cc to user_group_ids',
     `webhooks` text not null default '',
     `redefine_webhooks` tinyint(1) default 0,
-    `for_duration` bigint not null default 0
+    `for_duration` bigint not null default 0,
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
