@@ -262,7 +262,7 @@ CREATE TABLE `alert_rule` (
     `severity` tinyint(1) not null comment '1:Emergency 2:Warning 3:Notice',
     `disabled` tinyint(1) not null comment '0:enabled 1:disabled',
     `prom_for_duration` int not null comment 'prometheus for, unit:s',
-    `rule_config` text not null comment 'rule_config';
+    `rule_config` text not null comment 'rule_config',
     `prom_ql` text not null comment 'promql',
     `prom_eval_interval` int not null comment 'evaluate interval',
     `enable_stime` varchar(255) not null default '00:00',
