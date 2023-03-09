@@ -1,11 +1,6 @@
 package cconf
 
 import (
-	"github.com/ccfos/nightingale/v6/pkg/cas"
-	"github.com/ccfos/nightingale/v6/pkg/ldapx"
-	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
-	"github.com/ccfos/nightingale/v6/pkg/oidcx"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,10 +16,6 @@ type Center struct {
 	AnonymousAccess        AnonymousAccess
 	JWTAuth                JWTAuth
 	ProxyAuth              ProxyAuth
-	LDAP                   ldapx.Config
-	OIDC                   oidcx.Config
-	CAS                    cas.Config
-	OAuth                  oauth2x.Config
 	Ibex                   Ibex
 }
 

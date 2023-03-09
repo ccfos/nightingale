@@ -19,22 +19,23 @@ import (
 )
 
 type SsoClient struct {
-	enable          bool
-	config          oauth2.Config
-	ssoAddr         string
-	userInfoAddr    string
+	Enable          bool
+	Config          oauth2.Config
+	SsoAddr         string
+	UserInfoAddr    string
 	TranTokenMethod string
-	callbackAddr    string
-	displayName     string
-	coverAttributes bool
-	attributes      struct {
-		username string
-		nickname string
-		phone    string
-		email    string
+	CallbackAddr    string
+	DisplayName     string
+	CoverAttributes bool
+	Attributes      struct {
+		Username string
+		Nickname string
+		Phone    string
+		Email    string
 	}
-	userinfoIsArray bool
-	userinfoPrefix  string
+	UserinfoIsArray bool
+	UserinfoPrefix  string
+	DefaultRoles    []string
 
 	sync.RWMutex
 }
@@ -75,25 +76,26 @@ func (s *SsoClient) Reload(cf Config) {
 	s.Lock()
 	defer s.Unlock()
 	if !cf.Enable {
-		s.enable = cf.Enable
+		s.Enable = cf.Enable
 		return
 	}
 
-	s.enable = cf.Enable
-	s.ssoAddr = cf.SsoAddr
-	s.userInfoAddr = cf.UserInfoAddr
+	s.Enable = cf.Enable
+	s.SsoAddr = cf.SsoAddr
+	s.UserInfoAddr = cf.UserInfoAddr
 	s.TranTokenMethod = cf.TranTokenMethod
-	s.callbackAddr = cf.RedirectURL
-	s.displayName = cf.DisplayName
-	s.coverAttributes = cf.CoverAttributes
-	s.attributes.username = cf.Attributes.Username
-	s.attributes.nickname = cf.Attributes.Nickname
-	s.attributes.phone = cf.Attributes.Phone
-	s.attributes.email = cf.Attributes.Email
-	s.userinfoIsArray = cf.UserinfoIsArray
-	s.userinfoPrefix = cf.UserinfoPrefix
+	s.CallbackAddr = cf.RedirectURL
+	s.DisplayName = cf.DisplayName
+	s.CoverAttributes = cf.CoverAttributes
+	s.Attributes.Username = cf.Attributes.Username
+	s.Attributes.Nickname = cf.Attributes.Nickname
+	s.Attributes.Phone = cf.Attributes.Phone
+	s.Attributes.Email = cf.Attributes.Email
+	s.UserinfoIsArray = cf.UserinfoIsArray
+	s.UserinfoPrefix = cf.UserinfoPrefix
+	s.DefaultRoles = cf.DefaultRoles
 
-	s.config = oauth2.Config{
+	s.Config = oauth2.Config{
 		ClientID:     cf.ClientId,
 		ClientSecret: cf.ClientSecret,
 		Endpoint: oauth2.Endpoint{
@@ -108,11 +110,11 @@ func (s *SsoClient) Reload(cf Config) {
 func (s *SsoClient) GetDisplayName() string {
 	s.RLock()
 	defer s.RUnlock()
-	if !s.enable {
+	if !s.Enable {
 		return ""
 	}
 
-	return s.displayName
+	return s.DisplayName
 }
 
 func wrapStateKey(key string) string {
@@ -131,7 +133,7 @@ func (s *SsoClient) Authorize(redis storage.Redis, redirect string) (string, err
 
 	s.RLock()
 	defer s.RUnlock()
-	return s.config.AuthCodeURL(state), nil
+	return s.Config.AuthCodeURL(state), nil
 }
 
 func fetchRedirect(redis storage.Redis, ctx context.Context, state string) (string, error) {
@@ -164,10 +166,10 @@ type CallbackOutput struct {
 	Redirect    string `json:"redirect"`
 	Msg         string `json:"msg"`
 	AccessToken string `json:"accessToken"`
-	Username    string `json:"username"`
-	Nickname    string `json:"nickname"`
-	Phone       string `yaml:"phone"`
-	Email       string `yaml:"email"`
+	Username    string `json:"Username"`
+	Nickname    string `json:"Nickname"`
+	Phone       string `yaml:"Phone"`
+	Email       string `yaml:"Email"`
 }
 
 func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
@@ -175,12 +177,12 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	defer s.RUnlock()
 
 	ctx := context.Background()
-	oauth2Token, err := s.config.Exchange(ctx, code)
+	oauth2Token, err := s.Config.Exchange(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange token: %s", err)
 	}
 
-	userInfo, err := getUserInfo(s.userInfoAddr, oauth2Token.AccessToken, s.TranTokenMethod)
+	userInfo, err := getUserInfo(s.UserInfoAddr, oauth2Token.AccessToken, s.TranTokenMethod)
 	if err != nil {
 		logger.Errorf("failed to get user info: %s", err)
 		return nil, fmt.Errorf("failed to get user info: %s", err)
@@ -188,32 +190,32 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 
 	return &CallbackOutput{
 		AccessToken: oauth2Token.AccessToken,
-		Username:    getUserinfoField(userInfo, s.userinfoIsArray, s.userinfoPrefix, s.attributes.username),
-		Nickname:    getUserinfoField(userInfo, s.userinfoIsArray, s.userinfoPrefix, s.attributes.nickname),
-		Phone:       getUserinfoField(userInfo, s.userinfoIsArray, s.userinfoPrefix, s.attributes.phone),
-		Email:       getUserinfoField(userInfo, s.userinfoIsArray, s.userinfoPrefix, s.attributes.email),
+		Username:    getUserinfoField(userInfo, s.UserinfoIsArray, s.UserinfoPrefix, s.Attributes.Username),
+		Nickname:    getUserinfoField(userInfo, s.UserinfoIsArray, s.UserinfoPrefix, s.Attributes.Nickname),
+		Phone:       getUserinfoField(userInfo, s.UserinfoIsArray, s.UserinfoPrefix, s.Attributes.Phone),
+		Email:       getUserinfoField(userInfo, s.UserinfoIsArray, s.UserinfoPrefix, s.Attributes.Email),
 	}, nil
 }
 
-func getUserInfo(userInfoAddr, accessToken string, TranTokenMethod string) ([]byte, error) {
+func getUserInfo(UserInfoAddr, accessToken string, TranTokenMethod string) ([]byte, error) {
 	var req *http.Request
 	if TranTokenMethod == "formdata" {
 		body := bytes.NewBuffer([]byte("access_token=" + accessToken))
-		r, err := http.NewRequest("POST", userInfoAddr, body)
+		r, err := http.NewRequest("POST", UserInfoAddr, body)
 		if err != nil {
 			return nil, err
 		}
 		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		req = r
 	} else if TranTokenMethod == "querystring" {
-		r, err := http.NewRequest("GET", userInfoAddr+"?access_token="+accessToken, nil)
+		r, err := http.NewRequest("GET", UserInfoAddr+"?access_token="+accessToken, nil)
 		if err != nil {
 			return nil, err
 		}
 		r.Header.Add("Authorization", "Bearer "+accessToken)
 		req = r
 	} else {
-		r, err := http.NewRequest("GET", userInfoAddr, nil)
+		r, err := http.NewRequest("GET", UserInfoAddr, nil)
 		if err != nil {
 			return nil, err
 		}

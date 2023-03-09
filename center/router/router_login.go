@@ -32,15 +32,15 @@ func (rt *Router) loginPost(c *gin.Context) {
 	user, err := models.PassLogin(rt.Ctx, f.Username, f.Password)
 	if err != nil {
 		// pass validate fail, try ldap
-		if rt.Center.LDAP.Enable {
-			roles := strings.Join(rt.Center.LDAP.DefaultRoles, " ")
+		if rt.Sso.LDAP.Enable {
+			roles := strings.Join(rt.Sso.LDAP.DefaultRoles, " ")
 			user, err = models.LdapLogin(rt.Ctx, f.Username, f.Password, roles, rt.Sso.LDAP)
 			if err != nil {
 				logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
 				ginx.NewRender(c).Message(err)
 				return
 			}
-			user.RolesLst = rt.Center.LDAP.DefaultRoles
+			user.RolesLst = rt.Sso.LDAP.DefaultRoles
 		} else {
 			ginx.NewRender(c).Message(err)
 			return
@@ -183,7 +183,7 @@ func (rt *Router) loginRedirect(c *gin.Context) {
 		}
 	}
 
-	if !rt.Center.OIDC.Enable {
+	if !rt.Sso.OIDC.Enable {
 		ginx.NewRender(c).Data("", nil)
 		return
 	}
@@ -216,7 +216,7 @@ func (rt *Router) loginCallback(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if user != nil {
-		if rt.Center.OIDC.CoverAttributes {
+		if rt.Sso.OIDC.CoverAttributes {
 			if ret.Nickname != "" {
 				user.Nickname = ret.Nickname
 			}
@@ -241,8 +241,8 @@ func (rt *Router) loginCallback(c *gin.Context) {
 			Phone:    ret.Phone,
 			Email:    ret.Email,
 			Portrait: "",
-			Roles:    strings.Join(rt.Center.OIDC.DefaultRoles, " "),
-			RolesLst: rt.Center.OIDC.DefaultRoles,
+			Roles:    strings.Join(rt.Sso.OIDC.DefaultRoles, " "),
+			RolesLst: rt.Sso.OIDC.DefaultRoles,
 			Contacts: []byte("{}"),
 			CreateAt: now,
 			UpdateAt: now,
@@ -296,7 +296,7 @@ func (rt *Router) loginRedirectCas(c *gin.Context) {
 		}
 	}
 
-	if !rt.Center.CAS.Enable {
+	if !rt.Sso.CAS.Enable {
 		logger.Error("cas is not enable")
 		ginx.NewRender(c).Data("", nil)
 		return
@@ -326,7 +326,7 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 	}
 	ginx.Dangerous(err)
 	if user != nil {
-		if rt.Center.CAS.CoverAttributes {
+		if rt.Sso.CAS.CoverAttributes {
 			if ret.Nickname != "" {
 				user.Nickname = ret.Nickname
 			}
@@ -349,8 +349,8 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 			Password: "******",
 			Nickname: ret.Nickname,
 			Portrait: "",
-			Roles:    strings.Join(rt.Center.CAS.DefaultRoles, " "),
-			RolesLst: rt.Center.CAS.DefaultRoles,
+			Roles:    strings.Join(rt.Sso.CAS.DefaultRoles, " "),
+			RolesLst: rt.Sso.CAS.DefaultRoles,
 			Contacts: []byte("{}"),
 			Phone:    ret.Phone,
 			Email:    ret.Email,
@@ -402,7 +402,7 @@ func (rt *Router) loginRedirectOAuth(c *gin.Context) {
 		}
 	}
 
-	if !rt.Center.OAuth.Enable {
+	if !rt.Sso.OAuth2.Enable {
 		ginx.NewRender(c).Data("", nil)
 		return
 	}
@@ -428,7 +428,7 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if user != nil {
-		if rt.Center.OAuth.CoverAttributes {
+		if rt.Sso.OAuth2.CoverAttributes {
 			if ret.Nickname != "" {
 				user.Nickname = ret.Nickname
 			}
@@ -453,8 +453,8 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 			Phone:    ret.Phone,
 			Email:    ret.Email,
 			Portrait: "",
-			Roles:    strings.Join(rt.Center.OAuth.DefaultRoles, " "),
-			RolesLst: rt.Center.OAuth.DefaultRoles,
+			Roles:    strings.Join(rt.Sso.OAuth2.DefaultRoles, " "),
+			RolesLst: rt.Sso.OAuth2.DefaultRoles,
 			Contacts: []byte("{}"),
 			CreateAt: now,
 			UpdateAt: now,

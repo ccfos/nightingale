@@ -30,17 +30,18 @@ type Config struct {
 }
 
 type SsoClient struct {
-	enable       bool
-	config       Config
-	ssoAddr      string
-	callbackAddr string
-	displayName  string
-	attributes   struct {
-		nickname string
-		phone    string
-		email    string
+	Enable       bool
+	Config       Config
+	SsoAddr      string
+	CallbackAddr string
+	DisplayName  string
+	Attributes   struct {
+		Nickname string
+		Phone    string
+		Email    string
 	}
-
+	DefaultRoles    []string
+	CoverAttributes bool
 	sync.RWMutex
 }
 
@@ -50,13 +51,15 @@ func New(cf Config) *SsoClient {
 		return &cli
 	}
 
-	cli.config = cf
-	cli.ssoAddr = cf.SsoAddr
-	cli.callbackAddr = cf.RedirectURL
-	cli.displayName = cf.DisplayName
-	cli.attributes.nickname = cf.Attributes.Nickname
-	cli.attributes.phone = cf.Attributes.Phone
-	cli.attributes.email = cf.Attributes.Email
+	cli.Config = cf
+	cli.SsoAddr = cf.SsoAddr
+	cli.CallbackAddr = cf.RedirectURL
+	cli.DisplayName = cf.DisplayName
+	cli.Attributes.Nickname = cf.Attributes.Nickname
+	cli.Attributes.Phone = cf.Attributes.Phone
+	cli.Attributes.Email = cf.Attributes.Email
+	cli.DefaultRoles = cf.DefaultRoles
+	cli.CoverAttributes = cf.CoverAttributes
 
 	return &cli
 }
@@ -65,28 +68,30 @@ func (s *SsoClient) Reload(cf Config) {
 	s.Lock()
 	defer s.Unlock()
 	if !cf.Enable {
-		s.enable = cf.Enable
+		s.Enable = cf.Enable
 		return
 	}
 
-	s.enable = cf.Enable
-	s.config = cf
-	s.ssoAddr = cf.SsoAddr
-	s.callbackAddr = cf.RedirectURL
-	s.displayName = cf.DisplayName
-	s.attributes.nickname = cf.Attributes.Nickname
-	s.attributes.phone = cf.Attributes.Phone
-	s.attributes.email = cf.Attributes.Email
+	s.Enable = cf.Enable
+	s.Config = cf
+	s.SsoAddr = cf.SsoAddr
+	s.CallbackAddr = cf.RedirectURL
+	s.DisplayName = cf.DisplayName
+	s.Attributes.Nickname = cf.Attributes.Nickname
+	s.Attributes.Phone = cf.Attributes.Phone
+	s.Attributes.Email = cf.Attributes.Email
+	s.DefaultRoles = cf.DefaultRoles
+	s.CoverAttributes = cf.CoverAttributes
 }
 
 func (s *SsoClient) GetDisplayName() string {
 	s.RLock()
 	defer s.RUnlock()
-	if !s.enable {
+	if !s.Enable {
 		return ""
 	}
 
-	return s.displayName
+	return s.DisplayName
 }
 
 // Authorize return the cas authorize location and state
@@ -117,18 +122,18 @@ func (s *SsoClient) genRedirectURL(state string) string {
 	s.RLock()
 	defer s.RUnlock()
 
-	ssoAddr, err := url.Parse(s.config.SsoAddr)
-	ssoAddr.Path = "login"
+	SsoAddr, err := url.Parse(s.Config.SsoAddr)
+	SsoAddr.Path = "login"
 	if err != nil {
 		logger.Error(err)
 		return buf.String()
 	}
 
-	buf.WriteString(ssoAddr.String())
+	buf.WriteString(SsoAddr.String())
 	v := url.Values{
-		"service": {s.callbackAddr},
+		"service": {s.CallbackAddr},
 	}
-	if strings.Contains(s.ssoAddr, "?") {
+	if strings.Contains(s.SsoAddr, "?") {
 		buf.WriteByte('&')
 	} else {
 		buf.WriteByte('?')
@@ -142,21 +147,21 @@ type CallbackOutput struct {
 	Msg         string `json:"msg"`
 	AccessToken string `json:"accessToken"`
 	Username    string `json:"username"`
-	Nickname    string `json:"nickname"`
-	Phone       string `yaml:"phone"`
-	Email       string `yaml:"email"`
+	Nickname    string `json:"Nickname"`
+	Phone       string `yaml:"Phone"`
+	Email       string `yaml:"Email"`
 }
 
 func (s *SsoClient) ValidateServiceTicket(ctx context.Context, ticket, state string, redis storage.Redis) (ret *CallbackOutput, err error) {
 	s.RLock()
 	defer s.RUnlock()
 
-	casUrl, err := url.Parse(s.config.SsoAddr)
+	casUrl, err := url.Parse(s.Config.SsoAddr)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
-	serviceUrl, err := url.Parse(s.callbackAddr)
+	serviceUrl, err := url.Parse(s.CallbackAddr)
 	if err != nil {
 		logger.Error(err)
 		return
@@ -173,11 +178,11 @@ func (s *SsoClient) ValidateServiceTicket(ctx context.Context, ticket, state str
 	}
 	ret = &CallbackOutput{}
 	ret.Username = authRet.User
-	ret.Nickname = authRet.Attributes.Get(s.attributes.nickname)
+	ret.Nickname = authRet.Attributes.Get(s.Attributes.Nickname)
 	logger.Debugf("CAS Authentication Response's Attributes--[Nickname]: %s", ret.Nickname)
-	ret.Email = authRet.Attributes.Get(s.attributes.email)
+	ret.Email = authRet.Attributes.Get(s.Attributes.Email)
 	logger.Debugf("CAS Authentication Response's Attributes--[Email]: %s", ret.Email)
-	ret.Phone = authRet.Attributes.Get(s.attributes.phone)
+	ret.Phone = authRet.Attributes.Get(s.Attributes.Phone)
 	logger.Debugf("CAS Authentication Response's Attributes--[Phone]: %s", ret.Phone)
 	ret.Redirect, err = fetchRedirect(ctx, state, redis)
 	if err != nil {

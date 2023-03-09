@@ -15,19 +15,20 @@ import (
 )
 
 type SsoClient struct {
-	enable          bool
-	verifier        *oidc.IDTokenVerifier
-	config          oauth2.Config
-	ssoAddr         string
-	callbackAddr    string
-	coverAttributes bool
-	displayName     string
-	attributes      struct {
-		username string
-		nickname string
-		phone    string
-		email    string
+	Enable          bool
+	Verifier        *oidc.IDTokenVerifier
+	Config          oauth2.Config
+	SsoAddr         string
+	CallbackAddr    string
+	CoverAttributes bool
+	DisplayName     string
+	Attributes      struct {
+		Username string
+		Nickname string
+		Phone    string
+		Email    string
 	}
+	DefaultRoles []string
 
 	sync.RWMutex
 }
@@ -61,19 +62,20 @@ func (s *SsoClient) Reload(cf Config) error {
 	s.Lock()
 	defer s.Unlock()
 	if !cf.Enable {
-		s.enable = cf.Enable
+		s.Enable = cf.Enable
 		return nil
 	}
 
-	s.enable = cf.Enable
-	s.ssoAddr = cf.SsoAddr
-	s.callbackAddr = cf.RedirectURL
-	s.coverAttributes = cf.CoverAttributes
-	s.attributes.username = "sub"
-	s.attributes.nickname = cf.Attributes.Nickname
-	s.attributes.phone = cf.Attributes.Phone
-	s.attributes.email = cf.Attributes.Email
-	s.displayName = cf.DisplayName
+	s.Enable = cf.Enable
+	s.SsoAddr = cf.SsoAddr
+	s.CallbackAddr = cf.RedirectURL
+	s.CoverAttributes = cf.CoverAttributes
+	s.Attributes.Username = "sub"
+	s.Attributes.Nickname = cf.Attributes.Nickname
+	s.Attributes.Phone = cf.Attributes.Phone
+	s.Attributes.Email = cf.Attributes.Email
+	s.DisplayName = cf.DisplayName
+	s.DefaultRoles = cf.DefaultRoles
 	provider, err := oidc.NewProvider(context.Background(), cf.SsoAddr)
 	if err != nil {
 		return err
@@ -82,8 +84,8 @@ func (s *SsoClient) Reload(cf Config) error {
 		ClientID: cf.ClientId,
 	}
 
-	s.verifier = provider.Verifier(oidcConfig)
-	s.config = oauth2.Config{
+	s.Verifier = provider.Verifier(oidcConfig)
+	s.Config = oauth2.Config{
 		ClientID:     cf.ClientId,
 		ClientSecret: cf.ClientSecret,
 		Endpoint:     provider.Endpoint(),
@@ -96,11 +98,11 @@ func (s *SsoClient) Reload(cf Config) error {
 func (s *SsoClient) GetDisplayName() string {
 	s.RLock()
 	defer s.RUnlock()
-	if !s.enable {
+	if !s.Enable {
 		return ""
 	}
 
-	return s.displayName
+	return s.DisplayName
 }
 
 func wrapStateKey(key string) string {
@@ -120,7 +122,7 @@ func (s *SsoClient) Authorize(redis storage.Redis, redirect string) (string, err
 		return "", err
 	}
 
-	return s.config.AuthCodeURL(state), nil
+	return s.Config.AuthCodeURL(state), nil
 }
 
 func fetchRedirect(redis storage.Redis, ctx context.Context, state string) (string, error) {
@@ -165,7 +167,7 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	defer s.RUnlock()
 
 	ctx := context.Background()
-	oauth2Token, err := s.config.Exchange(ctx, code)
+	oauth2Token, err := s.Config.Exchange(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange token: %v", err)
 	}
@@ -175,7 +177,7 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 		return nil, fmt.Errorf("no id_token field in oauth2 token. ")
 	}
 
-	idToken, err := s.verifier.Verify(ctx, rawIDToken)
+	idToken, err := s.Verifier.Verify(ctx, rawIDToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify ID Token: %v", err)
 	}
@@ -195,9 +197,9 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 
 	return &CallbackOutput{
 		AccessToken: oauth2Token.AccessToken,
-		Username:    v(s.attributes.username),
-		Nickname:    v(s.attributes.nickname),
-		Phone:       v(s.attributes.phone),
-		Email:       v(s.attributes.email),
+		Username:    v(s.Attributes.Username),
+		Nickname:    v(s.Attributes.Nickname),
+		Phone:       v(s.Attributes.Phone),
+		Email:       v(s.Attributes.Email),
 	}, nil
 }
