@@ -15,7 +15,7 @@ builds:
     hooks:
       pre:
        - ./fe.sh
-    main: ./src/
+    main: ./cmd/center/
     binary: n9e
     env:
       - CGO_ENABLED=0
