@@ -42,6 +42,7 @@ archives:
       - docker/*
       - etc/*
       - pub/*
+      - integrations/*
       - n9e.sql
 
 release:
