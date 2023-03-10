@@ -14,14 +14,16 @@ import (
 )
 
 type Naming struct {
-	ctx       *ctx.Context
-	Heartbeat aconf.HeartbeatConfig
+	ctx             *ctx.Context
+	heartbeatConfig aconf.HeartbeatConfig
+	isCenter        bool
 }
 
-func NewNaming(ctx *ctx.Context, heartbeat aconf.HeartbeatConfig) *Naming {
+func NewNaming(ctx *ctx.Context, heartbeat aconf.HeartbeatConfig, isCenter bool) *Naming {
 	naming := &Naming{
-		ctx:       ctx,
-		Heartbeat: heartbeat,
+		ctx:             ctx,
+		heartbeatConfig: heartbeat,
+		isCenter:        isCenter,
 	}
 	naming.Heartbeats()
 	return naming
@@ -58,7 +60,7 @@ func (n *Naming) DeleteInactiveInstances() {
 }
 
 func (n *Naming) loopHeartbeat() {
-	interval := time.Duration(n.Heartbeat.Interval) * time.Millisecond
+	interval := time.Duration(n.heartbeatConfig.Interval) * time.Millisecond
 	for {
 		time.Sleep(interval)
 		if err := n.heartbeat(); err != nil {
@@ -72,19 +74,19 @@ func (n *Naming) heartbeat() error {
 	var err error
 
 	// 在页面上维护实例和集群的对应关系
-	datasourceIds, err = models.GetDatasourceIdsByClusterName(n.ctx, n.Heartbeat.ClusterName)
+	datasourceIds, err = models.GetDatasourceIdsByClusterName(n.ctx, n.heartbeatConfig.ClusterName)
 	if err != nil {
 		return err
 	}
 
 	if len(datasourceIds) == 0 {
-		err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.Heartbeat.Endpoint, n.Heartbeat.ClusterName, 0)
+		err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.ClusterName, 0)
 		if err != nil {
 			logger.Warningf("heartbeat with cluster %s err:%v", "", err)
 		}
 	} else {
 		for i := 0; i < len(datasourceIds); i++ {
-			err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.Heartbeat.Endpoint, n.Heartbeat.ClusterName, datasourceIds[i])
+			err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.ClusterName, datasourceIds[i])
 			if err != nil {
 				logger.Warningf("heartbeat with cluster %d err:%v", datasourceIds[i], err)
 			}
@@ -110,6 +112,32 @@ func (n *Naming) heartbeat() error {
 		localss[datasourceIds[i]] = newss
 	}
 
+	if n.isCenter {
+		// 如果是中心节点，还需要处理 host 类型的告警规则，host 类型告警规则，和数据源无关，想复用下数据源的 hash ring，想用一个虚假的数据源 id 来处理
+		// if is center node, we need to handle host type alerting rules, host type alerting rules are not related to datasource, we want to reuse the hash ring of datasource, we want to use a fake datasource id to handle it
+		err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.ClusterName, HostDatasource)
+		if err != nil {
+			logger.Warningf("heartbeat with cluster %s err:%v", "", err)
+		}
+
+		servers, err := n.ActiveServers(HostDatasource)
+		if err != nil {
+			logger.Warningf("hearbeat %d get active server err:%v", HostDatasource, err)
+			return nil
+		}
+
+		sort.Strings(servers)
+		newss := strings.Join(servers, " ")
+
+		oldss, exists := localss[HostDatasource]
+		if exists && oldss == newss {
+			return nil
+		}
+
+		RebuildConsistentHashRing(HostDatasource, servers)
+		localss[HostDatasource] = newss
+	}
+
 	return nil
 }
 
@@ -120,9 +148,4 @@ func (n *Naming) ActiveServers(datasourceId int64) ([]string, error) {
 
 	// 30秒内有心跳，就认为是活的
 	return models.AlertingEngineGetsInstances(n.ctx, "datasource_id = ? and clock > ?", datasourceId, time.Now().Unix()-30)
-}
-
-func (n *Naming) AllActiveServers() ([]string, error) {
-	// 30秒内有心跳，就认为是活的
-	return models.AlertingEngineGetsInstances(n.ctx, "clock > ?", time.Now().Unix()-30)
 }

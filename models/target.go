@@ -114,9 +114,9 @@ func TargetGets(ctx *ctx.Context, bgid int64, dsIds []int64, query string, limit
 }
 
 // 根据 DatasourceIds, groupids, tags, hosts 查询 targets
-func TargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, typ string, ts int64, limit, offset int) ([]*Target, error) {
+func TargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, limit, offset int) ([]*Target, error) {
 	var lst []*Target
-	session := TargetFilterQueryBuild(ctx, query, typ, ts, limit, offset)
+	session := TargetFilterQueryBuild(ctx, query, limit, offset)
 	err := session.Order("ident").Find(&lst).Error
 	cache := make(map[int64]*BusiGroup)
 	for i := 0; i < len(lst); i++ {
@@ -127,22 +127,15 @@ func TargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, typ stri
 	return lst, err
 }
 
-func TargetCountByFilter(ctx *ctx.Context, query map[string]interface{}, typ string, ts int64) (int64, error) {
-	session := TargetFilterQueryBuild(ctx, query, typ, ts, 0, 0)
+func TargetCountByFilter(ctx *ctx.Context, query map[string]interface{}) (int64, error) {
+	session := TargetFilterQueryBuild(ctx, query, 0, 0)
 	return Count(session)
 }
 
-func TargetFilterQueryBuild(ctx *ctx.Context, query map[string]interface{}, typ string, ts int64, limit, offset int) *gorm.DB {
+func TargetFilterQueryBuild(ctx *ctx.Context, query map[string]interface{}, limit, offset int) *gorm.DB {
 	session := DB(ctx).Model(&Target{})
 	for k, v := range query {
 		session = session.Where(k, v)
-	}
-
-	switch typ {
-	case "target_miss", "pct_target_miss":
-		session = session.Where("update_at < ?", ts)
-	case "offset":
-		session = session.Where("offset > ?", ts)
 	}
 
 	if limit > 0 {

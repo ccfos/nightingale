@@ -15,6 +15,7 @@ import (
 )
 
 type Scheduler struct {
+	isCenter bool
 	// key: hash
 	alertRules map[string]*AlertRuleWorker
 
@@ -35,10 +36,11 @@ type Scheduler struct {
 	stats *astats.Stats
 }
 
-func NewScheduler(aconf aconf.Alert, externalProcessors *process.ExternalProcessorsType, arc *memsto.AlertRuleCacheType, targetCache *memsto.TargetCacheType,
+func NewScheduler(isCenter bool, aconf aconf.Alert, externalProcessors *process.ExternalProcessorsType, arc *memsto.AlertRuleCacheType, targetCache *memsto.TargetCacheType,
 	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, promClients *prom.PromClientMap, naming *naming.Naming,
 	ctx *ctx.Context, stats *astats.Stats) *Scheduler {
 	scheduler := &Scheduler{
+		isCenter:   isCenter,
 		aconf:      aconf,
 		alertRules: make(map[string]*AlertRuleWorker),
 		// recordRules:        make(map[string]RuleContext),
@@ -96,8 +98,12 @@ func (s *Scheduler) syncAlertRules() {
 				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.ctx)
 				alertRuleWorkers[alertRule.Hash()] = alertRule
 			}
-		} else if rule.IsHostRule() && s.naming.IamLeader() {
-			// all host rule will be processed by leader
+		} else if rule.IsHostRule() && s.isCenter {
+			// all host rule will be processed by center instance
+
+			if !naming.DatasourceHashRing.IsHit(naming.HostDatasource, fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
+				continue
+			}
 			processor := process.NewProcessor(rule, 0, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.promClients, s.ctx, s.stats)
 			alertRule := NewAlertRuleWorker(rule, 0, processor, s.promClients, s.ctx)
 			alertRuleWorkers[alertRule.Hash()] = alertRule

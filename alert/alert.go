@@ -56,7 +56,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	externalProcessors := process.NewExternalProcessors()
 
-	Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, ctx, promClients)
+	Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, ctx, promClients, false)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 	rt := router.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
@@ -71,7 +71,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 }
 
 func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, alertStats *astats.Stats, externalProcessors *process.ExternalProcessorsType, targetCache *memsto.TargetCacheType, busiGroupCache *memsto.BusiGroupCacheType,
-	alertMuteCache *memsto.AlertMuteCacheType, alertRuleCache *memsto.AlertRuleCacheType, ctx *ctx.Context, promClients *prom.PromClientMap) {
+	alertMuteCache *memsto.AlertMuteCacheType, alertRuleCache *memsto.AlertRuleCacheType, ctx *ctx.Context, promClients *prom.PromClientMap, isCenter bool) {
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 	alertSubscribeCache := memsto.NewAlertSubscribeCache(ctx, syncStats)
@@ -81,12 +81,12 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 
 	go models.InitNotifyConfig(ctx, alertc.Alerting.TemplatesDir)
 
-	naming := naming.NewNaming(ctx, alertc.Heartbeat)
+	naming := naming.NewNaming(ctx, alertc.Heartbeat, isCenter)
 
 	writers := writer.NewWriters(pushgwc)
 	record.NewScheduler(alertc, recordingRuleCache, promClients, writers, alertStats)
 
-	eval.NewScheduler(alertc, externalProcessors, alertRuleCache, targetCache, busiGroupCache, alertMuteCache, promClients, naming, ctx, alertStats)
+	eval.NewScheduler(isCenter, alertc, externalProcessors, alertRuleCache, targetCache, busiGroupCache, alertMuteCache, promClients, naming, ctx, alertStats)
 
 	dp := dispatch.NewDispatch(alertRuleCache, userCache, userGroupCache, alertSubscribeCache, targetCache, webhookCache, notifyScript, alertc.Alerting, alertc.Ibex, ctx)
 	consumer := dispatch.NewConsumer(alertc.Alerting, ctx, dp)

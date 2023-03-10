@@ -11,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/center"
 	"github.com/ccfos/nightingale/v6/pkg/osx"
 	"github.com/ccfos/nightingale/v6/pkg/version"
+
 	"github.com/toolkits/pkg/runner"
 )
 

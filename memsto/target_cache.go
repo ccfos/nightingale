@@ -72,19 +72,40 @@ func (tc *TargetCacheType) Get(ident string) (*models.Target, bool) {
 	return val, has
 }
 
-func (tc *TargetCacheType) GetDeads(actives map[string]struct{}) map[string]*models.Target {
-	ret := make(map[string]*models.Target)
-
+func (tc *TargetCacheType) GetMissHost(targets []*models.Target, ts int64) []string {
 	tc.RLock()
 	defer tc.RUnlock()
-
-	for ident, target := range tc.targets {
-		if _, has := actives[ident]; !has {
-			ret[ident] = target
+	var missHosts []string
+	for _, target := range targets {
+		target, exists := tc.targets[target.Ident]
+		if !exists {
+			missHosts = append(missHosts, target.Ident)
+			continue
+		}
+		if target.UnixTime < ts {
+			missHosts = append(missHosts, target.Ident)
 		}
 	}
 
-	return ret
+	return missHosts
+}
+
+func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, ts int64) []string {
+	tc.RLock()
+	defer tc.RUnlock()
+	var hosts []string
+	for _, target := range targets {
+		target, exists := tc.targets[target.Ident]
+		if !exists {
+			continue
+		}
+
+		if target.Offset > ts {
+			hosts = append(hosts, target.Ident)
+		}
+	}
+
+	return hosts
 }
 
 func (tc *TargetCacheType) SyncTargets() {

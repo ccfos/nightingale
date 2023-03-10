@@ -25,10 +25,10 @@ func (rt *Router) targetGetsByHostFilter(c *gin.Context) {
 
 	query := models.GetHostsQuery(f.Filters)
 
-	hosts, err := models.TargetGetsByFilter(rt.Ctx, query, "", 0, f.Limit, (f.P-1)*f.Limit)
+	hosts, err := models.TargetGetsByFilter(rt.Ctx, query, f.Limit, (f.P-1)*f.Limit)
 	ginx.Dangerous(err)
 
-	total, err := models.TargetCountByFilter(rt.Ctx, query, "", 0)
+	total, err := models.TargetCountByFilter(rt.Ctx, query)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
