@@ -1,16 +1,20 @@
 package router
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/center/idents"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 type TargetQuery struct {
@@ -55,18 +59,27 @@ func (rt *Router) targetGets(c *gin.Context) {
 		for i := 0; i < len(list); i++ {
 			ginx.Dangerous(list[i].FillGroup(rt.Ctx, cache))
 
-			if now.UnixMilli()-list[i].UnixTime < 10000 {
+			if now.UnixMilli()-list[i].UnixTime < 60000 {
 				list[i].TargetUp = 1
 			}
 
-			meta, exists := rt.IdentSet.Get(list[i].Ident)
-			if exists {
-				list[i].MemUtil = meta.MemUtil
-				list[i].CpuUtil = meta.CpuUtil
-				list[i].CpuNum = meta.CpuNum
-				list[i].UnixTime = meta.UnixTime
-				list[i].Offset = meta.Offset
+			bs, err := rt.Redis.Get(context.Background(), list[i].Ident).Bytes()
+			if err != nil {
+				logger.Warningf("get ident %s from redis error: %v", list[i].Ident, err)
+				continue
 			}
+
+			var meta idents.HostMeta
+			err = json.Unmarshal(bs, &meta)
+			if err != nil {
+				logger.Warningf("unmarshal ident %s from redis error: %v", list[i].Ident, err)
+				continue
+			}
+			list[i].MemUtil = meta.MemUtil
+			list[i].CpuUtil = meta.CpuUtil
+			list[i].CpuNum = meta.CpuNum
+			list[i].UnixTime = meta.UnixTime
+			list[i].Offset = meta.Offset
 		}
 	}
 

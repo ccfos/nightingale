@@ -2,6 +2,7 @@ package idents
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	"time"
 
@@ -22,6 +23,14 @@ type HostMeta struct {
 	MemUtil      float64 `json:"mem_util"`
 	Offset       int64   `json:"offset"`
 	UnixTime     int64   `json:"unixtime"`
+}
+
+func (h HostMeta) MarshalBinary() ([]byte, error) {
+	return json.Marshal(h)
+}
+
+func (h *HostMeta) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, h)
 }
 
 type Set struct {
@@ -125,8 +134,12 @@ func (s *Set) updateTargets(m map[string]HostMeta, now int64) error {
 		return nil
 	}
 
-	// 一次性更新所有的 ident 写到 redis 中
-	err := s.redis.MSet(context.Background(), m).Err()
+	var values []interface{}
+	for ident, meta := range m {
+		values = append(values, ident)
+		values = append(values, meta)
+	}
+	err := s.redis.MSet(context.Background(), values...).Err()
 	if err != nil {
 		return err
 	}
