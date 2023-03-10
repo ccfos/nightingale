@@ -607,7 +607,7 @@ CREATE TABLE `notify_tpl` (
 
 CREATE TABLE `sso_config` (
     `id` bigint unsigned not null auto_increment,
-    `name` varchar(255) not null,
+    `name` varchar(191) not null,
     `content` text not null,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`name`)
