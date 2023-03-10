@@ -64,13 +64,13 @@ func (rt *Router) AppendLabels(pt *prompb.TimeSeries, target *models.Target, bgC
 	}
 }
 
-func getTs(pt *prompb.TimeSeries) int64 {
-	if len(pt.Samples) == 0 {
-		return 0
-	}
+// func getTs(pt *prompb.TimeSeries) int64 {
+// 	if len(pt.Samples) == 0 {
+// 		return 0
+// 	}
 
-	return pt.Samples[0].Timestamp
-}
+// 	return pt.Samples[0].Timestamp
+// }
 
 func (rt *Router) debugSample(remoteAddr string, v *prompb.TimeSeries) {
 	filter := rt.Pushgw.DebugSample

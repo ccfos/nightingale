@@ -4,7 +4,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gogo/protobuf/proto"
@@ -79,8 +78,6 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 	}
 
 	var (
-		now    = time.Now().Unix()
-		ids    = make(map[string]int64)
 		ident  string
 		metric string
 	)
@@ -101,9 +98,6 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		}
 
 		if len(ident) > 0 {
-			// register host
-			ids[ident] = now
-
 			// fill tags
 			target, has := rt.TargetCache.Get(ident)
 			if has {
@@ -125,7 +119,6 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 	}
 
 	CounterSampleTotal.WithLabelValues("prometheus").Add(float64(count))
-	rt.IdentSet.MSet(ids)
 }
 
 // DecodeWriteRequest from an io.Reader into a prompb.WriteRequest, handling

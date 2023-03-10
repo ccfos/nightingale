@@ -1,16 +1,12 @@
 package router
 
 import (
-	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/prom"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
@@ -45,7 +41,6 @@ func (rt *Router) targetGets(c *gin.Context) {
 	bgid := ginx.QueryInt64(c, "bgid", -1)
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 30)
-	mins := ginx.QueryInt(c, "mins", 2)
 	dsIds := queryDatasourceIds(c)
 
 	total, err := models.TargetTotal(rt.Ctx, bgid, dsIds, query)
@@ -57,55 +52,20 @@ func (rt *Router) targetGets(c *gin.Context) {
 	if err == nil {
 		now := time.Now()
 		cache := make(map[int64]*models.BusiGroup)
-		targetsMap := make(map[string]*models.Target)
 		for i := 0; i < len(list); i++ {
 			ginx.Dangerous(list[i].FillGroup(rt.Ctx, cache))
-			targetsMap[strconv.FormatInt(list[i].DatasourceId, 10)+list[i].Ident] = list[i]
-			if now.Unix()-list[i].UpdateAt < 60 {
+
+			if now.UnixMilli()-list[i].UnixTime < 10000 {
 				list[i].TargetUp = 1
 			}
-		}
 
-		// query LoadPerCore / MemUtil / TargetUp / DiskUsedPercent from prometheus
-		// map key: cluster, map value: ident list
-		targets := make(map[int64][]string)
-		for i := 0; i < len(list); i++ {
-			targets[list[i].DatasourceId] = append(targets[list[i].DatasourceId], list[i].Ident)
-		}
-
-		for dsId := range targets {
-			cc := rt.PromClients.GetCli(dsId)
-
-			targetArr := targets[dsId]
-			if len(targetArr) == 0 {
-				continue
-			}
-
-			targetRe := strings.Join(targetArr, "|")
-			valuesMap := make(map[string]map[string]float64)
-
-			for metric, ql := range rt.Center.TargetMetrics {
-				promql := fmt.Sprintf(ql, targetRe, mins)
-				values, err := instantQuery(context.Background(), cc, promql, now)
-				ginx.Dangerous(err)
-				valuesMap[metric] = values
-			}
-
-			// handle values
-			for metric, values := range valuesMap {
-				for ident := range values {
-					mapkey := strconv.FormatInt(dsId, 10) + ident
-					if t, has := targetsMap[mapkey]; has {
-						switch metric {
-						case "LoadPerCore":
-							t.LoadPerCore = values[ident]
-						case "MemUtil":
-							t.MemUtil = values[ident]
-						case "DiskUtil":
-							t.DiskUtil = values[ident]
-						}
-					}
-				}
+			meta, exists := rt.IdentSet.Get(list[i].Ident)
+			if exists {
+				list[i].MemUtil = meta.MemUtil
+				list[i].CpuUtil = meta.CpuUtil
+				list[i].CpuNum = meta.CpuNum
+				list[i].UnixTime = meta.UnixTime
+				list[i].Offset = meta.Offset
 			}
 		}
 	}
@@ -114,30 +74,6 @@ func (rt *Router) targetGets(c *gin.Context) {
 		"list":  list,
 		"total": total,
 	}, nil)
-}
-
-func instantQuery(ctx context.Context, c prom.API, promql string, ts time.Time) (map[string]float64, error) {
-	ret := make(map[string]float64)
-
-	val, warnings, err := c.Query(ctx, promql, ts)
-	if err != nil {
-		return ret, err
-	}
-
-	if len(warnings) > 0 {
-		return ret, fmt.Errorf("instant query occur warnings, promql: %s, warnings: %v", promql, warnings)
-	}
-
-	// TODO 替换函数
-	vectors := common.ConvertAnomalyPoints(val)
-	for i := range vectors {
-		ident, has := vectors[i].Labels["ident"]
-		if has {
-			ret[string(ident)] = vectors[i].Value
-		}
-	}
-
-	return ret, nil
 }
 
 func (rt *Router) targetGetTags(c *gin.Context) {
@@ -150,10 +86,6 @@ func (rt *Router) targetGetTags(c *gin.Context) {
 type targetTagsForm struct {
 	Idents []string `json:"idents" binding:"required"`
 	Tags   []string `json:"tags" binding:"required"`
-}
-
-func (t targetTagsForm) Verify() {
-
 }
 
 func (rt *Router) targetBindTagsByFE(c *gin.Context) {

@@ -166,7 +166,6 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 		fail int
 		msg  = "received"
 		ts   = time.Now().Unix()
-		ids  = make(map[string]int64)
 	)
 
 	for i := 0; i < len(arr); i++ {
@@ -191,9 +190,6 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 
 		host, has := arr[i].Tags["ident"]
 		if has {
-			// register host
-			ids[host] = getTs(pt)
-
 			// fill tags
 			target, has := rt.TargetCache.Get(host)
 			if has {
@@ -218,7 +214,6 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 
 	if succ > 0 {
 		CounterSampleTotal.WithLabelValues("opentsdb").Add(float64(succ))
-		rt.IdentSet.MSet(ids)
 	}
 
 	c.JSON(200, gin.H{

@@ -29,6 +29,8 @@ type Redis interface {
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
 	Get(ctx context.Context, key string) *redis.StringCmd
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+	MSet(ctx context.Context, values ...interface{}) *redis.StatusCmd
+	MGet(ctx context.Context, keys ...string) *redis.SliceCmd
 	HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd
 	HSet(ctx context.Context, key string, values ...interface{}) *redis.IntCmd
 	HDel(ctx context.Context, key string, fields ...string) *redis.IntCmd

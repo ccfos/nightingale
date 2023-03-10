@@ -6,54 +6,32 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/toolkits/pkg/logger"
 
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type Target struct {
-	Id           int64             `json:"id" gorm:"primaryKey"`
-	GroupId      int64             `json:"group_id"`
-	GroupObj     *BusiGroup        `json:"group_obj" gorm:"-"`
-	Cluster      string            `json:"cluster"`
-	DatasourceId int64             `json:"datasource_id"`
-	Ident        string            `json:"ident"`
-	Note         string            `json:"note"`
-	Tags         string            `json:"-"`
-	TagsJSON     []string          `json:"tags" gorm:"-"`
-	TagsMap      map[string]string `json:"-" gorm:"-"` // internal use, append tags to series
-	UpdateAt     int64             `json:"update_at"`
-	Offset       int64             `json:"offset"`
+	Id       int64             `json:"id" gorm:"primaryKey"`
+	GroupId  int64             `json:"group_id"`
+	GroupObj *BusiGroup        `json:"group_obj" gorm:"-"`
+	Cluster  string            `json:"cluster"`
+	Ident    string            `json:"ident"`
+	Note     string            `json:"note"`
+	Tags     string            `json:"-"`
+	TagsJSON []string          `json:"tags" gorm:"-"`
+	TagsMap  map[string]string `json:"-" gorm:"-"` // internal use, append tags to series
 
-	TargetUp    float64 `json:"target_up" gorm:"-"`
-	LoadPerCore float64 `json:"load_per_core" gorm:"-"`
-	MemUtil     float64 `json:"mem_util" gorm:"-"`
-	DiskUtil    float64 `json:"disk_util" gorm:"-"`
+	UnixTime int64   `json:"unixtime" gorm:"-"`
+	Offset   int64   `json:"offset" gorm:"-"`
+	TargetUp float64 `json:"target_up" gorm:"-"`
+	MemUtil  float64 `json:"mem_util" gorm:"-"`
+	CpuNum   int     `json:"cpu_num" gorm:"-"`
+	CpuUtil  float64 `json:"cpu_util" gorm:"-"`
 }
 
 func (t *Target) TableName() string {
 	return "target"
-}
-
-func (t *Target) Add(ctx *ctx.Context) error {
-	obj, err := TargetGet(ctx, "ident = ?", t.Ident)
-	if err != nil {
-		return err
-	}
-
-	if obj == nil {
-		return Insert(ctx, t)
-	}
-
-	if obj.DatasourceId != t.DatasourceId {
-		return DB(ctx).Model(&Target{}).Where("ident = ?", t.Ident).Updates(map[string]interface{}{
-			"datasource_id": t.DatasourceId,
-			"update_at":     t.UpdateAt,
-		}).Error
-	}
-
-	return nil
 }
 
 func (t *Target) FillGroup(ctx *ctx.Context, cache map[int64]*BusiGroup) error {
@@ -322,26 +300,4 @@ func IdentsFilter(ctx *ctx.Context, idents []string, where string, args ...inter
 
 func (m *Target) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
 	return DB(ctx).Model(m).Updates(fields).Error
-}
-
-func TargetUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
-	var lst []*Target
-	err := DB(ctx).Find(&lst).Error
-	if err != nil {
-		return err
-	}
-
-	for i := 0; i < len(lst); i++ {
-		ds, exists := dsm[lst[i].Cluster]
-		if !exists {
-			continue
-		}
-		lst[i].DatasourceId = ds.Id
-
-		err = lst[i].UpdateFieldsMap(ctx, map[string]interface{}{"datasource_id": lst[i].DatasourceId})
-		if err != nil {
-			logger.Errorf("update target:%d datasource ids failed, %v", lst[i].Id, err)
-		}
-	}
-	return nil
 }
