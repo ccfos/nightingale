@@ -522,7 +522,7 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 		ginx.Dangerous(err)
 
 		err = rt.Sso.OIDC.Reload(config)
-		ginx.Bomb(200, "oidc init error: %v", err)
+		ginx.Dangerous(err)
 	case "CAS":
 		var config cas.Config
 		err := toml.Unmarshal([]byte(f.Content), &config)
