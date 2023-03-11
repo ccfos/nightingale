@@ -95,12 +95,6 @@ func Upgrade(configFile string) error {
 		return err
 	}
 
-	// target
-	err = models.TargetUpgradeToV6(ctx, m)
-	if err != nil {
-		return err
-	}
-
 	// recoding rule
 	err = models.RecordingRuleUpgradeToV6(ctx, m)
 	if err != nil {

@@ -180,7 +180,6 @@ func (rt *Router) falconPush(c *gin.Context) {
 		fail int
 		msg  = "received"
 		ts   = time.Now().Unix()
-		ids  = make(map[string]int64)
 	)
 
 	for i := 0; i < len(arr); i++ {
@@ -196,8 +195,6 @@ func (rt *Router) falconPush(c *gin.Context) {
 		}
 
 		if ident != "" {
-			// register host
-			ids[ident] = getTs(pt)
 			// fill tags
 			target, has := rt.TargetCache.Get(ident)
 			if has {
@@ -222,7 +219,6 @@ func (rt *Router) falconPush(c *gin.Context) {
 
 	if succ > 0 {
 		CounterSampleTotal.WithLabelValues("openfalcon").Add(float64(succ))
-		rt.IdentSet.MSet(ids)
 	}
 
 	c.JSON(200, gin.H{

@@ -59,7 +59,7 @@ type Processor struct {
 	groupName  string
 
 	atertRuleCache *memsto.AlertRuleCacheType
-	targetCache    *memsto.TargetCacheType
+	TargetCache    *memsto.TargetCacheType
 	busiGroupCache *memsto.BusiGroupCacheType
 	alertMuteCache *memsto.AlertMuteCacheType
 
@@ -90,7 +90,7 @@ func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *me
 		quit:         make(chan struct{}),
 		rule:         rule,
 
-		targetCache:    targetCache,
+		TargetCache:    targetCache,
 		busiGroupCache: busiGroupCache,
 		alertMuteCache: alertMuteCache,
 		atertRuleCache: atertRuleCache,
@@ -126,7 +126,7 @@ func (arw *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, i
 		// 如果 event 被 mute 了,本质也是 fire 的状态,这里无论如何都添加到 alertingKeys 中,防止 fire 的事件自动恢复了
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
-		if mute.IsMuted(cachedRule, event, arw.targetCache, arw.alertMuteCache) {
+		if mute.IsMuted(cachedRule, event, arw.TargetCache, arw.alertMuteCache) {
 			logger.Debugf("rule_eval:%s event:%v is muted", arw.Key(), event)
 			continue
 		}
@@ -392,7 +392,7 @@ func (arw *Processor) fillTags(anomalyPoint common.AnomalyPoint) {
 func (arw *Processor) mayHandleIdent() {
 	// handle ident
 	if ident, has := arw.tagsMap["ident"]; has {
-		if target, exists := arw.targetCache.Get(ident); exists {
+		if target, exists := arw.TargetCache.Get(ident); exists {
 			arw.target = target.Ident
 			arw.targetNote = target.Note
 		}

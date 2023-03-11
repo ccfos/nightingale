@@ -1,13 +1,15 @@
 package memsto
 
 import (
+	"context"
+	"encoding/json"
 	"log"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
@@ -20,17 +22,19 @@ type TargetCacheType struct {
 	statLastUpdated int64
 	ctx             *ctx.Context
 	stats           *Stats
+	redis           storage.Redis
 
 	sync.RWMutex
 	targets map[string]*models.Target // key: ident
 }
 
-func NewTargetCache(ctx *ctx.Context, stats *Stats) *TargetCacheType {
+func NewTargetCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) *TargetCacheType {
 	tc := &TargetCacheType{
 		statTotal:       -1,
 		statLastUpdated: -1,
 		ctx:             ctx,
 		stats:           stats,
+		redis:           redis,
 		targets:         make(map[string]*models.Target),
 	}
 
@@ -72,19 +76,40 @@ func (tc *TargetCacheType) Get(ident string) (*models.Target, bool) {
 	return val, has
 }
 
-func (tc *TargetCacheType) GetDeads(actives map[string]struct{}) map[string]*models.Target {
-	ret := make(map[string]*models.Target)
-
+func (tc *TargetCacheType) GetMissHost(targets []*models.Target, ts int64) []string {
 	tc.RLock()
 	defer tc.RUnlock()
-
-	for ident, target := range tc.targets {
-		if _, has := actives[ident]; !has {
-			ret[ident] = target
+	var missHosts []string
+	for _, target := range targets {
+		target, exists := tc.targets[target.Ident]
+		if !exists {
+			missHosts = append(missHosts, target.Ident)
+			continue
+		}
+		if target.UnixTime < ts {
+			missHosts = append(missHosts, target.Ident)
 		}
 	}
 
-	return ret
+	return missHosts
+}
+
+func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, ts int64) []string {
+	tc.RLock()
+	defer tc.RUnlock()
+	var hosts []string
+	for _, target := range targets {
+		target, exists := tc.targets[target.Ident]
+		if !exists {
+			continue
+		}
+
+		if target.Offset > ts {
+			hosts = append(hosts, target.Ident)
+		}
+	}
+
+	return hosts
 }
 
 func (tc *TargetCacheType) SyncTargets() {
@@ -126,18 +151,14 @@ func (tc *TargetCacheType) syncTargets() error {
 		return errors.WithMessage(err, "failed to call TargetGetsAll")
 	}
 
+	metaMap := tc.GetHostMetas(lst)
+
 	m := make(map[string]*models.Target)
 	for i := 0; i < len(lst); i++ {
-		lst[i].TagsJSON = strings.Fields(lst[i].Tags)
-		lst[i].TagsMap = make(map[string]string)
-		for _, item := range lst[i].TagsJSON {
-			arr := strings.Split(item, "=")
-			if len(arr) != 2 {
-				continue
-			}
-			lst[i].TagsMap[arr[0]] = arr[1]
+		lst[i].FillTagsMap()
+		if meta, ok := metaMap[lst[i].Ident]; ok {
+			lst[i].FillMeta(meta)
 		}
-
 		m[lst[i].Ident] = lst[i]
 	}
 
@@ -149,4 +170,51 @@ func (tc *TargetCacheType) syncTargets() error {
 	logger.Infof("timer: sync targets done, cost: %dms, number: %d", ms, len(lst))
 
 	return nil
+}
+
+func (tc *TargetCacheType) GetHostMetas(targets []*models.Target) map[string]*models.HostMeta {
+	metaMap := make(map[string]*models.HostMeta)
+	if tc.redis == nil {
+		return metaMap
+	}
+	var metas []*models.HostMeta
+	num := 0
+	var keys []string
+	for i := 0; i < len(targets); i++ {
+		keys = append(keys, targets[i].Ident)
+		num++
+		if num == 100 {
+			vals := tc.redis.MGet(context.Background(), keys...).Val()
+			for _, value := range vals {
+				var meta models.HostMeta
+				if value == nil {
+					continue
+				}
+				err := json.Unmarshal([]byte(value.(string)), &meta)
+				if err != nil {
+					logger.Errorf("failed to unmarshal host meta: %s value:%v", err, value)
+					continue
+				}
+				metaMap[meta.Hostname] = &meta
+			}
+			keys = keys[:0]
+			metas = metas[:0]
+			num = 0
+		}
+	}
+
+	vals := tc.redis.MGet(context.Background(), keys...).Val()
+	for _, value := range vals {
+		var meta models.HostMeta
+		if value == nil {
+			continue
+		}
+		err := json.Unmarshal([]byte(value.(string)), &meta)
+		if err != nil {
+			continue
+		}
+		metaMap[meta.Hostname] = &meta
+	}
+
+	return metaMap
 }

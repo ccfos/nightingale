@@ -9,6 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cstats"
+	"github.com/ccfos/nightingale/v6/center/idents"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
@@ -28,12 +29,13 @@ type Router struct {
 	DatasourceCache *memsto.DatasourceCacheType
 	PromClients     *prom.PromClientMap
 	Redis           storage.Redis
+	IdentSet        *idents.Set
 	Sso             *sso.SsoClient
 	Ctx             *ctx.Context
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, pc *prom.PromClientMap,
-	redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context) *Router {
+	redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, identSet *idents.Set) *Router {
 	return &Router{
 		HTTP:            httpConfig,
 		Center:          center,
@@ -43,6 +45,7 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		Redis:           redis,
 		Sso:             sso,
 		Ctx:             ctx,
+		IdentSet:        identSet,
 	}
 }
 
@@ -342,6 +345,8 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		service.POST("/conf-prop/encrypt", rt.confPropEncrypt)
 		service.POST("/conf-prop/decrypt", rt.confPropDecrypt)
+
+		service.POST("/heartbeat", rt.heartbeat)
 	}
 
 	rt.configNoRoute(r)

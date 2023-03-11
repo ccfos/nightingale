@@ -8,6 +8,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/center/cconf"
+	"github.com/ccfos/nightingale/v6/center/idents"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/memsto"
@@ -17,7 +18,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/i18nx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/prom"
-	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 
@@ -54,13 +54,15 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
+	idents := idents.New(db, redis)
+
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
-	idents := idents.New(db, config.Pushgw.DatasourceId, config.Pushgw.MaxOffset)
+	// idents := idents.New(db, config.Pushgw.DatasourceId, config.Pushgw.MaxOffset)
 	sso := sso.Init(config.Center, ctx)
 
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
-	targetCache := memsto.NewTargetCache(ctx, syncStats)
+	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
 	dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
@@ -68,13 +70,13 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
-	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, ctx, promClients)
+	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, ctx, promClients, true)
 
 	writers := writer.NewWriters(config.Pushgw)
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
-	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, promClients, redis, sso, ctx)
-	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
+	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, promClients, redis, sso, ctx, idents)
+	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, writers, ctx)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 

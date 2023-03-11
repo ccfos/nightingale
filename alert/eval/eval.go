@@ -188,36 +188,43 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 
 		query := models.GetHostsQuery(rule.Queries)
 		switch trigger.Type {
-		case "target_miss", "offset":
-			t := now - int64(trigger.Duration)
-			if trigger.Type == "offset" {
-				t = int64(trigger.Duration)
-			}
-
-			hosts, err := models.TargetGetsByFilter(arw.ctx, query, trigger.Type, t, 0, 0)
+		case "target_miss":
+			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
 				continue
 			}
+			t := now - int64(trigger.Duration)
+			hosts := arw.processor.TargetCache.GetMissHost(targets, t)
 
 			for _, host := range hosts {
 				m := make(map[string]string)
-				m["ident"] = host.Ident
+				m["ident"] = host
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(t), trigger.Severity))
 			}
-		case "pct_target_miss":
-			AllCount, err := models.TargetCountByFilter(arw.ctx, query, "", 0)
+		case "offset":
+			t := int64(trigger.Duration)
+			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
 				continue
 			}
-			missCount, err := models.TargetCountByFilter(arw.ctx, query, trigger.Type, now-int64(trigger.Duration))
+			hosts := arw.processor.TargetCache.GetOffsetHost(targets, t)
+			for _, host := range hosts {
+				m := make(map[string]string)
+				m["ident"] = host
+				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(t), trigger.Severity))
+			}
+		case "pct_target_miss":
+			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
 				continue
 			}
 
-			pct := float64(missCount) / float64(AllCount) * 100
+			t := now - int64(trigger.Duration)
+			hosts := arw.processor.TargetCache.GetMissHost(targets, t)
+			pct := float64(len(hosts)) / float64(len(targets)) * 100
 			if pct >= float64(trigger.Percent) {
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, nil, now, pct, trigger.Severity))
 			}
