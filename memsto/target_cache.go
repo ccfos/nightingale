@@ -184,14 +184,18 @@ func (tc *TargetCacheType) GetHostMetas(targets []*models.Target) map[string]*mo
 		keys = append(keys, targets[i].Ident)
 		num++
 		if num == 100 {
-			str := tc.redis.MGet(context.Background(), keys...).String()
-			err := json.Unmarshal([]byte(str), &metas)
-			if err != nil {
-				logger.Errorf("failed to unmarshal metas: %v", err)
-				continue
-			}
-			for i := 0; i < len(metas); i++ {
-				metaMap[metas[i].Hostname] = metas[i]
+			vals := tc.redis.MGet(context.Background(), keys...).Val()
+			for _, value := range vals {
+				var meta models.HostMeta
+				if value == nil {
+					continue
+				}
+				err := json.Unmarshal([]byte(value.(string)), &meta)
+				if err != nil {
+					logger.Errorf("failed to unmarshal host meta: %s value:%v", err, value)
+					continue
+				}
+				metaMap[meta.Hostname] = &meta
 			}
 			keys = keys[:0]
 			metas = metas[:0]
@@ -199,14 +203,17 @@ func (tc *TargetCacheType) GetHostMetas(targets []*models.Target) map[string]*mo
 		}
 	}
 
-	str := tc.redis.MGet(context.Background(), keys...).String()
-	err := json.Unmarshal([]byte(str), &metas)
-	if err != nil {
-		logger.Errorf("failed to unmarshal metas: %v", err)
-	}
-
-	for i := 0; i < len(metas); i++ {
-		metaMap[metas[i].Hostname] = metas[i]
+	vals := tc.redis.MGet(context.Background(), keys...).Val()
+	for _, value := range vals {
+		var meta models.HostMeta
+		if value == nil {
+			continue
+		}
+		err := json.Unmarshal([]byte(value.(string)), &meta)
+		if err != nil {
+			continue
+		}
+		metaMap[meta.Hostname] = &meta
 	}
 
 	return metaMap

@@ -13,7 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/logger"
 )
 
 type TargetQuery struct {
@@ -62,16 +61,18 @@ func (rt *Router) targetGets(c *gin.Context) {
 			keys = append(keys, list[i].Ident)
 		}
 
-		var metas []*models.HostMeta
 		metaMap := make(map[string]*models.HostMeta)
-		str := rt.Redis.MGet(context.Background(), keys...).String()
-		err := json.Unmarshal([]byte(str), &metas)
-		if err != nil {
-			logger.Errorf("failed to unmarshal metas: %v", err)
-		}
-
-		for i := 0; i < len(metas); i++ {
-			metaMap[metas[i].Hostname] = metas[i]
+		vals := rt.Redis.MGet(context.Background(), keys...).Val()
+		for _, value := range vals {
+			var meta models.HostMeta
+			if value == nil {
+				continue
+			}
+			err := json.Unmarshal([]byte(value.(string)), &meta)
+			if err != nil {
+				continue
+			}
+			metaMap[meta.Hostname] = &meta
 		}
 
 		for i := 0; i < len(list); i++ {
