@@ -141,7 +141,6 @@ MemUtil = '''100-max(max_over_time(mem_available_percent{ident=~"(%s)"}[%dm])) b
 DiskUtil = '''max(max_over_time(disk_used_percent{ident=~"(%s)", path="/"}[%dm])) by (ident)'''
 
 [Pushgw]
-DatasourceId = 1
 # use target labels in database instead of in series
 LabelRewrite = true
 # # default busigroup key name
