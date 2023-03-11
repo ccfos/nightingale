@@ -338,19 +338,13 @@ CREATE TABLE `alert_subscribe` (
 CREATE TABLE `target` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
-    `datasource_id` bigint not null default 0 comment 'datasource id',
-    `cluster` varchar(128) not null default '',
     `ident` varchar(191) not null comment 'target id',
     `note` varchar(255) not null default '' comment 'append to alert event as field',
     `tags` varchar(512) not null default '' comment 'append to series data as tags, split by space, append external space at suffix',
     `update_at` bigint not null default 0,
-    `offset` bigint not null default 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`ident`),
-    KEY (`group_id`),
-    KEY (`datasource_id`),
-    KEY (`update_at`),
-    KEY (`offset`)
+    KEY (`group_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 

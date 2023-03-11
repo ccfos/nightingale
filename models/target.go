@@ -15,12 +15,12 @@ type Target struct {
 	Id       int64             `json:"id" gorm:"primaryKey"`
 	GroupId  int64             `json:"group_id"`
 	GroupObj *BusiGroup        `json:"group_obj" gorm:"-"`
-	Cluster  string            `json:"cluster"`
 	Ident    string            `json:"ident"`
 	Note     string            `json:"note"`
 	Tags     string            `json:"-"`
 	TagsJSON []string          `json:"tags" gorm:"-"`
 	TagsMap  map[string]string `json:"-" gorm:"-"` // internal use, append tags to series
+	UpdateAt int64             `json:"update_at"`
 
 	UnixTime int64   `json:"unixtime" gorm:"-"`
 	Offset   int64   `json:"offset" gorm:"-"`
