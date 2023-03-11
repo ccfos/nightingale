@@ -47,10 +47,6 @@ func InitConfig(configDir, cryptoKey string) (*ConfigType, error) {
 		return nil, err
 	}
 
-	if config.Pushgw.DatasourceId == 0 {
-		return nil, fmt.Errorf("datasourceId is 0")
-	}
-
 	if config.Alert.Heartbeat.IP == "" {
 		// auto detect
 		// config.Alert.Heartbeat.IP = fmt.Sprint(GetOutboundIP())

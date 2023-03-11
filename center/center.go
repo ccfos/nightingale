@@ -54,7 +54,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	idents := idents.New(db, redis, config.Pushgw.DatasourceId, config.Pushgw.MaxOffset)
+	idents := idents.New(db, redis)
 
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
@@ -62,7 +62,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	sso := sso.Init(config.Center, ctx)
 
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
-	targetCache := memsto.NewTargetCache(ctx, syncStats)
+	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
 	dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)

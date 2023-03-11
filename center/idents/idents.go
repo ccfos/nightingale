@@ -2,10 +2,10 @@ package idents
 
 import (
 	"context"
-	"encoding/json"
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/logger"
@@ -13,45 +13,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type HostMeta struct {
-	AgentVersion string  `json:"agent_version"`
-	Os           string  `json:"os"`
-	Arch         string  `json:"arch"`
-	Hostname     string  `json:"hostname"`
-	CpuNum       int     `json:"cpu_num"`
-	CpuUtil      float64 `json:"cpu_util"`
-	MemUtil      float64 `json:"mem_util"`
-	Offset       int64   `json:"offset"`
-	UnixTime     int64   `json:"unixtime"`
-}
-
-func (h HostMeta) MarshalBinary() ([]byte, error) {
-	return json.Marshal(h)
-}
-
-func (h *HostMeta) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, h)
-}
-
 type Set struct {
 	sync.RWMutex
-	items        map[string]HostMeta
-	db           *gorm.DB
-	redis        storage.Redis
-	datasourceId int64
-	maxOffset    int64
+	items map[string]models.HostMeta
+	db    *gorm.DB
+	redis storage.Redis
 }
 
-func New(db *gorm.DB, redis storage.Redis, dsId, maxOffset int64) *Set {
-	if maxOffset <= 0 {
-		maxOffset = 500
-	}
+func New(db *gorm.DB, redis storage.Redis) *Set {
 	set := &Set{
-		items:        make(map[string]HostMeta),
-		db:           db,
-		redis:        redis,
-		datasourceId: dsId,
-		maxOffset:    maxOffset,
+		items: make(map[string]models.HostMeta),
+		db:    db,
+		redis: redis,
 	}
 
 	set.Init()
@@ -62,7 +35,7 @@ func (s *Set) Init() {
 	go s.LoopPersist()
 }
 
-func (s *Set) MSet(items map[string]HostMeta) {
+func (s *Set) MSet(items map[string]models.HostMeta) {
 	s.Lock()
 	defer s.Unlock()
 	for ident, meta := range items {
@@ -70,17 +43,10 @@ func (s *Set) MSet(items map[string]HostMeta) {
 	}
 }
 
-func (s *Set) Set(ident string, meta HostMeta) {
+func (s *Set) Set(ident string, meta models.HostMeta) {
 	s.Lock()
 	defer s.Unlock()
 	s.items[ident] = meta
-}
-
-func (s *Set) Get(ident string) (HostMeta, bool) {
-	s.RLock()
-	defer s.RUnlock()
-	meta, exists := s.items[ident]
-	return meta, exists
 }
 
 func (s *Set) LoopPersist() {
@@ -91,7 +57,7 @@ func (s *Set) LoopPersist() {
 }
 
 func (s *Set) persist() {
-	var items map[string]HostMeta
+	var items map[string]models.HostMeta
 
 	s.Lock()
 	if len(s.items) == 0 {
@@ -100,14 +66,14 @@ func (s *Set) persist() {
 	}
 
 	items = s.items
-	s.items = make(map[string]HostMeta)
+	s.items = make(map[string]models.HostMeta)
 	s.Unlock()
 
 	s.updateMeta(items)
 }
 
-func (s *Set) updateMeta(items map[string]HostMeta) {
-	m := make(map[string]HostMeta, 100)
+func (s *Set) updateMeta(items map[string]models.HostMeta) {
+	m := make(map[string]models.HostMeta, 100)
 	now := time.Now().Unix()
 	num := 0
 
@@ -118,7 +84,7 @@ func (s *Set) updateMeta(items map[string]HostMeta) {
 			if err := s.updateTargets(m, now); err != nil {
 				logger.Errorf("failed to update targets: %v", err)
 			}
-			m = make(map[string]HostMeta, 100)
+			m = make(map[string]models.HostMeta, 100)
 			num = 0
 		}
 	}
@@ -128,7 +94,7 @@ func (s *Set) updateMeta(items map[string]HostMeta) {
 	}
 }
 
-func (s *Set) updateTargets(m map[string]HostMeta, now int64) error {
+func (s *Set) updateTargets(m map[string]models.HostMeta, now int64) error {
 	count := int64(len(m))
 	if count == 0 {
 		return nil

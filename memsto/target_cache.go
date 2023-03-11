@@ -1,13 +1,15 @@
 package memsto
 
 import (
+	"context"
+	"encoding/json"
 	"log"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
@@ -20,17 +22,19 @@ type TargetCacheType struct {
 	statLastUpdated int64
 	ctx             *ctx.Context
 	stats           *Stats
+	redis           storage.Redis
 
 	sync.RWMutex
 	targets map[string]*models.Target // key: ident
 }
 
-func NewTargetCache(ctx *ctx.Context, stats *Stats) *TargetCacheType {
+func NewTargetCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) *TargetCacheType {
 	tc := &TargetCacheType{
 		statTotal:       -1,
 		statLastUpdated: -1,
 		ctx:             ctx,
 		stats:           stats,
+		redis:           redis,
 		targets:         make(map[string]*models.Target),
 	}
 
@@ -147,18 +151,14 @@ func (tc *TargetCacheType) syncTargets() error {
 		return errors.WithMessage(err, "failed to call TargetGetsAll")
 	}
 
+	metaMap := tc.GetHostMetas(lst)
+
 	m := make(map[string]*models.Target)
 	for i := 0; i < len(lst); i++ {
-		lst[i].TagsJSON = strings.Fields(lst[i].Tags)
-		lst[i].TagsMap = make(map[string]string)
-		for _, item := range lst[i].TagsJSON {
-			arr := strings.Split(item, "=")
-			if len(arr) != 2 {
-				continue
-			}
-			lst[i].TagsMap[arr[0]] = arr[1]
+		lst[i].FillTagsMap()
+		if meta, ok := metaMap[lst[i].Ident]; ok {
+			lst[i].FillMeta(meta)
 		}
-
 		m[lst[i].Ident] = lst[i]
 	}
 
@@ -170,4 +170,44 @@ func (tc *TargetCacheType) syncTargets() error {
 	logger.Infof("timer: sync targets done, cost: %dms, number: %d", ms, len(lst))
 
 	return nil
+}
+
+func (tc *TargetCacheType) GetHostMetas(targets []*models.Target) map[string]*models.HostMeta {
+	metaMap := make(map[string]*models.HostMeta)
+	if tc.redis == nil {
+		return metaMap
+	}
+	var metas []*models.HostMeta
+	num := 0
+	var keys []string
+	for i := 0; i < len(targets); i++ {
+		keys = append(keys, targets[i].Ident)
+		num++
+		if num == 100 {
+			str := tc.redis.MGet(context.Background(), keys...).String()
+			err := json.Unmarshal([]byte(str), &metas)
+			if err != nil {
+				logger.Errorf("failed to unmarshal metas: %v", err)
+				continue
+			}
+			for i := 0; i < len(metas); i++ {
+				metaMap[metas[i].Hostname] = metas[i]
+			}
+			keys = keys[:0]
+			metas = metas[:0]
+			num = 0
+		}
+	}
+
+	str := tc.redis.MGet(context.Background(), keys...).String()
+	err := json.Unmarshal([]byte(str), &metas)
+	if err != nil {
+		logger.Errorf("failed to unmarshal metas: %v", err)
+	}
+
+	for i := 0; i < len(metas); i++ {
+		metaMap[metas[i].Hostname] = metas[i]
+	}
+
+	return metaMap
 }

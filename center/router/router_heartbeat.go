@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/center/idents"
+	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -16,7 +16,7 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	var bs []byte
 	var err error
 	var r *gzip.Reader
-	var req idents.HostMeta
+	var req models.HostMeta
 	if c.GetHeader("Content-Encoding") == "gzip" {
 		r, err = gzip.NewReader(c.Request.Body)
 		if err != nil {
@@ -35,7 +35,7 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	err = json.Unmarshal(bs, &req)
 	ginx.Dangerous(err)
 
-	req.Offset = (req.UnixTime - time.Now().UnixMilli())
+	req.Offset = (time.Now().UnixMilli() - req.UnixTime)
 	rt.IdentSet.Set(req.Hostname, req)
 	ginx.NewRender(c).Message(nil)
 }

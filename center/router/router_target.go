@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/center/idents"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
@@ -56,30 +55,32 @@ func (rt *Router) targetGets(c *gin.Context) {
 	if err == nil {
 		now := time.Now()
 		cache := make(map[int64]*models.BusiGroup)
+
+		var keys []string
 		for i := 0; i < len(list); i++ {
 			ginx.Dangerous(list[i].FillGroup(rt.Ctx, cache))
+			keys = append(keys, list[i].Ident)
+		}
 
-			if now.UnixMilli()-list[i].UnixTime < 60000 {
-				list[i].TargetUp = 1
-			}
+		var metas []*models.HostMeta
+		metaMap := make(map[string]*models.HostMeta)
+		str := rt.Redis.MGet(context.Background(), keys...).String()
+		err := json.Unmarshal([]byte(str), &metas)
+		if err != nil {
+			logger.Errorf("failed to unmarshal metas: %v", err)
+		}
 
-			bs, err := rt.Redis.Get(context.Background(), list[i].Ident).Bytes()
-			if err != nil {
-				logger.Warningf("get ident %s from redis error: %v", list[i].Ident, err)
-				continue
-			}
+		for i := 0; i < len(metas); i++ {
+			metaMap[metas[i].Hostname] = metas[i]
+		}
 
-			var meta idents.HostMeta
-			err = json.Unmarshal(bs, &meta)
-			if err != nil {
-				logger.Warningf("unmarshal ident %s from redis error: %v", list[i].Ident, err)
-				continue
+		for i := 0; i < len(list); i++ {
+			if meta, ok := metaMap[list[i].Ident]; ok {
+				if now.UnixMilli()-meta.UnixTime < 60000 {
+					list[i].TargetUp = 1
+				}
+				list[i].FillMeta(meta)
 			}
-			list[i].MemUtil = meta.MemUtil
-			list[i].CpuUtil = meta.CpuUtil
-			list[i].CpuNum = meta.CpuNum
-			list[i].UnixTime = meta.UnixTime
-			list[i].Offset = meta.Offset
 		}
 	}
 

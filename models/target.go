@@ -259,6 +259,26 @@ func (t *Target) DelTags(ctx *ctx.Context, tags []string) error {
 	}).Error
 }
 
+func (t *Target) FillTagsMap() {
+	t.TagsJSON = strings.Fields(t.Tags)
+	t.TagsMap = make(map[string]string)
+	for _, item := range t.TagsJSON {
+		arr := strings.Split(item, "=")
+		if len(arr) != 2 {
+			continue
+		}
+		t.TagsMap[arr[0]] = arr[1]
+	}
+}
+
+func (t *Target) FillMeta(meta *HostMeta) {
+	t.MemUtil = meta.MemUtil
+	t.CpuUtil = meta.CpuUtil
+	t.CpuNum = meta.CpuNum
+	t.UnixTime = meta.UnixTime
+	t.Offset = meta.Offset
+}
+
 func TargetIdents(ctx *ctx.Context, ids []int64) ([]string, error) {
 	var ret []string
 

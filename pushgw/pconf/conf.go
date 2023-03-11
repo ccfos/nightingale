@@ -10,9 +10,7 @@ import (
 )
 
 type Pushgw struct {
-	DatasourceId      int64
 	BusiGroupLabelKey string
-	MaxOffset         int64
 	LabelRewrite      bool
 	ForceUseServerTS  bool
 	DebugSample       map[string]string

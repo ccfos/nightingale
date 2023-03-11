@@ -38,7 +38,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	stats := memsto.NewSyncStats()
 
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, stats)
-	targetCache := memsto.NewTargetCache(ctx, stats)
+	targetCache := memsto.NewTargetCache(ctx, stats, nil)
 
 	writers := writer.NewWriters(config.Pushgw)
 
