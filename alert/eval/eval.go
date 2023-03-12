@@ -209,11 +209,11 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
 				continue
 			}
-			hosts := arw.processor.TargetCache.GetOffsetHost(targets, t)
-			for _, host := range hosts {
+			hostOffsetMap := arw.processor.TargetCache.GetOffsetHost(targets, t)
+			for host, offset := range hostOffsetMap {
 				m := make(map[string]string)
 				m["ident"] = host
-				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(t), trigger.Severity))
+				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(offset), trigger.Severity))
 			}
 		case "pct_target_miss":
 			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0)

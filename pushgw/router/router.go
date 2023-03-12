@@ -41,7 +41,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	r.POST("/datadog/api/v1/metadata", datadogMetadata)
 	r.POST("/datadog/intake/", datadogIntake)
 
-	if len(rt.HTTP.BasicAuth) > 0 {
+	if len(rt.HTTP.BasicAuth) > 0 && rt.Pushgw.PushMetricBasicAuthEnable {
 		// enable basic auth
 		auth := gin.BasicAuth(rt.HTTP.BasicAuth)
 		r.POST("/opentsdb/put", auth, rt.openTSDBPut)

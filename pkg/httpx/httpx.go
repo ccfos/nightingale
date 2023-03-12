@@ -30,6 +30,21 @@ type Config struct {
 	WriteTimeout     int
 	IdleTimeout      int
 	BasicAuth        gin.Accounts
+	JWTAuth          JWTAuth
+	ProxyAuth        ProxyAuth
+}
+
+type ProxyAuth struct {
+	Enable            bool
+	HeaderUserNameKey string
+	DefaultRoles      []string
+}
+
+type JWTAuth struct {
+	SigningKey     string
+	AccessExpired  int64
+	RefreshExpired int64
+	RedisKeyPrefix string
 }
 
 func GinEngine(mode string, cfg Config) *gin.Engine {

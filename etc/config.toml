@@ -74,8 +74,8 @@ WriteTimeout = 40
 # http server idle timeout, unit: s
 IdleTimeout = 120
 
-# [HTTP.BasicAuth]
-# username = "password"
+[HTTP.BasicAuth]
+user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
 [Alert]
 [Alert.Heartbeat]
@@ -84,11 +84,6 @@ IP = ""
 # unit ms
 Interval = 1000
 ClusterName = "default"
-
-[Alert.Alerting]
-# timeout settings, unit: ms, default: 30000ms
-Timeout=30000
-NotifyConcurrency = 10
 
 [Alert.SMTP]
 Host = "smtp.163.com"
@@ -99,28 +94,13 @@ From = "username@163.com"
 InsecureSkipVerify = true
 Batch = 5
 
+# [Alert.Alerting]
+# NotifyConcurrency = 10
+
 [Center]
 MetricsYamlFile = "./etc/metrics.yaml"
 I18NHeaderKey = "X-Language"
-
-[Center.JWTAuth]
-# signing key
-SigningKey = "5b94a0fd640fe2765af826acfe42d151"
-# unit: min
-AccessExpired = 1500
-# unit: min
-RefreshExpired = 10080
-RedisKeyPrefix = "/jwt/"
-
-[Center.ProxyAuth]
-# if proxy auth enabled, jwt auth is disabled
-Enable = false
-# username key in http proxy header
-HeaderUserNameKey = "X-User-Name"
-DefaultRoles = ["Standard"]
-
-[Center.BasicAuth]
-user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+# HeartbeatBasicAuthEnable = true
 
 [Center.AnonymousAccess]
 PromQuerier = true
@@ -134,18 +114,13 @@ BasicAuthPass = "ibex"
 # unit: ms
 Timeout = 3000
 
-[Center.TargetMetrics]
-TargetUp = '''max(max_over_time(target_up{ident=~"(%s)"}[%dm])) by (ident)'''
-LoadPerCore = '''max(max_over_time(system_load_norm_1{ident=~"(%s)"}[%dm])) by (ident)'''
-MemUtil = '''100-max(max_over_time(mem_available_percent{ident=~"(%s)"}[%dm])) by (ident)'''
-DiskUtil = '''max(max_over_time(disk_used_percent{ident=~"(%s)", path="/"}[%dm])) by (ident)'''
-
 [Pushgw]
 # use target labels in database instead of in series
 LabelRewrite = true
 # # default busigroup key name
 # BusiGroupLabelKey = "busigroup"
 # ForceUseServerTS = false
+# PushMetricBasicAuthEnable = true
 
 # [Pushgw.DebugSample]
 # ident = "xx"

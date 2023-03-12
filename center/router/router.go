@@ -309,8 +309,8 @@ func (rt *Router) Config(r *gin.Engine) {
 
 	service := r.Group("/v1/n9e")
 
-	if len(rt.Center.BasicAuth) > 0 {
-		service.Use(gin.BasicAuth(rt.Center.BasicAuth))
+	if len(rt.HTTP.BasicAuth) > 0 {
+		service.Use(gin.BasicAuth(rt.HTTP.BasicAuth))
 	}
 	{
 		service.Any("/prometheus/*url", rt.dsProxy)
@@ -345,8 +345,15 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		service.POST("/conf-prop/encrypt", rt.confPropEncrypt)
 		service.POST("/conf-prop/decrypt", rt.confPropDecrypt)
+	}
 
-		service.POST("/heartbeat", rt.heartbeat)
+	heartbeat := r.Group("/v1/n9e")
+	{
+		if len(rt.HTTP.BasicAuth) > 0 && rt.Center.HeartbeatBasicAuthEnable {
+			heartbeat.Use(gin.BasicAuth(rt.HTTP.BasicAuth))
+		}
+
+		heartbeat.POST("/heartbeat", rt.heartbeat)
 	}
 
 	rt.configNoRoute(r)

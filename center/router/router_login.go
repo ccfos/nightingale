@@ -55,7 +55,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
 
-	ts, err := rt.createTokens(rt.Center.JWTAuth.SigningKey, userIdentity)
+	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
 	ginx.Dangerous(err)
 	ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
 
@@ -95,7 +95,7 @@ func (rt *Router) refreshPost(c *gin.Context) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected jwt signing method: %v", token.Header["alg"])
 		}
-		return []byte(rt.Center.JWTAuth.SigningKey), nil
+		return []byte(rt.HTTP.JWTAuth.SigningKey), nil
 	})
 
 	// if there is an error, the token must have expired
@@ -151,7 +151,7 @@ func (rt *Router) refreshPost(c *gin.Context) {
 		rt.deleteAuth(c.Request.Context(), strings.Split(refreshUuid, "++")[0])
 
 		// Create new pairs of refresh and access tokens
-		ts, err := rt.createTokens(rt.Center.JWTAuth.SigningKey, userIdentity)
+		ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
 		ginx.Dangerous(err)
 		ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
 
@@ -256,7 +256,7 @@ func (rt *Router) loginCallback(c *gin.Context) {
 
 	// set user login state
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
-	ts, err := rt.createTokens(rt.Center.JWTAuth.SigningKey, userIdentity)
+	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
 	ginx.Dangerous(err)
 	ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
 
@@ -365,7 +365,7 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 
 	// set user login state
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
-	ts, err := rt.createTokens(rt.Center.JWTAuth.SigningKey, userIdentity)
+	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
 	if err != nil {
 		logger.Errorf("createTokens: %s", err)
 	}
@@ -468,7 +468,7 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 
 	// set user login state
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
-	ts, err := rt.createTokens(rt.Center.JWTAuth.SigningKey, userIdentity)
+	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
 	ginx.Dangerous(err)
 	ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
 

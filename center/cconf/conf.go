@@ -5,18 +5,17 @@ import (
 )
 
 type Center struct {
-	Plugins                []Plugin
-	BasicAuth              gin.Accounts
-	MetricsYamlFile        string
-	OpsYamlFile            string
-	BuiltinIntegrationsDir string
-	I18NHeaderKey          string
-	MetricDesc             MetricDescType
-	TargetMetrics          map[string]string
-	AnonymousAccess        AnonymousAccess
-	JWTAuth                JWTAuth
-	ProxyAuth              ProxyAuth
-	Ibex                   Ibex
+	Plugins                  []Plugin
+	BasicAuth                gin.Accounts
+	MetricsYamlFile          string
+	OpsYamlFile              string
+	BuiltinIntegrationsDir   string
+	I18NHeaderKey            string
+	MetricDesc               MetricDescType
+	TargetMetrics            map[string]string
+	AnonymousAccess          AnonymousAccess
+	Ibex                     Ibex
+	HeartbeatBasicAuthEnable bool
 }
 
 type Plugin struct {
@@ -24,19 +23,6 @@ type Plugin struct {
 	Category string `json:"category"`
 	Type     string `json:"plugin_type"`
 	TypeName string `json:"plugin_type_name"`
-}
-
-type ProxyAuth struct {
-	Enable            bool
-	HeaderUserNameKey string
-	DefaultRoles      []string
-}
-
-type JWTAuth struct {
-	SigningKey     string
-	AccessExpired  int64
-	RefreshExpired int64
-	RedisKeyPrefix string
 }
 
 type AnonymousAccess struct {

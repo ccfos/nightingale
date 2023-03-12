@@ -10,12 +10,13 @@ import (
 )
 
 type Pushgw struct {
-	BusiGroupLabelKey string
-	LabelRewrite      bool
-	ForceUseServerTS  bool
-	DebugSample       map[string]string
-	WriterOpt         WriterGlobalOpt
-	Writers           []WriterOptions
+	BusiGroupLabelKey         string
+	LabelRewrite              bool
+	ForceUseServerTS          bool
+	DebugSample               map[string]string
+	WriterOpt                 WriterGlobalOpt
+	Writers                   []WriterOptions
+	PushMetricBasicAuthEnable bool
 }
 
 type WriterGlobalOpt struct {

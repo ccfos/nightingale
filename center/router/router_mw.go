@@ -23,7 +23,7 @@ type AccessDetails struct {
 }
 
 func (rt *Router) handleProxyUser(c *gin.Context) *models.User {
-	headerUserNameKey := rt.Center.ProxyAuth.HeaderUserNameKey
+	headerUserNameKey := rt.HTTP.ProxyAuth.HeaderUserNameKey
 	username := c.GetHeader(headerUserNameKey)
 	if username == "" {
 		ginx.Bomb(http.StatusUnauthorized, "unauthorized")
@@ -39,7 +39,7 @@ func (rt *Router) handleProxyUser(c *gin.Context) *models.User {
 		user = &models.User{
 			Username: username,
 			Nickname: username,
-			Roles:    strings.Join(rt.Center.ProxyAuth.DefaultRoles, " "),
+			Roles:    strings.Join(rt.HTTP.ProxyAuth.DefaultRoles, " "),
 			CreateAt: now,
 			UpdateAt: now,
 			CreateBy: "system",
@@ -93,7 +93,7 @@ func (rt *Router) jwtAuth() gin.HandlerFunc {
 }
 
 func (rt *Router) auth() gin.HandlerFunc {
-	if rt.Center.ProxyAuth.Enable {
+	if rt.HTTP.ProxyAuth.Enable {
 		return rt.proxyAuth()
 	} else {
 		return rt.jwtAuth()
@@ -103,7 +103,7 @@ func (rt *Router) auth() gin.HandlerFunc {
 // if proxy auth is enabled, mock jwt login/logout/refresh request
 func (rt *Router) jwtMock() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !rt.Center.ProxyAuth.Enable {
+		if !rt.HTTP.ProxyAuth.Enable {
 			c.Next()
 			return
 		}
@@ -280,7 +280,7 @@ func (rt *Router) admin() gin.HandlerFunc {
 }
 
 func (rt *Router) extractTokenMetadata(r *http.Request) (*AccessDetails, error) {
-	token, err := rt.verifyToken(rt.Center.JWTAuth.SigningKey, rt.extractToken(r))
+	token, err := rt.verifyToken(rt.HTTP.JWTAuth.SigningKey, rt.extractToken(r))
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +357,7 @@ func (rt *Router) deleteTokens(ctx context.Context, authD *AccessDetails) error 
 }
 
 func (rt *Router) wrapJwtKey(key string) string {
-	return rt.Center.JWTAuth.RedisKeyPrefix + key
+	return rt.HTTP.JWTAuth.RedisKeyPrefix + key
 }
 
 type TokenDetails struct {
@@ -371,10 +371,10 @@ type TokenDetails struct {
 
 func (rt *Router) createTokens(signingKey, userIdentity string) (*TokenDetails, error) {
 	td := &TokenDetails{}
-	td.AtExpires = time.Now().Add(time.Minute * time.Duration(rt.Center.JWTAuth.AccessExpired)).Unix()
+	td.AtExpires = time.Now().Add(time.Minute * time.Duration(rt.HTTP.JWTAuth.AccessExpired)).Unix()
 	td.AccessUuid = uuid.NewString()
 
-	td.RtExpires = time.Now().Add(time.Minute * time.Duration(rt.Center.JWTAuth.RefreshExpired)).Unix()
+	td.RtExpires = time.Now().Add(time.Minute * time.Duration(rt.HTTP.JWTAuth.RefreshExpired)).Unix()
 	td.RefreshUuid = td.AccessUuid + "++" + userIdentity
 
 	var err error

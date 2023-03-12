@@ -61,8 +61,8 @@ func (a *Alert) PreCheck() {
 		a.Alerting.TemplatesDir = path.Join(runner.Cwd, "etc", "template")
 	}
 
-	if a.Alerting.Timeout == 0 {
-		a.Alerting.Timeout = 30000
+	if a.Alerting.NotifyConcurrency == 0 {
+		a.Alerting.NotifyConcurrency = 10
 	}
 
 	if a.Heartbeat.Interval == 0 {

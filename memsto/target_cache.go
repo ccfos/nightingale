@@ -94,10 +94,10 @@ func (tc *TargetCacheType) GetMissHost(targets []*models.Target, ts int64) []str
 	return missHosts
 }
 
-func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, ts int64) []string {
+func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, ts int64) map[string]int64 {
 	tc.RLock()
 	defer tc.RUnlock()
-	var hosts []string
+	hostOffset := make(map[string]int64)
 	for _, target := range targets {
 		target, exists := tc.targets[target.Ident]
 		if !exists {
@@ -105,11 +105,11 @@ func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, ts int64) []s
 		}
 
 		if target.Offset > ts {
-			hosts = append(hosts, target.Ident)
+			hostOffset[target.Ident] = target.Offset
 		}
 	}
 
-	return hosts
+	return hostOffset
 }
 
 func (tc *TargetCacheType) SyncTargets() {
