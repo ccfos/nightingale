@@ -15,6 +15,51 @@ Output = "stdout"
 # # unit: MB
 # RotateSize = 256
 
+[HTTP]
+# http listening address
+Host = "0.0.0.0"
+# http listening port
+Port = 17000
+# https cert file path
+CertFile = ""
+# https key file path
+KeyFile = ""
+# whether print access log
+PrintAccessLog = false
+# whether enable pprof
+PProf = false
+# expose prometheus /metrics?
+ExposeMetrics = true
+# http graceful shutdown timeout, unit: s
+ShutdownTimeout = 30
+# max content length: 64M
+MaxContentLength = 67108864
+# http server read timeout, unit: s
+ReadTimeout = 20
+# http server write timeout, unit: s
+WriteTimeout = 40
+# http server idle timeout, unit: s
+IdleTimeout = 120
+
+[HTTP.BasicAuth]
+user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[HTTP.JWTAuth]
+# signing key
+SigningKey = "5b94a0fd640fe2765af826acfe42d151"
+# unit: min
+AccessExpired = 1500
+# unit: min
+RefreshExpired = 10080
+RedisKeyPrefix = "/jwt/"
+
+[HTTP.ProxyAuth]
+# if proxy auth enabled, jwt auth is disabled
+Enable = false
+# username key in http proxy header
+HeaderUserNameKey = "X-User-Name"
+DefaultRoles = ["Standard"]
+
 [DB]
 # postgres: host=%s port=%s user=%s dbname=%s password=%s sslmode=%s
 DSN="root:1234@tcp(127.0.0.1:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local&allowNativePasswords=true"
@@ -48,35 +93,6 @@ RedisType = "standalone"
 # SentinelUsername = ""
 # SentinelPassword = ""
 
-[HTTP]
-# http listening address
-Host = "0.0.0.0"
-# http listening port
-Port = 17000
-# https cert file path
-CertFile = ""
-# https key file path
-KeyFile = ""
-# whether print access log
-PrintAccessLog = false
-# whether enable pprof
-PProf = false
-# expose prometheus /metrics?
-ExposeMetrics = true
-# http graceful shutdown timeout, unit: s
-ShutdownTimeout = 30
-# max content length: 64M
-MaxContentLength = 67108864
-# http server read timeout, unit: s
-ReadTimeout = 20
-# http server write timeout, unit: s
-WriteTimeout = 40
-# http server idle timeout, unit: s
-IdleTimeout = 120
-
-[HTTP.BasicAuth]
-user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
-
 [Alert]
 [Alert.Heartbeat]
 # auto detect if blank
@@ -85,14 +101,14 @@ IP = ""
 Interval = 1000
 ClusterName = "default"
 
-[Alert.SMTP]
-Host = "smtp.163.com"
-Port = 994
-User = "username"
-Pass = "password"
-From = "username@163.com"
-InsecureSkipVerify = true
-Batch = 5
+# [Alert.SMTP]
+# Host = "smtp.163.com"
+# Port = 994
+# User = "username"
+# Pass = "password"
+# From = "username@163.com"
+# InsecureSkipVerify = true
+# Batch = 5
 
 # [Alert.Alerting]
 # NotifyConcurrency = 10
