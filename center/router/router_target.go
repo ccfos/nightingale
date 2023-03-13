@@ -58,6 +58,9 @@ func (rt *Router) targetGets(c *gin.Context) {
 		var keys []string
 		for i := 0; i < len(list); i++ {
 			ginx.Dangerous(list[i].FillGroup(rt.Ctx, cache))
+			if now.Unix()-list[i].UpdateAt < 120 {
+				list[i].TargetUp = 1
+			}
 			keys = append(keys, list[i].Ident)
 		}
 
@@ -77,10 +80,13 @@ func (rt *Router) targetGets(c *gin.Context) {
 
 		for i := 0; i < len(list); i++ {
 			if meta, ok := metaMap[list[i].Ident]; ok {
-				if now.UnixMilli()-meta.UnixTime < 60000 {
+				if now.Unix()-meta.UnixTime < 120 {
 					list[i].TargetUp = 1
 				}
 				list[i].FillMeta(meta)
+			} else {
+				// 未上报过元数据的主机，cpuNum默认为-1, 用于前端展示 unknown
+				list[i].CpuNum = -1
 			}
 		}
 	}
