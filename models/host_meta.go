@@ -4,7 +4,7 @@ import "encoding/json"
 
 type HostMeta struct {
 	AgentVersion string  `json:"agent_version"`
-	Os           string  `json:"os"`
+	OS           string  `json:"os"`
 	Arch         string  `json:"arch"`
 	Hostname     string  `json:"hostname"`
 	CpuNum       int     `json:"cpu_num"`

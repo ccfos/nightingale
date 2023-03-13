@@ -28,6 +28,8 @@ type Target struct {
 	MemUtil  float64 `json:"mem_util" gorm:"-"`
 	CpuNum   int     `json:"cpu_num" gorm:"-"`
 	CpuUtil  float64 `json:"cpu_util" gorm:"-"`
+	OS       string  `json:"os" gorm:"-"`
+	Arch     string  `json:"arch" gorm:"-"`
 }
 
 func (t *Target) TableName() string {
@@ -277,6 +279,8 @@ func (t *Target) FillMeta(meta *HostMeta) {
 	t.CpuNum = meta.CpuNum
 	t.UnixTime = meta.UnixTime
 	t.Offset = meta.Offset
+	t.OS = meta.OS
+	t.Arch = meta.Arch
 }
 
 func TargetIdents(ctx *ctx.Context, ids []int64) ([]string, error) {
