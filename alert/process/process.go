@@ -112,7 +112,7 @@ func (arw *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, i
 	arw.rule = arw.atertRuleCache.Get(arw.rule.Id)
 	cachedRule := arw.rule
 	if cachedRule == nil {
-		logger.Errorf("rule_eval:%s rule not found", arw.Key())
+		logger.Errorf("rule not found %+v", anomalyPoints)
 		return
 	}
 
