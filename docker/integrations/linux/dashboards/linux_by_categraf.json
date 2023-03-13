@@ -1,0 +1,1569 @@
+{
+    "name": "Linux Host by Categraf",
+    "tags": "",
+    "configs": {
+        "var": [
+            {
+                "name": "ident",
+                "definition": "label_values(system_load1,ident)"
+            }
+        ],
+        "links": [
+            {
+                "title": "n9e",
+                "url": "https://n9e.github.io/",
+                "targetBlank": true
+            },
+            {
+                "title": "author",
+                "url": "http://flashcat.cloud/",
+                "targetBlank": true
+            }
+        ],
+        "version": "2.0.0",
+        "panels": [
+            {
+                "id": "e5d14dd7-4417-42bd-b7ba-560f34d299a2",
+                "type": "row",
+                "name": "整体概况",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "e5d14dd7-4417-42bd-b7ba-560f34d299a2",
+                    "isResizable": false
+                },
+                "collapsed": true
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "count(system_load1)"
+                    }
+                ],
+                "name": "监控机器数",
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {
+                        "value": 50
+                    }
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 3,
+                    "x": 0,
+                    "y": 1,
+                    "i": "41f37540-e695-492a-9d2f-24bfd2d36805",
+                    "isResizable": true
+                },
+                "id": "41f37540-e695-492a-9d2f-24bfd2d36805"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(10, (mem_used_percent))",
+                        "legend": "{{ident}}"
+                    }
+                ],
+                "name": "内存使用率 top10",
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#cd75eb",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "#f8070e"
+                            },
+                            "match": {
+                                "from": 60
+                            }
+                        }
+                    ],
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "barGauge",
+                "layout": {
+                    "h": 3,
+                    "w": 9,
+                    "x": 3,
+                    "y": 1,
+                    "i": "585bfc50-7c92-42b1-88ee-5b725b640418",
+                    "isResizable": true
+                },
+                "id": "585bfc50-7c92-42b1-88ee-5b725b640418"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(10, (100-cpu_usage_idle{cpu=\"cpu-total\"}))"
+                    }
+                ],
+                "name": "cpu使用率 top10",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 3,
+                    "w": 12,
+                    "x": 12,
+                    "y": 1,
+                    "i": "60b1e833-3f03-45bb-9385-a3825904a0ac",
+                    "isResizable": true
+                },
+                "id": "60b1e833-3f03-45bb-9385-a3825904a0ac"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(10, (disk_used_percent{path!~\"/var.*\"}))",
+                        "legend": "{{ident}} {{path}}"
+                    }
+                ],
+                "name": "磁盘分区使用率 top10",
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470ff",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "#f00404"
+                            },
+                            "match": {
+                                "from": 85
+                            }
+                        }
+                    ],
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "barGauge",
+                "layout": {
+                    "h": 3,
+                    "w": 12,
+                    "x": 0,
+                    "y": 4,
+                    "i": "69351db9-e646-4e5d-925a-cba29823b00d",
+                    "isResizable": true
+                },
+                "id": "69351db9-e646-4e5d-925a-cba29823b00d"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(10, (rate(diskio_io_time[1m])/10))",
+                        "legend": ""
+                    }
+                ],
+                "name": "设备io util top10",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 3,
+                    "w": 12,
+                    "x": 12,
+                    "y": 4,
+                    "i": "e3675ed9-6d3b-4a41-8d16-d6e82037dce3",
+                    "isResizable": true
+                },
+                "id": "e3675ed9-6d3b-4a41-8d16-d6e82037dce3"
+            },
+            {
+                "id": "2b2de3d1-65c8-4c39-9bea-02b754e0d751",
+                "type": "row",
+                "name": "单机概况",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 7,
+                    "i": "2b2de3d1-65c8-4c39-9bea-02b754e0d751",
+                    "isResizable": false
+                },
+                "collapsed": true
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "system_uptime{ident=\"$ident\"}/3600/24"
+                    }
+                ],
+                "name": "启动时长（单位：天）",
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {
+                        "value": 30
+                    }
+                },
+                "options": {
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 1
+                    }
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 6,
+                    "x": 0,
+                    "y": 8,
+                    "i": "deec579b-3090-4344-a9a6-c1455c4a8e50",
+                    "isResizable": true
+                },
+                "id": "deec579b-3090-4344-a9a6-c1455c4a8e50"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "100-cpu_usage_idle{ident=\"$ident\",cpu=\"cpu-total\"}"
+                    }
+                ],
+                "name": "CPU使用率",
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {
+                        "value": 30
+                    }
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 0,
+                                "to": 50
+                            },
+                            "result": {
+                                "color": "#129b22"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 50,
+                                "to": 100
+                            },
+                            "result": {
+                                "color": "#f51919"
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    }
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 6,
+                    "x": 6,
+                    "y": 8,
+                    "i": "7a7bd5db-d12e-49f0-92a8-15958e99ee54",
+                    "isResizable": true
+                },
+                "id": "7a7bd5db-d12e-49f0-92a8-15958e99ee54"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mem_used_percent{ident=\"$ident\"}"
+                    }
+                ],
+                "name": "内存使用率",
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {
+                        "value": 30
+                    }
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 0,
+                                "to": 50
+                            },
+                            "result": {
+                                "color": "#129b22"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 50,
+                                "to": 100
+                            },
+                            "result": {
+                                "color": "#f51919"
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    }
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 6,
+                    "x": 12,
+                    "y": 8,
+                    "i": "8a814265-54ad-419c-8cb7-e1f84a242de0",
+                    "isResizable": true
+                },
+                "id": "8a814265-54ad-419c-8cb7-e1f84a242de0"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "linux_sysctl_fs_file_nr{ident=\"$ident\"}/linux_sysctl_fs_file_max{ident=\"$ident\"}*100"
+                    }
+                ],
+                "name": "FD使用率",
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {
+                        "value": 25
+                    }
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 0,
+                                "to": 50
+                            },
+                            "result": {
+                                "color": "#129b22"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 50,
+                                "to": 100
+                            },
+                            "result": {
+                                "color": "#f51919"
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    }
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 3,
+                    "x": 18,
+                    "y": 8,
+                    "i": "d7d11972-5c5b-4bc6-98f8-bbbe9f018896",
+                    "isResizable": true
+                },
+                "id": "d7d11972-5c5b-4bc6-98f8-bbbe9f018896"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mem_swap_total{ident=\"$ident\"}-mem_swap_free{ident=\"$ident\"}"
+                    }
+                ],
+                "name": "SWAP使用",
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {
+                        "value": 40
+                    }
+                },
+                "options": {
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    }
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 3,
+                    "x": 21,
+                    "y": 8,
+                    "i": "209d3aba-5e02-4b8f-a364-65f20ba92a2c",
+                    "isResizable": true
+                },
+                "id": "209d3aba-5e02-4b8f-a364-65f20ba92a2c"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "disk_used_percent{ident=\"$ident\"}",
+                        "legend": "{{path}}"
+                    }
+                ],
+                "name": "磁盘使用率",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 0,
+                    "y": 11,
+                    "i": "b3c5dd9d-e82a-4b15-8b23-c510e2bee152",
+                    "isResizable": true
+                },
+                "id": "b3c5dd9d-e82a-4b15-8b23-c510e2bee152"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "disk_inodes_used{ident=\"$ident\"}/disk_inodes_total{ident=\"$ident\"}",
+                        "legend": "{{path}}"
+                    }
+                ],
+                "name": "inode使用率",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 8,
+                    "y": 11,
+                    "i": "0de74cd9-cc74-4a96-bcb2-05d3a8bde2ea",
+                    "isResizable": true
+                },
+                "id": "0de74cd9-cc74-4a96-bcb2-05d3a8bde2ea"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(diskio_io_time{ident=\"$ident\"}[1m])/10",
+                        "legend": "{{name}}"
+                    }
+                ],
+                "name": "io_util",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 16,
+                    "y": 11,
+                    "i": "59afa167-434d-496c-a3ef-ceff6db7c1f6",
+                    "isResizable": true
+                },
+                "id": "59afa167-434d-496c-a3ef-ceff6db7c1f6"
+            },
+            {
+                "id": "aabb8263-1a9b-43fb-bee1-6c532f5012a3",
+                "type": "row",
+                "name": "系统指标",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 14,
+                    "i": "aabb8263-1a9b-43fb-bee1-6c532f5012a3",
+                    "isResizable": false
+                },
+                "collapsed": true
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "processes_total{ident=\"$ident\"}"
+                    }
+                ],
+                "name": "进程总数",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "value": 2000,
+                                "color": "#fa2a05"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 15,
+                    "i": "1b4da538-29d4-4c58-b3f4-773fabb8616c",
+                    "isResizable": true
+                },
+                "id": "1b4da538-29d4-4c58-b3f4-773fabb8616c"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(kernel_context_switches{ident=\"$ident\"}[1m])",
+                        "legend": "context_switches"
+                    },
+                    {
+                        "expr": "rate(kernel_interrupts{ident=\"$ident\"}[1m])",
+                        "refId": "B",
+                        "legend": "kernel_interrupts"
+                    }
+                ],
+                "name": "上下文切换/中断",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 15,
+                    "i": "aa7adae0-ae3b-4e28-a8ce-801c65961552",
+                    "isResizable": true
+                },
+                "id": "aa7adae0-ae3b-4e28-a8ce-801c65961552"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "kernel_entropy_avail{ident=\"$ident\"}",
+                        "legend": "entropy_avail"
+                    }
+                ],
+                "name": "熵池大小",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "value": 100,
+                                "color": "#f50505"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 15,
+                    "i": "71e22f58-5b9a-4604-bca8-55bcef59b5fe",
+                    "isResizable": true
+                },
+                "id": "71e22f58-5b9a-4604-bca8-55bcef59b5fe"
+            },
+            {
+                "id": "10f34f8f-f94d-4a28-9551-16e6667e3833",
+                "type": "row",
+                "name": "CPU",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 22,
+                    "i": "10f34f8f-f94d-4a28-9551-16e6667e3833",
+                    "isResizable": false
+                },
+                "collapsed": true
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "cpu_usage_idle{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "legend": "cpu_usage_idle"
+                    }
+                ],
+                "name": "CPU空闲率",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "value": 10,
+                                "color": "#f20202"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 23,
+                    "i": "1559d880-7e26-4e42-9427-4e55fb6f67be",
+                    "isResizable": true
+                },
+                "id": "1559d880-7e26-4e42-9427-4e55fb6f67be"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "cpu_usage_guest{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "legend": ""
+                    },
+                    {
+                        "expr": "cpu_usage_iowait{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "refId": "B",
+                        "legend": ""
+                    },
+                    {
+                        "expr": "cpu_usage_user{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "cpu_usage_system{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "cpu_usage_irq{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "cpu_usage_softirq{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "refId": "F"
+                    },
+                    {
+                        "expr": "cpu_usage_nice{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "refId": "G"
+                    },
+                    {
+                        "expr": "cpu_usage_steal{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "refId": "H"
+                    }
+                ],
+                "name": "CPU使用率详情",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 23,
+                    "i": "043c26de-d19f-4fe8-a615-2b7c10ceb828",
+                    "isResizable": true
+                },
+                "id": "043c26de-d19f-4fe8-a615-2b7c10ceb828"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "system_load15{ident=\"$ident\"}"
+                    },
+                    {
+                        "expr": "system_load1{ident=\"$ident\"}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "system_load5{ident=\"$ident\"}",
+                        "refId": "C"
+                    }
+                ],
+                "name": "CPU负载",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 23,
+                    "i": "a420ce25-6968-47f8-8335-60cde70fd062",
+                    "isResizable": true
+                },
+                "id": "a420ce25-6968-47f8-8335-60cde70fd062"
+            },
+            {
+                "id": "b7a3c99f-a796-4b76-89b5-cbddd566f91c",
+                "type": "row",
+                "name": "内存详情",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 30,
+                    "i": "b7a3c99f-a796-4b76-89b5-cbddd566f91c",
+                    "isResizable": false
+                },
+                "collapsed": true
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mem_active{ident=\"$ident\"}"
+                    },
+                    {
+                        "expr": "mem_cached{ident=\"$ident\"}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "mem_buffered{ident=\"$ident\"}",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "mem_inactive{ident=\"$ident\"}",
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "mem_mapped{ident=\"$ident\"}",
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "mem_shared{ident=\"$ident\"}",
+                        "refId": "F"
+                    },
+                    {
+                        "expr": "mem_swap_cached{ident=\"$ident\"}",
+                        "refId": "G"
+                    }
+                ],
+                "name": "用户态内存使用",
+                "description": "内存指标可参考链接 [/PROC/MEMINFO之谜](http://linuxperf.com/?p=142) ",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 31,
+                    "i": "239aacdf-1982-428b-b240-57f4ce7f946d",
+                    "isResizable": true
+                },
+                "id": "239aacdf-1982-428b-b240-57f4ce7f946d"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mem_slab{ident=\"$ident\"}"
+                    },
+                    {
+                        "expr": "mem_sreclaimable{ident=\"$ident\"}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "mem_sunreclaim{ident=\"$ident\"}",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "mem_vmalloc_used{ident=\"$ident\"}",
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "mem_vmalloc_chunk{ident=\"$ident\"}",
+                        "refId": "E"
+                    }
+                ],
+                "name": "内核态内存使用",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 31,
+                    "i": "00ed6e4d-c979-4938-a20e-56d42ca452cf",
+                    "isResizable": true
+                },
+                "id": "00ed6e4d-c979-4938-a20e-56d42ca452cf"
+            },
+            {
+                "id": "842a8c48-0e93-40bf-8f28-1b2f837e5c19",
+                "type": "row",
+                "name": "磁盘详情",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 38,
+                    "i": "842a8c48-0e93-40bf-8f28-1b2f837e5c19",
+                    "isResizable": false
+                },
+                "collapsed": true
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "disk_free{ident=\"$ident\"}"
+                    },
+                    {
+                        "expr": "disk_total{ident=\"$ident\"}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "disk_used{ident=\"$ident\"}",
+                        "refId": "C"
+                    }
+                ],
+                "name": "磁盘空间",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": null
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 39,
+                    "i": "bc894871-1c03-4d12-91be-6867f394a8a6",
+                    "isResizable": true
+                },
+                "id": "bc894871-1c03-4d12-91be-6867f394a8a6"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "linux_sysctl_fs_file_max{ident=\"$ident\"}"
+                    },
+                    {
+                        "expr": "linux_sysctl_fs_file_nr{ident=\"$ident\"}",
+                        "refId": "B"
+                    }
+                ],
+                "name": "fd使用",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 39,
+                    "i": "d825671f-7dc5-46a2-89dc-4fff084a3ae0",
+                    "isResizable": true
+                },
+                "id": "d825671f-7dc5-46a2-89dc-4fff084a3ae0"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "disk_inodes_total{ident=\"$ident\",path!~\"/var.*\"}",
+                        "legend": "{{path}}-total"
+                    },
+                    {
+                        "expr": "disk_inodes_used{ident=\"$ident\",path!~\"/var.*\"}",
+                        "refId": "B",
+                        "legend": "{{path}}-used"
+                    }
+                ],
+                "name": "inode",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 39,
+                    "i": "d27b522f-9c70-42f2-9e31-fed3816fd675",
+                    "isResizable": true
+                },
+                "id": "d27b522f-9c70-42f2-9e31-fed3816fd675"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(diskio_reads{ident=\"$ident\"}[1m])",
+                        "legend": "{{name}}-read"
+                    },
+                    {
+                        "expr": "rate(diskio_writes{ident=\"$ident\"}[1m])",
+                        "refId": "B",
+                        "legend": "{{name}}-writes"
+                    }
+                ],
+                "name": "IOPS",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 46,
+                    "i": "f645741e-c632-4685-b267-c7ad26b5c10e",
+                    "isResizable": true
+                },
+                "id": "f645741e-c632-4685-b267-c7ad26b5c10e"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(diskio_read_bytes{ident=\"$ident\"}[1m])",
+                        "legend": "{{name}}-read"
+                    },
+                    {
+                        "expr": "rate(diskio_write_bytes{ident=\"$ident\"}[1m])",
+                        "refId": "B",
+                        "legend": "{{name}}-writes"
+                    }
+                ],
+                "name": "IO吞吐量",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 0
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 46,
+                    "i": "bbd1ebda-99f6-419c-90a5-5f84973976dd",
+                    "isResizable": true
+                },
+                "id": "bbd1ebda-99f6-419c-90a5-5f84973976dd"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(diskio_write_time{ident=\"$ident\"}[1m])/rate(diskio_writes{ident=\"$ident\"}[1m])+rate(diskio_read_time{ident=\"$ident\"}[1m])/rate(diskio_reads{ident=\"$ident\"}[1m])",
+                        "legend": "{{name}}"
+                    }
+                ],
+                "name": "iowait",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 46,
+                    "i": "d6b45598-54c6-4b36-a896-0a7529ac21f8",
+                    "isResizable": true
+                },
+                "id": "d6b45598-54c6-4b36-a896-0a7529ac21f8"
+            },
+            {
+                "id": "307152d2-708c-4736-98cf-08b886cbf7f2",
+                "type": "row",
+                "name": "网络详情",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 53,
+                    "i": "307152d2-708c-4736-98cf-08b886cbf7f2",
+                    "isResizable": false
+                },
+                "collapsed": true
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(net_bytes_recv{ident=\"$ident\"}[1m])*8",
+                        "legend": "{{interface}}-recv"
+                    },
+                    {
+                        "expr": "rate(net_bytes_sent{ident=\"$ident\"}[1m])*8",
+                        "refId": "B",
+                        "legend": "{{interface}}-sent"
+                    }
+                ],
+                "name": "网络流量",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 0
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 0,
+                    "y": 54,
+                    "i": "f2ee5d32-737c-4095-b6b7-b15b778ffdb9",
+                    "isResizable": true
+                },
+                "id": "f2ee5d32-737c-4095-b6b7-b15b778ffdb9"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(net_packets_recv{ident=\"$ident\"}[1m])",
+                        "legend": "{{interface}}-recv"
+                    },
+                    {
+                        "expr": "rate(net_packets_sent{ident=\"$ident\"}[1m])",
+                        "refId": "B",
+                        "legend": "{{interface}}-sent"
+                    }
+                ],
+                "name": "packets",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 6,
+                    "y": 54,
+                    "i": "9113323a-98f5-4bff-a8ce-3b459e7e2190",
+                    "isResizable": true
+                },
+                "id": "9113323a-98f5-4bff-a8ce-3b459e7e2190"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(net_err_in{ident=\"$ident\"}[1m])",
+                        "legend": "{{interface}}-in"
+                    },
+                    {
+                        "expr": "rate(net_err_out{ident=\"$ident\"}[1m])",
+                        "refId": "B",
+                        "legend": "{{interface}}-out"
+                    }
+                ],
+                "name": "error",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 12,
+                    "y": 54,
+                    "i": "9634c41c-e124-4d7f-9406-0f86753e8d70",
+                    "isResizable": true
+                },
+                "id": "9634c41c-e124-4d7f-9406-0f86753e8d70"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(net_drop_in{ident=\"$ident\"}[1m])",
+                        "legend": "{{interface}}-in"
+                    },
+                    {
+                        "expr": "rate(net_drop_out{ident=\"$ident\"}[1m])",
+                        "refId": "B",
+                        "legend": "{{interface}}-out"
+                    }
+                ],
+                "name": "drop",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 18,
+                    "y": 54,
+                    "i": "4123f4c1-bf8e-400e-b267-8d7f6a92691a",
+                    "isResizable": true
+                },
+                "id": "4123f4c1-bf8e-400e-b267-8d7f6a92691a"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "netstat_tcp_established{ident=\"$ident\"}"
+                    },
+                    {
+                        "expr": "netstat_tcp_listen{ident=\"$ident\"}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "netstat_tcp_time_wait{ident=\"$ident\"}",
+                        "refId": "C"
+                    }
+                ],
+                "name": "tcp",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 7,
+                    "w": 24,
+                    "x": 0,
+                    "y": 61,
+                    "i": "cfb80689-de7b-47fb-9155-052b796dd7f5",
+                    "isResizable": true
+                },
+                "id": "cfb80689-de7b-47fb-9155-052b796dd7f5"
+            }
+        ]
+    }
+}
