@@ -6,7 +6,7 @@ networks:
 
 services:
   mysql:
-    platform: linux/x86_64
+    # platform: linux/x86_64
     image: "mysql:5.7"
     container_name: mysql
     hostname: mysql
@@ -77,7 +77,7 @@ services:
     links:
       - mysql:mysql
     command: >
-      sh -c "/wait && /app/ibex server"
+      sh -c "/wait && /app/ibex server" 
 
   n9e:
     image: flashcatcloud/nightingale:latest
@@ -92,7 +92,7 @@ services:
       - ./n9eetc:/app/etc
       - ./integrations:/app/integrations
     ports:
-      - "18000:18000"
+      - "17000:17000"
     networks:
       - nightingale
     depends_on:
@@ -127,9 +127,9 @@ services:
     networks:
       - nightingale
     depends_on:
-      - nserver
+      - n9e
     links:
-      - nserver:nserver
+      - n9e:n9e
 
   agentd:
     image: ulric2019/ibex:0.3
