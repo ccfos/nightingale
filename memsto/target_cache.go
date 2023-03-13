@@ -77,7 +77,7 @@ func (tc *TargetCacheType) Get(ident string) (*models.Target, bool) {
 	return val, has
 }
 
-func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, ts int64) map[string]int64 {
+func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, now, offset int64) map[string]int64 {
 	tc.RLock()
 	defer tc.RUnlock()
 	hostOffset := make(map[string]int64)
@@ -87,12 +87,17 @@ func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, ts int64) map
 			continue
 		}
 
-		if target.CpuNum == 0 {
-			// cpu_num is 0, means this target is not a active host, do not check offset
+		if target.CpuNum <= 0 {
+			// means this target is not collect by categraf, do not check offset
 			continue
 		}
 
-		if int64(math.Abs(float64(target.Offset))) > ts {
+		if now-target.UpdateAt < 120 {
+			// means this target is not a active host, do not check offset
+			continue
+		}
+
+		if int64(math.Abs(float64(target.Offset))) > offset {
 			hostOffset[target.Ident] = target.Offset
 		}
 	}

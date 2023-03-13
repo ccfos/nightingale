@@ -201,13 +201,12 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(t), trigger.Severity))
 			}
 		case "offset":
-			t := int64(trigger.Duration)
 			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
 				continue
 			}
-			hostOffsetMap := arw.processor.TargetCache.GetOffsetHost(targets, t)
+			hostOffsetMap := arw.processor.TargetCache.GetOffsetHost(targets, now, int64(trigger.Duration))
 			for host, offset := range hostOffsetMap {
 				m := make(map[string]string)
 				m["ident"] = host
