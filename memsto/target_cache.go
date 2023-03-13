@@ -87,6 +87,11 @@ func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, ts int64) map
 			continue
 		}
 
+		if target.CpuNum == 0 {
+			// cpu_num is 0, means this target is not a active host, do not check offset
+			continue
+		}
+
 		if int64(math.Abs(float64(target.Offset))) > ts {
 			hostOffset[target.Ident] = target.Offset
 		}
