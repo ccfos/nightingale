@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 )
@@ -66,55 +65,6 @@ func (rt *Router) alertRuleBuiltinList(c *gin.Context) {
 type alertRuleBuiltinImportForm struct {
 	Name         string `json:"name" binding:"required"`
 	DatasourceId int64  `json:"datasource_id" binding:"required"`
-}
-
-func (rt *Router) alertRuleBuiltinImport(c *gin.Context) {
-	var f alertRuleBuiltinImportForm
-	ginx.BindJSON(c, &f)
-
-	dirpath := rt.Center.BuiltinIntegrationsDir
-	if dirpath == "" {
-		dirpath = path.Join(runner.Cwd, "etc", "alerts")
-	}
-
-	jsonfile := path.Join(dirpath, f.Name+".json")
-	if !file.IsExist(jsonfile) {
-		ginx.Bomb(http.StatusBadRequest, "%s not found", jsonfile)
-	}
-
-	var lst []models.AlertRule
-	ginx.Dangerous(file.ReadJson(jsonfile, &lst))
-
-	count := len(lst)
-	if count == 0 {
-		ginx.Bomb(http.StatusBadRequest, "builtin alerts is empty, file: %s", jsonfile)
-	}
-
-	username := c.MustGet("username").(string)
-	bgid := ginx.UrlParamInt64(c, "id")
-
-	// alert rule name -> error string
-	reterr := make(map[string]string)
-	for i := 0; i < count; i++ {
-		lst[i].Id = 0
-		lst[i].DatasourceIdsJson = []int64{f.DatasourceId}
-		lst[i].GroupId = bgid
-		lst[i].CreateBy = username
-		lst[i].UpdateBy = username
-
-		if err := lst[i].FE2DB(); err != nil {
-			reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
-			continue
-		}
-
-		if err := lst[i].Add(rt.Ctx, models.GetChannelMap(rt.Ctx)); err != nil {
-			reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
-		} else {
-			reterr[lst[i].Name] = ""
-		}
-	}
-
-	ginx.NewRender(c).Data(reterr, nil)
 }
 
 type Payload struct {
