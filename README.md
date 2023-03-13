@@ -122,7 +122,6 @@ https://user-images.githubusercontent.com/792850/216888712-2565fcea-9df5-47bd-a4
 ## License
 [Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE)
 
-## Contact Us
-推荐您关注夜莺监控公众号，及时获取相关产品和社区动态：
+## 加入交流群
 
-<img src="doc/img/n9e-vx-new.png" width="120">
+<img src="doc/img/wecom.png" width="120">

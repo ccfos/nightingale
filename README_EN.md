@@ -52,7 +52,7 @@ Nightingale is an cloud-native monitoring system by All-In-On design, support en
 - We recommend that you use [github issue](https://github.com/ccfos/nightingale/issues) as the preferred channel for issue feedback and requirement submission;
 - You can join our WeChat group
 
-<img src="doc/img/n9e-vx-new.png" width="180">
+<img src="doc/img/wecom.png" width="120">
 
 
 ## Contributing
