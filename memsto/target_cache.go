@@ -88,7 +88,7 @@ func (tc *TargetCacheType) GetMissHost(targets []*models.Target, ts int64) []str
 			continue
 		}
 
-		if t.UpdateAt < ts {
+		if t.UnixTime/1000 < ts {
 			missHosts = append(missHosts, target.Ident)
 		}
 	}
