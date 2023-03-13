@@ -78,7 +78,7 @@ func (rt *Router) targetGets(c *gin.Context) {
 		for i := 0; i < len(list); i++ {
 			if meta, ok := metaMap[list[i].Ident]; ok {
 				list[i].FillMeta(meta)
-				if now.Unix()-list[i].UnixTime/1000 < 120 {
+				if now.Unix()-list[i].UpdateAt < 120 {
 					list[i].TargetUp = 1
 				}
 			} else {

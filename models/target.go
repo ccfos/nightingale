@@ -115,7 +115,7 @@ func TargetGets(ctx *ctx.Context, bgid int64, dsIds []int64, query string, limit
 	return lst, err
 }
 
-// 根据 DatasourceIds, groupids, tags, hosts 查询 targets
+// 根据 groupids, tags, hosts 查询 targets
 func TargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, limit, offset int) ([]*Target, error) {
 	var lst []*Target
 	session := TargetFilterQueryBuild(ctx, query, limit, offset)
@@ -131,6 +131,21 @@ func TargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, limit, o
 
 func TargetCountByFilter(ctx *ctx.Context, query map[string]interface{}) (int64, error) {
 	session := TargetFilterQueryBuild(ctx, query, 0, 0)
+	return Count(session)
+}
+
+func MissTargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, ts int64) ([]*Target, error) {
+	var lst []*Target
+	session := TargetFilterQueryBuild(ctx, query, 0, 0)
+	session = session.Where("update_at < ?", ts)
+
+	err := session.Order("ident").Find(&lst).Error
+	return lst, err
+}
+
+func MissTargetCountByFilter(ctx *ctx.Context, query map[string]interface{}, ts int64) (int64, error) {
+	session := TargetFilterQueryBuild(ctx, query, 0, 0)
+	session = session.Where("update_at < ?", ts)
 	return Count(session)
 }
 

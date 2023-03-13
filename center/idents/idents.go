@@ -121,6 +121,11 @@ func (s *Set) updateTargets(m map[string]models.HostMeta, now int64) error {
 		return err
 	}
 
+	err = s.db.Table("target").Where("ident in ?", exists).Update("update_at", now).Error
+	if err != nil {
+		logger.Error("failed to update target:", exists, "error:", err)
+	}
+
 	news := slice.SubString(lst, exists)
 	for i := 0; i < len(news); i++ {
 		err = s.db.Exec("INSERT INTO target(ident, update_at) VALUES(?, ?)", news[i], now).Error

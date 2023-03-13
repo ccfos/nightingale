@@ -189,17 +189,15 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 		query := models.GetHostsQuery(rule.Queries)
 		switch trigger.Type {
 		case "target_miss":
-			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0)
+			t := now - int64(trigger.Duration)
+			targets, err := models.MissTargetGetsByFilter(arw.ctx, query, t)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
 				continue
 			}
-			t := now - int64(trigger.Duration)
-			hosts := arw.processor.TargetCache.GetMissHost(targets, t)
-
-			for _, host := range hosts {
+			for _, target := range targets {
 				m := make(map[string]string)
-				m["ident"] = host
+				m["ident"] = target.Ident
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(t), trigger.Severity))
 			}
 		case "offset":
@@ -216,15 +214,19 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(offset), trigger.Severity))
 			}
 		case "pct_target_miss":
-			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0)
+			t := now - int64(trigger.Duration)
+			count, err := models.MissTargetCountByFilter(arw.ctx, query, t)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
 				continue
 			}
 
-			t := now - int64(trigger.Duration)
-			hosts := arw.processor.TargetCache.GetMissHost(targets, t)
-			pct := float64(len(hosts)) / float64(len(targets)) * 100
+			total, err := models.TargetCountByFilter(arw.ctx, query)
+			if err != nil {
+				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
+				continue
+			}
+			pct := float64(count) / float64(total) * 100
 			if pct >= float64(trigger.Percent) {
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, nil, now, pct, trigger.Severity))
 			}

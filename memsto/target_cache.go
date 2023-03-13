@@ -77,25 +77,6 @@ func (tc *TargetCacheType) Get(ident string) (*models.Target, bool) {
 	return val, has
 }
 
-func (tc *TargetCacheType) GetMissHost(targets []*models.Target, ts int64) []string {
-	tc.RLock()
-	defer tc.RUnlock()
-	var missHosts []string
-	for _, target := range targets {
-		t, exists := tc.targets[target.Ident]
-		if !exists {
-			missHosts = append(missHosts, target.Ident)
-			continue
-		}
-
-		if t.UnixTime/1000 < ts {
-			missHosts = append(missHosts, target.Ident)
-		}
-	}
-
-	return missHosts
-}
-
 func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, ts int64) map[string]int64 {
 	tc.RLock()
 	defer tc.RUnlock()

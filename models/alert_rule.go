@@ -101,13 +101,6 @@ func GetHostsQuery(queries []HostQuery) map[string]interface{} {
 	var query = make(map[string]interface{})
 	for _, q := range queries {
 		switch q.Key {
-		case "datasource_ids":
-			ids := ParseInt64(q.Values)
-			if q.Op == "==" {
-				query["datasource_id in (?)"] = ids
-			} else {
-				query["datasource_id not in (?)"] = ids
-			}
 		case "group_ids":
 			ids := ParseInt64(q.Values)
 			if q.Op == "==" {
@@ -132,7 +125,7 @@ func GetHostsQuery(queries []HostQuery) map[string]interface{} {
 					query["tags not like ?"] = "% " + tag + " %"
 				}
 			}
-		case "idents":
+		case "hosts":
 			lst := []string{}
 			for _, v := range q.Values {
 				if v == nil {
