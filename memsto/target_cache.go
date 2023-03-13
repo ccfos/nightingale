@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"math"
 	"sync"
 	"time"
 
@@ -81,12 +82,13 @@ func (tc *TargetCacheType) GetMissHost(targets []*models.Target, ts int64) []str
 	defer tc.RUnlock()
 	var missHosts []string
 	for _, target := range targets {
-		target, exists := tc.targets[target.Ident]
+		t, exists := tc.targets[target.Ident]
 		if !exists {
 			missHosts = append(missHosts, target.Ident)
 			continue
 		}
-		if target.UnixTime < ts {
+
+		if t.UpdateAt < ts {
 			missHosts = append(missHosts, target.Ident)
 		}
 	}
@@ -104,7 +106,7 @@ func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, ts int64) map
 			continue
 		}
 
-		if target.Offset > ts {
+		if int64(math.Abs(float64(target.Offset))) > ts {
 			hostOffset[target.Ident] = target.Offset
 		}
 	}
