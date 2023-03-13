@@ -77,10 +77,10 @@ services:
     links:
       - mysql:mysql
     command: >
-      sh -c "/wait && /app/ibex server" 
+      sh -c "/wait && /app/ibex server"
 
   n9e:
-    image: flashcatcloud/nightingale:latest
+    image: flashcatcloud/nightingale:6.0.0-beta.1
     container_name: n9e
     hostname: n9e
     restart: always

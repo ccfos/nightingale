@@ -62,7 +62,7 @@ DefaultRoles = ["Standard"]
 
 [DB]
 # postgres: host=%s port=%s user=%s dbname=%s password=%s sslmode=%s
-DSN="root:1234@tcp(127.0.0.1:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local&allowNativePasswords=true"
+DSN="root:1234@tcp(mysql:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local&allowNativePasswords=true"
 # enable debug mode or not
 Debug = false
 # mysql postgres
@@ -80,7 +80,7 @@ TablePrefix = ""
 
 [Redis]
 # address, ip:port or ip1:port,ip2:port for cluster and sentinel(SentinelAddrs)
-Address = "127.0.0.1:6379"
+Address = "redis:6379"
 # Username = ""
 # Password = ""
 # DB = 0
@@ -123,7 +123,7 @@ PromQuerier = true
 AlertDetail = true
 
 [Center.Ibex]
-Address = "http://127.0.0.1:10090"
+Address = "http://ibex:10090"
 # basic auth
 BasicAuthUser = "ibex"
 BasicAuthPass = "ibex"
@@ -150,9 +150,9 @@ LabelRewrite = true
 # # ident or metric
 # ShardingKey = "ident"
 
-[[Pushgw.Writers]] 
+[[Pushgw.Writers]]
 # Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"
-Url = "http://127.0.0.1:9090/api/v1/write"
+Url = "http://prometheus:9090/api/v1/write"
 # Basic auth username
 BasicAuthUser = ""
 # Basic auth password
