@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 type TargetQuery struct {
@@ -61,31 +62,35 @@ func (rt *Router) targetGets(c *gin.Context) {
 			keys = append(keys, list[i].Ident)
 		}
 
-		metaMap := make(map[string]*models.HostMeta)
-		vals := rt.Redis.MGet(context.Background(), keys...).Val()
-		for _, value := range vals {
-			var meta models.HostMeta
-			if value == nil {
-				continue
+		if len(keys) > 0 {
+			metaMap := make(map[string]*models.HostMeta)
+			vals := rt.Redis.MGet(context.Background(), keys...).Val()
+			for _, value := range vals {
+				var meta models.HostMeta
+				if value == nil {
+					continue
+				}
+				err := json.Unmarshal([]byte(value.(string)), &meta)
+				if err != nil {
+					logger.Warningf("unmarshal %v host meta failed: %v", value, err)
+					continue
+				}
+				metaMap[meta.Hostname] = &meta
 			}
-			err := json.Unmarshal([]byte(value.(string)), &meta)
-			if err != nil {
-				continue
+
+			for i := 0; i < len(list); i++ {
+				if meta, ok := metaMap[list[i].Ident]; ok {
+					list[i].FillMeta(meta)
+					if now.Unix()-list[i].UpdateAt < 120 {
+						list[i].TargetUp = 1
+					}
+				} else {
+					// 未上报过元数据的主机，cpuNum默认为-1, 用于前端展示 unknown
+					list[i].CpuNum = -1
+				}
 			}
-			metaMap[meta.Hostname] = &meta
 		}
 
-		for i := 0; i < len(list); i++ {
-			if meta, ok := metaMap[list[i].Ident]; ok {
-				list[i].FillMeta(meta)
-				if now.Unix()-list[i].UpdateAt < 120 {
-					list[i].TargetUp = 1
-				}
-			} else {
-				// 未上报过元数据的主机，cpuNum默认为-1, 用于前端展示 unknown
-				list[i].CpuNum = -1
-			}
-		}
 	}
 
 	ginx.NewRender(c).Data(gin.H{
