@@ -1,0 +1,112 @@
+{
+  "name": "HTTP探测",
+  "tags": "",
+  "ident": "",
+  "configs": {
+      "version": "2.0.0",
+      "panels": [
+          {
+              "id": "0cd7c8aa-456c-4522-97ef-0b1710e7af8a",
+              "type": "row",
+              "name": "Default chart group",
+              "layout": {
+                  "h": 1,
+                  "w": 24,
+                  "x": 0,
+                  "y": 0,
+                  "i": "0cd7c8aa-456c-4522-97ef-0b1710e7af8a"
+              },
+              "collapsed": true
+          },
+          {
+              "targets": [
+                  {
+                      "refId": "A",
+                      "expr": "max(http_response_result_code) by (target)",
+                      "legend": "UP?"
+                  },
+                  {
+                      "expr": "max(http_response_response_code) by (target)",
+                      "refId": "B",
+                      "legend": "status code"
+                  },
+                  {
+                      "expr": "max(http_response_response_time) by (target)",
+                      "refId": "C",
+                      "legend": "latency(s)"
+                  },
+                  {
+                      "expr": "max(http_response_cert_expire_timestamp) by (target) - time()",
+                      "refId": "D",
+                      "legend": "cert expire"
+                  }
+              ],
+              "name": "URL Details",
+              "custom": {
+                  "showHeader": true,
+                  "calc": "lastNotNull",
+                  "displayMode": "labelValuesToRows",
+                  "aggrDimension": "target"
+              },
+              "options": {
+                  "valueMappings": [],
+                  "standardOptions": {}
+              },
+              "overrides": [
+                  {
+                      "properties": {
+                          "valueMappings": [
+                              {
+                                  "type": "special",
+                                  "match": {
+                                      "special": 0
+                                  },
+                                  "result": {
+                                      "text": "UP",
+                                      "color": "#417505"
+                                  }
+                              },
+                              {
+                                  "type": "range",
+                                  "match": {
+                                      "special": 1,
+                                      "from": 1
+                                  },
+                                  "result": {
+                                      "text": "DOWN",
+                                      "color": "#e90f0f"
+                                  }
+                              }
+                          ],
+                          "standardOptions": {}
+                      },
+                      "matcher": {
+                          "value": "A"
+                      }
+                  },
+                  {
+                      "type": "special",
+                      "matcher": {
+                          "value": "D"
+                      },
+                      "properties": {
+                          "standardOptions": {
+                              "util": "humantimeSeconds"
+                          }
+                      }
+                  }
+              ],
+              "version": "2.0.0",
+              "type": "table",
+              "layout": {
+                  "h": 15,
+                  "w": 24,
+                  "x": 0,
+                  "y": 1,
+                  "i": "3674dbfa-243a-49f6-baa5-b7f887c1afb0"
+              },
+              "id": "3674dbfa-243a-49f6-baa5-b7f887c1afb0"
+          }
+      ]
+  }
+}

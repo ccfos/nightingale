@@ -1,0 +1,96 @@
+{
+  "name": "PING探测",
+  "tags": "",
+  "ident": "",
+  "configs": {
+      "version": "2.0.0",
+      "panels": [
+          {
+              "id": "eb08a300-c59a-4b0d-8537-62512e833f48",
+              "type": "row",
+              "name": "Default chart group",
+              "layout": {
+                  "h": 1,
+                  "w": 24,
+                  "x": 0,
+                  "y": 0,
+                  "i": "eb08a300-c59a-4b0d-8537-62512e833f48"
+              },
+              "collapsed": true
+          },
+          {
+              "targets": [
+                  {
+                      "refId": "A",
+                      "expr": "max(ping_result_code) by (target)",
+                      "legend": "UP?"
+                  },
+                  {
+                      "expr": "max(ping_percent_packet_loss) by (target)",
+                      "refId": "B",
+                      "legend": "Packet Loss %"
+                  },
+                  {
+                      "expr": "max(httpresponse_response_time) by (target)",
+                      "refId": "C",
+                      "legend": "latency(s)"
+                  }
+              ],
+              "name": "Ping",
+              "custom": {
+                  "showHeader": true,
+                  "calc": "lastNotNull",
+                  "displayMode": "labelValuesToRows",
+                  "aggrDimension": "target"
+              },
+              "options": {
+                  "valueMappings": [],
+                  "standardOptions": {}
+              },
+              "overrides": [
+                  {
+                      "properties": {
+                          "valueMappings": [
+                              {
+                                  "type": "special",
+                                  "match": {
+                                      "special": 0
+                                  },
+                                  "result": {
+                                      "text": "UP",
+                                      "color": "#417505"
+                                  }
+                              },
+                              {
+                                  "type": "range",
+                                  "match": {
+                                      "special": 1,
+                                      "from": 1
+                                  },
+                                  "result": {
+                                      "text": "DOWN",
+                                      "color": "#e90f0f"
+                                  }
+                              }
+                          ],
+                          "standardOptions": {}
+                      },
+                      "matcher": {
+                          "value": "A"
+                      }
+                  }
+              ],
+              "version": "2.0.0",
+              "type": "table",
+              "layout": {
+                  "h": 15,
+                  "w": 24,
+                  "x": 0,
+                  "y": 1,
+                  "i": "1677138f-0f33-485c-8ee1-2db24cabbf54"
+              },
+              "id": "1677138f-0f33-485c-8ee1-2db24cabbf54"
+          }
+      ]
+  }
+}

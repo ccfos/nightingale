@@ -90,6 +90,7 @@ services:
       WAIT_HOSTS: mysql:3306, redis:6379
     volumes:
       - ./n9eetc:/app/etc
+      - ./integrations:/app/integrations
     ports:
       - "18000:18000"
     networks:
