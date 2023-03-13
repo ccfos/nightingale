@@ -198,7 +198,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			for _, target := range targets {
 				m := make(map[string]string)
 				m["ident"] = target.Ident
-				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(t), trigger.Severity))
+				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(now-target.UpdateAt), trigger.Severity))
 			}
 		case "offset":
 			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0)

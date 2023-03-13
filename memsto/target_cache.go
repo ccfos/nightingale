@@ -92,7 +92,7 @@ func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, now, offset i
 			continue
 		}
 
-		if now-target.UpdateAt < 120 {
+		if now-target.UpdateAt > 120 {
 			// means this target is not a active host, do not check offset
 			continue
 		}
