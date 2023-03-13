@@ -42,9 +42,9 @@ WriteTimeout = 40
 IdleTimeout = 120
 
 [HTTP.Pushgw]
-Enable = false 
-[HTTP.Pushgw.BasicAuth]
-user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+Enable = true 
+# [HTTP.Pushgw.BasicAuth]
+# user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
 [HTTP.Alert]
 Enable = true 
@@ -52,9 +52,9 @@ Enable = true
 user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
 [HTTP.Heartbeat]
-Enable = false 
-[HTTP.Heartbeat.BasicAuth]
-user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+Enable = true 
+# [HTTP.Heartbeat.BasicAuth]
+# user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
 [HTTP.Service]
 Enable = true 
