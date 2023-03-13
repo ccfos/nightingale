@@ -1,0 +1,151 @@
+version: "3.7"
+
+networks:
+  nightingale:
+    driver: bridge
+
+services:
+  mysql:
+    platform: linux/x86_64
+    image: "mysql:5.7"
+    container_name: mysql
+    hostname: mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: 1234
+    volumes:
+      - ./mysqldata:/var/lib/mysql/
+      - ./initsql:/docker-entrypoint-initdb.d/
+      - ./mysqletc/my.cnf:/etc/my.cnf
+    networks:
+      - nightingale
+
+  redis:
+    image: "redis:6.2"
+    container_name: redis
+    hostname: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    environment:
+      TZ: Asia/Shanghai
+    networks:
+      - nightingale
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    hostname: prometheus
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - ./prometc:/etc/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - nightingale
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--enable-feature=remote-write-receiver"
+      - "--query.lookback-delta=2m"
+
+  ibex:
+    image: ulric2019/ibex:0.3
+    container_name: ibex
+    hostname: ibex
+    restart: always
+    environment:
+      GIN_MODE: release
+      TZ: Asia/Shanghai
+      WAIT_HOSTS: mysql:3306
+    ports:
+      - "10090:10090"
+      - "20090:20090"
+    volumes:
+      - ./ibexetc:/app/etc
+    networks:
+      - nightingale
+    depends_on:
+      - mysql
+    links:
+      - mysql:mysql
+    command: >
+      sh -c "/wait && /app/ibex server"
+
+  n9e:
+    image: flashcatcloud/nightingale:latest
+    container_name: n9e
+    hostname: n9e
+    restart: always
+    environment:
+      GIN_MODE: release
+      TZ: Asia/Shanghai
+      WAIT_HOSTS: mysql:3306, redis:6379
+    volumes:
+      - ./n9eetc:/app/etc
+    ports:
+      - "18000:18000"
+    networks:
+      - nightingale
+    depends_on:
+      - mysql
+      - redis
+      - prometheus
+      - ibex
+    links:
+      - mysql:mysql
+      - redis:redis
+      - prometheus:prometheus
+      - ibex:ibex
+    command: >
+      sh -c "/wait && /app/n9e"
+
+  categraf:
+    image: "flashcatcloud/categraf:latest"
+    container_name: "categraf"
+    hostname: "categraf01"
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+      HOST_PROC: /hostfs/proc
+      HOST_SYS: /hostfs/sys
+      HOST_MOUNT_PREFIX: /hostfs
+    volumes:
+      - ./categraf/conf:/etc/categraf/conf
+      - /:/hostfs
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "9100:9100/tcp"
+    networks:
+      - nightingale
+    depends_on:
+      - nserver
+    links:
+      - nserver:nserver
+
+  agentd:
+    image: ulric2019/ibex:0.3
+    container_name: agentd
+    hostname: agentd
+    restart: always
+    environment:
+      GIN_MODE: release
+      TZ: Asia/Shanghai
+    volumes:
+      - ./ibexetc:/app/etc
+    networks:
+      - nightingale
+    depends_on:
+      - ibex
+    links:
+      - ibex:ibex
+    command:
+      - "/app/ibex"
+      - "agentd"
