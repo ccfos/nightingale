@@ -1,7 +1,6 @@
 package router
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -226,14 +225,8 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 		}
 
 		for k, v := range f.Fields {
-			if k == "datasource_ids" {
-				b, err := json.Marshal(v)
-				ginx.Dangerous(err)
-				f.Fields[k] = string(b)
-			}
+			ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, v))
 		}
-
-		ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, f.Fields))
 	}
 
 	ginx.NewRender(c).Message(nil)

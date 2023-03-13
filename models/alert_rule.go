@@ -290,6 +290,18 @@ func (ar *AlertRule) Update(ctx *ctx.Context, arf AlertRule, channelMap map[stri
 	return DB(ctx).Model(ar).Select("*").Updates(arf).Error
 }
 
+func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interface{}) error {
+	if column == "datasource_ids" {
+		b, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		return DB(ctx).Model(ar).UpdateColumn(column, string(b)).Error
+	}
+
+	return DB(ctx).Model(ar).UpdateColumn(column, value).Error
+}
+
 func (ar *AlertRule) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
 	return DB(ctx).Model(ar).Updates(fields).Error
 }
