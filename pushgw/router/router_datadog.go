@@ -186,9 +186,9 @@ func (r *Router) datadogSeries(c *gin.Context) {
 		apiKey = ""
 	}
 
-	if len(r.HTTP.BasicAuth) > 0 {
+	if len(r.HTTP.Pushgw.BasicAuth) > 0 {
 		ok := false
-		for _, v := range r.HTTP.BasicAuth {
+		for _, v := range r.HTTP.Pushgw.BasicAuth {
 			if apiKey == v {
 				ok = true
 				break

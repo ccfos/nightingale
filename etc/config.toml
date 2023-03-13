@@ -41,7 +41,24 @@ WriteTimeout = 40
 # http server idle timeout, unit: s
 IdleTimeout = 120
 
-[HTTP.BasicAuth]
+[HTTP.Pushgw]
+Enable = false 
+[HTTP.Pushgw.BasicAuth]
+user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[HTTP.Alert]
+Enable = true 
+[HTTP.Alert.BasicAuth]
+user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[HTTP.Heartbeat]
+Enable = false 
+[HTTP.Heartbeat.BasicAuth]
+user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[HTTP.Service]
+Enable = true 
+[HTTP.Service.BasicAuth]
 user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
 [HTTP.JWTAuth]
@@ -116,7 +133,6 @@ ClusterName = "default"
 [Center]
 MetricsYamlFile = "./etc/metrics.yaml"
 I18NHeaderKey = "X-Language"
-# HeartbeatBasicAuthEnable = true
 
 [Center.AnonymousAccess]
 PromQuerier = true
@@ -136,7 +152,6 @@ LabelRewrite = true
 # # default busigroup key name
 # BusiGroupLabelKey = "busigroup"
 # ForceUseServerTS = false
-# PushMetricBasicAuthEnable = true
 
 # [Pushgw.DebugSample]
 # ident = "xx"

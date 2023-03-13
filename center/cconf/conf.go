@@ -5,17 +5,16 @@ import (
 )
 
 type Center struct {
-	Plugins                  []Plugin
-	BasicAuth                gin.Accounts
-	MetricsYamlFile          string
-	OpsYamlFile              string
-	BuiltinIntegrationsDir   string
-	I18NHeaderKey            string
-	MetricDesc               MetricDescType
-	TargetMetrics            map[string]string
-	AnonymousAccess          AnonymousAccess
-	Ibex                     Ibex
-	HeartbeatBasicAuthEnable bool
+	Plugins                []Plugin
+	BasicAuth              gin.Accounts
+	MetricsYamlFile        string
+	OpsYamlFile            string
+	BuiltinIntegrationsDir string
+	I18NHeaderKey          string
+	MetricDesc             MetricDescType
+	TargetMetrics          map[string]string
+	AnonymousAccess        AnonymousAccess
+	Ibex                   Ibex
 }
 
 type Plugin struct {

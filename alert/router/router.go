@@ -39,7 +39,14 @@ func New(httpConfig httpx.Config, alert aconf.Alert, amc *memsto.AlertMuteCacheT
 }
 
 func (rt *Router) Config(r *gin.Engine) {
+	if !rt.HTTP.Alert.Enable {
+		return
+	}
+
 	service := r.Group("/v1/n9e")
+	if len(rt.HTTP.Alert.BasicAuth) > 0 {
+		service.Use(gin.BasicAuth(rt.HTTP.Alert.BasicAuth))
+	}
 	service.POST("/event", rt.pushEventToQueue)
 	service.POST("/make-event", rt.makeEvent)
 }

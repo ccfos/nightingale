@@ -307,53 +307,55 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/notify-contact", rt.auth(), rt.admin(), rt.notifyContactPuts)
 	}
 
-	service := r.Group("/v1/n9e")
-
-	if len(rt.HTTP.BasicAuth) > 0 {
-		service.Use(gin.BasicAuth(rt.HTTP.BasicAuth))
-	}
-	{
-		service.Any("/prometheus/*url", rt.dsProxy)
-		service.POST("/users", rt.userAddPost)
-		service.GET("/users", rt.userFindAll)
-
-		service.GET("/targets", rt.targetGets)
-		service.GET("/targets/tags", rt.targetGetTags)
-		service.POST("/targets/tags", rt.targetBindTagsByService)
-		service.DELETE("/targets/tags", rt.targetUnbindTagsByService)
-		service.PUT("/targets/note", rt.targetUpdateNoteByService)
-
-		service.POST("/alert-rules", rt.alertRuleAddByService)
-		service.DELETE("/alert-rules", rt.alertRuleDelByService)
-		service.PUT("/alert-rule/:arid", rt.alertRulePutByService)
-		service.GET("/alert-rule/:arid", rt.alertRuleGet)
-		service.GET("/alert-rules", rt.alertRulesGetByService)
-
-		service.GET("/alert-mutes", rt.alertMuteGets)
-		service.POST("/alert-mutes", rt.alertMuteAddByService)
-		service.DELETE("/alert-mutes", rt.alertMuteDel)
-
-		service.GET("/alert-cur-events", rt.alertCurEventsList)
-		service.GET("/alert-his-events", rt.alertHisEventsList)
-		service.GET("/alert-his-event/:eid", rt.alertHisEventGet)
-
-		service.GET("/config/:id", rt.configGet)
-		service.GET("/configs", rt.configsGet)
-		service.PUT("/configs", rt.configsPut)
-		service.POST("/configs", rt.configsPost)
-		service.DELETE("/configs", rt.configsDel)
-
-		service.POST("/conf-prop/encrypt", rt.confPropEncrypt)
-		service.POST("/conf-prop/decrypt", rt.confPropDecrypt)
-	}
-
-	heartbeat := r.Group("/v1/n9e")
-	{
-		if len(rt.HTTP.BasicAuth) > 0 && rt.Center.HeartbeatBasicAuthEnable {
-			heartbeat.Use(gin.BasicAuth(rt.HTTP.BasicAuth))
+	if rt.HTTP.Service.Enable {
+		service := r.Group("/v1/n9e")
+		if len(rt.HTTP.Service.BasicAuth) > 0 {
+			service.Use(gin.BasicAuth(rt.HTTP.Service.BasicAuth))
 		}
+		{
+			service.Any("/prometheus/*url", rt.dsProxy)
+			service.POST("/users", rt.userAddPost)
+			service.GET("/users", rt.userFindAll)
 
-		heartbeat.POST("/heartbeat", rt.heartbeat)
+			service.GET("/targets", rt.targetGets)
+			service.GET("/targets/tags", rt.targetGetTags)
+			service.POST("/targets/tags", rt.targetBindTagsByService)
+			service.DELETE("/targets/tags", rt.targetUnbindTagsByService)
+			service.PUT("/targets/note", rt.targetUpdateNoteByService)
+
+			service.POST("/alert-rules", rt.alertRuleAddByService)
+			service.DELETE("/alert-rules", rt.alertRuleDelByService)
+			service.PUT("/alert-rule/:arid", rt.alertRulePutByService)
+			service.GET("/alert-rule/:arid", rt.alertRuleGet)
+			service.GET("/alert-rules", rt.alertRulesGetByService)
+
+			service.GET("/alert-mutes", rt.alertMuteGets)
+			service.POST("/alert-mutes", rt.alertMuteAddByService)
+			service.DELETE("/alert-mutes", rt.alertMuteDel)
+
+			service.GET("/alert-cur-events", rt.alertCurEventsList)
+			service.GET("/alert-his-events", rt.alertHisEventsList)
+			service.GET("/alert-his-event/:eid", rt.alertHisEventGet)
+
+			service.GET("/config/:id", rt.configGet)
+			service.GET("/configs", rt.configsGet)
+			service.PUT("/configs", rt.configsPut)
+			service.POST("/configs", rt.configsPost)
+			service.DELETE("/configs", rt.configsDel)
+
+			service.POST("/conf-prop/encrypt", rt.confPropEncrypt)
+			service.POST("/conf-prop/decrypt", rt.confPropDecrypt)
+		}
+	}
+
+	if rt.HTTP.Heartbeat.Enable {
+		heartbeat := r.Group("/v1/n9e")
+		{
+			if len(rt.HTTP.Heartbeat.BasicAuth) > 0 {
+				heartbeat.Use(gin.BasicAuth(rt.HTTP.Heartbeat.BasicAuth))
+			}
+			heartbeat.POST("/heartbeat", rt.heartbeat)
+		}
 	}
 
 	rt.configNoRoute(r)
