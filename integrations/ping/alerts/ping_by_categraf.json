@@ -1,6 +1,6 @@
 [
     {
-      "name": "PING地址探测失败",
+      "name": "PING address detection failed",
       "note": "",
       "severity": 2,
       "disabled": 0,

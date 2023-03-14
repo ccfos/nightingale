@@ -11,7 +11,7 @@
                         "expr": "rate(n9e_server_samples_received_total[1m])"
                     }
                 ],
-                "name": "每秒接收的数据点个数",
+                "name": "number of data points received per second",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -48,7 +48,7 @@
                         "expr": "rate(n9e_server_alerts_total[10m])"
                     }
                 ],
-                "name": "每秒产生的告警事件个数",
+                "name": "number of alarm events generated per second",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -85,7 +85,7 @@
                         "expr": "n9e_server_alert_queue_size"
                     }
                 ],
-                "name": "告警事件内存队列长度",
+                "name": "queue length of alarm events",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -122,7 +122,7 @@
                         "expr": "n9e_server_http_request_duration_seconds_sum/n9e_server_http_request_duration_seconds_count"
                     }
                 ],
-                "name": "数据接收接口平均响应时间（单位：秒）",
+                "name": "The average response time of the data receiving interface (unit: seconds).",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -159,7 +159,7 @@
                         "expr": "n9e_server_sample_queue_size"
                     }
                 ],
-                "name": "内存数据队列长度",
+                "name": "length of the in-memory data queue",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -196,7 +196,7 @@
                         "expr": "avg(n9e_server_forward_duration_seconds_sum/n9e_server_forward_duration_seconds_count)"
                     }
                 ],
-                "name": "数据发往TSDB平均耗时（单位：秒）",
+                "name": "average time it takes to send data to TSDB (unit: seconds)",
                 "options": {
                     "tooltip": {
                         "mode": "all",

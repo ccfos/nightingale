@@ -1,6 +1,6 @@
 [
     {
-      "name": "NTP时间偏移太大",
+      "name": "NTP time offset is too large",
       "note": "",
       "severity": 2,
       "disabled": 0,

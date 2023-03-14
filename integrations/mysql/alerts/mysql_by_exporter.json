@@ -1,6 +1,6 @@
 [
     {
-      "name": "MysqlInnodbLogWaits",
+      "name": "MysqlInnodbLogWaits - exporter",
       "note": "MySQL innodb log writes stalling",
       "severity": 2,
       "disabled": 0,
@@ -30,7 +30,7 @@
       ]
     },
     {
-      "name": "MysqlSlaveIoThreadNotRunning",
+      "name": "MysqlSlaveIoThreadNotRunning - exporter",
       "note": "MySQL Slave IO thread not running",
       "severity": 1,
       "disabled": 0,
@@ -60,7 +60,7 @@
       ]
     },
     {
-      "name": "MysqlSlaveReplicationLag",
+      "name": "MysqlSlaveReplicationLag - exporter",
       "note": "",
       "severity": 1,
       "disabled": 0,
@@ -90,7 +90,7 @@
       ]
     },
     {
-      "name": "MysqlSlaveSqlThreadNotRunning",
+      "name": "MysqlSlaveSqlThreadNotRunning - exporter",
       "note": "MySQL Slave SQL thread not running",
       "severity": 1,
       "disabled": 0,
@@ -120,7 +120,7 @@
       ]
     },
     {
-      "name": "Mysql刚刚有重启，请注意",
+      "name": "Mysql has just restarted. Please be advised - exporter",
       "note": "MySQL has just been restarted, less than one minute ago",
       "severity": 3,
       "disabled": 0,
@@ -150,7 +150,7 @@
       ]
     },
     {
-      "name": "Mysql实例挂了",
+      "name": "The MySQL instance is down",
       "note": "",
       "severity": 1,
       "disabled": 0,
@@ -180,7 +180,7 @@
       ]
     },
     {
-      "name": "Mysql打开了很多文件句柄，请注意",
+      "name": "More than 80% of MySQL files open",
       "note": "More than 80% of MySQL files open",
       "severity": 2,
       "disabled": 0,
@@ -210,8 +210,8 @@
       ]
     },
     {
-      "name": "Mysql最近一分钟有慢查询出现",
-      "note": "MySQL server mysql has some new slow query",
+      "name": "MySQL server mysql has some new slow query",
+      "note": "",
       "severity": 2,
       "disabled": 0,
       "prom_for_duration": 120,
@@ -240,7 +240,7 @@
       ]
     },
     {
-      "name": "Mysql有超过60%的连接是running状态",
+      "name": "More than 60% of the connections in MySQL are in a running state",
       "note": "",
       "severity": 2,
       "disabled": 0,
@@ -270,7 +270,7 @@
       ]
     },
     {
-      "name": "Mysql连接数已超过80%",
+      "name": "MySQL connection count has exceeded 80%",
       "note": "More than 80% of MySQL connections are in use",
       "severity": 2,
       "disabled": 0,

@@ -1,6 +1,6 @@
 [
     {
-      "name": "Redis Ping 延迟高（大于100毫秒）",
+      "name": "High Redis Ping latency (above 100 milliseconds)",
       "note": "",
       "severity": 2,
       "disabled": 0,
@@ -30,7 +30,7 @@
       ]
     },
     {
-      "name": "Redis内存使用率较高",
+      "name": "High Redis memory usage rate",
       "note": "",
       "severity": 2,
       "disabled": 0,
@@ -60,7 +60,7 @@
       ]
     },
     {
-      "name": "Redis出现拒绝连接",
+      "name": "Redis connection refused",
       "note": "",
       "severity": 2,
       "disabled": 0,
@@ -90,7 +90,7 @@
       ]
     },
     {
-      "name": "Redis刚刚有重启，请注意",
+      "name": "Redis has just been restarted, please be aware",
       "note": "",
       "severity": 3,
       "disabled": 0,
@@ -120,7 +120,7 @@
       ]
     },
     {
-      "name": "Redis较低的命中率",
+      "name": "Low Redis hit rate",
       "note": "",
       "severity": 2,
       "disabled": 0,
@@ -150,7 +150,7 @@
       ]
     },
     {
-      "name": "Redis驱逐率较高",
+      "name": "High Redis eviction rate",
       "note": "",
       "severity": 2,
       "disabled": 0,

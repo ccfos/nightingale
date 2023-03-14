@@ -1,5 +1,5 @@
 {
-  "name": "HOST - 模板",
+  "name": "HOST by Node Exporter",
   "tags": "Prometheus Host",
   "ident": "",
   "configs": {

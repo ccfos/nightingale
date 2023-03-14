@@ -1,6 +1,6 @@
 [
   {
-    "name": "数据有丢失风险-副本数小于3",
+    "name": "Risk of data loss - number of replicas less than 3",
     "note": "",
     "prod": "",
     "algorithm": "",
@@ -35,7 +35,7 @@
     ]
   },
   {
-    "name": "消费能力不足-延迟超过5分钟",
+    "name": "Insufficient consumption ability - delay exceeds 5 minutes",
     "note": "",
     "prod": "",
     "algorithm": "",

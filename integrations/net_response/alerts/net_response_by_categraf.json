@@ -1,6 +1,6 @@
 [
     {
-      "name": "网络地址探活失败",
+      "name": "Network address probe failed",
       "note": "",
       "severity": 2,
       "disabled": 0,

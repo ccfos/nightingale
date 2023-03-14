@@ -1,6 +1,6 @@
 [
     {
-      "name": "HTTP地址探测失败",
+      "name": "http detect failed",
       "note": "",
       "severity": 2,
       "disabled": 0,

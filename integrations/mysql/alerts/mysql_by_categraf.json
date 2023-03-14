@@ -1,6 +1,6 @@
 [
     {
-      "name": "MysqlInnodbLogWaits",
+      "name": "MysqlInnodbLogWaits - categraf",
       "note": "MySQL innodb log writes stalling",
       "severity": 2,
       "disabled": 0,
@@ -30,7 +30,7 @@
       ]
     },
     {
-      "name": "MysqlSlaveIoThreadNotRunning",
+      "name": "MysqlSlaveIoThreadNotRunning - categraf",
       "note": "MySQL Slave IO thread not running",
       "severity": 1,
       "disabled": 0,
@@ -60,7 +60,7 @@
       ]
     },
     {
-      "name": "MysqlSlaveReplicationLag",
+      "name": "MysqlSlaveReplicationLag - categraf",
       "note": "",
       "severity": 1,
       "disabled": 0,
@@ -90,7 +90,7 @@
       ]
     },
     {
-      "name": "MysqlSlaveSqlThreadNotRunning",
+      "name": "MysqlSlaveSqlThreadNotRunning - categraf",
       "note": "MySQL Slave SQL thread not running",
       "severity": 1,
       "disabled": 0,
@@ -120,7 +120,7 @@
       ]
     },
     {
-      "name": "Mysql刚刚有重启，请注意",
+      "name": "Mysql has just restarted. Please be advised - categraf",
       "note": "MySQL has just been restarted, less than one minute ago",
       "severity": 3,
       "disabled": 0,
@@ -150,7 +150,7 @@
       ]
     },
     {
-      "name": "Mysql实例挂了",
+      "name": "Mysql instance has crashed - categraf",
       "note": "",
       "severity": 1,
       "disabled": 0,
@@ -180,7 +180,7 @@
       ]
     },
     {
-      "name": "Mysql打开了很多文件句柄，请注意",
+      "name": "Mysql has opened a large number of file handles. Please be aware - categraf",
       "note": "More than 80% of MySQL files open",
       "severity": 2,
       "disabled": 0,
@@ -210,7 +210,7 @@
       ]
     },
     {
-      "name": "Mysql最近一分钟有慢查询出现",
+      "name": "A slow query has occurred in Mysql within the last minute - categraf",
       "note": "MySQL server mysql has some new slow query",
       "severity": 2,
       "disabled": 0,
@@ -240,7 +240,7 @@
       ]
     },
     {
-      "name": "Mysql有超过60%的连接是running状态",
+      "name": "More than 60% of the connections in Mysql are in a running state - categraf",
       "note": "",
       "severity": 2,
       "disabled": 0,
@@ -270,7 +270,7 @@
       ]
     },
     {
-      "name": "Mysql连接数已超过80%",
+      "name": "The number of connections in Mysql has exceeded 80% - categraf",
       "note": "More than 80% of MySQL connections are in use",
       "severity": 2,
       "disabled": 0,

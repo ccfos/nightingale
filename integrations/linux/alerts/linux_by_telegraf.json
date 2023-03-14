@@ -1,6 +1,6 @@
 [
     {
-      "name": "有地址PING不通，请注意",
+      "name": "Address is unreachable by PING, please pay attention - telegraf",
       "note": "",
       "severity": 1,
       "disabled": 0,
@@ -30,7 +30,7 @@
       "append_tags": []
     },
     {
-      "name": "有监控对象失联",
+      "name": "Lost connection with monitoring target - telegraf",
       "note": "",
       "severity": 1,
       "disabled": 0,
@@ -60,7 +60,7 @@
       "append_tags": []
     },
     {
-      "name": "有端口探测失败，请注意",
+      "name": "Port detection failed, please pay attention - telegraf",
       "note": "",
       "severity": 1,
       "disabled": 0,
@@ -90,7 +90,7 @@
       "append_tags": []
     },
     {
-      "name": "机器负载-CPU较高，请关注",
+      "name": "Machine load - high CPU, please pay attention - telegraf",
       "note": "",
       "severity": 3,
       "disabled": 0,
@@ -120,7 +120,7 @@
       "append_tags": []
     },
     {
-      "name": "机器负载-内存较高，请关注",
+      "name": "Machine load - high memory, please pay attention - telegraf",
       "note": "",
       "severity": 2,
       "disabled": 0,
@@ -150,7 +150,7 @@
       "append_tags": []
     },
     {
-      "name": "硬盘-IO非常繁忙",
+      "name": "Hard disk - IO is very busy - telegraf",
       "note": "",
       "severity": 2,
       "disabled": 0,
@@ -180,7 +180,7 @@
       "append_tags": []
     },
     {
-      "name": "硬盘-预计再有4小时写满",
+      "name": "Hard disk - expected to be written full in 4 hours - telegraf",
       "note": "",
       "severity": 1,
       "disabled": 0,
@@ -210,7 +210,7 @@
       "append_tags": []
     },
     {
-      "name": "网卡-入向有丢包",
+      "name": "packet loss in the inbound direction - telegraf",
       "note": "",
       "severity": 3,
       "disabled": 0,
@@ -240,7 +240,7 @@
       "append_tags": []
     },
     {
-      "name": "网卡-出向有丢包",
+      "name": "packet loss in the outbound direction - telegraf",
       "note": "",
       "severity": 3,
       "disabled": 0,
@@ -270,7 +270,7 @@
       "append_tags": []
     },
     {
-      "name": "网络连接-TME_WAIT数量超过2万",
+      "name": "Network connection - number of TME_WAIT exceeds 20,000 - telegraf",
       "note": "",
       "severity": 2,
       "disabled": 0,
@@ -300,7 +300,7 @@
       "append_tags": []
     },
     {
-      "name": "进程监控-有进程数为0，某进程可能挂了",
+      "name": "there are processes with 0 count, a certain process may have crashed - telegraf",
       "note": "",
       "severity": 1,
       "disabled": 0,
@@ -330,7 +330,7 @@
       "append_tags": []
     },
     {
-      "name": "进程监控-进程句柄限制过小",
+      "name": "process handle limit is too small - telegraf",
       "note": "",
       "severity": 3,
       "disabled": 0,
@@ -360,7 +360,7 @@
       "append_tags": []
     },
     {
-      "name": "进程监控-采集失败",
+      "name": "Process monitoring - lookup failure - telegraf",
       "note": "",
       "severity": 1,
       "disabled": 0,

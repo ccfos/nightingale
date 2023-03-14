@@ -1,6 +1,6 @@
 [
   {
-    "name": "inode资源不足-使用率超过90",
+    "name": "Insufficient inode resources - usage exceeds 90% - node exporter",
     "note": "",
     "severity": 2,
     "disabled": 1,
@@ -28,8 +28,8 @@
     "append_tags": []
   },
   {
-    "name": "内存资源不足-利用率大于75%",
-    "note": "需要扩容或者升级配置了",
+    "name": "Insufficient memory resources - utilization is greater than 75% - node exporter",
+    "note": "Expansion or upgrading of configuration is required",
     "severity": 2,
     "disabled": 1,
     "prom_for_duration": 60,
@@ -58,8 +58,8 @@
     "append_tags": []
   },
   {
-    "name": "内存资源不足-利用率大于95%",
-    "note": "需要扩容或者升级配置了",
+    "name": "Insufficient memory resources - utilization is greater than 95% - node exporter",
+    "note": "",
     "severity": 1,
     "disabled": 1,
     "prom_for_duration": 60,
@@ -88,8 +88,8 @@
     "append_tags": []
   },
   {
-    "name": "文件句柄不足-使用率超过90%",
-    "note": "可以将文件句柄limit调大，或者扩容",
+    "name": "Insufficient file handles - usage exceeds 90% - node exporter",
+    "note": "You can increase the file handle limit or expand the capacity",
     "severity": 2,
     "disabled": 1,
     "prom_for_duration": 60,
@@ -116,7 +116,7 @@
     "append_tags": []
   },
   {
-    "name": "某磁盘无法正常读写",
+    "name": "A certain disk is unable to read/write normally",
     "note": "",
     "severity": 1,
     "disabled": 1,
@@ -144,7 +144,7 @@
     "append_tags": []
   },
   {
-    "name": "磁盘需要清理了-利用率达到92%",
+    "name": "Disk needs to be cleaned - utilization has reached 92% - node exporter",
     "note": "",
     "severity": 1,
     "disabled": 1,
@@ -174,7 +174,7 @@
     "append_tags": []
   },
   {
-    "name": "系统conntrack需要调整-使用率超过80%",
+    "name": "System conntrack needs to be adjusted - usage exceeds 80% - node exporter",
     "note": "",
     "severity": 2,
     "disabled": 1,
@@ -202,7 +202,7 @@
     "append_tags": []
   },
   {
-    "name": "系统出现oom",
+    "name": "System experiences OOM - node exporter",
     "note": "",
     "severity": 2,
     "disabled": 1,
@@ -230,7 +230,7 @@
     "append_tags": []
   },
   {
-    "name": "网卡入方向丢包",
+    "name": "Packet loss in the inbound direction of the network card - node exporter",
     "note": "",
     "severity": 2,
     "disabled": 1,
@@ -258,7 +258,7 @@
     "append_tags": []
   },
   {
-    "name": "网卡出方向丢包",
+    "name": "Packet loss in the outbound direction of the network card - node exporter",
     "note": "",
     "severity": 2,
     "disabled": 1,
@@ -286,8 +286,8 @@
     "append_tags": []
   },
   {
-    "name": "计算资源不足-机器每个核平均负载大于10",
-    "note": "需要扩容或者升级配置了",
+    "name": "Insufficient computational resources - average load per core of the machine is greater than 10 - node exporter",
+    "note": "",
     "severity": 2,
     "disabled": 1,
     "prom_for_duration": 60,
@@ -314,8 +314,8 @@
     "append_tags": []
   },
   {
-    "name": "运行进程数过多-超过3000",
-    "note": "建议扩容",
+    "name": "Too many running processes - exceeding 3000 - node exporter",
+    "note": "",
     "severity": 2,
     "disabled": 1,
     "prom_for_duration": 60,
