@@ -65,6 +65,26 @@ func (rt *Router) alertRuleAddByFE(c *gin.Context) {
 	ginx.NewRender(c).Data(reterr, nil)
 }
 
+func (rt *Router) alertRuleAddByImport(c *gin.Context) {
+	username := c.MustGet("username").(string)
+
+	var lst []models.AlertRule
+	ginx.BindJSON(c, &lst)
+
+	count := len(lst)
+	if count == 0 {
+		ginx.Bomb(http.StatusBadRequest, "input json is empty")
+	}
+	for i := 0; i < count; i++ {
+		lst[i].DatasourceIdsJson = []int64{0}
+	}
+
+	bgid := ginx.UrlParamInt64(c, "id")
+	reterr := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
+
+	ginx.NewRender(c).Data(reterr, nil)
+}
+
 func (rt *Router) alertRuleAddByService(c *gin.Context) {
 	var lst []models.AlertRule
 	ginx.BindJSON(c, &lst)

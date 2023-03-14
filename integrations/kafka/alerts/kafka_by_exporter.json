@@ -1,6 +1,6 @@
 [
   {
-    "name": "Risk of data loss - number of replicas less than 3",
+    "name": "Risk of data loss - number of replicas less than 3 - exporter",
     "note": "",
     "prod": "",
     "algorithm": "",
@@ -9,7 +9,7 @@
     "severity": 2,
     "disabled": 1,
     "prom_for_duration": 60,
-    "prom_ql": "sum(kafka_topic_partition_in_sync_replica) by (topic) < 3",
+    "prom_ql": "sum(kafka_topic_partition_in_sync_replica) by (topic) < 3 - exporter",
     "prom_eval_interval": 15,
     "enable_stime": "00:00",
     "enable_etime": "23:59",
@@ -35,7 +35,7 @@
     ]
   },
   {
-    "name": "Insufficient consumption ability - delay exceeds 5 minutes",
+    "name": "Insufficient consumption ability - delay exceeds 5 minutes - exporter",
     "note": "",
     "prod": "",
     "algorithm": "",
