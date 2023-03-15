@@ -118,15 +118,6 @@ IP = ""
 Interval = 1000
 ClusterName = "default"
 
-# [Alert.SMTP]
-# Host = "smtp.163.com"
-# Port = 994
-# User = "username"
-# Pass = "password"
-# From = "username@163.com"
-# InsecureSkipVerify = true
-# Batch = 5
-
 # [Alert.Alerting]
 # NotifyConcurrency = 10
 
@@ -137,14 +128,6 @@ I18NHeaderKey = "X-Language"
 [Center.AnonymousAccess]
 PromQuerier = true
 AlertDetail = true
-
-[Center.Ibex]
-Address = "http://127.0.0.1:10090"
-# basic auth
-BasicAuthUser = "ibex"
-BasicAuthPass = "ibex"
-# unit: ms
-Timeout = 3000
 
 [Pushgw]
 # use target labels in database instead of in series

@@ -23,29 +23,31 @@ import (
 )
 
 type Router struct {
-	HTTP            httpx.Config
-	Center          cconf.Center
-	Operations      cconf.Operation
-	DatasourceCache *memsto.DatasourceCacheType
-	PromClients     *prom.PromClientMap
-	Redis           storage.Redis
-	IdentSet        *idents.Set
-	Sso             *sso.SsoClient
-	Ctx             *ctx.Context
+	HTTP              httpx.Config
+	Center            cconf.Center
+	Operations        cconf.Operation
+	DatasourceCache   *memsto.DatasourceCacheType
+	NotifyConfigCache *memsto.NotifyConfigCacheType
+	PromClients       *prom.PromClientMap
+	Redis             storage.Redis
+	IdentSet          *idents.Set
+	Sso               *sso.SsoClient
+	Ctx               *ctx.Context
 }
 
-func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, pc *prom.PromClientMap,
-	redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, identSet *idents.Set) *Router {
+func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
+	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, identSet *idents.Set) *Router {
 	return &Router{
-		HTTP:            httpConfig,
-		Center:          center,
-		Operations:      operations,
-		DatasourceCache: ds,
-		PromClients:     pc,
-		Redis:           redis,
-		Sso:             sso,
-		Ctx:             ctx,
-		IdentSet:        identSet,
+		HTTP:              httpConfig,
+		Center:            center,
+		Operations:        operations,
+		DatasourceCache:   ds,
+		NotifyConfigCache: ncc,
+		PromClients:       pc,
+		Redis:             redis,
+		Sso:               sso,
+		Ctx:               ctx,
+		IdentSet:          identSet,
 	}
 }
 
