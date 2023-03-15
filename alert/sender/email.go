@@ -91,6 +91,13 @@ func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
 	}
 }
 
+var mailQuit chan struct{}
+
+func RestartEmailSender(smtp aconf.SMTPConfig) {
+	close(mailQuit)
+	StartEmailSender(smtp)
+}
+
 func StartEmailSender(smtp aconf.SMTPConfig) {
 	mailch = make(chan *gomail.Message, 100000)
 
@@ -111,6 +118,8 @@ func StartEmailSender(smtp aconf.SMTPConfig) {
 	var size int
 	for {
 		select {
+		case <-mailQuit:
+			return
 		case m, ok := <-mailch:
 			if !ok {
 				return

@@ -45,7 +45,6 @@ func (e *ExternalProcessorsType) GetExternalAlertRule(datasourceId, id int64) (*
 
 type Processor struct {
 	datasourceId int64
-	quit         chan struct{}
 
 	rule     *models.AlertRule
 	fires    *AlertCurEventMap
@@ -87,7 +86,6 @@ func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *me
 
 	arw := &Processor{
 		datasourceId: datasourceId,
-		quit:         make(chan struct{}),
 		rule:         rule,
 
 		TargetCache:    targetCache,

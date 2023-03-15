@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
+	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/pelletier/go-toml/v2"
 
@@ -137,7 +138,7 @@ func (rt *Router) notifyContactPuts(c *gin.Context) {
 }
 
 const DefaultSMTP = `
-Host = "smtp.163.com"
+Host = ""
 Port = 994
 User = "username"
 Pass = "password"
@@ -181,6 +182,20 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 		ginx.Dangerous(err)
 	default:
 		ginx.Bomb(200, "key %s can not modify", f.Ckey)
+	}
+
+	err := models.ConfigsSet(rt.Ctx, f.Ckey, f.Cval)
+	if err != nil {
+		ginx.Bomb(200, err.Error())
+	}
+
+	if f.Ckey == models.SMTP {
+		// 重置邮件发送器
+		var smtp aconf.SMTPConfig
+		err := toml.Unmarshal([]byte(f.Cval), &smtp)
+		ginx.Dangerous(err)
+
+		sender.RestartEmailSender(smtp)
 	}
 
 	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, f.Ckey, f.Cval))
