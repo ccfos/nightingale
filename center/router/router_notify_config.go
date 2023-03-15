@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
+	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/pelletier/go-toml/v2"
 
@@ -136,9 +137,34 @@ func (rt *Router) notifyContactPuts(c *gin.Context) {
 	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, models.NOTIFYCONTACT, string(data)))
 }
 
+const DefaultSMTP = `
+Host = ""
+Port = 994
+User = "username"
+Pass = "password"
+From = "username@163.com"
+InsecureSkipVerify = true
+Batch = 5
+`
+
+const DefaultIbex = `
+Address = "http://127.0.0.1:10090"
+BasicAuthUser = "ibex"
+BasicAuthPass = "ibex"
+Timeout = 3000
+`
+
 func (rt *Router) notifyConfigGet(c *gin.Context) {
-	key := ginx.QueryStr(c, "key")
+	key := ginx.QueryStr(c, "ckey")
 	cval, err := models.ConfigsGet(rt.Ctx, key)
+	if cval == "" {
+		switch key {
+		case models.IBEX:
+			cval = DefaultIbex
+		case models.SMTP:
+			cval = DefaultSMTP
+		}
+	}
 	ginx.NewRender(c).Data(cval, err)
 }
 
@@ -158,5 +184,23 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 		ginx.Bomb(200, "key %s can not modify", f.Ckey)
 	}
 
-	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, f.Ckey, f.Cval))
+	err := models.ConfigsSet(rt.Ctx, f.Ckey, f.Cval)
+	if err != nil {
+		ginx.Bomb(200, err.Error())
+	}
+
+	if f.Ckey == models.SMTP {
+		// 重置邮件发送器
+		var smtp aconf.SMTPConfig
+		err := toml.Unmarshal([]byte(f.Cval), &smtp)
+		ginx.Dangerous(err)
+
+		if smtp.Host == "" || smtp.Port == 0 {
+			ginx.Bomb(200, "smtp host or port can not be empty")
+		}
+
+		go sender.RestartEmailSender(smtp)
+	}
+
+	ginx.NewRender(c).Message(nil)
 }

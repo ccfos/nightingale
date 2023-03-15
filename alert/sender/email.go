@@ -91,6 +91,14 @@ func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
 	}
 }
 
+var mailQuit = make(chan struct{})
+
+func RestartEmailSender(smtp aconf.SMTPConfig) {
+	close(mailQuit)
+	StartEmailSender(smtp)
+	mailQuit = make(chan struct{})
+}
+
 func StartEmailSender(smtp aconf.SMTPConfig) {
 	mailch = make(chan *gomail.Message, 100000)
 
@@ -100,6 +108,7 @@ func StartEmailSender(smtp aconf.SMTPConfig) {
 		logger.Warning("SMTP configurations invalid")
 		return
 	}
+	logger.Infof("start email sender... %+v", conf)
 
 	d := gomail.NewDialer(conf.Host, conf.Port, conf.User, conf.Pass)
 	if conf.InsecureSkipVerify {
@@ -111,6 +120,8 @@ func StartEmailSender(smtp aconf.SMTPConfig) {
 	var size int
 	for {
 		select {
+		case <-mailQuit:
+			return
 		case m, ok := <-mailch:
 			if !ok {
 				return
@@ -120,7 +131,6 @@ func StartEmailSender(smtp aconf.SMTPConfig) {
 				s = dialSmtp(d)
 				open = true
 			}
-
 			if err := gomail.Send(s, m); err != nil {
 				logger.Errorf("email_sender: failed to send: %s", err)
 

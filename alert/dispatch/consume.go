@@ -72,8 +72,6 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 		event.Annotations = fmt.Sprintf("failed to parse rule note: %v", err)
 	}
 
-	logger.Info("event_persist: event.Annotations", event.Annotations)
-
 	e.persist(event)
 
 	if event.IsRecovered && event.NotifyRecovered == 0 {

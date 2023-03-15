@@ -14,7 +14,6 @@ type Center struct {
 	MetricDesc             MetricDescType
 	TargetMetrics          map[string]string
 	AnonymousAccess        AnonymousAccess
-	Ibex                   Ibex
 }
 
 type Plugin struct {
@@ -27,13 +26,6 @@ type Plugin struct {
 type AnonymousAccess struct {
 	PromQuerier bool
 	AlertDetail bool
-}
-
-type Ibex struct {
-	Address       string
-	BasicAuthUser string
-	BasicAuthPass string
-	Timeout       int64
 }
 
 func (c *Center) PreCheck() {

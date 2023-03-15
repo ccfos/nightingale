@@ -70,7 +70,7 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 		logger.Errorf("failed to unmarshal smtp:%s config:", cval, err)
 	}
 
-	logger.Infof("timer: sync smtp done")
+	logger.Infof("timer: sync smtp:%+v done", w.smtp)
 
 	cval, err = models.ConfigsGet(w.ctx, models.NOTIFYSCRIPT)
 	if err != nil {

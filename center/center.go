@@ -66,6 +66,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
+	notifyConfigCache := memsto.NewNotifyConfigCache(ctx)
 
 	promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
 
@@ -75,7 +76,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	writers := writer.NewWriters(config.Pushgw)
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
-	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, promClients, redis, sso, ctx, idents)
+	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, idents)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, writers, ctx)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)

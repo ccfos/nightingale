@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ccfos/nightingale/v6/center/cconf"
+	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ibex"
@@ -96,7 +96,7 @@ type TaskCreateReply struct {
 }
 
 // return task.id, error
-func TaskCreate(v interface{}, ibexc cconf.Ibex) (int64, error) {
+func TaskCreate(v interface{}, ibexc aconf.Ibex) (int64, error) {
 	var res TaskCreateReply
 	err := ibex.New(
 		ibexc.Address,

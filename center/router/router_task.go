@@ -137,7 +137,7 @@ func (rt *Router) taskAdd(c *gin.Context) {
 	rt.checkTargetPerm(c, f.Hosts)
 
 	// call ibex
-	taskId, err := TaskCreate(f, rt.Center.Ibex)
+	taskId, err := TaskCreate(f, rt.NotifyConfigCache.GetIbex())
 	ginx.Dangerous(err)
 
 	if taskId <= 0 {
@@ -148,9 +148,9 @@ func (rt *Router) taskAdd(c *gin.Context) {
 	record := models.TaskRecord{
 		Id:           taskId,
 		GroupId:      bgid,
-		IbexAddress:  rt.Center.Ibex.Address,
-		IbexAuthUser: rt.Center.Ibex.BasicAuthUser,
-		IbexAuthPass: rt.Center.Ibex.BasicAuthPass,
+		IbexAddress:  rt.NotifyConfigCache.GetIbex().Address,
+		IbexAuthUser: rt.NotifyConfigCache.GetIbex().BasicAuthUser,
+		IbexAuthPass: rt.NotifyConfigCache.GetIbex().BasicAuthPass,
 		Title:        f.Title,
 		Account:      f.Account,
 		Batch:        f.Batch,
@@ -168,9 +168,9 @@ func (rt *Router) taskAdd(c *gin.Context) {
 }
 
 func (rt *Router) taskProxy(c *gin.Context) {
-	target, err := url.Parse(rt.Center.Ibex.Address)
+	target, err := url.Parse(rt.NotifyConfigCache.GetIbex().Address)
 	if err != nil {
-		ginx.NewRender(c).Message("invalid ibex address: %s", rt.Center.Ibex.Address)
+		ginx.NewRender(c).Message("invalid ibex address: %s", rt.NotifyConfigCache.GetIbex().Address)
 		return
 	}
 
@@ -192,8 +192,8 @@ func (rt *Router) taskProxy(c *gin.Context) {
 			req.URL.RawQuery = target.RawQuery + "&" + req.URL.RawQuery
 		}
 
-		if rt.Center.Ibex.BasicAuthUser != "" {
-			req.SetBasicAuth(rt.Center.Ibex.BasicAuthUser, rt.Center.Ibex.BasicAuthPass)
+		if rt.NotifyConfigCache.GetIbex().BasicAuthUser != "" {
+			req.SetBasicAuth(rt.NotifyConfigCache.GetIbex().BasicAuthUser, rt.NotifyConfigCache.GetIbex().BasicAuthPass)
 		}
 	}
 

@@ -78,14 +78,15 @@ func (e *Dispatch) relaodTpls() error {
 	if err != nil {
 		return err
 	}
+	smtp := e.notifyConfigCache.GetSMTP()
 
 	senders := map[string]sender.Sender{
-		models.Email:    sender.NewSender(models.Email, tmpTpls),
-		models.Dingtalk: sender.NewSender(models.Dingtalk, tmpTpls),
-		models.Wecom:    sender.NewSender(models.Wecom, tmpTpls),
-		models.Feishu:   sender.NewSender(models.Feishu, tmpTpls),
-		models.Mm:       sender.NewSender(models.Mm, tmpTpls),
-		models.Telegram: sender.NewSender(models.Telegram, tmpTpls),
+		models.Email:    sender.NewSender(models.Email, tmpTpls, smtp),
+		models.Dingtalk: sender.NewSender(models.Dingtalk, tmpTpls, smtp),
+		models.Wecom:    sender.NewSender(models.Wecom, tmpTpls, smtp),
+		models.Feishu:   sender.NewSender(models.Feishu, tmpTpls, smtp),
+		models.Mm:       sender.NewSender(models.Mm, tmpTpls, smtp),
+		models.Telegram: sender.NewSender(models.Telegram, tmpTpls, smtp),
 	}
 
 	e.RwLock.Lock()
