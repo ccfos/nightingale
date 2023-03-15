@@ -112,7 +112,7 @@ func NotifyGroupDispatch(rule *models.AlertRule, event *models.AlertCurEvent, pr
 }
 
 func GlobalWebhookDispatch(rule *models.AlertRule, event *models.AlertCurEvent, prev *NotifyTarget, dispatch *Dispatch) *NotifyTarget {
-	webhooks := dispatch.webhookCache.GetWebhooks()
+	webhooks := dispatch.notifyConfigCache.GetWebhooks()
 	NotifyTarget := NewNotifyTarget()
 	for _, webhook := range webhooks {
 		if !webhook.Enable {

@@ -6,23 +6,23 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/memsto"
+	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/sys"
 )
 
-func MayPluginNotify(noticeBytes []byte, notifyScript *memsto.NotifyScriptCacheType) {
+func MayPluginNotify(noticeBytes []byte, notifyScript models.NotifyScript) {
 	if len(noticeBytes) == 0 {
 		return
 	}
 	alertingCallScript(noticeBytes, notifyScript)
 }
 
-func alertingCallScript(stdinBytes []byte, notifyScript *memsto.NotifyScriptCacheType) {
+func alertingCallScript(stdinBytes []byte, notifyScript models.NotifyScript) {
 	// not enable or no notify.py? do nothing
-	config := notifyScript.GetNotifyScript()
+	config := notifyScript
 	if !config.Enable || config.Content == "" {
 		return
 	}

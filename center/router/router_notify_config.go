@@ -3,7 +3,9 @@ package router
 import (
 	"encoding/json"
 
+	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/pelletier/go-toml/v2"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -132,4 +134,29 @@ func (rt *Router) notifyContactPuts(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, models.NOTIFYCONTACT, string(data)))
+}
+
+func (rt *Router) notifyConfigGet(c *gin.Context) {
+	key := ginx.QueryStr(c, "key")
+	cval, err := models.ConfigsGet(rt.Ctx, key)
+	ginx.NewRender(c).Data(cval, err)
+}
+
+func (rt *Router) notifyConfigPut(c *gin.Context) {
+	var f models.Configs
+	ginx.BindJSON(c, &f)
+	switch f.Ckey {
+	case models.SMTP:
+		var smtp aconf.SMTPConfig
+		err := toml.Unmarshal([]byte(f.Cval), &smtp)
+		ginx.Dangerous(err)
+	case models.IBEX:
+		var ibex aconf.Ibex
+		err := toml.Unmarshal([]byte(f.Cval), &ibex)
+		ginx.Dangerous(err)
+	default:
+		ginx.Bomb(200, "key %s can not modify", f.Ckey)
+	}
+
+	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, f.Ckey, f.Cval))
 }

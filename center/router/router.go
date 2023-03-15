@@ -305,6 +305,9 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/notify-contact", rt.auth(), rt.admin(), rt.notifyContactGets)
 		pages.PUT("/notify-contact", rt.auth(), rt.admin(), rt.notifyContactPuts)
+
+		pages.GET("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigGet)
+		pages.PUT("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigPut)
 	}
 
 	if rt.HTTP.Service.Enable {

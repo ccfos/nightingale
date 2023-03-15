@@ -2,14 +2,6 @@ package models
 
 import "github.com/ccfos/nightingale/v6/pkg/ctx"
 
-// CREATE TABLE `sso_config` (
-//     `id` bigint unsigned not null auto_increment,
-//     `name` varchar(255) not null,
-//     `content` text not null,
-//     PRIMARY KEY (`id`),
-//     UNIQUE KEY (`name`)
-// ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-
 type SsoConfig struct {
 	Id      int64  `json:"id"`
 	Name    string `json:"name"`

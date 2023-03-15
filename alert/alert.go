@@ -81,8 +81,7 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 	alertSubscribeCache := memsto.NewAlertSubscribeCache(ctx, syncStats)
 	recordingRuleCache := memsto.NewRecordingRuleCache(ctx, syncStats)
-	webhookCache := memsto.NewWebhookCache(ctx)
-	notifyScript := memsto.NewNotifyScript(ctx)
+	notifyConfigCache := memsto.NewNotifyConfigCache(ctx)
 
 	go models.InitNotifyConfig(ctx, alertc.Alerting.TemplatesDir)
 
@@ -93,12 +92,12 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 
 	eval.NewScheduler(isCenter, alertc, externalProcessors, alertRuleCache, targetCache, busiGroupCache, alertMuteCache, promClients, naming, ctx, alertStats)
 
-	dp := dispatch.NewDispatch(alertRuleCache, userCache, userGroupCache, alertSubscribeCache, targetCache, webhookCache, notifyScript, alertc.Alerting, alertc.Ibex, ctx)
+	dp := dispatch.NewDispatch(alertRuleCache, userCache, userGroupCache, alertSubscribeCache, targetCache, notifyConfigCache, alertc.Alerting, ctx)
 	consumer := dispatch.NewConsumer(alertc.Alerting, ctx, dp)
 
 	go dp.ReloadTpls()
 	go consumer.LoopConsume()
 
 	go queue.ReportQueueSize(alertStats)
-	go sender.StartEmailSender(alertc.SMTP)
+	go sender.StartEmailSender(notifyConfigCache.GetSMTP()) // todo
 }

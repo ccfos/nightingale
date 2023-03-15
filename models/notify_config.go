@@ -4,6 +4,8 @@ const WEBHOOKKEY = "webhook"
 const NOTIFYSCRIPT = "notify_script"
 const NOTIFYCHANNEL = "notify_channel"
 const NOTIFYCONTACT = "notify_contact"
+const SMTP = "smtp_config"
+const IBEX = "ibex_server"
 
 type Webhook struct {
 	Enable        bool              `json:"enable"`

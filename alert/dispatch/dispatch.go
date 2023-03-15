@@ -24,11 +24,9 @@ type Dispatch struct {
 	userGroupCache      *memsto.UserGroupCacheType
 	alertSubscribeCache *memsto.AlertSubscribeCacheType
 	targetCache         *memsto.TargetCacheType
-	webhookCache        *memsto.WebhookCacheType
-	notifyScriptCache   *memsto.NotifyScriptCacheType
+	notifyConfigCache   *memsto.NotifyConfigCacheType
 
 	alerting aconf.Alerting
-	ibex     aconf.Ibex
 
 	senders map[string]sender.Sender
 	tpls    map[string]*template.Template
@@ -40,19 +38,17 @@ type Dispatch struct {
 
 // 创建一个 Notify 实例
 func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
-	alertSubscribeCache *memsto.AlertSubscribeCacheType, targetCache *memsto.TargetCacheType, webhookCache *memsto.WebhookCacheType, notifyScriptCache *memsto.NotifyScriptCacheType,
-	alerting aconf.Alerting, ibex aconf.Ibex, ctx *ctx.Context) *Dispatch {
+	alertSubscribeCache *memsto.AlertSubscribeCacheType, targetCache *memsto.TargetCacheType, notifyConfigCache *memsto.NotifyConfigCacheType,
+	alerting aconf.Alerting, ctx *ctx.Context) *Dispatch {
 	notify := &Dispatch{
 		alertRuleCache:      alertRuleCache,
 		userCache:           userCache,
 		userGroupCache:      userGroupCache,
 		alertSubscribeCache: alertSubscribeCache,
 		targetCache:         targetCache,
-		webhookCache:        webhookCache,
-		notifyScriptCache:   notifyScriptCache,
+		notifyConfigCache:   notifyConfigCache,
 
 		alerting: alerting,
-		ibex:     ibex,
 
 		senders: make(map[string]sender.Sender),
 		tpls:    make(map[string]*template.Template),
@@ -190,13 +186,13 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	}
 
 	// handle event callbacks
-	sender.SendCallbacks(e.ctx, notifyTarget.ToCallbackList(), event, e.targetCache, e.ibex)
+	sender.SendCallbacks(e.ctx, notifyTarget.ToCallbackList(), event, e.targetCache, e.notifyConfigCache.GetIbex())
 
 	// handle global webhooks
 	sender.SendWebhooks(notifyTarget.ToWebhookList(), event)
 
 	// handle plugin call
-	go sender.MayPluginNotify(e.genNoticeBytes(event), e.notifyScriptCache)
+	go sender.MayPluginNotify(e.genNoticeBytes(event), e.notifyConfigCache.GetNotifyScript())
 }
 
 type Notice struct {

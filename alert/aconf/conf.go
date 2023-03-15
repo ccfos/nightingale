@@ -10,8 +10,6 @@ type Alert struct {
 	EngineDelay int64
 	Heartbeat   HeartbeatConfig
 	Alerting    Alerting
-	SMTP        SMTPConfig
-	Ibex        Ibex
 }
 
 type SMTPConfig struct {
