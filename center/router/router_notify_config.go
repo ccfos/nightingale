@@ -195,6 +195,10 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 		err := toml.Unmarshal([]byte(f.Cval), &smtp)
 		ginx.Dangerous(err)
 
+		if smtp.Host == "" || smtp.Port == 0 {
+			ginx.Bomb(200, "smtp host or port can not be empty")
+		}
+
 		go sender.RestartEmailSender(smtp)
 	}
 
