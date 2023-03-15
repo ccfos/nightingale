@@ -12,19 +12,32 @@ const EVENT_EXAMPLE = `
     "rule_name": "测试告警",
     "rule_note": "测试告警",
     "rule_prod": "metric",
-    "rule_algo": "",
-    "severity": 0,
+    "rule_config": {
+        "queries": [
+            {
+                "key": "all_hosts",
+                "op": "==",
+                "values": []
+            }
+        ],
+        "triggers": [
+            {
+                "duration": 3,
+                "percent": 10,
+                "severity": 3,
+                "type": "pct_target_miss"
+            }
+        ]
+    },
     "prom_for_duration": 60,
-    "prom_ql": "",
     "prom_eval_interval": 30,
-    "callbacks": [],
-    "runbook_url": "",
+    "callbacks": ["https://n9e.github.io"],
     "notify_recovered": 1,
-    "notify_channels": [],
+    "notify_channels": ["dingtalk"],
     "notify_groups": [],
     "notify_groups_obj": null,
-    "target_ident": "",
-    "target_note": "",
+    "target_ident": "host01",
+    "target_note": "机器备注",
     "trigger_time": 1677229517,
     "trigger_value": "2273533952",
     "tags": [
@@ -39,6 +52,9 @@ const EVENT_EXAMPLE = `
     "last_eval_time": 1677229517,
     "last_sent_time": 1677229517,
     "notify_cur_number": 1,
-    "first_trigger_time": 1677229517
+    "first_trigger_time": 1677229517,
+    "annotations": {
+        "summary": "测试告警"
+    }
 }
 `

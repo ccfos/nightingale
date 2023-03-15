@@ -75,10 +75,12 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 	if count == 0 {
 		ginx.Bomb(http.StatusBadRequest, "input json is empty")
 	}
-	for i := 0; i < count; i++ {
-		lst[i].DatasourceIdsJson = []int64{0}
-	}
 
+	for i := 0; i < count; i++ {
+		if lst[i].Prod != models.HOST {
+			lst[i].DatasourceIdsJson = []int64{0}
+		}
+	}
 	bgid := ginx.UrlParamInt64(c, "id")
 	reterr := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
 
