@@ -195,8 +195,8 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 		err := toml.Unmarshal([]byte(f.Cval), &smtp)
 		ginx.Dangerous(err)
 
-		sender.RestartEmailSender(smtp)
+		go sender.RestartEmailSender(smtp)
 	}
 
-	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, f.Ckey, f.Cval))
+	ginx.NewRender(c).Message(nil)
 }
