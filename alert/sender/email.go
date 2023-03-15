@@ -91,7 +91,7 @@ func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
 	}
 }
 
-var mailQuit chan struct{}
+var mailQuit = make(chan struct{})
 
 func RestartEmailSender(smtp aconf.SMTPConfig) {
 	close(mailQuit)
