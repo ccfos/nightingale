@@ -1,7 +1,7 @@
 [
   {
     "targets": [
-      "nwebapi:18000","nserver:19000"
+      "n9e:17000"
     ]
   }
 ]
