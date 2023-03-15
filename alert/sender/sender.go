@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"html/template"
 
+	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 )
@@ -22,7 +23,7 @@ type (
 	}
 )
 
-func NewSender(key string, tpls map[string]*template.Template) Sender {
+func NewSender(key string, tpls map[string]*template.Template, smtp aconf.SMTPConfig) Sender {
 	switch key {
 	case models.Dingtalk:
 		return &DingtalkSender{tpl: tpls[models.Dingtalk]}
@@ -31,7 +32,7 @@ func NewSender(key string, tpls map[string]*template.Template) Sender {
 	case models.Feishu:
 		return &FeishuSender{tpl: tpls[models.Feishu]}
 	case models.Email:
-		return &EmailSender{subjectTpl: tpls["mailsubject"], contentTpl: tpls[models.Email]}
+		return &EmailSender{subjectTpl: tpls["mailsubject"], contentTpl: tpls[models.Email], smtp: smtp}
 	case models.Mm:
 		return &MmSender{tpl: tpls[models.Mm]}
 	case models.Telegram:

@@ -108,6 +108,7 @@ func StartEmailSender(smtp aconf.SMTPConfig) {
 		logger.Warning("SMTP configurations invalid")
 		return
 	}
+	logger.Infof("start email sender... %+v", conf)
 
 	d := gomail.NewDialer(conf.Host, conf.Port, conf.User, conf.Pass)
 	if conf.InsecureSkipVerify {
@@ -130,7 +131,6 @@ func StartEmailSender(smtp aconf.SMTPConfig) {
 				s = dialSmtp(d)
 				open = true
 			}
-
 			if err := gomail.Send(s, m); err != nil {
 				logger.Errorf("email_sender: failed to send: %s", err)
 
