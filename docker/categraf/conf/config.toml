@@ -73,3 +73,11 @@ timeout = 5000
 dial_timeout = 2500
 max_idle_conns_per_host = 100
 
+[ibex]
+enable = true
+## ibex flush interval
+interval = "1000ms"
+## n9e ibex server rpc address
+servers = ["ibex:20090"]
+## temp script dir
+meta_dir = "./meta"

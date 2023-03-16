@@ -12,7 +12,7 @@ services:
     hostname: mysql
     restart: always
     ports:
-      - "3306:3306"
+      - "3406:3306"
     environment:
       TZ: Asia/Shanghai
       MYSQL_ROOT_PASSWORD: 1234
@@ -80,7 +80,7 @@ services:
       sh -c "/wait && /app/ibex server"
 
   n9e:
-    image: flashcatcloud/nightingale:6.0.0-beta.1
+    image: flashcatcloud/nightingale:latest
     container_name: n9e
     hostname: n9e
     restart: always
@@ -122,31 +122,13 @@ services:
       - ./categraf/conf:/etc/categraf/conf
       - /:/hostfs
       - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "9100:9100/tcp"
+    # ports:
+    #   - "9100:9100/tcp"
     networks:
       - nightingale
     depends_on:
       - n9e
-    links:
-      - n9e:n9e
-
-  agentd:
-    image: ulric2019/ibex:0.3
-    container_name: agentd
-    hostname: agentd
-    restart: always
-    environment:
-      GIN_MODE: release
-      TZ: Asia/Shanghai
-    volumes:
-      - ./ibexetc:/app/etc
-    networks:
-      - nightingale
-    depends_on:
       - ibex
     links:
+      - n9e:n9e
       - ibex:ibex
-    command:
-      - "/app/ibex"
-      - "agentd"

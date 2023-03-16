@@ -30,15 +30,44 @@
       "append_tags": []
     },
     {
+      "cate": "host",
+      "datasource_ids": null,
       "name": "Lost connection with monitoring target - telegraf",
       "note": "",
-      "severity": 1,
+      "prod": "host",
+      "algorithm": "",
+      "algo_params": null,
+      "delay": 0,
+      "severity": 0,
       "disabled": 0,
-      "prom_for_duration": 60,
-      "prom_ql": "target_up != 1",
+      "prom_for_duration": 0,
+      "prom_ql": "",
+      "rule_config": {
+        "inhibit": false,
+        "queries": [
+          {
+            "key": "all_hosts",
+            "op": "==",
+            "values": []
+          }
+        ],
+        "triggers": [
+          {
+            "duration": 60,
+            "severity": 2,
+            "type": "target_miss"
+          }
+        ]
+      },
       "prom_eval_interval": 15,
       "enable_stime": "00:00",
+      "enable_stimes": [
+        "00:00"
+      ],
       "enable_etime": "23:59",
+      "enable_etimes": [
+        "23:59"
+      ],
       "enable_days_of_week": [
         "1",
         "2",
@@ -48,16 +77,27 @@
         "6",
         "0"
       ],
-      "notify_recovered": 1,
-      "notify_channels": [
-        "email",
-        "dingtalk",
-        "wecom"
+      "enable_days_of_weeks": [
+        [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "0"
+        ]
       ],
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_channels": [],
       "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
       "callbacks": [],
       "runbook_url": "",
-      "append_tags": []
+      "append_tags": [],
+      "annotations": {}
     },
     {
       "name": "Port detection failed, please pay attention - telegraf",

@@ -2,6 +2,7 @@ package memsto
 
 import (
 	"encoding/json"
+	"strings"
 	"sync"
 	"time"
 
@@ -57,7 +58,14 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	if err != nil {
 		return err
 	}
-	json.Unmarshal([]byte(cval), &w.webhooks)
+
+	if strings.TrimSpace(cval) != "" {
+		err = json.Unmarshal([]byte(cval), &w.webhooks)
+		if err != nil {
+			logger.Errorf("failed to unmarshal webhooks:%s config:", cval, err)
+		}
+	}
+
 	logger.Infof("timer: sync wbhooks done number: %d", len(w.webhooks))
 
 	cval, err = models.ConfigsGet(w.ctx, models.SMTP)
@@ -65,9 +73,11 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 		return err
 	}
 
-	err = toml.Unmarshal([]byte(cval), &w.smtp)
-	if err != nil {
-		logger.Errorf("failed to unmarshal smtp:%s config:", cval, err)
+	if strings.TrimSpace(cval) != "" {
+		err = toml.Unmarshal([]byte(cval), &w.smtp)
+		if err != nil {
+			logger.Errorf("failed to unmarshal smtp:%s config:", cval, err)
+		}
 	}
 
 	logger.Infof("timer: sync smtp:%+v done", w.smtp)
@@ -76,20 +86,28 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal([]byte(cval), &w.script)
-	if err != nil {
-		logger.Errorf("failed to unmarshal notify script:%s config:", cval, err)
+
+	if strings.TrimSpace(cval) != "" {
+		err = json.Unmarshal([]byte(cval), &w.script)
+		if err != nil {
+			logger.Errorf("failed to unmarshal notify script:%s config:", cval, err)
+		}
 	}
+
 	logger.Infof("timer: sync notify script done")
 
 	cval, err = models.ConfigsGet(w.ctx, models.IBEX)
 	if err != nil {
 		return err
 	}
-	err = toml.Unmarshal([]byte(cval), &w.ibex)
-	if err != nil {
-		logger.Errorf("failed to unmarshal ibex:%s config:", cval, err)
+
+	if strings.TrimSpace(cval) != "" {
+		err = toml.Unmarshal([]byte(cval), &w.ibex)
+		if err != nil {
+			logger.Errorf("failed to unmarshal ibex:%s config:", cval, err)
+		}
 	}
+
 	logger.Infof("timer: sync ibex done")
 
 	return nil
