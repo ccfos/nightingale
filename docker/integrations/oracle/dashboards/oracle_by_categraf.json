@@ -1,6 +1,6 @@
 {
-  "name": "Oracle - 模板",
-  "tags": "Telegraf",
+  "name": "Oracle by categraf",
+  "tags": "categraf",
   "ident": "",
   "configs": {
       "var": [

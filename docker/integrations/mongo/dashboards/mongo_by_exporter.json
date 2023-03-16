@@ -1,5 +1,5 @@
 {
-    "name": "MongoDB Overview - 模板",
+    "name": "MongoDB Overview by exporter",
     "tags": "Prometheus MongoDB",
     "configs": {
         "var": [
@@ -44,7 +44,7 @@
                     }
                 ],
                 "name": "Up",
-                "description": "实例数",
+                "description": "instance count",
                 "custom": {
                     "textMode": "value",
                     "colorMode": "value",
@@ -100,7 +100,7 @@
                     }
                 ],
                 "name": "Uptime",
-                "description": "启用时长",
+                "description": "Uptime",
                 "custom": {
                     "textMode": "value",
                     "colorMode": "value",
@@ -166,7 +166,7 @@
                     }
                 ],
                 "name": "Memory",
-                "description": "内存占用（MiB）",
+                "description": "Memory usage (MiB)",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -221,7 +221,7 @@
                     }
                 ],
                 "name": "Page Faults",
-                "description": "页缺失中断次数 Page faults indicate that requests are processed from disk either because an index is missing or there is not enough memory for the data set. Consider increasing memory or sharding out.",
+                "description": "Page faults indicate that requests are processed from disk either because an index is missing or there is not enough memory for the data set. Consider increasing memory or sharding out.",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -282,7 +282,7 @@
                     }
                 ],
                 "name": "Network I/O",
-                "description": "网络流量（byte）",
+                "description": "Network traffic (bytes)",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -337,7 +337,7 @@
                     }
                 ],
                 "name": "Connections",
-                "description": "连接数 Keep in mind the hard limit on the maximum number of connections set by your distribution.",
+                "description": "Number of connections Keep in mind the hard limit on the maximum number of connections set by your distribution.",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -390,7 +390,7 @@
                     }
                 ],
                 "name": "Assert Events",
-                "description": "断言错误次数 Asserts are not important by themselves, but you can correlate spikes with other graphs.",
+                "description": "Number of assertion errors, Asserts are not important by themselves, but you can correlate spikes with other graphs.",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -443,7 +443,7 @@
                     }
                 ],
                 "name": "Lock Queue",
-                "description": "等待获取锁操作数量 Any number of queued operations for long periods of time is an indication of possible issues. Find the cause and fix it before requests get stuck in the queue.",
+                "description": "Number of operations waiting to acquire locks, Any number of queued operations for long periods of time is an indication of possible issues. Find the cause and fix it before requests get stuck in the queue.",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -520,7 +520,7 @@
                     }
                 ],
                 "name": "Command Operations",
-                "description": "接收请求数 Shows how many times a command is executed per second on average during the selected interval.",
+                "description": "Number of requests received Shows how many times a command is executed per second on average during the selected interval.",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -573,7 +573,7 @@
                     }
                 ],
                 "name": "Document Operations",
-                "description": "文档操作数 When used in combination with 'Command Operations', this graph can help identify write amplification. For example, when one insert or update command actually inserts or updates hundreds, thousands, or even millions of documents.",
+                "description": "Number of document operations When used in combination with 'Command Operations', this graph can help identify write amplification. For example, when one insert or update command actually inserts or updates hundreds, thousands, or even millions of documents.",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -626,7 +626,7 @@
                     }
                 ],
                 "name": "Response Time",
-                "description": "操作详情耗时（毫秒）",
+                "description": "Operation detail processing time (milliseconds)",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -686,7 +686,7 @@
                     }
                 ],
                 "name": "Query Efficiency",
-                "description": "查询效率",
+                "description": "",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -741,7 +741,7 @@
                     }
                 ],
                 "name": "Cursors",
-                "description": "游标数量 Helps identify why connections are increasing. Shows active cursors compared to cursors being automatically killed after 10 minutes due to an application not closing the connection.",
+                "description": "number of cursors Helps identify why connections are increasing. Shows active cursors compared to cursors being automatically killed after 10 minutes due to an application not closing the connection.",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -824,7 +824,7 @@
                     }
                 ],
                 "name": "Cache Size",
-                "description": "缓存大小（byte）",
+                "description": "cache size (byte)",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -884,7 +884,7 @@
                     }
                 ],
                 "name": "Cache I/O",
-                "description": "写入或读取的缓存数据大小（byte）",
+                "description": "size of cached data written or read (in bytes)",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -939,7 +939,7 @@
                     }
                 ],
                 "name": "Cache Dirty Pages Rate",
-                "description": "缓存脏页占比",
+                "description": "",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -994,7 +994,7 @@
                     }
                 ],
                 "name": "Cache Evicted Pages",
-                "description": "缓存剔除页数量",
+                "description": "",
                 "options": {
                     "tooltip": {
                         "mode": "all",
@@ -1060,7 +1060,7 @@
                     }
                 ],
                 "name": "Replset Election",
-                "description": "副本集选主时间",
+                "description": "",
                 "custom": {
                     "textMode": "value",
                     "colorMode": "value",
@@ -1114,7 +1114,7 @@
                     }
                 ],
                 "name": "Replset Lag Seconds",
-                "description": "副本集成员主从同步延迟",
+                "description": "replica set member master-slave synchronization delay",
                 "options": {
                     "tooltip": {
                         "mode": "all",

@@ -1,5 +1,5 @@
 {
-  "name": "JMX - 模板",
+  "name": "JMX",
   "tags": "Prometheus JMX",
   "ident": "",
   "configs": {

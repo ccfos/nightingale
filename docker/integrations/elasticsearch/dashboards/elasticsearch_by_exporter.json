@@ -1,5 +1,5 @@
 {
-  "name": "ElasticSearch - 模板",
+  "name": "ElasticSearch",
   "tags": "Prometheus ElasticSearch ES",
   "ident": "",
   "configs": {

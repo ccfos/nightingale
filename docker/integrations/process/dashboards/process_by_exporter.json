@@ -1,5 +1,5 @@
 {
-  "name": "Linux Process - 模板",
+  "name": "Linux Process - exporter",
   "tags": "Prometheus Process",
   "ident": "",
   "configs": {
