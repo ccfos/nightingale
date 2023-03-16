@@ -95,8 +95,8 @@ var mailQuit = make(chan struct{})
 
 func RestartEmailSender(smtp aconf.SMTPConfig) {
 	close(mailQuit)
-	StartEmailSender(smtp)
 	mailQuit = make(chan struct{})
+	StartEmailSender(smtp)
 }
 
 func StartEmailSender(smtp aconf.SMTPConfig) {
