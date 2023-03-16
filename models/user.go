@@ -57,6 +57,15 @@ func (u *User) TableName() string {
 	return "users"
 }
 
+func (u *User) String() string {
+	bs, err := u.Contacts.MarshalJSON()
+	if err != nil {
+		return err.Error()
+	}
+
+	return fmt.Sprintf("<id:%d username:%s nickname:%s email:%s phone:%s contacts:%s>", u.Id, u.Username, u.Nickname, u.Email, u.Phone, string(bs))
+}
+
 func (u *User) IsAdmin() bool {
 	for i := 0; i < len(u.RolesLst); i++ {
 		if u.RolesLst[i] == AdminRole {
