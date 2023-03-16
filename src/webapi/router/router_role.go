@@ -19,3 +19,18 @@ func permsGets(c *gin.Context) {
 	lst, err := models.OperationsOfRole(strings.Fields(user.Roles))
 	ginx.NewRender(c).Data(lst, err)
 }
+
+func allPerms(c *gin.Context) {
+	roles, err := models.RoleGetsAll()
+	ginx.Dangerous(err)
+	m := make(map[string][]string)
+	for _, r := range roles {
+		lst, err := models.OperationsOfRole(strings.Fields(r.Name))
+		if err != nil {
+			continue
+		}
+		m[r.Name] = lst
+	}
+
+	ginx.NewRender(c).Data(m, err)
+}
