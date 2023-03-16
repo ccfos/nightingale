@@ -1,8 +1,30 @@
-<img src="doc/img/ccf-n9e.png" width="240">
+<p align="center">
+  <a href="https://github.com/ccfos/nightingale">
+    <img src="doc/img/nightingale_logo_h.png" alt="nightingale - cloud native monitoring" width="240" /></a>
+</p>
 
- Nightingale is an enterprise-level cloud-native monitoring system, which can be used as drop-in replacement of Prometheus for alerting and management.   
+<p align="center">
+<img alt="GitHub latest release" src="https://img.shields.io/github/v/release/ccfos/nightingale"/>
+<a href="https://n9e.github.io">
+  <img alt="Docs" src="https://img.shields.io/badge/docs-get%20started-brightgreen"/></a>
+<a href="https://hub.docker.com/u/flashcatcloud">
+  <img alt="Docker pulls" src="https://img.shields.io/docker/pulls/flashcatcloud/nightingale"/></a>
+<img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/ccfos/nightingale">
+<img alt="GitHub Repo issues" src="https://img.shields.io/github/issues/ccfos/nightingale">
+<img alt="GitHub Repo issues closed" src="https://img.shields.io/github/issues-closed/ccfos/nightingale">
+<img alt="GitHub forks" src="https://img.shields.io/github/forks/ccfos/nightingale">
+<a href="https://github.com/ccfos/nightingale/graphs/contributors">
+  <img alt="GitHub contributors" src="https://img.shields.io/github/contributors-anon/ccfos/nightingale"/></a>
+<img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
+</p>
+<p align="center">
+  An open-source cloud-native monitoring system that is <b>all-in-one</b> <br/>
+  <b>Out-of-the-box</b>, it integrates data collection, visualization, and monitoring alert <br/>
+  We recommend upgrading your <b>Prometheus + AlertManager + Grafana</b> combination to Nightingale!
+</p>
 
 [English](./README.md) | [中文](./README_ZH.md)
+
 
 ## Highlighted Features
 
@@ -36,44 +58,45 @@
 #### If you are using [open-falcon](https://github.com/open-falcon/falcon-plus), we recommend you to upgrade to Nightingale：
 - For more information about open-falcon and Nightingale, please refer to read [Ten features and trends of cloud-native monitoring](https://mp.weixin.qq.com/s?__biz=MzkzNjI5OTM5Nw==&mid=2247483738&idx=1&sn=e8bdbb974a2cd003c1abcc2b5405dd18&chksm=c2a19fb0f5d616a63185cd79277a79a6b80118ef2185890d0683d2bb20451bd9303c78d083c5#rd)。
 
-## Quickstart
-- [n9e.github.io/quickstart](https://n9e.github.io/docs/install/compose/)
+## Getting Started
 
-## Documentation
-- [n9e.github.io](https://n9e.github.io/)
+[English Doc](https://n9e.github.io/) |  [中文文档](http://n9e.flashcat.cloud/)
 
-## Example of use
+## Screenshots
 
-<img src="doc/img/intro.gif" width="680">
+https://user-images.githubusercontent.com/792850/216888712-2565fcea-9df5-47bd-a49e-d60af9bd76e8.mp4
 
-## System Architecture
-#### A typical Nightingale deployment architecture:
-<img src="doc/img/arch-system.png" width="680">
+## Architecture
 
-#### Typical deployment architecture using VictoriaMetrics as storage:
-<img src="doc/img/install-vm.png" width="680">
+<img src="doc/img/arch-product.png" width="600">
 
-## Contact us and feedback questions
-- We recommend that you use [github issue](https://github.com/ccfos/nightingale/issues) as the preferred channel for issue feedback and requirement submission;
-- You can join our WeChat group
+Nightingale monitoring can receive monitoring data reported by various collectors (such as [Categraf](https://github.com/flashcatcloud/categraf) , telegraf, grafana-agent, Prometheus, etc.) and write them to various popular time-series databases (such as Prometheus, M3DB, VictoriaMetrics, Thanos, TDEngine, etc.). It provides configuration capabilities for alert rules, silence rules, and subscription rules, as well as the ability to view monitoring data. It also provides automatic alarm self-healing mechanisms (such as automatically calling back to a webhook address or executing a script after an alarm is triggered), and the ability to store and manage historical alarm events and view them in groups.
 
-<img src="doc/img/wecom.png" width="120">
+If the performance of a standalone time-series database (such as Prometheus) has bottlenecks or poor disaster recovery, we recommend using [VictoriaMetrics](https://github.com/VictoriaMetrics/VictoriaMetrics). The VictoriaMetrics architecture is relatively simple, has excellent performance, and is easy to deploy and maintain. The architecture diagram is as shown above. For more detailed documentation on VictoriaMetrics, please refer to its [official website](https://victoriametrics.com/).
+
+**We welcome you to participate in the Nightingale open-source project and community in various ways, including but not limited to**：
+- Adding and improving documentation => [n9e.github.io](https://n9e.github.io/)
+- Sharing your best practices and experience in using Nightingale monitoring => [Article sharing]((https://n9e.github.io/docs/prologue/share/))
+- Submitting product suggestions => [github issue](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Ffeature&template=enhancement.md)
+- Submitting code to make Nightingale monitoring faster, more stable, and easier to use => [github pull request](https://github.com/didi/nightingale/pulls)
 
 
-## Contributing
-We welcome your participation in the Nightingale open source project and open source community in a variety of ways:
-- Feedback on problems and bugs  => [github issue](https://github.com/ccfos/nightingale/issues)
-- Additional and improved documentation => [n9e.github.io](https://n9e.github.io/)
-- Share your best practices and insights on using Nightingale => [User Story](https://github.com/ccfos/nightingale/issues/897)
-- Join our community events => [Nightingale wechat group](https://s3-gz01.ccfosstatic.com/n9e-pub/image/n9e-wx.png)
-- Submit code to make Nightingale better =>[github PR](https://github.com/ccfos/nightingale/pulls)
+**Respecting, recognizing, and recording the work of every contributor** is the first guiding principle of the Nightingale open-source community. We advocate effective questioning, which not only respects the developer's time but also contributes to the accumulation of knowledge in the entire community
+- Before asking a question, please first refer to the [FAQ](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq) 
+- We use [GitHub Discussions](https://github.com/ccfos/nightingale/discussions) as the communication forum. You can search and ask questions here.
+- We also recommend that you join ours [discard](https://discord.gg/qsRmtAuPw2) to exchange experiences with other Nightingale users.
+
+
+## Who is using Nightingale
+You can register your usage and share your experience by posting on **[Who is Using Nightingale](https://github.com/ccfos/nightingale/issues/897)**.
 
 ## Star History
 [![Star History Chart](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale)
+
 ## Contributors
 <a href="https://github.com/ccfos/nightingale/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=ccfos/nightingale" />
 </a>
 
 ## License
-Nightingale with [Apache License V2.0](https://github.com/ccfos/nightingale/blob/main/LICENSE) open source license.
+[Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE)
