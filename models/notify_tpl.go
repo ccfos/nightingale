@@ -64,19 +64,6 @@ func NotifyTplGets(c *ctx.Context) ([]*NotifyTpl, error) {
 	return lst, err
 }
 
-func GetChannelMap(c *ctx.Context) map[string]struct{} {
-	tpls, err := NotifyTplGets(c)
-	if err != nil {
-		return nil
-	}
-
-	channels := make(map[string]struct{})
-	for _, tpl := range tpls {
-		channels[tpl.Channel] = struct{}{}
-	}
-	return channels
-}
-
 func ListTpls(c *ctx.Context) (map[string]*template.Template, error) {
 	notifyTpls, err := NotifyTplGets(c)
 	if err != nil {

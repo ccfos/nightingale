@@ -169,7 +169,7 @@ func (ar *AlertRule) TableName() string {
 	return "alert_rule"
 }
 
-func (ar *AlertRule) Verify(channelMap map[string]struct{}) error {
+func (ar *AlertRule) Verify() error {
 	if ar.GroupId < 0 {
 		return fmt.Errorf("GroupId(%d) invalid", ar.GroupId)
 	}
@@ -222,25 +222,11 @@ func (ar *AlertRule) Verify(channelMap map[string]struct{}) error {
 		}
 	}
 
-	channels := strings.Fields(ar.NotifyChannels)
-	if len(channels) > 0 {
-		nlst := make([]string, 0, len(channels))
-		for i := 0; i < len(channels); i++ {
-			if _, ok := channelMap[channels[i]]; !ok {
-				continue
-			}
-			nlst = append(nlst, channels[i])
-		}
-		ar.NotifyChannels = strings.Join(nlst, " ")
-	} else {
-		ar.NotifyChannels = ""
-	}
-
 	return nil
 }
 
-func (ar *AlertRule) Add(ctx *ctx.Context, channels map[string]struct{}) error {
-	if err := ar.Verify(channels); err != nil {
+func (ar *AlertRule) Add(ctx *ctx.Context) error {
+	if err := ar.Verify(); err != nil {
 		return err
 	}
 
@@ -260,7 +246,7 @@ func (ar *AlertRule) Add(ctx *ctx.Context, channels map[string]struct{}) error {
 	return Insert(ctx, ar)
 }
 
-func (ar *AlertRule) Update(ctx *ctx.Context, arf AlertRule, channelMap map[string]struct{}) error {
+func (ar *AlertRule) Update(ctx *ctx.Context, arf AlertRule) error {
 	if ar.Name != arf.Name {
 		exists, err := AlertRuleExists(ctx, ar.Id, ar.GroupId, ar.DatasourceIdsJson, arf.Name)
 		if err != nil {
@@ -283,7 +269,7 @@ func (ar *AlertRule) Update(ctx *ctx.Context, arf AlertRule, channelMap map[stri
 	arf.CreateBy = ar.CreateBy
 	arf.UpdateAt = time.Now().Unix()
 
-	err = arf.Verify(channelMap)
+	err = arf.Verify()
 	if err != nil {
 		return err
 	}

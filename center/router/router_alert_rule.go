@@ -115,7 +115,7 @@ func (rt *Router) alertRuleAddForService(lst []models.AlertRule, username string
 			continue
 		}
 
-		if err := lst[i].Add(rt.Ctx, models.GetChannelMap(rt.Ctx)); err != nil {
+		if err := lst[i].Add(rt.Ctx); err != nil {
 			reterr[lst[i].Name] = err.Error()
 		} else {
 			reterr[lst[i].Name] = ""
@@ -141,7 +141,7 @@ func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int
 			continue
 		}
 
-		if err := lst[i].Add(rt.Ctx, models.GetChannelMap(rt.Ctx)); err != nil {
+		if err := lst[i].Add(rt.Ctx); err != nil {
 			reterr[lst[i].Name] = i18n.Sprintf(lang, err.Error())
 		} else {
 			reterr[lst[i].Name] = ""
@@ -182,7 +182,7 @@ func (rt *Router) alertRulePutByFE(c *gin.Context) {
 	rt.bgrwCheck(c, ar.GroupId)
 
 	f.UpdateBy = c.MustGet("username").(string)
-	ginx.NewRender(c).Message(ar.Update(rt.Ctx, f, models.GetChannelMap(rt.Ctx)))
+	ginx.NewRender(c).Message(ar.Update(rt.Ctx, f))
 }
 
 func (rt *Router) alertRulePutByService(c *gin.Context) {
@@ -197,7 +197,7 @@ func (rt *Router) alertRulePutByService(c *gin.Context) {
 		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
 		return
 	}
-	ginx.NewRender(c).Message(ar.Update(rt.Ctx, f, models.GetChannelMap(rt.Ctx)))
+	ginx.NewRender(c).Message(ar.Update(rt.Ctx, f))
 }
 
 type alertRuleFieldForm struct {

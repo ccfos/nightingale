@@ -162,6 +162,19 @@
                     <th>设备备注：</th>
                     <td>{{.TargetNote}}</td>
                 </tr>
+                {{if not .IsRecovered}}
+                <tr>
+                    <th>触发时值：</th>
+                    <td>{{.TriggerValue}}</td>
+                </tr>
+                {{end}}
+
+                {{if .TargetIdent}}
+                <tr>
+                    <th>监控对象：</th>
+                    <td>{{.TargetIdent}}</td>
+                </tr>
+                {{end}}
                 <tr>
                     <th>监控指标：</th>
                     <td>{{.TagsJSON}}</td>
@@ -173,10 +186,6 @@
                     <td>{{timeformat .LastEvalTime}}</td>
                 </tr>
                 {{else}}
-                <tr>
-                    <th>触发时值：</th>
-                    <td>{{.TriggerValue}}</td>
-                </tr>
                 <tr>
                     <th>触发时间：</th>
                     <td>
