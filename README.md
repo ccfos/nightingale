@@ -90,8 +90,8 @@ If the performance of a standalone time-series database (such as Prometheus) has
 ## Who is using Nightingale
 You can register your usage and share your experience by posting on **[Who is Using Nightingale](https://github.com/ccfos/nightingale/issues/897)**.
 
-## Star History
-[![Star History Chart](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale)
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/ccfos/nightingale.svg)](https://starchart.cc/ccfos/nightingale)
 
 ## Contributors
 <a href="https://github.com/ccfos/nightingale/graphs/contributors">

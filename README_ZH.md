@@ -111,8 +111,9 @@ https://user-images.githubusercontent.com/792850/216888712-2565fcea-9df5-47bd-a4
 
 您可以通过在 **[Who is Using Nightingale](https://github.com/ccfos/nightingale/issues/897)** 登记您的使用情况，分享您的使用经验。
 
-## Star History
-[![Star History Chart](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale)
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/ccfos/nightingale.svg)](https://starchart.cc/ccfos/nightingale)
+
 ## Contributors
 <a href="https://github.com/ccfos/nightingale/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=ccfos/nightingale" />
