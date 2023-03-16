@@ -14,6 +14,8 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+type SetField func(string)
+
 type AlertCurEvent struct {
 	Id                 int64             `json:"id" gorm:"primaryKey"`
 	Cate               string            `json:"cate"`
@@ -67,17 +69,10 @@ func (e *AlertCurEvent) Add(ctx *ctx.Context) error {
 	return Insert(ctx, e)
 }
 
-type AggrRule struct {
-	Type  string
-	Value string
-}
-
-func (e *AlertCurEvent) ParseRule(field string) error {
-	f := e.GetField(field)
-	f = strings.TrimSpace(f)
-
-	if f == "" {
-		return nil
+func (e *AlertCurEvent) parseField(value string) (string, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return value, nil
 	}
 
 	var defs = []string{
@@ -85,32 +80,48 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 		"{{$value := .TriggerValue}}",
 	}
 
-	text := strings.Join(append(defs, f), "")
+	text := strings.Join(append(defs, value), "")
 	t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
 	if err != nil {
-		return err
+		return value, err
 	}
 
 	var body bytes.Buffer
 	err = t.Execute(&body, e)
 	if err != nil {
-		return err
+		return value, err
 	}
+	return body.String(), nil
+}
 
-	if field == "rule_name" {
-		e.RuleName = body.String()
+func (e *AlertCurEvent) parseRule(field string, setf SetField) {
+	f := e.GetField(field)
+
+	parseData, err := e.parseField(f)
+	if err != nil {
+		parseData = fmt.Sprintf("failed to parse %s: %v", field, err)
 	}
+	setf(parseData)
+}
 
-	if field == "rule_note" {
-		e.RuleNote = body.String()
-	}
+func (e *AlertCurEvent) ParseData() {
+	// 规则名称
+	e.parseRule("rule_name", func(data string) { e.RuleName = data })
+	// 规则描述
+	e.parseRule("rule_note", func(data string) { e.RuleNote = data })
+	// 标签
+	e.parseRule("annotations",
+		func(data string) {
+			e.Annotations = data
+			json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
+		})
+	// 预案链接
+	e.parseRule("runbook_url", func(data string) { e.RunbookUrl = data })
+}
 
-	if field == "annotations" {
-		e.Annotations = body.String()
-		json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
-	}
-
-	return nil
+type AggrRule struct {
+	Type  string
+	Value string
 }
 
 func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule) string {

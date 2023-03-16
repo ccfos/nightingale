@@ -1,7 +1,6 @@
 package dispatch
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
@@ -60,17 +59,8 @@ func (e *Consumer) consume(events []interface{}, sema *semaphore.Semaphore) {
 func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 	LogEvent(event, "consume")
 
-	if err := event.ParseRule("rule_name"); err != nil {
-		event.RuleName = fmt.Sprintf("failed to parse rule name: %v", err)
-	}
-
-	if err := event.ParseRule("rule_note"); err != nil {
-		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
-	}
-
-	if err := event.ParseRule("annotations"); err != nil {
-		event.Annotations = fmt.Sprintf("failed to parse rule note: %v", err)
-	}
+	// 处理告警事件的数据
+	event.ParseData()
 
 	e.persist(event)
 

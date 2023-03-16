@@ -47,17 +47,7 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 		return
 	}
 
-	if err := event.ParseRule("rule_name"); err != nil {
-		event.RuleName = fmt.Sprintf("failed to parse rule name: %v", err)
-	}
-
-	if err := event.ParseRule("rule_note"); err != nil {
-		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
-	}
-
-	if err := event.ParseRule("annotations"); err != nil {
-		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
-	}
+	event.ParseData()
 
 	// 如果 rule_note 中有 ; 前缀，则使用 rule_note 替换 tags 中的内容
 	if strings.HasPrefix(event.RuleNote, ";") {
