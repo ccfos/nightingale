@@ -183,7 +183,10 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 			logger.Warningf("no sender for channel: %s", channel)
 			continue
 		}
-		logger.Debugf("send event: %s, channel: %s, uids: %+v", event.Hash, channel, ctx.Users)
+		logger.Debugf("send event: %s, channel: %s", event.Hash, channel)
+		for i := 0; i < len(ctx.Users); i++ {
+			logger.Debug("send event to user: ", ctx.Users[i])
+		}
 		s.Send(ctx)
 	}
 
