@@ -59,7 +59,7 @@ func (rt *Router) targetGets(c *gin.Context) {
 		var keys []string
 		for i := 0; i < len(list); i++ {
 			ginx.Dangerous(list[i].FillGroup(rt.Ctx, cache))
-			keys = append(keys, list[i].Ident)
+			keys = append(keys, models.WrapIdent(list[i].Ident))
 		}
 
 		if len(keys) > 0 {

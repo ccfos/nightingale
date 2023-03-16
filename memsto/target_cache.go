@@ -174,7 +174,7 @@ func (tc *TargetCacheType) GetHostMetas(targets []*models.Target) map[string]*mo
 	num := 0
 	var keys []string
 	for i := 0; i < len(targets); i++ {
-		keys = append(keys, targets[i].Ident)
+		keys = append(keys, models.WrapIdent(targets[i].Ident))
 		num++
 		if num == 100 {
 			vals := tc.redis.MGet(context.Background(), keys...).Val()

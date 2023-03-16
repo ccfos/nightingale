@@ -21,3 +21,7 @@ func (h HostMeta) MarshalBinary() ([]byte, error) {
 func (h *HostMeta) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, h)
 }
+
+func WrapIdent(ident string) string {
+	return "n9e_meta_" + ident
+}

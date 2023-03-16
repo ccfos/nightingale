@@ -102,7 +102,7 @@ func (s *Set) updateTargets(m map[string]models.HostMeta, now int64) error {
 
 	var values []interface{}
 	for ident, meta := range m {
-		values = append(values, ident)
+		values = append(values, models.WrapIdent(ident))
 		values = append(values, meta)
 	}
 	err := s.redis.MSet(context.Background(), values...).Err()
