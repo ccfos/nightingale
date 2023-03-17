@@ -80,6 +80,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 	var (
 		ident  string
 		metric string
+		ids    = make(map[string]struct{})
 	)
 
 	for i := 0; i < count; i++ {
@@ -98,6 +99,9 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		}
 
 		if len(ident) > 0 {
+			// register host
+			ids[ident] = struct{}{}
+
 			// fill tags
 			target, has := rt.TargetCache.Get(ident)
 			if has {
@@ -119,6 +123,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 	}
 
 	CounterSampleTotal.WithLabelValues("prometheus").Add(float64(count))
+	rt.IdentSet.MSet(ids)
 }
 
 // DecodeWriteRequest from an io.Reader into a prompb.WriteRequest, handling

@@ -8,7 +8,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/center/cconf"
-	"github.com/ccfos/nightingale/v6/center/idents"
+	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/memsto"
@@ -18,6 +18,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/i18nx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/prom"
+	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 
@@ -54,11 +55,12 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	idents := idents.New(db, redis)
+	metas := metas.New(redis)
+	idents := idents.New(db)
 
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
-	// idents := idents.New(db, config.Pushgw.DatasourceId, config.Pushgw.MaxOffset)
+
 	sso := sso.Init(config.Center, ctx)
 
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
@@ -76,8 +78,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	writers := writer.NewWriters(config.Pushgw)
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
-	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, idents)
-	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, writers, ctx)
+	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, metas)
+	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 

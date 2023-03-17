@@ -36,6 +36,6 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	req.Offset = (time.Now().UnixMilli() - req.UnixTime)
-	rt.IdentSet.Set(req.Hostname, req)
+	rt.MetaSet.Set(req.Hostname, req)
 	ginx.NewRender(c).Message(nil)
 }

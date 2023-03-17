@@ -224,6 +224,7 @@ func (r *Router) datadogSeries(c *gin.Context) {
 		succ int
 		fail int
 		msg  = "received"
+		ids  = make(map[string]struct{})
 	)
 
 	for i := 0; i < cnt; i++ {
@@ -245,6 +246,9 @@ func (r *Router) datadogSeries(c *gin.Context) {
 		}
 
 		if ident != "" {
+			// register host
+			ids[ident] = struct{}{}
+
 			// fill tags
 			target, has := r.TargetCache.Get(ident)
 			if has {
@@ -269,6 +273,7 @@ func (r *Router) datadogSeries(c *gin.Context) {
 
 	if succ > 0 {
 		CounterSampleTotal.WithLabelValues("datadog").Add(float64(succ))
+		r.IdentSet.MSet(ids)
 	}
 
 	c.JSON(200, gin.H{

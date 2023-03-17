@@ -9,7 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cstats"
-	"github.com/ccfos/nightingale/v6/center/idents"
+	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
@@ -30,13 +30,13 @@ type Router struct {
 	NotifyConfigCache *memsto.NotifyConfigCacheType
 	PromClients       *prom.PromClientMap
 	Redis             storage.Redis
-	IdentSet          *idents.Set
+	MetaSet           *metas.Set
 	Sso               *sso.SsoClient
 	Ctx               *ctx.Context
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
-	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, identSet *idents.Set) *Router {
+	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set) *Router {
 	return &Router{
 		HTTP:              httpConfig,
 		Center:            center,
@@ -47,7 +47,7 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		Redis:             redis,
 		Sso:               sso,
 		Ctx:               ctx,
-		IdentSet:          identSet,
+		MetaSet:           metaSet,
 	}
 }
 

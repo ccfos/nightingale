@@ -6,6 +6,7 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
+	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 )
@@ -15,18 +16,19 @@ type Router struct {
 	Pushgw         pconf.Pushgw
 	TargetCache    *memsto.TargetCacheType
 	BusiGroupCache *memsto.BusiGroupCacheType
-	// IdentSet       *idents.Set
-	Writers *writer.WritersType
-	Ctx     *ctx.Context
+	IdentSet       *idents.Set
+	Writers        *writer.WritersType
+	Ctx            *ctx.Context
 }
 
-func New(httpConfig httpx.Config, pushgw pconf.Pushgw, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType, writers *writer.WritersType, ctx *ctx.Context) *Router {
+func New(httpConfig httpx.Config, pushgw pconf.Pushgw, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType, idents *idents.Set, writers *writer.WritersType, ctx *ctx.Context) *Router {
 	return &Router{
 		HTTP:           httpConfig,
 		Writers:        writers,
 		Ctx:            ctx,
 		TargetCache:    tc,
 		BusiGroupCache: bg,
+		IdentSet:       idents,
 	}
 }
 
