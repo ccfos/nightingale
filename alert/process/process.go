@@ -57,58 +57,60 @@ type Processor struct {
 	targetNote string
 	groupName  string
 
-	atertRuleCache *memsto.AlertRuleCacheType
-	TargetCache    *memsto.TargetCacheType
-	busiGroupCache *memsto.BusiGroupCacheType
-	alertMuteCache *memsto.AlertMuteCacheType
+	atertRuleCache  *memsto.AlertRuleCacheType
+	TargetCache     *memsto.TargetCacheType
+	busiGroupCache  *memsto.BusiGroupCacheType
+	alertMuteCache  *memsto.AlertMuteCacheType
+	datasourceCache *memsto.DatasourceCacheType
 
 	promClients *prom.PromClientMap
 	ctx         *ctx.Context
 	stats       *astats.Stats
 }
 
-func (arw *Processor) Key() string {
-	return common.RuleKey(arw.datasourceId, arw.rule.Id)
+func (p *Processor) Key() string {
+	return common.RuleKey(p.datasourceId, p.rule.Id)
 }
 
-func (arw *Processor) Hash() string {
+func (p *Processor) Hash() string {
 	return str.MD5(fmt.Sprintf("%d_%d_%s_%d",
-		arw.rule.Id,
-		arw.rule.PromEvalInterval,
-		arw.rule.RuleConfig,
-		arw.datasourceId,
+		p.rule.Id,
+		p.rule.PromEvalInterval,
+		p.rule.RuleConfig,
+		p.datasourceId,
 	))
 }
 
 func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *memsto.AlertRuleCacheType, targetCache *memsto.TargetCacheType,
-	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, promClients *prom.PromClientMap, ctx *ctx.Context,
+	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, promClients *prom.PromClientMap, ctx *ctx.Context,
 	stats *astats.Stats) *Processor {
 
-	arw := &Processor{
+	p := &Processor{
 		datasourceId: datasourceId,
 		rule:         rule,
 
-		TargetCache:    targetCache,
-		busiGroupCache: busiGroupCache,
-		alertMuteCache: alertMuteCache,
-		atertRuleCache: atertRuleCache,
+		TargetCache:     targetCache,
+		busiGroupCache:  busiGroupCache,
+		alertMuteCache:  alertMuteCache,
+		atertRuleCache:  atertRuleCache,
+		datasourceCache: datasourceCache,
 
 		promClients: promClients,
 		ctx:         ctx,
 		stats:       stats,
 	}
 
-	arw.mayHandleGroup()
-	return arw
+	p.mayHandleGroup()
+	return p
 }
 
-func (arw *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inhibit bool) {
+func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inhibit bool) {
 	// 有可能rule的一些配置已经发生变化，比如告警接收人、callbacks等
 	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
 	// 所以，这里直接从memsto.AlertRuleCache中获取并覆盖
-	arw.inhibit = inhibit
-	arw.rule = arw.atertRuleCache.Get(arw.rule.Id)
-	cachedRule := arw.rule
+	p.inhibit = inhibit
+	p.rule = p.atertRuleCache.Get(p.rule.Id)
+	cachedRule := p.rule
 	if cachedRule == nil {
 		logger.Errorf("rule not found %+v", anomalyPoints)
 		return
@@ -120,12 +122,12 @@ func (arw *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, i
 	// 根据 event 的 tag 将 events 分组，处理告警抑制的情况
 	eventsMap := make(map[string][]*models.AlertCurEvent)
 	for _, anomalyPoint := range anomalyPoints {
-		event := arw.BuildEvent(anomalyPoint, from, now)
+		event := p.BuildEvent(anomalyPoint, from, now)
 		// 如果 event 被 mute 了,本质也是 fire 的状态,这里无论如何都添加到 alertingKeys 中,防止 fire 的事件自动恢复了
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
-		if mute.IsMuted(cachedRule, event, arw.TargetCache, arw.alertMuteCache) {
-			logger.Debugf("rule_eval:%s event:%v is muted", arw.Key(), event)
+		if mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache) {
+			logger.Debugf("rule_eval:%s event:%v is muted", p.Key(), event)
 			continue
 		}
 		tagHash := TagHash(anomalyPoint)
@@ -133,35 +135,41 @@ func (arw *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, i
 	}
 
 	for _, events := range eventsMap {
-		arw.handleEvent(events)
+		p.handleEvent(events)
 	}
 
-	arw.HandleRecover(alertingKeys, now)
+	p.HandleRecover(alertingKeys, now)
 }
 
-func (arw *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, now int64) *models.AlertCurEvent {
-	arw.fillTags(anomalyPoint)
-	arw.mayHandleIdent()
-	hash := Hash(arw.rule.Id, arw.datasourceId, anomalyPoint)
+func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, now int64) *models.AlertCurEvent {
+	p.fillTags(anomalyPoint)
+	p.mayHandleIdent()
+	hash := Hash(p.rule.Id, p.datasourceId, anomalyPoint)
+	ds := p.datasourceCache.GetById(p.datasourceId)
+	var dsName string
+	if ds != nil {
+		dsName = ds.Name
+	}
 
-	event := arw.rule.GenerateNewEvent(arw.ctx)
+	event := p.rule.GenerateNewEvent(p.ctx)
 	event.TriggerTime = anomalyPoint.Timestamp
-	event.TagsMap = arw.tagsMap
-	event.DatasourceId = arw.datasourceId
+	event.TagsMap = p.tagsMap
+	event.DatasourceId = p.datasourceId
+	event.Cluster = dsName
 	event.Hash = hash
-	event.TargetIdent = arw.target
-	event.TargetNote = arw.targetNote
+	event.TargetIdent = p.target
+	event.TargetNote = p.targetNote
 	event.TriggerValue = anomalyPoint.ReadableValue()
-	event.TagsJSON = arw.tagsArr
-	event.GroupName = arw.groupName
-	event.Tags = strings.Join(arw.tagsArr, ",,")
+	event.TagsJSON = p.tagsArr
+	event.GroupName = p.groupName
+	event.Tags = strings.Join(p.tagsArr, ",,")
 	event.IsRecovered = false
-	event.Callbacks = arw.rule.Callbacks
-	event.CallbacksJSON = arw.rule.CallbacksJSON
-	event.Annotations = arw.rule.Annotations
-	event.AnnotationsJSON = arw.rule.AnnotationsJSON
-	event.RuleConfig = arw.rule.RuleConfig
-	event.RuleConfigJson = arw.rule.RuleConfigJson
+	event.Callbacks = p.rule.Callbacks
+	event.CallbacksJSON = p.rule.CallbacksJSON
+	event.Annotations = p.rule.Annotations
+	event.AnnotationsJSON = p.rule.AnnotationsJSON
+	event.RuleConfig = p.rule.RuleConfig
+	event.RuleConfigJson = p.rule.RuleConfigJson
 	event.Severity = anomalyPoint.Severity
 
 	if from == "inner" {
@@ -172,34 +180,34 @@ func (arw *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, 
 	return event
 }
 
-func (arw *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64) {
-	for _, hash := range arw.pendings.Keys() {
+func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64) {
+	for _, hash := range p.pendings.Keys() {
 		if _, has := alertingKeys[hash]; has {
 			continue
 		}
-		arw.pendings.Delete(hash)
+		p.pendings.Delete(hash)
 	}
 
-	for hash := range arw.fires.GetAll() {
+	for hash := range p.fires.GetAll() {
 		if _, has := alertingKeys[hash]; has {
 			continue
 		}
-		arw.RecoverSingle(hash, now, nil)
+		p.RecoverSingle(hash, now, nil)
 	}
 }
 
-func (arw *Processor) RecoverSingle(hash string, now int64, value *string) {
-	cachedRule := arw.rule
+func (p *Processor) RecoverSingle(hash string, now int64, value *string) {
+	cachedRule := p.rule
 	if cachedRule == nil {
 		return
 	}
-	event, has := arw.fires.Get(hash)
+	event, has := p.fires.Get(hash)
 	if !has {
 		return
 	}
 	// 如果配置了留观时长，就不能立马恢复了
 	if cachedRule.RecoverDuration > 0 && now-event.LastEvalTime < cachedRule.RecoverDuration {
-		logger.Debugf("rule_eval:%s event:%v not recover", arw.Key(), event)
+		logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
 		return
 	}
 	if value != nil {
@@ -208,18 +216,18 @@ func (arw *Processor) RecoverSingle(hash string, now int64, value *string) {
 
 	// 没查到触发阈值的vector，姑且就认为这个vector的值恢复了
 	// 我确实无法分辨，是prom中有值但是未满足阈值所以没返回，还是prom中确实丢了一些点导致没有数据可以返回，尴尬
-	arw.fires.Delete(hash)
-	arw.pendings.Delete(hash)
+	p.fires.Delete(hash)
+	p.pendings.Delete(hash)
 
 	// 可能是因为调整了promql才恢复的，所以事件里边要体现最新的promql，否则用户会比较困惑
 	// 当然，其实rule的各个字段都可能发生变化了，都更新一下吧
 	cachedRule.UpdateEvent(event)
 	event.IsRecovered = true
 	event.LastEvalTime = now
-	arw.pushEventToQueue(event)
+	p.pushEventToQueue(event)
 }
 
-func (arw *Processor) handleEvent(events []*models.AlertCurEvent) {
+func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 	var fireEvents []*models.AlertCurEvent
 	// severity 初始为 4, 一定为遇到比自己优先级高的事件
 	severity := 4
@@ -227,7 +235,7 @@ func (arw *Processor) handleEvent(events []*models.AlertCurEvent) {
 		if event == nil {
 			continue
 		}
-		if arw.rule.PromForDuration == 0 {
+		if p.rule.PromForDuration == 0 {
 			fireEvents = append(fireEvents, event)
 			if severity > event.Severity {
 				severity = event.Severity
@@ -236,16 +244,16 @@ func (arw *Processor) handleEvent(events []*models.AlertCurEvent) {
 		}
 
 		var preTriggerTime int64
-		preEvent, has := arw.pendings.Get(event.Hash)
+		preEvent, has := p.pendings.Get(event.Hash)
 		if has {
-			arw.pendings.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+			p.pendings.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 			preTriggerTime = preEvent.TriggerTime
 		} else {
-			arw.pendings.Set(event.Hash, event)
+			p.pendings.Set(event.Hash, event)
 			preTriggerTime = event.TriggerTime
 		}
 
-		if event.LastEvalTime-preTriggerTime+int64(event.PromEvalInterval) >= int64(arw.rule.PromForDuration) {
+		if event.LastEvalTime-preTriggerTime+int64(event.PromEvalInterval) >= int64(p.rule.PromForDuration) {
 			fireEvents = append(fireEvents, event)
 			if severity > event.Severity {
 				severity = event.Severity
@@ -254,31 +262,31 @@ func (arw *Processor) handleEvent(events []*models.AlertCurEvent) {
 		}
 	}
 
-	arw.inhibitEvent(fireEvents, severity)
+	p.inhibitEvent(fireEvents, severity)
 }
 
-func (arw *Processor) inhibitEvent(events []*models.AlertCurEvent, highSeverity int) {
+func (p *Processor) inhibitEvent(events []*models.AlertCurEvent, highSeverity int) {
 	for _, event := range events {
-		if arw.inhibit && event.Severity > highSeverity {
-			logger.Debugf("rule_eval:%s event:%+v inhibit highSeverity:%d", arw.Key(), event, highSeverity)
+		if p.inhibit && event.Severity > highSeverity {
+			logger.Debugf("rule_eval:%s event:%+v inhibit highSeverity:%d", p.Key(), event, highSeverity)
 			continue
 		}
-		arw.fireEvent(event)
+		p.fireEvent(event)
 	}
 }
 
-func (arw *Processor) fireEvent(event *models.AlertCurEvent) {
-	// As arw.rule maybe outdated, use rule from cache
-	cachedRule := arw.rule
+func (p *Processor) fireEvent(event *models.AlertCurEvent) {
+	// As p.rule maybe outdated, use rule from cache
+	cachedRule := p.rule
 	if cachedRule == nil {
 		return
 	}
-	logger.Debugf("rule_eval:%s event:%+v fire", arw.Key(), event)
-	if fired, has := arw.fires.Get(event.Hash); has {
-		arw.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+	logger.Debugf("rule_eval:%s event:%+v fire", p.Key(), event)
+	if fired, has := p.fires.Get(event.Hash); has {
+		p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 
 		if cachedRule.NotifyRepeatStep == 0 {
-			logger.Debugf("rule_eval:%s event:%+v repeat is zero nothing to do", arw.Key(), event)
+			logger.Debugf("rule_eval:%s event:%+v repeat is zero nothing to do", p.Key(), event)
 			// 说明不想重复通知，那就直接返回了，nothing to do
 			// do not need to send alert again
 			return
@@ -290,46 +298,46 @@ func (arw *Processor) fireEvent(event *models.AlertCurEvent) {
 				// 最大可以发送次数如果是0，表示不想限制最大发送次数，一直发即可
 				event.NotifyCurNumber = fired.NotifyCurNumber + 1
 				event.FirstTriggerTime = fired.FirstTriggerTime
-				arw.pushEventToQueue(event)
+				p.pushEventToQueue(event)
 			} else {
 				// 有最大发送次数的限制，就要看已经发了几次了，是否达到了最大发送次数
 				if fired.NotifyCurNumber >= cachedRule.NotifyMaxNumber {
-					logger.Debugf("rule_eval:%s event:%+v reach max number", arw.Key(), event)
+					logger.Debugf("rule_eval:%s event:%+v reach max number", p.Key(), event)
 					return
 				} else {
 					event.NotifyCurNumber = fired.NotifyCurNumber + 1
 					event.FirstTriggerTime = fired.FirstTriggerTime
-					arw.pushEventToQueue(event)
+					p.pushEventToQueue(event)
 				}
 			}
 		}
 	} else {
 		event.NotifyCurNumber = 1
 		event.FirstTriggerTime = event.TriggerTime
-		arw.pushEventToQueue(event)
+		p.pushEventToQueue(event)
 	}
 }
 
-func (arw *Processor) pushEventToQueue(e *models.AlertCurEvent) {
+func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 	if !e.IsRecovered {
 		e.LastSentTime = e.LastEvalTime
-		arw.fires.Set(e.Hash, e)
+		p.fires.Set(e.Hash, e)
 	}
 
-	arw.stats.CounterAlertsTotal.WithLabelValues(fmt.Sprintf("%d", e.DatasourceId)).Inc()
+	p.stats.CounterAlertsTotal.WithLabelValues(fmt.Sprintf("%d", e.DatasourceId)).Inc()
 	dispatch.LogEvent(e, "push_queue")
 	if !queue.EventQueue.PushFront(e) {
 		logger.Warningf("event_push_queue: queue is full, event:%+v", e)
 	}
 }
 
-func (arw *Processor) RecoverAlertCurEventFromDb() {
-	arw.pendings = NewAlertCurEventMap(nil)
+func (p *Processor) RecoverAlertCurEventFromDb() {
+	p.pendings = NewAlertCurEventMap(nil)
 
-	curEvents, err := models.AlertCurEventGetByRuleIdAndCluster(arw.ctx, arw.rule.Id, arw.datasourceId)
+	curEvents, err := models.AlertCurEventGetByRuleIdAndCluster(p.ctx, p.rule.Id, p.datasourceId)
 	if err != nil {
-		logger.Errorf("recover event from db for rule:%s failed, err:%s", arw.Key(), err)
-		arw.fires = NewAlertCurEventMap(nil)
+		logger.Errorf("recover event from db for rule:%s failed, err:%s", p.Key(), err)
+		p.fires = NewAlertCurEventMap(nil)
 		return
 	}
 
@@ -339,10 +347,10 @@ func (arw *Processor) RecoverAlertCurEventFromDb() {
 		fireMap[event.Hash] = event
 	}
 
-	arw.fires = NewAlertCurEventMap(fireMap)
+	p.fires = NewAlertCurEventMap(fireMap)
 }
 
-func (arw *Processor) fillTags(anomalyPoint common.AnomalyPoint) {
+func (p *Processor) fillTags(anomalyPoint common.AnomalyPoint) {
 	// handle series tags
 	tagsMap := make(map[string]string)
 	for label, value := range anomalyPoint.Labels {
@@ -354,7 +362,7 @@ func (arw *Processor) fillTags(anomalyPoint common.AnomalyPoint) {
 	}
 
 	// handle rule tags
-	for _, tag := range arw.rule.AppendTagsJSON {
+	for _, tag := range p.rule.AppendTagsJSON {
 		arr := strings.SplitN(tag, "=", 2)
 
 		var defs = []string{
@@ -363,7 +371,7 @@ func (arw *Processor) fillTags(anomalyPoint common.AnomalyPoint) {
 		}
 		tagValue := arr[1]
 		text := strings.Join(append(defs, tagValue), "")
-		t, err := template.New(fmt.Sprint(arw.rule.Id)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
+		t, err := template.New(fmt.Sprint(p.rule.Id)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
 		if err != nil {
 			tagValue = fmt.Sprintf("parse tag value failed, err:%s", err)
 		}
@@ -380,28 +388,28 @@ func (arw *Processor) fillTags(anomalyPoint common.AnomalyPoint) {
 		tagsMap[arr[0]] = tagValue
 	}
 
-	tagsMap["rulename"] = arw.rule.Name
-	arw.tagsMap = tagsMap
+	tagsMap["rulename"] = p.rule.Name
+	p.tagsMap = tagsMap
 
 	// handle tagsArr
-	arw.tagsArr = labelMapToArr(tagsMap)
+	p.tagsArr = labelMapToArr(tagsMap)
 }
 
-func (arw *Processor) mayHandleIdent() {
+func (p *Processor) mayHandleIdent() {
 	// handle ident
-	if ident, has := arw.tagsMap["ident"]; has {
-		if target, exists := arw.TargetCache.Get(ident); exists {
-			arw.target = target.Ident
-			arw.targetNote = target.Note
+	if ident, has := p.tagsMap["ident"]; has {
+		if target, exists := p.TargetCache.Get(ident); exists {
+			p.target = target.Ident
+			p.targetNote = target.Note
 		}
 	}
 }
 
-func (arw *Processor) mayHandleGroup() {
+func (p *Processor) mayHandleGroup() {
 	// handle bg
-	bg := arw.busiGroupCache.GetByBusiGroupId(arw.rule.GroupId)
+	bg := p.busiGroupCache.GetByBusiGroupId(p.rule.GroupId)
 	if bg != nil {
-		arw.groupName = bg.Name
+		p.groupName = bg.Name
 	}
 }
 

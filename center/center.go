@@ -73,7 +73,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
-	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, ctx, promClients, true)
+	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, true)
 
 	writers := writer.NewWriters(config.Pushgw)
 

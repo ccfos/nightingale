@@ -54,15 +54,15 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
-
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
 	notifyConfigCache := memsto.NewNotifyConfigCache(ctx)
+	dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 
 	promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
 
-	Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, ctx, promClients, false)
+	Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, false)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 	rt := router.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
@@ -77,7 +77,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 }
 
 func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, alertStats *astats.Stats, externalProcessors *process.ExternalProcessorsType, targetCache *memsto.TargetCacheType, busiGroupCache *memsto.BusiGroupCacheType,
-	alertMuteCache *memsto.AlertMuteCacheType, alertRuleCache *memsto.AlertRuleCacheType, notifyConfigCache *memsto.NotifyConfigCacheType, ctx *ctx.Context, promClients *prom.PromClientMap, isCenter bool) {
+	alertMuteCache *memsto.AlertMuteCacheType, alertRuleCache *memsto.AlertRuleCacheType, notifyConfigCache *memsto.NotifyConfigCacheType, datasourceCache *memsto.DatasourceCacheType, ctx *ctx.Context, promClients *prom.PromClientMap, isCenter bool) {
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 	alertSubscribeCache := memsto.NewAlertSubscribeCache(ctx, syncStats)
@@ -90,7 +90,7 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	writers := writer.NewWriters(pushgwc)
 	record.NewScheduler(alertc, recordingRuleCache, promClients, writers, alertStats)
 
-	eval.NewScheduler(isCenter, alertc, externalProcessors, alertRuleCache, targetCache, busiGroupCache, alertMuteCache, promClients, naming, ctx, alertStats)
+	eval.NewScheduler(isCenter, alertc, externalProcessors, alertRuleCache, targetCache, busiGroupCache, alertMuteCache, datasourceCache, promClients, naming, ctx, alertStats)
 
 	dp := dispatch.NewDispatch(alertRuleCache, userCache, userGroupCache, alertSubscribeCache, targetCache, notifyConfigCache, alertc.Alerting, ctx)
 	consumer := dispatch.NewConsumer(alertc.Alerting, ctx, dp)

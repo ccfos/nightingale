@@ -23,10 +23,11 @@ type Scheduler struct {
 
 	aconf aconf.Alert
 
-	alertRuleCache *memsto.AlertRuleCacheType
-	targetCache    *memsto.TargetCacheType
-	busiGroupCache *memsto.BusiGroupCacheType
-	alertMuteCache *memsto.AlertMuteCacheType
+	alertRuleCache  *memsto.AlertRuleCacheType
+	targetCache     *memsto.TargetCacheType
+	busiGroupCache  *memsto.BusiGroupCacheType
+	alertMuteCache  *memsto.AlertMuteCacheType
+	datasourceCache *memsto.DatasourceCacheType
 
 	promClients *prom.PromClientMap
 
@@ -37,21 +38,20 @@ type Scheduler struct {
 }
 
 func NewScheduler(isCenter bool, aconf aconf.Alert, externalProcessors *process.ExternalProcessorsType, arc *memsto.AlertRuleCacheType, targetCache *memsto.TargetCacheType,
-	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, promClients *prom.PromClientMap, naming *naming.Naming,
+	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, promClients *prom.PromClientMap, naming *naming.Naming,
 	ctx *ctx.Context, stats *astats.Stats) *Scheduler {
 	scheduler := &Scheduler{
 		isCenter:   isCenter,
 		aconf:      aconf,
 		alertRules: make(map[string]*AlertRuleWorker),
-		// recordRules:        make(map[string]RuleContext),
-		// externalAlertRules: make(map[string]*eval.AlertRuleWorker),
 
 		ExternalProcessors: externalProcessors,
 
-		alertRuleCache: arc,
-		targetCache:    targetCache,
-		busiGroupCache: busiGroupCache,
-		alertMuteCache: alertMuteCache,
+		alertRuleCache:  arc,
+		targetCache:     targetCache,
+		busiGroupCache:  busiGroupCache,
+		alertMuteCache:  alertMuteCache,
+		datasourceCache: datasourceCache,
 
 		promClients: promClients,
 		naming:      naming,
@@ -93,7 +93,7 @@ func (s *Scheduler) syncAlertRules() {
 					continue
 				}
 
-				processor := process.NewProcessor(rule, dsId, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.promClients, s.ctx, s.stats)
+				processor := process.NewProcessor(rule, dsId, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.promClients, s.ctx, s.stats)
 
 				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.ctx)
 				alertRuleWorkers[alertRule.Hash()] = alertRule
@@ -104,14 +104,14 @@ func (s *Scheduler) syncAlertRules() {
 			if !naming.DatasourceHashRing.IsHit(naming.HostDatasource, fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
 				continue
 			}
-			processor := process.NewProcessor(rule, 0, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.promClients, s.ctx, s.stats)
+			processor := process.NewProcessor(rule, 0, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.promClients, s.ctx, s.stats)
 			alertRule := NewAlertRuleWorker(rule, 0, processor, s.promClients, s.ctx)
 			alertRuleWorkers[alertRule.Hash()] = alertRule
 		} else {
 			// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
 			// if rule is not processed by prometheus engine, create it as externalRule
 			for _, dsId := range rule.DatasourceIdsJson {
-				processor := process.NewProcessor(rule, dsId, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.promClients, s.ctx, s.stats)
+				processor := process.NewProcessor(rule, dsId, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.promClients, s.ctx, s.stats)
 				externalRuleWorkers[processor.Key()] = processor
 			}
 		}

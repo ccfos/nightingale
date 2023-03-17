@@ -53,7 +53,7 @@ func (rt *Router) promBatchQueryRange(c *gin.Context) {
 
 func (rt *Router) dsProxy(c *gin.Context) {
 	dsId := ginx.UrlParamInt64(c, "id")
-	ds := rt.DatasourceCache.GetBId(dsId)
+	ds := rt.DatasourceCache.GetById(dsId)
 
 	if ds == nil {
 		c.String(http.StatusBadRequest, "no such datasource")

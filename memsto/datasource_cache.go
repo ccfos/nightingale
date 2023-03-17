@@ -52,7 +52,7 @@ func (d *DatasourceCacheType) Set(ds map[int64]*models.Datasource, total, lastUp
 	d.statLastUpdated = lastUpdated
 }
 
-func (d *DatasourceCacheType) GetBId(id int64) *models.Datasource {
+func (d *DatasourceCacheType) GetById(id int64) *models.Datasource {
 	d.RLock()
 	defer d.RUnlock()
 	return d.ds[id]
