@@ -72,6 +72,10 @@ func (p *Processor) Key() string {
 	return common.RuleKey(p.datasourceId, p.rule.Id)
 }
 
+func (p *Processor) DatasourceId() int64 {
+	return p.datasourceId
+}
+
 func (p *Processor) Hash() string {
 	return str.MD5(fmt.Sprintf("%d_%d_%s_%d",
 		p.rule.Id,

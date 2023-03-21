@@ -105,7 +105,7 @@ func (s *Set) updateTargets(lst []string, now int64) error {
 
 	news := slice.SubString(lst, exists)
 	for i := 0; i < len(news); i++ {
-		err = s.db.Exec("INSERT INTO target(ident, update_at, cluster) VALUES(?, ?, ?)", news[i], now, "").Error
+		err = s.db.Exec("INSERT INTO target(ident, update_at) VALUES(?, ?)", news[i], now).Error
 		if err != nil {
 			logger.Error("failed to insert target:", news[i], "error:", err)
 		}
