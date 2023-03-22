@@ -53,7 +53,7 @@ class Sender(object):
             }
 
             response = requests.post(url, headers=headers, data=json.dumps(body))
-            print(f"notify_feishu: token={t} status_code={response.status_code} response_text={response.text}")
+            print(f"notify_ifeishu: token={t} status_code={response.status_code} response_text={response.text}")
 
     @classmethod
     def send_mm(cls, payload):
