@@ -44,7 +44,7 @@ class Sender(object):
             body = {
                 "msg_type": "text",
                 "content": {
-                    "text": payload.get('tpls').get("feishu.tpl", "feishu.tpl not found")
+                    "text": payload.get('tpls').get("feishu", "feishu not found")
                 },
                 "at": {
                     "atMobiles": list(phones.keys()),
