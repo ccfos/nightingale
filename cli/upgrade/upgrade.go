@@ -45,7 +45,7 @@ func Upgrade(configFile string) error {
 		httpJson := models.HTTP{
 			Timeout:     cluster.Timeout,
 			DialTimeout: cluster.DialTimeout,
-			UseTLS: models.TLS{
+			TLS: models.TLS{
 				SkipTlsVerify: cluster.UseTLS,
 			},
 			MaxIdleConnsPerHost: cluster.MaxIdleConnsPerHost,

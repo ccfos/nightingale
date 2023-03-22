@@ -13,26 +13,26 @@ import (
 )
 
 type Datasource struct {
-	Id             int64           `json:"id"`
-	Name           string          `json:"name"`
-	Description    string          `json:"description"`
-	PluginId       int64           `json:"plugin_id"`
-	PluginType     string          `json:"plugin_type"`      // prometheus
-	PluginTypeName string          `json:"plugin_type_name"` // Prometheus Like
-	Category       string          `json:"category"`         // timeseries
-	ClusterName    string          `json:"cluster_name"`
-	Settings       string          `json:"-" gorm:"settings"`
-	SettingsJson   interface{}     `json:"settings" gorm:"-"`
-	Status         string          `json:"status"`
-	HTTP           string          `json:"-" gorm:"http"`
-	HTTPJson       HTTP            `json:"http" gorm:"-"`
-	Auth           string          `json:"-" gorm:"auth"`
-	AuthJson       Auth            `json:"auth" gorm:"-"`
-	CreatedAt      int64           `json:"created_at"`
-	UpdatedAt      int64           `json:"updated_at"`
-	CreatedBy      string          `json:"created_by"`
-	UpdatedBy      string          `json:"updated_by"`
-	Transport      *http.Transport `json:"-" gorm:"-"`
+	Id             int64                  `json:"id"`
+	Name           string                 `json:"name"`
+	Description    string                 `json:"description"`
+	PluginId       int64                  `json:"plugin_id"`
+	PluginType     string                 `json:"plugin_type"`      // prometheus
+	PluginTypeName string                 `json:"plugin_type_name"` // Prometheus Like
+	Category       string                 `json:"category"`         // timeseries
+	ClusterName    string                 `json:"cluster_name"`
+	Settings       string                 `json:"-" gorm:"settings"`
+	SettingsJson   map[string]interface{} `json:"settings" gorm:"-"`
+	Status         string                 `json:"status"`
+	HTTP           string                 `json:"-" gorm:"http"`
+	HTTPJson       HTTP                   `json:"http" gorm:"-"`
+	Auth           string                 `json:"-" gorm:"auth"`
+	AuthJson       Auth                   `json:"auth" gorm:"-"`
+	CreatedAt      int64                  `json:"created_at"`
+	UpdatedAt      int64                  `json:"updated_at"`
+	CreatedBy      string                 `json:"created_by"`
+	UpdatedBy      string                 `json:"updated_by"`
+	Transport      *http.Transport        `json:"-" gorm:"-"`
 }
 
 type Auth struct {
@@ -44,7 +44,7 @@ type Auth struct {
 type HTTP struct {
 	Timeout             int64             `json:"timeout"`
 	DialTimeout         int64             `json:"dial_timeout"`
-	UseTLS              TLS               `json:"tls"`
+	TLS                 TLS               `json:"tls"`
 	MaxIdleConnsPerHost int               `json:"max_idle_conns_per_host"`
 	Url                 string            `json:"url"`
 	Headers             map[string]string `json:"headers"`
@@ -185,6 +185,19 @@ func GetDatasourcesGetsBy(ctx *ctx.Context, typ, cate, name string, limit, offse
 		}
 	}
 	return lst, err
+}
+
+func GetDatasourcesGetsByTypes(ctx *ctx.Context, typs []string) (map[string]*Datasource, error) {
+	var lst []*Datasource
+	m := make(map[string]*Datasource)
+	err := DB(ctx).Where("plugin_type in ?", typs).Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+			m[lst[i].Name] = lst[i]
+		}
+	}
+	return m, err
 }
 
 func (ds *Datasource) FE2DB() error {
