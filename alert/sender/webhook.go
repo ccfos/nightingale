@@ -30,6 +30,7 @@ func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent) {
 			continue
 		}
 
+		req.Header.Set("Content-Type", "application/json")
 		if conf.BasicAuthUser != "" && conf.BasicAuthPass != "" {
 			req.SetBasicAuth(conf.BasicAuthUser, conf.BasicAuthPass)
 		}
