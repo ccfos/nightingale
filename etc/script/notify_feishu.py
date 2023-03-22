@@ -47,7 +47,7 @@ class Sender(object):
                     "text": payload.get('tpls').get("feishu.tpl", "feishu.tpl not found")
                 },
                 "at": {
-                    "atMobiles": phones.keys(),
+                    "atMobiles": list(phones.keys()),
                     "isAtAll": False
                 }
             }
