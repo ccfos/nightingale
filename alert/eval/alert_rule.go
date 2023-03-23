@@ -100,7 +100,6 @@ func (s *Scheduler) syncAlertRules() {
 			}
 		} else if rule.IsHostRule() && s.isCenter {
 			// all host rule will be processed by center instance
-
 			if !naming.DatasourceHashRing.IsHit(naming.HostDatasource, fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
 				continue
 			}

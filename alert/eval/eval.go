@@ -100,6 +100,11 @@ func (arw *AlertRuleWorker) Eval() {
 		return
 	}
 
+	if arw.processor == nil {
+		logger.Warningf("rule_eval:%s processor is nil", arw.Key())
+		return
+	}
+
 	arw.processor.Handle(lst, "inner", arw.inhibit)
 }
 

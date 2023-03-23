@@ -14,6 +14,7 @@ type AnomalyPoint struct {
 	Timestamp int64        `json:"timestamp"`
 	Value     float64      `json:"value"`
 	Severity  int          `json:"severity"`
+	Triggered bool         `json:"triggered"`
 }
 
 func NewAnomalyPoint(key string, labels map[string]string, ts int64, value float64, severity int) AnomalyPoint {
