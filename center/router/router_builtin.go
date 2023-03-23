@@ -39,34 +39,6 @@ func (rt *Router) builtinCateFavoriteDel(c *gin.Context) {
 	ginx.NewRender(c).Message(models.BuiltinCateDelete(rt.Ctx, name, me.Id))
 }
 
-func (rt *Router) alertRuleBuiltinList(c *gin.Context) {
-	fp := rt.Center.BuiltinIntegrationsDir
-	if fp == "" {
-		fp = path.Join(runner.Cwd, "etc", "alerts")
-	}
-
-	files, err := file.FilesUnder(fp)
-	ginx.Dangerous(err)
-
-	names := make([]string, 0, len(files))
-
-	for _, f := range files {
-		if !strings.HasSuffix(f, ".json") {
-			continue
-		}
-
-		name := strings.TrimSuffix(f, ".json")
-		names = append(names, name)
-	}
-
-	ginx.NewRender(c).Data(names, nil)
-}
-
-type alertRuleBuiltinImportForm struct {
-	Name         string `json:"name" binding:"required"`
-	DatasourceId int64  `json:"datasource_id" binding:"required"`
-}
-
 type Payload struct {
 	Cate    string      `json:"cate"`
 	Fname   string      `json:"fname"`
@@ -229,6 +201,67 @@ func (rt *Router) builtinAlertCateGets(c *gin.Context) {
 			}
 			alertRules = append(alertRules, ars...)
 		}
+		alertCate.AlertRules = alertRules
+		iconFiles, _ := file.FilesUnder(fp + "/" + dir + "/icon")
+		if len(iconFiles) > 0 {
+			alertCate.IconUrl = fmt.Sprintf("/api/n9e/integrations/icon/%s/%s", dir, iconFiles[0])
+		}
+
+		if _, ok := buildinFavoritesMap[dir]; ok {
+			alertCate.Favorite = true
+		}
+
+		alertCates = append(alertCates, alertCate)
+	}
+	ginx.NewRender(c).Data(alertCates, nil)
+}
+
+type builtinAlertRulesList struct {
+	Name       string                        `json:"name"`
+	IconUrl    string                        `json:"icon_url"`
+	AlertRules map[string][]models.AlertRule `json:"alert_rules"`
+	Favorite   bool                          `json:"favorite"`
+}
+
+func (rt *Router) builtinAlertRules(c *gin.Context) {
+	fp := rt.Center.BuiltinIntegrationsDir
+	if fp == "" {
+		fp = path.Join(runner.Cwd, "integrations")
+	}
+
+	me := c.MustGet("user").(*models.User)
+	buildinFavoritesMap, err := models.BuiltinCateGetByUserId(rt.Ctx, me.Id)
+	if err != nil {
+		logger.Warningf("get builtin favorites fail: %v", err)
+	}
+
+	var alertCates []builtinAlertRulesList
+	dirList, err := file.DirsUnder(fp)
+	ginx.Dangerous(err)
+	for _, dir := range dirList {
+		var alertCate builtinAlertRulesList
+		alertCate.Name = dir
+		files, err := file.FilesUnder(fp + "/" + dir + "/alerts")
+		ginx.Dangerous(err)
+
+		alertRules := make(map[string][]models.AlertRule)
+		for _, f := range files {
+			fn := fp + "/" + dir + "/alerts/" + f
+			content, err := file.ReadBytes(fn)
+			if err != nil {
+				logger.Warningf("add board fail: %v", err)
+				continue
+			}
+
+			var ars []models.AlertRule
+			err = json.Unmarshal(content, &ars)
+			if err != nil {
+				logger.Warningf("add board:%s fail: %v", fn, err)
+				continue
+			}
+			alertRules[strings.TrimSuffix(f, ".json")] = ars
+		}
+
 		alertCate.AlertRules = alertRules
 		iconFiles, _ := file.FilesUnder(fp + "/" + dir + "/icon")
 		if len(iconFiles) > 0 {
