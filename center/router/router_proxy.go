@@ -51,6 +51,34 @@ func (rt *Router) promBatchQueryRange(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, nil)
 }
 
+type batchInstantForm struct {
+	DatasourceId int64             `json:"datasource_id" binding:"required"`
+	Queries      []InstantFormItem `json:"queries" binding:"required"`
+}
+
+type InstantFormItem struct {
+	Time  int64  `json:"time" binding:"required"`
+	Query string `json:"query" binding:"required"`
+}
+
+func (rt *Router) promBatchQueryInstant(c *gin.Context) {
+	var f batchInstantForm
+	ginx.Dangerous(c.BindJSON(&f))
+
+	cli := rt.PromClients.GetCli(f.DatasourceId)
+
+	var lst []model.Value
+
+	for _, item := range f.Queries {
+		resp, _, err := cli.Query(context.Background(), item.Query, time.Unix(item.Time, 0))
+		ginx.Dangerous(err)
+
+		lst = append(lst, resp)
+	}
+
+	ginx.NewRender(c).Data(lst, nil)
+}
+
 func (rt *Router) dsProxy(c *gin.Context) {
 	dsId := ginx.UrlParamInt64(c, "id")
 	ds := rt.DatasourceCache.GetById(dsId)

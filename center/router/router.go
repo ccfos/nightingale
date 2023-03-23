@@ -111,9 +111,11 @@ func (rt *Router) Config(r *gin.Engine) {
 		if rt.Center.AnonymousAccess.PromQuerier {
 			pages.Any("/proxy/:id/*url", rt.dsProxy)
 			pages.POST("/query-range-batch", rt.promBatchQueryRange)
+			pages.POST("/query-instant-batch", rt.promBatchQueryInstant)
 		} else {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
+			pages.POST("/query-instant-batch", rt.auth(), rt.promBatchQueryInstant)
 		}
 
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
