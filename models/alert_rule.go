@@ -36,6 +36,7 @@ type AlertRule struct {
 	AlgoParamsJson        interface{}       `json:"algo_params" gorm:"-"`          // for fe
 	Delay                 int               `json:"delay"`                         // Time (in seconds) to delay evaluation
 	Severity              int               `json:"severity"`                      // 1: Emergency 2: Warning 3: Notice
+	Severities            []int             `json:"severities" gorm:"-"`           // 1: Emergency 2: Warning 3: Notice
 	Disabled              int               `json:"disabled"`                      // 0: enabled, 1: disabled
 	PromForDuration       int               `json:"prom_for_duration"`             // prometheus for, unit:s
 	PromQl                string            `json:"prom_ql"`                       // just one ql
@@ -297,6 +298,29 @@ func (ar *AlertRule) FillDatasourceIds(ctx *ctx.Context) error {
 	if ar.DatasourceIds != "" {
 		json.Unmarshal([]byte(ar.DatasourceIds), &ar.DatasourceIdsJson)
 		return nil
+	}
+	return nil
+}
+
+func (ar *AlertRule) FillSeverities() error {
+	if ar.RuleConfig != "" {
+		if ar.Prod == HOST {
+			var rule HostRuleConfig
+			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
+				return err
+			}
+			for i := range rule.Queries {
+				ar.Severities = append(ar.Severities, rule.Triggers[i].Severity)
+			}
+		} else {
+			var rule PromRuleConfig
+			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
+				return err
+			}
+			for i := range rule.Queries {
+				ar.Severities = append(ar.Severities, rule.Queries[i].Severity)
+			}
+		}
 	}
 	return nil
 }

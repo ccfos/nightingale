@@ -20,6 +20,7 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
+			ars[i].FillSeverities()
 		}
 	}
 	ginx.NewRender(c).Data(ars, err)
