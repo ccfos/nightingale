@@ -158,7 +158,7 @@ func GetDatasourcesCountBy(ctx *ctx.Context, typ, cate, name string) (int64, err
 	return Count(session)
 }
 
-func GetDatasourcesGetsBy(ctx *ctx.Context, typ, cate, name string, limit, offset int) ([]*Datasource, error) {
+func GetDatasourcesGetsBy(ctx *ctx.Context, typ, cate, name, status string) ([]*Datasource, error) {
 	session := DB(ctx)
 
 	if name != "" {
@@ -177,8 +177,12 @@ func GetDatasourcesGetsBy(ctx *ctx.Context, typ, cate, name string, limit, offse
 		session = session.Where("category = ?", cate)
 	}
 
+	if status != "" {
+		session = session.Where("status = ?", status)
+	}
+
 	var lst []*Datasource
-	err := session.Order("id desc").Limit(limit).Offset(offset).Find(&lst).Error
+	err := session.Order("id desc").Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()

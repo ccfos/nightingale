@@ -15,27 +15,17 @@ type listReq struct {
 	Name     string `json:"name"`
 	Type     string `json:"plugin_type"`
 	Category string `json:"category"`
-	Limit    int    `json:"limit"`
-	P        int    `json:"p"`
 }
 
 func (rt *Router) datasourceList(c *gin.Context) {
 	var req listReq
 	ginx.BindJSON(c, &req)
-	if req.Limit == 0 {
-		req.Limit = 10
-	}
-	if req.P == 0 {
-		req.P = 1
-	}
 
 	typ := req.Type
 	category := req.Category
 	name := req.Name
-	limit := req.Limit
-	p := req.P
 
-	list, err := models.GetDatasourcesGetsBy(rt.Ctx, typ, category, name, limit, (p-1)*limit)
+	list, err := models.GetDatasourcesGetsBy(rt.Ctx, typ, category, name, "")
 	Render(c, list, err)
 }
 
