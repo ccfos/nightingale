@@ -28,10 +28,6 @@ alter table `alert_subscribe` add webhooks text;
 alter table `alert_subscribe` add redefine_webhooks tinyint(1) default 0;
 alter table `alert_subscribe` add for_duration bigint not null default 0;
 
-alter table `target` add datasource_id bigint unsigned not null default 0;
-alter table `target` add offset bigint not null default 0;
-alter table `target` modify cluster varchar(128) not null default '';
-
 alter table `recording_rule` add datasource_ids varchar(255) default '';
 
 alter table `alert_cur_event` add datasource_id bigint unsigned not null default 0;
