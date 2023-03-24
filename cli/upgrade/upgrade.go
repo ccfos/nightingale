@@ -61,6 +61,7 @@ func Upgrade(configFile string) error {
 			HTTPJson:       httpJson,
 			AuthJson:       authJosn,
 			ClusterName:    "default",
+			Status:         "enabled",
 		}
 
 		err = datasrouce.Add(ctx)
