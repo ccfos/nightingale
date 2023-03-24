@@ -291,7 +291,7 @@ func AlertMuteUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 
 		err = lst[i].UpdateFieldsMap(ctx, map[string]interface{}{
 			"datasource_ids": lst[i].DatasourceIds,
-			"rule_prod":      lst[i].Prod,
+			"prod":           lst[i].Prod,
 			"cate":           lst[i].Cate,
 		})
 		if err != nil {
