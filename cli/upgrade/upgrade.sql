@@ -30,6 +30,8 @@ alter table `alert_subscribe` add for_duration bigint not null default 0;
 
 alter table `recording_rule` add datasource_ids varchar(255) default '';
 
+alter table `target` modify cluster varchar(128) not null default '';
+
 alter table `alert_cur_event` add datasource_id bigint unsigned not null default 0;
 alter table `alert_cur_event` add annotations text not null comment 'annotations';
 alter table `alert_cur_event` add rule_config text not null comment 'rule_config';
@@ -38,7 +40,7 @@ alter table `alert_his_event` add datasource_id bigint unsigned not null default
 alter table `alert_his_event` add annotations text not null comment 'annotations';
 alter table `alert_his_event` add rule_config text not null comment 'rule_config';
 
-alter table alerting_engines add datasource_id bigint unsigned not null default 0;
+alter table `alerting_engines` add datasource_id bigint unsigned not null default 0;
 
 CREATE TABLE `datasource`
 (
