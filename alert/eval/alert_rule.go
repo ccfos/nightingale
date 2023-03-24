@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/prom"
+	"github.com/toolkits/pkg/logger"
 )
 
 type Scheduler struct {
@@ -92,7 +93,16 @@ func (s *Scheduler) syncAlertRules() {
 				if !naming.DatasourceHashRing.IsHit(dsId, fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
 					continue
 				}
+				ds := s.datasourceCache.GetById(dsId)
+				if ds == nil {
+					logger.Debugf("datasource %d not found", dsId)
+					continue
+				}
 
+				if ds.Status != "enabled" {
+					logger.Debugf("datasource %d status is %s", dsId, ds.Status)
+					continue
+				}
 				processor := process.NewProcessor(rule, dsId, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.promClients, s.ctx, s.stats)
 
 				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.ctx)
@@ -110,6 +120,16 @@ func (s *Scheduler) syncAlertRules() {
 			// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
 			// if rule is not processed by prometheus engine, create it as externalRule
 			for _, dsId := range rule.DatasourceIdsJson {
+				ds := s.datasourceCache.GetById(dsId)
+				if ds == nil {
+					logger.Debugf("datasource %d not found", dsId)
+					continue
+				}
+
+				if ds.Status != "enabled" {
+					logger.Debugf("datasource %d status is %s", dsId, ds.Status)
+					continue
+				}
 				processor := process.NewProcessor(rule, dsId, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.promClients, s.ctx, s.stats)
 				externalRuleWorkers[processor.Key()] = processor
 			}

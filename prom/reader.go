@@ -42,7 +42,7 @@ type PromSetting struct {
 }
 
 func (pc *PromClientMap) loadFromDatabase() {
-	datasources, err := models.GetDatasourcesGetsBy(pc.ctx, models.PROMETHEUS, "", "", "enabled")
+	datasources, err := models.GetDatasourcesGetsBy(pc.ctx, models.PROMETHEUS, "", "", "")
 	if err != nil {
 		logger.Errorf("failed to get datasources, error: %v", err)
 		return
