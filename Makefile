@@ -28,3 +28,6 @@ run_alert:
 
 run_pushgw:
 	nohup ./n9e-pushgw > n9e-pushgw.log 2>&1 &
+
+release:
+	goreleaser --skip-validate --skip-publish --snapshot

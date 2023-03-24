@@ -27,11 +27,25 @@ builds:
     ldflags:
       - -s -w
       - -X github.com/ccfos/nightingale/v6/pkg/version.Version={{ .Tag }}-{{.Commit}}
+  - id: build-cli
+    main: ./cmd/cli/
+    binary: n9e-cli
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/ccfos/nightingale/v6/pkg/version.Version={{ .Tag }}-{{.Commit}}
 
 archives:
   - id: n9e
     builds:
       - build
+      - build-cli
     format: tar.gz
     format_overrides:
       - goos: windows
@@ -43,6 +57,7 @@ archives:
       - etc/*
       - pub/*
       - integrations/*
+      - cli/*
       - n9e.sql
 
 release:
