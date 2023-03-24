@@ -47,6 +47,9 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 	rules := parseAggrRules(c)
 
 	prod := ginx.QueryStr(c, "prods", "")
+	if prod == "" {
+		prod = ginx.QueryStr(c, "rule_prods", "")
+	}
 	prods := []string{}
 	if prod != "" {
 		prods = strings.Split(prod, ",")
