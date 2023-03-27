@@ -19,7 +19,7 @@ alter table `alert_rule` add rule_config text not null comment 'rule_config';
 alter table `alert_rule` add annotations text not null comment 'annotations';
 
 alter table `alert_mute` add datasource_ids varchar(255) not null default '';
-alter table `alert_mute` add periodic_mutes varchar(4096) not null default '';
+alter table `alert_mute` add periodic_mutes varchar(4096) not null default '[]';
 alter table `alert_mute` add mute_time_type tinyint(1) not null default 0;
 
 alter table `alert_subscribe` add datasource_ids varchar(255) not null default '';
