@@ -85,7 +85,7 @@ func (arw *AlertRuleWorker) Start() {
 func (arw *AlertRuleWorker) Eval() {
 	cachedRule := arw.rule
 	if cachedRule == nil {
-		logger.Errorf("rule_eval:%s rule not found", arw.Key())
+		//logger.Errorf("rule_eval:%s rule not found", arw.Key())
 		return
 	}
 
