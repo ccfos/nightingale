@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
@@ -64,13 +65,13 @@ func (rt *Router) targetGets(c *gin.Context) {
 
 		if len(keys) > 0 {
 			metaMap := make(map[string]*models.HostMeta)
-			vals := rt.Redis.MGet(context.Background(), keys...).Val()
+			vals, _ := storage.MGet(context.Background(), rt.Redis, keys)
 			for _, value := range vals {
 				var meta models.HostMeta
 				if value == nil {
 					continue
 				}
-				err := json.Unmarshal([]byte(value.(string)), &meta)
+				err := json.Unmarshal(value, &meta)
 				if err != nil {
 					logger.Warningf("unmarshal %v host meta failed: %v", value, err)
 					continue
