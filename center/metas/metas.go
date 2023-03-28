@@ -97,7 +97,7 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 
 	newMap := make(map[string]interface{}, count)
 	for ident, meta := range m {
-		newMap[ident] = meta
+		newMap[models.WrapIdent(ident)] = meta
 	}
 	err := storage.MSet(context.Background(), s.redis, newMap)
 	return err
