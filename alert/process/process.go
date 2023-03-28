@@ -171,7 +171,7 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.Callbacks = p.rule.Callbacks
 	event.CallbacksJSON = p.rule.CallbacksJSON
 	event.Annotations = p.rule.Annotations
-	event.AnnotationsJSON = p.rule.AnnotationsJSON
+	event.AnnotationsJSON = make(map[string]string)
 	event.RuleConfig = p.rule.RuleConfig
 	event.RuleConfigJson = p.rule.RuleConfigJson
 	event.Severity = anomalyPoint.Severity
