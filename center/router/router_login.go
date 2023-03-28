@@ -40,7 +40,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 				ginx.NewRender(c).Message(err)
 				return
 			}
-			user.RolesLst = rt.Sso.LDAP.DefaultRoles
+			user.RolesLst = strings.Fields(user.Roles)
 		} else {
 			ginx.NewRender(c).Message(err)
 			return

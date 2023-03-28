@@ -287,7 +287,9 @@ func LdapLogin(ctx *ctx.Context, username, pass, roles string, ldap *ldapx.SsoCl
 		user.Phone = sr.Entries[0].GetAttributeValue(attrs.Phone)
 	}
 
-	user.Roles = roles
+	if user.Roles == "" {
+		user.Roles = roles
+	}
 
 	if user.Id > 0 {
 		if coverAttributes {
