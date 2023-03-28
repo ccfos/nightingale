@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
-
 	"github.com/redis/go-redis/v9"
+	"github.com/toolkits/pkg/logger"
 )
 
 type RedisConfig struct {
@@ -26,11 +26,10 @@ type RedisConfig struct {
 }
 
 type Redis interface {
+	Pipeline() redis.Pipeliner
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
 	Get(ctx context.Context, key string) *redis.StringCmd
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
-	MSet(ctx context.Context, values ...interface{}) *redis.StatusCmd
-	MGet(ctx context.Context, keys ...string) *redis.SliceCmd
 	HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd
 	HSet(ctx context.Context, key string, values ...interface{}) *redis.IntCmd
 	HDel(ctx context.Context, key string, fields ...string) *redis.IntCmd
@@ -112,4 +111,38 @@ func NewRedis(cfg RedisConfig) (Redis, error) {
 		os.Exit(1)
 	}
 	return redisClient, nil
+}
+
+func MGet(ctx context.Context, r Redis, keys []string) ([][]byte, error) {
+	var vals [][]byte
+	pipe := r.Pipeline()
+	for _, key := range keys {
+		pipe.Get(ctx, key)
+	}
+	cmds, err := pipe.Exec(ctx)
+	if err != nil {
+		logger.Errorf("failed to exec pipeline: %s", err)
+		return vals, err
+	}
+
+	for i, key := range keys {
+		cmd := cmds[i]
+		if cmd.Err() != nil {
+			logger.Errorf("failed to get key: %s, err: %s", key, cmd.Err())
+			continue
+		}
+		val := []byte(cmd.(*redis.StringCmd).Val())
+		vals = append(vals, val)
+	}
+
+	return vals, err
+}
+
+func MSet(ctx context.Context, r Redis, m map[string]interface{}) error {
+	pipe := r.Pipeline()
+	for k, v := range m {
+		pipe.Set(ctx, k, v, 0)
+	}
+	_, err := pipe.Exec(ctx)
+	return err
 }
