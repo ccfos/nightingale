@@ -387,7 +387,7 @@ insert into metric_view(name, cate, configs) values('Host View', 0, '{"filters":
 CREATE TABLE `recording_rule` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default '0' comment 'group_id',
-    `datasource_id` bigint not null default 0 comment 'datasource id',
+    `datasource_ids` varchar(255) not null default '' comment 'datasource ids',
     `cluster` varchar(128) not null,
     `name` varchar(255) not null comment 'new metric name',
     `note` varchar(255) not null comment 'rule note',
