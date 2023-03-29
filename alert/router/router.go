@@ -29,10 +29,10 @@ func New(httpConfig httpx.Config, alert aconf.Alert, amc *memsto.AlertMuteCacheT
 	return &Router{
 		HTTP:               httpConfig,
 		Alert:              alert,
-		AlertStats:         astats,
 		AlertMuteCache:     amc,
 		TargetCache:        tc,
 		BusiGroupCache:     bgc,
+		AlertStats:         astats,
 		Ctx:                ctx,
 		ExternalProcessors: externalProcessors,
 	}

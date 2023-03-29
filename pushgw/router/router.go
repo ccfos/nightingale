@@ -24,6 +24,7 @@ type Router struct {
 func New(httpConfig httpx.Config, pushgw pconf.Pushgw, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType, idents *idents.Set, writers *writer.WritersType, ctx *ctx.Context) *Router {
 	return &Router{
 		HTTP:           httpConfig,
+		Pushgw:         pushgw,
 		Writers:        writers,
 		Ctx:            ctx,
 		TargetCache:    tc,

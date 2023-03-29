@@ -45,9 +45,9 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		NotifyConfigCache: ncc,
 		PromClients:       pc,
 		Redis:             redis,
+		MetaSet:           metaSet,
 		Sso:               sso,
 		Ctx:               ctx,
-		MetaSet:           metaSet,
 	}
 }
 
