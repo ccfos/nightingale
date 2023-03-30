@@ -4,7 +4,8 @@ FROM --platform=$BUILDPLATFORM python:3-slim
 WORKDIR /app
 ADD n9e /app
 ADD etc /app
-ADD integrations /app
+RUN mkdir -p /app/integrations
+ADD integrations /app/integrations/
 ADD http://download.flashcat.cloud/wait /wait
 RUN mkdir -p /app/pub && chmod +x /wait
 ADD pub /app/pub/
