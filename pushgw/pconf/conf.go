@@ -11,6 +11,7 @@ import (
 
 type Pushgw struct {
 	BusiGroupLabelKey string
+	WriteConcurrency  int
 	LabelRewrite      bool
 	ForceUseServerTS  bool
 	DebugSample       map[string]string
@@ -78,6 +79,10 @@ func (p *Pushgw) PreCheck() {
 
 	if p.WriterOpt.ShardingKey == "" {
 		p.WriterOpt.ShardingKey = "ident"
+	}
+
+	if p.WriteConcurrency <= 0 {
+		p.WriteConcurrency = 5000
 	}
 
 	for _, writer := range p.Writers {
