@@ -65,7 +65,7 @@ func (rt *Router) targetGets(c *gin.Context) {
 
 		if len(keys) > 0 {
 			metaMap := make(map[string]*models.HostMeta)
-			vals, _ := storage.MGet(context.Background(), rt.Redis, keys)
+			vals := storage.MGet(context.Background(), rt.Redis, keys)
 			for _, value := range vals {
 				var meta models.HostMeta
 				if value == nil {

@@ -177,12 +177,7 @@ func (tc *TargetCacheType) GetHostMetas(targets []*models.Target) map[string]*mo
 		keys = append(keys, models.WrapIdent(targets[i].Ident))
 		num++
 		if num == 100 {
-			vals, err := storage.MGet(context.Background(), tc.redis, keys)
-			if err != nil {
-				logger.Warningf("keys:%v get host meta err:%v", keys, err)
-				continue
-			}
-
+			vals := storage.MGet(context.Background(), tc.redis, keys)
 			for _, value := range vals {
 				var meta models.HostMeta
 				if value == nil {
@@ -202,10 +197,7 @@ func (tc *TargetCacheType) GetHostMetas(targets []*models.Target) map[string]*mo
 		}
 	}
 
-	vals, err := storage.MGet(context.Background(), tc.redis, keys)
-	if err != nil {
-		logger.Warningf("keys:%v get host meta err:%v", keys, err)
-	}
+	vals := storage.MGet(context.Background(), tc.redis, keys)
 	for _, value := range vals {
 		var meta models.HostMeta
 		if value == nil {

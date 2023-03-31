@@ -113,17 +113,13 @@ func NewRedis(cfg RedisConfig) (Redis, error) {
 	return redisClient, nil
 }
 
-func MGet(ctx context.Context, r Redis, keys []string) ([][]byte, error) {
+func MGet(ctx context.Context, r Redis, keys []string) [][]byte {
 	var vals [][]byte
 	pipe := r.Pipeline()
 	for _, key := range keys {
 		pipe.Get(ctx, key)
 	}
-	cmds, err := pipe.Exec(ctx)
-	if err != nil {
-		logger.Errorf("failed to exec pipeline: %s", err)
-		return vals, err
-	}
+	cmds, _ := pipe.Exec(ctx)
 
 	for i, key := range keys {
 		cmd := cmds[i]
@@ -135,7 +131,7 @@ func MGet(ctx context.Context, r Redis, keys []string) ([][]byte, error) {
 		vals = append(vals, val)
 	}
 
-	return vals, err
+	return vals
 }
 
 func MSet(ctx context.Context, r Redis, m map[string]interface{}) error {
