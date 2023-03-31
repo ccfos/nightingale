@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -123,6 +124,10 @@ func MGet(ctx context.Context, r Redis, keys []string) [][]byte {
 
 	for i, key := range keys {
 		cmd := cmds[i]
+		if errors.Is(cmd.Err(), redis.Nil) {
+			continue
+		}
+
 		if cmd.Err() != nil {
 			logger.Errorf("failed to get key: %s, err: %s", key, cmd.Err())
 			continue
