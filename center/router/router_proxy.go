@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"crypto/tls"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -139,7 +140,8 @@ func (rt *Router) dsProxy(c *gin.Context) {
 	}
 
 	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify},
+		Proxy:           http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			Timeout: time.Duration(ds.HTTPJson.DialTimeout) * time.Millisecond,
 		}).DialContext,
