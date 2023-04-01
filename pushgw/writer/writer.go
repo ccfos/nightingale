@@ -201,9 +201,9 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 	for {
 		select {
 		case <-identQueue.closeCh:
+			logger.Infof("write queue:%v closed", identQueue)
 			return
 		default:
-			ws.sema.Acquire()
 			series := identQueue.list.PopBack(ws.pushgw.WriterOpt.QueuePopSize)
 			if len(series) == 0 {
 				time.Sleep(time.Millisecond * 400)
