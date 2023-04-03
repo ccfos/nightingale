@@ -97,13 +97,13 @@ https://user-images.githubusercontent.com/792850/216888712-2565fcea-9df5-47bd-a4
 
 **我们欢迎您以各种方式参与到夜莺开源项目和开源社区中来，工作包括不限于**：
 - 补充和完善文档 => [n9e.github.io](https://n9e.github.io/)
-- 分享您在使用夜莺监控过程中的最佳实践和经验心得 => [文章分享](https://n9e.github.io/docs/prologue/share/)
+- 分享您在使用夜莺监控过程中的最佳实践和经验心得 => [文章分享](https://flashcat.cloud/docs/content/flashcat-monitor/nightingale/share/)
 - 提交产品建议 =》 [github issue](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Ffeature&template=enhancement.md)
 - 提交代码，让夜莺监控更快、更稳、更好用 => [github pull request](https://github.com/didi/nightingale/pulls)
 
 **尊重、认可和记录每一位贡献者的工作**是夜莺开源社区的第一指导原则，我们提倡**高效的提问**，这既是对开发者时间的尊重，也是对整个社区知识沉淀的贡献：
 - 提问之前请先查阅 [FAQ](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq) 
-- 我们使用[GitHub Discussions](https://github.com/ccfos/nightingale/discussions)作为交流论坛，有问题可以到这里搜索、提问
+- 我们使用[论坛](https://answer.flashcat.cloud/)进行交流，有问题可以到这里搜索、提问
 - 我们也推荐你加入微信群，和其他夜莺用户交流经验 (请先加好友：[picobyte](https://www.gitlink.org.cn/UlricQin/gist/tree/master/self.jpeg) 备注：夜莺加群+姓名+公司)
 
 
