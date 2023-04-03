@@ -378,18 +378,19 @@ func (p *Processor) fillTags(anomalyPoint common.AnomalyPoint) {
 		t, err := template.New(fmt.Sprint(p.rule.Id)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
 		if err != nil {
 			tagValue = fmt.Sprintf("parse tag value failed, err:%s", err)
+			tagsMap[arr[0]] = tagValue
+			continue
 		}
 
 		var body bytes.Buffer
 		err = t.Execute(&body, e)
 		if err != nil {
 			tagValue = fmt.Sprintf("parse tag value failed, err:%s", err)
+			tagsMap[arr[0]] = tagValue
+			continue
 		}
 
-		if err == nil {
-			tagValue = body.String()
-		}
-		tagsMap[arr[0]] = tagValue
+		tagsMap[arr[0]] = body.String()
 	}
 
 	tagsMap["rulename"] = p.rule.Name
