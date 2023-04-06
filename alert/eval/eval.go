@@ -202,14 +202,11 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			}
 			for _, target := range targets {
 				m := make(map[string]string)
-				m["ident"] = target.Ident
 				target.FillTagsMap()
 				for k, v := range target.TagsMap {
-					if k == "ident" {
-						continue
-					}
 					m[k] = v
 				}
+				m["ident"] = target.Ident
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(now-target.UpdateAt), trigger.Severity))
 			}
 		case "offset":
@@ -226,17 +223,14 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			hostOffsetMap := arw.processor.TargetCache.GetOffsetHost(targets, now, int64(trigger.Duration))
 			for host, offset := range hostOffsetMap {
 				m := make(map[string]string)
-				m["ident"] = host
 				target, exists := targetMap[host]
 				if exists {
 					target.FillTagsMap()
 					for k, v := range target.TagsMap {
-						if k == "ident" {
-							continue
-						}
 						m[k] = v
 					}
 				}
+				m["ident"] = host
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(offset), trigger.Severity))
 			}
 		case "pct_target_miss":
