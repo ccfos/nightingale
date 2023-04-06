@@ -17,7 +17,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/toolkits/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
 )
@@ -188,11 +187,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/dashboards/builtin/list", rt.builtinBoardGets)
 		pages.GET("/builtin-boards-cates", rt.auth(), rt.user(), rt.builtinBoardCateGets)
 		pages.POST("/builtin-boards-detail", rt.auth(), rt.user(), rt.builtinBoardDetailGets)
-		pages.GET("/integrations/icon/:cate/:name", func(c *gin.Context) {
-			cate := ginx.UrlParamStr(c, "cate")
-			fp := "integrations/" + cate + "/icon/" + ginx.UrlParamStr(c, "name")
-			c.File(path.Join(fp))
-		})
+		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
 
 		pages.GET("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.bgro(), rt.boardGets)
 		pages.POST("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards/add"), rt.bgrw(), rt.boardAdd)

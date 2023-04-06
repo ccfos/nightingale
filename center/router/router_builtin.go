@@ -298,3 +298,14 @@ func (rt *Router) builtinBoardGet(c *gin.Context) {
 
 	ginx.Bomb(http.StatusBadRequest, "%s not found", name)
 }
+
+func (rt *Router) builtinIcon(c *gin.Context) {
+	fp := rt.Center.BuiltinIntegrationsDir
+	if fp == "" {
+		fp = path.Join(runner.Cwd, "integrations")
+	}
+
+	cate := ginx.UrlParamStr(c, "cate")
+	iconPath := fp + "/" + cate + "/icon/" + ginx.UrlParamStr(c, "name")
+	c.File(path.Join(iconPath))
+}
