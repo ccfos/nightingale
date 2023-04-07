@@ -84,7 +84,7 @@ If the performance of a standalone time-series database (such as Prometheus) has
 **Respecting, recognizing, and recording the work of every contributor** is the first guiding principle of the Nightingale open-source community. We advocate effective questioning, which not only respects the developer's time but also contributes to the accumulation of knowledge in the entire community
 - Before asking a question, please first refer to the [FAQ](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq) 
 - We use [GitHub Discussions](https://github.com/ccfos/nightingale/discussions) as the communication forum. You can search and ask questions here.
-- We also recommend that you join ours [discard](https://discord.gg/qsRmtAuPw2) to exchange experiences with other Nightingale users.
+- We also recommend that you join ours [Slack channel](https://n9e-talk.slack.com/) to exchange experiences with other Nightingale users.
 
 
 ## Who is using Nightingale
