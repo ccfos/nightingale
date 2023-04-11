@@ -206,6 +206,7 @@ func (rt *Router) falconPush(c *gin.Context) {
 			}
 		}
 
+		rt.EnrichLabels(pt)
 		rt.debugSample(c.Request.RemoteAddr, pt)
 
 		if rt.Pushgw.WriterOpt.ShardingKey == "ident" {

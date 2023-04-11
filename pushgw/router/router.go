@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/prometheus/prompb"
 
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -11,6 +12,8 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 )
 
+type EnrichLabelsFunc func(pt *prompb.TimeSeries)
+
 type Router struct {
 	HTTP           httpx.Config
 	Pushgw         pconf.Pushgw
@@ -19,6 +22,7 @@ type Router struct {
 	IdentSet       *idents.Set
 	Writers        *writer.WritersType
 	Ctx            *ctx.Context
+	EnrichLabels   EnrichLabelsFunc
 }
 
 func New(httpConfig httpx.Config, pushgw pconf.Pushgw, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType, idents *idents.Set, writers *writer.WritersType, ctx *ctx.Context) *Router {
@@ -30,6 +34,7 @@ func New(httpConfig httpx.Config, pushgw pconf.Pushgw, tc *memsto.TargetCacheTyp
 		TargetCache:    tc,
 		BusiGroupCache: bg,
 		IdentSet:       idents,
+		EnrichLabels:   func(pt *prompb.TimeSeries) {},
 	}
 }
 
