@@ -17,6 +17,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/storage"
+	"github.com/toolkits/pkg/runner"
 
 	"github.com/gin-gonic/gin"
 )
@@ -91,9 +92,17 @@ func (rt *Router) configNoRoute(r *gin.Engine) {
 		suffix := arr[len(arr)-1]
 		switch suffix {
 		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map":
-			c.File(path.Join(strings.Split("pub/"+c.Request.URL.Path, "/")...))
+			cwdarr := []string{"/"}
+			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+			cwdarr = append(cwdarr, "pub")
+			cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
+			c.File(path.Join(cwdarr...))
 		default:
-			c.File(path.Join("pub", "index.html"))
+			cwdarr := []string{"/"}
+			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+			cwdarr = append(cwdarr, "pub")
+			cwdarr = append(cwdarr, "index.html")
+			c.File(path.Join(cwdarr...))
 		}
 	})
 }
