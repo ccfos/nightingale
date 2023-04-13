@@ -1,10 +1,14 @@
 package router
 
 import (
+	"crypto/tls"
+	"net/http"
+
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 func (rt *Router) pluginList(c *gin.Context) {
@@ -37,6 +41,12 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 
 	var err error
 	var count int64
+
+	if !DatasourceUrlIsAvail(req) {
+		Render(c, nil, "config is not available")
+		return
+	}
+
 	if req.Id == 0 {
 		req.CreatedBy = username
 		req.Status = "enabled"
@@ -56,6 +66,48 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	}
 
 	Render(c, nil, err)
+}
+
+func DatasourceUrlIsAvail(ds models.Datasource) bool {
+	if ds.HTTPJson.Url == "" {
+		return false
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify,
+			},
+		},
+	}
+
+	req, err := http.NewRequest("GET", ds.HTTPJson.Url, nil)
+	if err != nil {
+		logger.Errorf("Error creating request: %v\n", err)
+		return false
+	}
+
+	if ds.AuthJson.BasicAuthUser != "" {
+		req.SetBasicAuth(ds.AuthJson.BasicAuthUser, ds.AuthJson.BasicAuthPassword)
+	}
+
+	for k, v := range ds.HTTPJson.Headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		logger.Errorf("Error making request: %v\n", err)
+		return false
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		logger.Errorf("Error making request: %v\n", resp.StatusCode)
+		return false
+	}
+
+	return true
 }
 
 func (rt *Router) datasourceGet(c *gin.Context) {
