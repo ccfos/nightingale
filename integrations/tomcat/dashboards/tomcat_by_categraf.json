@@ -1,440 +1,468 @@
 {
-  "name": "Tomcat - categraf",
-  "tags": "Categraf",
-  "ident": "",
-  "configs": {
-      "var": [
-          {
-              "name": "instance",
-              "definition": "label_values(tomcat_up, instance)"
-          }
-      ],
-      "links": [
-          {
-              "title": "n9e",
-              "url": "https://n9e.gitee.io/",
-              "targetBlank": true
-          }
-      ],
-      "version": "2.0.0",
-      "panels": [
-          {
-              "id": "cdc17d90-17f5-44b8-99a1-94764de61698",
-              "type": "row",
-              "name": "connector",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 0,
-                  "i": "cdc17d90-17f5-44b8-99a1-94764de61698"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "rate(tomcat_connector_bytes_sent{instance=\"$instance\"}[1m])",
-                      "legend": "sent"
-                  },
-                  {
-                      "expr": "rate(tomcat_connector_bytes_received{instance=\"$instance\"}[1m])",
-                      "refId": "B",
-                      "legend": "received"
-                  }
-              ],
-              "name": "Traffic Bytes / Second",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesIEC"
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 1,
-                  "i": "004b1408-dcfe-40e1-8910-a1f16a574a85"
-              },
-              "id": "004b1408-dcfe-40e1-8910-a1f16a574a85"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "rate(tomcat_connector_request_count{instance=\"$instance\"}[1m])",
-                      "legend": "tomcat_connector_request_count"
-                  },
-                  {
-                      "expr": "rate(tomcat_connector_error_count{instance=\"$instance\"}[1m])",
-                      "refId": "B",
-                      "legend": "tomcat_connector_error_count"
-                  }
-              ],
-              "name": "Request count / Second",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 1,
-                  "i": "010aabe0-9b60-4bf3-867e-b5773703090a"
-              },
-              "id": "010aabe0-9b60-4bf3-867e-b5773703090a"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "tomcat_connector_max_threads{instance=\"$instance\"}",
-                      "legend": "max_threads"
-                  },
-                  {
-                      "expr": "tomcat_connector_current_thread_count{instance=\"$instance\"}",
-                      "refId": "B",
-                      "legend": "current_thread_count"
-                  },
-                  {
-                      "expr": "tomcat_connector_current_threads_busy{instance=\"$instance\"}",
-                      "refId": "C",
-                      "legend": "current_threads_busy"
-                  }
-              ],
-              "name": "Tread",
-              "description": "max_threads: The maximum number of allowed worker threads.\ncurrent_thread_count: The number of threads managed by the thread pool\ncurrent_threads_busy: The number of threads that are in use",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 3,
-                  "i": "40ea7316-46b9-4447-8e45-6b5acb77f0d2"
-              },
-              "id": "40ea7316-46b9-4447-8e45-6b5acb77f0d2"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "rate(tomcat_connector_processing_time{instance=\"$instance\"}[1m])",
-                      "legend": "{{name}}-processing_time"
-                  }
-              ],
-              "name": "Processing time",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 3,
-                  "i": "c99a33ea-53d1-464d-84aa-e7be9e15cfb1"
-              },
-              "id": "c99a33ea-53d1-464d-84aa-e7be9e15cfb1"
-          },
-          {
-              "id": "1cca4a8b-9352-4d15-9488-ae3aee7b17e3",
-              "type": "row",
-              "name": "mem used",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 10,
-                  "i": "1cca4a8b-9352-4d15-9488-ae3aee7b17e3"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "tomcat_jvm_memory_max{instance=\"$instance\"}",
-                      "legend": "max"
-                  },
-                  {
-                      "expr": "tomcat_jvm_memory_total{instance=\"$instance\"}",
-                      "refId": "B",
-                      "legend": "used"
-                  },
-                  {
-                      "expr": "tomcat_jvm_memory_free{instance=\"$instance\"}",
-                      "refId": "C",
-                      "legend": "free"
-                  }
-              ],
-              "name": "Mem Used",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 24,
-                  "x": 0,
-                  "y": 11,
-                  "i": "07059834-fb32-4dfd-88cd-a3bad0203c79"
-              },
-              "id": "07059834-fb32-4dfd-88cd-a3bad0203c79"
-          },
-          {
-              "id": "6e07a88a-41b4-4fe2-b11f-0f5c8cb95d52",
-              "type": "row",
-              "name": "memorypool",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 18,
-                  "i": "6e07a88a-41b4-4fe2-b11f-0f5c8cb95d52"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "tomcat_jvm_memorypool_used{instance=\"$instance\"}",
-                      "legend": "{{name}}"
-                  }
-              ],
-              "name": "Used",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesIEC",
-                      "decimals": 1
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 0,
-                  "y": 19,
-                  "i": "92d79cd5-7a53-4f29-a42a-34db741e3c62"
-              },
-              "id": "92d79cd5-7a53-4f29-a42a-34db741e3c62"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "tomcat_jvm_memorypool_max{instance=\"$instance\"}",
-                      "legend": "{{name}}"
-                  }
-              ],
-              "name": "Max",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesIEC",
-                      "decimals": 1
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 6,
-                  "y": 19,
-                  "i": "c6aace01-4b13-45dd-87e2-fd73cc3e5a28"
-              },
-              "id": "c6aace01-4b13-45dd-87e2-fd73cc3e5a28"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "tomcat_jvm_memorypool_committed{instance=\"$instance\"}",
-                      "legend": "{{name}}"
-                  }
-              ],
-              "name": "Committed",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesIEC",
-                      "decimals": 1
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 12,
-                  "y": 19,
-                  "i": "8cbc2b26-290e-4d11-a56c-e2f0645179a0"
-              },
-              "id": "8cbc2b26-290e-4d11-a56c-e2f0645179a0"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "tomcat_jvm_memorypool_init{instance=\"$instance\"}",
-                      "legend": "{{name}}"
-                  }
-              ],
-              "name": "Init",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesIEC",
-                      "decimals": 1
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 18,
-                  "y": 19,
-                  "i": "b81e4684-c03b-4ee1-86f2-45c883ace756"
-              },
-              "id": "b81e4684-c03b-4ee1-86f2-45c883ace756"
-          }
-      ]
-  }
+    "name": "Tomcat - categraf",
+    "tags": "Categraf",
+    "ident": "",
+    "configs": {
+        "links": [
+            {
+                "targetBlank": true,
+                "title": "n9e",
+                "url": "https://n9e.gitee.io/"
+            }
+        ],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "cdc17d90-17f5-44b8-99a1-94764de61698",
+                "layout": {
+                    "h": 1,
+                    "i": "cdc17d90-17f5-44b8-99a1-94764de61698",
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "connector",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "004b1408-dcfe-40e1-8910-a1f16a574a85",
+                "layout": {
+                    "h": 7,
+                    "i": "004b1408-dcfe-40e1-8910-a1f16a574a85",
+                    "w": 12,
+                    "x": 0,
+                    "y": 1
+                },
+                "name": "Traffic Bytes / Second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(tomcat_connector_bytes_sent{instance=\"$instance\"}[1m])",
+                        "legend": "sent",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(tomcat_connector_bytes_received{instance=\"$instance\"}[1m])",
+                        "legend": "received",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "010aabe0-9b60-4bf3-867e-b5773703090a",
+                "layout": {
+                    "h": 7,
+                    "i": "010aabe0-9b60-4bf3-867e-b5773703090a",
+                    "w": 12,
+                    "x": 12,
+                    "y": 1
+                },
+                "name": "Request count / Second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(tomcat_connector_request_count{instance=\"$instance\"}[1m])",
+                        "legend": "tomcat_connector_request_count",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(tomcat_connector_error_count{instance=\"$instance\"}[1m])",
+                        "legend": "tomcat_connector_error_count",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "max_threads: The maximum number of allowed worker threads.\ncurrent_thread_count: The number of threads managed by the thread pool\ncurrent_threads_busy: The number of threads that are in use",
+                "id": "40ea7316-46b9-4447-8e45-6b5acb77f0d2",
+                "layout": {
+                    "h": 7,
+                    "i": "40ea7316-46b9-4447-8e45-6b5acb77f0d2",
+                    "w": 12,
+                    "x": 0,
+                    "y": 3
+                },
+                "name": "Tread",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "tomcat_connector_max_threads{instance=\"$instance\"}",
+                        "legend": "max_threads",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "tomcat_connector_current_thread_count{instance=\"$instance\"}",
+                        "legend": "current_thread_count",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "tomcat_connector_current_threads_busy{instance=\"$instance\"}",
+                        "legend": "current_threads_busy",
+                        "refId": "C"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "c99a33ea-53d1-464d-84aa-e7be9e15cfb1",
+                "layout": {
+                    "h": 7,
+                    "i": "c99a33ea-53d1-464d-84aa-e7be9e15cfb1",
+                    "w": 12,
+                    "x": 12,
+                    "y": 3
+                },
+                "name": "Processing time",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(tomcat_connector_processing_time{instance=\"$instance\"}[1m])",
+                        "legend": "{{name}}-processing_time",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "1cca4a8b-9352-4d15-9488-ae3aee7b17e3",
+                "layout": {
+                    "h": 1,
+                    "i": "1cca4a8b-9352-4d15-9488-ae3aee7b17e3",
+                    "w": 24,
+                    "x": 0,
+                    "y": 10
+                },
+                "name": "mem used",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "07059834-fb32-4dfd-88cd-a3bad0203c79",
+                "layout": {
+                    "h": 7,
+                    "i": "07059834-fb32-4dfd-88cd-a3bad0203c79",
+                    "w": 24,
+                    "x": 0,
+                    "y": 11
+                },
+                "name": "Mem Used",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "tomcat_jvm_memory_max{instance=\"$instance\"}",
+                        "legend": "max",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "tomcat_jvm_memory_total{instance=\"$instance\"}",
+                        "legend": "used",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "tomcat_jvm_memory_free{instance=\"$instance\"}",
+                        "legend": "free",
+                        "refId": "C"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "6e07a88a-41b4-4fe2-b11f-0f5c8cb95d52",
+                "layout": {
+                    "h": 1,
+                    "i": "6e07a88a-41b4-4fe2-b11f-0f5c8cb95d52",
+                    "w": 24,
+                    "x": 0,
+                    "y": 18
+                },
+                "name": "memorypool",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "92d79cd5-7a53-4f29-a42a-34db741e3c62",
+                "layout": {
+                    "h": 7,
+                    "i": "92d79cd5-7a53-4f29-a42a-34db741e3c62",
+                    "w": 6,
+                    "x": 0,
+                    "y": 19
+                },
+                "name": "Used",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "tomcat_jvm_memorypool_used{instance=\"$instance\"}",
+                        "legend": "{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "c6aace01-4b13-45dd-87e2-fd73cc3e5a28",
+                "layout": {
+                    "h": 7,
+                    "i": "c6aace01-4b13-45dd-87e2-fd73cc3e5a28",
+                    "w": 6,
+                    "x": 6,
+                    "y": 19
+                },
+                "name": "Max",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "tomcat_jvm_memorypool_max{instance=\"$instance\"}",
+                        "legend": "{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "8cbc2b26-290e-4d11-a56c-e2f0645179a0",
+                "layout": {
+                    "h": 7,
+                    "i": "8cbc2b26-290e-4d11-a56c-e2f0645179a0",
+                    "w": 6,
+                    "x": 12,
+                    "y": 19
+                },
+                "name": "Committed",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "tomcat_jvm_memorypool_committed{instance=\"$instance\"}",
+                        "legend": "{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "b81e4684-c03b-4ee1-86f2-45c883ace756",
+                "layout": {
+                    "h": 7,
+                    "i": "b81e4684-c03b-4ee1-86f2-45c883ace756",
+                    "w": 6,
+                    "x": 18,
+                    "y": 19
+                },
+                "name": "Init",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "tomcat_jvm_memorypool_init{instance=\"$instance\"}",
+                        "legend": "{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            }
+        ],
+        "var": [
+            {
+                "name": "prom",
+                "type": "datasource",
+                "definition": "prometheus"
+            },
+            {
+                "definition": "label_values(tomcat_up, instance)",
+                "name": "instance",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                }
+            }
+        ],
+        "version": "3.0.0"
+    }
 }
