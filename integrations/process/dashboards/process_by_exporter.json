@@ -1,1049 +1,1106 @@
 {
-  "name": "Linux Process - exporter",
-  "tags": "Prometheus Process",
-  "ident": "",
-  "configs": {
-      "var": [
-          {
-              "name": "instance",
-              "definition": "label_values(namedprocess_namegroup_num_procs, instance)",
-              "multi": false,
-              "options": [
-                  "tt-fc-es02.nj:12346"
-              ]
-          },
-          {
-              "definition": "label_values(namedprocess_namegroup_cpu_seconds_total{instance=~\"$instance\"},groupname)",
-              "name": "processes",
-              "multi": true,
-              "options": [
-                  "(sd-pam)",
-                  "NetworkManager",
-                  "YDLive",
-                  "YDPython",
-                  "YDService",
-                  "agent",
-                  "agetty",
-                  "atd",
-                  "auditd",
-                  "barad_agent",
-                  "bash",
-                  "chronyd",
-                  "crond",
-                  "dbus-daemon",
-                  "fc-agent",
-                  "fc-alert",
-                  "fc-checker",
-                  "gpg-agent",
-                  "less",
-                  "lsmd",
-                  "mongod",
-                  "mysql",
-                  "mysqld",
-                  "nginx",
-                  "ngo",
-                  "node",
-                  "openvpn",
-                  "podman pause",
-                  "polkitd",
-                  "process-agent",
-                  "redis-server",
-                  "rsyslogd",
-                  "sedispatch",
-                  "sgagent",
-                  "sh",
-                  "ssh-agent",
-                  "sshd",
-                  "sssd",
-                  "sssd_be",
-                  "sssd_nss",
-                  "su",
-                  "sudo",
-                  "systemd",
-                  "systemd-journal",
-                  "systemd-logind",
-                  "systemd-udevd",
-                  "tat_agent",
-                  "trace-agent",
-                  "tuned",
-                  "unbound-anchor",
-                  "vminsert-prod",
-                  "vmselect-prod",
-                  "vmstorage-prod"
-              ],
-              "allOption": true
-          }
-      ],
-      "version": "2.0.0",
-      "panels": [
-          {
-              "id": "021aedd5-dac7-4431-aeea-50c0c594e784",
-              "type": "row",
-              "name": "Cpu Usage",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 0,
-                  "i": "021aedd5-dac7-4431-aeea-50c0c594e784"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,(rate(namedprocess_namegroup_cpu_seconds_total{mode=\"user\",groupname=~\"$processes\",instance=~\"$instance\"}[5m])  + ignoring(mode)  rate(namedprocess_namegroup_cpu_seconds_total{mode=\"system\",groupname=~\"$processes\",instance=~\"$instance\"}[5m])) or  (irate(namedprocess_namegroup_cpu_seconds_total{mode=\"user\",groupname=~\"$processes\",instance=~\"$instance\"}[5m]) + ignoring(mode) irate(namedprocess_namegroup_cpu_seconds_total{mode=\"system\",groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by Total CPU cores used",
-              "description": "进程占用CPU时间（用户态+内核态），倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "percentUnit"
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 1,
-                  "i": "0f55cad5-ae67-44de-bba5-f6e1bd23066a"
-              },
-              "id": "0f55cad5-ae67-44de-bba5-f6e1bd23066a"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5, rate(namedprocess_namegroup_cpu_seconds_total{mode=\"system\",groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or  ( irate(namedprocess_namegroup_cpu_seconds_total{mode=\"system\",groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by System CPU cores used",
-              "description": "进程占用CPU时间（内核态），倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "percentUnit"
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 1,
-                  "i": "e200eb2a-9cd6-4954-880f-9a354c1af2cc"
-              },
-              "id": "e200eb2a-9cd6-4954-880f-9a354c1af2cc"
-          },
-          {
-              "id": "3f0a9068-51ab-4889-82e1-444cd23c56e8",
-              "type": "row",
-              "name": "Memory Usage",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 8,
-                  "i": "3f0a9068-51ab-4889-82e1-444cd23c56e8"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,(  (avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"swapped\",instance=~\"$instance\"}[5m])+ ignoring (memtype) avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"resident\",instance=~\"$instance\"}[5m]))  or  (avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"swapped\",instance=~\"$instance\"}[5m])+ ignoring (memtype) avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"resident\",instance=~\"$instance\"}[5m]))  ))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by Used memory",
-              "description": "进程常驻内存与交换空间平均占用容量之和，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesIEC"
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 9,
-                  "i": "9cb0cc2f-c122-4f5e-98ed-8bf310bd612a"
-              },
-              "id": "9cb0cc2f-c122-4f5e-98ed-8bf310bd612a"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5, (avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"resident\",instance=~\"$instance\"}[5m])  or avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"resident\",instance=~\"$instance\"}[5m]) ))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by Resident Memory",
-              "description": "进程常驻内存平均占用容量之和，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesIEC"
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 9,
-                  "i": "7aceae00-23be-447f-87df-47f74b278190"
-              },
-              "id": "7aceae00-23be-447f-87df-47f74b278190"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,( avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"swapped\",instance=~\"$instance\"}[5m]) or avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"swapped\",instance=~\"$instance\"}[5m]))) ",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by Swapped Memory",
-              "description": "进程交换内存平均占用容量，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesIEC"
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 11,
-                  "i": "55b255d8-756e-421c-9690-675d7c174e86"
-              },
-              "id": "55b255d8-756e-421c-9690-675d7c174e86"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,( avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"virtual\",instance=~\"$instance\"}[5m]) or avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"virtual\",instance=~\"$instance\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by Virtual Memory",
-              "description": "进程虚拟内存平均占用容量，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesIEC"
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 11,
-                  "i": "3c900819-5955-4bef-b419-ea8c47107b0d"
-              },
-              "id": "3c900819-5955-4bef-b419-ea8c47107b0d"
-          },
-          {
-              "id": "4d72a763-48f3-480b-9701-bc297be1bbfb",
-              "type": "row",
-              "name": "Disk IO Usage",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 18,
-                  "i": "4d72a763-48f3-480b-9701-bc297be1bbfb"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,(rate(namedprocess_namegroup_write_bytes_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or irate(namedprocess_namegroup_write_bytes_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by Bytes Written",
-              "description": "进程写数据量，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesSI"
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 19,
-                  "i": "4cb30905-65f6-42aa-895e-ef3679905ef8"
-              },
-              "id": "4cb30905-65f6-42aa-895e-ef3679905ef8"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,(rate(namedprocess_namegroup_read_bytes_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or irate(namedprocess_namegroup_read_bytes_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by Bytes Read",
-              "description": "进程读数据量，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesSI"
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 19,
-                  "i": "d74f4d5f-db71-4781-b539-0df17dfcd42f"
-              },
-              "id": "d74f4d5f-db71-4781-b539-0df17dfcd42f"
-          },
-          {
-              "id": "e460097e-c3c8-45da-8202-dee1de996ddf",
-              "type": "row",
-              "name": "Process and Thread Counts",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 26,
-                  "i": "e460097e-c3c8-45da-8202-dee1de996ddf"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,(max_over_time(namedprocess_namegroup_num_procs{groupname=~\"$processes\",instance=~\"$instance\"}[5m])  or max_over_time(namedprocess_namegroup_num_procs{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by number of processes instances",
-              "description": "同名进程数，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 27,
-                  "i": "1b44ce6f-ca65-49f5-892e-05444c9aa580"
-              },
-              "id": "1b44ce6f-ca65-49f5-892e-05444c9aa580"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,(max_over_time(namedprocess_namegroup_num_threads{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or max_over_time(namedprocess_namegroup_num_threads{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by number of threads",
-              "description": "进程内线程数，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 27,
-                  "i": "24975aae-a573-4998-bdab-ffcb19cee2ae"
-              },
-              "id": "24975aae-a573-4998-bdab-ffcb19cee2ae"
-          },
-          {
-              "id": "3df9fc7b-bf9c-45bc-baa1-72ef83bc6b34",
-              "type": "row",
-              "name": "Context Switches",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 34,
-                  "i": "3df9fc7b-bf9c-45bc-baa1-72ef83bc6b34"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,( rate(namedprocess_namegroup_context_switches_total{groupname=~\"$processes\",instance=~\"$instance\",ctxswitchtype=\"voluntary\"}[5m]) or irate(namedprocess_namegroup_context_switches_total{groupname=~\"$processes\",instance=~\"$instance\",ctxswitchtype=\"voluntary\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top Processes by Voluntary Context Switches",
-              "description": "进程自愿中断（如I/O完成）次数，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 35,
-                  "i": "3775f2e7-fa98-4458-9659-0d1221b3cc03"
-              },
-              "id": "3775f2e7-fa98-4458-9659-0d1221b3cc03"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,( rate(namedprocess_namegroup_context_switches_total{groupname=~\"$processes\",instance=~\"$instance\",ctxswitchtype=\"nonvoluntary\"}[5m]) or irate(namedprocess_namegroup_context_switches_total{groupname=~\"$processes\",instance=~\"$instance\",ctxswitchtype=\"nonvoluntary\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top Processes by  Non-Voluntary Context Switches",
-              "description": "进程被迫中断（如CPU时间耗尽）次数，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 35,
-                  "i": "a0e912d2-5b0d-42d0-bcf6-27bd54b5f07d"
-              },
-              "id": "a0e912d2-5b0d-42d0-bcf6-27bd54b5f07d"
-          },
-          {
-              "id": "79aedbba-da75-4393-b322-1565655017c0",
-              "type": "row",
-              "name": "File Descriptors",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 42,
-                  "i": "79aedbba-da75-4393-b322-1565655017c0"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,(max_over_time(namedprocess_namegroup_open_filedesc{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or max_over_time(namedprocess_namegroup_open_filedesc{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by Open File Descriptors",
-              "description": "打开文件数，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 43,
-                  "i": "73dc1195-8ffd-4c6e-b963-d10cde9ae7ba"
-              },
-              "id": "73dc1195-8ffd-4c6e-b963-d10cde9ae7ba"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,( max_over_time(namedprocess_namegroup_worst_fd_ratio{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or max_over_time(namedprocess_namegroup_worst_fd_ratio{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) ))*100",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by File Descriptor Usage Percent",
-              "description": "已打开文件数与允许打开文件数占比，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "percent"
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 43,
-                  "i": "5ffa8032-5b55-4841-a12e-81c1fc8443dd"
-              },
-              "id": "5ffa8032-5b55-4841-a12e-81c1fc8443dd"
-          },
-          {
-              "id": "fe967a6c-63bc-48d6-9632-07da1675581b",
-              "type": "row",
-              "name": "Page Faults",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 50,
-                  "i": "fe967a6c-63bc-48d6-9632-07da1675581b"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,( rate(namedprocess_namegroup_major_page_faults_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or irate(namedprocess_namegroup_major_page_faults_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by Major Page Faults",
-              "description": "主要页缺失次数，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 51,
-                  "i": "8944f17d-51e6-435d-808a-8301b8539f08"
-              },
-              "id": "8944f17d-51e6-435d-808a-8301b8539f08"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,( rate(namedprocess_namegroup_minor_page_faults_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or irate(namedprocess_namegroup_minor_page_faults_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top processes by Minor Page Faults",
-              "description": "次要页缺失次数，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 51,
-                  "i": "b9bed634-d25a-4542-8fd9-4c63e9db766c"
-              },
-              "id": "b9bed634-d25a-4542-8fd9-4c63e9db766c"
-          },
-          {
-              "id": "76910d2f-d2c7-48c1-ad05-9651110f0ff1",
-              "type": "row",
-              "name": "Statuses",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 58,
-                  "i": "76910d2f-d2c7-48c1-ad05-9651110f0ff1"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,( max_over_time(namedprocess_namegroup_states{instance=~\"$instance\", groupname=~\"$processes\", state=\"Running\"}[5m]) or max_over_time(namedprocess_namegroup_states{instance=~\"$instance\", groupname=~\"$processes\", state=\"Running\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top running processes",
-              "description": "运行态同名进程数量，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 59,
-                  "i": "7c0a07a2-f936-41c1-a03e-328d8bc1feea"
-              },
-              "id": "7c0a07a2-f936-41c1-a03e-328d8bc1feea"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,( max_over_time(namedprocess_namegroup_states{instance=~\"$instance\", groupname=~\"$processes\", state=\"Waiting\"}[5m]) or max_over_time(namedprocess_namegroup_states{instance=~\"$instance\", groupname=~\"$processes\", state=\"Waiting\"}[5m])))",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Top of processes waiting on IO",
-              "description": "等待IO状态同名进程数量，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 59,
-                  "i": "31829466-def5-496f-83e8-10806b19410b"
-              },
-              "id": "31829466-def5-496f-83e8-10806b19410b"
-          },
-          {
-              "id": "9c79f06d-0262-4284-a65e-bcd0d84130be",
-              "type": "row",
-              "name": "Kernel Waits(WCHAN)",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 66,
-                  "i": "9c79f06d-0262-4284-a65e-bcd0d84130be"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,sum(avg_over_time(namedprocess_namegroup_threads_wchan{instance=~\"$instance\", groupname=~\"$processes\"}[5m])) by (wchan) )",
-                      "legend": "{{wchan}}"
-                  }
-              ],
-              "name": "Kernel waits for All",
-              "description": "内核函数等待线程数量，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 67,
-                  "i": "5decb873-5452-4084-8bbf-7bd3c9fa33f4"
-              },
-              "id": "5decb873-5452-4084-8bbf-7bd3c9fa33f4"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "topk(5,sum(avg_over_time(namedprocess_namegroup_threads_wchan{instance=~\"$instance\", groupname=~\"$processes\"}[5m])) by (wchan,groupname) )",
-                      "legend": "{{wchan}}"
-                  }
-              ],
-              "name": "Kernel wait Details for All",
-              "description": "内核函数等待线程数量按进程统计，倒排前5",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 67,
-                  "i": "20f14e96-5ac8-43f8-93a8-3f7696f5d8d5"
-              },
-              "id": "20f14e96-5ac8-43f8-93a8-3f7696f5d8d5"
-          },
-          {
-              "id": "972e68da-d03d-4638-81a2-fba73d215788",
-              "type": "row",
-              "name": "Uptime",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 74,
-                  "i": "972e68da-d03d-4638-81a2-fba73d215788"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "time()-(namedprocess_namegroup_oldest_start_time_seconds{instance=~\"$instance\",groupname=~\"$processes\"}>0)",
-                      "legend": "{{groupname}}"
-                  }
-              ],
-              "name": "Processes by uptime",
-              "description": "进程启动时长",
-              "custom": {
-                  "showHeader": true,
-                  "calc": "lastNotNull",
-                  "displayMode": "seriesToRows"
-              },
-              "options": {
-                  "standardOptions": {
-                      "util": "seconds"
-                  }
-              },
-              "overrides": [
-                  {
-                      "properties": {
-                          "standardOptions": {
-                              "util": "seconds"
-                          },
-                          "valueMappings": [
-                              {
-                                  "type": "range",
-                                  "match": {
-                                      "to": 1800
-                                  },
-                                  "result": {
-                                      "color": "#f91010"
-                                  }
-                              },
-                              {
-                                  "type": "range",
-                                  "match": {
-                                      "from": 1800
-                                  },
-                                  "result": {
-                                      "color": "#21f312"
-                                  }
-                              }
-                          ]
-                      }
-                  }
-              ],
-              "version": "2.0.0",
-              "type": "table",
-              "layout": {
-                  "h": 7,
-                  "w": 24,
-                  "x": 0,
-                  "y": 75,
-                  "i": "eff1ee11-1d70-4c79-a159-588a363a2b60"
-              },
-              "id": "eff1ee11-1d70-4c79-a159-588a363a2b60"
-          }
-      ]
-  }
+    "name": "Linux Process - exporter",
+    "tags": "Prometheus Process",
+    "ident": "",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "021aedd5-dac7-4431-aeea-50c0c594e784",
+                "layout": {
+                    "h": 1,
+                    "i": "021aedd5-dac7-4431-aeea-50c0c594e784",
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Cpu Usage",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "进程占用CPU时间（用户态+内核态），倒排前5",
+                "id": "0f55cad5-ae67-44de-bba5-f6e1bd23066a",
+                "layout": {
+                    "h": 7,
+                    "i": "0f55cad5-ae67-44de-bba5-f6e1bd23066a",
+                    "w": 12,
+                    "x": 0,
+                    "y": 1
+                },
+                "name": "Top processes by Total CPU cores used",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,(rate(namedprocess_namegroup_cpu_seconds_total{mode=\"user\",groupname=~\"$processes\",instance=~\"$instance\"}[5m])  + ignoring(mode)  rate(namedprocess_namegroup_cpu_seconds_total{mode=\"system\",groupname=~\"$processes\",instance=~\"$instance\"}[5m])) or  (irate(namedprocess_namegroup_cpu_seconds_total{mode=\"user\",groupname=~\"$processes\",instance=~\"$instance\"}[5m]) + ignoring(mode) irate(namedprocess_namegroup_cpu_seconds_total{mode=\"system\",groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "进程占用CPU时间（内核态），倒排前5",
+                "id": "e200eb2a-9cd6-4954-880f-9a354c1af2cc",
+                "layout": {
+                    "h": 7,
+                    "i": "e200eb2a-9cd6-4954-880f-9a354c1af2cc",
+                    "w": 12,
+                    "x": 12,
+                    "y": 1
+                },
+                "name": "Top processes by System CPU cores used",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5, rate(namedprocess_namegroup_cpu_seconds_total{mode=\"system\",groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or  ( irate(namedprocess_namegroup_cpu_seconds_total{mode=\"system\",groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "3f0a9068-51ab-4889-82e1-444cd23c56e8",
+                "layout": {
+                    "h": 1,
+                    "i": "3f0a9068-51ab-4889-82e1-444cd23c56e8",
+                    "w": 24,
+                    "x": 0,
+                    "y": 8
+                },
+                "name": "Memory Usage",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "进程常驻内存与交换空间平均占用容量之和，倒排前5",
+                "id": "9cb0cc2f-c122-4f5e-98ed-8bf310bd612a",
+                "layout": {
+                    "h": 7,
+                    "i": "9cb0cc2f-c122-4f5e-98ed-8bf310bd612a",
+                    "w": 12,
+                    "x": 0,
+                    "y": 9
+                },
+                "name": "Top processes by Used memory",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,(  (avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"swapped\",instance=~\"$instance\"}[5m])+ ignoring (memtype) avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"resident\",instance=~\"$instance\"}[5m]))  or  (avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"swapped\",instance=~\"$instance\"}[5m])+ ignoring (memtype) avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"resident\",instance=~\"$instance\"}[5m]))  ))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "进程常驻内存平均占用容量之和，倒排前5",
+                "id": "7aceae00-23be-447f-87df-47f74b278190",
+                "layout": {
+                    "h": 7,
+                    "i": "7aceae00-23be-447f-87df-47f74b278190",
+                    "w": 12,
+                    "x": 12,
+                    "y": 9
+                },
+                "name": "Top processes by Resident Memory",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5, (avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"resident\",instance=~\"$instance\"}[5m])  or avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"resident\",instance=~\"$instance\"}[5m]) ))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "进程交换内存平均占用容量，倒排前5",
+                "id": "55b255d8-756e-421c-9690-675d7c174e86",
+                "layout": {
+                    "h": 7,
+                    "i": "55b255d8-756e-421c-9690-675d7c174e86",
+                    "w": 12,
+                    "x": 0,
+                    "y": 11
+                },
+                "name": "Top processes by Swapped Memory",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,( avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"swapped\",instance=~\"$instance\"}[5m]) or avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"swapped\",instance=~\"$instance\"}[5m]))) ",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "进程虚拟内存平均占用容量，倒排前5",
+                "id": "3c900819-5955-4bef-b419-ea8c47107b0d",
+                "layout": {
+                    "h": 7,
+                    "i": "3c900819-5955-4bef-b419-ea8c47107b0d",
+                    "w": 12,
+                    "x": 12,
+                    "y": 11
+                },
+                "name": "Top processes by Virtual Memory",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,( avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"virtual\",instance=~\"$instance\"}[5m]) or avg_over_time(namedprocess_namegroup_memory_bytes{groupname=~\"$processes\", memtype=\"virtual\",instance=~\"$instance\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "4d72a763-48f3-480b-9701-bc297be1bbfb",
+                "layout": {
+                    "h": 1,
+                    "i": "4d72a763-48f3-480b-9701-bc297be1bbfb",
+                    "w": 24,
+                    "x": 0,
+                    "y": 18
+                },
+                "name": "Disk IO Usage",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "进程写数据量，倒排前5",
+                "id": "4cb30905-65f6-42aa-895e-ef3679905ef8",
+                "layout": {
+                    "h": 7,
+                    "i": "4cb30905-65f6-42aa-895e-ef3679905ef8",
+                    "w": 12,
+                    "x": 0,
+                    "y": 19
+                },
+                "name": "Top processes by Bytes Written",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,(rate(namedprocess_namegroup_write_bytes_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or irate(namedprocess_namegroup_write_bytes_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "进程读数据量，倒排前5",
+                "id": "d74f4d5f-db71-4781-b539-0df17dfcd42f",
+                "layout": {
+                    "h": 7,
+                    "i": "d74f4d5f-db71-4781-b539-0df17dfcd42f",
+                    "w": 12,
+                    "x": 12,
+                    "y": 19
+                },
+                "name": "Top processes by Bytes Read",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,(rate(namedprocess_namegroup_read_bytes_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or irate(namedprocess_namegroup_read_bytes_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "e460097e-c3c8-45da-8202-dee1de996ddf",
+                "layout": {
+                    "h": 1,
+                    "i": "e460097e-c3c8-45da-8202-dee1de996ddf",
+                    "w": 24,
+                    "x": 0,
+                    "y": 26
+                },
+                "name": "Process and Thread Counts",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "同名进程数，倒排前5",
+                "id": "1b44ce6f-ca65-49f5-892e-05444c9aa580",
+                "layout": {
+                    "h": 7,
+                    "i": "1b44ce6f-ca65-49f5-892e-05444c9aa580",
+                    "w": 12,
+                    "x": 0,
+                    "y": 27
+                },
+                "name": "Top processes by number of processes instances",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,(max_over_time(namedprocess_namegroup_num_procs{groupname=~\"$processes\",instance=~\"$instance\"}[5m])  or max_over_time(namedprocess_namegroup_num_procs{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "进程内线程数，倒排前5",
+                "id": "24975aae-a573-4998-bdab-ffcb19cee2ae",
+                "layout": {
+                    "h": 7,
+                    "i": "24975aae-a573-4998-bdab-ffcb19cee2ae",
+                    "w": 12,
+                    "x": 12,
+                    "y": 27
+                },
+                "name": "Top processes by number of threads",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,(max_over_time(namedprocess_namegroup_num_threads{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or max_over_time(namedprocess_namegroup_num_threads{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "3df9fc7b-bf9c-45bc-baa1-72ef83bc6b34",
+                "layout": {
+                    "h": 1,
+                    "i": "3df9fc7b-bf9c-45bc-baa1-72ef83bc6b34",
+                    "w": 24,
+                    "x": 0,
+                    "y": 34
+                },
+                "name": "Context Switches",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "进程自愿中断（如I/O完成）次数，倒排前5",
+                "id": "3775f2e7-fa98-4458-9659-0d1221b3cc03",
+                "layout": {
+                    "h": 7,
+                    "i": "3775f2e7-fa98-4458-9659-0d1221b3cc03",
+                    "w": 12,
+                    "x": 0,
+                    "y": 35
+                },
+                "name": "Top Processes by Voluntary Context Switches",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,( rate(namedprocess_namegroup_context_switches_total{groupname=~\"$processes\",instance=~\"$instance\",ctxswitchtype=\"voluntary\"}[5m]) or irate(namedprocess_namegroup_context_switches_total{groupname=~\"$processes\",instance=~\"$instance\",ctxswitchtype=\"voluntary\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "进程被迫中断（如CPU时间耗尽）次数，倒排前5",
+                "id": "a0e912d2-5b0d-42d0-bcf6-27bd54b5f07d",
+                "layout": {
+                    "h": 7,
+                    "i": "a0e912d2-5b0d-42d0-bcf6-27bd54b5f07d",
+                    "w": 12,
+                    "x": 12,
+                    "y": 35
+                },
+                "name": "Top Processes by  Non-Voluntary Context Switches",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,( rate(namedprocess_namegroup_context_switches_total{groupname=~\"$processes\",instance=~\"$instance\",ctxswitchtype=\"nonvoluntary\"}[5m]) or irate(namedprocess_namegroup_context_switches_total{groupname=~\"$processes\",instance=~\"$instance\",ctxswitchtype=\"nonvoluntary\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "79aedbba-da75-4393-b322-1565655017c0",
+                "layout": {
+                    "h": 1,
+                    "i": "79aedbba-da75-4393-b322-1565655017c0",
+                    "w": 24,
+                    "x": 0,
+                    "y": 42
+                },
+                "name": "File Descriptors",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "打开文件数，倒排前5",
+                "id": "73dc1195-8ffd-4c6e-b963-d10cde9ae7ba",
+                "layout": {
+                    "h": 7,
+                    "i": "73dc1195-8ffd-4c6e-b963-d10cde9ae7ba",
+                    "w": 12,
+                    "x": 0,
+                    "y": 43
+                },
+                "name": "Top processes by Open File Descriptors",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,(max_over_time(namedprocess_namegroup_open_filedesc{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or max_over_time(namedprocess_namegroup_open_filedesc{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "已打开文件数与允许打开文件数占比，倒排前5",
+                "id": "5ffa8032-5b55-4841-a12e-81c1fc8443dd",
+                "layout": {
+                    "h": 7,
+                    "i": "5ffa8032-5b55-4841-a12e-81c1fc8443dd",
+                    "w": 12,
+                    "x": 12,
+                    "y": 43
+                },
+                "name": "Top processes by File Descriptor Usage Percent",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,( max_over_time(namedprocess_namegroup_worst_fd_ratio{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or max_over_time(namedprocess_namegroup_worst_fd_ratio{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) ))*100",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "fe967a6c-63bc-48d6-9632-07da1675581b",
+                "layout": {
+                    "h": 1,
+                    "i": "fe967a6c-63bc-48d6-9632-07da1675581b",
+                    "w": 24,
+                    "x": 0,
+                    "y": 50
+                },
+                "name": "Page Faults",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "主要页缺失次数，倒排前5",
+                "id": "8944f17d-51e6-435d-808a-8301b8539f08",
+                "layout": {
+                    "h": 7,
+                    "i": "8944f17d-51e6-435d-808a-8301b8539f08",
+                    "w": 12,
+                    "x": 0,
+                    "y": 51
+                },
+                "name": "Top processes by Major Page Faults",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,( rate(namedprocess_namegroup_major_page_faults_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or irate(namedprocess_namegroup_major_page_faults_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "次要页缺失次数，倒排前5",
+                "id": "b9bed634-d25a-4542-8fd9-4c63e9db766c",
+                "layout": {
+                    "h": 7,
+                    "i": "b9bed634-d25a-4542-8fd9-4c63e9db766c",
+                    "w": 12,
+                    "x": 12,
+                    "y": 51
+                },
+                "name": "Top processes by Minor Page Faults",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,( rate(namedprocess_namegroup_minor_page_faults_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m]) or irate(namedprocess_namegroup_minor_page_faults_total{groupname=~\"$processes\",instance=~\"$instance\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "76910d2f-d2c7-48c1-ad05-9651110f0ff1",
+                "layout": {
+                    "h": 1,
+                    "i": "76910d2f-d2c7-48c1-ad05-9651110f0ff1",
+                    "w": 24,
+                    "x": 0,
+                    "y": 58
+                },
+                "name": "Statuses",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "运行态同名进程数量，倒排前5",
+                "id": "7c0a07a2-f936-41c1-a03e-328d8bc1feea",
+                "layout": {
+                    "h": 7,
+                    "i": "7c0a07a2-f936-41c1-a03e-328d8bc1feea",
+                    "w": 12,
+                    "x": 0,
+                    "y": 59
+                },
+                "name": "Top running processes",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,( max_over_time(namedprocess_namegroup_states{instance=~\"$instance\", groupname=~\"$processes\", state=\"Running\"}[5m]) or max_over_time(namedprocess_namegroup_states{instance=~\"$instance\", groupname=~\"$processes\", state=\"Running\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "等待IO状态同名进程数量，倒排前5",
+                "id": "31829466-def5-496f-83e8-10806b19410b",
+                "layout": {
+                    "h": 7,
+                    "i": "31829466-def5-496f-83e8-10806b19410b",
+                    "w": 12,
+                    "x": 12,
+                    "y": 59
+                },
+                "name": "Top of processes waiting on IO",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,( max_over_time(namedprocess_namegroup_states{instance=~\"$instance\", groupname=~\"$processes\", state=\"Waiting\"}[5m]) or max_over_time(namedprocess_namegroup_states{instance=~\"$instance\", groupname=~\"$processes\", state=\"Waiting\"}[5m])))",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "9c79f06d-0262-4284-a65e-bcd0d84130be",
+                "layout": {
+                    "h": 1,
+                    "i": "9c79f06d-0262-4284-a65e-bcd0d84130be",
+                    "w": 24,
+                    "x": 0,
+                    "y": 66
+                },
+                "name": "Kernel Waits(WCHAN)",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "内核函数等待线程数量，倒排前5",
+                "id": "5decb873-5452-4084-8bbf-7bd3c9fa33f4",
+                "layout": {
+                    "h": 7,
+                    "i": "5decb873-5452-4084-8bbf-7bd3c9fa33f4",
+                    "w": 12,
+                    "x": 0,
+                    "y": 67
+                },
+                "name": "Kernel waits for All",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,sum(avg_over_time(namedprocess_namegroup_threads_wchan{instance=~\"$instance\", groupname=~\"$processes\"}[5m])) by (wchan) )",
+                        "legend": "{{wchan}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "内核函数等待线程数量按进程统计，倒排前5",
+                "id": "20f14e96-5ac8-43f8-93a8-3f7696f5d8d5",
+                "layout": {
+                    "h": 7,
+                    "i": "20f14e96-5ac8-43f8-93a8-3f7696f5d8d5",
+                    "w": 12,
+                    "x": 12,
+                    "y": 67
+                },
+                "name": "Kernel wait Details for All",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(5,sum(avg_over_time(namedprocess_namegroup_threads_wchan{instance=~\"$instance\", groupname=~\"$processes\"}[5m])) by (wchan,groupname) )",
+                        "legend": "{{wchan}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "972e68da-d03d-4638-81a2-fba73d215788",
+                "layout": {
+                    "h": 1,
+                    "i": "972e68da-d03d-4638-81a2-fba73d215788",
+                    "w": 24,
+                    "x": 0,
+                    "y": 74
+                },
+                "name": "Uptime",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "displayMode": "seriesToRows",
+                    "showHeader": true
+                },
+                "description": "进程启动时长",
+                "id": "eff1ee11-1d70-4c79-a159-588a363a2b60",
+                "layout": {
+                    "h": 7,
+                    "i": "eff1ee11-1d70-4c79-a159-588a363a2b60",
+                    "w": 24,
+                    "x": 0,
+                    "y": 75
+                },
+                "name": "Processes by uptime",
+                "options": {
+                    "standardOptions": {
+                        "util": "seconds"
+                    }
+                },
+                "overrides": [
+                    {
+                        "properties": {
+                            "standardOptions": {
+                                "util": "seconds"
+                            },
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "to": 1800
+                                    },
+                                    "result": {
+                                        "color": "#f91010"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 1800
+                                    },
+                                    "result": {
+                                        "color": "#21f312"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "time()-(namedprocess_namegroup_oldest_start_time_seconds{instance=~\"$instance\",groupname=~\"$processes\"}>0)",
+                        "legend": "{{groupname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            }
+        ],
+        "var": [
+            {
+                "name": "prom",
+                "type": "datasource",
+                "definition": "prometheus"
+            },
+            {
+                "definition": "label_values(namedprocess_namegroup_num_procs, instance)",
+                "multi": false,
+                "name": "instance",
+                "options": [
+                    "tt-fc-es02.nj:12346"
+                ],
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                }
+            },
+            {
+                "allOption": true,
+                "definition": "label_values(namedprocess_namegroup_cpu_seconds_total{instance=~\"$instance\"},groupname)",
+                "multi": true,
+                "name": "processes",
+                "options": [
+                    "(sd-pam)",
+                    "NetworkManager",
+                    "YDLive",
+                    "YDPython",
+                    "YDService",
+                    "agent",
+                    "agetty",
+                    "atd",
+                    "auditd",
+                    "barad_agent",
+                    "bash",
+                    "chronyd",
+                    "crond",
+                    "dbus-daemon",
+                    "fc-agent",
+                    "fc-alert",
+                    "fc-checker",
+                    "gpg-agent",
+                    "less",
+                    "lsmd",
+                    "mongod",
+                    "mysql",
+                    "mysqld",
+                    "nginx",
+                    "ngo",
+                    "node",
+                    "openvpn",
+                    "podman pause",
+                    "polkitd",
+                    "process-agent",
+                    "redis-server",
+                    "rsyslogd",
+                    "sedispatch",
+                    "sgagent",
+                    "sh",
+                    "ssh-agent",
+                    "sshd",
+                    "sssd",
+                    "sssd_be",
+                    "sssd_nss",
+                    "su",
+                    "sudo",
+                    "systemd",
+                    "systemd-journal",
+                    "systemd-logind",
+                    "systemd-udevd",
+                    "tat_agent",
+                    "trace-agent",
+                    "tuned",
+                    "unbound-anchor",
+                    "vminsert-prod",
+                    "vmselect-prod",
+                    "vmstorage-prod"
+                ],
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                }
+            }
+        ],
+        "version": "3.0.0"
+    }
 }

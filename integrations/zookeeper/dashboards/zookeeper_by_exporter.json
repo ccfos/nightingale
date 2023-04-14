@@ -1,425 +1,460 @@
 {
-  "name": "Zookeeper - exporter",
-  "tags": "",
-  "ident": "",
-  "configs": {
-      "var": [
-          {
-              "name": "job",
-              "definition": "label_values(zk_up,job)"
-          },
-          {
-              "definition": "label_values(zk_up,instance)",
-              "name": "instance"
-          }
-      ],
-      "version": "2.0.0",
-      "panels": [
-          {
-              "id": "2718a256-a74a-4661-ae74-fe21d765c8b4",
-              "type": "row",
-              "name": "overview",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 0,
-                  "i": "2718a256-a74a-4661-ae74-fe21d765c8b4"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "zk_up{job=\"$job\", instance=\"$instance\"}",
-                      "legend": "up"
-                  }
-              ],
-              "name": "up",
-              "custom": {
-                  "textMode": "value",
-                  "colorMode": "value",
-                  "calc": "lastNotNull",
-                  "colSpan": 1,
-                  "textSize": {
-                      "value": 40
-                  }
-              },
-              "options": {
-                  "valueMappings": [
-                      {
-                          "type": "special",
-                          "match": {
-                              "special": 1
-                          },
-                          "result": {
-                              "color": "#3d950e",
-                              "text": "UP"
-                          }
-                      },
-                      {
-                          "type": "special",
-                          "match": {
-                              "special": 0
-                          },
-                          "result": {
-                              "color": "#f01414",
-                              "text": "DOWN"
-                          }
-                      }
-                  ],
-                  "standardOptions": {}
-              },
-              "version": "2.0.0",
-              "type": "stat",
-              "layout": {
-                  "h": 3,
-                  "w": 6,
-                  "x": 0,
-                  "y": 1,
-                  "i": "4474ec3c-360b-4b3c-ab16-978305ecc438"
-              },
-              "id": "4474ec3c-360b-4b3c-ab16-978305ecc438"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "zk_znode_count{job=~\"$job\", instance=~\"$instance\"}",
-                      "legend": "{{instance}}"
-                  }
-              ],
-              "name": "zk_znode_count",
-              "custom": {
-                  "textMode": "value",
-                  "colorMode": "value",
-                  "calc": "lastNotNull",
-                  "colSpan": 1,
-                  "textSize": {
-                      "value": 50
-                  }
-              },
-              "options": {
-                  "standardOptions": {}
-              },
-              "version": "2.0.0",
-              "type": "stat",
-              "layout": {
-                  "h": 3,
-                  "w": 6,
-                  "x": 6,
-                  "y": 1,
-                  "i": "5ef1653d-ca20-47b9-9604-f3a0dfffbdd6"
-              },
-              "id": "5ef1653d-ca20-47b9-9604-f3a0dfffbdd6"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "zk_watch_count{job=~\"$job\", instance=~\"$instance\"}",
-                      "legend": "{{instance}}"
-                  }
-              ],
-              "name": "zk_watch_count",
-              "custom": {
-                  "textMode": "value",
-                  "colorMode": "value",
-                  "calc": "lastNotNull",
-                  "colSpan": 1,
-                  "textSize": {
-                      "value": 50
-                  }
-              },
-              "options": {
-                  "standardOptions": {}
-              },
-              "version": "2.0.0",
-              "type": "stat",
-              "layout": {
-                  "h": 3,
-                  "w": 6,
-                  "x": 12,
-                  "y": 1,
-                  "i": "fef22c82-540a-4662-9913-26b6b38e8aa3"
-              },
-              "id": "fef22c82-540a-4662-9913-26b6b38e8aa3"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "zk_ephemerals_count{job=~\"$job\", instance=~\"$instance\"}",
-                      "legend": "zk_ephemerals_count"
-                  }
-              ],
-              "name": "zk_ephemerals_count",
-              "custom": {
-                  "textMode": "value",
-                  "colorMode": "value",
-                  "calc": "lastNotNull",
-                  "colSpan": 1,
-                  "textSize": {
-                      "value": 50
-                  }
-              },
-              "options": {
-                  "standardOptions": {}
-              },
-              "version": "2.0.0",
-              "type": "stat",
-              "layout": {
-                  "h": 3,
-                  "w": 6,
-                  "x": 18,
-                  "y": 1,
-                  "i": "12510246-7469-4868-9dad-8d761f574ad3"
-              },
-              "id": "12510246-7469-4868-9dad-8d761f574ad3"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "rate(zk_packets_sent{job=~\"$job\", instance=~\"$instance\"}[5m])",
-                      "legend": "{{instance}}-sent"
-                  },
-                  {
-                      "expr": "rate(zk_packets_received{job=~\"$job\", instance=~\"$instance\"}[5m])",
-                      "refId": "B",
-                      "legend": "{{instance}}-received"
-                  }
-              ],
-              "name": "Pakages",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 2,
-                  "i": "0f7b7057-8446-49b8-ab45-beb9fb2a6af3"
-              },
-              "id": "0f7b7057-8446-49b8-ab45-beb9fb2a6af3"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "zk_num_alive_connections{job=~\"$job\", instance=~\"$instance\"}",
-                      "legend": "{{instance}}"
-                  }
-              ],
-              "name": "alive_connections",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 6,
-                  "y": 4,
-                  "i": "3e2d6853-4e2b-4b71-8601-fd2ececceb30"
-              },
-              "id": "3e2d6853-4e2b-4b71-8601-fd2ececceb30"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "zk_open_file_descriptor_count{job=~\"$job\", instance=~\"$instance\"}",
-                      "legend": "{{instance}}-open"
-                  },
-                  {
-                      "expr": "zk_max_file_descriptor_count{job=~\"$job\", instance=~\"$instance\"}",
-                      "refId": "B",
-                      "legend": "{{instance}}-max"
-                  }
-              ],
-              "name": "file_descriptor",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 12,
-                  "y": 4,
-                  "i": "83205acd-35b8-404b-9883-cf3f656b022b"
-              },
-              "id": "83205acd-35b8-404b-9883-cf3f656b022b"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "zk_avg_latency{job=~\"$job\", instance=~\"$instance\"}",
-                      "legend": "{{instance}}-avg"
-                  },
-                  {
-                      "expr": "zk_min_latency{job=~\"$job\", instance=~\"$instance\"}",
-                      "refId": "B",
-                      "legend": "{{instance}}-min"
-                  },
-                  {
-                      "expr": "zk_max_latency{job=~\"$job\", instance=~\"$instance\"}",
-                      "refId": "C",
-                      "legend": "{{instance}}-max"
-                  }
-              ],
-              "name": "latency(ms)",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 18,
-                  "y": 4,
-                  "i": "ea71f66f-690f-4e4e-95bc-b835f0d6027e"
-              },
-              "id": "ea71f66f-690f-4e4e-95bc-b835f0d6027e"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "zk_outstanding_requests{job=~\"$job\", instance=~\"$instance\"}",
-                      "legend": "{{instance}}"
-                  }
-              ],
-              "name": "outstanding_requests",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 0,
-                  "y": 4,
-                  "i": "906d651b-234b-4e38-b90f-7ac31b267eb8"
-              },
-              "id": "906d651b-234b-4e38-b90f-7ac31b267eb8"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "zk_approximate_data_size{job=~\"$job\", instance=~\"$instance\"}",
-                      "legend": "{{instance}}"
-                  }
-              ],
-              "name": "approximate_data_size",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "none"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 2,
-                  "i": "83bb38e0-0074-4a80-ae2a-ea242db0da7b"
-              },
-              "id": "83bb38e0-0074-4a80-ae2a-ea242db0da7b"
-          }
-      ]
-  }
+    "name": "Zookeeper - exporter",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "2718a256-a74a-4661-ae74-fe21d765c8b4",
+                "layout": {
+                    "h": 1,
+                    "i": "2718a256-a74a-4661-ae74-fe21d765c8b4",
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "overview",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {
+                        "value": 40
+                    }
+                },
+                "id": "4474ec3c-360b-4b3c-ab16-978305ecc438",
+                "layout": {
+                    "h": 3,
+                    "i": "4474ec3c-360b-4b3c-ab16-978305ecc438",
+                    "w": 6,
+                    "x": 0,
+                    "y": 1
+                },
+                "name": "up",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#3d950e",
+                                "text": "UP"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "#f01414",
+                                "text": "DOWN"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "zk_up{job=\"$job\", instance=\"$instance\"}",
+                        "legend": "up",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {
+                        "value": 50
+                    }
+                },
+                "id": "5ef1653d-ca20-47b9-9604-f3a0dfffbdd6",
+                "layout": {
+                    "h": 3,
+                    "i": "5ef1653d-ca20-47b9-9604-f3a0dfffbdd6",
+                    "w": 6,
+                    "x": 6,
+                    "y": 1
+                },
+                "name": "zk_znode_count",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "zk_znode_count{job=~\"$job\", instance=~\"$instance\"}",
+                        "legend": "{{instance}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {
+                        "value": 50
+                    }
+                },
+                "id": "fef22c82-540a-4662-9913-26b6b38e8aa3",
+                "layout": {
+                    "h": 3,
+                    "i": "fef22c82-540a-4662-9913-26b6b38e8aa3",
+                    "w": 6,
+                    "x": 12,
+                    "y": 1
+                },
+                "name": "zk_watch_count",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "zk_watch_count{job=~\"$job\", instance=~\"$instance\"}",
+                        "legend": "{{instance}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {
+                        "value": 50
+                    }
+                },
+                "id": "12510246-7469-4868-9dad-8d761f574ad3",
+                "layout": {
+                    "h": 3,
+                    "i": "12510246-7469-4868-9dad-8d761f574ad3",
+                    "w": 6,
+                    "x": 18,
+                    "y": 1
+                },
+                "name": "zk_ephemerals_count",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "zk_ephemerals_count{job=~\"$job\", instance=~\"$instance\"}",
+                        "legend": "zk_ephemerals_count",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "0f7b7057-8446-49b8-ab45-beb9fb2a6af3",
+                "layout": {
+                    "h": 7,
+                    "i": "0f7b7057-8446-49b8-ab45-beb9fb2a6af3",
+                    "w": 12,
+                    "x": 0,
+                    "y": 2
+                },
+                "name": "Pakages",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(zk_packets_sent{job=~\"$job\", instance=~\"$instance\"}[5m])",
+                        "legend": "{{instance}}-sent",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(zk_packets_received{job=~\"$job\", instance=~\"$instance\"}[5m])",
+                        "legend": "{{instance}}-received",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "3e2d6853-4e2b-4b71-8601-fd2ececceb30",
+                "layout": {
+                    "h": 7,
+                    "i": "3e2d6853-4e2b-4b71-8601-fd2ececceb30",
+                    "w": 6,
+                    "x": 6,
+                    "y": 4
+                },
+                "name": "alive_connections",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "zk_num_alive_connections{job=~\"$job\", instance=~\"$instance\"}",
+                        "legend": "{{instance}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "83205acd-35b8-404b-9883-cf3f656b022b",
+                "layout": {
+                    "h": 7,
+                    "i": "83205acd-35b8-404b-9883-cf3f656b022b",
+                    "w": 6,
+                    "x": 12,
+                    "y": 4
+                },
+                "name": "file_descriptor",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "zk_open_file_descriptor_count{job=~\"$job\", instance=~\"$instance\"}",
+                        "legend": "{{instance}}-open",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "zk_max_file_descriptor_count{job=~\"$job\", instance=~\"$instance\"}",
+                        "legend": "{{instance}}-max",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "ea71f66f-690f-4e4e-95bc-b835f0d6027e",
+                "layout": {
+                    "h": 7,
+                    "i": "ea71f66f-690f-4e4e-95bc-b835f0d6027e",
+                    "w": 6,
+                    "x": 18,
+                    "y": 4
+                },
+                "name": "latency(ms)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "zk_avg_latency{job=~\"$job\", instance=~\"$instance\"}",
+                        "legend": "{{instance}}-avg",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "zk_min_latency{job=~\"$job\", instance=~\"$instance\"}",
+                        "legend": "{{instance}}-min",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "zk_max_latency{job=~\"$job\", instance=~\"$instance\"}",
+                        "legend": "{{instance}}-max",
+                        "refId": "C"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "906d651b-234b-4e38-b90f-7ac31b267eb8",
+                "layout": {
+                    "h": 7,
+                    "i": "906d651b-234b-4e38-b90f-7ac31b267eb8",
+                    "w": 6,
+                    "x": 0,
+                    "y": 4
+                },
+                "name": "outstanding_requests",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "zk_outstanding_requests{job=~\"$job\", instance=~\"$instance\"}",
+                        "legend": "{{instance}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "83bb38e0-0074-4a80-ae2a-ea242db0da7b",
+                "layout": {
+                    "h": 7,
+                    "i": "83bb38e0-0074-4a80-ae2a-ea242db0da7b",
+                    "w": 12,
+                    "x": 12,
+                    "y": 2
+                },
+                "name": "approximate_data_size",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "zk_approximate_data_size{job=~\"$job\", instance=~\"$instance\"}",
+                        "legend": "{{instance}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            }
+        ],
+        "var": [
+            {
+                "name": "prom",
+                "type": "datasource",
+                "definition": "prometheus"
+            },
+            {
+                "definition": "label_values(zk_up,job)",
+                "name": "job",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                }
+            },
+            {
+                "definition": "label_values(zk_up,instance)",
+                "name": "instance",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                }
+            }
+        ],
+        "version": "3.0.0"
+    }
 }
