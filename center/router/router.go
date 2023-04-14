@@ -92,13 +92,13 @@ func (rt *Router) configNoRoute(r *gin.Engine) {
 		suffix := arr[len(arr)-1]
 		switch suffix {
 		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map":
-			cwdarr := []string{"/"}
+			cwdarr := []string{""}
 			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
 			cwdarr = append(cwdarr, "pub")
 			cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
 			c.File(path.Join(cwdarr...))
 		default:
-			cwdarr := []string{"/"}
+			cwdarr := []string{""}
 			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
 			cwdarr = append(cwdarr, "pub")
 			cwdarr = append(cwdarr, "index.html")
