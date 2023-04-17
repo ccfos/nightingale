@@ -45,7 +45,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 
 	err = DatasourceCheck(req)
 	if err != nil {
-		Render(c, nil, err)
+		Dangerous(c, err)
 		return
 	}
 
