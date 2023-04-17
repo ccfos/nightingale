@@ -15,6 +15,8 @@
 <img alt="GitHub forks" src="https://img.shields.io/github/forks/ccfos/nightingale">
 <a href="https://github.com/ccfos/nightingale/graphs/contributors">
   <img alt="GitHub contributors" src="https://img.shields.io/github/contributors-anon/ccfos/nightingale"/></a>
+<a href="https://n9e-talk.slack.com/">
+  <img alt="GitHub contributors" src="https://img.shields.io/badge/join%20slack-%23n9e-brightgreen.svg"/></a>
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
 </p>
 <p align="center">
