@@ -207,6 +207,12 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 					m[k] = v
 				}
 				m["ident"] = target.Ident
+
+				bg := arw.processor.BusiGroupCache.GetByBusiGroupId(target.GroupId)
+				if bg != nil && bg.LabelEnable == 1 {
+					m["busigroup"] = bg.LabelValue
+				}
+
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(now-target.UpdateAt), trigger.Severity))
 			}
 		case "offset":
@@ -231,6 +237,12 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 					}
 				}
 				m["ident"] = host
+
+				bg := arw.processor.BusiGroupCache.GetByBusiGroupId(target.GroupId)
+				if bg != nil && bg.LabelEnable == 1 {
+					m["busigroup"] = bg.LabelValue
+				}
+
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(offset), trigger.Severity))
 			}
 		case "pct_target_miss":

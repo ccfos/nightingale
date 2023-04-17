@@ -59,7 +59,7 @@ type Processor struct {
 
 	atertRuleCache  *memsto.AlertRuleCacheType
 	TargetCache     *memsto.TargetCacheType
-	busiGroupCache  *memsto.BusiGroupCacheType
+	BusiGroupCache  *memsto.BusiGroupCacheType
 	alertMuteCache  *memsto.AlertMuteCacheType
 	datasourceCache *memsto.DatasourceCacheType
 
@@ -94,7 +94,7 @@ func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *me
 		rule:         rule,
 
 		TargetCache:     targetCache,
-		busiGroupCache:  busiGroupCache,
+		BusiGroupCache:  busiGroupCache,
 		alertMuteCache:  alertMuteCache,
 		atertRuleCache:  atertRuleCache,
 		datasourceCache: datasourceCache,
@@ -412,7 +412,7 @@ func (p *Processor) mayHandleIdent() {
 
 func (p *Processor) mayHandleGroup() {
 	// handle bg
-	bg := p.busiGroupCache.GetByBusiGroupId(p.rule.GroupId)
+	bg := p.BusiGroupCache.GetByBusiGroupId(p.rule.GroupId)
 	if bg != nil {
 		p.groupName = bg.Name
 	}
