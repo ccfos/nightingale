@@ -394,6 +394,6 @@ func Dangerous(c *gin.Context, v interface{}, code ...int) {
 			c.JSON(http.StatusOK, gin.H{"error": gin.H{"message": v}})
 		}
 	case error:
-		c.JSON(http.StatusOK, gin.H{"error": gin.H{"message": t.Error()}})
+		c.JSON(http.StatusOK, gin.H{"error": t.Error()})
 	}
 }

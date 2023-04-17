@@ -2,6 +2,7 @@ package router
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -42,8 +43,9 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	var err error
 	var count int64
 
-	if !DatasourceUrlIsAvail(req) {
-		Render(c, nil, "config is not available")
+	err = DatasourceCheck(req)
+	if err != nil {
+		Render(c, nil, err)
 		return
 	}
 
@@ -68,9 +70,9 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	Render(c, nil, err)
 }
 
-func DatasourceUrlIsAvail(ds models.Datasource) bool {
+func DatasourceCheck(ds models.Datasource) error {
 	if ds.HTTPJson.Url == "" {
-		return false
+		return fmt.Errorf("url is empty")
 	}
 
 	client := &http.Client{
@@ -83,8 +85,8 @@ func DatasourceUrlIsAvail(ds models.Datasource) bool {
 
 	req, err := http.NewRequest("GET", ds.HTTPJson.Url, nil)
 	if err != nil {
-		logger.Errorf("Error creating request: %v\n", err)
-		return false
+		logger.Errorf("Error creating request: %v", err)
+		return fmt.Errorf("request url:%s failed", ds.HTTPJson.Url)
 	}
 
 	if ds.AuthJson.BasicAuthUser != "" {
@@ -98,16 +100,16 @@ func DatasourceUrlIsAvail(ds models.Datasource) bool {
 	resp, err := client.Do(req)
 	if err != nil {
 		logger.Errorf("Error making request: %v\n", err)
-		return false
+		return fmt.Errorf("request url:%s failed", ds.HTTPJson.Url)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		logger.Errorf("Error making request: %v\n", resp.StatusCode)
-		return false
+		return fmt.Errorf("request url:%s failed code:%d", ds.HTTPJson.Url, resp.StatusCode)
 	}
 
-	return true
+	return nil
 }
 
 func (rt *Router) datasourceGet(c *gin.Context) {
