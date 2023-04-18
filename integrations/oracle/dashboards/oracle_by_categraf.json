@@ -1,824 +1,877 @@
 {
-  "name": "Oracle by categraf",
-  "tags": "categraf",
-  "ident": "",
-  "configs": {
-      "var": [
-          {
-              "name": "ident",
-              "definition": "label_values(oracle_up,ident)",
-              "options": [
-                  "tt-fc-log00.nj"
-              ]
-          },
-          {
-              "name": "instance",
-              "definition": "label_values(oracle_up{ident=\"$ident\"},instance)"
-          }
-      ],
-      "version": "2.0.0",
-      "panels": [
-          {
-              "id": "16c3b81f-38ea-472e-ba9d-58f3218413c9",
-              "type": "row",
-              "name": "Activities",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 0,
-                  "i": "16c3b81f-38ea-472e-ba9d-58f3218413c9"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "rate(oracle_activity_execute_count_value{ident=\"$ident\", instance=\"$instance\"}[2m])"
-                  }
-              ],
-              "name": "execute count / second",
-              "custom": {
-                  "textMode": "value",
-                  "colorMode": "value",
-                  "calc": "lastNotNull",
-                  "colSpan": 1,
-                  "textSize": {}
-              },
-              "options": {
-                  "standardOptions": {
-                      "decimals": 1
-                  }
-              },
-              "version": "2.0.0",
-              "type": "stat",
-              "layout": {
-                  "h": 3,
-                  "w": 6,
-                  "x": 6,
-                  "y": 1,
-                  "i": "6834fcfd-6448-4848-9f63-72350d818a39"
-              },
-              "id": "6834fcfd-6448-4848-9f63-72350d818a39"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "rate(oracle_activity_user_commits_value{ident=\"$ident\", instance=\"$instance\"}[2m])"
-                  }
-              ],
-              "name": "user commits / second",
-              "custom": {
-                  "textMode": "value",
-                  "colorMode": "value",
-                  "calc": "lastNotNull",
-                  "colSpan": 1,
-                  "textSize": {}
-              },
-              "options": {
-                  "standardOptions": {}
-              },
-              "version": "2.0.0",
-              "type": "stat",
-              "layout": {
-                  "h": 3,
-                  "w": 6,
-                  "x": 12,
-                  "y": 1,
-                  "i": "1754fda2-fa98-481e-ba86-520f1d7ebc0d"
-              },
-              "id": "1754fda2-fa98-481e-ba86-520f1d7ebc0d"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "rate(oracle_activity_user_rollbacks_value{ident=\"$ident\", instance=\"$instance\"}[2m])"
-                  }
-              ],
-              "name": "user rollbacks / second",
-              "custom": {
-                  "textMode": "value",
-                  "colorMode": "value",
-                  "calc": "lastNotNull",
-                  "colSpan": 1,
-                  "textSize": {}
-              },
-              "options": {
-                  "standardOptions": {}
-              },
-              "version": "2.0.0",
-              "type": "stat",
-              "layout": {
-                  "h": 3,
-                  "w": 6,
-                  "x": 18,
-                  "y": 1,
-                  "i": "18357a10-cab4-4795-a4a4-fd960d37ce95"
-              },
-              "id": "18357a10-cab4-4795-a4a4-fd960d37ce95"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_up{ident=\"$ident\", instance=\"$instance\"}"
-                  }
-              ],
-              "name": "status",
-              "custom": {
-                  "textMode": "value",
-                  "colorMode": "background",
-                  "calc": "lastNotNull",
-                  "colSpan": 1,
-                  "textSize": {}
-              },
-              "options": {
-                  "valueMappings": [
-                      {
-                          "type": "special",
-                          "match": {
-                              "special": 1
-                          },
-                          "result": {
-                              "text": "UP",
-                              "color": "#5ea70f"
-                          }
-                      },
-                      {
-                          "type": "special",
-                          "match": {
-                              "special": 0
-                          },
-                          "result": {
-                              "text": "DOWN",
-                              "color": "#f60f0f"
-                          }
-                      }
-                  ],
-                  "standardOptions": {}
-              },
-              "version": "2.0.0",
-              "type": "stat",
-              "layout": {
-                  "h": 3,
-                  "w": 6,
-                  "x": 0,
-                  "y": 1,
-                  "i": "8e5f9501-7bc0-4b77-9178-3ab875202f43"
-              },
-              "id": "8e5f9501-7bc0-4b77-9178-3ab875202f43"
-          },
-          {
-              "id": "aa019cdc-109a-4d3d-9549-9abc20720343",
-              "type": "row",
-              "name": "Waits",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 4,
-                  "i": "aa019cdc-109a-4d3d-9549-9abc20720343"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_wait_time_value{ident=\"$ident\", instance=\"$instance\"}",
-                      "legend": "{{wait_class}}"
-                  }
-              ],
-              "name": "Time waited",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 24,
-                  "x": 0,
-                  "y": 5,
-                  "i": "51451443-eb34-4bdc-8fc5-1f0ee35eb73c"
-              },
-              "id": "51451443-eb34-4bdc-8fc5-1f0ee35eb73c"
-          },
-          {
-              "id": "108aa978-21be-45f4-92a6-f125f977965c",
-              "type": "row",
-              "name": "Tablespace",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 12,
-                  "i": "108aa978-21be-45f4-92a6-f125f977965c"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_tablespace_bytes{ident=\"$ident\", instance=\"$instance\"}/oracle_tablespace_max_bytes{ident=\"$ident\", instance=\"$instance\"}",
-                      "legend": "{{tablespace}}"
-                  }
-              ],
-              "name": "Used Percent",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "percentUnit"
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 0,
-                  "y": 13,
-                  "i": "cf2454bd-0cf4-4f1a-a96a-b043db94da1f"
-              },
-              "id": "cf2454bd-0cf4-4f1a-a96a-b043db94da1f"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_tablespace_free{ident=\"$ident\", instance=\"$instance\"}",
-                      "legend": "{{tablespace}}"
-                  }
-              ],
-              "name": "Free space",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesIEC",
-                      "decimals": 1
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 12,
-                  "x": 12,
-                  "y": 13,
-                  "i": "8f4aa32b-1ab6-49d2-94c5-83f408dd3cc4"
-              },
-              "id": "8f4aa32b-1ab6-49d2-94c5-83f408dd3cc4"
-          },
-          {
-              "id": "91c8d4ca-109e-4380-9222-92cffdcc5381",
-              "type": "row",
-              "name": "IO and TPS",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 20,
-                  "i": "91c8d4ca-109e-4380-9222-92cffdcc5381"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_sysmetric_io_requests_per_second_value{ident=\"$ident\", instance=\"$instance\"}"
-                  }
-              ],
-              "name": "IO Requests / Second",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 8,
-                  "x": 0,
-                  "y": 21,
-                  "i": "08552fed-10d2-4408-809e-eabc705db9f5"
-              },
-              "id": "08552fed-10d2-4408-809e-eabc705db9f5"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_sysmetric_user_transaction_per_sec_value{ident=\"$ident\", instance=\"$instance\"}"
-                  }
-              ],
-              "name": "TPS",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "decimals": 1
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 8,
-                  "x": 8,
-                  "y": 21,
-                  "i": "c42236d6-d18a-40bb-84dc-d287b1d0ac25"
-              },
-              "id": "c42236d6-d18a-40bb-84dc-d287b1d0ac25"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_sysmetric_io_megabytes_per_second_value{ident=\"$ident\", instance=\"$instance\"}*1024*1024"
-                  }
-              ],
-              "name": "IO Bytes / Second",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {
-                      "util": "bytesIEC",
-                      "decimals": 1
-                  },
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 8,
-                  "x": 16,
-                  "y": 21,
-                  "i": "3a564e64-4bed-4381-ab08-517b51f6cc66"
-              },
-              "id": "3a564e64-4bed-4381-ab08-517b51f6cc66"
-          },
-          {
-              "id": "34bc0a3c-23ee-4792-9552-0994fb027464",
-              "type": "row",
-              "name": "Connections",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 28,
-                  "i": "34bc0a3c-23ee-4792-9552-0994fb027464"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_sessions_value{ident=\"$ident\", instance=\"$instance\",status=\"ACTIVE\"}",
-                      "legend": ""
-                  }
-              ],
-              "name": "Sessions",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 24,
-                  "x": 0,
-                  "y": 29,
-                  "i": "f46676da-b625-458e-b8d2-9079441ac3d6"
-              },
-              "id": "f46676da-b625-458e-b8d2-9079441ac3d6"
-          },
-          {
-              "id": "f8a61c95-0d00-4d38-a9d1-5813f70443da",
-              "type": "row",
-              "name": "Hit Ratio",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 36,
-                  "i": "f8a61c95-0d00-4d38-a9d1-5813f70443da"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_sysmetric_buffer_cache_hit_ratio_value{ident=\"$ident\", instance=\"$instance\"}"
-                  }
-              ],
-              "name": "Buffer Cache Hit Ratio",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 0,
-                  "y": 37,
-                  "i": "f35e0768-204e-43c8-8d43-32f34a391bf8"
-              },
-              "id": "f35e0768-204e-43c8-8d43-32f34a391bf8"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_sysmetric_redo_allocation_hit_ratio_value{ident=\"$ident\", instance=\"$instance\"}"
-                  }
-              ],
-              "name": "Redo Allocation Hit Ratio",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 6,
-                  "y": 37,
-                  "i": "4239c9e1-0bf3-42ae-a7a5-8db2c38f1900"
-              },
-              "id": "4239c9e1-0bf3-42ae-a7a5-8db2c38f1900"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_sysmetric_row_cache_hit_ratio_value{ident=\"$ident\", instance=\"$instance\"}"
-                  }
-              ],
-              "name": "Row Cache Hit Ratio",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 12,
-                  "y": 37,
-                  "i": "c40640c2-31b8-4bec-a88e-8a0f346da2a8"
-              },
-              "id": "c40640c2-31b8-4bec-a88e-8a0f346da2a8"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_sysmetric_library_cache_hit_ratio_value{ident=\"$ident\", instance=\"$instance\"}"
-                  }
-              ],
-              "name": "Library Cache Hit Ratio",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 18,
-                  "y": 37,
-                  "i": "93c7f8d2-093c-47fc-93e8-97b47bfcff80"
-              },
-              "id": "93c7f8d2-093c-47fc-93e8-97b47bfcff80"
-          },
-          {
-              "id": "9857bf37-1e40-4cf5-adbc-8331f5e128c8",
-              "type": "row",
-              "name": "Physical Read Write",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 44,
-                  "i": "9857bf37-1e40-4cf5-adbc-8331f5e128c8"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_sysmetric_physical_read_bytes_per_sec_value{ident=\"$ident\", instance=\"$instance\"}"
-                  },
-                  {
-                      "expr": "oracle_sysmetric_Physical_Write_Bytes_Per_Sec{ident=\"$ident\", instance=\"$instance\"}",
-                      "refId": "B"
-                  }
-              ],
-              "name": "Physical Read Write Bytes / Second",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 0,
-                  "y": 45,
-                  "i": "b47bcfb9-2d26-454d-982a-039b769d405b"
-              },
-              "id": "b47bcfb9-2d26-454d-982a-039b769d405b"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_sysmetric_physical_read_total_bytes_per_sec_value{ident=\"$ident\", instance=\"$instance\"}"
-                  },
-                  {
-                      "expr": "oracle_sysmetric_Physical_Write_Total_Bytes_Per_Sec{ident=\"$ident\", instance=\"$instance\"}",
-                      "refId": "B"
-                  }
-              ],
-              "name": "Physical Read Write Total Bytes / Second",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 6,
-                  "y": 45,
-                  "i": "0c4ea45a-913f-4464-9c31-eb026a365729"
-              },
-              "id": "0c4ea45a-913f-4464-9c31-eb026a365729"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_sysmetric_physical_read_io_requests_per_sec_value{ident=\"$ident\", instance=\"$instance\"}"
-                  },
-                  {
-                      "expr": "oracle_sysmetric_Physical_Write_IO_Requests_Per_Sec{ident=\"$ident\", instance=\"$instance\"}",
-                      "refId": "B"
-                  }
-              ],
-              "name": "Physical RW IO Requests / Second",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 12,
-                  "y": 45,
-                  "i": "2bbfa751-4ac8-4ab9-affe-04b68e98daec"
-              },
-              "id": "2bbfa751-4ac8-4ab9-affe-04b68e98daec"
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "oracle_sysmetric_physical_read_total_io_requests_per_sec_value{ident=\"$ident\", instance=\"$instance\"}"
-                  },
-                  {
-                      "expr": "oracle_sysmetric_Physical_Write_Total_IO_Requests_Per_Sec{ident=\"$ident\", instance=\"$instance\"}",
-                      "refId": "B"
-                  }
-              ],
-              "name": "Physical RW Total IO Requests / Second",
-              "options": {
-                  "tooltip": {
-                      "mode": "all",
-                      "sort": "desc"
-                  },
-                  "legend": {
-                      "displayMode": "hidden"
-                  },
-                  "standardOptions": {},
-                  "thresholds": {}
-              },
-              "custom": {
-                  "drawStyle": "lines",
-                  "lineInterpolation": "smooth",
-                  "fillOpacity": 0.5,
-                  "stack": "off"
-              },
-              "version": "2.0.0",
-              "type": "timeseries",
-              "layout": {
-                  "h": 7,
-                  "w": 6,
-                  "x": 18,
-                  "y": 45,
-                  "i": "2ec5b041-dbd1-4013-bac8-bb0ac6fb5df6"
-              },
-              "id": "2ec5b041-dbd1-4013-bac8-bb0ac6fb5df6"
-          }
-      ]
-  }
+    "name": "Oracle by categraf",
+    "tags": "categraf",
+    "ident": "",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "16c3b81f-38ea-472e-ba9d-58f3218413c9",
+                "layout": {
+                    "h": 1,
+                    "i": "16c3b81f-38ea-472e-ba9d-58f3218413c9",
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Activities",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "id": "6834fcfd-6448-4848-9f63-72350d818a39",
+                "layout": {
+                    "h": 3,
+                    "i": "6834fcfd-6448-4848-9f63-72350d818a39",
+                    "w": 6,
+                    "x": 6,
+                    "y": 1
+                },
+                "name": "execute count / second",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 1
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(oracle_activity_execute_count_value{ident=\"$ident\", instance=\"$instance\"}[2m])",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "id": "1754fda2-fa98-481e-ba86-520f1d7ebc0d",
+                "layout": {
+                    "h": 3,
+                    "i": "1754fda2-fa98-481e-ba86-520f1d7ebc0d",
+                    "w": 6,
+                    "x": 12,
+                    "y": 1
+                },
+                "name": "user commits / second",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "rate(oracle_activity_user_commits_value{ident=\"$ident\", instance=\"$instance\"}[2m])",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "id": "18357a10-cab4-4795-a4a4-fd960d37ce95",
+                "layout": {
+                    "h": 3,
+                    "i": "18357a10-cab4-4795-a4a4-fd960d37ce95",
+                    "w": 6,
+                    "x": 18,
+                    "y": 1
+                },
+                "name": "user rollbacks / second",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "rate(oracle_activity_user_rollbacks_value{ident=\"$ident\", instance=\"$instance\"}[2m])",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "id": "8e5f9501-7bc0-4b77-9178-3ab875202f43",
+                "layout": {
+                    "h": 3,
+                    "i": "8e5f9501-7bc0-4b77-9178-3ab875202f43",
+                    "w": 6,
+                    "x": 0,
+                    "y": 1
+                },
+                "name": "status",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#5ea70f",
+                                "text": "UP"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "#f60f0f",
+                                "text": "DOWN"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_up{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "aa019cdc-109a-4d3d-9549-9abc20720343",
+                "layout": {
+                    "h": 1,
+                    "i": "aa019cdc-109a-4d3d-9549-9abc20720343",
+                    "w": 24,
+                    "x": 0,
+                    "y": 4
+                },
+                "name": "Waits",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "51451443-eb34-4bdc-8fc5-1f0ee35eb73c",
+                "layout": {
+                    "h": 7,
+                    "i": "51451443-eb34-4bdc-8fc5-1f0ee35eb73c",
+                    "w": 24,
+                    "x": 0,
+                    "y": 5
+                },
+                "name": "Time waited",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_wait_time_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "legend": "{{wait_class}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "108aa978-21be-45f4-92a6-f125f977965c",
+                "layout": {
+                    "h": 1,
+                    "i": "108aa978-21be-45f4-92a6-f125f977965c",
+                    "w": 24,
+                    "x": 0,
+                    "y": 12
+                },
+                "name": "Tablespace",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "cf2454bd-0cf4-4f1a-a96a-b043db94da1f",
+                "layout": {
+                    "h": 7,
+                    "i": "cf2454bd-0cf4-4f1a-a96a-b043db94da1f",
+                    "w": 12,
+                    "x": 0,
+                    "y": 13
+                },
+                "name": "Used Percent",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_tablespace_bytes{ident=\"$ident\", instance=\"$instance\"}/oracle_tablespace_max_bytes{ident=\"$ident\", instance=\"$instance\"}",
+                        "legend": "{{tablespace}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "8f4aa32b-1ab6-49d2-94c5-83f408dd3cc4",
+                "layout": {
+                    "h": 7,
+                    "i": "8f4aa32b-1ab6-49d2-94c5-83f408dd3cc4",
+                    "w": 12,
+                    "x": 12,
+                    "y": 13
+                },
+                "name": "Free space",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_tablespace_free{ident=\"$ident\", instance=\"$instance\"}",
+                        "legend": "{{tablespace}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "91c8d4ca-109e-4380-9222-92cffdcc5381",
+                "layout": {
+                    "h": 1,
+                    "i": "91c8d4ca-109e-4380-9222-92cffdcc5381",
+                    "w": 24,
+                    "x": 0,
+                    "y": 20
+                },
+                "name": "IO and TPS",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "08552fed-10d2-4408-809e-eabc705db9f5",
+                "layout": {
+                    "h": 7,
+                    "i": "08552fed-10d2-4408-809e-eabc705db9f5",
+                    "w": 8,
+                    "x": 0,
+                    "y": 21
+                },
+                "name": "IO Requests / Second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_sysmetric_io_requests_per_second_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "c42236d6-d18a-40bb-84dc-d287b1d0ac25",
+                "layout": {
+                    "h": 7,
+                    "i": "c42236d6-d18a-40bb-84dc-d287b1d0ac25",
+                    "w": 8,
+                    "x": 8,
+                    "y": 21
+                },
+                "name": "TPS",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 1
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_sysmetric_user_transaction_per_sec_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "3a564e64-4bed-4381-ab08-517b51f6cc66",
+                "layout": {
+                    "h": 7,
+                    "i": "3a564e64-4bed-4381-ab08-517b51f6cc66",
+                    "w": 8,
+                    "x": 16,
+                    "y": 21
+                },
+                "name": "IO Bytes / Second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_sysmetric_io_megabytes_per_second_value{ident=\"$ident\", instance=\"$instance\"}*1024*1024",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "34bc0a3c-23ee-4792-9552-0994fb027464",
+                "layout": {
+                    "h": 1,
+                    "i": "34bc0a3c-23ee-4792-9552-0994fb027464",
+                    "w": 24,
+                    "x": 0,
+                    "y": 28
+                },
+                "name": "Connections",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "f46676da-b625-458e-b8d2-9079441ac3d6",
+                "layout": {
+                    "h": 7,
+                    "i": "f46676da-b625-458e-b8d2-9079441ac3d6",
+                    "w": 24,
+                    "x": 0,
+                    "y": 29
+                },
+                "name": "Sessions",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_sessions_value{ident=\"$ident\", instance=\"$instance\",status=\"ACTIVE\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "f8a61c95-0d00-4d38-a9d1-5813f70443da",
+                "layout": {
+                    "h": 1,
+                    "i": "f8a61c95-0d00-4d38-a9d1-5813f70443da",
+                    "w": 24,
+                    "x": 0,
+                    "y": 36
+                },
+                "name": "Hit Ratio",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "f35e0768-204e-43c8-8d43-32f34a391bf8",
+                "layout": {
+                    "h": 7,
+                    "i": "f35e0768-204e-43c8-8d43-32f34a391bf8",
+                    "w": 6,
+                    "x": 0,
+                    "y": 37
+                },
+                "name": "Buffer Cache Hit Ratio",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_sysmetric_buffer_cache_hit_ratio_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "4239c9e1-0bf3-42ae-a7a5-8db2c38f1900",
+                "layout": {
+                    "h": 7,
+                    "i": "4239c9e1-0bf3-42ae-a7a5-8db2c38f1900",
+                    "w": 6,
+                    "x": 6,
+                    "y": 37
+                },
+                "name": "Redo Allocation Hit Ratio",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_sysmetric_redo_allocation_hit_ratio_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "c40640c2-31b8-4bec-a88e-8a0f346da2a8",
+                "layout": {
+                    "h": 7,
+                    "i": "c40640c2-31b8-4bec-a88e-8a0f346da2a8",
+                    "w": 6,
+                    "x": 12,
+                    "y": 37
+                },
+                "name": "Row Cache Hit Ratio",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_sysmetric_row_cache_hit_ratio_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "93c7f8d2-093c-47fc-93e8-97b47bfcff80",
+                "layout": {
+                    "h": 7,
+                    "i": "93c7f8d2-093c-47fc-93e8-97b47bfcff80",
+                    "w": 6,
+                    "x": 18,
+                    "y": 37
+                },
+                "name": "Library Cache Hit Ratio",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_sysmetric_library_cache_hit_ratio_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "9857bf37-1e40-4cf5-adbc-8331f5e128c8",
+                "layout": {
+                    "h": 1,
+                    "i": "9857bf37-1e40-4cf5-adbc-8331f5e128c8",
+                    "w": 24,
+                    "x": 0,
+                    "y": 44
+                },
+                "name": "Physical Read Write",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "b47bcfb9-2d26-454d-982a-039b769d405b",
+                "layout": {
+                    "h": 7,
+                    "i": "b47bcfb9-2d26-454d-982a-039b769d405b",
+                    "w": 6,
+                    "x": 0,
+                    "y": 45
+                },
+                "name": "Physical Read Write Bytes / Second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_sysmetric_physical_read_bytes_per_sec_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "oracle_sysmetric_Physical_Write_Bytes_Per_Sec{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "0c4ea45a-913f-4464-9c31-eb026a365729",
+                "layout": {
+                    "h": 7,
+                    "i": "0c4ea45a-913f-4464-9c31-eb026a365729",
+                    "w": 6,
+                    "x": 6,
+                    "y": 45
+                },
+                "name": "Physical Read Write Total Bytes / Second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_sysmetric_physical_read_total_bytes_per_sec_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "oracle_sysmetric_Physical_Write_Total_Bytes_Per_Sec{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "2bbfa751-4ac8-4ab9-affe-04b68e98daec",
+                "layout": {
+                    "h": 7,
+                    "i": "2bbfa751-4ac8-4ab9-affe-04b68e98daec",
+                    "w": 6,
+                    "x": 12,
+                    "y": 45
+                },
+                "name": "Physical RW IO Requests / Second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_sysmetric_physical_read_io_requests_per_sec_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "oracle_sysmetric_Physical_Write_IO_Requests_Per_Sec{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "2ec5b041-dbd1-4013-bac8-bb0ac6fb5df6",
+                "layout": {
+                    "h": 7,
+                    "i": "2ec5b041-dbd1-4013-bac8-bb0ac6fb5df6",
+                    "w": 6,
+                    "x": 18,
+                    "y": 45
+                },
+                "name": "Physical RW Total IO Requests / Second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "oracle_sysmetric_physical_read_total_io_requests_per_sec_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "oracle_sysmetric_Physical_Write_Total_IO_Requests_Per_Sec{ident=\"$ident\", instance=\"$instance\"}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            }
+        ],
+        "var": [
+            {
+                "name": "prom",
+                "type": "datasource",
+                "definition": "prometheus"
+            },
+            {
+                "definition": "label_values(oracle_up,ident)",
+                "name": "ident",
+                "options": [
+                    "tt-fc-log00.nj"
+                ],
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                }
+            },
+            {
+                "definition": "label_values(oracle_up{ident=\"$ident\"},instance)",
+                "name": "instance",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                }
+            }
+        ],
+        "version": "3.0.0"
+    }
 }

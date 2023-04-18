@@ -1,10 +1,15 @@
 package router
 
 import (
+	"crypto/tls"
+	"fmt"
+	"net/http"
+
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 func (rt *Router) pluginList(c *gin.Context) {
@@ -37,6 +42,13 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 
 	var err error
 	var count int64
+
+	err = DatasourceCheck(req)
+	if err != nil {
+		Dangerous(c, err)
+		return
+	}
+
 	if req.Id == 0 {
 		req.CreatedBy = username
 		req.Status = "enabled"
@@ -52,10 +64,52 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		}
 		err = req.Add(rt.Ctx)
 	} else {
-		err = req.Update(rt.Ctx, "name", "description", "cluster_name", "settings", "http", "auth", "status", "updated_by", "updated_at")
+		err = req.Update(rt.Ctx, "name", "description", "cluster_name", "settings", "http", "auth", "updated_by", "updated_at")
 	}
 
 	Render(c, nil, err)
+}
+
+func DatasourceCheck(ds models.Datasource) error {
+	if ds.HTTPJson.Url == "" {
+		return fmt.Errorf("url is empty")
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify,
+			},
+		},
+	}
+
+	req, err := http.NewRequest("GET", ds.HTTPJson.Url, nil)
+	if err != nil {
+		logger.Errorf("Error creating request: %v", err)
+		return fmt.Errorf("request url:%s failed", ds.HTTPJson.Url)
+	}
+
+	if ds.AuthJson.BasicAuthUser != "" {
+		req.SetBasicAuth(ds.AuthJson.BasicAuthUser, ds.AuthJson.BasicAuthPassword)
+	}
+
+	for k, v := range ds.HTTPJson.Headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		logger.Errorf("Error making request: %v\n", err)
+		return fmt.Errorf("request url:%s failed", ds.HTTPJson.Url)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		logger.Errorf("Error making request: %v\n", resp.StatusCode)
+		return fmt.Errorf("request url:%s failed code:%d", ds.HTTPJson.Url, resp.StatusCode)
+	}
+
+	return nil
 }
 
 func (rt *Router) datasourceGet(c *gin.Context) {

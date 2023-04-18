@@ -58,7 +58,7 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 				Msgtype: "markdown",
 				Markdown: dingtalkMarkdown{
 					Title: ctx.Rule.Name,
-					Text:  message + " " + strings.Join(ats, " "),
+					Text:  message + "\n" + strings.Join(ats, " "),
 				},
 				At: dingtalkAt{
 					AtMobiles: ats,

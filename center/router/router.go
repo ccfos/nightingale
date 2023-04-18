@@ -17,7 +17,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/runner"
 
 	"github.com/gin-gonic/gin"
 )
@@ -92,9 +92,17 @@ func (rt *Router) configNoRoute(r *gin.Engine) {
 		suffix := arr[len(arr)-1]
 		switch suffix {
 		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map":
-			c.File(path.Join(strings.Split("pub/"+c.Request.URL.Path, "/")...))
+			cwdarr := []string{"/"}
+			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+			cwdarr = append(cwdarr, "pub")
+			cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
+			c.File(path.Join(cwdarr...))
 		default:
-			c.File(path.Join("pub", "index.html"))
+			cwdarr := []string{"/"}
+			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+			cwdarr = append(cwdarr, "pub")
+			cwdarr = append(cwdarr, "index.html")
+			c.File(path.Join(cwdarr...))
 		}
 	})
 }
@@ -188,11 +196,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/dashboards/builtin/list", rt.builtinBoardGets)
 		pages.GET("/builtin-boards-cates", rt.auth(), rt.user(), rt.builtinBoardCateGets)
 		pages.POST("/builtin-boards-detail", rt.auth(), rt.user(), rt.builtinBoardDetailGets)
-		pages.GET("/integrations/icon/:cate/:name", func(c *gin.Context) {
-			cate := ginx.UrlParamStr(c, "cate")
-			fp := "integrations/" + cate + "/icon/" + ginx.UrlParamStr(c, "name")
-			c.File(path.Join(fp))
-		})
+		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
 
 		pages.GET("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.bgro(), rt.boardGets)
 		pages.POST("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards/add"), rt.bgrw(), rt.boardAdd)
@@ -387,9 +391,9 @@ func Dangerous(c *gin.Context, v interface{}, code ...int) {
 	switch t := v.(type) {
 	case string:
 		if t != "" {
-			c.JSON(http.StatusOK, gin.H{"error": gin.H{"message": v}})
+			c.JSON(http.StatusOK, gin.H{"error": v})
 		}
 	case error:
-		c.JSON(http.StatusOK, gin.H{"error": gin.H{"message": t.Error()}})
+		c.JSON(http.StatusOK, gin.H{"error": t.Error()})
 	}
 }

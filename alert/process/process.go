@@ -59,7 +59,7 @@ type Processor struct {
 
 	atertRuleCache  *memsto.AlertRuleCacheType
 	TargetCache     *memsto.TargetCacheType
-	busiGroupCache  *memsto.BusiGroupCacheType
+	BusiGroupCache  *memsto.BusiGroupCacheType
 	alertMuteCache  *memsto.AlertMuteCacheType
 	datasourceCache *memsto.DatasourceCacheType
 
@@ -94,7 +94,7 @@ func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *me
 		rule:         rule,
 
 		TargetCache:     targetCache,
-		busiGroupCache:  busiGroupCache,
+		BusiGroupCache:  busiGroupCache,
 		alertMuteCache:  alertMuteCache,
 		atertRuleCache:  atertRuleCache,
 		datasourceCache: datasourceCache,
@@ -378,18 +378,19 @@ func (p *Processor) fillTags(anomalyPoint common.AnomalyPoint) {
 		t, err := template.New(fmt.Sprint(p.rule.Id)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
 		if err != nil {
 			tagValue = fmt.Sprintf("parse tag value failed, err:%s", err)
+			tagsMap[arr[0]] = tagValue
+			continue
 		}
 
 		var body bytes.Buffer
 		err = t.Execute(&body, e)
 		if err != nil {
 			tagValue = fmt.Sprintf("parse tag value failed, err:%s", err)
+			tagsMap[arr[0]] = tagValue
+			continue
 		}
 
-		if err == nil {
-			tagValue = body.String()
-		}
-		tagsMap[arr[0]] = tagValue
+		tagsMap[arr[0]] = body.String()
 	}
 
 	tagsMap["rulename"] = p.rule.Name
@@ -411,7 +412,7 @@ func (p *Processor) mayHandleIdent() {
 
 func (p *Processor) mayHandleGroup() {
 	// handle bg
-	bg := p.busiGroupCache.GetByBusiGroupId(p.rule.GroupId)
+	bg := p.BusiGroupCache.GetByBusiGroupId(p.rule.GroupId)
 	if bg != nil {
 		p.groupName = bg.Name
 	}

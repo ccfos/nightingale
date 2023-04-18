@@ -1,475 +1,461 @@
 {
     "name": "VMware by vSphere-monitor",
     "tags": "VMware vSphere-monitor",
+    "ident": "",
     "configs": {
-        "var": [
-            {
-                "type": "query",
-                "name": "vcenter",
-                "definition": "label_values(esxi_alive,ident)",
-                "multi": false
-            },
-            {
-                "type": "query",
-                "name": "datacenter",
-                "definition": "label_values(esxi_alive{ident=\"$vcenter\"},datacenter)",
-                "multi": true,
-                "allOption": true
-            },
-            {
-                "type": "query",
-                "definition": "label_values(esxi_alive{ident=\"$vcenter\",datacenter=~\"$datacenter\"},host)",
-                "name": "esxi",
-                "multi": true,
-                "allOption": true
-            },
-            {
-                "type": "query",
-                "definition": "label_values(vm_power{ident=\"$vcenter\"},vm)",
-                "name": "vm",
-                "multi": true,
-                "allOption": true
-            }
-        ],
         "panels": [
             {
-                "type": "row",
-                "id": "8d8b9e77-73dd-4ccf-bb4b-82c725f6be60",
-                "name": "Vcenter Status",
                 "collapsed": true,
+                "id": "8d8b9e77-73dd-4ccf-bb4b-82c725f6be60",
                 "layout": {
                     "h": 1,
+                    "i": "8d8b9e77-73dd-4ccf-bb4b-82c725f6be60",
+                    "isResizable": false,
                     "w": 24,
                     "x": 0,
-                    "y": 0,
-                    "i": "8d8b9e77-73dd-4ccf-bb4b-82c725f6be60",
-                    "isResizable": false
+                    "y": 0
                 },
-                "panels": []
+                "name": "Vcenter Status",
+                "panels": [],
+                "type": "row"
             },
             {
-                "name": "",
-                "links": [
-                    {
-                        "url": "https://github.com/freedomkk-qfeng/vsphere-monitor",
-                        "title": "Vsphere-monitor",
-                        "targetBlank": true
-                    }
-                ],
-                "description": "",
                 "custom": {
-                    "textColor": "#ff9919",
-                    "bgColor": "#1d78a1",
-                    "textSize": 22,
-                    "justifyContent": "center",
                     "alignItems": "center",
-                    "content": "```VMware Vcenter```"
+                    "bgColor": "#1d78a1",
+                    "content": "```VMware Vcenter```",
+                    "justifyContent": "center",
+                    "textColor": "#ff9919",
+                    "textSize": 22
                 },
-                "version": "2.0.0",
-                "type": "text",
+                "description": "",
+                "id": "597e7302-ea67-4690-a8d0-0ef4db233825",
                 "layout": {
                     "h": 3,
+                    "i": "597e7302-ea67-4690-a8d0-0ef4db233825",
+                    "isResizable": true,
                     "w": 4,
                     "x": 0,
-                    "y": 1,
-                    "i": "597e7302-ea67-4690-a8d0-0ef4db233825",
-                    "isResizable": true
+                    "y": 1
                 },
-                "id": "597e7302-ea67-4690-a8d0-0ef4db233825"
-            },
-            {
-                "targets": [
+                "links": [
                     {
-                        "refId": "A",
-                        "expr": "count(max(esxi_alive{ident=\"$vcenter\"}) by (datacenter))",
-                        "legend": "",
-                        "time": {
-                            "start": "now-30m",
-                            "end": "now"
-                        }
+                        "targetBlank": true,
+                        "title": "Vsphere-monitor",
+                        "url": "https://github.com/freedomkk-qfeng/vsphere-monitor"
                     }
                 ],
-                "name": "Datacenter summary",
-                "description": "所有Datacenter数量",
+                "name": "",
+                "type": "text",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "description": "所有Datacenter数量",
+                "id": "65429acb-0817-4e45-a396-157ad73a77a2",
+                "layout": {
+                    "h": 3,
+                    "i": "62db6d95-be53-4123-bef1-6e5bd0adbfea",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 1
+                },
+                "name": "Datacenter summary",
                 "options": {
+                    "standardOptions": {},
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 1
+                            },
                             "result": {
                                 "color": "#4ca3d9"
                             },
-                            "match": {
-                                "from": 1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {}
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 4,
-                    "y": 1,
-                    "i": "62db6d95-be53-4123-bef1-6e5bd0adbfea",
-                    "isResizable": true
-                },
-                "id": "65429acb-0817-4e45-a396-157ad73a77a2"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "count(datastore_capacity{ident=\"$vcenter\"})",
+                        "expr": "count(max(esxi_alive{ident=\"$vcenter\"}) by (datacenter))",
                         "legend": "",
+                        "refId": "A",
                         "time": {
-                            "start": "now-30m",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
-                "name": "Datastore summary",
-                "description": "所有Datastore存储数量",
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "description": "所有Datastore存储数量",
+                "id": "20001d28-d0f6-400d-b0ac-340160dd8bdc",
+                "layout": {
+                    "h": 3,
+                    "i": "ecae770c-5e50-40e7-99dd-88dbd64174f1",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 1
+                },
+                "name": "Datastore summary",
                 "options": {
+                    "standardOptions": {},
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 1
+                            },
                             "result": {
                                 "color": "#ff9919"
                             },
-                            "match": {
-                                "from": 1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {}
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 8,
-                    "y": 1,
-                    "i": "ecae770c-5e50-40e7-99dd-88dbd64174f1",
-                    "isResizable": true
-                },
-                "id": "20001d28-d0f6-400d-b0ac-340160dd8bdc"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "count(esxi_alive{ident=\"$vcenter\"})",
+                        "expr": "count(datastore_capacity{ident=\"$vcenter\"})",
                         "legend": "",
+                        "refId": "A",
                         "time": {
-                            "start": "now-30m",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
-                "name": "ESXI summary",
-                "description": "所有ESXI主机的数量",
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "description": "所有ESXI主机的数量",
+                "id": "40fb3098-f205-432b-b38e-5defb98b1da0",
+                "layout": {
+                    "h": 3,
+                    "i": "ce2ce101-ee12-429a-8968-e1a6fe0e0f13",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 12,
+                    "y": 1
+                },
+                "name": "ESXI summary",
                 "options": {
+                    "standardOptions": {},
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 1
+                            },
                             "result": {
                                 "color": "#e49d4e"
                             },
-                            "match": {
-                                "from": 1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {}
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 12,
-                    "y": 1,
-                    "i": "ce2ce101-ee12-429a-8968-e1a6fe0e0f13",
-                    "isResizable": true
-                },
-                "id": "40fb3098-f205-432b-b38e-5defb98b1da0"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "count(vm_power{ident=\"$vcenter\"}==1)",
+                        "expr": "count(esxi_alive{ident=\"$vcenter\"})",
                         "legend": "",
+                        "refId": "A",
                         "time": {
-                            "start": "now-30m",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
-                "name": "VM Power ON",
-                "description": "开启的虚拟机数量",
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "description": "开启的虚拟机数量",
+                "id": "906403b1-4bc3-41e3-a5a4-3563ad335724",
+                "layout": {
+                    "h": 3,
+                    "i": "66911f96-94d4-41b4-9604-ef3c4268f3bf",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 1
+                },
+                "name": "VM Power ON",
                 "options": {
+                    "standardOptions": {},
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 1
+                            },
                             "result": {
                                 "color": "#3fc453"
                             },
-                            "match": {
-                                "from": 1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {}
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 16,
-                    "y": 1,
-                    "i": "66911f96-94d4-41b4-9604-ef3c4268f3bf",
-                    "isResizable": true
-                },
-                "id": "906403b1-4bc3-41e3-a5a4-3563ad335724"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "count(vm_power{ident=\"$vcenter\"} != 1) or vector(0)",
+                        "expr": "count(vm_power{ident=\"$vcenter\"}==1)",
                         "legend": "",
+                        "refId": "A",
                         "time": {
-                            "start": "now-30m",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
-                "name": "VM Power OFF",
-                "links": [],
-                "description": "关闭的虚拟机数量",
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "first",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "description": "关闭的虚拟机数量",
+                "id": "8b452644-5cf2-45fb-8bb9-eb9bf1dcfd43",
+                "layout": {
+                    "h": 3,
+                    "i": "4ca2f3fd-02ff-4e17-9d16-91f5897726bb",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 1
+                },
+                "links": [],
+                "name": "VM Power OFF",
                 "options": {
+                    "standardOptions": {
+                        "min": null
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 1,
+                                "specialValue": "null",
+                                "to": null
+                            },
                             "result": {
                                 "color": "#ce4f52",
                                 "text": ""
                             },
-                            "match": {
-                                "from": 1,
-                                "to": null,
-                                "specialValue": "null"
-                            }
+                            "type": "range"
                         },
                         {
-                            "type": "special",
+                            "match": {
+                                "special": 0
+                            },
                             "result": {
                                 "color": "#3fc453"
                             },
-                            "match": {
-                                "special": 0
-                            }
+                            "type": "special"
                         }
-                    ],
-                    "standardOptions": {
-                        "min": null
-                    }
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 20,
-                    "y": 1,
-                    "i": "4ca2f3fd-02ff-4e17-9d16-91f5897726bb",
-                    "isResizable": true
-                },
-                "id": "8b452644-5cf2-45fb-8bb9-eb9bf1dcfd43"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "sum(datastore_capacity{ident=\"$vcenter\"})",
+                        "expr": "count(vm_power{ident=\"$vcenter\"} != 1) or vector(0)",
                         "legend": "",
+                        "refId": "A",
                         "time": {
-                            "start": "now-30m",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
-                "name": "Datastore Total",
-                "description": "Datastore总空间",
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "description": "Datastore总空间",
+                "id": "aeacca5e-063d-4abf-9b05-80b8ca33ea02",
+                "layout": {
+                    "h": 3,
+                    "i": "3287ae88-1552-44c6-b5c2-168064d1e1e2",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 4
+                },
+                "name": "Datastore Total",
                 "options": {
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 1
+                            },
                             "result": {
                                 "color": "#9470ff"
                             },
-                            "match": {
-                                "from": 1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "bytesIEC"
-                    }
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 0,
-                    "y": 4,
-                    "i": "3287ae88-1552-44c6-b5c2-168064d1e1e2",
-                    "isResizable": true
-                },
-                "id": "aeacca5e-063d-4abf-9b05-80b8ca33ea02"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "(sum(datastore_capacity{ident=\"$vcenter\"})-sum(datastore_free{ident=\"$vcenter\"})) / sum(datastore_capacity{ident=\"$vcenter\"})",
+                        "expr": "sum(datastore_capacity{ident=\"$vcenter\"})",
                         "legend": "",
+                        "refId": "A",
                         "time": {
-                            "start": "now-30m",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
-                "name": "Datastore Percent",
-                "description": "Datastore总使用率",
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "description": "Datastore总使用率",
+                "id": "4c51137d-9403-473a-b0d7-bda0410546e3",
+                "layout": {
+                    "h": 3,
+                    "i": "8a6b9c64-f05f-4128-9c4e-9227d955192c",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 4
+                },
+                "name": "Datastore Percent",
                 "options": {
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#2c9d3d"
-                            },
                             "match": {
                                 "from": null,
                                 "to": 0.6
-                            }
+                            },
+                            "result": {
+                                "color": "#2c9d3d"
+                            },
+                            "type": "range"
                         },
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#ffae39"
-                            },
                             "match": {
                                 "from": 0.6,
                                 "to": 0.8
-                            }
+                            },
+                            "result": {
+                                "color": "#ffae39"
+                            },
+                            "type": "range"
                         },
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 0.8
+                            },
                             "result": {
                                 "color": "#ce4f52"
                             },
-                            "match": {
-                                "from": 0.8
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "percentUnit"
-                    }
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 4,
-                    "y": 4,
-                    "i": "8a6b9c64-f05f-4128-9c4e-9227d955192c",
-                    "isResizable": true
-                },
-                "id": "4c51137d-9403-473a-b0d7-bda0410546e3"
-            },
-            {
                 "targets": [
                     {
+                        "expr": "(sum(datastore_capacity{ident=\"$vcenter\"})-sum(datastore_free{ident=\"$vcenter\"})) / sum(datastore_capacity{ident=\"$vcenter\"})",
+                        "legend": "",
                         "refId": "A",
-                        "expr": "esxi_alive{ident=\"$vcenter\"} ",
-                        "legend": "{{ident}}(esxi-{{host}})",
                         "time": {
-                            "start": "now-30m",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
-                "name": "ESXI List",
-                "description": "ESXI列表",
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "showHeader": false,
-                    "colorMode": "background",
                     "calc": "lastNotNull",
+                    "colorMode": "background",
                     "displayMode": "seriesToRows",
+                    "showHeader": false,
                     "sortColumn": "value",
                     "sortOrder": "ascend"
                 },
+                "description": "ESXI列表",
+                "id": "2fc78fbf-9238-42d8-8934-b5c5c0ea72c4",
+                "layout": {
+                    "h": 9,
+                    "i": "8dace014-0c83-4be0-8234-4a779e0d656a",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 4
+                },
+                "name": "ESXI List",
                 "options": {
-                    "valueMappings": [],
-                    "standardOptions": {}
+                    "standardOptions": {},
+                    "valueMappings": []
                 },
                 "overrides": [
                     {
@@ -479,881 +465,914 @@
                         "properties": {
                             "valueMappings": [
                                 {
-                                    "type": "special",
+                                    "match": {
+                                        "special": 1
+                                    },
                                     "result": {
                                         "color": "#2c9d3d",
                                         "text": "UP"
                                     },
-                                    "match": {
-                                        "special": 1
-                                    }
+                                    "type": "special"
                                 },
                                 {
-                                    "type": "special",
+                                    "match": {
+                                        "special": 0
+                                    },
                                     "result": {
                                         "color": "#ce4f52",
                                         "text": "Down"
                                     },
-                                    "match": {
-                                        "special": 0
-                                    }
+                                    "type": "special"
                                 }
                             ]
                         }
                     }
                 ],
-                "version": "2.0.0",
-                "type": "table",
-                "layout": {
-                    "h": 9,
-                    "w": 8,
-                    "x": 8,
-                    "y": 4,
-                    "i": "8dace014-0c83-4be0-8234-4a779e0d656a",
-                    "isResizable": true
-                },
-                "id": "2fc78fbf-9238-42d8-8934-b5c5c0ea72c4"
-            },
-            {
                 "targets": [
                     {
+                        "expr": "esxi_alive{ident=\"$vcenter\"} ",
+                        "legend": "{{ident}}(esxi-{{host}})",
                         "refId": "A",
-                        "expr": "topk(10,(100 - vm_memory_freePercent{ident=\"$vcenter\"}))",
-                        "legend": "{{vm}}(Vcenter={{ident}})"
+                        "time": {
+                            "end": "now",
+                            "start": "now-30m"
+                        }
                     }
                 ],
-                "name": "虚拟机内存使用率 top10",
+                "type": "table",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "calc": "lastNotNull",
                     "baseColor": "#2c9d3d",
+                    "calc": "lastNotNull",
                     "serieWidth": 40,
                     "sortOrder": "desc"
                 },
+                "id": "2027eb16-0b3f-493d-b5fc-7627d9427377",
+                "layout": {
+                    "h": 9,
+                    "i": "2027eb16-0b3f-493d-b5fc-7627d9427377",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 4
+                },
+                "name": "虚拟机内存使用率 top10",
                 "options": {
+                    "standardOptions": {
+                        "util": "percent"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#2c9d3d"
-                            },
                             "match": {
                                 "from": null,
                                 "to": 50
-                            }
+                            },
+                            "result": {
+                                "color": "#2c9d3d"
+                            },
+                            "type": "range"
                         },
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#ffae39"
-                            },
                             "match": {
                                 "from": 50,
                                 "to": 75
-                            }
+                            },
+                            "result": {
+                                "color": "#ffae39"
+                            },
+                            "type": "range"
                         },
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#ce4f52"
-                            },
                             "match": {
                                 "from": 75,
                                 "to": null
-                            }
+                            },
+                            "result": {
+                                "color": "#ce4f52"
+                            },
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "percent"
-                    }
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "barGauge",
-                "layout": {
-                    "h": 9,
-                    "w": 8,
-                    "x": 16,
-                    "y": 4,
-                    "i": "2027eb16-0b3f-493d-b5fc-7627d9427377",
-                    "isResizable": true
-                },
-                "id": "2027eb16-0b3f-493d-b5fc-7627d9427377"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "sum(esxi_memory_capacity{ident=\"$vcenter\"})",
-                        "legend": "",
-                        "time": {
-                            "start": "now-30m",
-                            "end": "now"
-                        }
+                        "expr": "topk(10,(100 - vm_memory_freePercent{ident=\"$vcenter\"}))",
+                        "legend": "{{vm}}(Vcenter={{ident}})",
+                        "refId": "A"
                     }
                 ],
-                "name": "Vcenter MEM Total",
-                "description": "ESXI内存总量",
+                "type": "barGauge",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "description": "ESXI内存总量",
+                "id": "c06e345f-f174-48a1-9cf6-cca48ef61289",
+                "layout": {
+                    "h": 3,
+                    "i": "b8014e1d-a5c9-4a06-ac04-195a32ccedf1",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 7
+                },
+                "name": "Vcenter MEM Total",
                 "options": {
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 1
+                            },
                             "result": {
                                 "color": "#9470ff"
                             },
-                            "match": {
-                                "from": 1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "bytesIEC"
-                    }
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 0,
-                    "y": 7,
-                    "i": "b8014e1d-a5c9-4a06-ac04-195a32ccedf1",
-                    "isResizable": true
-                },
-                "id": "c06e345f-f174-48a1-9cf6-cca48ef61289"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "sum(esxi_memory_usage{ident=\"$vcenter\"}) / sum(esxi_memory_capacity{ident=\"$vcenter\"})",
+                        "expr": "sum(esxi_memory_capacity{ident=\"$vcenter\"})",
                         "legend": "",
+                        "refId": "A",
                         "time": {
-                            "start": "now-30m",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
-                "name": "Vcenter MEM Percent",
-                "description": "ESXI内存总使用率",
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "description": "ESXI内存总使用率",
+                "id": "ba9c54ef-d538-4063-b917-398c231db726",
+                "layout": {
+                    "h": 3,
+                    "i": "7a104eb0-fddb-4f0f-a826-8796dfac3eda",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 7
+                },
+                "name": "Vcenter MEM Percent",
                 "options": {
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#2c9d3d"
-                            },
                             "match": {
                                 "from": null,
                                 "to": 0.6
-                            }
+                            },
+                            "result": {
+                                "color": "#2c9d3d"
+                            },
+                            "type": "range"
                         },
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#ffae39"
-                            },
                             "match": {
                                 "from": 0.6,
                                 "to": 0.8
-                            }
+                            },
+                            "result": {
+                                "color": "#ffae39"
+                            },
+                            "type": "range"
                         },
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#ce4f52"
-                            },
                             "match": {
                                 "from": 0.8
-                            }
+                            },
+                            "result": {
+                                "color": "#ce4f52"
+                            },
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "percentUnit"
-                    }
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 4,
-                    "y": 7,
-                    "i": "7a104eb0-fddb-4f0f-a826-8796dfac3eda",
-                    "isResizable": true
-                },
-                "id": "ba9c54ef-d538-4063-b917-398c231db726"
-            },
-            {
                 "targets": [
                     {
+                        "expr": "sum(esxi_memory_usage{ident=\"$vcenter\"}) / sum(esxi_memory_capacity{ident=\"$vcenter\"})",
+                        "legend": "",
                         "refId": "A",
+                        "time": {
+                            "end": "now",
+                            "start": "now-30m"
+                        }
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "description": "ESXI存活数量",
+                "id": "9ea6f568-c803-4890-aff1-4074a4d6309f",
+                "layout": {
+                    "h": 3,
+                    "i": "3a3545c2-3df6-4ec2-baa1-39ccd99beda8",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 10
+                },
+                "name": "ESXI UP",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 1
+                            },
+                            "result": {
+                                "color": "#2c9d3d"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
                         "expr": "count(esxi_alive{ident=\"$vcenter\"} ==1)",
                         "legend": "",
+                        "refId": "A",
                         "time": {
-                            "start": "now-30m",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
-                "name": "ESXI UP",
-                "description": "ESXI存活数量",
-                "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
-                    "calc": "lastNotNull",
-                    "colSpan": 1,
-                    "textSize": {}
-                },
-                "options": {
-                    "valueMappings": [
-                        {
-                            "type": "range",
-                            "result": {
-                                "color": "#2c9d3d"
-                            },
-                            "match": {
-                                "from": 1
-                            }
-                        }
-                    ],
-                    "standardOptions": {}
-                },
-                "version": "2.0.0",
                 "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 0,
-                    "y": 10,
-                    "i": "3a3545c2-3df6-4ec2-baa1-39ccd99beda8",
-                    "isResizable": true
-                },
-                "id": "9ea6f568-c803-4890-aff1-4074a4d6309f"
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
             },
             {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "count(esxi_alive{ident=\"$vcenter\"} !=1) or vector(0)",
-                        "legend": "",
-                        "time": {
-                            "start": "now-30m",
-                            "end": "now"
-                        }
-                    }
-                ],
-                "name": "ESXI Down",
-                "description": "ESXI宕机数量",
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
-                "options": {
-                    "valueMappings": [
-                        {
-                            "type": "range",
-                            "result": {
-                                "color": "#ce4f52"
-                            },
-                            "match": {
-                                "from": 1
-                            }
-                        },
-                        {
-                            "type": "special",
-                            "result": {
-                                "color": "#2c9d3d"
-                            },
-                            "match": {
-                                "special": 0
-                            }
-                        }
-                    ],
-                    "standardOptions": {}
-                },
-                "version": "2.0.0",
-                "type": "stat",
+                "description": "ESXI宕机数量",
+                "id": "6bc0cb3a-71fb-4306-a150-8462a0e4c053",
                 "layout": {
                     "h": 3,
+                    "i": "21d15ac6-9a68-46f2-87f6-d298f9b0d596",
+                    "isResizable": true,
                     "w": 4,
                     "x": 4,
-                    "y": 10,
-                    "i": "21d15ac6-9a68-46f2-87f6-d298f9b0d596",
-                    "isResizable": true
+                    "y": 10
                 },
-                "id": "6bc0cb3a-71fb-4306-a150-8462a0e4c053"
+                "name": "ESXI Down",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 1
+                            },
+                            "result": {
+                                "color": "#ce4f52"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "#2c9d3d"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "count(esxi_alive{ident=\"$vcenter\"} !=1) or vector(0)",
+                        "legend": "",
+                        "refId": "A",
+                        "time": {
+                            "end": "now",
+                            "start": "now-30m"
+                        }
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
             },
             {
-                "type": "row",
-                "id": "35b7dc01-0e58-4b01-9f84-e466cb817879",
-                "name": "Datacenter Status",
                 "collapsed": true,
+                "id": "35b7dc01-0e58-4b01-9f84-e466cb817879",
                 "layout": {
                     "h": 1,
+                    "i": "35b7dc01-0e58-4b01-9f84-e466cb817879",
+                    "isResizable": false,
                     "w": 24,
                     "x": 0,
-                    "y": 13,
-                    "i": "35b7dc01-0e58-4b01-9f84-e466cb817879",
-                    "isResizable": false
+                    "y": 13
                 },
-                "panels": []
+                "name": "Datacenter Status",
+                "panels": [],
+                "type": "row"
             },
             {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "topk(10,(esxi_cpu_usage{ident=\"$vcenter\",datacenter=~\"$datacenter\"}))",
-                        "legend": "{{host}}(Vcenter={{ident}})"
-                    }
-                ],
-                "name": "Datacenter-Esxi CPU Usage top10",
                 "custom": {
-                    "calc": "lastNotNull",
                     "baseColor": "#2c9d3d",
+                    "calc": "lastNotNull",
                     "serieWidth": 40,
                     "sortOrder": "desc"
                 },
-                "options": {
-                    "valueMappings": [
-                        {
-                            "type": "range",
-                            "result": {
-                                "color": "#2c9d3d"
-                            },
-                            "match": {
-                                "from": null,
-                                "to": 50
-                            }
-                        },
-                        {
-                            "type": "range",
-                            "result": {
-                                "color": "#ffae39"
-                            },
-                            "match": {
-                                "from": 50,
-                                "to": 75
-                            }
-                        },
-                        {
-                            "type": "range",
-                            "result": {
-                                "color": "#ce4f52"
-                            },
-                            "match": {
-                                "from": 75,
-                                "to": null
-                            }
-                        }
-                    ],
-                    "standardOptions": {
-                        "util": "percent"
-                    }
-                },
-                "version": "2.0.0",
-                "type": "barGauge",
+                "id": "ae61d444-e137-4467-ae4a-541976a0cb75",
                 "layout": {
                     "h": 9,
+                    "i": "53b66c57-64da-431e-833b-b128654ddee6",
+                    "isResizable": true,
                     "w": 8,
                     "x": 0,
-                    "y": 14,
-                    "i": "53b66c57-64da-431e-833b-b128654ddee6",
-                    "isResizable": true
+                    "y": 14
                 },
-                "id": "ae61d444-e137-4467-ae4a-541976a0cb75"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "topk(10,(100 - esxi_memory_freePercent{ident=\"$vcenter\"}))",
-                        "legend": "{{host}}(Vcenter={{ident}})"
-                    }
-                ],
-                "name": "Datacenter-Esxi Mem Usage top10",
-                "custom": {
-                    "calc": "lastNotNull",
-                    "baseColor": "#2c9d3d",
-                    "serieWidth": 40,
-                    "sortOrder": "desc"
-                },
+                "name": "Datacenter-Esxi CPU Usage top10",
                 "options": {
+                    "standardOptions": {
+                        "util": "percent"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#2c9d3d"
-                            },
                             "match": {
                                 "from": null,
                                 "to": 50
-                            }
+                            },
+                            "result": {
+                                "color": "#2c9d3d"
+                            },
+                            "type": "range"
                         },
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#ffae39"
-                            },
                             "match": {
                                 "from": 50,
                                 "to": 75
-                            }
+                            },
+                            "result": {
+                                "color": "#ffae39"
+                            },
+                            "type": "range"
                         },
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#ce4f52"
-                            },
                             "match": {
                                 "from": 75,
                                 "to": null
-                            }
+                            },
+                            "result": {
+                                "color": "#ce4f52"
+                            },
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "percent"
-                    }
+                    ]
                 },
-                "version": "2.0.0",
+                "targets": [
+                    {
+                        "expr": "topk(10,(esxi_cpu_usage{ident=\"$vcenter\",datacenter=~\"$datacenter\"}))",
+                        "legend": "{{host}}(Vcenter={{ident}})",
+                        "refId": "A"
+                    }
+                ],
                 "type": "barGauge",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "baseColor": "#2c9d3d",
+                    "calc": "lastNotNull",
+                    "serieWidth": 40,
+                    "sortOrder": "desc"
+                },
+                "id": "bffb1e95-6ee8-47d8-9f65-ef584c335d8b",
                 "layout": {
                     "h": 9,
+                    "i": "5c71bbfe-7b70-4dbd-84ae-5c4b2318d0fb",
+                    "isResizable": true,
                     "w": 8,
                     "x": 8,
-                    "y": 14,
-                    "i": "5c71bbfe-7b70-4dbd-84ae-5c4b2318d0fb",
-                    "isResizable": true
+                    "y": 14
                 },
-                "id": "bffb1e95-6ee8-47d8-9f65-ef584c335d8b"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "topk(10,(100 - datastore_freePercent{ident=\"$vcenter\",datacenter=~\"$datacenter\"}))",
-                        "legend": "{{datastore}}(Vcenter={{ident}})"
-                    }
-                ],
-                "name": "Datacenter-Esxi Datastore Usage top10 top10",
-                "custom": {
-                    "calc": "lastNotNull",
-                    "baseColor": "#2c9d3d",
-                    "serieWidth": 40,
-                    "sortOrder": "desc"
-                },
+                "name": "Datacenter-Esxi Mem Usage top10",
                 "options": {
+                    "standardOptions": {
+                        "util": "percent"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#2c9d3d"
-                            },
                             "match": {
                                 "from": null,
                                 "to": 50
-                            }
+                            },
+                            "result": {
+                                "color": "#2c9d3d"
+                            },
+                            "type": "range"
                         },
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#ffae39"
-                            },
                             "match": {
                                 "from": 50,
                                 "to": 75
-                            }
+                            },
+                            "result": {
+                                "color": "#ffae39"
+                            },
+                            "type": "range"
                         },
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#ce4f52"
-                            },
                             "match": {
                                 "from": 75,
                                 "to": null
-                            }
+                            },
+                            "result": {
+                                "color": "#ce4f52"
+                            },
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "percent"
-                    }
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "barGauge",
-                "layout": {
-                    "h": 9,
-                    "w": 8,
-                    "x": 16,
-                    "y": 14,
-                    "i": "9f192b9b-dca8-4d0b-acd4-38e89277ed4e",
-                    "isResizable": true
-                },
-                "id": "b36c69c2-6cb0-4b89-a4a0-7225140c271f"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "count(esxi_alive{ident=\"$vcenter\",datacenter=~\"$datacenter\"})",
-                        "legend": "",
-                        "time": {
-                            "start": "now-30m",
-                            "end": "now"
-                        }
+                        "expr": "topk(10,(100 - esxi_memory_freePercent{ident=\"$vcenter\"}))",
+                        "legend": "{{host}}(Vcenter={{ident}})",
+                        "refId": "A"
                     }
                 ],
-                "name": "Datacenter-ESXI summary",
-                "description": "所有ESXI主机的数量",
+                "type": "barGauge",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
+                    "baseColor": "#2c9d3d",
                     "calc": "lastNotNull",
-                    "colSpan": 1,
-                    "textSize": {}
+                    "serieWidth": 40,
+                    "sortOrder": "desc"
                 },
+                "id": "b36c69c2-6cb0-4b89-a4a0-7225140c271f",
+                "layout": {
+                    "h": 9,
+                    "i": "9f192b9b-dca8-4d0b-acd4-38e89277ed4e",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 14
+                },
+                "name": "Datacenter-Esxi Datastore Usage top10 top10",
                 "options": {
+                    "standardOptions": {
+                        "util": "percent"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": null,
+                                "to": 50
+                            },
+                            "result": {
+                                "color": "#2c9d3d"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 50,
+                                "to": 75
+                            },
+                            "result": {
+                                "color": "#ffae39"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 75,
+                                "to": null
+                            },
+                            "result": {
+                                "color": "#ce4f52"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "topk(10,(100 - datastore_freePercent{ident=\"$vcenter\",datacenter=~\"$datacenter\"}))",
+                        "legend": "{{datastore}}(Vcenter={{ident}})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "description": "所有ESXI主机的数量",
+                "id": "acc6adf8-ad83-4f59-b8c9-f9937e10c20e",
+                "layout": {
+                    "h": 3,
+                    "i": "0ee44882-4d66-426e-8bc0-003ae2b4bdfa",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 23
+                },
+                "name": "Datacenter-ESXI summary",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 1
+                            },
                             "result": {
                                 "color": "#e49d4e"
                             },
-                            "match": {
-                                "from": 1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {}
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 0,
-                    "y": 23,
-                    "i": "0ee44882-4d66-426e-8bc0-003ae2b4bdfa",
-                    "isResizable": true
-                },
-                "id": "acc6adf8-ad83-4f59-b8c9-f9937e10c20e"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "count(datastore_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\"})",
+                        "expr": "count(esxi_alive{ident=\"$vcenter\",datacenter=~\"$datacenter\"})",
                         "legend": "",
+                        "refId": "A",
                         "time": {
-                            "start": "now-30m",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
-                "name": "Datacenter-Datastore summary",
-                "description": "所有Datastore存储数量",
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "description": "所有Datastore存储数量",
+                "id": "813109ee-42bd-4150-88e4-4e3e16d0bae7",
+                "layout": {
+                    "h": 3,
+                    "i": "bcc780a0-bfb9-4e90-87ed-8c2057255582",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 23
+                },
+                "name": "Datacenter-Datastore summary",
                 "options": {
+                    "standardOptions": {},
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 1
+                            },
                             "result": {
                                 "color": "#ff9919"
                             },
-                            "match": {
-                                "from": 1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {}
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 4,
-                    "y": 23,
-                    "i": "bcc780a0-bfb9-4e90-87ed-8c2057255582",
-                    "isResizable": true
-                },
-                "id": "813109ee-42bd-4150-88e4-4e3e16d0bae7"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "sum(datastore_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\"})",
+                        "expr": "count(datastore_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\"})",
                         "legend": "",
+                        "refId": "A",
                         "time": {
-                            "start": "now-30m",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
-                "name": "Datacenter-Datastore Total",
-                "description": "Datastore总空间",
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
-                "options": {
-                    "valueMappings": [
-                        {
-                            "type": "range",
-                            "result": {
-                                "color": "#9470ff"
-                            },
-                            "match": {
-                                "from": 1
-                            }
-                        }
-                    ],
-                    "standardOptions": {
-                        "util": "bytesIEC"
-                    }
-                },
-                "version": "2.0.0",
-                "type": "stat",
+                "description": "Datastore总空间",
+                "id": "d672145f-1b8e-40b5-9ae9-a72bd76d98fe",
                 "layout": {
                     "h": 3,
+                    "i": "9ea70640-54a9-4065-a272-d7adfb434867",
+                    "isResizable": true,
                     "w": 4,
                     "x": 8,
-                    "y": 23,
-                    "i": "9ea70640-54a9-4065-a272-d7adfb434867",
-                    "isResizable": true
+                    "y": 23
                 },
-                "id": "d672145f-1b8e-40b5-9ae9-a72bd76d98fe"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "(sum(datastore_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\"})-sum(datastore_free{ident=\"$vcenter\",datacenter=~\"$datacenter\"})) / sum(datastore_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\"})",
-                        "legend": "",
-                        "time": {
-                            "start": "now-30m",
-                            "end": "now"
-                        }
-                    }
-                ],
-                "name": "Datacenter-Datastore Percent",
-                "description": "Datastore总使用率",
-                "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
-                    "calc": "lastNotNull",
-                    "colSpan": 1,
-                    "textSize": {}
-                },
+                "name": "Datacenter-Datastore Total",
                 "options": {
-                    "valueMappings": [
-                        {
-                            "type": "range",
-                            "result": {
-                                "color": "#2c9d3d"
-                            },
-                            "match": {
-                                "from": null,
-                                "to": 0.6
-                            }
-                        },
-                        {
-                            "type": "range",
-                            "result": {
-                                "color": "#ffae39"
-                            },
-                            "match": {
-                                "from": 0.6,
-                                "to": 0.8
-                            }
-                        },
-                        {
-                            "type": "range",
-                            "result": {
-                                "color": "#ce4f52"
-                            },
-                            "match": {
-                                "from": 0.8
-                            }
-                        }
-                    ],
                     "standardOptions": {
-                        "util": "percentUnit"
-                    }
-                },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 12,
-                    "y": 23,
-                    "i": "c84978c3-b1f3-4a21-bd85-edb9abc95780",
-                    "isResizable": true
-                },
-                "id": "40c1c5ef-69e4-4054-93cf-3f3c29a14b95"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "sum(esxi_memory_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\"})",
-                        "legend": "",
-                        "time": {
-                            "start": "now-30m",
-                            "end": "now"
-                        }
-                    }
-                ],
-                "name": "Datacenter-MEM Total",
-                "description": "ESXI内存总量",
-                "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
-                    "calc": "lastNotNull",
-                    "colSpan": 1,
-                    "textSize": {}
-                },
-                "options": {
+                        "util": "bytesIEC"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 1
+                            },
                             "result": {
                                 "color": "#9470ff"
                             },
-                            "match": {
-                                "from": 1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "bytesIEC"
-                    }
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 16,
-                    "y": 23,
-                    "i": "3f3ab532-dfcf-4261-8f77-e068ed7d9cc7",
-                    "isResizable": true
-                },
-                "id": "e07d16cc-a7b1-4f26-b900-aa7a4c515954"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "sum(esxi_memory_usage{ident=\"$vcenter\",datacenter=~\"$datacenter\"}) / sum(esxi_memory_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\"})",
+                        "expr": "sum(datastore_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\"})",
                         "legend": "",
+                        "refId": "A",
                         "time": {
-                            "start": "now-30m",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
-                "name": "Datacenter-MEM Percent",
-                "description": "ESXI内存总使用率",
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "description": "Datastore总使用率",
+                "id": "40c1c5ef-69e4-4054-93cf-3f3c29a14b95",
+                "layout": {
+                    "h": 3,
+                    "i": "c84978c3-b1f3-4a21-bd85-edb9abc95780",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 12,
+                    "y": 23
+                },
+                "name": "Datacenter-Datastore Percent",
                 "options": {
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#2c9d3d"
-                            },
                             "match": {
                                 "from": null,
                                 "to": 0.6
-                            }
+                            },
+                            "result": {
+                                "color": "#2c9d3d"
+                            },
+                            "type": "range"
                         },
                         {
-                            "type": "range",
-                            "result": {
-                                "color": "#ffae39"
-                            },
                             "match": {
                                 "from": 0.6,
                                 "to": 0.8
-                            }
+                            },
+                            "result": {
+                                "color": "#ffae39"
+                            },
+                            "type": "range"
                         },
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 0.8
+                            },
                             "result": {
                                 "color": "#ce4f52"
                             },
-                            "match": {
-                                "from": 0.8
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "percentUnit"
-                    }
+                    ]
                 },
-                "version": "2.0.0",
-                "type": "stat",
-                "layout": {
-                    "h": 3,
-                    "w": 4,
-                    "x": 20,
-                    "y": 23,
-                    "i": "9ebe01f2-f97d-4021-bc01-035afcbc66dc",
-                    "isResizable": true
-                },
-                "id": "22a23007-9c6f-4c30-b684-381e5ff88c5b"
-            },
-            {
                 "targets": [
                     {
+                        "expr": "(sum(datastore_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\"})-sum(datastore_free{ident=\"$vcenter\",datacenter=~\"$datacenter\"})) / sum(datastore_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\"})",
+                        "legend": "",
                         "refId": "A",
-                        "expr": "sum(esxi_cpu_usage{ident=\"$vcenter\"}) by (datacenter)",
-                        "legend": "{{datacenter}}",
                         "time": {
-                            "start": "now-7d",
-                            "end": "now"
+                            "end": "now",
+                            "start": "now-30m"
                         }
                     }
                 ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "description": "ESXI内存总量",
+                "id": "e07d16cc-a7b1-4f26-b900-aa7a4c515954",
+                "layout": {
+                    "h": 3,
+                    "i": "3f3ab532-dfcf-4261-8f77-e068ed7d9cc7",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 23
+                },
+                "name": "Datacenter-MEM Total",
+                "options": {
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 1
+                            },
+                            "result": {
+                                "color": "#9470ff"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(esxi_memory_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\"})",
+                        "legend": "",
+                        "refId": "A",
+                        "time": {
+                            "end": "now",
+                            "start": "now-30m"
+                        }
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "description": "ESXI内存总使用率",
+                "id": "22a23007-9c6f-4c30-b684-381e5ff88c5b",
+                "layout": {
+                    "h": 3,
+                    "i": "9ebe01f2-f97d-4021-bc01-035afcbc66dc",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 23
+                },
+                "name": "Datacenter-MEM Percent",
+                "options": {
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": null,
+                                "to": 0.6
+                            },
+                            "result": {
+                                "color": "#2c9d3d"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 0.6,
+                                "to": 0.8
+                            },
+                            "result": {
+                                "color": "#ffae39"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 0.8
+                            },
+                            "result": {
+                                "color": "#ce4f52"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(esxi_memory_usage{ident=\"$vcenter\",datacenter=~\"$datacenter\"}) / sum(esxi_memory_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\"})",
+                        "legend": "",
+                        "refId": "A",
+                        "time": {
+                            "end": "now",
+                            "start": "now-30m"
+                        }
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "bars",
+                    "fillOpacity": 0.8,
+                    "gradientMode": "none",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "ecb15e88-9f9b-4e58-b56e-280a77c30c12",
+                "layout": {
+                    "h": 6,
+                    "i": "1e978dc6-6a89-45c1-8c1a-4be48842830c",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 26
+                },
                 "name": "Datacenter-CPU Usage Trend",
                 "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
                     "legend": {
                         "displayMode": "list",
                         "placement": "bottom"
@@ -1364,49 +1383,52 @@
                     "thresholds": {
                         "steps": [
                             {
-                                "value": 80,
-                                "color": "#ce4f52"
+                                "color": "#ce4f52",
+                                "value": 80
                             }
                         ]
-                    }
-                },
-                "custom": {
-                    "drawStyle": "bars",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.8,
-                    "gradientMode": "none",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 6,
-                    "w": 8,
-                    "x": 0,
-                    "y": 26,
-                    "i": "1e978dc6-6a89-45c1-8c1a-4be48842830c",
-                    "isResizable": true
-                },
-                "id": "ecb15e88-9f9b-4e58-b56e-280a77c30c12"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "sum(esxi_memory_usage{ident=\"$vcenter\"}) by (datacenter) / sum(esxi_memory_capacity{ident=\"$vcenter\"}) by(datacenter)",
-                        "legend": "{{datacenter}}",
-                        "time": {
-                            "start": "now-7d",
-                            "end": "now"
-                        }
-                    }
-                ],
-                "name": "Datacenter-MEM Usage Trend",
-                "options": {
+                    },
                     "tooltip": {
                         "mode": "all",
                         "sort": "none"
-                    },
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(esxi_cpu_usage{ident=\"$vcenter\"}) by (datacenter)",
+                        "legend": "{{datacenter}}",
+                        "refId": "A",
+                        "time": {
+                            "end": "now",
+                            "start": "now-7d"
+                        }
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "0b70e6aa-bdff-488c-b60e-586baa8b5626",
+                "layout": {
+                    "h": 6,
+                    "i": "4de6e60a-8b25-4e79-9989-6d9e5877d39a",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 26
+                },
+                "name": "Datacenter-MEM Usage Trend",
+                "options": {
                     "legend": {
                         "displayMode": "list",
                         "placement": "bottom"
@@ -1416,46 +1438,48 @@
                     },
                     "thresholds": {
                         "steps": []
-                    }
-                },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 6,
-                    "w": 8,
-                    "x": 8,
-                    "y": 26,
-                    "i": "4de6e60a-8b25-4e79-9989-6d9e5877d39a",
-                    "isResizable": true
-                },
-                "id": "0b70e6aa-bdff-488c-b60e-586baa8b5626"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "(sum(datastore_capacity{ident=\"$vcenter\"})-sum(datastore_free{ident=\"$vcenter\"})) / sum(datastore_capacity{ident=\"$vcenter\"}) by (datacenter)",
-                        "legend": "{{datacenter}}",
-                        "time": {
-                            "start": "now-7d",
-                            "end": "now"
-                        }
-                    }
-                ],
-                "name": "Datacenter-Datastore Usage Trend",
-                "options": {
+                    },
                     "tooltip": {
                         "mode": "all",
                         "sort": "none"
-                    },
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(esxi_memory_usage{ident=\"$vcenter\"}) by (datacenter) / sum(esxi_memory_capacity{ident=\"$vcenter\"}) by(datacenter)",
+                        "legend": "{{datacenter}}",
+                        "refId": "A",
+                        "time": {
+                            "end": "now",
+                            "start": "now-7d"
+                        }
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "1b4adc0a-19d8-463d-a47c-0051cf7113f6",
+                "layout": {
+                    "h": 6,
+                    "i": "7074b7a0-88c5-45e1-9d50-c3f48a4b6d54",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 26
+                },
+                "name": "Datacenter-Datastore Usage Trend",
+                "options": {
                     "legend": {
                         "displayMode": "list"
                     },
@@ -1464,967 +1488,1057 @@
                     },
                     "thresholds": {
                         "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
                     }
                 },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
-                    "stack": "off",
-                    "lineInterpolation": "smooth"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 6,
-                    "w": 8,
-                    "x": 16,
-                    "y": 26,
-                    "i": "7074b7a0-88c5-45e1-9d50-c3f48a4b6d54",
-                    "isResizable": true
-                },
-                "id": "1b4adc0a-19d8-463d-a47c-0051cf7113f6"
-            },
-            {
-                "type": "row",
-                "id": "3acc2ed5-a94a-4f6e-ba20-cf74af9ce773",
-                "name": "ESXI Status",
-                "collapsed": true,
-                "layout": {
-                    "h": 1,
-                    "w": 24,
-                    "x": 0,
-                    "y": 32,
-                    "i": "3acc2ed5-a94a-4f6e-ba20-cf74af9ce773",
-                    "isResizable": false
-                },
-                "panels": []
-            },
-            {
                 "targets": [
                     {
+                        "expr": "(sum(datastore_capacity{ident=\"$vcenter\"})-sum(datastore_free{ident=\"$vcenter\"})) / sum(datastore_capacity{ident=\"$vcenter\"}) by (datacenter)",
+                        "legend": "{{datacenter}}",
                         "refId": "A",
-                        "expr": "esxi_alive{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
-                        "legend": "{{host}}"
+                        "time": {
+                            "end": "now",
+                            "start": "now-7d"
+                        }
                     }
                 ],
-                "name": "ESXI-UP/Down",
-                "custom": {
-                    "showHeader": false,
-                    "colorMode": "value",
-                    "calc": "lastNotNull",
-                    "displayMode": "seriesToRows"
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "collapsed": true,
+                "id": "3acc2ed5-a94a-4f6e-ba20-cf74af9ce773",
+                "layout": {
+                    "h": 1,
+                    "i": "3acc2ed5-a94a-4f6e-ba20-cf74af9ce773",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 32
                 },
+                "name": "ESXI Status",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "showHeader": false
+                },
+                "id": "e46c5596-5f99-4cd5-8761-dfa861df318c",
+                "layout": {
+                    "h": 7,
+                    "i": "b648687d-bc38-40c7-af77-e910de8d7090",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 33
+                },
+                "name": "ESXI-UP/Down",
                 "options": {
+                    "standardOptions": {
+                        "decimals": 0,
+                        "util": "none"
+                    },
                     "valueMappings": [
                         {
-                            "type": "special",
+                            "match": {
+                                "from": null,
+                                "special": 1,
+                                "to": 1
+                            },
                             "result": {
                                 "color": "#2c9d3d",
                                 "text": "UP"
                             },
-                            "match": {
-                                "from": null,
-                                "to": 1,
-                                "special": 1
-                            }
+                            "type": "special"
                         },
                         {
-                            "type": "special",
+                            "match": {
+                                "special": 0
+                            },
                             "result": {
                                 "color": "#ce4f52",
                                 "text": "Down"
                             },
-                            "match": {
-                                "special": 0
-                            }
+                            "type": "special"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "none",
-                        "decimals": 0
-                    }
+                    ]
                 },
                 "overrides": [
                     {}
                 ],
-                "version": "2.0.0",
-                "type": "table",
-                "layout": {
-                    "h": 7,
-                    "w": 4,
-                    "x": 0,
-                    "y": 33,
-                    "i": "b648687d-bc38-40c7-af77-e910de8d7090",
-                    "isResizable": true
-                },
-                "id": "e46c5596-5f99-4cd5-8761-dfa861df318c"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "esxi_uptime{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"} /60 /60 /24",
-                        "legend": "{{host}}"
+                        "expr": "esxi_alive{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
+                        "legend": "{{host}}",
+                        "refId": "A"
                     }
                 ],
-                "name": "ESXI-Uptime（天）",
+                "type": "table",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "showHeader": false,
-                    "colorMode": "value",
                     "calc": "lastNotNull",
+                    "colorMode": "value",
                     "displayMode": "seriesToRows",
+                    "showHeader": false,
                     "sortColumn": "value",
                     "sortOrder": "ascend"
                 },
+                "id": "64683543-70ea-447b-8667-c66642f66d39",
+                "layout": {
+                    "h": 7,
+                    "i": "64683543-70ea-447b-8667-c66642f66d39",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 33
+                },
+                "name": "ESXI-Uptime（天）",
                 "options": {
+                    "standardOptions": {
+                        "decimals": 0,
+                        "util": "none"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 1
+                            },
                             "result": {
                                 "color": "#ff9919"
                             },
-                            "match": {
-                                "from": 1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "none",
-                        "decimals": 0
-                    }
+                    ]
                 },
                 "overrides": [
                     {}
                 ],
-                "version": "2.0.0",
-                "type": "table",
-                "layout": {
-                    "h": 7,
-                    "w": 4,
-                    "x": 4,
-                    "y": 33,
-                    "i": "64683543-70ea-447b-8667-c66642f66d39",
-                    "isResizable": true
-                },
-                "id": "64683543-70ea-447b-8667-c66642f66d39"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "esxi_memory_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
-                        "legend": "{{host}}"
+                        "expr": "esxi_uptime{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"} /60 /60 /24",
+                        "legend": "{{host}}",
+                        "refId": "A"
                     }
                 ],
-                "name": "ESXI-MEM Total",
+                "type": "table",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "showHeader": false,
-                    "colorMode": "value",
                     "calc": "lastNotNull",
-                    "displayMode": "seriesToRows"
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "showHeader": false
                 },
+                "id": "6ec3bd61-cf30-45c3-9118-28c6dfd3c2bd",
+                "layout": {
+                    "h": 7,
+                    "i": "50431a0f-65f2-4eaf-87a6-7ffe3a77fec7",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 33
+                },
+                "name": "ESXI-MEM Total",
                 "options": {
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "bytesIEC"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 1
+                            },
                             "result": {
                                 "color": "#70a0ff"
                             },
-                            "match": {
-                                "from": 1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "bytesIEC",
-                        "decimals": 2
-                    }
+                    ]
                 },
                 "overrides": [
                     {}
                 ],
-                "version": "2.0.0",
-                "type": "table",
-                "layout": {
-                    "h": 7,
-                    "w": 4,
-                    "x": 8,
-                    "y": 33,
-                    "i": "50431a0f-65f2-4eaf-87a6-7ffe3a77fec7",
-                    "isResizable": true
-                },
-                "id": "6ec3bd61-cf30-45c3-9118-28c6dfd3c2bd"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "esxi_cpu_usage{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
+                        "expr": "esxi_memory_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
                         "legend": "{{host}}",
-                        "time": {
-                            "start": "now-12h",
-                            "end": "now"
-                        },
-                        "step": 15
+                        "refId": "A"
                     }
                 ],
-                "name": "ESXI-CPU Usage",
+                "type": "table",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "showHeader": false,
-                    "colorMode": "value",
                     "calc": "lastNotNull",
+                    "colorMode": "value",
                     "displayMode": "seriesToRows",
+                    "showHeader": false,
                     "sortOrder": "ascend"
                 },
+                "id": "46a4eea7-6577-430d-8fb2-2a371c1c8c64",
+                "layout": {
+                    "h": 7,
+                    "i": "e6344a4e-cd2a-4db5-ad16-4fb69d321e9d",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 12,
+                    "y": 33
+                },
+                "name": "ESXI-CPU Usage",
                 "options": {
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "percent"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 0.1
+                            },
                             "result": {
                                 "color": "#ff8286"
                             },
-                            "match": {
-                                "from": 0.1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "percent",
-                        "decimals": 2
-                    }
+                    ]
                 },
                 "overrides": [
                     {}
                 ],
-                "version": "2.0.0",
-                "type": "table",
-                "layout": {
-                    "h": 7,
-                    "w": 4,
-                    "x": 12,
-                    "y": 33,
-                    "i": "e6344a4e-cd2a-4db5-ad16-4fb69d321e9d",
-                    "isResizable": true
-                },
-                "id": "46a4eea7-6577-430d-8fb2-2a371c1c8c64"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "esxi_net_if_in{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
+                        "expr": "esxi_cpu_usage{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
                         "legend": "{{host}}",
+                        "refId": "A",
+                        "step": 15,
                         "time": {
-                            "start": "now-12h",
-                            "end": "now"
-                        },
-                        "step": 15
+                            "end": "now",
+                            "start": "now-12h"
+                        }
                     }
                 ],
-                "name": "ESXI-NET_IN",
+                "type": "table",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "showHeader": false,
-                    "colorMode": "value",
                     "calc": "lastNotNull",
+                    "colorMode": "value",
                     "displayMode": "seriesToRows",
+                    "showHeader": false,
                     "sortOrder": "ascend"
                 },
+                "id": "e631e9e9-7d25-4bab-916b-e11da4bcb6b4",
+                "layout": {
+                    "h": 7,
+                    "i": "e6673ca5-5f7e-4ec2-bc68-8745b4bac2a8",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 33
+                },
+                "name": "ESXI-NET_IN",
                 "options": {
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "bytesIEC"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 0.1
+                            },
                             "result": {
                                 "color": "#9470ff"
                             },
-                            "match": {
-                                "from": 0.1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "bytesIEC",
-                        "decimals": 2
-                    }
+                    ]
                 },
                 "overrides": [
                     {}
                 ],
-                "version": "2.0.0",
-                "type": "table",
-                "layout": {
-                    "h": 7,
-                    "w": 4,
-                    "x": 16,
-                    "y": 33,
-                    "i": "e6673ca5-5f7e-4ec2-bc68-8745b4bac2a8",
-                    "isResizable": true
-                },
-                "id": "e631e9e9-7d25-4bab-916b-e11da4bcb6b4"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "esxi_net_if_out{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
+                        "expr": "esxi_net_if_in{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
                         "legend": "{{host}}",
+                        "refId": "A",
+                        "step": 15,
                         "time": {
-                            "start": "now-12h",
-                            "end": "now"
-                        },
-                        "step": 15
+                            "end": "now",
+                            "start": "now-12h"
+                        }
                     }
                 ],
-                "name": "ESXI-NET_OUT",
+                "type": "table",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
-                    "showHeader": false,
-                    "colorMode": "value",
                     "calc": "lastNotNull",
+                    "colorMode": "value",
                     "displayMode": "seriesToRows",
+                    "showHeader": false,
                     "sortOrder": "ascend"
                 },
+                "id": "cbe91b45-d4de-4218-9f07-28848fb05202",
+                "layout": {
+                    "h": 7,
+                    "i": "62a2fcb0-584d-4e8b-a62e-de41352c43b8",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 33
+                },
+                "name": "ESXI-NET_OUT",
                 "options": {
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "bytesIEC"
+                    },
                     "valueMappings": [
                         {
-                            "type": "range",
+                            "match": {
+                                "from": 0.1
+                            },
                             "result": {
                                 "color": "#ecd245"
                             },
-                            "match": {
-                                "from": 0.1
-                            }
+                            "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "bytesIEC",
-                        "decimals": 2
-                    }
+                    ]
                 },
                 "overrides": [
                     {}
                 ],
-                "version": "2.0.0",
-                "type": "table",
-                "layout": {
-                    "h": 7,
-                    "w": 4,
-                    "x": 20,
-                    "y": 33,
-                    "i": "62a2fcb0-584d-4e8b-a62e-de41352c43b8",
-                    "isResizable": true
-                },
-                "id": "cbe91b45-d4de-4218-9f07-28848fb05202"
-            },
-            {
                 "targets": [
                     {
+                        "expr": "esxi_net_if_out{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
+                        "legend": "{{host}}",
                         "refId": "A",
-                        "expr": "esxi_cpu_usage{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
-                        "legend": "{{host}}"
+                        "step": 15,
+                        "time": {
+                            "end": "now",
+                            "start": "now-12h"
+                        }
                     }
                 ],
-                "name": "ESXI-CPU Usage Trend",
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "list"
-                    },
-                    "standardOptions": {
-                        "util": "percent",
-                        "decimals": 2
-                    },
-                    "thresholds": {}
-                },
+                "type": "table",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
                 "custom": {
                     "drawStyle": "bars",
-                    "lineWidth": 1,
                     "fillOpacity": 0.5,
                     "gradientMode": "none",
+                    "lineWidth": 1,
                     "stack": "off"
                 },
-                "version": "2.0.0",
-                "type": "timeseries",
+                "id": "b3265d25-c15d-41cb-8c8b-25417e655caa",
                 "layout": {
                     "h": 6,
+                    "i": "b3265d25-c15d-41cb-8c8b-25417e655caa",
+                    "isResizable": true,
                     "w": 12,
                     "x": 0,
-                    "y": 40,
-                    "i": "b3265d25-c15d-41cb-8c8b-25417e655caa",
-                    "isResizable": true
+                    "y": 40
                 },
-                "id": "b3265d25-c15d-41cb-8c8b-25417e655caa"
-            },
-            {
+                "name": "ESXI-CPU Usage Trend",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "percent"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "esxi_memory_usage{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"} / esxi_memory_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
-                        "legend": "{{host}}"
+                        "expr": "esxi_cpu_usage{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
+                        "legend": "{{host}}",
+                        "refId": "A"
                     }
                 ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "25fd6cd6-be54-420f-b3ee-002a9579eb1d",
+                "layout": {
+                    "h": 6,
+                    "i": "e7042001-d660-4781-af81-861720fca815",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 40
+                },
                 "name": "ESXI-MEM Usage Trend",
                 "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
                     "legend": {
                         "displayMode": "list"
                     },
                     "standardOptions": {
-                        "util": "percentUnit",
-                        "decimals": 2
+                        "decimals": 2,
+                        "util": "percentUnit"
                     },
-                    "thresholds": {}
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
                 },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "opacity",
-                    "stack": "off",
-                    "lineInterpolation": "smooth"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 6,
-                    "w": 12,
-                    "x": 12,
-                    "y": 40,
-                    "i": "e7042001-d660-4781-af81-861720fca815",
-                    "isResizable": true
-                },
-                "id": "25fd6cd6-be54-420f-b3ee-002a9579eb1d"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "esxi_net_if_in{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
-                        "legend": "{{host}}"
+                        "expr": "esxi_memory_usage{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"} / esxi_memory_capacity{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
+                        "legend": "{{host}}",
+                        "refId": "A"
                     }
                 ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "868fca2d-df6e-487c-8c8d-e307d82c28ce",
+                "layout": {
+                    "h": 7,
+                    "i": "593f9476-adfe-48ad-8506-3b39fcaabd47",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 46
+                },
                 "name": "ESXI-NET_IN Trend",
                 "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
                     "legend": {
                         "displayMode": "list"
                     },
                     "standardOptions": {
-                        "util": "bytesIEC",
-                        "decimals": 2
+                        "decimals": 2,
+                        "util": "bytesIEC"
                     },
-                    "thresholds": {}
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
                 },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "opacity",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 7,
-                    "w": 12,
-                    "x": 0,
-                    "y": 46,
-                    "i": "593f9476-adfe-48ad-8506-3b39fcaabd47",
-                    "isResizable": true
-                },
-                "id": "868fca2d-df6e-487c-8c8d-e307d82c28ce"
-            },
-            {
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "esxi_net_if_out{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
-                        "legend": "{{host}}"
+                        "expr": "esxi_net_if_in{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
+                        "legend": "{{host}}",
+                        "refId": "A"
                     }
                 ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "aee98a26-c7dd-43d6-9195-72bdf1fc0b47",
+                "layout": {
+                    "h": 7,
+                    "i": "1f9fc9b6-5064-42b9-9aa6-8d741a36d5d0",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 46
+                },
                 "name": "ESXI-NET_OUT Trend",
                 "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
                     "legend": {
                         "displayMode": "list"
                     },
                     "standardOptions": {
-                        "util": "bytesIEC",
-                        "decimals": 2
+                        "decimals": 2,
+                        "util": "bytesIEC"
                     },
-                    "thresholds": {}
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
                 },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "opacity",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
+                "targets": [
+                    {
+                        "expr": "esxi_net_if_out{ident=\"$vcenter\",datacenter=~\"$datacenter\",host=~\"$esxi\"}",
+                        "legend": "{{host}}",
+                        "refId": "A"
+                    }
+                ],
                 "type": "timeseries",
-                "layout": {
-                    "h": 7,
-                    "w": 12,
-                    "x": 12,
-                    "y": 46,
-                    "i": "1f9fc9b6-5064-42b9-9aa6-8d741a36d5d0",
-                    "isResizable": true
-                },
-                "id": "aee98a26-c7dd-43d6-9195-72bdf1fc0b47"
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
             },
             {
-                "type": "row",
-                "id": "e5ed126a-2d17-4195-94c4-214864a9755d",
-                "name": "VM Status",
                 "collapsed": true,
+                "id": "e5ed126a-2d17-4195-94c4-214864a9755d",
                 "layout": {
                     "h": 1,
+                    "i": "e5ed126a-2d17-4195-94c4-214864a9755d",
+                    "isResizable": false,
                     "w": 24,
                     "x": 0,
-                    "y": 53,
-                    "i": "e5ed126a-2d17-4195-94c4-214864a9755d",
-                    "isResizable": false
+                    "y": 53
+                },
+                "name": "VM Status",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "182d718e-83af-449b-9492-7af701a16569",
+                "layout": {
+                    "h": 5,
+                    "i": "182d718e-83af-449b-9492-7af701a16569",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 54
+                },
+                "name": "VM-IO_Read",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "vm_datastore_io_read_bytes{ident=\"$vcenter\",vm=~\"$vm\"}",
+                        "legend": "{{vm}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "43fe023c-8c3a-47f5-9c69-225189622d36",
+                "layout": {
+                    "h": 5,
+                    "i": "394d59f4-939c-4459-b875-381aac49d566",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 54
+                },
+                "name": "VM-IO_Write",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "vm_datastore_io_write_bytes{ident=\"$vcenter\",vm=~\"$vm\"}",
+                        "legend": "{{vm}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "d8a40ecc-d125-4272-b60f-543e6018ca05",
+                "layout": {
+                    "h": 5,
+                    "i": "7ba230b1-9d71-4321-8729-3b046fdda035",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 54
+                },
+                "name": "VM-IO_Read_Numbers",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "vm_datastore_io_read_numbers{ident=\"$vcenter\",vm=~\"$vm\"}",
+                        "legend": "{{vm}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "1a48a82c-19b4-4b73-8093-b2c9c87ded20",
+                "layout": {
+                    "h": 5,
+                    "i": "563c4bed-0ac7-491a-835c-70c638edd5c8",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 12,
+                    "y": 54
+                },
+                "name": "VM-IO_Write_Numbers",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "vm_datastore_io_write_numbers{ident=\"$vcenter\",vm=~\"$vm\"}",
+                        "legend": "{{vm}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "15147aa2-3c7d-490b-b53b-4c3e3f9731d5",
+                "layout": {
+                    "h": 5,
+                    "i": "9f0098bf-7f82-41ad-9749-272e6126e020",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 54
+                },
+                "name": "VM-IO_Read_Latency",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "vm_datastore_io_read_latency{ident=\"$vcenter\",vm=~\"$vm\"}",
+                        "legend": "{{vm}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "1870bf34-d019-484f-a462-411629ca78fe",
+                "layout": {
+                    "h": 5,
+                    "i": "c89db128-f5e0-4141-a89b-c0dfc567f7e2",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 54
+                },
+                "name": "VM-IO_Write_Latency",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "vm_datastore_io_write_latency{ident=\"$vcenter\",vm=~\"$vm\"}",
+                        "legend": "{{vm}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "bars",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "e2751b2b-3b1f-469e-abd6-f6e843efd16a",
+                "layout": {
+                    "h": 6,
+                    "i": "0516c59f-70f9-4d65-9cdb-06c0932c1956",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 59
+                },
+                "name": "VM-CPU Usage Trend",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "percent"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "vm_cpu_usage{ident=\"$vcenter\",vm=~\"$vm\"}",
+                        "legend": "{{vm}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "1af92e8e-4163-475b-a3e4-ccdca9a74cdf",
+                "layout": {
+                    "h": 6,
+                    "i": "b1bc6cda-5d1e-4cd5-8e98-d3cca0a8d6aa",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 59
+                },
+                "name": "VM-MEM Usage Trend",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "vm_memory_usage{ident=\"$vcenter\",vm=~\"$vm\"} / vm_memory_capacity{ident=\"$vcenter\",vm=~\"$vm\"}",
+                        "legend": "{{vm}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "380ea87f-9b4f-41dc-9117-579295a1a5de",
+                "layout": {
+                    "h": 7,
+                    "i": "3c04d89f-d880-495b-954a-708eb3c8cf02",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 65
+                },
+                "name": "ESXI-NET_IN Trend",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "vm_net_if_in{ident=\"$vcenter\",vm=~\"$vm\"}",
+                        "legend": "{{vm}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "id": "8d2bf7e4-eb86-4d24-96da-e45b1eef68f5",
+                "layout": {
+                    "h": 7,
+                    "i": "66f5afc9-ea2f-444c-9170-098c684e52ee",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 65
+                },
+                "name": "ESXI-NET_OUT Trend",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "vm_net_if_out{ident=\"$vcenter\",vm=~\"$vm\"}",
+                        "legend": "{{vm}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            }
+        ],
+        "var": [
+            {
+                "name": "prom",
+                "type": "datasource",
+                "definition": "prometheus"
+            },
+            {
+                "definition": "label_values(esxi_alive,ident)",
+                "multi": false,
+                "name": "vcenter",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
                 }
             },
             {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "vm_datastore_io_read_bytes{ident=\"$vcenter\",vm=~\"$vm\"}",
-                        "legend": "{{vm}}"
-                    }
-                ],
-                "name": "VM-IO_Read",
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {
-                        "util": "bytesIEC"
-                    },
-                    "thresholds": {}
-                },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 5,
-                    "w": 4,
-                    "x": 0,
-                    "y": 54,
-                    "i": "182d718e-83af-449b-9492-7af701a16569",
-                    "isResizable": true
-                },
-                "id": "182d718e-83af-449b-9492-7af701a16569"
+                "allOption": true,
+                "definition": "label_values(esxi_alive{ident=\"$vcenter\"},datacenter)",
+                "multi": true,
+                "name": "datacenter",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                }
             },
             {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "vm_datastore_io_write_bytes{ident=\"$vcenter\",vm=~\"$vm\"}",
-                        "legend": "{{vm}}"
-                    }
-                ],
-                "name": "VM-IO_Write",
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {
-                        "util": "bytesIEC"
-                    },
-                    "thresholds": {}
-                },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 5,
-                    "w": 4,
-                    "x": 4,
-                    "y": 54,
-                    "i": "394d59f4-939c-4459-b875-381aac49d566",
-                    "isResizable": true
-                },
-                "id": "43fe023c-8c3a-47f5-9c69-225189622d36"
+                "allOption": true,
+                "definition": "label_values(esxi_alive{ident=\"$vcenter\",datacenter=~\"$datacenter\"},host)",
+                "multi": true,
+                "name": "esxi",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                }
             },
             {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "vm_datastore_io_read_numbers{ident=\"$vcenter\",vm=~\"$vm\"}",
-                        "legend": "{{vm}}"
-                    }
-                ],
-                "name": "VM-IO_Read_Numbers",
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {
-                        "util": "none"
-                    },
-                    "thresholds": {}
-                },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 5,
-                    "w": 4,
-                    "x": 8,
-                    "y": 54,
-                    "i": "7ba230b1-9d71-4321-8729-3b046fdda035",
-                    "isResizable": true
-                },
-                "id": "d8a40ecc-d125-4272-b60f-543e6018ca05"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "vm_datastore_io_write_numbers{ident=\"$vcenter\",vm=~\"$vm\"}",
-                        "legend": "{{vm}}"
-                    }
-                ],
-                "name": "VM-IO_Write_Numbers",
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {
-                        "util": "none"
-                    },
-                    "thresholds": {}
-                },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 5,
-                    "w": 4,
-                    "x": 12,
-                    "y": 54,
-                    "i": "563c4bed-0ac7-491a-835c-70c638edd5c8",
-                    "isResizable": true
-                },
-                "id": "1a48a82c-19b4-4b73-8093-b2c9c87ded20"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "vm_datastore_io_read_latency{ident=\"$vcenter\",vm=~\"$vm\"}",
-                        "legend": "{{vm}}"
-                    }
-                ],
-                "name": "VM-IO_Read_Latency",
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {
-                        "util": "milliseconds"
-                    },
-                    "thresholds": {}
-                },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 5,
-                    "w": 4,
-                    "x": 16,
-                    "y": 54,
-                    "i": "9f0098bf-7f82-41ad-9749-272e6126e020",
-                    "isResizable": true
-                },
-                "id": "15147aa2-3c7d-490b-b53b-4c3e3f9731d5"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "vm_datastore_io_write_latency{ident=\"$vcenter\",vm=~\"$vm\"}",
-                        "legend": "{{vm}}"
-                    }
-                ],
-                "name": "VM-IO_Write_Latency",
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {
-                        "util": "milliseconds"
-                    },
-                    "thresholds": {}
-                },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 5,
-                    "w": 4,
-                    "x": 20,
-                    "y": 54,
-                    "i": "c89db128-f5e0-4141-a89b-c0dfc567f7e2",
-                    "isResizable": true
-                },
-                "id": "1870bf34-d019-484f-a462-411629ca78fe"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "vm_cpu_usage{ident=\"$vcenter\",vm=~\"$vm\"}",
-                        "legend": "{{vm}}"
-                    }
-                ],
-                "name": "VM-CPU Usage Trend",
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "list"
-                    },
-                    "standardOptions": {
-                        "util": "percent",
-                        "decimals": 2
-                    },
-                    "thresholds": {}
-                },
-                "custom": {
-                    "drawStyle": "bars",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 6,
-                    "w": 12,
-                    "x": 0,
-                    "y": 59,
-                    "i": "0516c59f-70f9-4d65-9cdb-06c0932c1956",
-                    "isResizable": true
-                },
-                "id": "e2751b2b-3b1f-469e-abd6-f6e843efd16a"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "vm_memory_usage{ident=\"$vcenter\",vm=~\"$vm\"} / vm_memory_capacity{ident=\"$vcenter\",vm=~\"$vm\"}",
-                        "legend": "{{vm}}"
-                    }
-                ],
-                "name": "VM-MEM Usage Trend",
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "list"
-                    },
-                    "standardOptions": {
-                        "util": "percentUnit",
-                        "decimals": 2
-                    },
-                    "thresholds": {}
-                },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "opacity",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 6,
-                    "w": 12,
-                    "x": 12,
-                    "y": 59,
-                    "i": "b1bc6cda-5d1e-4cd5-8e98-d3cca0a8d6aa",
-                    "isResizable": true
-                },
-                "id": "1af92e8e-4163-475b-a3e4-ccdca9a74cdf"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "vm_net_if_in{ident=\"$vcenter\",vm=~\"$vm\"}",
-                        "legend": "{{vm}}"
-                    }
-                ],
-                "name": "ESXI-NET_IN Trend",
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "list"
-                    },
-                    "standardOptions": {
-                        "util": "bytesIEC",
-                        "decimals": 2
-                    },
-                    "thresholds": {}
-                },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "opacity",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 7,
-                    "w": 12,
-                    "x": 0,
-                    "y": 65,
-                    "i": "3c04d89f-d880-495b-954a-708eb3c8cf02",
-                    "isResizable": true
-                },
-                "id": "380ea87f-9b4f-41dc-9117-579295a1a5de"
-            },
-            {
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "vm_net_if_out{ident=\"$vcenter\",vm=~\"$vm\"}",
-                        "legend": "{{vm}}"
-                    }
-                ],
-                "name": "ESXI-NET_OUT Trend",
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "list"
-                    },
-                    "standardOptions": {
-                        "util": "bytesIEC",
-                        "decimals": 2
-                    },
-                    "thresholds": {}
-                },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "opacity",
-                    "stack": "off"
-                },
-                "version": "2.0.0",
-                "type": "timeseries",
-                "layout": {
-                    "h": 7,
-                    "w": 12,
-                    "x": 12,
-                    "y": 65,
-                    "i": "66f5afc9-ea2f-444c-9170-098c684e52ee",
-                    "isResizable": true
-                },
-                "id": "8d2bf7e4-eb86-4d24-96da-e45b1eef68f5"
+                "allOption": true,
+                "definition": "label_values(vm_power{ident=\"$vcenter\"},vm)",
+                "multi": true,
+                "name": "vm",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                }
             }
         ],
-        "version": "2.0.0"
+        "version": "3.0.0"
     }
 }

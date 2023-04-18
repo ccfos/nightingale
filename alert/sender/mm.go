@@ -59,6 +59,7 @@ func SendMM(message MatterMostMessage) {
 		u, err := url.Parse(message.Tokens[i])
 		if err != nil {
 			logger.Errorf("mm_sender: failed to parse error=%v", err)
+			continue
 		}
 
 		v, err := url.ParseQuery(u.RawQuery)

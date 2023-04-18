@@ -1,91 +1,100 @@
 {
-  "name": "TCP detection",
-  "tags": "",
-  "ident": "",
-  "configs": {
-      "version": "2.0.0",
-      "panels": [
-          {
-              "id": "b90370ef-ee1c-40c3-a570-e26a89448209",
-              "type": "row",
-              "name": "Default chart group",
-              "layout": {
-                  "h": 1,
-                  "w": 24,
-                  "x": 0,
-                  "y": 0,
-                  "i": "b90370ef-ee1c-40c3-a570-e26a89448209"
-              },
-              "collapsed": true
-          },
-          {
-              "targets": [
-                  {
-                      "refId": "A",
-                      "expr": "max(net_response_result_code) by (target)",
-                      "legend": "UP?"
-                  },
-                  {
-                      "expr": "max(net_response_response_time) by (target)",
-                      "refId": "C",
-                      "legend": "latency(s)"
-                  }
-              ],
-              "name": "Targets",
-              "custom": {
-                  "showHeader": true,
-                  "calc": "lastNotNull",
-                  "displayMode": "labelValuesToRows",
-                  "aggrDimension": "target"
-              },
-              "options": {
-                  "valueMappings": [],
-                  "standardOptions": {}
-              },
-              "overrides": [
-                  {
-                      "properties": {
-                          "valueMappings": [
-                              {
-                                  "type": "special",
-                                  "match": {
-                                      "special": 0
-                                  },
-                                  "result": {
-                                      "text": "UP",
-                                      "color": "#417505"
-                                  }
-                              },
-                              {
-                                  "type": "range",
-                                  "match": {
-                                      "special": 1,
-                                      "from": 1
-                                  },
-                                  "result": {
-                                      "text": "DOWN",
-                                      "color": "#e90f0f"
-                                  }
-                              }
-                          ],
-                          "standardOptions": {}
-                      },
-                      "matcher": {
-                          "value": "A"
-                      }
-                  }
-              ],
-              "version": "2.0.0",
-              "type": "table",
-              "layout": {
-                  "h": 15,
-                  "w": 24,
-                  "x": 0,
-                  "y": 1,
-                  "i": "73c6eaf9-1685-4a7a-bf53-3d52afa1792e"
-              },
-              "id": "73c6eaf9-1685-4a7a-bf53-3d52afa1792e"
-          }
-      ]
-  }
+    "name": "TCP detection",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "b90370ef-ee1c-40c3-a570-e26a89448209",
+                "layout": {
+                    "h": 1,
+                    "i": "b90370ef-ee1c-40c3-a570-e26a89448209",
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Default chart group",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "aggrDimension": "target",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelValuesToRows",
+                    "showHeader": true
+                },
+                "id": "73c6eaf9-1685-4a7a-bf53-3d52afa1792e",
+                "layout": {
+                    "h": 15,
+                    "i": "73c6eaf9-1685-4a7a-bf53-3d52afa1792e",
+                    "w": 24,
+                    "x": 0,
+                    "y": 1
+                },
+                "name": "Targets",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "value": "A"
+                        },
+                        "properties": {
+                            "standardOptions": {},
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "special": 0
+                                    },
+                                    "result": {
+                                        "color": "#417505",
+                                        "text": "UP"
+                                    },
+                                    "type": "special"
+                                },
+                                {
+                                    "match": {
+                                        "from": 1,
+                                        "special": 1
+                                    },
+                                    "result": {
+                                        "color": "#e90f0f",
+                                        "text": "DOWN"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "max(net_response_result_code) by (target)",
+                        "legend": "UP?",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(net_response_response_time) by (target)",
+                        "legend": "latency(s)",
+                        "refId": "C"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            }
+        ],
+        "version": "3.0.0",
+        "var": [
+            {
+                "name": "prom",
+                "type": "datasource",
+                "definition": "prometheus"
+            }
+        ]
+    }
 }

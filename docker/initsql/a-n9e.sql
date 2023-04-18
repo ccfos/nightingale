@@ -235,6 +235,7 @@ CREATE TABLE `chart_share` (
     `id` bigint unsigned not null auto_increment,
     `cluster` varchar(128) not null,
     `dashboard_id` bigint unsigned not null,
+    `datasource_id` bigint unsigned not null default 0,
     `configs` text,
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
