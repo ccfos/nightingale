@@ -1,0 +1,143 @@
+[Global]
+RunMode = "release"
+
+[Log]
+# log write dir
+Dir = "logs"
+# log level: DEBUG INFO WARNING ERROR
+Level = "DEBUG"
+# stdout, stderr, file
+Output = "stdout"
+# # rotate by time
+# KeepHours: 4
+# # rotate by size
+# RotateNum = 3
+# # unit: MB
+# RotateSize = 256
+
+[HTTP]
+# http listening address
+Host = "0.0.0.0"
+# http listening port
+Port = 17000
+# https cert file path
+CertFile = ""
+# https key file path
+KeyFile = ""
+# whether print access log
+PrintAccessLog = false
+# whether enable pprof
+PProf = false
+# expose prometheus /metrics?
+ExposeMetrics = true
+# http graceful shutdown timeout, unit: s
+ShutdownTimeout = 30
+# max content length: 64M
+MaxContentLength = 67108864
+# http server read timeout, unit: s
+ReadTimeout = 20
+# http server write timeout, unit: s
+WriteTimeout = 40
+# http server idle timeout, unit: s
+IdleTimeout = 120
+
+[HTTP.Pushgw]
+Enable = true 
+# [HTTP.Pushgw.BasicAuth]
+# user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[HTTP.Alert]
+Enable = true 
+[HTTP.Alert.BasicAuth]
+user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[HTTP.Heartbeat]
+Enable = true 
+# [HTTP.Heartbeat.BasicAuth]
+# user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[HTTP.Service]
+Enable = true 
+[HTTP.Service.BasicAuth]
+user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[HTTP.JWTAuth]
+# signing key
+SigningKey = "5b94a0fd640fe2765af826acfe42d151"
+# unit: min
+AccessExpired = 1500
+# unit: min
+RefreshExpired = 10080
+RedisKeyPrefix = "/jwt/"
+
+[HTTP.ProxyAuth]
+# if proxy auth enabled, jwt auth is disabled
+Enable = false
+# username key in http proxy header
+HeaderUserNameKey = "X-User-Name"
+DefaultRoles = ["Standard"]
+
+[DB]
+DSN="host=postgres port=5432 user=root dbname=n9e_v6 password=1234 sslmode=disable"
+# enable debug mode or not
+Debug = false
+# mysql postgres
+DBType = "postgres"
+# unit: s
+MaxLifetime = 7200
+# max open connections
+MaxOpenConns = 150
+# max idle connections
+MaxIdleConns = 50
+# table prefix
+TablePrefix = ""
+# enable auto migrate or not
+# EnableAutoMigrate = false
+
+[Redis]
+# address, ip:port or ip1:port,ip2:port for cluster and sentinel(SentinelAddrs)
+Address = "redis:6379"
+# Username = ""
+# Password = ""
+# DB = 0
+# UseTLS = false
+# TLSMinVersion = "1.2"
+# standalone cluster sentinel
+RedisType = "standalone"
+# Mastername for sentinel type
+# MasterName = "mymaster"
+# SentinelUsername = ""
+# SentinelPassword = ""
+
+[Alert]
+[Alert.Heartbeat]
+# auto detect if blank
+IP = ""
+# unit ms
+Interval = 1000
+ClusterName = "default"
+
+# [Alert.Alerting]
+# NotifyConcurrency = 10
+
+[Center]
+MetricsYamlFile = "./etc/metrics.yaml"
+I18NHeaderKey = "X-Language"
+
+[Center.AnonymousAccess]
+PromQuerier = true
+AlertDetail = true
+
+[Center.Ibex]
+Address = "http://ibex:10090"
+# basic auth
+BasicAuthUser = "ibex"
+BasicAuthPass = "ibex"
+# unit: ms
+Timeout = 3000
+
+[Pushgw]
+LabelRewrite = true
+
+[[Pushgw.Writers]]
+Url = "http://victoriametrics:8428/api/v1/write"

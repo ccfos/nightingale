@@ -1,0 +1,129 @@
+version: "3.7"
+
+networks:
+  nightingale:
+    driver: bridge
+
+services:
+  postgres:
+    # platform: linux/x86_64
+    image: "postgres:12-alpine"
+    container_name: postgres
+    hostname: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      TZ: Asia/Shanghai
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: n9e_v6
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+      - ./initsql_for_postgres:/docker-entrypoint-initdb.d/
+    networks:
+      - nightingale
+
+  redis:
+    image: "redis:7.0-alpine"
+    container_name: redis
+    hostname: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    environment:
+      TZ: Asia/Shanghai
+    networks:
+      - nightingale
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.79.12
+    container_name: victoriametrics
+    hostname: victoriametrics
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "8428:8428"
+    networks:
+      - nightingale
+    command:
+      - "--loggerTimezone=Asia/Shanghai"
+
+  ibex:
+    image: ulric2019/ibex:0.3
+    container_name: ibex
+    hostname: ibex
+    restart: always
+    environment:
+      GIN_MODE: release
+      TZ: Asia/Shanghai
+      WAIT_HOSTS: postgres:5432
+    ports:
+      - "10090:10090"
+      - "20090:20090"
+    volumes:
+      - ./ibexetc_pg:/app/etc
+    networks:
+      - nightingale
+    depends_on:
+      - postgres
+    links:
+      - postgres:postgres
+    command: >
+      sh -c "/wait && /app/ibex server"
+
+  n9e:
+    image: flashcatcloud/nightingale:latest
+    container_name: n9e
+    hostname: n9e
+    restart: always
+    environment:
+      GIN_MODE: release
+      TZ: Asia/Shanghai
+      WAIT_HOSTS: postgres:5432, redis:6379
+    volumes:
+      - ./n9eetc_pg:/app/etc
+    ports:
+      - "17000:17000"
+    networks:
+      - nightingale
+    depends_on:
+      - postgres
+      - redis
+      - victoriametrics
+      - ibex
+    links:
+      - postgres:postgres
+      - redis:redis
+      - victoriametrics:victoriametrics
+      - ibex:ibex
+    command: >
+      sh -c "/wait && /app/n9e"
+
+  categraf:
+    image: "flashcatcloud/categraf:latest"
+    container_name: "categraf"
+    hostname: "categraf01"
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+      HOST_PROC: /hostfs/proc
+      HOST_SYS: /hostfs/sys
+      HOST_MOUNT_PREFIX: /hostfs
+    volumes:
+      - ./categraf/conf:/etc/categraf/conf
+      - /:/hostfs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./prometc_vm:/etc/prometheus
+    # ports:
+    #   - "9100:9100/tcp"
+    networks:
+      - nightingale
+    depends_on:
+      - n9e
+      - ibex
+    links:
+      - n9e:n9e
+      - ibex:ibex

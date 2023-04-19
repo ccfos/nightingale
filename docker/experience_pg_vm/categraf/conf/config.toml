@@ -1,0 +1,83 @@
+[global]
+# whether print configs
+print_configs = false
+
+# add label(agent_hostname) to series
+# "" -> auto detect hostname
+# "xx" -> use specified string xx
+# "$hostname" -> auto detect hostname
+# "$ip" -> auto detect ip
+# "$hostname-$ip" -> auto detect hostname and ip to replace the vars
+hostname = "$HOSTNAME"
+
+# will not add label(agent_hostname) if true
+omit_hostname = false
+
+# s | ms
+precision = "ms"
+
+# global collect interval
+interval = 15
+
+[global.labels]
+source="categraf"
+# region = "shanghai"
+# env = "localhost"
+
+[writer_opt]
+# default: 2000
+batch = 2000
+# channel(as queue) size
+chan_size = 10000
+
+[[writers]]
+url = "http://n9e:17000/prometheus/v1/write"
+
+# Basic auth username
+basic_auth_user = ""
+
+# Basic auth password
+basic_auth_pass = ""
+
+# timeout settings, unit: ms
+timeout = 5000
+dial_timeout = 2500
+max_idle_conns_per_host = 100
+
+[http]
+enable = false
+address = ":9100"
+print_access = false
+run_mode = "release"
+
+[heartbeat]
+enable = true
+
+# report os version cpu.util mem.util metadata
+url = "http://n9e:17000/v1/n9e/heartbeat"
+
+# interval, unit: s
+interval = 10
+
+# Basic auth username
+basic_auth_user = ""
+
+# Basic auth password
+basic_auth_pass = ""
+
+## Optional headers
+# headers = ["X-From", "categraf", "X-Xyz", "abc"]
+
+# timeout settings, unit: ms
+timeout = 5000
+dial_timeout = 2500
+max_idle_conns_per_host = 100
+
+[ibex]
+enable = true
+## ibex flush interval
+interval = "1000ms"
+## n9e ibex server rpc address
+servers = ["ibex:20090"]
+## temp script dir
+meta_dir = "./meta"
