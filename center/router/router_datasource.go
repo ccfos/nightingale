@@ -3,9 +3,10 @@ package router
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/models"
 	"net/http"
 	"net/url"
+
+	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -83,16 +84,24 @@ func DatasourceCheck(ds models.Datasource) error {
 		},
 	}
 
-	// 参考Grafana校验方式
-	subPath := "/api/v1/query"
-	query := url.Values{}
-	query.Add("query", "1+1")
-	fullURL := fmt.Sprintf("%s%s?%s", ds.HTTPJson.Url, subPath, query.Encode())
-
-	req, err := http.NewRequest("POST", fullURL, nil)
+	fullURL := ds.HTTPJson.Url
+	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
 		logger.Errorf("Error creating request: %v", err)
 		return fmt.Errorf("request url:%s failed", fullURL)
+	}
+
+	if ds.PluginType == models.PROMETHEUS {
+		subPath := "/api/v1/query"
+		query := url.Values{}
+		query.Add("query", "1+1")
+		fullURL = fmt.Sprintf("%s%s?%s", ds.HTTPJson.Url, subPath, query.Encode())
+
+		req, err = http.NewRequest("POST", fullURL, nil)
+		if err != nil {
+			logger.Errorf("Error creating request: %v", err)
+			return fmt.Errorf("request url:%s failed", fullURL)
+		}
 	}
 
 	if ds.AuthJson.BasicAuthUser != "" {

@@ -1,0 +1,249 @@
+{
+    "name": "HOST by Node Exporter Overview",
+    "tags": "Prometheus Host",
+    "ident": "",
+    "configs": {
+        "links": [
+            {
+                "targetBlank": true,
+                "title": "n9e",
+                "url": "https://n9e.gitee.io/"
+            },
+            {
+                "targetBlank": true,
+                "title": "author",
+                "url": "http://flashcat.cloud/"
+            }
+        ],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "3173366d-01a2-420e-8878-75124b0051b6",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "3173366d-01a2-420e-8878-75124b0051b6",
+                    "isResizable": false
+                },
+                "name": "整体概况",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {
+                        "value": 40
+                    }
+                },
+                "id": "9a5e3292-b346-4ccf-a793-b83a2f8ac8c5",
+                "layout": {
+                    "h": 3,
+                    "w": 3,
+                    "x": 0,
+                    "y": 1,
+                    "i": "9a5e3292-b346-4ccf-a793-b83a2f8ac8c5",
+                    "isResizable": true
+                },
+                "name": "监控机器数",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "count(node_boot_time_seconds)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "description": "",
+                "id": "e1925fc8-cb05-467b-ba82-bb5cb6be7595",
+                "layout": {
+                    "h": 3,
+                    "w": 9,
+                    "x": 3,
+                    "y": 1,
+                    "i": "e1925fc8-cb05-467b-ba82-bb5cb6be7595",
+                    "isResizable": true
+                },
+                "links": [],
+                "name": "cpu使用率 top10",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(10,100-(avg by (mode, instance)(rate(node_cpu_seconds_total{mode=\"idle\"}[1m])))*100)",
+                        "legend": "{{instance}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "327b7e4b-6ec1-47e1-8840-d31cf4b5532b",
+                "layout": {
+                    "h": 3,
+                    "w": 12,
+                    "x": 12,
+                    "y": 1,
+                    "i": "327b7e4b-6ec1-47e1-8840-d31cf4b5532b",
+                    "isResizable": true
+                },
+                "name": "内存使用率 top10",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(10,(node_memory_MemTotal_bytes - node_memory_MemFree_bytes - (node_memory_Cached_bytes + node_memory_Buffers_bytes))/node_memory_MemTotal_bytes*100)",
+                        "legend": "{{instance}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "5a9d4a65-3f73-42cc-859e-fc0b82791b59",
+                "layout": {
+                    "h": 3,
+                    "w": 12,
+                    "x": 0,
+                    "y": 4,
+                    "i": "5a9d4a65-3f73-42cc-859e-fc0b82791b59",
+                    "isResizable": true
+                },
+                "name": "磁盘分区使用率 top10",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(10,(node_filesystem_avail_bytes{device!~'rootfs', device!~\"tmpfs\",mountpoint!~\"/var/lib.*\"} * 100) / node_filesystem_size_bytes{device!~'rootfs', device!~\"tmpfs\",mountpoint!~\"/var/lib.*\"})",
+                        "legend": "{{instance}}-{{mountpoint}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "id": "fa764e4b-5ca9-45d8-b12e-604f8743f9d9",
+                "layout": {
+                    "h": 3,
+                    "w": 12,
+                    "x": 12,
+                    "y": 4,
+                    "i": "fa764e4b-5ca9-45d8-b12e-604f8743f9d9",
+                    "isResizable": true
+                },
+                "name": "设备io util top10",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(10,rate(node_disk_io_time_seconds_total[5m]) * 100)",
+                        "legend": "{{instance}}-{{device}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}"
+            }
+        ],
+        "var": [
+            {
+                "name": "prom",
+                "type": "datasource",
+                "definition": "prometheus"
+            },
+            {
+                "definition": "label_values(node_cpu_seconds_total,  instance)",
+                "name": "node",
+                "selected": "$node",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                }
+            }
+        ],
+        "version": "3.0.0"
+    }
+}

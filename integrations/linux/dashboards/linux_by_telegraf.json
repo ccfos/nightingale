@@ -257,7 +257,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "system_uptime{ident=\"$ident\"}",
+                        "expr": "system_uptime{ident=~\"$ident\"}",
                         "refId": "A"
                     }
                 ],
@@ -315,7 +315,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "100-cpu_usage_idle{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "expr": "100-cpu_usage_idle{ident=~\"$ident\",cpu=\"cpu-total\"}",
                         "refId": "A"
                     }
                 ],
@@ -373,7 +373,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "mem_used_percent{ident=\"$ident\"}",
+                        "expr": "mem_used_percent{ident=~\"$ident\"}",
                         "refId": "A"
                     }
                 ],
@@ -431,7 +431,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "linux_sysctl_fs_file_nr{ident=\"$ident\"}/linux_sysctl_fs_file_max{ident=\"$ident\"}*100",
+                        "expr": "linux_sysctl_fs_file_nr{ident=~\"$ident\"}/linux_sysctl_fs_file_max{ident=~\"$ident\"}*100",
                         "refId": "A"
                     }
                 ],
@@ -468,7 +468,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "mem_swap_total{ident=\"$ident\"}-mem_swap_free{ident=\"$ident\"}",
+                        "expr": "mem_swap_total{ident=~\"$ident\"}-mem_swap_free{ident=~\"$ident\"}",
                         "refId": "A"
                     }
                 ],
@@ -509,7 +509,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "disk_used_percent{ident=\"$ident\"}",
+                        "expr": "disk_used_percent{ident=~\"$ident\"}",
                         "legend": "{{path}}",
                         "refId": "A"
                     }
@@ -551,7 +551,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "disk_inodes_used{ident=\"$ident\"}/disk_inodes_total{ident=\"$ident\"}",
+                        "expr": "disk_inodes_used{ident=~\"$ident\"}/disk_inodes_total{ident=~\"$ident\"}",
                         "legend": "{{path}}",
                         "refId": "A"
                     }
@@ -593,7 +593,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(diskio_io_time{ident=\"$ident\"}[1m])/10",
+                        "expr": "rate(diskio_io_time{ident=~\"$ident\"}[1m])/10",
                         "legend": "{{name}}",
                         "refId": "A"
                     }
@@ -652,7 +652,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "processes_total{ident=\"$ident\"}",
+                        "expr": "processes_total{ident=~\"$ident\"}",
                         "refId": "A"
                     }
                 ],
@@ -690,12 +690,12 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(kernel_context_switches{ident=\"$ident\"}[1m])",
+                        "expr": "rate(kernel_context_switches{ident=~\"$ident\"}[1m])",
                         "legend": "context_switches",
                         "refId": "A"
                     },
                     {
-                        "expr": "rate(kernel_interrupts{ident=\"$ident\"}[1m])",
+                        "expr": "rate(kernel_interrupts{ident=~\"$ident\"}[1m])",
                         "legend": "kernel_interrupts",
                         "refId": "B"
                     }
@@ -741,7 +741,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "kernel_entropy_avail{ident=\"$ident\"}",
+                        "expr": "kernel_entropy_avail{ident=~\"$ident\"}",
                         "legend": "entropy_avail",
                         "refId": "A"
                     }
@@ -800,7 +800,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "cpu_usage_idle{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "expr": "cpu_usage_idle{ident=~\"$ident\",cpu=\"cpu-total\"}",
                         "legend": "cpu_usage_idle",
                         "refId": "A"
                     }
@@ -839,37 +839,37 @@
                 },
                 "targets": [
                     {
-                        "expr": "cpu_usage_guest{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "expr": "cpu_usage_guest{ident=~\"$ident\",cpu=\"cpu-total\"}",
                         "legend": "",
                         "refId": "A"
                     },
                     {
-                        "expr": "cpu_usage_iowait{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "expr": "cpu_usage_iowait{ident=~\"$ident\",cpu=\"cpu-total\"}",
                         "legend": "",
                         "refId": "B"
                     },
                     {
-                        "expr": "cpu_usage_user{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "expr": "cpu_usage_user{ident=~\"$ident\",cpu=\"cpu-total\"}",
                         "refId": "C"
                     },
                     {
-                        "expr": "cpu_usage_system{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "expr": "cpu_usage_system{ident=~\"$ident\",cpu=\"cpu-total\"}",
                         "refId": "D"
                     },
                     {
-                        "expr": "cpu_usage_irq{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "expr": "cpu_usage_irq{ident=~\"$ident\",cpu=\"cpu-total\"}",
                         "refId": "E"
                     },
                     {
-                        "expr": "cpu_usage_softirq{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "expr": "cpu_usage_softirq{ident=~\"$ident\",cpu=\"cpu-total\"}",
                         "refId": "F"
                     },
                     {
-                        "expr": "cpu_usage_nice{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "expr": "cpu_usage_nice{ident=~\"$ident\",cpu=\"cpu-total\"}",
                         "refId": "G"
                     },
                     {
-                        "expr": "cpu_usage_steal{ident=\"$ident\",cpu=\"cpu-total\"}",
+                        "expr": "cpu_usage_steal{ident=~\"$ident\",cpu=\"cpu-total\"}",
                         "refId": "H"
                     }
                 ],
@@ -907,15 +907,15 @@
                 },
                 "targets": [
                     {
-                        "expr": "system_load15{ident=\"$ident\"}",
+                        "expr": "system_load15{ident=~\"$ident\"}",
                         "refId": "A"
                     },
                     {
-                        "expr": "system_load1{ident=\"$ident\"}",
+                        "expr": "system_load1{ident=~\"$ident\"}",
                         "refId": "B"
                     },
                     {
-                        "expr": "system_load5{ident=\"$ident\"}",
+                        "expr": "system_load5{ident=~\"$ident\"}",
                         "refId": "C"
                     }
                 ],
@@ -967,31 +967,31 @@
                 },
                 "targets": [
                     {
-                        "expr": "mem_active{ident=\"$ident\"}",
+                        "expr": "mem_active{ident=~\"$ident\"}",
                         "refId": "A"
                     },
                     {
-                        "expr": "mem_cached{ident=\"$ident\"}",
+                        "expr": "mem_cached{ident=~\"$ident\"}",
                         "refId": "B"
                     },
                     {
-                        "expr": "mem_buffered{ident=\"$ident\"}",
+                        "expr": "mem_buffered{ident=~\"$ident\"}",
                         "refId": "C"
                     },
                     {
-                        "expr": "mem_inactive{ident=\"$ident\"}",
+                        "expr": "mem_inactive{ident=~\"$ident\"}",
                         "refId": "D"
                     },
                     {
-                        "expr": "mem_mapped{ident=\"$ident\"}",
+                        "expr": "mem_mapped{ident=~\"$ident\"}",
                         "refId": "E"
                     },
                     {
-                        "expr": "mem_shared{ident=\"$ident\"}",
+                        "expr": "mem_shared{ident=~\"$ident\"}",
                         "refId": "F"
                     },
                     {
-                        "expr": "mem_swap_cached{ident=\"$ident\"}",
+                        "expr": "mem_swap_cached{ident=~\"$ident\"}",
                         "refId": "G"
                     }
                 ],
@@ -1029,23 +1029,23 @@
                 },
                 "targets": [
                     {
-                        "expr": "mem_slab{ident=\"$ident\"}",
+                        "expr": "mem_slab{ident=~\"$ident\"}",
                         "refId": "A"
                     },
                     {
-                        "expr": "mem_sreclaimable{ident=\"$ident\"}",
+                        "expr": "mem_sreclaimable{ident=~\"$ident\"}",
                         "refId": "B"
                     },
                     {
-                        "expr": "mem_sunreclaim{ident=\"$ident\"}",
+                        "expr": "mem_sunreclaim{ident=~\"$ident\"}",
                         "refId": "C"
                     },
                     {
-                        "expr": "mem_vmalloc_used{ident=\"$ident\"}",
+                        "expr": "mem_vmalloc_used{ident=~\"$ident\"}",
                         "refId": "D"
                     },
                     {
-                        "expr": "mem_vmalloc_chunk{ident=\"$ident\"}",
+                        "expr": "mem_vmalloc_chunk{ident=~\"$ident\"}",
                         "refId": "E"
                     }
                 ],
@@ -1099,15 +1099,15 @@
                 },
                 "targets": [
                     {
-                        "expr": "disk_free{ident=\"$ident\"}",
+                        "expr": "disk_free{ident=~\"$ident\"}",
                         "refId": "A"
                     },
                     {
-                        "expr": "disk_total{ident=\"$ident\"}",
+                        "expr": "disk_total{ident=~\"$ident\"}",
                         "refId": "B"
                     },
                     {
-                        "expr": "disk_used{ident=\"$ident\"}",
+                        "expr": "disk_used{ident=~\"$ident\"}",
                         "refId": "C"
                     }
                 ],
@@ -1145,11 +1145,11 @@
                 },
                 "targets": [
                     {
-                        "expr": "linux_sysctl_fs_file_max{ident=\"$ident\"}",
+                        "expr": "linux_sysctl_fs_file_max{ident=~\"$ident\"}",
                         "refId": "A"
                     },
                     {
-                        "expr": "linux_sysctl_fs_file_nr{ident=\"$ident\"}",
+                        "expr": "linux_sysctl_fs_file_nr{ident=~\"$ident\"}",
                         "refId": "B"
                     }
                 ],
@@ -1187,12 +1187,12 @@
                 },
                 "targets": [
                     {
-                        "expr": "disk_inodes_total{ident=\"$ident\",path!~\"/var.*\"}",
+                        "expr": "disk_inodes_total{ident=~\"$ident\",path!~\"/var.*\"}",
                         "legend": "{{path}}-total",
                         "refId": "A"
                     },
                     {
-                        "expr": "disk_inodes_used{ident=\"$ident\",path!~\"/var.*\"}",
+                        "expr": "disk_inodes_used{ident=~\"$ident\",path!~\"/var.*\"}",
                         "legend": "{{path}}-used",
                         "refId": "B"
                     }
@@ -1231,12 +1231,12 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(diskio_reads{ident=\"$ident\"}[1m])",
+                        "expr": "rate(diskio_reads{ident=~\"$ident\"}[1m])",
                         "legend": "{{name}}-read",
                         "refId": "A"
                     },
                     {
-                        "expr": "rate(diskio_writes{ident=\"$ident\"}[1m])",
+                        "expr": "rate(diskio_writes{ident=~\"$ident\"}[1m])",
                         "legend": "{{name}}-writes",
                         "refId": "B"
                     }
@@ -1278,12 +1278,12 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(diskio_read_bytes{ident=\"$ident\"}[1m])",
+                        "expr": "rate(diskio_read_bytes{ident=~\"$ident\"}[1m])",
                         "legend": "{{name}}-read",
                         "refId": "A"
                     },
                     {
-                        "expr": "rate(diskio_write_bytes{ident=\"$ident\"}[1m])",
+                        "expr": "rate(diskio_write_bytes{ident=~\"$ident\"}[1m])",
                         "legend": "{{name}}-writes",
                         "refId": "B"
                     }
@@ -1322,7 +1322,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(diskio_write_time{ident=\"$ident\"}[1m])/rate(diskio_writes{ident=\"$ident\"}[1m])+rate(diskio_read_time{ident=\"$ident\"}[1m])/rate(diskio_reads{ident=\"$ident\"}[1m])",
+                        "expr": "rate(diskio_write_time{ident=~\"$ident\"}[1m])/rate(diskio_writes{ident=~\"$ident\"}[1m])+rate(diskio_read_time{ident=~\"$ident\"}[1m])/rate(diskio_reads{ident=~\"$ident\"}[1m])",
                         "legend": "{{name}}",
                         "refId": "A"
                     }
@@ -1377,12 +1377,12 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(net_bytes_recv{ident=\"$ident\",interface=~\"eth.*\"}[1m])*8",
+                        "expr": "rate(net_bytes_recv{ident=~\"$ident\",interface=~\"eth.*\"}[1m])*8",
                         "legend": "{{interface}}-recv",
                         "refId": "A"
                     },
                     {
-                        "expr": "rate(net_bytes_sent{ident=\"$ident\",interface=~\"eth.*\"}[1m])*8",
+                        "expr": "rate(net_bytes_sent{ident=~\"$ident\",interface=~\"eth.*\"}[1m])*8",
                         "legend": "{{interface}}-sent",
                         "refId": "B"
                     }
@@ -1423,12 +1423,12 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(net_packets_recv{ident=\"$ident\",interface=~\"eth.*\"}[1m])",
+                        "expr": "rate(net_packets_recv{ident=~\"$ident\",interface=~\"eth.*\"}[1m])",
                         "legend": "{{interface}}-recv",
                         "refId": "A"
                     },
                     {
-                        "expr": "rate(net_packets_sent{ident=\"$ident\",interface=~\"eth.*\"}[1m])",
+                        "expr": "rate(net_packets_sent{ident=~\"$ident\",interface=~\"eth.*\"}[1m])",
                         "legend": "{{interface}}-sent",
                         "refId": "B"
                     }
@@ -1469,12 +1469,12 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(net_err_in{ident=\"$ident\",interface=~\"eth.*\"}[1m])",
+                        "expr": "rate(net_err_in{ident=~\"$ident\",interface=~\"eth.*\"}[1m])",
                         "legend": "{{interface}}-in",
                         "refId": "A"
                     },
                     {
-                        "expr": "rate(net_err_out{ident=\"$ident\",interface=~\"eth.*\"}[1m])",
+                        "expr": "rate(net_err_out{ident=~\"$ident\",interface=~\"eth.*\"}[1m])",
                         "legend": "{{interface}}-out",
                         "refId": "B"
                     }
@@ -1515,12 +1515,12 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(net_drop_in{ident=\"$ident\",interface=~\"eth.*\"}[1m])",
+                        "expr": "rate(net_drop_in{ident=~\"$ident\",interface=~\"eth.*\"}[1m])",
                         "legend": "{{interface}}-in",
                         "refId": "A"
                     },
                     {
-                        "expr": "rate(net_drop_out{ident=\"$ident\",interface=~\"eth.*\"}[1m])",
+                        "expr": "rate(net_drop_out{ident=~\"$ident\",interface=~\"eth.*\"}[1m])",
                         "legend": "{{interface}}-out",
                         "refId": "B"
                     }
@@ -1559,15 +1559,15 @@
                 },
                 "targets": [
                     {
-                        "expr": "netstat_tcp_established{ident=\"$ident\"}",
+                        "expr": "netstat_tcp_established{ident=~\"$ident\"}",
                         "refId": "A"
                     },
                     {
-                        "expr": "netstat_tcp_listen{ident=\"$ident\"}",
+                        "expr": "netstat_tcp_listen{ident=~\"$ident\"}",
                         "refId": "B"
                     },
                     {
-                        "expr": "netstat_tcp_time_wait{ident=\"$ident\"}",
+                        "expr": "netstat_tcp_time_wait{ident=~\"$ident\"}",
                         "refId": "C"
                     }
                 ],
