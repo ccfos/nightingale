@@ -120,10 +120,12 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.Any("/proxy/:id/*url", rt.dsProxy)
 			pages.POST("/query-range-batch", rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.promBatchQueryInstant)
+			pages.GET("/datasource/brief", rt.datasourceBriefs)
 		} else {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.auth(), rt.promBatchQueryInstant)
+			pages.GET("/datasource/brief", rt.auth(), rt.datasourceBriefs)
 		}
 
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
