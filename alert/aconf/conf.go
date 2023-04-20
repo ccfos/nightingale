@@ -23,10 +23,10 @@ type SMTPConfig struct {
 }
 
 type HeartbeatConfig struct {
-	IP          string
-	Interval    int64
-	Endpoint    string
-	ClusterName string
+	IP         string
+	Interval   int64
+	Endpoint   string
+	EngineName string
 }
 
 type Alerting struct {
@@ -65,5 +65,9 @@ func (a *Alert) PreCheck() {
 
 	if a.Heartbeat.Interval == 0 {
 		a.Heartbeat.Interval = 1000
+	}
+
+	if a.Heartbeat.EngineName == "" {
+		a.Heartbeat.EngineName = "default"
 	}
 }

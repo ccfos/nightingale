@@ -116,7 +116,7 @@ RedisType = "standalone"
 IP = ""
 # unit ms
 Interval = 1000
-ClusterName = "default"
+EngineName = "default"
 
 # [Alert.Alerting]
 # NotifyConcurrency = 10

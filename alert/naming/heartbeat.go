@@ -74,19 +74,19 @@ func (n *Naming) heartbeat() error {
 	var err error
 
 	// 在页面上维护实例和集群的对应关系
-	datasourceIds, err = models.GetDatasourceIdsByClusterName(n.ctx, n.heartbeatConfig.ClusterName)
+	datasourceIds, err = models.GetDatasourceIdsByClusterName(n.ctx, n.heartbeatConfig.EngineName)
 	if err != nil {
 		return err
 	}
 
 	if len(datasourceIds) == 0 {
-		err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.ClusterName, 0)
+		err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.EngineName, 0)
 		if err != nil {
 			logger.Warningf("heartbeat with cluster %s err:%v", "", err)
 		}
 	} else {
 		for i := 0; i < len(datasourceIds); i++ {
-			err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.ClusterName, datasourceIds[i])
+			err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.EngineName, datasourceIds[i])
 			if err != nil {
 				logger.Warningf("heartbeat with cluster %d err:%v", datasourceIds[i], err)
 			}
@@ -115,7 +115,7 @@ func (n *Naming) heartbeat() error {
 	if n.isCenter {
 		// 如果是中心节点，还需要处理 host 类型的告警规则，host 类型告警规则，和数据源无关，想复用下数据源的 hash ring，想用一个虚假的数据源 id 来处理
 		// if is center node, we need to handle host type alerting rules, host type alerting rules are not related to datasource, we want to reuse the hash ring of datasource, we want to use a fake datasource id to handle it
-		err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.ClusterName, HostDatasource)
+		err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.EngineName, HostDatasource)
 		if err != nil {
 			logger.Warningf("heartbeat with cluster %s err:%v", "", err)
 		}
