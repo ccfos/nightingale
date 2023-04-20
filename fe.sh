@@ -6,3 +6,5 @@ VERSION=$(echo $TAG)
 curl -o n9e-fe-${VERSION}.tar.gz -L https://github.com/n9e/fe/releases/download/${TAG}/n9e-fe-${VERSION}.tar.gz  
 
 tar zxvf n9e-fe-${VERSION}.tar.gz
+
+cp docker/initsql/a-n9e.sql n9e.sql

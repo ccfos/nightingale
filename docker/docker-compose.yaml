@@ -1,9 +1,5 @@
 version: "3.7"
 
-networks:
-  nightingale:
-    driver: bridge
-
 services:
   mysql:
     # platform: linux/x86_64
@@ -11,8 +7,6 @@ services:
     container_name: mysql
     hostname: mysql
     restart: always
-    ports:
-      - "3406:3306"
     environment:
       TZ: Asia/Shanghai
       MYSQL_ROOT_PASSWORD: 1234
@@ -20,20 +14,16 @@ services:
       - ./mysqldata:/var/lib/mysql/
       - ./initsql:/docker-entrypoint-initdb.d/
       - ./mysqletc/my.cnf:/etc/my.cnf
-    networks:
-      - nightingale
+    network_mode: host
 
   redis:
     image: "redis:6.2"
     container_name: redis
     hostname: redis
     restart: always
-    ports:
-      - "6379:6379"
     environment:
       TZ: Asia/Shanghai
-    networks:
-      - nightingale
+    network_mode: host
 
   prometheus:
     image: prom/prometheus
@@ -44,10 +34,7 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - ./prometc:/etc/prometheus
-    ports:
-      - "9090:9090"
-    networks:
-      - nightingale
+    network_mode: host
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
@@ -64,18 +51,12 @@ services:
     environment:
       GIN_MODE: release
       TZ: Asia/Shanghai
-      WAIT_HOSTS: mysql:3306
-    ports:
-      - "10090:10090"
-      - "20090:20090"
+      WAIT_HOSTS: 127.0.0.1:3306
     volumes:
       - ./ibexetc:/app/etc
-    networks:
-      - nightingale
+    network_mode: host
     depends_on:
       - mysql
-    links:
-      - mysql:mysql
     command: >
       sh -c "/wait && /app/ibex server"
 
@@ -87,23 +68,15 @@ services:
     environment:
       GIN_MODE: release
       TZ: Asia/Shanghai
-      WAIT_HOSTS: mysql:3306, redis:6379
+      WAIT_HOSTS: 127.0.0.1:3306, 127.0.0.1:6379
     volumes:
-      - ./n9eetc:/app/etc
-    ports:
-      - "17000:17000"
-    networks:
-      - nightingale
+      - ../etc:/app/etc
+    network_mode: host
     depends_on:
       - mysql
       - redis
       - prometheus
       - ibex
-    links:
-      - mysql:mysql
-      - redis:redis
-      - prometheus:prometheus
-      - ibex:ibex
     command: >
       sh -c "/wait && /app/n9e"
 
@@ -121,13 +94,7 @@ services:
       - ./categraf/conf:/etc/categraf/conf
       - /:/hostfs
       - /var/run/docker.sock:/var/run/docker.sock
-    # ports:
-    #   - "9100:9100/tcp"
-    networks:
-      - nightingale
+    network_mode: host
     depends_on:
       - n9e
       - ibex
-    links:
-      - n9e:n9e
-      - ibex:ibex

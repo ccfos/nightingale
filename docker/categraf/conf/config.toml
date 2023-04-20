@@ -31,7 +31,7 @@ batch = 2000
 chan_size = 10000
 
 [[writers]]
-url = "http://n9e:17000/prometheus/v1/write"
+url = "http://127.0.0.1:17000/prometheus/v1/write"
 
 # Basic auth username
 basic_auth_user = ""
@@ -54,7 +54,7 @@ run_mode = "release"
 enable = true
 
 # report os version cpu.util mem.util metadata
-url = "http://n9e:17000/v1/n9e/heartbeat"
+url = "http://127.0.0.1:17000/v1/n9e/heartbeat"
 
 # interval, unit: s
 interval = 10
@@ -78,6 +78,6 @@ enable = true
 ## ibex flush interval
 interval = "1000ms"
 ## n9e ibex server rpc address
-servers = ["ibex:20090"]
+servers = ["127.0.0.1:20090"]
 ## temp script dir
 meta_dir = "./meta"
