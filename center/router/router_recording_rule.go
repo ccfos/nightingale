@@ -1,7 +1,10 @@
 package router
 
 import (
+	"encoding/json"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -103,6 +106,25 @@ func (rt *Router) recordingRulePutFields(c *gin.Context) {
 
 	f.Fields["update_by"] = c.MustGet("username").(string)
 	f.Fields["update_at"] = time.Now().Unix()
+
+	if _, ok := f.Fields["datasource_ids"]; ok {
+		// datasource_ids = "1 2 3"
+		idsStr := strings.Fields(f.Fields["datasource_ids"].(string))
+		ids := make([]int64, 0)
+		for _, idStr := range idsStr {
+			id, err := strconv.ParseInt(idStr, 10, 64)
+			if err != nil {
+				ginx.Bomb(http.StatusBadRequest, "datasource_ids error")
+			}
+			ids = append(ids, id)
+		}
+
+		bs, err := json.Marshal(ids)
+		if err != nil {
+			ginx.Bomb(http.StatusBadRequest, "datasource_ids error")
+		}
+		f.Fields["datasource_ids"] = string(bs)
+	}
 
 	for i := 0; i < len(f.Ids); i++ {
 		ar, err := models.RecordingRuleGetById(rt.Ctx, f.Ids[i])
