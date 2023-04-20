@@ -23,6 +23,23 @@ type NotifyConfigCacheType struct {
 	sync.RWMutex
 }
 
+const DefaultSMTP = `
+Host = ""
+Port = 994
+User = "username"
+Pass = "password"
+From = "username@163.com"
+InsecureSkipVerify = true
+Batch = 5
+`
+
+const DefaultIbex = `
+Address = "http://127.0.0.1:10090"
+BasicAuthUser = "ibex"
+BasicAuthPass = "ibex"
+Timeout = 3000
+`
+
 func NewNotifyConfigCache(ctx *ctx.Context) *NotifyConfigCacheType {
 	w := &NotifyConfigCacheType{
 		ctx: ctx,
@@ -103,6 +120,11 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 
 	if strings.TrimSpace(cval) != "" {
 		err = toml.Unmarshal([]byte(cval), &w.ibex)
+		if err != nil {
+			logger.Errorf("failed to unmarshal ibex:%s config:", cval, err)
+		}
+	} else {
+		err = toml.Unmarshal([]byte(DefaultIbex), &w.ibex)
 		if err != nil {
 			logger.Errorf("failed to unmarshal ibex:%s config:", cval, err)
 		}

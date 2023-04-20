@@ -5,6 +5,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/sender"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/pelletier/go-toml/v2"
 
@@ -137,32 +138,15 @@ func (rt *Router) notifyContactPuts(c *gin.Context) {
 	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, models.NOTIFYCONTACT, string(data)))
 }
 
-const DefaultSMTP = `
-Host = ""
-Port = 994
-User = "username"
-Pass = "password"
-From = "username@163.com"
-InsecureSkipVerify = true
-Batch = 5
-`
-
-const DefaultIbex = `
-Address = "http://127.0.0.1:10090"
-BasicAuthUser = "ibex"
-BasicAuthPass = "ibex"
-Timeout = 3000
-`
-
 func (rt *Router) notifyConfigGet(c *gin.Context) {
 	key := ginx.QueryStr(c, "ckey")
 	cval, err := models.ConfigsGet(rt.Ctx, key)
 	if cval == "" {
 		switch key {
 		case models.IBEX:
-			cval = DefaultIbex
+			cval = memsto.DefaultIbex
 		case models.SMTP:
-			cval = DefaultSMTP
+			cval = memsto.DefaultSMTP
 		}
 	}
 	ginx.NewRender(c).Data(cval, err)
