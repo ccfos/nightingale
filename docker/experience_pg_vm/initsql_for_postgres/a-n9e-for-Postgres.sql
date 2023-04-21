@@ -331,7 +331,7 @@ CREATE TABLE alert_mute (
     cate varchar(128) not null,
     cluster varchar(128) not null,
     datasource_ids varchar(255) not null default '' ,
-    tags varchar(4096) not null default '' ,
+    tags jsonb NOT NULL ,
     cause varchar(255) not null default '',
     btime bigint not null default 0 ,
     etime bigint not null default 0 ,
