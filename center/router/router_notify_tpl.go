@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"html/template"
 
 	"github.com/ccfos/nightingale/v6/center/cconf"
@@ -22,6 +23,11 @@ func (rt *Router) notifyTplUpdateContent(c *gin.Context) {
 	var f models.NotifyTpl
 	ginx.BindJSON(c, &f)
 
+	if err := templateValidate(f); err != nil {
+		ginx.NewRender(c).Message(err.Error())
+		return
+	}
+
 	ginx.NewRender(c).Message(f.UpdateContent(rt.Ctx))
 }
 
@@ -29,7 +35,20 @@ func (rt *Router) notifyTplUpdate(c *gin.Context) {
 	var f models.NotifyTpl
 	ginx.BindJSON(c, &f)
 
+	if err := templateValidate(f); err != nil {
+		ginx.NewRender(c).Message(err.Error())
+		return
+	}
+
 	ginx.NewRender(c).Message(f.Update(rt.Ctx))
+}
+
+func templateValidate(f models.NotifyTpl) error {
+	if _, err := template.New(f.Channel).Funcs(tplx.TemplateFuncMap).Parse(f.Content); err != nil {
+		return fmt.Errorf("模版校验错误:%s", err.Error())
+	}
+
+	return nil
 }
 
 func (rt *Router) notifyTplPreview(c *gin.Context) {
