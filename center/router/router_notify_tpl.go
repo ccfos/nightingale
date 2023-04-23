@@ -44,6 +44,9 @@ func (rt *Router) notifyTplUpdate(c *gin.Context) {
 }
 
 func templateValidate(f models.NotifyTpl) error {
+	if f.Content == "" {
+		return nil
+	}
 	if _, err := template.New(f.Channel).Funcs(tplx.TemplateFuncMap).Parse(f.Content); err != nil {
 		return fmt.Errorf("模版校验错误:%s", err.Error())
 	}
