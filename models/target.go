@@ -30,7 +30,7 @@ type Target struct {
 	CpuUtil  float64 `json:"cpu_util" gorm:"-"`
 	OS       string  `json:"os" gorm:"-"`
 	Arch     string  `json:"arch" gorm:"-"`
-	Bgid     int64   `json:"gbid" gorm:"-"`
+	Bgid     int64   `json:"bgid" gorm:"-"`
 }
 
 func (t *Target) TableName() string {
