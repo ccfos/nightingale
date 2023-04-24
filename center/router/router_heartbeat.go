@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/clientip"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -36,7 +37,7 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	req.Offset = (time.Now().UnixMilli() - req.UnixTime)
-	req.RemoteAddr = c.Request.RemoteAddr
+	req.RemoteAddr = clientip.ClientIP(c.Request)
 	rt.MetaSet.Set(req.Hostname, req)
 
 	gid := ginx.QueryInt64(c, "gid", 0)
