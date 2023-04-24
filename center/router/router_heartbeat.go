@@ -36,6 +36,17 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	req.Offset = (time.Now().UnixMilli() - req.UnixTime)
+	req.RemoteAddr = c.Request.RemoteAddr
 	rt.MetaSet.Set(req.Hostname, req)
-	ginx.NewRender(c).Message(nil)
+
+	gid := ginx.QueryInt64(c, "gid", 0)
+
+	if gid != 0 {
+		target, has := rt.TargetCache.Get(req.Hostname)
+		if has && target.GroupId != gid {
+			err = models.TargetUpdateBgid(rt.Ctx, []string{req.Hostname}, gid, false)
+		}
+	}
+
+	ginx.NewRender(c).Message(err)
 }
