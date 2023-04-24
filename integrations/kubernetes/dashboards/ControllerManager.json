@@ -1,0 +1,1110 @@
+{
+  "name": "Kubernetes / Controller Manager",
+  "tags": "Categraf",
+  "ident": "",
+  "configs": {
+    "version": "2.0.0",
+    "links": [],
+    "var": [],
+    "panels": [
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "up{job=\"controller-manager\"}",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Controller Manager - Health Status",
+        "links": [],
+        "description": "controller manager健康状态",
+        "custom": {
+          "showHeader": true,
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "displayMode": "seriesToRows"
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "0": {
+                  "text": "DOWN"
+                },
+                "1": {
+                  "text": "UP"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "type": "special",
+              "result": {
+                "color": "#3fc453",
+                "text": "UP"
+              },
+              "match": {
+                "special": 1
+              }
+            },
+            {
+              "type": "special",
+              "result": {
+                "color": "#f60707",
+                "text": "DOWN"
+              },
+              "match": {
+                "special": 0
+              }
+            }
+          ],
+          "standardOptions": {
+            "util": "none"
+          }
+        },
+        "overrides": [
+          {}
+        ],
+        "version": "2.0.0",
+        "type": "table",
+        "layout": {
+          "h": 6,
+          "w": 12,
+          "x": 0,
+          "y": 0,
+          "i": "5d6560c5-6137-4632-bb88-ff8c9cf42e9d",
+          "isResizable": true
+        },
+        "id": "5d6560c5-6137-4632-bb88-ff8c9cf42e9d"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "leader_election_master_status{job=\"controller-manager\"}",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Controller Manager - Member Status",
+        "links": [],
+        "description": "controller manager 主从状态",
+        "custom": {
+          "showHeader": true,
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "displayMode": "seriesToRows"
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "0": {
+                  "text": "DOWN"
+                },
+                "1": {
+                  "text": "UP"
+                }
+              },
+              "type": "value",
+              "result": {
+                "text": "val"
+              }
+            },
+            {
+              "type": "special",
+              "result": {
+                "color": "#3fc453",
+                "text": "MASTER"
+              },
+              "match": {
+                "special": 1
+              }
+            },
+            {
+              "type": "special",
+              "result": {
+                "color": "#9470ff",
+                "text": "BACKUP"
+              },
+              "match": {
+                "special": 0
+              }
+            }
+          ],
+          "standardOptions": {
+            "util": "none"
+          }
+        },
+        "overrides": [
+          {
+            "properties": {
+              "valueMappings": []
+            }
+          }
+        ],
+        "version": "2.0.0",
+        "type": "table",
+        "layout": {
+          "h": 6,
+          "w": 12,
+          "x": 12,
+          "y": 0,
+          "i": "a5d1ef0c-83e3-4194-b242-d5c51ba4bdd2",
+          "isResizable": true
+        },
+        "id": "62e3b249-fefe-4f32-8baf-394eac053f2a"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(rest_client_requests_total{job=\"controller-manager\"}[5m])) by (instance,code)",
+            "legend": "{{ instance }} {{ code }}"
+          }
+        ],
+        "name": "Controller Manager - Requests by code",
+        "links": [],
+        "description": "controller manager 请求量 按返回码统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 6,
+          "i": "94713dc3-acb7-43b5-ae2f-399b2da61763",
+          "isResizable": true
+        },
+        "id": "94713dc3-acb7-43b5-ae2f-399b2da61763"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(rest_client_requests_total{job=\"controller-manager\"}[5m])) by (instance,method)",
+            "legend": "{{ instance }} {{ method }}"
+          }
+        ],
+        "name": "Controller Manager - Requests by verb",
+        "links": [],
+        "description": "controller manager请求量，按请求类型统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 6,
+          "i": "a6928b49-cf0a-443e-a8fd-b999685df0be",
+          "isResizable": true
+        },
+        "id": "a6928b49-cf0a-443e-a8fd-b999685df0be"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(rest_client_requests_total{job=\"controller-manager\"}[5m])) by (instance)",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Controller Manager -Requests by instance",
+        "links": [],
+        "description": "controller manager请求(apiserver)量",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 14,
+          "i": "69690063-d044-4547-9f5f-126e5f8bf55a",
+          "isResizable": true
+        },
+        "id": "69690063-d044-4547-9f5f-126e5f8bf55a"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.9, sum(rate(rest_client_request_duration_seconds_bucket{job=\"controller-manager\"}[5m])) by (instance,verb,le))*1000",
+            "legend": "{{ instance }} {{ verb }}"
+          }
+        ],
+        "name": "Controller Manager - Requests Latancy by verb",
+        "links": [],
+        "description": "controller manager 90分位请求apiserver延迟，按请求类型统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 14,
+          "i": "d5a67103-9930-46e0-97e1-296e0d71e30e",
+          "isResizable": true
+        },
+        "id": "053d10f3-1113-40e0-85aa-dfbabb706995"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.9, sum(rate(rest_client_request_duration_seconds_bucket{job=\"controller-manager\"}[5m])) by (instance,url,verb,le))*1000",
+            "legend": "{{ instance }} {{ verb }}  {{ url }}"
+          }
+        ],
+        "name": "Controller Manager - Requests Latancy by url",
+        "links": [],
+        "description": "controller manager90分位请求延迟，按url统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 22,
+          "i": "2924bb3f-20c3-4f56-96ff-76d473743d8b",
+          "isResizable": true
+        },
+        "id": "c86ed101-a91c-4478-b67a-7182a5e856d1"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.9, sum(rate(rest_client_request_duration_seconds_bucket{job=\"controller-manager\"}[5m])) by (instance,le)) * 1000",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Controller Manager - Requests Latancy by instance",
+        "links": [],
+        "description": "controller manager90分位请求延迟，按实例统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 22,
+          "i": "75671720-bca1-449f-9c68-bf562f105b66",
+          "isResizable": true
+        },
+        "id": "80bd434e-21dc-4864-97c6-bfd1e2e27bbe"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by(instance,method) (rate(rest_client_requests_total{code=~\"5..\",job=\"controller-manager\"}[5m]))\n / sum by(instance,method) (rate(rest_client_requests_total{job=\"controller-manager\"}[5m]))",
+            "legend": "{{ instance }} {{ method }}"
+          }
+        ],
+        "name": "Controller Manager - Errors by verb",
+        "links": [],
+        "description": "controller manager请求5xx，按请求类型统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 30,
+          "i": "cfc389ad-5648-4107-a5bd-1680f6ede2ed",
+          "isResizable": true
+        },
+        "id": "32a09298-d0f8-4d54-808e-d223d0a428ff"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by(instance) (rate(rest_client_requests_total{code=~\"5..\",job=\"controller-manager\"}[5m]))\n / sum by(instance) (rate(rest_client_requests_total{job=\"controller-manager\"}[5m]))",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Controller Manager - Errors by instance",
+        "links": [],
+        "description": "controller manager请求5xx，按实例统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 30,
+          "i": "152b5817-ad87-44d0-a71f-5fbd0fc10ca3",
+          "isResizable": true
+        },
+        "id": "b6931f1f-6c43-478e-bcc7-26d1b121bceb"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "avg(rate(workqueue_adds_total{job=\"controller-manager\"}[5m])) by (instance,name)",
+            "legend": "{{ instance }} {{ name }}"
+          }
+        ],
+        "name": "Controller Manager - Average Enqueue Rate by instance",
+        "links": [],
+        "description": "controller manager workqueue 添加任务数的速率",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 38,
+          "i": "0c8ac9ee-2a3e-4e7e-b338-748d79f6cbb6",
+          "isResizable": true
+        },
+        "id": "0c8ac9ee-2a3e-4e7e-b338-748d79f6cbb6"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(workqueue_depth{job=\"controller-manager\"}[5m])) by(instance,name)",
+            "legend": "{{ instance }} {{ name }} workqueue depth"
+          }
+        ],
+        "name": "Controller Manager - WorkQueue Depth by name",
+        "links": [],
+        "description": "各个controller 队列深度",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 38,
+          "i": "b15af6b1-107d-4246-9eec-06fd370d4d35",
+          "isResizable": true
+        },
+        "id": "b15af6b1-107d-4246-9eec-06fd370d4d35"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.9, sum(rate(workqueue_queue_duration_seconds_bucket{job=\"controller-manager\"}[5m])) by (instance,name,le))*1000",
+            "legend": "{{ instance }} {{ name }}"
+          }
+        ],
+        "name": "Controller Manager - WorkQueue Queue Time by name",
+        "links": [],
+        "description": "任务在队列中的90分位等待耗时",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 46,
+          "i": "1f2a42da-cdf8-4ce9-830f-92dabeb387be",
+          "isResizable": true
+        },
+        "id": "1b4705d3-cb3c-49c9-b60d-69edd28b662c"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.9, sum(rate(workqueue_work_duration_seconds_bucket{job=\"controller-manager\"}[5m])) by (instance,name,le))*1000",
+            "legend": "{{ instance }} {{ name }}"
+          }
+        ],
+        "name": "Controller Manager - WorkQueue Work Time by name",
+        "links": [],
+        "description": "controller manager 90分位 任务出队到完成的耗时",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 46,
+          "i": "30b7d514-fc44-4e24-9379-da697ceba79a",
+          "isResizable": true
+        },
+        "id": "1779a666-696e-4f07-b93f-f4b5bdd9d102"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(workqueue_retries_total{job=\"controller-manager\"}[5m])) by (instance,name)",
+            "legend": "{{ instance }} {{ name }}"
+          }
+        ],
+        "name": "Controller Manager - WorkQueue Retries Total",
+        "links": [],
+        "description": "controller manager 任务进入队列的重试次数",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 54,
+          "i": "4841fbd4-8393-412f-ba40-7e63d79827e8",
+          "isResizable": true
+        },
+        "id": "084ccfb0-b7a1-4865-825d-f913bbc8456f"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "workqueue_longest_running_processor_seconds{job=\"controller-manager\"}*1000",
+            "legend": "{{ instance }} {{ name }}"
+          }
+        ],
+        "name": "Controller Manager - WorkQueue longest running time",
+        "links": [],
+        "description": "队列中最耗时任务的处理时间（500ms采样周期，未完成的任务-任务开始处理即出队的时间)",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 54,
+          "i": "5c576ba5-0e85-4401-9e44-346b987eb8ba",
+          "isResizable": true
+        },
+        "id": "a1644e81-5aee-409b-be7a-6445f9478373"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "pv_collector_bound_pv_count{job=\"controller-manager\"}",
+            "legend": "{{ instance }} {{ storage_class }} bound pv "
+          },
+          {
+            "expr": "pv_collector_total_pv_count{job=\"controller-manager\"}",
+            "refId": "B",
+            "legend": "{{ instance }} total pv count"
+          }
+        ],
+        "name": "Controller Manager - Bound PV Count",
+        "links": [],
+        "description": "controller manager 绑定的pv数目",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 62,
+          "i": "c28c023d-08e3-4614-8d20-0f0f3f5c7044",
+          "isResizable": true
+        },
+        "id": "d17fab46-1a62-47a5-9666-ee083f2ec9e5"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "node_collector_zone_size{job=\"controller-manager\"}",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Controller Manager - Zone Size",
+        "links": [],
+        "description": "controller manager zone中的node数据",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 62,
+          "i": "8ccebf05-e22a-475e-9c4b-308887757855",
+          "isResizable": true
+        },
+        "id": "ce8b2909-215d-4a2a-a2ea-5faff34cf4ef"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(process_cpu_seconds_total{job=\"controller-manager\"}[5m])",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Controller Manager - CPU Usage by instance",
+        "links": [],
+        "description": "controller manager cpu使用率",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "percentUnit",
+            "decimals": 2
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 70,
+          "i": "9c187c1c-f5cd-4aab-af81-09169948ab82",
+          "isResizable": true
+        },
+        "id": "9c187c1c-f5cd-4aab-af81-09169948ab82"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "pv_collector_bound_pvc_count{job=\"controller-manager\"}",
+            "legend": "{{ instance }} {{ namespace }} bound pvc"
+          },
+          {
+            "expr": "pv_collector_unbound_pvc_count{job=\"controller-manager\"}",
+            "refId": "B",
+            "legend": "{{ instance }} {{ namespace }} unbound pvc"
+          }
+        ],
+        "name": "Controller Manager - PVC Count",
+        "links": [],
+        "description": "controller manager 绑定/非绑定的pvc数目",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 70,
+          "i": "6ad946ea-8cee-42f5-9863-3a76d53340a4",
+          "isResizable": true
+        },
+        "id": "92b035eb-2bd3-417d-b82a-f5734b8a4aec"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "process_open_fds{job=\"controller-manager\"}",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Controller Manager - Open fds by instance",
+        "links": [],
+        "description": "controller manager打开的fd数量",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 78,
+          "i": "e438aed2-6d4a-4254-a8ec-26752385dc74",
+          "isResizable": true
+        },
+        "id": "94bb09a7-dbf7-41d8-b6a4-16b262365474"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "process_resident_memory_bytes{job=\"controller-manager\"}",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Controller Manager - Memory Usage by instance",
+        "links": [],
+        "description": "controller manager 内存使用量",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "bytesIEC"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 78,
+          "i": "8cff2618-b2d4-4fb4-bfc2-d1d4c4f1b35c",
+          "isResizable": true
+        },
+        "id": "8cff2618-b2d4-4fb4-bfc2-d1d4c4f1b35c"
+      }
+    ]
+  }
+}
