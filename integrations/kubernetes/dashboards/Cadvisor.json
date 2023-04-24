@@ -1,0 +1,271 @@
+{
+  "name": "Cadvisor",
+  "tags": "",
+  "ident": "",
+  "configs": {
+    "version": "2.0.0",
+    "links": [],
+    "var": [
+      {
+        "type": "query",
+        "name": "host",
+        "definition": "label_values({__name__=~\"container.*\"},instance)",
+        "allValue": ".*",
+        "allOption": true,
+        "multi": false,
+        "reg": ""
+      },
+      {
+        "type": "query",
+        "name": "container",
+        "definition": "label_values({__name__=~\"container.*\", instance=~\"$host\"},name)",
+        "allValue": ".*",
+        "allOption": true,
+        "multi": false,
+        "reg": ""
+      }
+    ],
+    "panels": [
+      {
+        "version": "2.0.0",
+        "id": "eeb56afe-8a3e-46d6-8923-aeb3d0f124ea",
+        "type": "timeseries",
+        "name": "CPU Usage",
+        "links": [],
+        "layout": {
+          "h": 7,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "eeb56afe-8a3e-46d6-8923-aeb3d0f124ea",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(container_cpu_usage_seconds_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[5m])) by (name) *100",
+            "legend": "{{name}}"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "2.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4
+      },
+      {
+        "version": "2.0.0",
+        "id": "6690fff4-c159-40e5-b340-65a3ba85e37e",
+        "type": "timeseries",
+        "name": "Memory Usage",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 7,
+          "i": "6690fff4-c159-40e5-b340-65a3ba85e37e",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(container_memory_rss{instance=~\"$host\",name=~\"$container\",name=~\".+\"}) by (name)",
+            "legend": "{{name}}"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "2.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4
+      },
+      {
+        "version": "2.0.0",
+        "id": "3c798af5-cfae-4962-9b70-85736df44bb1",
+        "type": "timeseries",
+        "name": "Memory Cached",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 7,
+          "i": "3c798af5-cfae-4962-9b70-85736df44bb1",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(container_memory_cache{instance=~\"$host\",name=~\"$container\",name=~\".+\"}) by (name)",
+            "legend": "{{name}}"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "2.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4
+      },
+      {
+        "version": "2.0.0",
+        "id": "111835e1-cfb5-40db-bb52-1aca74cf1a00",
+        "type": "timeseries",
+        "name": "Received Network Traffic",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 15,
+          "i": "111835e1-cfb5-40db-bb52-1aca74cf1a00",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(container_network_receive_bytes_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[5m])) by (name)",
+            "legend": "{{name}}"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "2.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4
+      },
+      {
+        "version": "2.0.0",
+        "id": "b8050f8f-aee7-4fa5-888d-b6025df14aa1",
+        "type": "timeseries",
+        "name": "Sent Network Traffic",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 15,
+          "i": "b8050f8f-aee7-4fa5-888d-b6025df14aa1",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(container_network_transmit_bytes_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[5m])) by (name)",
+            "legend": "{{name}}"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "2.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4
+      }
+    ]
+  }
+}

@@ -1,0 +1,1238 @@
+{
+  "name": "Kubernetes / Kube State Metrics",
+  "tags": "Categraf",
+  "ident": "",
+  "configs": {
+    "var": [
+      {
+        "name": "cluster",
+        "definition": "label_values(kube_node_info, cluster)",
+        "multi": true,
+        "allOption": true
+      }
+    ],
+    "panels": [
+      {
+        "type": "row",
+        "id": "0786021a-c1e7-4425-89b5-221c548e66ac",
+        "name": "Node",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "0786021a-c1e7-4425-89b5-221c548e66ac",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_node_status_condition{cluster=~\"$cluster\", condition=\"Ready\"})"
+          }
+        ],
+        "name": "Total Node",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "background",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 0,
+          "y": 1,
+          "i": "65cefb81-39fa-455a-b514-6c7de7b666b1",
+          "isResizable": true
+        },
+        "id": "65cefb81-39fa-455a-b514-6c7de7b666b1"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_node_status_condition{cluster=~\"$cluster\",condition=\"Ready\", status!=\"true\"})"
+          }
+        ],
+        "name": "Not Ready Node",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "type": "range",
+              "match": {
+                "from": null,
+                "to": 1
+              },
+              "result": {
+                "color": "#417505"
+              }
+            },
+            {
+              "type": "range",
+              "match": {
+                "from": 1
+              },
+              "result": {
+                "color": "#d0021b"
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 4,
+          "y": 1,
+          "i": "2bc28c00-c417-43c0-b577-2d86e42e7cc7",
+          "isResizable": true
+        },
+        "id": "2bc28c00-c417-43c0-b577-2d86e42e7cc7"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_node_status_condition{cluster=~\"$cluster\",condition=\"DiskPressure\", status=\"true\"})"
+          }
+        ],
+        "name": "有磁盘压力",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "type": "range",
+              "match": {
+                "from": null,
+                "to": 1
+              },
+              "result": {
+                "color": "#417505"
+              }
+            },
+            {
+              "type": "range",
+              "match": {
+                "from": 1
+              },
+              "result": {
+                "color": "#d0021b"
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 8,
+          "y": 1,
+          "i": "968c87d3-6a9b-401e-895f-55e929eb37ac",
+          "isResizable": true
+        },
+        "id": "5ea68c0a-2a9a-4dac-a134-9768bdbdc6eb"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_node_status_condition{cluster=~\"$cluster\",condition=\"MemoryPressure\", status=\"true\"})"
+          }
+        ],
+        "name": "有内存压力",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "type": "range",
+              "match": {
+                "from": null,
+                "to": 1
+              },
+              "result": {
+                "color": "#417505"
+              }
+            },
+            {
+              "type": "range",
+              "match": {
+                "from": 1
+              },
+              "result": {
+                "color": "#d0021b"
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 12,
+          "y": 1,
+          "i": "fd201859-06bf-42c8-b4d8-e38bd1382bbe",
+          "isResizable": true
+        },
+        "id": "72462b79-e531-4bbb-a43e-26b8e40e40fd"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_node_status_condition{cluster=~\"$cluster\",condition=\"NetworkUnavailable\", status=\"true\"})"
+          }
+        ],
+        "name": "有网络压力",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "type": "range",
+              "match": {
+                "from": null,
+                "to": 1
+              },
+              "result": {
+                "color": "#417505"
+              }
+            },
+            {
+              "type": "range",
+              "match": {
+                "from": 1
+              },
+              "result": {
+                "color": "#d0021b"
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 16,
+          "y": 1,
+          "i": "e6280126-40bf-4683-95b8-7a0a38bbd943",
+          "isResizable": true
+        },
+        "id": "66324dd4-c937-44c2-8e71-9c97d13d2e07"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_node_status_condition{cluster=~\"$cluster\",condition=\"PIDPressure\", status=\"true\"})"
+          }
+        ],
+        "name": "有PID压力",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "type": "range",
+              "match": {
+                "from": null,
+                "to": 1
+              },
+              "result": {
+                "color": "#417505"
+              }
+            },
+            {
+              "type": "range",
+              "match": {
+                "from": 1
+              },
+              "result": {
+                "color": "#d0021b"
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 20,
+          "y": 1,
+          "i": "9488bd89-3527-453a-aca7-3fb779a182b1",
+          "isResizable": true
+        },
+        "id": "caa0c577-12d8-4c4d-92ac-99ba3e38995e"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_node_status_capacity{cluster=~\"$cluster\", resource=\"cpu\"})"
+          }
+        ],
+        "name": "集群容量：CPU Cores",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 8,
+          "x": 0,
+          "y": 4,
+          "i": "a028f8d2-b1fd-47d7-8331-e12df56c8ae6",
+          "isResizable": true
+        },
+        "id": "a028f8d2-b1fd-47d7-8331-e12df56c8ae6"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_node_status_capacity{cluster=~\"$cluster\", resource=\"memory\"})"
+          }
+        ],
+        "name": "集群容量：Memory",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {
+            "util": "bytesIEC",
+            "decimals": 0
+          }
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 8,
+          "x": 8,
+          "y": 4,
+          "i": "81f63499-c085-44e4-a8e9-e49212c7bdcb",
+          "isResizable": true
+        },
+        "id": "1bdfd329-01a4-453a-b071-b14d18f943df"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_node_status_capacity{cluster=~\"$cluster\", resource=\"ephemeral_storage\"})"
+          }
+        ],
+        "name": "集群容量：Ephemeral Storage",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {
+            "util": "bytesIEC",
+            "decimals": 0
+          }
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 8,
+          "x": 16,
+          "y": 4,
+          "i": "c1a1d33c-2d35-41fd-a32c-6297ae8a6912",
+          "isResizable": true
+        },
+        "id": "ffa6374c-d8ef-442b-bc3b-2fa4a0e4cc94"
+      },
+      {
+        "type": "row",
+        "id": "f03009d7-e495-43e0-9200-2026a84ec54b",
+        "name": "Daemonset",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 13,
+          "i": "f03009d7-e495-43e0-9200-2026a84ec54b",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_daemonset_status_desired_number_scheduled{cluster=~\"$cluster\"})"
+          }
+        ],
+        "name": "Desired Number Scheduled",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "background",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 0,
+          "y": 14,
+          "i": "57d6e18b-d083-4732-86ca-e266db3191f4",
+          "isResizable": true
+        },
+        "id": "57d6e18b-d083-4732-86ca-e266db3191f4"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_daemonset_status_current_number_scheduled{cluster=~\"$cluster\"})"
+          }
+        ],
+        "name": "Current Number Scheduled",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 4,
+          "y": 14,
+          "i": "67af9443-9f8e-4400-90e2-7af3b6fc2f0c",
+          "isResizable": true
+        },
+        "id": "43fb02d1-1647-421d-a5c7-f8f9c6bc5cdd"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_daemonset_status_number_ready{cluster=~\"$cluster\"})"
+          }
+        ],
+        "name": "Ready",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 8,
+          "y": 14,
+          "i": "fd32a463-738b-44b8-91b8-395058f177f7",
+          "isResizable": true
+        },
+        "id": "ba24545a-3c6d-475c-b7e6-aeb4367a03e3"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_daemonset_status_number_available{cluster=~\"$cluster\"})"
+          }
+        ],
+        "name": "Available",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 12,
+          "y": 14,
+          "i": "9b509227-dbc4-41b1-8ba1-6c9b94405cf0",
+          "isResizable": true
+        },
+        "id": "0a918de7-32e1-4a68-b954-81b1307d3ef2"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_daemonset_status_number_unavailable{cluster=~\"$cluster\"})"
+          }
+        ],
+        "name": "Unavailable",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "type": "range",
+              "match": {
+                "from": null,
+                "to": 1
+              },
+              "result": {
+                "color": "#417505"
+              }
+            },
+            {
+              "type": "range",
+              "match": {
+                "from": 1
+              },
+              "result": {
+                "color": "#d0021b"
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 16,
+          "y": 14,
+          "i": "79b65e9e-f4f7-4e2b-8fa9-977b093eac11",
+          "isResizable": true
+        },
+        "id": "9fee3cc3-cdd2-4597-8aab-a32f5b99b7fe"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kube_daemonset_status_number_misscheduled{cluster=~\"$cluster\"})"
+          }
+        ],
+        "name": "Misscheduled",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "type": "range",
+              "match": {
+                "from": null,
+                "to": 1
+              },
+              "result": {
+                "color": "#417505"
+              }
+            },
+            {
+              "type": "range",
+              "match": {
+                "from": 1
+              },
+              "result": {
+                "color": "#d0021b"
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 20,
+          "y": 14,
+          "i": "eb2a28b2-fb09-4273-8cc6-76a19f96ab06",
+          "isResizable": true
+        },
+        "id": "e8dab8ca-d0ba-456d-a358-f32b39d564eb"
+      },
+      {
+        "type": "row",
+        "id": "ec1c6595-4fab-4d00-aab6-2e7e34d5d208",
+        "name": "Deployment",
+        "collapsed": false,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 20,
+          "i": "ec1c6595-4fab-4d00-aab6-2e7e34d5d208",
+          "isResizable": false
+        },
+        "panels": [
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_deployment_status_replicas{cluster=~\"$cluster\"})"
+              }
+            ],
+            "name": "Replicas",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "background",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 0,
+              "y": 12,
+              "i": "9e867792-c82e-4b06-8384-fb351b1da247",
+              "isResizable": true
+            },
+            "id": "6712f9ba-c40c-4f11-8565-485d3321b434"
+          },
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_deployment_status_replicas_available{cluster=~\"$cluster\"})"
+              }
+            ],
+            "name": "Replicas Available",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "value",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 6,
+              "y": 12,
+              "i": "75631d60-84c9-482f-a2e4-3aaaa5738512",
+              "isResizable": true
+            },
+            "id": "363ed020-5a36-4322-9f8a-1a4aa6507684"
+          },
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_deployment_status_replicas_ready{cluster=~\"$cluster\"})"
+              }
+            ],
+            "name": "Replicas Ready",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "value",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 12,
+              "y": 12,
+              "i": "c916543c-d212-4dbc-8d53-9d46a914fdbe",
+              "isResizable": true
+            },
+            "id": "e859dd8b-8b78-4950-b406-b2b8aed3a095"
+          },
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_deployment_status_replicas_unavailable{cluster=~\"$cluster\"})"
+              }
+            ],
+            "name": "Unavailable",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "value",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "valueMappings": [
+                {
+                  "type": "range",
+                  "match": {
+                    "from": null,
+                    "to": 1
+                  },
+                  "result": {
+                    "color": "#417505"
+                  }
+                },
+                {
+                  "type": "range",
+                  "match": {
+                    "from": 1
+                  },
+                  "result": {
+                    "color": "#d0021b"
+                  }
+                }
+              ],
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 18,
+              "y": 12,
+              "i": "6d642aff-058a-45ed-93e2-409dcfaf32d4",
+              "isResizable": true
+            },
+            "id": "abd803ab-e282-4211-adb8-036154e81b4b"
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "b72d699a-d900-449c-ae7e-d52ba70128fe",
+        "name": "Statefulset",
+        "collapsed": false,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 24,
+          "i": "b72d699a-d900-449c-ae7e-d52ba70128fe",
+          "isResizable": false
+        },
+        "panels": [
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_statefulset_status_replicas{cluster=~\"$cluster\"})"
+              }
+            ],
+            "name": "Replicas",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "background",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 0,
+              "y": 16,
+              "i": "5d69ceaa-8e93-4b1d-8a51-f7b5d295507b",
+              "isResizable": true
+            },
+            "id": "d77f502d-881f-4a45-bbea-dbf0acc18611"
+          },
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_statefulset_status_replicas_available{cluster=~\"$cluster\"})"
+              }
+            ],
+            "name": "Replicas Available",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "value",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 6,
+              "y": 16,
+              "i": "5c915ccd-0096-4812-a1d5-0772ecacf435",
+              "isResizable": true
+            },
+            "id": "cdbcf704-c5c5-45ec-b392-0e53d9b177a1"
+          },
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_statefulset_status_replicas_current{cluster=~\"$cluster\"})"
+              }
+            ],
+            "name": "Replicas Current",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "value",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 12,
+              "y": 16,
+              "i": "c01d88bb-9747-4f7f-ad38-5b055967732c",
+              "isResizable": true
+            },
+            "id": "db5d5574-9f9d-4856-b4d0-5f313e7466d9"
+          },
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_statefulset_status_replicas_ready{cluster=~\"$cluster\"})"
+              }
+            ],
+            "name": "Replicas Ready",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "value",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 18,
+              "y": 16,
+              "i": "cf027f9e-9257-4e5d-8548-f6c30698859f",
+              "isResizable": true
+            },
+            "id": "0fbe57c3-58f5-4a8d-9d71-fc20b2ffe762"
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "3c515e1b-cc46-4bd3-84dc-a0ba893a6af6",
+        "name": "Pod",
+        "collapsed": false,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 28,
+          "i": "3c515e1b-cc46-4bd3-84dc-a0ba893a6af6",
+          "isResizable": false
+        },
+        "panels": [
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_pod_status_phase{cluster=~\"$cluster\", phase=\"Running\"})"
+              }
+            ],
+            "name": "Running Pods",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "background",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 0,
+              "y": 20,
+              "i": "a4dfbc69-3688-4bc8-b1fb-7d5853bc4da4",
+              "isResizable": true
+            },
+            "id": "a3dd94c4-06e1-4425-ab32-d1a4eb173eba"
+          },
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_pod_status_phase{cluster=~\"$cluster\", phase=\"Pending\"})"
+              }
+            ],
+            "name": "Pending Pods",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "value",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 6,
+              "y": 20,
+              "i": "34d7f46e-7efb-44d1-a0be-cfdb659b6784",
+              "isResizable": true
+            },
+            "id": "b7379a63-cdb3-4fdb-9067-def62580822d"
+          },
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_pod_status_phase{cluster=~\"$cluster\", phase=~\"Failed|Unknown\"})"
+              }
+            ],
+            "name": "Failed | Unknown Pods",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "value",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "valueMappings": [
+                {
+                  "type": "range",
+                  "match": {
+                    "from": 1
+                  },
+                  "result": {
+                    "color": "#eb0909"
+                  }
+                }
+              ],
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 12,
+              "y": 20,
+              "i": "fa974aab-dd2a-46ee-bb00-10461f396240",
+              "isResizable": true
+            },
+            "id": "fa974aab-dd2a-46ee-bb00-10461f396240"
+          },
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(increase(kube_pod_container_status_restarts_total{cluster=~\"$cluster\"}[5m]))"
+              }
+            ],
+            "name": "Restarts in last 5min",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "value",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "valueMappings": [
+                {
+                  "type": "range",
+                  "match": {
+                    "from": 1
+                  },
+                  "result": {
+                    "color": "#eb0909"
+                  }
+                }
+              ],
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 18,
+              "y": 20,
+              "i": "3a314f6b-7da2-40e1-8e6b-f32da4295f8e",
+              "isResizable": true
+            },
+            "id": "245eee0d-e0c1-4ff3-801d-3de31c74bdcb"
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "3789e988-a132-48f6-9953-c2985769e23d",
+        "name": "Job",
+        "collapsed": false,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 32,
+          "i": "3789e988-a132-48f6-9953-c2985769e23d",
+          "isResizable": false
+        },
+        "panels": [
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_job_complete{cluster=~\"$cluster\"})"
+              }
+            ],
+            "name": "Complete",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "background",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 0,
+              "y": 24,
+              "i": "9bb45396-e0bc-4823-a663-d6fbdeb545a1",
+              "isResizable": true
+            },
+            "id": "9bb45396-e0bc-4823-a663-d6fbdeb545a1"
+          },
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_job_status_active{cluster=~\"$cluster\"})"
+              }
+            ],
+            "name": "Active",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "value",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 6,
+              "y": 24,
+              "i": "b126a364-4822-4de4-a676-56e6e7e95e87",
+              "isResizable": true
+            },
+            "id": "9660891f-767e-4e5c-bddc-638c13be6e54"
+          },
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_job_status_succeeded{cluster=~\"$cluster\"})"
+              }
+            ],
+            "name": "Succeeded",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "value",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 12,
+              "y": 24,
+              "i": "b8afaed1-7ffc-42bb-85c2-b4aa5fa2c116",
+              "isResizable": true
+            },
+            "id": "c41b07f9-b513-4bd4-b0dc-43dbc4bbce6d"
+          },
+          {
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(kube_job_status_failed{cluster=~\"$cluster\"})"
+              }
+            ],
+            "name": "Failed",
+            "custom": {
+              "textMode": "valueAndName",
+              "colorMode": "value",
+              "calc": "lastNotNull",
+              "colSpan": 1,
+              "textSize": {}
+            },
+            "options": {
+              "standardOptions": {}
+            },
+            "version": "2.0.0",
+            "type": "stat",
+            "layout": {
+              "h": 3,
+              "w": 6,
+              "x": 18,
+              "y": 24,
+              "i": "52c5a536-bc77-41e0-99ec-81e769065feb",
+              "isResizable": true
+            },
+            "id": "b65a3ee3-7e07-4347-b04f-0f77c67877e6"
+          }
+        ]
+      }
+    ],
+    "version": "2.0.0"
+  }
+}
