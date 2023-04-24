@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -95,12 +96,18 @@ func (rt *Router) configNoRoute(r *gin.Engine) {
 		switch suffix {
 		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map":
 			cwdarr := []string{"/"}
+			if runtime.GOOS == "windows" {
+				cwdarr[0] = ""
+			}
 			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
 			cwdarr = append(cwdarr, "pub")
 			cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
 			c.File(path.Join(cwdarr...))
 		default:
 			cwdarr := []string{"/"}
+			if runtime.GOOS == "windows" {
+				cwdarr[0] = ""
+			}
 			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
 			cwdarr = append(cwdarr, "pub")
 			cwdarr = append(cwdarr, "index.html")
