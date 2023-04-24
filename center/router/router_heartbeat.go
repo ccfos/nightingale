@@ -37,21 +37,21 @@ func (rt *Router) heartbeat(c *gin.Context) {
 
 	req.Offset = (time.Now().UnixMilli() - req.UnixTime)
 	req.RemoteAddr = c.Request.RemoteAddr
+
+	gid := ginx.QueryInt64(c, "gid", 0)
+	req.Bgid = gid
 	rt.MetaSet.Set(req.Hostname, req)
 
-	reqBgid := req.Bgid
 	needBgidup := false
-	if reqBgid != 0 {
+	if gid != 0 {
 		target, has := rt.TargetCache.Get(req.Hostname)
-		if has {
-			if target.Bgid != reqBgid {
-				needBgidup = true
-			}
+		if has && target.Bgid != gid {
+			needBgidup = true
 		}
 	}
 
 	if needBgidup {
-		err = models.TargetUpdateBgid(rt.Ctx, []string{req.Hostname}, req.Bgid, false)
+		err = models.TargetUpdateBgid(rt.Ctx, []string{req.Hostname}, gid, false)
 	}
 
 	ginx.NewRender(c).Message(err)
