@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM python:3-slim
+FROM --platform=$TARGETPLATFORM python:3-slim
 
 
 WORKDIR /app
