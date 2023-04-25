@@ -1,0 +1,438 @@
+{
+  "name": "Kubernetes / Kubelet Metrics",
+  "tags": "Categraf",
+  "ident": "",
+  "configs": {
+    "var": [
+      {
+        "name": "cluster",
+        "definition": "label_values(kubelet_running_pods, cluster)",
+        "multi": true,
+        "allOption": true
+      },
+      {
+        "name": "instance",
+        "definition": "label_values(kubelet_running_pods{cluster=~\"$cluster\"}, instance)",
+        "multi": true,
+        "allOption": true
+      }
+    ],
+    "panels": [
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(up{source=\"kubelet\", cluster=~\"$cluster\"})"
+          }
+        ],
+        "name": "Kubelet UP",
+        "custom": {
+          "textMode": "value",
+          "colorMode": "background",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 0,
+          "y": 0,
+          "i": "d3caf396-b3a1-449b-acec-f550967889e6",
+          "isResizable": true
+        },
+        "id": "d3caf396-b3a1-449b-acec-f550967889e6"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kubelet_running_pods{cluster=~\"$cluster\", instance=~\"$instance\"})"
+          }
+        ],
+        "name": "Running Pods",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 4,
+          "y": 0,
+          "i": "38c38b23-a7e3-4177-8c41-3ce955ea0434",
+          "isResizable": true
+        },
+        "id": "38c38b23-a7e3-4177-8c41-3ce955ea0434"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(kubelet_running_containers{cluster=~\"$cluster\", instance=~\"$instance\", container_state=\"running\"})"
+          }
+        ],
+        "name": "Running Containers",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 8,
+          "y": 0,
+          "i": "26bf2320-fcff-48f8-a6fc-aa9076bb9329",
+          "isResizable": true
+        },
+        "id": "525859b9-91d7-4180-b363-bf8ceec977d8"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(volume_manager_total_volumes{cluster=~\"$cluster\", instance=~\"$instance\", state=\"desired_state_of_world\"})"
+          }
+        ],
+        "name": "Desired Volumes",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 12,
+          "y": 0,
+          "i": "54ae4ab3-e932-418c-a637-f2f515cce1b9",
+          "isResizable": true
+        },
+        "id": "84af4617-2ae0-4b30-a82a-6e8586342224"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(volume_manager_total_volumes{cluster=~\"$cluster\", instance=~\"$instance\", state=\"actual_state_of_world\"})"
+          }
+        ],
+        "name": "Actual Volumes",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 16,
+          "y": 0,
+          "i": "d9de76d7-2203-40e7-a792-9888ec869e82",
+          "isResizable": true
+        },
+        "id": "d431f4bd-9115-41d2-a494-1d680bdd1e0f"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(increase(kubelet_runtime_operations_errors_total{cluster=~\"$cluster\", instance=~\"$instance\"}[5m]))"
+          }
+        ],
+        "name": "OP Errors in 5min",
+        "custom": {
+          "textMode": "value",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "type": "range",
+              "match": {
+                "from": 1
+              },
+              "result": {
+                "color": "#d0021b"
+              }
+            },
+            {
+              "type": "range",
+              "match": {
+                "to": 1
+              },
+              "result": {
+                "color": "#417505"
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "version": "2.0.0",
+        "type": "stat",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 20,
+          "y": 0,
+          "i": "bf2bbd15-347d-404c-9b8f-e524875befe2",
+          "isResizable": true
+        },
+        "id": "54de62bc-8af3-4c27-8b8e-1af567b363fc"
+      },
+      {
+        "type": "row",
+        "id": "730d4a9b-791f-4aaf-a042-668f66e73814",
+        "name": "Operations",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 3,
+          "i": "730d4a9b-791f-4aaf-a042-668f66e73814",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(kubelet_runtime_operations_total{cluster=~\"$cluster\", instance=~\"$instance\"}[5m])"
+          }
+        ],
+        "name": "Operations in 5min",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {}
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 0,
+          "y": 4,
+          "i": "d26e6818-6704-492a-8cbf-58473dd85716",
+          "isResizable": true
+        },
+        "id": "d26e6818-6704-492a-8cbf-58473dd85716"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(kubelet_runtime_operations_errors_total{cluster=~\"$cluster\", instance=~\"$instance\"}[5m])"
+          }
+        ],
+        "name": "Operation Errors in 5min",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {}
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 12,
+          "y": 4,
+          "i": "4e585d2f-c61c-4350-86ec-dca7ddc34ceb",
+          "isResizable": true
+        },
+        "id": "09a6ad5b-8c0e-4f17-b17f-3ebc514f7d20"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(kubelet_runtime_operations_duration_seconds_sum{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])/increase(kubelet_runtime_operations_duration_seconds_count{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])"
+          }
+        ],
+        "name": "Average Operation duration in 1 hour (Unit: Second)",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {}
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 4,
+          "w": 24,
+          "x": 0,
+          "y": 8,
+          "i": "b5e56f3e-fa20-4c19-8578-c0610fa0a7e7",
+          "isResizable": true
+        },
+        "id": "b5e56f3e-fa20-4c19-8578-c0610fa0a7e7"
+      },
+      {
+        "type": "row",
+        "id": "dd7e84c5-03ce-467c-871a-aa110fe051f4",
+        "name": "PLEG relist",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 12,
+          "i": "dd7e84c5-03ce-467c-871a-aa110fe051f4",
+          "isResizable": false
+        }
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(kubelet_pleg_relist_duration_seconds_count{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])"
+          }
+        ],
+        "name": "relist rate",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {}
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 0,
+          "y": 13,
+          "i": "f3822da8-a9c9-4db1-ba12-465d3ece823e",
+          "isResizable": true
+        },
+        "id": "f3822da8-a9c9-4db1-ba12-465d3ece823e"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(kubelet_pleg_relist_duration_seconds_sum{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])/increase(kubelet_pleg_relist_duration_seconds_count{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])"
+          }
+        ],
+        "name": "relist duration (Unit: Second)",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {}
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 12,
+          "y": 13,
+          "i": "2b4ada76-6c30-42cd-9bd3-c939b4c0139c",
+          "isResizable": true
+        },
+        "id": "a6e4c914-bfca-4419-a264-f5b1cbab261a"
+      }
+    ],
+    "version": "2.0.0"
+  }
+}

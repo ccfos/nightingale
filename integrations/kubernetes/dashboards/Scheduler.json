@@ -1,0 +1,1005 @@
+{
+  "name": "Kubernetes / Scheduler",
+  "tags": "Categraf",
+  "ident": "",
+  "configs": {
+    "version": "2.0.0",
+    "links": [],
+    "var": [],
+    "panels": [
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "up{job=\"scheduler\"}",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Scheduler - Health Status",
+        "links": [],
+        "description": "scheduler健康状态",
+        "custom": {
+          "showHeader": true,
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "displayMode": "seriesToRows"
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "0": {
+                  "text": "DOWN"
+                },
+                "1": {
+                  "text": "UP"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "type": "special",
+              "result": {
+                "color": "#3fc453",
+                "text": "UP"
+              },
+              "match": {
+                "special": 1
+              }
+            },
+            {
+              "type": "special",
+              "result": {
+                "color": "#f80202",
+                "text": "DOWN"
+              },
+              "match": {
+                "special": 0
+              }
+            }
+          ],
+          "standardOptions": {
+            "util": "none"
+          }
+        },
+        "overrides": [
+          {}
+        ],
+        "version": "2.0.0",
+        "type": "table",
+        "layout": {
+          "h": 6,
+          "w": 12,
+          "x": 0,
+          "y": 0,
+          "i": "5d6560c5-6137-4632-bb88-ff8c9cf42e9d",
+          "isResizable": true
+        },
+        "id": "5d6560c5-6137-4632-bb88-ff8c9cf42e9d"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "leader_election_master_status{job=\"scheduler\"}",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Scheduler - Member Status",
+        "links": [],
+        "description": "scheduler 主从状态",
+        "custom": {
+          "showHeader": true,
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "displayMode": "seriesToRows"
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "0": {
+                  "text": "DOWN"
+                },
+                "1": {
+                  "text": "UP"
+                }
+              },
+              "type": "value",
+              "result": {
+                "text": "val2"
+              }
+            },
+            {
+              "type": "special",
+              "result": {
+                "color": "#3fc453",
+                "text": "MASTER"
+              },
+              "match": {
+                "special": 1
+              }
+            },
+            {
+              "type": "special",
+              "result": {
+                "color": "#9470ff",
+                "text": "BACKUP"
+              },
+              "match": {
+                "special": 0
+              }
+            }
+          ],
+          "standardOptions": {
+            "util": "none"
+          }
+        },
+        "overrides": [
+          {
+            "properties": {
+              "valueMappings": []
+            }
+          }
+        ],
+        "version": "2.0.0",
+        "type": "table",
+        "layout": {
+          "h": 6,
+          "w": 12,
+          "x": 12,
+          "y": 0,
+          "i": "a5d1ef0c-83e3-4194-b242-d5c51ba4bdd2",
+          "isResizable": true
+        },
+        "id": "62e3b249-fefe-4f32-8baf-394eac053f2a"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(rest_client_requests_total{job=\"scheduler\"}[5m])) by (instance,code)",
+            "legend": "{{ instance }} {{ code }}"
+          }
+        ],
+        "name": "Scheduler - Requests by code",
+        "links": [],
+        "description": "scheduler 请求量 按返回码统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 6,
+          "i": "94713dc3-acb7-43b5-ae2f-399b2da61763",
+          "isResizable": true
+        },
+        "id": "94713dc3-acb7-43b5-ae2f-399b2da61763"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(rest_client_requests_total{job=\"scheduler\"}[5m])) by (instance,method)",
+            "legend": "{{ instance }} {{ method }}"
+          }
+        ],
+        "name": "Scheduler - Requests by verb",
+        "links": [],
+        "description": "scheduler请求量，按请求类型统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 6,
+          "i": "a6928b49-cf0a-443e-a8fd-b999685df0be",
+          "isResizable": true
+        },
+        "id": "a6928b49-cf0a-443e-a8fd-b999685df0be"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(rest_client_requests_total{job=\"scheduler\"}[5m])) by (instance)",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Scheduler -Requests by instance",
+        "links": [],
+        "description": "scheduler请求(apiserver)量",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 14,
+          "i": "69690063-d044-4547-9f5f-126e5f8bf55a",
+          "isResizable": true
+        },
+        "id": "69690063-d044-4547-9f5f-126e5f8bf55a"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.9, sum(rate(rest_client_request_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,verb,le))*1000",
+            "legend": "{{ instance }} {{ verb }}"
+          }
+        ],
+        "name": "Scheduler - Requests Latancy by verb",
+        "links": [],
+        "description": "scheduler 90分位请求延迟，按请求类型统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 14,
+          "i": "d5a67103-9930-46e0-97e1-296e0d71e30e",
+          "isResizable": true
+        },
+        "id": "053d10f3-1113-40e0-85aa-dfbabb706995"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.9, sum(rate(rest_client_request_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,url,verb,le))*1000",
+            "legend": "{{ instance }} {{ verb }}  {{ url }}"
+          }
+        ],
+        "name": "Scheduler - Requests Latancy by url",
+        "links": [],
+        "description": "scheduler 90分位请求延迟，按请求类型统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 22,
+          "i": "2924bb3f-20c3-4f56-96ff-76d473743d8b",
+          "isResizable": true
+        },
+        "id": "c86ed101-a91c-4478-b67a-7182a5e856d1"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.9, sum(rate(rest_client_request_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,le))*1000",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Scheduler - Requests Latancy by instance",
+        "links": [],
+        "description": "scheduler 90分位请求延迟，按实例统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 22,
+          "i": "75671720-bca1-449f-9c68-bf562f105b66",
+          "isResizable": true
+        },
+        "id": "80bd434e-21dc-4864-97c6-bfd1e2e27bbe"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by(instance,method) (rate(rest_client_requests_total{code=~\"5..\",job=\"scheduler\"}[5m]))\n / sum by(instance,method) (rate(rest_client_requests_total{job=\"scheduler\"}[5m]))",
+            "legend": "{{ instance }} {{ method }}"
+          }
+        ],
+        "name": "Scheduler - Errors by verb",
+        "links": [],
+        "description": "scheduler请求5xx，按请求类型统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 30,
+          "i": "cfc389ad-5648-4107-a5bd-1680f6ede2ed",
+          "isResizable": true
+        },
+        "id": "32a09298-d0f8-4d54-808e-d223d0a428ff"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by(instance) (rate(rest_client_requests_total{code=~\"5..\",job=\"scheduler\"}[5m]))\n / sum by(instance) (rate(rest_client_requests_total{job=\"scheduler\"}[5m]))",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Scheduler - Errors by instance",
+        "links": [],
+        "description": "scheduler请求5xx，按实例统计",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 30,
+          "i": "152b5817-ad87-44d0-a71f-5fbd0fc10ca3",
+          "isResizable": true
+        },
+        "id": "b6931f1f-6c43-478e-bcc7-26d1b121bceb"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "avg(rate(scheduler_queue_incoming_pods_total{job=\"scheduler\"}[5m])) by (instance)",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Scheduler - Average Enqueue Rate by instance",
+        "links": [],
+        "description": "pod进入调度队列的平均速率",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 38,
+          "i": "0c8ac9ee-2a3e-4e7e-b338-748d79f6cbb6",
+          "isResizable": true
+        },
+        "id": "0c8ac9ee-2a3e-4e7e-b338-748d79f6cbb6"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "avg(rate(scheduler_preemption_attempts_total{job=\"scheduler\"}[5m])) by (instance)",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Scheduler - Preemption Attempts Total by instance",
+        "links": [],
+        "description": "调度器驱逐容器的次数",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 38,
+          "i": "730be715-cfdd-4f2a-b878-1b2fb9a9be45",
+          "isResizable": true
+        },
+        "id": "ed72c89c-9732-4fb0-9187-0cabe9a4a81c"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": " scheduler_scheduler_cache_size{job=\"scheduler\"}",
+            "legend": "{{ instance }} {{ type }}"
+          }
+        ],
+        "name": "Scheduler - Cache Size",
+        "links": [],
+        "description": "调度器cache中pod node和已绑定pod的数量",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 46,
+          "i": "668362fe-211a-4286-861c-eeb90907b2fb",
+          "isResizable": true
+        },
+        "id": "dd189a18-704b-44c0-8a8b-186ccc591c81"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "scheduler_pending_pods{job=\"scheduler\"}",
+            "legend": "{{ instance }} {{ queue }}"
+          }
+        ],
+        "name": "Scheduler - Pending Pod",
+        "links": [],
+        "description": "调度队列中pending pod的数目",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 46,
+          "i": "f20223e4-199a-4b08-b5f0-470ac1974afc",
+          "isResizable": true
+        },
+        "id": "0e231e69-4651-4728-abcb-46fafd1a7d61"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.9, sum(rate(scheduler_plugin_execution_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,extension_point,plugin,status,le))*1000",
+            "legend": "{{ instance }} {{ plugin }} {{ extension_point }} {{ status }}"
+          }
+        ],
+        "name": "Scheduler - Plugin Execution Duration by plugin",
+        "links": [],
+        "description": "调度插件在每个扩展点的执行时间,90分位",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 54,
+          "i": "ec0db15d-fa63-4448-a961-0b8a7b977dd0",
+          "isResizable": true
+        },
+        "id": "51cb0215-0827-4543-bb58-64eaec6cdc77"
+      },
+      {
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.9, sum (rate(scheduler_scheduling_algorithm_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,le))*1000",
+            "refId": "B",
+            "legend": "{{ instance }} "
+          }
+        ],
+        "name": "Scheduler - Scheduling Algorithm Duration by instance",
+        "links": [],
+        "description": "调度算法90分位耗时",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 54,
+          "i": "c5c557a6-0f48-4154-91f7-30a300f00813",
+          "isResizable": true
+        },
+        "id": "bf41347e-c307-4ae1-84d8-6202b563837f"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.9, sum(rate(scheduler_scheduling_attempt_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,le,profile,result))*1000",
+            "legend": "{{ instance }} {{ profile }} {{ result }}"
+          }
+        ],
+        "name": "Scheduler - Scheduling Duration by instance",
+        "links": [],
+        "description": "调度算法+绑定 90分位耗时",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 62,
+          "i": "68585816-6a08-422d-a7d3-c414ae427380",
+          "isResizable": true
+        },
+        "id": "4f2de85b-7fa7-4e06-bcbf-7362fa71f010"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(process_cpu_seconds_total{job=\"scheduler\"}[5m])",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Scheduler - CPU Usage by instance",
+        "links": [],
+        "description": "scheduler cpu使用率",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "percentUnit",
+            "decimals": 2
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 62,
+          "i": "9c187c1c-f5cd-4aab-af81-09169948ab82",
+          "isResizable": true
+        },
+        "id": "9c187c1c-f5cd-4aab-af81-09169948ab82"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "process_resident_memory_bytes{job=\"scheduler\"}",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Scheduler - Memory Usage by instance",
+        "links": [],
+        "description": "scheduler 内存使用量",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "bytesIEC"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 70,
+          "i": "8cff2618-b2d4-4fb4-bfc2-d1d4c4f1b35c",
+          "isResizable": true
+        },
+        "id": "8cff2618-b2d4-4fb4-bfc2-d1d4c4f1b35c"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "process_open_fds{job=\"scheduler\"}",
+            "legend": "{{ instance }}"
+          }
+        ],
+        "name": "Scheduler - Open fds by instance",
+        "links": [],
+        "description": "scheduler打开的fd数量",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 70,
+          "i": "e438aed2-6d4a-4254-a8ec-26752385dc74",
+          "isResizable": true
+        },
+        "id": "94bb09a7-dbf7-41d8-b6a4-16b262365474"
+      }
+    ]
+  }
+}
