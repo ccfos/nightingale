@@ -1,15 +1,12 @@
-FROM --platform=$BUILDPLATFORM python:3-slim
+FROM --platform=$TARGETPLATFORM python:3-slim
 
 
 WORKDIR /app
 ADD n9e /app
 ADD etc /app
-RUN mkdir -p /app/integrations
-ADD integrations /app/integrations/
-ADD http://download.flashcat.cloud/wait /wait
-RUN mkdir -p /app/pub && chmod +x /wait
-ADD pub /app/pub/
-RUN chmod +x n9e
+ADD integrations /app
+ADD --chmod=755 https://github.com/ufoscout/docker-compose-wait/releases/download/2.11.0/wait_x86_64 /wait
+ADD pub /app
 
 EXPOSE 17000
 

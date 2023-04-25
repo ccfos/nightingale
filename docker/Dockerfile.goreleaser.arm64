@@ -1,0 +1,13 @@
+FROM --platform=$BUILDPLATFORM python:3-slim
+
+
+WORKDIR /app
+ADD n9e /app
+ADD etc /app
+ADD integrations /app
+ADD --chmod=755 https://github.com/ufoscout/docker-compose-wait/releases/download/2.11.0/wait_aarch64 /wait
+ADD pub /app
+
+EXPOSE 17000
+
+CMD ["/app/n9e", "-h"]
