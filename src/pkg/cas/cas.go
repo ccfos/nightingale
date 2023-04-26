@@ -16,6 +16,7 @@ import (
 type Config struct {
 	Enable          bool
 	SsoAddr         string
+	LoginPath       string
 	RedirectURL     string
 	DisplayName     string
 	CoverAttributes bool
@@ -47,6 +48,7 @@ func Init(cf Config) {
 	if !cf.Enable {
 		return
 	}
+
 	cli = ssoClient{}
 	cli.config = cf
 	cli.ssoAddr = cf.SsoAddr
@@ -88,7 +90,16 @@ func (cli *ssoClient) genRedirectURL(state string) string {
 	var buf bytes.Buffer
 
 	ssoAddr, err := url.Parse(cli.config.SsoAddr)
-	ssoAddr.Path = "login"
+	if cli.config.LoginPath == "" {
+		if strings.Contains(cli.config.SsoAddr, "p3") {
+			ssoAddr.Path = "login"
+		} else {
+			ssoAddr.Path = "cas/login"
+		}
+	} else {
+		ssoAddr.Path = cli.config.LoginPath
+	}
+
 	if err != nil {
 		logger.Error(err)
 		return buf.String()
