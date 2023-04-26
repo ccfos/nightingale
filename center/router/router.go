@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -31,12 +32,13 @@ type Router struct {
 	PromClients       *prom.PromClientMap
 	Redis             storage.Redis
 	MetaSet           *metas.Set
+	TargetCache       *memsto.TargetCacheType
 	Sso               *sso.SsoClient
 	Ctx               *ctx.Context
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
-	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set) *Router {
+	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, tc *memsto.TargetCacheType) *Router {
 	return &Router{
 		HTTP:              httpConfig,
 		Center:            center,
@@ -46,6 +48,7 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		PromClients:       pc,
 		Redis:             redis,
 		MetaSet:           metaSet,
+		TargetCache:       tc,
 		Sso:               sso,
 		Ctx:               ctx,
 	}
@@ -93,12 +96,18 @@ func (rt *Router) configNoRoute(r *gin.Engine) {
 		switch suffix {
 		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map":
 			cwdarr := []string{"/"}
+			if runtime.GOOS == "windows" {
+				cwdarr[0] = ""
+			}
 			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
 			cwdarr = append(cwdarr, "pub")
 			cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
 			c.File(path.Join(cwdarr...))
 		default:
 			cwdarr := []string{"/"}
+			if runtime.GOOS == "windows" {
+				cwdarr[0] = ""
+			}
 			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
 			cwdarr = append(cwdarr, "pub")
 			cwdarr = append(cwdarr, "index.html")

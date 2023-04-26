@@ -49,7 +49,7 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 			body = dingtalk{
 				Msgtype: "markdown",
 				Markdown: dingtalkMarkdown{
-					Title: ctx.Rule.Name,
+					Title: ctx.Event.RuleName,
 					Text:  message,
 				},
 			}
@@ -57,7 +57,7 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 			body = dingtalk{
 				Msgtype: "markdown",
 				Markdown: dingtalkMarkdown{
-					Title: ctx.Rule.Name,
+					Title: ctx.Event.RuleName,
 					Text:  message + "\n" + strings.Join(ats, " "),
 				},
 				At: dingtalkAt{

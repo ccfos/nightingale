@@ -22,14 +22,15 @@ type Target struct {
 	TagsMap  map[string]string `json:"-" gorm:"-"` // internal use, append tags to series
 	UpdateAt int64             `json:"update_at"`
 
-	UnixTime int64   `json:"unixtime" gorm:"-"`
-	Offset   int64   `json:"offset" gorm:"-"`
-	TargetUp float64 `json:"target_up" gorm:"-"`
-	MemUtil  float64 `json:"mem_util" gorm:"-"`
-	CpuNum   int     `json:"cpu_num" gorm:"-"`
-	CpuUtil  float64 `json:"cpu_util" gorm:"-"`
-	OS       string  `json:"os" gorm:"-"`
-	Arch     string  `json:"arch" gorm:"-"`
+	UnixTime   int64   `json:"unixtime" gorm:"-"`
+	Offset     int64   `json:"offset" gorm:"-"`
+	TargetUp   float64 `json:"target_up" gorm:"-"`
+	MemUtil    float64 `json:"mem_util" gorm:"-"`
+	CpuNum     int     `json:"cpu_num" gorm:"-"`
+	CpuUtil    float64 `json:"cpu_util" gorm:"-"`
+	OS         string  `json:"os" gorm:"-"`
+	Arch       string  `json:"arch" gorm:"-"`
+	RemoteAddr string  `json:"remote_addr" gorm:"-"`
 }
 
 func (t *Target) TableName() string {
@@ -296,6 +297,7 @@ func (t *Target) FillMeta(meta *HostMeta) {
 	t.Offset = meta.Offset
 	t.OS = meta.OS
 	t.Arch = meta.Arch
+	t.RemoteAddr = meta.RemoteAddr
 }
 
 func TargetIdents(ctx *ctx.Context, ids []int64) ([]string, error) {

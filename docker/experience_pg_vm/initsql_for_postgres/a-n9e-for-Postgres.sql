@@ -331,7 +331,7 @@ CREATE TABLE alert_mute (
     cate varchar(128) not null,
     cluster varchar(128) not null,
     datasource_ids varchar(255) not null default '' ,
-    tags varchar(4096) not null default '' ,
+    tags jsonb NOT NULL ,
     cause varchar(255) not null default '',
     btime bigint not null default 0 ,
     etime bigint not null default 0 ,
@@ -651,6 +651,7 @@ COMMENT ON COLUMN task_tpl_host.host IS 'ip or hostname';
 CREATE TABLE task_record
 (
     id bigint  not null ,
+    event_id bigint not null default 0,
     group_id bigint not null ,
     ibex_address   varchar(128) not null,
     ibex_auth_user varchar(128) not null default '',
@@ -669,9 +670,10 @@ CREATE TABLE task_record
 ) ;
 CREATE INDEX task_record_cg_idx ON task_record (create_at, group_id);
 CREATE INDEX task_record_create_by_idx ON task_record (create_by);
+CREATE INDEX task_record_event_id_idx ON task_record (event_id);
 COMMENT ON COLUMN task_record.id IS 'ibex task id';
 COMMENT ON COLUMN task_record.group_id IS 'busi group id';
-
+COMMENT ON COLUMN task_record.event_id IS 'event id';
 
 CREATE TABLE alerting_engines
 (

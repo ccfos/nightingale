@@ -31,7 +31,7 @@ func (es *EmailSender) Send(ctx MessageContext) {
 	if es.subjectTpl != nil {
 		subject = BuildTplMessage(es.subjectTpl, ctx.Event)
 	} else {
-		subject = ctx.Rule.Name
+		subject = ctx.Event.RuleName
 	}
 	content := BuildTplMessage(es.contentTpl, ctx.Event)
 	es.WriteEmail(subject, content, tos)

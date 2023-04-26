@@ -154,6 +154,7 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 	// write db
 	record := models.TaskRecord{
 		Id:           res.Dat,
+		EventId:      event.Id,
 		GroupId:      tpl.GroupId,
 		IbexAddress:  ibexConf.Address,
 		IbexAuthUser: ibexConf.BasicAuthUser,

@@ -115,7 +115,7 @@ dockers:
     goarch: arm64
     ids:
       - build
-    dockerfile: docker/Dockerfile.goreleaser
+    dockerfile: docker/Dockerfile.goreleaser.arm64
     extra_files:
       - pub
       - etc

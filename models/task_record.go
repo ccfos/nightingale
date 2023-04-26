@@ -4,6 +4,7 @@ import "github.com/ccfos/nightingale/v6/pkg/ctx"
 
 type TaskRecord struct {
 	Id           int64  `json:"id" gorm:"primaryKey"`
+	EventId      int64  `json:"event_id"`
 	GroupId      int64  `json:"group_id"`
 	IbexAddress  string `json:"ibex_address"`
 	IbexAuthUser string `json:"ibex_auth_user"`
