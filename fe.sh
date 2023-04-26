@@ -11,5 +11,5 @@ cp ./docker/initsql/a-n9e.sql n9e.sql
 
 TAG=$(curl -sX GET https://api.github.com/repos/ccfos/nightingale/releases/latest   | awk '/tag_name/{print $4;exit}' FS='[""]')
 VERSION=$(echo $TAG)
-echo $VERSION
+VERSION=${VERSION/v/}
 sed -i "s/nightingale:latest/nightingale:${VERSION}/g" ./docker/docker-compose.yaml
