@@ -680,13 +680,13 @@ CREATE TABLE alerting_engines
     id serial,
     instance varchar(128) not null default '' ,
     datasource_id bigint not null default 0 ,
-    cluster varchar(128) not null default '' ,
+    engine_cluster varchar(128) not null default '' ,
     clock bigint not null,
     PRIMARY KEY (id)
 ) ;
 COMMENT ON COLUMN alerting_engines.instance IS 'instance identification, e.g. 10.9.0.9:9090';
 COMMENT ON COLUMN alerting_engines.datasource_id IS 'datasource id';
-COMMENT ON COLUMN alerting_engines.cluster IS 'target reader cluster';
+COMMENT ON COLUMN alerting_engines.engine_cluster IS 'target reader cluster';
 
 
 CREATE TABLE datasource
