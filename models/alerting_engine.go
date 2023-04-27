@@ -8,11 +8,11 @@ import (
 )
 
 type AlertingEngines struct {
-	Id           int64  `json:"id" gorm:"primaryKey"`
-	Instance     string `json:"instance"`
-	Cluster      string `json:"cluster"`
-	DatasourceId int64  `json:"datasource_id"`
-	Clock        int64  `json:"clock"`
+	Id            int64  `json:"id" gorm:"primaryKey"`
+	Instance      string `json:"instance"`
+	EngineCluster string `json:"cluster" gorm:"engine_cluster"`
+	DatasourceId  int64  `json:"datasource_id"`
+	Clock         int64  `json:"clock"`
 }
 
 func (e *AlertingEngines) TableName() string {
@@ -130,7 +130,7 @@ func AlertingEngineGetsInstances(ctx *ctx.Context, where string, args ...interfa
 
 func AlertingEngineHeartbeatWithCluster(ctx *ctx.Context, instance, cluster string, datasourceId int64) error {
 	var total int64
-	err := DB(ctx).Model(new(AlertingEngines)).Where("instance=? and `cluster` = ? and datasource_id=?", instance, cluster, datasourceId).Count(&total).Error
+	err := DB(ctx).Model(new(AlertingEngines)).Where("instance=? and engine_cluster = ? and datasource_id=?", instance, cluster, datasourceId).Count(&total).Error
 	if err != nil {
 		return err
 	}
@@ -138,15 +138,15 @@ func AlertingEngineHeartbeatWithCluster(ctx *ctx.Context, instance, cluster stri
 	if total == 0 {
 		// insert
 		err = DB(ctx).Create(&AlertingEngines{
-			Instance:     instance,
-			DatasourceId: datasourceId,
-			Cluster:      cluster,
-			Clock:        time.Now().Unix(),
+			Instance:      instance,
+			DatasourceId:  datasourceId,
+			EngineCluster: cluster,
+			Clock:         time.Now().Unix(),
 		}).Error
 	} else {
 		// updates
 		fields := map[string]interface{}{"clock": time.Now().Unix()}
-		err = DB(ctx).Model(new(AlertingEngines)).Where("instance=? and `cluster` = ? and datasource_id=?", instance, cluster, datasourceId).Updates(fields).Error
+		err = DB(ctx).Model(new(AlertingEngines)).Where("instance=? and engine_cluster = ? and datasource_id=?", instance, cluster, datasourceId).Updates(fields).Error
 	}
 
 	return err
