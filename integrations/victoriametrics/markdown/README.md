@@ -10,7 +10,7 @@
 
 ### 配置文件示例：
 
-其中label_key: `instance` ，label: `service`  为[dashboard](https://github.com/ccfos/nightingale/tree/main/integrations/victoriametrics/dashboard/victoriametrics.json)中选择变量，如果有特殊需求，可自行修改或者添加；
+其中label_key: `instance` ，label: `service`  为[dashboard](../dashboard/victoriametrics.json)中选择变量，如果有特殊需求，可自行修改或者添加；
 
 ```toml
 # vmstorage
@@ -44,4 +44,4 @@ labels = {service="vminsert"}
 
 ### 告警规则
 
-[alerts](https://github.com/ccfos/nightingale/tree/main/integrations/victoriametrics/alerts/alerts.json)
+[alerts](../alerts/alerts.json)
