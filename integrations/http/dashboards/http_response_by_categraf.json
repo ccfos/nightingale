@@ -56,7 +56,9 @@
                     "colorMode": "background",
                     "calc": "lastNotNull",
                     "displayMode": "labelValuesToRows",
-                    "aggrDimension": "target"
+                    "aggrDimension": "target",
+                    "sortColumn": "target",
+                    "sortOrder": "ascend"
                 },
                 "options": {
                     "valueMappings": [],
