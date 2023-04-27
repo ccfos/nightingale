@@ -107,11 +107,11 @@ func AlertingEngineGet(ctx *ctx.Context, where string, args ...interface{}) (*Al
 func AlertingEngineGetsClusters(ctx *ctx.Context, where string, args ...interface{}) ([]string, error) {
 	var arr []string
 	var err error
-	session := DB(ctx).Model(new(AlertingEngines)).Where("cluster != ''").Order("cluster").Distinct("cluster")
+	session := DB(ctx).Model(new(AlertingEngines)).Where("engine_cluster != ''").Order("engine_cluster").Distinct("engine_cluster")
 	if where == "" {
-		err = session.Pluck("cluster", &arr).Error
+		err = session.Pluck("engine_cluster", &arr).Error
 	} else {
-		err = session.Where(where, args...).Pluck("cluster", &arr).Error
+		err = session.Where(where, args...).Pluck("engine_cluster", &arr).Error
 	}
 	return arr, err
 }
