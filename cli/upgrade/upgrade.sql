@@ -13,6 +13,7 @@ alter table `board` add built_in tinyint(1) not null default 0 comment '0:false 
 alter table `board` add hide tinyint(1) not null default 0 comment '0:false 1:true';
 
 alter table `chart_share` add datasource_id bigint unsigned not null default 0;
+alter table `chart_share` drop dashboard_id;
 
 alter table `alert_rule` add datasource_ids varchar(255) not null default '';
 alter table `alert_rule` add rule_config text not null comment 'rule_config';
@@ -41,6 +42,9 @@ alter table `alert_his_event` add annotations text not null comment 'annotations
 alter table `alert_his_event` add rule_config text not null comment 'rule_config';
 
 alter table `alerting_engines` add datasource_id bigint unsigned not null default 0;
+alter table `alerting_engines` change cluster engine_cluster varchar(128) not null default '' comment 'n9e engine cluster';
+
+alter table `task_record` add event_id bigint not null comment 'event id' default 0;
 
 CREATE TABLE `datasource`
 (

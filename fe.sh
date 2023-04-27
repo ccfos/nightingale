@@ -8,8 +8,3 @@ curl -o n9e-fe-${VERSION}.tar.gz -L https://github.com/n9e/fe/releases/download/
 tar zxvf n9e-fe-${VERSION}.tar.gz
 
 cp ./docker/initsql/a-n9e.sql n9e.sql
-
-TAG=$(curl -sX GET https://api.github.com/repos/ccfos/nightingale/releases/latest   | awk '/tag_name/{print $4;exit}' FS='[""]')
-VERSION=$(echo $TAG)
-VERSION=${VERSION/v/}
-sed -i "s/nightingale:latest/nightingale:${VERSION}/g" ./docker/docker-compose.yaml

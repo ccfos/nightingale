@@ -1,0 +1,234 @@
+{
+    "name": "Processes by UlricQin",
+    "tags": "Categraf Linux OS",
+    "ident": "",
+    "configs": {
+        "var": [
+            {
+                "name": "Datasource",
+                "label": "",
+                "type": "datasource",
+                "definition": "prometheus",
+                "defaultValue": 37
+            },
+            {
+                "name": "ident",
+                "label": "Host",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${Datasource}"
+                },
+                "definition": "label_values(processes_running, ident)",
+                "multi": true,
+                "allOption": true
+            }
+        ],
+        "panels": [
+            {
+                "type": "barGauge",
+                "id": "adc3f1d3-6d0d-4c1e-80ca-5b6d8103bac5",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0,
+                    "i": "adc3f1d3-6d0d-4c1e-80ca-5b6d8103bac5",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "processes_running{ident=~\"$ident\"}",
+                        "legend": "{{ident}}",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Running Processes",
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "#f10808"
+                            },
+                            "match": {
+                                "from": 50
+                            }
+                        }
+                    ],
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "barGauge",
+                "id": "659f5f75-24ca-493c-97cb-3d99abd52172",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0,
+                    "i": "df457bf0-17c8-4d05-a527-cfaf0f2b844c",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "processes_total{ident=~\"$ident\"}",
+                        "legend": "{{ident}}",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Total Processes",
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "#f10808"
+                            },
+                            "match": {
+                                "from": 600
+                            }
+                        }
+                    ],
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "barGauge",
+                "id": "5e849509-1c41-44c7-85ee-d8c0adf7c623",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 8,
+                    "i": "62291285-be84-470a-9ccc-53be7a8733fd",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "processes_total_threads{ident=~\"$ident\"}",
+                        "legend": "{{ident}}",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Total Threads",
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "#ff8286"
+                            },
+                            "match": {
+                                "from": 2000
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "#f30909"
+                            },
+                            "match": {
+                                "from": 4000
+                            }
+                        }
+                    ],
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "table",
+                "id": "b2850506-6cdd-48cc-9223-70acff9212b0",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 8,
+                    "i": "b2850506-6cdd-48cc-9223-70acff9212b0",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum({__name__=~\"processes_sleeping|processes_dead|processes_paging|processes_total_threads|processes_total|processes_idle|processes_running|processes_zombies|processes_stopped|processes_unknown|processes_blocked\", ident=~\"$ident\"}) by (__name__)",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "SUM by Process state",
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "sortColumn": "value",
+                    "sortOrder": "descend",
+                    "columns": []
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {}
+                ]
+            }
+        ],
+        "version": "3.0.0"
+    }
+}

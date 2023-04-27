@@ -2,11 +2,12 @@ FROM --platform=$TARGETPLATFORM python:3-slim
 
 
 WORKDIR /app
-ADD n9e /app
-ADD etc /app
-ADD integrations /app
+ADD n9e /app/
+ADD etc /app/
+ADD integrations /app/integrations/
 ADD --chmod=755 https://github.com/ufoscout/docker-compose-wait/releases/download/2.11.0/wait_aarch64 /wait
-ADD pub /app
+RUN chmod +x /wait
+ADD pub /app/pub/
 
 EXPOSE 17000
 

@@ -425,18 +425,6 @@ func AlertNumbers(ctx *ctx.Context, bgids []int64) (map[int64]int64, error) {
 	return ret, nil
 }
 
-func AlertCurEventGetAll(ctx *ctx.Context, cluster string) ([]*AlertCurEvent, error) {
-	session := DB(ctx).Model(&AlertCurEvent{})
-
-	if cluster != "" {
-		session = session.Where("cluster = ?", cluster)
-	}
-
-	var lst []*AlertCurEvent
-	err := session.Find(&lst).Error
-	return lst, err
-}
-
 func AlertCurEventGetByIds(ctx *ctx.Context, ids []int64) ([]*AlertCurEvent, error) {
 	var lst []*AlertCurEvent
 
