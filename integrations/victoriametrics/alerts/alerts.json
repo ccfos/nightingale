@@ -1,0 +1,55 @@
+[
+  {
+    "cate": "prometheus",
+    "name": "VictoriaMetrics服务宕机",
+    "note": "当前采集所有实例存活状态",
+    "prod": "",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "disabled": 0,
+    "prom_for_duration": 60,
+    "prom_ql": "up{service=~\"vm.+\"} < 1",
+    "prom_eval_interval": 60,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "dingtalk"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": []
+  }
+]
