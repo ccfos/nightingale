@@ -130,7 +130,7 @@ func AlertingEngineGetsInstances(ctx *ctx.Context, where string, args ...interfa
 
 func AlertingEngineHeartbeatWithCluster(ctx *ctx.Context, instance, cluster string, datasourceId int64) error {
 	var total int64
-	err := DB(ctx).Model(new(AlertingEngines)).Where("instance=? and cluster = ? and datasource_id=?", instance, cluster, datasourceId).Count(&total).Error
+	err := DB(ctx).Model(new(AlertingEngines)).Where("instance=? and `cluster` = ? and datasource_id=?", instance, cluster, datasourceId).Count(&total).Error
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func AlertingEngineHeartbeatWithCluster(ctx *ctx.Context, instance, cluster stri
 	} else {
 		// updates
 		fields := map[string]interface{}{"clock": time.Now().Unix()}
-		err = DB(ctx).Model(new(AlertingEngines)).Where("instance=? and cluster = ? and datasource_id=?", instance, cluster, datasourceId).Updates(fields).Error
+		err = DB(ctx).Model(new(AlertingEngines)).Where("instance=? and `cluster` = ? and datasource_id=?", instance, cluster, datasourceId).Updates(fields).Error
 	}
 
 	return err
