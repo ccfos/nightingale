@@ -104,7 +104,26 @@
                             "standardOptions": {
                                 "util": "humantimeSeconds"
                             },
-                            "valueMappings": []
+                            "valueMappings": [
+                                {
+                                    "type": "range",
+                                    "result": {
+                                        "color": "#f60c0c"
+                                    },
+                                    "match": {
+                                        "to": 604800
+                                    }
+                                },
+                                {
+                                    "type": "range",
+                                    "result": {
+                                        "color": "#ffae39"
+                                    },
+                                    "match": {
+                                        "to": 2592000
+                                    }
+                                }
+                            ]
                         },
                         "type": "special"
                     },
