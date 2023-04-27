@@ -278,12 +278,78 @@ func (ar *AlertRule) Update(ctx *ctx.Context, arf AlertRule) error {
 }
 
 func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interface{}) error {
+	if value == nil {
+		return nil
+	}
+
 	if column == "datasource_ids" {
 		b, err := json.Marshal(value)
 		if err != nil {
 			return err
 		}
 		return DB(ctx).Model(ar).UpdateColumn(column, string(b)).Error
+	}
+
+	if column == "severity" {
+		severity := int(value.(float64))
+		if ar.Cate == PROMETHEUS {
+			var ruleConfig PromRuleConfig
+			err := json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig)
+			if err != nil {
+				return err
+			}
+
+			if len(ruleConfig.Queries) != 1 {
+				return nil
+			}
+
+			ruleConfig.Queries[0].Severity = severity
+			b, err := json.Marshal(ruleConfig)
+			if err != nil {
+				return err
+			}
+			return DB(ctx).Model(ar).UpdateColumn("rule_config", string(b)).Error
+		} else if ar.Cate == HOST {
+			var ruleConfig HostRuleConfig
+			err := json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig)
+			if err != nil {
+				return err
+			}
+
+			if len(ruleConfig.Triggers) != 1 {
+				return nil
+			}
+
+			ruleConfig.Triggers[0].Severity = severity
+
+			b, err := json.Marshal(ruleConfig)
+			if err != nil {
+				return err
+			}
+			return DB(ctx).Model(ar).UpdateColumn("rule_config", string(b)).Error
+		}
+	}
+
+	if column == "runbook_url" {
+		url := value.(string)
+
+		err := json.Unmarshal([]byte(ar.Annotations), &ar.AnnotationsJSON)
+		if err != nil {
+			return err
+		}
+
+		if ar.AnnotationsJSON == nil {
+			ar.AnnotationsJSON = make(map[string]string)
+		}
+
+		ar.AnnotationsJSON["runbook_url"] = url
+
+		b, err := json.Marshal(ar.AnnotationsJSON)
+		if err != nil {
+			return err
+		}
+
+		return DB(ctx).Model(ar).UpdateColumn("annotations", string(b)).Error
 	}
 
 	return DB(ctx).Model(ar).UpdateColumn(column, value).Error
