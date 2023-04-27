@@ -1,0 +1,642 @@
+{
+    "name": "Procstat by UlricQin",
+    "tags": "Categraf OS",
+    "ident": "",
+    "configs": {
+        "var": [
+            {
+                "name": "Datasource",
+                "type": "datasource",
+                "definition": "prometheus",
+                "defaultValue": 37
+            },
+            {
+                "name": "ident",
+                "label": "Host",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${Datasource}"
+                },
+                "definition": "label_values(system_load_norm_1, ident)",
+                "multi": true,
+                "allOption": true
+            },
+            {
+                "name": "search_string",
+                "label": "Proc",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${Datasource}"
+                },
+                "definition": "label_values(procstat_lookup_count{ident=~\"$ident\"}, search_string)",
+                "multi": true,
+                "allOption": true
+            }
+        ],
+        "panels": [
+            {
+                "type": "stat",
+                "id": "be9aac6c-4401-4c61-8c43-574cf314ffef",
+                "layout": {
+                    "h": 4,
+                    "w": 5,
+                    "x": 0,
+                    "y": 0,
+                    "i": "be9aac6c-4401-4c61-8c43-574cf314ffef",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "procstat_lookup_count{ident=~\"$ident\", search_string=~\"$search_string\"}",
+                        "legend": "{{ident}} {{search_string}}",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Proc Count Now",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "table",
+                "id": "da621e2c-ae2b-4375-9a66-2bec7832490b",
+                "layout": {
+                    "h": 4,
+                    "w": 9,
+                    "x": 5,
+                    "y": 0,
+                    "i": "79db82d9-5f46-4c45-bb9f-c23f94d99e0a",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "procstat_lookup_count{ident=~\"$ident\", search_string=~\"$search_string\"}",
+                        "legend": "{{ident}} {{search_string}}",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Proc Count Table",
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "columns": [
+                        "ident",
+                        "search_string",
+                        "value"
+                    ],
+                    "sortColumn": "ident",
+                    "sortOrder": "ascend"
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "#fa0c0c"
+                            },
+                            "match": {
+                                "special": 0
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "#2c9d3d"
+                            },
+                            "match": {
+                                "from": 1
+                            }
+                        }
+                    ],
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {}
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "881c04fd-8804-432e-9b34-b4761590de20",
+                "layout": {
+                    "h": 4,
+                    "w": 10,
+                    "x": 14,
+                    "y": 0,
+                    "i": "24b55362-d900-43c0-98d5-f2e994bf22a6",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "procstat_lookup_count{ident=~\"$ident\", search_string=~\"$search_string\"}",
+                        "legend": "{{ident}} {{search_string}}",
+                        "instant": false
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Proc Count Trend",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "ffeb0fc6-ee02-4fdd-a8e3-ec2b9db9c23c",
+                "layout": {
+                    "h": 4,
+                    "w": 5,
+                    "x": 0,
+                    "y": 4,
+                    "i": "acd6e7b5-99f5-4d9b-9124-8072c14e5fea",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "procstat_uptime_minimum{ident=~\"$ident\", search_string=~\"$search_string\"}",
+                        "legend": "{{ident}} {{search_string}}",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Proc Uptime",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "humantimeSeconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#2c9d3d",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "c642a30a-da86-402c-87bf-c2f98616bf95",
+                "layout": {
+                    "h": 4,
+                    "w": 9,
+                    "x": 5,
+                    "y": 4,
+                    "i": "c642a30a-da86-402c-87bf-c2f98616bf95",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "procstat_cpu_usage_total{ident=~\"$ident\", search_string=~\"$search_string\"}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU Util",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "cbc2444e-49c7-45e1-b64e-cd1282b5a419",
+                "layout": {
+                    "h": 4,
+                    "w": 10,
+                    "x": 14,
+                    "y": 4,
+                    "i": "198846a2-4794-4ba9-9c2d-137bce22f266",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "procstat_mem_usage_total{ident=~\"$ident\", search_string=~\"$search_string\"}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Mem Util",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "d2bff162-5801-4d85-94d7-d63145d5b935",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 8,
+                    "i": "a208e192-cf74-468b-9bcb-cb81c8d78d24",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "procstat_num_fds_total{ident=~\"$ident\", search_string=~\"$search_string\"}/procstat_rlimit_num_fds_soft_minimum{ident=~\"$ident\", search_string=~\"$search_string\"}*100"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "FD soft Util",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "46a71143-84b5-4dde-87db-2f0403df6519",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 8,
+                    "i": "22dfb5e4-1d17-4e06-a9b4-b25cb33d1c20",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "procstat_num_fds_total{ident=~\"$ident\", search_string=~\"$search_string\"}/procstat_rlimit_num_fds_hard_minimum{ident=~\"$ident\", search_string=~\"$search_string\"}*100"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "FD hard Util",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "3dda4eb5-a27f-4d54-9547-ae8f0ac9bb96",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 12,
+                    "i": "3dda4eb5-a27f-4d54-9547-ae8f0ac9bb96",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "procstat_read_bytes_total{ident=~\"$ident\", search_string=~\"$search_string\"}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Read bytes",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "c97403f4-618d-4037-8ea7-5deb32eb8d56",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 12,
+                    "i": "ae0dc449-8263-4f38-8c52-d50b3cb3f1b4",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "procstat_read_bytes_total{ident=~\"$ident\", search_string=~\"$search_string\"}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Write bytes",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            }
+        ],
+        "version": "3.0.0"
+    }
+}
