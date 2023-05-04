@@ -41,6 +41,7 @@ _test
 /docker/pub
 /docker/n9e
 /docker/mysqldata
+/docker/experience_pg_vm/pgdata
 /etc.local
 
 .alerts
