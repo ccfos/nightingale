@@ -251,7 +251,6 @@ COMMENT ON COLUMN chart.group_id IS 'chart group id';
 CREATE TABLE chart_share (
     id bigserial,
     cluster varchar(128) not null,
-    dashboard_id bigint  not null,
     datasource_id bigint  not null default 0,
     configs text,
     create_at bigint not null default 0,

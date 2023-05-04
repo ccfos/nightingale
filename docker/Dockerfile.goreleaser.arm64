@@ -1,3 +1,4 @@
+FROM flashcatcloud/toolbox:v0.0.1 as toolbox
 FROM --platform=$TARGETPLATFORM python:3-slim
 
 
@@ -5,8 +6,8 @@ WORKDIR /app
 ADD n9e /app/
 ADD etc /app/
 ADD integrations /app/integrations/
-ADD --chmod=755 https://github.com/ufoscout/docker-compose-wait/releases/download/2.11.0/wait_aarch64 /wait
 ADD pub /app/pub/
+COPY --chmod=755  --from=toolbox /toolbox/wait_aarch64 /wait
 
 EXPOSE 17000
 

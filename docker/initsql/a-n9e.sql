@@ -167,7 +167,7 @@ CREATE TABLE `busi_group_member` (
     KEY (`user_group_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-insert into busi_group_member(busi_group_id, user_group_id, perm_flag) values(1, 1, "rw");
+insert into busi_group_member(busi_group_id, user_group_id, perm_flag) values(1, 1, 'rw');
 
 -- for dashboard new version
 CREATE TABLE `board` (
@@ -334,7 +334,7 @@ CREATE TABLE `alert_subscribe` (
     KEY (`update_at`),
     KEY (`group_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-  
+
 CREATE TABLE `target` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
@@ -383,7 +383,7 @@ CREATE TABLE `metric_view` (
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
 insert into metric_view(name, cate, configs) values('Host View', 0, '{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}');
- 
+
 CREATE TABLE `recording_rule` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default '0' comment 'group_id',
@@ -582,15 +582,15 @@ CREATE TABLE `datasource`
     `updated_by` varchar(64) not null default '',
     UNIQUE KEY (`name`),
     PRIMARY KEY (`id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4; 
-  
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
 CREATE TABLE `builtin_cate` (
     `id` bigint unsigned not null auto_increment,
     `name` varchar(191) not null,
     `user_id` bigint not null default 0,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
- 
+
 CREATE TABLE `notify_tpl` (
     `id` bigint unsigned not null auto_increment,
     `channel` varchar(32) not null,
