@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
 
@@ -116,7 +117,13 @@ func DatasourceCheck(ds models.Datasource) error {
 	if ds.PluginType == models.PROMETHEUS {
 		subPath := "/api/v1/query"
 		query := url.Values{}
-		query.Add("query", "1+1")
+		if strings.Contains(fullURL, "loki") {
+			subPath = "/api/v1/labels"
+			query.Add("start", "1")
+			query.Add("end", "2")
+		} else {
+			query.Add("query", "1+1")
+		}
 		fullURL = fmt.Sprintf("%s%s?%s", ds.HTTPJson.Url, subPath, query.Encode())
 
 		req, err = http.NewRequest("POST", fullURL, nil)
