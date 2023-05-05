@@ -125,7 +125,6 @@ Url = "http://127.0.0.1:9090/api/v1/write"
 **尊重、认可和记录每一位贡献者的工作**是夜莺开源社区的第一指导原则，我们提倡**高效的提问**，这既是对开发者时间的尊重，也是对整个社区知识沉淀的贡献：
 - 提问之前请先查阅 [FAQ](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq) 
 - 我们使用[论坛](https://answer.flashcat.cloud/)进行交流，有问题可以到这里搜索、提问
-- 我们也推荐你加入微信群，和其他夜莺用户交流经验 (请先加好友：[picobyte](https://www.gitlink.org.cn/UlricQin/gist/tree/master/self.jpeg) 备注：夜莺加群+姓名+公司)
 
 
 ## Who is using Nightingale
