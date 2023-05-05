@@ -1,0 +1,614 @@
+{
+    "name": "Canal instances",
+    "tags": "",
+    "configs": {
+        "version": "2.0.0",
+        "links": [],
+        "var": [
+            {
+                "name": "destination",
+                "allOption": false,
+                "multi": false,
+                "definition": "label_values(canal_instance, destination)"
+            }
+        ],
+        "panels": [
+            {
+                "version": "2.0.0",
+                "id": "758ed076-0140-4755-bd86-da18d0648fdd",
+                "type": "row",
+                "name": "Instance status",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "758ed076-0140-4755-bd86-da18d0648fdd"
+                },
+                "panels": []
+            },
+            {
+                "version": "2.0.0",
+                "id": "0c611d83-9ccb-402f-b3ed-14d53bd3e818",
+                "type": "timeseries",
+                "name": "Basic",
+                "description": "Canal instance ������Ϣ��",
+                "links": [],
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 1,
+                    "i": "0c611d83-9ccb-402f-b3ed-14d53bd3e818"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "canal_instance{destination=~\"$destination\"}",
+                        "legend": "Destination: {{destination}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "canal_instance_parser_mode{destination=~\"$destination\"}",
+                        "legend": "Parallel parser: {{parallel}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "canal_instance_store{destination=~\"$destination\"}",
+                        "legend": "Batch mode: {{batchMode}}"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "canal_instance_store{destination=~\"$destination\"}",
+                        "legend": "Buffer size: {{size}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "efde62a5-f4ac-4062-80d1-4cc7dd50bb9f",
+                "type": "timeseries",
+                "name": "Network bandwith",
+                "description": "Canal instance �������ռ�á�\ninbound: ��ȡMySQL binlog.\noutbound: ��Client�˴����ʽ��binlog.",
+                "links": [],
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 1,
+                    "i": "efde62a5-f4ac-4062-80d1-4cc7dd50bb9f"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(canal_instance_received_binlog_bytes{destination=~\"$destination\", parser=\"0\"}[2m]) / 1024",
+                        "legend": "inbound"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "rate(canal_instance_client_bytes{destination=~\"$destination\"}[2m]) / 1024",
+                        "legend": "outbound"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "rate(canal_instance_received_binlog_bytes{destination=~\"$destination\", parser=\"1\"}[2m]) / 1024",
+                        "legend": "inbound-1"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "rate(canal_instance_received_binlog_bytes{destination=~\"$destination\", parser=\"2\"}[2m]) / 1024",
+                        "legend": "inbound-2"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "93d407a9-c1bf-4f9c-b88b-f0a01c023ea4",
+                "type": "timeseries",
+                "name": "Delay",
+                "description": "master: Canal server�����MySQL master����ʱ��ͨ��master heartbeat������ˢ��idle״̬�µ���ʱ��\nput: store put������ʱ���Ϊ��׼��\nget: client get������ʱ���Ϊ��׼��\nack:  client ack������ʱ���Ϊ��׼��",
+                "links": [],
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 1,
+                    "i": "93d407a9-c1bf-4f9c-b88b-f0a01c023ea4"
+                },
+                "targets": [
+                    {
+                        "refId": "D",
+                        "expr": "canal_instance_traffic_delay{destination=~\"$destination\"} / 1000",
+                        "legend": "master"
+                    },
+                    {
+                        "refId": "A",
+                        "expr": "canal_instance_put_delay{destination=~\"$destination\"} / 1000",
+                        "legend": "put"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "canal_instance_get_delay{destination=~\"$destination\"} / 1000",
+                        "legend": "get"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "canal_instance_ack_delay{destination=~\"$destination\"} / 1000",
+                        "legend": "ack"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "131cbcbe-29e7-469a-bb17-5914a8471ee7",
+                "type": "timeseries",
+                "name": "Blocking",
+                "description": "sink�߳�blockingռ�ȣ�dump�߳�blockingռ��(��parallel mode)��",
+                "links": [],
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 1,
+                    "i": "131cbcbe-29e7-469a-bb17-5914a8471ee7"
+                },
+                "targets": [
+                    {
+                        "refId": "B",
+                        "expr": "clamp_max(rate(canal_instance_publish_blocking_time{destination=~\"$destination\", parser=\"0\"}[2m]), 1000) / 10",
+                        "legend": "dump"
+                    },
+                    {
+                        "refId": "A",
+                        "expr": "clamp_max(rate(canal_instance_sink_blocking_time{destination=~\"$destination\"}[2m]), 1000) / 10",
+                        "legend": "sink"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "clamp_max(rate(canal_instance_publish_blocking_time{destination=~\"$destination\", parser=\"1\"}[2m]), 1000) / 10",
+                        "legend": "dump-1"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "clamp_max(rate(canal_instance_publish_blocking_time{destination=~\"$destination\", parser=\"2\"}[2m]), 1000) / 10",
+                        "legend": "dump-2"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "de248e75-37cb-4536-874c-fbdd61a4a6a4",
+                "type": "row",
+                "name": "Throughput",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 6,
+                    "i": "de248e75-37cb-4536-874c-fbdd61a4a6a4"
+                },
+                "panels": []
+            },
+            {
+                "version": "2.0.0",
+                "id": "16e7b311-3e9e-4c17-874e-4ef3beb8779f",
+                "type": "timeseries",
+                "name": "TPS(table rows)",
+                "description": "Instance����binlog��TPS(��master�������table rowsΪ��׼����)��\nput: put����TPS��\nget: get����TPS��\nack: ack����TPS��",
+                "links": [],
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 7,
+                    "i": "16e7b311-3e9e-4c17-874e-4ef3beb8779f"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(canal_instance_put_rows{destination=~\"$destination\"}[2m])",
+                        "legend": "put"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "rate(canal_instance_get_rows{destination=~\"$destination\"}[2m])",
+                        "legend": "get"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "rate(canal_instance_ack_rows{destination=~\"$destination\"}[2m])",
+                        "legend": "ack"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "791852f6-dad5-43fd-8629-3f84f8b4ae85",
+                "type": "timeseries",
+                "name": "TPS(MySQL transaction)",
+                "description": "Canal instance ����binlog��TPS����MySQL transactionΪ��λ���㡣",
+                "links": [],
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 7,
+                    "i": "791852f6-dad5-43fd-8629-3f84f8b4ae85"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(canal_instance_transactions{destination=~\"$destination\"}[2m])",
+                        "legend": "transactions"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "3de66e9d-a9ad-41a9-8a48-8911e382e1fe",
+                "type": "row",
+                "name": "Client",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 12,
+                    "i": "3de66e9d-a9ad-41a9-8a48-8911e382e1fe"
+                },
+                "panels": []
+            },
+            {
+                "version": "2.0.0",
+                "id": "74c61ee7-2c28-4ee4-997d-e9a4bd9e7183",
+                "type": "timeseries",
+                "name": "Client requests",
+                "description": "Canal instance���յ�������ͳ�ƣ������packet type���ࡣ",
+                "links": [],
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 13,
+                    "i": "74c61ee7-2c28-4ee4-997d-e9a4bd9e7183"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "canal_instance_client_packets{destination=~\"$destination\"}",
+                        "legend": "{{packetType}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "037002c9-dda5-4ce2-b8a3-d14e8ef9440b",
+                "type": "timeseries",
+                "name": "Client QPS",
+                "description": "client �����GET��ACK����QPS��",
+                "links": [],
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 13,
+                    "i": "037002c9-dda5-4ce2-b8a3-d14e8ef9440b"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(canal_instance_client_packets{destination=~\"$destination\",packetType=\"GET\"}[2m])",
+                        "legend": "GET"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "rate(canal_instance_client_packets{destination=~\"$destination\",packetType=\"CLIENTACK\"}[2m])",
+                        "legend": "ACK"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "2a433709-f08d-404a-acd6-3ef295157b83",
+                "type": "timeseries",
+                "name": "Empty packets",
+                "description": "server��ӦGET���󣬵����ؿհ���ռ�ȡ�",
+                "links": [],
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 13,
+                    "i": "2a433709-f08d-404a-acd6-3ef295157b83"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(canal_instance_client_empty_batches{destination=~\"$destination\"}[2m])",
+                        "legend": "empty"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "rate(canal_instance_client_packets{destination=~\"$destination\", packetType=\"GET\"}[2m])",
+                        "legend": "nonempty"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "1c262e9e-1dc5-4aae-bf8c-0e4c3e85a84f",
+                "type": "timeseries",
+                "name": "Response time",
+                "description": "Canal client ������Ӧʱ��ĸſ���",
+                "links": [],
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 13,
+                    "i": "1c262e9e-1dc5-4aae-bf8c-0e4c3e85a84f"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(canal_instance_client_request_latency_bucket{destination=~\"$destination\"}[2m])",
+                        "legend": "{{le}}ms"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "ae68fd29-4dd4-445a-86b9-76144d23d27c",
+                "type": "row",
+                "name": "Store",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 18,
+                    "i": "ae68fd29-4dd4-445a-86b9-76144d23d27c"
+                },
+                "panels": []
+            },
+            {
+                "version": "2.0.0",
+                "id": "27b7365c-2bca-42b7-836d-33dc769b2a4e",
+                "type": "timeseries",
+                "name": "Store remain events",
+                "description": "Canal instance ringbuffer��δ�ͷŵ�events������",
+                "links": [],
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 19,
+                    "i": "27b7365c-2bca-42b7-836d-33dc769b2a4e"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "canal_instance_store_produce_seq{destination=~\"$destination\"} - canal_instance_store_consume_seq{destination=~\"$destination\"}",
+                        "legend": "events"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "f399e86f-8f87-43fe-80a2-5b6f2ef7529f",
+                "type": "timeseries",
+                "name": "Store remain mem",
+                "description": "Canal instance ringbuffer ��δ�ͷ�eventsռ���ڴ档",
+                "links": [],
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 19,
+                    "i": "f399e86f-8f87-43fe-80a2-5b6f2ef7529f"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "(canal_instance_store_produce_mem{destination=~\"$destination\"} - canal_instance_store_consume_mem{destination=~\"$destination\"}) / 1024",
+                        "legend": "memsize"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            }
+        ]
+    }
+}
