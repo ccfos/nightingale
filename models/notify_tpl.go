@@ -72,7 +72,12 @@ func ListTpls(c *ctx.Context) (map[string]*template.Template, error) {
 
 	tpls := make(map[string]*template.Template)
 	for _, notifyTpl := range notifyTpls {
-		tpl, err := template.New(notifyTpl.Channel).Funcs(tplx.TemplateFuncMap).Parse(notifyTpl.Content)
+		var defs = []string{
+			"{{$labels := .TagsMap}}",
+			"{{$value := .TriggerValue}}",
+		}
+		text := strings.Join(append(defs, notifyTpl.Content), "")
+		tpl, err := template.New(notifyTpl.Channel).Funcs(tplx.TemplateFuncMap).Parse(text)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse tpl:%v %v ", notifyTpl, err)
 		}

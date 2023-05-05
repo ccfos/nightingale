@@ -54,6 +54,7 @@ func BuildTplMessage(tpl *template.Template, event *models.AlertCurEvent) string
 	if tpl == nil {
 		return "tpl for current sender not found, please check configuration"
 	}
+
 	var body bytes.Buffer
 	if err := tpl.Execute(&body, event); err != nil {
 		return err.Error()
