@@ -1,41 +1,56 @@
 {
-    "name": "TCP detection",
+    "name": "TCP detection by UlricQin",
     "tags": "",
     "ident": "",
     "configs": {
         "panels": [
             {
-                "collapsed": true,
-                "id": "b90370ef-ee1c-40c3-a570-e26a89448209",
-                "layout": {
-                    "h": 1,
-                    "i": "b90370ef-ee1c-40c3-a570-e26a89448209",
-                    "w": 24,
-                    "x": 0,
-                    "y": 0
-                },
-                "name": "Default chart group",
-                "type": "row"
-            },
-            {
-                "custom": {
-                    "aggrDimension": "target",
-                    "calc": "lastNotNull",
-                    "displayMode": "labelValuesToRows",
-                    "showHeader": true
-                },
+                "type": "table",
                 "id": "73c6eaf9-1685-4a7a-bf53-3d52afa1792e",
                 "layout": {
                     "h": 15,
-                    "i": "73c6eaf9-1685-4a7a-bf53-3d52afa1792e",
                     "w": 24,
                     "x": 0,
-                    "y": 1
+                    "y": 0,
+                    "i": "73c6eaf9-1685-4a7a-bf53-3d52afa1792e",
+                    "isResizable": true
                 },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "max(net_response_result_code) by (target)",
+                        "legend": "UP?",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(net_response_response_time) by (target) * 1000",
+                        "legend": "Latency(ms)",
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "indexByName": {
+                                "target": 0
+                            }
+                        }
+                    }
+                ],
                 "name": "Targets",
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelValuesToRows",
+                    "aggrDimension": "target"
+                },
                 "options": {
-                    "standardOptions": {},
-                    "valueMappings": []
+                    "valueMappings": [],
+                    "standardOptions": {}
                 },
                 "overrides": [
                     {
@@ -50,7 +65,7 @@
                                         "special": 0
                                     },
                                     "result": {
-                                        "color": "#417505",
+                                        "color": "#2c9d3d",
                                         "text": "UP"
                                     },
                                     "type": "special"
@@ -68,33 +83,49 @@
                                 }
                             ]
                         }
-                    }
-                ],
-                "targets": [
-                    {
-                        "expr": "max(net_response_result_code) by (target)",
-                        "legend": "UP?",
-                        "refId": "A"
                     },
                     {
-                        "expr": "max(net_response_response_time) by (target)",
-                        "legend": "latency(s)",
-                        "refId": "C"
+                        "type": "special",
+                        "matcher": {
+                            "value": "C"
+                        },
+                        "properties": {
+                            "valueMappings": [
+                                {
+                                    "type": "range",
+                                    "result": {
+                                        "color": "#f10c0c"
+                                    },
+                                    "match": {
+                                        "from": 1
+                                    }
+                                },
+                                {
+                                    "type": "range",
+                                    "result": {
+                                        "color": "#2c9d3d"
+                                    },
+                                    "match": {
+                                        "to": 1
+                                    }
+                                }
+                            ],
+                            "standardOptions": {
+                                "util": "milliseconds",
+                                "decimals": 3
+                            }
+                        }
                     }
-                ],
-                "type": "table",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                ]
             }
         ],
-        "version": "3.0.0",
         "var": [
             {
+                "definition": "prometheus",
                 "name": "prom",
-                "type": "datasource",
-                "definition": "prometheus"
+                "type": "datasource"
             }
-        ]
+        ],
+        "version": "3.0.0"
     }
 }
