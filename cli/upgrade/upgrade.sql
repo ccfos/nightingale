@@ -43,7 +43,6 @@ alter table `alert_his_event` add rule_config text not null comment 'rule_config
 
 alter table `alerting_engines` add datasource_id bigint unsigned not null default 0;
 alter table `alerting_engines` change cluster engine_cluster varchar(128) not null default '' comment 'n9e engine cluster';
-alter table `alerting_engines` drop index instance;
 
 alter table `task_record` add event_id bigint not null comment 'event id' default 0;
 
