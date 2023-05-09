@@ -43,6 +43,7 @@ type Config struct {
 	CoverAttributes bool
 	Attributes      struct {
 		Nickname string
+		Username string
 		Phone    string
 		Email    string
 	}
@@ -66,11 +67,15 @@ func (s *SsoClient) Reload(cf Config) error {
 		return nil
 	}
 
+	if cf.Attributes.Username == "" {
+		cf.Attributes.Username = "sub"
+	}
+
 	s.Enable = cf.Enable
 	s.SsoAddr = cf.SsoAddr
 	s.CallbackAddr = cf.RedirectURL
 	s.CoverAttributes = cf.CoverAttributes
-	s.Attributes.Username = "sub"
+	s.Attributes.Username = cf.Attributes.Username
 	s.Attributes.Nickname = cf.Attributes.Nickname
 	s.Attributes.Phone = cf.Attributes.Phone
 	s.Attributes.Email = cf.Attributes.Email
