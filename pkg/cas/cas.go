@@ -18,6 +18,7 @@ import (
 type Config struct {
 	Enable          bool
 	SsoAddr         string
+	LoginPath       string
 	RedirectURL     string
 	DisplayName     string
 	CoverAttributes bool
@@ -123,10 +124,19 @@ func (s *SsoClient) genRedirectURL(state string) string {
 	defer s.RUnlock()
 
 	SsoAddr, err := url.Parse(s.Config.SsoAddr)
-	SsoAddr.Path = "login"
 	if err != nil {
 		logger.Error(err)
 		return buf.String()
+	}
+
+	if s.Config.LoginPath == "" {
+		if strings.Contains(s.Config.SsoAddr, "p3") {
+			SsoAddr.Path = "login"
+		} else {
+			SsoAddr.Path = "cas/login"
+		}
+	} else {
+		SsoAddr.Path = s.Config.LoginPath
 	}
 
 	buf.WriteString(SsoAddr.String())
