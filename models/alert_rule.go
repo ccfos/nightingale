@@ -119,11 +119,11 @@ func GetHostsQuery(queries []HostQuery) map[string]interface{} {
 			}
 			if q.Op == "==" {
 				for _, tag := range lst {
-					query["tags like ?"] = "% " + tag + " %"
+					query["tags like ?"] = "%" + tag + "%"
 				}
 			} else {
 				for _, tag := range lst {
-					query["tags not like ?"] = "% " + tag + " %"
+					query["tags not like ?"] = "%" + tag + "%"
 				}
 			}
 		case "hosts":
