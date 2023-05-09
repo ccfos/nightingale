@@ -375,7 +375,7 @@ func (ar *AlertRule) FillSeverities() error {
 			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
 				return err
 			}
-			for i := range rule.Queries {
+			for i := range rule.Triggers {
 				ar.Severities = append(ar.Severities, rule.Triggers[i].Severity)
 			}
 		} else {
