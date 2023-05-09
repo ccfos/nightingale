@@ -11,14 +11,6 @@ import (
 	"github.com/prometheus/prometheus/prompb"
 )
 
-var promMetricFilter map[string]bool = map[string]bool{
-	"up":                                    true,
-	"scrape_series_added":                   true,
-	"scrape_samples_post_metric_relabeling": true,
-	"scrape_samples_scraped":                true,
-	"scrape_duration_seconds":               true,
-}
-
 func extractIdentFromTimeSeries(s *prompb.TimeSeries) string {
 	for i := 0; i < len(s.Labels); i++ {
 		if s.Labels[i].Name == "ident" {
@@ -90,11 +82,8 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 
 		ident = extractIdentFromTimeSeries(req.Timeseries[i])
 
-		// 当数据是通过prometheus抓取（也许直接remote write到夜莺）的时候，prometheus会自动产生部分系统指标
-		// 例如最典型的有up指标，是prometheus为exporter生成的指标，即使exporter挂掉的时候也会送up=0的指标
-		// 此类指标当剔除，否则会导致redis数据中时间戳被意外更新，导致由此类指标中携带的ident的相关target_up指标无法变为实际的0值
-		// 更多详细信息：https://prometheus.io/docs/concepts/jobs_instances/#automatically-generated-labels-and-time-series
-		if _, has := promMetricFilter[metric]; has {
+		// telegraf 上报数据的场景，只有在 metric 为 system_load1 时，说明指标来自机器，将 host 改为 ident，其他情况都忽略
+		if metric != "system_load1" {
 			ident = ""
 		}
 
