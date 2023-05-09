@@ -596,7 +596,7 @@ func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {
 }
 
 func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
-	session := DB(ctx).Where("disabled = ? and (prod = ? or prod = ? or prod = ?)", 0, "", HOST, METRIC)
+	session := DB(ctx).Where("disabled = ?", 0)
 
 	var lst []*AlertRule
 	err := session.Find(&lst).Error
@@ -687,7 +687,7 @@ func AlertRuleGetName(ctx *ctx.Context, id int64) (string, error) {
 }
 
 func AlertRuleStatistics(ctx *ctx.Context) (*Statistics, error) {
-	session := DB(ctx).Model(&AlertRule{}).Select("count(*) as total", "max(update_at) as last_updated").Where("disabled = ? and (prod = ? or prod = ? or prod = ?)", 0, "", HOST, METRIC)
+	session := DB(ctx).Model(&AlertRule{}).Select("count(*) as total", "max(update_at) as last_updated").Where("disabled = ?", 0)
 
 	var stats []*Statistics
 	err := session.Find(&stats).Error
@@ -810,7 +810,7 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 			"annotations":    lst[i].Annotations,
 			"rule_config":    lst[i].RuleConfig,
 			"prod":           lst[i].Prod,
-			"cate":           PROMETHEUS,
+			"cate":           lst[i].Cate,
 		})
 		if err != nil {
 			logger.Errorf("update alert rule:%d datasource ids failed, %v", lst[i].Id, err)
