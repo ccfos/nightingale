@@ -9,7 +9,7 @@ Level = "DEBUG"
 # stdout, stderr, file
 Output = "stdout"
 # # rotate by time
-# KeepHours: 4
+# KeepHours = 4
 # # rotate by size
 # RotateNum = 3
 # # unit: MB
