@@ -370,21 +370,21 @@ func (ar *AlertRule) FillDatasourceIds(ctx *ctx.Context) error {
 
 func (ar *AlertRule) FillSeverities() error {
 	if ar.RuleConfig != "" {
-		if ar.Prod == HOST {
-			var rule HostRuleConfig
-			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
-				return err
-			}
-			for i := range rule.Triggers {
-				ar.Severities = append(ar.Severities, rule.Triggers[i].Severity)
-			}
-		} else {
+		if ar.Cate == PROMETHEUS {
 			var rule PromRuleConfig
 			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
 				return err
 			}
 			for i := range rule.Queries {
 				ar.Severities = append(ar.Severities, rule.Queries[i].Severity)
+			}
+		} else {
+			var rule HostRuleConfig
+			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
+				return err
+			}
+			for i := range rule.Triggers {
+				ar.Severities = append(ar.Severities, rule.Triggers[i].Severity)
 			}
 		}
 	}
