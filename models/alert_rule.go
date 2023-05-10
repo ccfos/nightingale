@@ -76,8 +76,11 @@ type AlertRule struct {
 }
 
 type PromRuleConfig struct {
-	Queries []PromQuery `json:"queries"`
-	Inhibit bool        `json:"inhibit"`
+	Queries    []PromQuery `json:"queries"`
+	Inhibit    bool        `json:"inhibit"`
+	PromQl     string      `json:"prom_ql"`
+	Severity   int         `json:"severity"`
+	AlgoParams interface{} `json:"algo_params"`
 }
 
 type HostRuleConfig struct {
@@ -88,14 +91,26 @@ type HostRuleConfig struct {
 
 type PromQuery struct {
 	PromQl   string `json:"prom_ql"`
-	Severity int    `json:"severity"` // 1: Emergency 2: Warning 3: Notice
+	Severity int    `json:"severity"`
 }
 
 type HostTrigger struct {
 	Type     string `json:"type"`
 	Duration int    `json:"duration"`
 	Percent  int    `json:"percent"`
-	Severity int    `json:"severity"` // 1: Emergency 2: Warning 3: Notice
+	Severity int    `json:"severity"`
+}
+
+type RuleQuery struct {
+	Queries  []interface{} `json:"queries"`
+	Triggers []Trigger     `json:"triggers"`
+}
+
+type Trigger struct {
+	Expressions interface{} `json:"expressions"`
+	Mode        int         `json:"mode"`
+	Exp         string      `json:"exp"`
+	Severity    int         `json:"severity"`
 }
 
 func GetHostsQuery(queries []HostQuery) map[string]interface{} {
@@ -299,6 +314,15 @@ func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interfa
 				return err
 			}
 
+			if len(ruleConfig.Queries) < 1 {
+				ruleConfig.Severity = severity
+				b, err := json.Marshal(ruleConfig)
+				if err != nil {
+					return err
+				}
+				return DB(ctx).Model(ar).UpdateColumn("rule_config", string(b)).Error
+			}
+
 			if len(ruleConfig.Queries) != 1 {
 				return nil
 			}
@@ -322,6 +346,23 @@ func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interfa
 
 			ruleConfig.Triggers[0].Severity = severity
 
+			b, err := json.Marshal(ruleConfig)
+			if err != nil {
+				return err
+			}
+			return DB(ctx).Model(ar).UpdateColumn("rule_config", string(b)).Error
+		} else {
+			var ruleConfig RuleQuery
+			err := json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig)
+			if err != nil {
+				return err
+			}
+
+			if len(ruleConfig.Triggers) != 1 {
+				return nil
+			}
+
+			ruleConfig.Triggers[0].Severity = severity
 			b, err := json.Marshal(ruleConfig)
 			if err != nil {
 				return err
@@ -375,6 +416,12 @@ func (ar *AlertRule) FillSeverities() error {
 			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
 				return err
 			}
+
+			if len(rule.Queries) == 0 {
+				ar.Severities = append(ar.Severities, rule.Severity)
+				return nil
+			}
+
 			for i := range rule.Queries {
 				ar.Severities = append(ar.Severities, rule.Queries[i].Severity)
 			}
