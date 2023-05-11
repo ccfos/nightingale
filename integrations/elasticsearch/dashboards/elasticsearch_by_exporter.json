@@ -1,5 +1,5 @@
 {
-    "name": "ElasticSearch",
+    "name": "ElasticSearch By Exporter",
     "tags": "Prometheus ElasticSearch ES",
     "ident": "",
     "configs": {
