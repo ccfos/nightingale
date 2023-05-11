@@ -179,6 +179,13 @@ func (rt *Router) datasourceDel(c *gin.Context) {
 	Render(c, nil, err)
 }
 
+func (rt *Router) getDatasourceIds(c *gin.Context) {
+	name := ginx.QueryStr(c, "name")
+	datasourceIds, err := models.GetDatasourceIdsByEngineName(rt.Ctx, name)
+
+	ginx.NewRender(c).Data(datasourceIds, err)
+}
+
 func Username(c *gin.Context) string {
 
 	return c.MustGet("username").(string)

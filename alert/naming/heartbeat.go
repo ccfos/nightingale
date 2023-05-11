@@ -74,7 +74,7 @@ func (n *Naming) heartbeat() error {
 	var err error
 
 	// 在页面上维护实例和集群的对应关系
-	datasourceIds, err = models.GetDatasourceIdsByClusterName(n.ctx, n.heartbeatConfig.EngineName)
+	datasourceIds, err = models.GetDatasourceIdsByEngineName(n.ctx, n.heartbeatConfig.EngineName)
 	if err != nil {
 		return err
 	}

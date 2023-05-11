@@ -367,6 +367,8 @@ func (rt *Router) Config(r *gin.Engine) {
 
 			service.POST("/conf-prop/encrypt", rt.confPropEncrypt)
 			service.POST("/conf-prop/decrypt", rt.confPropDecrypt)
+
+			service.GET("/datasource-ids", rt.getDatasourceIds)
 		}
 	}
 

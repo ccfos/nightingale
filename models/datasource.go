@@ -122,10 +122,10 @@ func GetDatasources(ctx *ctx.Context) ([]Datasource, error) {
 	return dss, err
 }
 
-func GetDatasourceIdsByClusterName(ctx *ctx.Context, clusterName string) ([]int64, error) {
+func GetDatasourceIdsByEngineName(ctx *ctx.Context, engineName string) ([]int64, error) {
 	var dss []Datasource
 	var ids []int64
-	err := DB(ctx).Where("cluster_name = ?", clusterName).Find(&dss).Error
+	err := DB(ctx).Where("cluster_name = ?", engineName).Find(&dss).Error
 	if err != nil {
 		return ids, err
 	}
