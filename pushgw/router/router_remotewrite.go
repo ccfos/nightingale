@@ -11,6 +11,15 @@ import (
 	"github.com/prometheus/prometheus/prompb"
 )
 
+func extractMetricFromTimeSeries(s *prompb.TimeSeries) string {
+	for i := 0; i < len(s.Labels); i++ {
+		if s.Labels[i].Name == "__name__" {
+			return s.Labels[i].Value
+		}
+	}
+	return ""
+}
+
 func extractIdentFromTimeSeries(s *prompb.TimeSeries) string {
 	for i := 0; i < len(s.Labels); i++ {
 		if s.Labels[i].Name == "ident" {
@@ -83,7 +92,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		ident = extractIdentFromTimeSeries(req.Timeseries[i])
 
 		// telegraf 上报数据的场景，只有在 metric 为 system_load1 时，说明指标来自机器，将 host 改为 ident，其他情况都忽略
-		if metric != "system_load1" {
+		if extractMetricFromTimeSeries(req.Timeseries[i]) != "system_load1" {
 			ident = ""
 		}
 

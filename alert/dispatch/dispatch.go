@@ -180,7 +180,7 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 		s := e.senders[channel]
 		e.RwLock.RUnlock()
 		if s == nil {
-			logger.Warningf("no sender for channel: %s", channel)
+			logger.Debugf("no sender for channel: %s", channel)
 			continue
 		}
 		logger.Debugf("send event: %s, channel: %s", event.Hash, channel)
