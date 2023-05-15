@@ -746,7 +746,7 @@ func AlertRuleStatistics(ctx *ctx.Context) (*Statistics, error) {
 }
 
 func (ar *AlertRule) IsPrometheusRule() bool {
-	return ar.Algorithm == "" && (ar.Cate == "" || strings.ToLower(ar.Cate) == PROMETHEUS)
+	return ar.Prod == METRIC && ar.Cate == PROMETHEUS
 }
 
 func (ar *AlertRule) IsHostRule() bool {
