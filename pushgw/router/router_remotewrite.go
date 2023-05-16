@@ -90,6 +90,13 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		}
 
 		ident = extractIdentFromTimeSeries(req.Timeseries[i])
+		if len(ident) > 0 {
+			// fill tags
+			target, has := rt.TargetCache.Get(ident)
+			if has {
+				rt.AppendLabels(req.Timeseries[i], target, rt.BusiGroupCache)
+			}
+		}
 
 		// telegraf 上报数据的场景，只有在 metric 为 system_load1 时，说明指标来自机器，将 host 改为 ident，其他情况都忽略
 		if extractMetricFromTimeSeries(req.Timeseries[i]) != "system_load1" {
@@ -99,12 +106,6 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		if len(ident) > 0 {
 			// register host
 			ids[ident] = struct{}{}
-
-			// fill tags
-			target, has := rt.TargetCache.Get(ident)
-			if has {
-				rt.AppendLabels(req.Timeseries[i], target, rt.BusiGroupCache)
-			}
 		}
 
 		rt.EnrichLabels(req.Timeseries[i])
