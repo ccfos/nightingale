@@ -13,7 +13,6 @@ alter table `board` add built_in tinyint(1) not null default 0 comment '0:false 
 alter table `board` add hide tinyint(1) not null default 0 comment '0:false 1:true';
 
 alter table `chart_share` add datasource_id bigint unsigned not null default 0;
-alter table `chart_share` drop dashboard_id;
 
 alter table `alert_rule` add datasource_ids varchar(255) not null default '';
 alter table `alert_rule` add rule_config text not null comment 'rule_config';
