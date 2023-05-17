@@ -81,7 +81,7 @@ func (pc *PromClientMap) loadFromDatabase() {
 		if pc.IsNil(dsId) {
 			// first time
 			if err = pc.setClientFromPromOption(dsId, po); err != nil {
-				logger.Errorf("failed to setClientFromPromOption: %v", err)
+				logger.Errorf("failed to setClientFromPromOption po:%+v err:%v", po, err)
 				continue
 			}
 

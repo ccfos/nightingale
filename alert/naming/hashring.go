@@ -40,8 +40,8 @@ func RebuildConsistentHashRing(datasourceId int64, nodes []string) {
 }
 
 func (chr *DatasourceHashRingType) GetNode(datasourceId int64, pk string) (string, error) {
-	chr.RLock()
-	defer chr.RUnlock()
+	chr.Lock()
+	defer chr.Unlock()
 	_, exists := chr.Rings[datasourceId]
 	if !exists {
 		chr.Rings[datasourceId] = NewConsistentHashRing(int32(NodeReplicas), []string{})
@@ -64,7 +64,7 @@ func (chr *DatasourceHashRingType) IsHit(datasourceId int64, pk string, currentN
 }
 
 func (chr *DatasourceHashRingType) Set(datasourceId int64, r *consistent.Consistent) {
-	chr.RLock()
-	defer chr.RUnlock()
+	chr.Lock()
+	defer chr.Unlock()
 	chr.Rings[datasourceId] = r
 }
