@@ -18,7 +18,7 @@ func Upgrade(configFile string) error {
 		return err
 	}
 
-	ctx := ctx.NewContext(context.Background(), db)
+	ctx := ctx.NewContext(context.Background(), db, false)
 	for _, cluster := range config.Clusters {
 		count, err := models.GetDatasourcesCountBy(ctx, "", "", cluster.Name)
 		if err != nil {

@@ -17,11 +17,12 @@ import (
 )
 
 type ConfigType struct {
-	Global GlobalConfig
-	Log    logx.Config
-	HTTP   httpx.Config
-	DB     ormx.DBConfig
-	Redis  storage.RedisConfig
+	Global      GlobalConfig
+	Log         logx.Config
+	HTTP        httpx.Config
+	DB          ormx.DBConfig
+	Redis       storage.RedisConfig
+	CenterAddrs []string
 
 	Pushgw pconf.Pushgw
 	Alert  aconf.Alert

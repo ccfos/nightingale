@@ -7,14 +7,18 @@ import (
 )
 
 type Context struct {
-	DB  *gorm.DB
-	Ctx context.Context
+	DB       *gorm.DB
+	Addrs    []string
+	Ctx      context.Context
+	IsCenter bool
 }
 
-func NewContext(ctx context.Context, db *gorm.DB) *Context {
+func NewContext(ctx context.Context, db *gorm.DB, isCenter bool, addrs ...string) *Context {
 	return &Context{
-		Ctx: ctx,
-		DB:  db,
+		Ctx:      ctx,
+		DB:       db,
+		Addrs:    addrs,
+		IsCenter: isCenter,
 	}
 }
 

@@ -16,14 +16,12 @@ import (
 type Naming struct {
 	ctx             *ctx.Context
 	heartbeatConfig aconf.HeartbeatConfig
-	isCenter        bool
 }
 
-func NewNaming(ctx *ctx.Context, heartbeat aconf.HeartbeatConfig, isCenter bool) *Naming {
+func NewNaming(ctx *ctx.Context, heartbeat aconf.HeartbeatConfig) *Naming {
 	naming := &Naming{
 		ctx:             ctx,
 		heartbeatConfig: heartbeat,
-		isCenter:        isCenter,
 	}
 	naming.Heartbeats()
 	return naming
@@ -112,7 +110,7 @@ func (n *Naming) heartbeat() error {
 		localss[datasourceIds[i]] = newss
 	}
 
-	if n.isCenter {
+	if n.ctx.IsCenter {
 		// 如果是中心节点，还需要处理 host 类型的告警规则，host 类型告警规则，和数据源无关，想复用下数据源的 hash ring，想用一个虚假的数据源 id 来处理
 		// if is center node, we need to handle host type alerting rules, host type alerting rules are not related to datasource, we want to reuse the hash ring of datasource, we want to use a fake datasource id to handle it
 		err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.EngineName, HostDatasource)
