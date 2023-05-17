@@ -150,6 +150,10 @@ func (w *NotifyConfigCacheType) GetSMTP() aconf.SMTPConfig {
 func (w *NotifyConfigCacheType) GetNotifyScript() models.NotifyScript {
 	w.RWMutex.RLock()
 	defer w.RWMutex.RUnlock()
+	if w.script.Timeout == 0 {
+		w.script.Timeout = 10
+	}
+
 	return w.script
 }
 
