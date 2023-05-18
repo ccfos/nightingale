@@ -230,6 +230,11 @@ func AlertMuteDel(ctx *ctx.Context, ids []int64) error {
 
 func AlertMuteStatistics(ctx *ctx.Context) (*Statistics, error) {
 	var stats []*Statistics
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=alert_mute")
+		return s, err
+	}
+
 	// clean expired first
 	buf := int64(30)
 	err := DB(ctx).Where("etime < ? and mute_time_type = 0", time.Now().Unix()-buf).Delete(new(AlertMute)).Error

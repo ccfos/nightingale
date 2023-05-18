@@ -36,7 +36,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	ctx := ctx.NewContext(context.Background(), db, false, config.CenterAddrs...)
+	ctx := ctx.NewContext(context.Background(), db, false, config.CenterApi)
 
 	idents := idents.New(db)
 

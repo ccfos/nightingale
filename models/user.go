@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
@@ -347,12 +348,18 @@ func UserGets(ctx *ctx.Context, query string, limit, offset int) ([]User, error)
 	for i := 0; i < len(users); i++ {
 		users[i].RolesLst = strings.Fields(users[i].Roles)
 		users[i].Admin = users[i].IsAdmin()
+		users[i].Password = ""
 	}
 
 	return users, nil
 }
 
 func UserGetAll(ctx *ctx.Context) ([]*User, error) {
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]*User](ctx, "/v1/n9e/users")
+		return lst, err
+	}
+
 	var lst []*User
 	err := DB(ctx).Find(&lst).Error
 	if err == nil {
@@ -429,6 +436,11 @@ func (u *User) CheckPerm(ctx *ctx.Context, operation string) (bool, error) {
 }
 
 func UserStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=user")
+		return s, err
+	}
+
 	session := DB(ctx).Model(&User{}).Select("count(*) as total", "max(update_at) as last_updated")
 
 	var stats []*Statistics

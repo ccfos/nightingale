@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -19,7 +20,7 @@ type Target struct {
 	Note     string            `json:"note"`
 	Tags     string            `json:"-"`
 	TagsJSON []string          `json:"tags" gorm:"-"`
-	TagsMap  map[string]string `json:"-" gorm:"-"` // internal use, append tags to series
+	TagsMap  map[string]string `json:"tags_maps" gorm:"-"` // internal use, append tags to series
 	UpdateAt int64             `json:"update_at"`
 
 	UnixTime   int64   `json:"unixtime" gorm:"-"`
@@ -59,6 +60,11 @@ func (t *Target) FillGroup(ctx *ctx.Context, cache map[int64]*BusiGroup) error {
 }
 
 func TargetStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=target")
+		return s, err
+	}
+
 	var stats []*Statistics
 	err := DB(ctx).Model(&Target{}).Select("count(*) as total", "max(update_at) as last_updated").Find(&stats).Error
 	if err != nil {
@@ -164,8 +170,16 @@ func TargetFilterQueryBuild(ctx *ctx.Context, query map[string]interface{}, limi
 }
 
 func TargetGetsAll(ctx *ctx.Context) ([]*Target, error) {
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]*Target](ctx, "/v1/n9e/targets")
+		return lst, err
+	}
+
 	var lst []*Target
 	err := DB(ctx).Model(&Target{}).Find(&lst).Error
+	for i := 0; i < len(lst); i++ {
+		lst[i].FillTagsMap()
+	}
 	return lst, err
 }
 

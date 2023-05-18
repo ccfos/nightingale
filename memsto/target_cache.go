@@ -144,14 +144,17 @@ func (tc *TargetCacheType) syncTargets() error {
 		return errors.WithMessage(err, "failed to call TargetGetsAll")
 	}
 
-	metaMap := tc.GetHostMetas(lst)
-
 	m := make(map[string]*models.Target)
-	for i := 0; i < len(lst); i++ {
-		lst[i].FillTagsMap()
-		if meta, ok := metaMap[lst[i].Ident]; ok {
-			lst[i].FillMeta(meta)
+	if tc.ctx.IsCenter {
+		metaMap := tc.GetHostMetas(lst)
+		for i := 0; i < len(lst); i++ {
+			if meta, ok := metaMap[lst[i].Ident]; ok {
+				lst[i].FillMeta(meta)
+			}
 		}
+	}
+
+	for i := 0; i < len(lst); i++ {
 		m[lst[i].Ident] = lst[i]
 	}
 

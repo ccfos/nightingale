@@ -12,19 +12,11 @@ import (
 )
 
 func (rt *Router) userFindAll(c *gin.Context) {
-	limit := ginx.QueryInt(c, "limit", 20)
-	query := ginx.QueryStr(c, "query", "")
-
-	total, err := models.UserTotal(rt.Ctx, query)
-	ginx.Dangerous(err)
-
-	list, err := models.UserGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
-	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Data(gin.H{
-		"list":  list,
-		"total": total,
-	}, nil)
+	list, err := models.UserGetAll(rt.Ctx)
+	for i := range list {
+		list[i].Password = ""
+	}
+	ginx.NewRender(c).Data(list, err)
 }
 
 func (rt *Router) userGets(c *gin.Context) {

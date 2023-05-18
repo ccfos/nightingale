@@ -19,6 +19,11 @@ func (rt *Router) recordingRuleGets(c *gin.Context) {
 	ginx.NewRender(c).Data(ars, err)
 }
 
+func (rt *Router) recordingRuleGetsByService(c *gin.Context) {
+	ars, err := models.RecordingRuleEnabledGets(rt.Ctx)
+	ginx.NewRender(c).Data(ars, err)
+}
+
 func (rt *Router) recordingRuleGet(c *gin.Context) {
 	rrid := ginx.UrlParamInt64(c, "rrid")
 

@@ -339,7 +339,10 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.POST("/users", rt.userAddPost)
 			service.GET("/users", rt.userFindAll)
 
-			service.GET("/targets", rt.targetGets)
+			service.GET("/user-groups", rt.userGroupGetsByService)
+			service.GET("/user-group-members", rt.userGroupMemberGetsByService)
+
+			service.GET("/targets", rt.targetGetsByService)
 			service.GET("/targets/tags", rt.targetGetTags)
 			service.POST("/targets/tags", rt.targetBindTagsByService)
 			service.DELETE("/targets/tags", rt.targetUnbindTagsByService)
@@ -350,6 +353,14 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.PUT("/alert-rule/:arid", rt.alertRulePutByService)
 			service.GET("/alert-rule/:arid", rt.alertRuleGet)
 			service.GET("/alert-rules", rt.alertRulesGetByService)
+
+			service.GET("/alert-subscribes", rt.alertSubscribeGetsByService)
+
+			service.GET("/busi-groups", rt.busiGroupGetsByService)
+
+			service.GET("/datasources", rt.datasourceGetsByService)
+
+			service.GET("/recording-rules", rt.recordingRuleGetsByService)
 
 			service.GET("/alert-mutes", rt.alertMuteGets)
 			service.POST("/alert-mutes", rt.alertMuteAddByService)
@@ -369,6 +380,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.POST("/conf-prop/decrypt", rt.confPropDecrypt)
 
 			service.GET("/datasource-ids", rt.getDatasourceIds)
+
+			service.GET("/statistic", rt.statistic)
 		}
 	}
 

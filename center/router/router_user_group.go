@@ -29,6 +29,17 @@ func (rt *Router) userGroupGets(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
+func (rt *Router) userGroupGetsByService(c *gin.Context) {
+	lst, err := models.UserGroupGetAll(rt.Ctx)
+	ginx.NewRender(c).Data(lst, err)
+}
+
+// user group member get by service
+func (rt *Router) userGroupMemberGetsByService(c *gin.Context) {
+	members, err := models.UserGroupMemberGetAll(rt.Ctx)
+	ginx.NewRender(c).Data(members, err)
+}
+
 type userGroupForm struct {
 	Name string `json:"name" binding:"required"`
 	Note string `json:"note"`

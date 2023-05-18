@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -64,9 +65,17 @@ func (bg *BusiGroup) FillUserGroups(ctx *ctx.Context) error {
 
 func BusiGroupGetMap(ctx *ctx.Context) (map[int64]*BusiGroup, error) {
 	var lst []*BusiGroup
-	err := DB(ctx).Find(&lst).Error
-	if err != nil {
-		return nil, err
+	var err error
+	if !ctx.IsCenter {
+		lst, err = poster.GetByUrls[[]*BusiGroup](ctx, "/v1/n9e/busi-groups")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = DB(ctx).Find(&lst).Error
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	ret := make(map[int64]*BusiGroup)
@@ -75,6 +84,12 @@ func BusiGroupGetMap(ctx *ctx.Context) (map[int64]*BusiGroup, error) {
 	}
 
 	return ret, nil
+}
+
+func BusiGroupGetAll(ctx *ctx.Context) ([]*BusiGroup, error) {
+	var lst []*BusiGroup
+	err := DB(ctx).Find(&lst).Error
+	return lst, err
 }
 
 func BusiGroupGet(ctx *ctx.Context, where string, args ...interface{}) (*BusiGroup, error) {
@@ -324,6 +339,11 @@ func BusiGroupAdd(ctx *ctx.Context, name string, labelEnable int, labelValue str
 }
 
 func BusiGroupStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=busi_group")
+		return s, err
+	}
+
 	session := DB(ctx).Model(&BusiGroup{}).Select("count(*) as total", "max(update_at) as last_updated")
 
 	var stats []*Statistics

@@ -46,6 +46,18 @@ type Statistics struct {
 	LastUpdated int64 `gorm:"last_updated"`
 }
 
+func StatisticsGet[T any](ctx *ctx.Context, model T) (*Statistics, error) {
+	var stats []*Statistics
+	session := DB(ctx).Model(model).Select("count(*) as total", "max(update_at) as last_updated")
+
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return stats[0], nil
+}
+
 func MatchDatasource(ids []int64, id int64) bool {
 	if id == DatasourceIdAll {
 		return true

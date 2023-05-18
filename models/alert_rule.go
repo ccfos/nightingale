@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
@@ -643,6 +644,11 @@ func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {
 }
 
 func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]*AlertRule](ctx, "/v1/n9e/alert-rules?disabled=0")
+		return lst, err
+	}
+
 	session := DB(ctx).Where("disabled = ?", 0)
 
 	var lst []*AlertRule
@@ -734,6 +740,11 @@ func AlertRuleGetName(ctx *ctx.Context, id int64) (string, error) {
 }
 
 func AlertRuleStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=alert_rule")
+		return s, err
+	}
+
 	session := DB(ctx).Model(&AlertRule{}).Select("count(*) as total", "max(update_at) as last_updated").Where("disabled = ?", 0)
 
 	var stats []*Statistics
