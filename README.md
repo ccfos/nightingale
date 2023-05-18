@@ -64,5 +64,5 @@ https://user-images.githubusercontent.com/792850/216888712-2565fcea-9df5-47bd-a4
 
 ## 社区管理
 
-- [夜莺开源项目和社区治理架构（草案）](./doc/community-governance.md)
+[夜莺开源项目和社区治理架构（草案）](./doc/community-governance.md)
 
