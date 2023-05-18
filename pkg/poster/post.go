@@ -29,8 +29,9 @@ func GetByUrls[T any](ctx *ctx.Context, path string) (T, error) {
 	rand.Shuffle(len(addrs), func(i, j int) { addrs[i], addrs[j] = addrs[j], addrs[i] })
 	for _, addr := range addrs {
 		url := fmt.Sprintf("%s%s", addr, path)
-		dat, err := GetByUrl[T](url, ctx.CenterApi.BasicAuth)
-		if err != nil {
+		dat, e := GetByUrl[T](url, ctx.CenterApi.BasicAuth)
+		if e != nil {
+			err = e
 			logger.Warningf("failed to get data from center, url: %s, err: %v", url, err)
 			continue
 		}

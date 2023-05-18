@@ -31,8 +31,6 @@ func (rt *Router) statistic(c *gin.Context) {
 		model = models.AlertSubscribe{}
 	case "busi_group":
 		model = models.BusiGroup{}
-	case "datasource":
-		model = models.Datasource{}
 	case "recording_rule":
 		model = models.RecordingRule{}
 	case "target":
@@ -41,14 +39,17 @@ func (rt *Router) statistic(c *gin.Context) {
 		model = models.User{}
 	case "user_group":
 		model = models.UserGroup{}
+	case "datasource":
+		// datasource update_at is different from others
+		statistics, err = models.StatisticsGet(rt.Ctx, model)
+		ginx.NewRender(c).Data(statistics, err)
+		return
 	default:
 		ginx.Bomb(http.StatusBadRequest, "invalid name")
 	}
 
 	statistics, err = models.StatisticsGet(rt.Ctx, model)
-	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Data(statistics, nil)
+	ginx.NewRender(c).Data(statistics, err)
 }
 
 func queryDatasourceIds(c *gin.Context) []int64 {

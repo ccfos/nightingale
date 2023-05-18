@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/runner"
@@ -43,6 +44,13 @@ func InitSalt(ctx *ctx.Context) {
 }
 
 func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) {
+	if !ctx.IsCenter {
+		if !ctx.IsCenter {
+			s, err := poster.GetByUrls[string](ctx, "/v1/n9e/config?key="+ckey)
+			return s, err
+		}
+	}
+
 	var lst []string
 	err := DB(ctx).Model(&Configs{}).Where("ckey=?", ckey).Pluck("cval", &lst).Error
 	if err != nil {
