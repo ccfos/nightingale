@@ -61,10 +61,6 @@ func GetByUrl[T any](url string, basicAuth gin.Accounts) (T, error) {
 	if err != nil {
 		return dat, fmt.Errorf("failed to fetch from url: %w", err)
 	}
-
-	if err != nil {
-		return dat, fmt.Errorf("failed to fetch from url: %w", err)
-	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -90,15 +86,74 @@ func GetByUrl[T any](url string, basicAuth gin.Accounts) (T, error) {
 	return dataResp.Dat, nil
 }
 
-func PostByUrls(urls []string, timeout time.Duration, v interface{}) (response []byte, code int, err error) {
-	rand.Shuffle(len(urls), func(i, j int) { urls[i], urls[j] = urls[j], urls[i] })
-	for _, url := range urls {
-		response, code, err = PostJSON(url, timeout, v)
+type PostResponse struct {
+	Err string `json:"err"`
+}
+
+func PostByUrls(ctx *ctx.Context, path string, v interface{}) (err error) {
+	addrs := ctx.CenterApi.Addrs
+
+	rand.Shuffle(len(addrs), func(i, j int) { addrs[i], addrs[j] = addrs[j], addrs[i] })
+	for _, addr := range addrs {
+		url := fmt.Sprintf("%s%s", addr, path)
+		err = PostByUrl(url, ctx.CenterApi.BasicAuth, v)
 		if err == nil {
 			return
 		}
 	}
 	return
+}
+
+func PostByUrl(url string, basicAuth gin.Accounts, v interface{}) (err error) {
+	var bs []byte
+	bs, err = json.Marshal(v)
+	if err != nil {
+		return
+	}
+	bf := bytes.NewBuffer(bs)
+	client := http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	req, err := http.NewRequest("POST", url, bf)
+	req.Header.Set("Content-Type", "application/json")
+
+	if len(basicAuth) > 0 {
+		var token string
+		for username, password := range basicAuth {
+			token = base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+		}
+		if len(token) > 0 {
+			req.Header.Set("Authorization", "Basic "+token)
+		}
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to fetch from url: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var dataResp PostResponse
+	err = json.Unmarshal(body, &dataResp)
+	if err != nil {
+		return fmt.Errorf("failed to decode response: %w body:%s", err, string(body))
+	}
+
+	if dataResp.Err != "" {
+		return fmt.Errorf("error from server: %s", dataResp.Err)
+	}
+
+	return nil
 }
 
 func PostJSON(url string, timeout time.Duration, v interface{}, retries ...int) (response []byte, code int, err error) {

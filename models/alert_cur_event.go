@@ -220,13 +220,25 @@ func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
 	}
 }
 
-func (e *AlertCurEvent) DB2FE(ctx *ctx.Context) {
+func (e *AlertCurEvent) DB2FE() {
 	e.NotifyChannelsJSON = strings.Fields(e.NotifyChannels)
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
 	e.CallbacksJSON = strings.Fields(e.Callbacks)
 	e.TagsJSON = strings.Split(e.Tags, ",,")
 	json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
 	json.Unmarshal([]byte(e.RuleConfig), &e.RuleConfigJson)
+}
+
+func (e *AlertCurEvent) FE2DB() {
+	e.NotifyChannels = strings.Join(e.NotifyChannelsJSON, " ")
+	e.NotifyGroups = strings.Join(e.NotifyGroupsJSON, " ")
+	e.Callbacks = strings.Join(e.CallbacksJSON, " ")
+	e.Tags = strings.Join(e.TagsJSON, ",,")
+	b, _ := json.Marshal(e.AnnotationsJSON)
+	e.Annotations = string(b)
+
+	b, _ = json.Marshal(e.RuleConfigJson)
+	e.RuleConfig = string(b)
 }
 
 func (e *AlertCurEvent) DB2Mem() {
@@ -356,7 +368,7 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
-			lst[i].DB2FE(ctx)
+			lst[i].DB2FE()
 		}
 	}
 
@@ -390,7 +402,7 @@ func AlertCurEventGet(ctx *ctx.Context, where string, args ...interface{}) (*Ale
 		return nil, nil
 	}
 
-	lst[0].DB2FE(ctx)
+	lst[0].DB2FE()
 	lst[0].FillNotifyGroups(ctx, make(map[int64]*UserGroup))
 
 	return lst[0], nil
@@ -435,7 +447,7 @@ func AlertCurEventGetByIds(ctx *ctx.Context, ids []int64) ([]*AlertCurEvent, err
 	err := DB(ctx).Where("id in ?", ids).Order("id desc").Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
-			lst[i].DB2FE(ctx)
+			lst[i].DB2FE()
 		}
 	}
 

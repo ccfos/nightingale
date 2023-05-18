@@ -48,6 +48,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		service.Use(gin.BasicAuth(rt.HTTP.Alert.BasicAuth))
 	}
 	service.POST("/event", rt.pushEventToQueue)
+	service.POST("/event-persist", rt.eventPersist)
 	service.POST("/make-event", rt.makeEvent)
 }
 

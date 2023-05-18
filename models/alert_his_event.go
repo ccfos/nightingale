@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -61,7 +62,7 @@ func (e *AlertHisEvent) Add(ctx *ctx.Context) error {
 	return Insert(ctx, e)
 }
 
-func (e *AlertHisEvent) DB2FE(ctx *ctx.Context) {
+func (e *AlertHisEvent) DB2FE() {
 	e.NotifyChannelsJSON = strings.Fields(e.NotifyChannels)
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
 	e.CallbacksJSON = strings.Fields(e.Callbacks)
@@ -182,7 +183,7 @@ func AlertHisEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
-			lst[i].DB2FE(ctx)
+			lst[i].DB2FE()
 		}
 	}
 
@@ -200,7 +201,7 @@ func AlertHisEventGet(ctx *ctx.Context, where string, args ...interface{}) (*Ale
 		return nil, nil
 	}
 
-	lst[0].DB2FE(ctx)
+	lst[0].DB2FE()
 	lst[0].FillNotifyGroups(ctx, make(map[int64]*UserGroup))
 
 	return lst[0], nil
@@ -257,5 +258,55 @@ func AlertHisEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 			logger.Errorf("update alert rule:%d datasource ids failed, %v", lst[i].Id, err)
 		}
 	}
+	return nil
+}
+
+func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
+	has, err := AlertCurEventExists(ctx, "hash=?", event.Hash)
+	if err != nil {
+		return fmt.Errorf("event_persist_check_exists_fail: %v rule_id=%d hash=%s", err, event.RuleId, event.Hash)
+	}
+
+	his := event.ToHis(ctx)
+
+	// 不管是告警还是恢复，全量告警里都要记录
+	if err := his.Add(ctx); err != nil {
+		return fmt.Errorf("add his event error:%v", err)
+	}
+
+	if has {
+		// 活跃告警表中有记录，删之
+		err = AlertCurEventDelByHash(ctx, event.Hash)
+		if err != nil {
+			return fmt.Errorf("event_del_cur_fail: %v hash=%s", err, event.Hash)
+		}
+
+		if !event.IsRecovered {
+			// 恢复事件，从活跃告警列表彻底删掉，告警事件，要重新加进来新的event
+			// use his id as cur id
+			event.Id = his.Id
+			if event.Id > 0 {
+				if err := event.Add(ctx); err != nil {
+					return fmt.Errorf("add cur event err:%v", err)
+				}
+			}
+		}
+
+		return nil
+	}
+
+	if event.IsRecovered {
+		// alert_cur_event表里没有数据，表示之前没告警，结果现在报了恢复，神奇....理论上不应该出现的
+		return nil
+	}
+
+	// use his id as cur id
+	event.Id = his.Id
+	if event.Id > 0 {
+		if err := event.Add(ctx); err != nil {
+			return fmt.Errorf("add cur event error:%v", err)
+		}
+	}
+
 	return nil
 }
