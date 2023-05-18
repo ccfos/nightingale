@@ -37,7 +37,8 @@ func (rt *Router) datasourceList(c *gin.Context) {
 }
 
 func (rt *Router) datasourceGetsByService(c *gin.Context) {
-	lst, err := models.GetDatasourcesGetsBy(rt.Ctx, "", "", "", "")
+	typ := ginx.QueryStr(c, "typ", "")
+	lst, err := models.GetDatasourcesGetsBy(rt.Ctx, typ, "", "", "")
 	ginx.NewRender(c).Data(lst, err)
 }
 

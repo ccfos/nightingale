@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
 
 	"github.com/prometheus/client_golang/api"
@@ -42,11 +43,22 @@ type PromSetting struct {
 }
 
 func (pc *PromClientMap) loadFromDatabase() {
-	datasources, err := models.GetDatasourcesGetsBy(pc.ctx, models.PROMETHEUS, "", "", "")
-	if err != nil {
-		logger.Errorf("failed to get datasources, error: %v", err)
-		return
+	var datasources []*models.Datasource
+	var err error
+	if !pc.ctx.IsCenter {
+		datasources, err = poster.GetByUrls[[]*models.Datasource](pc.ctx, "/v1/n9e/datasources?typ="+models.PROMETHEUS)
+		if err != nil {
+			logger.Errorf("failed to get datasources, error: %v", err)
+			return
+		}
+	} else {
+		datasources, err = models.GetDatasourcesGetsBy(pc.ctx, models.PROMETHEUS, "", "", "")
+		if err != nil {
+			logger.Errorf("failed to get datasources, error: %v", err)
+			return
+		}
 	}
+
 	newCluster := make(map[int64]struct{})
 	for _, ds := range datasources {
 		dsId := ds.Id
