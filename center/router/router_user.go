@@ -13,9 +13,6 @@ import (
 
 func (rt *Router) userFindAll(c *gin.Context) {
 	list, err := models.UserGetAll(rt.Ctx)
-	for i := range list {
-		list[i].Password = ""
-	}
 	ginx.NewRender(c).Data(list, err)
 }
 

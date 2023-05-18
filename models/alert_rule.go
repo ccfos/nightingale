@@ -646,6 +646,12 @@ func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {
 func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*AlertRule](ctx, "/v1/n9e/alert-rules?disabled=0")
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].FE2DB()
+		}
 		return lst, err
 	}
 

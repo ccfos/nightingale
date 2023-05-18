@@ -257,6 +257,12 @@ func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 	var lst []*AlertMute
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*AlertMute](ctx, "/v1/n9e/alert-mutes")
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].FE2DB()
+		}
 		return lst, err
 	}
 

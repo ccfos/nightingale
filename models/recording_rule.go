@@ -217,6 +217,12 @@ func RecordingRuleEnabledGets(ctx *ctx.Context) ([]*RecordingRule, error) {
 func RecordingRuleGetsByCluster(ctx *ctx.Context) ([]*RecordingRule, error) {
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*RecordingRule](ctx, "/v1/n9e/recording-rules")
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].FE2DB()
+		}
 		return lst, err
 	}
 

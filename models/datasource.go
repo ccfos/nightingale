@@ -279,6 +279,9 @@ func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 		if err != nil {
 			return nil, err
 		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].FE2DB()
+		}
 	} else {
 		err := DB(ctx).Find(&lst).Error
 		if err != nil {

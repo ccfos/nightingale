@@ -55,6 +55,13 @@ func AlertSubscribeGets(ctx *ctx.Context, groupId int64) (lst []AlertSubscribe, 
 
 func AlertSubscribeGetsByService(ctx *ctx.Context) (lst []AlertSubscribe, err error) {
 	err = DB(ctx).Find(&lst).Error
+	if err != nil {
+		return
+	}
+
+	for i := range lst {
+		lst[i].DB2FE()
+	}
 	return
 }
 
@@ -287,6 +294,12 @@ func AlertSubscribeStatistics(ctx *ctx.Context) (*Statistics, error) {
 func AlertSubscribeGetsAll(ctx *ctx.Context) ([]*AlertSubscribe, error) {
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*AlertSubscribe](ctx, "/v1/n9e/alert-subscribes")
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].FE2DB()
+		}
 		return lst, err
 	}
 
