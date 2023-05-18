@@ -56,7 +56,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	metas := metas.New(redis)
-	idents := idents.New(db)
+	idents := idents.New(ctx)
 
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()

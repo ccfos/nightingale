@@ -12,7 +12,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/router"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
-	"github.com/ccfos/nightingale/v6/storage"
 )
 
 type PushgwProvider struct {
@@ -31,14 +30,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	db, err := storage.New(config.DB)
-	if err != nil {
-		return nil, err
-	}
+	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
 
-	ctx := ctx.NewContext(context.Background(), db, false, config.CenterApi)
-
-	idents := idents.New(db)
+	idents := idents.New(ctx)
 
 	stats := memsto.NewSyncStats()
 
