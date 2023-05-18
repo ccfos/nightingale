@@ -94,6 +94,10 @@ func ListTpls(c *ctx.Context) (map[string]*template.Template, error) {
 }
 
 func InitNotifyConfig(c *ctx.Context, tplDir string) {
+	if !c.IsCenter {
+		return
+	}
+
 	// init notify channel
 	cval, err := ConfigsGet(c, NOTIFYCHANNEL)
 	if err != nil {

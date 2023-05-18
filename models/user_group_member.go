@@ -59,7 +59,7 @@ func UserGroupMemberDel(ctx *ctx.Context, groupId int64, userIds []int64) error 
 
 func UserGroupMemberGetAll(ctx *ctx.Context) ([]*UserGroupMember, error) {
 	if !ctx.IsCenter {
-		lst, err := poster.GetByUrls[[]*UserGroupMember](ctx, "/v1/n9e/user-group-memebers")
+		lst, err := poster.GetByUrls[[]*UserGroupMember](ctx, "/v1/n9e/user-group-members")
 		return lst, err
 	}
 
