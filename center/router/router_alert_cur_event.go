@@ -128,6 +128,13 @@ func (rt *Router) alertCurEventsCardDetails(c *gin.Context) {
 	ginx.NewRender(c).Data(list, err)
 }
 
+// alertCurEventsGetByRid
+func (rt *Router) alertCurEventsGetByRid(c *gin.Context) {
+	rid := ginx.QueryInt64(c, "rid")
+	dsId := ginx.QueryInt64(c, "dsid")
+	ginx.NewRender(c).Data(models.AlertCurEventGetByRuleIdAndDsId(rt.Ctx, rid, dsId))
+}
+
 // 列表方式，拉取活跃告警
 func (rt *Router) alertCurEventsList(c *gin.Context) {
 	stime, etime := getTimeRange(c)

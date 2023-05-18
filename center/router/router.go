@@ -370,6 +370,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.DELETE("/alert-mutes", rt.alertMuteDel)
 
 			service.GET("/alert-cur-events", rt.alertCurEventsList)
+			service.GET("/alert-cur-events-get-by-rid", rt.alertCurEventsGetByRid)
 			service.GET("/alert-his-events", rt.alertHisEventsList)
 			service.GET("/alert-his-event/:eid", rt.alertHisEventGet)
 
