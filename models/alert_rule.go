@@ -668,7 +668,11 @@ func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 }
 
 func AlertRulesGetsBy(ctx *ctx.Context, prods []string, query, algorithm, cluster string, cates []string, disabled int) ([]*AlertRule, error) {
-	session := DB(ctx).Where("prod in (?)", prods)
+	session := DB(ctx)
+
+	if len(prods) > 0 {
+		session = session.Where("prod in (?)", prods)
+	}
 
 	if query != "" {
 		arr := strings.Fields(query)
