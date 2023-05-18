@@ -15,7 +15,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, ibexConf aconf.Ibex) {
+func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType, ibexConf aconf.Ibex) {
 	for _, url := range urls {
 		if url == "" {
 			continue
@@ -23,7 +23,7 @@ func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent,
 
 		if strings.HasPrefix(url, "${ibex}") {
 			if !event.IsRecovered {
-				handleIbex(ctx, url, event, targetCache, ibexConf)
+				handleIbex(ctx, url, event, targetCache, userCache, ibexConf)
 			}
 			continue
 		}
@@ -60,7 +60,7 @@ type TaskCreateReply struct {
 	Dat int64  `json:"dat"` // task.id
 }
 
-func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, ibexConf aconf.Ibex) {
+func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType, ibexConf aconf.Ibex) {
 	arr := strings.Split(url, "/")
 
 	var idstr string
@@ -103,7 +103,7 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 
 	// check perm
 	// tpl.GroupId - host - account 三元组校验权限
-	can, err := canDoIbex(ctx, tpl.UpdateBy, tpl, host, targetCache)
+	can, err := canDoIbex(ctx, tpl.UpdateBy, tpl, host, targetCache, userCache)
 	if err != nil {
 		logger.Errorf("event_callback_ibex: check perm fail: %v", err)
 		return
@@ -176,12 +176,8 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 	}
 }
 
-func canDoIbex(ctx *ctx.Context, username string, tpl *models.TaskTpl, host string, targetCache *memsto.TargetCacheType) (bool, error) {
-	user, err := models.UserGetByUsername(ctx, username)
-	if err != nil {
-		return false, err
-	}
-
+func canDoIbex(ctx *ctx.Context, username string, tpl *models.TaskTpl, host string, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType) (bool, error) {
+	user := userCache.GetByUsername(username)
 	if user != nil && user.IsAdmin() {
 		return true, nil
 	}

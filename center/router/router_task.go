@@ -120,6 +120,12 @@ func (f *taskForm) HandleFH(fh string) {
 	f.Title = f.Title + " FH: " + fh
 }
 
+func (rt *Router) taskRecordAdd(c *gin.Context) {
+	var f *models.TaskRecord
+	ginx.BindJSON(c, &f)
+	ginx.NewRender(c).Message(f.Add(rt.Ctx))
+}
+
 func (rt *Router) taskAdd(c *gin.Context) {
 	var f taskForm
 	ginx.BindJSON(c, &f)

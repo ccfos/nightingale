@@ -124,6 +124,11 @@ func GetDatasources(ctx *ctx.Context) ([]Datasource, error) {
 }
 
 func GetDatasourceIdsByEngineName(ctx *ctx.Context, engineName string) ([]int64, error) {
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]int64](ctx, "/v1/n9e/datasource-ids?name="+engineName)
+		return lst, err
+	}
+
 	var dss []Datasource
 	var ids []int64
 	err := DB(ctx).Where("cluster_name = ?", engineName).Find(&dss).Error

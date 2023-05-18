@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 )
 
 type AlertingEngines struct {
@@ -128,7 +129,23 @@ func AlertingEngineGetsInstances(ctx *ctx.Context, where string, args ...interfa
 	return arr, err
 }
 
+type HeartbeatInfo struct {
+	Instance      string `json:"instance"`
+	EngineCluster string `json:"engine_cluster"`
+	DatasourceId  int64  `json:"datasource_id"`
+}
+
 func AlertingEngineHeartbeatWithCluster(ctx *ctx.Context, instance, cluster string, datasourceId int64) error {
+	if !ctx.IsCenter {
+		info := HeartbeatInfo{
+			Instance:      instance,
+			EngineCluster: cluster,
+			DatasourceId:  datasourceId,
+		}
+		err := poster.PostByUrls(ctx, "/v1/n9e/server-heartbeat", info)
+		return err
+	}
+
 	var total int64
 	err := DB(ctx).Model(new(AlertingEngines)).Where("instance=? and engine_cluster = ? and datasource_id=?", instance, cluster, datasourceId).Count(&total).Error
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
 	"github.com/pkg/errors"
@@ -59,6 +60,11 @@ func NotifyTplCountByChannel(c *ctx.Context, channel string) (int64, error) {
 }
 
 func NotifyTplGets(c *ctx.Context) ([]*NotifyTpl, error) {
+	if !c.IsCenter {
+		lst, err := poster.GetByUrls[[]*NotifyTpl](c, "/v1/n9e/notify-tpls")
+		return lst, err
+	}
+
 	var lst []*NotifyTpl
 	err := DB(c).Find(&lst).Error
 	return lst, err

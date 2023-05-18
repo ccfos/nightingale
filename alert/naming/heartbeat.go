@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -43,6 +44,10 @@ func (n *Naming) Heartbeats() error {
 }
 
 func (n *Naming) loopDeleteInactiveInstances() {
+	if !n.ctx.IsCenter {
+		return
+	}
+
 	interval := time.Duration(10) * time.Minute
 	for {
 		time.Sleep(interval)
@@ -142,6 +147,11 @@ func (n *Naming) heartbeat() error {
 func (n *Naming) ActiveServers(datasourceId int64) ([]string, error) {
 	if datasourceId == -1 {
 		return nil, fmt.Errorf("cluster is empty")
+	}
+
+	if !n.ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]string](n.ctx, "/v1/n9e/servers-active?dsid="+fmt.Sprintf("%d", datasourceId))
+		return lst, err
 	}
 
 	// 30秒内有心跳，就认为是活的

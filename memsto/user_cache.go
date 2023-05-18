@@ -58,6 +58,17 @@ func (uc *UserCacheType) GetByUserId(id int64) *models.User {
 	return uc.users[id]
 }
 
+func (uc *UserCacheType) GetByUsername(name string) *models.User {
+	uc.RLock()
+	defer uc.RUnlock()
+	for _, v := range uc.users {
+		if v.Username == name {
+			return v
+		}
+	}
+	return nil
+}
+
 func (uc *UserCacheType) GetByUserIds(ids []int64) []*models.User {
 	set := make(map[int64]struct{})
 

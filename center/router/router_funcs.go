@@ -41,7 +41,7 @@ func (rt *Router) statistic(c *gin.Context) {
 		model = models.UserGroup{}
 	case "datasource":
 		// datasource update_at is different from others
-		statistics, err = models.StatisticsGet(rt.Ctx, model)
+		statistics, err = models.DatasourceStatistics(rt.Ctx)
 		ginx.NewRender(c).Data(statistics, err)
 		return
 	default:

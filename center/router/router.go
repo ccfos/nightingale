@@ -359,6 +359,9 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/busi-groups", rt.busiGroupGetsByService)
 
 			service.GET("/datasources", rt.datasourceGetsByService)
+			service.GET("/datasource-ids", rt.getDatasourceIds)
+			service.POST("/server-heartbeat", rt.serverHeartbeat)
+			service.GET("/servers-active", rt.serversActive)
 
 			service.GET("/recording-rules", rt.recordingRuleGetsByService)
 
@@ -380,9 +383,11 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.POST("/conf-prop/encrypt", rt.confPropEncrypt)
 			service.POST("/conf-prop/decrypt", rt.confPropDecrypt)
 
-			service.GET("/datasource-ids", rt.getDatasourceIds)
-
 			service.GET("/statistic", rt.statistic)
+
+			service.GET("/notify-tpls", rt.notifyTplGets)
+
+			service.POST("/task-record-add", rt.taskRecordAdd)
 		}
 	}
 
