@@ -4,7 +4,6 @@ import (
 	"path"
 
 	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/runner"
 )
 
 // metricDesc , As load map happens before read map, there is no necessary to use concurrent map for metric desc store
@@ -33,10 +32,10 @@ func GetMetricDesc(lang, metric string) string {
 	return MetricDesc.CommonDesc[metric]
 }
 
-func LoadMetricsYaml(metricsYamlFile string) error {
+func LoadMetricsYaml(configDir, metricsYamlFile string) error {
 	fp := metricsYamlFile
 	if fp == "" {
-		fp = path.Join(runner.Cwd, "etc", "metrics.yaml")
+		fp = path.Join(configDir, "metrics.yaml")
 	}
 	if !file.IsExist(fp) {
 		return nil

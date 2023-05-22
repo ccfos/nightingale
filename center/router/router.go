@@ -304,7 +304,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/role/:id/ops", rt.auth(), rt.admin(), rt.operationOfRole)
 		pages.PUT("/role/:id/ops", rt.auth(), rt.admin(), rt.roleBindOperation)
-		pages.GET("operation", rt.operations)
+		pages.GET("/operation", rt.operations)
 
 		pages.GET("/notify-tpls", rt.auth(), rt.admin(), rt.notifyTplGets)
 		pages.PUT("/notify-tpl/content", rt.auth(), rt.admin(), rt.notifyTplUpdateContent)

@@ -33,8 +33,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, fmt.Errorf("failed to init config: %v", err)
 	}
 
-	cconf.LoadMetricsYaml(config.Center.MetricsYamlFile)
-	cconf.LoadOpsYaml(config.Center.OpsYamlFile)
+	cconf.LoadMetricsYaml(configDir, config.Center.MetricsYamlFile)
+	cconf.LoadOpsYaml(configDir, config.Center.OpsYamlFile)
 
 	logxClean, err := logx.Init(config.Log)
 	if err != nil {

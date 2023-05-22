@@ -4,7 +4,6 @@ import (
 	"path"
 
 	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/runner"
 )
 
 var Operations = Operation{}
@@ -19,10 +18,10 @@ type Ops struct {
 	Ops   []string `yaml:"ops" json:"ops"`
 }
 
-func LoadOpsYaml(opsYamlFile string) error {
+func LoadOpsYaml(configDir string, opsYamlFile string) error {
 	fp := opsYamlFile
 	if fp == "" {
-		fp = path.Join(runner.Cwd, "etc", "ops.yaml")
+		fp = path.Join(configDir, "ops.yaml")
 	}
 	if !file.IsExist(fp) {
 		return nil
