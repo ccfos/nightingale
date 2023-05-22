@@ -113,6 +113,17 @@ func (ds *Datasource) Get(ctx *ctx.Context) error {
 }
 
 func GetDatasources(ctx *ctx.Context) ([]Datasource, error) {
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]Datasource](ctx, "/v1/n9e/datasources")
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].FE2DB()
+		}
+		return lst, nil
+	}
+
 	var dss []Datasource
 	err := DB(ctx).Find(&dss).Error
 

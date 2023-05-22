@@ -148,6 +148,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/auth/callback", rt.loginCallback)
 		pages.GET("/auth/callback/cas", rt.loginCallbackCas)
 		pages.GET("/auth/callback/oauth", rt.loginCallbackOAuth)
+		pages.GET("/auth/perms", rt.allPerms)
 
 		pages.GET("/metrics/desc", rt.metricsDescGetFile)
 		pages.POST("/metrics/desc", rt.metricsDescGetMap)

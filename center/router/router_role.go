@@ -83,3 +83,18 @@ func (rt *Router) roleGets(c *gin.Context) {
 	lst, err := models.RoleGetsAll(rt.Ctx)
 	ginx.NewRender(c).Data(lst, err)
 }
+
+func (rt *Router) allPerms(c *gin.Context) {
+	roles, err := models.RoleGetsAll(rt.Ctx)
+	ginx.Dangerous(err)
+	m := make(map[string][]string)
+	for _, r := range roles {
+		lst, err := models.OperationsOfRole(rt.Ctx, strings.Fields(r.Name))
+		if err != nil {
+			continue
+		}
+		m[r.Name] = lst
+	}
+
+	ginx.NewRender(c).Data(m, err)
+}
