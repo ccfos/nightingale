@@ -21,6 +21,14 @@ const (
 	PROMETHEUS = "prometheus"
 )
 
+// enum for alert rule level using iota
+const (
+	DEFAULT = iota
+	EMERGENCY
+	WARNING
+	NOTICE
+)
+
 type AlertRule struct {
 	Id                    int64             `json:"id" gorm:"primaryKey"`
 	GroupId               int64             `json:"group_id"`                      // busi group id
@@ -76,11 +84,32 @@ type AlertRule struct {
 }
 
 type PromRuleConfig struct {
-	Queries    []PromQuery `json:"queries"`
-	Inhibit    bool        `json:"inhibit"`
-	PromQl     string      `json:"prom_ql"`
-	Severity   int         `json:"severity"`
-	AlgoParams interface{} `json:"algo_params"`
+	Queries      []PromQuery         `json:"queries"`
+	Inhibit      bool                `json:"inhibit"`
+	PromQl       string              `json:"prom_ql"`
+	Severity     int                 `json:"severity"`
+	AlgoParams   interface{}         `json:"algo_params"`
+	AlertConfigs map[int]AlertConfig `json:"alert_configs"` // 告警配置
+}
+
+// 告警配置
+type AlertConfig struct {
+	EnableStime           string     `json:"-" gorm:"-"`                        // split by space: "00:00 10:00 12:00"
+	EnableStimeJSON       string     `json:"-" gorm:"-"`                        // for fe
+	EnableStimesJSON      []string   `json:"enable_stimes" gorm:"-"`            // for fe
+	EnableEtime           string     `json:"-" gorm:"-"`                        // split by space: "00:00 10:00 12:00"
+	EnableEtimeJSON       string     `json:"-" gorm:"-"`                        // for fe
+	EnableEtimesJSON      []string   `json:"enable_etimes" gorm:"-"`            // for fe
+	EnableDaysOfWeek      string     `json:"-" gorm:"-"`                        // eg: "0 1 2 3 4 5 6 ; 0 1 2"
+	EnableDaysOfWeekJSON  []string   `json:"-" gorm:"-"`                        // for fe
+	EnableDaysOfWeeksJSON [][]string `json:"enable_days_of_weeks" gorm:"-"`     // for fe
+	NotifyChannels        string     `json:"-" gorm:"-"`                        // split by space: sms voice email dingtalk wecom
+	NotifyChannelsJSON    []string   `json:"notify_channels" gorm:"-" gorm:"-"` // for fe
+	NotifyGroups          string     `json:"-" gorm:"-"`                        // split by space: 233 43
+	NotifyGroupsJSON      []string   `json:"notify_groups" gorm:"-"`            // for fe
+	NotifyRepeatStep      int        `json:"notify_repeat_step"`                // notify repeat interval, unit: min
+	NotifyMaxNumber       int        `json:"notify_max_number"`                 // notify: max number
+	RecoverDuration       int64      `json:"recover_duration"`                  // unit: s
 }
 
 type HostRuleConfig struct {
@@ -90,8 +119,10 @@ type HostRuleConfig struct {
 }
 
 type PromQuery struct {
-	PromQl   string `json:"prom_ql"`
-	Severity int    `json:"severity"`
+	PromQl       string `json:"prom_ql"`
+	Severity     int    `json:"severity"`                // 报警级别
+	Description  string `json:"description,omitempty"`   // 说明
+	CustomNotify bool   `json:"custom_notify,omitempty"` // 是否选择默认的配置, 0: 否, 1: 是
 }
 
 type HostTrigger struct {
@@ -865,4 +896,53 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 
 	}
 	return nil
+}
+
+func (ac *AlertConfig) DB2FE() {
+	ac.EnableStimesJSON = strings.Fields(ac.EnableStime)
+	ac.EnableEtimesJSON = strings.Fields(ac.EnableEtime)
+	if len(ac.EnableEtimesJSON) > 0 {
+		ac.EnableStimeJSON = ac.EnableStimesJSON[0]
+		ac.EnableEtimeJSON = ac.EnableEtimesJSON[0]
+	}
+
+	cache := strings.Split(ac.EnableDaysOfWeek, ";")
+	for i := 0; i < len(cache); i++ {
+		ac.EnableDaysOfWeeksJSON = append(ac.EnableDaysOfWeeksJSON, strings.Fields(cache[i]))
+	}
+	if len(ac.EnableDaysOfWeeksJSON) > 0 {
+		ac.EnableDaysOfWeekJSON = ac.EnableDaysOfWeeksJSON[0]
+	}
+
+	ac.NotifyChannelsJSON = strings.Fields(ac.NotifyChannels)
+	ac.NotifyGroupsJSON = strings.Fields(ac.NotifyGroups)
+}
+func (ac *AlertConfig) FE2DB() {
+
+	if len(ac.EnableStimesJSON) > 0 {
+		ac.EnableStime = strings.Join(ac.EnableStimesJSON, " ")
+		ac.EnableEtime = strings.Join(ac.EnableEtimesJSON, " ")
+	} else {
+		ac.EnableStime = ac.EnableStimeJSON
+		ac.EnableEtime = ac.EnableEtimeJSON
+	}
+
+	if len(ac.EnableDaysOfWeeksJSON) > 0 {
+		for i := 0; i < len(ac.EnableDaysOfWeeksJSON); i++ {
+			if len(ac.EnableDaysOfWeeksJSON) == 1 {
+				ac.EnableDaysOfWeek = strings.Join(ac.EnableDaysOfWeeksJSON[i], " ")
+			} else {
+				if i == len(ac.EnableDaysOfWeeksJSON)-1 {
+					ac.EnableDaysOfWeek += strings.Join(ac.EnableDaysOfWeeksJSON[i], " ")
+				} else {
+					ac.EnableDaysOfWeek += strings.Join(ac.EnableDaysOfWeeksJSON[i], " ") + ";"
+				}
+			}
+		}
+	} else {
+		ac.EnableDaysOfWeek = strings.Join(ac.EnableDaysOfWeekJSON, " ")
+	}
+
+	ac.NotifyChannels = strings.Join(ac.NotifyChannelsJSON, " ")
+	ac.NotifyGroups = strings.Join(ac.NotifyGroupsJSON, " ")
 }

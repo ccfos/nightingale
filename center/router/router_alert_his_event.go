@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -78,5 +79,39 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 		ginx.Bomb(404, "No such alert event")
 	}
 
+	ginx.NewRender(c).Data(event, err)
+}
+
+func (rt *Router) alertEventGet(c *gin.Context) {
+	hash := ginx.UrlParamStr(c, "hash")
+	event, err := models.AlertHisEventGetByHash(rt.Ctx, hash)
+	ginx.Dangerous(err)
+
+	if event == nil {
+		ginx.Bomb(404, "No such alert event")
+	}
+
+	ginx.NewRender(c).Data(event, err)
+}
+
+func (rt *Router) alertHisEventPut(c *gin.Context) {
+	eid := ginx.UrlParamInt64(c, "eid")
+	event, err := models.AlertHisEventGetById(rt.Ctx, eid)
+	ginx.Dangerous(err)
+	if event == nil {
+		ginx.Bomb(404, "No such alert event")
+	}
+	var annotations map[string]string
+	ginx.BindJSON(c, &annotations)
+	for k, v := range annotations {
+		if _, ok := event.AnnotationsJSON[k]; !ok {
+			event.AnnotationsJSON[k] = v
+		}
+	}
+	jstr, _ := json.Marshal(event.AnnotationsJSON)
+	event.Annotations = string(jstr)
+	err = event.UpdateFieldsMap(rt.Ctx, map[string]interface{}{
+		"annotations": event.Annotations,
+	})
 	ginx.NewRender(c).Data(event, err)
 }

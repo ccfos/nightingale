@@ -58,6 +58,12 @@ func (e *Consumer) consume(events []interface{}, sema *semaphore.Semaphore) {
 }
 
 func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Errorf("dispatch.consumeOne.panic: %v", err)
+		}
+	}()
+
 	LogEvent(event, "consume")
 
 	if err := event.ParseRule("rule_name"); err != nil {

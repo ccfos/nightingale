@@ -38,6 +38,29 @@ func TimeNonEffectiveMuteStrategy(rule *models.AlertRule, event *models.AlertCur
 		return true
 	}
 
+	//var allRuleDisabled = 1
+	// todo: unmarsha rule.RuleConfig to struct
+	//if rule.Cate == models.PROMETHEUS {
+	//	var ruleConfig models.PromRuleConfig
+	//	if err := json.Unmarshal([]byte(rule.RuleConfig), &ruleConfig); err == nil {
+	//		alertConfigs := ruleConfig.AlertConfigs
+	//		for _, query := range ruleConfig.Queries {
+	//			if query.Default == 1 {
+	//				allRuleDisabled &= rule.Disabled
+	//			} else {
+	//				cfg, ok := alertConfigs[query.Severity]
+	//				if !ok {
+	//					continue
+	//				}
+	//				allRuleDisabled &= cfg.Disabled
+	//			}
+	//		}
+	//	}
+	//	if allRuleDisabled == 1 {
+	//		return true
+	//	}
+	//}
+
 	tm := time.Unix(event.TriggerTime, 0)
 	triggerTime := tm.Format("15:04")
 	triggerWeek := strconv.Itoa(int(tm.Weekday()))

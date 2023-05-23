@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"github.com/ccfos/nightingale/v6/models"
 	"math"
 	"strings"
 
@@ -13,8 +14,9 @@ type AnomalyPoint struct {
 	Labels    model.Metric `json:"labels"`
 	Timestamp int64        `json:"timestamp"`
 	Value     float64      `json:"value"`
-	Severity  int          `json:"severity"`
-	Triggered bool         `json:"triggered"`
+	//Severity  int          `json:"severity"`
+	Triggered bool             `json:"triggered"`
+	Promquery models.PromQuery `json:"promquery"` //有道添加，用来后续规则判断
 }
 
 func NewAnomalyPoint(key string, labels map[string]string, ts int64, value float64, severity int) AnomalyPoint {
@@ -28,7 +30,7 @@ func NewAnomalyPoint(key string, labels map[string]string, ts int64, value float
 		Labels:    anomalyPointLabels,
 		Timestamp: ts,
 		Value:     value,
-		Severity:  severity,
+		//Severity:  severity,
 	}
 }
 

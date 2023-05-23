@@ -256,9 +256,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		if rt.Center.AnonymousAccess.AlertDetail {
 			pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
 			pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
+			pages.GET("/alert-event/:hash", rt.alertEventGet)
 		} else {
 			pages.GET("/alert-cur-event/:eid", rt.auth(), rt.alertCurEventGet)
 			pages.GET("/alert-his-event/:eid", rt.auth(), rt.alertHisEventGet)
+			pages.PUT("/alert-his-event/:eid", rt.auth(), rt.alertHisEventPut)
+			pages.GET("/alert-event/:hash", rt.auth(), rt.alertEventGet)
 		}
 
 		// card logic

@@ -10,6 +10,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+// todo: 可以新增一个Title字段
 type AlertHisEvent struct {
 	Id                 int64             `json:"id" gorm:"primaryKey"`
 	Cate               string            `json:"cate"`
@@ -191,7 +192,7 @@ func AlertHisEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 
 func AlertHisEventGet(ctx *ctx.Context, where string, args ...interface{}) (*AlertHisEvent, error) {
 	var lst []*AlertHisEvent
-	err := DB(ctx).Where(where, args...).Find(&lst).Error
+	err := DB(ctx).Where(where, args...).Order("id desc").Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +210,9 @@ func AlertHisEventGet(ctx *ctx.Context, where string, args ...interface{}) (*Ale
 func AlertHisEventGetById(ctx *ctx.Context, id int64) (*AlertHisEvent, error) {
 	return AlertHisEventGet(ctx, "id=?", id)
 }
-
+func AlertHisEventGetByHash(ctx *ctx.Context, hash string) (*AlertHisEvent, error) {
+	return AlertHisEventGet(ctx, "hash=?", hash)
+}
 func (m *AlertHisEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
 	return DB(ctx).Model(m).Updates(fields).Error
 }

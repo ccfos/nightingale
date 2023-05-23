@@ -2,8 +2,10 @@ package process
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -19,6 +21,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/ccfos/nightingale/v6/prom"
+	"github.com/mohae/deepcopy"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
@@ -66,6 +69,7 @@ type Processor struct {
 	promClients *prom.PromClientMap
 	ctx         *ctx.Context
 	stats       *astats.Stats
+	customeRule map[int]*models.AlertRule //有道添加，存放rule.RuleConfig 下 自定义的规则
 }
 
 func (p *Processor) Key() string {
@@ -85,6 +89,44 @@ func (p *Processor) Hash() string {
 	))
 }
 
+// 有道添加，参考全局监控配置，重新按告警等级为索引，生成一整套监控配置
+func (p *Processor) makeCustomeRule() {
+	var prom_rule_config models.PromRuleConfig
+	if err := json.Unmarshal([]byte(p.rule.RuleConfig), &prom_rule_config); err != nil {
+		logger.Errorf("rule_eval:%s makeCustomeRule rule_config:%s, error:%v", p.Key(), p.rule.RuleConfig, err)
+	} else {
+		for severity, alertconfig := range prom_rule_config.AlertConfigs {
+			alertconfig.FE2DB()
+			p.customeRule[severity] = p.mergCustomeRule(alertconfig)
+		}
+	}
+}
+
+// 有道添加，将自定义的监控告警配置合并到全局监控配置中，生成一个新的alertrule，此时用了deepcopy，防止指针传递出现篡改情况
+func (p *Processor) mergCustomeRule(alertconfig models.AlertConfig) *models.AlertRule {
+	alerRule := deepcopy.Copy(p.rule).(*models.AlertRule)
+	bVal := reflect.ValueOf(alerRule).Elem()
+	vVal := reflect.ValueOf(&alertconfig).Elem()
+	vTypeOfT := vVal.Type()
+	for i := 0; i < vVal.NumField(); i++ {
+		name := vTypeOfT.Field(i).Name
+		if ok := bVal.FieldByName(name).IsValid(); ok {
+			bVal.FieldByName(name).Set(reflect.ValueOf(vVal.Field(i).Interface()))
+		}
+	}
+	return alerRule
+}
+
+// 有道添加，获取告警规则
+func (p *Processor) getRule(customNotify bool, severity int) *models.AlertRule {
+	if customNotify {
+		if customeRule, ok := p.customeRule[severity]; ok {
+			return customeRule
+		}
+	}
+	return p.rule
+}
+
 func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *memsto.AlertRuleCacheType, targetCache *memsto.TargetCacheType,
 	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, promClients *prom.PromClientMap, ctx *ctx.Context,
 	stats *astats.Stats) *Processor {
@@ -102,18 +144,19 @@ func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *me
 		promClients: promClients,
 		ctx:         ctx,
 		stats:       stats,
+		customeRule: map[int]*models.AlertRule{},
 	}
 
 	p.mayHandleGroup()
 	return p
 }
-
 func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inhibit bool) {
 	// 有可能rule的一些配置已经发生变化，比如告警接收人、callbacks等
 	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
 	// 所以，这里直接从memsto.AlertRuleCache中获取并覆盖
 	p.inhibit = inhibit
 	p.rule = p.atertRuleCache.Get(p.rule.Id)
+	p.makeCustomeRule()
 	cachedRule := p.rule
 	if cachedRule == nil {
 		logger.Errorf("rule not found %+v", anomalyPoints)
@@ -130,6 +173,8 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		// 如果 event 被 mute 了,本质也是 fire 的状态,这里无论如何都添加到 alertingKeys 中,防止 fire 的事件自动恢复了
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
+		//有道添加，根据事件是否使用全局配置和等级来获取告警规则
+		cachedRule = p.getRule(event.CustomNotify, event.Severity)
 		if mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache) {
 			logger.Debugf("rule_eval:%s event:%v is muted", p.Key(), event)
 			continue
@@ -154,8 +199,9 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	if ds != nil {
 		dsName = ds.Name
 	}
-
-	event := p.rule.GenerateNewEvent(p.ctx)
+	//有道添加，根据事件是否使用全局配置和等级来获取告警规则
+	rule := p.getRule(anomalyPoint.Promquery.CustomNotify, anomalyPoint.Promquery.Severity)
+	event := rule.GenerateNewEvent(p.ctx)
 	event.TriggerTime = anomalyPoint.Timestamp
 	event.TagsMap = p.tagsMap
 	event.DatasourceId = p.datasourceId
@@ -168,14 +214,24 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.GroupName = p.groupName
 	event.Tags = strings.Join(p.tagsArr, ",,")
 	event.IsRecovered = false
-	event.Callbacks = p.rule.Callbacks
-	event.CallbacksJSON = p.rule.CallbacksJSON
-	event.Annotations = p.rule.Annotations
+	event.Callbacks = rule.Callbacks
+	event.CallbacksJSON = rule.CallbacksJSON
+	event.Annotations = rule.Annotations
 	event.AnnotationsJSON = make(map[string]string)
-	event.RuleConfig = p.rule.RuleConfig
-	event.RuleConfigJson = p.rule.RuleConfigJson
-	event.Severity = anomalyPoint.Severity
-
+	event.RuleConfig = rule.RuleConfig
+	event.RuleConfigJson = rule.RuleConfigJson
+	//event.Severity = anomalyPoint.Severity
+	//有道添加
+	event.Severity = anomalyPoint.Promquery.Severity
+	event.PromQl = anomalyPoint.Promquery.PromQl
+	event.CustomNotify = anomalyPoint.Promquery.CustomNotify
+	if len(event.RuleNote) > 0 {
+		if len(anomalyPoint.Promquery.Description) > 0 {
+			event.RuleNote = fmt.Sprintf("%s | %s", event.RuleNote, anomalyPoint.Promquery.Description)
+		}
+	} else {
+		event.RuleNote = anomalyPoint.Promquery.Description
+	}
 	if from == "inner" {
 		event.LastEvalTime = now
 	} else {
@@ -209,6 +265,8 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string) {
 	if !has {
 		return
 	}
+	//有道添加，根据事件是否使用全局配置和等级来获取告警规则
+	cachedRule = p.getRule(event.CustomNotify, event.Severity)
 	// 如果配置了留观时长，就不能立马恢复了
 	if cachedRule.RecoverDuration > 0 && now-event.LastEvalTime < cachedRule.RecoverDuration {
 		logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
@@ -225,7 +283,7 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string) {
 
 	// 可能是因为调整了promql才恢复的，所以事件里边要体现最新的promql，否则用户会比较困惑
 	// 当然，其实rule的各个字段都可能发生变化了，都更新一下吧
-	cachedRule.UpdateEvent(event)
+	//cachedRule.UpdateEvent(event) //有道添加，此时不能更新event，否则收到的恢复告警用户比较懵逼，尤其是一个规则组下面配置了多个规则情况下，最好还是让恢复事件保持原样吧
 	event.IsRecovered = true
 	event.LastEvalTime = now
 	p.pushEventToQueue(event)
@@ -256,7 +314,6 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 			p.pendings.Set(event.Hash, event)
 			preTriggerTime = event.TriggerTime
 		}
-
 		if event.LastEvalTime-preTriggerTime+int64(event.PromEvalInterval) >= int64(p.rule.PromForDuration) {
 			fireEvents = append(fireEvents, event)
 			if severity > event.Severity {
@@ -285,6 +342,8 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 	if cachedRule == nil {
 		return
 	}
+	//有道添加，根据事件是否使用全局配置和等级来获取告警规则
+	cachedRule = p.getRule(event.CustomNotify, event.Severity)
 	logger.Debugf("rule_eval:%s event:%+v fire", p.Key(), event)
 	if fired, has := p.fires.Get(event.Hash); has {
 		p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
@@ -433,7 +492,7 @@ func labelMapToArr(m map[string]string) []string {
 }
 
 func Hash(ruleId, datasourceId int64, vector common.AnomalyPoint) string {
-	return str.MD5(fmt.Sprintf("%d_%s_%d_%d", ruleId, vector.Labels.String(), datasourceId, vector.Severity))
+	return str.MD5(fmt.Sprintf("%d_%s_%d_%d", ruleId, vector.Labels.String(), datasourceId, vector.Promquery.Severity))
 }
 
 func TagHash(vector common.AnomalyPoint) string {

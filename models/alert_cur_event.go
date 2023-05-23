@@ -57,6 +57,7 @@ type AlertCurEvent struct {
 	LastSentTime       int64             `json:"last_sent_time" gorm:"-"`   // 上次发送时间
 	NotifyCurNumber    int               `json:"notify_cur_number"`         // notify: current number
 	FirstTriggerTime   int64             `json:"first_trigger_time"`        // 连续告警的首次告警时间
+	CustomNotify       bool              `json:"-" gorm:"-"`
 }
 
 func (e *AlertCurEvent) TableName() string {

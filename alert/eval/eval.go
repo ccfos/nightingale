@@ -162,7 +162,9 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 		logger.Debugf("rule_eval:%s query:%+v, value:%v", arw.Key(), query, value)
 		points := common.ConvertAnomalyPoints(value)
 		for i := 0; i < len(points); i++ {
-			points[i].Severity = query.Severity
+			//points[i].Severity = query.Severity
+			points[i].Promquery = query
+
 		}
 		lst = append(lst, points...)
 	}
