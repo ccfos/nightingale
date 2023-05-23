@@ -9,6 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/toolkits/pkg/logger"
 
 	"github.com/pkg/errors"
@@ -78,7 +79,15 @@ func AlertMuteGet(ctx *ctx.Context, where string, args ...interface{}) (*AlertMu
 }
 
 func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, query string) (lst []AlertMute, err error) {
-	session := DB(ctx).Where("group_id = ? and prod in (?)", bgid, prods)
+	session := DB(ctx)
+
+	if bgid != -1 {
+		session = session.Where("group_id = ?", bgid)
+	}
+
+	if len(prods) > 0 {
+		session = session.Where("prod in (?)", prods)
+	}
 
 	if query != "" {
 		arr := strings.Fields(query)
@@ -220,6 +229,12 @@ func AlertMuteDel(ctx *ctx.Context, ids []int64) error {
 }
 
 func AlertMuteStatistics(ctx *ctx.Context) (*Statistics, error) {
+	var stats []*Statistics
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=alert_mute")
+		return s, err
+	}
+
 	// clean expired first
 	buf := int64(30)
 	err := DB(ctx).Where("etime < ? and mute_time_type = 0", time.Now().Unix()-buf).Delete(new(AlertMute)).Error
@@ -229,7 +244,6 @@ func AlertMuteStatistics(ctx *ctx.Context) (*Statistics, error) {
 
 	session := DB(ctx).Model(&AlertMute{}).Select("count(*) as total", "max(update_at) as last_updated")
 
-	var stats []*Statistics
 	err = session.Find(&stats).Error
 	if err != nil {
 		return nil, err
@@ -240,9 +254,20 @@ func AlertMuteStatistics(ctx *ctx.Context) (*Statistics, error) {
 
 func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 	// get my cluster's mutes
+	var lst []*AlertMute
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]*AlertMute](ctx, "/v1/n9e/alert-mutes")
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].FE2DB()
+		}
+		return lst, err
+	}
+
 	session := DB(ctx).Model(&AlertMute{})
 
-	var lst []*AlertMute
 	err := session.Find(&lst).Error
 	if err != nil {
 		return nil, err

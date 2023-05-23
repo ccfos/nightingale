@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
+
 	"github.com/pkg/errors"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
@@ -197,7 +199,33 @@ func RecordingRuleGetById(ctx *ctx.Context, id int64) (*RecordingRule, error) {
 	return RecordingRuleGet(ctx, "id=?", id)
 }
 
+func RecordingRuleEnabledGets(ctx *ctx.Context) ([]*RecordingRule, error) {
+	session := DB(ctx)
+
+	var lst []*RecordingRule
+	err := session.Where("disabled = ?", 0).Find(&lst).Error
+	if err != nil {
+		return lst, err
+	}
+
+	for i := 0; i < len(lst); i++ {
+		lst[i].DB2FE(ctx)
+	}
+	return lst, nil
+}
+
 func RecordingRuleGetsByCluster(ctx *ctx.Context) ([]*RecordingRule, error) {
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]*RecordingRule](ctx, "/v1/n9e/recording-rules")
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].FE2DB()
+		}
+		return lst, err
+	}
+
 	session := DB(ctx).Where("disabled = ?", 0)
 
 	var lst []*RecordingRule
@@ -217,6 +245,11 @@ func RecordingRuleGetsByCluster(ctx *ctx.Context) ([]*RecordingRule, error) {
 }
 
 func RecordingRuleStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=recording_rule")
+		return s, err
+	}
+
 	session := DB(ctx).Model(&RecordingRule{}).Select("count(*) as total", "max(update_at) as last_updated")
 
 	var stats []*Statistics

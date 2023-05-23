@@ -21,7 +21,7 @@ func (rt *Router) alertMuteGetsByBG(c *gin.Context) {
 
 func (rt *Router) alertMuteGets(c *gin.Context) {
 	prods := strings.Fields(ginx.QueryStr(c, "prods", ""))
-	bgid := ginx.QueryInt64(c, "bgid", 0)
+	bgid := ginx.QueryInt64(c, "bgid", -1)
 	query := ginx.QueryStr(c, "query", "")
 	lst, err := models.AlertMuteGets(rt.Ctx, prods, bgid, query)
 

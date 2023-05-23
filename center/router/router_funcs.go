@@ -17,6 +17,41 @@ import (
 
 const defaultLimit = 300
 
+func (rt *Router) statistic(c *gin.Context) {
+	name := ginx.QueryStr(c, "name")
+	var model interface{}
+	var err error
+	var statistics *models.Statistics
+	switch name {
+	case "alert_mute":
+		model = models.AlertMute{}
+	case "alert_rule":
+		model = models.AlertRule{}
+	case "alert_subscribe":
+		model = models.AlertSubscribe{}
+	case "busi_group":
+		model = models.BusiGroup{}
+	case "recording_rule":
+		model = models.RecordingRule{}
+	case "target":
+		model = models.Target{}
+	case "user":
+		model = models.User{}
+	case "user_group":
+		model = models.UserGroup{}
+	case "datasource":
+		// datasource update_at is different from others
+		statistics, err = models.DatasourceStatistics(rt.Ctx)
+		ginx.NewRender(c).Data(statistics, err)
+		return
+	default:
+		ginx.Bomb(http.StatusBadRequest, "invalid name")
+	}
+
+	statistics, err = models.StatisticsGet(rt.Ctx, model)
+	ginx.NewRender(c).Data(statistics, err)
+}
+
 func queryDatasourceIds(c *gin.Context) []int64 {
 	datasourceIds := ginx.QueryStr(c, "datasource_ids", "")
 	datasourceIds = strings.ReplaceAll(datasourceIds, ",", " ")

@@ -1,6 +1,9 @@
 package models
 
-import "github.com/ccfos/nightingale/v6/pkg/ctx"
+import (
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
+)
 
 type TaskRecord struct {
 	Id           int64  `json:"id" gorm:"primaryKey"`
@@ -27,6 +30,11 @@ func (r *TaskRecord) TableName() string {
 
 // create task
 func (r *TaskRecord) Add(ctx *ctx.Context) error {
+	if !ctx.IsCenter {
+		err := poster.PostByUrls(ctx, "/v1/n9e/task-record-add", r)
+		return err
+	}
+
 	return Insert(ctx, r)
 }
 

@@ -101,6 +101,11 @@ func (rt *Router) targetGets(c *gin.Context) {
 	}, nil)
 }
 
+func (rt *Router) targetGetsByService(c *gin.Context) {
+	lst, err := models.TargetGetsAll(rt.Ctx)
+	ginx.NewRender(c).Data(lst, err)
+}
+
 func (rt *Router) targetGetTags(c *gin.Context) {
 	idents := ginx.QueryStr(c, "idents", "")
 	idents = strings.ReplaceAll(idents, ",", " ")

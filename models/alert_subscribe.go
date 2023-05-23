@@ -9,6 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 )
@@ -49,6 +50,18 @@ func (s *AlertSubscribe) TableName() string {
 
 func AlertSubscribeGets(ctx *ctx.Context, groupId int64) (lst []AlertSubscribe, err error) {
 	err = DB(ctx).Where("group_id=?", groupId).Order("id desc").Find(&lst).Error
+	return
+}
+
+func AlertSubscribeGetsByService(ctx *ctx.Context) (lst []AlertSubscribe, err error) {
+	err = DB(ctx).Find(&lst).Error
+	if err != nil {
+		return
+	}
+
+	for i := range lst {
+		lst[i].DB2FE()
+	}
 	return
 }
 
@@ -262,6 +275,11 @@ func AlertSubscribeDel(ctx *ctx.Context, ids []int64) error {
 }
 
 func AlertSubscribeStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=alert_subscribe")
+		return s, err
+	}
+
 	session := DB(ctx).Model(&AlertSubscribe{}).Select("count(*) as total", "max(update_at) as last_updated")
 
 	var stats []*Statistics
@@ -274,6 +292,17 @@ func AlertSubscribeStatistics(ctx *ctx.Context) (*Statistics, error) {
 }
 
 func AlertSubscribeGetsAll(ctx *ctx.Context) ([]*AlertSubscribe, error) {
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]*AlertSubscribe](ctx, "/v1/n9e/alert-subscribes")
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].FE2DB()
+		}
+		return lst, err
+	}
+
 	// get my cluster's subscribes
 	session := DB(ctx).Model(&AlertSubscribe{})
 

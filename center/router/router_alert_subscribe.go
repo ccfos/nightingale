@@ -110,3 +110,8 @@ func (rt *Router) alertSubscribeDel(c *gin.Context) {
 
 	ginx.NewRender(c).Message(models.AlertSubscribeDel(rt.Ctx, f.Ids))
 }
+
+func (rt *Router) alertSubscribeGetsByService(c *gin.Context) {
+	lst, err := models.AlertSubscribeGetsByService(rt.Ctx)
+	ginx.NewRender(c).Data(lst, err)
+}

@@ -1,6 +1,9 @@
 package models
 
-import "github.com/ccfos/nightingale/v6/pkg/ctx"
+import (
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
+)
 
 type UserGroupMember struct {
 	GroupId int64
@@ -54,8 +57,13 @@ func UserGroupMemberDel(ctx *ctx.Context, groupId int64, userIds []int64) error 
 	return DB(ctx).Where("group_id = ? and user_id in ?", groupId, userIds).Delete(&UserGroupMember{}).Error
 }
 
-func UserGroupMemberGetAll(ctx *ctx.Context) ([]UserGroupMember, error) {
-	var lst []UserGroupMember
+func UserGroupMemberGetAll(ctx *ctx.Context) ([]*UserGroupMember, error) {
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]*UserGroupMember](ctx, "/v1/n9e/user-group-members")
+		return lst, err
+	}
+
+	var lst []*UserGroupMember
 	err := DB(ctx).Find(&lst).Error
 	return lst, err
 }

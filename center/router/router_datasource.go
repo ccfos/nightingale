@@ -36,6 +36,12 @@ func (rt *Router) datasourceList(c *gin.Context) {
 	Render(c, list, err)
 }
 
+func (rt *Router) datasourceGetsByService(c *gin.Context) {
+	typ := ginx.QueryStr(c, "typ", "")
+	lst, err := models.GetDatasourcesGetsBy(rt.Ctx, typ, "", "", "")
+	ginx.NewRender(c).Data(lst, err)
+}
+
 type datasourceBrief struct {
 	Id         int64  `json:"id"`
 	Name       string `json:"name"`

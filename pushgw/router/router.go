@@ -59,10 +59,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		r.POST("/opentsdb/put", auth, rt.openTSDBPut)
 		r.POST("/openfalcon/push", auth, rt.falconPush)
 		r.POST("/prometheus/v1/write", auth, rt.remoteWrite)
+		r.POST("/v1/n9e/target-update", auth, rt.targetUpdate)
 	} else {
 		// no need basic auth
 		r.POST("/opentsdb/put", rt.openTSDBPut)
 		r.POST("/openfalcon/push", rt.falconPush)
 		r.POST("/prometheus/v1/write", rt.remoteWrite)
+		r.POST("/v1/n9e/target-update", rt.targetUpdate)
 	}
 }

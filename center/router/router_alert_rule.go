@@ -27,7 +27,12 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 }
 
 func (rt *Router) alertRulesGetByService(c *gin.Context) {
-	prods := strings.Split(ginx.QueryStr(c, "prods", ""), ",")
+	prods := []string{}
+	prodStr := ginx.QueryStr(c, "prods", "")
+	if prodStr != "" {
+		prods = strings.Split(ginx.QueryStr(c, "prods", ""), ",")
+	}
+
 	query := ginx.QueryStr(c, "query", "")
 	algorithm := ginx.QueryStr(c, "algorithm", "")
 	cluster := ginx.QueryStr(c, "cluster", "")

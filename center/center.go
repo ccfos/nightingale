@@ -33,8 +33,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, fmt.Errorf("failed to init config: %v", err)
 	}
 
-	cconf.LoadMetricsYaml(config.Center.MetricsYamlFile)
-	cconf.LoadOpsYaml(config.Center.OpsYamlFile)
+	cconf.LoadMetricsYaml(configDir, config.Center.MetricsYamlFile)
+	cconf.LoadOpsYaml(configDir, config.Center.OpsYamlFile)
 
 	logxClean, err := logx.Init(config.Log)
 	if err != nil {
@@ -47,7 +47,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx := ctx.NewContext(context.Background(), db)
+	ctx := ctx.NewContext(context.Background(), db, true)
 	models.InitRoot(ctx)
 
 	redis, err := storage.NewRedis(config.Redis)
@@ -56,7 +56,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	metas := metas.New(redis)
-	idents := idents.New(db)
+	idents := idents.New(ctx)
 
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
@@ -73,7 +73,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
-	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, true)
+	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, dsCache, ctx, promClients)
 
 	writers := writer.NewWriters(config.Pushgw)
 

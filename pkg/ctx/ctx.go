@@ -3,18 +3,29 @@ package ctx
 import (
 	"context"
 
+	"github.com/ccfos/nightingale/v6/conf"
+
 	"gorm.io/gorm"
 )
 
 type Context struct {
-	DB  *gorm.DB
-	Ctx context.Context
+	DB        *gorm.DB
+	CenterApi conf.CenterApi
+	Ctx       context.Context
+	IsCenter  bool
 }
 
-func NewContext(ctx context.Context, db *gorm.DB) *Context {
+func NewContext(ctx context.Context, db *gorm.DB, isCenter bool, centerApis ...conf.CenterApi) *Context {
+	var api conf.CenterApi
+	if len(centerApis) > 0 {
+		api = centerApis[0]
+	}
+
 	return &Context{
-		Ctx: ctx,
-		DB:  db,
+		Ctx:       ctx,
+		DB:        db,
+		CenterApi: api,
+		IsCenter:  isCenter,
 	}
 }
 

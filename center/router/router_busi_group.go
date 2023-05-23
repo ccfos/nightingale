@@ -123,6 +123,11 @@ func (rt *Router) busiGroupGets(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
+func (rt *Router) busiGroupGetsByService(c *gin.Context) {
+	lst, err := models.BusiGroupGetAll(rt.Ctx)
+	ginx.NewRender(c).Data(lst, err)
+}
+
 // 这个接口只有在活跃告警页面才调用，获取各个BG的活跃告警数量
 func (rt *Router) busiGroupAlertingsGets(c *gin.Context) {
 	ids := ginx.QueryStr(c, "ids", "")

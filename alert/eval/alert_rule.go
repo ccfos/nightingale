@@ -16,7 +16,6 @@ import (
 )
 
 type Scheduler struct {
-	isCenter bool
 	// key: hash
 	alertRules map[string]*AlertRuleWorker
 
@@ -38,11 +37,10 @@ type Scheduler struct {
 	stats *astats.Stats
 }
 
-func NewScheduler(isCenter bool, aconf aconf.Alert, externalProcessors *process.ExternalProcessorsType, arc *memsto.AlertRuleCacheType, targetCache *memsto.TargetCacheType,
+func NewScheduler(aconf aconf.Alert, externalProcessors *process.ExternalProcessorsType, arc *memsto.AlertRuleCacheType, targetCache *memsto.TargetCacheType,
 	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, promClients *prom.PromClientMap, naming *naming.Naming,
 	ctx *ctx.Context, stats *astats.Stats) *Scheduler {
 	scheduler := &Scheduler{
-		isCenter:   isCenter,
 		aconf:      aconf,
 		alertRules: make(map[string]*AlertRuleWorker),
 
@@ -108,7 +106,7 @@ func (s *Scheduler) syncAlertRules() {
 				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.ctx)
 				alertRuleWorkers[alertRule.Hash()] = alertRule
 			}
-		} else if rule.IsHostRule() && s.isCenter {
+		} else if rule.IsHostRule() && s.ctx.IsCenter {
 			// all host rule will be processed by center instance
 			if !naming.DatasourceHashRing.IsHit(naming.HostDatasource, fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
 				continue

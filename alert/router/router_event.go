@@ -83,6 +83,13 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 	ginx.NewRender(c).Message(nil)
 }
 
+func (rt *Router) eventPersist(c *gin.Context) {
+	var event *models.AlertCurEvent
+	ginx.BindJSON(c, &event)
+	event.FE2DB()
+	ginx.NewRender(c).Message(models.EventPersist(rt.Ctx, event))
+}
+
 type eventForm struct {
 	Alert         bool                  `json:"alert"`
 	AnomalyPoints []common.AnomalyPoint `json:"vectors"`

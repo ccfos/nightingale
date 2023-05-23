@@ -30,6 +30,10 @@ func (po *PromOption) Equal(target PromOption) bool {
 		return false
 	}
 
+	if po.WriteAddr != target.WriteAddr {
+		return false
+	}
+
 	if po.Timeout != target.Timeout {
 		return false
 	}

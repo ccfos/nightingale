@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
@@ -112,6 +113,17 @@ func (ds *Datasource) Get(ctx *ctx.Context) error {
 }
 
 func GetDatasources(ctx *ctx.Context) ([]Datasource, error) {
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]Datasource](ctx, "/v1/n9e/datasources")
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].FE2DB()
+		}
+		return lst, nil
+	}
+
 	var dss []Datasource
 	err := DB(ctx).Find(&dss).Error
 
@@ -123,6 +135,11 @@ func GetDatasources(ctx *ctx.Context) ([]Datasource, error) {
 }
 
 func GetDatasourceIdsByEngineName(ctx *ctx.Context, engineName string) ([]int64, error) {
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]int64](ctx, "/v1/n9e/datasource-ids?name="+engineName)
+		return lst, err
+	}
+
 	var dss []Datasource
 	var ids []int64
 	err := DB(ctx).Where("cluster_name = ?", engineName).Find(&dss).Error
@@ -267,19 +284,32 @@ func (ds *Datasource) DB2FE() error {
 
 func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 	var lst []*Datasource
-	err := DB(ctx).Find(&lst).Error
-	if err != nil {
-		return nil, err
+	var err error
+	if !ctx.IsCenter {
+		lst, err = poster.GetByUrls[[]*Datasource](ctx, "/v1/n9e/datasources")
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].FE2DB()
+		}
+	} else {
+		err := DB(ctx).Find(&lst).Error
+		if err != nil {
+			return nil, err
+		}
+
+		for i := 0; i < len(lst); i++ {
+			err := lst[i].DB2FE()
+			if err != nil {
+				logger.Warningf("get ds:%+v err:%v", lst[i], err)
+				continue
+			}
+		}
 	}
 
 	ret := make(map[int64]*Datasource)
 	for i := 0; i < len(lst); i++ {
-		err := lst[i].DB2FE()
-		if err != nil {
-			logger.Warningf("get ds:%+v err:%v", lst[i], err)
-			continue
-		}
-
 		ret[lst[i].Id] = lst[i]
 	}
 
@@ -287,6 +317,11 @@ func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 }
 
 func DatasourceStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=datasource")
+		return s, err
+	}
+
 	session := DB(ctx).Model(&Datasource{}).Select("count(*) as total", "max(updated_at) as last_updated")
 
 	var stats []*Statistics
