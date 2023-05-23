@@ -118,7 +118,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		logger.Errorf("rule not found %+v", anomalyPoints)
 		return
 	}
-
+	p.rule = cachedRule
 	now := time.Now().Unix()
 	alertingKeys := map[string]struct{}{}
 

@@ -109,7 +109,7 @@ func (arw *AlertRuleWorker) Eval() {
 }
 
 func (arw *AlertRuleWorker) Stop() {
-	logger.Infof("%s stopped", arw.Key())
+	logger.Infof("rule_eval %s stopped", arw.Key())
 	close(arw.quit)
 }
 
