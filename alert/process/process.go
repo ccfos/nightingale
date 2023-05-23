@@ -113,8 +113,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
 	// 所以，这里直接从memsto.AlertRuleCache中获取并覆盖
 	p.inhibit = inhibit
-	p.rule = p.atertRuleCache.Get(p.rule.Id)
-	cachedRule := p.rule
+	cachedRule := p.atertRuleCache.Get(p.rule.Id)
 	if cachedRule == nil {
 		logger.Errorf("rule not found %+v", anomalyPoints)
 		return
