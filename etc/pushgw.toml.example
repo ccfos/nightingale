@@ -1,0 +1,103 @@
+[Global]
+RunMode = "release"
+
+[CenterApi]
+Addrs = ["http://127.0.0.1:17000"]
+[CenterApi.BasicAuth]
+user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[Pushgw]
+# use target labels in database instead of in series
+LabelRewrite = true
+# # default busigroup key name
+# BusiGroupLabelKey = "busigroup"
+# ForceUseServerTS = false
+
+# [Pushgw.DebugSample]
+# ident = "xx"
+# __name__ = "xx"
+
+# [Pushgw.WriterOpt]
+# # Writer Options
+# QueueCount = 1000
+# QueueMaxSize = 1000000
+# QueuePopSize = 1000
+# # ident or metric
+# ShardingKey = "ident"
+
+[[Pushgw.Writers]] 
+# Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"
+Url = "http://127.0.0.1:9090/api/v1/write"
+# Basic auth username
+BasicAuthUser = ""
+# Basic auth password
+BasicAuthPass = ""
+# timeout settings, unit: ms
+Headers = ["X-From", "n9e"]
+Timeout = 10000
+DialTimeout = 3000
+TLSHandshakeTimeout = 30000
+ExpectContinueTimeout = 1000
+IdleConnTimeout = 90000
+# time duration, unit: ms
+KeepAlive = 30000
+MaxConnsPerHost = 0
+MaxIdleConns = 100
+MaxIdleConnsPerHost = 100
+## Optional TLS Config
+# UseTLS = false
+# TLSCA = "/etc/n9e/ca.pem"
+# TLSCert = "/etc/n9e/cert.pem"
+# TLSKey = "/etc/n9e/key.pem"
+# InsecureSkipVerify = false
+# [[Writers.WriteRelabels]]
+# Action = "replace"
+# SourceLabels = ["__address__"]
+# Regex = "([^:]+)(?::\\d+)?"
+# Replacement = "$1:80"
+# TargetLabel = "__address__"
+
+[Log]
+# log write dir
+Dir = "logs"
+# log level: DEBUG INFO WARNING ERROR
+Level = "DEBUG"
+# stdout, stderr, file
+Output = "stdout"
+# # rotate by time
+# KeepHours = 4
+# # rotate by size
+# RotateNum = 3
+# # unit: MB
+# RotateSize = 256
+
+[HTTP]
+# http listening address
+Host = "0.0.0.0"
+# http listening port
+Port = 17000
+# https cert file path
+CertFile = ""
+# https key file path
+KeyFile = ""
+# whether print access log
+PrintAccessLog = false
+# whether enable pprof
+PProf = false
+# expose prometheus /metrics?
+ExposeMetrics = true
+# http graceful shutdown timeout, unit: s
+ShutdownTimeout = 30
+# max content length: 64M
+MaxContentLength = 67108864
+# http server read timeout, unit: s
+ReadTimeout = 20
+# http server write timeout, unit: s
+WriteTimeout = 40
+# http server idle timeout, unit: s
+IdleTimeout = 120
+
+[HTTP.Pushgw]
+Enable = true 
+# [HTTP.Pushgw.BasicAuth]
+# user001 = "ccc26da7b9aba533cbb263a36c07dcc5"

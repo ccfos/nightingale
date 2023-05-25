@@ -1,0 +1,60 @@
+[Global]
+RunMode = "release"
+
+[CenterApi]
+Addrs = ["http://127.0.0.1:17000"]
+[CenterApi.BasicAuth]
+user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[Alert]
+[Alert.Heartbeat]
+# auto detect if blank
+IP = ""
+# unit ms
+Interval = 1000
+EngineName = "default"
+
+[Log]
+# log write dir
+Dir = "logs"
+# log level: DEBUG INFO WARNING ERROR
+Level = "DEBUG"
+# stdout, stderr, file
+Output = "stdout"
+# # rotate by time
+# KeepHours = 4
+# # rotate by size
+# RotateNum = 3
+# # unit: MB
+# RotateSize = 256
+
+[HTTP]
+# http listening address
+Host = "0.0.0.0"
+# http listening port
+Port = 17001
+# https cert file path
+CertFile = ""
+# https key file path
+KeyFile = ""
+# whether print access log
+PrintAccessLog = false
+# whether enable pprof
+PProf = false
+# expose prometheus /metrics?
+ExposeMetrics = true
+# http graceful shutdown timeout, unit: s
+ShutdownTimeout = 30
+# max content length: 64M
+MaxContentLength = 67108864
+# http server read timeout, unit: s
+ReadTimeout = 20
+# http server write timeout, unit: s
+WriteTimeout = 40
+# http server idle timeout, unit: s
+IdleTimeout = 120
+
+[HTTP.Alert]
+Enable = true 
+[HTTP.Alert.BasicAuth]
+user001 = "ccc26da7b9aba533cbb263a36c07dcc5"

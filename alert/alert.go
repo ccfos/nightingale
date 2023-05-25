@@ -23,7 +23,6 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
-	"github.com/ccfos/nightingale/v6/storage"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -39,15 +38,10 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
 
-	redis, err := storage.NewRedis(config.Redis)
-	if err != nil {
-		return nil, err
-	}
-
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
 
-	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
+	targetCache := memsto.NewTargetCache(ctx, syncStats, nil)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
