@@ -42,7 +42,7 @@ _test
 /docker/n9e
 /docker/mysqldata
 /docker/experience_pg_vm/pgdata
-/etc.local
+/etc.local*
 
 .alerts
 .idea
