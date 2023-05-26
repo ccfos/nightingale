@@ -16,6 +16,7 @@ type Webhook struct {
 	HeaderMap     map[string]string `json:"headers"`
 	Headers       []string          `json:"headers_str"`
 	SkipVerify    bool              `json:"skip_verify"`
+	Note          string            `json:"note"`
 }
 
 type NotifyScript struct {
