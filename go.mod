@@ -23,6 +23,7 @@ require (
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/common v0.39.0
 	github.com/prometheus/prometheus v2.5.0+incompatible
+	github.com/rakyll/statik v0.1.7
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/tidwall/gjson v1.14.0
 	github.com/toolkits/pkg v1.3.3

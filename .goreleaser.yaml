@@ -2,6 +2,7 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
+    - go install github.com/rakyll/statik
 
 snapshot:
   name_template: '{{ .Tag }}'

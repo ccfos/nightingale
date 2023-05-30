@@ -4,8 +4,7 @@ FROM python:3-slim
 WORKDIR /app
 ADD n9e /app
 ADD http://download.flashcat.cloud/wait /wait
-RUN mkdir -p /app/pub && chmod +x /wait
-ADD pub /app/pub/
+RUN chmod +x /wait
 RUN chmod +x n9e
 
 EXPOSE 17000
