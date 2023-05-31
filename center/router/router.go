@@ -17,10 +17,10 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/rakyll/statik/fs"
-	"github.com/toolkits/pkg/logger"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rakyll/statik/fs"
+	"github.com/toolkits/pkg/logger"
 )
 
 type Router struct {
