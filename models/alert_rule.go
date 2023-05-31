@@ -114,16 +114,17 @@ type Trigger struct {
 	Severity    int         `json:"severity"`
 }
 
-func GetHostsQuery(queries []HostQuery) map[string]interface{} {
-	var query = make(map[string]interface{})
+func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
+	var query []map[string]interface{}
 	for _, q := range queries {
+		m := make(map[string]interface{})
 		switch q.Key {
 		case "group_ids":
 			ids := ParseInt64(q.Values)
 			if q.Op == "==" {
-				query["group_id in (?)"] = ids
+				m["group_id in (?)"] = ids
 			} else {
-				query["group_id not in (?)"] = ids
+				m["group_id not in (?)"] = ids
 			}
 		case "tags":
 			lst := []string{}
@@ -135,11 +136,11 @@ func GetHostsQuery(queries []HostQuery) map[string]interface{} {
 			}
 			if q.Op == "==" {
 				for _, tag := range lst {
-					query["tags like ?"] = "%" + tag + "%"
+					m["tags like ?"] = "%" + tag + "%"
 				}
 			} else {
 				for _, tag := range lst {
-					query["tags not like ?"] = "%" + tag + "%"
+					m["tags not like ?"] = "%" + tag + "%"
 				}
 			}
 		case "hosts":
@@ -151,11 +152,12 @@ func GetHostsQuery(queries []HostQuery) map[string]interface{} {
 				lst = append(lst, v.(string))
 			}
 			if q.Op == "==" {
-				query["ident in (?)"] = lst
+				m["ident in (?)"] = lst
 			} else {
-				query["ident not in (?)"] = lst
+				m["ident not in (?)"] = lst
 			}
 		}
+		query = append(query, m)
 	}
 	return query
 }

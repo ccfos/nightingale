@@ -123,7 +123,7 @@ func TargetGets(ctx *ctx.Context, bgid int64, dsIds []int64, query string, limit
 }
 
 // 根据 groupids, tags, hosts 查询 targets
-func TargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, limit, offset int) ([]*Target, error) {
+func TargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, limit, offset int) ([]*Target, error) {
 	var lst []*Target
 	session := TargetFilterQueryBuild(ctx, query, limit, offset)
 	err := session.Order("ident").Find(&lst).Error
@@ -136,12 +136,12 @@ func TargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, limit, o
 	return lst, err
 }
 
-func TargetCountByFilter(ctx *ctx.Context, query map[string]interface{}) (int64, error) {
+func TargetCountByFilter(ctx *ctx.Context, query []map[string]interface{}) (int64, error) {
 	session := TargetFilterQueryBuild(ctx, query, 0, 0)
 	return Count(session)
 }
 
-func MissTargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, ts int64) ([]*Target, error) {
+func MissTargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, ts int64) ([]*Target, error) {
 	var lst []*Target
 	session := TargetFilterQueryBuild(ctx, query, 0, 0)
 	session = session.Where("update_at < ?", ts)
@@ -150,16 +150,20 @@ func MissTargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, ts i
 	return lst, err
 }
 
-func MissTargetCountByFilter(ctx *ctx.Context, query map[string]interface{}, ts int64) (int64, error) {
+func MissTargetCountByFilter(ctx *ctx.Context, query []map[string]interface{}, ts int64) (int64, error) {
 	session := TargetFilterQueryBuild(ctx, query, 0, 0)
 	session = session.Where("update_at < ?", ts)
 	return Count(session)
 }
 
-func TargetFilterQueryBuild(ctx *ctx.Context, query map[string]interface{}, limit, offset int) *gorm.DB {
+func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, limit, offset int) *gorm.DB {
 	session := DB(ctx).Model(&Target{})
-	for k, v := range query {
-		session = session.Where(k, v)
+	for _, q := range query {
+		tx := session
+		for k, v := range q {
+			tx = tx.Or(k, v)
+		}
+		session = session.Where(tx)
 	}
 
 	if limit > 0 {
