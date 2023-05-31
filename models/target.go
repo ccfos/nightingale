@@ -159,7 +159,7 @@ func MissTargetCountByFilter(ctx *ctx.Context, query []map[string]interface{}, t
 func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, limit, offset int) *gorm.DB {
 	session := DB(ctx).Model(&Target{})
 	for _, q := range query {
-		tx := session
+		tx := DB(ctx).Model(&Target{})
 		for k, v := range q {
 			tx = tx.Or(k, v)
 		}
