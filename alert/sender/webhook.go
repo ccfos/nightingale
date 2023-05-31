@@ -53,7 +53,7 @@ func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent) {
 		var resp *http.Response
 		resp, err = client.Do(req)
 		if err != nil {
-			logger.Warningf("WebhookCallError, ruleId: [%d], eventId: [%d], url: [%s], error: [%s]", event.RuleId, event.Id, conf.Url, err)
+			logger.Errorf("event_webhook_fail, ruleId: [%d], eventId: [%d], url: [%s], error: [%s]", event.RuleId, event.Id, conf.Url, err)
 			continue
 		}
 
@@ -63,6 +63,6 @@ func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent) {
 			body, _ = ioutil.ReadAll(resp.Body)
 		}
 
-		logger.Debugf("alertingWebhook done, url: %s, response code: %d, body: %s", conf.Url, resp.StatusCode, string(body))
+		logger.Debugf("event_webhook_succ, url: %s, response code: %d, body: %s", conf.Url, resp.StatusCode, string(body))
 	}
 }

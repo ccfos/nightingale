@@ -34,9 +34,9 @@ func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent,
 
 		resp, code, err := poster.PostJSON(url, 5*time.Second, event, 3)
 		if err != nil {
-			logger.Errorf("event_callback(rule_id=%d url=%s) fail, resp: %s, err: %v, code: %d", event.RuleId, url, string(resp), err, code)
+			logger.Errorf("event_callback_fail(rule_id=%d url=%s), resp: %s, err: %v, code: %d", event.RuleId, url, string(resp), err, code)
 		} else {
-			logger.Infof("event_callback(rule_id=%d url=%s) succ, resp: %s, code: %d", event.RuleId, url, string(resp), code)
+			logger.Infof("event_callback_succ(rule_id=%d url=%s), resp: %s, code: %d", event.RuleId, url, string(resp), code)
 		}
 	}
 }
