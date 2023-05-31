@@ -14,4 +14,4 @@ statik -src=./pub -dest=./front
 
 # rm the fe file
 rm n9e-fe-${VERSION}.tar.gz
-rm ./pub
+rm -r ./pub
