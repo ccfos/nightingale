@@ -3,8 +3,6 @@ package router
 import (
 	"fmt"
 	"net/http"
-	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -12,13 +10,15 @@ import (
 	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/center/sso"
+	_ "github.com/ccfos/nightingale/v6/front/statik"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/toolkits/pkg/runner"
+	"github.com/rakyll/statik/fs"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -89,37 +89,31 @@ func languageDetector(i18NHeaderKey string) gin.HandlerFunc {
 	}
 }
 
-func (rt *Router) configNoRoute(r *gin.Engine) {
+func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 	r.NoRoute(func(c *gin.Context) {
 		arr := strings.Split(c.Request.URL.Path, ".")
 		suffix := arr[len(arr)-1]
+
 		switch suffix {
 		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map":
-			cwdarr := []string{"/"}
-			if runtime.GOOS == "windows" {
-				cwdarr[0] = ""
-			}
-			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
-			cwdarr = append(cwdarr, "pub")
-			cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
-			c.File(path.Join(cwdarr...))
+			c.FileFromFS(c.Request.URL.Path, *fs)
 		default:
-			cwdarr := []string{"/"}
-			if runtime.GOOS == "windows" {
-				cwdarr[0] = ""
-			}
-			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
-			cwdarr = append(cwdarr, "pub")
-			cwdarr = append(cwdarr, "index.html")
-			c.File(path.Join(cwdarr...))
+			c.FileFromFS("/", *fs)
 		}
 	})
 }
 
 func (rt *Router) Config(r *gin.Engine) {
+
 	r.Use(stat())
 	r.Use(languageDetector(rt.Center.I18NHeaderKey))
 	r.Use(aop.Recovery())
+
+	statikFS, err := fs.New()
+	if err != nil {
+		logger.Errorf("cannot create statik fs: %v", err)
+	}
+	r.StaticFS("/pub", statikFS)
 
 	pagesPrefix := "/api/n9e"
 	pages := r.Group(pagesPrefix)
@@ -403,7 +397,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		}
 	}
 
-	rt.configNoRoute(r)
+	rt.configNoRoute(r, &statikFS)
+
 }
 
 func Render(c *gin.Context, data, msg interface{}) {

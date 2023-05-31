@@ -10,7 +10,6 @@ echo "tag: ${tag}"
 
 rm -rf n9e pub
 cp ../n9e .
-cp -r ../pub .
 
 docker build -t nightingale:${tag} .
 

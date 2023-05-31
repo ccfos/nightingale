@@ -7,7 +7,6 @@ ADD etc /app/
 ADD integrations /app/integrations/
 ADD --chmod=755 https://github.com/ufoscout/docker-compose-wait/releases/download/2.11.0/wait_x86_64 /wait
 RUN chmod +x /wait
-ADD pub /app/pub/
 
 EXPOSE 17000
 

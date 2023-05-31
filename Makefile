@@ -1,4 +1,4 @@
-.PHONY: start build
+.PHONY: prebuild start build
 
 ROOT:=$(shell pwd -P)
 GIT_COMMIT:=$(shell git --work-tree ${ROOT}  rev-parse 'HEAD^{commit}')
@@ -6,18 +6,23 @@ _GIT_VERSION:=$(shell git --work-tree ${ROOT} describe --tags --abbrev=14 "${GIT
 TAG=$(shell echo "${_GIT_VERSION}" |  awk -F"-" '{print $$1}')
 RELEASE_VERSION:="$(TAG)-$(GIT_COMMIT)"
 
+prebuild:
+	echo "begin download and embed the front-end file..."
+	sh fe.sh
+	echo "front-end file download and embedding completed."
+
 all: build
 
-build:
+build: prebuild
 	go build -ldflags "-w -s -X github.com/ccfos/nightingale/v6/pkg/version.Version=$(RELEASE_VERSION)" -o n9e ./cmd/center/main.go
 
-build-alert:
+build-alert: prebuild
 	go build -ldflags "-w -s -X github.com/ccfos/nightingale/v6/pkg/version.Version=$(RELEASE_VERSION)" -o n9e-alert ./cmd/alert/main.go
 
-build-pushgw:
+build-pushgw: prebuild
 	go build -ldflags "-w -s -X github.com/ccfos/nightingale/v6/pkg/version.Version=$(RELEASE_VERSION)" -o n9e-pushgw ./cmd/pushgw/main.go
 
-build-cli:
+build-cli: prebuild
 	go build -ldflags "-w -s -X github.com/ccfos/nightingale/v6/pkg/version.Version=$(RELEASE_VERSION)" -o n9e-cli ./cmd/cli/main.go
 
 run:

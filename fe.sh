@@ -8,3 +8,10 @@ curl -o n9e-fe-${VERSION}.tar.gz -L https://github.com/n9e/fe/releases/download/
 tar zxvf n9e-fe-${VERSION}.tar.gz
 
 cp ./docker/initsql/a-n9e.sql n9e.sql
+
+# Embed files into a Go executable
+statik -src=./pub -dest=./front
+
+# rm the fe file
+rm n9e-fe-${VERSION}.tar.gz
+rm -r ./pub

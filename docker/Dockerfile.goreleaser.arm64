@@ -6,7 +6,6 @@ WORKDIR /app
 ADD n9e /app/
 ADD etc /app/
 ADD integrations /app/integrations/
-ADD pub /app/pub/
 COPY --chmod=755  --from=toolbox /toolbox/wait_aarch64 /wait
 
 EXPOSE 17000
