@@ -15,7 +15,8 @@ builds:
   - id: build
     hooks:
       pre:
-      - sh -x ./fe.sh
+      - cmd: sh -x ./fe.sh
+        output: true
     main: ./cmd/center/
     binary: n9e
     env:
