@@ -43,12 +43,12 @@ IdleTimeout = 120
 
 [HTTP.APIForAgent]
 Enable = true 
-# [HTTP.Pushgw.BasicAuth]
+# [HTTP.APIForAgent.BasicAuth]
 # user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
 [HTTP.APIForService]
 Enable = true 
-[HTTP.Service.BasicAuth]
+[HTTP.APIForService.BasicAuth]
 user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
 [HTTP.JWTAuth]
