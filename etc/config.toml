@@ -41,22 +41,12 @@ WriteTimeout = 40
 # http server idle timeout, unit: s
 IdleTimeout = 120
 
-[HTTP.Pushgw]
+[HTTP.APIForAgent]
 Enable = true 
 # [HTTP.Pushgw.BasicAuth]
 # user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
-[HTTP.Alert]
-Enable = true 
-[HTTP.Alert.BasicAuth]
-user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
-
-[HTTP.Heartbeat]
-Enable = true 
-# [HTTP.Heartbeat.BasicAuth]
-# user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
-
-[HTTP.Service]
+[HTTP.APIForService]
 Enable = true 
 [HTTP.Service.BasicAuth]
 user001 = "ccc26da7b9aba533cbb263a36c07dcc5"

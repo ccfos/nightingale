@@ -31,28 +31,11 @@ type Config struct {
 	IdleTimeout      int
 	JWTAuth          JWTAuth
 	ProxyAuth        ProxyAuth
-	Alert            Alert
-	Pushgw           Pushgw
-	Heartbeat        Heartbeat
-	Service          Service
+	APIForAgent      BasicAuths
+	APIForService    BasicAuths
 }
 
-type Alert struct {
-	BasicAuth gin.Accounts
-	Enable    bool
-}
-
-type Pushgw struct {
-	BasicAuth gin.Accounts
-	Enable    bool
-}
-
-type Heartbeat struct {
-	BasicAuth gin.Accounts
-	Enable    bool
-}
-
-type Service struct {
+type BasicAuths struct {
 	BasicAuth gin.Accounts
 	Enable    bool
 }

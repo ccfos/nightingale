@@ -324,10 +324,10 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigPut)
 	}
 
-	if rt.HTTP.Service.Enable {
+	if rt.HTTP.APIForService.Enable {
 		service := r.Group("/v1/n9e")
-		if len(rt.HTTP.Service.BasicAuth) > 0 {
-			service.Use(gin.BasicAuth(rt.HTTP.Service.BasicAuth))
+		if len(rt.HTTP.APIForService.BasicAuth) > 0 {
+			service.Use(gin.BasicAuth(rt.HTTP.APIForService.BasicAuth))
 		}
 		{
 			service.Any("/prometheus/*url", rt.dsProxy)
@@ -387,11 +387,11 @@ func (rt *Router) Config(r *gin.Engine) {
 		}
 	}
 
-	if rt.HTTP.Heartbeat.Enable {
+	if rt.HTTP.APIForAgent.Enable {
 		heartbeat := r.Group("/v1/n9e")
 		{
-			if len(rt.HTTP.Heartbeat.BasicAuth) > 0 {
-				heartbeat.Use(gin.BasicAuth(rt.HTTP.Heartbeat.BasicAuth))
+			if len(rt.HTTP.APIForAgent.BasicAuth) > 0 {
+				heartbeat.Use(gin.BasicAuth(rt.HTTP.APIForAgent.BasicAuth))
 			}
 			heartbeat.POST("/heartbeat", rt.heartbeat)
 		}
