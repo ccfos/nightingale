@@ -7,6 +7,7 @@ import (
 )
 
 type Alert struct {
+	Disable     bool
 	EngineDelay int64
 	Heartbeat   HeartbeatConfig
 	Alerting    Alerting
@@ -69,5 +70,9 @@ func (a *Alert) PreCheck() {
 
 	if a.Heartbeat.EngineName == "" {
 		a.Heartbeat.EngineName = "default"
+	}
+
+	if a.EngineDelay == 0 {
+		a.EngineDelay = 30
 	}
 }

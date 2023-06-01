@@ -17,7 +17,7 @@ import (
 
 var (
 	showVersion = flag.Bool("version", false, "Show version.")
-	configDir   = flag.String("configs", osx.GetEnv("N9E_CONFIGS", "etc"), "Specify configuration directory.(env:N9E_CONFIGS)")
+	configDir   = flag.String("configs", osx.GetEnv("N9E_PUSHGW_CONFIGS", "etc"), "Specify configuration directory.(env:N9E_PUSHGW_CONFIGS)")
 	cryptoKey   = flag.String("crypto-key", "", "Specify the secret key for configuration file field encryption.")
 )
 

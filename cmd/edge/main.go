@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/pkg/osx"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 
@@ -17,7 +16,7 @@ import (
 
 var (
 	showVersion = flag.Bool("version", false, "Show version.")
-	configDir   = flag.String("configs", osx.GetEnv("N9E_ALERT_CONFIGS", "etc"), "Specify configuration directory.(env:N9E_ALERT_CONFIGS)")
+	configDir   = flag.String("configs", osx.GetEnv("N9E_EDGE_CONFIGS", "etc"), "Specify configuration directory.(env:N9E_EDGE_CONFIGS)")
 	cryptoKey   = flag.String("crypto-key", "", "Specify the secret key for configuration file field encryption.")
 )
 
@@ -31,7 +30,7 @@ func main() {
 
 	printEnv()
 
-	cleanFunc, err := alert.Initialize(*configDir, *cryptoKey)
+	cleanFunc, err := Initialize(*configDir, *cryptoKey)
 	if err != nil {
 		log.Fatalln("failed to initialize:", err)
 	}
