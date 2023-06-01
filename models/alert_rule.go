@@ -135,16 +135,16 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 				lst = append(lst, v.(string))
 			}
 			if q.Op == "==" {
-				black := " "
+				blank := " "
 				for _, tag := range lst {
-					m["tags like ?"+black] = "%" + tag + "%"
-					black += " "
+					m["tags like ?"+blank] = "%" + tag + "%"
+					blank += " "
 				}
 			} else {
-				black := " "
+				blank := " "
 				for _, tag := range lst {
-					m["tags not like ?"+black] = "%" + tag + "%"
-					black += " "
+					m["tags not like ?"+blank] = "%" + tag + "%"
+					blank += " "
 				}
 			}
 		case "hosts":
