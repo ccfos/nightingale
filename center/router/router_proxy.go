@@ -8,6 +8,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	pkgprom "github.com/ccfos/nightingale/v6/pkg/prom"
@@ -139,14 +140,18 @@ func (rt *Router) dsProxy(c *gin.Context) {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 	}
 
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify},
-		Proxy:           http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout: time.Duration(ds.HTTPJson.DialTimeout) * time.Millisecond,
-		}).DialContext,
-		ResponseHeaderTimeout: time.Duration(ds.HTTPJson.Timeout) * time.Millisecond,
-		MaxIdleConnsPerHost:   ds.HTTPJson.MaxIdleConnsPerHost,
+	transport, has := transportGet(dsId, ds.UpdatedAt)
+	if !has {
+		transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify},
+			Proxy:           http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout: time.Duration(ds.HTTPJson.DialTimeout) * time.Millisecond,
+			}).DialContext,
+			ResponseHeaderTimeout: time.Duration(ds.HTTPJson.Timeout) * time.Millisecond,
+			MaxIdleConnsPerHost:   ds.HTTPJson.MaxIdleConnsPerHost,
+		}
+		transportPut(dsId, ds.UpdatedAt, transport)
 	}
 
 	proxy := &httputil.ReverseProxy{
@@ -156,4 +161,45 @@ func (rt *Router) dsProxy(c *gin.Context) {
 	}
 
 	proxy.ServeHTTP(c.Writer, c.Request)
+}
+
+var (
+	transports     = map[int64]http.RoundTripper{}
+	updatedAts     = map[int64]int64{}
+	transportsLock = &sync.Mutex{}
+)
+
+func transportGet(dsid, newUpdatedAt int64) (http.RoundTripper, bool) {
+	transportsLock.Lock()
+	defer transportsLock.Unlock()
+
+	tran, has := transports[dsid]
+	if !has {
+		return nil, false
+	}
+
+	oldUpdateAt, has := updatedAts[dsid]
+	if !has {
+		oldtran := tran.(*http.Transport)
+		oldtran.CloseIdleConnections()
+		delete(transports, dsid)
+		return nil, false
+	}
+
+	if oldUpdateAt != newUpdatedAt {
+		oldtran := tran.(*http.Transport)
+		oldtran.CloseIdleConnections()
+		delete(transports, dsid)
+		delete(updatedAts, dsid)
+		return nil, false
+	}
+
+	return tran, has
+}
+
+func transportPut(dsid, updatedat int64, tran http.RoundTripper) {
+	transportsLock.Lock()
+	transports[dsid] = tran
+	updatedAts[dsid] = updatedat
+	transportsLock.Unlock()
 }

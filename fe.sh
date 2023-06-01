@@ -15,8 +15,8 @@ fi
 
 cp ./docker/initsql/a-n9e.sql n9e.sql
 
-# Embed files into a Go executable
+# Embed files into a go binary
 if ! $GOPATH/bin/statik -src=./pub -dest=./front; then
-    echo "failed to embed files into a Go executable!"
+    echo "failed to embed files into a go binary!"
     exit 4
 fi
