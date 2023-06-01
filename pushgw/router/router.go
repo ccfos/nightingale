@@ -39,7 +39,7 @@ func New(httpConfig httpx.Config, pushgw pconf.Pushgw, tc *memsto.TargetCacheTyp
 }
 
 func (rt *Router) Config(r *gin.Engine) {
-	if !rt.HTTP.Pushgw.Enable {
+	if !rt.HTTP.APIForAgent.Enable {
 		return
 	}
 
@@ -53,9 +53,9 @@ func (rt *Router) Config(r *gin.Engine) {
 	r.POST("/datadog/api/v1/metadata", datadogMetadata)
 	r.POST("/datadog/intake/", datadogIntake)
 
-	if len(rt.HTTP.Pushgw.BasicAuth) > 0 {
+	if len(rt.HTTP.APIForAgent.BasicAuth) > 0 {
 		// enable basic auth
-		auth := gin.BasicAuth(rt.HTTP.Pushgw.BasicAuth)
+		auth := gin.BasicAuth(rt.HTTP.APIForAgent.BasicAuth)
 		r.POST("/opentsdb/put", auth, rt.openTSDBPut)
 		r.POST("/openfalcon/push", auth, rt.falconPush)
 		r.POST("/prometheus/v1/write", auth, rt.remoteWrite)

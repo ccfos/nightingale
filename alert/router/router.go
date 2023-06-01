@@ -39,13 +39,13 @@ func New(httpConfig httpx.Config, alert aconf.Alert, amc *memsto.AlertMuteCacheT
 }
 
 func (rt *Router) Config(r *gin.Engine) {
-	if !rt.HTTP.Alert.Enable {
+	if !rt.HTTP.APIForService.Enable {
 		return
 	}
 
 	service := r.Group("/v1/n9e")
-	if len(rt.HTTP.Alert.BasicAuth) > 0 {
-		service.Use(gin.BasicAuth(rt.HTTP.Alert.BasicAuth))
+	if len(rt.HTTP.APIForService.BasicAuth) > 0 {
+		service.Use(gin.BasicAuth(rt.HTTP.APIForService.BasicAuth))
 	}
 	service.POST("/event", rt.pushEventToQueue)
 	service.POST("/event-persist", rt.eventPersist)
