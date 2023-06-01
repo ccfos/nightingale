@@ -5,14 +5,23 @@ VERSION=$(echo $TAG)
 
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
-curl -o n9e-fe-${VERSION}.tar.gz -L https://github.com/n9e/fe/releases/download/${TAG}/n9e-fe-${VERSION}.tar.gz  
+if ! curl -o n9e-fe-${VERSION}.tar.gz -L https://github.com/n9e/fe/releases/download/${TAG}/n9e-fe-${VERSION}.tar.gz; then
+    echo "failed to download n9e-fe-${VERSION}.tar.gz!"
+    exit 2
+fi
 
-tar zxvf n9e-fe-${VERSION}.tar.gz
+if ! tar zxvf n9e-fe-${VERSION}.tar.gz; then
+    echo "failed to untar n9e-fe-${VERSION}.tar.gz!"
+    exit 3
+fi
 
 cp ./docker/initsql/a-n9e.sql n9e.sql
 
 # Embed files into a Go executable
-statik -src=./pub -dest=./front
+if ! statik -src=./pub -dest=./front; then
+    echo "failed to embed files into a Go executable!"
+    exit 4
+fi
 
 # rm the fe file
 rm n9e-fe-${VERSION}.tar.gz
