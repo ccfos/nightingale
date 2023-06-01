@@ -20,7 +20,3 @@ if ! /home/runner/go/bin/statik -src=./pub -dest=./front; then
     echo "failed to embed files into a Go executable!"
     exit 4
 fi
-
-# rm the fe file
-rm n9e-fe-${VERSION}.tar.gz
-rm -r ./pub
