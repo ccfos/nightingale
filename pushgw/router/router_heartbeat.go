@@ -13,7 +13,6 @@ import (
 )
 
 // heartbeat Forward heartbeat request to the center.
-// basic auth
 func (rt *Router) heartbeat(c *gin.Context) {
 	var bs []byte
 	var err error
