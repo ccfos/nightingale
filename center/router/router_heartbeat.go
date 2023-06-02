@@ -35,8 +35,15 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	err = json.Unmarshal(bs, &req)
 	ginx.Dangerous(err)
 
-	req.Offset = (time.Now().UnixMilli() - req.UnixTime)
-	req.RemoteAddr = c.ClientIP()
+	// maybe from pushgw
+	if req.Offset == 0 {
+		req.Offset = (time.Now().UnixMilli() - req.UnixTime)
+	}
+
+	if req.RemoteAddr == "" {
+		req.RemoteAddr = c.ClientIP()
+	}
+
 	rt.MetaSet.Set(req.Hostname, req)
 
 	gid := ginx.QueryInt64(c, "gid", 0)
