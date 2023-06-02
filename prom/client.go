@@ -71,9 +71,9 @@ func (pc *PromClientMap) Hit(datasourceIds []int64) []int64 {
 	dsIds := make([]int64, 0, len(pc.ReaderClients))
 	if len(datasourceIds) == 1 && datasourceIds[0] == models.DatasourceIdAll {
 		for c := range pc.ReaderClients {
-			datasourceIds = append(datasourceIds, c)
+			dsIds = append(dsIds, c)
 		}
-		return datasourceIds
+		return dsIds
 	}
 
 	for dsId := range pc.ReaderClients {
