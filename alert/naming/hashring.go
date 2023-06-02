@@ -53,9 +53,7 @@ func (chr *DatasourceHashRingType) GetNode(datasourceId int64, pk string) (strin
 func (chr *DatasourceHashRingType) IsHit(datasourceId int64, pk string, currentNode string) bool {
 	node, err := chr.GetNode(datasourceId, pk)
 	if err != nil {
-		if errors.Is(err, consistent.ErrEmptyCircle) {
-			logger.Debugf("rule id:%s is not work, datasource id:%d is not assigned to active alert engine", pk, datasourceId)
-		} else {
+		if !errors.Is(err, consistent.ErrEmptyCircle) {
 			logger.Debugf("rule id:%s is not work, datasource id:%d failed to get node from hashring:%v", pk, datasourceId, err)
 		}
 		return false
