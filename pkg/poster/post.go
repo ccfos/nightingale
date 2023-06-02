@@ -2,7 +2,6 @@ package poster
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,11 +9,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
-	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/net/httplib"
 )
 
 type DataResponse[T any] struct {
@@ -29,7 +27,7 @@ func GetByUrls[T any](ctx *ctx.Context, path string) (T, error) {
 	rand.Shuffle(len(addrs), func(i, j int) { addrs[i], addrs[j] = addrs[j], addrs[i] })
 	for _, addr := range addrs {
 		url := fmt.Sprintf("%s%s", addr, path)
-		dat, e := GetByUrl[T](url, ctx.CenterApi.BasicAuth)
+		dat, e := GetByUrl[T](url, ctx.CenterApi)
 		if e != nil {
 			err = e
 			logger.Warningf("failed to get data from center, url: %s, err: %v", url, err)
@@ -42,25 +40,27 @@ func GetByUrls[T any](ctx *ctx.Context, path string) (T, error) {
 	return dat, err
 }
 
-func GetByUrl[T any](url string, basicAuth gin.Accounts) (T, error) {
+func GetByUrl[T any](url string, cfg conf.CenterApi) (T, error) {
 	var dat T
-	req := httplib.Get(url).SetTimeout(time.Duration(3000) * time.Millisecond)
 
-	if len(basicAuth) > 0 {
-		var token string
-		for username, password := range basicAuth {
-			token = base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
-		}
-
-		if len(token) > 0 {
-			req = req.Header("Authorization", "Basic "+token)
-		}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return dat, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := req.Response()
+	if len(cfg.BasicAuthUser) > 0 {
+		req.SetBasicAuth(cfg.BasicAuthUser, cfg.BasicAuthPass)
+	}
+
+	client := &http.Client{
+		Timeout: time.Duration(cfg.Timeout) * time.Millisecond,
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return dat, fmt.Errorf("failed to fetch from url: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -96,7 +96,7 @@ func PostByUrls(ctx *ctx.Context, path string, v interface{}) (err error) {
 	rand.Shuffle(len(addrs), func(i, j int) { addrs[i], addrs[j] = addrs[j], addrs[i] })
 	for _, addr := range addrs {
 		url := fmt.Sprintf("%s%s", addr, path)
-		err = PostByUrl(url, ctx.CenterApi.BasicAuth, v)
+		err = PostByUrl(url, ctx.CenterApi, v)
 		if err == nil {
 			return
 		}
@@ -104,7 +104,7 @@ func PostByUrls(ctx *ctx.Context, path string, v interface{}) (err error) {
 	return
 }
 
-func PostByUrl(url string, basicAuth gin.Accounts, v interface{}) (err error) {
+func PostByUrl(url string, cfg conf.CenterApi, v interface{}) (err error) {
 	var bs []byte
 	bs, err = json.Marshal(v)
 	if err != nil {
@@ -112,20 +112,14 @@ func PostByUrl(url string, basicAuth gin.Accounts, v interface{}) (err error) {
 	}
 	bf := bytes.NewBuffer(bs)
 	client := http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: time.Duration(cfg.Timeout) * time.Millisecond,
 	}
 
 	req, err := http.NewRequest("POST", url, bf)
 	req.Header.Set("Content-Type", "application/json")
 
-	if len(basicAuth) > 0 {
-		var token string
-		for username, password := range basicAuth {
-			token = base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
-		}
-		if len(token) > 0 {
-			req.Header.Set("Authorization", "Basic "+token)
-		}
+	if len(cfg.BasicAuthUser) > 0 {
+		req.SetBasicAuth(cfg.BasicAuthUser, cfg.BasicAuthPass)
 	}
 
 	resp, err := client.Do(req)

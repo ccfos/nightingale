@@ -3,8 +3,10 @@ RunMode = "release"
 
 [CenterApi]
 Addrs = ["http://127.0.0.1:17000"]
-[CenterApi.BasicAuth]
-user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+BasicAuthUser = "user001"
+BasicAuthPass = "ccc26da7b9aba533cbb263a36c07dcc5"
+# unit: ms
+Timeout = 9000
 
 [Log]
 # log write dir

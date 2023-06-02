@@ -14,8 +14,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/storage"
-
-	"github.com/gin-gonic/gin"
 )
 
 type ConfigType struct {
@@ -32,8 +30,10 @@ type ConfigType struct {
 }
 
 type CenterApi struct {
-	Addrs     []string
-	BasicAuth gin.Accounts
+	Addrs         []string
+	BasicAuthUser string
+	BasicAuthPass string
+	Timeout       int64
 }
 
 type GlobalConfig struct {
