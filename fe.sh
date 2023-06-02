@@ -16,6 +16,8 @@ if [ ! -d "./pub" ]; then
     fi
 fi
 
+GOPATH=$(go env GOPATH)
+GOPATH=${GOPATH:-/home/runner/go}
 
 # Embed files into a go binary
 if ! $GOPATH/bin/statik -src=./pub -dest=./front; then
