@@ -60,13 +60,13 @@ func (rt *Router) Config(r *gin.Engine) {
 		r.POST("/openfalcon/push", auth, rt.falconPush)
 		r.POST("/prometheus/v1/write", auth, rt.remoteWrite)
 		r.POST("/v1/n9e/target-update", auth, rt.targetUpdate)
-		r.POST("/v1/n9e/heartbeat/pushgw", auth, rt.heartbeat)
+		r.POST("/v1/n9e/edge/heartbeat", auth, rt.heartbeat)
 	} else {
 		// no need basic auth
 		r.POST("/opentsdb/put", rt.openTSDBPut)
 		r.POST("/openfalcon/push", rt.falconPush)
 		r.POST("/prometheus/v1/write", rt.remoteWrite)
 		r.POST("/v1/n9e/target-update", rt.targetUpdate)
-		r.POST("/v1/n9e/heartbeat/pushgw", rt.heartbeat)
+		r.POST("/v1/n9e/edge/heartbeat", rt.heartbeat)
 	}
 }
