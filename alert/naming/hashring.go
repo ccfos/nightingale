@@ -16,7 +16,7 @@ type DatasourceHashRingType struct {
 }
 
 // for alert_rule sharding
-var HostDatasource int64 = -999
+var HostDatasource int64 = 99999999
 var DatasourceHashRing = DatasourceHashRingType{Rings: make(map[int64]*consistent.Consistent)}
 
 func NewConsistentHashRing(replicas int32, nodes []string) *consistent.Consistent {
