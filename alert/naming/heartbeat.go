@@ -96,6 +96,16 @@ func (n *Naming) heartbeat() error {
 		}
 	}
 
+	if len(datasourceIds) == 0 {
+		DatasourceHashRing.Clear()
+		for dsId := range localss {
+			if dsId == HostDatasource {
+				continue
+			}
+			delete(localss, dsId)
+		}
+	}
+
 	for i := 0; i < len(datasourceIds); i++ {
 		servers, err := n.ActiveServers(datasourceIds[i])
 		if err != nil {
