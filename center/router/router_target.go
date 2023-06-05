@@ -87,9 +87,9 @@ func (rt *Router) targetGets(c *gin.Context) {
 					list[i].CpuNum = -1
 				}
 
-				if now.Unix()-list[i].UnixTime < 60 {
+				if now.Unix()-list[i].UnixTime/1000 < 60 {
 					list[i].TargetUp = 2
-				} else if now.Unix()-list[i].UnixTime < 180 {
+				} else if now.Unix()-list[i].UnixTime/1000 < 180 {
 					list[i].TargetUp = 1
 				}
 			}
