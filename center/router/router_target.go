@@ -80,17 +80,17 @@ func (rt *Router) targetGets(c *gin.Context) {
 			}
 
 			for i := 0; i < len(list); i++ {
-				if now.Unix()-list[i].UnixTime < 60 {
-					list[i].TargetUp = 2
-				} else if now.Unix()-list[i].UnixTime < 180 {
-					list[i].TargetUp = 1
-				}
-
 				if meta, ok := metaMap[list[i].Ident]; ok {
 					list[i].FillMeta(meta)
 				} else {
 					// 未上报过元数据的主机，cpuNum默认为-1, 用于前端展示 unknown
 					list[i].CpuNum = -1
+				}
+
+				if now.Unix()-list[i].UnixTime < 60 {
+					list[i].TargetUp = 2
+				} else if now.Unix()-list[i].UnixTime < 180 {
+					list[i].TargetUp = 1
 				}
 			}
 		}
