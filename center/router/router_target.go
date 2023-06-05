@@ -80,7 +80,9 @@ func (rt *Router) targetGets(c *gin.Context) {
 			}
 
 			for i := 0; i < len(list); i++ {
-				if now.Unix()-list[i].UpdateAt < 120 {
+				if now.Unix()-list[i].UnixTime < 60 {
+					list[i].TargetUp = 2
+				} else if now.Unix()-list[i].UnixTime < 180 {
 					list[i].TargetUp = 1
 				}
 
