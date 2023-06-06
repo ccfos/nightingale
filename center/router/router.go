@@ -132,7 +132,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		}
 
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
-		pages.POST("/auth/logout", rt.jwtMock(), rt.logoutPost)
+		pages.POST("/auth/logout", rt.jwtMock(), rt.auth(), rt.logoutPost)
 		pages.POST("/auth/refresh", rt.jwtMock(), rt.refreshPost)
 
 		pages.GET("/auth/sso-config", rt.ssoConfigNameGet)

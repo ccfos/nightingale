@@ -28,6 +28,7 @@ type loginForm struct {
 func (rt *Router) loginPost(c *gin.Context) {
 	var f loginForm
 	ginx.BindJSON(c, &f)
+	logger.Infof("username:%s login from:%s", f.Username, c.ClientIP())
 
 	user, err := models.PassLogin(rt.Ctx, f.Username, f.Password)
 	if err != nil {
@@ -67,6 +68,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 }
 
 func (rt *Router) logoutPost(c *gin.Context) {
+	logger.Infof("username:%s login from:%s", c.GetString("username"), c.ClientIP())
 	metadata, err := rt.extractTokenMetadata(c.Request)
 	if err != nil {
 		ginx.NewRender(c, http.StatusBadRequest).Message("failed to parse jwt token")
