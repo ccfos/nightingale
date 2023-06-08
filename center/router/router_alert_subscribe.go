@@ -83,6 +83,9 @@ func (rt *Router) alertSubscribePut(c *gin.Context) {
 			rt.Ctx,
 			"name",
 			"disabled",
+			"prod",
+			"cate",
+			"datasource_ids",
 			"cluster",
 			"rule_id",
 			"tags",
@@ -96,7 +99,6 @@ func (rt *Router) alertSubscribePut(c *gin.Context) {
 			"webhooks",
 			"for_duration",
 			"redefine_webhooks",
-			"datasource_ids",
 		))
 	}
 
