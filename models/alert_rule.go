@@ -819,7 +819,6 @@ func (ar *AlertRule) UpdateEvent(event *AlertCurEvent) {
 	event.NotifyChannelsJSON = ar.NotifyChannelsJSON
 	event.NotifyGroups = ar.NotifyGroups
 	event.NotifyGroupsJSON = ar.NotifyGroupsJSON
-	event.AnnotationsJSON = ar.AnnotationsJSON
 }
 
 func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
