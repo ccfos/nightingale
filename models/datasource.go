@@ -153,6 +153,15 @@ func GetDatasourceIdsByEngineName(ctx *ctx.Context, engineName string) ([]int64,
 	return ids, err
 }
 
+func GetDatasourcesCountByName(ctx *ctx.Context, name string) (int64, error) {
+	session := DB(ctx).Model(&Datasource{})
+	if name != "" {
+		session = session.Where("name = ?", name)
+	}
+
+	return Count(session)
+}
+
 func GetDatasourcesCountBy(ctx *ctx.Context, typ, cate, name string) (int64, error) {
 	session := DB(ctx).Model(&Datasource{})
 
