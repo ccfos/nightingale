@@ -848,6 +848,10 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 		}
 		lst[i].DatasourceIds = string(b)
 
+		if lst[i].PromQl == "" {
+			continue
+		}
+
 		ruleConfig := PromRuleConfig{
 			Queries: []PromQuery{
 				{
