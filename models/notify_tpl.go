@@ -107,7 +107,7 @@ func InitNotifyConfig(c *ctx.Context, tplDir string) {
 
 	if cval == "" {
 		var notifyChannels []NotifyChannel
-		channels := []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email}
+		channels := []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, Feishucard}
 		for _, channel := range channels {
 			notifyChannels = append(notifyChannels, NotifyChannel{Ident: channel, Name: channel, BuiltIn: true})
 		}

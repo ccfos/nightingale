@@ -23,6 +23,7 @@ const (
 	Dingtalk     = "dingtalk"
 	Wecom        = "wecom"
 	Feishu       = "feishu"
+	Feishucard   = "feishucard"
 	Mm           = "mm"
 	Telegram     = "telegram"
 	Email        = "email"
@@ -607,7 +608,7 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	case Wecom:
 		ret := gjson.GetBytes(bs, WecomKey)
 		return ret.String(), ret.Exists()
-	case Feishu:
+	case Feishu, Feishucard:
 		ret := gjson.GetBytes(bs, FeishuKey)
 		return ret.String(), ret.Exists()
 	case Mm:
