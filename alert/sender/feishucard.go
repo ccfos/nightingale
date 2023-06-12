@@ -116,7 +116,7 @@ func (fs *FeishucardSender) Send(ctx MessageContext) {
 		color = "green"
 	default:
 	}
-	SendTitle := fmt.Sprintf("🔔 [告警提醒] - %s", ctx.Event.RuleName)
+	SendTitle := fmt.Sprintf("🔔 %s", ctx.Event.RuleName)
 	body.Card.Header.Title.Content = SendTitle
 	body.Card.Header.Template = color
 	body.Card.Elements[0].Text.Content = message
