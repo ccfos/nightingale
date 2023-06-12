@@ -16,22 +16,32 @@ import (
 
 // A RecordingRule records its vector expression into new timeseries.
 type RecordingRule struct {
-	Id                int64    `json:"id" gorm:"primaryKey"`
-	GroupId           int64    `json:"group_id"`                // busi group id
-	DatasourceIds     string   `json:"-" gorm:"datasource_ids"` // datasource ids
-	DatasourceIdsJson []int64  `json:"datasource_ids" gorm:"-"` // for fe
-	Cluster           string   `json:"cluster"`                 // take effect by cluster, seperated by space
-	Name              string   `json:"name"`                    // new metric name
-	Note              string   `json:"note"`                    // note
-	Disabled          int      `json:"disabled"`                // 0: enabled, 1: disabled
-	PromQl            string   `json:"prom_ql"`                 // just one ql for promql
-	PromEvalInterval  int      `json:"prom_eval_interval"`      // unit:s
-	AppendTags        string   `json:"-"`                       // split by space: service=n9e mod=api
-	AppendTagsJSON    []string `json:"append_tags" gorm:"-"`    // for fe
-	CreateAt          int64    `json:"create_at"`
-	CreateBy          string   `json:"create_by"`
-	UpdateAt          int64    `json:"update_at"`
-	UpdateBy          string   `json:"update_by"`
+	Id                int64       `json:"id" gorm:"primaryKey"`
+	GroupId           int64       `json:"group_id"`                // busi group id
+	DatasourceIds     string      `json:"-" gorm:"datasource_ids"` // datasource ids
+	DatasourceIdsJson []int64     `json:"datasource_ids" gorm:"-"` // for fe
+	Cluster           string      `json:"cluster"`                 // take effect by cluster, seperated by space
+	Name              string      `json:"name"`                    // new metric name
+	Disabled          int         `json:"disabled"`                // 0: enabled, 1: disabled
+	PromQl            string      `json:"prom_ql"`                 // just one ql for promql
+	QueryConfigs      string      `json:"-" gorm:"query_configs"`  // query_configs
+	QueryConfigsJson  interface{} `json:"query_configs" gorm:"-"`  // query_configs for fe
+	PromEvalInterval  int         `json:"prom_eval_interval"`      // unit:s
+	AppendTags        string      `json:"-"`                       // split by space: service=n9e mod=api
+	AppendTagsJSON    []string    `json:"append_tags" gorm:"-"`    // for fe
+	Note              string      `json:"note"`                    // note
+	CreateAt          int64       `json:"create_at"`
+	CreateBy          string      `json:"create_by"`
+	UpdateAt          int64       `json:"update_at"`
+	UpdateBy          string      `json:"update_by"`
+}
+
+type QueryConfig struct {
+	Querys       []interface{} `json:"queries"`
+	NewMetric    string        `json:"new_metric"`
+	Exp          string        `json:"exp"`
+	DatasourceId int64         `json:"datasource_id"`
+	Delay        int           `json:"delay"`
 }
 
 func (re *RecordingRule) TableName() string {
