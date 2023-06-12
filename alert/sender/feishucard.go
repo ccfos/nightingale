@@ -50,7 +50,7 @@ type feishuCard struct {
 	Card Cards `json:"card"`
 }
 
-type FeishucardSender struct {
+type FeishuCardSender struct {
 	tpl *template.Template
 }
 
@@ -60,7 +60,6 @@ const (
 )
 
 var (
-	//regRecovered ,regTriggered = regexp.MustCompile(Recovered) regexp.MustCompile(Triggered)
 	body = feishuCard{
 		feishu: feishu{Msgtype: "interactive"},
 		Card: Cards{
@@ -70,16 +69,13 @@ var (
 			},
 			Header: Headers{
 				Title: Titles{
-					//Content: SendTitle,
 					Tag: "plain_text",
 				},
-				//Template: color,
 			},
 			Elements: []Element{
-				Element{
+				{
 					Tag: "div",
 					Text: Te{
-						//Content: message,
 						Tag: "lark_md",
 					},
 				},
@@ -90,7 +86,6 @@ var (
 					Tag: "note",
 					Elements: []Element{
 						{
-							//Content: SendTitle,
 							Tag: "lark_md",
 						},
 					},
@@ -100,7 +95,7 @@ var (
 	}
 )
 
-func (fs *FeishucardSender) Send(ctx MessageContext) {
+func (fs *FeishuCardSender) Send(ctx MessageContext) {
 	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
 		return
 	}
@@ -108,14 +103,12 @@ func (fs *FeishucardSender) Send(ctx MessageContext) {
 	message := BuildTplMessage(fs.tpl, ctx.Event)
 	color := "red"
 	lowerUnicode := strings.ToLower(message)
-	switch {
-	case strings.Count(lowerUnicode, Recovered) > 0 && strings.Count(lowerUnicode, Triggered) > 0:
-		//case len(regRecovered.FindAllStringIndex(lowerUnicode, -1))>0 && len(regTriggered.FindAllStringIndex(lowerUnicode, -1)) > 0:
+	if strings.Count(lowerUnicode, Recovered) > 0 && strings.Count(lowerUnicode, Triggered) > 0 {
 		color = "orange"
-	case strings.Count(lowerUnicode, Recovered) > 0:
+	} else if strings.Count(lowerUnicode, Recovered) > 0 {
 		color = "green"
-	default:
 	}
+
 	SendTitle := fmt.Sprintf("🔔 %s", ctx.Event.RuleName)
 	body.Card.Header.Title.Content = SendTitle
 	body.Card.Header.Template = color
@@ -126,11 +119,11 @@ func (fs *FeishucardSender) Send(ctx MessageContext) {
 	}
 }
 
-func (fs *FeishucardSender) extract(users []*models.User) ([]string, []string) {
+func (fs *FeishuCardSender) extract(users []*models.User) ([]string, []string) {
 	urls := make([]string, 0, len(users))
 	ats := make([]string, 0)
 	for i := range users {
-		if token, has := users[i].ExtractToken(models.Feishucard); has {
+		if token, has := users[i].ExtractToken(models.FeishuCard); has {
 			url := token
 			if !strings.HasPrefix(token, "https://") {
 				url = "https://open.feishu.cn/open-apis/bot/v2/hook/" + strings.TrimSpace(token)
@@ -141,7 +134,7 @@ func (fs *FeishucardSender) extract(users []*models.User) ([]string, []string) {
 	return urls, ats
 }
 
-func (fs *FeishucardSender) doSend(url string, body feishuCard) {
+func (fs *FeishuCardSender) doSend(url string, body feishuCard) {
 	res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
 	if err != nil {
 		logger.Errorf("feishucard_sender: result=fail url=%s code=%d error=%v response=%s", url, code, err, string(res))

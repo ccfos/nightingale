@@ -107,8 +107,7 @@ func InitNotifyConfig(c *ctx.Context, tplDir string) {
 
 	if cval == "" {
 		var notifyChannels []NotifyChannel
-		channels := []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, Feishucard}
-		for _, channel := range channels {
+		for _, channel := range DefaultChannels {
 			notifyChannels = append(notifyChannels, NotifyChannel{Ident: channel, Name: channel, BuiltIn: true})
 		}
 
@@ -117,6 +116,33 @@ func InitNotifyConfig(c *ctx.Context, tplDir string) {
 		if err != nil {
 			logger.Errorf("failed to set notify contact config: %v", err)
 			return
+		}
+	} else {
+		var channels []NotifyChannel
+		err = json.Unmarshal([]byte(cval), &channels)
+		if err != nil {
+			logger.Errorf("failed to unmarshal notify channel config: %v", err)
+			return
+		}
+		channelMap := make(map[string]bool)
+		for _, channel := range channels {
+			channelMap[channel.Ident] = true
+		}
+
+		var newChannels []NotifyChannel
+		for _, channel := range DefaultChannels {
+			if _, ok := channelMap[channel]; !ok {
+				newChannels = append(newChannels, NotifyChannel{Ident: channel, Name: channel, BuiltIn: true})
+			}
+		}
+		if len(newChannels) > 0 {
+			channels = append(channels, newChannels...)
+			data, _ := json.Marshal(channels)
+			err = ConfigsSet(c, NOTIFYCHANNEL, string(data))
+			if err != nil {
+				logger.Errorf("failed to set notify contact config: %v", err)
+				return
+			}
 		}
 	}
 

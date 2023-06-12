@@ -31,8 +31,8 @@ func NewSender(key string, tpls map[string]*template.Template, smtp aconf.SMTPCo
 		return &WecomSender{tpl: tpls[models.Wecom]}
 	case models.Feishu:
 		return &FeishuSender{tpl: tpls[models.Feishu]}
-	case models.Feishucard:
-		return &FeishucardSender{tpl: tpls[models.Feishucard]}
+	case models.FeishuCard:
+		return &FeishuCardSender{tpl: tpls[models.FeishuCard]}
 	case models.Email:
 		return &EmailSender{subjectTpl: tpls["mailsubject"], contentTpl: tpls[models.Email], smtp: smtp}
 	case models.Mm:
