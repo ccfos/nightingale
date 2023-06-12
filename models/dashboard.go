@@ -24,7 +24,7 @@ type Dashboard struct {
 }
 
 func (d *Dashboard) TableName() string {
-	return "dashboard"
+	return "dashboards"
 }
 
 func (d *Dashboard) Verify() error {
@@ -46,7 +46,7 @@ func (d *Dashboard) Add(ctx *ctx.Context) error {
 
 	exists, err := DashboardExists(ctx, "group_id=? and name=?", d.GroupId, d.Name)
 	if err != nil {
-		return errors.WithMessage(err, "failed to count dashboard")
+		return errors.WithMessage(err, "failed to count dashboards")
 	}
 
 	if exists {

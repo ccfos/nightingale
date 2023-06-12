@@ -141,7 +141,7 @@ insert into role_operation(role_name, operation) values('Standard', '/recording-
 insert into role_operation(role_name, operation) values('Standard', '/recording-rules/put');
 insert into role_operation(role_name, operation) values('Standard', '/recording-rules/del');
 
--- for alert_rule | collect_rule | mute | dashboard grouping
+-- for alert_rule | collect_rule | mute | dashboards grouping
 CREATE TABLE busi_group (
     id bigserial,
     name varchar(191) not null,
@@ -174,7 +174,7 @@ COMMENT ON COLUMN busi_group_member.perm_flag IS 'ro | rw';
 
 insert into busi_group_member(busi_group_id, user_group_id, perm_flag) values(1, 1, 'rw');
 
--- for dashboard new version
+-- for dashboards new version
 CREATE TABLE board (
     id bigserial,
     group_id bigint not null default 0 ,
@@ -199,13 +199,13 @@ COMMENT ON COLUMN board.built_in IS '0:false 1:true';
 COMMENT ON COLUMN board.hide IS '0:false 1:true';
 
 
--- for dashboard new version
+-- for dashboards new version
 CREATE TABLE board_payload (
     id bigint  not null ,
     payload text not null,
     UNIQUE (id)
 ) ;
-COMMENT ON COLUMN board_payload.id IS 'dashboard id';
+COMMENT ON COLUMN board_payload.id IS 'dashboards id';
 
 -- deprecated
 CREATE TABLE dashboard (
@@ -223,10 +223,10 @@ CREATE TABLE dashboard (
 ) ;
 COMMENT ON COLUMN dashboard.group_id IS 'busi group id';
 COMMENT ON COLUMN dashboard.tags IS 'split by space';
-COMMENT ON COLUMN dashboard.configs IS 'dashboard variables';
+COMMENT ON COLUMN dashboard.configs IS 'dashboards variables';
 
 -- deprecated
--- auto create the first subclass 'Default chart group' of dashboard
+-- auto create the first subclass 'Default chart group' of dashboards
 CREATE TABLE chart_group (
     id bigserial,
     dashboard_id bigint  not null,

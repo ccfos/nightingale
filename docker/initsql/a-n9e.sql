@@ -141,7 +141,7 @@ insert into `role_operation`(role_name, operation) values('Standard', '/recordin
 insert into `role_operation`(role_name, operation) values('Standard', '/recording-rules/put');
 insert into `role_operation`(role_name, operation) values('Standard', '/recording-rules/del');
 
--- for alert_rule | collect_rule | mute | dashboard grouping
+-- for alert_rule | collect_rule | mute | dashboards grouping
 CREATE TABLE `busi_group` (
     `id` bigint unsigned not null auto_increment,
     `name` varchar(191) not null,
@@ -169,7 +169,7 @@ CREATE TABLE `busi_group_member` (
 
 insert into busi_group_member(busi_group_id, user_group_id, perm_flag) values(1, 1, 'rw');
 
--- for dashboard new version
+-- for dashboards new version
 CREATE TABLE `board` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
@@ -188,9 +188,9 @@ CREATE TABLE `board` (
     KEY(`ident`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
--- for dashboard new version
+-- for dashboards new version
 CREATE TABLE `board_payload` (
-    `id` bigint unsigned not null comment 'dashboard id',
+    `id` bigint unsigned not null comment 'dashboards id',
     `payload` mediumtext not null,
     UNIQUE KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
@@ -201,7 +201,7 @@ CREATE TABLE `dashboard` (
     `group_id` bigint not null default 0 comment 'busi group id',
     `name` varchar(191) not null,
     `tags` varchar(255) not null comment 'split by space',
-    `configs` varchar(8192) comment 'dashboard variables',
+    `configs` varchar(8192) comment 'dashboards variables',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
@@ -211,7 +211,7 @@ CREATE TABLE `dashboard` (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 -- deprecated
--- auto create the first subclass 'Default chart group' of dashboard
+-- auto create the first subclass 'Default chart group' of dashboards
 CREATE TABLE `chart_group` (
     `id` bigint unsigned not null auto_increment,
     `dashboard_id` bigint unsigned not null,

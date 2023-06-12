@@ -20,7 +20,7 @@ const I18N = `
       "duplicate tagkey(%s)":"tagkey(%s)重复了",
       "name is empty": "名称不能为空",
       "Ident duplicate":"大盘唯一标识已存在",
-      "No such dashboard":"大盘不存在",
+      "No such dashboards":"大盘不存在",
       "Name has invalid characters":"名称包含非法字符",
       "Name is blank":"名称不能为空",
       "forbidden":"没有权限",

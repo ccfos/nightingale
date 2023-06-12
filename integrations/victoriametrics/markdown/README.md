@@ -10,7 +10,7 @@
 
 ### 配置文件示例：
 
-其中label_key: `instance` ，label: `service`  为[dashboard](../dashboard/victoriametrics.json)中选择变量，制作版本为v1.83.0，已经在1.90.0进行过验证，理论上适配当前1.70.0以上所有版本，指标描述全部补齐，并调整为中文，这个仪表盘为官方推荐的集群仪表盘，一直在持续更新，推荐使用这个；
+其中label_key: `instance` ，label: `service`  为[dashboards](../dashboards/victoriametrics.json)中选择变量，制作版本为v1.83.0，已经在1.90.0进行过验证，理论上适配当前1.70.0以上所有版本，指标描述全部补齐，并调整为中文，这个仪表盘为官方推荐的集群仪表盘，一直在持续更新，推荐使用这个；
 
 ```toml
 # vmstorage

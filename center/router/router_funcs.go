@@ -112,7 +112,7 @@ func Dashboard(ctx *ctx.Context, id int64) *models.Dashboard {
 	ginx.Dangerous(err)
 
 	if obj == nil {
-		ginx.Bomb(http.StatusNotFound, "No such dashboard")
+		ginx.Bomb(http.StatusNotFound, "No such dashboards")
 	}
 
 	return obj

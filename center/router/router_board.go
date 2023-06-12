@@ -51,7 +51,7 @@ func (rt *Router) boardGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if board == nil {
-		ginx.Bomb(http.StatusNotFound, "No such dashboard")
+		ginx.Bomb(http.StatusNotFound, "No such dashboards")
 	}
 
 	if board.Public == 0 {
@@ -73,7 +73,7 @@ func (rt *Router) boardPureGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if board == nil {
-		ginx.Bomb(http.StatusNotFound, "No such dashboard")
+		ginx.Bomb(http.StatusNotFound, "No such dashboards")
 	}
 
 	ginx.NewRender(c).Data(board, nil)
@@ -112,7 +112,7 @@ func (rt *Router) Board(id int64) *models.Board {
 	ginx.Dangerous(err)
 
 	if obj == nil {
-		ginx.Bomb(http.StatusNotFound, "No such dashboard")
+		ginx.Bomb(http.StatusNotFound, "No such dashboards")
 	}
 
 	return obj
@@ -160,7 +160,7 @@ func (rt *Router) boardPutConfigs(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if bo == nil {
-		ginx.Bomb(http.StatusNotFound, "No such dashboard")
+		ginx.Bomb(http.StatusNotFound, "No such dashboards")
 	}
 
 	// check permission
