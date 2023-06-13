@@ -37,15 +37,14 @@ type RecordingRule struct {
 }
 
 type QueryConfig struct {
-	Queries      []Query `json:"queries"`
-	NewMetric    string  `json:"new_metric"`
-	Exp          string  `json:"exp"`
-	DatasourceId int64   `json:"datasource_id"`
-	Delay        int     `json:"delay"`
+	Queries           []Query `json:"queries"`
+	NewMetric         string  `json:"new_metric"`
+	Exp               string  `json:"exp"`
+	WriteDatasourceId int64   `json:"write_datasource_id"`
+	Delay             int     `json:"delay"`
 }
 
 type Query struct {
-	Ref           string      `json:"ref"`
 	DatasourceIds []int64     `json:"datasource_ids"`
 	Cate          string      `json:"cate"`
 	Config        interface{} `json:"config"`
