@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"html/template"
+	"sort"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/center/cconf"
@@ -13,6 +15,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
+
+var sortedDefaultChannels []string
+
+func init() {
+	sortedDefaultChannels = models.DefaultChannels
+	sort.Strings(sortedDefaultChannels)
+}
 
 func (rt *Router) notifyTplGets(c *gin.Context) {
 	lst, err := models.NotifyTplGets(rt.Ctx)
@@ -105,4 +114,37 @@ func (rt *Router) notifyTplPreview(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(ret, nil)
+}
+
+// add new notify template
+func (rt *Router) notifyTplAdd(c *gin.Context) {
+	var f models.NotifyTpl
+	ginx.BindJSON(c, &f)
+	f.Channel = strings.TrimSpace(f.Channel) //unique
+	if err := templateValidate(f); err != nil {
+		ginx.NewRender(c).Message(err.Error())
+		return
+	}
+	if count, err := models.NotifyTplCountByChannel(rt.Ctx, f.Channel); err != nil || count != 0 {
+		if err != nil {
+			ginx.NewRender(c).Message(err.Error())
+		} else {
+			ginx.NewRender(c).Message(errors.New("Refuse to create duplicate channel(unique)"))
+		}
+		return
+	}
+	ginx.NewRender(c).Message(f.Create(rt.Ctx))
+}
+
+// delete notify template
+func (rt *Router) notifyTplDel(c *gin.Context) {
+	var f models.NotifyTpl
+	ginx.BindJSON(c, &f)
+	f.Channel = strings.TrimSpace(f.Channel)
+	index := sort.SearchStrings(sortedDefaultChannels, f.Channel)
+	if index < len(sortedDefaultChannels) && sortedDefaultChannels[index] == f.Channel {
+		ginx.NewRender(c).Message(errors.New("Refuse to delete the default channel"))
+		return
+	}
+	ginx.NewRender(c).Message(f.NotifyTplDeleteByChannel(rt.Ctx))
 }
