@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"html/template"
 	"strings"
 
@@ -105,4 +106,27 @@ func (rt *Router) notifyTplPreview(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(ret, nil)
+}
+
+// add new notify template
+func (rt *Router) notifyTplAdd(c *gin.Context) {
+	var f models.NotifyTpl
+	ginx.BindJSON(c, &f)
+	f.Channel = strings.TrimSpace(f.Channel) //unique
+	if err := templateValidate(f); err != nil {
+		ginx.Dangerous(err)
+	}
+	count, err := models.NotifyTplCountByChannel(rt.Ctx, f.Channel)
+	ginx.Dangerous(err)
+	if count != 0 {
+		ginx.Dangerous(errors.New("Refuse to create duplicate channel(unique)"))
+	}
+	ginx.NewRender(c).Message(f.Create(rt.Ctx))
+}
+
+// delete notify template, not allowed to delete the system defaults(models.DefaultChannels)
+func (rt *Router) notifyTplDel(c *gin.Context) {
+	f := new(models.NotifyTpl)
+	id := ginx.UrlParamInt64(c, "id")
+	ginx.NewRender(c).Message(f.NotifyTplDelete(rt.Ctx, id))
 }
