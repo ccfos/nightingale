@@ -53,11 +53,8 @@ func (n *NotifyTpl) CreateIfNotExists(c *ctx.Context, channel string) error {
 	return err
 }
 
-func (n *NotifyTpl) NotifyTplDelete(ctx *ctx.Context, ids ...int64) error {
-	if len(ids) == 0 {
-		return nil
-	}
-	return DB(ctx).Where("channel not in (?) and id in (?) ", DefaultChannels, []int64(ids)).Delete(new(NotifyTpl)).Error
+func (n *NotifyTpl) NotifyTplDelete(ctx *ctx.Context, id int64) error {
+	return DB(ctx).Where("channel not in (?) and id in (?) ", DefaultChannels, id).Delete(new(NotifyTpl)).Error
 }
 
 func NotifyTplCountByChannel(c *ctx.Context, channel string) (int64, error) {
