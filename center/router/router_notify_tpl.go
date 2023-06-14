@@ -114,14 +114,12 @@ func (rt *Router) notifyTplAdd(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 	f.Channel = strings.TrimSpace(f.Channel) //unique
 	if err := templateValidate(f); err != nil {
-		ginx.Dangerous(err.Error())
+		ginx.Dangerous(err)
 	}
-	if count, err := models.NotifyTplCountByChannel(rt.Ctx, f.Channel); err != nil || count != 0 {
-		if err != nil {
-			ginx.Dangerous(err.Error())
-		} else {
-			ginx.Dangerous(errors.New("Refuse to create duplicate channel(unique)"))
-		}
+	count, err := models.NotifyTplCountByChannel(rt.Ctx, f.Channel)
+	ginx.Dangerous(err)
+	if count != 0 {
+		ginx.Dangerous(errors.New("Refuse to create duplicate channel(unique)"))
 	}
 	ginx.NewRender(c).Message(f.Create(rt.Ctx))
 }
