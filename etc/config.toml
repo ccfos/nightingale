@@ -41,6 +41,9 @@ WriteTimeout = 40
 # http server idle timeout, unit: s
 IdleTimeout = 120
 
+[HTTP.ShowCaptcha]
+Enable = false 
+
 [HTTP.APIForAgent]
 Enable = true 
 # [HTTP.APIForAgent.BasicAuth]

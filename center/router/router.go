@@ -136,6 +136,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/auth/refresh", rt.jwtMock(), rt.refreshPost)
 		pages.POST("/auth/captcha", rt.jwtMock(), rt.generateCaptcha)
 		pages.POST("/auth/captcha-verify", rt.jwtMock(), rt.captchaVerify)
+		pages.GET("/auth/ifshowcaptcha", rt.ifShowCaptcha)
 
 		pages.GET("/auth/sso-config", rt.ssoConfigNameGet)
 		pages.GET("/auth/redirect", rt.loginRedirect)

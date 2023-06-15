@@ -92,6 +92,21 @@ func (rt *Router) captchaVerify(c *gin.Context) {
 	ginx.NewRender(c).Message("incorrect verification code")
 }
 
+// 验证码开关
+func (rt *Router) ifShowCaptcha(c *gin.Context) {
+
+	if rt.HTTP.ShowCaptcha.Enable {
+		ginx.NewRender(c).Data(gin.H{
+			"show": true,
+		}, nil)
+		return
+	}
+
+	ginx.NewRender(c).Data(gin.H{
+		"show": false,
+	}, nil)
+}
+
 // 验证
 func CaptchaVerify(id string, value string) bool {
 	//verify the captcha
