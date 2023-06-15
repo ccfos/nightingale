@@ -173,31 +173,7 @@ func InitNotifyConfig(c *ctx.Context, tplDir string) {
 	}
 
 	// init notify tpl
-	filenames, err := file.FilesUnder(tplDir)
-	if err != nil {
-		logger.Errorf("failed to get tpl files under %s", tplDir)
-		return
-	}
-
-	if len(filenames) == 0 {
-		logger.Errorf("no tpl files under %s", tplDir)
-		return
-	}
-
-	tplMap := make(map[string]string)
-	for i := 0; i < len(filenames); i++ {
-		if strings.HasSuffix(filenames[i], ".tpl") {
-			name := strings.TrimSuffix(filenames[i], ".tpl")
-			tplpath := path.Join(tplDir, filenames[i])
-			content, err := file.ToString(tplpath)
-			if err != nil {
-				logger.Errorf("failed to read tpl file: %s", filenames[i])
-				continue
-			}
-			tplMap[name] = content
-		}
-	}
-
+	tplMap := getNotifyTpl(tplDir)
 	for channel, content := range tplMap {
 		notifyTpl := NotifyTpl{
 			Name:    channel,
@@ -210,4 +186,314 @@ func InitNotifyConfig(c *ctx.Context, tplDir string) {
 			logger.Warningf("failed to create notify tpls %v", err)
 		}
 	}
+}
+
+func getNotifyTpl(tplDir string) map[string]string {
+	filenames, err := file.FilesUnder(tplDir)
+	if err != nil {
+		logger.Errorf("failed to get tpl files under %s", tplDir)
+		return nil
+	}
+
+	tplMap := make(map[string]string)
+	if len(filenames) != 0 {
+		for i := 0; i < len(filenames); i++ {
+			if strings.HasSuffix(filenames[i], ".tpl") {
+				name := strings.TrimSuffix(filenames[i], ".tpl")
+				tplpath := path.Join(tplDir, filenames[i])
+				content, err := file.ToString(tplpath)
+				if err != nil {
+					logger.Errorf("failed to read tpl file: %s", filenames[i])
+					continue
+				}
+				tplMap[name] = content
+			}
+		}
+		return tplMap
+	}
+
+	logger.Debugf("no tpl files under %s, use default tpl", tplDir)
+	return TplMap
+}
+
+var TplMap = map[string]string{
+	"dingtalk": `#### {{if .IsRecovered}}<font color="#008800">S{{.Severity}} - Recovered - {{.RuleName}}</font>{{else}}<font color="#FF0000">S{{.Severity}} - Triggered - {{.RuleName}}</font>{{end}}
+
+	---
+	
+	- **规则标题**: {{.RuleName}}{{if .RuleNote}}
+	- **规则备注**: {{.RuleNote}}{{end}}
+	{{if not .IsRecovered}}- **触发时值**: {{.TriggerValue}}{{end}}
+	{{if .TargetIdent}}- **监控对象**: {{.TargetIdent}}{{end}}
+	- **监控指标**: {{.TagsJSON}}
+	- {{if .IsRecovered}}**恢复时间**: {{timeformat .LastEvalTime}}{{else}}**触发时间**: {{timeformat .TriggerTime}}{{end}}
+	- **发送时间**: {{timestamp}}
+	`,
+	"email": `<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title>夜莺告警通知</title>
+		<style type="text/css">
+			.wrapper {
+				background-color: #f8f8f8;
+				padding: 15px;
+				height: 100%;
+			}
+			.main {
+				width: 600px;
+				padding: 30px;
+				margin: 0 auto;
+				background-color: #fff;
+				font-size: 12px;
+				font-family: verdana,'Microsoft YaHei',Consolas,'Deja Vu Sans Mono','Bitstream Vera Sans Mono';
+			}
+			header {
+				border-radius: 2px 2px 0 0;
+			}
+			header .title {
+				font-size: 14px;
+				color: #333333;
+				margin: 0;
+			}
+			header .sub-desc {
+				color: #333;
+				font-size: 14px;
+				margin-top: 6px;
+				margin-bottom: 0;
+			}
+			hr {
+				margin: 20px 0;
+				height: 0;
+				border: none;
+				border-top: 1px solid #e5e5e5;
+			}
+			em {
+				font-weight: 600;
+			}
+			table {
+				margin: 20px 0;
+				width: 100%;
+			}
+	
+			table tbody tr{
+				font-weight: 200;
+				font-size: 12px;
+				color: #666;
+				height: 32px;
+			}
+	
+			.succ {
+				background-color: green;
+				color: #fff;
+			}
+	
+			.fail {
+				background-color: red;
+				color: #fff;
+			}
+	
+			.succ th, .succ td, .fail th, .fail td {
+				color: #fff;
+			}
+	
+			table tbody tr th {
+				width: 80px;
+				text-align: right;
+			}
+			.text-right {
+				text-align: right;
+			}
+			.body {
+				margin-top: 24px;
+			}
+			.body-text {
+				color: #666666;
+				-webkit-font-smoothing: antialiased;
+			}
+			.body-extra {
+				-webkit-font-smoothing: antialiased;
+			}
+			.body-extra.text-right a {
+				text-decoration: none;
+				color: #333;
+			}
+			.body-extra.text-right a:hover {
+				color: #666;
+			}
+			.button {
+				width: 200px;
+				height: 50px;
+				margin-top: 20px;
+				text-align: center;
+				border-radius: 2px;
+				background: #2D77EE;
+				line-height: 50px;
+				font-size: 20px;
+				color: #FFFFFF;
+				cursor: pointer;
+			}
+			.button:hover {
+				background: rgb(25, 115, 255);
+				border-color: rgb(25, 115, 255);
+				color: #fff;
+			}
+			footer {
+				margin-top: 10px;
+				text-align: right;
+			}
+			.footer-logo {
+				text-align: right;
+			}
+			.footer-logo-image {
+				width: 108px;
+				height: 27px;
+				margin-right: 10px;
+			}
+			.copyright {
+				margin-top: 10px;
+				font-size: 12px;
+				text-align: right;
+				color: #999;
+				-webkit-font-smoothing: antialiased;
+			}
+		</style>
+	</head>
+	<body>
+	<div class="wrapper">
+		<div class="main">
+			<header>
+				<h3 class="title">{{.RuleName}}</h3>
+				<p class="sub-desc"></p>
+			</header>
+	
+			<hr>
+	
+			<div class="body">
+				<table cellspacing="0" cellpadding="0" border="0">
+					<tbody>
+					{{if .IsRecovered}}
+					<tr class="succ">
+						<th>级别状态：</th>
+						<td>S{{.Severity}} Recovered</td>
+					</tr>
+					{{else}}
+					<tr class="fail">
+						<th>级别状态：</th>
+						<td>S{{.Severity}} Triggered</td>
+					</tr>
+					{{end}}
+	
+					<tr>
+						<th>策略备注：</th>
+						<td>{{.RuleNote}}</td>
+					</tr>
+					<tr>
+						<th>设备备注：</th>
+						<td>{{.TargetNote}}</td>
+					</tr>
+					{{if not .IsRecovered}}
+					<tr>
+						<th>触发时值：</th>
+						<td>{{.TriggerValue}}</td>
+					</tr>
+					{{end}}
+	
+					{{if .TargetIdent}}
+					<tr>
+						<th>监控对象：</th>
+						<td>{{.TargetIdent}}</td>
+					</tr>
+					{{end}}
+					<tr>
+						<th>监控指标：</th>
+						<td>{{.TagsJSON}}</td>
+					</tr>
+	
+					{{if .IsRecovered}}
+					<tr>
+						<th>恢复时间：</th>
+						<td>{{timeformat .LastEvalTime}}</td>
+					</tr>
+					{{else}}
+					<tr>
+						<th>触发时间：</th>
+						<td>
+							{{timeformat .TriggerTime}}
+						</td>
+					</tr>
+					{{end}}
+	
+					<tr>
+						<th>发送时间：</th>
+						<td>
+							{{timestamp}}
+						</td>
+					</tr>
+					</tbody>
+				</table>
+	
+				<hr>
+	
+				<footer>
+					<div class="copyright" style="font-style: italic">
+						我们希望与您一起，将监控这个事情，做到极致！
+					</div>
+				</footer>
+			</div>
+		</div>
+	</div>
+	</body>
+	</html>`,
+	"feishu": `级别状态: S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}}
+	规则名称: {{.RuleName}}{{if .RuleNote}}
+	规则备注: {{.RuleNote}}{{end}}
+	监控指标: {{.TagsJSON}}
+	{{if .IsRecovered}}恢复时间：{{timeformat .LastEvalTime}}{{else}}触发时间: {{timeformat .TriggerTime}}
+	触发时值: {{.TriggerValue}}{{end}}
+	发送时间: {{timestamp}}`,
+	"feishucard": `{{ if .IsRecovered }}
+	{{- if ne .Cate "host"}}
+	**告警集群:** {{.Cluster}}{{end}}
+	**级别状态:** S{{.Severity}} Recovered
+	**告警名称:** {{.RuleName}}
+	**恢复时间:** {{timeformat .LastEvalTime}}
+	**告警描述:** **服务已恢复**
+	{{- else }}
+	{{- if ne .Cate "host"}}
+	**告警集群:** {{.Cluster}}{{end}}
+	**级别状态:** S{{.Severity}} Triggered
+	**告警名称:** {{.RuleName}}
+	**触发时间:** {{timeformat .TriggerTime}}
+	**发送时间:** {{timestamp}}
+	**触发时值:** {{.TriggerValue}}
+	{{if .RuleNote }}**告警描述:** **{{.RuleNote}}**{{end}}
+	{{- end -}}`,
+	"mailsubject": `{{if .IsRecovered}}Recovered{{else}}Triggered{{end}}: {{.RuleName}} {{.TagsJSON}}`,
+	"mm": `级别状态: S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}}
+	规则名称: {{.RuleName}}{{if .RuleNote}}
+	规则备注: {{.RuleNote}}{{end}}
+	监控指标: {{.TagsJSON}}
+	{{if .IsRecovered}}恢复时间：{{timeformat .LastEvalTime}}{{else}}触发时间: {{timeformat .TriggerTime}}
+	触发时值: {{.TriggerValue}}{{end}}
+	发送时间: {{timestamp}}`,
+	"telegram": `**级别状态**: {{if .IsRecovered}}<font color="info">S{{.Severity}} Recovered</font>{{else}}<font color="warning">S{{.Severity}} Triggered</font>{{end}}
+	**规则标题**: {{.RuleName}}{{if .RuleNote}}
+	**规则备注**: {{.RuleNote}}{{end}}{{if .TargetIdent}}
+	**监控对象**: {{.TargetIdent}}{{end}}
+	**监控指标**: {{.TagsJSON}}{{if not .IsRecovered}}
+	**触发时值**: {{.TriggerValue}}{{end}}
+	{{if .IsRecovered}}**恢复时间**: {{timeformat .LastEvalTime}}{{else}}**首次触发时间**: {{timeformat .FirstTriggerTime}}{{end}}
+	{{$time_duration := sub now.Unix .FirstTriggerTime }}{{if .IsRecovered}}{{$time_duration = sub .LastEvalTime .FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}
+	**发送时间**: {{timestamp}}`,
+	"wecom": `**级别状态**: {{if .IsRecovered}}<font color="info">S{{.Severity}} Recovered</font>{{else}}<font color="warning">S{{.Severity}} Triggered</font>{{end}}
+	**规则标题**: {{.RuleName}}{{if .RuleNote}}
+	**规则备注**: {{.RuleNote}}{{end}}{{if .TargetIdent}}
+	**监控对象**: {{.TargetIdent}}{{end}}
+	**监控指标**: {{.TagsJSON}}{{if not .IsRecovered}}
+	**触发时值**: {{.TriggerValue}}{{end}}
+	{{if .IsRecovered}}**恢复时间**: {{timeformat .LastEvalTime}}{{else}}**首次触发时间**: {{timeformat .FirstTriggerTime}}{{end}}
+	{{$time_duration := sub now.Unix .FirstTriggerTime }}{{if .IsRecovered}}{{$time_duration = sub .LastEvalTime .FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}
+	**发送时间**: {{timestamp}}`,
 }
