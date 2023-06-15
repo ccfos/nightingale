@@ -8,6 +8,13 @@ insert into `role_operation`(role_name, operation) values('Standard', '/trace/ex
 insert into `role_operation`(role_name, operation) values('Standard', '/alert-rules-built-in');
 insert into `role_operation`(role_name, operation) values('Standard', '/dashboards-built-in');
 insert into `role_operation`(role_name, operation) values('Standard', '/trace/dependencies');
+insert into `role_operation`(role_name, operation) values('Standard', '/help/servers');
+insert into `role_operation`(role_name, operation) values('Standard', '/help/migrate');
+
+insert into `role_operation`(role_name, operation) values('Admin', '/help/source');
+insert into `role_operation`(role_name, operation) values('Admin', '/help/sso');
+insert into `role_operation`(role_name, operation) values('Admin', '/help/notification-tpls');
+insert into `role_operation`(role_name, operation) values('Admin', '/help/notification-settings');
 
 alter table `board` add built_in tinyint(1) not null default 0 comment '0:false 1:true';
 alter table `board` add hide tinyint(1) not null default 0 comment '0:false 1:true';
