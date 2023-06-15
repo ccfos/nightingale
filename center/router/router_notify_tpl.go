@@ -4,19 +4,30 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"html/template"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/str"
 )
 
 func (rt *Router) notifyTplGets(c *gin.Context) {
+	m := make(map[string]struct{})
+	for _, channel := range models.DefaultChannels {
+		m[channel] = struct{}{}
+	}
+
 	lst, err := models.NotifyTplGets(rt.Ctx)
+	for i := 0; i < len(lst); i++ {
+		if _, exists := m[lst[i].Channel]; exists {
+			lst[i].BuiltIn = true
+		}
+	}
 
 	ginx.NewRender(c).Data(lst, err)
 }
@@ -24,11 +35,7 @@ func (rt *Router) notifyTplGets(c *gin.Context) {
 func (rt *Router) notifyTplUpdateContent(c *gin.Context) {
 	var f models.NotifyTpl
 	ginx.BindJSON(c, &f)
-
-	if err := templateValidate(f); err != nil {
-		ginx.NewRender(c).Message(err.Error())
-		return
-	}
+	ginx.Dangerous(templateValidate(f))
 
 	ginx.NewRender(c).Message(f.UpdateContent(rt.Ctx))
 }
@@ -36,16 +43,28 @@ func (rt *Router) notifyTplUpdateContent(c *gin.Context) {
 func (rt *Router) notifyTplUpdate(c *gin.Context) {
 	var f models.NotifyTpl
 	ginx.BindJSON(c, &f)
-
-	if err := templateValidate(f); err != nil {
-		ginx.NewRender(c).Message(err.Error())
-		return
-	}
+	ginx.Dangerous(templateValidate(f))
 
 	ginx.NewRender(c).Message(f.Update(rt.Ctx))
 }
 
 func templateValidate(f models.NotifyTpl) error {
+	if len(f.Channel) > 32 {
+		return fmt.Errorf("channel length should not exceed 32")
+	}
+
+	if str.Dangerous(f.Channel) {
+		return fmt.Errorf("channel should not contain dangerous characters")
+	}
+
+	if len(f.Name) > 255 {
+		return fmt.Errorf("name length should not exceed 255")
+	}
+
+	if str.Dangerous(f.Name) {
+		return fmt.Errorf("name should not contain dangerous characters")
+	}
+
 	if f.Content == "" {
 		return nil
 	}
@@ -66,10 +85,7 @@ func templateValidate(f models.NotifyTpl) error {
 func (rt *Router) notifyTplPreview(c *gin.Context) {
 	var event models.AlertCurEvent
 	err := json.Unmarshal([]byte(cconf.EVENT_EXAMPLE), &event)
-	if err != nil {
-		ginx.NewRender(c).Message(err.Error())
-		return
-	}
+	ginx.Dangerous(err)
 
 	var f models.NotifyTpl
 	ginx.BindJSON(c, &f)
@@ -112,14 +128,13 @@ func (rt *Router) notifyTplPreview(c *gin.Context) {
 func (rt *Router) notifyTplAdd(c *gin.Context) {
 	var f models.NotifyTpl
 	ginx.BindJSON(c, &f)
-	f.Channel = strings.TrimSpace(f.Channel) //unique
-	if err := templateValidate(f); err != nil {
-		ginx.Dangerous(err)
-	}
+	f.Channel = strings.TrimSpace(f.Channel)
+	ginx.Dangerous(templateValidate(f))
+
 	count, err := models.NotifyTplCountByChannel(rt.Ctx, f.Channel)
 	ginx.Dangerous(err)
 	if count != 0 {
-		ginx.Dangerous(errors.New("Refuse to create duplicate channel(unique)"))
+		ginx.Bomb(200, "Refuse to create duplicate channel(unique)")
 	}
 	ginx.NewRender(c).Message(f.Create(rt.Ctx))
 }

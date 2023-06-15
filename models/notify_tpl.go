@@ -21,6 +21,7 @@ type NotifyTpl struct {
 	Name    string `json:"name"`
 	Channel string `json:"channel"`
 	Content string `json:"content"`
+	BuiltIn bool   `json:"built_in" gorm:"-"`
 }
 
 func (n *NotifyTpl) TableName() string {
