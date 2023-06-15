@@ -79,7 +79,7 @@ func (re *RecordingRule) Verify() error {
 		re.DatasourceIdsJson = []int64{0}
 	}
 
-	if !model.MetricNameRE.MatchString(re.Name) {
+	if re.PromQl != "" && !model.MetricNameRE.MatchString(re.Name) {
 		return errors.New("Name has invalid chreacters")
 	}
 
