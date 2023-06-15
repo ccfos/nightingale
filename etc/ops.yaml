@@ -108,3 +108,4 @@ ops:
   - "/help/sso"
   - "/help/notification-tpls"
   - "/help/notification-settings"
+  - "/help/migrate"

@@ -94,9 +94,16 @@ insert into `role_operation`(role_name, operation) values('Standard', '/log/expl
 insert into `role_operation`(role_name, operation) values('Standard', '/trace/explorer');
 insert into `role_operation`(role_name, operation) values('Standard', '/help/version');
 insert into `role_operation`(role_name, operation) values('Standard', '/help/contact');
+insert into `role_operation`(role_name, operation) values('Standard', '/help/servers');
+insert into `role_operation`(role_name, operation) values('Standard', '/help/migrate');
 insert into `role_operation`(role_name, operation) values('Standard', '/alert-rules-built-in');
 insert into `role_operation`(role_name, operation) values('Standard', '/dashboards-built-in');
 insert into `role_operation`(role_name, operation) values('Standard', '/trace/dependencies');
+
+insert into `role_operation`(role_name, operation) values('Admin', '/help/source');
+insert into `role_operation`(role_name, operation) values('Admin', '/help/sso');
+insert into `role_operation`(role_name, operation) values('Admin', '/help/notification-tpls');
+insert into `role_operation`(role_name, operation) values('Admin', '/help/notification-settings');
 
 insert into `role_operation`(role_name, operation) values('Standard', '/users');
 insert into `role_operation`(role_name, operation) values('Standard', '/user-groups');
