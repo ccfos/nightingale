@@ -39,6 +39,10 @@ func (bg *BusiGroup) TableName() string {
 	return "busi_group"
 }
 
+func (bg *BusiGroup) DB2FE(ctx *ctx.Context) error {
+	return nil
+}
+
 func (bg *BusiGroup) FillUserGroups(ctx *ctx.Context) error {
 	members, err := BusiGroupMemberGetsByBusiGroupId(ctx, bg.Id)
 	if err != nil {

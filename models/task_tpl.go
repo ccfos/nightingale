@@ -35,6 +35,10 @@ func (t *TaskTpl) TableName() string {
 	return "task_tpl"
 }
 
+func (t *TaskTpl) DB2FE(ctx *ctx.Context) error {
+	return nil
+}
+
 func TaskTplTotal(ctx *ctx.Context, groupId int64, query string) (int64, error) {
 	session := DB(ctx).Model(&TaskTpl{}).Where("group_id = ?", groupId)
 	if query == "" {

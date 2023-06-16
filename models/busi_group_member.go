@@ -12,6 +12,10 @@ func (BusiGroupMember) TableName() string {
 	return "busi_group_member"
 }
 
+func (bgm *BusiGroupMember) DB2FE(ctx *ctx.Context) error {
+	return nil
+}
+
 func BusiGroupIds(ctx *ctx.Context, userGroupIds []int64, permFlag ...string) ([]int64, error) {
 	if len(userGroupIds) == 0 {
 		return []int64{}, nil

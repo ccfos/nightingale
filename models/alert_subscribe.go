@@ -60,7 +60,7 @@ func AlertSubscribeGetsByService(ctx *ctx.Context) (lst []AlertSubscribe, err er
 	}
 
 	for i := range lst {
-		lst[i].DB2FE()
+		lst[i].DB2FE(ctx)
 	}
 	return
 }
@@ -121,7 +121,7 @@ func (s *AlertSubscribe) FE2DB() error {
 	return nil
 }
 
-func (s *AlertSubscribe) DB2FE() error {
+func (s *AlertSubscribe) DB2FE(ctx *ctx.Context) error {
 	if s.DatasourceIds != "" {
 		if err := json.Unmarshal([]byte(s.DatasourceIds), &s.DatasourceIdsJson); err != nil {
 			return err

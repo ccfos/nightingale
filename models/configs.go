@@ -24,6 +24,10 @@ func (Configs) TableName() string {
 	return "configs"
 }
 
+func (c *Configs) DB2FE(ctx *ctx.Context) error {
+	return nil
+}
+
 // InitSalt generate random salt
 func InitSalt(ctx *ctx.Context) {
 	val, err := ConfigsGet(ctx, "salt")

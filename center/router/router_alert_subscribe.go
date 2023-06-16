@@ -49,7 +49,7 @@ func (rt *Router) alertSubscribeGet(c *gin.Context) {
 	rulecache := make(map[int64]string)
 	ginx.Dangerous(sub.FillRuleName(rt.Ctx, rulecache))
 	ginx.Dangerous(sub.FillDatasourceIds(rt.Ctx))
-	ginx.Dangerous(sub.DB2FE())
+	ginx.Dangerous(sub.DB2FE(rt.Ctx))
 
 	ginx.NewRender(c).Data(sub, nil)
 }

@@ -12,6 +12,10 @@ func (b *SsoConfig) TableName() string {
 	return "sso_config"
 }
 
+func (b *SsoConfig) DB2FE(c *ctx.Context) error {
+	return nil
+}
+
 // get all sso_config
 func SsoConfigGets(c *ctx.Context) ([]SsoConfig, error) {
 	var lst []SsoConfig

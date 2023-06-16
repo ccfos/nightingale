@@ -63,6 +63,10 @@ func (u *User) TableName() string {
 	return "users"
 }
 
+func (u *User) DB2FE(ctx *ctx.Context) error {
+	return nil
+}
+
 func (u *User) String() string {
 	bs, err := u.Contacts.MarshalJSON()
 	if err != nil {

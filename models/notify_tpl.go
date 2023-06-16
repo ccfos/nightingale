@@ -28,6 +28,10 @@ func (n *NotifyTpl) TableName() string {
 	return "notify_tpl"
 }
 
+func (n *NotifyTpl) DB2FE(c *ctx.Context) error {
+	return nil
+}
+
 func (n *NotifyTpl) Create(c *ctx.Context) error {
 	return Insert(c, n)
 }

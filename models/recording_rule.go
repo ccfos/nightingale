@@ -63,11 +63,13 @@ func (re *RecordingRule) FE2DB() {
 	re.QueryConfigs = string(queryConfigsByte)
 }
 
-func (re *RecordingRule) DB2FE(ctx *ctx.Context) {
+func (re *RecordingRule) DB2FE(ctx *ctx.Context) error {
 	re.AppendTagsJSON = strings.Fields(re.AppendTags)
 	json.Unmarshal([]byte(re.DatasourceIds), &re.DatasourceIdsJson)
 
 	json.Unmarshal([]byte(re.QueryConfigs), &re.QueryConfigsJson)
+	return nil
+
 }
 
 func (re *RecordingRule) Verify() error {
