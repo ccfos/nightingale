@@ -408,7 +408,7 @@ func (ar *AlertRule) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interfa
 }
 
 // for v5 rule
-func (ar *AlertRule) FillDatasourceIds(ctx *ctx.Context) error {
+func (ar *AlertRule) FillDatasourceIds() error {
 	if ar.DatasourceIds != "" {
 		json.Unmarshal([]byte(ar.DatasourceIds), &ar.DatasourceIdsJson)
 		return nil
@@ -563,20 +563,13 @@ func (ar *AlertRule) FE2DB() error {
 	return nil
 }
 
-func (ar *AlertRule) DB2FE(ctx *ctx.Context) error {
+func (ar *AlertRule) DB2FE() error {
 	ar.EnableStimesJSON = strings.Fields(ar.EnableStime)
 	ar.EnableEtimesJSON = strings.Fields(ar.EnableEtime)
-	if len(ar.EnableEtimesJSON) > 0 {
-		ar.EnableStimeJSON = ar.EnableStimesJSON[0]
-		ar.EnableEtimeJSON = ar.EnableEtimesJSON[0]
-	}
 
 	cache := strings.Split(ar.EnableDaysOfWeek, ";")
 	for i := 0; i < len(cache); i++ {
 		ar.EnableDaysOfWeeksJSON = append(ar.EnableDaysOfWeeksJSON, strings.Fields(cache[i]))
-	}
-	if len(ar.EnableDaysOfWeeksJSON) > 0 {
-		ar.EnableDaysOfWeekJSON = ar.EnableDaysOfWeeksJSON[0]
 	}
 
 	ar.NotifyChannelsJSON = strings.Fields(ar.NotifyChannels)
@@ -587,7 +580,7 @@ func (ar *AlertRule) DB2FE(ctx *ctx.Context) error {
 	json.Unmarshal([]byte(ar.RuleConfig), &ar.RuleConfigJson)
 	json.Unmarshal([]byte(ar.Annotations), &ar.AnnotationsJSON)
 
-	err := ar.FillDatasourceIds(ctx)
+	err := ar.FillDatasourceIds()
 	return err
 }
 
@@ -625,7 +618,7 @@ func AlertRuleExists(ctx *ctx.Context, id, groupId int64, datasourceIds []int64,
 
 	// match cluster
 	for _, r := range lst {
-		r.FillDatasourceIds(ctx)
+		r.FillDatasourceIds()
 		for _, id := range r.DatasourceIdsJson {
 			if MatchDatasource(datasourceIds, id) {
 				return true, nil
@@ -642,7 +635,7 @@ func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {
 	err := session.Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
-			lst[i].DB2FE(ctx)
+			lst[i].DB2FE()
 		}
 	}
 
@@ -674,7 +667,7 @@ func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 	}
 
 	for i := 0; i < len(lst); i++ {
-		lst[i].DB2FE(ctx)
+		lst[i].DB2FE()
 	}
 	return lst, nil
 }
@@ -714,7 +707,7 @@ func AlertRulesGetsBy(ctx *ctx.Context, prods []string, query, algorithm, cluste
 	err := session.Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
-			lst[i].DB2FE(ctx)
+			lst[i].DB2FE()
 		}
 	}
 
@@ -732,7 +725,7 @@ func AlertRuleGet(ctx *ctx.Context, where string, args ...interface{}) (*AlertRu
 		return nil, nil
 	}
 
-	lst[0].DB2FE(ctx)
+	lst[0].DB2FE()
 
 	return lst[0], nil
 }

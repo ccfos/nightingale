@@ -63,7 +63,7 @@ func (u *User) TableName() string {
 	return "users"
 }
 
-func (u *User) DB2FE(ctx *ctx.Context) error {
+func (u *User) DB2FE() error {
 	return nil
 }
 

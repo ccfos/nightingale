@@ -12,7 +12,7 @@ func (BusiGroupMember) TableName() string {
 	return "busi_group_member"
 }
 
-func (bgm *BusiGroupMember) DB2FE(ctx *ctx.Context) error {
+func (bgm *BusiGroupMember) DB2FE() error {
 	return nil
 }
 

@@ -26,7 +26,7 @@ func (v *AlertAggrView) TableName() string {
 	return "alert_aggr_view"
 }
 
-func (v *AlertAggrView) DB2FE(ctx *ctx.Context) error {
+func (v *AlertAggrView) DB2FE() error {
 	return nil
 }
 

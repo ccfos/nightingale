@@ -30,7 +30,7 @@ func (b *Board) TableName() string {
 	return "board"
 }
 
-func (b *Board) DB2FE(ctx *ctx.Context) error {
+func (b *Board) DB2FE() error {
 	return nil
 }
 

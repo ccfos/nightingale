@@ -38,7 +38,7 @@ func (t *Target) TableName() string {
 	return "target"
 }
 
-func (t *Target) DB2FE(ctx *ctx.Context) error {
+func (t *Target) DB2FE() error {
 	return nil
 }
 

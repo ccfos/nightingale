@@ -134,7 +134,7 @@ func (c *AlertSubscribeCacheType) syncAlertSubscribes() error {
 			continue
 		}
 
-		err = lst[i].DB2FE(c.ctx)
+		err = lst[i].DB2FE()
 		if err != nil {
 			logger.Warningf("failed to db2fe alert subscribe, id: %d", lst[i].Id)
 			continue

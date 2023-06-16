@@ -24,7 +24,7 @@ func (v *MetricView) TableName() string {
 	return "metric_view"
 }
 
-func (v *MetricView) DB2FE(ctx *ctx.Context) error {
+func (v *MetricView) DB2FE() error {
 	return nil
 }
 

@@ -15,7 +15,7 @@ func (Role) TableName() string {
 	return "role"
 }
 
-func (r *Role) DB2FE(ctx *ctx.Context) error {
+func (r *Role) DB2FE() error {
 	return nil
 }
 

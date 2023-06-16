@@ -39,7 +39,7 @@ func (bg *BusiGroup) TableName() string {
 	return "busi_group"
 }
 
-func (bg *BusiGroup) DB2FE(ctx *ctx.Context) error {
+func (bg *BusiGroup) DB2FE() error {
 	return nil
 }
 

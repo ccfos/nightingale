@@ -63,7 +63,7 @@ func (re *RecordingRule) FE2DB() {
 	re.QueryConfigs = string(queryConfigsByte)
 }
 
-func (re *RecordingRule) DB2FE(ctx *ctx.Context) error {
+func (re *RecordingRule) DB2FE() error {
 	re.AppendTagsJSON = strings.Fields(re.AppendTags)
 	json.Unmarshal([]byte(re.DatasourceIds), &re.DatasourceIdsJson)
 
@@ -201,7 +201,7 @@ func RecordingRuleGets(ctx *ctx.Context, groupId int64) ([]RecordingRule, error)
 	err := session.Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
-			lst[i].DB2FE(ctx)
+			lst[i].DB2FE()
 		}
 	}
 
@@ -219,7 +219,7 @@ func RecordingRuleGet(ctx *ctx.Context, where string, regs ...interface{}) (*Rec
 		return nil, nil
 	}
 
-	lst[0].DB2FE(ctx)
+	lst[0].DB2FE()
 
 	return lst[0], nil
 }
@@ -238,7 +238,7 @@ func RecordingRuleEnabledGets(ctx *ctx.Context) ([]*RecordingRule, error) {
 	}
 
 	for i := 0; i < len(lst); i++ {
-		lst[i].DB2FE(ctx)
+		lst[i].DB2FE()
 	}
 	return lst, nil
 }
@@ -268,7 +268,7 @@ func RecordingRuleGetsByCluster(ctx *ctx.Context) ([]*RecordingRule, error) {
 	}
 
 	for i := 0; i < len(lst); i++ {
-		lst[i].DB2FE(ctx)
+		lst[i].DB2FE()
 	}
 	return lst, nil
 }

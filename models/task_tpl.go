@@ -35,7 +35,7 @@ func (t *TaskTpl) TableName() string {
 	return "task_tpl"
 }
 
-func (t *TaskTpl) DB2FE(ctx *ctx.Context) error {
+func (t *TaskTpl) DB2FE() error {
 	return nil
 }
 

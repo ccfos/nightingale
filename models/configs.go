@@ -24,7 +24,7 @@ func (Configs) TableName() string {
 	return "configs"
 }
 
-func (c *Configs) DB2FE(ctx *ctx.Context) error {
+func (c *Configs) DB2FE() error {
 	return nil
 }
 

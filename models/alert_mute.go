@@ -74,7 +74,7 @@ func AlertMuteGet(ctx *ctx.Context, where string, args ...interface{}) (*AlertMu
 	if len(lst) == 0 {
 		return nil, nil
 	}
-	err = lst[0].DB2FE(ctx)
+	err = lst[0].DB2FE()
 	return lst[0], err
 }
 
@@ -99,7 +99,7 @@ func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, query string) (
 
 	err = session.Order("id desc").Find(&lst).Error
 	for i := 0; i < len(lst); i++ {
-		lst[i].DB2FE(ctx)
+		lst[i].DB2FE()
 	}
 	return
 }
@@ -107,7 +107,7 @@ func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, query string) (
 func AlertMuteGetsByBG(ctx *ctx.Context, groupId int64) (lst []AlertMute, err error) {
 	err = DB(ctx).Where("group_id=?", groupId).Order("id desc").Find(&lst).Error
 	for i := 0; i < len(lst); i++ {
-		lst[i].DB2FE(ctx)
+		lst[i].DB2FE()
 	}
 	return
 }
@@ -211,7 +211,7 @@ func (m *AlertMute) FE2DB() error {
 	return nil
 }
 
-func (m *AlertMute) DB2FE(ctx *ctx.Context) error {
+func (m *AlertMute) DB2FE() error {
 	json.Unmarshal([]byte(m.DatasourceIds), &m.DatasourceIdsJson)
 	err := json.Unmarshal([]byte(m.PeriodicMutes), &m.PeriodicMutesJson)
 	return err
@@ -274,7 +274,7 @@ func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 	}
 
 	for i := 0; i < len(lst); i++ {
-		lst[i].DB2FE(ctx)
+		lst[i].DB2FE()
 	}
 
 	return lst, err

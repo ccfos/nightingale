@@ -101,7 +101,7 @@ func DatasourceGet(ctx *ctx.Context, id int64) (*Datasource, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ds, ds.DB2FE(ctx)
+	return ds, ds.DB2FE()
 }
 
 func (ds *Datasource) Get(ctx *ctx.Context) error {
@@ -109,7 +109,7 @@ func (ds *Datasource) Get(ctx *ctx.Context) error {
 	if err != nil {
 		return err
 	}
-	return ds.DB2FE(ctx)
+	return ds.DB2FE()
 }
 
 func GetDatasources(ctx *ctx.Context) ([]Datasource, error) {
@@ -128,7 +128,7 @@ func GetDatasources(ctx *ctx.Context) ([]Datasource, error) {
 	err := DB(ctx).Find(&dss).Error
 
 	for i := 0; i < len(dss); i++ {
-		dss[i].DB2FE(ctx)
+		dss[i].DB2FE()
 	}
 
 	return dss, err
@@ -211,7 +211,7 @@ func GetDatasourcesGetsBy(ctx *ctx.Context, typ, cate, name, status string) ([]*
 	err := session.Order("id desc").Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
-			lst[i].DB2FE(ctx)
+			lst[i].DB2FE()
 		}
 	}
 	return lst, err
@@ -223,7 +223,7 @@ func GetDatasourcesGetsByTypes(ctx *ctx.Context, typs []string) (map[string]*Dat
 	err := DB(ctx).Where("plugin_type in ?", typs).Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
-			lst[i].DB2FE(ctx)
+			lst[i].DB2FE()
 			m[lst[i].Name] = lst[i]
 		}
 	}
@@ -254,7 +254,7 @@ func (ds *Datasource) FE2DB() error {
 	return nil
 }
 
-func (ds *Datasource) DB2FE(ctx *ctx.Context) error {
+func (ds *Datasource) DB2FE() error {
 	if ds.Settings != "" {
 		err := json.Unmarshal([]byte(ds.Settings), &ds.SettingsJson)
 		if err != nil {
@@ -309,7 +309,7 @@ func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 		}
 
 		for i := 0; i < len(lst); i++ {
-			err := lst[i].DB2FE(ctx)
+			err := lst[i].DB2FE()
 			if err != nil {
 				logger.Warningf("get ds:%+v err:%v", lst[i], err)
 				continue
