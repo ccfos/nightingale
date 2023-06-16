@@ -49,6 +49,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 	ctx := ctx.NewContext(context.Background(), db, true)
 	models.InitRoot(ctx)
+	models.Migrate(db)
 
 	redis, err := storage.NewRedis(config.Redis)
 	if err != nil {
