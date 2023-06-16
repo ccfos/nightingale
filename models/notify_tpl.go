@@ -28,7 +28,7 @@ func (n *NotifyTpl) TableName() string {
 	return "notify_tpl"
 }
 
-func (n *NotifyTpl) DB2FE(c *ctx.Context) error {
+func (n *NotifyTpl) DB2FE() error {
 	return nil
 }
 

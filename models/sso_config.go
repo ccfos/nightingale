@@ -12,7 +12,7 @@ func (b *SsoConfig) TableName() string {
 	return "sso_config"
 }
 
-func (b *SsoConfig) DB2FE(c *ctx.Context) error {
+func (b *SsoConfig) DB2FE() error {
 	return nil
 }
 
