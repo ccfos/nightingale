@@ -21,14 +21,23 @@ import (
 )
 
 type loginForm struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username    string `json:"username" binding:"required"`
+	Password    string `json:"password" binding:"required"`
+	Captchaid   string `json:"captchaid"`
+	Verifyvalue string `json:"verifyvalue"`
 }
 
 func (rt *Router) loginPost(c *gin.Context) {
 	var f loginForm
 	ginx.BindJSON(c, &f)
 	logger.Infof("username:%s login from:%s", f.Username, c.ClientIP())
+
+	if rt.HTTP.ShowCaptcha.Enable {
+		if !CaptchaVerify(f.Captchaid, f.Verifyvalue) {
+			ginx.NewRender(c).Message("incorrect verification code")
+			return
+		}
+	}
 
 	user, err := models.PassLogin(rt.Ctx, f.Username, f.Password)
 	if err != nil {

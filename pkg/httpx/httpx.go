@@ -31,8 +31,13 @@ type Config struct {
 	IdleTimeout      int
 	JWTAuth          JWTAuth
 	ProxyAuth        ProxyAuth
+	ShowCaptcha      ShowCaptcha
 	APIForAgent      BasicAuths
 	APIForService    BasicAuths
+}
+
+type ShowCaptcha struct {
+	Enable bool
 }
 
 type BasicAuths struct {
