@@ -1,0 +1,376 @@
+{
+  "name": "阿里云SLB",
+  "tags": "",
+  "ident": "",
+  "configs": {
+    "var": [
+      {
+        "name": "instance_id",
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus"
+        },
+        "definition": "label_values(aliyun_acs_slb_dashboard_active_connection_average ,instance_id)",
+        "multi": true,
+        "allOption": true
+      }
+    ],
+    "panels": [
+      {
+        "type": "timeseries",
+        "id": "aa8b2623-1e14-43cd-a3c4-33944a61fcc5",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 0,
+          "y": 0,
+          "i": "aa8b2623-1e14-43cd-a3c4-33944a61fcc5",
+          "isResizable": true
+        },
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceName": "Default",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(aliyun_acs_slb_dashboard_instance_qps_utilization_average{instance_id=~\"$instance_id\"}) by (instance_id)",
+            "legend": "{{instance_id}} QPS使用率 "
+          }
+        ],
+        "name": "七层实例QPS使用率(%)",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "b2002c63-8f0b-436c-b765-5bb65191f3c2",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 12,
+          "y": 0,
+          "i": "b2002c63-8f0b-436c-b765-5bb65191f3c2",
+          "isResizable": true
+        },
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(aliyun_acs_slb_dashboard_upstream_code4xx_average{instance_id=~\"$instance_id\"}) by (instance_id)",
+            "legend": "{{instance_id}} 状态码 4xx "
+          },
+          {
+            "expr": "sum(aliyun_acs_slb_dashboard_upstream_code5xx_average{instance_id=~\"$instance_id\"}) by (instance_id)",
+            "refId": "B",
+            "legend": "{{instance_id}} 状态码 5xx "
+          }
+        ],
+        "name": "7层协议实例Upstream状态码分布",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "71028d82-4804-468f-92f4-3444953b22cc",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 0,
+          "y": 4,
+          "i": "71028d82-4804-468f-92f4-3444953b22cc",
+          "isResizable": true
+        },
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(aliyun_acs_slb_dashboard_instance_new_connection_average{instance_id=~\"$instance_id\"}) by (instance_id)",
+            "legend": "{{instance_id}} 新建连接数"
+          }
+        ],
+        "name": "新建连接数",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "25f90635-ff68-4dc2-bfb0-c6634f0e6867",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 12,
+          "y": 4,
+          "i": "25f90635-ff68-4dc2-bfb0-c6634f0e6867",
+          "isResizable": true
+        },
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(aliyun_acs_slb_dashboard_active_connection_average{instance_id=~\"$instance_id\"}) by (instance_id)",
+            "legend": "{{instance_id}} 活跃连接数"
+          },
+          {
+            "expr": "sum(aliyun_acs_slb_dashboard_inactive_connection_average{instance_id=~\"$instance_id\"}) by (instance_id)",
+            "refId": "B",
+            "legend": "{{instance_id}} 非活跃连接数"
+          },
+          {
+            "expr": "sum(aliyun_acs_slb_dashboard_max_connection_average{instance_id=~\"$instance_id\"}) by (instance_id)",
+            "refId": "C",
+            "legend": "{{instance_id}} 最大活跃连接数"
+          }
+        ],
+        "name": "并发连接数",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "fde27e57-bdd6-4fd6-b3c0-75222f736d3b",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 0,
+          "y": 8,
+          "i": "fde27e57-bdd6-4fd6-b3c0-75222f736d3b",
+          "isResizable": true
+        },
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(aliyun_acs_slb_dashboard_packet_rx_average{instance_id=~\"$instance_id\"}) by (instance_id)",
+            "legend": "{{instance_id}} 接受数据包数"
+          },
+          {
+            "expr": "sum(aliyun_acs_slb_dashboard_packet_tx_average{instance_id=~\"$instance_id\"}) by (instance_id)",
+            "refId": "B",
+            "legend": "{{instance_id}} 发送数据包数"
+          }
+        ],
+        "name": "数据包数",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "a0fd47db-0b49-4b71-ae16-b4108324e35a",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 12,
+          "y": 8,
+          "i": "a0fd47db-0b49-4b71-ae16-b4108324e35a",
+          "isResizable": true
+        },
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(aliyun_acs_slb_dashboard_instance_traffic_rx_average{instance_id=~\"$instance_id\"}) by (instance_id)",
+            "legend": "{{instance_id}} 出流量"
+          },
+          {
+            "expr": "sum(aliyun_acs_slb_dashboard_instance_traffic_tx_average{instance_id=~\"$instance_id\"}) by (instance_id)",
+            "refId": "B",
+            "legend": "{{instance_id}} 入流量"
+          }
+        ],
+        "name": "流量",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {
+            "util": "bitsSI"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      }
+    ],
+    "version": "2.0.0"
+  }
+}

@@ -8,9 +8,9 @@ ESXi Server是Hypervsior，在其中创建和运行虚拟机和虚拟设备。
 
 vCenter Server是用于管理网络中连接的多个ESXi主机和主机资源池的服务。
 
-`想实现监控vsphere套间，必须部署vcenter.`
+`想实现监控 vSphere 组件，必须部署 vCenter.`
 
-完整的部署vsphere&n9e&categraf采集文档：[夜莺监控之Categraf监控VMwareSphere](https://unixsre.com/posts/n9e-monitor-vsphere/)
+完整的部署vSphere&N9E&Categraf采集文档：[夜莺监控之Categraf监控VMwareSphere](https://unixsre.com/posts/n9e-monitor-vsphere/)
 
 ### Categraf中conf/input.vsphere/vsphere.toml配置文件：
 
