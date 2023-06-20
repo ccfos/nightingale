@@ -258,14 +258,20 @@ func (r *Router) datadogSeries(c *gin.Context) {
 
 		r.debugSample(c.Request.RemoteAddr, pt)
 
-		if r.Pushgw.WriterOpt.ShardingKey == "ident" {
-			if ident == "" {
-				r.Writers.PushSample("-", pt)
-			} else {
-				r.Writers.PushSample(ident, pt)
-			}
+		if ident != "" {
+			// use ident as hash key, cause "out of bounds" problem
+			r.Writers.PushSample(ident, pt)
 		} else {
-			r.Writers.PushSample(item.Metric, pt)
+			// no ident tag, use metric name as hash key
+			// sharding again cause there are too many series with the same metric name
+			var hashkey string
+			if len(item.Metric) >= 2 {
+				hashkey = item.Metric[0:2]
+			} else {
+				hashkey = item.Metric[0:1]
+			}
+
+			r.Writers.PushSample(hashkey, pt)
 		}
 
 		succ++

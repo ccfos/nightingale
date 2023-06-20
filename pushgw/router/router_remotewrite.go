@@ -91,34 +91,35 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 
 		ident = extractIdentFromTimeSeries(req.Timeseries[i])
 		if len(ident) > 0 {
-			// fill tags
+			// has ident tag or agent_hostname tag
+			// register host in table target
+			ids[ident] = struct{}{}
+
+			// enrich host labels
 			target, has := rt.TargetCache.Get(ident)
 			if has {
 				rt.AppendLabels(req.Timeseries[i], target, rt.BusiGroupCache)
 			}
 		}
 
-		// telegraf 上报数据的场景，只有在 metric 为 system_load1 时，说明指标来自机器，将 host 改为 ident，其他情况都忽略
-		if extractMetricFromTimeSeries(req.Timeseries[i]) != "system_load1" {
-			ident = ""
-		}
-
-		if len(ident) > 0 {
-			// register host
-			ids[ident] = struct{}{}
-		}
-
 		rt.EnrichLabels(req.Timeseries[i])
 		rt.debugSample(c.Request.RemoteAddr, req.Timeseries[i])
 
-		if rt.Pushgw.WriterOpt.ShardingKey == "ident" {
-			if ident == "" {
-				rt.Writers.PushSample("-", req.Timeseries[i])
-			} else {
-				rt.Writers.PushSample(ident, req.Timeseries[i])
-			}
+		if len(ident) > 0 {
+			// use ident as hash key, cause "out of bounds" problem
+			rt.Writers.PushSample(ident, req.Timeseries[i])
 		} else {
-			rt.Writers.PushSample(metric, req.Timeseries[i])
+			// no ident tag, use metric name as hash key
+			// sharding again cause there are too many series with the same metric name
+			metric = extractMetricFromTimeSeries(req.Timeseries[i])
+			var hashkey string
+			if len(metric) >= 2 {
+				hashkey = metric[0:2]
+			} else {
+				hashkey = metric[0:1]
+			}
+
+			rt.Writers.PushSample(hashkey, req.Timeseries[i])
 		}
 	}
 

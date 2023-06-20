@@ -204,14 +204,20 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 		rt.EnrichLabels(pt)
 		rt.debugSample(c.Request.RemoteAddr, pt)
 
-		if rt.Pushgw.WriterOpt.ShardingKey == "ident" {
-			if host == "" {
-				rt.Writers.PushSample("-", pt)
-			} else {
-				rt.Writers.PushSample(host, pt)
-			}
+		if host != "" {
+			// use ident as hash key, cause "out of bounds" problem
+			rt.Writers.PushSample(host, pt)
 		} else {
-			rt.Writers.PushSample(arr[i].Metric, pt)
+			// no ident tag, use metric name as hash key
+			// sharding again cause there are too many series with the same metric name
+			var hashkey string
+			if len(arr[i].Metric) >= 2 {
+				hashkey = arr[i].Metric[0:2]
+			} else {
+				hashkey = arr[i].Metric[0:1]
+			}
+
+			rt.Writers.PushSample(hashkey, pt)
 		}
 
 		succ++

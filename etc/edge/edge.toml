@@ -81,12 +81,8 @@ LabelRewrite = true
 # __name__ = "xx"
 
 # [Pushgw.WriterOpt]
-# # Writer Options
-# QueueCount = 1000
 # QueueMaxSize = 1000000
 # QueuePopSize = 1000
-# # ident or metric
-# ShardingKey = "ident"
 
 [[Pushgw.Writers]] 
 # Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"

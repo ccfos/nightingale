@@ -20,10 +20,8 @@ type Pushgw struct {
 }
 
 type WriterGlobalOpt struct {
-	QueueCount   int
 	QueueMaxSize int
 	QueuePopSize int
-	ShardingKey  string
 }
 
 type WriterOptions struct {
@@ -71,14 +69,6 @@ func (p *Pushgw) PreCheck() {
 
 	if p.WriterOpt.QueuePopSize <= 0 {
 		p.WriterOpt.QueuePopSize = 1000
-	}
-
-	if p.WriterOpt.QueueCount <= 0 {
-		p.WriterOpt.QueueCount = 1000
-	}
-
-	if p.WriterOpt.ShardingKey == "" {
-		p.WriterOpt.ShardingKey = "ident"
 	}
 
 	if p.WriteConcurrency <= 0 {
