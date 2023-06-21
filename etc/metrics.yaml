@@ -40,14 +40,14 @@ zh:
   kernel_processes_forked: fork的进程数
 
   mem_active: 活跃使用的内存总数(包括cache和buffer内存)
-  mem_available: 应用程序可用内存数
+  mem_available: 可用内存大小(bytes)
   mem_available_percent: 内存剩余百分比(0~100)
   mem_buffered: 用来给文件做缓冲大小
   mem_cached: 被高速缓冲存储器（cache memory）用的内存的大小（等于 diskcache minus SwapCache ）
   mem_commit_limit: 根据超额分配比率（'vm.overcommit_ratio'），这是当前在系统上分配可用的内存总量，这个限制只是在模式2('vm.overcommit_memory')时启用
   mem_committed_as: 目前在系统上分配的内存量。是所有进程申请的内存的总和
   mem_dirty: 等待被写回到磁盘的内存大小
-  mem_free: 空闲内存数
+  mem_free: 空闲内存大小(bytes)
   mem_high_free: 未被使用的高位内存大小
   mem_high_total: 高位内存总大小（Highmem是指所有内存高于860MB的物理内存,Highmem区域供用户程序使用，或用于页面缓存。该区域不是直接映射到内核空间。内核必须使用不同的手法使用该段内存）
   mem_huge_page_size: 每个大页的大小
