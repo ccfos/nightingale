@@ -125,8 +125,6 @@ func DatasourceCheck(ds models.Datasource) error {
 		query := url.Values{}
 		if strings.Contains(fullURL, "loki") {
 			subPath = "/api/v1/labels"
-			query.Add("start", "1")
-			query.Add("end", "2")
 		} else {
 			query.Add("query", "1+1")
 		}
