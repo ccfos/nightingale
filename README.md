@@ -29,12 +29,9 @@
 
 ## 资料
 
-- 文档：[Flashcat.cloud/docs](https://flashcat.cloud/docs/)
-- 提问：[Answer.flashcat.cloud](https://answer.flashcat.cloud/)
-- 报Bug：[Github.com/ccfos/nightingale/issues](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&projects=&template=bug_report.yml)
-- 分享使用经验：[Issue#897](https://github.com/ccfos/nightingale/issues/897)
-
-> [快猫星云](https://flashcat.cloud)基于夜莺提供发行版，且配合数据采集方案 [Categraf](https://flashcat.cloud/product/categraf)，为终端用户提供企业级的可观测产品与服务，欢迎[联系我们](https://flashcat.cloud/contact/)了解[【Flashcat专业版】](https://flashcat.cloud/product/flashcat_pro)和[【Flashcat企业版】](https://flashcat.cloud/product/flashcat_enterprise)的更多信息。
+- 文档：[flashcat.cloud/docs](https://flashcat.cloud/docs/)
+- 提问：[answer.flashcat.cloud](https://answer.flashcat.cloud/)
+- 报Bug：[github.com/ccfos/nightingale/issues](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&projects=&template=bug_report.yml)
 
 
 ## 功能和特点
@@ -56,9 +53,8 @@
 ![架构](doc/img/n9e-arch-latest.png)
 
 ## 加入交流群
-欢迎加入 QQ 交流群，群号：479290895，也可以扫下方二维码加入微信交流群：
 
-<img src="doc/img/wecom.png" width="180">
+欢迎加入 QQ 交流群，群号：479290895，QQ 群适合群友互助，夜莺研发人员通常不在群里。如果要报 bug 请到[这里](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&projects=&template=bug_report.yml)，提问到[这里](https://answer.flashcat.cloud/)。
 
 ## Stargazers over time
 [![Stargazers over time](https://starchart.cc/ccfos/nightingale.svg)](https://starchart.cc/ccfos/nightingale)
