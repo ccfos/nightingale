@@ -1,0 +1,953 @@
+{
+    "name": "S.M.A.R.T Dashboard",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "version": "3.0.0",
+        "links": [],
+        "var": [
+            {
+                "name": "ident",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": 4
+                },
+                "definition": "label_values(smart_device_temp_c,ident)",
+                "reg": "",
+                "multi": false
+            },
+            {
+                "name": "device",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": 4
+                },
+                "definition": "label_values(smart_device_temp_c, device)",
+                "reg": "",
+                "multi": false
+            }
+        ],
+        "panels": [
+            {
+                "version": "3.0.0",
+                "id": "2a2c3cec-5699-4860-a31d-14814371482c",
+                "type": "row",
+                "name": "【 General 】",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "2a2c3cec-5699-4860-a31d-14814371482c",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "stat",
+                "id": "c9d829c1-240f-46c1-8269-82879081eea2",
+                "layout": {
+                    "h": 4,
+                    "w": 4,
+                    "x": 0,
+                    "y": 1,
+                    "i": "c9d829c1-240f-46c1-8269-82879081eea2",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "count(smart_device_temp_c{ident=\"$ident\"})"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Disk Drives Monitored",
+                "links": [],
+                "description": "设备数量",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "table",
+                "id": "24fbb1bf-9817-4fa0-9525-17dd4fa2a710",
+                "layout": {
+                    "h": 8,
+                    "w": 20,
+                    "x": 4,
+                    "y": 1,
+                    "i": "24fbb1bf-9817-4fa0-9525-17dd4fa2a710",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "smart_device_temp_c{ident=\"$ident\"}",
+                        "legend": ""
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Disk Drives List",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "columns": [
+                        "shop",
+                        "ident",
+                        "device",
+                        "capacity",
+                        "serial_no",
+                        "wwn",
+                        "model",
+                        "enabled",
+                        "value"
+                    ]
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {}
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "b9f030af-0c68-45e5-9f64-d4b4216c3ef0",
+                "layout": {
+                    "h": 4,
+                    "w": 4,
+                    "x": 0,
+                    "y": 5,
+                    "i": "b9f030af-0c68-45e5-9f64-d4b4216c3ef0",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "count(smart_device_temp_c{ident=~\"$ident\"})-count(smart_device_health_ok{ident=~\"$ident\"})",
+                        "legend": ""
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Unhealthy Disks",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "version": "3.0.0",
+                "id": "e17b3260-b43d-4733-9e89-c91caf3689cf",
+                "type": "row",
+                "name": "【 Temperature 】",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 9,
+                    "i": "e17b3260-b43d-4733-9e89-c91caf3689cf",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "2df514d0-6858-48d4-b2fc-ed6c4932cb33",
+                "layout": {
+                    "h": 11,
+                    "w": 12,
+                    "x": 0,
+                    "y": 10,
+                    "i": "2df514d0-6858-48d4-b2fc-ed6c4932cb33",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "label_replace(smart_device_temp_c{ ident=\"$ident\"}, \"ident\", \"$1\", \"ident\", \"([^.]+).*\")",
+                        "legend": "【{{ident}}】 {{device}} {{model}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Temperature History",
+                "links": [],
+                "description": "",
+                "repeat": null,
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "barGauge",
+                "id": "e028227f-cf3d-4f4e-abc6-96e16d2508c3",
+                "layout": {
+                    "h": 11,
+                    "w": 12,
+                    "x": 12,
+                    "y": 10,
+                    "i": "e028227f-cf3d-4f4e-abc6-96e16d2508c3",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "label_replace(label_replace(smart_device_temp_c{ ident=~\"$ident\"}, \"ident\", \"$1\", \"ident\", \"([^.]+).*\"), \"device\", \"$1\", \"device\", \"(.*)\")",
+                        "legend": "{{ident}}: {{device}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Temperature Bar",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "avg",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "min": "0",
+                        "max": "80",
+                        "decimals": 1
+                    }
+                }
+            },
+            {
+                "version": "3.0.0",
+                "id": "7ce33f1a-85a0-4d0b-a696-caf679e1fa82",
+                "type": "row",
+                "name": "【 Wear and Tear 】",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 21,
+                    "i": "7ce33f1a-85a0-4d0b-a696-caf679e1fa82",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "barGauge",
+                "id": "c270b82c-610b-4f58-bba3-0ed2838cc925",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 22,
+                    "i": "c270b82c-610b-4f58-bba3-0ed2838cc925",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "label_replace(smart_attribute_power_on_hours{ident=~\"$ident\" }, \"ident\", \"$1\", \"ident\", \"([^.]+).*\")",
+                        "legend": "【{{ident}} {{device}}】"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Power On Hours",
+                "links": [],
+                "description": "通电时间",
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "min": 0,
+                        "max": "17520",
+                        "decimals": 2
+                    }
+                }
+            },
+            {
+                "type": "barGauge",
+                "id": "33f83d64-23be-4d58-807a-4a3570da8b97",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 22,
+                    "i": "33f83d64-23be-4d58-807a-4a3570da8b97",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "label_replace(smart_attribute_power_cycle_count{ ident=~\"$ident\"}, \"ident\", \"$1\", \"ident\", \"([^.]+).*\")",
+                        "legend": "【{{ident}} {{device}}】"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Power Cycle Count",
+                "links": [],
+                "description": "通电次数",
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "min": 0,
+                        "max": 2000,
+                        "decimals": 0
+                    }
+                }
+            },
+            {
+                "type": "barGauge",
+                "id": "20700be8-a0d8-4cef-84c5-cecef88bcbc9",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 28,
+                    "i": "20700be8-a0d8-4cef-84c5-cecef88bcbc9",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "label_replace(smart_attribute_unexpect_power_loss_ct{ ident=~\"$ident\"}, \"ident\", \"$1\", \"ident\", \"([^.]+).*\")",
+                        "legend": "【{{ident}} {{device}}】"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Power Loss Count",
+                "links": [],
+                "description": "非预期掉电次数统计",
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "max": 2500
+                    }
+                }
+            },
+            {
+                "version": "3.0.0",
+                "id": "c9474027-b555-4085-89e8-56c2521919c7",
+                "type": "row",
+                "name": "【 Errors 】",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 34,
+                    "i": "c9474027-b555-4085-89e8-56c2521919c7",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "barGauge",
+                "id": "9f364792-45b4-444c-be76-20714396eadc",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 35,
+                    "i": "9f364792-45b4-444c-be76-20714396eadc",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "label_replace(smart_device_read_error_rate{ ident=~\"$ident\" }, \"ident\", \"$1\", \"ident\", \"([^.]+).*\")",
+                        "legend": "【{{ident}} {{device}}】"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Raw Read Error",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "max": 20000
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "074ffe0a-7bda-4ac0-867a-08ba44a8c4fb",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 35,
+                    "i": "074ffe0a-7bda-4ac0-867a-08ba44a8c4fb",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "B",
+                        "expr": "sum( smart_device_reallocated_sectors_count{ ident=~\"$ident\"})",
+                        "legend": "smart_device_reallocated_sectors_count"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "sum( smart_attribute_reallocated_event_count{ ident=~\"$ident\" })",
+                        "legend": "smart_attribute_reallocated_event_count"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "sum(smart_device_read_error_rate{ ident=~\"$ident\" })",
+                        "legend": "smart_device_read_error_rate"
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "sum(smart_device_pending_sector_count{ ident=~\"$ident\" })",
+                        "legend": "smart_device_pending_sector_count"
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "sum(smart_device_uncorrectable_errors{ ident=~\"$ident\"})",
+                        "legend": "smart_device_uncorrectable_errors"
+                    },
+                    {
+                        "refId": "G",
+                        "expr": "sum(smart_device_udma_crc_errors{ ident=\"$ident\" })",
+                        "legend": "smart_device_udma_crc_errors"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Total Errors",
+                "links": [],
+                "description": "Aggregated graph for all types of errors",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "barGauge",
+                "id": "f2d6fe6e-3cd5-4b5a-9978-6dcf3be45b39",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 41,
+                    "i": "f2d6fe6e-3cd5-4b5a-9978-6dcf3be45b39",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "label_replace(smart_device_udma_crc_errors{ ident=~\"$ident\"}, \"ident\", \"$1\", \"ident\", \"([^.]+).*\")",
+                        "legend": "【{{ident}} {{device}}】"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "UDMA CRC Error",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "max": 2500
+                    }
+                }
+            },
+            {
+                "version": "3.0.0",
+                "id": "5e2273be-0948-47b6-acc4-5d460384813e",
+                "type": "row",
+                "name": "【 SAS-specific Errors 】",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 47,
+                    "i": "5e2273be-0948-47b6-acc4-5d460384813e",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "version": "3.0.0",
+                "id": "2d4d0c4e-9bc6-4dd6-bd28-7b0ce47c2bd1",
+                "type": "barGauge",
+                "name": "SAS grown defects",
+                "description": "Grown defects are drive blocks that have been marked bad once the drive has been in use",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 48,
+                    "i": "2d4d0c4e-9bc6-4dd6-bd28-7b0ce47c2bd1",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "label_replace(smartmon_sas_grown_defects_count_raw_value{ instance=~\"$instance\", disk=~\"$disk\" }, \"instance\", \"$1\", \"instance\", \"([^.]+).*\")",
+                        "legend": "{{name}} 【{{instance}} {{disk}}】"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 800
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 2000
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none",
+                        "max": 2000
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    }
+                },
+                "custom": {
+                    "version": "3.0.0",
+                    "calc": "mean"
+                },
+                "maxPerRow": 4
+            },
+            {
+                "version": "3.0.0",
+                "id": "9f80056a-5d5b-41e7-90aa-5ba75e71cbf4",
+                "type": "timeseries",
+                "name": "SAS Total Errors",
+                "description": "Aggregated graph for all types of SAS errors",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 48,
+                    "i": "9f80056a-5d5b-41e7-90aa-5ba75e71cbf4",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "K",
+                        "expr": "sum(smartmon_sas_grown_defects_count_raw_value{ instance=~\"$instance\", disk=~\"$disk\" } )",
+                        "legend": "sas_grown_defects_count"
+                    },
+                    {
+                        "refId": "L",
+                        "expr": "sum(smartmon_sas_non_medium_errors_count_raw_value{ instance=~\"$instance\", disk=~\"$disk\" } )",
+                        "legend": "sas_non_medium_errors_count"
+                    },
+                    {
+                        "refId": "M",
+                        "expr": "sum(smartmon_sas_read_uncorrected_errors_count_raw_value{ instance=~\"$instance\", disk=~\"$disk\" } )",
+                        "legend": "sas_read_uncorrected_errors_count"
+                    },
+                    {
+                        "refId": "A",
+                        "expr": "sum(smartmon_sas_verify_uncorrected_errors_count_raw_value{ instance=~\"$instance\", disk=~\"$disk\" })",
+                        "legend": "sas_verify_uncorrected_errors_count"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "sum(smartmon_sas_write_uncorrected_errors_count_raw_value{ instance=~\"$instance\", disk=~\"$disk\" })",
+                        "legend": "sas_write_uncorrected_errors_count"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "version": "3.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "maxPerRow": 4
+            },
+            {
+                "version": "3.0.0",
+                "id": "f24e5f2d-0b7c-43bc-9a12-c7f4fa62d25a",
+                "type": "barGauge",
+                "name": "SAS Non-Medium Errors",
+                "description": "SCSI command errors which might be related to bad cable, backplane or card",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 54,
+                    "i": "f24e5f2d-0b7c-43bc-9a12-c7f4fa62d25a",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "label_replace(smartmon_sas_non_medium_errors_count_raw_value{ instance=~\"$instance\", disk=~\"$disk\" }, \"instance\", \"$1\", \"instance\", \"([^.]+).*\")",
+                        "legend": "{{name}} 【{{instance}} {{disk}}】"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 800
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 2000
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none",
+                        "max": 2000
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    }
+                },
+                "custom": {
+                    "version": "3.0.0",
+                    "calc": "mean"
+                },
+                "maxPerRow": 4
+            },
+            {
+                "version": "3.0.0",
+                "id": "7882d995-95c3-411d-9a9e-237d60c52ba1",
+                "type": "barGauge",
+                "name": "SAS Uncorrected Errors Total (read/write/verify)",
+                "description": "Specifies the counter that contains the total number of blocks for which an uncorrected data error has occurred",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 54,
+                    "i": "7882d995-95c3-411d-9a9e-237d60c52ba1",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "label_replace(sum (smartmon_sas_read_uncorrected_errors_count_raw_value{ instance=~\"$instance\", disk=~\"$disk\" } + smartmon_sas_write_uncorrected_errors_count_raw_value{ instance=~\"$instance\", disk=~\"$disk\" } + smartmon_sas_verify_uncorrected_errors_count_raw_value{ instance=~\"$instance\", disk=~\"$disk\" }) by (instance, disk, name), \"instance\", \"$1\", \"instance\", \"([^.]+).*\")",
+                        "legend": "{{name}} 【{{instance}} {{disk}}】"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 800
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 2000
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none",
+                        "max": 2000
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    }
+                },
+                "custom": {
+                    "version": "3.0.0",
+                    "calc": "mean"
+                },
+                "maxPerRow": 4
+            }
+        ]
+    }
+}

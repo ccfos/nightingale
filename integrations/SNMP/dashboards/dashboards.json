@@ -1,0 +1,891 @@
+{
+    "name": "SNMP Stats",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "version": "3.0.0",
+        "links": [],
+        "var": [
+            {
+                "name": "ident",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": 4
+                },
+                "definition": "label_values(snmp_interface_ifInOctets,  ident)",
+                "reg": "",
+                "multi": false
+            },
+            {
+                "name": "role",
+                "label": "role",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": 4
+                },
+                "definition": "label_values(snmp_uptime,role)"
+            }
+        ],
+        "panels": [
+            {
+                "type": "stat",
+                "id": "d5e905cf-da22-48be-9fca-1f92695ca730",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 0,
+                    "y": 0,
+                    "i": "d5e905cf-da22-48be-9fca-1f92695ca730",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "snmp_uptime{ident=\"$ident\",role=\"$role\"} /100",
+                        "legend": "In"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Uptime",
+                "links": [],
+                "description": "系统启动时间，timetick转换为秒，大盘自动转换为时 天 周 月……",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "26ae7fc1-230e-451e-9415-ea93ae8b2abb",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 8,
+                    "y": 0,
+                    "i": "26ae7fc1-230e-451e-9415-ea93ae8b2abb",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(irate(snmp_interface_ifOutOctets{ident=\"$ident\",role=\"$role\"}[5m]))",
+                        "legend": "Out"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Max Out (Current)",
+                "links": [],
+                "description": "端口每秒最大出流量  单位是bit，大盘自动转换",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "c5496f39-e194-401c-888c-556292e39254",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 16,
+                    "y": 0,
+                    "i": "c5496f39-e194-401c-888c-556292e39254",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(irate(snmp_interface_ifInOctets{ident=\"$ident\",role=\"$role\"}[5m]))",
+                        "legend": "In"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Max In (Current)",
+                "links": [],
+                "description": "端口每秒最大入流量",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "d755c99d-a323-41e6-8117-6bc006bef8b7",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 0,
+                    "y": 3,
+                    "i": "bd2cd5b0-50ac-42d7-b29d-ea89ceb015a7",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "snmp_sys_cpu_usage{ident=\"$ident\",role=\"$role\"}",
+                        "legend": "Out"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU 使用率 %",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "c3991b49-1ad8-4f63-87b8-d41bbf729833",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 8,
+                    "y": 3,
+                    "i": "109aad94-79bd-4aec-b8ac-db73cb6601a8",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "snmp_sys_mem_usage{ident=\"$ident\",role=\"$role\"}",
+                        "legend": "mem_usage"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内存使用率 %",
+                "links": [],
+                "description": "内存使用率 ",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "024c8f3e-b632-4177-9a71-396d81ede19e",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 16,
+                    "y": 3,
+                    "i": "55c508d9-acaa-4bd2-a473-7b6176a5a44a",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "snmp_sys_mem_usage{ident=\"$ident\",role=\"$role\"}",
+                        "legend": "mem_usage"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "并发连接数（当前）",
+                "links": [],
+                "description": "当前并发连接数",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "49e0453c-328c-4499-9097-a6bb52d92ad1",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 0,
+                    "y": 6,
+                    "i": "c7ddd2b8-5803-4de0-a8e7-3466020684e9",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "snmp_sys_session_rate{ident=\"$ident\",role=\"$role\"}",
+                        "legend": "mem_usage"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "每秒新建连接数",
+                "links": [],
+                "description": "最近10分钟平均每秒新建连接数",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "ad0d02bb-9eb0-47d8-8529-1ce66150e4f9",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 8,
+                    "y": 6,
+                    "i": "ad0d02bb-9eb0-47d8-8529-1ce66150e4f9",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(delta(snmp_interface_ifOutOctets{ident=\"$ident\",role=\"$role\"}[1m]))",
+                        "legend": "Out"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Total Out",
+                "links": [],
+                "description": "最近1分钟总计出流量",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "616de58a-70a7-4c0b-b0f2-5151b9f0e9c5",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 16,
+                    "y": 6,
+                    "i": "616de58a-70a7-4c0b-b0f2-5151b9f0e9c5",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(delta(snmp_interface_ifInOctets{role=\"$role\",ident=\"$ident\"}[1m]))",
+                        "legend": "In"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Total In",
+                "links": [],
+                "description": "最近1分钟总计入流量",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "fcdf91de-394f-4d9c-abb9-d750583ce6cf",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 0,
+                    "y": 9,
+                    "i": "da757839-0fc0-4d1b-b486-7070aa3d70f8",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(snmp_interface_ifInDiscards{role=\"$role\",ident=\"$ident\"}[1m]))",
+                        "legend": "In"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Drop Packets (In)",
+                "links": [],
+                "description": "入方向1m内丢包数",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "b5d3c6de-6512-40d2-b167-a1e00bfaa795",
+                "layout": {
+                    "h": 3,
+                    "w": 8,
+                    "x": 8,
+                    "y": 9,
+                    "i": "ab9b1070-a81a-4a30-9dcd-7071dfafcdc6",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(snmp_interface_ifOutDiscards{role=\"$role\",ident=\"$ident\"}[1m]))",
+                        "legend": "In"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Drop Packets (Out)",
+                "links": [],
+                "description": "出方向1m的丢包数",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "barGauge",
+                "id": "a925c635-0ff8-4984-a8b0-ca99948960f0",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 12,
+                    "i": "a925c635-0ff8-4984-a8b0-ca99948960f0",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "B",
+                        "expr": "irate(snmp_interface_ifOutOctets{ident=\"$ident\",role=\"$role\"}[5m])",
+                        "legend": "{{ifDescr}}( {{ifIndex}})"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Out (Current)",
+                "links": [],
+                "description": "Max: 10MB  \nRed Status: 9MB",
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "barGauge",
+                "id": "86345d37-977a-44e0-96ca-e46fe388b529",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 12,
+                    "i": "86345d37-977a-44e0-96ca-e46fe388b529",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "B",
+                        "expr": "irate(snmp_interface_ifInOctets{ident=\"$ident\",role=\"$role\"}[5m])",
+                        "legend": "{{ifDescr}}({{ifIndex}})"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "In (Current)",
+                "links": [],
+                "description": "Max: 10MB  \nRed Status: 9MB",
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "4bd4c3ad-e00f-4eac-89fc-6b146f36d922",
+                "layout": {
+                    "h": 10,
+                    "w": 24,
+                    "x": 0,
+                    "y": 21,
+                    "i": "4bd4c3ad-e00f-4eac-89fc-6b146f36d922",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(snmp_interface_ifOutOctets{ident=\"$ident\",role=\"$role\"}[5m])",
+                        "legend": "Out: {{ifDescr}} "
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "-irate(snmp_interface_ifInOctets{ident=\"$ident\",role=\"$role\"}[5m])",
+                        "legend": "In: {{ifDescr}} "
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Out / In",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "table",
+                "id": "b663d53d-41a9-4e28-a60e-6ced1b9d46ce",
+                "layout": {
+                    "h": 10,
+                    "w": 24,
+                    "x": 0,
+                    "y": 31,
+                    "i": "b663d53d-41a9-4e28-a60e-6ced1b9d46ce",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": 4,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "snmp_interface_ifOperStatus{ident=\"$ident\",role=\"$role\"}",
+                        "legend": "out"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Interface Status",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "columns": [
+                        "shop",
+                        "role",
+                        "ifIndex",
+                        "value"
+                    ],
+                    "sortColumn": "ifDescr",
+                    "sortOrder": "ascend"
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "#3fc453",
+                                "text": "UP"
+                            },
+                            "match": {
+                                "special": 1
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "#ce4f52",
+                                "text": "DOWN"
+                            },
+                            "match": {
+                                "special": 2
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "#9470ff",
+                                "text": "TESTING"
+                            },
+                            "match": {
+                                "special": 3
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "#000000",
+                                "text": "UNKNOWN"
+                            },
+                            "match": {
+                                "special": 4
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "#ffae39",
+                                "text": "DORMANT"
+                            },
+                            "match": {
+                                "special": 5
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "#e6c627",
+                                "text": "NotPresent"
+                            },
+                            "match": {
+                                "special": 6
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "#ff8286",
+                                "text": "LowerLayerDown"
+                            },
+                            "match": {
+                                "special": 7
+                            }
+                        }
+                    ],
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {}
+                ]
+            }
+        ]
+    }
+}
