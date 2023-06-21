@@ -1,0 +1,512 @@
+[
+  {
+    "cate": "",
+    "name": "[RabbitMQ] Cluster Operator Unavailable Replicas",
+    "note": "There are kube_pod_names that are either running but not yet available or kube_pod_names that still have not been created.",
+    "prod": "",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "disabled": 0,
+    "prom_for_duration": 300,
+    "prom_ql": "kube_deployment_status_replicas_unavailable > 0\n",
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": []
+  },
+  {
+    "cate": "",
+    "name": "[RabbitMQ] Container Restarts",
+    "note": "Over the last 10 minutes a rabbitmq container was restarted",
+    "prod": "",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "disabled": 0,
+    "prom_for_duration": 300,
+    "prom_ql": "increase(kube__container_status_restarts_total[10m]) >= 1\n",
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": []
+  },
+  {
+    "cate": "",
+    "name": "[RabbitMQ] File Descriptors Near Limit",
+    "note": "The file descriptors are near to the limit",
+    "prod": "",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "disabled": 0,
+    "prom_for_duration": 600,
+    "prom_ql": "sum (max_over_time(rabbitmq_process_open_fds[5m]))/sum (rabbitmq_process_max_tcp_sockets)> 0.8\n",
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": []
+  },
+  {
+    "cate": "",
+    "name": "[RabbitMQ] High Connection Churn",
+    "note": "There are a high connection churn",
+    "prod": "",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "disabled": 0,
+    "prom_for_duration": 600,
+    "prom_ql": "( sum(rate(rabbitmq_connections_closed_total[5m]) )  + sum(rate(rabbitmq_connections_opened_total[5m]) ) )/sum (rabbitmq_connections) > 0.1 unless sum (rabbitmq_connections) < 100\n",
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": []
+  },
+  {
+    "cate": "",
+    "name": "[RabbitMQ] Insufficient Established Erlang Distribution Links",
+    "note": "Insuffient establised erland distribution links",
+    "prod": "",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "disabled": 0,
+    "prom_for_duration": 600,
+    "prom_ql": "count (erlang_vm_dist_node_state) == 3< count (rabbitmq_build_info ) *(count (rabbitmq_build_info - 1 ))\n",
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": []
+  },
+  {
+    "cate": "",
+    "name": "[RabbitMQ] Low Disk Watermark Predicted",
+    "note": "The predicted free disk space in 24 hours from now is low",
+    "prod": "",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "disabled": 0,
+    "prom_for_duration": 3600,
+    "prom_ql": "( predict_linear(rabbitmq_disk_space_available_bytes[24h], 60*60*24) < rabbitmq_disk_space_available_limit_bytes )and( count_over_time(rabbitmq_disk_space_available_limit_bytes[2h] offset 22h) > 0)\n",
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": []
+  },
+  {
+    "cate": "",
+    "name": "[RabbitMQ] No MajorityOfNodesReady",
+    "note": "There are so many nodes not ready",
+    "prod": "",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "disabled": 0,
+    "prom_for_duration": 300,
+    "prom_ql": "kube_statefulset_status_replicas_ready<=kube_statefulset_replicas/ 2 unless kube_statefulset_replicas== 0\n",
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": []
+  },
+  {
+    "cate": "",
+    "name": "[RabbitMQ] Persistent Volume Missing",
+    "note": "There is at least one pvc not bound",
+    "prod": "",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "disabled": 0,
+    "prom_for_duration": 600,
+    "prom_ql": "kube_persistentvolumeclaim_status_phase{phase=\"Bound\"} == 0\n",
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": []
+  },
+  {
+    "cate": "",
+    "name": "[RabbitMQ] TCP Sockets Near Limit",
+    "note": "The TCP sockets are near to the limit",
+    "prod": "",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "disabled": 0,
+    "prom_for_duration": 600,
+    "prom_ql": "sum (max_over_time(rabbitmq_process_open_tcp_sockets[5m]))/sum (rabbitmq_process_max_tcp_sockets)> 0.8\n",
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": []
+  },
+  {
+    "cate": "",
+    "name": "[RabbitMQ] Unroutable Messages",
+    "note": "There were unroutable message within the last 5 minutes in RabbitMQ cluster",
+    "prod": "",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "disabled": 0,
+    "prom_for_duration": 300,
+    "prom_ql": "sum (increase(rabbitmq_channel_messages_unroutable_dropped_total[5m])) >= 1 or sum (increase(rabbitmq_channel_messages_unroutable_returned_total[5m])) >= 1\n",
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": []
+  }
+]
