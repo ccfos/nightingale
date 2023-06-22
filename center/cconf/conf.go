@@ -8,6 +8,7 @@ type Center struct {
 	I18NHeaderKey          string
 	MetricDesc             MetricDescType
 	AnonymousAccess        AnonymousAccess
+	UseFileAssets          bool
 }
 
 type Plugin struct {

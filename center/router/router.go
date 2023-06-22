@@ -3,6 +3,8 @@ package router
 import (
 	"fmt"
 	"net/http"
+	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -21,6 +23,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/runner"
 )
 
 type Router struct {
@@ -96,9 +99,31 @@ func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 
 		switch suffix {
 		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map":
-			c.FileFromFS(c.Request.URL.Path, *fs)
+			if !rt.Center.UseFileAssets {
+				c.FileFromFS(c.Request.URL.Path, *fs)
+			} else {
+				cwdarr := []string{"/"}
+				if runtime.GOOS == "windows" {
+					cwdarr[0] = ""
+				}
+				cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+				cwdarr = append(cwdarr, "pub")
+				cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
+				c.File(path.Join(cwdarr...))
+			}
 		default:
-			c.FileFromFS("/", *fs)
+			if !rt.Center.UseFileAssets {
+				c.FileFromFS("/", *fs)
+			} else {
+				cwdarr := []string{"/"}
+				if runtime.GOOS == "windows" {
+					cwdarr[0] = ""
+				}
+				cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+				cwdarr = append(cwdarr, "pub")
+				cwdarr = append(cwdarr, "index.html")
+				c.File(path.Join(cwdarr...))
+			}
 		}
 	})
 }
@@ -113,7 +138,10 @@ func (rt *Router) Config(r *gin.Engine) {
 	if err != nil {
 		logger.Errorf("cannot create statik fs: %v", err)
 	}
-	r.StaticFS("/pub", statikFS)
+
+	if !rt.Center.UseFileAssets {
+		r.StaticFS("/pub", statikFS)
+	}
 
 	pagesPrefix := "/api/n9e"
 	pages := r.Group(pagesPrefix)
