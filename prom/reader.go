@@ -1,10 +1,10 @@
 package prom
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
@@ -38,10 +38,6 @@ func (pc *PromClientMap) InitReader() error {
 	return nil
 }
 
-type PromSetting struct {
-	WriterAddr string `json:"write_addr"`
-}
-
 func (pc *PromClientMap) loadFromDatabase() {
 	var datasources []*models.Datasource
 	var err error
@@ -71,25 +67,31 @@ func (pc *PromClientMap) loadFromDatabase() {
 			header = append(header, v)
 		}
 
-		var promSetting PromSetting
-		if ds.Settings != "" {
-			err := json.Unmarshal([]byte(ds.Settings), &promSetting)
-			if err != nil {
-				logger.Errorf("failed to unmarshal prom settings, error: %v", err)
-				continue
+		var writeAddr string
+		var internalAddr string
+		for k, v := range ds.SettingsJson {
+			if strings.Contains(k, "write_addr") {
+				writeAddr = v.(string)
+			} else if strings.Contains(k, "internal_addr") && v.(string) != "" {
+				internalAddr = v.(string)
 			}
 		}
 
 		po := PromOption{
 			ClusterName:         ds.Name,
 			Url:                 ds.HTTPJson.Url,
-			WriteAddr:           promSetting.WriterAddr,
+			WriteAddr:           writeAddr,
 			BasicAuthUser:       ds.AuthJson.BasicAuthUser,
 			BasicAuthPass:       ds.AuthJson.BasicAuthPassword,
 			Timeout:             ds.HTTPJson.Timeout,
 			DialTimeout:         ds.HTTPJson.DialTimeout,
 			MaxIdleConnsPerHost: ds.HTTPJson.MaxIdleConnsPerHost,
 			Headers:             header,
+		}
+
+		if internalAddr != "" && !pc.ctx.IsCenter {
+			// internal addr is set, use internal addr when edge mode
+			po.Url = internalAddr
 		}
 
 		newCluster[dsId] = struct{}{}
