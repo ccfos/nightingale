@@ -402,6 +402,7 @@ CREATE TABLE `recording_rule` (
     `prom_ql` varchar(8192) not null comment 'promql',
     `prom_eval_interval` int not null comment 'evaluate interval',
     `append_tags` varchar(255) default '' comment 'split by space: service=n9e mod=api',
+    `query_configs` text not null comment 'query configs',
     `create_at` bigint default '0',
     `create_by` varchar(64) default '',
     `update_at` bigint default '0',
