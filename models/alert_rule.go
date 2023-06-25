@@ -566,10 +566,17 @@ func (ar *AlertRule) FE2DB() error {
 func (ar *AlertRule) DB2FE() error {
 	ar.EnableStimesJSON = strings.Fields(ar.EnableStime)
 	ar.EnableEtimesJSON = strings.Fields(ar.EnableEtime)
+	if len(ar.EnableEtimesJSON) > 0 {
+		ar.EnableStimeJSON = ar.EnableStimesJSON[0]
+		ar.EnableEtimeJSON = ar.EnableEtimesJSON[0]
+	}
 
 	cache := strings.Split(ar.EnableDaysOfWeek, ";")
 	for i := 0; i < len(cache); i++ {
 		ar.EnableDaysOfWeeksJSON = append(ar.EnableDaysOfWeeksJSON, strings.Fields(cache[i]))
+	}
+	if len(ar.EnableDaysOfWeeksJSON) > 0 {
+		ar.EnableDaysOfWeekJSON = ar.EnableDaysOfWeeksJSON[0]
 	}
 
 	ar.NotifyChannelsJSON = strings.Fields(ar.NotifyChannels)
