@@ -1,4 +1,4 @@
-package models
+package migrate
 
 import (
 	"github.com/toolkits/pkg/logger"
@@ -7,6 +7,10 @@ import (
 
 func Migrate(db *gorm.DB) {
 	MigrateRecordingTable(db)
+}
+
+type RecordingRule struct {
+	QueryConfigs string `gorm:"type:text;not null;column:query_configs"` // query_configs
 }
 
 func MigrateRecordingTable(db *gorm.DB) error {

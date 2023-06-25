@@ -16,24 +16,24 @@ import (
 
 // A RecordingRule records its vector expression into new timeseries.
 type RecordingRule struct {
-	Id                int64         `json:"id" gorm:"primary_key;auto_increment;column:id"`
-	GroupId           int64         `json:"group_id" gorm:"type:bigint;not null;default:0;column:group_id"`        // busi group id
-	DatasourceIds     string        `json:"-" gorm:"type:varchar(255);not null;default:'';column:datasource_ids"`  // datasource ids
-	DatasourceIdsJson []int64       `json:"datasource_ids" gorm:"-"`                                               // for fe
-	Cluster           string        `json:"cluster" gorm:"type:varchar(128);not null;column:cluster"`              // take effect by cluster, seperated by space
-	Name              string        `json:"name" gorm:"type:varchar(255);not null;column:name"`                    // new metric name
-	Disabled          int           `json:"disabled" gorm:"type:varchar(255);not null;column:note"`                // 0: enabled, 1: disabled
-	PromQl            string        `json:"prom_ql" gorm:"type:varchar(8192);not null;column:prom_ql"`             // just one ql for promql
-	QueryConfigs      string        `json:"-" gorm:"type:text;not null;column:query_configs"`                      // query_configs
-	QueryConfigsJson  []QueryConfig `json:"query_configs" gorm:"-"`                                                // query_configs for fe
-	PromEvalInterval  int           `json:"prom_eval_interval" gorm:"type:int;not null;column:prom_eval_interval"` // unit:s
-	AppendTags        string        `json:"-" gorm:"type:varchar(255);default:'';column:append_tags"`              // split by space: service=n9e mod=api
-	AppendTagsJSON    []string      `json:"append_tags" gorm:"-"`                                                  // for fe
-	Note              string        `json:"note" gorm:"type:varchar(255);not null;column:note"`                    // note
-	CreateAt          int64         `json:"create_at" gorm:"type:bigint;default:0;column:create_at"`
-	CreateBy          string        `json:"create_by" gorm:"type:varchar(64);default:'';column:create_by"`
-	UpdateAt          int64         `json:"update_at" gorm:"type:bigint;default:0;column:update_at"`
-	UpdateBy          string        `json:"update_by" gorm:"type:varchar(64);default:'';column:update_by"`
+	Id                int64         `json:"id" gorm:"primaryKey"`
+	GroupId           int64         `json:"group_id"`                // busi group id
+	DatasourceIds     string        `json:"-" gorm:"datasource_ids"` // datasource ids
+	DatasourceIdsJson []int64       `json:"datasource_ids" gorm:"-"` // for fe
+	Cluster           string        `json:"cluster"`                 // take effect by cluster, seperated by space
+	Name              string        `json:"name"`                    // new metric name
+	Disabled          int           `json:"disabled"`                // 0: enabled, 1: disabled
+	PromQl            string        `json:"prom_ql"`                 // just one ql for promql
+	QueryConfigs      string        `json:"-" gorm:"query_configs"`  // query_configs
+	QueryConfigsJson  []QueryConfig `json:"query_configs" gorm:"-"`  // query_configs for fe
+	PromEvalInterval  int           `json:"prom_eval_interval"`      // unit:s
+	AppendTags        string        `json:"-"`                       // split by space: service=n9e mod=api
+	AppendTagsJSON    []string      `json:"append_tags" gorm:"-"`    // for fe
+	Note              string        `json:"note"`                    // note
+	CreateAt          int64         `json:"create_at"`
+	CreateBy          string        `json:"create_by"`
+	UpdateAt          int64         `json:"update_at"`
+	UpdateBy          string        `json:"update_by"`
 }
 
 type QueryConfig struct {
