@@ -1,0 +1,322 @@
+[
+  {
+    "cluster": "",
+    "name": ":node_memory_MemAvailable_bytes:sum",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "sum(\n  node_memory_MemAvailable_bytes{job=\"node-exporter\"} or\n  (\n    node_memory_Buffers_bytes{job=\"node-exporter\"} +\n    node_memory_Cached_bytes{job=\"node-exporter\"} +\n    node_memory_MemFree_bytes{job=\"node-exporter\"} +\n    node_memory_Slab_bytes{job=\"node-exporter\"}\n  )\n) by (cluster)\n",
+    "prom_eval_interval": 15,
+    "append_tags": []
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:availability30d",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "1 - (\n  (\n    # write too slow\n    sum by (cluster) (cluster_verb_scope:apiserver_request_slo_duration_seconds_count:increase30d{verb=~\"POST|PUT|PATCH|DELETE\"})\n    -\n    sum by (cluster) (cluster_verb_scope_le:apiserver_request_slo_duration_seconds_bucket:increase30d{verb=~\"POST|PUT|PATCH|DELETE\",le=\"1\"})\n  ) +\n  (\n    # read too slow\n    sum by (cluster) (cluster_verb_scope:apiserver_request_slo_duration_seconds_count:increase30d{verb=~\"LIST|GET\"})\n    -\n    (\n      (\n        sum by (cluster) (cluster_verb_scope_le:apiserver_request_slo_duration_seconds_bucket:increase30d{verb=~\"LIST|GET\",scope=~\"resource|\",le=\"1\"})\n        or\n        vector(0)\n      )\n      +\n      sum by (cluster) (cluster_verb_scope_le:apiserver_request_slo_duration_seconds_bucket:increase30d{verb=~\"LIST|GET\",scope=\"namespace\",le=\"5\"})\n      +\n      sum by (cluster) (cluster_verb_scope_le:apiserver_request_slo_duration_seconds_bucket:increase30d{verb=~\"LIST|GET\",scope=\"cluster\",le=\"30\"})\n    )\n  ) +\n  # errors\n  sum by (cluster) (code:apiserver_request_total:increase30d{code=~\"5..\"} or vector(0))\n)\n/\nsum by (cluster) (code:apiserver_request_total:increase30d)\n",
+    "prom_eval_interval": 180,
+    "append_tags": [
+      "verb=all"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:availability30d",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "1 - (\n  sum by (cluster) (cluster_verb_scope:apiserver_request_slo_duration_seconds_count:increase30d{verb=~\"LIST|GET\"})\n  -\n  (\n    # too slow\n    (\n      sum by (cluster) (cluster_verb_scope_le:apiserver_request_slo_duration_seconds_bucket:increase30d{verb=~\"LIST|GET\",scope=~\"resource|\",le=\"1\"})\n      or\n      vector(0)\n    )\n    +\n    sum by (cluster) (cluster_verb_scope_le:apiserver_request_slo_duration_seconds_bucket:increase30d{verb=~\"LIST|GET\",scope=\"namespace\",le=\"5\"})\n    +\n    sum by (cluster) (cluster_verb_scope_le:apiserver_request_slo_duration_seconds_bucket:increase30d{verb=~\"LIST|GET\",scope=\"cluster\",le=\"30\"})\n  )\n  +\n  # errors\n  sum by (cluster) (code:apiserver_request_total:increase30d{verb=\"read\",code=~\"5..\"} or vector(0))\n)\n/\nsum by (cluster) (code:apiserver_request_total:increase30d{verb=\"read\"})\n",
+    "prom_eval_interval": 180,
+    "append_tags": [
+      "verb=read"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:availability30d",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "1 - (\n  (\n    # too slow\n    sum by (cluster) (cluster_verb_scope:apiserver_request_slo_duration_seconds_count:increase30d{verb=~\"POST|PUT|PATCH|DELETE\"})\n    -\n    sum by (cluster) (cluster_verb_scope_le:apiserver_request_slo_duration_seconds_bucket:increase30d{verb=~\"POST|PUT|PATCH|DELETE\",le=\"1\"})\n  )\n  +\n  # errors\n  sum by (cluster) (code:apiserver_request_total:increase30d{verb=\"write\",code=~\"5..\"} or vector(0))\n)\n/\nsum by (cluster) (code:apiserver_request_total:increase30d{verb=\"write\"})\n",
+    "prom_eval_interval": 180,
+    "append_tags": [
+      "verb=write"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate1d",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\"}[1d]))\n    -\n    (\n      (\n        sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=~\"resource|\",le=\"1\"}[1d]))\n        or\n        vector(0)\n      )\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"namespace\",le=\"5\"}[1d]))\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"cluster\",le=\"30\"}[1d]))\n    )\n  )\n  +\n  # errors\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\",code=~\"5..\"}[1d]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\"}[1d]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=read"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate1d",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\"}[1d]))\n    -\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\",le=\"1\"}[1d]))\n  )\n  +\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",code=~\"5..\"}[1d]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\"}[1d]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=write"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate1h",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\"}[1h]))\n    -\n    (\n      (\n        sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=~\"resource|\",le=\"1\"}[1h]))\n        or\n        vector(0)\n      )\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"namespace\",le=\"5\"}[1h]))\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"cluster\",le=\"30\"}[1h]))\n    )\n  )\n  +\n  # errors\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\",code=~\"5..\"}[1h]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\"}[1h]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=read"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate1h",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\"}[1h]))\n    -\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\",le=\"1\"}[1h]))\n  )\n  +\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",code=~\"5..\"}[1h]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\"}[1h]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=write"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate2h",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\"}[2h]))\n    -\n    (\n      (\n        sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=~\"resource|\",le=\"1\"}[2h]))\n        or\n        vector(0)\n      )\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"namespace\",le=\"5\"}[2h]))\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"cluster\",le=\"30\"}[2h]))\n    )\n  )\n  +\n  # errors\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\",code=~\"5..\"}[2h]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\"}[2h]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=read"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate2h",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\"}[2h]))\n    -\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\",le=\"1\"}[2h]))\n  )\n  +\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",code=~\"5..\"}[2h]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\"}[2h]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=write"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate30m",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\"}[30m]))\n    -\n    (\n      (\n        sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=~\"resource|\",le=\"1\"}[30m]))\n        or\n        vector(0)\n      )\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"namespace\",le=\"5\"}[30m]))\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"cluster\",le=\"30\"}[30m]))\n    )\n  )\n  +\n  # errors\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\",code=~\"5..\"}[30m]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\"}[30m]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=read"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate30m",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\"}[30m]))\n    -\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\",le=\"1\"}[30m]))\n  )\n  +\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",code=~\"5..\"}[30m]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\"}[30m]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=write"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate3d",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\"}[3d]))\n    -\n    (\n      (\n        sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=~\"resource|\",le=\"1\"}[3d]))\n        or\n        vector(0)\n      )\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"namespace\",le=\"5\"}[3d]))\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"cluster\",le=\"30\"}[3d]))\n    )\n  )\n  +\n  # errors\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\",code=~\"5..\"}[3d]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\"}[3d]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=read"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate3d",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\"}[3d]))\n    -\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\",le=\"1\"}[3d]))\n  )\n  +\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",code=~\"5..\"}[3d]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\"}[3d]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=write"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate5m",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\"}[5m]))\n    -\n    (\n      (\n        sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=~\"resource|\",le=\"1\"}[5m]))\n        or\n        vector(0)\n      )\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"namespace\",le=\"5\"}[5m]))\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"cluster\",le=\"30\"}[5m]))\n    )\n  )\n  +\n  # errors\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\",code=~\"5..\"}[5m]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\"}[5m]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=read"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate5m",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\"}[5m]))\n    -\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\",le=\"1\"}[5m]))\n  )\n  +\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",code=~\"5..\"}[5m]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\"}[5m]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=write"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate6h",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\"}[6h]))\n    -\n    (\n      (\n        sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=~\"resource|\",le=\"1\"}[6h]))\n        or\n        vector(0)\n      )\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"namespace\",le=\"5\"}[6h]))\n      +\n      sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\",scope=\"cluster\",le=\"30\"}[6h]))\n    )\n  )\n  +\n  # errors\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\",code=~\"5..\"}[6h]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"LIST|GET\"}[6h]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=read"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "apiserver_request:burnrate6h",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "(\n  (\n    # too slow\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_count{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\"}[6h]))\n    -\n    sum by (cluster) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\",le=\"1\"}[6h]))\n  )\n  +\n  sum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",code=~\"5..\"}[6h]))\n)\n/\nsum by (cluster) (rate(apiserver_request_total{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\"}[6h]))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "verb=write"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "cluster:namespace:pod_cpu:active:kube_pod_container_resource_limits",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "kube_pod_container_resource_limits{resource=\"cpu\",job=\"kube-state-metrics\"}  * on (namespace, pod, cluster)\ngroup_left() max by (namespace, pod, cluster) (\n  (kube_pod_status_phase{phase=~\"Pending|Running\"} == 1)\n  )\n",
+    "prom_eval_interval": 15,
+    "append_tags": []
+  },
+  {
+    "cluster": "",
+    "name": "cluster:namespace:pod_cpu:active:kube_pod_container_resource_requests",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "kube_pod_container_resource_requests{resource=\"cpu\",job=\"kube-state-metrics\"}  * on (namespace, pod, cluster)\ngroup_left() max by (namespace, pod, cluster) (\n  (kube_pod_status_phase{phase=~\"Pending|Running\"} == 1)\n)\n",
+    "prom_eval_interval": 15,
+    "append_tags": []
+  },
+  {
+    "cluster": "",
+    "name": "cluster:namespace:pod_memory:active:kube_pod_container_resource_limits",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "kube_pod_container_resource_limits{resource=\"memory\",job=\"kube-state-metrics\"}  * on (namespace, pod, cluster)\ngroup_left() max by (namespace, pod, cluster) (\n  (kube_pod_status_phase{phase=~\"Pending|Running\"} == 1)\n)\n",
+    "prom_eval_interval": 15,
+    "append_tags": []
+  },
+  {
+    "cluster": "",
+    "name": "cluster:namespace:pod_memory:active:kube_pod_container_resource_requests",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "kube_pod_container_resource_requests{resource=\"memory\",job=\"kube-state-metrics\"}  * on (namespace, pod, cluster)\ngroup_left() max by (namespace, pod, cluster) (\n  (kube_pod_status_phase{phase=~\"Pending|Running\"} == 1)\n)\n",
+    "prom_eval_interval": 15,
+    "append_tags": []
+  },
+  {
+    "cluster": "",
+    "name": "cluster:node_cpu:ratio_rate5m",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "avg by (cluster) (\n  node:node_cpu_utilization:ratio_rate5m\n)\n",
+    "prom_eval_interval": 15,
+    "append_tags": []
+  },
+  {
+    "cluster": "",
+    "name": "cluster_quantile:apiserver_request_slo_duration_seconds:histogram_quantile",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "histogram_quantile(0.99, sum by (cluster, le, resource) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"LIST|GET\",subresource!~\"proxy|attach|log|exec|portforward\"}[5m]))) > 0\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "quantile=0.99",
+      "verb=read"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "cluster_quantile:apiserver_request_slo_duration_seconds:histogram_quantile",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "histogram_quantile(0.99, sum by (cluster, le, resource) (rate(apiserver_request_slo_duration_seconds_bucket{job=\"apiserver\",verb=~\"POST|PUT|PATCH|DELETE\",subresource!~\"proxy|attach|log|exec|portforward\"}[5m]))) > 0\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "quantile=0.99",
+      "verb=write"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "histogram_quantile(0.99, sum(rate(scheduler_binding_duration_seconds_bucket{job=\"kube-scheduler\"}[5m])) without(instance, pod))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "quantile=0.99"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "histogram_quantile(0.9, sum(rate(scheduler_binding_duration_seconds_bucket{job=\"kube-scheduler\"}[5m])) without(instance, pod))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "quantile=0.9"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "histogram_quantile(0.5, sum(rate(scheduler_binding_duration_seconds_bucket{job=\"kube-scheduler\"}[5m])) without(instance, pod))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "quantile=0.5"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "cluster_quantile:scheduler_e2e_scheduling_duration_seconds:histogram_quantile",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "histogram_quantile(0.99, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job=\"kube-scheduler\"}[5m])) without(instance, pod))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "quantile=0.99"
+    ]
+  },
+  {
+    "cluster": "",
+    "name": "cluster_quantile:scheduler_e2e_scheduling_duration_seconds:histogram_quantile",
+    "note": "",
+    "disabled": 0,
+    "prom_ql": "histogram_quantile(0.9, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job=\"kube-scheduler\"}[5m])) without(instance, pod))\n",
+    "prom_eval_interval": 15,
+    "append_tags": [
+      "quantile=0.9"
+    ]
+  }
+]
