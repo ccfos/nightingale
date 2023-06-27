@@ -1,0 +1,266 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CPU温度超过90",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "ipmi_cpu1_temp{} > 90 or ipmi_cpu2_temp{} > 90",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CPU电压大于10",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "ipmi_vcpu1 > 10 or ipmi_vcpu1 > 10",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CPU风扇转速超过1000",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "ipmi_fan1  > 1000 or ipmi_fan2  > 1000 or ipmi_fan3  > 1000 or ipmi_fan4  > 1000 or ipmi_fan5  > 1000 or ipmi_fan6 > 1000",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "主板温度超过90",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "ipmi_system_temp > 90 or ipmi_pch_temp > 90",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  }
+]
