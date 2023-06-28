@@ -40,4 +40,5 @@ type AlertRule struct {
 
 type AlertSubscribe struct {
 	ExtraConfig string `gorm:"type:text;not null;column:extra_config"` // extra config
+	Severity    int    `gorm:"type:bigint;default:0;column:severity"`  // sub severity
 }
