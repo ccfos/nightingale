@@ -109,27 +109,6 @@ type RuleQuery struct {
 	Triggers []Trigger     `json:"triggers"`
 }
 
-type ExtraConfig struct {
-	Escalation        Escalation        `json:"escalation,omitempty"`
-	NotifyAggregation NotifyAggregation `json:"notify_aggregation,omitempty"`
-}
-
-type Escalation struct {
-	Enable           bool   `json:"enable"`
-	ForDuration      int    `json:"for_duration"` // unit: min
-	RedefineSeverity int    `json:"redefine_severity"`
-	NewSeverity      int    `json:"new_severity"`
-	RedefineChannels int    `json:"redefine_channels"`
-	NewChannels      string `json:"new_channels"`
-	NotifyRepeatStep int    `json:"notify_repeat_step"`
-	UserGroupIds     string `json:"user_group_ids"`
-}
-
-type NotifyAggregation struct {
-	Enable bool `json:"enable"`
-	Wait   int  `json:"wait"`
-}
-
 type Trigger struct {
 	Expressions interface{} `json:"expressions"`
 	Mode        int         `json:"mode"`
