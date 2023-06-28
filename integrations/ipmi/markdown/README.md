@@ -1,6 +1,6 @@
-### 使用Categraf基于IPMI监控硬件
+### 使用Categraf基于IPMI工具监控硬件温度、功率、电压
 
-首先原理：
+实现原理：
 
 利用ipmitool sdr命令， 采集硬件的温度、功率、电压等信息，并转化为指标。 依赖工具ipmitool ,所以需要安装ipmitool。
 
