@@ -19,6 +19,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/ccfos/nightingale/v6/prom"
+	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
@@ -43,6 +44,8 @@ func (e *ExternalProcessorsType) GetExternalAlertRule(datasourceId, id int64) (*
 	return processor, has
 }
 
+type HandleEventFunc func(pt *prompb.TimeSeries)
+
 type Processor struct {
 	datasourceId int64
 
@@ -64,6 +67,7 @@ type Processor struct {
 	datasourceCache *memsto.DatasourceCacheType
 
 	promClients *prom.PromClientMap
+	HandleEvent HandleEventFunc
 	ctx         *ctx.Context
 	stats       *astats.Stats
 }

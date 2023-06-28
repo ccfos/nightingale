@@ -103,8 +103,26 @@ type HostTrigger struct {
 }
 
 type RuleQuery struct {
-	Queries  []interface{} `json:"queries"`
-	Triggers []Trigger     `json:"triggers"`
+	Queries           []interface{}     `json:"queries"`
+	Triggers          []Trigger         `json:"triggers"`
+	Escalation        Escalation        `json:"escalation,omitempty"`
+	NotifyAggregation NotifyAggregation `json:"notify_aggregation,omitempty"`
+}
+
+type Escalation struct {
+	Enable           bool   `json:"enable"`
+	ForDuration      int    `json:"for_duration"` // unit: min
+	RedefineSeverity int    `json:"redefine_severity"`
+	NewSeverity      int    `json:"new_severity"`
+	RedefineChannels int    `json:"redefine_channels"`
+	NewChannels      string `json:"new_channels"`
+	NotifyRepeatStep int    `json:"notify_repeat_step"`
+	UserGroupIds     string `json:"user_group_ids"`
+}
+
+type NotifyAggregation struct {
+	Enable bool `json:"enable"`
+	Wait   int  `json:"wait"`
 }
 
 type Trigger struct {
