@@ -1,21 +1,24 @@
-### 使用IPMI监控硬件
+### 使用Categraf基于IPMI监控硬件
+
+首先原理：
+
+利用ipmitool sdr命令， 采集硬件的温度、功率、电压等信息，并转化为指标。 依赖工具ipmitool ,所以需要安装ipmitool。
 
 IPMI配置：
 
 ```bash
-# Ubuntu  此处的主机必须支持ipmi bmc，不然openipmi启动不了
+#  此处的主机必须支持ipmi bmc，不然openipmi启动不了
+# Ubuntu 
 apt install openipmi ipmitool
-# Centos  此处的主机必须支持ipmi bmc，不然openipmi启动不了
+# Centos
 yum install OpenIPMI  ipmitool
-# freeipmi是exporter依赖的相关模块，需要安装exporter采集的机器上
-apt install freeipmi
 # 加载模块
 modprobe ipmi_msghandler
 modprobe ipmi_devintf
 modprobe ipmi_si
 modprobe ipmi_poweroff
 modprobe ipmi_watchdog
-# 此处有一点一定要注意，如果不是真实的服务器的话，在加载ipmi_si的时候会报错，因为我在pve虚拟化中使用虚拟机测试，安装完成以后，ipmi_si 模块始终加载不了
+# 此处有一点一定要注意，如果不是真实的服务器的话，在加载ipmi_si的时候会报错，因为在虚拟化中使用虚拟机测试，安装完成以后，ipmi_si模块无法加载。
 lsmod |grep ^ipmi
 ipmi_watchdog          28672  0
 ipmi_poweroff          16384  0
@@ -23,33 +26,7 @@ ipmi_ssif              32768  0
 ipmi_si                61440  1
 ipmi_devintf           20480  0
 ipmi_msghandler       102400  5 ipmi_devintf,ipmi_si,ipmi_watchdog,ipmi_ssif,ipmi_poweroff
-# 安装ipmi_exporter
-wget https://github.com/soundcloud/ipmi_exporter/releases/download/v1.2.0/ipmi_exporter-v1.2.0.linux-amd64.tar.gz
-tar xvf ipmi_exporter-v1.2.0.linux-amd64.tar.gz
-mv  ipmi_exporter-v1.2.0.linux-amd64 ipmi_exporter
-cat <<EOF>> /lib/systemd/system/ipmi_exporter.service
-[unit]
-Description=ipmi_exporter
-Documentation=https://github.com/soundcloud/ipmi_exporter/
-After=network.target
-
-[Service]
-User=root
-Group=root
-Type=simple
-Restart=on-failure
-WorkingDirectory=/data/ipmi_exporter
-ExecStart=/data/ipmi_exporter/ipmi_exporter --config.file=ipmi.yml
-ExecReload=/bin/kill -HUP $MAINPID
-RuntimeDirectory=ipmi_exporter
-RuntimeDirectoryMode=0750
-LimitNOFILE=10000
-TimeoutStopSec=20
-
-[Install]
-WantedBy=multi-user.target
-EOF
-# 配置ipm访问，在目标主机，我这里是pve server01做实例
+# 配置ipm访问，在目标主机，我这里是server01做实例。
 ipmitool user list 1 # 查看当前的用户列表
 ID  Name         Callin  Link Auth  IPMI Msg   Channel Priv Limit
 1                    true    false      false      NO ACCESS
@@ -124,7 +101,7 @@ SNMP Community String   : public
 ```
 
 ### 采集配置
-在categraf中的prometheus插件中加入采集配置
+使用[categraf](https://github.com/flashcatcloud/categraf)中[inputs.ipmi](https://github.com/flashcatcloud/categraf/tree/main/inputs/ipmi)插件采集服务器指标:
 ```yaml
 cat /opt/categraf/conf/input.ipmi/conf.toml
   [[instances]]
