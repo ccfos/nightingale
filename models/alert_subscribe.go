@@ -15,36 +15,36 @@ import (
 )
 
 type AlertSubscribe struct {
-	Id                    int64             `json:"id" gorm:"primaryKey"`
-	Name                  string            `json:"name"`     // AlertSubscribe name
-	Disabled              int               `json:"disabled"` // 0: enabled, 1: disabled
-	GroupId               int64             `json:"group_id"`
-	Prod                  string            `json:"prod"`
-	Cate                  string            `json:"cate"`
-	DatasourceIds         string            `json:"-" gorm:"datasource_ids"` // datasource ids
-	DatasourceIdsJson     []int64           `json:"datasource_ids" gorm:"-"` // for fe
-	Cluster               string            `json:"cluster"`                 // take effect by clusters, seperated by space
-	RuleId                int64             `json:"rule_id"`
-	Severity              int               `json:"severity"`           // sub severity
-	ForDuration           int64             `json:"for_duration"`       // for duration, unit: second
-	RuleName              string            `json:"rule_name" gorm:"-"` // for fe
-	Tags                  ormx.JSONArr      `json:"tags"`
-	RedefineSeverity      int               `json:"redefine_severity"`
-	NewSeverity           int               `json:"new_severity"`
-	RedefineChannels      int               `json:"redefine_channels"`
-	NewChannels           string            `json:"new_channels"`
-	UserGroupIds          string            `json:"user_group_ids"`
-	UserGroups            []UserGroup       `json:"user_groups" gorm:"-"` // for fe
-	RedefineWebhooks      int               `json:"redefine_webhooks"`
-	Webhooks              string            `json:"-" gorm:"webhooks"`
-	WebhooksJson          []string          `json:"webhooks" gorm:"-"`
-	NotifyAggregation     string            `json:"-" gorm:"notify_aggregation"`
-	NotifyAggregationJson NotifyAggregation `json:"notify_aggregation" gorm:"-"`
-	CreateBy              string            `json:"create_by"`
-	CreateAt              int64             `json:"create_at"`
-	UpdateBy              string            `json:"update_by"`
-	UpdateAt              int64             `json:"update_at"`
-	ITags                 []TagFilter       `json:"-" gorm:"-"` // inner tags
+	Id                int64        `json:"id" gorm:"primaryKey"`
+	Name              string       `json:"name"`     // AlertSubscribe name
+	Disabled          int          `json:"disabled"` // 0: enabled, 1: disabled
+	GroupId           int64        `json:"group_id"`
+	Prod              string       `json:"prod"`
+	Cate              string       `json:"cate"`
+	DatasourceIds     string       `json:"-" gorm:"datasource_ids"` // datasource ids
+	DatasourceIdsJson []int64      `json:"datasource_ids" gorm:"-"` // for fe
+	Cluster           string       `json:"cluster"`                 // take effect by clusters, seperated by space
+	RuleId            int64        `json:"rule_id"`
+	Severity          int          `json:"severity"`           // sub severity
+	ForDuration       int64        `json:"for_duration"`       // for duration, unit: second
+	RuleName          string       `json:"rule_name" gorm:"-"` // for fe
+	Tags              ormx.JSONArr `json:"tags"`
+	RedefineSeverity  int          `json:"redefine_severity"`
+	NewSeverity       int          `json:"new_severity"`
+	RedefineChannels  int          `json:"redefine_channels"`
+	NewChannels       string       `json:"new_channels"`
+	UserGroupIds      string       `json:"user_group_ids"`
+	UserGroups        []UserGroup  `json:"user_groups" gorm:"-"` // for fe
+	RedefineWebhooks  int          `json:"redefine_webhooks"`
+	Webhooks          string       `json:"-" gorm:"webhooks"`
+	WebhooksJson      []string     `json:"webhooks" gorm:"-"`
+	ExtraConfig       string       `json:"-" grom:"extra_config"`
+	ExtraConfigJson   interface{}  `json:"extra_config" gorm:"-"` // for fe
+	CreateBy          string       `json:"create_by"`
+	CreateAt          int64        `json:"create_at"`
+	UpdateBy          string       `json:"update_by"`
+	UpdateAt          int64        `json:"update_at"`
+	ITags             []TagFilter  `json:"-" gorm:"-"` // inner tags
 }
 
 func (s *AlertSubscribe) TableName() string {
@@ -121,10 +121,8 @@ func (s *AlertSubscribe) FE2DB() error {
 		s.Webhooks = string(b)
 	}
 
-	if s.NotifyAggregationJson.Wait > 0 {
-		b, _ := json.Marshal(s.NotifyAggregationJson)
-		s.NotifyAggregation = string(b)
-	}
+	b, _ := json.Marshal(s.ExtraConfigJson)
+	s.ExtraConfig = string(b)
 
 	return nil
 }
@@ -142,8 +140,8 @@ func (s *AlertSubscribe) DB2FE() error {
 		}
 	}
 
-	if s.NotifyAggregation != "" {
-		if err := json.Unmarshal([]byte(s.NotifyAggregation), &s.NotifyAggregationJson); err != nil {
+	if s.ExtraConfig != "" {
+		if err := json.Unmarshal([]byte(s.ExtraConfig), &s.ExtraConfigJson); err != nil {
 			return err
 		}
 	}

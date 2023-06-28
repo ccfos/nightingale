@@ -70,6 +70,8 @@ type AlertRule struct {
 	AppendTagsJSON        []string          `json:"append_tags" gorm:"-"`          // for fe
 	Annotations           string            `json:"-"`                             //
 	AnnotationsJSON       map[string]string `json:"annotations" gorm:"-"`          // for fe
+	ExtraConfig           string            `json:"-" gorm:"extra_config"`         // extra config
+	ExtraConfigJSON       interface{}       `json:"extra_config" gorm:"-"`         // for fe
 	CreateAt              int64             `json:"create_at"`
 	CreateBy              string            `json:"create_by"`
 	UpdateAt              int64             `json:"update_at"`
@@ -103,8 +105,11 @@ type HostTrigger struct {
 }
 
 type RuleQuery struct {
-	Queries           []interface{}     `json:"queries"`
-	Triggers          []Trigger         `json:"triggers"`
+	Queries  []interface{} `json:"queries"`
+	Triggers []Trigger     `json:"triggers"`
+}
+
+type ExtraConfig struct {
 	Escalation        Escalation        `json:"escalation,omitempty"`
 	NotifyAggregation NotifyAggregation `json:"notify_aggregation,omitempty"`
 }
