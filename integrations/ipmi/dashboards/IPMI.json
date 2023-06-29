@@ -1,0 +1,367 @@
+{
+  "name": "IPMI",
+  "tags": "Categraf",
+  "ident": "",
+  "configs": {
+    "var": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "definition": "prometheus",
+        "defaultValue": 5
+      },
+      {
+        "type": "query",
+        "name": "server",
+        "definition": "label_values(ipmi_system_temp,server)",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        }
+      }
+    ],
+    "panels": [
+      {
+        "type": "row",
+        "id": "1007833d-b9fb-4199-979e-6f70c0904770",
+        "name": "分组",
+        "collapsed": false,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "1007833d-b9fb-4199-979e-6f70c0904770",
+          "isResizable": false
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "3d7ca439-38fa-4f22-9b6a-98323f167ee9",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 0,
+          "y": 1,
+          "i": "3d7ca439-38fa-4f22-9b6a-98323f167ee9",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ipmi_cpu1_temp{server=\"$server\"}",
+            "legend": "CPU1"
+          },
+          {
+            "expr": "ipmi_cpu2_temp{server=\"$server\"}",
+            "refId": "B",
+            "legend": "CPU2"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "CPU温度",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "32ccc47c-6841-4b1d-a8b5-f6034ddca3e8",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 12,
+          "y": 1,
+          "i": "32ccc47c-6841-4b1d-a8b5-f6034ddca3e8",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 5,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ipmi_vcpu1",
+            "legend": "CPU1 "
+          },
+          {
+            "expr": "ipmi_vcpu2",
+            "refId": "B",
+            "legend": "CPU2"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "CPU电压",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ipmi_system_temp{server=\"$server\"}",
+            "legend": "system_temp"
+          },
+          {
+            "expr": "ipmi_pch_temp{server=\"$server\"}",
+            "refId": "B",
+            "legend": "pch_temp"
+          }
+        ],
+        "name": "主板温度",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {}
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 0,
+          "y": 5,
+          "i": "899d2ed2-4b9e-4a45-82f4-9aa8287842ea",
+          "isResizable": true
+        },
+        "id": "899d2ed2-4b9e-4a45-82f4-9aa8287842ea",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "type": "timeseries",
+        "id": "fab67c57-8c83-4bc3-82a6-b304b14ece84",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 12,
+          "y": 5,
+          "i": "fab67c57-8c83-4bc3-82a6-b304b14ece84",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ipmi_fan1{server=\"$server\"}",
+            "legend": "fan1"
+          },
+          {
+            "expr": "ipmi_fan2{server=\"$server\"}",
+            "refId": "B",
+            "legend": "fan2"
+          },
+          {
+            "expr": "ipmi_fan3{server=\"$server\"}",
+            "refId": "C",
+            "legend": "fan3"
+          },
+          {
+            "expr": "ipmi_fan4{server=\"$server\"}",
+            "refId": "D",
+            "legend": "fan4"
+          },
+          {
+            "expr": "ipmi_fan5{server=\"$server\"}",
+            "refId": "E",
+            "legend": "fan5"
+          },
+          {
+            "expr": "ipmi_fan6{server=\"$server\"}",
+            "refId": "F",
+            "legend": "fan6"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "风扇转速",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "a5ee9813-4f4c-4928-8aed-b93d78b63199",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 0,
+          "y": 9,
+          "i": "a5ee9813-4f4c-4928-8aed-b93d78b63199",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 5,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ipmi_12v{server=~\"$server\"}",
+            "legend": "12V"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "电压",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      }
+    ],
+    "version": "3.0.0"
+  }
+}

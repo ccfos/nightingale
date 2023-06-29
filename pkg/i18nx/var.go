@@ -1,6 +1,6 @@
 package i18nx
 
-const I18N = `
+var I18N = `
 {
     "zh": {
       "Username or password invalid": "用户名或密码错误",
