@@ -44,4 +44,12 @@ labels = {service="vminsert"}
 
 ### 告警规则
 
+![alert](./alerts.png)
+
 [alerts](../alerts/alerts.json)
+
+### 仪表盘：
+
+![dashboard](./dashboard.png)
+
+[dashboard](../dashboard/victoriametrics.json)
