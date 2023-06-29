@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -50,6 +51,7 @@ type TaskForm struct {
 	Pause     string   `json:"pause"`
 	Script    string   `json:"script"`
 	Args      string   `json:"args"`
+	EventTags string   `json:"event_tags"`
 	Action    string   `json:"action"`
 	Creator   string   `json:"creator"`
 	Hosts     []string `json:"hosts"`
@@ -114,6 +116,9 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 		return
 	}
 
+	// 附加告警级别  告警触发值标签
+	tags := fmt.Sprintf("%s,,alert_severity=%d,,alert_trigger_value=%s", event.Tags, event.Severity, event.TriggerValue)
+
 	// call ibex
 	in := TaskForm{
 		Title:     tpl.Title + " FH: " + host,
@@ -124,6 +129,7 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 		Pause:     tpl.Pause,
 		Script:    tpl.Script,
 		Args:      tpl.Args,
+		EventTags: tags,
 		Action:    "start",
 		Creator:   tpl.UpdateBy,
 		Hosts:     []string{host},

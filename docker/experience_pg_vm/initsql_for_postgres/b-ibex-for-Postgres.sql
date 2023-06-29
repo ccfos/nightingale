@@ -1,20 +1,22 @@
 CREATE TABLE task_meta
 (
-    id        bigserial,
-    title     varchar(255)    not null default '',
-    account   varchar(64)     not null,
-    batch     int     not null default 0,
-    tolerance int     not null default 0,
-    timeout   int     not null default 0,
-    pause     varchar(255)    not null default '',
-    script    text            not null,
-    args      varchar(512)    not null default '',
-    creator   varchar(64)     not null default '',
-    created   timestamp       not null default CURRENT_TIMESTAMP,
+    id          bigserial,
+    title       varchar(255)    not null default '',
+    account     varchar(64)     not null,
+    batch       int     not null default 0,
+    tolerance   int     not null default 0,
+    timeout     int     not null default 0,
+    pause       varchar(255)    not null default '',
+    script      text            not null,
+    args        varchar(512)    not null default '',
+    event_tags  varchar(1024)   not null default '' ,
+    creator     varchar(64)     not null default '',
+    created     timestamp       not null default CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 ) ;
 CREATE INDEX task_meta_creator_idx ON task_meta (creator);
 CREATE INDEX task_meta_created_idx ON task_meta (created);
+COMMENT ON COLUMN task_meta.event_tags IS 'event tags, split by ,,';
 
 /* start|cancel|kill|pause */
 CREATE TABLE task_action
