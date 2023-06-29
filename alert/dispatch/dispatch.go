@@ -28,9 +28,10 @@ type Dispatch struct {
 
 	alerting aconf.Alerting
 
-	senders      map[string]sender.Sender
-	tpls         map[string]*template.Template
-	ExtraSenders map[string]sender.Sender
+	senders          map[string]sender.Sender
+	tpls             map[string]*template.Template
+	ExtraSenders     map[string]sender.Sender
+	BeforeSenderHook func(*models.AlertCurEvent) bool
 
 	ctx *ctx.Context
 
@@ -51,9 +52,10 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 
 		alerting: alerting,
 
-		senders:      make(map[string]sender.Sender),
-		tpls:         make(map[string]*template.Template),
-		ExtraSenders: make(map[string]sender.Sender),
+		senders:          make(map[string]sender.Sender),
+		tpls:             make(map[string]*template.Template),
+		ExtraSenders:     make(map[string]sender.Sender),
+		BeforeSenderHook: func(*models.AlertCurEvent) bool { return true },
 
 		ctx: ctx,
 	}
@@ -63,7 +65,7 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 func (e *Dispatch) ReloadTpls() error {
 	err := e.relaodTpls()
 	if err != nil {
-		logger.Error("failed to reload tpls: %v", err)
+		logger.Errorf("failed to reload tpls: %v", err)
 	}
 
 	duration := time.Duration(9000) * time.Millisecond
@@ -183,20 +185,23 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 }
 
 func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, notifyTarget *NotifyTarget, isSubscribe bool) {
-	for channel, uids := range notifyTarget.ToChannelUserMap() {
-		ctx := sender.BuildMessageContext(rule, event, uids, e.userCache)
-		e.RwLock.RLock()
-		s := e.senders[channel]
-		e.RwLock.RUnlock()
-		if s == nil {
-			logger.Debugf("no sender for channel: %s", channel)
-			continue
+	needSend := e.BeforeSenderHook(event)
+	if needSend {
+		for channel, uids := range notifyTarget.ToChannelUserMap() {
+			ctx := sender.BuildMessageContext(rule, event, uids, e.userCache)
+			e.RwLock.RLock()
+			s := e.senders[channel]
+			e.RwLock.RUnlock()
+			if s == nil {
+				logger.Debugf("no sender for channel: %s", channel)
+				continue
+			}
+			logger.Debugf("send event: %+v, channel: %s", event, channel)
+			for i := 0; i < len(ctx.Users); i++ {
+				logger.Debugf("send event %s to user: %v", event.Hash, ctx.Users[i])
+			}
+			s.Send(ctx)
 		}
-		logger.Debugf("send event: %s, channel: %s", event.Hash, channel)
-		for i := 0; i < len(ctx.Users); i++ {
-			logger.Debug("send event to user: ", ctx.Users[i])
-		}
-		s.Send(ctx)
 	}
 
 	// handle event callbacks
