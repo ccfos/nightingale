@@ -45,6 +45,9 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	}
 
 	rt.MetaSet.Set(req.Hostname, req)
+	var items = make(map[string]struct{})
+	items[req.Hostname] = struct{}{}
+	rt.IdentSet.MSet(items)
 
 	gid := ginx.QueryInt64(c, "gid", 0)
 
