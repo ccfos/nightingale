@@ -19,7 +19,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/ccfos/nightingale/v6/prom"
-	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
@@ -44,7 +43,7 @@ func (e *ExternalProcessorsType) GetExternalAlertRule(datasourceId, id int64) (*
 	return processor, has
 }
 
-type HandleEventFunc func(pt *prompb.TimeSeries)
+type HandleEventFunc func(event *models.AlertCurEvent)
 
 type Processor struct {
 	datasourceId int64
@@ -66,10 +65,11 @@ type Processor struct {
 	alertMuteCache  *memsto.AlertMuteCacheType
 	datasourceCache *memsto.DatasourceCacheType
 
-	promClients *prom.PromClientMap
-	HandleEvent HandleEventFunc
-	ctx         *ctx.Context
-	stats       *astats.Stats
+	promClients            *prom.PromClientMap
+	HandleFireEventHook    HandleEventFunc
+	HandleRecoverEventHook HandleEventFunc
+	ctx                    *ctx.Context
+	stats                  *astats.Stats
 }
 
 func (p *Processor) Key() string {
@@ -106,6 +106,9 @@ func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *me
 		promClients: promClients,
 		ctx:         ctx,
 		stats:       stats,
+
+		HandleFireEventHook:    func(event *models.AlertCurEvent) {},
+		HandleRecoverEventHook: func(event *models.AlertCurEvent) {},
 	}
 
 	p.mayHandleGroup()
@@ -178,6 +181,7 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.RuleConfig = p.rule.RuleConfig
 	event.RuleConfigJson = p.rule.RuleConfigJson
 	event.Severity = anomalyPoint.Severity
+	event.ExtraConfig = p.rule.ExtraConfigJSON
 
 	if from == "inner" {
 		event.LastEvalTime = now
@@ -231,6 +235,8 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string) {
 	cachedRule.UpdateEvent(event)
 	event.IsRecovered = true
 	event.LastEvalTime = now
+
+	p.HandleRecoverEventHook(event)
 	p.pushEventToQueue(event)
 }
 
@@ -288,6 +294,9 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 	if cachedRule == nil {
 		return
 	}
+
+	p.HandleFireEventHook(event)
+
 	logger.Debugf("rule_eval:%s event:%+v fire", p.Key(), event)
 	if fired, has := p.fires.Get(event.Hash); has {
 		p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
