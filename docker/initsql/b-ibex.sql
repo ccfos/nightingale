@@ -15,7 +15,7 @@ CREATE TABLE `task_meta`
     `pause`       varchar(255)    not null default '',
     `script`      text            not null,
     `args`        varchar(512)    not null default '',
-    `event_tags`  varchar(1024)   not null default '' comment 'event tags, split by ,,',
+    `stdin`       varchar(1024)   not null default '',
     `creator`     varchar(64)     not null default '',
     `created`     timestamp       not null default CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),

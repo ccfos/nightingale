@@ -51,7 +51,7 @@ type TaskForm struct {
 	Pause     string   `json:"pause"`
 	Script    string   `json:"script"`
 	Args      string   `json:"args"`
-	EventTags string   `json:"event_tags"`
+	Stdin     string   `json:"stdin"`
 	Action    string   `json:"action"`
 	Creator   string   `json:"creator"`
 	Hosts     []string `json:"hosts"`
@@ -129,7 +129,7 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 		Pause:     tpl.Pause,
 		Script:    tpl.Script,
 		Args:      tpl.Args,
-		EventTags: tags,
+		Stdin:     tags,
 		Action:    "start",
 		Creator:   tpl.UpdateBy,
 		Hosts:     []string{host},
