@@ -1,7 +1,7 @@
 package sender
 
 import (
-	"fmt"
+	"encoding/json"
 	"strconv"
 	"strings"
 	"time"
@@ -116,8 +116,29 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 		return
 	}
 
+	tagsMap := make(map[string]string)
+	for i := 0; i < len(event.TagsJSON); i++ {
+		pair := strings.TrimSpace(event.TagsJSON[i])
+		if pair == "" {
+			continue
+		}
+
+		arr := strings.Split(pair, "=")
+		if len(arr) != 2 {
+			continue
+		}
+
+		tagsMap[arr[0]] = arr[1]
+	}
 	// 附加告警级别  告警触发值标签
-	tags := fmt.Sprintf("%s,,alert_severity=%d,,alert_trigger_value=%s", event.Tags, event.Severity, event.TriggerValue)
+	tagsMap["alert_severity"] = strconv.Itoa(event.Severity)
+	tagsMap["alert_trigger_value"] = event.TriggerValue
+
+	tags, err := json.Marshal(tagsMap)
+	if err != nil {
+		logger.Errorf("event_callback_ibex: failed to marshal tags to json: %v", tagsMap)
+		return
+	}
 
 	// call ibex
 	in := TaskForm{
@@ -129,7 +150,7 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 		Pause:     tpl.Pause,
 		Script:    tpl.Script,
 		Args:      tpl.Args,
-		Stdin:     tags,
+		Stdin:     string(tags),
 		Action:    "start",
 		Creator:   tpl.UpdateBy,
 		Hosts:     []string{host},
