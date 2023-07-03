@@ -28,7 +28,7 @@ type Dispatch struct {
 
 	alerting aconf.Alerting
 
-	senders          map[string]sender.Sender
+	Senders          map[string]sender.Sender
 	tpls             map[string]*template.Template
 	ExtraSenders     map[string]sender.Sender
 	BeforeSenderHook func(*models.AlertCurEvent) bool
@@ -52,7 +52,7 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 
 		alerting: alerting,
 
-		senders:          make(map[string]sender.Sender),
+		Senders:          make(map[string]sender.Sender),
 		tpls:             make(map[string]*template.Template),
 		ExtraSenders:     make(map[string]sender.Sender),
 		BeforeSenderHook: func(*models.AlertCurEvent) bool { return true },
@@ -102,7 +102,7 @@ func (e *Dispatch) relaodTpls() error {
 
 	e.RwLock.Lock()
 	e.tpls = tmpTpls
-	e.senders = senders
+	e.Senders = senders
 	e.RwLock.Unlock()
 	return nil
 }
@@ -143,7 +143,7 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	}
 
 	// 处理事件发送,这里用一个goroutine处理一个event的所有发送事件
-	go e.Send(rule, event, notifyTarget, isSubscribe)
+	go e.Send(rule, event, notifyTarget)
 
 	// 如果是不是订阅规则出现的event, 则需要处理订阅规则的event
 	if !isSubscribe {
@@ -181,16 +181,18 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 	}
 	sub.ModifyEvent(&event)
 	LogEvent(&event, "subscribe")
+
+	event.IsSubscribe = true
 	e.HandleEventNotify(&event, true)
 }
 
-func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, notifyTarget *NotifyTarget, isSubscribe bool) {
+func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, notifyTarget *NotifyTarget) {
 	needSend := e.BeforeSenderHook(event)
 	if needSend {
 		for channel, uids := range notifyTarget.ToChannelUserMap() {
-			ctx := sender.BuildMessageContext(rule, event, uids, e.userCache)
+			ctx := sender.BuildMessageContext(rule, []*models.AlertCurEvent{event}, uids, e.userCache)
 			e.RwLock.RLock()
-			s := e.senders[channel]
+			s := e.Senders[channel]
 			e.RwLock.RUnlock()
 			if s == nil {
 				logger.Debugf("no sender for channel: %s", channel)
