@@ -19,3 +19,8 @@ url_label_value = "{{.Host}}"
 ```
 
 效果图：![actuator](./actuator.jpeg)
+
+
+2.0 效果图:
+
+![actuator2.0](./actuator_2.0.png)

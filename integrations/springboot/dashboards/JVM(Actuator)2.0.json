@@ -1,0 +1,1517 @@
+{
+  "name": "JVM(Actuator)",
+  "tags": "",
+  "ident": "",
+  "configs": {
+    "version": "3.0.0",
+    "links": [],
+    "var": [
+      {
+        "name": "application",
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus",
+          "value": 1
+        },
+        "definition": "label_values(jvm_memory_used_bytes, application)",
+        "reg": "",
+        "multi": false
+      },
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus",
+          "value": 1
+        },
+        "definition": "label_values(jvm_memory_used_bytes{application=\"$application\", }, instance)",
+        "reg": "",
+        "multi": false
+      }
+    ],
+    "panels": [
+      {
+        "type": "stat",
+        "id": "c325f6ba-bca2-42f1-a518-1d3077b54a54",
+        "layout": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0,
+          "i": "c325f6ba-bca2-42f1-a518-1d3077b54a54",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "process_start_time_seconds{instance=\"$instance\"}*1000",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "启动时间",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {
+            "util": "datetimeMilliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "95bc69c0-0b29-4dc5-8404-c0ca0741918f",
+        "layout": {
+          "h": 3,
+          "w": 6,
+          "x": 6,
+          "y": 0,
+          "i": "95bc69c0-0b29-4dc5-8404-c0ca0741918f",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "process_uptime_seconds{instance=\"$instance\"}",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "运行时间",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {
+            "util": "humantimeSeconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "03627849-92c0-4a5c-9558-738dc6bd6186",
+        "layout": {
+          "h": 3,
+          "w": 6,
+          "x": 12,
+          "y": 0,
+          "i": "03627849-92c0-4a5c-9558-738dc6bd6186",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(jvm_memory_used_bytes{instance=\"$instance\", area=\"heap\"})*100/sum(jvm_memory_max_bytes{instance=\"$instance\", area=\"heap\"})",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "堆栈内存使用率",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {
+            "util": "percent"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "4e85e1c3-9623-4e1c-bbb2-a4824455c5b3",
+        "layout": {
+          "h": 3,
+          "w": 6,
+          "x": 18,
+          "y": 0,
+          "i": "4e85e1c3-9623-4e1c-bbb2-a4824455c5b3",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(jvm_memory_used_bytes{instance=\"$instance\", area=\"nonheap\"})*100/sum(jvm_memory_max_bytes{instance=\"$instance\", area=\"nonheap\"})",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "非堆栈内存使用率",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {
+            "util": "percent"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "7caea97e-1cfb-45c6-892f-fe89377bd8fa",
+        "layout": {
+          "h": 8,
+          "w": 4,
+          "x": 0,
+          "y": 3,
+          "i": "7caea97e-1cfb-45c6-892f-fe89377bd8fa",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(jvm_gc_pause_seconds_sum{instance=\"$instance\",action=~\"end of major GC\"}[1m])/rate(jvm_gc_pause_seconds_count{instance=\"$instance\",action=~\"end of major GC\"}[1m])",
+            "legend": "老年代GCavg {{action}} ({{cause}}) "
+          },
+          {
+            "refId": "B",
+            "expr": "jvm_gc_pause_seconds_max{instance=\"$instance\",action=~\"end of major GC\"}",
+            "legend": "老年代GC max {{action}} ({{cause}})"
+          },
+          {
+            "expr": "rate(jvm_gc_pause_seconds_sum{instance=\"$instance\",action=~\"end of minor GC\"}[1m])/rate(jvm_gc_pause_seconds_count{instance=\"$instance\",action=~\"end of minor GC\"}[1m])",
+            "refId": "C",
+            "legend": "年轻代GC max {{action}} ({{cause}})"
+          },
+          {
+            "expr": "jvm_gc_pause_seconds_max{instance=\"$instance\",action=~\"end of minor GC\"}",
+            "refId": "D",
+            "legend": "年轻代GC max {{action}} ({{cause}})"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "GC延时",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "adf56723-9689-4202-a7dd-1d9d844a5e66",
+        "layout": {
+          "h": 8,
+          "w": 4,
+          "x": 4,
+          "y": 3,
+          "i": "adf56723-9689-4202-a7dd-1d9d844a5e66",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(jvm_gc_pause_seconds_count{instance=\"$instance\",action=~\"end of major GC\"}[1m])",
+            "legend": "老年代GC {{action}} ({{cause}})"
+          },
+          {
+            "expr": "rate(jvm_gc_pause_seconds_count{instance=\"$instance\",action=~\"end of minor GC\"}[1m])",
+            "refId": "B",
+            "legend": "年轻代GC {{action}} ({{cause}})"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "GC累计",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "00223434-f6e0-4c53-8562-38bcb46948f4",
+        "layout": {
+          "h": 8,
+          "w": 4,
+          "x": 8,
+          "y": 3,
+          "i": "00223434-f6e0-4c53-8562-38bcb46948f4",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(jvm_gc_memory_allocated_bytes_total{instance=\"$instance\"}[1m])",
+            "legend": "allocated"
+          },
+          {
+            "refId": "B",
+            "expr": "rate(jvm_gc_memory_promoted_bytes_total{instance=\"$instance\"}[1m])",
+            "legend": "promoted"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "GC分配/瞬时",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "df058502-188f-4711-b1da-3240a39cb35b",
+        "layout": {
+          "h": 8,
+          "w": 4,
+          "x": 12,
+          "y": 3,
+          "i": "df058502-188f-4711-b1da-3240a39cb35b",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(jvm_memory_used_bytes{instance=\"$instance\",area=~\"heap\"}) by (id)",
+            "legend": "{{id}}  used"
+          },
+          {
+            "refId": "B",
+            "expr": "sum(jvm_memory_committed_bytes{instance=\"$instance\",area=~\"heap\"}) by (id)",
+            "legend": "{{id}}  committed"
+          },
+          {
+            "refId": "C",
+            "expr": "sum(jvm_memory_max_bytes{instance=\"$instance\",area=~\"heap\"}) by (id)",
+            "legend": "{{id}} max"
+          },
+          {
+            "refId": "E",
+            "expr": "process_memory_rss_bytes{instance=\"$instance\"}",
+            "legend": "rss"
+          },
+          {
+            "refId": "F",
+            "expr": "process_memory_pss_bytes{instance=\"$instance\"}",
+            "legend": "pss"
+          },
+          {
+            "refId": "G",
+            "expr": "process_memory_swap_bytes{instance=\"$instance\"}",
+            "legend": "swap"
+          },
+          {
+            "refId": "H",
+            "expr": "process_memory_swappss_bytes{instance=\"$instance\"}",
+            "legend": "swappss"
+          },
+          {
+            "refId": "I",
+            "expr": "process_memory_pss_bytes{instance=\"$instance\"} + process_memory_swap_bytes{instance=\"$instance\"}",
+            "legend": "phys (pss+swap)"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "堆栈内存",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "4849d4c5-3889-4f6e-a271-aef9ef9e2c4a",
+        "layout": {
+          "h": 8,
+          "w": 4,
+          "x": 16,
+          "y": 3,
+          "i": "692ae5a4-118b-4ffc-b58f-6262699a16df",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(jvm_memory_used_bytes{instance=~\"$instance\",area=~\"nonheap\",id=~\"Metaspace\"}[1m])) by (id) ",
+            "legend": "{{id}}  used"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "元空间",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "dd9a63b6-9a33-416f-8dbe-dbbae1ff3fed",
+        "layout": {
+          "h": 8,
+          "w": 4,
+          "x": 20,
+          "y": 3,
+          "i": "dd9a63b6-9a33-416f-8dbe-dbbae1ff3fed",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(jvm_memory_used_bytes{instance=\"$instance\", area=\"nonheap\"}) by (id)",
+            "legend": "{{id}} used"
+          },
+          {
+            "refId": "B",
+            "expr": "sum(jvm_memory_committed_bytes{instance=\"$instance\", area=\"nonheap\"}) by (id)",
+            "legend": "{{id}} committed"
+          },
+          {
+            "refId": "C",
+            "expr": "sum(jvm_memory_max_bytes{instance=\"$instance\", area=\"nonheap\"}) by (id)",
+            "legend": "{{id}} max"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM非堆栈内存",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "1aeab3d4-de80-4795-ae7e-57c9b085a074",
+        "layout": {
+          "h": 7,
+          "w": 4,
+          "x": 0,
+          "y": 11,
+          "i": "1aeab3d4-de80-4795-ae7e-57c9b085a074",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(jvm_memory_used_bytes{instance=\"$instance\", area=\"heap\",id=~\"PS Old Gen\"}) by (id)",
+            "legend": "{{id}} used"
+          },
+          {
+            "refId": "B",
+            "expr": "sum(jvm_memory_committed_bytes{instance=\"$instance\", area=\"heap\",id=~\"PS Old Gen\"}) by (id)",
+            "legend": "{{id}} committed"
+          },
+          {
+            "refId": "C",
+            "expr": "sum(jvm_memory_max_bytes{instance=\"$instance\", area=\"heap\",id=~\"PS Old Gen\"}) by (id)",
+            "legend": "{{id}}  max"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM堆栈内存(老年代)",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "f99ace35-a1c7-416a-97d7-ac4140ee4276",
+        "layout": {
+          "h": 7,
+          "w": 4,
+          "x": 4,
+          "y": 11,
+          "i": "4a4119ef-5e00-4ef8-93f0-163eb6292048",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(jvm_memory_used_bytes{instance=\"$instance\", area=\"heap\",id!~\"PS Old Gen\"}) by (id)",
+            "legend": "{{id}} used"
+          },
+          {
+            "refId": "B",
+            "expr": "sum(jvm_memory_committed_bytes{instance=\"$instance\", area=\"heap\",id!~\"PS Old Gen\"}) by (id)",
+            "legend": "{{id}} committed"
+          },
+          {
+            "refId": "C",
+            "expr": "sum(jvm_memory_max_bytes{instance=\"$instance\", area=\"heap\",id!~\"PS Old Gen\"}) by (id)",
+            "legend": "{{id}}  max"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM堆栈内存(年轻代)",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "c8db3f1c-b857-473b-be1a-4d4d5b1d7618",
+        "layout": {
+          "h": 7,
+          "w": 4,
+          "x": 8,
+          "y": 11,
+          "i": "c8db3f1c-b857-473b-be1a-4d4d5b1d7618",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "process_open_fds{instance=\"$instance\"}",
+            "legend": "open"
+          },
+          {
+            "refId": "B",
+            "expr": "process_max_fds{instance=\"$instance\"}",
+            "legend": "max"
+          },
+          {
+            "refId": "C",
+            "expr": "process_files_open{instance=\"$instance\"} or process_files_open_files{instance=\"$instance\"}",
+            "legend": "open"
+          },
+          {
+            "refId": "D",
+            "expr": "process_files_max{instance=\"$instance\"} or process_files_max_files{instance=\"$instance\"}",
+            "legend": "max"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "文件描述符",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "07d11fe1-7005-420f-bbfc-16f304294ef7",
+        "layout": {
+          "h": 7,
+          "w": 4,
+          "x": 12,
+          "y": 11,
+          "i": "07d11fe1-7005-420f-bbfc-16f304294ef7",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(http_server_requests_seconds_sum{instance=\"$instance\", status!~\"5..\"}[1m]))/sum(rate(http_server_requests_seconds_count{instance=\"$instance\", status!~\"5..\"}[1m]))",
+            "legend": "HTTP - AVG"
+          },
+          {
+            "refId": "B",
+            "expr": "max(http_server_requests_seconds_max{instance=\"$instance\", status!~\"5..\"})",
+            "legend": "HTTP - MAX"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "HTTP延时",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "4d5bedf5-2b3c-425b-a4be-b5e7f36300af",
+        "layout": {
+          "h": 7,
+          "w": 4,
+          "x": 16,
+          "y": 11,
+          "i": "4d5bedf5-2b3c-425b-a4be-b5e7f36300af",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(http_server_requests_seconds_count{instance=\"$instance\"}[1m]))",
+            "legend": "HTTP"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "HTTP每分钟RATE",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "9ac2c14e-9871-4b84-a5cb-976f8dfe6c19",
+        "layout": {
+          "h": 7,
+          "w": 4,
+          "x": 20,
+          "y": 11,
+          "i": "9ac2c14e-9871-4b84-a5cb-976f8dfe6c19",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(jvm_buffer_memory_used_bytes{instance=\"$instance\"}) by (id)",
+            "legend": "{{id}} used"
+          },
+          {
+            "refId": "B",
+            "expr": "sum(jvm_buffer_total_capacity_bytes{instance=\"$instance\"} )by (id)",
+            "legend": "{{id}} capacity"
+          },
+          {
+            "expr": "sum(jvm_buffer_count{instance=\"$instance\", id=\"direct\"} or jvm_buffer_count_buffers{instance=\"$instance\"}) by (id)",
+            "refId": "C",
+            "legend": "{{id}} count"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "直接缓冲区：Direct/Mapped Buffers",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "d1e449d5-31e3-4df9-a69a-c22edab3a44e",
+        "layout": {
+          "h": 8,
+          "w": 4,
+          "x": 0,
+          "y": 18,
+          "i": "d1e449d5-31e3-4df9-a69a-c22edab3a44e",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "jvm_threads_live{instance=\"$instance\"} or jvm_threads_live_threads{instance=\"$instance\"}",
+            "legend": "live"
+          },
+          {
+            "refId": "B",
+            "expr": "jvm_threads_daemon{instance=\"$instance\"} or jvm_threads_daemon_threads{instance=\"$instance\"}",
+            "legend": "daemon"
+          },
+          {
+            "refId": "C",
+            "expr": "jvm_threads_peak{instance=\"$instance\"} or jvm_threads_peak_threads{instance=\"$instance\"}",
+            "legend": "peak"
+          },
+          {
+            "refId": "D",
+            "expr": "process_threads{instance=\"$instance\"}",
+            "legend": "process"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "线程数",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "3b8ef3a3-f687-4cf9-8348-da9e60bfa0f5",
+        "layout": {
+          "h": 8,
+          "w": 4,
+          "x": 4,
+          "y": 18,
+          "i": "3b8ef3a3-f687-4cf9-8348-da9e60bfa0f5",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "jvm_threads_states_threads{instance=\"$instance\"}",
+            "legend": "{{state}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "线程状态",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "2e02407c-9beb-460a-bca8-9b4dfd2e3a37",
+        "layout": {
+          "h": 8,
+          "w": 4,
+          "x": 8,
+          "y": 18,
+          "i": "2e02407c-9beb-460a-bca8-9b4dfd2e3a37",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(logback_events_total{instance=\"$instance\"}[1m])",
+            "legend": "{{level}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "日志事件[1m]",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "68f7255b-6637-4967-906d-a6d4c9a61d88",
+        "layout": {
+          "h": 8,
+          "w": 4,
+          "x": 12,
+          "y": 18,
+          "i": "68f7255b-6637-4967-906d-a6d4c9a61d88",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(http_server_requests_seconds_count{instance=\"$instance\", status=~\"5..\"}[1m]))",
+            "legend": "HTTP - 5xx"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "HTTP1分钟内请求错误数",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "8e65b992-ea8b-40b0-b201-23c8e54436a5",
+        "layout": {
+          "h": 8,
+          "w": 4,
+          "x": 16,
+          "y": 18,
+          "i": "8e65b992-ea8b-40b0-b201-23c8e54436a5",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "system_cpu_usage{instance=\"$instance\"}",
+            "legend": "system"
+          },
+          {
+            "refId": "B",
+            "expr": "process_cpu_usage{instance=\"$instance\"}",
+            "legend": "process"
+          },
+          {
+            "refId": "C",
+            "expr": "avg_over_time(process_cpu_usage{instance=\"$instance\"}[1h])",
+            "legend": "process-1h"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "CPU",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "903e6501-6f64-4860-a12a-4e07a7424ef8",
+        "layout": {
+          "h": 8,
+          "w": 4,
+          "x": 20,
+          "y": 18,
+          "i": "903e6501-6f64-4860-a12a-4e07a7424ef8",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 1,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "jvm_classes_loaded{instance=\"$instance\"} or jvm_classes_loaded_classes{instance=\"$instance\"}",
+            "legend": "loaded"
+          },
+          {
+            "expr": "delta(jvm_classes_loaded{application=\"$application\",instance=\"$instance\"}[5m]) or delta(jvm_classes_loaded_classes{application=\"$application\",instance=\"$instance\"}[5m])",
+            "refId": "B",
+            "legend": "delta"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "类加载/Delta状态",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      }
+    ]
+  }
+}
