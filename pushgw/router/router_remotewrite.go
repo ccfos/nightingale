@@ -103,7 +103,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		}
 
 		rt.EnrichLabels(req.Timeseries[i])
-		rt.debugSample(c.Request.RemoteAddr, req.Timeseries[i])
+		rt.debugSample(c.ClientIP(), req.Timeseries[i])
 
 		if len(ident) > 0 {
 			// use ident as hash key, cause "out of bounds" problem
