@@ -28,7 +28,7 @@ type MmSender struct {
 }
 
 func (ms *MmSender) Send(ctx MessageContext) {
-	if len(ctx.Users) == 0 || ctx.Rule == nil || len(ctx.Events) == 0 {
+	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
 

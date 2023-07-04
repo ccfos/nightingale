@@ -26,7 +26,7 @@ type TelegramSender struct {
 }
 
 func (ts *TelegramSender) Send(ctx MessageContext) {
-	if len(ctx.Users) == 0 || ctx.Rule == nil || len(ctx.Events) == 0 {
+	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
 	tokens := ts.extract(ctx.Users)

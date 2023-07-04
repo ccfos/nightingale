@@ -69,6 +69,16 @@ func (c *AlertSubscribeCacheType) Get(ruleId int64) ([]*models.AlertSubscribe, b
 	return lst, has
 }
 
+func (c *AlertSubscribeCacheType) GetAll() []*models.AlertSubscribe {
+	c.RLock()
+	defer c.RUnlock()
+	var ret []*models.AlertSubscribe
+	for _, v := range c.subs {
+		ret = append(ret, v...)
+	}
+	return ret
+}
+
 func (c *AlertSubscribeCacheType) GetStructs(ruleId int64) []models.AlertSubscribe {
 	c.RLock()
 	defer c.RUnlock()

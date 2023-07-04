@@ -31,7 +31,7 @@ type FeishuSender struct {
 }
 
 func (fs *FeishuSender) Send(ctx MessageContext) {
-	if len(ctx.Users) == 0 || ctx.Rule == nil || len(ctx.Events) == 0 {
+	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
 	urls, ats := fs.extract(ctx.Users)
