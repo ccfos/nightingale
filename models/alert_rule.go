@@ -562,6 +562,14 @@ func (ar *AlertRule) FE2DB() error {
 		ar.Annotations = string(b)
 	}
 
+	if ar.ExtraConfigJSON != nil {
+		b, err := json.Marshal(ar.ExtraConfigJSON)
+		if err != nil {
+			return fmt.Errorf("marshal extra_config err:%v", err)
+		}
+		ar.ExtraConfig = string(b)
+	}
+
 	return nil
 }
 
@@ -588,6 +596,7 @@ func (ar *AlertRule) DB2FE() error {
 	json.Unmarshal([]byte(ar.AlgoParams), &ar.AlgoParamsJson)
 	json.Unmarshal([]byte(ar.RuleConfig), &ar.RuleConfigJson)
 	json.Unmarshal([]byte(ar.Annotations), &ar.AnnotationsJSON)
+	json.Unmarshal([]byte(ar.ExtraConfig), &ar.ExtraConfigJSON)
 
 	err := ar.FillDatasourceIds()
 	return err
