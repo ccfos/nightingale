@@ -295,11 +295,11 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 		return
 	}
 
-	p.HandleFireEventHook(event)
-
 	logger.Debugf("rule_eval:%s event:%+v fire", p.Key(), event)
 	if fired, has := p.fires.Get(event.Hash); has {
 		p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+		event.FirstTriggerTime = fired.FirstTriggerTime
+		p.HandleFireEventHook(event)
 
 		if cachedRule.NotifyRepeatStep == 0 {
 			logger.Debugf("rule_eval:%s event:%+v repeat is zero nothing to do", p.Key(), event)
@@ -313,7 +313,6 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 			if cachedRule.NotifyMaxNumber == 0 {
 				// 最大可以发送次数如果是0，表示不想限制最大发送次数，一直发即可
 				event.NotifyCurNumber = fired.NotifyCurNumber + 1
-				event.FirstTriggerTime = fired.FirstTriggerTime
 				p.pushEventToQueue(event)
 			} else {
 				// 有最大发送次数的限制，就要看已经发了几次了，是否达到了最大发送次数
@@ -322,7 +321,6 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 					return
 				} else {
 					event.NotifyCurNumber = fired.NotifyCurNumber + 1
-					event.FirstTriggerTime = fired.FirstTriggerTime
 					p.pushEventToQueue(event)
 				}
 			}
@@ -330,6 +328,7 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 	} else {
 		event.NotifyCurNumber = 1
 		event.FirstTriggerTime = event.TriggerTime
+		p.HandleFireEventHook(event)
 		p.pushEventToQueue(event)
 	}
 }
