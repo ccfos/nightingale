@@ -4,21 +4,22 @@
 </p>
 
 <p align="center">
-<img alt="GitHub latest release" src="https://img.shields.io/github/v/release/ccfos/nightingale"/>
-<a href="https://n9e.github.io">
+<a href="https://flashcat.cloud/docs/">
   <img alt="Docs" src="https://img.shields.io/badge/docs-get%20started-brightgreen"/></a>
 <a href="https://hub.docker.com/u/flashcatcloud">
   <img alt="Docker pulls" src="https://img.shields.io/docker/pulls/flashcatcloud/nightingale"/></a>
+<a href="https://github.com/ccfos/nightingale/graphs/contributors">
+  <img alt="GitHub contributors" src="https://img.shields.io/github/contributors-anon/ccfos/nightingale"/></a>
 <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/ccfos/nightingale">
 <br/><img alt="GitHub Repo issues" src="https://img.shields.io/github/issues/ccfos/nightingale">
 <img alt="GitHub Repo issues closed" src="https://img.shields.io/github/issues-closed/ccfos/nightingale">
 <img alt="GitHub forks" src="https://img.shields.io/github/forks/ccfos/nightingale">
-<a href="https://github.com/ccfos/nightingale/graphs/contributors">
-  <img alt="GitHub contributors" src="https://img.shields.io/github/contributors-anon/ccfos/nightingale"/></a>
+<img alt="GitHub latest release" src="https://img.shields.io/github/v/release/ccfos/nightingale"/>
+<img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
 <a href="https://n9e-talk.slack.com/">
   <img alt="GitHub contributors" src="https://img.shields.io/badge/join%20slack-%23n9e-brightgreen.svg"/></a>
-<img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
 </p>
+
 <p align="center">
   告警管理专家，一体化的开源可观测平台
 </p>
@@ -57,7 +58,9 @@
 欢迎加入 QQ 交流群，群号：479290895，QQ 群适合群友互助，夜莺研发人员通常不在群里。如果要报 bug 请到[这里](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&projects=&template=bug_report.yml)，提问到[这里](https://answer.flashcat.cloud/)。
 
 ## Stargazers over time
-[![Stargazers over time](https://starchart.cc/ccfos/nightingale.svg)](https://starchart.cc/ccfos/nightingale)
+
+[![Stargazers over time](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale&Date)
+
 
 ## Contributors
 <a href="https://github.com/ccfos/nightingale/graphs/contributors">
