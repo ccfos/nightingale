@@ -175,5 +175,5 @@ func (n *Naming) ActiveServersByEngineName() ([]string, error) {
 	}
 
 	// 30秒内有心跳，就认为是活的
-	return models.AlertingEngineGetsInstances(n.ctx, "engine_name = ? and clock > ?", n.heartbeatConfig.EngineName, time.Now().Unix()-30)
+	return models.AlertingEngineGetsInstances(n.ctx, "engine_cluster = ? and clock > ?", n.heartbeatConfig.EngineName, time.Now().Unix()-30)
 }
