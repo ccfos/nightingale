@@ -1,0 +1,3701 @@
+{
+    "name": "tidb-Overview",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "version": "3.0.0",
+        "links": [
+            {
+                "url": "http://10.100.69.11:2479/dashboard/#/slow_query",
+                "targetBlank": true,
+                "title": "慢sql监控"
+            },
+            {
+                "url": "http://10.100.2.15:3000",
+                "targetBlank": true,
+                "title": "详细指标-DBA"
+            }
+        ],
+        "var": [
+            {
+                "name": "tidb_datasource",
+                "type": "datasource",
+                "hide": true,
+                "definition": "prometheus",
+                "defaultValue": 7
+            },
+            {
+                "name": "k8s_cluster",
+                "type": "query",
+                "hide": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${tidb_datasource}"
+                },
+                "definition": "label_values(pd_cluster_status, k8s_cluster)"
+            },
+            {
+                "name": "tidb_cluster",
+                "type": "query",
+                "hide": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${tidb_datasource}"
+                },
+                "definition": "label_values(pd_cluster_status{k8s_cluster=\"$k8s_cluster\"}, tidb_cluster)",
+                "reg": "",
+                "multi": false
+            },
+            {
+                "name": "pd_instance",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${tidb_datasource}"
+                },
+                "definition": "label_values(pd_cluster_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}, instance)",
+                "reg": "",
+                "multi": false
+            },
+            {
+                "name": "tidb_instance",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${tidb_datasource}"
+                },
+                "definition": "label_values(tidb_server_connections{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}, instance)",
+                "reg": "",
+                "multi": true,
+                "allOption": true
+            },
+            {
+                "name": "tikv_instance",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${tidb_datasource}"
+                },
+                "definition": "label_values(tikv_engine_size_bytes{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}, instance)",
+                "reg": "",
+                "multi": true,
+                "allOption": true
+            }
+        ],
+        "panels": [
+            {
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "id": "535636fd-2f92-484c-9e23-42118801f7c9",
+                "type": "row",
+                "name": "Services Status",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "535636fd-2f92-484c-9e23-42118801f7c9",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "hexbin",
+                "id": "d18288fc-3f6d-4520-b112-ede7948b3c0f",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 1,
+                    "i": "d18288fc-3f6d-4520-b112-ede7948b3c0f",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"tidb\"} == 1)",
+                        "legend": "TiDB"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"pd\"} == 1)",
+                        "legend": "PD"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"tikv\"} == 1)",
+                        "legend": "TiKV"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"tiflash\"} == 1)",
+                        "legend": "TiFlash"
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"pump\"} == 1)",
+                        "legend": "Pump"
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"drainer\"} == 1)",
+                        "legend": "Drainer"
+                    },
+                    {
+                        "refId": "G",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"kafka\"} == 1)",
+                        "legend": "Kafka"
+                    },
+                    {
+                        "refId": "H",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"zookeeper\"} == 1)",
+                        "legend": "Zookeeper"
+                    },
+                    {
+                        "refId": "I",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"node_exporter\"} == 1)",
+                        "legend": "Node_exporter"
+                    },
+                    {
+                        "refId": "J",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"blackbox_exporter\"} == 1)",
+                        "legend": "Blackbox_exporter"
+                    },
+                    {
+                        "refId": "K",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"grafana\"} == 1)",
+                        "legend": "Grafana"
+                    },
+                    {
+                        "refId": "L",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", job=\"blackbox_exporter_http\"} == 1)",
+                        "legend": "Pushgateway"
+                    },
+                    {
+                        "refId": "M",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"kafka_exporter\"} == 1)",
+                        "legend": "Kafka_exporter"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Service Up",
+                "links": [],
+                "custom": {
+                    "textMode": "valueAndName",
+                    "calc": "lastNotNull",
+                    "colorRange": [
+                        "#83c898",
+                        "#c2c2c2",
+                        "#fc653f"
+                    ],
+                    "reverseColorOrder": false,
+                    "colorDomainAuto": false,
+                    "colorDomain": [
+                        1,
+                        99999999999
+                    ]
+                },
+                "options": {
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "hexbin",
+                "id": "955bd169-0b3c-4476-939e-89302e74097a",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 1,
+                    "i": "955bd169-0b3c-4476-939e-89302e74097a",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"tidb\"} == 0)",
+                        "legend": "TiDB"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"pd\"} == 0)",
+                        "legend": "PD"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"tikv\"} == 0)",
+                        "legend": "TiKV"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"tiflash\"} == 0)",
+                        "legend": "TiFlash"
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"pump\"} == 0)",
+                        "legend": "Pump"
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"drainer\"} == 0)",
+                        "legend": "Drainer"
+                    },
+                    {
+                        "refId": "G",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"kafka\"} == 0)",
+                        "legend": "Kafka"
+                    },
+                    {
+                        "refId": "H",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"zookeeper\"} == 0)",
+                        "legend": "Zookeeper"
+                    },
+                    {
+                        "refId": "I",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"node_exporter\"} == 0)",
+                        "legend": "Node_exporter"
+                    },
+                    {
+                        "refId": "J",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"blackbox_exporter\"} == 0)",
+                        "legend": "Blackbox_exporter"
+                    },
+                    {
+                        "refId": "K",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"grafana\"} == 0)",
+                        "legend": "Grafana"
+                    },
+                    {
+                        "refId": "L",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", job=\"blackbox_exporter_http\"} == 0)",
+                        "legend": "Pushgateway"
+                    },
+                    {
+                        "refId": "M",
+                        "expr": "\ncount(probe_success{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", group=\"kafka_exporter\"} == 0)",
+                        "legend": "Kafka_exporter"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Service Down",
+                "links": [],
+                "custom": {
+                    "textMode": "valueAndName",
+                    "calc": "lastNotNull",
+                    "colorRange": [
+                        "#ffeda0",
+                        "#fc4e2a",
+                        "#800026"
+                    ],
+                    "reverseColorOrder": false,
+                    "colorDomainAuto": false,
+                    "colorDomain": [
+                        1,
+                        20
+                    ]
+                },
+                "options": {
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "057219ac-0441-4e0e-b65a-a358f72fcf51",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 7,
+                    "i": "057219ac-0441-4e0e-b65a-a358f72fcf51",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "(time() - process_start_time_seconds{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\",job=~\".*pd.*\"})",
+                        "legend": "{{job}}-{{instance}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "(time() - process_start_time_seconds{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", job=\"tidb\"})",
+                        "legend": "{{job}}-{{instance}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "(time() - process_start_time_seconds{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", job=~\".*tikv\"})",
+                        "legend": "{{job}}-{{instance}}"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "tiflash_system_asynchronous_metric_Uptime{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}",
+                        "legend": "tiflash-{{instance}}"
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "(time() - process_start_time_seconds{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", job=\"ticdc\"})",
+                        "legend": "{{job}}-{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Uptime",
+                "links": [],
+                "description": "uptime since last restart",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "humantimeSeconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "hexbin",
+                "id": "e4af8eb3-f52d-434e-a6cc-83359b36d5a2",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 7,
+                    "i": "e4af8eb3-f52d-434e-a6cc-83359b36d5a2",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "B",
+                        "expr": "sum(pd_cluster_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\", type=\"store_disconnected_count\"})",
+                        "legend": "Disconnect Stores"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "sum(pd_cluster_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\", type=\"store_unhealth_count\"})",
+                        "legend": "Unhealth Stores"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "sum(pd_cluster_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\", type=\"store_low_space_count\"})",
+                        "legend": "LowSpace Stores"
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "sum(pd_cluster_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\", type=\"store_down_count\"})",
+                        "legend": "Down Stores"
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "sum(pd_cluster_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\", type=\"store_offline_count\"})",
+                        "legend": "Offline Stores"
+                    },
+                    {
+                        "refId": "G",
+                        "expr": "sum(pd_cluster_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\", type=\"store_tombstone_count\"})",
+                        "legend": "Tombstone Stores"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Abnormal stores",
+                "links": [],
+                "custom": {
+                    "textMode": "valueAndName",
+                    "calc": "lastNotNull",
+                    "colorRange": [
+                        "#83c898",
+                        "#c2c2c2",
+                        "#fc653f"
+                    ],
+                    "reverseColorOrder": false,
+                    "colorDomainAuto": false,
+                    "colorDomain": [
+                        -1,
+                        1
+                    ]
+                },
+                "options": {
+                    "standardOptions": {}
+                }
+            },
+            {
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "id": "3ed49e8a-c1f5-4e5a-ac01-c8ae1c734cc7",
+                "type": "row",
+                "name": "PD",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 73,
+                    "i": "3ed49e8a-c1f5-4e5a-ac01-c8ae1c734cc7",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "stat",
+                "id": "0e14ace8-401d-4215-bf15-09a7abf00414",
+                "layout": {
+                    "h": 7,
+                    "w": 5,
+                    "x": 0,
+                    "y": 74,
+                    "i": "0e14ace8-401d-4215-bf15-09a7abf00414",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "expr": "pd_tso_role{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\", dc=\"global\"}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "PD role",
+                "links": [],
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "#3fc453",
+                                "text": "Leader"
+                            },
+                            "match": {
+                                "special": 1
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "#ce4f52",
+                                "text": "Follower"
+                            },
+                            "match": {
+                                "special": 0
+                            }
+                        }
+                    ],
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "ef1dc81d-83c2-49f9-b44c-d97fdb320753",
+                "layout": {
+                    "h": 7,
+                    "w": 5,
+                    "x": 5,
+                    "y": 74,
+                    "i": "ef1dc81d-83c2-49f9-b44c-d97fdb320753",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "pd_cluster_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\",type=\"storage_capacity\"}",
+                        "legend": ""
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Storage capacity",
+                "links": [],
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "#3fc453"
+                            },
+                            "match": {
+                                "from": 0,
+                                "to": 1000000000000000000
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "d8955955-37ac-485e-935c-cac66800f436",
+                "layout": {
+                    "h": 7,
+                    "w": 5,
+                    "x": 10,
+                    "y": 74,
+                    "i": "d8955955-37ac-485e-935c-cac66800f436",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "pd_cluster_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\",type=\"storage_size\"}",
+                        "legend": ""
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Current storage size",
+                "links": [],
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "#3fc453"
+                            },
+                            "match": {
+                                "from": 0,
+                                "to": 1000000000000000000
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "a76f3318-30f7-4c17-949c-91ef452b9d82",
+                "layout": {
+                    "h": 7,
+                    "w": 5,
+                    "x": 15,
+                    "y": 74,
+                    "i": "a76f3318-30f7-4c17-949c-91ef452b9d82",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(pd_cluster_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\",type=\"storage_size\"}) / sum(pd_cluster_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\",type=\"storage_capacity\"})",
+                        "legend": ""
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Current storage used",
+                "links": [],
+                "description": "The current storage size and used ratio of the cluster",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "#3fc453"
+                            },
+                            "match": {
+                                "from": 0,
+                                "to": 0.7
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "#ce4f52"
+                            },
+                            "match": {
+                                "from": 0.7,
+                                "to": 1
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "f893916f-dc2f-4e91-a20d-43fc4bf92304",
+                "layout": {
+                    "h": 7,
+                    "w": 4,
+                    "x": 20,
+                    "y": 74,
+                    "i": "f893916f-dc2f-4e91-a20d-43fc4bf92304",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(pd_cluster_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\", type=\"store_up_count\"})",
+                        "legend": ""
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Normal stores",
+                "links": [],
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "#ce4f52"
+                            },
+                            "match": {
+                                "special": 0
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "#3fc453",
+                                "text": ""
+                            },
+                            "match": {
+                                "from": 1,
+                                "to": 9999
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "9181ea69-d2d6-48bd-b137-3dbb7365d1fa",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 81,
+                    "i": "9181ea69-d2d6-48bd-b137-3dbb7365d1fa",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "pd_regions_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\"}",
+                        "legend": "{{type}}",
+                        "step": null
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Region health",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "a7c270f9-fddf-4bce-8a77-ab64dc02f4c6",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 81,
+                    "i": "a7c270f9-fddf-4bce-8a77-ab64dc02f4c6",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "expr": "pd_scheduler_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", type=\"allow\",instance=\"$pd_instance\"}",
+                        "refId": "A",
+                        "legend": "{{kind}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Scheduler is running",
+                "links": [],
+                "description": "The current running schedulers",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "bars",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 1,
+                    "gradientMode": "none",
+                    "stack": "noraml",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "94a89a96-4016-450e-8d34-921e6d222e57",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 87,
+                    "i": "94a89a96-4016-450e-8d34-921e6d222e57",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "pd_scheduler_store_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\",  type=\"leader_count\"}",
+                        "legend": "{{address}}-store-{{store}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Store leader count",
+                "links": [],
+                "description": "The leader count of each TiKV instance",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "45d762bf-1c78-4462-a021-787cc2ef43a1",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 87,
+                    "i": "45d762bf-1c78-4462-a021-787cc2ef43a1",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "pd_scheduler_store_status{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\",  type=\"region_count\"}",
+                        "legend": "{{address}}-store-{{store}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Store Region count",
+                "links": [],
+                "description": "The Region count of each TiKV instance \t",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "be24f158-2662-4640-a699-ca02820448a2",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 93,
+                    "i": "be24f158-2662-4640-a699-ca02820448a2",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "histogram_quantile(0.99, sum(rate(grpc_server_handling_seconds_bucket{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=\"$pd_instance\"}[5m])) by (grpc_method, le))*1000",
+                        "legend": "{{grpc_method}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "99% Completed commands duration",
+                "links": [],
+                "description": "The time consumed of completing each kind of gRPC commands in .99",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "e64e2809-e92c-4765-947e-862cda4e4f03",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 93,
+                    "i": "e64e2809-e92c-4765-947e-862cda4e4f03",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "histogram_quantile(0.90, sum(rate(pd_server_handle_tso_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[30s])) by (type, le))*1000",
+                        "legend": "90% tso"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "histogram_quantile(0.99, sum(rate(pd_server_handle_tso_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[30s])) by (type, le))*1000",
+                        "legend": "99% tso"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "histogram_quantile(0.999, sum(rate(pd_server_handle_tso_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[30s])) by (type, le))*1000",
+                        "legend": "99.9% tso"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "histogram_quantile(0.99999, sum(rate(pd_server_handle_tso_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[30s])) by (type, le))*1000",
+                        "legend": "99.999% tso"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "PD server TSO handle time",
+                "links": [],
+                "description": "The time consumed of handling TiDB requests",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "9f2e927e-f293-46da-8688-1475343cbd1b",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 99,
+                    "i": "9f2e927e-f293-46da-8688-1475343cbd1b",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(process_cpu_seconds_total{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\",job=~\".*pd.*\"}[30s])*100",
+                        "legend": "{{job}}-{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU Usage（%）",
+                "links": [],
+                "description": "PD cpu usage calculated with process cpu running seconds",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "bae011b2-b545-4314-8083-9436716cd281",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 99,
+                    "i": "bae011b2-b545-4314-8083-9436716cd281",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "process_resident_memory_bytes{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\",job=~\".*pd.*\"}",
+                        "legend": "process-{{job}}-{{instance}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "go_memstats_heap_inuse_bytes{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\",job=~\".*pd.*\"}",
+                        "legend": "HeapInuse-{{job}}-{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Memory Usage",
+                "links": [],
+                "description": "PD  memory usage. ",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "id": "2f1959a6-654c-48bd-9f78-38865ec7b406",
+                "type": "row",
+                "name": "TiDB",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 202,
+                    "i": "2f1959a6-654c-48bd-9f78-38865ec7b406",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "bc04bd9e-39ed-4969-a969-d2a5d0c731ac",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 203,
+                    "i": "bc04bd9e-39ed-4969-a969-d2a5d0c731ac",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(rate(tidb_executor_statement_total{k8s_cluster=\"$k8s_cluster\",instance=~\"$tidb_instance\",tidb_cluster=\"$tidb_cluster\"}[1m])) by (type)",
+                        "legend": "{{type}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "sum(rate(tidb_executor_statement_total{k8s_cluster=\"$k8s_cluster\",instance=~\"$tidb_instance\",tidb_cluster=\"$tidb_cluster\"}[1m]))",
+                        "legend": "Total"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "sum(rate(tidb_server_execute_error_total{k8s_cluster=\"$k8s_cluster\",instance=~\"$tidb_instance\",tidb_cluster=\"$tidb_cluster\"}[1m])) ",
+                        "legend": "Failed"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "QPS",
+                "links": [],
+                "description": "TiDB statement statistics.\nBold red line on right Y axis for Failed Queries per second",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "82ef5626-87ac-4577-b888-cc51b038e91f",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 203,
+                    "i": "82ef5626-87ac-4577-b888-cc51b038e91f",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "histogram_quantile(0.9999, sum(rate(tidb_server_handle_query_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\",instance=~\"$tidb_instance\", tidb_cluster=\"$tidb_cluster\"}[1m])) by (le))*1000",
+                        "legend": "9999"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "histogram_quantile(0.999, sum(rate(tidb_server_handle_query_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\",instance=~\"$tidb_instance\", tidb_cluster=\"$tidb_cluster\"}[1m])) by (le))*1000",
+                        "legend": "999"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "histogram_quantile(0.99, sum(rate(tidb_server_handle_query_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\",instance=~\"$tidb_instance\", tidb_cluster=\"$tidb_cluster\"}[1m])) by (le))*1000",
+                        "legend": "99"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "histogram_quantile(0.95, sum(rate(tidb_server_handle_query_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\",instance=~\"$tidb_instance\", tidb_cluster=\"$tidb_cluster\"}[1m])) by (le))*1000",
+                        "legend": "95"
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "histogram_quantile(0.80, sum(rate(tidb_server_handle_query_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\",instance=~\"$tidb_instance\", tidb_cluster=\"$tidb_cluster\"}[1m])) by (le))*1000",
+                        "legend": "80"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Duration",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "cf1426f5-85b1-413b-b2d6-a24a693f5609",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 210,
+                    "i": "cf1426f5-85b1-413b-b2d6-a24a693f5609",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(rate(tidb_server_handle_query_duration_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tidb_instance\", sql_type!=\"internal\"}[1m]))",
+                        "legend": "database time"
+                    },
+                    {
+                        "refId": "G",
+                        "expr": "sum(rate(tidb_server_handle_query_duration_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tidb_instance\", sql_type!=\"internal\"}[1m])) by (sql_type)",
+                        "legend": "{{sql_type}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Database Time by SQL Type",
+                "links": [],
+                "description": "Service Time Per Second, show service time distribution among different SQL types:\n1. Database time, the total time that the TiDB cluster is processing application requests.\n2. The service time of different SQL types.\n",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "e4b40e12-1cf9-449a-86c6-a9433c1e4dae",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 210,
+                    "i": "e4b40e12-1cf9-449a-86c6-a9433c1e4dae",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(rate(tidb_server_handle_query_duration_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tidb_instance\", sql_type!=\"internal\"}[1m]))",
+                        "legend": "database time"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "sum(rate(tidb_session_parse_duration_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tidb_instance\", sql_type=\"general\"}[1m]))",
+                        "legend": "parse"
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "sum(rate(tidb_session_compile_duration_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tidb_instance\", sql_type=\"general\"}[1m]))",
+                        "legend": "compile"
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "sum(rate(tidb_session_execute_duration_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tidb_instance\", sql_type=\"general\"}[1m]))",
+                        "legend": "execute"
+                    },
+                    {
+                        "refId": "G",
+                        "expr": "sum(rate(tidb_server_get_token_duration_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tidb_instance\"}[1m]))/1000000",
+                        "legend": "get token"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Database Time by SQL Phase",
+                "links": [],
+                "description": "Service Time Per Second, show service time distribution among different SQL phases.\n1. Database time, the total time that the TiDB cluster is processing application requests.\n2. The service time of different SQL phases.\n",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "e64105a4-56b7-4b74-948e-c2bc8cffdebd",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 210,
+                    "i": "e64105a4-56b7-4b74-948e-c2bc8cffdebd",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "B",
+                        "expr": "sum(rate(tidb_tikvclient_request_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tidb_instance\", store!=\"0\"}[1m])) by (type)",
+                        "legend": "{{type}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "sum(rate(pd_client_cmd_handle_cmds_duration_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tidb_instance\", type=\"wait\"}[1m]))",
+                        "legend": "tso_wait"
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "sum(rate(tidb_session_execute_duration_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tidb_instance\", sql_type=\"general\"}[1m]))",
+                        "legend": "execute time"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "SQL Execute Time Overview",
+                "links": [],
+                "description": "Service Time Per Second, show service time distribution among different KV/PD request:\n1. Execute time, the execute time in SQL Phase\n2. Service time  of different KV/PD request ",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "648f51db-4891-42ca-a6aa-ee2cf9976b62",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 217,
+                    "i": "648f51db-4891-42ca-a6aa-ee2cf9976b62",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "tidb_server_connections{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\"}",
+                        "legend": "{{instance}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "sum(tidb_server_connections{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\"})",
+                        "legend": "total"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "sum(rate(tidb_server_handle_query_duration_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\", sql_type!=\"internal\"}[1m]))",
+                        "legend": "active connections"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Connection Count",
+                "links": [],
+                "description": "TiDB current connection counts",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "2d1a443c-afbf-4197-b2a8-3b99d8087590",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 217,
+                    "i": "2d1a443c-afbf-4197-b2a8-3b99d8087590",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "histogram_quantile(0.90, sum(rate(tidb_server_slow_query_process_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=~\"$tidb_instance\"}[1m])) by (le,sql_type))",
+                        "legend": "all_proc_{{sql_type}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "histogram_quantile(0.90, sum(rate(tidb_server_slow_query_cop_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=~\"$tidb_instance\"}[1m])) by (le,sql_type))",
+                        "legend": "all_cop_proc_{{sql_type}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "histogram_quantile(0.90, sum(rate(tidb_server_slow_query_wait_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=~\"$tidb_instance\"}[1m])) by (le,sql_type))",
+                        "legend": "all_cop_wait_{{sql_type}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Slow query",
+                "links": [],
+                "description": "TiDB slow query statistics with slow query durations and coprocessor waiting/executing durations",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "4df8dfb9-5151-4cc8-8560-30fb259dcb75",
+                "layout": {
+                    "h": 6,
+                    "w": 24,
+                    "x": 0,
+                    "y": 224,
+                    "i": "4df8dfb9-5151-4cc8-8560-30fb259dcb75",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(increase(tidb_server_execute_error_total{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=~\"$tidb_instance\"}[1m])) by (type, instance)",
+                        "legend": " {{type}}-{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Failed Query OPM",
+                "links": [],
+                "description": "TiDB failed query statistics by query type",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "5bfbc205-53f1-4d1d-9bac-8d685bd7b9a2",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 230,
+                    "i": "5bfbc205-53f1-4d1d-9bac-8d685bd7b9a2",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(process_cpu_seconds_total{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=~\"$tidb_instance\", job=\"tidb\"}[30s])*100",
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU Usage（%）",
+                "links": [],
+                "description": "TiDB cpu usage calculated with process cpu running seconds",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": ""
+                            },
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "a4725eba-e15d-4dee-92ac-71dc2d8dba3a",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 230,
+                    "i": "a4725eba-e15d-4dee-92ac-71dc2d8dba3a",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "process_resident_memory_bytes{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\",instance=~\"$tidb_instance\", job=\"tidb\"}",
+                        "legend": "process-{{instance}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "go_memstats_heap_inuse_bytes{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\",instance=~\"$tidb_instance\", job=\"tidb\"}",
+                        "legend": "HeapInuse-{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Memory Usage",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "id": "d661c0cc-f4f1-45b9-8fd7-69a863d57225",
+                "type": "row",
+                "name": "TiKV",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 271,
+                    "i": "d661c0cc-f4f1-45b9-8fd7-69a863d57225",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "babad1cd-29ac-4fe7-8b7b-55ac7ebc2963",
+                "layout": {
+                    "h": 8,
+                    "w": 8,
+                    "x": 0,
+                    "y": 272,
+                    "i": "babad1cd-29ac-4fe7-8b7b-55ac7ebc2963",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "C",
+                        "expr": "sum(rate(tidb_tikvclient_request_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\", store!=\"0\"}[1m])) by (type)/ sum(rate(tidb_tikvclient_request_seconds_count{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\", store!=\"0\"}[1m])) by (type)*1000",
+                        "legend": "{{type}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Avg TiDB KV Request Duration",
+                "links": [],
+                "description": "tidb avg kv request duration",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "bd36343a-d3a7-4e46-be96-5e3976741206",
+                "layout": {
+                    "h": 8,
+                    "w": 8,
+                    "x": 8,
+                    "y": 272,
+                    "i": "bd36343a-d3a7-4e46-be96-5e3976741206",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "C",
+                        "expr": "sum(rate(tikv_grpc_msg_duration_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tikv_instance\", store!=\"0\"}[1m])) by (type)/ sum(rate(tikv_grpc_msg_duration_seconds_count{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tikv_instance\", store!=\"0\"}[1m])) by (type)*1000",
+                        "legend": "{{type}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Avg TiKV GRPC Duration",
+                "links": [],
+                "description": "tikv grpc avg duration",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "85d4b493-8bd9-472a-8281-23085cde1f88",
+                "layout": {
+                    "h": 8,
+                    "w": 8,
+                    "x": 16,
+                    "y": 272,
+                    "i": "85d4b493-8bd9-472a-8281-23085cde1f88",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "C",
+                        "expr": "sum(rate(tikv_storage_engine_async_request_duration_seconds_sum{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tikv_instance\", type=\"write\"}[1m])) / sum(rate(tikv_storage_engine_async_request_duration_seconds_count{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tikv_instance\", type=\"write\"}[1m]))*1000",
+                        "legend": "avg"
+                    },
+                    {
+                        "refId": "A",
+                        "expr": "histogram_quantile(0.99, sum(rate(tikv_storage_engine_async_request_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tikv_instance\", type=\"write\"}[1m])) by (le))*1000",
+                        "legend": "99"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "histogram_quantile(0.999, sum(rate(tikv_storage_engine_async_request_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\",tidb_cluster=\"$tidb_cluster\",instance=~\"$tikv_instance\", type=\"write\"}[1m])) by (le))*1000",
+                        "legend": "999"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Storage Async Write Duration",
+                "links": [],
+                "description": "The time consumed by processing asynchronous write requests.\nStorage async write duration = store duration + apply duration",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "03b56519-9926-4aa7-bff5-e1c7c8a576be",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 280,
+                    "i": "03b56519-9926-4aa7-bff5-e1c7c8a576be",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(rate(tikv_thread_cpu_seconds_total{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=~\"$tikv_instance\", name=~\"raftstore_.*\"}[1m])) by (instance)*100",
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Raft store CPU（%）",
+                "links": [],
+                "description": "The CPU utilization of raftstore thread",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "189a88d9-5aac-4855-a427-45adc353a5fa",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 280,
+                    "i": "189a88d9-5aac-4855-a427-45adc353a5fa",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(rate(tikv_thread_cpu_seconds_total{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", instance=~\"$tikv_instance\", name=~\"unified_read_po*\"}[1m])) by (instance)*100",
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Unified read pool CPU（%）",
+                "links": [],
+                "description": "The CPU utilization of the unified read pool",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "6149705b-aa38-49a7-83b4-430e0ae4e193",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 287,
+                    "i": "6149705b-aa38-49a7-83b4-430e0ae4e193",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(rate(tikv_thread_cpu_seconds_total{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\",instance=~\"$tikv_instance\", job=\"tikv\"}[1m])) by (instance)*100",
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU（%）",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "80304baf-0534-4799-b093-571ec11c7e5a",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 287,
+                    "i": "80304baf-0534-4799-b093-571ec11c7e5a",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "avg(process_resident_memory_bytes{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\",instance=~\"$tikv_instance\", job=\"tikv\"}) by (instance)",
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Memory",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "id": "74a0ec87-31c6-4f6c-a0b3-912583f276b0",
+                "type": "row",
+                "name": "TiFlash",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 318,
+                    "i": "74a0ec87-31c6-4f6c-a0b3-912583f276b0",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "208123c5-6b6f-4b89-9c9e-53439840649f",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 319,
+                    "i": "208123c5-6b6f-4b89-9c9e-53439840649f",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(rate(tiflash_coprocessor_request_count{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[1m])) by (type)",
+                        "legend": "{{type}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Request QPS",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "be97f8e3-f2f8-4c6e-bb22-aa06d9364f47",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 319,
+                    "i": "be97f8e3-f2f8-4c6e-bb22-aa06d9364f47",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(rate(tiflash_coprocessor_executor_count{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[1m])) by (type)",
+                        "legend": "{{type}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Executor QPS",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "9b1a9996-01f9-45f8-9c33-5eabb4470ddf",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 326,
+                    "i": "9b1a9996-01f9-45f8-9c33-5eabb4470ddf",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "histogram_quantile(0.999, sum(rate(tiflash_coprocessor_request_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[1m])) by (le))",
+                        "legend": "999"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "histogram_quantile(0.99, sum(rate(tiflash_coprocessor_request_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[1m])) by (le))",
+                        "legend": "99"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "histogram_quantile(0.95, sum(rate(tiflash_coprocessor_request_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[1m])) by (le))",
+                        "legend": "95"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "histogram_quantile(0.80, sum(rate(tiflash_coprocessor_request_duration_seconds_bucket{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[1m])) by (le))",
+                        "legend": "80"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Request Duration",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "ac51b582-b174-40de-8105-674086eca665",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 326,
+                    "i": "ac51b582-b174-40de-8105-674086eca665",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(rate(tiflash_coprocessor_request_error{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[1m])) by (reason)",
+                        "legend": "{{reason}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Error QPS",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "fc9eee95-22d3-4273-8750-4fea4ec7db64",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 333,
+                    "i": "fc9eee95-22d3-4273-8750-4fea4ec7db64",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(tiflash_proxy_process_cpu_seconds_total{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", job=\"tiflash\"}[1m])*100",
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU Usage（%）",
+                "links": [],
+                "description": "TiFlash CPU usage calculated with process CPU running seconds.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "5f8b7d63-84a9-44ce-82d7-8499a50f1acf",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 333,
+                    "i": "5f8b7d63-84a9-44ce-82d7-8499a50f1acf",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "K",
+                        "expr": "tiflash_proxy_process_resident_memory_bytes{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", job=\"tiflash\"}",
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Memory",
+                "links": [],
+                "description": "The memory usage per TiFlash instance",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "id": "ce791748-16dc-42fc-863e-420676b78a20",
+                "type": "row",
+                "name": "Replication",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 361,
+                    "i": "ce791748-16dc-42fc-863e-420676b78a20",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "6bfc7d33-d7e8-4c23-987d-bd90a18f4486",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 362,
+                    "i": "6bfc7d33-d7e8-4c23-987d-bd90a18f4486",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "binlog_drainer_checkpoint_tso{}",
+                        "legend": "drainer-{{instance}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "max(pd_cluster_tso{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"})",
+                        "legend": "approximate current time (s)"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Drainer Checkpoint TSO",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "datetimeMilliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "35128ec8-f870-42bb-b2b9-ebb50de5a75d",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 362,
+                    "i": "35128ec8-f870-42bb-b2b9-ebb50de5a75d",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "tidb_server_critical_error_total",
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "TiDB Server Skip Binlog Count",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "fb2e0749-6d67-44e6-a8ca-756fba222d7d",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 369,
+                    "i": "fb2e0749-6d67-44e6-a8ca-756fba222d7d",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(pd_cluster_tso{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"})",
+                        "legend": "approximate current time (s)"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "max(ticdc_owner_checkpoint_ts{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}) by (changefeed)",
+                        "legend": "{{changefeed}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "max(ticdc_processor_checkpoint_ts{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}) by (instance, changefeed)",
+                        "legend": "{{instance}}-{{changefeed}}"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "max(ticdc_owner_barrier_ts{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}) by (changefeed)",
+                        "legend": "{{changefeed}}-barrierTs"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CDC Changefeed checkpoint",
+                "links": [],
+                "description": "The checkpoint ts of changefeeds.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "datetimeMilliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "id": "79da928c-64c4-4e1a-86c0-73c7e69bf0a0",
+                "type": "row",
+                "name": "System Info",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 390,
+                    "i": "79da928c-64c4-4e1a-86c0-73c7e69bf0a0",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "hexbin",
+                "id": "b1552049-e2fe-4994-8475-daf6933d092f",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 391,
+                    "i": "b1552049-e2fe-4994-8475-daf6933d092f",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "count(node_cpu_seconds_total{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", mode=\"user\"}) by (instance)",
+                        "legend": "{{ instance }}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Vcores",
+                "links": [],
+                "custom": {
+                    "textMode": "valueAndName",
+                    "calc": "lastNotNull",
+                    "colorRange": [
+                        "#83c898",
+                        "#c2c2c2",
+                        "#fc653f"
+                    ],
+                    "reverseColorOrder": false,
+                    "colorDomainAuto": false,
+                    "colorDomain": [
+                        1,
+                        99999999999
+                    ]
+                },
+                "options": {
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "hexbin",
+                "id": "5b20c6c9-3985-468c-ac2f-f685a5b3cbad",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 391,
+                    "i": "5b20c6c9-3985-468c-ac2f-f685a5b3cbad",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "node_memory_MemTotal_bytes{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}",
+                        "legend": "{{ instance }}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Memory",
+                "links": [],
+                "custom": {
+                    "textMode": "valueAndName",
+                    "calc": "lastNotNull",
+                    "colorRange": [
+                        "#83c898",
+                        "#c2c2c2",
+                        "#fc653f"
+                    ],
+                    "reverseColorOrder": false,
+                    "colorDomainAuto": false,
+                    "colorDomain": [
+                        1,
+                        900000000000000000
+                    ]
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "677c3bf1-d593-445f-8313-b45a99017b8d",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 12,
+                    "y": 391,
+                    "i": "677c3bf1-d593-445f-8313-b45a99017b8d",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "100 - avg by (instance) (irate(node_cpu_seconds_total{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", mode=\"idle\"}[1m]) ) * 100",
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU Usage（%）",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "f7da66ec-80be-4c66-b99b-f0fc38d64e31",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 0,
+                    "y": 396,
+                    "i": "f7da66ec-80be-4c66-b99b-f0fc38d64e31",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "node_load1{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}",
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Load [1m]",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "d61da9f0-0f8d-4012-b419-275de5d61cc1",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 12,
+                    "y": 396,
+                    "i": "d61da9f0-0f8d-4012-b419-275de5d61cc1",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "node_memory_MemAvailable_bytes{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}",
+                        "legend": "{{ instance }}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Memory Available",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "84e5094f-f60f-4fe5-a79f-20ad9f816428",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 0,
+                    "y": 401,
+                    "i": "84e5094f-f60f-4fe5-a79f-20ad9f816428",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(node_network_receive_bytes_total{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", device!=\"lo\"}[5m])",
+                        "legend": "Inbound:  {{instance}}-{{device}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "irate(node_network_transmit_bytes_total{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\", device!=\"lo\"}[5m])",
+                        "legend": "Outbound:  {{instance}}-{{device}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Network Traffic",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "f2625015-e8d4-4a63-8bdb-deb99a76c331",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 12,
+                    "y": 401,
+                    "i": "f2625015-e8d4-4a63-8bdb-deb99a76c331",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "B",
+                        "expr": "irate(node_netstat_Tcp_RetransSegs{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[1m])",
+                        "legend": "{{instance}} - TCPSlowStartRetrans"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "TCP Retrans",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "3a15cdf1-596a-4329-b909-81dc1eda59fb",
+                "layout": {
+                    "h": 7,
+                    "w": 24,
+                    "x": 0,
+                    "y": 406,
+                    "i": "3a15cdf1-596a-4329-b909-81dc1eda59fb",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${tidb_datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(node_disk_io_time_seconds_total{k8s_cluster=\"$k8s_cluster\", tidb_cluster=\"$tidb_cluster\"}[1m])*100",
+                        "legend": "{{instance}} - {{device}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "IO Util（%）",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            }
+        ]
+    }
+}

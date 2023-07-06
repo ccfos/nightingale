@@ -1,0 +1,1914 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-CPU 使用率大于 80%",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) by(instance) * 100 <= 20",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-Node_exporter_is_down",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "probe_success{group=\"node_exporter\"} == 0",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 1,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-PD 写盘延迟大于 1s ，leader 写盘慢会导致 leader 切换",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      3
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "histogram_quantile(0.99, sum(rate(etcd_disk_wal_fsync_duration_seconds_bucket[1m])) by (instance,job,le) ) > 1",
+          "severity": 3
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-PD 无 leader ",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "sum(etcd_server_is_leader) !=1",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {
+      "描述": "集群不可用，可能 pd 多数派故障，需要分析日志查看无法选举 leader 的原因。"
+    }
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-PD 节点之间网络延迟大于 1s",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      3
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "histogram_quantile(0.99, sum(rate(etcd_network_peer_round_trip_time_seconds_bucket[1m])) by (To,instance,job,le) ) > 1",
+          "severity": 3
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-TCP 连接数大于 50000 ",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "node_netstat_Tcp_CurrEstab > 50000",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {
+      "描述": "通常有连接泄露，需分析主要是与哪个对象的连接。"
+    }
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-TiDB_server_is_down",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "probe_success{group=\"tidb\"} == 0",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-blackbox_is_down",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "probe_success{group=\"blackbox_exporter\"} == 0",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-drainer_server_is_down",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "probe_success{group=\"drainer\"} == 0",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-grafana_is_down",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "probe_success{group=\"grafana\"} == 0",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-pd_server_is_down",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "probe_success{group=\"pd\"} == 0",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-pump_server_is_down",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "probe_success{group=\"pump\"} == 0",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tidb CPU 使用率超过可用 CPU的 80%",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "rate(process_cpu_seconds_total{job=\"tidb\"}[1m]) > tidb_server_maxprocs{job=\"tidb\"} * 0.8",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tidb 最近 15 分钟加载 schema 出现错误",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "increase(tidb_session_schema_lease_error_total{type=\"outdated\"}[15m]) > 0",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tidb 最近五分钟出现跳过 binlog",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "increase( tidb_server_critical_error_total[5m] ) > 0",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tidb 最近十分钟加载 schema 失败大于 10 次",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "increase( tidb_domain_load_schema_total{type=\"failed\"}[10m] ) > 10",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tiflash_server_is_down",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "probe_success{group=\"tiflash\"} == 0",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tikv 5分钟内内存增长大于 5G",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      3
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "process_resident_memory_bytes{job=~\"tikv\",instance=~\".*\"} - (process_resident_memory_bytes{job=~\"tikv\",instance=~\".*\"} offset 5m) > 5*1024*1024*1024",
+          "severity": 3
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {
+      "描述": "通常 tikv 实例刚启动时会触发。或者有较复杂的计算 offload 到 tikv 上导致短暂的内存升高，需要分析具体 SQL 语句。"
+    }
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tikv 发生重启",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "changes(process_start_time_seconds{job=\"tikv\"}[5m]) > 0",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tikv 可用空间低于 20%",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "sum(tikv_store_size_bytes{type=\"available\"}) by (instance) / sum(tikv_store_size_bytes{type=\"capacity\"}) by (instance) < 0.2",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {
+      "描述": "需要检查 tikv 是否有删除数据但空间未释放的问题，如果是正常的空间使用，则需要扩容 tikv 节点。"
+    }
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tikv_server_is_down",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "probe_success{group=\"tikv\"} == 0",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-内存使用大于 80%",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "(((node_memory_MemTotal_bytes-node_memory_MemFree_bytes-node_memory_Cached_bytes)/(node_memory_MemTotal_bytes)*100)) >= 80",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-挂载点状态变为只读",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "node_filesystem_readonly{fstype=~\"(ext.|xfs)\"} == 1",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-文件系统 inode 使用率大于 80%",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "node_filesystem_files_free{fstype=~\"(ext.|xfs)\"} / node_filesystem_files{fstype=~\"(ext.|xfs)\"} * 100 < 20",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-磁盘使用率大于 80%",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "node_filesystem_avail_bytes{fstype=~\"(ext.|xfs)\", mountpoint!~\"/boot\"} / node_filesystem_size_bytes{fstype=~\"(ext.|xfs)\", mountpoint!~\"/boot\"} * 100 <= 20",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-网卡-入向有丢包",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "increase(net_drop_in[1m]) > 0",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-网卡-出向有丢包",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "increase(net_drop_out[1m]) > 0",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      7
+    ],
+    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-集群中出现状态为 down 的 tikv 数量大于 0",
+    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "(sum(pd_cluster_status{type=\"store_down_count\"}) by (instance) > 0) and (sum(etcd_server_is_leader) by (instance) > 0)",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "nvwa"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  }
+]
