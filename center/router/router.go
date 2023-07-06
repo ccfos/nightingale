@@ -18,8 +18,8 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/prom"
-	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
@@ -36,7 +36,7 @@ type Router struct {
 	PromClients       *prom.PromClientMap
 	Redis             storage.Redis
 	MetaSet           *metas.Set
-	IdentSet           *idents.Set
+	IdentSet          *idents.Set
 	TargetCache       *memsto.TargetCacheType
 	Sso               *sso.SsoClient
 	Ctx               *ctx.Context
@@ -170,6 +170,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/auth/ifshowcaptcha", rt.ifShowCaptcha)
 
 		pages.GET("/auth/sso-config", rt.ssoConfigNameGet)
+		pages.GET("/auth/rsa-config", rt.rsaConfigGet)
 		pages.GET("/auth/redirect", rt.loginRedirect)
 		pages.GET("/auth/redirect/cas", rt.loginRedirectCas)
 		pages.GET("/auth/redirect/oauth", rt.loginRedirectOAuth)
