@@ -297,7 +297,7 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 			}
 		}
 		if len(anc) > 0 {
-			ginx.NewRender(c).Message("Absent Notify Channels Please Check. %s", anc)
+			ginx.NewRender(c).Message("Please check for absent tokens of notify channels. %s", anc)
 			return
 		}
 	}
