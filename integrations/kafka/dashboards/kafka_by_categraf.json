@@ -278,175 +278,6 @@
         "id": "855aa8f5-0c51-42d4-b9a4-5460b7cd0f5a"
       },
       {
-        "type": "timeseries",
-        "id": "c48c1ed0-95b4-4b96-94cd-9dcf6cd88bad",
-        "layout": {
-          "h": 6,
-          "w": 8,
-          "x": 0,
-          "y": 12,
-          "i": "c48c1ed0-95b4-4b96-94cd-9dcf6cd88bad",
-          "isResizable": true
-        },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(kafka_topic_partition_current_offset{}) by (topic)",
-            "legend": "{{topic}}"
-          }
-        ],
-        "name": "Topic Partition offset",
-        "maxPerRow": 4,
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "value": null,
-                "type": "base"
-              }
-            ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
-      },
-      {
-        "type": "timeseries",
-        "id": "21135bc6-15f2-4981-b50b-f5d19fce0067",
-        "layout": {
-          "h": 6,
-          "w": 7,
-          "x": 8,
-          "y": 12,
-          "i": "21135bc6-15f2-4981-b50b-f5d19fce0067",
-          "isResizable": true
-        },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(kafka_consumergroup_current_offset{})by (topic)",
-            "legend": "{{topic}}"
-          }
-        ],
-        "name": "Consumer Group offset",
-        "maxPerRow": 4,
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "value": null,
-                "type": "base"
-              }
-            ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
-      },
-      {
-        "type": "timeseries",
-        "id": "e5a68f96-f03b-40fa-b148-cff31d95d39c",
-        "layout": {
-          "h": 6,
-          "w": 9,
-          "x": 15,
-          "y": 12,
-          "i": "e5a68f96-f03b-40fa-b148-cff31d95d39c",
-          "isResizable": true
-        },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(kafka_consumer_lag_millis{}) by (partition,topic)",
-            "legend": "{{topic}} 分区: {{partition}}"
-          }
-        ],
-        "name": "Consumer Lag",
-        "maxPerRow": 4,
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {
-            "util": "milliseconds",
-            "decimals": 0
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "value": null,
-                "type": "base"
-              }
-            ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
-      },
-      {
         "id": "20166830-7f85-4665-8f39-bf904267af29",
         "type": "row",
         "name": "patition/replicate",
@@ -526,20 +357,13 @@
           "isResizable": true
         },
         "id": "dd615767-dda7-4da6-b37f-0d484553aac6"
-      },
+      }
+    ],
+    "links": [
       {
-        "type": "row",
-        "id": "d6f84c51-00fe-4f02-bc97-ce96203b2f52",
-        "name": "分组",
-        "collapsed": true,
-        "layout": {
-          "h": 1,
-          "w": 24,
-          "x": 0,
-          "y": 26,
-          "i": "d6f84c51-00fe-4f02-bc97-ce96203b2f52",
-          "isResizable": false
-        }
+        "title": "文档",
+        "url": "https://github.com/ccfos/nightingale/tree/main/integrations/kafka/markdown/",
+        "targetBlank": true
       }
     ]
   }
