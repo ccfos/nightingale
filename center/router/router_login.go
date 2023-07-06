@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
+	"github.com/ccfos/nightingale/v6/pkg/secu"
 	"github.com/pelletier/go-toml/v2"
 
 	"github.com/dgrijalva/jwt-go"
@@ -38,13 +40,23 @@ func (rt *Router) loginPost(c *gin.Context) {
 			return
 		}
 	}
-
-	user, err := models.PassLogin(rt.Ctx, f.Username, f.Password)
+	authPassWord := f.Password
+	// need decode
+	if rt.HTTP.RSA.OpenRSA {
+		decPassWord, err := secu.Decrypt(f.Password, rt.HTTP.RSA.RSAPrivateKey, rt.HTTP.RSA.RSAPassWord)
+		if err != nil {
+			logger.Errorf("RSA Decrypt failed: %v username: %s", err, f.Username)
+			ginx.NewRender(c).Message(err)
+			return
+		}
+		authPassWord = decPassWord
+	}
+	user, err := models.PassLogin(rt.Ctx, f.Username, authPassWord)
 	if err != nil {
 		// pass validate fail, try ldap
 		if rt.Sso.LDAP.Enable {
 			roles := strings.Join(rt.Sso.LDAP.DefaultRoles, " ")
-			user, err = models.LdapLogin(rt.Ctx, f.Username, f.Password, roles, rt.Sso.LDAP)
+			user, err = models.LdapLogin(rt.Ctx, f.Username, authPassWord, roles, rt.Sso.LDAP)
 			if err != nil {
 				logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
 				ginx.NewRender(c).Message(err)
@@ -547,4 +559,20 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(nil)
+}
+
+type RSAConfigOutput struct {
+	OpenRSA      bool
+	RSAPublicKey string
+}
+
+func (rt *Router) rsaConfigGet(c *gin.Context) {
+	publicKey := ""
+	if rt.HTTP.RSA.OpenRSA {
+		publicKey = base64.StdEncoding.EncodeToString(rt.HTTP.RSA.RSAPublicKey)
+	}
+	ginx.NewRender(c).Data(RSAConfigOutput{
+		OpenRSA:      rt.HTTP.RSA.OpenRSA,
+		RSAPublicKey: publicKey,
+	}, nil)
 }

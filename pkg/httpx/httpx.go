@@ -34,6 +34,16 @@ type Config struct {
 	ShowCaptcha      ShowCaptcha
 	APIForAgent      BasicAuths
 	APIForService    BasicAuths
+	RSA              RSAConfig
+}
+
+type RSAConfig struct {
+	OpenRSA           bool
+	RSAPublicKey      []byte
+	RSAPublicKeyPath  string
+	RSAPrivateKey     []byte
+	RSAPrivateKeyPath string
+	RSAPassWord       string
 }
 
 type ShowCaptcha struct {
@@ -149,4 +159,23 @@ func Init(cfg Config, handler http.Handler) func() {
 			fmt.Println("http server stopped")
 		}
 	}
+}
+
+func InitRSAConfig(rsaConfig *RSAConfig) {
+	if !rsaConfig.OpenRSA {
+		return
+	}
+	// 读取公钥配置文件
+	//获取文件内容
+	publicBuf, err := os.ReadFile(rsaConfig.RSAPublicKeyPath)
+	if err != nil {
+		panic(fmt.Errorf("could not read RSAPublicKeyPath %q: %v", rsaConfig.RSAPublicKeyPath, err))
+	}
+	rsaConfig.RSAPublicKey = publicBuf
+	// 读取私钥配置文件
+	privateBuf, err := os.ReadFile(rsaConfig.RSAPrivateKeyPath)
+	if err != nil {
+		panic(fmt.Errorf("could not read RSAPrivateKeyPath %q: %v", rsaConfig.RSAPrivateKeyPath, err))
+	}
+	rsaConfig.RSAPrivateKey = privateBuf
 }
