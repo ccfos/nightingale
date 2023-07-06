@@ -1,0 +1,601 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "Hard disk - expected to be written full in 4 hours - categraf [Windows]",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "predict_linear(disk_free{platform=~\"windows\"}[1h], 4*3600) < 0",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "email",
+      "dingtalk",
+      "wecom"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "Hard disk - IO is a bit busy - categraf [Windows]",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "rate(diskio_io_time{platform=~\"windows\"}[1m])/10 > 99",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "email",
+      "dingtalk",
+      "wecom"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "host",
+    "datasource_ids": null,
+    "name": "Lost connection with monitoring target - categraf [Windows]",
+    "note": "",
+    "prod": "host",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "",
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "key": "all_hosts",
+          "op": "==",
+          "values": []
+        },
+        {
+          "key": "tags",
+          "op": "==",
+          "values": [
+            "platform=windows"
+          ]
+        }
+      ],
+      "triggers": [
+        {
+          "duration": 60,
+          "severity": 2,
+          "type": "target_miss"
+        }
+      ]
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "Machine load - high memory, please pay attention - categraf[Windows]",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      3,
+      2,
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "inhibit": true,
+      "queries": [
+        {
+          "prom_ql": "mem_available_percent{platform=~\"windows\"} < 25",
+          "severity": 3
+        },
+        {
+          "prom_ql": "mem_available_percent{platform=~\"windows\"} < 15",
+          "severity": 2
+        },
+        {
+          "prom_ql": "mem_available_percent{platform=~\"windows\"} < 5",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "email",
+      "dingtalk",
+      "wecom"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "packet loss in the inbound direction - categraf[Windows]",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      3
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "increase(net_drop_in{platform=~\"windows\"[1m]) > 0",
+          "severity": 3
+        }
+      ]
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "email",
+      "dingtalk",
+      "wecom"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "packet loss in the outbound direction - categraf [Windows]",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      3
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "increase(net_drop_out{platform=~\"windows\"}[1m]) > 0",
+          "severity": 3
+        }
+      ]
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "email",
+      "dingtalk",
+      "wecom"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "大于200G的盘，空间不足了[Windows]",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      3,
+      2,
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "inhibit": true,
+      "queries": [
+        {
+          "prom_ql": "disk_free{platform=~\"windows\"}/1024/1024/1024 < 20 and disk_total{platform=~\"windows\"}/1024/1024/1024 >= 200",
+          "severity": 3
+        },
+        {
+          "prom_ql": "disk_free{platform=~\"windows\"}/1024/1024/1024 < 10 and disk_total{platform=~\"windows\"}/1024/1024/1024 >= 200",
+          "severity": 2
+        },
+        {
+          "prom_ql": "disk_free{platform=~\"windows\"}/1024/1024/1024 < 2 and disk_total{platform=~\"windows\"}/1024/1024/1024 >= 200",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "小于200G的盘，空间不足了[Windows]",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      3,
+      2,
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "inhibit": true,
+      "queries": [
+        {
+          "prom_ql": "disk_used_percent{platform=~\"windows\"} > 90 and disk_total{platform=~\"windows\"}/1024/1024/1024 < 200",
+          "severity": 3
+        },
+        {
+          "prom_ql": "disk_used_percent{platform=~\"windows\"} > 95 and disk_total{platform=~\"windows\"}/1024/1024/1024 < 200",
+          "severity": 2
+        },
+        {
+          "prom_ql": "disk_used_percent{platform=~\"windows\"} > 99 and disk_total{platform=~\"windows\"}/1024/1024/1024 < 200",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {}
+  }
+]
