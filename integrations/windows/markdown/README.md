@@ -58,4 +58,4 @@ url = "http://192.168.0.250:19000/v1/n9e/heartbeat"
 
 ### 告警规则
 
-[alerts](../alerts/windows_by_categrafr.json)
+[alerts](../alerts/windows_by_categraf.json)
