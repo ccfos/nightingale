@@ -444,7 +444,7 @@ func labelMapToArr(m map[string]string) []string {
 }
 
 func Hash(ruleId, datasourceId int64, vector common.AnomalyPoint) string {
-	return str.MD5(fmt.Sprintf("%d_%s_%d_%d", ruleId, vector.Labels.String(), datasourceId, vector.Severity))
+	return str.MD5(fmt.Sprintf("%d_%s_%d_%d_%s", ruleId, vector.Labels.String(), datasourceId, vector.Severity, vector.Query))
 }
 
 func TagHash(vector common.AnomalyPoint) string {

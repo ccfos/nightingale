@@ -163,6 +163,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 		points := common.ConvertAnomalyPoints(value)
 		for i := 0; i < len(points); i++ {
 			points[i].Severity = query.Severity
+			points[i].Query = promql
 		}
 		lst = append(lst, points...)
 	}
