@@ -182,7 +182,7 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 	sub.ModifyEvent(&event)
 	LogEvent(&event, "subscribe")
 
-	event.IsSubscribe = true
+	event.SubRuleId = sub.Id
 	e.HandleEventNotify(&event, true)
 }
 

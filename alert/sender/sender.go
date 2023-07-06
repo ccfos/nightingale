@@ -67,7 +67,7 @@ func buildTplMessage(tpl *template.Template, events []*models.AlertCurEvent) str
 		if err := tpl.Execute(&body, event); err != nil {
 			return err.Error()
 		}
-		content += body.String() + "\n"
+		content += body.String() + "\n\n"
 	}
 
 	return content
