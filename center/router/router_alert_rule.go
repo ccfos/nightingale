@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -146,6 +147,7 @@ func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int
 			reterr[lst[i].Name] = i18n.Sprintf(lang, err.Error())
 		} else {
 			reterr[lst[i].Name] = ""
+			models.AuditLogAdd(rt.Ctx, models.EVENT_ALERTRULE_ADD, username, fmt.Sprint("alert-rule-id: ", lst[i].Id))
 		}
 	}
 	return reterr
@@ -157,7 +159,11 @@ func (rt *Router) alertRuleDel(c *gin.Context) {
 	f.Verify()
 
 	// param(busiGroupId) for protect
-	ginx.NewRender(c).Message(models.AlertRuleDels(rt.Ctx, f.Ids, ginx.UrlParamInt64(c, "id")))
+	err := models.AlertRuleDels(rt.Ctx, f.Ids, ginx.UrlParamInt64(c, "id"))
+	if err == nil {
+		models.AuditLogAdd(rt.Ctx, models.EVENT_ALERTRULE_DELETE, c.MustGet("username").(string), fmt.Sprint("alert-rule-id: ", f.Ids))
+	}
+	ginx.NewRender(c).Message(err)
 }
 
 func (rt *Router) alertRuleDelByService(c *gin.Context) {
@@ -182,8 +188,13 @@ func (rt *Router) alertRulePutByFE(c *gin.Context) {
 
 	rt.bgrwCheck(c, ar.GroupId)
 
-	f.UpdateBy = c.MustGet("username").(string)
-	ginx.NewRender(c).Message(ar.Update(rt.Ctx, f))
+	username := c.MustGet("username").(string)
+	f.UpdateBy = username
+	err = ar.Update(rt.Ctx, f)
+	if err == nil {
+		models.AuditLogAdd(rt.Ctx, models.EVENT_ALERTRULE_ADD, username, fmt.Sprint("alert-rule-id: ", f.Id))
+	}
+	ginx.NewRender(c).Message(err)
 }
 
 func (rt *Router) alertRulePutByService(c *gin.Context) {

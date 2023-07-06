@@ -82,6 +82,11 @@ ops:
     - "/job-tasks/add"
     - "/job-tasks/put"
 
+- name: audit
+  cname: 审计日志
+  ops:
+    - "/audit/logs"
+
 - name: user
   cname: 用户管理
   ops:

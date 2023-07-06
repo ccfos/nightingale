@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -62,6 +63,7 @@ func (rt *Router) userGroupAdd(c *gin.Context) {
 	if err == nil {
 		// Even failure is not a big deal
 		models.UserGroupMemberAdd(rt.Ctx, ug.Id, me.Id)
+		models.AuditLogAdd(rt.Ctx, models.EVENT_USERGROUP_ADD, me.Username, fmt.Sprint("user-group-id: ", ug.Id))
 	}
 
 	ginx.NewRender(c).Data(ug.Id, err)
@@ -88,8 +90,11 @@ func (rt *Router) userGroupPut(c *gin.Context) {
 	ug.Note = f.Note
 	ug.UpdateBy = me.Username
 	ug.UpdateAt = time.Now().Unix()
-
-	ginx.NewRender(c).Message(ug.Update(rt.Ctx, "Name", "Note", "UpdateAt", "UpdateBy"))
+	err := ug.Update(rt.Ctx, "Name", "Note", "UpdateAt", "UpdateBy")
+	if err == nil {
+		models.AuditLogAdd(rt.Ctx, models.EVENT_USERGROUP_PUT, me.Username, fmt.Sprint("user-group-id: ", ug.Id))
+	}
+	ginx.NewRender(c).Message(err)
 }
 
 // Return all members, front-end search and paging
@@ -110,7 +115,11 @@ func (rt *Router) userGroupGet(c *gin.Context) {
 
 func (rt *Router) userGroupDel(c *gin.Context) {
 	ug := c.MustGet("user_group").(*models.UserGroup)
-	ginx.NewRender(c).Message(ug.Del(rt.Ctx))
+	err := ug.Del(rt.Ctx)
+	if err == nil {
+		models.AuditLogAdd(rt.Ctx, models.EVENT_USERGROUP_DELETE, c.MustGet("username").(string), fmt.Sprint("user-group-id: ", ug.Id))
+	}
+	ginx.NewRender(c).Message(err)
 }
 
 func (rt *Router) userGroupMemberAdd(c *gin.Context) {

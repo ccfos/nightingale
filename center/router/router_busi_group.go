@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -50,6 +51,8 @@ func (rt *Router) busiGroupAdd(c *gin.Context) {
 		return
 	}
 
+	models.AuditLogAdd(rt.Ctx, models.EVENT_BUSIGROUP_ADD, username, fmt.Sprint("busi-group-id: ", newbg.Id))
+
 	ginx.NewRender(c).Data(newbg.Id, nil)
 }
 
@@ -59,7 +62,11 @@ func (rt *Router) busiGroupPut(c *gin.Context) {
 
 	username := c.MustGet("username").(string)
 	targetbg := c.MustGet("busi_group").(*models.BusiGroup)
-	ginx.NewRender(c).Message(targetbg.Update(rt.Ctx, f.Name, f.LabelEnable, f.LabelValue, username))
+	err := targetbg.Update(rt.Ctx, f.Name, f.LabelEnable, f.LabelValue, username)
+	if err == nil {
+		models.AuditLogAdd(rt.Ctx, models.EVENT_BUSIGROUP_PUT, username, fmt.Sprint("busi-group-id: ", targetbg.Id))
+	}
+	ginx.NewRender(c).Message(err)
 }
 
 func (rt *Router) busiGroupMemberAdd(c *gin.Context) {
@@ -102,6 +109,7 @@ func (rt *Router) busiGroupDel(c *gin.Context) {
 	if err != nil {
 		logger.Infof("busi_group_delete fail: operator=%s, group_name=%s error=%v", username, targetbg.Name, err)
 	} else {
+		models.AuditLogAdd(rt.Ctx, models.EVENT_BUSIGROUP_DELETE, username, fmt.Sprint("busi-group-id: ", targetbg.Id))
 		logger.Infof("busi_group_delete succ: operator=%s, group_name=%s", username, targetbg.Name)
 	}
 

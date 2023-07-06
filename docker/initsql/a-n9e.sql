@@ -4,6 +4,17 @@ drop database if exists n9e_v6;
 create database n9e_v6;
 use n9e_v6;
 
+CREATE TABLE `audit_log` (
+    `id` bigint unsigned not null auto_increment,
+    `username` varchar(64) not null default '',
+    `event` varchar(64) not null default '',
+    `comment` varchar(512) not null default '',
+    `create_at` bigint not null default 0,
+    PRIMARY KEY (`id`),
+    KEY (`username`),
+    KEY (`create_at`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
 CREATE TABLE `users` (
     `id` bigint unsigned not null auto_increment,
     `username` varchar(64) not null comment 'login name, cannot rename',
