@@ -271,3 +271,36 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 
 	ginx.NewRender(c).Data(ar, err)
 }
+
+//pre validation before save rule
+func (rt *Router) alertRuleValidation(c *gin.Context) {
+	var f models.AlertRule
+	ginx.BindJSON(c, &f)
+
+	arid := ginx.UrlParamInt64(c, "arid")
+	ar, err := models.AlertRuleGetById(rt.Ctx, arid)
+	ginx.Dangerous(err)
+
+	if ar == nil {
+		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
+		return
+	}
+
+	rt.bgrwCheck(c, ar.GroupId)
+
+	if len(f.NotifyChannelsJSON) > 0 { //Validation NotifyChannels
+		me := c.MustGet("user").(*models.User)
+		anc := make([]string, 0, len(f.NotifyChannelsJSON)) //absentNotifyChannels
+		for i := range f.NotifyChannelsJSON {
+			if _, b := me.ExtractToken(f.NotifyChannelsJSON[i]); !b {
+				anc = append(anc, f.NotifyChannelsJSON[i])
+			}
+		}
+		if len(anc) > 0 {
+			ginx.NewRender(c).Message("Absent Notify Channels Please Check. %s", anc)
+			return
+		}
+	}
+
+	ginx.NewRender(c).Message("")
+}
