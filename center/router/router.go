@@ -28,35 +28,42 @@ import (
 )
 
 type Router struct {
-	HTTP              httpx.Config
-	Center            cconf.Center
-	Operations        cconf.Operation
-	DatasourceCache   *memsto.DatasourceCacheType
-	NotifyConfigCache *memsto.NotifyConfigCacheType
-	PromClients       *prom.PromClientMap
-	Redis             storage.Redis
-	MetaSet           *metas.Set
-	IdentSet          *idents.Set
-	TargetCache       *memsto.TargetCacheType
-	Sso               *sso.SsoClient
-	Ctx               *ctx.Context
+	HTTP                 httpx.Config
+	Center               cconf.Center
+	Operations           cconf.Operation
+	DatasourceCache      *memsto.DatasourceCacheType
+	NotifyConfigCache    *memsto.NotifyConfigCacheType
+	PromClients          *prom.PromClientMap
+	Redis                storage.Redis
+	MetaSet              *metas.Set
+	IdentSet             *idents.Set
+	TargetCache          *memsto.TargetCacheType
+	Sso                  *sso.SsoClient
+	UserCache            *memsto.UserCacheType
+	UserGroupCache       *memsto.UserGroupCacheType
+	UserGroupMemberCache *memsto.UserGroupMemberCacheType
+	Ctx                  *ctx.Context
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
-	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType) *Router {
+	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType,
+	uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, ugmc *memsto.UserGroupMemberCacheType) *Router {
 	return &Router{
-		HTTP:              httpConfig,
-		Center:            center,
-		Operations:        operations,
-		DatasourceCache:   ds,
-		NotifyConfigCache: ncc,
-		PromClients:       pc,
-		Redis:             redis,
-		MetaSet:           metaSet,
-		IdentSet:          idents,
-		TargetCache:       tc,
-		Sso:               sso,
-		Ctx:               ctx,
+		HTTP:                 httpConfig,
+		Center:               center,
+		Operations:           operations,
+		DatasourceCache:      ds,
+		NotifyConfigCache:    ncc,
+		PromClients:          pc,
+		Redis:                redis,
+		MetaSet:              metaSet,
+		IdentSet:             idents,
+		TargetCache:          tc,
+		Sso:                  sso,
+		UserCache:            uc,
+		UserGroupCache:       ugc,
+		UserGroupMemberCache: ugmc,
+		Ctx:                  ctx,
 	}
 }
 

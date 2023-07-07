@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -288,43 +289,27 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 
 	rt.bgrwCheck(c, ar.GroupId)
 
-	err = f.FillNotifyGroups(rt.Ctx, make(map[int64]*models.UserGroup)) //Get All NotifyGroupsObj
-	ginx.Dangerous(err)
-
-	if len(f.NotifyChannelsJSON) > 0 && len(f.NotifyGroupsObj) > 0 { //Validation NotifyChannels
-
-		type temp struct {
-			uname string
-			anc   []string //absentNotifyChannels
+	if len(f.NotifyChannelsJSON) > 0 && len(f.NotifyGroupsJSON) > 0 { //Validation NotifyChannels
+		ngid := make([]int64, 0, len(f.NotifyChannelsJSON))
+		for i := range f.NotifyGroupsJSON {
+			id, _ := strconv.ParseInt(f.NotifyGroupsJSON[i], 10, 64)
+			ngid = append(ngid, id)
 		}
-		gIds := getArraySet(f.NotifyGroupsObj, func(t models.UserGroup) int64 {
-			return t.Id
-		})
-		ids, err := models.MemberIds(rt.Ctx, gIds...)
-		ginx.Dangerous(err)
-		idSet := getArraySet(ids, func(t int64) int64 {
-			return t
-		})
-		users, err := models.UserGetsByIds(rt.Ctx, idSet)
-		ginx.Dangerous(err)
-		anu := make([]temp, 0, len(users))
-		if len(users) < 10000 {
+		uid := rt.UserGroupMemberCache.GetUidByGroupIds(ngid)
+		users := rt.UserCache.GetByUserIds(uid)
+		//If all users have a certain notify channel's token, it will be okay. Otherwise, this notify channel is absent token.
+		anc := make([]string, 0, len(f.NotifyChannelsJSON)) //absentNotifyChannels
+		for i := range f.NotifyChannelsJSON {
 			for ui := range users {
-				anc := make([]string, 0, len(f.NotifyChannelsJSON)) //absentNotifyChannels
-				for i := range f.NotifyChannelsJSON {
-					if _, b := users[ui].ExtractToken(f.NotifyChannelsJSON[i]); !b {
-						anc = append(anc, f.NotifyChannelsJSON[i])
-					}
+				if _, b := users[ui].ExtractToken(f.NotifyChannelsJSON[i]); !b {
+					anc = append(anc, f.NotifyChannelsJSON[i])
+					break
 				}
-				anu = append(anu, temp{users[ui].Username, anc})
 			}
-		} else {
-			ginx.NewRender(c).Message("Notify too many users(%d).Need audit", len(users))
-			return
 		}
 
-		if len(anu) > 0 {
-			ginx.NewRender(c).Message("Please check for absent tokens of notify channels. %s", anu)
+		if len(anc) > 0 {
+			ginx.NewRender(c).Message("Some users in the NotifyGroups are missing tokens. Please check for any missing tokens of notify channels. %s", anc)
 			return
 		}
 
