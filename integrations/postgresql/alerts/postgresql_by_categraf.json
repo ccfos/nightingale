@@ -2,7 +2,7 @@
   {
     "cate": "prometheus",
     "datasource_ids": [
-      1
+      0
     ],
     "name": "posgresql读取时间过高",
     "note": "数据库中花费在读取文件的时间，这个值很高说明内存较小，需要频繁从磁盘读入数据文件",
@@ -68,7 +68,7 @@
   {
     "cate": "prometheus",
     "datasource_ids": [
-      1
+      0
     ],
     "name": "Postgresql down",
     "note": "",
@@ -134,7 +134,7 @@
   {
     "cate": "prometheus",
     "datasource_ids": [
-      1
+      0
     ],
     "name": "postgresql写入时间过高",
     "note": "数据库中花费在写数据文件的时间，pg中脏页一般写入page cache，如果这个值较高，则说明cache较小，操作系统的cache需要更积极的写入",
@@ -200,7 +200,7 @@
   {
     "cate": "prometheus",
     "datasource_ids": [
-      1
+      0
     ],
     "name": "postgresql有死锁",
     "note": "",
@@ -266,7 +266,7 @@
   {
     "cate": "prometheus",
     "datasource_ids": [
-      1
+      0
     ],
     "name": "Postgresql缓存命中率低于50%",
     "note": "",

@@ -1,17 +1,32 @@
 {
-  "name": "postgresql大盘",
-  "tags": "",
+  "name": "postgresql by categraf",
+  "tags": "categraf",
+  "ident": "",
   "configs": {
     "var": [
       {
+        "name": "datasource",
+        "type": "datasource",
+        "definition": "prometheus",
+        "defaultValue": 5
+      },
+      {
         "name": "server",
         "type": "query",
-        "definition": "label_values(postgresql_datid,server)"
+        "definition": "label_values(postgresql_datid,server)",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        }
       },
       {
         "name": "db",
         "type": "query",
-        "definition": "label_values(postgresql_datid{server=\"$server\"},db)"
+        "definition": "label_values(postgresql_datid{server=\"$server\"},db)",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        }
       }
     ],
     "panels": [
@@ -35,7 +50,7 @@
         "id": "65571b64-d249-40f1-8c57-ef826118c7a9",
         "layout": {
           "h": 4,
-          "w": 5,
+          "w": 6,
           "x": 0,
           "y": 1,
           "i": "65571b64-d249-40f1-8c57-ef826118c7a9",
@@ -73,15 +88,16 @@
               }
             ]
           }
-        }
+        },
+        "datasourceValue": "${datasource}"
       },
       {
         "type": "stat",
         "id": "bdf5299c-b621-4d98-bcf8-fa2ebd12b7d4",
         "layout": {
           "h": 4,
-          "w": 5,
-          "x": 5,
+          "w": 6,
+          "x": 6,
           "y": 1,
           "i": "0fb92b82-63c4-4edd-a452-fb51150757ab",
           "isResizable": true
@@ -121,15 +137,16 @@
               }
             ]
           }
-        }
+        },
+        "datasourceValue": "${datasource}"
       },
       {
         "type": "stat",
         "id": "2a559648-ad51-40d1-a6ff-f641467b57ea",
         "layout": {
           "h": 4,
-          "w": 5,
-          "x": 10,
+          "w": 6,
+          "x": 12,
           "y": 1,
           "i": "d78ae395-1d53-481a-9566-9f4913616330",
           "isResizable": true
@@ -169,15 +186,16 @@
               }
             ]
           }
-        }
+        },
+        "datasourceValue": "${datasource}"
       },
       {
         "type": "stat",
         "id": "87a74ec2-c6d2-49e8-a1ea-4dbf1252a33d",
         "layout": {
           "h": 4,
-          "w": 5,
-          "x": 15,
+          "w": 6,
+          "x": 18,
           "y": 1,
           "i": "a666823e-455f-459e-bbfe-169341b77ddc",
           "isResizable": true
@@ -217,7 +235,8 @@
               }
             ]
           }
-        }
+        },
+        "datasourceValue": "${datasource}"
       },
       {
         "targets": [
@@ -271,7 +290,9 @@
           "i": "443aee8c-d1b8-485b-b74f-13fa58b6e7ae",
           "isResizable": true
         },
-        "id": "3dea2872-5904-4abf-b0f8-64afe82b617a"
+        "id": "3dea2872-5904-4abf-b0f8-64afe82b617a",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
         "targets": [
@@ -325,7 +346,9 @@
           "i": "8b85bc95-091a-4868-9bec-b495609d7a04",
           "isResizable": true
         },
-        "id": "dec2c25d-ae70-4e47-bc4f-6dbaa9e72683"
+        "id": "dec2c25d-ae70-4e47-bc4f-6dbaa9e72683",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
         "targets": [
@@ -384,7 +407,9 @@
           "i": "e08d94bb-1a72-4104-8ba0-11ab7317a192",
           "isResizable": true
         },
-        "id": "048d2652-40f1-42ab-a435-7e02d51c98c4"
+        "id": "048d2652-40f1-42ab-a435-7e02d51c98c4",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
         "targets": [
@@ -438,7 +463,9 @@
           "i": "971c5838-7408-4ec7-ae5e-33dcd0f20210",
           "isResizable": true
         },
-        "id": "c89d1e4b-d8ad-402d-bee4-f6d362b4634a"
+        "id": "c89d1e4b-d8ad-402d-bee4-f6d362b4634a",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
         "targets": [
@@ -494,7 +521,9 @@
           "i": "71e28edd-8961-4a7a-be78-3a9a526c89bb",
           "isResizable": true
         },
-        "id": "7ae2c26a-cc2b-435d-9a16-52722c37bedf"
+        "id": "7ae2c26a-cc2b-435d-9a16-52722c37bedf",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
         "type": "row",
@@ -564,7 +593,9 @@
           "i": "c3d3ccee-719f-4280-8921-367ea5343849",
           "isResizable": true
         },
-        "id": "600a9687-0a1e-4531-b9bc-ccf8589566a2"
+        "id": "600a9687-0a1e-4531-b9bc-ccf8589566a2",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
         "targets": [
@@ -620,7 +651,9 @@
           "i": "178d8220-3c22-4ea3-909d-71c73fbb3a78",
           "isResizable": true
         },
-        "id": "561012f8-481a-482a-8504-4bdd8c62e8a6"
+        "id": "561012f8-481a-482a-8504-4bdd8c62e8a6",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
         "targets": [
@@ -686,9 +719,18 @@
           "i": "23b6fc64-1a19-422e-b28e-453570af339c",
           "isResizable": true
         },
-        "id": "af9e2a7f-ce09-4de2-8625-e779c770d46d"
+        "id": "af9e2a7f-ce09-4de2-8625-e779c770d46d",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       }
     ],
-    "version": "2.0.0"
+    "version": "3.0.0",
+    "links": [
+      {
+        "title": "文档",
+        "url": "https://github.com/ccfos/nightingale/tree/main/integrations/postgresql/markdown/",
+        "targetBlank": true
+      }
+    ]
   }
 }
