@@ -4,8 +4,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-CPU 使用率大于 80%",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-CPU 使用率大于 80%",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -72,8 +72,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-Node_exporter_is_down",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-Node_exporter_is_down",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -140,8 +140,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-PD 写盘延迟大于 1s ，leader 写盘慢会导致 leader 切换",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-PD 写盘延迟大于 1s ，leader 写盘慢会导致 leader 切换",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -208,8 +208,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-PD 无 leader ",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-PD 无 leader ",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -278,8 +278,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-PD 节点之间网络延迟大于 1s",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-PD 节点之间网络延迟大于 1s",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -346,8 +346,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-TCP 连接数大于 50000 ",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-TCP 连接数大于 50000 ",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -416,8 +416,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-TiDB_server_is_down",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-TiDB_server_is_down",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -484,8 +484,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-blackbox_is_down",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-blackbox_is_down",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -552,8 +552,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-drainer_server_is_down",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-drainer_server_is_down",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -620,8 +620,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-grafana_is_down",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-grafana_is_down",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -688,8 +688,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-pd_server_is_down",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-pd_server_is_down",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -756,8 +756,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-pump_server_is_down",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-pump_server_is_down",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -824,8 +824,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tidb CPU 使用率超过可用 CPU的 80%",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-tidb CPU 使用率超过可用 CPU的 80%",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -892,8 +892,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tidb 最近 15 分钟加载 schema 出现错误",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-tidb 最近 15 分钟加载 schema 出现错误",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -960,8 +960,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tidb 最近五分钟出现跳过 binlog",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-tidb 最近五分钟出现跳过 binlog",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1028,8 +1028,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tidb 最近十分钟加载 schema 失败大于 10 次",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-tidb 最近十分钟加载 schema 失败大于 10 次",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1096,8 +1096,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tiflash_server_is_down",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-tiflash_server_is_down",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1164,8 +1164,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tikv 5分钟内内存增长大于 5G",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-tikv 5分钟内内存增长大于 5G",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1234,8 +1234,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tikv 发生重启",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-tikv 发生重启",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1302,8 +1302,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tikv 可用空间低于 20%",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-tikv 可用空间低于 20%",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1372,8 +1372,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-tikv_server_is_down",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-tikv_server_is_down",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1440,8 +1440,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-内存使用大于 80%",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-内存使用大于 80%",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1508,8 +1508,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-挂载点状态变为只读",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-挂载点状态变为只读",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1576,8 +1576,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-文件系统 inode 使用率大于 80%",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-文件系统 inode 使用率大于 80%",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1644,8 +1644,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-磁盘使用率大于 80%",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-磁盘使用率大于 80%",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1712,8 +1712,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-网卡-入向有丢包",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-网卡-入向有丢包",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1780,8 +1780,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-网卡-出向有丢包",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-网卡-出向有丢包",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
@@ -1848,8 +1848,8 @@
     "datasource_ids": [
       7
     ],
-    "name": "CTIE-TIDB-BJ天玑两地三中心-DEV-集群中出现状态为 down 的 tikv 数量大于 0",
-    "note": "CTIE-TIDB-BJ天玑两地三中心-DEV,10.100.2.15 tidb(中控)",
+    "name": "TiDB-集群中出现状态为 down 的 tikv 数量大于 0",
+    "note": "TiDB(中控)",
     "prod": "metric",
     "algorithm": "",
     "algo_params": null,
