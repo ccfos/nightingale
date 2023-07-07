@@ -317,15 +317,3 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 
 	ginx.NewRender(c).Message("")
 }
-
-func getArraySet[T any, K comparable](arr []T, f func(T) K) []K {
-	tMaps := make(map[K]struct{}, len(arr))
-	for i := range arr {
-		tMaps[f(arr[i])] = struct{}{}
-	}
-	res := make([]K, 0, len(tMaps))
-	for gid := range tMaps {
-		res = append(res, gid)
-	}
-	return res
-}
