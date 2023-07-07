@@ -179,6 +179,11 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 	if sub.ForDuration > (event.TriggerTime - event.FirstTriggerTime) {
 		return
 	}
+
+	if sub.Severity != 0 && sub.Severity != event.Severity {
+		return
+	}
+
 	sub.ModifyEvent(&event)
 	LogEvent(&event, "subscribe")
 
