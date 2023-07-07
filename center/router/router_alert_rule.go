@@ -295,21 +295,29 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 			id, _ := strconv.ParseInt(f.NotifyGroupsJSON[i], 10, 64)
 			ngid = append(ngid, id)
 		}
-		uid := rt.UserGroupMemberCache.GetUidByGroupIds(ngid)
+		userGroups := rt.UserGroupCache.GetByUserGroupIds(ngid)
+		uid := make([]int64, 0)
+		for i := range userGroups {
+			uid = append(uid, userGroups[i].UserIds...)
+		}
 		users := rt.UserCache.GetByUserIds(uid)
-		//If all users have a certain notify channel's token, it will be okay. Otherwise, this notify channel is absent token.
+		//If any users have a certain notify channel's token, it will be okay. Otherwise, this notify channel is absent of tokens.
 		anc := make([]string, 0, len(f.NotifyChannelsJSON)) //absentNotifyChannels
 		for i := range f.NotifyChannelsJSON {
+			flag := true
 			for ui := range users {
-				if _, b := users[ui].ExtractToken(f.NotifyChannelsJSON[i]); !b {
-					anc = append(anc, f.NotifyChannelsJSON[i])
+				if _, b := users[ui].ExtractToken(f.NotifyChannelsJSON[i]); b {
+					flag = false
 					break
 				}
+			}
+			if flag {
+				anc = append(anc, f.NotifyChannelsJSON[i])
 			}
 		}
 
 		if len(anc) > 0 {
-			ginx.NewRender(c).Message("Some users in the NotifyGroups are missing tokens. Please check for any missing tokens of notify channels. %s", anc)
+			ginx.NewRender(c).Message(i18n.Sprintf(c.GetHeader("X-Language"), "All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", anc))
 			return
 		}
 
