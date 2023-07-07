@@ -182,6 +182,7 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.RuleConfigJson = p.rule.RuleConfigJson
 	event.Severity = anomalyPoint.Severity
 	event.ExtraConfig = p.rule.ExtraConfigJSON
+	event.PromQl = anomalyPoint.Query
 
 	if from == "inner" {
 		event.LastEvalTime = now
