@@ -274,7 +274,7 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 
 //pre validation before save rule
 func (rt *Router) alertRuleValidation(c *gin.Context) {
-	var f models.AlertRule
+	var f models.AlertRule //new
 	ginx.BindJSON(c, &f)
 
 	arid := ginx.UrlParamInt64(c, "arid")
@@ -288,19 +288,59 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 
 	rt.bgrwCheck(c, ar.GroupId)
 
-	if len(f.NotifyChannelsJSON) > 0 { //Validation NotifyChannels
-		me := c.MustGet("user").(*models.User)
-		anc := make([]string, 0, len(f.NotifyChannelsJSON)) //absentNotifyChannels
-		for i := range f.NotifyChannelsJSON {
-			if _, b := me.ExtractToken(f.NotifyChannelsJSON[i]); !b {
-				anc = append(anc, f.NotifyChannelsJSON[i])
-			}
+	err = f.FillNotifyGroups(rt.Ctx, make(map[int64]*models.UserGroup)) //Get All NotifyGroupsObj
+	ginx.Dangerous(err)
+
+	if len(f.NotifyChannelsJSON) > 0 && len(f.NotifyGroupsObj) > 0 { //Validation NotifyChannels
+
+		type temp struct {
+			uname string
+			anc   []string //absentNotifyChannels
 		}
-		if len(anc) > 0 {
-			ginx.NewRender(c).Message("Please check for absent tokens of notify channels. %s", anc)
+		gIds := getArraySet(f.NotifyGroupsObj, func(t models.UserGroup) int64 {
+			return t.Id
+		})
+		ids, err := models.MemberIds(rt.Ctx, gIds...)
+		ginx.Dangerous(err)
+		idSet := getArraySet(ids, func(t int64) int64 {
+			return t
+		})
+		users, err := models.UserGetsByIds(rt.Ctx, idSet)
+		ginx.Dangerous(err)
+		anu := make([]temp, 0, len(users))
+		if len(users) < 10000 {
+			for ui := range users {
+				anc := make([]string, 0, len(f.NotifyChannelsJSON)) //absentNotifyChannels
+				for i := range f.NotifyChannelsJSON {
+					if _, b := users[ui].ExtractToken(f.NotifyChannelsJSON[i]); !b {
+						anc = append(anc, f.NotifyChannelsJSON[i])
+					}
+				}
+				anu = append(anu, temp{users[ui].Username, anc})
+			}
+		} else {
+			ginx.NewRender(c).Message("Notify too many users(%d).Need audit", len(users))
 			return
 		}
+
+		if len(anu) > 0 {
+			ginx.NewRender(c).Message("Please check for absent tokens of notify channels. %s", anu)
+			return
+		}
+
 	}
 
 	ginx.NewRender(c).Message("")
+}
+
+func getArraySet[T any, K comparable](arr []T, f func(T) K) []K {
+	tMaps := make(map[K]struct{}, len(arr))
+	for i := range arr {
+		tMaps[f(arr[i])] = struct{}{}
+	}
+	res := make([]K, 0, len(tMaps))
+	for gid := range tMaps {
+		res = append(res, gid)
+	}
+	return res
 }

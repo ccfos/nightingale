@@ -23,9 +23,9 @@ func MyGroupIds(ctx *ctx.Context, userId int64) ([]int64, error) {
 	return ids, err
 }
 
-func MemberIds(ctx *ctx.Context, groupId int64) ([]int64, error) {
+func MemberIds(ctx *ctx.Context, groupIds ...int64) ([]int64, error) {
 	var ids []int64
-	err := DB(ctx).Model(&UserGroupMember{}).Where("group_id=?", groupId).Pluck("user_id", &ids).Error
+	err := DB(ctx).Model(&UserGroupMember{}).Where("group_id in (?)", groupIds).Pluck("user_id", &ids).Error
 	return ids, err
 }
 
