@@ -70,20 +70,3 @@ func UserGroupMemberGetAll(ctx *ctx.Context) ([]*UserGroupMember, error) {
 	err := DB(ctx).Find(&lst).Error
 	return lst, err
 }
-
-func UserGroupMemberStatistics(ctx *ctx.Context) (*Statistics, error) {
-	if !ctx.IsCenter {
-		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=user_group_member")
-		return s, err
-	}
-	// Updating statements are not allowed for user_group_member; changes can only be made through deletion and addition.
-	session := DB(ctx).Model(&UserGroupMember{}).Select("count(*) as total", "max(id) as last_updated")
-
-	var stats []*Statistics
-	err := session.Find(&stats).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return stats[0], nil
-}
