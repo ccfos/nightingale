@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"encoding/json"
 	"strconv"
 	"strings"
 	"time"
@@ -50,6 +51,7 @@ type TaskForm struct {
 	Pause     string   `json:"pause"`
 	Script    string   `json:"script"`
 	Args      string   `json:"args"`
+	Stdin     string   `json:"stdin"`
 	Action    string   `json:"action"`
 	Creator   string   `json:"creator"`
 	Hosts     []string `json:"hosts"`
@@ -114,6 +116,30 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 		return
 	}
 
+	tagsMap := make(map[string]string)
+	for i := 0; i < len(event.TagsJSON); i++ {
+		pair := strings.TrimSpace(event.TagsJSON[i])
+		if pair == "" {
+			continue
+		}
+
+		arr := strings.Split(pair, "=")
+		if len(arr) != 2 {
+			continue
+		}
+
+		tagsMap[arr[0]] = arr[1]
+	}
+	// 附加告警级别  告警触发值标签
+	tagsMap["alert_severity"] = strconv.Itoa(event.Severity)
+	tagsMap["alert_trigger_value"] = event.TriggerValue
+
+	tags, err := json.Marshal(tagsMap)
+	if err != nil {
+		logger.Errorf("event_callback_ibex: failed to marshal tags to json: %v", tagsMap)
+		return
+	}
+
 	// call ibex
 	in := TaskForm{
 		Title:     tpl.Title + " FH: " + host,
@@ -124,6 +150,7 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 		Pause:     tpl.Pause,
 		Script:    tpl.Script,
 		Args:      tpl.Args,
+		Stdin:     string(tags),
 		Action:    "start",
 		Creator:   tpl.UpdateBy,
 		Hosts:     []string{host},

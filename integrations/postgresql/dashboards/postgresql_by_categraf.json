@@ -1,0 +1,736 @@
+{
+  "name": "postgresql by categraf",
+  "tags": "categraf",
+  "ident": "",
+  "configs": {
+    "var": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "definition": "prometheus",
+        "defaultValue": 5
+      },
+      {
+        "name": "server",
+        "type": "query",
+        "definition": "label_values(postgresql_datid,server)",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        }
+      },
+      {
+        "name": "db",
+        "type": "query",
+        "definition": "label_values(postgresql_datid{server=\"$server\"},db)",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        }
+      }
+    ],
+    "panels": [
+      {
+        "type": "row",
+        "id": "7f38f76f-5e62-4660-a104-a7f1e6e73aeb",
+        "name": "pg_stat_database",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "7f38f76f-5e62-4660-a104-a7f1e6e73aeb",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "stat",
+        "id": "65571b64-d249-40f1-8c57-ef826118c7a9",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 1,
+          "i": "65571b64-d249-40f1-8c57-ef826118c7a9",
+          "isResizable": true
+        },
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "postgresql_numbackends{server=\"$server\",db=\"$db\"}",
+            "legend": "{{db}}"
+          }
+        ],
+        "name": "连接数",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {
+            "title": 32,
+            "value": 46
+          }
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "type": "stat",
+        "id": "bdf5299c-b621-4d98-bcf8-fa2ebd12b7d4",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 1,
+          "i": "0fb92b82-63c4-4edd-a452-fb51150757ab",
+          "isResizable": true
+        },
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "postgresql_blks_hit{server=\"$server\",db=\"$db\"}/(postgresql_blks_hit{server=\"$server\",db=\"$db\"}+postgresql_blks_read{server=\"$server\",db=\"$db\"})",
+            "legend": "{{db}}"
+          }
+        ],
+        "name": "缓存命中率",
+        "description": "命中率低于99%，就需要适当调大shared buffer",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {
+            "title": 32,
+            "value": 46
+          }
+        },
+        "options": {
+          "standardOptions": {
+            "util": "percentUnit"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "type": "stat",
+        "id": "2a559648-ad51-40d1-a6ff-f641467b57ea",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 1,
+          "i": "d78ae395-1d53-481a-9566-9f4913616330",
+          "isResizable": true
+        },
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "postgresql_deadlocks{server=\"$server\",db=\"$db\"}",
+            "legend": "{{db}}"
+          }
+        ],
+        "name": "死锁数",
+        "description": "死锁的数量，如果这个值很大说明业务逻辑有问题",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {
+            "title": 32,
+            "value": 46
+          }
+        },
+        "options": {
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "type": "stat",
+        "id": "87a74ec2-c6d2-49e8-a1ea-4dbf1252a33d",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 1,
+          "i": "a666823e-455f-459e-bbfe-169341b77ddc",
+          "isResizable": true
+        },
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "postgresql_conflicts{server=\"$server\",db=\"$db\"}",
+            "legend": "{{db}}"
+          }
+        ],
+        "name": "冲突数",
+        "description": "与恢复冲突取消的查询次数，只会在备机上发生",
+        "custom": {
+          "textMode": "valueAndName",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {
+            "title": 32,
+            "value": 46
+          }
+        },
+        "options": {
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(postgresql_xact_commit{server=\"$server\",db=\"$db\"}[5m])",
+            "legend": "commit"
+          },
+          {
+            "expr": "increase(postgresql_xact_rollback{server=\"$server\",db=\"$db\"}[5m])",
+            "refId": "B",
+            "legend": "rollback"
+          }
+        ],
+        "name": "事务统计",
+        "description": "rollback 过多，则需要检查业务逻辑，表面业务逻辑存在问题",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 0,
+          "y": 5,
+          "i": "443aee8c-d1b8-485b-b74f-13fa58b6e7ae",
+          "isResizable": true
+        },
+        "id": "3dea2872-5904-4abf-b0f8-64afe82b617a",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(postgresql_tup_returned{server=\"$server\",db=\"$db\"}[5m])",
+            "legend": "returned"
+          },
+          {
+            "expr": "increase(postgresql_tup_fetched{server=\"$server\",db=\"$db\"}[5m])",
+            "refId": "B",
+            "legend": "fetched"
+          }
+        ],
+        "name": "数据查询统计",
+        "description": "returned ,代表执行查询遍历行数\nfetched，代表返回给客户端的行数\nreturned 远大于 fetched，代表查询效率低，存在全表扫描，应增加索引进行优化",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 12,
+          "y": 5,
+          "i": "8b85bc95-091a-4868-9bec-b495609d7a04",
+          "isResizable": true
+        },
+        "id": "dec2c25d-ae70-4e47-bc4f-6dbaa9e72683",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(postgresql_tup_inserted{server=\"$server\",db=\"$db\"}[5m])",
+            "legend": "inserted"
+          },
+          {
+            "expr": "increase(postgresql_tup_updated{server=\"$server\",db=\"$db\"}[5m])",
+            "refId": "B",
+            "legend": "updated"
+          },
+          {
+            "expr": "increase(postgresql_tup_deleted{server=\"$server\",db=\"$db\"}[5m])",
+            "refId": "C",
+            "legend": "deleted"
+          }
+        ],
+        "name": "数据更新统计",
+        "description": "",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 0,
+          "y": 9,
+          "i": "e08d94bb-1a72-4104-8ba0-11ab7317a192",
+          "isResizable": true
+        },
+        "id": "048d2652-40f1-42ab-a435-7e02d51c98c4",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(postgresql_temp_files{server=\"$server\",db=\"$db\"}[5m])",
+            "legend": "temp_files"
+          },
+          {
+            "expr": "increase(postgresql_temp_bytes{server=\"$server\",db=\"$db\"}[5m])",
+            "refId": "B",
+            "legend": "temp_bytes"
+          }
+        ],
+        "name": "生成临时文件统计",
+        "description": "temp_files较高说明存在很多排序，hash,或者聚合这种操作，可以增大work_mem减少临时文件的产生，并且同时这些操作的性能也会有较大的提升",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 12,
+          "y": 9,
+          "i": "971c5838-7408-4ec7-ae5e-33dcd0f20210",
+          "isResizable": true
+        },
+        "id": "c89d1e4b-d8ad-402d-bee4-f6d362b4634a",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(postgresql_blk_read_time{server=\"$server\",db=\"$db\"}[5m])",
+            "legend": "blk_read_time"
+          },
+          {
+            "expr": "increase(postgresql_blk_write_time{server=\"$server\",db=\"$db\"}[5m])",
+            "refId": "B",
+            "legend": "blk_write_time"
+          }
+        ],
+        "name": "数据库读写时间统计",
+        "description": "数据库中花费在读取文件的时间，这个值很高说明内存较小，需要频繁从磁盘读入数据文件\n数据库中花费在写数据文件的时间，pg中脏页一般写入page cache，如果这个值较高，则说明cache较小，操作系统的cache需要更积极的写入",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 4,
+          "w": 24,
+          "x": 0,
+          "y": 13,
+          "i": "71e28edd-8961-4a7a-be78-3a9a526c89bb",
+          "isResizable": true
+        },
+        "id": "7ae2c26a-cc2b-435d-9a16-52722c37bedf",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "type": "row",
+        "id": "72575aba-dbf5-4a05-8bd6-64170bff617e",
+        "name": "pg_stat_bgwriter",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 17,
+          "i": "72575aba-dbf5-4a05-8bd6-64170bff617e",
+          "isResizable": false
+        }
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(postgresql_checkpoints_timed{server=\"$server\",db=\"$db\"}[5m])",
+            "legend": "postgresql_checkpoints_timed"
+          },
+          {
+            "expr": "increase(postgresql_checkpoints_req{server=\"$server\",db=\"$db\"}[5m])",
+            "refId": "B",
+            "legend": "postgresql_checkpoints_req"
+          }
+        ],
+        "name": "checkpoint分布",
+        "description": "postgresql_checkpoints_timed：指超过checkpoint_timeout的时间后触发的检查点次数\npostgresql_checkpoints_req：手动触发checkpoint或者因为WAL文件数量达到max_wal_size时也会增加，如果这个值大于postgresql_checkpoints_timed说明checkpoint_timeout设置的不合理",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 5,
+          "w": 12,
+          "x": 0,
+          "y": 18,
+          "i": "c3d3ccee-719f-4280-8921-367ea5343849",
+          "isResizable": true
+        },
+        "id": "600a9687-0a1e-4531-b9bc-ccf8589566a2",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(postgresql_checkpoint_write_time{server=\"$server\",db=\"$db\"}[5m])",
+            "legend": "checkpoint_write_time"
+          },
+          {
+            "expr": "increase(postgresql_checkpoint_sync_time{server=\"$server\",db=\"$db\"}[5m])",
+            "refId": "B",
+            "legend": "checkpoint_sync_time"
+          }
+        ],
+        "name": "checkpoint 写文件时间分布",
+        "description": "checkpoint_write_time: 从shared buffer 中write到page cache花费的时间\ncheckpoint_sync_time  : checkpoint调用fsync将脏数据刷到磁盘花费的时间，如果这个值很长，容易造成IO抖动，需要增加checkpoint_timeout或者checkpoint_completion_target",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 5,
+          "w": 12,
+          "x": 12,
+          "y": 18,
+          "i": "178d8220-3c22-4ea3-909d-71c73fbb3a78",
+          "isResizable": true
+        },
+        "id": "561012f8-481a-482a-8504-4bdd8c62e8a6",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "increase(postgresql_buffers_checkpoint{server=\"$server\",db=\"$db\"}[5m])",
+            "legend": "buffers_checkpoint"
+          },
+          {
+            "expr": "increase(postgresql_buffers_clean{server=\"$server\",db=\"$db\"}[5m])",
+            "refId": "B",
+            "legend": "buffers_clean"
+          },
+          {
+            "expr": "increase(postgresql_buffers_backend{server=\"$server\",db=\"$db\"}[5m])",
+            "refId": "C",
+            "legend": "buffers_backend"
+          },
+          {
+            "expr": "increase(postgresql_buffers_backend_fsync{server=\"$server\",db=\"$db\"}[5m])",
+            "refId": "D",
+            "legend": "buffers_backend_fsync"
+          }
+        ],
+        "name": "数据块写入分布",
+        "description": "buffers_checkpoint: checkpoint写数据块数量\nbuffers_clean：bgwriter写入数据块的数量\nbuffers_backend:通过backend写入的块数量, 此值过大，代表shared buffer没有维护好，后端进程不得不自己去进行刷盘的动作\nbuffers_backend_fsync: backend需要fsync的次数\n",
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off"
+        },
+        "version": "2.0.0",
+        "type": "timeseries",
+        "layout": {
+          "h": 5,
+          "w": 24,
+          "x": 0,
+          "y": 23,
+          "i": "23b6fc64-1a19-422e-b28e-453570af339c",
+          "isResizable": true
+        },
+        "id": "af9e2a7f-ce09-4de2-8625-e779c770d46d",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      }
+    ],
+    "version": "3.0.0",
+    "links": [
+      {
+        "title": "文档",
+        "url": "https://github.com/ccfos/nightingale/tree/main/integrations/postgresql/markdown/",
+        "targetBlank": true
+      }
+    ]
+  }
+}

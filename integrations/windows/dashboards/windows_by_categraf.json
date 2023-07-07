@@ -1,0 +1,1303 @@
+{
+    "name": "Windows Host by Categraf",
+    "tags": "Categraf",
+    "ident": "",
+    "configs": {
+        "links": [
+            {
+                "targetBlank": true,
+                "title": "n9e",
+                "url": "https://n9e.github.io/"
+            },
+            {
+                "targetBlank": true,
+                "title": "author",
+                "url": "http://flashcat.cloud/"
+            }
+        ],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "2b2de3d1-65c8-4c39-9bea-02b754e0d751",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "2b2de3d1-65c8-4c39-9bea-02b754e0d751",
+                    "isResizable": false
+                },
+                "name": "单机概况",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {
+                        "value": 30
+                    },
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "deec579b-3090-4344-a9a6-c1455c4a8e50",
+                "layout": {
+                    "h": 5,
+                    "w": 4,
+                    "x": 0,
+                    "y": 1,
+                    "i": "deec579b-3090-4344-a9a6-c1455c4a8e50",
+                    "isResizable": true
+                },
+                "name": "启动时长（单位：天）",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "system_uptime{ident=~\"$ident\"}/3600/24",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {
+                        "value": 30
+                    },
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "7a7bd5db-d12e-49f0-92a8-15958e99ee54",
+                "layout": {
+                    "h": 5,
+                    "w": 4,
+                    "x": 4,
+                    "y": 1,
+                    "i": "7a7bd5db-d12e-49f0-92a8-15958e99ee54",
+                    "isResizable": true
+                },
+                "name": "CPU使用率",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 0,
+                                "to": 50
+                            },
+                            "result": {
+                                "color": "#129b22"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 50,
+                                "to": 100
+                            },
+                            "result": {
+                                "color": "#f51919"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "100-cpu_usage_idle{ident=~\"$ident\",cpu=\"cpu-total\"}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {
+                        "value": 30
+                    }
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "8a814265-54ad-419c-8cb7-e1f84a242de0",
+                "layout": {
+                    "h": 5,
+                    "w": 4,
+                    "x": 8,
+                    "y": 1,
+                    "i": "8a814265-54ad-419c-8cb7-e1f84a242de0",
+                    "isResizable": true
+                },
+                "name": "内存使用率",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "percent"
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 0,
+                                "to": 50
+                            },
+                            "result": {
+                                "color": "#129b22"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 50,
+                                "to": 100
+                            },
+                            "result": {
+                                "color": "#f51919"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "mem_used_percent{ident=~\"$ident\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "type": "hexbin",
+                "id": "b3c5dd9d-e82a-4b15-8b23-c510e2bee152",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 1,
+                    "i": "b3c5dd9d-e82a-4b15-8b23-c510e2bee152",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "disk_used_percent{ident=~\"$ident\"}",
+                        "instant": false,
+                        "legend": "主机名：{{ident}} - 盘符：{{path}}",
+                        "refId": "A",
+                        "step": 60
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "磁盘使用率",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "calc": "lastNotNull",
+                    "colorRange": [
+                        "#83c898",
+                        "#c2c2c2",
+                        "#fc653f"
+                    ],
+                    "reverseColorOrder": false,
+                    "colorDomainAuto": true
+                },
+                "options": {
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "59afa167-434d-496c-a3ef-ceff6db7c1f6",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 1,
+                    "i": "59afa167-434d-496c-a3ef-ceff6db7c1f6",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(diskio_io_time{ident=~\"$ident\"}[1m])/10",
+                        "legend": "{{ident}}-{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "io_util",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "collapsed": true,
+                "id": "10f34f8f-f94d-4a28-9551-16e6667e3833",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 6,
+                    "i": "10f34f8f-f94d-4a28-9551-16e6667e3833",
+                    "isResizable": false
+                },
+                "name": "CPU",
+                "type": "row"
+            },
+            {
+                "type": "timeseries",
+                "id": "1559d880-7e26-4e42-9427-4e55fb6f67be",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 7,
+                    "i": "1559d880-7e26-4e42-9427-4e55fb6f67be",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "cpu_usage_idle{ident=~\"$ident\",cpu=\"cpu-total\"}",
+                        "legend": "{{ident}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU空闲率",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#f20202",
+                                "value": 10
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "043c26de-d19f-4fe8-a615-2b7c10ceb828",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 7,
+                    "i": "043c26de-d19f-4fe8-a615-2b7c10ceb828",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "cpu_usage_guest{ident=~\"$ident\",cpu=\"cpu-total\"}",
+                        "legend": "{{ident}}-cpu_usage_guest",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "cpu_usage_iowait{ident=~\"$ident\",cpu=\"cpu-total\"}",
+                        "legend": "{{ident}}-cpu_usage_iowait",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "cpu_usage_user{ident=~\"$ident\",cpu=\"cpu-total\"}",
+                        "legend": "{{ident}}-cpu_usage_user",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "cpu_usage_system{ident=~\"$ident\",cpu=\"cpu-total\"}",
+                        "legend": "{{ident}}-cpu_usage_system",
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "cpu_usage_irq{ident=~\"$ident\",cpu=\"cpu-total\"}",
+                        "legend": "{{ident}}-cpu_usage_irq",
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "cpu_usage_softirq{ident=~\"$ident\",cpu=\"cpu-total\"}",
+                        "legend": "{{ident}}-cpu_usage_softirq",
+                        "refId": "F"
+                    },
+                    {
+                        "expr": "cpu_usage_nice{ident=~\"$ident\",cpu=\"cpu-total\"}",
+                        "legend": "{{ident}}-cpu_usage_nice",
+                        "refId": "G"
+                    },
+                    {
+                        "expr": "cpu_usage_steal{ident=~\"$ident\",cpu=\"cpu-total\"}",
+                        "legend": "{{ident}}-cpu_usage_steal",
+                        "refId": "H"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU使用率详情",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "a420ce25-6968-47f8-8335-60cde70fd062",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 7,
+                    "i": "a420ce25-6968-47f8-8335-60cde70fd062",
+                    "isResizable": true
+                },
+                "name": "CPU负载",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "system_load15{ident=~\"$ident\"}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "system_load1{ident=~\"$ident\"}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "system_load5{ident=~\"$ident\"}",
+                        "refId": "C"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "b7a3c99f-a796-4b76-89b5-cbddd566f91c",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 14,
+                    "i": "b7a3c99f-a796-4b76-89b5-cbddd566f91c",
+                    "isResizable": false
+                },
+                "name": "内存详情",
+                "type": "row"
+            },
+            {
+                "type": "timeseries",
+                "id": "44a07a85-0f3e-4c73-abfe-dcc3c5c7f30e",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 15,
+                    "i": "44a07a85-0f3e-4c73-abfe-dcc3c5c7f30e",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mem_used_percent{ident=~\"$ident\"}",
+                        "legend": "platform: {{platform}} {{ident}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内存使用率",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "28a1dac8-2ddc-408d-8e17-27fc7d7bc9ff",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 15,
+                    "i": "bab1e1f4-87cc-48b9-a655-bcac9839ec9b",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mem_available_percent{ident=~\"$ident\"}",
+                        "legend": "{{ident}} "
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内用当前可用率",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "collapsed": true,
+                "id": "842a8c48-0e93-40bf-8f28-1b2f837e5c19",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 21,
+                    "i": "842a8c48-0e93-40bf-8f28-1b2f837e5c19",
+                    "isResizable": false
+                },
+                "name": "磁盘详情",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "bc894871-1c03-4d12-91be-6867f394a8a6",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 0,
+                    "y": 22,
+                    "i": "bc894871-1c03-4d12-91be-6867f394a8a6",
+                    "isResizable": true
+                },
+                "name": "磁盘空间",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": null,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "disk_free{ident=~\"$ident\"}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "disk_total{ident=~\"$ident\"}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "disk_used{ident=~\"$ident\"}",
+                        "refId": "C"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "bbd1ebda-99f6-419c-90a5-5f84973976dd",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 6,
+                    "y": 22,
+                    "i": "bbd1ebda-99f6-419c-90a5-5f84973976dd",
+                    "isResizable": true
+                },
+                "name": "IO吞吐量",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 0,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(diskio_read_bytes{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}}-{{name}}-read",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(diskio_write_bytes{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}}-{{name}}-writes",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "f645741e-c632-4685-b267-c7ad26b5c10e",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 12,
+                    "y": 22,
+                    "i": "f645741e-c632-4685-b267-c7ad26b5c10e",
+                    "isResizable": true
+                },
+                "name": "IOPS",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(diskio_reads{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}}-{{name}}-read",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(diskio_writes{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}}-{{name}}-writes",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "d6b45598-54c6-4b36-a896-0a7529ac21f8",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 18,
+                    "y": 22,
+                    "i": "d6b45598-54c6-4b36-a896-0a7529ac21f8",
+                    "isResizable": true
+                },
+                "name": "iowait",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(diskio_write_time{ident=~\"$ident\"}[1m])/rate(diskio_writes{ident=~\"$ident\"}[1m])+rate(diskio_read_time{ident=~\"$ident\"}[1m])/rate(diskio_reads{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}}-{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "307152d2-708c-4736-98cf-08b886cbf7f2",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 29,
+                    "i": "307152d2-708c-4736-98cf-08b886cbf7f2",
+                    "isResizable": false
+                },
+                "name": "网络详情",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "f2ee5d32-737c-4095-b6b7-b15b778ffdb9",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 0,
+                    "y": 30,
+                    "i": "f2ee5d32-737c-4095-b6b7-b15b778ffdb9",
+                    "isResizable": true
+                },
+                "name": "网络流量",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 0,
+                        "util": "bitsIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(net_bytes_recv{ident=~\"$ident\"}[1m])*8",
+                        "legend": "{{ident}}-{{interface}}-recv",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(net_bytes_sent{ident=~\"$ident\"}[1m])*8",
+                        "legend": "{{ident}}-{{interface}}-sent",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "9113323a-98f5-4bff-a8ce-3b459e7e2190",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 6,
+                    "y": 30,
+                    "i": "9113323a-98f5-4bff-a8ce-3b459e7e2190",
+                    "isResizable": true
+                },
+                "name": "packets",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(net_packets_recv{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}}-{{interface}}-recv",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(net_packets_sent{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}}-{{interface}}-sent",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "9634c41c-e124-4d7f-9406-0f86753e8d70",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 12,
+                    "y": 30,
+                    "i": "9634c41c-e124-4d7f-9406-0f86753e8d70",
+                    "isResizable": true
+                },
+                "name": "error",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(net_err_in{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}}-{{interface}}-in",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(net_err_out{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}}-{{interface}}-out",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "4123f4c1-bf8e-400e-b267-8d7f6a92691a",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 18,
+                    "y": 30,
+                    "i": "4123f4c1-bf8e-400e-b267-8d7f6a92691a",
+                    "isResizable": true
+                },
+                "name": "drop",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(net_drop_in{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}}-{{interface}}-in",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(net_drop_out{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}}-{{interface}}-out",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "cfb80689-de7b-47fb-9155-052b796dd7f5",
+                "layout": {
+                    "h": 7,
+                    "w": 24,
+                    "x": 0,
+                    "y": 37,
+                    "i": "cfb80689-de7b-47fb-9155-052b796dd7f5",
+                    "isResizable": true
+                },
+                "name": "tcp",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "netstat_tcp_established{ident=~\"$ident\"}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "netstat_tcp_listen{ident=~\"$ident\"}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "netstat_tcp_time_wait{ident=~\"$ident\"}",
+                        "refId": "C"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "prom",
+                "type": "datasource"
+            },
+            {
+                "name": "ident",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
+                "definition": "label_values(system_load1{platform=\"windows\"},ident)",
+                "multi": true,
+                "allOption": true
+            }
+        ],
+        "version": "3.0.0"
+    }
+}

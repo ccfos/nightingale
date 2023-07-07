@@ -170,6 +170,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/auth/ifshowcaptcha", rt.ifShowCaptcha)
 
 		pages.GET("/auth/sso-config", rt.ssoConfigNameGet)
+		pages.GET("/auth/rsa-config", rt.rsaConfigGet)
 		pages.GET("/auth/redirect", rt.loginRedirect)
 		pages.GET("/auth/redirect/cas", rt.loginRedirectCas)
 		pages.GET("/auth/redirect/oauth", rt.loginRedirectOAuth)
