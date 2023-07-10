@@ -325,7 +325,7 @@ CREATE TABLE `alert_subscribe` (
     `datasource_ids` varchar(255) not null default '' comment 'datasource ids',
     `cluster` varchar(128) not null,
     `rule_id` bigint not null default 0,
-    `severity` tinyint(1) not null comment '0:Emergency 1:Warning 2:Notice',
+    `severities` varchar(32) not null default '',
     `tags` varchar(4096) not null default '' comment 'json,map,tagkey->regexp|value',
     `redefine_severity` tinyint(1) default 0 comment 'is redefine severity?',
     `new_severity` tinyint(1) not null comment '0:Emergency 1:Warning 2:Notice',

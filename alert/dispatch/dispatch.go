@@ -180,8 +180,17 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 		return
 	}
 
-	if sub.Severity != 0 && sub.Severity != event.Severity {
-		return
+	if len(sub.SeveritiesJson) != 0 {
+		match := false
+		for _, s := range sub.SeveritiesJson {
+			if s == event.Severity || s == 0 {
+				match = true
+				break
+			}
+		}
+		if !match {
+			return
+		}
 	}
 
 	sub.ModifyEvent(&event)

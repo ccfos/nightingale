@@ -25,9 +25,10 @@ type AlertSubscribe struct {
 	DatasourceIdsJson []int64      `json:"datasource_ids" gorm:"-"` // for fe
 	Cluster           string       `json:"cluster"`                 // take effect by clusters, seperated by space
 	RuleId            int64        `json:"rule_id"`
-	Severity          int          `json:"severity"`           // sub severity
-	ForDuration       int64        `json:"for_duration"`       // for duration, unit: second
-	RuleName          string       `json:"rule_name" gorm:"-"` // for fe
+	Severities        string       `json:"-" gorm:"severities"`          // sub severity
+	SeveritiesJson    []int        `json:"severities" gorm:"severities"` // for fe
+	ForDuration       int64        `json:"for_duration"`                 // for duration, unit: second
+	RuleName          string       `json:"rule_name" gorm:"-"`           // for fe
 	Tags              ormx.JSONArr `json:"tags"`
 	RedefineSeverity  int          `json:"redefine_severity"`
 	NewSeverity       int          `json:"new_severity"`
@@ -124,6 +125,11 @@ func (s *AlertSubscribe) FE2DB() error {
 	b, _ := json.Marshal(s.ExtraConfigJson)
 	s.ExtraConfig = string(b)
 
+	if len(s.SeveritiesJson) > 0 {
+		b, _ := json.Marshal(s.SeveritiesJson)
+		s.Severities = string(b)
+	}
+
 	return nil
 }
 
@@ -142,6 +148,12 @@ func (s *AlertSubscribe) DB2FE() error {
 
 	if s.ExtraConfig != "" {
 		if err := json.Unmarshal([]byte(s.ExtraConfig), &s.ExtraConfigJson); err != nil {
+			return err
+		}
+	}
+
+	if s.Severities != "" {
+		if err := json.Unmarshal([]byte(s.Severities), &s.SeveritiesJson); err != nil {
 			return err
 		}
 	}
