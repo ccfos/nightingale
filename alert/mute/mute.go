@@ -177,5 +177,21 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		return false
 	}
 
+	var matchSeverity bool
+	if len(mute.SeveritiesJson) > 0 {
+		for _, s := range mute.SeveritiesJson {
+			if event.Severity == s || s == 0 {
+				matchSeverity = true
+				break
+			}
+		}
+	} else {
+		matchSeverity = true
+	}
+
+	if !matchSeverity {
+		return false
+	}
+
 	return common.MatchTags(event.TagsMap, mute.ITags)
 }

@@ -306,6 +306,7 @@ CREATE TABLE `alert_mute` (
     `disabled` tinyint(1) not null default 0 comment '0:enabled 1:disabled',
     `mute_time_type` tinyint(1) not null default 0,
     `periodic_mutes` varchar(4096) not null default '',
+    `severities` varchar(32) not null default '',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
