@@ -296,7 +296,7 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 		}
 
 		// 之前发送过告警了，这次是否要继续发送，要看是否过了通道静默时间
-		if event.LastEvalTime > fired.LastSentTime+int64(cachedRule.NotifyRepeatStep)*60 {
+		if event.LastEvalTime >= fired.LastSentTime+int64(cachedRule.NotifyRepeatStep)*60 {
 			if cachedRule.NotifyMaxNumber == 0 {
 				// 最大可以发送次数如果是0，表示不想限制最大发送次数，一直发即可
 				event.NotifyCurNumber = fired.NotifyCurNumber + 1
