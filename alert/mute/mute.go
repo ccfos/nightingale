@@ -52,12 +52,12 @@ func TimeNonEffectiveMuteStrategy(rule *models.AlertRule, event *models.AlertCur
 		if !strings.Contains(enableDaysOfWeek[i], triggerWeek) {
 			continue
 		}
-		if enableStime[i] <= enableEtime[i] {
+		if enableStime[i] < enableEtime[i] {
 			if triggerTime < enableStime[i] || triggerTime > enableEtime[i] {
 				continue
 			}
-		} else {
-			if triggerTime < enableStime[i] && triggerTime > enableEtime[i] {
+		} else if enableStime[i] > enableEtime[i] {
+			if triggerTime < enableStime[i] && triggerTime >= enableEtime[i] {
 				continue
 			}
 		}
@@ -165,7 +165,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 						break
 					}
 				} else {
-					if triggerTime < mute.PeriodicMutesJson[i].EnableStime || triggerTime >= mute.PeriodicMutesJson[i].EnableEtime {
+					if triggerTime >= mute.PeriodicMutesJson[i].EnableStime || triggerTime < mute.PeriodicMutesJson[i].EnableEtime {
 						matchTime = true
 						break
 					}
