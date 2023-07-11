@@ -25,10 +25,10 @@ type AlertSubscribe struct {
 	DatasourceIdsJson []int64      `json:"datasource_ids" gorm:"-"` // for fe
 	Cluster           string       `json:"cluster"`                 // take effect by clusters, seperated by space
 	RuleId            int64        `json:"rule_id"`
-	Severities        string       `json:"-" gorm:"severities"`          // sub severity
-	SeveritiesJson    []int        `json:"severities" gorm:"severities"` // for fe
-	ForDuration       int64        `json:"for_duration"`                 // for duration, unit: second
-	RuleName          string       `json:"rule_name" gorm:"-"`           // for fe
+	Severities        string       `json:"-" gorm:"severities"` // sub severity
+	SeveritiesJson    []int        `json:"severities" gorm:"-"` // for fe
+	ForDuration       int64        `json:"for_duration"`        // for duration, unit: second
+	RuleName          string       `json:"rule_name" gorm:"-"`  // for fe
 	Tags              ormx.JSONArr `json:"tags"`
 	RedefineSeverity  int          `json:"redefine_severity"`
 	NewSeverity       int          `json:"new_severity"`
