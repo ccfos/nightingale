@@ -1,0 +1,2879 @@
+{
+  "name": "Ceph - Cluster By Categraf",
+  "tags": "Categraf",
+  "ident": "",
+  "configs": {
+    "version": "3.0.0",
+    "links": [],
+    "var": [
+      {
+        "name": "DATASOURCE",
+        "type": "datasource",
+        "definition": "prometheus",
+        "defaultValue": 5
+      },
+      {
+        "name": "cluster",
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${DATASOURCE}"
+        },
+        "definition": "label_values(ceph_health_status,cluster)",
+        "reg": "",
+        "multi": false
+      }
+    ],
+    "panels": [
+      {
+        "version": "3.0.0",
+        "id": "40d15965-877f-4cb9-8e8f-b6d43eaf477b",
+        "type": "row",
+        "name": "CLUSTER STATE",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "40d15965-877f-4cb9-8e8f-b6d43eaf477b",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "stat",
+        "id": "d30b94a5-5875-4c55-85d3-352d6bc4d419",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 0,
+          "y": 1,
+          "i": "d30b94a5-5875-4c55-85d3-352d6bc4d419",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ceph_health_status{cluster=\"$cluster\"}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "f22cc692-4e4e-44e6-ae1e-f4750e6ced36",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 3,
+          "y": 1,
+          "i": "f22cc692-4e4e-44e6-ae1e-f4750e6ced36",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(irate(ceph_osd_op_w_in_bytes{cluster=\"$cluster\"}[5m]))"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Write Throughput",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "aaf30364-54b0-47b1-9e99-351f4f65a780",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 6,
+          "y": 1,
+          "i": "aaf30364-54b0-47b1-9e99-351f4f65a780",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(irate(ceph_osd_op_r_out_bytes{cluster=\"$cluster\"}[5m]))"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Read Throughput",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "ce61e127-e379-4fd9-bcd4-37a3bbca1ace",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 9,
+          "y": 1,
+          "i": "ce61e127-e379-4fd9-bcd4-37a3bbca1ace",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ceph_cluster_total_bytes{cluster=\"$cluster\"}",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Cluster Capacity",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "ddf70b0b-f207-489d-95b0-fc3a457993a6",
+        "layout": {
+          "h": 6,
+          "w": 3,
+          "x": 12,
+          "y": 1,
+          "i": "ddf70b0b-f207-489d-95b0-fc3a457993a6",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "(ceph_cluster_total_bytes{cluster=\"$cluster\"}-ceph_cluster_total_used_bytes{cluster=\"$cluster\"})/ceph_cluster_total_bytes{cluster=\"$cluster\"}",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Available Capacity",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "6114e5c7-73a8-4c35-8b49-85ed0fe5ca75",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 15,
+          "y": 1,
+          "i": "6114e5c7-73a8-4c35-8b49-85ed0fe5ca75",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ceph_cluster_total_objects{cluster=\"$cluster\"}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Number of Objects",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "45150843-0f61-4e6c-9dc2-484c693afd4e",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 18,
+          "y": 1,
+          "i": "45150843-0f61-4e6c-9dc2-484c693afd4e",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(ceph_osd_op_w_in_bytes{cluster=\"$cluster\"})"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Bytes Written",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "9eb35dad-3e2f-4020-97b7-2a4567bc4e9c",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 21,
+          "y": 1,
+          "i": "9eb35dad-3e2f-4020-97b7-2a4567bc4e9c",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(ceph_osd_op_r_out_bytes{cluster=\"$cluster\"})"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Bytes Read",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "c08d5553-c189-424d-be0c-15fdced7a402",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 0,
+          "y": 4,
+          "i": "c08d5553-c189-424d-be0c-15fdced7a402",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "count(ALERTS{cluster='$cluster', alertstate='firing'}) OR vector(0)"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Alerts",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "92dc4651-a023-4c7a-b998-88a6ba844d7f",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 3,
+          "y": 4,
+          "i": "92dc4651-a023-4c7a-b998-88a6ba844d7f",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(irate(ceph_osd_op_w{cluster=\"$cluster\"}[5m]))"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Write IOPS",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "72056479-6031-4014-8d72-5cf06e50099c",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 6,
+          "y": 4,
+          "i": "72056479-6031-4014-8d72-5cf06e50099c",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(irate(ceph_osd_op_r{cluster=\"$cluster\"}[5m]))"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Read IOPS",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "c750f49f-05e1-4a22-8efe-eb0e42b87950",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 9,
+          "y": 4,
+          "i": "c750f49f-05e1-4a22-8efe-eb0e42b87950",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ceph_cluster_total_used_bytes{cluster=\"$cluster\"}",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Used Capacity",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "d20d66ff-ce39-47d6-800c-8ab99941bf6a",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 15,
+          "y": 4,
+          "i": "d20d66ff-ce39-47d6-800c-8ab99941bf6a",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ceph_cluster_total_objects{cluster=\"$cluster\"}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Difference",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "a36e7fb7-c450-4dcf-9cac-3dd20092cdef",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 18,
+          "y": 4,
+          "i": "a36e7fb7-c450-4dcf-9cac-3dd20092cdef",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(ceph_mon_num_sessions{cluster='$cluster'})"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Mon Session Num",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "065cb6bd-fca7-46b0-a9d0-7f4866a583fb",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 21,
+          "y": 4,
+          "i": "065cb6bd-fca7-46b0-a9d0-7f4866a583fb",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "count(ceph_mon_quorum_status{cluster=\"$cluster\"})",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Monitors In Quorum",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "4ea9d78b-193e-41a9-8ed5-b52487f6b460",
+        "type": "row",
+        "name": "OSD STATE",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 7,
+          "i": "4ea9d78b-193e-41a9-8ed5-b52487f6b460",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "stat",
+        "id": "2e9efb16-1239-4f9a-b105-1cbcdc2e9a25",
+        "layout": {
+          "h": 3,
+          "w": 2,
+          "x": 0,
+          "y": 8,
+          "i": "2e9efb16-1239-4f9a-b105-1cbcdc2e9a25",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "count(ceph_osd_up{cluster=\"$cluster\"}) - count(ceph_osd_in{cluster=\"$cluster\"})",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "OSDs OUT",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "323101fb-f562-4c6d-89d7-39899549ba5b",
+        "layout": {
+          "h": 3,
+          "w": 2,
+          "x": 2,
+          "y": 8,
+          "i": "323101fb-f562-4c6d-89d7-39899549ba5b",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "count(ceph_osd_up{cluster=\"$cluster\"} == 0.0) OR vector(0)",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "OSDs DOWN",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "5add038b-eb04-40dd-9bcc-8e620e72549b",
+        "layout": {
+          "h": 3,
+          "w": 2,
+          "x": 4,
+          "y": 8,
+          "i": "5add038b-eb04-40dd-9bcc-8e620e72549b",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(ceph_osd_up{cluster=\"$cluster\"})",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "OSDs UP",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "5295e4fa-4027-408d-acef-ee1e6b662c3b",
+        "layout": {
+          "h": 3,
+          "w": 2,
+          "x": 6,
+          "y": 8,
+          "i": "5295e4fa-4027-408d-acef-ee1e6b662c3b",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(ceph_osd_in{cluster=\"$cluster\"})",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "OSDs IN",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "6ef3f924-1ada-4d7e-9a34-2b00bf607e0e",
+        "layout": {
+          "h": 3,
+          "w": 2,
+          "x": 8,
+          "y": 8,
+          "i": "6ef3f924-1ada-4d7e-9a34-2b00bf607e0e",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "avg(ceph_osd_numpg{cluster=\"$cluster\"})",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Avg PGs",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "b6109c27-3022-45bc-8d69-46db095335b4",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 10,
+          "y": 8,
+          "i": "b6109c27-3022-45bc-8d69-46db095335b4",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "avg(ceph_osd_apply_latency_ms{cluster=\"$cluster\"})",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Avg Apply Latency",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "ba070ba7-8fb3-44af-9bcf-5f34eeb96919",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 13,
+          "y": 8,
+          "i": "ba070ba7-8fb3-44af-9bcf-5f34eeb96919",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "avg(ceph_osd_commit_latency_ms{cluster=\"$cluster\"})",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Avg Commit Latency",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "fe6884f3-8cb6-4688-a189-3d733090f041",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 16,
+          "y": 8,
+          "i": "fe6884f3-8cb6-4688-a189-3d733090f041",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "avg(rate(ceph_osd_op_w_latency_sum{cluster=\"$cluster\"}[5m]) / rate(ceph_osd_op_w_latency_count{cluster=\"$cluster\"}[5m]) >= 0)"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Avg Op Write Latency",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "7d2d0613-206b-487b-8c58-56f36ba4f145",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 20,
+          "y": 8,
+          "i": "7d2d0613-206b-487b-8c58-56f36ba4f145",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "avg(rate(ceph_osd_op_r_latency_sum{cluster=\"$cluster\"}[5m])/rate(ceph_osd_op_r_latency_count{cluster=\"$cluster\"}[5m]) >= 0)"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Avg  Op Read Latency",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "8b5713db-43e7-470e-8758-108e51543bcc",
+        "type": "row",
+        "name": "CLUSTER",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 11,
+          "i": "8b5713db-43e7-470e-8758-108e51543bcc",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "d756bbce-10d0-4301-994d-4e381be883ee",
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 12,
+          "i": "d756bbce-10d0-4301-994d-4e381be883ee",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "C",
+            "expr": "ceph_cluster_total_bytes{cluster=\"$cluster\"}",
+            "legend": "Total Capacity"
+          },
+          {
+            "refId": "A",
+            "expr": "ceph_cluster_total_bytes{cluster=\"$cluster\"}-ceph_cluster_total_used_bytes{cluster=\"$cluster\"}",
+            "legend": "Available"
+          },
+          {
+            "refId": "B",
+            "expr": "ceph_cluster_total_used_bytes{cluster=\"$cluster\"}",
+            "legend": "Used"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Capacity",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "496e43b1-cb84-42cf-b0db-d4c5fb651d45",
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 12,
+          "i": "496e43b1-cb84-42cf-b0db-d4c5fb651d45",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(irate(ceph_osd_op_w{cluster=\"$cluster\"}[5m]))",
+            "legend": "Write"
+          },
+          {
+            "refId": "B",
+            "expr": "sum(irate(ceph_osd_op_r{cluster=\"$cluster\"}[5m]))",
+            "legend": "Read"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "IOPS",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "22fc4713-e9f9-4b47-aa65-d7c2067452c1",
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 12,
+          "i": "22fc4713-e9f9-4b47-aa65-d7c2067452c1",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(irate(ceph_osd_op_w_in_bytes{cluster=\"$cluster\"}[5m]))",
+            "legend": "Write"
+          },
+          {
+            "refId": "B",
+            "expr": "sum(irate(ceph_osd_op_r_out_bytes{cluster=\"$cluster\"}[5m]))",
+            "legend": "Read"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Throughput",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "a5c43a7c-b6cf-4bc5-acef-c7ef845c4620",
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 20,
+          "i": "a5c43a7c-b6cf-4bc5-acef-c7ef845c4620",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "(ceph_pool_bytes_used{cluster='$cluster'}) *on (pool_id) group_left(name)(ceph_pool_metadata{cluster='$cluster'})",
+            "legend": "{{name}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Pool Used Bytes",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "729139a3-0097-45a5-86ee-63608734baef",
+        "type": "timeseries",
+        "name": "Pool RAW Used Bytes",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 20,
+          "i": "729139a3-0097-45a5-86ee-63608734baef",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "(ceph_pool_raw_bytes_used{cluster='$cluster'}) *on (pool_id) group_left(name)(ceph_pool_metadata{cluster='$cluster'})",
+            "legend": "{{name}}"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4
+      },
+      {
+        "type": "timeseries",
+        "id": "c97c4581-6163-4b3c-bd18-b710244f607b",
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 20,
+          "i": "c97c4581-6163-4b3c-bd18-b710244f607b",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "(ceph_pool_objects{cluster='$cluster'}) *on (pool_id) group_left(name)(ceph_pool_metadata{cluster='$cluster'})",
+            "legend": "{{name}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Objects Per Pool",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "e04d410c-280a-4f4a-90c0-f19779d30753",
+        "type": "timeseries",
+        "name": "Pool Quota Bytes",
+        "links": [],
+        "layout": {
+          "h": 7,
+          "w": 8,
+          "x": 0,
+          "y": 28,
+          "i": "e04d410c-280a-4f4a-90c0-f19779d30753",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "(ceph_pool_quota_bytes{cluster='$cluster'}) *on (pool_id) group_left(name)(ceph_pool_metadata{cluster='$cluster'})",
+            "legend": "{{name}}"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4
+      },
+      {
+        "version": "3.0.0",
+        "id": "94f01b89-eeef-4b73-922f-e24539683f85",
+        "type": "timeseries",
+        "name": "Pool Objects Quota",
+        "links": [],
+        "layout": {
+          "h": 7,
+          "w": 8,
+          "x": 8,
+          "y": 28,
+          "i": "94f01b89-eeef-4b73-922f-e24539683f85",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "(ceph_pool_quota_objects{cluster='$cluster'}) *on (pool_id) group_left(name)(ceph_pool_metadata{cluster='$cluster'})",
+            "legend": "{{name}}"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4
+      },
+      {
+        "version": "3.0.0",
+        "id": "6fce7e94-658a-43f0-b71d-6d4884b0729f",
+        "type": "timeseries",
+        "name": "OSD Type Count",
+        "links": [],
+        "layout": {
+          "h": 7,
+          "w": 8,
+          "x": 16,
+          "y": 28,
+          "i": "6fce7e94-658a-43f0-b71d-6d4884b0729f",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "count(ceph_bluestore_commit_lat_count{cluster='$cluster'})",
+            "legend": "BlueStore"
+          },
+          {
+            "refId": "B",
+            "expr": "count(ceph_filestore_journal_latency_count{cluster='$cluster'})",
+            "legend": "FileStore"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4
+      },
+      {
+        "version": "3.0.0",
+        "id": "8d15424c-09e2-4277-b03c-9f387794c246",
+        "type": "row",
+        "name": "Alerts",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 35,
+          "i": "8d15424c-09e2-4277-b03c-9f387794c246",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "unknown",
+        "id": "39fe8468-9d6a-4ea0-86cb-82629123b5b2",
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 0,
+          "y": 36,
+          "i": "39fe8468-9d6a-4ea0-86cb-82629123b5b2",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ALERTS{cluster='$cluster', alertstate='firing'}",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Alerts from CephThanos",
+        "links": [],
+        "maxPerRow": 4
+      },
+      {
+        "type": "table",
+        "id": "00669ac0-4fac-4771-ba40-390bc2bd3131",
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 8,
+          "y": 36,
+          "i": "00669ac0-4fac-4771-ba40-390bc2bd3131",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "topk(5,sort_desc(ceph_osd_apply_latency_ms{cluster='$cluster'} + ceph_osd_commit_latency_ms{cluster='$cluster'}))"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Top Sluggish OSD's",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "showHeader": true,
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "displayMode": "seriesToRows"
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "overrides": [
+          {}
+        ]
+      },
+      {
+        "type": "unknown",
+        "id": "021f7151-84f5-465c-85be-2f4d80d3087a",
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 16,
+          "y": 36,
+          "i": "021f7151-84f5-465c-85be-2f4d80d3087a",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ceph_osd_up{cluster=\"$cluster\"} == 0",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Down OSD's",
+        "links": [],
+        "maxPerRow": 4
+      },
+      {
+        "version": "3.0.0",
+        "id": "4276718f-312d-469a-a079-36696fef7926",
+        "type": "row",
+        "name": "Ceph Versions",
+        "collapsed": false,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 42,
+          "i": "4276718f-312d-469a-a079-36696fef7926",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "b5196610-3a49-4c6a-99fb-49173346db75",
+        "layout": {
+          "h": 9,
+          "w": 6,
+          "x": 0,
+          "y": 43,
+          "i": "b5196610-3a49-4c6a-99fb-49173346db75",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "count by (ceph_version)(ceph_osd_metadata{cluster='$cluster'})"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Ceph OSD Versions",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "3ceb91fe-65a0-408b-96ca-1bdd3b003890",
+        "layout": {
+          "h": 9,
+          "w": 6,
+          "x": 6,
+          "y": 43,
+          "i": "3ceb91fe-65a0-408b-96ca-1bdd3b003890",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "count by (ceph_version)(ceph_mon_metadata{cluster='$cluster'})"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Ceph Mon Versions",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "72476720-2416-49d3-af67-8ed7da951d4f",
+        "layout": {
+          "h": 9,
+          "w": 6,
+          "x": 12,
+          "y": 43,
+          "i": "72476720-2416-49d3-af67-8ed7da951d4f",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "count by (ceph_version)(ceph_mds_metadata{cluster='$cluster'})"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Ceph MDS Versions",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "9fe26b14-d9ce-41b6-af0b-f0e353789959",
+        "layout": {
+          "h": 9,
+          "w": 6,
+          "x": 18,
+          "y": 43,
+          "i": "9fe26b14-d9ce-41b6-af0b-f0e353789959",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "count by (ceph_version)(ceph_rgw_metadata{cluster='$cluster'})"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Ceph RGW Versions",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "55fde6b5-f588-4a82-b6df-7faeb819a6ed",
+        "type": "row",
+        "name": "OBJECTS",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 52,
+          "i": "55fde6b5-f588-4a82-b6df-7faeb819a6ed",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "version": "3.0.0",
+        "id": "cfd5482c-be7c-4072-8404-3f1c34095825",
+        "type": "timeseries",
+        "name": "Objects in the Cluster",
+        "links": [],
+        "layout": {
+          "h": 12,
+          "w": 6,
+          "x": 0,
+          "y": 53,
+          "i": "cfd5482c-be7c-4072-8404-3f1c34095825",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ceph_cluster_total_objects{cluster=\"$cluster\"}",
+            "legend": "Total"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4
+      },
+      {
+        "type": "timeseries",
+        "id": "7b173926-a111-48c6-b31c-e153ce874b92",
+        "layout": {
+          "h": 12,
+          "w": 8,
+          "x": 6,
+          "y": 53,
+          "i": "7b173926-a111-48c6-b31c-e153ce874b92",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "M",
+            "expr": "ceph_pg_active{cluster=\"$cluster\"}",
+            "legend": "Active"
+          },
+          {
+            "refId": "U",
+            "expr": "ceph_pg_clean{cluster=\"$cluster\"}",
+            "legend": "Clean"
+          },
+          {
+            "refId": "I",
+            "expr": "ceph_pg_peering{cluster=\"$cluster\"}",
+            "legend": "Peering"
+          },
+          {
+            "refId": "B",
+            "expr": "ceph_pg_degraded{cluster=\"$cluster\"}",
+            "legend": "Degraded"
+          },
+          {
+            "refId": "C",
+            "expr": "ceph_pg_stale{cluster=\"$cluster\"}",
+            "legend": "Stale"
+          },
+          {
+            "refId": "D",
+            "expr": "ceph_unclean_pgs{cluster=\"$cluster\"}",
+            "legend": "Unclean"
+          },
+          {
+            "refId": "E",
+            "expr": "ceph_pg_undersized{cluster=\"$cluster\"}",
+            "legend": "Undersized"
+          },
+          {
+            "refId": "G",
+            "expr": "ceph_pg_incomplete{cluster=\"$cluster\"}",
+            "legend": "Incomplete"
+          },
+          {
+            "refId": "H",
+            "expr": "ceph_pg_forced_backfill{cluster=\"$cluster\"}",
+            "legend": "Forced Backfill"
+          },
+          {
+            "refId": "F",
+            "expr": "ceph_pg_inconsistent{cluster=\"$cluster\"}",
+            "legend": "Inconsistent"
+          },
+          {
+            "refId": "J",
+            "expr": "ceph_pg_forced_recovery{cluster=\"$cluster\"}",
+            "legend": "Forced Recovery"
+          },
+          {
+            "refId": "K",
+            "expr": "ceph_pg_creating{cluster=\"$cluster\"}",
+            "legend": "Creating"
+          },
+          {
+            "refId": "L",
+            "expr": "ceph_pg_wait_backfill{cluster=\"$cluster\"}",
+            "legend": "Wait Backfill"
+          },
+          {
+            "refId": "N",
+            "expr": "ceph_pg_deep{cluster=\"$cluster\"}",
+            "legend": "Deep"
+          },
+          {
+            "refId": "O",
+            "expr": "ceph_pg_scrubbing{cluster=\"$cluster\"}",
+            "legend": "Scrubbing"
+          },
+          {
+            "refId": "P",
+            "expr": "ceph_pg_recovering{cluster=\"$cluster\"}",
+            "legend": "Recovering"
+          },
+          {
+            "refId": "Q",
+            "expr": "ceph_pg_repair{cluster=\"$cluster\"}",
+            "legend": "Repair"
+          },
+          {
+            "refId": "R",
+            "expr": "ceph_pg_down{cluster=\"$cluster\"}",
+            "legend": "Down"
+          },
+          {
+            "refId": "S",
+            "expr": "ceph_pg_peered{cluster=\"$cluster\"}",
+            "legend": "Peered"
+          },
+          {
+            "refId": "T",
+            "expr": "ceph_pg_backfill{cluster=\"$cluster\"}",
+            "legend": "Backfill"
+          },
+          {
+            "refId": "V",
+            "expr": "ceph_pg_remapped{cluster=\"$cluster\"}",
+            "legend": "Remapped"
+          },
+          {
+            "refId": "W",
+            "expr": "ceph_pg_backfill_toofull{cluster=\"$cluster\"}",
+            "legend": "Backfill Toofull"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "PGs State",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "3fb23975-8958-45ec-a963-610fd376ec7a",
+        "layout": {
+          "h": 6,
+          "w": 10,
+          "x": 14,
+          "y": 53,
+          "i": "3fb23975-8958-45ec-a963-610fd376ec7a",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "F",
+            "expr": "ceph_pg_degraded{cluster=\"$cluster\"}",
+            "legend": "Degraded"
+          },
+          {
+            "refId": "A",
+            "expr": "ceph_pg_stale{cluster=\"$cluster\"}",
+            "legend": "Stale"
+          },
+          {
+            "refId": "B",
+            "expr": "ceph_pg_undersized{cluster=\"$cluster\"}",
+            "legend": "Undersized"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Stuck PGs",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "2fb7f0a1-4f10-4435-bff7-a5cdbb68ad79",
+        "layout": {
+          "h": 6,
+          "w": 10,
+          "x": 14,
+          "y": 59,
+          "i": "2fb7f0a1-4f10-4435-bff7-a5cdbb68ad79",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(irate(ceph_osd_recovery_ops{cluster=\"$cluster\"}[$interval]))",
+            "legend": "OPS"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Recovery Operations",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "4ae16220-033e-4b18-ab00-190388f95783",
+        "type": "row",
+        "name": "LATENCY",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 65,
+          "i": "4ae16220-033e-4b18-ab00-190388f95783",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "table",
+        "id": "de0f7837-69c6-4a10-a362-814893d10a3f",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 66,
+          "i": "de0f7837-69c6-4a10-a362-814893d10a3f",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ceph_osd_apply_latency_ms{cluster='$cluster'}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "OSD Apply Latency Distribution",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "showHeader": true,
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "displayMode": "seriesToRows"
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "overrides": [
+          {}
+        ]
+      },
+      {
+        "type": "table",
+        "id": "43fb926a-064f-4107-be33-b0b16af9924f",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 66,
+          "i": "43fb926a-064f-4107-be33-b0b16af9924f",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "ceph_osd_commit_latency_ms{cluster='$cluster'}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "OSD Commit Latency Distribution",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "showHeader": true,
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "displayMode": "seriesToRows"
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "overrides": [
+          {}
+        ]
+      },
+      {
+        "type": "unknown",
+        "id": "b65f0eef-cd72-4a22-9143-3937626a3762",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 74,
+          "i": "b65f0eef-cd72-4a22-9143-3937626a3762",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(ceph_osd_op_r_latency_sum{cluster=\"$cluster\"}[5m]) / rate(ceph_osd_op_r_latency_count{cluster=\"$cluster\"}[5m]) >= 0"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "OSD Read Op Latency Distribution",
+        "links": [],
+        "maxPerRow": 4
+      },
+      {
+        "type": "unknown",
+        "id": "7ebe8e1e-7b43-4371-b6d2-b934d8f189b6",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 74,
+          "i": "7ebe8e1e-7b43-4371-b6d2-b934d8f189b6",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(ceph_osd_op_w_latency_sum{cluster=\"$cluster\"}[5m]) / rate(ceph_osd_op_w_latency_count{cluster=\"$cluster\"}[5m]) >= 0"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "OSD Write Op Latency Distribution",
+        "links": [],
+        "maxPerRow": 4
+      },
+      {
+        "type": "timeseries",
+        "id": "83ce1df6-4421-4692-be4c-85cf3b24bfa9",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 82,
+          "i": "83ce1df6-4421-4692-be4c-85cf3b24bfa9",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "avg(rate(ceph_osd_op_r_latency_sum{cluster=\"$cluster\"}[5m]) / rate(ceph_osd_op_r_latency_count{cluster=\"$cluster\"}[5m]) >= 0)",
+            "legend": "read"
+          },
+          {
+            "refId": "B",
+            "expr": "avg(rate(ceph_osd_op_w_latency_sum{cluster=\"$cluster\"}[5m]) / rate(ceph_osd_op_w_latency_count{cluster=\"$cluster\"}[5m]) >= 0)",
+            "legend": "write"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Avg OSD  Op  Latency",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "4e31065f-fc5e-4e3c-ac34-a7ec9141ece8",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 82,
+          "i": "4e31065f-fc5e-4e3c-ac34-a7ec9141ece8",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DATASOURCE}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "avg(ceph_osd_apply_latency_ms{cluster=\"$cluster\"})",
+            "legend": "apply"
+          },
+          {
+            "refId": "B",
+            "expr": "avg(ceph_osd_commit_latency_ms{cluster=\"$cluster\"})",
+            "legend": "commit"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "AVG OSD Apply + Commit Latency",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      }
+    ]
+  }
+}
