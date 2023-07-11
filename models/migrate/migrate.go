@@ -46,9 +46,9 @@ type AlertRule struct {
 
 type AlertSubscribe struct {
 	ExtraConfig string `gorm:"type:text;not null;column:extra_config"` // extra config
-	Severities  string `gorm:"type:varchar(32);not null;default:''"`
+	Severities  string `gorm:"column:severities;type:varchar(32);not null;default:''"`
 }
 
 type AlertMute struct {
-	Severities string `gorm:"type:varchar(32);not null;default:''"`
+	Severities string `gorm:"column:severities;type:varchar(32);not null;default:''"`
 }
