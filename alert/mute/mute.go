@@ -13,7 +13,11 @@ import (
 )
 
 func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, alertMuteCache *memsto.AlertMuteCacheType) bool {
-	if TimeNonEffectiveMuteStrategy(rule, event) {
+	if rule.Disabled == 1 {
+		return true
+	}
+
+	if TimeSpanMuteStrategy(rule, event) {
 		return true
 	}
 
@@ -32,12 +36,8 @@ func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *m
 	return false
 }
 
-// TimeNonEffectiveMuteStrategy 根据规则配置的告警时间过滤,如果产生的告警不在规则配置的告警时间内,则不告警
-func TimeNonEffectiveMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
-	if rule.Disabled == 1 {
-		return true
-	}
-
+// TimeSpanMuteStrategy 根据规则配置的告警生效时间段过滤,如果产生的告警不在规则配置的告警生效时间段内,则不告警,即被mute
+func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	tm := time.Unix(event.TriggerTime, 0)
 	triggerTime := tm.Format("15:04")
 	triggerWeek := strconv.Itoa(int(tm.Weekday()))
@@ -52,18 +52,28 @@ func TimeNonEffectiveMuteStrategy(rule *models.AlertRule, event *models.AlertCur
 		if !strings.Contains(enableDaysOfWeek[i], triggerWeek) {
 			continue
 		}
+
 		if enableStime[i] < enableEtime[i] {
+			// 02:00-04:00
 			if triggerTime < enableStime[i] || triggerTime > enableEtime[i] {
 				continue
 			}
 		} else if enableStime[i] > enableEtime[i] {
+			// 04:00-02:00
 			if triggerTime < enableStime[i] && triggerTime >= enableEtime[i] {
 				continue
 			}
+		} else {
+			// 02:00-02:00
+			if triggerTime < enableStime[i] {
+				continue
+			}
 		}
-		// 到这里说明当前时刻在告警规则的某组生效时间范围内，直接返回 false
+
+		// 到这里说明当前时刻在告警规则的某组生效时间范围内，即没有 mute，直接返回 false
 		return false
 	}
+
 	return true
 }
 
