@@ -49,7 +49,7 @@ type AlertMute struct {
 	PeriodicMutes     string         `json:"-" gorm:"periodic_mutes"`
 	PeriodicMutesJson []PeriodicMute `json:"periodic_mutes" gorm:"-"`
 	Severities        string         `json:"-" gorm:"severities"`
-	SeveritiesJson    []int          `json:"severities" gorm:"severities"`
+	SeveritiesJson    []int          `json:"severities" gorm:"-"`
 }
 
 type PeriodicMute struct {
