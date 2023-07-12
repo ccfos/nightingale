@@ -23,6 +23,8 @@ import (
 	"github.com/toolkits/pkg/str"
 )
 
+type EventMuteHookFunc func(event *models.AlertCurEvent) bool
+
 type ExternalProcessorsType struct {
 	ExternalLock sync.RWMutex
 	Processors   map[string]*Processor
@@ -66,6 +68,8 @@ type Processor struct {
 	promClients *prom.PromClientMap
 	ctx         *ctx.Context
 	stats       *astats.Stats
+
+	EventMuteHook EventMuteHookFunc
 }
 
 func (p *Processor) Key() string {
@@ -99,9 +103,10 @@ func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *me
 		atertRuleCache:  atertRuleCache,
 		datasourceCache: datasourceCache,
 
-		promClients: promClients,
-		ctx:         ctx,
-		stats:       stats,
+		promClients:   promClients,
+		ctx:           ctx,
+		stats:         stats,
+		EventMuteHook: func(event *models.AlertCurEvent) bool { return false },
 	}
 
 	p.mayHandleGroup()
@@ -133,6 +138,11 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 			logger.Debugf("rule_eval:%s event:%v is muted", p.Key(), event)
 			continue
 		}
+
+		if p.EventMuteHook(event) {
+			continue
+		}
+
 		tagHash := TagHash(anomalyPoint)
 		eventsMap[tagHash] = append(eventsMap[tagHash], event)
 	}
