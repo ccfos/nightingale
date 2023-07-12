@@ -56,13 +56,13 @@ func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) b
 
 		if enableStime[i] < enableEtime[i] {
 			if enableEtime[i] == "23:59" {
-				// 02:00-23:59
+				// 02:00-23:59，这种情况做个特殊处理，相当于左闭右闭区间了
 				if triggerTime < enableStime[i] {
 					// mute, 即没生效
 					continue
 				}
 			} else {
-				// 02:00-04:00
+				// 02:00-04:00 或者 02:00-24:00
 				if triggerTime < enableStime[i] || triggerTime >= enableEtime[i] {
 					// mute, 即没生效
 					continue
