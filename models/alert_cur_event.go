@@ -61,6 +61,7 @@ type AlertCurEvent struct {
 	FirstTriggerTime         int64             `json:"first_trigger_time"`      // 连续告警的首次告警时间
 	ExtraConfig              interface{}       `json:"extra_config" gorm:"-"`
 	Status                   int               `json:"status" gorm:"-"`
+	Claimant                 string            `json:"claimant" gorm:"-"`
 	SubRuleId                int64             `json:"sub_rule_id" gorm:"-"`
 }
 
