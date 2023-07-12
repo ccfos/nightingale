@@ -37,6 +37,7 @@ func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *m
 }
 
 // TimeSpanMuteStrategy 根据规则配置的告警生效时间段过滤,如果产生的告警不在规则配置的告警生效时间段内,则不告警,即被mute
+// 时间范围，左闭右开，默认范围：00:00-24:00
 func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	tm := time.Unix(event.TriggerTime, 0)
 	triggerTime := tm.Format("15:04")
@@ -54,18 +55,23 @@ func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) b
 		}
 
 		if enableStime[i] < enableEtime[i] {
-			// 02:00-04:00
-			if triggerTime < enableStime[i] || triggerTime > enableEtime[i] {
-				continue
+			if enableEtime[i] == "23:59" {
+				// 02:00-23:59
+				if triggerTime < enableStime[i] {
+					// mute, 即没生效
+					continue
+				}
+			} else {
+				// 02:00-04:00
+				if triggerTime < enableStime[i] || triggerTime >= enableEtime[i] {
+					// mute, 即没生效
+					continue
+				}
 			}
 		} else if enableStime[i] > enableEtime[i] {
-			// 04:00-02:00
+			// 21:00-09:00
 			if triggerTime < enableStime[i] && triggerTime >= enableEtime[i] {
-				continue
-			}
-		} else {
-			// 02:00-02:00
-			if triggerTime < enableStime[i] {
+				// mute, 即没生效
 				continue
 			}
 		}
