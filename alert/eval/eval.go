@@ -69,14 +69,16 @@ func (arw *AlertRuleWorker) Start() {
 	if interval <= 0 {
 		interval = 10
 	}
+
+	ticker := time.NewTicker(time.Duration(interval) * time.Second)
 	go func() {
+		defer ticker.Stop()
 		for {
 			select {
 			case <-arw.quit:
 				return
-			default:
+			case <-ticker.C:
 				arw.Eval()
-				time.Sleep(time.Duration(interval) * time.Second)
 			}
 		}
 	}()

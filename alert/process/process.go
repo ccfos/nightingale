@@ -23,6 +23,8 @@ import (
 	"github.com/toolkits/pkg/str"
 )
 
+type EventMuteHookFunc func(event *models.AlertCurEvent) bool
+
 type ExternalProcessorsType struct {
 	ExternalLock sync.RWMutex
 	Processors   map[string]*Processor
@@ -65,11 +67,13 @@ type Processor struct {
 	alertMuteCache  *memsto.AlertMuteCacheType
 	datasourceCache *memsto.DatasourceCacheType
 
-	promClients            *prom.PromClientMap
+	promClients *prom.PromClientMap
+	ctx         *ctx.Context
+	stats       *astats.Stats
+
 	HandleFireEventHook    HandleEventFunc
 	HandleRecoverEventHook HandleEventFunc
-	ctx                    *ctx.Context
-	stats                  *astats.Stats
+	EventMuteHook          EventMuteHookFunc
 }
 
 func (p *Processor) Key() string {
@@ -109,6 +113,7 @@ func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *me
 
 		HandleFireEventHook:    func(event *models.AlertCurEvent) {},
 		HandleRecoverEventHook: func(event *models.AlertCurEvent) {},
+		EventMuteHook:          func(event *models.AlertCurEvent) bool { return false },
 	}
 
 	p.mayHandleGroup()
@@ -140,6 +145,11 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 			logger.Debugf("rule_eval:%s event:%v is muted", p.Key(), event)
 			continue
 		}
+
+		if p.EventMuteHook(event) {
+			continue
+		}
+
 		tagHash := TagHash(anomalyPoint)
 		eventsMap[tagHash] = append(eventsMap[tagHash], event)
 	}
@@ -310,7 +320,7 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 		}
 
 		// 之前发送过告警了，这次是否要继续发送，要看是否过了通道静默时间
-		if event.LastEvalTime > fired.LastSentTime+int64(cachedRule.NotifyRepeatStep)*60 {
+		if event.LastEvalTime >= fired.LastSentTime+int64(cachedRule.NotifyRepeatStep)*60 {
 			if cachedRule.NotifyMaxNumber == 0 {
 				// 最大可以发送次数如果是0，表示不想限制最大发送次数，一直发即可
 				event.NotifyCurNumber = fired.NotifyCurNumber + 1
