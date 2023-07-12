@@ -104,6 +104,7 @@ insert into `role_operation`(role_name, operation) values('Admin', '/help/source
 insert into `role_operation`(role_name, operation) values('Admin', '/help/sso');
 insert into `role_operation`(role_name, operation) values('Admin', '/help/notification-tpls');
 insert into `role_operation`(role_name, operation) values('Admin', '/help/notification-settings');
+insert into `role_operation`(role_name, operation) values('Admin', '/help/global-muting-rules')
 
 insert into `role_operation`(role_name, operation) values('Standard', '/users');
 insert into `role_operation`(role_name, operation) values('Standard', '/user-groups');

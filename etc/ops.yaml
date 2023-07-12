@@ -109,3 +109,4 @@ ops:
   - "/help/notification-tpls"
   - "/help/notification-settings"
   - "/help/migrate"
+  - "/help/global-muting-rules"
