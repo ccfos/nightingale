@@ -23,15 +23,6 @@ func (t *EsIndexPattern) TableName() string {
 }
 
 func (r *EsIndexPattern) Add(ctx *ctx.Context) error {
-	err := r.esIndexPatternDsNameDupErr(ctx)
-	if err != nil {
-		return err
-	}
-
-	return DB(ctx).Create(r).Error
-}
-
-func (r *EsIndexPattern) esIndexPatternDsNameDupErr(ctx *ctx.Context) error {
 	esIndexPattern, err := EsIndexPatternGet(ctx, "datasource_id = ? and name = ?", r.DatasourceId, r.Name)
 	if err != nil {
 		return errors.WithMessage(err, "failed to query es index pattern")
@@ -41,7 +32,7 @@ func (r *EsIndexPattern) esIndexPatternDsNameDupErr(ctx *ctx.Context) error {
 		return errors.New("es index pattern datasource and name already exists")
 	}
 
-	return nil
+	return DB(ctx).Create(r).Error
 }
 
 func EsIndexPatternDel(ctx *ctx.Context, ids []int64) error {
@@ -51,13 +42,9 @@ func EsIndexPatternDel(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(new(EsIndexPattern)).Error
 }
 
-func (r *EsIndexPattern) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
-	err := r.esIndexPatternDsNameDupErr(ctx)
-	if err != nil {
-		return err
-	}
+func (eip *EsIndexPattern) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
 
-	return DB(ctx).Model(r).Select(selectField, selectFields...).Updates(r).Error
+	return DB(ctx).Model(eip).Select(selectField, selectFields...).Updates(eip).Error
 }
 
 func EsIndexPatternGets(ctx *ctx.Context, where string, args ...interface{}) ([]EsIndexPattern, error) {
