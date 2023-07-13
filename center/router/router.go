@@ -362,7 +362,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		// es index pattern
 		pages.GET("/es-index-pattern", rt.auth(), rt.esIndexPatternGet)
-		pages.GET("/es-index-pattern-list", rt.auth(), rt.esIndexPatternGetByDs)
+		pages.GET("/es-index-pattern-list", rt.auth(), rt.esIndexPatternGetAll)
 		pages.POST("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternAdd)
 		pages.PUT("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternPut)
 		pages.DELETE("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternDel)
