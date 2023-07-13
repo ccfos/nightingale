@@ -30,7 +30,7 @@ func (rt *Router) esIndexPatternPut(c *gin.Context) {
 	var f models.EsIndexPattern
 	ginx.BindJSON(c, &f)
 
-	id := ginx.QueryInt64(c, "id", -1)
+	id := ginx.QueryInt64(c, "id")
 	oldEsIndexPattern, err := models.EsIndexPatternGet(rt.Ctx, "id=?", id)
 	ginx.Dangerous(err)
 
@@ -65,7 +65,7 @@ func (rt *Router) esIndexPatternDel(c *gin.Context) {
 
 // ES Index Pattern列表
 func (rt *Router) esIndexPatternGetByDs(c *gin.Context) {
-	datasourceId := ginx.QueryInt64(c, "datasource_id", -1)
+	datasourceId := ginx.QueryInt64(c, "datasource_id")
 
 	lst, err := models.EsIndexPatternGets(rt.Ctx, "datasource_id = ?", datasourceId)
 	ginx.NewRender(c).Data(lst, err)
@@ -73,7 +73,7 @@ func (rt *Router) esIndexPatternGetByDs(c *gin.Context) {
 
 // ES Index Pattern 单个数据
 func (rt *Router) esIndexPatternGet(c *gin.Context) {
-	id := ginx.QueryInt64(c, "id", -1)
+	id := ginx.QueryInt64(c, "id")
 
 	item, err := models.EsIndexPatternGet(rt.Ctx, "id=?", id)
 	ginx.NewRender(c).Data(item, err)
