@@ -47,8 +47,8 @@ func (eip *EsIndexPattern) Update(ctx *ctx.Context, selectField interface{}, sel
 	return DB(ctx).Model(eip).Select(selectField, selectFields...).Updates(eip).Error
 }
 
-func EsIndexPatternGets(ctx *ctx.Context, where string, args ...interface{}) ([]EsIndexPattern, error) {
-	var objs []EsIndexPattern
+func EsIndexPatternGets(ctx *ctx.Context, where string, args ...interface{}) ([]*EsIndexPattern, error) {
+	var objs []*EsIndexPattern
 	err := DB(ctx).Where(where, args...).Find(&objs).Error
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to query es index pattern")
