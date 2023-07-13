@@ -22,18 +22,18 @@ type EmailSender struct {
 }
 
 func (es *EmailSender) Send(ctx MessageContext) {
-	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
+	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
 	tos := extract(ctx.Users)
 	var subject string
 
 	if es.subjectTpl != nil {
-		subject = BuildTplMessage(es.subjectTpl, ctx.Event)
+		subject = BuildTplMessage(es.subjectTpl, []*models.AlertCurEvent{ctx.Events[0]})
 	} else {
-		subject = ctx.Event.RuleName
+		subject = ctx.Events[0].RuleName
 	}
-	content := BuildTplMessage(es.contentTpl, ctx.Event)
+	content := BuildTplMessage(es.contentTpl, ctx.Events)
 	es.WriteEmail(subject, content, tos)
 }
 

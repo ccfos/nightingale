@@ -96,11 +96,11 @@ var (
 )
 
 func (fs *FeishuCardSender) Send(ctx MessageContext) {
-	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
+	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
 	urls, _ := fs.extract(ctx.Users)
-	message := BuildTplMessage(fs.tpl, ctx.Event)
+	message := BuildTplMessage(fs.tpl, ctx.Events)
 	color := "red"
 	lowerUnicode := strings.ToLower(message)
 	if strings.Count(lowerUnicode, Recovered) > 0 && strings.Count(lowerUnicode, Triggered) > 0 {
@@ -109,7 +109,7 @@ func (fs *FeishuCardSender) Send(ctx MessageContext) {
 		color = "green"
 	}
 
-	SendTitle := fmt.Sprintf("🔔 %s", ctx.Event.RuleName)
+	SendTitle := fmt.Sprintf("🔔 %s", ctx.Events[0].RuleName)
 	body.Card.Header.Title.Content = SendTitle
 	body.Card.Header.Template = color
 	body.Card.Elements[0].Text.Content = message

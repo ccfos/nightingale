@@ -31,11 +31,11 @@ type FeishuSender struct {
 }
 
 func (fs *FeishuSender) Send(ctx MessageContext) {
-	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
+	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
 	urls, ats := fs.extract(ctx.Users)
-	message := BuildTplMessage(fs.tpl, ctx.Event)
+	message := BuildTplMessage(fs.tpl, ctx.Events)
 	for _, url := range urls {
 		body := feishu{
 			Msgtype: "text",
