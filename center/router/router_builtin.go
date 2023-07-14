@@ -91,6 +91,9 @@ func (rt *Router) builtinBoardCateGets(c *gin.Context) {
 		boardCate.Name = dir
 		files, err := file.FilesUnder(fp + "/" + dir + "/dashboards")
 		ginx.Dangerous(err)
+		if len(files) == 0 {
+			continue
+		}
 
 		var boards []Payload
 		for _, f := range files {
@@ -243,6 +246,9 @@ func (rt *Router) builtinAlertRules(c *gin.Context) {
 		alertCate.Name = dir
 		files, err := file.FilesUnder(fp + "/" + dir + "/alerts")
 		ginx.Dangerous(err)
+		if len(files) == 0 {
+			continue
+		}
 
 		alertRules := make(map[string][]models.AlertRule)
 		for _, f := range files {
