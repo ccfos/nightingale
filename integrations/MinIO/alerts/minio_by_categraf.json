@@ -16,14 +16,14 @@
     ],
     "disabled": 1,
     "prom_for_duration": 600,
-    "prom_ql": "avg_over_time(minio_cluster_disk_offline_total{job=\"minio-job\"}[5m]) > 0",
+    "prom_ql": "avg_over_time(minio_cluster_disk_offline_total{job=~\"minio-.+\"}[5m]) > 0",
     "rule_config": {
       "algo_params": null,
       "inhibit": false,
       "prom_ql": "",
       "queries": [
         {
-          "prom_ql": "avg_over_time(minio_cluster_disk_offline_total{job=\"minio-job\"}[5m]) > 0",
+          "prom_ql": "avg_over_time(minio_cluster_disk_offline_total{job=~\"minio-.+\"}[5m]) > 0",
           "severity": 2
         }
       ],
@@ -86,14 +86,14 @@
     ],
     "disabled": 1,
     "prom_for_duration": 600,
-    "prom_ql": "avg_over_time(minio_cluster_nodes_offline_total{job=\"minio-job\"}[5m]) > 0",
+    "prom_ql": "avg_over_time(minio_cluster_nodes_offline_total{job=~\"minio-.+\"}[5m]) > 0",
     "rule_config": {
       "algo_params": null,
       "inhibit": false,
       "prom_ql": "",
       "queries": [
         {
-          "prom_ql": "avg_over_time(minio_cluster_nodes_offline_total{job=\"minio-job\"}[5m]) > 0",
+          "prom_ql": "avg_over_time(minio_cluster_nodes_offline_total{job=~\"minio-.+\"}[5m]) > 0",
           "severity": 2
         }
       ],
