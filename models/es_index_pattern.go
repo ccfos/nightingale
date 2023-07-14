@@ -6,16 +6,16 @@ import (
 )
 
 type EsIndexPattern struct {
-	Id                int64  `json:"id" gorm:"primaryKey"`
-	DatasourceId      int64  `json:"datasource_id"`
-	Name              string `json:"name"`
-	TimeField         string `json:"time_field"`
-	HideSystemIndices int    `json:"hide_system_indices"`
-	FieldsFormat      string `json:"fields_format"`
-	CreateAt          int64  `json:"create_at"`
-	CreateBy          string `json:"create_by"`
-	UpdateAt          int64  `json:"update_at"`
-	UpdateBy          string `json:"update_by"`
+	Id                     int64  `json:"id" gorm:"primaryKey"`
+	DatasourceId           int64  `json:"datasource_id"`
+	Name                   string `json:"name"`
+	TimeField              string `json:"time_field"`
+	AllowHideSystemIndices int    `json:"allow_hide_system_indices"`
+	FieldsFormat           string `json:"fields_format"`
+	CreateAt               int64  `json:"create_at"`
+	CreateBy               string `json:"create_by"`
+	UpdateAt               int64  `json:"update_at"`
+	UpdateBy               string `json:"update_by"`
 }
 
 func (t *EsIndexPattern) TableName() string {

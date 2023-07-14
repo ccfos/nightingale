@@ -51,14 +51,14 @@ func (rt *Router) esIndexPatternPut(c *gin.Context) {
 	oldEsIndexPattern.Name = f.Name
 	oldEsIndexPattern.DatasourceId = f.DatasourceId
 	oldEsIndexPattern.TimeField = f.TimeField
-	oldEsIndexPattern.HideSystemIndices = f.HideSystemIndices
+	oldEsIndexPattern.AllowHideSystemIndices = f.AllowHideSystemIndices
 	oldEsIndexPattern.FieldsFormat = f.FieldsFormat
 
 	username := c.MustGet("username").(string)
 	oldEsIndexPattern.UpdateBy = username
 	oldEsIndexPattern.UpdateAt = time.Now().Unix()
 
-	ginx.NewRender(c).Message(oldEsIndexPattern.Update(rt.Ctx, "datasource_id", "name", "time_field", "hide_system_indices", "fields_format", "update_at", "update_by"))
+	ginx.NewRender(c).Message(oldEsIndexPattern.Update(rt.Ctx, "datasource_id", "name", "time_field", "allow_hide_system_indices", "fields_format", "update_at", "update_by"))
 }
 
 // 删除 ES Index Pattern
