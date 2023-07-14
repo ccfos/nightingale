@@ -28,6 +28,12 @@ func (rt *Router) serverHeartbeat(c *gin.Context) {
 
 func (rt *Router) serversActive(c *gin.Context) {
 	datasourceId := ginx.QueryInt64(c, "dsid")
+	engineName := ginx.QueryStr(c, "engine_name", "")
+	if engineName != "" {
+		servers, err := models.AlertingEngineGetsInstances(rt.Ctx, "engine_cluster = ? and clock > ?", engineName, time.Now().Unix()-30)
+		ginx.NewRender(c).Data(servers, err)
+		return
+	}
 
 	servers, err := models.AlertingEngineGetsInstances(rt.Ctx, "datasource_id = ? and clock > ?", datasourceId, time.Now().Unix()-30)
 	ginx.NewRender(c).Data(servers, err)

@@ -48,6 +48,8 @@ type AlertMute struct {
 	MuteTimeType      int            `json:"mute_time_type"` //  0: mute by time range, 1: mute by periodic time
 	PeriodicMutes     string         `json:"-" gorm:"periodic_mutes"`
 	PeriodicMutesJson []PeriodicMute `json:"periodic_mutes" gorm:"-"`
+	Severities        string         `json:"-" gorm:"severities"`
+	SeveritiesJson    []int          `json:"severities" gorm:"-"`
 }
 
 type PeriodicMute struct {
@@ -208,12 +210,31 @@ func (m *AlertMute) FE2DB() error {
 	}
 	m.PeriodicMutes = string(periodicMutesBytes)
 
+	if len(m.SeveritiesJson) > 0 {
+		severtiesBytes, err := json.Marshal(m.SeveritiesJson)
+		if err != nil {
+			return err
+		}
+		m.Severities = string(severtiesBytes)
+	}
+
 	return nil
 }
 
 func (m *AlertMute) DB2FE() error {
 	json.Unmarshal([]byte(m.DatasourceIds), &m.DatasourceIdsJson)
 	err := json.Unmarshal([]byte(m.PeriodicMutes), &m.PeriodicMutesJson)
+	if err != nil {
+		return err
+	}
+
+	if m.Severities != "" {
+		err = json.Unmarshal([]byte(m.Severities), &m.SeveritiesJson)
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }
 

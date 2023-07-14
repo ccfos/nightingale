@@ -32,7 +32,7 @@ type DingtalkSender struct {
 }
 
 func (ds *DingtalkSender) Send(ctx MessageContext) {
-	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
+	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
 
@@ -40,7 +40,7 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 	if len(urls) == 0 {
 		return
 	}
-	message := BuildTplMessage(ds.tpl, ctx.Event)
+	message := BuildTplMessage(ds.tpl, ctx.Events)
 
 	for _, url := range urls {
 		var body dingtalk
@@ -49,7 +49,7 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 			body = dingtalk{
 				Msgtype: "markdown",
 				Markdown: dingtalkMarkdown{
-					Title: ctx.Event.RuleName,
+					Title: ctx.Events[0].RuleName,
 					Text:  message,
 				},
 			}
@@ -57,7 +57,7 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 			body = dingtalk{
 				Msgtype: "markdown",
 				Markdown: dingtalkMarkdown{
-					Title: ctx.Event.RuleName,
+					Title: ctx.Events[0].RuleName,
 					Text:  message + "\n" + strings.Join(ats, " "),
 				},
 				At: dingtalkAt{

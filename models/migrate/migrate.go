@@ -19,5 +19,36 @@ func MigrateRecordingTable(db *gorm.DB) error {
 		logger.Errorf("failed to migrate recording rule table: %v", err)
 		return err
 	}
+
+	err = db.AutoMigrate(&AlertRule{})
+	if err != nil {
+		logger.Errorf("failed to migrate recording rule table: %v", err)
+		return err
+	}
+
+	err = db.AutoMigrate(&AlertSubscribe{})
+	if err != nil {
+		logger.Errorf("failed to migrate recording rule table: %v", err)
+		return err
+	}
+
+	err = db.AutoMigrate(&AlertMute{})
+	if err != nil {
+		logger.Errorf("failed to migrate recording rule table: %v", err)
+		return err
+	}
 	return nil
+}
+
+type AlertRule struct {
+	ExtraConfig string `gorm:"type:text;not null;column:extra_config"` // extra config
+}
+
+type AlertSubscribe struct {
+	ExtraConfig string `gorm:"type:text;not null;column:extra_config"` // extra config
+	Severities  string `gorm:"column:severities;type:varchar(32);not null;default:''"`
+}
+
+type AlertMute struct {
+	Severities string `gorm:"column:severities;type:varchar(32);not null;default:''"`
 }

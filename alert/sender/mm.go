@@ -28,7 +28,7 @@ type MmSender struct {
 }
 
 func (ms *MmSender) Send(ctx MessageContext) {
-	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
+	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
 
@@ -36,7 +36,7 @@ func (ms *MmSender) Send(ctx MessageContext) {
 	if len(urls) == 0 {
 		return
 	}
-	message := BuildTplMessage(ms.tpl, ctx.Event)
+	message := BuildTplMessage(ms.tpl, ctx.Events)
 
 	SendMM(MatterMostMessage{
 		Text:   message,

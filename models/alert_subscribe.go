@@ -25,8 +25,10 @@ type AlertSubscribe struct {
 	DatasourceIdsJson []int64      `json:"datasource_ids" gorm:"-"` // for fe
 	Cluster           string       `json:"cluster"`                 // take effect by clusters, seperated by space
 	RuleId            int64        `json:"rule_id"`
-	ForDuration       int64        `json:"for_duration"`       // for duration, unit: second
-	RuleName          string       `json:"rule_name" gorm:"-"` // for fe
+	Severities        string       `json:"-" gorm:"severities"` // sub severity
+	SeveritiesJson    []int        `json:"severities" gorm:"-"` // for fe
+	ForDuration       int64        `json:"for_duration"`        // for duration, unit: second
+	RuleName          string       `json:"rule_name" gorm:"-"`  // for fe
 	Tags              ormx.JSONArr `json:"tags"`
 	RedefineSeverity  int          `json:"redefine_severity"`
 	NewSeverity       int          `json:"new_severity"`
@@ -37,6 +39,8 @@ type AlertSubscribe struct {
 	RedefineWebhooks  int          `json:"redefine_webhooks"`
 	Webhooks          string       `json:"-" gorm:"webhooks"`
 	WebhooksJson      []string     `json:"webhooks" gorm:"-"`
+	ExtraConfig       string       `json:"-" grom:"extra_config"`
+	ExtraConfigJson   interface{}  `json:"extra_config" gorm:"-"` // for fe
 	CreateBy          string       `json:"create_by"`
 	CreateAt          int64        `json:"create_at"`
 	UpdateBy          string       `json:"update_by"`
@@ -118,6 +122,14 @@ func (s *AlertSubscribe) FE2DB() error {
 		s.Webhooks = string(b)
 	}
 
+	b, _ := json.Marshal(s.ExtraConfigJson)
+	s.ExtraConfig = string(b)
+
+	if len(s.SeveritiesJson) > 0 {
+		b, _ := json.Marshal(s.SeveritiesJson)
+		s.Severities = string(b)
+	}
+
 	return nil
 }
 
@@ -133,6 +145,19 @@ func (s *AlertSubscribe) DB2FE() error {
 			return err
 		}
 	}
+
+	if s.ExtraConfig != "" {
+		if err := json.Unmarshal([]byte(s.ExtraConfig), &s.ExtraConfigJson); err != nil {
+			return err
+		}
+	}
+
+	if s.Severities != "" {
+		if err := json.Unmarshal([]byte(s.Severities), &s.SeveritiesJson); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
