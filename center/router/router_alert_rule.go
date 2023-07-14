@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -270,4 +271,57 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(ar, err)
+}
+
+//pre validation before save rule
+func (rt *Router) alertRuleValidation(c *gin.Context) {
+	var f models.AlertRule //new
+	ginx.BindJSON(c, &f)
+
+	arid := ginx.UrlParamInt64(c, "arid")
+	ar, err := models.AlertRuleGetById(rt.Ctx, arid)
+	ginx.Dangerous(err)
+
+	if ar == nil {
+		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
+		return
+	}
+
+	rt.bgrwCheck(c, ar.GroupId)
+
+	if len(f.NotifyChannelsJSON) > 0 && len(f.NotifyGroupsJSON) > 0 { //Validation NotifyChannels
+		ngids := make([]int64, 0, len(f.NotifyChannelsJSON))
+		for i := range f.NotifyGroupsJSON {
+			id, _ := strconv.ParseInt(f.NotifyGroupsJSON[i], 10, 64)
+			ngids = append(ngids, id)
+		}
+		userGroups := rt.UserGroupCache.GetByUserGroupIds(ngids)
+		uids := make([]int64, 0)
+		for i := range userGroups {
+			uids = append(uids, userGroups[i].UserIds...)
+		}
+		users := rt.UserCache.GetByUserIds(uids)
+		//If any users have a certain notify channel's token, it will be okay. Otherwise, this notify channel is absent of tokens.
+		ancs := make([]string, 0, len(f.NotifyChannelsJSON)) //absent Notify Channels
+		for i := range f.NotifyChannelsJSON {
+			flag := true
+			for ui := range users {
+				if _, b := users[ui].ExtractToken(f.NotifyChannelsJSON[i]); b {
+					flag = false
+					break
+				}
+			}
+			if flag {
+				ancs = append(ancs, f.NotifyChannelsJSON[i])
+			}
+		}
+
+		if len(ancs) > 0 {
+			ginx.NewRender(c).Message(i18n.Sprintf(c.GetHeader("X-Language"), "All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", ancs))
+			return
+		}
+
+	}
+
+	ginx.NewRender(c).Message("")
 }
