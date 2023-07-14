@@ -13,7 +13,11 @@ import (
 )
 
 func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, alertMuteCache *memsto.AlertMuteCacheType) bool {
-	if TimeNonEffectiveMuteStrategy(rule, event) {
+	if rule.Disabled == 1 {
+		return true
+	}
+
+	if TimeSpanMuteStrategy(rule, event) {
 		return true
 	}
 
@@ -32,12 +36,9 @@ func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *m
 	return false
 }
 
-// TimeNonEffectiveMuteStrategy 根据规则配置的告警时间过滤,如果产生的告警不在规则配置的告警时间内,则不告警
-func TimeNonEffectiveMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
-	if rule.Disabled == 1 {
-		return true
-	}
-
+// TimeSpanMuteStrategy 根据规则配置的告警生效时间段过滤,如果产生的告警不在规则配置的告警生效时间段内,则不告警,即被mute
+// 时间范围，左闭右开，默认范围：00:00-24:00
+func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	tm := time.Unix(event.TriggerTime, 0)
 	triggerTime := tm.Format("15:04")
 	triggerWeek := strconv.Itoa(int(tm.Weekday()))
@@ -52,18 +53,33 @@ func TimeNonEffectiveMuteStrategy(rule *models.AlertRule, event *models.AlertCur
 		if !strings.Contains(enableDaysOfWeek[i], triggerWeek) {
 			continue
 		}
-		if enableStime[i] <= enableEtime[i] {
-			if triggerTime < enableStime[i] || triggerTime > enableEtime[i] {
-				continue
+
+		if enableStime[i] < enableEtime[i] {
+			if enableEtime[i] == "23:59" {
+				// 02:00-23:59，这种情况做个特殊处理，相当于左闭右闭区间了
+				if triggerTime < enableStime[i] {
+					// mute, 即没生效
+					continue
+				}
+			} else {
+				// 02:00-04:00 或者 02:00-24:00
+				if triggerTime < enableStime[i] || triggerTime >= enableEtime[i] {
+					// mute, 即没生效
+					continue
+				}
 			}
-		} else {
-			if triggerTime < enableStime[i] && triggerTime > enableEtime[i] {
+		} else if enableStime[i] > enableEtime[i] {
+			// 21:00-09:00
+			if triggerTime < enableStime[i] && triggerTime >= enableEtime[i] {
+				// mute, 即没生效
 				continue
 			}
 		}
-		// 到这里说明当前时刻在告警规则的某组生效时间范围内，直接返回 false
+
+		// 到这里说明当前时刻在告警规则的某组生效时间范围内，即没有 mute，直接返回 false
 		return false
 	}
+
 	return true
 }
 
@@ -165,7 +181,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 						break
 					}
 				} else {
-					if triggerTime < mute.PeriodicMutesJson[i].EnableStime || triggerTime >= mute.PeriodicMutesJson[i].EnableEtime {
+					if triggerTime >= mute.PeriodicMutesJson[i].EnableStime || triggerTime < mute.PeriodicMutesJson[i].EnableEtime {
 						matchTime = true
 						break
 					}
@@ -174,6 +190,22 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		}
 	}
 	if !matchTime {
+		return false
+	}
+
+	var matchSeverity bool
+	if len(mute.SeveritiesJson) > 0 {
+		for _, s := range mute.SeveritiesJson {
+			if event.Severity == s || s == 0 {
+				matchSeverity = true
+				break
+			}
+		}
+	} else {
+		matchSeverity = true
+	}
+
+	if !matchSeverity {
 		return false
 	}
 

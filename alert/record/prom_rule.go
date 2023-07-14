@@ -54,14 +54,16 @@ func (rrc *RecordRuleContext) Start() {
 	if interval <= 0 {
 		interval = 10
 	}
+
+	ticker := time.NewTicker(time.Duration(interval) * time.Second)
 	go func() {
+		defer ticker.Stop()
 		for {
 			select {
 			case <-rrc.quit:
 				return
-			default:
+			case <-ticker.C:
 				rrc.Eval()
-				time.Sleep(time.Duration(interval) * time.Second)
 			}
 		}
 	}()

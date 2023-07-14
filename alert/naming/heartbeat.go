@@ -167,3 +167,13 @@ func (n *Naming) ActiveServers(datasourceId int64) ([]string, error) {
 	// 30秒内有心跳，就认为是活的
 	return models.AlertingEngineGetsInstances(n.ctx, "datasource_id = ? and clock > ?", datasourceId, time.Now().Unix()-30)
 }
+
+func (n *Naming) ActiveServersByEngineName() ([]string, error) {
+	if !n.ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]string](n.ctx, "/v1/n9e/servers-active?engine_name="+n.heartbeatConfig.EngineName)
+		return lst, err
+	}
+
+	// 30秒内有心跳，就认为是活的
+	return models.AlertingEngineGetsInstances(n.ctx, "engine_cluster = ? and clock > ?", n.heartbeatConfig.EngineName, time.Now().Unix()-30)
+}

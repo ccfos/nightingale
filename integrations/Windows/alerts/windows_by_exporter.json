@@ -1,0 +1,440 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "High CPU utilization - exporter",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "100 * sum by (instance) (rate(windows_cpu_time_total{mode != 'idle'}[5m])) / count by (instance) (windows_cpu_core_frequency_mhz) > 80",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=HighCPUUsage"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "High memory usage rate - exporter",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "100 * (windows_cs_physical_memory_bytes - windows_os_physical_memory_free_bytes) / windows_cs_physical_memory_bytes  > 80",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=HighPhysicalMemoryUsage"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "machine reboot in the last 15 minutes - exporter",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 3,
+    "severities": [
+      3
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "time() - windows_system_system_up_time  < 900",
+          "severity": 3
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=UpTimeLessThan15Min"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "packet loss issue in the inbound direction - exporter",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "100 * rate(windows_net_packets_received_errors[5m]) / (rate(windows_net_packets_received_errors[5m]) + rate(windows_net_packets_received_total[5m])>0)  > 0",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=HighInboundErrorRate"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "packet loss issue in the outbound direction - exporter",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "100 * rate(windows_net_packets_outbound_errors[5m]) / (rate(windows_net_packets_outbound_errors[5m]) + rate(windows_net_packets_sent_total[5m])>0)  > 0",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=HighOutboundErrorRate"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "The hard disk is almost full - exporter",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "100 * (windows_logical_disk_size_bytes - windows_logical_disk_free_bytes) / windows_logical_disk_size_bytes  > 90",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=LogicalDiskFull"
+    ],
+    "annotations": null,
+    "extra_config": null
+  }
+]

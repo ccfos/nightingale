@@ -1,0 +1,951 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elastic Cluster Red status",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": " elasticsearch_cluster_health_status{color=\"red\"} == 1",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchClusterRed"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elastic Cluster Yellow status",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_cluster_health_status{color=\"yellow\"} == 1",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchClusterYellow"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elasticsearch disk out of space of the instance",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 120,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes * 100 < 10",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchDiskOutOfSpace"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elasticsearch disk space low of the instance",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 120,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes * 100 < 20",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchDiskSpaceLow"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elasticsearch Heap Usage Too High of the instance",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 120,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "(elasticsearch_jvm_memory_used_bytes{area=\"heap\"} / elasticsearch_jvm_memory_max_bytes{area=\"heap\"}) * 100 > 90",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchHeapUsageTooHigh"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elasticsearch Heap Usage warning of the instance",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 120,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "(elasticsearch_jvm_memory_used_bytes{area=\"heap\"} / elasticsearch_jvm_memory_max_bytes{area=\"heap\"}) * 100 > 80",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchHeapUsageWarning"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elasticsearch initializing shards of the instance",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 900,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_cluster_health_initializing_shards > 0",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchInitializingShards"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elasticsearch no new documents of the instance",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 300,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "rate(elasticsearch_indices_docs{es_data_node=\"true\"}[5m]) == 0",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchNoNewDocuments"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elasticsearch pending tasks of the instance",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 900,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_cluster_health_number_of_pending_tasks > 0",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchPendingTasks"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elasticsearch relocation shards of the instance",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 900,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_cluster_health_relocating_shards > 0",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchRelocationShards"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elasticsearch unassigned shards of the instance",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_cluster_health_unassigned_shards > 0",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchUnassignedShards"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elasticsearch Unhealthy Data Nodes",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_cluster_health_number_of_data_nodes < number_of_data_nodes",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchHealthyDataNodes"
+    ],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      52
+    ],
+    "name": "Elasticsearch Unhealthy Nodes",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": " elasticsearch_cluster_health_number_of_nodes < number_of_nodes",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "alertname=ElasticsearchHealthyNodes"
+    ],
+    "annotations": null,
+    "extra_config": null
+  }
+]

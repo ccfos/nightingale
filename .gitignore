@@ -31,6 +31,9 @@ _test
 /etc/*.local.yml
 /etc/*.local.conf
 /etc/plugins/*.local.yml
+/etc/script/rules.yaml
+/etc/script/alert-rules.json
+/etc/script/record-rules.json
 /data*
 /tarball
 /run

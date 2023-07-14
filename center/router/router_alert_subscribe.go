@@ -99,6 +99,8 @@ func (rt *Router) alertSubscribePut(c *gin.Context) {
 			"webhooks",
 			"for_duration",
 			"redefine_webhooks",
+			"severities",
+			"extra_config",
 		))
 	}
 

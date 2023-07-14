@@ -9,6 +9,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/toolkits/pkg/ginx"
 )
 
 func extractMetricFromTimeSeries(s *prompb.TimeSeries) string {
@@ -20,7 +21,7 @@ func extractMetricFromTimeSeries(s *prompb.TimeSeries) string {
 	return ""
 }
 
-func extractIdentFromTimeSeries(s *prompb.TimeSeries) string {
+func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool) string {
 	for i := 0; i < len(s.Labels); i++ {
 		if s.Labels[i].Name == "ident" {
 			return s.Labels[i].Value
@@ -35,11 +36,13 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries) string {
 		}
 	}
 
-	// telegraf, output plugin: http, format: prometheusremotewrite
-	for i := 0; i < len(s.Labels); i++ {
-		if s.Labels[i].Name == "host" {
-			s.Labels[i].Name = "ident"
-			return s.Labels[i].Value
+	if !ignoreIdent {
+		// telegraf, output plugin: http, format: prometheusremotewrite
+		for i := 0; i < len(s.Labels); i++ {
+			if s.Labels[i].Name == "host" {
+				s.Labels[i].Name = "ident"
+				return s.Labels[i].Value
+			}
 		}
 	}
 
@@ -89,7 +92,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 			continue
 		}
 
-		ident = extractIdentFromTimeSeries(req.Timeseries[i])
+		ident = extractIdentFromTimeSeries(req.Timeseries[i], ginx.QueryBool(c, "ignore_ident", false))
 		if len(ident) > 0 {
 			// has ident tag or agent_hostname tag
 			// register host in table target
@@ -103,7 +106,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		}
 
 		rt.EnrichLabels(req.Timeseries[i])
-		rt.debugSample(c.Request.RemoteAddr, req.Timeseries[i])
+		rt.debugSample(c.ClientIP(), req.Timeseries[i])
 
 		if len(ident) > 0 {
 			// use ident as hash key, cause "out of bounds" problem

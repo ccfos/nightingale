@@ -1,0 +1,1052 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CephErrorState",
+    "note": "Ceph is in Error state longer than 5m, please check status of pools and OSDs",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 300,
+    "prom_ql": "ceph_health_status > 1",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_health_status > 1",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CephOsdReweighted",
+    "note": "OSD {{ $labels.ceph_daemon}} on cluster {{ $labels.cluster}} was reweighted for too long. Please either create silent or fix that issue",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 3600,
+    "prom_ql": "ceph_osd_weight < 1",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_osd_weight < 1",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CephOSDUtilizatoin",
+    "note": "Osd free space for  {{ $labels.osd }} is higher tan 90%. Please validate why its so big, reweight or add storage",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "ceph_osd_utilization > 90",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_osd_utilization > 90",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CephPgActivating",
+    "note": "Some groups are activating for too long on {{ $labels.cluster }}. Those PGs are unavailable for too long!",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 300,
+    "prom_ql": "ceph_pg_activating > 0",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_pg_activating > 0",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CephPgBackfillTooFull",
+    "note": "Some groups are located on full OSD on cluster {{ $labels.cluster }}. Those PGs can be unavailable shortly. Please check OSDs, change weight or reconfigure CRUSH rules.",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 300,
+    "prom_ql": "ceph_pg_backfill_toofull > 0",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_pg_backfill_toofull > 0",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CephPgDown",
+    "note": "Some groups are down (unavailable) for too long on {{ $labels.cluster }}. Please ensure that all the data are available",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 180,
+    "prom_ql": "ceph_pg_down > 0",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_pg_down > 0",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CephPgIncomplete",
+    "note": "Some groups are incomplete (unavailable) for too long on {{ $labels.cluster }}. Please ensure that all the data are available",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 120,
+    "prom_ql": "ceph_pg_incomplete > 0",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_pg_incomplete > 0",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CephPgInconsistent",
+    "note": "Some groups are inconsistent for too long on {{ $labels.cluster }}. Data is available but inconsistent across nodes",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "ceph_pg_inconsistent > 0",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_pg_inconsistent > 0",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CephPgUnavailable",
+    "note": "Some groups are unavailable on {{ $labels.cluster }}. Please check their detailed status and current configuration.",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 300,
+    "prom_ql": "ceph_pg_total - ceph_pg_active > 0",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_pg_total - ceph_pg_active > 0",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CephTargetDown",
+    "note": "CEPH target down for more than 2m, please check - it could be a either exporter crash or a whole cluster crash",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 600,
+    "prom_ql": "up{job=\"ceph\"} == 0",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "up{job=\"ceph\"} == 0",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "CephWarnState",
+    "note": "Ceph is in Warn state longer than 30m, please check status of pools and OSDs",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 1800,
+    "prom_ql": "ceph_health_status == 1",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_health_status == 1",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "MonitorAvailableStorage",
+    "note": "Monitor storage for {{ $labels.monitor }} less than 30% - please check why its too high",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "ceph_monitor_avail_percent < 30",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_monitor_avail_percent < 30",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "MonitorClockSkewTooHigh",
+    "note": "Monitor clock skew detected on  {{ $labels.monitor }} - please check ntp and harware clock settins",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "abs(ceph_monitor_clock_skew_seconds) > 0.1",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "abs(ceph_monitor_clock_skew_seconds) > 0.1",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "OsdApplyLatencyTooHigh",
+    "note": "OSD latency for {{ $labels.osd }} is too high. Please check if it doesn't stuck in weird state",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 90,
+    "prom_ql": "ceph_osd_perf_apply_latency_seconds > 10",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_osd_perf_apply_latency_seconds > 10",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "OsdDown",
+    "note": "OSD is down longer than 30 min, please check whats the status",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 1800,
+    "prom_ql": "ceph_osd_up == 0",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "ceph_osd_up == 0",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  }
+]
