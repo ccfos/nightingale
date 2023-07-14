@@ -552,6 +552,7 @@ func (ar *AlertRule) FE2DB() error {
 			return fmt.Errorf("marshal rule_config err:%v", err)
 		}
 		ar.RuleConfig = string(b)
+		ar.PromQl = ""
 	}
 
 	if ar.AnnotationsJSON != nil {
