@@ -1,0 +1,1891 @@
+{
+  "name": "MinIO Dashboard",
+  "tags": "",
+  "ident": "",
+  "configs": {
+    "version": "3.0.0",
+    "links": [],
+    "var": [
+      {
+        "name": "DS_PROMETHEUS",
+        "type": "datasource",
+        "definition": "prometheus",
+        "defaultValue": 5
+      },
+      {
+        "name": "scrape_jobs",
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(minio_node_process_starttime_seconds,job)",
+        "reg": "",
+        "multi": true,
+        "allOption": true
+      }
+    ],
+    "panels": [
+      {
+        "type": "gauge",
+        "id": "134b5e6d-63aa-4a43-ae26-13177c3d5184",
+        "layout": {
+          "h": 6,
+          "w": 3,
+          "x": 0,
+          "y": 0,
+          "i": "134b5e6d-63aa-4a43-ae26-13177c3d5184",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "time() - max(minio_node_process_starttime_seconds{job=\"$scrape_jobs\"})",
+            "legend": "{{job}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Uptime",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "valueAndName",
+          "calc": "lastNotNull"
+        },
+        "options": {
+          "standardOptions": {
+            "util": "seconds",
+            "decimals": 0
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#3FC453",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "ca68e795-0a81-4c24-8e55-e754e0283b70",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 3,
+          "y": 0,
+          "i": "ca68e795-0a81-4c24-8e55-e754e0283b70",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (instance) (minio_s3_traffic_received_bytes{job=\"$scrape_jobs\"})",
+            "legend": "{{instance}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Total S3 Traffic Inbound",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "last",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "standardOptions": {
+            "util": "bytesIEC"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "pie",
+        "id": "d356fc74-4fce-4764-aff9-bc5590c3753d",
+        "layout": {
+          "h": 6,
+          "w": 5,
+          "x": 6,
+          "y": 0,
+          "i": "d356fc74-4fce-4764-aff9-bc5590c3753d",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "topk(1, sum(minio_cluster_capacity_usable_total_bytes{job=\"$scrape_jobs\"}) by (instance)) - topk(1, sum(minio_cluster_capacity_usable_free_bytes{job=\"$scrape_jobs\"}) by (instance))",
+            "legend": "Used"
+          },
+          {
+            "refId": "B",
+            "expr": "topk(1, sum(minio_cluster_capacity_usable_free_bytes{job=\"$scrape_jobs\"}) by (instance)) ",
+            "legend": "Free"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Capacity",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "custom": {
+          "calc": "lastNotNull",
+          "legengPosition": "hidden",
+          "detailName": "详情"
+        },
+        "options": {
+          "standardOptions": {
+            "util": "bytesIEC"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "3b618c2c-1394-46f7-b3b2-578201444e30",
+        "layout": {
+          "h": 6,
+          "w": 5,
+          "x": 11,
+          "y": 0,
+          "i": "3b618c2c-1394-46f7-b3b2-578201444e30",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "max(sum(minio_bucket_usage_total_bytes{job=\"$scrape_jobs\"}) by (instance,server))",
+            "legend": "Usage"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Data Usage Growth",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {
+            "util": "bytesIEC"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.1,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "barGauge",
+        "id": "817686c6-499c-434b-8b9e-ffc7c3a21308",
+        "layout": {
+          "h": 6,
+          "w": 5,
+          "x": 16,
+          "y": 0,
+          "i": "817686c6-499c-434b-8b9e-ffc7c3a21308",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "max by (range) (sum (minio_bucket_objects_size_distribution{job=\"$scrape_jobs\"}) by (range))",
+            "legend": "{{range}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Object size distribution",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "calc": "lastNotNull",
+          "baseColor": "#9470FF",
+          "serieWidth": 20,
+          "sortOrder": "desc"
+        },
+        "options": {
+          "standardOptions": {
+            "util": "seconds"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "855e0055-e418-464f-bc3e-04a8a5a1b1b3",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 21,
+          "y": 0,
+          "i": "855e0055-e418-464f-bc3e-04a8a5a1b1b3",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum (minio_node_file_descriptor_open_total{job=\"$scrape_jobs\"})",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Total Open FDs",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "last",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 2000
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "2cc7d5ac-1508-4067-91a5-1b08c4339f7f",
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 3,
+          "y": 3,
+          "i": "2cc7d5ac-1508-4067-91a5-1b08c4339f7f",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (instance) (minio_s3_traffic_sent_bytes{job=\"$scrape_jobs\"})",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Total S3 Traffic Outbound",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "last",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "standardOptions": {
+            "util": "bytesIEC"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "b7b7d005-b1b3-403e-8cfa-91c561972ef5",
+        "type": "stat",
+        "name": "Total Goroutines",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 21,
+          "y": 3,
+          "i": "b7b7d005-b1b3-403e-8cfa-91c561972ef5",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum without (server,instance) (minio_node_go_routine_total{job=\"$scrape_jobs\"})",
+            "legend": ""
+          }
+        ],
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "line",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 2000
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "textMode": "value",
+          "calc": "last",
+          "colorMode": "value"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "type": "stat",
+        "id": "0e22c724-2ae0-4700-a7e5-3f1243a3d896",
+        "layout": {
+          "h": 2,
+          "w": 3,
+          "x": 0,
+          "y": 6,
+          "i": "0e22c724-2ae0-4700-a7e5-3f1243a3d896",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "minio_cluster_nodes_online_total{job=\"$scrape_jobs\"}",
+            "legend": "{{job}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Total Online Servers",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "avg",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "776ecb58-5daf-4d5c-9c5b-774f476de70b",
+        "layout": {
+          "h": 2,
+          "w": 3,
+          "x": 3,
+          "y": 6,
+          "i": "776ecb58-5daf-4d5c-9c5b-774f476de70b",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "minio_cluster_disk_online_total{job=\"$scrape_jobs\"}",
+            "legend": "Total online disks in MinIO Cluster"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Total Online Disks",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "avg",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          }
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "e9225532-5991-4394-9e4e-8c09879447ba",
+        "type": "stat",
+        "name": "Number of Buckets",
+        "links": [],
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 6,
+          "y": 6,
+          "i": "e9225532-5991-4394-9e4e-8c09879447ba",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "count(count by (bucket) (minio_bucket_usage_total_bytes{job=\"$scrape_jobs\"}))",
+            "legend": ""
+          }
+        ],
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "line",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#E0B400",
+                "value": 75000000
+              },
+              {
+                "color": "#C4162A",
+                "value": 100000000
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "textMode": "value",
+          "calc": "lastNotNull",
+          "colorMode": "value"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "2ebcc855-1fac-4a1e-baec-6ed398920c77",
+        "type": "timeseries",
+        "name": "S3 API Data Received Rate ",
+        "links": [],
+        "layout": {
+          "h": 6,
+          "w": 7,
+          "x": 9,
+          "y": 6,
+          "i": "2ebcc855-1fac-4a1e-baec-6ed398920c77",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (server) (rate(minio_s3_traffic_received_bytes{job=\"$scrape_jobs\"}[5m]))",
+            "legend": "Data Received [{{server}}]"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "6edb8e54-e7ed-4cbe-af77-0bcd985dda95",
+        "type": "timeseries",
+        "name": "S3 API Data Sent Rate ",
+        "links": [],
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 16,
+          "y": 6,
+          "i": "6edb8e54-e7ed-4cbe-af77-0bcd985dda95",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (server) (rate(minio_s3_traffic_sent_bytes{job=\"$scrape_jobs\"}[5m]))",
+            "legend": "Data Sent [{{server}}]"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "type": "stat",
+        "id": "26be803c-f2b5-40b2-99ce-39240830292e",
+        "layout": {
+          "h": 2,
+          "w": 3,
+          "x": 0,
+          "y": 8,
+          "i": "26be803c-f2b5-40b2-99ce-39240830292e",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "minio_cluster_nodes_offline_total{job=\"$scrape_jobs\"}",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Total Offline Servers",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "avg",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "136b9b07-6979-4402-89da-3a79ab8dc732",
+        "layout": {
+          "h": 2,
+          "w": 3,
+          "x": 3,
+          "y": 8,
+          "i": "136b9b07-6979-4402-89da-3a79ab8dc732",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "minio_cluster_disk_offline_total{job=\"$scrape_jobs\"}",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Total Offline Disks",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "avg",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          }
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "4072f862-84d1-4563-b4cc-7e2219a1da8c",
+        "type": "stat",
+        "name": "Number of Objects",
+        "links": [],
+        "layout": {
+          "h": 3,
+          "w": 3,
+          "x": 6,
+          "y": 9,
+          "i": "4072f862-84d1-4563-b4cc-7e2219a1da8c",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "topk(1, sum(minio_bucket_usage_object_total{job=\"$scrape_jobs\"}) by (instance))",
+            "legend": ""
+          }
+        ],
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "line",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#E0B400",
+                "value": 75000000
+              },
+              {
+                "color": "#C4162A",
+                "value": 100000000
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "textMode": "value",
+          "calc": "lastNotNull",
+          "colorMode": "value"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "type": "stat",
+        "id": "9151721f-21e1-49ab-9a95-896fb364d9d2",
+        "layout": {
+          "h": 2,
+          "w": 3,
+          "x": 0,
+          "y": 10,
+          "i": "9151721f-21e1-49ab-9a95-896fb364d9d2",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "minio_heal_time_last_activity_nano_seconds{job=\"$scrape_jobs\"}",
+            "legend": "{{server}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Time Since Last Heal Activity",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "last",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [],
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "fc40c036-86fc-42c7-9cc6-384c64c0814c",
+        "layout": {
+          "h": 2,
+          "w": 3,
+          "x": 3,
+          "y": 10,
+          "i": "fc40c036-86fc-42c7-9cc6-384c64c0814c",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "minio_usage_last_activity_nano_seconds{job=\"$scrape_jobs\"}",
+            "legend": "{{server}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Time Since Last Scan Activity",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "last",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [],
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "b5fe1dc4-833e-4e53-a2cb-98e7ecb8ea7b",
+        "type": "timeseries",
+        "name": "S3 API Request Rate",
+        "links": [],
+        "layout": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 12,
+          "i": "b5fe1dc4-833e-4e53-a2cb-98e7ecb8ea7b",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (server,api) (increase(minio_s3_requests_total{job=\"$scrape_jobs\"}[5m]))",
+            "legend": "{{server,api}}"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "761f532d-a867-4c56-8231-6d2ea2f82522",
+        "type": "timeseries",
+        "name": "Bucket Traffic Received",
+        "description": "Total s3 bytes received per bucket",
+        "links": [],
+        "layout": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 12,
+          "i": "761f532d-a867-4c56-8231-6d2ea2f82522",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by(bucket) (minio_bucket_traffic_received_bytes{job=\"$scrape_jobs\"})",
+            "legend": "__auto"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "bytesSI"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "right"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "842bc922-c7c3-4c57-a126-4328d53ee703",
+        "type": "timeseries",
+        "name": "Bucket Traffic Sent",
+        "description": "Total s3 bytes sent per bucket",
+        "links": [],
+        "layout": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 22,
+          "i": "842bc922-c7c3-4c57-a126-4328d53ee703",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by(bucket) (minio_bucket_traffic_sent_bytes{job=\"$scrape_jobs\"})",
+            "legend": "__auto"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "bytesSI"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "right"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "59fedaf1-cfab-49a5-80ce-c789fc05cfc0",
+        "type": "timeseries",
+        "name": "S3 API Request 4xx Error Rate",
+        "links": [],
+        "layout": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 22,
+          "i": "59fedaf1-cfab-49a5-80ce-c789fc05cfc0",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (server,api) (increase(minio_s3_requests_4xx_errors_total{job=\"$scrape_jobs\"}[5m]))",
+            "legend": "{{server,api}}"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "7be6161e-0202-48a5-8c44-ea6d92b6046e",
+        "type": "timeseries",
+        "name": "S3 API Request 5xx Error Rate",
+        "links": [],
+        "layout": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 32,
+          "i": "7be6161e-0202-48a5-8c44-ea6d92b6046e",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (server,api) (increase(minio_s3_requests_5xx_errors_total{job=\"$scrape_jobs\"}[5m]))",
+            "legend": "{{server,api}}"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "26ccd336-ccbd-4f84-a79e-aac8fc645295",
+        "type": "timeseries",
+        "name": "Healing",
+        "links": [],
+        "layout": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 32,
+          "i": "26ccd336-ccbd-4f84-a79e-aac8fc645295",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (instance) (minio_heal_objects_heal_total{job=\"$scrape_jobs\"})",
+            "legend": "Objects healed in current self heal run"
+          },
+          {
+            "refId": "B",
+            "expr": "sum by (instance) (minio_heal_objects_error_total{job=\"$scrape_jobs\"})",
+            "legend": "Heal errors in current self heal run"
+          },
+          {
+            "refId": "C",
+            "expr": "sum by (instance) (minio_heal_objects_total{job=\"$scrape_jobs\"}) ",
+            "legend": "Objects scanned in current self heal run"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "4ded094e-a71a-4104-80c6-eeb8770abf21",
+        "type": "timeseries",
+        "name": "Internode Data Transfer",
+        "description": "Total number of bytes received and sent among all MinIO server instances",
+        "links": [],
+        "layout": {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 42,
+          "i": "4ded094e-a71a-4104-80c6-eeb8770abf21",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(minio_inter_node_traffic_sent_bytes{job=\"$scrape_jobs\"}[5m])",
+            "legend": "Internode Bytes Received [{{server}}]"
+          },
+          {
+            "refId": "B",
+            "expr": "rate(minio_inter_node_traffic_received_bytes{job=\"$scrape_jobs\"}[5m])",
+            "legend": "Internode Bytes Sent [{{server}}]"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "e0994406-de33-4de1-9722-dcee647c2f68",
+        "type": "timeseries",
+        "name": "Node Memory Usage",
+        "links": [],
+        "layout": {
+          "h": 9,
+          "w": 12,
+          "x": 12,
+          "y": 42,
+          "i": "e0994406-de33-4de1-9722-dcee647c2f68",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "minio_node_process_resident_memory_bytes{job=\"$scrape_jobs\"}",
+            "legend": "Memory Used [{{server}}]"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "fc925e24-3be5-453a-85a0-f281ad60994e",
+        "type": "timeseries",
+        "name": "Node CPU Usage",
+        "links": [],
+        "layout": {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 51,
+          "i": "fc925e24-3be5-453a-85a0-f281ad60994e",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(minio_node_process_cpu_total_seconds{job=\"$scrape_jobs\"}[5m])",
+            "legend": "CPU Usage Rate [{{server}}]"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "54c9c962-e93e-4429-a376-eda862b2777a",
+        "type": "timeseries",
+        "name": "Drives Free Inodes",
+        "links": [],
+        "layout": {
+          "h": 9,
+          "w": 12,
+          "x": 12,
+          "y": 51,
+          "i": "54c9c962-e93e-4429-a376-eda862b2777a",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "minio_node_disk_free_inodes{job=\"$scrape_jobs\"}",
+            "legend": "Free Inodes [{{server}}:{{disk}}]"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "252d4c7b-c38a-4e08-8888-83408e31082c",
+        "type": "timeseries",
+        "name": "Drive Used Capacity",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 60,
+          "i": "252d4c7b-c38a-4e08-8888-83408e31082c",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "minio_node_disk_used_bytes{job=\"$scrape_jobs\"}",
+            "legend": "Used Capacity [{{server}}:{{disk}}]"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "867a88e9-5317-4a97-9e06-efba95eda8fb",
+        "type": "timeseries",
+        "name": "Node File Descriptors",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 9,
+          "w": 12,
+          "x": 12,
+          "y": 60,
+          "i": "867a88e9-5317-4a97-9e06-efba95eda8fb",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "B",
+            "expr": "minio_node_file_descriptor_open_total{job=\"$scrape_jobs\"}",
+            "legend": "Open FDs [{{server}}]"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "fc600570-ff7a-46b9-8cc8-1dc78fd81fa0",
+        "type": "timeseries",
+        "name": "Node Syscalls",
+        "description": "Number of online disks per MinIO Server",
+        "links": [],
+        "layout": {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 68,
+          "i": "fc600570-ff7a-46b9-8cc8-1dc78fd81fa0",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(minio_node_syscall_read_total{job=\"$scrape_jobs\"}[5m])",
+            "legend": "Read Syscalls [{{server}}]"
+          },
+          {
+            "refId": "B",
+            "expr": "rate(minio_node_syscall_write_total{job=\"$scrape_jobs\"}[5m])",
+            "legend": "Write Syscalls [{{server}}]"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.0.0",
+        "id": "83dcd281-30f8-4e36-805f-0f594a7816c2",
+        "type": "timeseries",
+        "name": "Node IO",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 69,
+          "i": "83dcd281-30f8-4e36-805f-0f594a7816c2",
+          "isResizable": true
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(minio_node_io_rchar_bytes{job=\"$scrape_jobs\"}[5m])",
+            "legend": "Node RChar [{{server}}]"
+          },
+          {
+            "refId": "B",
+            "expr": "rate(minio_node_io_wchar_bytes{job=\"$scrape_jobs\"}[5m])",
+            "legend": "Node WChar [{{server}}]"
+          }
+        ],
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.5,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      }
+    ]
+  }
+}
