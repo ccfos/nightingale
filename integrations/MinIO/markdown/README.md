@@ -24,7 +24,7 @@ labels = {job="minio-cluster"}
 
 [Dashboard](../dashboards/minio_by_categraf.json)
 
-![ceph](./minio.png)
+![MinIO](./minio.png)
 
 [Alerts](../alerts/minio_by_categraf.json)
 
