@@ -51,7 +51,7 @@ func NewNotifyConfigCache(ctx *ctx.Context) *NotifyConfigCacheType {
 func (w *NotifyConfigCacheType) SyncNotifyConfigs() {
 	err := w.syncNotifyConfigs()
 	if err != nil {
-		logger.Errorf("failed to sync webhooks:", err)
+		logger.Error("failed to sync webhooks:", err)
 	}
 
 	go w.loopSyncNotifyConfigs()
@@ -79,7 +79,7 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	if strings.TrimSpace(cval) != "" {
 		err = json.Unmarshal([]byte(cval), &w.webhooks)
 		if err != nil {
-			logger.Errorf("failed to unmarshal webhooks:%s config:", cval, err)
+			logger.Errorf("failed to unmarshal webhooks:%s error:%v", cval, err)
 		}
 	}
 
@@ -93,7 +93,7 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	if strings.TrimSpace(cval) != "" {
 		err = toml.Unmarshal([]byte(cval), &w.smtp)
 		if err != nil {
-			logger.Errorf("failed to unmarshal smtp:%s config:", cval, err)
+			logger.Errorf("failed to unmarshal smtp:%s error:%v", cval, err)
 		}
 	}
 
@@ -107,7 +107,7 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	if strings.TrimSpace(cval) != "" {
 		err = json.Unmarshal([]byte(cval), &w.script)
 		if err != nil {
-			logger.Errorf("failed to unmarshal notify script:%s config:", cval, err)
+			logger.Errorf("failed to unmarshal notify script:%s error:%v", cval, err)
 		}
 	}
 
@@ -121,12 +121,12 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	if strings.TrimSpace(cval) != "" {
 		err = toml.Unmarshal([]byte(cval), &w.ibex)
 		if err != nil {
-			logger.Errorf("failed to unmarshal ibex:%s config:", cval, err)
+			logger.Errorf("failed to unmarshal ibex:%s error:%v", cval, err)
 		}
 	} else {
 		err = toml.Unmarshal([]byte(DefaultIbex), &w.ibex)
 		if err != nil {
-			logger.Errorf("failed to unmarshal ibex:%s config:", cval, err)
+			logger.Errorf("failed to unmarshal ibex:%s error:%v", cval, err)
 		}
 	}
 
