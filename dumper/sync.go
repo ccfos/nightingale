@@ -35,20 +35,20 @@ type SyncRecords struct {
 	Last    *SyncRecord
 }
 
-type SyncObs struct {
+type SyncDumper struct {
 	sync.RWMutex
 	records map[string]*SyncRecords
 }
 
-func NewSyncObs() *SyncObs {
-	return &SyncObs{
+func NewSyncDumper() *SyncDumper {
+	return &SyncDumper{
 		records: make(map[string]*SyncRecords),
 	}
 }
 
-var syncObs = NewSyncObs()
+var syncDumper = NewSyncDumper()
 
-func (so *SyncObs) Put(key string, timestamp, mills int64, count int, message string) {
+func (sd *SyncDumper) Put(key string, timestamp, mills int64, count int, message string) {
 	sr := &SyncRecord{
 		Timestamp: timestamp,
 		Mills:     mills,
@@ -56,29 +56,29 @@ func (so *SyncObs) Put(key string, timestamp, mills int64, count int, message st
 		Message:   message,
 	}
 
-	so.Lock()
-	defer so.Unlock()
+	sd.Lock()
+	defer sd.Unlock()
 
-	if _, ok := so.records[key]; !ok {
-		so.records[key] = &SyncRecords{Current: sr}
+	if _, ok := sd.records[key]; !ok {
+		sd.records[key] = &SyncRecords{Current: sr}
 		return
 	}
 
-	so.records[key].Last = so.records[key].Current
-	so.records[key].Current = sr
+	sd.records[key].Last = sd.records[key].Current
+	sd.records[key].Current = sr
 }
 
 // busi_groups:
 // last: timestamp, mills, count
 // curr: timestamp, mills, count
-func (so *SyncObs) Sprint() string {
-	so.RLock()
-	defer so.RUnlock()
+func (sd *SyncDumper) Sprint() string {
+	sd.RLock()
+	defer sd.RUnlock()
 
 	var sb strings.Builder
 	sb.WriteString("\n")
 
-	for k, v := range so.records {
+	for k, v := range sd.records {
 		sb.WriteString(k)
 		sb.WriteString(":\n")
 		if v.Last != nil {
@@ -94,17 +94,17 @@ func (so *SyncObs) Sprint() string {
 	return sb.String()
 }
 
-func (so *SyncObs) ConfigRouter(r *gin.Engine) {
-	r.GET("/obs/sync", func(c *gin.Context) {
+func (sd *SyncDumper) ConfigRouter(r *gin.Engine) {
+	r.GET("/dumper/sync", func(c *gin.Context) {
 		clientIP := c.ClientIP()
 		if clientIP != "127.0.0.1" && clientIP != "::1" {
 			c.String(403, "forbidden")
 			return
 		}
-		c.String(200, so.Sprint())
+		c.String(200, sd.Sprint())
 	})
 }
 
 func PutSyncRecord(key string, timestamp, mills int64, count int, message string) {
-	syncObs.Put(key, timestamp, mills, count, message)
+	syncDumper.Put(key, timestamp, mills, count, message)
 }
