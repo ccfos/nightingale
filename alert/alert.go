@@ -60,7 +60,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 	rt := router.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 	rt.Config(r)
-	obs.ConfigSyncRouter(r)
+	obs.ConfigRouter(r)
 
 	httpClean := httpx.Init(config.HTTP, r)
 

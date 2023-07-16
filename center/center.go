@@ -93,7 +93,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	centerRouter.Config(r)
 	alertrtRouter.Config(r)
 	pushgwRouter.Config(r)
-	obs.ConfigSyncRouter(r)
+	obs.ConfigRouter(r)
 
 	httpClean := httpx.Init(config.HTTP, r)
 

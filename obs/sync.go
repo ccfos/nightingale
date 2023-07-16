@@ -105,11 +105,6 @@ func (so *SyncObs) ConfigRouter(r *gin.Engine) {
 	})
 }
 
-// package level functions
-func ConfigSyncRouter(r *gin.Engine) {
-	syncObs.ConfigRouter(r)
-}
-
 func PutSyncRecord(key string, timestamp, mills int64, count int, message string) {
 	syncObs.Put(key, timestamp, mills, count, message)
 }
