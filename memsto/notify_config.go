@@ -8,8 +8,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/ccfos/nightingale/v6/alert/aconf"
+	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/obs"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/toolkits/pkg/logger"
 )
@@ -76,37 +76,37 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 
 	cval, err := models.ConfigsGet(w.ctx, models.WEBHOOKKEY)
 	if err != nil {
-		obs.PutSyncRecord("webhooks", start.Unix(), -1, -1, "failed to query configs.webhook: "+err.Error())
+		dumper.PutSyncRecord("webhooks", start.Unix(), -1, -1, "failed to query configs.webhook: "+err.Error())
 		return err
 	}
 
 	if strings.TrimSpace(cval) != "" {
 		err = json.Unmarshal([]byte(cval), &w.webhooks)
 		if err != nil {
-			obs.PutSyncRecord("webhooks", start.Unix(), -1, -1, "failed to unmarshal configs.webhook: "+err.Error())
+			dumper.PutSyncRecord("webhooks", start.Unix(), -1, -1, "failed to unmarshal configs.webhook: "+err.Error())
 			logger.Errorf("failed to unmarshal webhooks:%s error:%v", cval, err)
 		}
 	}
 
-	obs.PutSyncRecord("webhooks", start.Unix(), time.Since(start).Milliseconds(), len(w.webhooks), "success, webhooks:\n"+cval)
+	dumper.PutSyncRecord("webhooks", start.Unix(), time.Since(start).Milliseconds(), len(w.webhooks), "success, webhooks:\n"+cval)
 	logger.Debugf("timer: sync wbhooks done number: %d", len(w.webhooks))
 
 	start = time.Now()
 	cval, err = models.ConfigsGet(w.ctx, models.SMTP)
 	if err != nil {
-		obs.PutSyncRecord("smtp", start.Unix(), -1, -1, "failed to query configs.smtp_config: "+err.Error())
+		dumper.PutSyncRecord("smtp", start.Unix(), -1, -1, "failed to query configs.smtp_config: "+err.Error())
 		return err
 	}
 
 	if strings.TrimSpace(cval) != "" {
 		err = toml.Unmarshal([]byte(cval), &w.smtp)
 		if err != nil {
-			obs.PutSyncRecord("smtp", start.Unix(), -1, -1, "failed to unmarshal configs.smtp_config: "+err.Error())
+			dumper.PutSyncRecord("smtp", start.Unix(), -1, -1, "failed to unmarshal configs.smtp_config: "+err.Error())
 			logger.Errorf("failed to unmarshal smtp:%s error:%v", cval, err)
 		}
 	}
 
-	obs.PutSyncRecord("smtp", start.Unix(), time.Since(start).Milliseconds(), 1, "success, smtp_config:\n"+cval)
+	dumper.PutSyncRecord("smtp", start.Unix(), time.Since(start).Milliseconds(), 1, "success, smtp_config:\n"+cval)
 
 	var tmp aconf.SMTPConfig
 	toml.Unmarshal([]byte(cval), &tmp)
@@ -116,43 +116,43 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	start = time.Now()
 	cval, err = models.ConfigsGet(w.ctx, models.NOTIFYSCRIPT)
 	if err != nil {
-		obs.PutSyncRecord("notify_script", start.Unix(), -1, -1, "failed to query configs.notify_script: "+err.Error())
+		dumper.PutSyncRecord("notify_script", start.Unix(), -1, -1, "failed to query configs.notify_script: "+err.Error())
 		return err
 	}
 
 	if strings.TrimSpace(cval) != "" {
 		err = json.Unmarshal([]byte(cval), &w.script)
 		if err != nil {
-			obs.PutSyncRecord("notify_script", start.Unix(), -1, -1, "failed to unmarshal configs.notify_script: "+err.Error())
+			dumper.PutSyncRecord("notify_script", start.Unix(), -1, -1, "failed to unmarshal configs.notify_script: "+err.Error())
 			logger.Errorf("failed to unmarshal notify script:%s error:%v", cval, err)
 		}
 	}
 
-	obs.PutSyncRecord("notify_script", start.Unix(), time.Since(start).Milliseconds(), 1, "success, notify_script:\n"+cval)
+	dumper.PutSyncRecord("notify_script", start.Unix(), time.Since(start).Milliseconds(), 1, "success, notify_script:\n"+cval)
 	logger.Debug("timer: sync notify script done")
 
 	start = time.Now()
 	cval, err = models.ConfigsGet(w.ctx, models.IBEX)
 	if err != nil {
-		obs.PutSyncRecord("ibex", start.Unix(), -1, -1, "failed to query configs.ibex_server: "+err.Error())
+		dumper.PutSyncRecord("ibex", start.Unix(), -1, -1, "failed to query configs.ibex_server: "+err.Error())
 		return err
 	}
 
 	if strings.TrimSpace(cval) != "" {
 		err = toml.Unmarshal([]byte(cval), &w.ibex)
 		if err != nil {
-			obs.PutSyncRecord("ibex", start.Unix(), -1, -1, "failed to unmarshal configs.ibex_server: "+err.Error())
+			dumper.PutSyncRecord("ibex", start.Unix(), -1, -1, "failed to unmarshal configs.ibex_server: "+err.Error())
 			logger.Errorf("failed to unmarshal ibex:%s error:%v", cval, err)
 		}
 	} else {
 		err = toml.Unmarshal([]byte(DefaultIbex), &w.ibex)
 		if err != nil {
-			obs.PutSyncRecord("ibex", start.Unix(), -1, -1, "failed to unmarshal configs.ibex_server: "+err.Error())
+			dumper.PutSyncRecord("ibex", start.Unix(), -1, -1, "failed to unmarshal configs.ibex_server: "+err.Error())
 			logger.Errorf("failed to unmarshal ibex:%s error:%v", cval, err)
 		}
 	}
 
-	obs.PutSyncRecord("ibex", start.Unix(), time.Since(start).Milliseconds(), 1, "success, ibex_server config:\n"+cval)
+	dumper.PutSyncRecord("ibex", start.Unix(), time.Since(start).Milliseconds(), 1, "success, ibex_server config:\n"+cval)
 	logger.Debug("timer: sync ibex done")
 
 	return nil

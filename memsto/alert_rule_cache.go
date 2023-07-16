@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/obs"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/pkg/errors"
@@ -105,7 +105,7 @@ func (arc *AlertRuleCacheType) syncAlertRules() error {
 	start := time.Now()
 	stat, err := models.AlertRuleStatistics(arc.ctx)
 	if err != nil {
-		obs.PutSyncRecord("alert_rules", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
+		dumper.PutSyncRecord("alert_rules", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
 		return errors.WithMessage(err, "failed to exec AlertRuleStatistics")
 	}
 
@@ -113,13 +113,13 @@ func (arc *AlertRuleCacheType) syncAlertRules() error {
 		arc.stats.GaugeCronDuration.WithLabelValues("sync_alert_rules").Set(0)
 		arc.stats.GaugeSyncNumber.WithLabelValues("sync_alert_rules").Set(0)
 		logger.Debug("alert rules not changed")
-		obs.PutSyncRecord("alert_rules", start.Unix(), -1, -1, "not changed")
+		dumper.PutSyncRecord("alert_rules", start.Unix(), -1, -1, "not changed")
 		return nil
 	}
 
 	lst, err := models.AlertRuleGetsAll(arc.ctx)
 	if err != nil {
-		obs.PutSyncRecord("alert_rules", start.Unix(), -1, -1, "failed to query records: "+err.Error())
+		dumper.PutSyncRecord("alert_rules", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to exec AlertRuleGetsByCluster")
 	}
 
@@ -134,7 +134,7 @@ func (arc *AlertRuleCacheType) syncAlertRules() error {
 	arc.stats.GaugeCronDuration.WithLabelValues("sync_alert_rules").Set(float64(ms))
 	arc.stats.GaugeSyncNumber.WithLabelValues("sync_alert_rules").Set(float64(len(m)))
 	logger.Infof("timer: sync rules done, cost: %dms, number: %d", ms, len(m))
-	obs.PutSyncRecord("alert_rules", start.Unix(), ms, len(m), "success")
+	dumper.PutSyncRecord("alert_rules", start.Unix(), ms, len(m), "success")
 
 	return nil
 }

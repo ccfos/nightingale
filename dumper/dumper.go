@@ -1,4 +1,4 @@
-package obs
+package dumper
 
 import "github.com/gin-gonic/gin"
 

@@ -1,4 +1,4 @@
-package obs
+package dumper
 
 import (
 	"fmt"
