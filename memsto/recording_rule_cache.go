@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/obs"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/pkg/errors"
@@ -105,18 +106,21 @@ func (rrc *RecordingRuleCacheType) syncRecordingRules() error {
 
 	stat, err := models.RecordingRuleStatistics(rrc.ctx)
 	if err != nil {
+		obs.PutSyncRecord("recording_rules", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
 		return errors.WithMessage(err, "failed to exec RecordingRuleStatistics")
 	}
 
 	if !rrc.StatChanged(stat.Total, stat.LastUpdated) {
 		rrc.stats.GaugeCronDuration.WithLabelValues("sync_recording_rules").Set(0)
 		rrc.stats.GaugeSyncNumber.WithLabelValues("sync_recording_rules").Set(0)
+		obs.PutSyncRecord("recording_rules", start.Unix(), -1, -1, "not changed")
 		logger.Debug("recoding rules not changed")
 		return nil
 	}
 
 	lst, err := models.RecordingRuleGetsByCluster(rrc.ctx)
 	if err != nil {
+		obs.PutSyncRecord("recording_rules", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to exec RecordingRuleGetsByCluster")
 	}
 
@@ -131,6 +135,7 @@ func (rrc *RecordingRuleCacheType) syncRecordingRules() error {
 	rrc.stats.GaugeCronDuration.WithLabelValues("sync_recording_rules").Set(float64(ms))
 	rrc.stats.GaugeSyncNumber.WithLabelValues("sync_recording_rules").Set(float64(len(m)))
 	logger.Infof("timer: sync recording rules done, cost: %dms, number: %d", ms, len(m))
+	obs.PutSyncRecord("recording_rules", start.Unix(), ms, len(m), "success")
 
 	return nil
 }

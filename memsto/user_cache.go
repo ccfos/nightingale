@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/obs"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/pkg/errors"
@@ -139,19 +140,21 @@ func (uc *UserCacheType) syncUsers() error {
 
 	stat, err := models.UserStatistics(uc.ctx)
 	if err != nil {
+		obs.PutSyncRecord("users", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
 		return errors.WithMessage(err, "failed to exec UserStatistics")
 	}
 
 	if !uc.StatChanged(stat.Total, stat.LastUpdated) {
 		uc.stats.GaugeCronDuration.WithLabelValues("sync_users").Set(0)
 		uc.stats.GaugeSyncNumber.WithLabelValues("sync_users").Set(0)
-
 		logger.Debug("users not changed")
+		obs.PutSyncRecord("users", start.Unix(), -1, -1, "not changed")
 		return nil
 	}
 
 	lst, err := models.UserGetAll(uc.ctx)
 	if err != nil {
+		obs.PutSyncRecord("users", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to exec UserGetAll")
 	}
 
@@ -167,6 +170,7 @@ func (uc *UserCacheType) syncUsers() error {
 	uc.stats.GaugeSyncNumber.WithLabelValues("sync_users").Set(float64(len(m)))
 
 	logger.Infof("timer: sync users done, cost: %dms, number: %d", ms, len(m))
+	obs.PutSyncRecord("users", start.Unix(), ms, len(m), "success")
 
 	return nil
 }
