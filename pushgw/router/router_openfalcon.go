@@ -206,23 +206,10 @@ func (rt *Router) falconPush(c *gin.Context) {
 			}
 		}
 
-		rt.EnrichLabels(pt)
-		rt.debugSample(c.Request.RemoteAddr, pt)
-
 		if ident != "" {
-			// use ident as hash key, cause "out of bounds" problem
-			rt.Writers.PushSample(ident, pt)
+			rt.ForwardByIdent(c.ClientIP(), ident, pt)
 		} else {
-			// no ident tag, use metric name as hash key
-			// sharding again cause there are too many series with the same metric name
-			var hashkey string
-			if len(arr[i].Metric) >= 2 {
-				hashkey = arr[i].Metric[0:2]
-			} else {
-				hashkey = arr[i].Metric[0:1]
-			}
-
-			rt.Writers.PushSample(hashkey, pt)
+			rt.ForwardByMetric(c.ClientIP(), arr[i].Metric, pt)
 		}
 
 		succ++
