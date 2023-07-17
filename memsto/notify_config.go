@@ -108,10 +108,7 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 
 	dumper.PutSyncRecord("smtp", start.Unix(), time.Since(start).Milliseconds(), 1, "success, smtp_config:\n"+cval)
 
-	var tmp aconf.SMTPConfig
-	toml.Unmarshal([]byte(cval), &tmp)
-	tmp.Pass = string(tmp.Pass[0]) + strings.Repeat("*", len(tmp.Pass)-2) + string(tmp.Pass[len(tmp.Pass)-1:])
-	logger.Debugf("timer: sync smtp:%+v done", tmp)
+	logger.Debugf("timer: sync smtp:%+v done", cval)
 
 	start = time.Now()
 	cval, err = models.ConfigsGet(w.ctx, models.NOTIFYSCRIPT)
