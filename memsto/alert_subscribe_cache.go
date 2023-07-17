@@ -128,7 +128,6 @@ func (c *AlertSubscribeCacheType) syncAlertSubscribes() error {
 	if !c.StatChanged(stat.Total, stat.LastUpdated) {
 		c.stats.GaugeCronDuration.WithLabelValues("sync_alert_subscribes").Set(0)
 		c.stats.GaugeSyncNumber.WithLabelValues("sync_alert_subscribes").Set(0)
-		logger.Debug("alert subscribes not changed")
 		dumper.PutSyncRecord("alert_subscribes", start.Unix(), -1, -1, "not changed")
 		return nil
 	}

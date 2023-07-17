@@ -147,7 +147,6 @@ func (uc *UserCacheType) syncUsers() error {
 	if !uc.StatChanged(stat.Total, stat.LastUpdated) {
 		uc.stats.GaugeCronDuration.WithLabelValues("sync_users").Set(0)
 		uc.stats.GaugeSyncNumber.WithLabelValues("sync_users").Set(0)
-		logger.Debug("users not changed")
 		dumper.PutSyncRecord("users", start.Unix(), -1, -1, "not changed")
 		return nil
 	}

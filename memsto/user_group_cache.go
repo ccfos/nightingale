@@ -118,10 +118,7 @@ func (ugc *UserGroupCacheType) syncUserGroups() error {
 	if !ugc.StatChanged(stat.Total, stat.LastUpdated) {
 		ugc.stats.GaugeCronDuration.WithLabelValues("sync_user_groups").Set(0)
 		ugc.stats.GaugeSyncNumber.WithLabelValues("sync_user_groups").Set(0)
-
-		logger.Debug("user_group not changed")
 		dumper.PutSyncRecord("user_groups", start.Unix(), -1, -1, "not changed")
-
 		return nil
 	}
 

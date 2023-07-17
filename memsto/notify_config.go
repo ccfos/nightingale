@@ -89,7 +89,6 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	}
 
 	dumper.PutSyncRecord("webhooks", start.Unix(), time.Since(start).Milliseconds(), len(w.webhooks), "success, webhooks:\n"+cval)
-	logger.Debugf("timer: sync wbhooks done number: %d", len(w.webhooks))
 
 	start = time.Now()
 	cval, err = models.ConfigsGet(w.ctx, models.SMTP)
@@ -108,8 +107,6 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 
 	dumper.PutSyncRecord("smtp", start.Unix(), time.Since(start).Milliseconds(), 1, "success, smtp_config:\n"+cval)
 
-	logger.Debugf("timer: sync smtp:%+v done", cval)
-
 	start = time.Now()
 	cval, err = models.ConfigsGet(w.ctx, models.NOTIFYSCRIPT)
 	if err != nil {
@@ -126,7 +123,6 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	}
 
 	dumper.PutSyncRecord("notify_script", start.Unix(), time.Since(start).Milliseconds(), 1, "success, notify_script:\n"+cval)
-	logger.Debug("timer: sync notify script done")
 
 	start = time.Now()
 	cval, err = models.ConfigsGet(w.ctx, models.IBEX)
@@ -150,7 +146,6 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	}
 
 	dumper.PutSyncRecord("ibex", start.Unix(), time.Since(start).Milliseconds(), 1, "success, ibex_server config:\n"+cval)
-	logger.Debug("timer: sync ibex done")
 
 	return nil
 }

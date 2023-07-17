@@ -138,7 +138,6 @@ func (tc *TargetCacheType) syncTargets() error {
 		tc.stats.GaugeCronDuration.WithLabelValues("sync_targets").Set(0)
 		tc.stats.GaugeSyncNumber.WithLabelValues("sync_targets").Set(0)
 		dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "not changed")
-		logger.Debug("targets not changed")
 		return nil
 	}
 

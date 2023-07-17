@@ -114,7 +114,6 @@ func (rrc *RecordingRuleCacheType) syncRecordingRules() error {
 		rrc.stats.GaugeCronDuration.WithLabelValues("sync_recording_rules").Set(0)
 		rrc.stats.GaugeSyncNumber.WithLabelValues("sync_recording_rules").Set(0)
 		dumper.PutSyncRecord("recording_rules", start.Unix(), -1, -1, "not changed")
-		logger.Debug("recoding rules not changed")
 		return nil
 	}
 

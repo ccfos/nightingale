@@ -116,7 +116,6 @@ func (amc *AlertMuteCacheType) syncAlertMutes() error {
 	if !amc.StatChanged(stat.Total, stat.LastUpdated) {
 		amc.stats.GaugeCronDuration.WithLabelValues("sync_alert_mutes").Set(0)
 		amc.stats.GaugeSyncNumber.WithLabelValues("sync_alert_mutes").Set(0)
-		logger.Debug("alert mutes not changed")
 		dumper.PutSyncRecord("alert_mutes", start.Unix(), -1, -1, "not changed")
 		return nil
 	}

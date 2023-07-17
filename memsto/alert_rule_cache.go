@@ -112,7 +112,6 @@ func (arc *AlertRuleCacheType) syncAlertRules() error {
 	if !arc.StatChanged(stat.Total, stat.LastUpdated) {
 		arc.stats.GaugeCronDuration.WithLabelValues("sync_alert_rules").Set(0)
 		arc.stats.GaugeSyncNumber.WithLabelValues("sync_alert_rules").Set(0)
-		logger.Debug("alert rules not changed")
 		dumper.PutSyncRecord("alert_rules", start.Unix(), -1, -1, "not changed")
 		return nil
 	}

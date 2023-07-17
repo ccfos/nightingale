@@ -91,7 +91,6 @@ func (c *BusiGroupCacheType) syncBusiGroups() error {
 	if !c.StatChanged(stat.Total, stat.LastUpdated) {
 		c.stats.GaugeCronDuration.WithLabelValues("sync_busi_groups").Set(0)
 		c.stats.GaugeSyncNumber.WithLabelValues("sync_busi_groups").Set(0)
-		logger.Debug("busi_group not changed")
 		dumper.PutSyncRecord("busi_groups", start.Unix(), -1, -1, "not changed")
 		return nil
 	}

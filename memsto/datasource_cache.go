@@ -90,10 +90,7 @@ func (d *DatasourceCacheType) syncDatasources() error {
 	if !d.StatChanged(stat.Total, stat.LastUpdated) {
 		d.stats.GaugeCronDuration.WithLabelValues("sync_datasources").Set(0)
 		d.stats.GaugeSyncNumber.WithLabelValues("sync_datasources").Set(0)
-
-		logger.Debug("datasource not changed")
 		dumper.PutSyncRecord("datasources", start.Unix(), -1, -1, "not changed")
-
 		return nil
 	}
 
