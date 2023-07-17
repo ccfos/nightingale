@@ -105,6 +105,10 @@ func DatasourceCheck(ds models.Datasource) error {
 		return fmt.Errorf("url is empty")
 	}
 
+	if !strings.HasPrefix(ds.HTTPJson.Url, "http") {
+		return fmt.Errorf("url must start with http or https")
+	}
+
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
