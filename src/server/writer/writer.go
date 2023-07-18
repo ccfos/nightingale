@@ -7,6 +7,7 @@ import (
 	"hash/crc32"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/didi/nightingale/v5/src/models"
@@ -81,49 +82,62 @@ func (w WriterType) Write(cluster string, index int, items []*prompb.TimeSeries,
 }
 
 func (w WriterType) Post(req []byte, headers ...map[string]string) error {
-	httpReq, err := http.NewRequest("POST", w.Opts.Url, bytes.NewReader(req))
-	if err != nil {
-		logger.Warningf("create remote write request got error: %s", err.Error())
-		return err
-	}
-
-	httpReq.Header.Add("Content-Encoding", "snappy")
-	httpReq.Header.Set("Content-Type", "application/x-protobuf")
-	httpReq.Header.Set("User-Agent", "n9e")
-	httpReq.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
-
-	if len(headers) > 0 {
-		for k, v := range headers[0] {
-			httpReq.Header.Set(k, v)
+	urls := strings.Split(w.Opts.Url, ",")
+	var err error
+	for _, url := range urls {
+		httpReq, e := http.NewRequest("POST", url, bytes.NewReader(req))
+		if e != nil {
+			logger.Warningf("create remote write request got error: %s", e.Error())
+			err = e
+			continue
 		}
-	}
 
-	if w.Opts.BasicAuthUser != "" {
-		httpReq.SetBasicAuth(w.Opts.BasicAuthUser, w.Opts.BasicAuthPass)
-	}
+		httpReq.Header.Add("Content-Encoding", "snappy")
+		httpReq.Header.Set("Content-Type", "application/x-protobuf")
+		httpReq.Header.Set("User-Agent", "n9e")
+		httpReq.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
 
-	headerCount := len(w.Opts.Headers)
-	if headerCount > 0 && headerCount%2 == 0 {
-		for i := 0; i < len(w.Opts.Headers); i += 2 {
-			httpReq.Header.Add(w.Opts.Headers[i], w.Opts.Headers[i+1])
-			if w.Opts.Headers[i] == "Host" {
-				httpReq.Host = w.Opts.Headers[i+1]
+		if len(headers) > 0 {
+			for k, v := range headers[0] {
+				httpReq.Header.Set(k, v)
 			}
 		}
+
+		if w.Opts.BasicAuthUser != "" {
+			httpReq.SetBasicAuth(w.Opts.BasicAuthUser, w.Opts.BasicAuthPass)
+		}
+
+		headerCount := len(w.Opts.Headers)
+		if headerCount > 0 && headerCount%2 == 0 {
+			for i := 0; i < len(w.Opts.Headers); i += 2 {
+				httpReq.Header.Add(w.Opts.Headers[i], w.Opts.Headers[i+1])
+				if w.Opts.Headers[i] == "Host" {
+					httpReq.Host = w.Opts.Headers[i+1]
+				}
+			}
+		}
+
+		resp, body, e := w.Client.Do(context.Background(), httpReq)
+		if e != nil {
+			logger.Warningf("push data with remote write request got error: %v, response body: %s", e, string(body))
+			err = e
+			continue
+		}
+
+		if resp.StatusCode >= 400 {
+			err = fmt.Errorf("push data with remote write request got status code: %v, response body: %s", resp.StatusCode, string(body))
+			logger.Warningf("push data with remote write request got error: %v, response body: %s", err, string(body))
+		}
+
+		resp.Body.Close()
+		if err != nil {
+			return err
+		}
+
+		break
 	}
 
-	resp, body, err := w.Client.Do(context.Background(), httpReq)
-	if err != nil {
-		logger.Warningf("push data with remote write request got error: %v, response body: %s", err, string(body))
-		return err
-	}
-
-	if resp.StatusCode >= 400 {
-		err = fmt.Errorf("push data with remote write request got status code: %v, response body: %s", resp.StatusCode, string(body))
-		return err
-	}
-
-	return nil
+	return err
 }
 
 type WritersType struct {
