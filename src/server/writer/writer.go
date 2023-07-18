@@ -84,11 +84,11 @@ func (w WriterType) Write(cluster string, index int, items []*prompb.TimeSeries,
 func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 	urls := strings.Split(w.Opts.Url, ",")
 	var err error
+	var httpReq *http.Request
 	for _, url := range urls {
-		httpReq, e := http.NewRequest("POST", url, bytes.NewReader(req))
-		if e != nil {
-			logger.Warningf("create remote write:%s request got error: %s", url, e.Error())
-			err = e
+		httpReq, err = http.NewRequest("POST", url, bytes.NewReader(req))
+		if err != nil {
+			logger.Warningf("create remote write:%s request got error: %s", url, err.Error())
 			continue
 		}
 
