@@ -87,7 +87,7 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 	for _, url := range urls {
 		httpReq, e := http.NewRequest("POST", url, bytes.NewReader(req))
 		if e != nil {
-			logger.Warningf("create remote write request got error: %s", e.Error())
+			logger.Warningf("create remote write:%s request got error: %s", url, e.Error())
 			err = e
 			continue
 		}
@@ -119,14 +119,14 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 
 		resp, body, e := w.Client.Do(context.Background(), httpReq)
 		if e != nil {
-			logger.Warningf("push data with remote write request got error: %v, response body: %s", e, string(body))
+			logger.Warningf("push data with remote write:%s request got error: %v, response body: %s", url, e, string(body))
 			err = e
 			continue
 		}
 
 		if resp.StatusCode >= 400 {
-			err = fmt.Errorf("push data with remote write request got status code: %v, response body: %s", resp.StatusCode, string(body))
-			logger.Warningf("push data with remote write request got error: %v, response body: %s", err, string(body))
+			err = fmt.Errorf("push data with remote write:%s request got status code: %v, response body: %s", url, resp.StatusCode, string(body))
+			logger.Warning(err)
 		}
 
 		resp.Body.Close()
