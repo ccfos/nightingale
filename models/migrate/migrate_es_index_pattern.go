@@ -13,7 +13,7 @@ func MigrateEsIndexPatternTable(db *gorm.DB) error {
 		return nil
 	}
 
-	err := db.AutoMigrate(&models.EsIndexPattern{})
+	err := db.Table("es_index_pattern").AutoMigrate(&models.EsIndexPattern{})
 	if err != nil {
 		logger.Errorf("failed to migrate es index pattern table: %v", err)
 		return err
