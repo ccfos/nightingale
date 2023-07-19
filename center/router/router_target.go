@@ -47,10 +47,24 @@ func (rt *Router) targetGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 30)
 	dsIds := queryDatasourceIds(c)
 
-	total, err := models.TargetTotal(rt.Ctx, bgid, dsIds, query)
+	var bgids []int64
+	var err error
+	if bgid == -1 {
+		// 全部对象的情况，找到用户有权限的业务组
+		user := c.MustGet("user").(*models.User)
+		bgids, err = models.MyGroupIds(rt.Ctx, user.Id)
+		ginx.Dangerous(err)
+
+		// 将未分配业务组的对象也加入到列表中
+		bgids = append(bgids, 0)
+	} else {
+		bgids = append(bgids, bgid)
+	}
+
+	total, err := models.TargetTotal(rt.Ctx, bgids, dsIds, query)
 	ginx.Dangerous(err)
 
-	list, err := models.TargetGets(rt.Ctx, bgid, dsIds, query, limit, ginx.Offset(c, limit))
+	list, err := models.TargetGets(rt.Ctx, bgids, dsIds, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	if err == nil {
