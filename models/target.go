@@ -89,11 +89,11 @@ func buildTargetWhere(ctx *ctx.Context, bgids []int64, dsIds []int64, query stri
 	session := DB(ctx).Model(&Target{})
 
 	if len(bgids) > 0 {
-		session = session.Where("group_id in ", bgids)
+		session = session.Where("group_id in (?)", bgids)
 	}
 
 	if len(dsIds) > 0 {
-		session = session.Where("datasource_id in ?", dsIds)
+		session = session.Where("datasource_id in (?)", dsIds)
 	}
 
 	if query != "" {
