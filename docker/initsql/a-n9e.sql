@@ -619,3 +619,18 @@ CREATE TABLE `sso_config` (
     PRIMARY KEY (`id`),
     UNIQUE KEY (`name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `es_index_pattern` (
+    `id` bigint unsigned not null auto_increment,
+    `datasource_id` bigint not null default 0 comment 'datasource id',
+    `name` varchar(191) not null,
+    `time_field` varchar(128) not null default '@timestamp',
+    `allow_hide_system_indices` tinyint(1) not null default 0,
+    `fields_format` varchar(4096) not null default '',
+    `create_at` bigint default '0',
+    `create_by` varchar(64) default '',
+    `update_at` bigint default '0',
+    `update_by` varchar(64) default '',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY (`name`, `datasource_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
