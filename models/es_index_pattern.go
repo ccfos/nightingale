@@ -46,13 +46,15 @@ func EsIndexPatternDel(ctx *ctx.Context, ids []int64) error {
 }
 
 func (ei *EsIndexPattern) Update(ctx *ctx.Context, eip EsIndexPattern) error {
-	exists, err := EsIndexPatternExists(ctx, ei.Id, eip.DatasourceId, eip.Name)
-	if err != nil {
-		return err
-	}
+	if ei.Name != eip.Name || ei.DatasourceId != eip.DatasourceId {
+		exists, err := EsIndexPatternExists(ctx, ei.Id, eip.DatasourceId, eip.Name)
+		if err != nil {
+			return err
+		}
 
-	if exists {
-		return errors.New("EsIndexPattern already exists")
+		if exists {
+			return errors.New("EsIndexPattern already exists")
+		}
 	}
 
 	eip.Id = ei.Id
@@ -91,7 +93,7 @@ func EsIndexPatternGetById(ctx *ctx.Context, id int64) (*EsIndexPattern, error) 
 }
 
 func EsIndexPatternExists(ctx *ctx.Context, id, datasourceId int64, name string) (bool, error) {
-	session := DB(ctx).Where("datasource_id = ? and name = ?", datasourceId, name)
+	session := DB(ctx).Where("id <> ? and datasource_id = ? and name = ?", id, datasourceId, name)
 
 	var lst []EsIndexPattern
 	err := session.Find(&lst).Error
