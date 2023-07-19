@@ -85,15 +85,15 @@ func TargetDel(ctx *ctx.Context, idents []string) error {
 	return DB(ctx).Where("ident in ?", idents).Delete(new(Target)).Error
 }
 
-func buildTargetWhere(ctx *ctx.Context, bgid int64, dsIds []int64, query string) *gorm.DB {
+func buildTargetWhere(ctx *ctx.Context, bgids []int64, dsIds []int64, query string) *gorm.DB {
 	session := DB(ctx).Model(&Target{})
 
-	if bgid >= 0 {
-		session = session.Where("group_id=?", bgid)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in (?)", bgids)
 	}
 
 	if len(dsIds) > 0 {
-		session = session.Where("datasource_id in ?", dsIds)
+		session = session.Where("datasource_id in (?)", dsIds)
 	}
 
 	if query != "" {
@@ -111,13 +111,13 @@ func TargetTotalCount(ctx *ctx.Context) (int64, error) {
 	return Count(DB(ctx).Model(new(Target)))
 }
 
-func TargetTotal(ctx *ctx.Context, bgid int64, dsIds []int64, query string) (int64, error) {
-	return Count(buildTargetWhere(ctx, bgid, dsIds, query))
+func TargetTotal(ctx *ctx.Context, bgids []int64, dsIds []int64, query string) (int64, error) {
+	return Count(buildTargetWhere(ctx, bgids, dsIds, query))
 }
 
-func TargetGets(ctx *ctx.Context, bgid int64, dsIds []int64, query string, limit, offset int) ([]*Target, error) {
+func TargetGets(ctx *ctx.Context, bgids []int64, dsIds []int64, query string, limit, offset int) ([]*Target, error) {
 	var lst []*Target
-	err := buildTargetWhere(ctx, bgid, dsIds, query).Order("ident").Limit(limit).Offset(offset).Find(&lst).Error
+	err := buildTargetWhere(ctx, bgids, dsIds, query).Order("ident").Limit(limit).Offset(offset).Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].TagsJSON = strings.Fields(lst[i].Tags)
