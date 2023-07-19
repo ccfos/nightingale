@@ -9,7 +9,7 @@ import (
 
 func MigrateEsIndexPatternTable(db *gorm.DB) error {
 	db = db.Set("gorm:table_options", "CHARSET=utf8mb4")
-	if db.Migrator().HasTable(&models.EsIndexPattern{}) {
+	if db.Migrator().HasTable("es_index_pattern") {
 		return nil
 	}
 
