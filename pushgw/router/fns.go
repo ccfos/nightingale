@@ -96,3 +96,25 @@ func (rt *Router) debugSample(remoteAddr string, v *prompb.TimeSeries) {
 
 	logger.Debugf("--> debug sample from: %s, sample: %s", remoteAddr, v.String())
 }
+
+func (rt *Router) ForwardByIdent(clientIP string, ident string, v *prompb.TimeSeries) {
+	rt.BeforePush(clientIP, v)
+	rt.Writers.PushSample(ident, v)
+}
+
+func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.TimeSeries) {
+	rt.BeforePush(clientIP, v)
+
+	var hashkey string
+	if len(metric) >= 2 {
+		hashkey = metric[0:2]
+	} else {
+		hashkey = metric[0:1]
+	}
+	rt.Writers.PushSample(hashkey, v)
+}
+
+func (rt *Router) BeforePush(clientIP string, v *prompb.TimeSeries) {
+	rt.EnrichLabels(v)
+	rt.debugSample(clientIP, v)
+}

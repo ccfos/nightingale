@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
@@ -82,19 +83,20 @@ func (d *DatasourceCacheType) syncDatasources() error {
 
 	stat, err := models.DatasourceStatistics(d.ctx)
 	if err != nil {
+		dumper.PutSyncRecord("datasources", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
 		return errors.WithMessage(err, "failed to call DatasourceStatistics")
 	}
 
 	if !d.StatChanged(stat.Total, stat.LastUpdated) {
 		d.stats.GaugeCronDuration.WithLabelValues("sync_datasources").Set(0)
 		d.stats.GaugeSyncNumber.WithLabelValues("sync_datasources").Set(0)
-
-		logger.Debug("datasource not changed")
+		dumper.PutSyncRecord("datasources", start.Unix(), -1, -1, "not changed")
 		return nil
 	}
 
 	m, err := models.DatasourceGetMap(d.ctx)
 	if err != nil {
+		dumper.PutSyncRecord("datasources", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to call DatasourceGetMap")
 	}
 
@@ -105,6 +107,7 @@ func (d *DatasourceCacheType) syncDatasources() error {
 	d.stats.GaugeSyncNumber.WithLabelValues("sync_datasources").Set(float64(len(m)))
 
 	logger.Infof("timer: sync datasources done, cost: %dms, number: %d", ms, len(m))
+	dumper.PutSyncRecord("datasources", start.Unix(), ms, len(m), "success")
 
 	return nil
 }

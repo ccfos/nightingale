@@ -8,6 +8,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/ccfos/nightingale/v6/alert/aconf"
+	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/toolkits/pkg/logger"
@@ -51,7 +52,7 @@ func NewNotifyConfigCache(ctx *ctx.Context) *NotifyConfigCacheType {
 func (w *NotifyConfigCacheType) SyncNotifyConfigs() {
 	err := w.syncNotifyConfigs()
 	if err != nil {
-		logger.Errorf("failed to sync webhooks:", err)
+		logger.Error("failed to sync webhooks:", err)
 	}
 
 	go w.loopSyncNotifyConfigs()
@@ -68,69 +69,83 @@ func (w *NotifyConfigCacheType) loopSyncNotifyConfigs() {
 }
 
 func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
+	start := time.Now()
+
 	w.RWMutex.Lock()
 	defer w.RWMutex.Unlock()
 
 	cval, err := models.ConfigsGet(w.ctx, models.WEBHOOKKEY)
 	if err != nil {
+		dumper.PutSyncRecord("webhooks", start.Unix(), -1, -1, "failed to query configs.webhook: "+err.Error())
 		return err
 	}
 
 	if strings.TrimSpace(cval) != "" {
 		err = json.Unmarshal([]byte(cval), &w.webhooks)
 		if err != nil {
-			logger.Errorf("failed to unmarshal webhooks:%s config:", cval, err)
+			dumper.PutSyncRecord("webhooks", start.Unix(), -1, -1, "failed to unmarshal configs.webhook: "+err.Error())
+			logger.Errorf("failed to unmarshal webhooks:%s error:%v", cval, err)
 		}
 	}
 
-	logger.Infof("timer: sync wbhooks done number: %d", len(w.webhooks))
+	dumper.PutSyncRecord("webhooks", start.Unix(), time.Since(start).Milliseconds(), len(w.webhooks), "success, webhooks:\n"+cval)
 
+	start = time.Now()
 	cval, err = models.ConfigsGet(w.ctx, models.SMTP)
 	if err != nil {
+		dumper.PutSyncRecord("smtp", start.Unix(), -1, -1, "failed to query configs.smtp_config: "+err.Error())
 		return err
 	}
 
 	if strings.TrimSpace(cval) != "" {
 		err = toml.Unmarshal([]byte(cval), &w.smtp)
 		if err != nil {
-			logger.Errorf("failed to unmarshal smtp:%s config:", cval, err)
+			dumper.PutSyncRecord("smtp", start.Unix(), -1, -1, "failed to unmarshal configs.smtp_config: "+err.Error())
+			logger.Errorf("failed to unmarshal smtp:%s error:%v", cval, err)
 		}
 	}
 
-	logger.Infof("timer: sync smtp:%+v done", w.smtp)
+	dumper.PutSyncRecord("smtp", start.Unix(), time.Since(start).Milliseconds(), 1, "success, smtp_config:\n"+cval)
 
+	start = time.Now()
 	cval, err = models.ConfigsGet(w.ctx, models.NOTIFYSCRIPT)
 	if err != nil {
+		dumper.PutSyncRecord("notify_script", start.Unix(), -1, -1, "failed to query configs.notify_script: "+err.Error())
 		return err
 	}
 
 	if strings.TrimSpace(cval) != "" {
 		err = json.Unmarshal([]byte(cval), &w.script)
 		if err != nil {
-			logger.Errorf("failed to unmarshal notify script:%s config:", cval, err)
+			dumper.PutSyncRecord("notify_script", start.Unix(), -1, -1, "failed to unmarshal configs.notify_script: "+err.Error())
+			logger.Errorf("failed to unmarshal notify script:%s error:%v", cval, err)
 		}
 	}
 
-	logger.Infof("timer: sync notify script done")
+	dumper.PutSyncRecord("notify_script", start.Unix(), time.Since(start).Milliseconds(), 1, "success, notify_script:\n"+cval)
 
+	start = time.Now()
 	cval, err = models.ConfigsGet(w.ctx, models.IBEX)
 	if err != nil {
+		dumper.PutSyncRecord("ibex", start.Unix(), -1, -1, "failed to query configs.ibex_server: "+err.Error())
 		return err
 	}
 
 	if strings.TrimSpace(cval) != "" {
 		err = toml.Unmarshal([]byte(cval), &w.ibex)
 		if err != nil {
-			logger.Errorf("failed to unmarshal ibex:%s config:", cval, err)
+			dumper.PutSyncRecord("ibex", start.Unix(), -1, -1, "failed to unmarshal configs.ibex_server: "+err.Error())
+			logger.Errorf("failed to unmarshal ibex:%s error:%v", cval, err)
 		}
 	} else {
 		err = toml.Unmarshal([]byte(DefaultIbex), &w.ibex)
 		if err != nil {
-			logger.Errorf("failed to unmarshal ibex:%s config:", cval, err)
+			dumper.PutSyncRecord("ibex", start.Unix(), -1, -1, "failed to unmarshal configs.ibex_server: "+err.Error())
+			logger.Errorf("failed to unmarshal ibex:%s error:%v", cval, err)
 		}
 	}
 
-	logger.Infof("timer: sync ibex done")
+	dumper.PutSyncRecord("ibex", start.Unix(), time.Since(start).Milliseconds(), 1, "success, ibex_server config:\n"+cval)
 
 	return nil
 }

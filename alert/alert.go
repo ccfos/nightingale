@@ -15,6 +15,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/conf"
+	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -59,6 +60,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 	rt := router.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 	rt.Config(r)
+	dumper.ConfigRouter(r)
 
 	httpClean := httpx.Init(config.HTTP, r)
 
