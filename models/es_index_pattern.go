@@ -9,16 +9,16 @@ import (
 )
 
 type EsIndexPattern struct {
-	Id                     int64  `gorm:"primaryKey;type:bigint unsigned"`
-	DatasourceId           int64  `gorm:"type:bigint not null default '0';uniqueIndex:idx_ds_name"`
-	Name                   string `gorm:"type:varchar(191) not null default '';uniqueIndex:idx_ds_name"`
-	TimeField              string `gorm:"type:varchar(128) not null default ''"`
-	AllowHideSystemIndices int    `gorm:"type:tinyint(1) not null default 0"`
-	FieldsFormat           string `gorm:"type:varchar(4096) not null default ''"`
-	CreateAt               int64  `gorm:"type:bigint  default '0'"`
-	CreateBy               string `gorm:"type:varchar(64) default ''"`
-	UpdateAt               int64  `gorm:"type:bigint  default '0'"`
-	UpdateBy               string `gorm:"type:varchar(64) default ''"`
+	Id                     int64  `json:"id" gorm:"primaryKey"`
+	DatasourceId           int64  `json:"datasource_id"`
+	Name                   string `json:"name"`
+	TimeField              string `json:"time_field"`
+	AllowHideSystemIndices bool   `json:"allow_hide_system_indices"`
+	FieldsFormat           string `json:"fields_format"`
+	CreateAt               int64  `json:"create_at"`
+	CreateBy               string `json:"create_by"`
+	UpdateAt               int64  `json:"update_at"`
+	UpdateBy               string `json:"update_by"`
 }
 
 func (t *EsIndexPattern) TableName() string {
