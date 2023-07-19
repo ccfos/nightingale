@@ -31,34 +31,17 @@ func (rt *Router) esIndexPatternPut(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 
 	id := ginx.QueryInt64(c, "id")
-	// 判定datasource_id 和 name 是否已经存在
-	existsIndexPatterns, err := models.EsIndexPatternGets(rt.Ctx, "datasource_id = ? and name = ?", f.DatasourceId, f.Name)
+
+	esIndexPattern, err := models.EsIndexPatternGetById(rt.Ctx, id)
 	ginx.Dangerous(err)
 
-	for _, indexPattern := range existsIndexPatterns {
-		if indexPattern.Id != id {
-			ginx.Bomb(http.StatusOK, "es index pattern datasource and name already exists")
-		}
+	if esIndexPattern == nil {
+		ginx.NewRender(c, http.StatusNotFound).Message("No such EsIndexPattern")
+		return
 	}
 
-	oldEsIndexPattern, err := models.EsIndexPatternGet(rt.Ctx, "id=?", id)
-	ginx.Dangerous(err)
-
-	if oldEsIndexPattern == nil {
-		ginx.Bomb(http.StatusOK, "es index pattern not found")
-	}
-
-	oldEsIndexPattern.Name = f.Name
-	oldEsIndexPattern.DatasourceId = f.DatasourceId
-	oldEsIndexPattern.TimeField = f.TimeField
-	oldEsIndexPattern.AllowHideSystemIndices = f.AllowHideSystemIndices
-	oldEsIndexPattern.FieldsFormat = f.FieldsFormat
-
-	username := c.MustGet("username").(string)
-	oldEsIndexPattern.UpdateBy = username
-	oldEsIndexPattern.UpdateAt = time.Now().Unix()
-
-	ginx.NewRender(c).Message(oldEsIndexPattern.Update(rt.Ctx, "datasource_id", "name", "time_field", "allow_hide_system_indices", "fields_format", "update_at", "update_by"))
+	f.UpdateBy = c.MustGet("username").(string)
+	ginx.NewRender(c).Message(esIndexPattern.Update(rt.Ctx, f))
 }
 
 // 删除 ES Index Pattern
