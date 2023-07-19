@@ -104,12 +104,5 @@ func EsIndexPatternExists(ctx *ctx.Context, id, datasourceId int64, name string)
 		return false, nil
 	}
 
-	// match
-	for _, indexPattern := range lst {
-		if indexPattern.Id != id {
-			return true, nil
-		}
-	}
-
-	return false, nil
+	return true, nil
 }
