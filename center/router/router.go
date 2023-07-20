@@ -367,7 +367,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigPut)
 
 		pages.GET("/es-index-pattern", rt.auth(), rt.esIndexPatternGet)
-		pages.GET("/es-index-pattern-list", rt.auth(), rt.esIndexPatternGetAll)
+		pages.GET("/es-index-pattern-list", rt.auth(), rt.esIndexPatternGetList)
 		pages.POST("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternAdd)
 		pages.PUT("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternPut)
 		pages.DELETE("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternDel)

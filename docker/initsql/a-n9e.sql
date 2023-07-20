@@ -632,5 +632,5 @@ CREATE TABLE `es_index_pattern` (
     `update_at` bigint default '0',
     `update_by` varchar(64) default '',
     PRIMARY KEY (`id`),
-    UNIQUE KEY (`name`, `datasource_id`)
+    UNIQUE KEY (`datasource_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
