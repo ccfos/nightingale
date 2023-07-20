@@ -48,6 +48,8 @@ url = "http://192.168.0.250:19000/v1/n9e/heartbeat"
 
 `label_values(system_load1{platform="linux"},ident)`
 
+*如果不需要区分操作系统平台，也可以直接导入大盘使用*
+
 ### Windows效果图
 
 ![windows](./windows.png)

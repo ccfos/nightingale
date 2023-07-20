@@ -62,13 +62,12 @@ func (rt *Router) esIndexPatternGetList(c *gin.Context) {
 
 	var lst []*models.EsIndexPattern
 	var err error
-
 	if datasourceId != 0 {
 		lst, err = models.EsIndexPatternGets(rt.Ctx, "datasource_id = ?", datasourceId)
 	} else {
 		lst, err = models.EsIndexPatternGets(rt.Ctx, "")
 	}
-
+  
 	ginx.NewRender(c).Data(lst, err)
 }
 

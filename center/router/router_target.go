@@ -52,7 +52,10 @@ func (rt *Router) targetGets(c *gin.Context) {
 	if bgid == -1 {
 		// 全部对象的情况，找到用户有权限的业务组
 		user := c.MustGet("user").(*models.User)
-		bgids, err = models.MyGroupIds(rt.Ctx, user.Id)
+		userGroupIds, err := models.MyGroupIds(rt.Ctx, user.Id)
+		ginx.Dangerous(err)
+
+		bgids, err = models.BusiGroupIds(rt.Ctx, userGroupIds)
 		ginx.Dangerous(err)
 
 		// 将未分配业务组的对象也加入到列表中
