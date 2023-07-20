@@ -1293,7 +1293,7 @@
                     "cate": "prometheus",
                     "value": "${prom}"
                 },
-                "definition": "label_values(system_load1{platform=\"windows\"},ident)",
+                "definition": "label_values(system_load1{disk_used_percent{device=~\".+:\"},ident)",
                 "multi": true,
                 "allOption": true
             }
