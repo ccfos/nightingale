@@ -57,8 +57,18 @@ func (rt *Router) esIndexPatternDel(c *gin.Context) {
 }
 
 // ES Index Pattern列表
-func (rt *Router) esIndexPatternGetAll(c *gin.Context) {
-	lst, err := models.EsIndexPatternGets(rt.Ctx, "")
+func (rt *Router) esIndexPatternGetList(c *gin.Context) {
+	datasourceId := ginx.QueryInt64(c, "datasource_id", 0)
+
+	var lst []*models.EsIndexPattern
+	var err error
+
+	if datasourceId != 0 {
+		lst, err = models.EsIndexPatternGets(rt.Ctx, "datasource_id = ?", datasourceId)
+	} else {
+		lst, err = models.EsIndexPatternGets(rt.Ctx, "")
+	}
+
 	ginx.NewRender(c).Data(lst, err)
 }
 
