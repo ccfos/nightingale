@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pushgw/pstats"
+
 	"github.com/gin-gonic/gin"
 	"github.com/mailru/easyjson"
 	"github.com/prometheus/common/model"
@@ -216,7 +218,7 @@ func (rt *Router) falconPush(c *gin.Context) {
 	}
 
 	if succ > 0 {
-		CounterSampleTotal.WithLabelValues("openfalcon").Add(float64(succ))
+		pstats.CounterSampleTotal.WithLabelValues("openfalcon").Add(float64(succ))
 		rt.IdentSet.MSet(ids)
 	}
 

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
+	"github.com/ccfos/nightingale/v6/pushgw/pstats"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
@@ -37,7 +38,7 @@ func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSerie
 	return ritems
 }
 
-func (w WriterType) Write(items []*prompb.TimeSeries, sema *semaphore.Semaphore, headers ...map[string]string) {
+func (w WriterType) Write(url string, items []*prompb.TimeSeries, sema *semaphore.Semaphore, headers ...map[string]string) {
 	defer sema.Release()
 	if len(items) == 0 {
 		return
@@ -47,6 +48,11 @@ func (w WriterType) Write(items []*prompb.TimeSeries, sema *semaphore.Semaphore,
 	if len(items) == 0 {
 		return
 	}
+
+	start := time.Now()
+	defer func() {
+		pstats.ForwardDuration.WithLabelValues(url).Observe(time.Since(start).Seconds())
+	}()
 
 	if w.ForceUseServerTS {
 		ts := time.Now().UnixMilli()
@@ -205,13 +211,15 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 			return
 		default:
 			series := identQueue.list.PopBack(ws.pushgw.WriterOpt.QueuePopSize)
-			if len(series) == 0 {
+			count := len(series)
+			if count == 0 {
 				time.Sleep(time.Millisecond * 400)
 				continue
 			}
 			for key := range ws.backends {
 				ws.sema.Acquire()
-				go ws.backends[key].Write(series, ws.sema)
+				pstats.CounterPushSampleTotal.WithLabelValues(key).Add(float64(count))
+				go ws.backends[key].Write(key, series, ws.sema)
 			}
 		}
 	}

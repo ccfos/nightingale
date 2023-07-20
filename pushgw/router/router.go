@@ -1,15 +1,19 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/prometheus/prometheus/prompb"
+	"fmt"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
+	"github.com/ccfos/nightingale/v6/pushgw/pstats"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
+
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/prometheus/prompb"
 )
 
 type EnrichLabelsFunc func(pt *prompb.TimeSeries)
@@ -43,8 +47,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		return
 	}
 
-	registerMetrics()
-
 	// datadog url: http://n9e-pushgw.foo.com/datadog
 	// use apiKey not basic auth
 	r.POST("/datadog/api/v1/series", rt.datadogSeries)
@@ -56,17 +58,30 @@ func (rt *Router) Config(r *gin.Engine) {
 	if len(rt.HTTP.APIForAgent.BasicAuth) > 0 {
 		// enable basic auth
 		auth := gin.BasicAuth(rt.HTTP.APIForAgent.BasicAuth)
-		r.POST("/opentsdb/put", auth, rt.openTSDBPut)
-		r.POST("/openfalcon/push", auth, rt.falconPush)
-		r.POST("/prometheus/v1/write", auth, rt.remoteWrite)
+		r.POST("/opentsdb/put", auth, stat(), rt.openTSDBPut)
+		r.POST("/openfalcon/push", auth, stat(), rt.falconPush)
+		r.POST("/prometheus/v1/write", auth, stat(), rt.remoteWrite)
 		r.POST("/v1/n9e/target-update", auth, rt.targetUpdate)
 		r.POST("/v1/n9e/edge/heartbeat", auth, rt.heartbeat)
 	} else {
 		// no need basic auth
-		r.POST("/opentsdb/put", rt.openTSDBPut)
-		r.POST("/openfalcon/push", rt.falconPush)
-		r.POST("/prometheus/v1/write", rt.remoteWrite)
+		r.POST("/opentsdb/put", stat(), rt.openTSDBPut)
+		r.POST("/openfalcon/push", stat(), rt.falconPush)
+		r.POST("/prometheus/v1/write", stat(), rt.remoteWrite)
 		r.POST("/v1/n9e/target-update", rt.targetUpdate)
 		r.POST("/v1/n9e/edge/heartbeat", rt.heartbeat)
+	}
+}
+
+func stat() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+
+		code := fmt.Sprintf("%d", c.Writer.Status())
+		method := c.Request.Method
+		labels := []string{code, c.FullPath(), method}
+
+		pstats.RequestDuration.WithLabelValues(labels...).Observe(time.Since(start).Seconds())
 	}
 }

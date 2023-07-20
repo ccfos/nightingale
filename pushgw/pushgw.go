@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
+	"github.com/ccfos/nightingale/v6/pushgw/pstats"
 	"github.com/ccfos/nightingale/v6/pushgw/router"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 )
@@ -35,6 +36,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	idents := idents.New(ctx)
 
 	stats := memsto.NewSyncStats()
+	pstats.RegisterMetrics()
 
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, stats)
 	targetCache := memsto.NewTargetCache(ctx, stats, nil)

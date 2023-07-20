@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ccfos/nightingale/v6/pushgw/pstats"
+
 	"github.com/gin-gonic/gin"
 	easyjson "github.com/mailru/easyjson"
 	"github.com/prometheus/common/model"
@@ -266,7 +268,7 @@ func (r *Router) datadogSeries(c *gin.Context) {
 	}
 
 	if succ > 0 {
-		CounterSampleTotal.WithLabelValues("datadog").Add(float64(succ))
+		pstats.CounterSampleTotal.WithLabelValues("datadog").Add(float64(succ))
 		r.IdentSet.MSet(ids)
 	}
 

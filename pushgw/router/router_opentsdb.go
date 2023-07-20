@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pushgw/pstats"
+
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
@@ -211,7 +213,7 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 	}
 
 	if succ > 0 {
-		CounterSampleTotal.WithLabelValues("opentsdb").Add(float64(succ))
+		pstats.CounterSampleTotal.WithLabelValues("opentsdb").Add(float64(succ))
 		rt.IdentSet.MSet(ids)
 	}
 

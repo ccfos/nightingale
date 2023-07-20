@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/ccfos/nightingale/v6/pushgw/pstats"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
@@ -111,7 +113,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		}
 	}
 
-	CounterSampleTotal.WithLabelValues("prometheus").Add(float64(count))
+	pstats.CounterSampleTotal.WithLabelValues("prometheus").Add(float64(count))
 	rt.IdentSet.MSet(ids)
 }
 
