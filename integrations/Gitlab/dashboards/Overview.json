@@ -1,0 +1,517 @@
+{
+  "name": "GitLab - Overview",
+  "tags": "",
+  "ident": "",
+  "configs": {
+    "version": "3.0.0",
+    "links": [
+      {
+        "title": "GitLab Docs",
+        "url": "https://docs.gitlab.com/"
+      }
+    ],
+    "var": [
+      {
+        "name": "DS_PROMETHEUS",
+        "type": "datasource",
+        "definition": "prometheus",
+        "defaultValue": 5
+      }
+    ],
+    "panels": [
+      {
+        "type": "text",
+        "id": "ffcfeb75-3a21-40b1-8fe7-313aa3e5f4e3",
+        "layout": {
+          "h": 3,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "ffcfeb75-3a21-40b1-8fe7-313aa3e5f4e3",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "name": "",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textColor": "#000000",
+          "bgColor": "#FFFFFF",
+          "textSize": 12,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "content": "<br><h1><i><font color=#5991A7><b>GitLab Service Status</b></font></i></h1>\n"
+        }
+      },
+      {
+        "type": "text",
+        "id": "9991440f-1e01-4807-8911-2619329af244",
+        "layout": {
+          "h": 3,
+          "w": 2,
+          "x": 0,
+          "y": 3,
+          "i": "9991440f-1e01-4807-8911-2619329af244",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "name": "Gitlab",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textColor": "#000000",
+          "bgColor": "#FFFFFF",
+          "textSize": 12,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "content": "<p style=\"text-align:center;\"><img src=\"https://www.cloudfoundry.org/wp-content/uploads/2017/10/icon_gitlab_cf@2x.png\" width=80px/></p>"
+        }
+      },
+      {
+        "type": "stat",
+        "id": "f3fcab1f-d198-48c6-bf1d-44e481a9fa7a",
+        "layout": {
+          "h": 3,
+          "w": 5,
+          "x": 2,
+          "y": 3,
+          "i": "f3fcab1f-d198-48c6-bf1d-44e481a9fa7a",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "topk(1, count by (version) (gitlab_build_info{job=~\"gitlab-workhorse\"}))",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "GitLab Version",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "first",
+          "valueField": "version",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "id": 0,
+              "op": "=",
+              "text": "N/A",
+              "type": 1,
+              "value": "null"
+            }
+          ],
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "hexbin",
+        "id": "7a4c7be6-56de-4c76-8c2f-cef5a80e84b5",
+        "layout": {
+          "h": 3,
+          "w": 17,
+          "x": 7,
+          "y": 3,
+          "i": "7a4c7be6-56de-4c76-8c2f-cef5a80e84b5",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(up{job!~\"gitlab_exporter.*|node\",instance!~\".*:9168\",service=~\"gitlab\"}) by (job) / count(up{job!~\"gitlab_exporter.*|node\",instance!~\".*:9168\",service=~\"gitlab\"}) by (job) * 100",
+            "legend": "{{job}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Service Status",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "valueAndName",
+          "calc": "lastNotNull",
+          "colorRange": [
+            "#f0ee6e",
+            "#6ba261",
+            "#306d52"
+          ],
+          "reverseColorOrder": false,
+          "colorDomainAuto": true
+        },
+        "options": {
+          "standardOptions": {}
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "9efa19b0-18fd-4f4d-abee-cebe09a36803",
+        "type": "text",
+        "links": [],
+        "layout": {
+          "h": 2,
+          "w": 24,
+          "x": 0,
+          "y": 6,
+          "i": "9efa19b0-18fd-4f4d-abee-cebe09a36803",
+          "isResizable": true
+        },
+        "targets": [],
+        "options": {
+          "thresholds": {
+            "style": "line",
+            "steps": []
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "content": "<br><h1><i><font color=#5991A7><b>Sidekiq Statistics</b></font></i></h1>\n"
+        },
+        "maxPerRow": 4
+      },
+      {
+        "type": "hexbin",
+        "id": "fd0e96e0-7577-4475-8287-143d9d7e0bc7",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 0,
+          "y": 8,
+          "i": "fd0e96e0-7577-4475-8287-143d9d7e0bc7",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "max(sidekiq_jobs_processed_total)",
+            "legend": "Processed"
+          },
+          {
+            "refId": "B",
+            "expr": "max(sidekiq_jobs_failed_total)",
+            "legend": "Failed"
+          },
+          {
+            "refId": "C",
+            "expr": "max(sidekiq_jobs_enqueued_size)",
+            "legend": "Enqueued"
+          },
+          {
+            "refId": "D",
+            "expr": "max(sidekiq_jobs_scheduled_size)",
+            "legend": "Scheduled"
+          },
+          {
+            "refId": "E",
+            "expr": "max(sidekiq_jobs_retry_size)",
+            "legend": "Retry"
+          },
+          {
+            "refId": "F",
+            "expr": "max(sidekiq_jobs_dead_size)",
+            "legend": "Dead"
+          },
+          {
+            "refId": "G",
+            "expr": "max(sidekiq_processes_size)",
+            "legend": "Processes"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Background Jobs",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "valueAndName",
+          "calc": "lastNotNull",
+          "colorRange": [
+            "#83c898",
+            "#c2c2c2",
+            "#fc653f"
+          ],
+          "reverseColorOrder": false,
+          "colorDomainAuto": true
+        },
+        "options": {
+          "standardOptions": {}
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "1645b734-ef79-4ff5-8be4-a24747cf4e6e",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 12,
+          "y": 8,
+          "i": "1645b734-ef79-4ff5-8be4-a24747cf4e6e",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "B",
+            "expr": "topk(10, avg_over_time(sidekiq_queue_size{}[5m]))",
+            "legend": "{{name}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Queue Size Top 10",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "e25e6cfb-020b-4743-8de9-ef6240144a94",
+        "type": "text",
+        "links": [],
+        "layout": {
+          "h": 2,
+          "w": 24,
+          "x": 0,
+          "y": 12,
+          "i": "e25e6cfb-020b-4743-8de9-ef6240144a94",
+          "isResizable": true
+        },
+        "targets": [],
+        "options": {
+          "thresholds": {
+            "style": "line",
+            "steps": []
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "custom": {
+          "version": "3.0.0",
+          "content": "<br><h1><i><font color=#5991A7><b>Workhorse Statistics</b></font></i></h1>"
+        },
+        "maxPerRow": 4
+      },
+      {
+        "type": "timeseries",
+        "id": "dd030993-481d-43e4-887a-3c0dee279ea0",
+        "layout": {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 14,
+          "i": "dd030993-481d-43e4-887a-3c0dee279ea0",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "B",
+            "expr": "sum by (code) (\n  rate(gitlab_workhorse_http_requests_total{instance=~\".*:9229\"}[5m])\n)",
+            "legend": "{{code}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Http Request Total",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "77343eca-60d3-4be9-b80d-6db471399339",
+        "layout": {
+          "h": 9,
+          "w": 12,
+          "x": 12,
+          "y": 14,
+          "i": "77343eca-60d3-4be9-b80d-6db471399339",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "B",
+            "expr": "sum by (le) (\n  rate(gitlab_workhorse_http_request_duration_seconds_bucket{instance=~\".*:9229\"}[5m])\n)",
+            "legend": "{{le}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Workhorse Latency",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {
+            "util": "seconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      }
+    ]
+  }
+}

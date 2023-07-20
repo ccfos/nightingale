@@ -1,0 +1,702 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "HighgRPCResourceExhaustedRate",
+    "note": "High gRPC ResourceExhausted error rate",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 3600,
+    "prom_ql": "sum without (grpc_code, grpc_method, grpc_service, grpc_type) (\n  rate(grpc_server_handled_total{grpc_code=\"ResourceExhausted\"}[5m])\n) / sum without (grpc_code, grpc_method, grpc_service, grpc_type) (\n  rate(grpc_server_handled_total[5m])\n) * 100 > 1\n",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "sum without (grpc_code, grpc_method, grpc_service, grpc_type) (\n  rate(grpc_server_handled_total{grpc_code=\"ResourceExhausted\"}[5m])\n) / sum without (grpc_code, grpc_method, grpc_service, grpc_type) (\n  rate(grpc_server_handled_total[5m])\n) * 100 > 1\n",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "HighPumaUtilization",
+    "note": "Puma instance {{ $labels.instance }} has more than 90% thread utilization ({{ $value | printf \"%.1f\" }}%) over the last 60 minutes.",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 3600,
+    "prom_ql": "instance:puma_utilization:ratio * 100 > 90",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "instance:puma_utilization:ratio * 100 > 90",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "PostgresDatabaseDeadlockCancels",
+    "note": "Postgres database has queries canceled due to deadlocks",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "increase(pg_stat_database_deadlocks[5m]) > 0",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "increase(pg_stat_database_deadlocks[5m]) > 0",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "PostgresDatabaseDeadlocks",
+    "note": "Postgres database has deadlocks",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "increase(pg_stat_database_deadlocks[5m]) > 0",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "increase(pg_stat_database_deadlocks[5m]) > 0",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "PostgresDown",
+    "note": "The Postgres service {{ $labels.job }} instance {{ $labels.instance }} is not responding for more than 50% of the time for 5 minutes.",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "avg_over_time(pg_up[5m]) * 100 < 50",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "avg_over_time(pg_up[5m]) * 100 < 50",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "PumaQueueing",
+    "note": "Puma instance {{ $labels.instance }} is queueing requests with an average of {{ $value | printf \"%.1f\" }} over the last 30 minutes.",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "avg_over_time(puma_queued_connections[30m]) > 1",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "avg_over_time(puma_queued_connections[30m]) > 1",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "RedisDown",
+    "note": "The Redis service {{ $labels.job }} instance {{ $labels.instance }} is not responding for more than 50% of the time for 5 minutes.",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "avg_over_time(redis_up[5m]) * 100 < 50",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "avg_over_time(redis_up[5m]) * 100 < 50",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "ServiceDown",
+    "note": "The service {{ $labels.job }} instance {{ $labels.instance }} is not responding for more than 50% of the time for 5 minutes.",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "avg_over_time(up[5m]) * 100 < 50",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "avg_over_time(up[5m]) * 100 < 50",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "SidekiqJobsQueuing",
+    "note": "Sidekiq has jobs queued",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 3600,
+    "prom_ql": "sum by (name) (sidekiq_queue_size) > 0",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "sum by (name) (sidekiq_queue_size) > 0",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "WorkhorseHighErrorRate",
+    "note": "Workhorse has high error rates",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 2,
+    "severities": [
+      2
+    ],
+    "disabled": 1,
+    "prom_for_duration": 0,
+    "prom_ql": "(\n  sum without (job, code) (\n    job_route_method_code:gitlab_workhorse_http_request_duration_seconds_count:rate5m{code=~\"5..\"}\n  ) /\n  sum without (job,code) (\n    job_route_method_code:gitlab_workhorse_http_request_duration_seconds_count:rate5m\n  ) < 10\n) * 100 > 50\n",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "(\n  sum without (job, code) (\n    job_route_method_code:gitlab_workhorse_http_request_duration_seconds_count:rate5m{code=~\"5..\"}\n  ) /\n  sum without (job,code) (\n    job_route_method_code:gitlab_workhorse_http_request_duration_seconds_count:rate5m\n  ) < 10\n) * 100 > 50\n",
+          "severity": 2
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null
+  }
+]
