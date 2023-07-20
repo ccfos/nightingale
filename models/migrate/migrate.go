@@ -7,6 +7,7 @@ import (
 
 func Migrate(db *gorm.DB) {
 	MigrateRecordingTable(db)
+	MigrateEsIndexPatternTable(db)
 }
 
 type RecordingRule struct {
