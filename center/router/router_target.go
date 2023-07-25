@@ -45,6 +45,7 @@ func (rt *Router) targetGets(c *gin.Context) {
 	bgid := ginx.QueryInt64(c, "bgid", -1)
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 30)
+	downtime := ginx.QueryInt64(c, "downtime", 0)
 	dsIds := queryDatasourceIds(c)
 
 	var bgids []int64
@@ -64,10 +65,10 @@ func (rt *Router) targetGets(c *gin.Context) {
 		bgids = append(bgids, bgid)
 	}
 
-	total, err := models.TargetTotal(rt.Ctx, bgids, dsIds, query)
+	total, err := models.TargetTotal(rt.Ctx, bgids, dsIds, query, downtime)
 	ginx.Dangerous(err)
 
-	list, err := models.TargetGets(rt.Ctx, bgids, dsIds, query, limit, ginx.Offset(c, limit))
+	list, err := models.TargetGets(rt.Ctx, bgids, dsIds, query, downtime, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	if err == nil {
@@ -78,6 +79,12 @@ func (rt *Router) targetGets(c *gin.Context) {
 		for i := 0; i < len(list); i++ {
 			ginx.Dangerous(list[i].FillGroup(rt.Ctx, cache))
 			keys = append(keys, models.WrapIdent(list[i].Ident))
+
+			if now.Unix()-list[i].UpdateAt < 60 {
+				list[i].TargetUp = 2
+			} else if now.Unix()-list[i].UpdateAt < 180 {
+				list[i].TargetUp = 1
+			}
 		}
 
 		if len(keys) > 0 {
@@ -102,12 +109,6 @@ func (rt *Router) targetGets(c *gin.Context) {
 				} else {
 					// 未上报过元数据的主机，cpuNum默认为-1, 用于前端展示 unknown
 					list[i].CpuNum = -1
-				}
-
-				if now.Unix()-list[i].UnixTime/1000 < 60 {
-					list[i].TargetUp = 2
-				} else if now.Unix()-list[i].UnixTime/1000 < 180 {
-					list[i].TargetUp = 1
 				}
 			}
 		}

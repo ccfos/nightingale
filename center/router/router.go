@@ -243,6 +243,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/builtin-boards-cates", rt.auth(), rt.user(), rt.builtinBoardCateGets)
 		pages.POST("/builtin-boards-detail", rt.auth(), rt.user(), rt.builtinBoardDetailGets)
 		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
+		pages.GET("/integrations/makedown/:cate", rt.builtinMarkdown)
 
 		pages.GET("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.bgro(), rt.boardGets)
 		pages.POST("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards/add"), rt.bgrw(), rt.boardAdd)
