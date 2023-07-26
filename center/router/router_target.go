@@ -51,16 +51,18 @@ func (rt *Router) targetGets(c *gin.Context) {
 	var bgids []int64
 	var err error
 	if bgid == -1 {
-		// 全部对象的情况，找到用户有权限的业务组
 		user := c.MustGet("user").(*models.User)
-		userGroupIds, err := models.MyGroupIds(rt.Ctx, user.Id)
-		ginx.Dangerous(err)
+		if !user.IsAdmin() {
+			// 如果是非 admin 用户，全部对象的情况，找到用户有权限的业务组
+			userGroupIds, err := models.MyGroupIds(rt.Ctx, user.Id)
+			ginx.Dangerous(err)
 
-		bgids, err = models.BusiGroupIds(rt.Ctx, userGroupIds)
-		ginx.Dangerous(err)
+			bgids, err = models.BusiGroupIds(rt.Ctx, userGroupIds)
+			ginx.Dangerous(err)
 
-		// 将未分配业务组的对象也加入到列表中
-		bgids = append(bgids, 0)
+			// 将未分配业务组的对象也加入到列表中
+			bgids = append(bgids, 0)
+		}
 	} else {
 		bgids = append(bgids, bgid)
 	}
