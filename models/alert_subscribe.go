@@ -336,6 +336,10 @@ func AlertSubscribeGetsAll(ctx *ctx.Context) ([]*AlertSubscribe, error) {
 	return lst, err
 }
 
+func (s *AlertSubscribe) MatchProd(prod string) bool {
+	return s.Prod == prod
+}
+
 func (s *AlertSubscribe) MatchCluster(dsId int64) bool {
 	// 没有配置数据源, 或者事件不需要关联数据源
 	// do not match any datasource or event not related to datasource

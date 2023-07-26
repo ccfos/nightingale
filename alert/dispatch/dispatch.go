@@ -170,9 +170,18 @@ func (e *Dispatch) handleSubs(event *models.AlertCurEvent) {
 
 // handleSub 处理订阅规则的event,注意这里event要使用值传递,因为后面会修改event的状态
 func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEvent) {
-	if sub.IsDisabled() || !sub.MatchCluster(event.DatasourceId) {
+	if sub.IsDisabled() {
 		return
 	}
+
+	if !sub.MatchCluster(event.DatasourceId) {
+		return
+	}
+
+	if !sub.MatchProd(event.RuleProd) {
+		return
+	}
+
 	if !common.MatchTags(event.TagsMap, sub.ITags) {
 		return
 	}
