@@ -9,7 +9,7 @@ Level = "DEBUG"
 # stdout, stderr, file
 Output = "stdout"
 # # rotate by time
-# KeepHours: 4
+# KeepHours = 4
 # # rotate by size
 # RotateNum = 3
 # # unit: MB
@@ -41,24 +41,17 @@ WriteTimeout = 40
 # http server idle timeout, unit: s
 IdleTimeout = 120
 
-[HTTP.Pushgw]
+[HTTP.ShowCaptcha]
+Enable = false 
+
+[HTTP.APIForAgent]
 Enable = true 
-# [HTTP.Pushgw.BasicAuth]
+# [HTTP.APIForAgent.BasicAuth]
 # user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
-[HTTP.Alert]
+[HTTP.APIForService]
 Enable = true 
-[HTTP.Alert.BasicAuth]
-user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
-
-[HTTP.Heartbeat]
-Enable = true 
-# [HTTP.Heartbeat.BasicAuth]
-# user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
-
-[HTTP.Service]
-Enable = true 
-[HTTP.Service.BasicAuth]
+[HTTP.APIForService.BasicAuth]
 user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
 [HTTP.JWTAuth]
@@ -76,6 +69,16 @@ Enable = false
 # username key in http proxy header
 HeaderUserNameKey = "X-User-Name"
 DefaultRoles = ["Standard"]
+
+[HTTP.RSA]
+# open RSA
+OpenRSA = false
+# RSA public key
+RSAPublicKeyPath = "/etc/n9e/public.pem"
+# RSA private key
+RSAPrivateKeyPath = "/etc/n9e/private.pem"
+# RSA private key password
+RSAPassWord = ""
 
 [DB]
 DSN="host=postgres port=5432 user=root dbname=n9e_v6 password=1234 sslmode=disable"
@@ -115,7 +118,7 @@ RedisType = "standalone"
 IP = ""
 # unit ms
 Interval = 1000
-ClusterName = "default"
+EngineName = "default"
 
 # [Alert.Alerting]
 # NotifyConcurrency = 10
@@ -128,16 +131,49 @@ I18NHeaderKey = "X-Language"
 PromQuerier = true
 AlertDetail = true
 
-[Center.Ibex]
-Address = "http://ibex:10090"
-# basic auth
-BasicAuthUser = "ibex"
-BasicAuthPass = "ibex"
-# unit: ms
-Timeout = 3000
-
 [Pushgw]
+# use target labels in database instead of in series
 LabelRewrite = true
+# # default busigroup key name
+# BusiGroupLabelKey = "busigroup"
+# ForceUseServerTS = false
 
-[[Pushgw.Writers]]
+# [Pushgw.DebugSample]
+# ident = "xx"
+# __name__ = "xx"
+
+# [Pushgw.WriterOpt]
+# QueueMaxSize = 1000000
+# QueuePopSize = 1000
+
+[[Pushgw.Writers]] 
+# Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"
 Url = "http://victoriametrics:8428/api/v1/write"
+# Basic auth username
+BasicAuthUser = ""
+# Basic auth password
+BasicAuthPass = ""
+# timeout settings, unit: ms
+Headers = ["X-From", "n9e"]
+Timeout = 10000
+DialTimeout = 3000
+TLSHandshakeTimeout = 30000
+ExpectContinueTimeout = 1000
+IdleConnTimeout = 90000
+# time duration, unit: ms
+KeepAlive = 30000
+MaxConnsPerHost = 0
+MaxIdleConns = 100
+MaxIdleConnsPerHost = 100
+## Optional TLS Config
+# UseTLS = false
+# TLSCA = "/etc/n9e/ca.pem"
+# TLSCert = "/etc/n9e/cert.pem"
+# TLSKey = "/etc/n9e/key.pem"
+# InsecureSkipVerify = false
+# [[Writers.WriteRelabels]]
+# Action = "replace"
+# SourceLabels = ["__address__"]
+# Regex = "([^:]+)(?::\\d+)?"
+# Replacement = "$1:80"
+# TargetLabel = "__address__"
