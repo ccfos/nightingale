@@ -96,21 +96,20 @@ url_label_value = "{{.Host}}"
 labels = {service="gitlab",job="nginx"}
 ```
 
-Dashboards:
+Dashboards:   
 <img src="http://download.flashcat.cloud/uPic/MachinePerformance.png" alt="MachinePerformance" style="zoom:50%;" />
 
-NGINXVTS
+NGINXVTS   
 <img src="http://download.flashcat.cloud/uPic/NGINXVTS.png" alt="NGINXVTS" style="zoom:50%;" />
 
-Overview
+Overview   
 <img src="http://download.flashcat.cloud/uPic/Overview.png" alt="Overview" style="zoom:50%;" />
 
-PostgreSQL
+PostgreSQL   
 <img src="http://download.flashcat.cloud/uPic/PostgreSQL.png" alt="PostgreSQL" style="zoom:50%;" />
 
 Redis
 <img src="http://download.flashcat.cloud/uPic/Redis.png" alt="Redis" style="zoom:50%;" />
 
-
-Alerts:
+Alerts:   
 <img src="http://download.flashcat.cloud/uPic/alerts.png" alt="alert" style="zoom:50%;" />
