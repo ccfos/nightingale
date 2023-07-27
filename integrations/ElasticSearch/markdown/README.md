@@ -23,4 +23,4 @@ labels = { instance="default-es" , service="es" }
 
 ### 效果图：
 
-![](./es-dashboard.jpeg)
+![](http://download.flashcat.cloud/uPic/es-dashboard.jpeg)

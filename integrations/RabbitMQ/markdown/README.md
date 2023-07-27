@@ -21,11 +21,6 @@ labels = {service="rabbitmq-cluster"}
 
 ```
 
-### 告警规则
-
-[alerts](../alerts/alerts.json)
 
 
-### 效果图：
-
-![rabbitmq](./rabbitmq.png)
+![rabbitmq](http://download.flashcat.cloud/uPic/rabbitmq.png)

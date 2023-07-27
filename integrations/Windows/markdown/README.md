@@ -52,12 +52,5 @@ url = "http://192.168.0.250:19000/v1/n9e/heartbeat"
 
 ### Windows效果图
 
-![windows](./windows.png)
+![windows](http://download.flashcat.cloud/uPic/windows.png)
 
-### 仪表盘
-
-[dashboard](../dashboards/windows_by_categraf.json)中选择变量，如果有特殊需求，可自行修改或者添加；
-
-### 告警规则
-
-[alerts](../alerts/windows_by_categraf.json)

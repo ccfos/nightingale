@@ -44,12 +44,11 @@ labels = {service="vminsert"}
 
 ### 告警规则
 
-![alert](./alerts.png)
+![alert](http://download.flashcat.cloud/uPic/alerts.png)
 
-[alerts](../alerts/alerts.json)
+
 
 ### 仪表盘：
 
-![dashboard](./dashboard.png)
+![dashboard](http://download.flashcat.cloud/uPic/dashboard.png)
 
-[dashboard](../dashboard/victoriametrics.json)

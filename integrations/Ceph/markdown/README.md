@@ -20,12 +20,8 @@ cat /opt/categraf/conf/input.prometheus/prometheus.toml
 
 Dashboard:
 
-[dashboard](../dashboards/ceph_by_categraf.json)
-
-![ceph](./ceph.png)
+![ceph](http://download.flashcat.cloud/uPic/ceph.png)
 
 Alerts:
 
-[alerts](../alerts/ceph_by_categraf.json)
-
-![alert](./alerts.png)
+![alert](http://download.flashcat.cloud/uPic/alerts.png)

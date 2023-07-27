@@ -15,12 +15,8 @@ labels = { cluster="kafka-cluster", service="kafka" }
 
 ### 告警规则
 
-![alerts](./alerts..png)
-
-[alerts](../alerts/kafka_by_categraf.json)
+![alerts](http://download.flashcat.cloud/uPic/alerts..png)
 
 ### 仪表盘：
 
-![dashboard](./dashboards.png)
-
-[dashboard](../dashboards/kafka_by_categraf.json)
+![dashboard](http://download.flashcat.cloud/uPic/dashboards.png)

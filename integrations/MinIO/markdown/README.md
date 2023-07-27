@@ -22,10 +22,10 @@ url_label_value = "{{.Host}}"
 labels = {job="minio-cluster"}
 ```
 
-[Dashboard](../dashboards/minio_by_categraf.json)
+Dashboard
 
-![MinIO](./minio.png)
+![MinIO](http://download.flashcat.cloud/uPic/minio.png)
 
-[Alerts](../alerts/minio_by_categraf.json)
+Alerts
 
-![alert](./alerts.png)
+![alert](http://download.flashcat.cloud/uPic/alerts.png)

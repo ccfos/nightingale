@@ -225,10 +225,3 @@ vCenter Server是用于管理网络中连接的多个ESXi主机和主机资源�
   # historical_interval = "5m"
 ```
 
-### 仪表盘
-
-[dashboard](../dashboards/vsphere.json)中选择变量，如果有特殊需求，可自行修改或者添加；
-
-### 告警规则
-
-[alerts](../alerts/alerts.json)

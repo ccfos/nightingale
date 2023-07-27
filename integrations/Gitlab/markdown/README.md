@@ -99,29 +99,25 @@ labels = {service="gitlab",job="nginx"}
 
 Dashboards:
 
-[MachinePerformance](../dashboards/MachinePerformance.json)
+![MachinePerformance](http://download.flashcat.cloud/uPic/MachinePerformance.png)
 
-![MachinePerformance](./MachinePerformance.png)
+NGINXVTS
 
-[NGINXVTS](../dashboards/NGINXVTS.json)
+![NGINXVTS](http://download.flashcat.cloud/uPic/NGINXVTS.png)
 
-![NGINXVTS](./NGINXVTS.png)
+Overview
 
-[Overview](../dashboards/Overview.json)
+![Overview](http://download.flashcat.cloud/uPic/Overview.png)
 
-![Overview](./Overview.png)
+PostgreSQL
 
-[PostgreSQL](../dashboards/PostgreSQL.json)
+![PostgreSQL](http://download.flashcat.cloud/uPic/PostgreSQL.png)
 
-![PostgreSQL](./PostgreSQL.png)
+Redis
 
-[Redis](../dashboards/Redis.json)
-
-![Redis](./Redis.png)
+![Redis](http://download.flashcat.cloud/uPic/Redis.png)
 
 
 Alerts:
 
-[alerts](../alerts/gitlab_by_categraf.json)
-
-![alert](./alerts.png)
+![alert](http://download.flashcat.cloud/uPic/alerts.png)

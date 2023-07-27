@@ -147,6 +147,6 @@ cat /opt/categraf/conf/input.ipmi/conf.toml
   ## The provided path must exist and must be writable
 ```
 
-[告警规则](../alerts/alerts.json)
 
-效果图：![ipmi](./ipmi.png)
+
+效果图：![ipmi](http://download.flashcat.cloud/uPic/ipmi.png)

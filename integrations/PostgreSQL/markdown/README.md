@@ -57,12 +57,9 @@ address = "host=192.168.11.181 port=5432 user=postgres password=123456789 sslmod
 
 ### 告警规则
 
-![alert](./alerts.png)
-
-[alerts](../alerts/postgresql_by_categraf.json)
+![alert](http://download.flashcat.cloud/uPic/alerts.png)
 
 ### 仪表盘：
 
-![dashboard](./postgresql.png)
+![dashboard](http://download.flashcat.cloud/uPic/postgresql.png)
 
-[dashboard](../dashboards/postgresql_by_categraf.json)

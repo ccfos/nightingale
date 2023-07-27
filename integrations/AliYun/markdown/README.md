@@ -47,12 +47,12 @@ timeout="5s"
 
 ### 效果图
 
-![ecs](./ecs.png)
+![ecs](http://download.flashcat.cloud/uPic/R6LOcO.jpg)
 
-![rds](./rds.png)
+![rds](http://download.flashcat.cloud/uPic/rds.png)
 
-![redis](./redis.png)
+![redis](http://download.flashcat.cloud/uPic/redis.png)
 
-![slb](./slb.png)
+![slb](http://download.flashcat.cloud/uPic/slb.png)
 
-![waf](./waf.png)
+![waf](http://download.flashcat.cloud/uPic/waf.png)

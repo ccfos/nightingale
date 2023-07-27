@@ -18,9 +18,9 @@ url_label_key = "instance"
 url_label_value = "{{.Host}}"
 ```
 
-效果图：![actuator](./actuator.jpeg)
+效果图：![actuator](http://download.flashcat.cloud/uPic/actuator.jpeg)
 
 
 2.0 效果图:
 
-![actuator2.0](./actuator_2.0.png)
+![actuator2.0](http://download.flashcat.cloud/uPic/actuator_2.0.png)
