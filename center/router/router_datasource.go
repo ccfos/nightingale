@@ -25,6 +25,11 @@ type listReq struct {
 }
 
 func (rt *Router) datasourceList(c *gin.Context) {
+	if rt.DatasourceCheckHook(c) {
+		Render(c, []int{}, nil)
+		return
+	}
+
 	var req listReq
 	ginx.BindJSON(c, &req)
 
@@ -65,6 +70,11 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 }
 
 func (rt *Router) datasourceUpsert(c *gin.Context) {
+	if rt.DatasourceCheckHook(c) {
+		Render(c, []int{}, nil)
+		return
+	}
+
 	var req models.Datasource
 	ginx.BindJSON(c, &req)
 	username := Username(c)
@@ -165,6 +175,11 @@ func DatasourceCheck(ds models.Datasource) error {
 }
 
 func (rt *Router) datasourceGet(c *gin.Context) {
+	if rt.DatasourceCheckHook(c) {
+		Render(c, []int{}, nil)
+		return
+	}
+
 	var req models.Datasource
 	ginx.BindJSON(c, &req)
 	err := req.Get(rt.Ctx)
@@ -172,6 +187,11 @@ func (rt *Router) datasourceGet(c *gin.Context) {
 }
 
 func (rt *Router) datasourceUpdataStatus(c *gin.Context) {
+	if rt.DatasourceCheckHook(c) {
+		Render(c, []int{}, nil)
+		return
+	}
+
 	var req models.Datasource
 	ginx.BindJSON(c, &req)
 	username := Username(c)
@@ -181,6 +201,11 @@ func (rt *Router) datasourceUpdataStatus(c *gin.Context) {
 }
 
 func (rt *Router) datasourceDel(c *gin.Context) {
+	if rt.DatasourceCheckHook(c) {
+		Render(c, []int{}, nil)
+		return
+	}
+
 	var ids []int64
 	ginx.BindJSON(c, &ids)
 	err := models.DatasourceDel(rt.Ctx, ids)
