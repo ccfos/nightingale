@@ -50,8 +50,8 @@ func (rt *Router) targetGets(c *gin.Context) {
 
 	var bgids []int64
 	var err error
+	user := c.MustGet("user").(*models.User)
 	if bgid == -1 {
-		user := c.MustGet("user").(*models.User)
 		if !user.IsAdmin() {
 			// 如果是非 admin 用户，全部对象的情况，找到用户有权限的业务组
 			userGroupIds, err := models.MyGroupIds(rt.Ctx, user.Id)
@@ -64,6 +64,19 @@ func (rt *Router) targetGets(c *gin.Context) {
 			bgids = append(bgids, 0)
 		}
 	} else {
+		if !user.IsAdmin() {
+			userGroupIds, err := models.MyGroupIds(rt.Ctx, user.Id)
+			ginx.Dangerous(err)
+
+			count, err := models.BusiGroupMemberCount(rt.Ctx, "busi_group_id = ? and user_group_id in (?)", bgid, userGroupIds)
+			ginx.Dangerous(err)
+
+			if count < 1 {
+				ginx.NewRender(c).Message(http.StatusForbidden, fmt.Sprintf("no permission to access busi group %d", bgid))
+				return
+			}
+		}
+
 		bgids = append(bgids, bgid)
 	}
 
