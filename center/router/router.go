@@ -423,6 +423,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/alert-his-events", rt.alertHisEventsList)
 			service.GET("/alert-his-event/:eid", rt.alertHisEventGet)
 
+			service.GET("/task-tpl/:tid", rt.taskTplGetByService)
+
 			service.GET("/config/:id", rt.configGet)
 			service.GET("/configs", rt.configsGet)
 			service.GET("/config", rt.configGetByKey)
