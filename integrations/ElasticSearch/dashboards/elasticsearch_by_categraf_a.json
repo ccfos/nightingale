@@ -1,0 +1,1945 @@
+{
+    "name": "ElasticSearch, group by service",
+    "tags": "ElasticSearch Prometheus Categraf",
+    "ident": "",
+    "configs": {
+        "var": [
+            {
+                "name": "service",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus"
+                },
+                "definition": "label_values(elasticsearch_up, service)"
+            },
+            {
+                "name": "node_host",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus"
+                },
+                "definition": "label_values(elasticsearch_jvm_uptime_in_millis{service =\"$service\"}, node_host)",
+                "multi": true,
+                "allOption": true
+            }
+        ],
+        "panels": [
+            {
+                "type": "stat",
+                "id": "f70f4198-dec2-40c0-97d9-6986c7001e73",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 0,
+                    "y": 0,
+                    "i": "f70f4198-dec2-40c0-97d9-6986c7001e73",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "min(elasticsearch_cluster_health_status_code{service =\"$service\"})"
+                    }
+                ],
+                "name": "",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "special",
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "text": "N/A"
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#417505",
+                                "text": "Green"
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "match": {
+                                "special": 2
+                            },
+                            "result": {
+                                "color": "#f5a623",
+                                "text": "Yellow"
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "match": {
+                                "special": 3
+                            },
+                            "result": {
+                                "color": "#d0021b",
+                                "text": "Red"
+                            }
+                        }
+                    ],
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "min(elasticsearch_cluster_health_number_of_nodes{service =\"$service\"})"
+                    }
+                ],
+                "name": "Nodes",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 4,
+                    "y": 0,
+                    "i": "7dafe232-ee30-479b-a2f1-e1064572c154",
+                    "isResizable": true
+                },
+                "id": "7dafe232-ee30-479b-a2f1-e1064572c154"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "min(elasticsearch_cluster_health_number_of_data_nodes{service =\"$service\"})"
+                    }
+                ],
+                "name": "Data Nodes",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 8,
+                    "y": 0,
+                    "i": "c6953ef5-3e29-44dc-bf9e-74905934e9df",
+                    "isResizable": true
+                },
+                "id": "447fb784-a7e4-41cf-820f-6086837590e6"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(elasticsearch_process_cpu_percent{service =\"$service\", node_host=~\"$node_host\"})"
+                    }
+                ],
+                "name": "CPU Util Percent",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "match": {
+                                "to": 50
+                            },
+                            "result": {
+                                "color": "#417505"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 50,
+                                "to": 80
+                            },
+                            "result": {
+                                "color": "#f5a623"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 80
+                            },
+                            "result": {
+                                "color": "#d0021b"
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "percent"
+                    }
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 12,
+                    "y": 0,
+                    "i": "e6cf29e7-bb5d-4c8f-8aa6-67a63fc325c7",
+                    "isResizable": true
+                },
+                "id": "f0375f72-4ca1-474f-81e9-ce6b64f22204"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(elasticsearch_jvm_mem_heap_used_percent{service =\"$service\", node_host=~\"$node_host\"})"
+                    }
+                ],
+                "name": "JVM Heap Util Percent",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "match": {
+                                "to": 50
+                            },
+                            "result": {
+                                "color": "#417505"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 50,
+                                "to": 80
+                            },
+                            "result": {
+                                "color": "#f5a623"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 80
+                            },
+                            "result": {
+                                "color": "#d0021b"
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "percent"
+                    }
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 16,
+                    "y": 0,
+                    "i": "34ae1975-6acb-48a7-adce-1d67b7c581ec",
+                    "isResizable": true
+                },
+                "id": "288ee5f1-b484-43f5-86bf-5b81c01b3c2c"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(elasticsearch_cluster_health_number_of_pending_tasks{service =\"$service\"})"
+                    }
+                ],
+                "name": "Pending Tasks",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "match": {
+                                "to": 1
+                            },
+                            "result": {
+                                "color": "#417505"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 1
+                            },
+                            "result": {
+                                "color": "#d0021b"
+                            }
+                        }
+                    ],
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 20,
+                    "y": 0,
+                    "i": "01c403f3-c3b0-4910-84df-a50d4968bcd6",
+                    "isResizable": true
+                },
+                "id": "4dd345c1-2bc1-474e-83b1-153be10a5b5b"
+            },
+            {
+                "type": "row",
+                "id": "b398d46e-7345-4cc9-90b4-918cbd1e8d1f",
+                "name": "Breakers",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 3,
+                    "i": "b398d46e-7345-4cc9-90b4-918cbd1e8d1f",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum({__name__=~\"elasticsearch_breakers_.+_tripped\", service =\"$service\", node_host=~\"$node_host\"}) by (node_host)",
+                        "legend": ""
+                    }
+                ],
+                "name": "Tripped for breakers",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.04,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 4,
+                    "i": "15882e6f-0585-4035-bfb6-71cb9caaa0a8",
+                    "isResizable": true
+                },
+                "id": "15882e6f-0585-4035-bfb6-71cb9caaa0a8"
+            },
+            {
+                "type": "timeseries",
+                "id": "8adbc8e4-f630-4a25-98e3-ee03dec92011",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 4,
+                    "i": "d05d16d0-022d-49f8-9b55-2388c4cbb2b1",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "{__name__=~\"elasticsearch_breakers_.+_size_in_bytes\", service =\"$service\", node_host=~\"$node_host\"}",
+                        "legend": "{{__name__}} {{node_host}}"
+                    }
+                ],
+                "name": "Estimated size in bytes of breaker",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.04,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "row",
+                "id": "2aadd697-3bed-4f70-bc74-4bc801ef7d1d",
+                "name": "Shards",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 8,
+                    "i": "2aadd697-3bed-4f70-bc74-4bc801ef7d1d",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(elasticsearch_cluster_health_active_shards{service =\"$service\"})"
+                    }
+                ],
+                "name": "Active shards",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 0,
+                    "y": 9,
+                    "i": "7aec074e-1672-4dbb-8529-28292f9a4221",
+                    "isResizable": true
+                },
+                "id": "7aec074e-1672-4dbb-8529-28292f9a4221"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(elasticsearch_cluster_health_active_primary_shards{service =\"$service\"})"
+                    }
+                ],
+                "name": "Active primary shards",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 4,
+                    "y": 9,
+                    "i": "fe82bb33-7b8d-4909-adda-64a4121f29fd",
+                    "isResizable": true
+                },
+                "id": "f138daa7-b98f-4575-89e3-42363a8102c9"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(elasticsearch_cluster_health_initializing_shards{service =\"$service\"})"
+                    }
+                ],
+                "name": "Initializing shards",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 8,
+                    "y": 9,
+                    "i": "de2c46fd-dcfd-43a3-847b-9fd1320dfaa7",
+                    "isResizable": true
+                },
+                "id": "7412543a-dba5-4624-96ff-11e30b7e8ff4"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(elasticsearch_cluster_health_relocating_shards{service =\"$service\"})"
+                    }
+                ],
+                "name": "Relocating shards",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 12,
+                    "y": 9,
+                    "i": "4403206d-a491-4564-9f61-db25a6beb356",
+                    "isResizable": true
+                },
+                "id": "2f26f24f-2a79-4552-b79d-60b41fa3aee6"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(elasticsearch_cluster_health_delayed_unassigned_shards{service =\"$service\"})"
+                    }
+                ],
+                "name": "Delayed Unassigned shards",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 16,
+                    "y": 9,
+                    "i": "e24c847a-5704-4b7c-861e-75dd4e4b59d8",
+                    "isResizable": true
+                },
+                "id": "394a83cc-f4e1-467e-83fa-b77d2c2be907"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "max(elasticsearch_cluster_health_unassigned_shards{service =\"$service\"})"
+                    }
+                ],
+                "name": "Unassigned shards",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 20,
+                    "y": 9,
+                    "i": "d82314d5-028c-41fb-a79f-34699d56d17a",
+                    "isResizable": true
+                },
+                "id": "720b9719-5c37-44d9-bce8-539308afa6ae"
+            },
+            {
+                "type": "row",
+                "id": "a1bc2be7-723b-4fe4-b217-bfdd8248559e",
+                "name": "JVM",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 12,
+                    "i": "a1bc2be7-723b-4fe4-b217-bfdd8248559e",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(elasticsearch_jvm_gc_collectors_old_collection_count{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "legend": "old gc {{node_host}}"
+                    },
+                    {
+                        "expr": "irate(elasticsearch_jvm_gc_collectors_young_collection_count{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "refId": "B",
+                        "legend": "young gc {{node_host}}"
+                    }
+                ],
+                "name": "GC counts / second",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 13,
+                    "i": "ee0c56e0-8f8e-4cbe-ac41-de2afad7b75a",
+                    "isResizable": true
+                },
+                "id": "ee0c56e0-8f8e-4cbe-ac41-de2afad7b75a"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(elasticsearch_jvm_gc_collectors_old_collection_time_in_millis{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "legend": "old gc {{node_host}}"
+                    },
+                    {
+                        "expr": "irate(elasticsearch_jvm_gc_collectors_young_collection_time_in_millis{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "refId": "B",
+                        "legend": "young gc {{node_host}}"
+                    }
+                ],
+                "name": "GC time in millis",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 13,
+                    "i": "4f21ebfc-b51c-469b-b149-479966750920",
+                    "isResizable": true
+                },
+                "id": "5c361278-8a94-4b16-afdd-e6def804b9ff"
+            },
+            {
+                "type": "timeseries",
+                "id": "ff81d109-79e5-4909-8765-857a75cebf17",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 0,
+                    "y": 17,
+                    "i": "5105f1dc-26cb-4818-a04d-90f2e5803da2",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "{__name__=~\"elasticsearch_jvm_mem_pools_young_used_in_bytes\", service =\"$service\", node_host=~\"$node_host\"}",
+                        "legend": "{{__name__}} {{node_name}}"
+                    }
+                ],
+                "name": "Yong Used(Bytes)",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "d7c76456-8f34-4e1b-843b-9d174bbdfcee",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 6,
+                    "y": 17,
+                    "i": "86841663-2a17-4858-a9e1-13c296b3bb76",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "{__name__=~\"elasticsearch_jvm_mem_pools_old_used_in_bytes\", service =\"$service\", node_host=~\"$node_host\"}",
+                        "legend": "{{__name__}} {{node_name}}"
+                    }
+                ],
+                "name": "Old Used(Bytes)",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "{__name__=~\"elasticsearch_jvm_mem_.+_committed_in_bytes\", service =\"$service\", node_host=~\"$node_host\"}",
+                        "legend": "{{__name__}} {{node_name}}"
+                    }
+                ],
+                "name": "Committed Bytes",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 17,
+                    "i": "14f655ac-9c1c-40fa-bfef-158cc8601ead",
+                    "isResizable": true
+                },
+                "id": "a0096936-3790-40a1-b2ad-d7805945b948"
+            },
+            {
+                "type": "row",
+                "id": "e1d04a8c-81ee-4949-87de-3b70bc637584",
+                "name": "Translog",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 21,
+                    "i": "e1d04a8c-81ee-4949-87de-3b70bc637584",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(elasticsearch_indices_translog_operations{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Total translog operations",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 22,
+                    "i": "45aafb11-c694-4686-89ab-685068f91560",
+                    "isResizable": true
+                },
+                "id": "45aafb11-c694-4686-89ab-685068f91560"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(elasticsearch_indices_translog_size_in_bytes{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Total translog size in bytes",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 22,
+                    "i": "56806f8a-525a-4ab4-a9d3-c83559ae4828",
+                    "isResizable": true
+                },
+                "id": "09ca6329-8eec-4a61-b19e-9bbeea2b9712"
+            },
+            {
+                "type": "row",
+                "id": "d9694c3f-9a14-4bde-9427-88531b0ea3a6",
+                "name": "Disk and Network",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 26,
+                    "i": "d9694c3f-9a14-4bde-9427-88531b0ea3a6",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "1-(elasticsearch_fs_total_available_in_bytes{service =\"$service\",node_host=~\"$node_host\"}/elasticsearch_fs_total_total_in_bytes{service =\"$service\",node_host=~\"$node_host\"})",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Disk usage %",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 27,
+                    "i": "6c0d9b3c-dda5-4da9-825e-33f650dbb008",
+                    "isResizable": true
+                },
+                "id": "6c0d9b3c-dda5-4da9-825e-33f650dbb008"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(elasticsearch_transport_tx_size_in_bytes{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}: sent"
+                    },
+                    {
+                        "expr": "-irate(elasticsearch_transport_rx_size_in_bytes{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "refId": "B",
+                        "legend": "{{node_host}}: received"
+                    }
+                ],
+                "name": "Network usage",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 27,
+                    "i": "4f7ce5a7-2771-4cbf-a569-b1a90b070b93",
+                    "isResizable": true
+                },
+                "id": "4f7ce5a7-2771-4cbf-a569-b1a90b070b93"
+            },
+            {
+                "type": "row",
+                "id": "292b6c24-5471-4eeb-9d65-1a1e7a684fe3",
+                "name": "Documents",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 31,
+                    "i": "292b6c24-5471-4eeb-9d65-1a1e7a684fe3",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "elasticsearch_indices_docs_count{service =\"$service\", node_host=~\"$node_host\"}",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Documents count on node",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 32,
+                    "i": "e98839c4-e3f3-4e6e-be3a-c44b70e6072c",
+                    "isResizable": true
+                },
+                "id": "e98839c4-e3f3-4e6e-be3a-c44b70e6072c"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(elasticsearch_indices_indexing_index_total{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Documents indexed rate",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 32,
+                    "i": "45c4e3d9-90f1-41bd-8169-1d8c0a921ba9",
+                    "isResizable": true
+                },
+                "id": "45c4e3d9-90f1-41bd-8169-1d8c0a921ba9"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(elasticsearch_indices_docs_deleted{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Documents deleted rate",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 36,
+                    "i": "3b2a922d-4423-4845-8cfc-95970f3300d6",
+                    "isResizable": true
+                },
+                "id": "3b2a922d-4423-4845-8cfc-95970f3300d6"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(elasticsearch_indices_merges_total_docs{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Documents merged rate",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 12,
+                    "y": 36,
+                    "i": "764fbcf7-3056-41ef-b62a-51813a6c315f",
+                    "isResizable": true
+                },
+                "id": "764fbcf7-3056-41ef-b62a-51813a6c315f"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(elasticsearch_indices_merges_total_size_in_bytes{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Documents merged bytes",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 18,
+                    "y": 36,
+                    "i": "97b5d900-e91e-4e0e-8184-f508a3433bc6",
+                    "isResizable": true
+                },
+                "id": "7cc04ae4-946d-4837-9ea9-764a7cc2eecd"
+            },
+            {
+                "type": "row",
+                "id": "a0545cbd-6df5-4845-90e0-88a710f738ba",
+                "name": "Times",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 40,
+                    "i": "a0545cbd-6df5-4845-90e0-88a710f738ba",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(elasticsearch_indices_search_query_time_in_millis{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Query time(Unit: ms)",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 41,
+                    "i": "ad0445b0-8539-440d-bbf4-712450132a7a",
+                    "isResizable": true
+                },
+                "id": "ad0445b0-8539-440d-bbf4-712450132a7a"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(elasticsearch_indices_indexing_index_time_in_millis{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Indexing time(Unit: ms)",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 41,
+                    "i": "2af98dc1-f24e-4c7b-bd2c-723224facc5d",
+                    "isResizable": true
+                },
+                "id": "c3cf6c57-c4ce-4bc2-a150-df32c4951144"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(elasticsearch_indices_merges_total_time_in_millis{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Merging time(Unit: ms)",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 45,
+                    "i": "553c7da8-2d83-4ea0-a6ef-b064a5101633",
+                    "isResizable": true
+                },
+                "id": "022db454-70ba-49f5-8c11-f89b76d145cb"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate(elasticsearch_indices_indexing_throttle_time_in_millis{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Indexing throttle time(Unit: ms)",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 45,
+                    "i": "51056e8d-6dc8-4c7f-91e9-9c24c056462d",
+                    "isResizable": true
+                },
+                "id": "f20bad4f-656c-428a-a1cf-aafb7d92137c"
+            },
+            {
+                "type": "row",
+                "id": "2c56fb7a-85a0-4396-a317-6754d761cff2",
+                "name": "Thread Pool",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 49,
+                    "i": "2c56fb7a-85a0-4396-a317-6754d761cff2",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate\n(label_replace({__name__=~\"elasticsearch_thread_pool_(.*)_rejected\", service =\"$service\", node_host=~\"$node_host\"}, \"type\", \"$1\", \"__name__\", \"elasticsearch_thread_pool_(.*)_rejected\")[5m:])",
+                        "legend": "{{node_host}}: {{type}}"
+                    }
+                ],
+                "name": "Thread Pool operations rejected",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 0,
+                    "y": 50,
+                    "i": "cefafeb9-fc8a-4c73-92b3-648cd6f08b11",
+                    "isResizable": true
+                },
+                "id": "cefafeb9-fc8a-4c73-92b3-648cd6f08b11"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "label_replace({__name__=~\"elasticsearch_thread_pool_(.*)_active\", service =\"$service\", node_host=~\"$node_host\"}, \"type\", \"$1\", \"__name__\", \"elasticsearch_thread_pool_(.*)_active\")",
+                        "legend": "{{node_host}}: {{type}}"
+                    }
+                ],
+                "name": "Thread Pool threads active",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 6,
+                    "y": 50,
+                    "i": "793e98e7-2729-4106-940c-ecccff1d4b89",
+                    "isResizable": true
+                },
+                "id": "0ab67903-16ea-4001-b784-ae04d8b815c0"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "label_replace({__name__=~\"elasticsearch_thread_pool_(.*)_queue\", service =\"$service\", node_host=~\"$node_host\"}, \"type\", \"$1\", \"__name__\", \"elasticsearch_thread_pool_(.*)_queue\")",
+                        "legend": "{{node_host}}: {{type}}"
+                    }
+                ],
+                "name": "Thread Pool threads queued",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 12,
+                    "y": 50,
+                    "i": "9a14c86a-86af-4464-ac82-41f621ce7166",
+                    "isResizable": true
+                },
+                "id": "bb5dc07d-673b-4e2d-b44c-441acfa7c27b"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "irate\n(label_replace({__name__=~\"elasticsearch_thread_pool_(.*)_completed\", service =\"$service\", node_host=~\"$node_host\"}, \"type\", \"$1\", \"__name__\", \"elasticsearch_thread_pool_(.*)_completed\")[5m:])",
+                        "legend": "{{node_host}}: {{type}}"
+                    }
+                ],
+                "name": "Thread Pool operations completed",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 18,
+                    "y": 50,
+                    "i": "d5f42ea7-bdb5-44da-9ba6-7c0f09ba7c71",
+                    "isResizable": true
+                },
+                "id": "4cac1498-c141-483f-97c6-e1177317a2ea"
+            },
+            {
+                "type": "row",
+                "id": "a5c3b529-c329-4a66-aab0-6caebba8be96",
+                "name": "Caches",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 54,
+                    "i": "a5c3b529-c329-4a66-aab0-6caebba8be96",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "elasticsearch_indices_fielddata_memory_size_in_bytes{service =\"$service\", node_host=~\"$node_host\"}",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Field data memory size",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 0
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 4,
+                    "x": 0,
+                    "y": 55,
+                    "i": "5247f393-a934-4d9e-be0f-40b177d2be80",
+                    "isResizable": true
+                },
+                "id": "5247f393-a934-4d9e-be0f-40b177d2be80"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(elasticsearch_indices_fielddata_evictions{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Field data evictions",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 0
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 4,
+                    "x": 4,
+                    "y": 55,
+                    "i": "c33fceb6-df37-483e-ba53-4ffa5f5e5456",
+                    "isResizable": true
+                },
+                "id": "b87c56f7-4e50-4d15-8bcd-1218fee879d9"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "elasticsearch_indices_query_cache_memory_size_in_bytes{service =\"$service\", node_host=~\"$node_host\"}",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Query cache size",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 0
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 4,
+                    "x": 8,
+                    "y": 55,
+                    "i": "445484f4-32d3-4569-af8d-76790d0aa56b",
+                    "isResizable": true
+                },
+                "id": "ae2d0a7a-b6cd-4fd5-99d4-3c4289b8b5a8"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(elasticsearch_indices_query_cache_evictions{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Query cache evictions",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 0
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 4,
+                    "x": 12,
+                    "y": 55,
+                    "i": "ce9aa255-9d5b-44ed-9071-85e9d95675ec",
+                    "isResizable": true
+                },
+                "id": "78e4badc-8d51-4aa6-81c5-d1c9183810a2"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(elasticsearch_indices_request_cache_evictions{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Request cache evictions",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 0
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 55,
+                    "i": "b8b2604c-d84f-426f-b033-af9035a9e80d",
+                    "isResizable": true
+                },
+                "id": "296b43f1-2f33-492a-bce8-6f0fde1e7b52"
+            },
+            {
+                "type": "row",
+                "id": "d3161bf5-27a7-4552-a7d6-7b2b7d46b611",
+                "name": "Segments",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 59,
+                    "i": "d3161bf5-27a7-4552-a7d6-7b2b7d46b611",
+                    "isResizable": false
+                }
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "elasticsearch_indices_segments_count{service =\"$service\", node_host=~\"$node_host\"}",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Count of index segments",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 60,
+                    "i": "1537acaa-d5ce-48c5-b740-26fd543eb120",
+                    "isResizable": true
+                },
+                "id": "1537acaa-d5ce-48c5-b740-26fd543eb120"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "elasticsearch_indices_segments_memory_in_bytes{service =\"$service\", node_host=~\"$node_host\"}",
+                        "legend": "{{node_host}}"
+                    }
+                ],
+                "name": "Current memory size of segments in bytes",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 60,
+                    "i": "9c8efed6-7ced-4805-87e0-3da3b18d2989",
+                    "isResizable": true
+                },
+                "id": "a1c34fa4-4549-41a6-8d31-d25e7d860106"
+            }
+        ],
+        "version": "2.0.0"
+    }
+}

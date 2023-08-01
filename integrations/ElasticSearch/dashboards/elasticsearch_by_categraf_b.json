@@ -1,24 +1,18 @@
 {
-    "name": "ElasticSearch",
-    "tags": "ElasticSearch Prometheus",
+    "name": "ElasticSearch, group by cluster",
+    "tags": "ElasticSearch Categraf",
     "ident": "",
     "configs": {
         "var": [
             {
-                "name": "service",
                 "type": "query",
-                "datasource": {
-                    "cate": "prometheus"
-                },
-                "definition": "label_values(elasticsearch_up, service)"
+                "name": "cluster",
+                "definition": "label_values(elasticsearch_up, cluster)"
             },
             {
-                "name": "node_host",
                 "type": "query",
-                "datasource": {
-                    "cate": "prometheus"
-                },
-                "definition": "label_values(elasticsearch_jvm_uptime_in_millis{service =\"$service\"}, node_host)",
+                "name": "node_host",
+                "definition": "label_values(elasticsearch_jvm_uptime_in_millis{cluster=\"$cluster\"}, node_host)",
                 "multi": true,
                 "allOption": true
             }
@@ -40,7 +34,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "min(elasticsearch_cluster_health_status_code{service =\"$service\"})"
+                        "expr": "min(elasticsearch_cluster_health_status_code{cluster=\"$cluster\"})"
                     }
                 ],
                 "name": "",
@@ -110,7 +104,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "min(elasticsearch_cluster_health_number_of_nodes{service =\"$service\"})"
+                        "expr": "min(elasticsearch_cluster_health_number_of_nodes{cluster=\"$cluster\"})"
                     }
                 ],
                 "name": "Nodes",
@@ -140,7 +134,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "min(elasticsearch_cluster_health_number_of_data_nodes{service =\"$service\"})"
+                        "expr": "min(elasticsearch_cluster_health_number_of_data_nodes{cluster=\"$cluster\"})"
                     }
                 ],
                 "name": "Data Nodes",
@@ -170,7 +164,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "max(elasticsearch_process_cpu_percent{service =\"$service\", node_host=~\"$node_host\"})"
+                        "expr": "max(elasticsearch_process_cpu_percent{cluster=\"$cluster\", node_host=~\"$node_host\"})"
                     }
                 ],
                 "name": "CPU Util Percent",
@@ -232,7 +226,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "max(elasticsearch_jvm_mem_heap_used_percent{service =\"$service\", node_host=~\"$node_host\"})"
+                        "expr": "max(elasticsearch_jvm_mem_heap_used_percent{cluster=\"$cluster\", node_host=~\"$node_host\"})"
                     }
                 ],
                 "name": "JVM Heap Util Percent",
@@ -294,7 +288,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "max(elasticsearch_cluster_health_number_of_pending_tasks{service =\"$service\"})"
+                        "expr": "max(elasticsearch_cluster_health_number_of_pending_tasks{cluster=\"$cluster\"})"
                     }
                 ],
                 "name": "Pending Tasks",
@@ -359,7 +353,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "sum({__name__=~\"elasticsearch_breakers_.+_tripped\", service =\"$service\", node_host=~\"$node_host\"}) by (node_host)",
+                        "expr": "sum({__name__=~\"elasticsearch_breakers_.+_tripped\", cluster=\"$cluster\", node_host=~\"$node_host\"}) by (node_host)",
                         "legend": ""
                     }
                 ],
@@ -409,7 +403,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "{__name__=~\"elasticsearch_breakers_.+_size_in_bytes\", service =\"$service\", node_host=~\"$node_host\"}",
+                        "expr": "{__name__=~\"elasticsearch_breakers_.+_size_in_bytes\", cluster=\"$cluster\", node_host=~\"$node_host\"}",
                         "legend": "{{__name__}} {{node_host}}"
                     }
                 ],
@@ -465,7 +459,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "max(elasticsearch_cluster_health_active_shards{service =\"$service\"})"
+                        "expr": "max(elasticsearch_cluster_health_active_shards{cluster=\"$cluster\"})"
                     }
                 ],
                 "name": "Active shards",
@@ -495,7 +489,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "max(elasticsearch_cluster_health_active_primary_shards{service =\"$service\"})"
+                        "expr": "max(elasticsearch_cluster_health_active_primary_shards{cluster=\"$cluster\"})"
                     }
                 ],
                 "name": "Active primary shards",
@@ -525,7 +519,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "max(elasticsearch_cluster_health_initializing_shards{service =\"$service\"})"
+                        "expr": "max(elasticsearch_cluster_health_initializing_shards{cluster=\"$cluster\"})"
                     }
                 ],
                 "name": "Initializing shards",
@@ -555,7 +549,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "max(elasticsearch_cluster_health_relocating_shards{service =\"$service\"})"
+                        "expr": "max(elasticsearch_cluster_health_relocating_shards{cluster=\"$cluster\"})"
                     }
                 ],
                 "name": "Relocating shards",
@@ -585,7 +579,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "max(elasticsearch_cluster_health_delayed_unassigned_shards{service =\"$service\"})"
+                        "expr": "max(elasticsearch_cluster_health_delayed_unassigned_shards{cluster=\"$cluster\"})"
                     }
                 ],
                 "name": "Delayed Unassigned shards",
@@ -615,7 +609,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "max(elasticsearch_cluster_health_unassigned_shards{service =\"$service\"})"
+                        "expr": "max(elasticsearch_cluster_health_unassigned_shards{cluster=\"$cluster\"})"
                     }
                 ],
                 "name": "Unassigned shards",
@@ -660,11 +654,11 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(elasticsearch_jvm_gc_collectors_old_collection_count{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_jvm_gc_collectors_old_collection_count{cluster=\"$cluster\", node_host=~\"$node_host\"}[5m])",
                         "legend": "old gc {{node_host}}"
                     },
                     {
-                        "expr": "irate(elasticsearch_jvm_gc_collectors_young_collection_count{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_jvm_gc_collectors_young_collection_count{cluster=\"$cluster\", node_host=~\"$node_host\"}[5m])",
                         "refId": "B",
                         "legend": "young gc {{node_host}}"
                     }
@@ -703,11 +697,11 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(elasticsearch_jvm_gc_collectors_old_collection_time_in_millis{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_jvm_gc_collectors_old_collection_time_in_millis{cluster=\"$cluster\", node_host=~\"$node_host\"}[5m])",
                         "legend": "old gc {{node_host}}"
                     },
                     {
-                        "expr": "irate(elasticsearch_jvm_gc_collectors_young_collection_time_in_millis{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_jvm_gc_collectors_young_collection_time_in_millis{cluster=\"$cluster\", node_host=~\"$node_host\"}[5m])",
                         "refId": "B",
                         "legend": "young gc {{node_host}}"
                     }
@@ -758,7 +752,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "{__name__=~\"elasticsearch_jvm_mem_pools_young_used_in_bytes\", service =\"$service\", node_host=~\"$node_host\"}",
+                        "expr": "{__name__=~\"elasticsearch_jvm_mem_pools_young_used_in_bytes\", cluster=\"$cluster\", node_host=~\"$node_host\"}",
                         "legend": "{{__name__}} {{node_name}}"
                     }
                 ],
@@ -814,7 +808,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "{__name__=~\"elasticsearch_jvm_mem_pools_old_used_in_bytes\", service =\"$service\", node_host=~\"$node_host\"}",
+                        "expr": "{__name__=~\"elasticsearch_jvm_mem_pools_old_used_in_bytes\", cluster=\"$cluster\", node_host=~\"$node_host\"}",
                         "legend": "{{__name__}} {{node_name}}"
                     }
                 ],
@@ -858,7 +852,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "{__name__=~\"elasticsearch_jvm_mem_.+_committed_in_bytes\", service =\"$service\", node_host=~\"$node_host\"}",
+                        "expr": "{__name__=~\"elasticsearch_jvm_mem_.+_committed_in_bytes\", cluster=\"$cluster\", node_host=~\"$node_host\"}",
                         "legend": "{{__name__}} {{node_name}}"
                     }
                 ],
@@ -914,7 +908,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(elasticsearch_indices_translog_operations{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_indices_translog_operations{cluster=\"$cluster\", node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -952,7 +946,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(elasticsearch_indices_translog_size_in_bytes{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_indices_translog_size_in_bytes{cluster=\"$cluster\", node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1008,7 +1002,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "1-(elasticsearch_fs_total_available_in_bytes{service =\"$service\",node_host=~\"$node_host\"}/elasticsearch_fs_total_total_in_bytes{service =\"$service\",node_host=~\"$node_host\"})",
+                        "expr": "1-(elasticsearch_fs_total_available_in_bytes{cluster=\"$cluster\",node_host=~\"$node_host\"}/elasticsearch_fs_total_total_in_bytes{cluster=\"$cluster\",node_host=~\"$node_host\"})",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1048,11 +1042,11 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(elasticsearch_transport_tx_size_in_bytes{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_transport_tx_size_in_bytes{cluster=\"$cluster\",node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}: sent"
                     },
                     {
-                        "expr": "-irate(elasticsearch_transport_rx_size_in_bytes{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "expr": "-irate(elasticsearch_transport_rx_size_in_bytes{cluster=\"$cluster\",node_host=~\"$node_host\"}[5m])",
                         "refId": "B",
                         "legend": "{{node_host}}: received"
                     }
@@ -1106,7 +1100,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "elasticsearch_indices_docs_count{service =\"$service\", node_host=~\"$node_host\"}",
+                        "expr": "elasticsearch_indices_docs_count{cluster=\"$cluster\", node_host=~\"$node_host\"}",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1144,7 +1138,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(elasticsearch_indices_indexing_index_total{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_indices_indexing_index_total{cluster=\"$cluster\",node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1182,7 +1176,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(elasticsearch_indices_docs_deleted{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_indices_docs_deleted{cluster=\"$cluster\",node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1220,7 +1214,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "rate(elasticsearch_indices_merges_total_docs{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "expr": "rate(elasticsearch_indices_merges_total_docs{cluster=\"$cluster\",node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1258,7 +1252,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(elasticsearch_indices_merges_total_size_in_bytes{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_indices_merges_total_size_in_bytes{cluster=\"$cluster\",node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1314,7 +1308,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(elasticsearch_indices_search_query_time_in_millis{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_indices_search_query_time_in_millis{cluster=\"$cluster\",node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1352,7 +1346,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(elasticsearch_indices_indexing_index_time_in_millis{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_indices_indexing_index_time_in_millis{cluster=\"$cluster\",node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1390,7 +1384,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(elasticsearch_indices_merges_total_time_in_millis{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_indices_merges_total_time_in_millis{cluster=\"$cluster\",node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1428,7 +1422,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(elasticsearch_indices_indexing_throttle_time_in_millis{service =\"$service\",node_host=~\"$node_host\"}[5m])",
+                        "expr": "irate(elasticsearch_indices_indexing_throttle_time_in_millis{cluster=\"$cluster\",node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1481,7 +1475,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate\n(label_replace({__name__=~\"elasticsearch_thread_pool_(.*)_rejected\", service =\"$service\", node_host=~\"$node_host\"}, \"type\", \"$1\", \"__name__\", \"elasticsearch_thread_pool_(.*)_rejected\")[5m:])",
+                        "expr": "irate\n(label_replace({__name__=~\"elasticsearch_thread_pool_(.*)_rejected\", cluster=\"$cluster\", node_host=~\"$node_host\"}, \"type\", \"$1\", \"__name__\", \"elasticsearch_thread_pool_(.*)_rejected\")[5m:])",
                         "legend": "{{node_host}}: {{type}}"
                     }
                 ],
@@ -1519,7 +1513,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "label_replace({__name__=~\"elasticsearch_thread_pool_(.*)_active\", service =\"$service\", node_host=~\"$node_host\"}, \"type\", \"$1\", \"__name__\", \"elasticsearch_thread_pool_(.*)_active\")",
+                        "expr": "label_replace({__name__=~\"elasticsearch_thread_pool_(.*)_active\", cluster=\"$cluster\", node_host=~\"$node_host\"}, \"type\", \"$1\", \"__name__\", \"elasticsearch_thread_pool_(.*)_active\")",
                         "legend": "{{node_host}}: {{type}}"
                     }
                 ],
@@ -1557,7 +1551,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "label_replace({__name__=~\"elasticsearch_thread_pool_(.*)_queue\", service =\"$service\", node_host=~\"$node_host\"}, \"type\", \"$1\", \"__name__\", \"elasticsearch_thread_pool_(.*)_queue\")",
+                        "expr": "label_replace({__name__=~\"elasticsearch_thread_pool_(.*)_queue\", cluster=\"$cluster\", node_host=~\"$node_host\"}, \"type\", \"$1\", \"__name__\", \"elasticsearch_thread_pool_(.*)_queue\")",
                         "legend": "{{node_host}}: {{type}}"
                     }
                 ],
@@ -1595,7 +1589,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate\n(label_replace({__name__=~\"elasticsearch_thread_pool_(.*)_completed\", service =\"$service\", node_host=~\"$node_host\"}, \"type\", \"$1\", \"__name__\", \"elasticsearch_thread_pool_(.*)_completed\")[5m:])",
+                        "expr": "irate\n(label_replace({__name__=~\"elasticsearch_thread_pool_(.*)_completed\", cluster=\"$cluster\", node_host=~\"$node_host\"}, \"type\", \"$1\", \"__name__\", \"elasticsearch_thread_pool_(.*)_completed\")[5m:])",
                         "legend": "{{node_host}}: {{type}}"
                     }
                 ],
@@ -1648,7 +1642,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "elasticsearch_indices_fielddata_memory_size_in_bytes{service =\"$service\", node_host=~\"$node_host\"}",
+                        "expr": "elasticsearch_indices_fielddata_memory_size_in_bytes{cluster=\"$cluster\", node_host=~\"$node_host\"}",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1689,7 +1683,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "rate(elasticsearch_indices_fielddata_evictions{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "expr": "rate(elasticsearch_indices_fielddata_evictions{cluster=\"$cluster\", node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1730,7 +1724,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "elasticsearch_indices_query_cache_memory_size_in_bytes{service =\"$service\", node_host=~\"$node_host\"}",
+                        "expr": "elasticsearch_indices_query_cache_memory_size_in_bytes{cluster=\"$cluster\", node_host=~\"$node_host\"}",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1771,7 +1765,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "rate(elasticsearch_indices_query_cache_evictions{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "expr": "rate(elasticsearch_indices_query_cache_evictions{cluster=\"$cluster\", node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1812,7 +1806,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "rate(elasticsearch_indices_request_cache_evictions{service =\"$service\", node_host=~\"$node_host\"}[5m])",
+                        "expr": "rate(elasticsearch_indices_request_cache_evictions{cluster=\"$cluster\", node_host=~\"$node_host\"}[5m])",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1867,7 +1861,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "elasticsearch_indices_segments_count{service =\"$service\", node_host=~\"$node_host\"}",
+                        "expr": "elasticsearch_indices_segments_count{cluster=\"$cluster\", node_host=~\"$node_host\"}",
                         "legend": "{{node_host}}"
                     }
                 ],
@@ -1905,7 +1899,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "elasticsearch_indices_segments_memory_in_bytes{service =\"$service\", node_host=~\"$node_host\"}",
+                        "expr": "elasticsearch_indices_segments_memory_in_bytes{cluster=\"$cluster\", node_host=~\"$node_host\"}",
                         "legend": "{{node_host}}"
                     }
                 ],
