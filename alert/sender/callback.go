@@ -92,7 +92,7 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 		return
 	}
 
-	tpl, err := models.TaskTplGet(ctx, "id = ?", id)
+	tpl, err := models.TaskTplGetById(ctx, id)
 	if err != nil {
 		logger.Errorf("event_callback_ibex: failed to get tpl: %v", err)
 		return
