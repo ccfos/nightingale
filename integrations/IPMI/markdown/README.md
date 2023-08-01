@@ -1,10 +1,8 @@
-### 使用Categraf基于IPMI工具监控硬件温度、功率、电压
+# IPMI plugin
 
-实现原理：
+利用 `ipmitool sdr` 命令， 采集硬件的温度、功率、电压等信息，并转化为指标。 依赖工具 `ipmitool`，所以需要安装`ipmitool`。
 
-利用ipmitool sdr命令， 采集硬件的温度、功率、电压等信息，并转化为指标。 依赖工具ipmitool ,所以需要安装ipmitool。
-
-IPMI配置：
+## IPMI 配置
 
 ```bash
 #  此处的主机必须支持ipmi bmc，不然openipmi启动不了
@@ -100,53 +98,56 @@ MAC Address             : xx:xx:52:xx:xx:81
 SNMP Community String   : public
 ```
 
-### 采集配置
-使用[categraf](https://github.com/flashcatcloud/categraf)中[inputs.ipmi](https://github.com/flashcatcloud/categraf/tree/main/inputs/ipmi)插件采集服务器指标:
-```yaml
-cat /opt/categraf/conf/input.ipmi/conf.toml
-  [[instances]]
-  ## optionally specify the path to the ipmitool executable
-  # path = "/usr/bin/ipmitool"
-  ##
-  ## Setting 'use_sudo' to true will make use of sudo to run ipmitool.
-  ## Sudo must be configured to allow the telegraf user to run ipmitool
-  ## without a password.
-  # use_sudo = false
-  ##
-  ## optionally force session privilege level. Can be CALLBACK, USER, OPERATOR, ADMINISTRATOR
-  # privilege = "ADMINISTRATOR"
-  ##
-  ## optionally specify one or more servers via a url matching
-  ##  [username[:password]@][protocol[(address)]]
-  ##  e.g.
-  ##    root:passwd@lan(127.0.0.1)
-  ##
-  ## if no servers are specified, local machine sensor stats will be queried
-  ##
-  servers = ["ADMIN:1234567@lan(192.168.1.123)"]
+## 采集配置
 
-  ## Recommended: use metric 'interval' that is a multiple of 'timeout' to avoid
-  ## gaps or overlap in pulled data
-  interval = "30s"
+categraf 的 `conf/input.ipmi/conf.toml`
 
-  ## Timeout for the ipmitool command to complete. Default is 20 seconds.
-  timeout = "20s"
+```toml
+[[instances]]
+## optionally specify the path to the ipmitool executable
+# path = "/usr/bin/ipmitool"
+##
+## Setting 'use_sudo' to true will make use of sudo to run ipmitool.
+## Sudo must be configured to allow the telegraf user to run ipmitool
+## without a password.
+# use_sudo = false
+##
+## optionally force session privilege level. Can be CALLBACK, USER, OPERATOR, ADMINISTRATOR
+# privilege = "ADMINISTRATOR"
+##
+## optionally specify one or more servers via a url matching
+##  [username[:password]@][protocol[(address)]]
+##  e.g.
+##    root:passwd@lan(127.0.0.1)
+##
+## if no servers are specified, local machine sensor stats will be queried
+##
+servers = ["ADMIN:1234567@lan(192.168.1.123)"]
 
-  ## Schema Version: (Optional, defaults to version 1)
-  metric_version = 2
+## Recommended: use metric 'interval' that is a multiple of 'timeout' to avoid
+## gaps or overlap in pulled data
+interval = "30s"
 
-  ## Optionally provide the hex key for the IMPI connection.
-  # hex_key = ""
+## Timeout for the ipmitool command to complete. Default is 20 seconds.
+timeout = "20s"
 
-  ## If ipmitool should use a cache
-  ## for me ipmitool runs about 2 to 10 times faster with cache enabled on HP G10 servers (when using ubuntu20.04)
-  ## the cache file may not work well for you if some sensors come up late
-  # use_cache = false
+## Schema Version: (Optional, defaults to version 1)
+metric_version = 2
 
-  ## Path to the ipmitools cache file (defaults to OS temp dir)
-  ## The provided path must exist and must be writable
+## Optionally provide the hex key for the IMPI connection.
+# hex_key = ""
+
+## If ipmitool should use a cache
+## for me ipmitool runs about 2 to 10 times faster with cache enabled on HP G10 servers (when using ubuntu20.04)
+## the cache file may not work well for you if some sensors come up late
+# use_cache = false
+
+## Path to the ipmitools cache file (defaults to OS temp dir)
+## The provided path must exist and must be writable
 ```
 
+## 仪表盘效果
 
+夜莺内置了 IPMI 的仪表盘和告警规则，克隆到自己的业务组下即可使用。
 
-效果图：![ipmi](http://download.flashcat.cloud/uPic/ipmi.png)
+![ipmi](http://download.flashcat.cloud/uPic/ipmi.png)
