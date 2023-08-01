@@ -1,0 +1,562 @@
+{
+    "name": "Nginx VTS",
+    "tags": "",
+    "configs": {
+        "version": "2.0.0",
+        "links": [],
+        "var": [
+            {
+                "name": "Country",
+                "definition": "nginx_vts_filter_bytes_total",
+                "allOption": true,
+                "multi": true
+            },
+            {
+                "name": "Instance",
+                "definition": "label_values(nginx_vts_server_bytes_total, instance)",
+                "allOption": true,
+                "multi": false
+            },
+            {
+                "name": "Host",
+                "definition": "label_values(nginx_vts_server_requests_total{instance=~\"$Instance\"}, host)",
+                "allOption": true,
+                "multi": false
+            },
+            {
+                "name": "Upstream",
+                "definition": "label_values(nginx_vts_upstream_requests_total{instance=~\"$Instance\"}, upstream)",
+                "allOption": true,
+                "multi": false
+            },
+            {
+                "name": "Backend",
+                "definition": "label_values(nginx_vts_upstream_requests_total{instance=~\"$Instance\", upstream=~\"$Upstream\"}, backend)",
+                "allOption": true,
+                "multi": false
+            }
+        ],
+        "panels": [
+            {
+                "version": "2.0.0",
+                "id": "2bed0dff-e7c7-4d8b-bf22-e7e4452300d8",
+                "type": "timeseries",
+                "name": "Server Connections",
+                "links": [],
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0,
+                    "i": "2bed0dff-e7c7-4d8b-bf22-e7e4452300d8"
+                },
+                "targets": [
+                    {
+                        "refId": "B",
+                        "expr": "sum(nginx_vts_main_connections{instance=~\"$Instance\", status=~\"active|writing|reading|waiting\"}) by (status)",
+                        "legend": "{{status}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "69d6240e-0c69-45b4-83ae-350d38d18f4c",
+                "type": "stat",
+                "name": "active",
+                "links": [],
+                "layout": {
+                    "h": 4,
+                    "w": 3,
+                    "x": 12,
+                    "y": 0,
+                    "i": "69d6240e-0c69-45b4-83ae-350d38d18f4c"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_main_connections{status=\"active\"}[1m]))",
+                        "legend": ""
+                    }
+                ],
+                "options": {},
+                "custom": {
+                    "version": "2.0.0",
+                    "textMode": "value",
+                    "colorMode": "value"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "d7666059-71fd-49f3-8cba-96cdbfadce4d",
+                "type": "stat",
+                "name": "writing",
+                "links": [],
+                "layout": {
+                    "h": 4,
+                    "w": 3,
+                    "x": 15,
+                    "y": 0,
+                    "i": "d7666059-71fd-49f3-8cba-96cdbfadce4d"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_main_connections{status=\"writing\"}[1m]))",
+                        "legend": ""
+                    }
+                ],
+                "options": {},
+                "custom": {
+                    "version": "2.0.0",
+                    "textMode": "value",
+                    "colorMode": "value"
+                }
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_main_connections{instance=\"$instance\",status=\"reading\"}[1m]))",
+                        "legend": ""
+                    }
+                ],
+                "name": "read",
+                "links": [],
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 4,
+                    "w": 3,
+                    "x": 18,
+                    "y": 0,
+                    "i": "6dca89ce-f2de-4b2b-a826-9fc6ae0cce28"
+                },
+                "id": "6dca89ce-f2de-4b2b-a826-9fc6ae0cce28"
+            },
+            {
+                "version": "2.0.0",
+                "id": "39b4c42c-5418-4386-837a-8b36464e83bf",
+                "type": "stat",
+                "name": "waiting",
+                "links": [],
+                "layout": {
+                    "h": 4,
+                    "w": 3,
+                    "x": 21,
+                    "y": 0,
+                    "i": "39b4c42c-5418-4386-837a-8b36464e83bf"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_main_connections{status=\"waiting\"}[1m]))",
+                        "legend": ""
+                    }
+                ],
+                "options": {},
+                "custom": {
+                    "version": "2.0.0",
+                    "textMode": "value",
+                    "colorMode": "value"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "97381677-fb79-473e-b2b1-cd7d21452546",
+                "type": "timeseries",
+                "name": "Server Requests",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 0,
+                    "y": 4,
+                    "i": "97381677-fb79-473e-b2b1-cd7d21452546"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_server_requests_total{instance=~\"$Instance\", host=~\"$Host\", code!=\"total\"}[5m])) by (code)",
+                        "legend": "{{ code }}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "6139b81f-d2de-4ecf-8ec3-41b94713ec48",
+                "type": "timeseries",
+                "name": "Upstream Requests",
+                "description": "This one is providing aggregated error codes, but it's still possible to graph these per upstream.",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 6,
+                    "y": 4,
+                    "i": "6139b81f-d2de-4ecf-8ec3-41b94713ec48"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_upstream_requests_total{instance=~\"$Instance\", upstream=~\"^$Upstream$\", backend=~\"^$Backend$\", code!=\"total\"}[5m])) by (code)",
+                        "legend": "{{ code }}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "2d09b8b7-dc80-455e-b809-5a46d64a6263",
+                "type": "timeseries",
+                "name": "Request delta/sec (BACKEND)",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 12,
+                    "y": 4,
+                    "i": "2d09b8b7-dc80-455e-b809-5a46d64a6263"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_upstream_requests_total{backend=~\"$Backend\", instance=~\"$Instance\", code!=\"total\"} [1m])) by (code)",
+                        "legend": "{{code}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "3447df45-823c-4a52-bebf-7003736ca138",
+                "type": "timeseries",
+                "name": "Request delta/sec (FILTER)",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 18,
+                    "y": 4,
+                    "i": "3447df45-823c-4a52-bebf-7003736ca138"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_filter_requests_total{filter=~\"country::$Host\", filter_name=~\"$Country\", instance=~\"$Instance\", direction!=\"total\"} [1m])) by (direction)",
+                        "legend": "{{direction}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "9c830846-110c-49df-8fa7-0662899c5804",
+                "type": "timeseries",
+                "name": "Response times (FILTER)",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 24,
+                    "x": 0,
+                    "y": 10,
+                    "i": "9c830846-110c-49df-8fa7-0662899c5804"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_filter_request_seconds{filter=~\"country::$Host\", filter_name=~\"$Country\", instance=~\"$Instance\"} [1m])) by (filter_name) * 1000",
+                        "legend": "{{filter_name}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "9785673c-0343-4796-9091-4f1f0df10cd7",
+                "type": "timeseries",
+                "name": "bandwith delta/sec (FILTER)",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 8,
+                    "x": 0,
+                    "y": 17,
+                    "i": "9785673c-0343-4796-9091-4f1f0df10cd7"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_filter_bytes_total{filter=~\"country::$Host\", filter_name=~\"$Country\", instance=~\"$Instance\"} [1m])) by (direction)",
+                        "legend": "{{direction}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "56bae540-1e16-49e0-82df-33d0b0602c5f",
+                "type": "timeseries",
+                "name": "Server Bytes",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 8,
+                    "x": 8,
+                    "y": 17,
+                    "i": "56bae540-1e16-49e0-82df-33d0b0602c5f"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_server_bytes_total{instance=~\"$Instance\", host=~\"$Host\"}[5m])) by (direction)",
+                        "legend": "{{ direction }}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "9124e32c-7c06-4f2d-ba35-390a1274b289",
+                "type": "timeseries",
+                "name": "Upstream Bytes",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 8,
+                    "x": 16,
+                    "y": 17,
+                    "i": "9124e32c-7c06-4f2d-ba35-390a1274b289"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_upstream_bytes_total{instance=~\"$Instance\", upstream=~\"^$Upstream$\", backend=~\"^$Backend$\"}[5m])) by (direction)",
+                        "legend": "{{ direction }}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "ed58e88d-4130-4d96-8e73-62be1d13909a",
+                "type": "timeseries",
+                "name": "Upstream Backend Response",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 23,
+                    "i": "ed58e88d-4130-4d96-8e73-62be1d13909a"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(nginx_vts_upstream_response_seconds{instance=~\"$Instance\", upstream=~\"^$Upstream$\", backend=~\"^$Backend$\"}) by (backend)",
+                        "legend": "{{ backend }}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            },
+            {
+                "version": "2.0.0",
+                "id": "75d3533d-156a-41ec-ae72-d12ca6a5f900",
+                "type": "timeseries",
+                "name": "Server Cache",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 23,
+                    "i": "75d3533d-156a-41ec-ae72-d12ca6a5f900"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(irate(nginx_vts_server_cache_total{instance=~\"$Instance\", host=~\"$Host\"}[5m])) by (status)",
+                        "legend": "{{ status }}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    }
+                },
+                "custom": {
+                    "version": "2.0.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                }
+            }
+        ]
+    }
+}
