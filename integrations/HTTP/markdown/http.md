@@ -43,7 +43,62 @@ targets = [
 method = "POST"
 ```
 
-完整的带有注释的配置文件，请参考 [这里](https://github.com/flashcatcloud/categraf/blob/main/conf/input.http_response/http_response.toml)。
+完整的带有注释的配置如下：
+
+```toml
+[[instances]]
+targets = [
+#     "http://localhost",
+#     "https://www.baidu.com"
+]
+
+# # append some labels for series
+# labels = { region="cloud", product="n9e" }
+
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+## Set http_proxy (categraf uses the system wide proxy settings if it's is not set)
+# http_proxy = "http://localhost:8888"
+
+## Interface to use when dialing an address
+# interface = "eth0"
+
+## HTTP Request Method
+# method = "GET"
+
+## Set response_timeout (default 5 seconds)
+# response_timeout = "5s"
+
+## Whether to follow redirects from the server (defaults to false)
+# follow_redirects = false
+
+## Optional HTTP Basic Auth Credentials
+# username = "username"
+# password = "pa$$word"
+
+## Optional headers
+# headers = ["Header-Key-1", "Header-Value-1", "Header-Key-2", "Header-Value-2"]
+
+## Optional HTTP Request Body
+# body = '''
+# {'fake':'data'}
+# '''
+
+## Optional substring match in body of the response (case sensitive)
+# expect_response_substring = "ok"
+
+## Optional expected response status code.
+# expect_response_status_code = 0
+
+## Optional TLS Config
+# use_tls = false
+# tls_ca = "/etc/categraf/ca.pem"
+# tls_cert = "/etc/categraf/cert.pem"
+# tls_key = "/etc/categraf/key.pem"
+## Use TLS but skip chain & host verification
+# insecure_skip_verify = false
+```
 
 ## dashboard and monitors
 
