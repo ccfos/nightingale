@@ -1,115 +1,74 @@
-### Gitlab Dashboard & Alerts
-使用[categraf](https://github.com/flashcatcloud/categraf)中[inputs.prometheus](https://github.com/flashcatcloud/categraf/tree/main/inputs/prometheus)插件采集[Gitlab](https://docs.gitlab.com/)服务组件暴露的指标数据:
+# Gitlab
 
-开启Gitlab默认Prometheus支持:
+Gitlab 默认提供 Prometheus 协议的监控数据，参考：[Monitoring GitLab with Prometheus](https://docs.gitlab.com/ee/administration/monitoring/prometheus/)。所以，使用 categraf 的 prometheus 插件即可采集。
 
-[Monitoring GitLab with Prometheus](https://docs.gitlab.com/ee/administration/monitoring/prometheus/)
+## 采集配置
 
-### 采集配置
-在categraf中的prometheus插件中加入采集配置
-```yaml
-cat /opt/categraf/conf/input.prometheus/prometheus.toml
-# # collect interval
-# interval = 15
+配置文件：categraf 的 `conf/input.prometheus/prometheus.toml`
+
+```toml
+[[instances]]
+urls = [
+  "http://192.168.11.77:9236/metrics"
+]
+labels = {service="gitlab", job="gitaly"}
 
 [[instances]]
 urls = [
-"http://192.168.11.77:9236/metrics"
+  "http://192.168.11.77:9168/sidekiq"
 ]
-url_label_key = "instance"
-url_label_value = "{{.Host}}"
-labels = {service="gitlab",job="gitaly"}
+labels = {service="gitlab", job="gitlab-exporter-sidekiq"}
 
 [[instances]]
 urls = [
-"http://192.168.11.77:9168/sidekiq"
+  "http://192.168.11.77:9168/database"
 ]
-url_label_key = "instance"
-url_label_value = "{{.Host}}"
-labels = {service="gitlab",job="gitlab_exporter_sidekiq"}
-
+labels = {service="gitlab",job="gitlab-exporter-database"}
 
 [[instances]]
 urls = [
-"http://192.168.11.77:9168/database"
+  "http://192.168.11.77:8082/metrics"
 ]
-url_label_key = "instance"
-url_label_value = "{{.Host}}"
-labels = {service="gitlab",job="gitlab_exporter_database"}
+labels = {service="gitlab", job="gitlab-sidekiq"}
 
 [[instances]]
 urls = [
-"http://192.168.11.77:8082/metrics"
+  "http://192.168.11.77:8082/metrics"
 ]
-url_label_key = "instance"
-url_label_value = "{{.Host}}"
-labels = {service="gitlab",job="gitlab-sidekiq"}
+labels = {service="gitlab", job="gitlab-sidekiq"}
 
 [[instances]]
 urls = [
-"http://192.168.11.77:8082/metrics"
+  "http://192.168.11.77:9229/metrics"
 ]
-url_label_key = "instance"
-url_label_value = "{{.Host}}"
-labels = {service="gitlab",job="gitlab-sidekiq"}
-
-[[instances]]
-urls = [
-"http://192.168.11.77:9229/metrics"
-]
-url_label_key = "instance"
-url_label_value = "{{.Host}}"
 labels = {service="gitlab",job="gitlab-workhorse"}
 
 [[instances]]
 urls = [
-"http://192.168.11.77:9100/metrics"
+  "http://192.168.11.77:9100/metrics"
 ]
-url_label_key = "instance"
-url_label_value = "{{.Host}}"
-labels = {service="gitlab",job="node"}
-
+labels = {service="gitlab", job="node"}
 
 [[instances]]
 urls = [
-"http://192.168.11.77:9187/metrics"
+  "http://192.168.11.77:9187/metrics"
 ]
-url_label_key = "instance"
-url_label_value = "{{.Host}}"
-labels = {service="gitlab",job="postgres"}
-
+labels = {service="gitlab", job="postgres"}
 
 [[instances]]
 urls = [
-"http://192.168.11.77:9121/metrics"
+  "http://192.168.11.77:9121/metrics"
 ]
-url_label_key = "instance"
-url_label_value = "{{.Host}}"
-labels = {service="gitlab",job="redis"}
+labels = {service="gitlab", job="redis"}
 
 [[instances]]
 urls = [
-"http://192.168.11.77:9999/metrics"
+  "http://192.168.11.77:9999/metrics"
 ]
-url_label_key = "instance"
-url_label_value = "{{.Host}}"
-labels = {service="gitlab",job="nginx"}
+labels = {service="gitlab", job="nginx"}
 ```
 
-Dashboards:   
-<img src="http://download.flashcat.cloud/uPic/MachinePerformance.png" alt="MachinePerformance" style="zoom:50%;" />
+## 仪表盘和告警规则
 
-NGINXVTS   
-<img src="http://download.flashcat.cloud/uPic/NGINXVTS.png" alt="NGINXVTS" style="zoom:50%;" />
+夜莺内置提供了 gitlab 各个组件相关的仪表盘和告警规则，导入自己的业务组即可使用。
 
-Overview   
-<img src="http://download.flashcat.cloud/uPic/Overview.png" alt="Overview" style="zoom:50%;" />
-
-PostgreSQL   
-<img src="http://download.flashcat.cloud/uPic/PostgreSQL.png" alt="PostgreSQL" style="zoom:50%;" />
-
-Redis
-<img src="http://download.flashcat.cloud/uPic/Redis.png" alt="Redis" style="zoom:50%;" />
-
-Alerts:   
-<img src="http://download.flashcat.cloud/uPic/alerts.png" alt="alert" style="zoom:50%;" />
