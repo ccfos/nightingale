@@ -1,10 +1,15 @@
-## PostgreSQL Dashboard & Alerts
+# PostgreSQL
 
-使用[categraf](https://github.com/flashcatcloud/categraf)中[inputs.postgresql](https://github.com/flashcatcloud/categraf/tree/main/inputs/postgresql)插件采集[PostgreSQL](https://www.postgresql.org/)服务监控指标数据；
+categraf 作为一个 client 连上 pg，采集相关指标，首先要确保用户授权。举例：
 
-### 配置文件示例：
+```
+create user categraf with password 'categraf';
+alter user categraf set default_transaction_read_only=on;
+grant usage on schema public to categraf;
+grant select on all tables in schema public to categraf ;
+```
 
-如果是多个PostgreSQL，可以写多个[[instance]]配置
+## 配置文件示例
 
 ```toml
 [[instances]]
@@ -44,7 +49,8 @@ address = "host=192.168.11.181 port=5432 user=postgres password=123456789 sslmod
 ## Whether to use prepared statements when connecting to the database.
 ## This should be set to false when connecting through a PgBouncer instance
 ## with pool_mode set to transaction.
-#prepared_statements = true
+# prepared_statements = true
+#
 # [[instances.metrics]]
 # mesurement = "sessions"
 # label_fields = [ "status", "type" ]
@@ -55,11 +61,14 @@ address = "host=192.168.11.181 port=5432 user=postgres password=123456789 sslmod
 # '''
 ```
 
-### 告警规则
+## 仪表盘
 
-![alert](http://download.flashcat.cloud/uPic/alerts.png)
+夜莺内置了 Postgres 的仪表盘，克隆到自己的业务组下即可使用。
 
-### 仪表盘：
+![20230802073729](https://download.flashcat.cloud/ulric/20230802073729.png)
 
-![dashboard](http://download.flashcat.cloud/uPic/postgresql.png)
+## 告警规则
 
+夜莺内置了 Postgres 的告警规则，克隆到自己的业务组下即可使用。
+
+![20230802073753](https://download.flashcat.cloud/ulric/20230802073753.png)
