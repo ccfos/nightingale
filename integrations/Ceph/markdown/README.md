@@ -25,10 +25,10 @@ labels = {service="ceph",cluster="ceph-cluster-001"}
 
 夜莺内置仪表盘中已经内置了 ceph 的仪表盘，导入即可使用。
 
-![ceph](http://download.flashcat.cloud/uPic/ceph.png)
+![20230801152445](https://download.flashcat.cloud/ulric/20230801152445.png)
 
 ## 告警规则
 
 夜莺内置告警规则中已经内置了 ceph 的告警规则，导入即可使用。
 
-![alert](http://download.flashcat.cloud/uPic/alerts.png)
+![20230801152431](https://download.flashcat.cloud/ulric/20230801152431.png)
