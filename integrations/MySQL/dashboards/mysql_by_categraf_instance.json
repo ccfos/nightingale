@@ -1,5 +1,5 @@
 {
-    "name": "MySQL Overview by categraf",
+    "name": "MySQL Overview by categraf, group by instance",
     "tags": "Prometheus MySQL",
     "ident": "",
     "configs": {
