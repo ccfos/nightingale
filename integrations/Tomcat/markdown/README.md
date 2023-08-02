@@ -27,10 +27,6 @@ By default the Manager is only accessible from a browser running on the same mac
 配置文件在 `conf/input.tomcat/tomcat.toml`
 
 ```toml
-# # collect interval
-# interval = 15
-
-# Gather metrics from the Tomcat server status page.
 [[instances]]
 ## URL of the Tomcat server status
 url = "http://127.0.0.1:8080/manager/status/all?XML=true"
@@ -60,4 +56,4 @@ password = "s3cret"
 
 ## 监控大盘
 
-本 README 文件的同级目录下放置了用于 Tomcat 的 dashboard.json，大家可以导入使用。
+夜莺内置了 tomcat 仪表盘，克隆到自己的业务组下使用即可。
