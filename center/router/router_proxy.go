@@ -1,13 +1,16 @@
 package router
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
-	"fmt"
+	"encoding/json"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -168,18 +171,24 @@ func (rt *Router) dsProxy(c *gin.Context) {
 	modifyResponse := func(r *http.Response) error {
 		// 当后端服务返回401时，改变响应状态码和内容
 		if r.StatusCode == http.StatusUnauthorized {
-			// 创建自定义错误，并返回
-			customErr := fmt.Errorf("unauthorized access")
+			newBody := gin.H{
+				"err": "unauthorized access",
+			}
+			newBodyBytes, err := json.Marshal(newBody)
+			if err != nil {
+				return err
+			}
 
-			// 调整返回的HTTP状态码和内容
+			// Set the new body to the response
+			r.Body = io.NopCloser(bytes.NewReader(newBodyBytes))
+
+			// Update the Content-Length
+			r.Header.Set("Content-Length", strconv.Itoa(len(newBodyBytes)))
+
+			// Set the new status code
 			r.StatusCode = http.StatusOK
-			r.Status = "200 OK"
 
-			c.JSON(http.StatusOK, gin.H{
-				"err": customErr.Error(),
-			})
-
-			return customErr
+			return nil
 		}
 		return nil
 	}
