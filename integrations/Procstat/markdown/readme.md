@@ -1,19 +1,15 @@
-## Categraf as collector
+# 进程监控
 
-configuration file: `conf/input.procstat/procstat.toml`
+使用 categraf procstat 插件。
 
-进程监控插件，两个核心作用，监控进程是否存活、监控进程使用了多少资源（CPU、内存、文件句柄等）
+## 配置文件
 
-### 存活监控
+位置：categraf 的 `conf/input.procstat/procstat.toml`
 
-如果进程监听了端口，就直接用 net_response 来做存活性监控即可，无需使用 procstat 来做，因为：端口在监听，说明进程一定活着，反之则不一定。
-
-### 进程筛选
-
-机器上进程很多，我们要做进程监控，就要想办法告诉 Categraf 要监控哪些进程，通过 search 打头的那几个配置，可以做进程过滤筛选：
+样例配置：
 
 ```toml
-[[instnaces]]
+[[instances]]
 # # executable name (ie, pgrep <search_exec_substring>)
 search_exec_substring = "nginx"
 
@@ -22,59 +18,66 @@ search_exec_substring = "nginx"
 
 # # windows service name
 # search_win_service = ""
-```
 
-上面三个 search 相关的配置，每个采集目标选用其中一个。有一个额外的配置：search_user，配合search_exec_substring 或者 search_cmdline_substring 使用，表示匹配指定 username 的特定进程。如果不需要指定username，保持配置注释即可。
-
-```toml
 # # search process with specific user, option with exec_substring or cmdline_substring
 # search_user = ""
+
+# # append some labels for series
+# labels = { region="cloud", product="n9e" }
+
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+# # mode to use when calculating CPU usage. can be one of 'solaris' or 'irix'
+# mode = "irix"
+
+# sum of threads/fd/io/cpu/mem, min of uptime/limit
+gather_total = true
+
+# will append pid as tag
+gather_per_pid = false
+
+#  gather jvm metrics only when jstat is ready
+# gather_more_metrics = [
+#     "threads",
+#     "fd",
+#     "io",
+#     "uptime",
+#     "cpu",
+#     "mem",
+#     "limit",
+#     "jvm"
+# ]
 ```
 
-默认的进程监控的配置，`[[instnaces]]` 是注释掉的，记得打开。
+机器上有很多进程，要监控进程是否存活以及进程的资源占用，首先得告诉 categraf，要监控的进程是啥。所以，本插件一开始的几个配置，就是做进程过滤的，用来告诉 categraf 要监控的进程是哪些。
 
-### mode
+- search_exec_substring 配置一个查询字符串，相当于执行 `pgrep <search_exec_substring>`
+- search_cmdline_substring 配置一个查询字符串，相当于执行 `pgrep -f <search_cmdline_substring>`
+- search_win_service 配置一个 windows 服务名，相当于执行 `sc query <search_win_service>`
 
-mode 配置有两个值供选择，一个是 solaris，一个是 irix，默认是 irix，用这个配置来决定使用哪种 cpu 使用率的计算方法：
+上例默认是采集 nginx。默认只会采集一个指标：procstat_lookup_count，表示通过这些过滤条件，查询到的进程的数量。那显然，如果 `procstat_lookup_count <= 0` 就说明进程不存在了。
 
-```go
-func (ins *Instance) gatherCPU(slist *types.SampleList, procs map[PID]Process, tags map[string]string, solarisMode bool) {
-	var value float64
-	for pid := range procs {
-		v, err := procs[pid].Percent(time.Duration(0))
-		if err == nil {
-			if solarisMode {
-				value += v / float64(runtime.NumCPU())
-				slist.PushFront(types.NewSample("cpu_usage", v/float64(runtime.NumCPU()), map[string]string{"pid": fmt.Sprint(pid)}, tags))
-			} else {
-				value += v
-				slist.PushFront(types.NewSample("cpu_usage", v, map[string]string{"pid": fmt.Sprint(pid)}, tags))
-			}
-		}
-	}
+## CPU 利用率计算
 
-	if ins.GatherTotal {
-		slist.PushFront(types.NewSample("cpu_usage_total", value, tags))
-	}
-}
-```
+在计算 CPU 利用率的时候有两种模式：irix（默认）、solaris。如果是 irix 模式，CPU 利用率会出现大于 100% 的情况，如果是 solaris 模式，会考虑 CPU 核数，所以 CPU 利用率不会大于 100%。
 
-### gather_total
+## 采集更多指标
 
-比如进程名字是 mysql 的进程，同时可能运行了多个，我们想知道这个机器上的所有 mysql 的进程占用的总的 cpu、mem、fd 等，就设置 gather_total = true，当然，对于 uptime 和 limit 的采集，gather_total 的时候是取的多个进程的最小值
+`gather_more_metrics` 默认没有打开，即不会采集进程资源利用情况。如果想要采集，就打开 `gather_more_metrics` 这个配置即可。其中最为特殊的是 `jvm`，如果想要采集 jvm 指标，需要先安装好 jstat，然后再打开 `jvm` 这个配置。
 
-### gather_per_pid
+## gather_total
+
+比如进程名字是 mysql 的进程，同时可能运行了多个，我们想知道这个机器上的所有 mysql 的进程占用的总的 cpu、mem、fd 等，就设置 gather_total = true，当然，对于 uptime 和 limit 的采集，gather_total 的时候是取的多个进程的最小值。
+
+## gather_per_pid
 
 还是拿 mysql 举例，一个机器上可能同时运行了多个，我们可能想知道每个 mysql 进程的资源占用情况，此时就要启用 gather_per_pid 的配置，设置为 true，此时会采集每个进程的资源占用情况，并附上 pid 作为标签来区分
 
-### gather_more_metrics
+## 告警规则
 
-默认 procstat 插件只是采集进程数量，如果想采集进程占用的资源，就要启用 gather_more_metrics 中的项，启用哪个就额外采集哪个
+夜莺内置了进程监控的告警规则，克隆到自己的业务组下即可使用。
 
-### jvm
+## 仪表盘
 
-gather_more_metrics 中有个 jvm，如果是 Java 的进程可以选择开启，非 Java 的进程就不要开启了。需要注意的是，这个监控需要依赖机器上的 jstat 命令，这是社区小伙伴贡献的采集代码，感谢 [@lsy1990](https://github.com/lsy1990)
-
-### One more thing
-
-要监控什么进程就去目标机器修改 Categraf 的配置 `conf/input.procstat/procstat.toml` ，如果嫌麻烦，可以联系我们采购专业版，专业版支持在服务端 WEB 上统一做配置，不需要登录目标机器修改 Categraf 的配置。
+夜莺内置了进程监控的仪表盘，克隆到自己的业务组下即可使用。
