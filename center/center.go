@@ -8,6 +8,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/center/cconf"
+	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/conf"
@@ -44,6 +45,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	i18nx.Init()
+	cstats.Init()
 
 	db, err := storage.New(config.DB)
 	if err != nil {
