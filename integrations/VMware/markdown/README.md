@@ -1,26 +1,21 @@
-## Vmware vSphere Dashboard & Alerts
+# VMware vSphere
 
-使用[categraf](https://github.com/flashcatcloud/categraf)中[inputs.vsphere](https://github.com/flashcatcloud/categraf/tree/main/inputs/vsphere)插件采集Vmware指标数据:
+使用 [categraf](https://github.com/flashcatcloud/categraf) 中的 [inputs.vsphere](https://github.com/flashcatcloud/categraf/tree/main/inputs/vsphere) 插件采集 VMware 指标数据。
 
-VMware vSphere的两个核心组件： ESXi Server & vCenter Server
+VMware vSphere的两个核心组件： ESXi Server & vCenter Server。要监控 vSphere，需要部署 vCenter。
 
-ESXi Server是Hypervsior，在其中创建和运行虚拟机和虚拟设备。
+- ESXi Server 是 Hypervsior，在其中创建和运行虚拟机和虚拟设备。
+- vCenter Server 是用于管理网络中连接的多个 ESXi 主机和主机资源池的服务。
 
-vCenter Server是用于管理网络中连接的多个ESXi主机和主机资源池的服务。
+博客参考：[夜莺监控之 Categraf 监控 VMware vSphere](https://unixsre.com/posts/n9e-monitor-vsphere/)
 
-`想实现监控 vSphere 组件，必须部署 vCenter.`
+## 采集配置
 
-完整的部署vSphere&N9E&Categraf采集文档：[夜莺监控之Categraf监控VMwareSphere](https://unixsre.com/posts/n9e-monitor-vsphere/)
+Categraf 中的 `conf/input.vsphere/vsphere.toml`。
 
-### Categraf中conf/input.vsphere/vsphere.toml配置文件：
-
-只需要修改其中的vcenter地址与username和password就可以使用，默认账号是administrator，权限较大，仅做测试使用，建议做权限做控制，可以在vcenter中自己建用户跟角色；
+监控数据的获取，其实就是通过 vCenter 的 API 获取，所以需要配置 vCenter 的地址、用户名和密码。配置文件里默认示例是 administrator 账号，权限较大，仅做测试使用，建议做权限做控制，可以在 vCenter 中自己建用户跟角色。
 
 ```toml
-# # collect interval
-# interval = 15
-
-# Read metrics from one or many vCenters
 [[instances]]
   labels = { instance="192.168.11.111", clustername="Datacenter" }
   ##  vCenter URLs to be monitored. These three lines must be uncommented
@@ -225,3 +220,10 @@ vCenter Server是用于管理网络中连接的多个ESXi主机和主机资源�
   # historical_interval = "5m"
 ```
 
+## 仪表盘
+
+夜莺内置了 vSphere 仪表盘，克隆到自己的业务组下即可使用。
+
+## 告警规则
+
+夜莺内置了 vSphere 告警规则，克隆到自己的业务组下即可使用。
