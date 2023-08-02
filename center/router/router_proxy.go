@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -164,10 +165,18 @@ func (rt *Router) dsProxy(c *gin.Context) {
 		transportPut(dsId, ds.UpdatedAt, transport)
 	}
 
+	modifyResponse := func(r *http.Response) error {
+		if r.StatusCode == http.StatusUnauthorized {
+			return fmt.Errorf("unauthorized access")
+		}
+		return nil
+	}
+
 	proxy := &httputil.ReverseProxy{
-		Director:     director,
-		Transport:    transport,
-		ErrorHandler: errFunc,
+		Director:       director,
+		Transport:      transport,
+		ErrorHandler:   errFunc,
+		ModifyResponse: modifyResponse,
 	}
 
 	proxy.ServeHTTP(c.Writer, c.Request)
