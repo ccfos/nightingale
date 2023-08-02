@@ -1,0 +1,241 @@
+{
+    "name": "PING大盘2.0",
+    "tags": "",
+    "ident": "",
+    "configs": {
+      "version": "2.0.0",
+      "panels": [
+        {
+          "type": "table",
+          "id": "cc788533-f60a-4fe7-bea5-9bdb20389bc9",
+          "layout": {
+            "h": 11,
+            "w": 7,
+            "x": 0,
+            "y": 0,
+            "i": "cc788533-f60a-4fe7-bea5-9bdb20389bc9",
+            "isResizable": true
+          },
+          "version": "2.0.0",
+          "datasourceCate": "prometheus",
+          "datasourceName": "flashcat_prometheus",
+          "targets": [
+            {
+              "expr": "max(ping_result_code) by (target,subnet)",
+              "refId": "A",
+              "legend": "源地址: {{subnet}}  目标地址:{{target}}"
+            }
+          ],
+          "name": "连通性",
+          "maxPerRow": 4,
+          "custom": {
+            "showHeader": true,
+            "colorMode": "background",
+            "calc": "lastNotNull",
+            "displayMode": "labelsOfSeriesToRows"
+          },
+          "options": {
+            "valueMappings": [
+              {
+                "type": "special",
+                "result": {
+                  "color": "#2c9d3d",
+                  "text": "UP"
+                },
+                "match": {
+                  "special": 0
+                }
+              },
+              {
+                "type": "special",
+                "result": {
+                  "color": "#ff656b",
+                  "text": "DOWN"
+                },
+                "match": {
+                  "special": 1
+                }
+              }
+            ],
+            "standardOptions": {}
+          },
+          "overrides": [
+            {}
+          ]
+        },
+        {
+          "type": "table",
+          "id": "0372da5a-d139-4fc4-92e5-bbf77dc6ee3b",
+          "layout": {
+            "h": 11,
+            "w": 8,
+            "x": 7,
+            "y": 0,
+            "i": "0372da5a-d139-4fc4-92e5-bbf77dc6ee3b",
+            "isResizable": true
+          },
+          "version": "2.0.0",
+          "datasourceCate": "prometheus",
+          "datasourceName": "flashcat_prometheus",
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max(ping_maximum_response_ms) by (target,subnet)",
+              "legend": "源地址: {{subnet}}  目标地址:{{target}}"
+            }
+          ],
+          "name": "延迟",
+          "maxPerRow": 4,
+          "custom": {
+            "showHeader": true,
+            "colorMode": "background",
+            "calc": "lastNotNull",
+            "displayMode": "labelsOfSeriesToRows",
+            "columns": [],
+            "sortOrder": "descend"
+          },
+          "options": {
+            "valueMappings": [
+              {
+                "type": "special",
+                "result": {
+                  "color": "#ff656b"
+                },
+                "match": {
+                  "special": -1
+                }
+              },
+              {
+                "type": "range",
+                "result": {
+                  "color": "#61d071"
+                },
+                "match": {
+                  "from": 0,
+                  "to": 5
+                }
+              },
+              {
+                "type": "range",
+                "result": {
+                  "color": "#ecd245"
+                },
+                "match": {
+                  "from": 5,
+                  "to": 100
+                }
+              },
+              {
+                "type": "range",
+                "result": {
+                  "color": "#ffae39"
+                },
+                "match": {
+                  "from": 100,
+                  "to": 200
+                }
+              }
+            ],
+            "standardOptions": {}
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "value": "A"
+              },
+              "properties": {
+                "valueMappings": []
+              }
+            }
+          ]
+        },
+        {
+          "type": "pie",
+          "id": "4b8d51bf-01cf-4007-8c96-8f21378bee3f",
+          "layout": {
+            "h": 11,
+            "w": 9,
+            "x": 15,
+            "y": 0,
+            "i": "4b8d51bf-01cf-4007-8c96-8f21378bee3f",
+            "isResizable": true
+          },
+          "version": "2.0.0",
+          "datasourceCate": "prometheus",
+          "datasourceName": "flashcat_prometheus",
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max(ping_ttl) by (target,subnet)",
+              "legend": "探测源: {{subnet}}目标地址: {{target }}  TTL"
+            }
+          ],
+          "name": "TTL",
+          "maxPerRow": 4,
+          "custom": {
+            "calc": "lastNotNull",
+            "legengPosition": "hidden",
+            "donut": false,
+            "labelWithName": false
+          }
+        },
+        {
+          "type": "hexbin",
+          "id": "95ad7fba-c794-47fc-aec3-dde0a4531829",
+          "layout": {
+            "h": 12,
+            "w": 24,
+            "x": 0,
+            "y": 11,
+            "i": "95ad7fba-c794-47fc-aec3-dde0a4531829",
+            "isResizable": true
+          },
+          "version": "2.0.0",
+          "datasourceCate": "prometheus",
+          "datasourceName": "flashcat_prometheus",
+          "targets": [
+            {
+              "expr": "max(ping_percent_packet_loss) by (subnet,target)",
+              "refId": "B",
+              "legend": "目标地址: {{target}}"
+            }
+          ],
+          "name": "丢包率",
+          "maxPerRow": 4,
+          "custom": {
+            "textMode": "valueAndName",
+            "calc": "last",
+            "colorRange": [
+              "#83c898",
+              "#c2c2c2",
+              "#fc653f"
+            ],
+            "reverseColorOrder": false,
+            "colorDomainAuto": false,
+            "colorDomain": [
+              0,
+              50
+            ]
+          },
+          "options": {
+            "standardOptions": {}
+          }
+        },
+        {
+          "id": "200a02f9-1132-4345-a251-3e497a2e01d1",
+          "type": "row",
+          "name": "",
+          "layout": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 23,
+            "i": "200a02f9-1132-4345-a251-3e497a2e01d1",
+            "isResizable": false
+          },
+          "collapsed": true,
+          "panels": []
+        }
+      ]
+    }
+  }

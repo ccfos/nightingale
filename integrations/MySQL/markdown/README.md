@@ -4,12 +4,11 @@ mysql 监控采集插件，核心原理就是连到 mysql 实例，执行一些 
 
 ## Configuration
 
-```toml
-# # collect interval
-# interval = 15
+categraf 的 `conf/input.mysql/mysql.toml`
 
-# 要监控 MySQL，首先要给出要监控的MySQL的连接地址、用户名、密码
+```toml
 [[instances]]
+# 要监控 MySQL，首先要给出要监控的MySQL的连接地址、用户名、密码
 address = "127.0.0.1:3306"
 username = "root"
 password = "1234"
@@ -74,9 +73,7 @@ gather_slave_status = true
 
 ## 监控多个实例
 
-当主机填写为localhost时mysql会采用 unix domain socket连接
-当主机填写为127.0.0.1时mysql会采用tcp方式连接
-大家最常问的问题是如何监控多个mysql实例，实际大家对toml配置学习一下就了解了，`[[instances]]` 部分表示数组，是可以出现多个的，address参数支持通过unix路径连接 所以，举例：
+大家最常问的问题是如何监控多个mysql实例，实际大家对toml配置学习一下就了解了，`[[instances]]` 部分表示数组，是可以出现多个的，举例：
 
 ```toml
 [[instances]]
@@ -98,6 +95,26 @@ password = "1234"
 labels = { instance="zbx-localhost:3306" }
 ```
 
-## 监控大盘和告警规则
+## 监控大盘
 
-本 README 的同级目录，大家可以看到alerts.json 是告警规则，导入夜莺就可以使用， dashboard-by-instance.json 就是监控大盘（注意！监控大盘使用instance大盘变量，所以，上面的配置文件中要配置一个instance的标签，就是 `labels = { instance="n9e-10.2.3.4:3306" }` 部分），也是导入夜莺就可以使用。dashboard-by-ident是使用ident作为大盘变量，适用于先找到宿主机器，再找机器上面的mysql实例的场景
+夜莺内置了 mysql 相关的监控大盘，内置了至少 4 个仪表盘：
+
+### mysql_by_categraf_instance
+
+这个大盘是使用 categraf 作为采集器，使用 instance 作为大盘变量，所以上例采集配置中都有一个 instance 的标签，就是和这个大盘配合使用的。
+
+### mysql_by_categraf_ident
+
+这个大盘是使用 categraf 作为采集器，使用 ident 作为大盘变量，即在查看 mysql 监控指标的时候，先通过大盘选中宿主机器，再通过机器找到 mysql 实例。
+
+### dashboard-by-aws-rds
+
+这是网友贡献的大盘，采集的 aws 的 rds 相关的数据制作的大盘。欢迎各位网友贡献大盘，这是一个很好的共建社区的方式。把您做好的大盘导出为 JSON，提 PR 到 [这个目录](https://github.com/ccfos/nightingale/tree/main/integrations/MySQL/dashboards) 下即可。
+
+### mysql_by_exporter
+
+这是使用 mysqld_exporter 作为采集器制作的大盘。
+
+## 告警规则
+
+夜莺内置了 mysql 相关的告警规则，克隆到自己的业务组即可使用。也欢迎大家一起来通过 PR 完善修改这个内置的 [告警规则](https://github.com/ccfos/nightingale/tree/main/integrations/MySQL/alerts)。

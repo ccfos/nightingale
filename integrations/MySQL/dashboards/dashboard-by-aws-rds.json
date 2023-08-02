@@ -1,0 +1,745 @@
+{
+    "name": "AWS RDS Telegraf",
+    "tags": "AWS Cloudwatch Telegraf",
+    "configs": {
+        "var": [
+            {
+                "name": "region",
+                "definition": "label_values(cloudwatch_aws_rds_cpu_utilization_average, region)",
+                "multi": false,
+                "type": "query"
+            },
+            {
+                "type": "query",
+                "definition": "label_values(cloudwatch_aws_rds_cpu_utilization_average{region=\"$region\"}, db_instance_identifier)",
+                "name": "instance"
+            }
+        ],
+        "panels": [
+            {
+                "type": "row",
+                "id": "2ceac4da-53d8-432d-ad43-51a25cf63b21",
+                "name": "Common metrics",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "2ceac4da-53d8-432d-ad43-51a25cf63b21",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_cpu_utilization_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS CPU利用率(百分比)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds cpu 利用率平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "value": 80,
+                                "color": "#d0021b"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 1,
+                    "i": "2002c9f5-6177-4239-a0c6-2981edacae5a",
+                    "isResizable": true
+                },
+                "id": "2002c9f5-6177-4239-a0c6-2981edacae5a"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_database_connections_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 数据库连接数",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 数据库连接平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "value": 100,
+                                "color": "#d0021b"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 1,
+                    "i": "05ddf798-e5f8-4b34-96f1-aaa2a45d1207",
+                    "isResizable": true
+                },
+                "id": "c54b9dca-88ce-425a-bf75-6d8b363f6ebb"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_free_storage_space_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 可用存储空间(MB/秒)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 可用存储空间平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "value": 10000000000,
+                                "color": "#d0021b"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 7,
+                    "i": "2d42ff70-a867-4f02-9980-5f20c017a21e",
+                    "isResizable": true
+                },
+                "id": "997a6214-2ac0-46c6-a0b9-046810b2b8cf"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_freeable_memory_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 可用内存(MB)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 可用内存平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "value": 2000000000,
+                                "color": "#d0021b"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 7,
+                    "i": "89bbb148-7fb3-4492-a5d6-abd0bb5df667",
+                    "isResizable": true
+                },
+                "id": "6c00311c-e931-487f-b088-3a3bfafc84ef"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_lvm_write_iops_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 写入IOPS(次数/秒)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds lvm 写入 iops 平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": []
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 13,
+                    "i": "18640a88-13c0-4ce7-8456-60b20f8c7422",
+                    "isResizable": true
+                },
+                "id": "990ab5a1-4aa5-47c3-b7b7-a65f63459119"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_read_iops_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 读取IOPS(次数/秒)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 读取 iops 平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": []
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 13,
+                    "i": "010a63f8-2a08-4d56-9131-0f9e50a7e2f4",
+                    "isResizable": true
+                },
+                "id": "a61a80da-7d0a-45a5-a868-bd442b3aa4cf"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_write_throughput_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 写入吞吐量(MB/秒)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 写入吞吐量平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": []
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 19,
+                    "i": "58987f8f-09d3-445f-b22f-5f872f5b9dde",
+                    "isResizable": true
+                },
+                "id": "2e605342-3413-4004-9fcf-3dbbfa7e7be3"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_read_throughput_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 读取吞吐量(MB/秒)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 读取吞吐量平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": []
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 19,
+                    "i": "23e7b924-d638-4293-9840-78fb129d5410",
+                    "isResizable": true
+                },
+                "id": "1ef3f98d-1b54-408a-8cc2-4570c327d705"
+            },
+            {
+                "type": "row",
+                "id": "07e3cd80-1984-4ebe-a037-526e6a186ebb",
+                "name": "NetWork metrics",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 25,
+                    "i": "07e3cd80-1984-4ebe-a037-526e6a186ebb",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_network_receive_throughput_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 网络接收吞吐量(MB/秒)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 网络接收吞吐量平均",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": []
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 26,
+                    "i": "e1573095-990a-468d-bf2f-7bbf5a6dcb42",
+                    "isResizable": true
+                },
+                "id": "4ba500c9-e87e-41e4-bbc1-82fec507da9d"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_network_transmit_throughput_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 网络传输吞吐量(MB/秒)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 网络传输吞吐量平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": []
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 26,
+                    "i": "0493a01d-d066-482a-b677-2d9ae1d9a30b",
+                    "isResizable": true
+                },
+                "id": "edee8285-1274-4ddc-b166-fb773c764c2b"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_write_latency_average{region=\"$region\",db_instance_identifier=\"$instance\"} * 1000",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 写入延迟(毫秒)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 写入延迟平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": []
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 32,
+                    "i": "fb7ee87d-7bec-4123-ab16-7ef2b6838d8c",
+                    "isResizable": true
+                },
+                "id": "ecb9b8a5-b168-4a65-b7f6-7912ab6c6b22"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_read_latency_average{region=\"$region\",db_instance_identifier=\"$instance\"} * 1000",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 读取延迟(毫秒)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 读取延迟平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": []
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 32,
+                    "i": "d652843b-4005-4448-8342-b3761f58677b",
+                    "isResizable": true
+                },
+                "id": "60d009fa-e547-45be-a862-9b156c15b675"
+            },
+            {
+                "type": "row",
+                "id": "3fafd89f-e6dc-4666-96b7-9f2dc216f496",
+                "name": "Additional metrics",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 38,
+                    "i": "3fafd89f-e6dc-4666-96b7-9f2dc216f496",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_disk_queue_depth_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 队列深度(数量)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 磁盘队列深度平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": []
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 39,
+                    "i": "b36508a8-057d-44fe-9899-74862407fd03",
+                    "isResizable": true
+                },
+                "id": "7edcf2a8-16f3-49ef-9026-e53dc5e72c69"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_bin_log_disk_usage_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 二进制日志磁盘使用情况 (MB)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 二进制日志磁盘使用情况 (MB)",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": []
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 39,
+                    "i": "ca09fee2-6496-444a-937d-3fc2d7483630",
+                    "isResizable": true
+                },
+                "id": "42143731-22a9-45b4-bb1e-ddb8f2c11a70"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_swap_usage_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 交换分区使用情况(MB)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 交换分区使用平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": []
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 45,
+                    "i": "1252f5b7-278b-4cd9-9f36-8fb5ccf6ee51",
+                    "isResizable": true
+                },
+                "id": "51c6f9d9-30db-4514-a54d-712e1a570b23"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "cloudwatch_aws_rds_burst_balance_average{region=\"$region\",db_instance_identifier=\"$instance\"}",
+                        "refId": "A",
+                        "legend": "{{db_instance_identifier}}"
+                    }
+                ],
+                "name": "RDS 突发信用余额平均值(百分比)",
+                "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 突发余额平均值",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "max": 110
+                    },
+                    "thresholds": {
+                        "steps": []
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 45,
+                    "i": "05473d8c-ea01-40c7-b4d4-47378a42aa3e",
+                    "isResizable": true
+                },
+                "id": "767bcc71-3f71-443a-9713-03f587ccc350"
+            }
+        ],
+        "version": "2.0.0"
+    }
+}

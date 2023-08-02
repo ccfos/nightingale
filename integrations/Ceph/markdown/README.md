@@ -1,27 +1,34 @@
-### Ceph Dashboard & Alerts
-开启ceph 默认Prometheus支持
+# ceph plugin
+
+开启 ceph prometheus 支持
+
 ```bash
 ceph mgr module enable prometheus
 ```
 
-### 采集配置
-在categraf中的prometheus插件中加入采集配置
+## 采集配置
+
+既然 ceph 可以暴露 prometheus 协议的 metrics 数据，则直接使用 prometheus 插件抓取即可。
+
+categraf 配置文件：`conf/input.prometheus/prometheus.toml`
+
 ```yaml
-cat /opt/categraf/conf/input.prometheus/prometheus.toml
-  [[instances]]
-  urls = [
+[[instances]]
+urls = [
   "http://192.168.11.181:9283/metrics"
 ]
-  url_label_key = "instance"
-  url_label_value = "{{.Host}}"
-  labels = {service="ceph",cluster="ceph"}
+labels = {service="ceph",cluster="ceph-cluster-001"}
 ```
 
 
-Dashboard:
+## 仪表盘效果
 
-![ceph](http://download.flashcat.cloud/uPic/ceph.png)
+夜莺内置仪表盘中已经内置了 ceph 的仪表盘，导入即可使用。
 
-Alerts:
+![20230801152445](https://download.flashcat.cloud/ulric/20230801152445.png)
 
-![alert](http://download.flashcat.cloud/uPic/alerts.png)
+## 告警规则
+
+夜莺内置告警规则中已经内置了 ceph 的告警规则，导入即可使用。
+
+![20230801152431](https://download.flashcat.cloud/ulric/20230801152431.png)

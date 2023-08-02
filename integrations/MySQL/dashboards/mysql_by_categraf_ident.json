@@ -1,0 +1,1436 @@
+{
+    "name": "MySQL Overview by categraf, group by ident",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "var": [
+            {
+                "name": "ident",
+                "definition": "label_values(mysql_global_status_uptime, ident)"
+            }
+        ],
+        "version": "2.0.0",
+        "panels": [
+            {
+                "id": "dfd77e6d-4e88-4bd9-8c19-74f566920f6c",
+                "type": "row",
+                "name": "Basic Info",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "dfd77e6d-4e88-4bd9-8c19-74f566920f6c",
+                    "isResizable": false
+                },
+                "collapsed": true,
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_uptime{ident=~\"$ident\"}/3600/24",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "MySQL Uptime Days",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {
+                        "title": 12,
+                        "value": 24
+                    }
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "match": {
+                                "to": 1800
+                            },
+                            "result": {
+                                "color": "#ec7718"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 1800
+                            },
+                            "result": {
+                                "color": "#369603"
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 1
+                    }
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 12,
+                    "x": 0,
+                    "y": 1,
+                    "i": "74a5cd8c-f870-442d-bda6-48b5ce4e87ea",
+                    "isResizable": true
+                },
+                "id": "74a5cd8c-f870-442d-bda6-48b5ce4e87ea"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_queries{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "Current QPS",
+                "description": "mysql_global_status_queries",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {
+                        "title": 12,
+                        "value": 24
+                    }
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "match": {
+                                "to": 100
+                            },
+                            "result": {
+                                "color": "#05a31f"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 100
+                            },
+                            "result": {
+                                "color": "#ea3939"
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "decimals": 2
+                    }
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 12,
+                    "x": 12,
+                    "y": 1,
+                    "i": "1763bcc6-d058-4a2b-a099-3d590debd01a",
+                    "isResizable": true
+                },
+                "id": "1763bcc6-d058-4a2b-a099-3d590debd01a"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "mysql_global_variables_innodb_buffer_pool_size{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "InnoDB Buffer Pool",
+                "description": "**InnoDB Buffer Pool Size**\n\nInnoDB maintains a storage area called the buffer pool for caching data and indexes in memory.  Knowing how the InnoDB buffer pool works, and taking advantage of it to keep frequently accessed data in memory, is one of the most important aspects of MySQL tuning. The goal is to keep the working set in memory. In most cases, this should be between 60%-90% of available memory on a dedicated database host, but depends on many factors.",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {
+                        "title": 12,
+                        "value": 24
+                    }
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    }
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 12,
+                    "x": 0,
+                    "y": 4,
+                    "i": "28d16171-9e36-4f5d-87be-95bcb2aeb643",
+                    "isResizable": true
+                },
+                "id": "28d16171-9e36-4f5d-87be-95bcb2aeb643"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "increase(mysql_global_status_table_locks_waited{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "Table Locks Waited(5min)",
+                "description": "**Table Locks**\n\nMySQL takes a number of different locks for varying reasons. In this graph we see how many Table level locks MySQL has requested from the storage engine. In the case of InnoDB, many times the locks could actually be row locks as it only takes table level locks in a few specific cases.\n\nIt is most useful to compare Locks Immediate and Locks Waited. If Locks waited is rising, it means you have lock contention. Otherwise, Locks Immediate rising and falling is normal activity.",
+                "custom": {
+                    "textMode": "valueAndName",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {
+                        "title": 12,
+                        "value": 24
+                    }
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 1
+                            },
+                            "result": {
+                                "color": "#e70d0d"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "to": 1
+                            },
+                            "result": {
+                                "color": "#53b503"
+                            }
+                        }
+                    ],
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 3,
+                    "w": 6,
+                    "x": 12,
+                    "y": 4,
+                    "i": "5fe39015-bf33-4f02-b79e-a8977e56d7ca",
+                    "isResizable": true
+                },
+                "id": "5fe39015-bf33-4f02-b79e-a8977e56d7ca"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mysql_slave_status_seconds_behind_master{ident=~\"$ident\"} - mysql_slave_status_sql_delay{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "Slave Replication Lag",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 3,
+                    "w": 6,
+                    "x": 18,
+                    "y": 4,
+                    "i": "70ee692b-24d9-4807-81b4-81582b5526c2",
+                    "isResizable": true
+                },
+                "id": "70ee692b-24d9-4807-81b4-81582b5526c2"
+            },
+            {
+                "id": "c6da1a55-04d2-4e3e-a22f-e5790182da4a",
+                "type": "row",
+                "name": "Connections",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 7,
+                    "i": "c6da1a55-04d2-4e3e-a22f-e5790182da4a",
+                    "isResizable": false
+                },
+                "collapsed": true,
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_threads_connected{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Connections"
+                    }
+                ],
+                "name": "MySQL Connections",
+                "description": "**Max Connections** \n\nMax Connections is the maximum permitted number of simultaneous client connections. By default, this is 151. Increasing this value increases the number of file descriptors that mysqld requires. If the required number of descriptors are not available, the server reduces the value of Max Connections.\n\nmysqld actually permits Max Connections + 1 clients to connect. The extra connection is reserved for use by accounts that have the SUPER privilege, such as root.\n\nMax Used Connections is the maximum number of connections that have been in use simultaneously since the server started.\n\nConnections is the number of connection attempts (successful or not) to the MySQL server.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 8,
+                    "i": "458753cc-a6d0-4afc-bf5e-54585dc5990c",
+                    "isResizable": true
+                },
+                "id": "458753cc-a6d0-4afc-bf5e-54585dc5990c"
+            },
+            {
+                "type": "timeseries",
+                "id": "ebf01aad-c07b-4541-9891-bb3d5a7175a6",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 8,
+                    "i": "13bf0230-db47-4338-9b32-8e15af8915e4",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_threads_connected{ident=~\"$ident\"}/mysql_global_variables_max_connections{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "MySQL Connections Used Percent",
+                "description": "**Max Connections** \n\nMax Connections is the maximum permitted number of simultaneous client connections. By default, this is 151. Increasing this value increases the number of file descriptors that mysqld requires. If the required number of descriptors are not available, the server reduces the value of Max Connections.\n\nmysqld actually permits Max Connections + 1 clients to connect. The extra connection is reserved for use by accounts that have the SUPER privilege, such as root.\n\nMax Used Connections is the maximum number of connections that have been in use simultaneously since the server started.\n\nConnections is the number of connection attempts (successful or not) to the MySQL server.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_threads_running{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Threads Running"
+                    }
+                ],
+                "name": "MySQL Client Thread Running",
+                "description": "Threads Connected is the number of open connections, while Threads Running is the number of threads not sleeping.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 8,
+                    "i": "f18e13bf-5495-492f-95c5-4a590e38c58e",
+                    "isResizable": true
+                },
+                "id": "f18e13bf-5495-492f-95c5-4a590e38c58e"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_max_used_connections{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Max Used Connections"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_aborted_connects{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Aborted Connections"
+                    }
+                ],
+                "name": "Max Used and Aborted Connections",
+                "description": "**Max Connections** \n\nMax Connections is the maximum permitted number of simultaneous client connections. By default, this is 151. Increasing this value increases the number of file descriptors that mysqld requires. If the required number of descriptors are not available, the server reduces the value of Max Connections.\n\nmysqld actually permits Max Connections + 1 clients to connect. The extra connection is reserved for use by accounts that have the SUPER privilege, such as root.\n\nMax Used Connections is the maximum number of connections that have been in use simultaneously since the server started.\n\nConnections is the number of connection attempts (successful or not) to the MySQL server.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 8,
+                    "i": "34bd296e-bea3-4638-9a35-f97121e804b2",
+                    "isResizable": true
+                },
+                "id": "86251111-3a14-4c52-b1f2-a5cbe009bc0f"
+            },
+            {
+                "id": "462559f7-06d3-4585-9ad3-a0906e7c362d",
+                "type": "row",
+                "name": "Query Performance",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 13,
+                    "i": "462559f7-06d3-4585-9ad3-a0906e7c362d",
+                    "isResizable": false
+                },
+                "collapsed": true,
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_created_tmp_tables{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Created Tmp Tables"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_created_tmp_disk_tables{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Created Tmp Disk Tables"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_created_tmp_files{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Created Tmp Files"
+                    }
+                ],
+                "name": "MySQL Temporary Objects",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.64,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 14,
+                    "i": "0428fde5-3fbf-45dd-b1a9-1a498d6c2de4",
+                    "isResizable": true
+                },
+                "id": "0428fde5-3fbf-45dd-b1a9-1a498d6c2de4"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_select_full_join{ ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Select Full Join"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_select_full_range_join{ ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Select Full Range Join"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_select_range{ ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Select Range"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_select_range_check{ ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Select Range Check"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_select_scan{ ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Select Scan"
+                    }
+                ],
+                "name": "MySQL Select Types",
+                "description": "**MySQL Select Types**\n\nAs with most relational databases, selecting based on indexes is more efficient than scanning an entire table's data. Here we see the counters for selects not done with indexes.\n\n* ***Select Scan*** is how many queries caused full table scans, in which all the data in the table had to be read and either discarded or returned.\n* ***Select Range*** is how many queries used a range scan, which means MySQL scanned all rows in a given range.\n* ***Select Full Join*** is the number of joins that are not joined on an index, this is usually a huge performance hit.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.41,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 14,
+                    "i": "7333267f-e76e-495a-b3d8-08b100ab1330",
+                    "isResizable": true
+                },
+                "id": "7333267f-e76e-495a-b3d8-08b100ab1330"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_sort_rows{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Sort Rows"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_sort_range{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Sort Range"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_sort_merge_passes{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Sort Merge Passes"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_sort_scan{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Sort Scan"
+                    }
+                ],
+                "name": "MySQL Sorts",
+                "description": "**MySQL Sorts**\n\nDue to a query's structure, order, or other requirements, MySQL sorts the rows before returning them. For example, if a table is ordered 1 to 10 but you want the results reversed, MySQL then has to sort the rows to return 10 to 1.\n\nThis graph also shows when sorts had to scan a whole table or a given range of a table in order to return the results and which could not have been sorted via an index.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 18,
+                    "i": "033652d8-8918-4eee-80bd-625cb0cf8d05",
+                    "isResizable": true
+                },
+                "id": "033652d8-8918-4eee-80bd-625cb0cf8d05"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_slow_queries{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Slow Queries"
+                    }
+                ],
+                "name": "MySQL Slow Queries",
+                "description": "**MySQL Slow Queries**\n\nSlow queries are defined as queries being slower than the long_query_time setting. For example, if you have long_query_time set to 3, all queries that take longer than 3 seconds to complete will show on this graph.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "bars",
+                    "fillOpacity": 0.81,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 18,
+                    "i": "08c7c660-5dbb-4fce-9037-3680b9e807d6",
+                    "isResizable": true
+                },
+                "id": "08c7c660-5dbb-4fce-9037-3680b9e807d6"
+            },
+            {
+                "id": "6f36134c-8dd7-4cfb-8a55-7b18ecce2cd6",
+                "type": "row",
+                "name": "Network",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 22,
+                    "i": "6f36134c-8dd7-4cfb-8a55-7b18ecce2cd6",
+                    "isResizable": false
+                },
+                "collapsed": true,
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_bytes_received{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Inbound"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_bytes_sent{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Outbound"
+                    }
+                ],
+                "name": "MySQL Network Traffic",
+                "description": "**MySQL Network Traffic**\n\nHere we can see how much network traffic is generated by MySQL. Outbound is network traffic sent from MySQL and Inbound is network traffic MySQL has received.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 24,
+                    "x": 0,
+                    "y": 23,
+                    "i": "6d50c653-a256-461d-80f1-69e3db613dbc",
+                    "isResizable": true
+                },
+                "id": "6d50c653-a256-461d-80f1-69e3db613dbc"
+            },
+            {
+                "id": "73cbe32a-36cd-488e-a818-23bb1857d6e7",
+                "type": "row",
+                "name": "Commands, Handlers",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 27,
+                    "i": "73cbe32a-36cd-488e-a818-23bb1857d6e7",
+                    "isResizable": false
+                },
+                "collapsed": true,
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "topk(10, rate(mysql_global_status_commands_total{ident=~\"$ident\"}[5m])>0)",
+                        "legend": "{{ident}} {{address}} {{command}}"
+                    }
+                ],
+                "name": "Top Command Counters",
+                "description": "**Top Command Counters**\n\nThe Com_{{xxx}} statement counter variables indicate the number of times each xxx statement has been executed. There is one status variable for each type of statement. For example, Com_delete and Com_update count [``DELETE``](https://dev.mysql.com/doc/refman/5.7/en/delete.html) and [``UPDATE``](https://dev.mysql.com/doc/refman/5.7/en/update.html) statements, respectively. Com_delete_multi and Com_update_multi are similar but apply to [``DELETE``](https://dev.mysql.com/doc/refman/5.7/en/delete.html) and [``UPDATE``](https://dev.mysql.com/doc/refman/5.7/en/update.html) statements that use multiple-table syntax.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.2,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 0,
+                    "y": 28,
+                    "i": "ffa708e1-2132-4dca-9cda-2dd73fad16da",
+                    "isResizable": true
+                },
+                "id": "ffa708e1-2132-4dca-9cda-2dd73fad16da"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_commands_total{ident=~\"$ident\", command=\"select\"}[1m])",
+                        "legend": "{{ident}} {{address}} "
+                    }
+                ],
+                "name": "Select per second",
+                "description": "",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.2,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 6,
+                    "y": 28,
+                    "i": "ad5d900a-3e60-436a-b8a6-eccc9ba117d4",
+                    "isResizable": true
+                },
+                "id": "49a40cdf-4715-4d5c-90f9-944479296d8b"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_commands_total{ident=~\"$ident\", command=~\"insert|update|delete\"}[1m])",
+                        "legend": "{{ident}} {{address}} {{command}}"
+                    }
+                ],
+                "name": "Write(insert|update|delete) per second",
+                "description": "",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.2,
+                    "stack": "noraml"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 12,
+                    "y": 28,
+                    "i": "10a3834f-5074-4a0a-9013-03c42a78e2c5",
+                    "isResizable": true
+                },
+                "id": "01970b88-417a-4c75-9bd0-33eb017a7264"
+            },
+            {
+                "type": "timeseries",
+                "id": "958eae25-8c2a-4886-962f-eb12d57bd594",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 18,
+                    "y": 28,
+                    "i": "64603263-1433-4041-9078-65ca95e09932",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_commands_total{ident=~\"$ident\", command=~\"commit|rollback\"}[10m])",
+                        "legend": "{{ident}} {{address}} {{command}}"
+                    }
+                ],
+                "name": "TPS(commit|rollback)",
+                "description": "",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "stack": "noraml",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_handlers_total{ident=~\"$ident\", handler!~\"commit|rollback|savepoint.*|prepare\"}[5m])",
+                        "legend": "{{ident}} {{address}} {{handler}}"
+                    }
+                ],
+                "name": "MySQL Handlers",
+                "description": "**MySQL Handlers**\n\nHandler statistics are internal statistics on how MySQL is selecting, updating, inserting, and modifying rows, tables, and indexes.\n\nThis is in fact the layer between the Storage Engine and MySQL.\n\n* `read_rnd_next` is incremented when the server performs a full table scan and this is a counter you don't really want to see with a high value.\n* `read_key` is incremented when a read is done with an index.\n* `read_next` is incremented when the storage engine is asked to 'read the next index entry'. A high value means a lot of index scans are being done.",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 3
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 32,
+                    "i": "d9623f6a-64f4-4520-b7b5-01abfc76144d",
+                    "isResizable": true
+                },
+                "id": "d9623f6a-64f4-4520-b7b5-01abfc76144d"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_handlers_total{ident=~\"$ident\", handler=~\"commit|rollback|savepoint.*|prepare\"}[5m])",
+                        "legend": "{{ident}} {{address}} {{handler}}"
+                    }
+                ],
+                "name": "MySQL Transaction Handlers",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 32,
+                    "i": "3a5ad3a4-5877-46e6-bb3d-bd71174c693e",
+                    "isResizable": true
+                },
+                "id": "3a5ad3a4-5877-46e6-bb3d-bd71174c693e"
+            },
+            {
+                "id": "4595a676-3d0e-4746-a881-260505002f64",
+                "type": "row",
+                "name": "Open Files",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 36,
+                    "i": "4595a676-3d0e-4746-a881-260505002f64",
+                    "isResizable": false
+                },
+                "collapsed": true,
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "mysql_global_variables_open_files_limit{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Open Files Limit"
+                    },
+                    {
+                        "expr": "mysql_global_status_open_files{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Open Files"
+                    }
+                ],
+                "name": "MySQL Open Files",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 24,
+                    "x": 0,
+                    "y": 37,
+                    "i": "ac66ac2b-e48b-4ba7-95e5-4846d616449a",
+                    "isResizable": true
+                },
+                "id": "ac66ac2b-e48b-4ba7-95e5-4846d616449a"
+            },
+            {
+                "id": "ddf0e641-3ef6-4be2-a90c-d013eb8a6c30",
+                "type": "row",
+                "name": "Table Openings",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 41,
+                    "i": "ddf0e641-3ef6-4be2-a90c-d013eb8a6c30",
+                    "isResizable": false
+                },
+                "collapsed": true,
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_table_open_cache_hits{ident=~\"$ident\"}[5m])\n/\n(\nrate(mysql_global_status_table_open_cache_hits{ident=~\"$ident\"}[5m])\n+\nrate(mysql_global_status_table_open_cache_misses{ident=~\"$ident\"}[5m])\n)",
+                        "legend": "{{ident}} {{address}} Table Open Cache Hit Ratio"
+                    }
+                ],
+                "name": "Table Open Cache Hit Ratio  Mysql 5.6.6+",
+                "description": "**MySQL Table Open Cache Status**\n\nThe recommendation is to set the `table_open_cache_instances` to a loose correlation to virtual CPUs, keeping in mind that more instances means the cache is split more times. If you have a cache set to 500 but it has 10 instances, each cache will only have 50 cached.\n\nThe `table_definition_cache` and `table_open_cache` can be left as default as they are auto-sized MySQL 5.6 and above (ie: do not set them to any value).",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 42,
+                    "i": "c215348c-ecdf-4480-8371-bc6a8d72da10",
+                    "isResizable": true
+                },
+                "id": "c215348c-ecdf-4480-8371-bc6a8d72da10"
+            },
+            {
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_open_tables{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Open Tables"
+                    },
+                    {
+                        "expr": "mysql_global_variables_table_open_cache{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Table Open Cache"
+                    }
+                ],
+                "name": "MySQL Open Tables",
+                "description": "**MySQL Open Tables**\n\nThe recommendation is to set the `table_open_cache_instances` to a loose correlation to virtual CPUs, keeping in mind that more instances means the cache is split more times. If you have a cache set to 500 but it has 10 instances, each cache will only have 50 cached.\n\nThe `table_definition_cache` and `table_open_cache` can be left as default as they are auto-sized MySQL 5.6 and above (ie: do not set them to any value).",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 42,
+                    "i": "a8fde020-a904-4eaf-84e3-7dbc9f4febf5",
+                    "isResizable": true
+                },
+                "id": "a8fde020-a904-4eaf-84e3-7dbc9f4febf5"
+            },
+            {
+                "type": "row",
+                "id": "d70df2e3-bd10-4072-a027-0cc83235e972",
+                "name": "InnoDB",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 46,
+                    "i": "d70df2e3-bd10-4072-a027-0cc83235e972",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mysql_global_status_innodb_buffer_pool_read_requests{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "Read requests / second",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 0,
+                    "y": 47,
+                    "i": "2bce3a5c-1ec3-4789-9ce5-897a3e40de30",
+                    "isResizable": true
+                },
+                "id": "2bce3a5c-1ec3-4789-9ce5-897a3e40de30"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mysql_global_status_innodb_buffer_pool_reads{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "Reads from disk / second",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 6,
+                    "y": 47,
+                    "i": "ab9b8335-2e25-40f6-9402-cd673dc7ae4e",
+                    "isResizable": true
+                },
+                "id": "6bded8a5-383e-49ad-b61b-1b0c72a8a911"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "100 - increase(mysql_global_status_innodb_buffer_pool_reads{ident=~\"$ident\"}[5m])/increase(mysql_global_status_innodb_buffer_pool_read_requests{ident=~\"$ident\"}[5m]) * 100",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "Reads from memory percent",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 47,
+                    "i": "763c8183-4315-474c-991e-f3ec78699b4e",
+                    "isResizable": true
+                },
+                "id": "08e60f4e-f7fd-4513-bf08-f9514371fa94"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mysql_global_status_innodb_row_lock_waits{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "Row lock waits / second",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 0,
+                    "y": 51,
+                    "i": "25e1fc62-9e94-4a39-9fc3-2a174777f93b",
+                    "isResizable": true
+                },
+                "id": "768306ee-2092-42f6-8b92-7edaf09fdab0"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mysql_global_status_innodb_row_lock_time{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "Row lock time / second",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 6,
+                    "y": 51,
+                    "i": "37679c80-588d-45e3-b2ac-3e0dad4be32a",
+                    "isResizable": true
+                },
+                "id": "722ff93d-630f-4921-a1f4-8240af974fd3"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "rate(mysql_global_status_innodb_os_log_fsyncs{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "Log fsyncs / second",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {}
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.5,
+                    "stack": "off"
+                },
+                "version": "2.0.0",
+                "type": "timeseries",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 12,
+                    "y": 51,
+                    "i": "33c8d0e1-03a3-4a3f-8b20-7b5b6373bdb0",
+                    "isResizable": true
+                },
+                "id": "3f8ba45a-a9bc-4420-980d-382c2638cda0"
+            },
+            {
+                "type": "timeseries",
+                "id": "c98ff938-5076-4217-bb0f-e082f34cc6bb",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 18,
+                    "y": 51,
+                    "i": "c5b892ee-bc0d-4fe9-b57d-7132c329752d",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mysql_global_status_buffer_pool_pages_utilization{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}}"
+                    }
+                ],
+                "name": "Buffer Pool Pages Utilization %",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            }
+        ]
+    }
+}

@@ -4,6 +4,8 @@ ping 监控插件，探测远端目标地址能否 ping 通，如果机器没有
 
 ## Configuration
 
+categraf 的 `conf/input.ping/ping.toml`。
+
 要探测的机器配置到 targets 中，targets 是个数组，可以配置多个，当然也可以拆成多个 `[[instances]]` 配置段，比如：
 
 ```
@@ -74,11 +76,4 @@ When using `method = "native"`, you will need permissions similar to the executa
 
 ## 监控大盘和告警规则
 
-该 README 的同级目录下，提供了 dashboard.json 就是监控大盘的配置，alerts.json 是告警规则，可以导入夜莺使用。
-
-### 新增PING大盘2.0
-
-![dashboard-2.0.png](./dashboard-2.0.png)
-
-大盘地址 [dashboard-2.0.json](https://github.com/flashcatcloud/categraf/tree/main/inputs/ping/dashboard-2.0.json)
-
+夜莺内置了告警规则和监控大盘，克隆到自己的业务组下即可使用。

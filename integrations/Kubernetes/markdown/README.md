@@ -1,6 +1,12 @@
-# kubernetes
+# Kubernetes
 
-forked from telegraf/kubernetes. 这个插件的作用是通过kubelet提供的API获取监控数据，包括系统容器的监控数据、node的、pod数据卷的、pod网络的、pod容器的
+这个插件已经废弃。Kubernetes 监控系列可以参考这个 [文章](https://flashcat.cloud/categories/kubernetes%E7%9B%91%E6%8E%A7%E4%B8%93%E6%A0%8F/)。或者参考 [专栏](https://time.geekbang.org/column/article/630306)。
+
+---
+
+下面是老文档：
+
+forked from telegraf/kubernetes. 这个插件的作用是通过kubelet提供的API获取监控数据，包括系统容器的监控数据、node的、pod数据卷的、pod网络的、pod容器的。
 
 ## Change
 
@@ -32,7 +38,3 @@ forked from telegraf/kubernetes. 这个插件的作用是通过kubelet提供的A
 
 1. `/metrics/cadvisor` 采集的数据没有业务自定义标签，kubernetes 这个插件会自动带上业务自定义标签。但是业务标签可能比较混乱，建议每个公司制定规范，比如要求业务只能打 project、region、env、service、app、job 等标签，其他标签都过滤掉，通过 kubernetes 插件的 label_include label_exclude 配置，可以做标签过滤。
 2. kubernetes 这个插件采集的数据比 `/metrics/cadvisor` 吐出的指标要少，不过常见的 cpu、mem、net、volume 相关的也都有。
-
-## kubelet 监控
-
-kubelet 的监控更推荐的做法：使用 prometheus 插件采集其 `/metrics` 接口，针对这种方式采集的数据，我们提供了监控大盘，在本 README 的同级目录下：kubelet-metrics-dash.json，可以直接导入夜莺使用。请使用 Categraf v0.1.7 以上的版本。

@@ -1,56 +1,15 @@
-## Windows Dashboard & Alerts
+# Windows
 
-使用[categraf](https://github.com/flashcatcloud/categraf)集Windows：win10/win2016基础监控指标数据:
+categraf 不但支持 linux 监控数据采集，也支持 windows 监控数据采集，而且指标命名也是一样的，这样告警规则、仪表盘其实都可以复用。不需要对 windows 做额外处理。
 
-[Categraf安装文档(搜索Windows关键字)](https://flashcat.cloud/docs/content/flashcat-monitor/categraf/2-installation/)
+## 安装
 
-### Categraf中conf/config.toml配置文件：
+categraf 在 windows 下安装请参考这个 [文档](https://flashcat.cloud/docs/content/flashcat-monitor/categraf/2-installation/)。
 
-因为Categraf采集的指标并不是像Telegraf采集Windows的指标有win前缀，在Categraf里是没有的，是直接与linux的基础系统指标合并在一起的，而且在Windows下有一些指标没有的，比如FD、内核态等等指标。
+## 仪表盘
 
-合并在一起的好处是可以不用采集过多的冗余指标，浪费空间，减轻了时序存储的压力。
+linux、windows 仪表盘其实是可以复用的，只是两种操作系统个别指标不同。比如有些指标是 linux 特有的，有些指标是 windows 特有的。如果你想要分开查看，夜莺也内置了 windows 的仪表盘，克隆到自己的业务组下即可使用。
 
-如果有Linux、Windows共存的情况，为了使大盘可以区分属于哪个操作系统平台，我们使用全局标签来筛选即可。
+## 告警规则
 
-Categraf的config.toml的简单配置，只需要修改3处即可；
-
-`Windows配置`
-
-```toml
-...
-# 此处label配置仅对Windows采集使用；
-[global.labels]
-platform="windows"
-...
-[[writers]]
-url = "http://192.168.0.250:19000/prometheus/v1/write"
-...
-url = "http://192.168.0.250:19000/v1/n9e/heartbeat"
-...
-```
-
-`Linux主机配置`
-
-```toml
-...
-# 此处label配置仅对Linux采集使用；
-[global.labels]
-platform="linux"
-...
-[[writers]]
-url = "http://192.168.0.250:19000/prometheus/v1/write"
-...
-url = "http://192.168.0.250:19000/v1/n9e/heartbeat"
-...
-```
-
-**注意：此处大盘仅对Windows做了label条件筛选，如果是Linux，需要单独在选择变量中加入platform='linux'；如下：**
-
-`label_values(system_load1{platform="linux"},ident)`
-
-*如果不需要区分操作系统平台，也可以直接导入大盘使用*
-
-### Windows效果图
-
-![windows](http://download.flashcat.cloud/uPic/windows.png)
-
+夜莺虽然也内置了 windows 的告警规则，但因为 linux、windows 大部分指标都是一样的，就不建议为 windows 单独管理一份告警规则了。

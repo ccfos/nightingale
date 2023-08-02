@@ -1,31 +1,34 @@
-### MinIO Dashboard & Alerts
+# MinIO
 
-使用[categraf](https://github.com/flashcatcloud/categraf)中[inputs.prometheus](https://github.com/flashcatcloud/categraf/tree/main/inputs/prometheus)插件采集[MinIO](https://min.io/docs/minio/linux/operations/monitoring/collect-minio-metrics-using-prometheus.html?ref=docs-redirect#minio-metrics-collect-using-prometheus)服务指标数据:
+参考 [使用 Prometheus 采集 MinIO 指标](https://min.io/docs/minio/linux/operations/monitoring/collect-minio-metrics-using-prometheus.html?ref=docs-redirect#minio-metrics-collect-using-prometheus)
 
-开启 MinIO Prometheus访问；
+开启 MinIO Prometheus 访问；
 
 ```bash
-# 启动MinIO服务的时候加入下面的变量：
+# 启动 MinIO 服务的时候加入下面的变量：
 MINIO_PROMETHEUS_AUTH_TYPE=public
 ```
 
-### 采集配置
-在categraf中的prometheus插件中加入采集配置
-```yaml
-cat /opt/categraf/conf/input.prometheus/prometheus.toml
+## 采集配置
+
+categraf 的 `conf/input.prometheus/prometheus.toml`
+
+```toml
 [[instances]]
-  urls = [
+urls = [
   "http://192.168.1.188:9000/minio/v2/metrics/cluster"
 ]
-url_label_key = "instance"
-url_label_value = "{{.Host}}"
 labels = {job="minio-cluster"}
 ```
 
-Dashboard
+## Dashboard
 
-![MinIO](http://download.flashcat.cloud/uPic/minio.png)
+夜莺内置了 MinIO 的仪表盘，克隆到自己的业务组下即可使用。
 
-Alerts
+![20230801170735](https://download.flashcat.cloud/ulric/20230801170735.png)
 
-![alert](http://download.flashcat.cloud/uPic/alerts.png)
+## Alerts
+
+夜莺内置了 MinIO 的告警规则，克隆到自己的业务组下即可使用。
+
+![20230801170725](https://download.flashcat.cloud/ulric/20230801170725.png)

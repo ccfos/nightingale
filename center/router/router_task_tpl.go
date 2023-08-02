@@ -48,6 +48,19 @@ func (rt *Router) taskTplGet(c *gin.Context) {
 	}, err)
 }
 
+func (rt *Router) taskTplGetByService(c *gin.Context) {
+	tid := ginx.UrlParamInt64(c, "tid")
+
+	tpl, err := models.TaskTplGetById(rt.Ctx, tid)
+	ginx.Dangerous(err)
+
+	if tpl == nil {
+		ginx.Bomb(404, "no such task template")
+	}
+
+	ginx.NewRender(c).Data(tpl, err)
+}
+
 type taskTplForm struct {
 	Title     string   `json:"title" binding:"required"`
 	Batch     int      `json:"batch"`
