@@ -17,6 +17,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
+	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
@@ -24,6 +25,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/runner"
 )
 
@@ -378,6 +380,22 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternDel)
 	}
 
+	r.GET("/api/n9e/versions", func(c *gin.Context) {
+		v := version.Version
+		lastIndex := strings.LastIndex(version.Version, "-")
+		if lastIndex != -1 {
+			v = version.Version[:lastIndex]
+		}
+		req := httplib.Get("https://api.github.com/repos/ccfos/nightingale/releases/latest")
+		var release GithubRelease
+		err := req.ToJSON(&release)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{"version": v, "github_verison": ""})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"version": v, "github_verison": release.TagName})
+		}
+	})
+
 	if rt.HTTP.APIForService.Enable {
 		service := r.Group("/v1/n9e")
 		if len(rt.HTTP.APIForService.BasicAuth) > 0 {
@@ -481,4 +499,8 @@ func Dangerous(c *gin.Context, v interface{}, code ...int) {
 	case error:
 		c.JSON(http.StatusOK, gin.H{"error": t.Error()})
 	}
+}
+
+type GithubRelease struct {
+	TagName string `json:"tag_name"`
 }
