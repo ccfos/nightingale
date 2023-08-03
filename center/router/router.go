@@ -26,7 +26,6 @@ import (
 	"github.com/rakyll/statik/fs"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/runner"
 )
 
@@ -388,14 +387,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			v = version.Version[:lastIndex]
 		}
 
-		req := httplib.Get("https://api.github.com/repos/ccfos/nightingale/releases/latest")
-		var release GithubRelease
-		err := req.ToJSON(&release)
-		if err != nil {
-			ginx.NewRender(c).Data(gin.H{"version": v, "github_verison": ""}, nil)
-		} else {
-			ginx.NewRender(c).Data(gin.H{"version": v, "github_verison": release.TagName}, nil)
-		}
+		ginx.NewRender(c).Data(gin.H{"version": v, "github_verison": version.GithubVersion.Load().(string)}, nil)
 	})
 
 	if rt.HTTP.APIForService.Enable {
@@ -501,8 +493,4 @@ func Dangerous(c *gin.Context, v interface{}, code ...int) {
 	case error:
 		c.JSON(http.StatusOK, gin.H{"error": t.Error()})
 	}
-}
-
-type GithubRelease struct {
-	TagName string `json:"tag_name"`
 }

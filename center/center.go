@@ -20,6 +20,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/i18nx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
+	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
@@ -85,6 +86,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	writers := writer.NewWriters(config.Pushgw)
 
 	httpx.InitRSAConfig(&config.HTTP.RSA)
+	go version.GetGithubVersion()
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache)
