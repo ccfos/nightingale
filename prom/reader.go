@@ -89,6 +89,11 @@ func (pc *PromClientMap) loadFromDatabase() {
 			Headers:             header,
 		}
 
+		if strings.HasPrefix(ds.HTTPJson.Url, "https") {
+			po.UseTLS = true
+			po.InsecureSkipVerify = ds.HTTPJson.TLS.SkipTlsVerify
+		}
+
 		if internalAddr != "" && !pc.ctx.IsCenter {
 			// internal addr is set, use internal addr when edge mode
 			po.Url = internalAddr
@@ -130,11 +135,13 @@ func (pc *PromClientMap) loadFromDatabase() {
 }
 
 func (pc *PromClientMap) newReaderClientFromPromOption(po PromOption) (api.Client, error) {
+	tlsConfig, _ := po.TLSConfig()
+
 	return api.NewClient(api.Config{
 		Address: po.Url,
 		RoundTripper: &http.Transport{
-			// TLSClientConfig: tlsConfig,
-			Proxy: http.ProxyFromEnvironment,
+			TLSClientConfig: tlsConfig,
+			Proxy:           http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
 				Timeout: time.Duration(po.DialTimeout) * time.Millisecond,
 			}).DialContext,
@@ -145,11 +152,13 @@ func (pc *PromClientMap) newReaderClientFromPromOption(po PromOption) (api.Clien
 }
 
 func (pc *PromClientMap) newWriterClientFromPromOption(po PromOption) (api.Client, error) {
+	tlsConfig, _ := po.TLSConfig()
+
 	return api.NewClient(api.Config{
 		Address: po.WriteAddr,
 		RoundTripper: &http.Transport{
-			// TLSClientConfig: tlsConfig,
-			Proxy: http.ProxyFromEnvironment,
+			TLSClientConfig: tlsConfig,
+			Proxy:           http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
 				Timeout: time.Duration(po.DialTimeout) * time.Millisecond,
 			}).DialContext,
