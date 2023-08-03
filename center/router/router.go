@@ -24,6 +24,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
+	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/runner"
@@ -386,13 +387,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		if lastIndex != -1 {
 			v = version.Version[:lastIndex]
 		}
+
 		req := httplib.Get("https://api.github.com/repos/ccfos/nightingale/releases/latest")
 		var release GithubRelease
 		err := req.ToJSON(&release)
 		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"version": v, "github_verison": ""})
+			ginx.NewRender(c).Data(gin.H{"version": v, "github_verison": ""}, nil)
 		} else {
-			c.JSON(http.StatusOK, gin.H{"version": v, "github_verison": release.TagName})
+			ginx.NewRender(c).Data(gin.H{"version": v, "github_verison": release.TagName}, nil)
 		}
 	})
 
