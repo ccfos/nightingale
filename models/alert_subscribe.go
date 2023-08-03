@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -15,37 +14,42 @@ import (
 )
 
 type AlertSubscribe struct {
-	Id                int64        `json:"id" gorm:"primaryKey"`
-	Name              string       `json:"name"`     // AlertSubscribe name
-	Disabled          int          `json:"disabled"` // 0: enabled, 1: disabled
-	GroupId           int64        `json:"group_id"`
-	Prod              string       `json:"prod"`
-	Cate              string       `json:"cate"`
-	DatasourceIds     string       `json:"-" gorm:"datasource_ids"` // datasource ids
-	DatasourceIdsJson []int64      `json:"datasource_ids" gorm:"-"` // for fe
-	Cluster           string       `json:"cluster"`                 // take effect by clusters, seperated by space
-	RuleId            int64        `json:"rule_id"`
-	Severities        string       `json:"-" gorm:"severities"` // sub severity
-	SeveritiesJson    []int        `json:"severities" gorm:"-"` // for fe
-	ForDuration       int64        `json:"for_duration"`        // for duration, unit: second
-	RuleName          string       `json:"rule_name" gorm:"-"`  // for fe
-	Tags              ormx.JSONArr `json:"tags"`
-	RedefineSeverity  int          `json:"redefine_severity"`
-	NewSeverity       int          `json:"new_severity"`
-	RedefineChannels  int          `json:"redefine_channels"`
-	NewChannels       string       `json:"new_channels"`
-	UserGroupIds      string       `json:"user_group_ids"`
-	UserGroups        []UserGroup  `json:"user_groups" gorm:"-"` // for fe
-	RedefineWebhooks  int          `json:"redefine_webhooks"`
-	Webhooks          string       `json:"-" gorm:"webhooks"`
-	WebhooksJson      []string     `json:"webhooks" gorm:"-"`
-	ExtraConfig       string       `json:"-" grom:"extra_config"`
-	ExtraConfigJson   interface{}  `json:"extra_config" gorm:"-"` // for fe
-	CreateBy          string       `json:"create_by"`
-	CreateAt          int64        `json:"create_at"`
-	UpdateBy          string       `json:"update_by"`
-	UpdateAt          int64        `json:"update_at"`
-	ITags             []TagFilter  `json:"-" gorm:"-"` // inner tags
+	Id                int64             `json:"id" gorm:"primaryKey"`
+	Name              string            `json:"name"`     // AlertSubscribe name
+	Disabled          int               `json:"disabled"` // 0: enabled, 1: disabled
+	GroupId           int64             `json:"group_id"`
+	Prod              string            `json:"prod"`
+	Cate              string            `json:"cate"`
+	DatasourceIds     string            `json:"-" gorm:"datasource_ids"` // datasource ids
+	DatasourceIdsJson []int64           `json:"datasource_ids" gorm:"-"` // for fe
+	Cluster           string            `json:"cluster"`                 // take effect by clusters, seperated by space
+	RuleId            int64             `json:"rule_id"`
+	Severities        string            `json:"-" gorm:"severities"` // sub severity
+	SeveritiesJson    []int             `json:"severities" gorm:"-"` // for fe
+	ForDuration       int64             `json:"for_duration"`        // for duration, unit: second
+	RuleName          string            `json:"rule_name" gorm:"-"`  // for fe
+	Tags              ormx.JSONArr      `json:"tags"`
+	RedefineSeverity  int               `json:"redefine_severity"`
+	NewSeverity       int               `json:"new_severity"`
+	RedefineChannels  int               `json:"redefine_channels"`
+	NewChannels       string            `json:"new_channels"`
+	UserGroupIds      string            `json:"user_group_ids"`
+	UserGroups        []UserGroup       `json:"user_groups" gorm:"-"` // for fe
+	RedefineWebhooks  int               `json:"redefine_webhooks"`
+	Webhooks          string            `json:"-" gorm:"webhooks"`
+	WebhooksJson      []string          `json:"webhooks" gorm:"-"`
+	ExtraConfig       string            `json:"-" grom:"extra_config"`
+	ExtraConfigJson   interface{}       `json:"extra_config" gorm:"-"` // for fe
+	CreateBy          string            `json:"create_by"`
+	CreateAt          int64             `json:"create_at"`
+	UpdateBy          string            `json:"update_by"`
+	UpdateAt          int64             `json:"update_at"`
+	ITags             []TagFilter       `json:"-" gorm:"-"` // inner tags
+	BusiGroups        ormx.JSONArr      `json:"busi_groups"`
+	IBusiGroups       []BusiGroupFilter `json:"-" gorm:"-"` // inner busiGroups
+}
+type BusiGroupFilter struct {
+	TagFilter
 }
 
 func (s *AlertSubscribe) TableName() string {
@@ -64,7 +68,7 @@ func AlertSubscribeGetsByService(ctx *ctx.Context) (lst []AlertSubscribe, err er
 	}
 
 	for i := range lst {
-		lst[i].DB2FE()
+		_ = lst[i].DB2FE()
 	}
 	return
 }
@@ -162,26 +166,19 @@ func (s *AlertSubscribe) DB2FE() error {
 }
 
 func (s *AlertSubscribe) Parse() error {
-	err := json.Unmarshal(s.Tags, &s.ITags)
+	var err error
+	s.ITags, err = new(TagFilter).Parse(s.Tags)
+	//s.IBusiGroups, err = new(BusiGroupFilter).Parse(s.BusiGroups)
+	// or
+	var t []TagFilter
+	t, err = new(TagFilter).Parse(s.BusiGroups)
 	if err != nil {
 		return err
 	}
-
-	for i := 0; i < len(s.ITags); i++ {
-		if s.ITags[i].Func == "=~" || s.ITags[i].Func == "!~" {
-			s.ITags[i].Regexp, err = regexp.Compile(s.ITags[i].Value)
-			if err != nil {
-				return err
-			}
-		} else if s.ITags[i].Func == "in" || s.ITags[i].Func == "not in" {
-			arr := strings.Fields(s.ITags[i].Value)
-			s.ITags[i].Vset = make(map[string]struct{})
-			for j := 0; j < len(arr); j++ {
-				s.ITags[i].Vset[arr[j]] = struct{}{}
-			}
-		}
+	s.IBusiGroups = make([]BusiGroupFilter, 0, len(t))
+	for i := range t {
+		s.IBusiGroups = append(s.IBusiGroups, BusiGroupFilter{TagFilter: t[i]})
 	}
-
 	return err
 }
 
@@ -228,8 +225,9 @@ func (s *AlertSubscribe) FillRuleName(ctx *ctx.Context, cache map[int64]string) 
 
 // for v5 rule
 func (s *AlertSubscribe) FillDatasourceIds(ctx *ctx.Context) error {
+	_ = ctx
 	if s.DatasourceIds != "" {
-		json.Unmarshal([]byte(s.DatasourceIds), &s.DatasourceIdsJson)
+		_ = json.Unmarshal([]byte(s.DatasourceIds), &s.DatasourceIdsJson)
 		return nil
 	}
 	return nil
@@ -246,7 +244,7 @@ func (s *AlertSubscribe) FillUserGroups(ctx *ctx.Context, cache map[int64]*UserG
 	}
 
 	exists := make([]string, 0, count)
-	delete := false
+	isDelete := false
 	for i := range ugids {
 		id, _ := strconv.ParseInt(ugids[i], 10, 64)
 
@@ -263,7 +261,7 @@ func (s *AlertSubscribe) FillUserGroups(ctx *ctx.Context, cache map[int64]*UserG
 		}
 
 		if ug == nil {
-			delete = true
+			isDelete = true
 		} else {
 			exists = append(exists, ugids[i])
 			s.UserGroups = append(s.UserGroups, *ug)
@@ -271,7 +269,7 @@ func (s *AlertSubscribe) FillUserGroups(ctx *ctx.Context, cache map[int64]*UserG
 		}
 	}
 
-	if delete {
+	if isDelete {
 		// some user-group already deleted
 		DB(ctx).Model(s).Update("user_group_ids", strings.Join(exists, " "))
 		s.UserGroupIds = strings.Join(exists, " ")
@@ -323,7 +321,7 @@ func AlertSubscribeGetsAll(ctx *ctx.Context) ([]*AlertSubscribe, error) {
 			return nil, err
 		}
 		for i := 0; i < len(lst); i++ {
-			lst[i].FE2DB()
+			_ = lst[i].FE2DB()
 		}
 		return lst, err
 	}
