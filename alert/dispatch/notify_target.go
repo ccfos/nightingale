@@ -124,7 +124,7 @@ func GlobalWebhookDispatch(rule *models.AlertRule, event *models.AlertCurEvent, 
 }
 
 func EventCallbacksDispatch(rule *models.AlertRule, event *models.AlertCurEvent, prev *NotifyTarget, dispatch *Dispatch) *NotifyTarget {
-	for _, c := range event.CallbacksJSON {
+	for _, c := range event.Callbacks {
 		if c == "" {
 			continue
 		}

@@ -34,8 +34,7 @@ type AlertCurEvent struct {
 	RuleConfig               string            `json:"-" gorm:"rule_config"` // rule config
 	RuleConfigJson           interface{}       `json:"rule_config" gorm:"-"` // rule config for fe
 	PromEvalInterval         int               `json:"prom_eval_interval"`
-	Callbacks                string            `json:"-"`                  // for db
-	CallbacksJSON            []string          `json:"callbacks" gorm:"-"` // for fe
+	Callbacks                StringArray       `json:"callbacks" gorm:"column:callbacks;type:varchar(2048);comment:回调地址;"` // for db
 	RunbookUrl               string            `json:"runbook_url"`
 	NotifyRecovered          int               `json:"notify_recovered"`
 	NotifyChannels           StringArray       `json:"notify_channels" gorm:"column:notify_channels;type:varchar(255);comment:通知渠道;"` // 通知媒介（sms voice email dingtalk wecom），
@@ -171,7 +170,8 @@ func (e *AlertCurEvent) GetField(field string) string {
 	case "target_note":
 		return e.TargetNote
 	case "callbacks":
-		return e.Callbacks
+		b, _ := json.Marshal(e.Callbacks)
+		return string(b)
 	case "annotations":
 		return e.Annotations
 	default:
@@ -227,7 +227,6 @@ func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
 
 func (e *AlertCurEvent) DB2FE() error {
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
-	e.CallbacksJSON = strings.Fields(e.Callbacks)
 	e.TagsJSON = strings.Split(e.Tags, ",,")
 	json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
 	json.Unmarshal([]byte(e.RuleConfig), &e.RuleConfigJson)
@@ -236,7 +235,6 @@ func (e *AlertCurEvent) DB2FE() error {
 
 func (e *AlertCurEvent) FE2DB() {
 	e.NotifyGroups = strings.Join(e.NotifyGroupsJSON, " ")
-	e.Callbacks = strings.Join(e.CallbacksJSON, " ")
 	e.Tags = strings.Join(e.TagsJSON, ",,")
 	b, _ := json.Marshal(e.AnnotationsJSON)
 	e.Annotations = string(b)
@@ -249,7 +247,6 @@ func (e *AlertCurEvent) FE2DB() {
 func (e *AlertCurEvent) DB2Mem() {
 	e.IsRecovered = false
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
-	e.CallbacksJSON = strings.Fields(e.Callbacks)
 	e.TagsJSON = strings.Split(e.Tags, ",,")
 	e.TagsMap = make(map[string]string)
 	for i := 0; i < len(e.TagsJSON); i++ {

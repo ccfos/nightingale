@@ -58,8 +58,7 @@ type AlertRule struct {
 	NotifyRepeatStep      int               `json:"notify_repeat_step"`                                                            // notify repeat interval, unit: min
 	NotifyMaxNumber       int               `json:"notify_max_number"`                                                             // notify: max number
 	RecoverDuration       int64             `json:"recover_duration"`                                                              // unit: s
-	Callbacks             string            `json:"-"`                                                                             // split by space: http://a.com/api/x http://a.com/api/y'
-	CallbacksJSON         []string          `json:"callbacks" gorm:"-"`                                                            // for fe
+	Callbacks             StringArray       `json:"callbacks" gorm:"column:callbacks;type:varchar(2048);comment:回调地址;"`            // split by space: http://a.com/api/x http://a.com/api/y'
 	RunbookUrl            string            `json:"runbook_url"`                                                                   // sop url
 	AppendTags            string            `json:"-"`                                                                             // split by space: service=n9e mod=api
 	AppendTagsJSON        []string          `json:"append_tags" gorm:"-"`                                                          // for fe
@@ -502,7 +501,6 @@ func (ar *AlertRule) FE2DB() error {
 		ar.EnableDaysOfWeek = strings.Join(ar.EnableDaysOfWeekJSON, " ")
 	}
 	ar.NotifyGroups = strings.Join(ar.NotifyGroupsJSON, " ")
-	ar.Callbacks = strings.Join(ar.CallbacksJSON, " ")
 	ar.AppendTags = strings.Join(ar.AppendTagsJSON, " ")
 
 	if ar.RuleConfigJson == nil {
@@ -560,7 +558,6 @@ func (ar *AlertRule) DB2FE() error {
 		ar.EnableDaysOfWeekJSON = ar.EnableDaysOfWeeksJSON[0]
 	}
 	ar.NotifyGroupsJSON = strings.Fields(ar.NotifyGroups)
-	ar.CallbacksJSON = strings.Fields(ar.Callbacks)
 	ar.AppendTagsJSON = strings.Fields(ar.AppendTags)
 	json.Unmarshal([]byte(ar.RuleConfig), &ar.RuleConfigJson)
 	json.Unmarshal([]byte(ar.Annotations), &ar.AnnotationsJSON)
@@ -787,7 +784,6 @@ func (ar *AlertRule) UpdateEvent(event *AlertCurEvent) {
 	event.RuleConfigJson = ar.RuleConfigJson
 	event.PromEvalInterval = ar.PromEvalInterval
 	event.Callbacks = ar.Callbacks
-	event.CallbacksJSON = ar.CallbacksJSON
 	event.RunbookUrl = ar.RunbookUrl
 	event.NotifyRecovered = ar.NotifyRecovered
 	event.NotifyChannels = ar.NotifyChannels

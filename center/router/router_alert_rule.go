@@ -1,6 +1,8 @@
 package router
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,6 +13,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
+)
+
+const (
+	ActionAdd    = "callback_add"
+	ActionDel    = "callback_del"
+	ActionUpdate = "callback_update"
 )
 
 // Return all, front-end search and paging
@@ -220,6 +228,23 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 	f.Fields["update_by"] = c.MustGet("username").(string)
 	f.Fields["update_at"] = time.Now().Unix()
 
+	var callbackArray []string
+
+	if vals, ok := f.Fields["callbacks"].([]interface{}); ok {
+		// 创建一个新的 []string，将 vals 中的元素转换为 string 类型后存入其中
+		callbacks := make([]string, len(vals))
+		for i, v := range vals {
+			if s, ok := v.(string); ok {
+				callbacks[i] = s
+			} else {
+				// 如果类型断言失败，则输出错误信息
+				ginx.Dangerous(fmt.Errorf("invalid type for callbacks: %T", v))
+			}
+		}
+		// 输出 []string
+		callbackArray = callbacks
+	}
+
 	for i := 0; i < len(f.Ids); i++ {
 		ar, err := models.AlertRuleGetById(rt.Ctx, f.Ids[i])
 		ginx.Dangerous(err)
@@ -228,32 +253,41 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 			continue
 		}
 
-		if f.Action == "callback_add" {
+		//TODO: 前端现在 callbacks 给的是 "http://aaaaaa http://bbbbbb" 以空格分割, 现在要求前端给 JSON 数组
+
+		switch f.Action {
+		case ActionAdd:
 			// 增加一个 callback 地址
-			if callbacks, has := f.Fields["callbacks"]; has {
-				callback := callbacks.(string)
-				if !strings.Contains(ar.Callbacks, callback) {
-					ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"callbacks": ar.Callbacks + " " + callback}))
-					continue
-				}
-			}
-		}
-
-		if f.Action == "callback_del" {
+			callbackArray = append(ar.Callbacks, callbackArray...)
+		case ActionDel:
 			// 删除一个 callback 地址
-			if callbacks, has := f.Fields["callbacks"]; has {
-				callback := callbacks.(string)
-				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"callbacks": strings.ReplaceAll(ar.Callbacks, callback, "")}))
-				continue
-			}
+			callbackArray = deleteCallbacks(ar.Callbacks, callbackArray)
 		}
 
+		b, err := json.Marshal(callbackArray)
+		if err != nil {
+			ginx.Dangerous(err)
+		}
+		f.Fields["callbacks"] = string(b)
+		//ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"callbacks": string(b)}))
 		for k, v := range f.Fields {
 			ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, v))
 		}
 	}
 
 	ginx.NewRender(c).Message(nil)
+}
+
+// deleteCallbacks 从 callbacks 数组中删除, callback 数组中包含的元素
+func deleteCallbacks(callbacks []string, callbackArray []string) []string {
+	for _, callback := range callbackArray {
+		for i, cb := range callbacks {
+			if cb == callback {
+				callbacks = append(callbacks[:i], callbacks[i+1:]...)
+			}
+		}
+	}
+	return callbacks
 }
 
 func (rt *Router) alertRuleGet(c *gin.Context) {

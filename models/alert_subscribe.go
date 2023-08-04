@@ -37,8 +37,7 @@ type AlertSubscribe struct {
 	UserGroupIds      string       `json:"user_group_ids"`
 	UserGroups        []UserGroup  `json:"user_groups" gorm:"-"` // for fe
 	RedefineWebhooks  int          `json:"redefine_webhooks"`
-	Webhooks          string       `json:"-" gorm:"webhooks"`
-	WebhooksJson      []string     `json:"webhooks" gorm:"-"`
+	Webhooks          StringArray  `json:"webhooks" gorm:"column:webhooks;type:varchar(2048);comment:webhook;"`
 	ExtraConfig       string       `json:"-" grom:"extra_config"`
 	ExtraConfigJson   interface{}  `json:"extra_config" gorm:"-"` // for fe
 	CreateBy          string       `json:"create_by"`
@@ -117,11 +116,6 @@ func (s *AlertSubscribe) FE2DB() error {
 	}
 	s.DatasourceIds = string(idsByte)
 
-	if len(s.WebhooksJson) > 0 {
-		b, _ := json.Marshal(s.WebhooksJson)
-		s.Webhooks = string(b)
-	}
-
 	b, _ := json.Marshal(s.ExtraConfigJson)
 	s.ExtraConfig = string(b)
 
@@ -136,12 +130,6 @@ func (s *AlertSubscribe) FE2DB() error {
 func (s *AlertSubscribe) DB2FE() error {
 	if s.DatasourceIds != "" {
 		if err := json.Unmarshal([]byte(s.DatasourceIds), &s.DatasourceIdsJson); err != nil {
-			return err
-		}
-	}
-
-	if s.Webhooks != "" {
-		if err := json.Unmarshal([]byte(s.Webhooks), &s.WebhooksJson); err != nil {
 			return err
 		}
 	}
@@ -366,7 +354,6 @@ func (s *AlertSubscribe) ModifyEvent(event *AlertCurEvent) {
 
 	if s.RedefineWebhooks == 1 {
 		event.Callbacks = s.Webhooks
-		event.CallbacksJSON = s.WebhooksJson
 	}
 
 	event.NotifyGroups = s.UserGroupIds

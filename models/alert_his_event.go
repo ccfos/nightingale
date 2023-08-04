@@ -31,8 +31,7 @@ type AlertHisEvent struct {
 	RuleConfig       string            `json:"-" gorm:"rule_config"` // rule config
 	RuleConfigJson   interface{}       `json:"rule_config" gorm:"-"` // rule config for fe
 	PromEvalInterval int               `json:"prom_eval_interval"`
-	Callbacks        string            `json:"-"`
-	CallbacksJSON    []string          `json:"callbacks" gorm:"-"`
+	Callbacks        StringArray       `json:"callbacks" gorm:"column:callbacks;type:varchar(2048);comment:回调地址;"`
 	RunbookUrl       string            `json:"runbook_url"`
 	NotifyRecovered  int               `json:"notify_recovered"`
 	NotifyChannels   StringArray       `json:"notify_channels" gorm:"column:notify_channels;type:varchar(255);comment:通知渠道;"`
@@ -64,7 +63,6 @@ func (e *AlertHisEvent) Add(ctx *ctx.Context) error {
 
 func (e *AlertHisEvent) DB2FE() {
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
-	e.CallbacksJSON = strings.Fields(e.Callbacks)
 	e.TagsJSON = strings.Split(e.Tags, ",,")
 	json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
 	json.Unmarshal([]byte(e.RuleConfig), &e.RuleConfigJson)
