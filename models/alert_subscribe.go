@@ -33,7 +33,7 @@ type AlertSubscribe struct {
 	RedefineSeverity  int          `json:"redefine_severity"`
 	NewSeverity       int          `json:"new_severity"`
 	RedefineChannels  int          `json:"redefine_channels"`
-	NewChannels       StringArray  `json:"new_channels" gorm:"column:new_channels;type:json;comment:新通知渠道;"`
+	NewChannels       StringArray  `json:"new_channels" gorm:"column:new_channels;type:varchar(255);comment:新通知渠道;"`
 	UserGroupIds      string       `json:"user_group_ids"`
 	UserGroups        []UserGroup  `json:"user_groups" gorm:"-"` // for fe
 	RedefineWebhooks  int          `json:"redefine_webhooks"`

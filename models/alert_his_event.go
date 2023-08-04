@@ -35,7 +35,7 @@ type AlertHisEvent struct {
 	CallbacksJSON    []string          `json:"callbacks" gorm:"-"`
 	RunbookUrl       string            `json:"runbook_url"`
 	NotifyRecovered  int               `json:"notify_recovered"`
-	NotifyChannels   StringArray       `json:"notify_channels" gorm:"column:notify_channels;type:json;comment:通知渠道;"`
+	NotifyChannels   StringArray       `json:"notify_channels" gorm:"column:notify_channels;type:varchar(255);comment:通知渠道;"`
 	NotifyGroups     string            `json:"-"`
 	NotifyGroupsJSON []string          `json:"notify_groups" gorm:"-"`
 	NotifyGroupsObj  []UserGroup       `json:"notify_groups_obj" gorm:"-"`

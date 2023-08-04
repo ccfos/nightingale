@@ -165,3 +165,35 @@ func (s *StringArray) Scan(value interface{}) error {
 	*s = strings
 	return nil
 }
+
+type StringMap map[string]string
+
+func (m StringMap) Value() (driver.Value, error) {
+	if len(m) == 0 {
+		return nil, nil
+	}
+	// 将 int 数组转换为逗号分隔的字符串
+	j, err := json.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return string(j), nil
+}
+
+func (m *StringMap) Scan(value interface{}) error {
+	if value == nil {
+		*m = nil
+		return nil
+	}
+	// 使用 JSON 解码 map[string]string
+	b, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("failed to scan StringMap: %v", value)
+	}
+	var data map[string]string
+	if err := json.Unmarshal(b, &data); err != nil {
+		return fmt.Errorf("failed to scan StringMap: %v", err)
+	}
+	*m = data
+	return nil
+}

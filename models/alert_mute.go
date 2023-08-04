@@ -32,9 +32,8 @@ type AlertMute struct {
 	Note              string         `json:"note"`
 	Cate              string         `json:"cate"`
 	Prod              string         `json:"prod"`
-	DatasourceIds     string         `json:"-" gorm:"datasource_ids"` // datasource ids
-	DatasourceIdsJson []int64        `json:"datasource_ids" gorm:"-"` // for fe
-	Cluster           string         `json:"cluster"`                 // take effect by clusters, seperated by space
+	DatasourceIds     IntArray       `json:"datasource_ids" gorm:"column:datasource_ids;type:varchar(255);comment:数据源ID;"` // datasource ids
+	Cluster           string         `json:"cluster"`                                                                      // take effect by clusters, seperated by space
 	Tags              ormx.JSONArr   `json:"tags"`
 	Cause             string         `json:"cause"`
 	Btime             int64          `json:"btime"`
@@ -119,8 +118,8 @@ func (m *AlertMute) Verify() error {
 		return errors.New("group_id invalid")
 	}
 
-	if IsAllDatasource(m.DatasourceIdsJson) {
-		m.DatasourceIdsJson = []int64{0}
+	if IsAllDatasource(m.DatasourceIds) {
+		m.DatasourceIds = []int64{0}
 	}
 
 	if m.Etime <= m.Btime {
@@ -198,11 +197,6 @@ func (m *AlertMute) Update(ctx *ctx.Context, arm AlertMute) error {
 }
 
 func (m *AlertMute) FE2DB() error {
-	idsBytes, err := json.Marshal(m.DatasourceIdsJson)
-	if err != nil {
-		return err
-	}
-	m.DatasourceIds = string(idsBytes)
 
 	periodicMutesBytes, err := json.Marshal(m.PeriodicMutesJson)
 	if err != nil {
@@ -222,7 +216,7 @@ func (m *AlertMute) FE2DB() error {
 }
 
 func (m *AlertMute) DB2FE() error {
-	json.Unmarshal([]byte(m.DatasourceIds), &m.DatasourceIdsJson)
+
 	err := json.Unmarshal([]byte(m.PeriodicMutes), &m.PeriodicMutesJson)
 	if err != nil {
 		return err
@@ -321,11 +315,11 @@ func AlertMuteUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 			}
 		}
 
-		b, err := json.Marshal(ids)
-		if err != nil {
-			continue
-		}
-		lst[i].DatasourceIds = string(b)
+		//b, err := json.Marshal(ids)
+		//if err != nil {
+		//	continue
+		//}
+		//lst[i].DatasourceIds = string(b)
 
 		if lst[i].Prod == "" {
 			lst[i].Prod = METRIC
