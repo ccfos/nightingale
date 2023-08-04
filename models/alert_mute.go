@@ -23,7 +23,7 @@ type TagFilter struct {
 	Vset   map[string]struct{} // parse value to regexp if func = 'in' or 'not in'
 }
 
-func (b *TagFilter) Parse(jsonArr ormx.JSONArr) ([]TagFilter, error) {
+func GetTagFilters(jsonArr ormx.JSONArr) ([]TagFilter, error) {
 	bFilters := make([]TagFilter, 0)
 	err := json.Unmarshal(jsonArr, &bFilters)
 	if err != nil {
@@ -125,7 +125,7 @@ func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, query string) (
 
 	err = session.Order("id desc").Find(&lst).Error
 	for i := 0; i < len(lst); i++ {
-		_ = lst[i].DB2FE()
+		lst[i].DB2FE()
 	}
 	return
 }
@@ -133,7 +133,7 @@ func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, query string) (
 func AlertMuteGetsByBG(ctx *ctx.Context, groupId int64) (lst []AlertMute, err error) {
 	err = DB(ctx).Where("group_id=?", groupId).Order("id desc").Find(&lst).Error
 	for i := 0; i < len(lst); i++ {
-		_ = lst[i].DB2FE()
+		lst[i].DB2FE()
 	}
 	return
 }
@@ -164,7 +164,7 @@ func (m *AlertMute) Verify() error {
 
 func (m *AlertMute) Parse() error {
 	var err error
-	m.ITags, err = new(TagFilter).Parse(m.Tags)
+	m.ITags, err = GetTagFilters(m.Tags)
 	if err != nil {
 		return err
 	}
@@ -295,7 +295,7 @@ func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 			return nil, err
 		}
 		for i := 0; i < len(lst); i++ {
-			_ = lst[i].FE2DB()
+			lst[i].FE2DB()
 		}
 		return lst, err
 	}
@@ -308,7 +308,7 @@ func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 	}
 
 	for i := 0; i < len(lst); i++ {
-		_ = lst[i].DB2FE()
+		lst[i].DB2FE()
 	}
 
 	return lst, err

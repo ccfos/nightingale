@@ -52,9 +52,6 @@ type AlertSubscribe struct {
 	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096);not null;default:'[]'"`
 }
 
-//alter table alert_subscribe
-//   add busi_groups varchar(4096) default '[]' not null comment 'jsonArr,map,groups->regexp|value';
-
 type AlertMute struct {
 	Severities string `gorm:"column:severities;type:varchar(32);not null;default:''"`
 }

@@ -22,9 +22,9 @@ func MatchTags(eventTagsMap map[string]string, itags []models.TagFilter) bool {
 	}
 	return true
 }
-func MatchGroupsName(groupName string, groupFilter []models.BusiGroupFilter) bool {
+func MatchGroupsName(groupName string, groupFilter []models.TagFilter) bool {
 	for _, filter := range groupFilter {
-		if !matchTag(groupName, filter.TagFilter) {
+		if !matchTag(groupName, filter) {
 			return false
 		}
 	}
