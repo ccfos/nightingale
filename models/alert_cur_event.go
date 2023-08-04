@@ -38,11 +38,10 @@ type AlertCurEvent struct {
 	CallbacksJSON            []string          `json:"callbacks" gorm:"-"` // for fe
 	RunbookUrl               string            `json:"runbook_url"`
 	NotifyRecovered          int               `json:"notify_recovered"`
-	NotifyChannels           string            `json:"-"`                          // for db
-	NotifyChannelsJSON       []string          `json:"notify_channels" gorm:"-"`   // for fe
-	NotifyGroups             string            `json:"-"`                          // for db
-	NotifyGroupsJSON         []string          `json:"notify_groups" gorm:"-"`     // for fe
-	NotifyGroupsObj          []*UserGroup      `json:"notify_groups_obj" gorm:"-"` // for fe
+	NotifyChannels           StringArray       `json:"notify_channels" gorm:"column:notify_channels;type:varchar(255);comment:通知渠道;"` // 通知媒介（sms voice email dingtalk wecom），
+	NotifyGroups             string            `json:"-"`                                                                             // for db
+	NotifyGroupsJSON         []string          `json:"notify_groups" gorm:"-"`                                                        // for fe
+	NotifyGroupsObj          []*UserGroup      `json:"notify_groups_obj" gorm:"-"`                                                    // for fe
 	TargetIdent              string            `json:"target_ident"`
 	TargetNote               string            `json:"target_note"`
 	TriggerTime              int64             `json:"trigger_time"`
@@ -227,7 +226,6 @@ func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
 }
 
 func (e *AlertCurEvent) DB2FE() error {
-	e.NotifyChannelsJSON = strings.Fields(e.NotifyChannels)
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
 	e.CallbacksJSON = strings.Fields(e.Callbacks)
 	e.TagsJSON = strings.Split(e.Tags, ",,")
@@ -237,7 +235,6 @@ func (e *AlertCurEvent) DB2FE() error {
 }
 
 func (e *AlertCurEvent) FE2DB() {
-	e.NotifyChannels = strings.Join(e.NotifyChannelsJSON, " ")
 	e.NotifyGroups = strings.Join(e.NotifyGroupsJSON, " ")
 	e.Callbacks = strings.Join(e.CallbacksJSON, " ")
 	e.Tags = strings.Join(e.TagsJSON, ",,")
@@ -253,7 +250,6 @@ func (e *AlertCurEvent) DB2Mem() {
 	e.IsRecovered = false
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
 	e.CallbacksJSON = strings.Fields(e.Callbacks)
-	e.NotifyChannelsJSON = strings.Fields(e.NotifyChannels)
 	e.TagsJSON = strings.Split(e.Tags, ",,")
 	e.TagsMap = make(map[string]string)
 	for i := 0; i < len(e.TagsJSON); i++ {

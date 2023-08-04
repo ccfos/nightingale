@@ -273,7 +273,7 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 	ginx.NewRender(c).Data(ar, err)
 }
 
-//pre validation before save rule
+// pre validation before save rule
 func (rt *Router) alertRuleValidation(c *gin.Context) {
 	var f models.AlertRule //new
 	ginx.BindJSON(c, &f)
@@ -289,8 +289,8 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 
 	rt.bgrwCheck(c, ar.GroupId)
 
-	if len(f.NotifyChannelsJSON) > 0 && len(f.NotifyGroupsJSON) > 0 { //Validation NotifyChannels
-		ngids := make([]int64, 0, len(f.NotifyChannelsJSON))
+	if len(f.NotifyChannels) > 0 && len(f.NotifyGroupsJSON) > 0 { //Validation NotifyChannels
+		ngids := make([]int64, 0, len(f.NotifyChannels))
 		for i := range f.NotifyGroupsJSON {
 			id, _ := strconv.ParseInt(f.NotifyGroupsJSON[i], 10, 64)
 			ngids = append(ngids, id)
@@ -302,17 +302,17 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 		}
 		users := rt.UserCache.GetByUserIds(uids)
 		//If any users have a certain notify channel's token, it will be okay. Otherwise, this notify channel is absent of tokens.
-		ancs := make([]string, 0, len(f.NotifyChannelsJSON)) //absent Notify Channels
-		for i := range f.NotifyChannelsJSON {
+		ancs := make([]string, 0, len(f.NotifyChannels)) //absent Notify Channels
+		for i := range f.NotifyChannels {
 			flag := true
 			for ui := range users {
-				if _, b := users[ui].ExtractToken(f.NotifyChannelsJSON[i]); b {
+				if _, b := users[ui].ExtractToken(f.NotifyChannels[i]); b {
 					flag = false
 					break
 				}
 			}
 			if flag {
-				ancs = append(ancs, f.NotifyChannelsJSON[i])
+				ancs = append(ancs, f.NotifyChannels[i])
 			}
 		}
 

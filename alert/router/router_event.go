@@ -69,7 +69,6 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 	}
 
 	event.Callbacks = strings.Join(event.CallbacksJSON, " ")
-	event.NotifyChannels = strings.Join(event.NotifyChannelsJSON, " ")
 	event.NotifyGroups = strings.Join(event.NotifyGroupsJSON, " ")
 
 	rt.AlertStats.CounterAlertsTotal.WithLabelValues(event.Cluster).Inc()

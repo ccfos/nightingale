@@ -105,7 +105,7 @@ func NotifyGroupDispatch(rule *models.AlertRule, event *models.AlertCurEvent, pr
 	NotifyTarget := NewNotifyTarget()
 	for _, group := range groups {
 		for _, userId := range group.UserIds {
-			NotifyTarget.userMap[userId] = NewNotifyChannels(event.NotifyChannelsJSON)
+			NotifyTarget.userMap[userId] = NewNotifyChannels(event.NotifyChannels)
 		}
 	}
 	return NotifyTarget

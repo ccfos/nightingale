@@ -12,47 +12,46 @@ import (
 )
 
 type AlertHisEvent struct {
-	Id                 int64             `json:"id" gorm:"primaryKey"`
-	Cate               string            `json:"cate"`
-	IsRecovered        int               `json:"is_recovered"`
-	DatasourceId       int64             `json:"datasource_id"`
-	Cluster            string            `json:"cluster"`
-	GroupId            int64             `json:"group_id"`
-	GroupName          string            `json:"group_name"` // busi group name
-	Hash               string            `json:"hash"`
-	RuleId             int64             `json:"rule_id"`
-	RuleName           string            `json:"rule_name"`
-	RuleNote           string            `json:"rule_note"`
-	RuleProd           string            `json:"rule_prod"`
-	RuleAlgo           string            `json:"rule_algo"`
-	Severity           int               `json:"severity"`
-	PromForDuration    int               `json:"prom_for_duration"`
-	PromQl             string            `json:"prom_ql"`
-	RuleConfig         string            `json:"-" gorm:"rule_config"` // rule config
-	RuleConfigJson     interface{}       `json:"rule_config" gorm:"-"` // rule config for fe
-	PromEvalInterval   int               `json:"prom_eval_interval"`
-	Callbacks          string            `json:"-"`
-	CallbacksJSON      []string          `json:"callbacks" gorm:"-"`
-	RunbookUrl         string            `json:"runbook_url"`
-	NotifyRecovered    int               `json:"notify_recovered"`
-	NotifyChannels     string            `json:"-"`
-	NotifyChannelsJSON []string          `json:"notify_channels" gorm:"-"`
-	NotifyGroups       string            `json:"-"`
-	NotifyGroupsJSON   []string          `json:"notify_groups" gorm:"-"`
-	NotifyGroupsObj    []UserGroup       `json:"notify_groups_obj" gorm:"-"`
-	TargetIdent        string            `json:"target_ident"`
-	TargetNote         string            `json:"target_note"`
-	TriggerTime        int64             `json:"trigger_time"`
-	TriggerValue       string            `json:"trigger_value"`
-	RecoverTime        int64             `json:"recover_time"`
-	LastEvalTime       int64             `json:"last_eval_time"`
-	Tags               string            `json:"-"`
-	TagsJSON           []string          `json:"tags" gorm:"-"`
-	Annotations        string            `json:"-"`
-	AnnotationsJSON    map[string]string `json:"annotations" gorm:"-"` // for fe
-	NotifyCurNumber    int               `json:"notify_cur_number"`    // notify: current number
-	FirstTriggerTime   int64             `json:"first_trigger_time"`   // 连续告警的首次告警时间
-	ExtraConfig        interface{}       `json:"extra_config" gorm:"-"`
+	Id               int64             `json:"id" gorm:"primaryKey"`
+	Cate             string            `json:"cate"`
+	IsRecovered      int               `json:"is_recovered"`
+	DatasourceId     int64             `json:"datasource_id"`
+	Cluster          string            `json:"cluster"`
+	GroupId          int64             `json:"group_id"`
+	GroupName        string            `json:"group_name"` // busi group name
+	Hash             string            `json:"hash"`
+	RuleId           int64             `json:"rule_id"`
+	RuleName         string            `json:"rule_name"`
+	RuleNote         string            `json:"rule_note"`
+	RuleProd         string            `json:"rule_prod"`
+	RuleAlgo         string            `json:"rule_algo"`
+	Severity         int               `json:"severity"`
+	PromForDuration  int               `json:"prom_for_duration"`
+	PromQl           string            `json:"prom_ql"`
+	RuleConfig       string            `json:"-" gorm:"rule_config"` // rule config
+	RuleConfigJson   interface{}       `json:"rule_config" gorm:"-"` // rule config for fe
+	PromEvalInterval int               `json:"prom_eval_interval"`
+	Callbacks        string            `json:"-"`
+	CallbacksJSON    []string          `json:"callbacks" gorm:"-"`
+	RunbookUrl       string            `json:"runbook_url"`
+	NotifyRecovered  int               `json:"notify_recovered"`
+	NotifyChannels   StringArray       `json:"notify_channels" gorm:"column:notify_channels;type:json;comment:通知渠道;"`
+	NotifyGroups     string            `json:"-"`
+	NotifyGroupsJSON []string          `json:"notify_groups" gorm:"-"`
+	NotifyGroupsObj  []UserGroup       `json:"notify_groups_obj" gorm:"-"`
+	TargetIdent      string            `json:"target_ident"`
+	TargetNote       string            `json:"target_note"`
+	TriggerTime      int64             `json:"trigger_time"`
+	TriggerValue     string            `json:"trigger_value"`
+	RecoverTime      int64             `json:"recover_time"`
+	LastEvalTime     int64             `json:"last_eval_time"`
+	Tags             string            `json:"-"`
+	TagsJSON         []string          `json:"tags" gorm:"-"`
+	Annotations      string            `json:"-"`
+	AnnotationsJSON  map[string]string `json:"annotations" gorm:"-"` // for fe
+	NotifyCurNumber  int               `json:"notify_cur_number"`    // notify: current number
+	FirstTriggerTime int64             `json:"first_trigger_time"`   // 连续告警的首次告警时间
+	ExtraConfig      interface{}       `json:"extra_config" gorm:"-"`
 }
 
 func (e *AlertHisEvent) TableName() string {
@@ -64,7 +63,6 @@ func (e *AlertHisEvent) Add(ctx *ctx.Context) error {
 }
 
 func (e *AlertHisEvent) DB2FE() {
-	e.NotifyChannelsJSON = strings.Fields(e.NotifyChannels)
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
 	e.CallbacksJSON = strings.Fields(e.Callbacks)
 	e.TagsJSON = strings.Split(e.Tags, ",,")

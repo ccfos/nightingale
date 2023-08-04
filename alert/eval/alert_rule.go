@@ -86,7 +86,7 @@ func (s *Scheduler) syncAlertRules() {
 			continue
 		}
 		if rule.IsPrometheusRule() {
-			datasourceIds := s.promClients.Hit(rule.DatasourceIdsJson)
+			datasourceIds := s.promClients.Hit(rule.DatasourceIds)
 			for _, dsId := range datasourceIds {
 				if !naming.DatasourceHashRing.IsHit(dsId, fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
 					continue
@@ -117,7 +117,7 @@ func (s *Scheduler) syncAlertRules() {
 		} else {
 			// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
 			// if rule is not processed by prometheus engine, create it as externalRule
-			for _, dsId := range rule.DatasourceIdsJson {
+			for _, dsId := range rule.DatasourceIds {
 				ds := s.datasourceCache.GetById(dsId)
 				if ds == nil {
 					logger.Debugf("datasource %d not found", dsId)

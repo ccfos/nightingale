@@ -33,7 +33,7 @@ type AlertSubscribe struct {
 	RedefineSeverity  int          `json:"redefine_severity"`
 	NewSeverity       int          `json:"new_severity"`
 	RedefineChannels  int          `json:"redefine_channels"`
-	NewChannels       string       `json:"new_channels"`
+	NewChannels       StringArray  `json:"new_channels" gorm:"column:new_channels;type:json;comment:新通知渠道;"`
 	UserGroupIds      string       `json:"user_group_ids"`
 	UserGroups        []UserGroup  `json:"user_groups" gorm:"-"` // for fe
 	RedefineWebhooks  int          `json:"redefine_webhooks"`
@@ -362,7 +362,6 @@ func (s *AlertSubscribe) ModifyEvent(event *AlertCurEvent) {
 
 	if s.RedefineChannels == 1 {
 		event.NotifyChannels = s.NewChannels
-		event.NotifyChannelsJSON = strings.Fields(s.NewChannels)
 	}
 
 	if s.RedefineWebhooks == 1 {
