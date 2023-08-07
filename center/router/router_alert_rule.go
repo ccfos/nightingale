@@ -273,7 +273,7 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 	ginx.NewRender(c).Data(ar, err)
 }
 
-//pre validation before save rule
+// pre validation before save rule
 func (rt *Router) alertRuleValidation(c *gin.Context) {
 	var f models.AlertRule //new
 	ginx.BindJSON(c, &f)
