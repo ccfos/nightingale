@@ -53,7 +53,7 @@ insert into user_group_member(group_id, user_id) values(1, 1);
 CREATE TABLE configs (
     id bigserial,
     ckey varchar(191) not null,
-    cval varchar(4096) not null default '',
+    cval text not null default '',
     PRIMARY KEY (id),
     UNIQUE (ckey)
 ) ;
@@ -94,9 +94,17 @@ insert into role_operation(role_name, operation) values('Standard', '/log/explor
 insert into role_operation(role_name, operation) values('Standard', '/trace/explorer');
 insert into role_operation(role_name, operation) values('Standard', '/help/version');
 insert into role_operation(role_name, operation) values('Standard', '/help/contact');
+insert into role_operation(role_name, operation) values('Standard', '/help/servers');
+insert into role_operation(role_name, operation) values('Standard', '/help/migrate');
+
 insert into role_operation(role_name, operation) values('Standard', '/alert-rules-built-in');
 insert into role_operation(role_name, operation) values('Standard', '/dashboards-built-in');
 insert into role_operation(role_name, operation) values('Standard', '/trace/dependencies');
+
+insert into role_operation(role_name, operation) values('Admin', '/help/source');
+insert into role_operation(role_name, operation) values('Admin', '/help/sso');
+insert into role_operation(role_name, operation) values('Admin', '/help/notification-tpls');
+insert into role_operation(role_name, operation) values('Admin', '/help/notification-settings');
 
 insert into role_operation(role_name, operation) values('Standard', '/users');
 insert into role_operation(role_name, operation) values('Standard', '/user-groups');
@@ -292,6 +300,7 @@ CREATE TABLE alert_rule (
     runbook_url varchar(255),
     append_tags varchar(255) not null default '' ,
     annotations text not null ,
+    extra_config text not null ,
     create_at bigint not null default 0,
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
@@ -320,7 +329,7 @@ COMMENT ON COLUMN alert_rule.recover_duration IS 'unit: s';
 COMMENT ON COLUMN alert_rule.callbacks IS 'split by space: http://a.com/api/x http://a.com/api/y';
 COMMENT ON COLUMN alert_rule.append_tags IS 'split by space: service=n9e mod=api';
 COMMENT ON COLUMN alert_rule.annotations IS 'annotations';
-
+COMMENT ON COLUMN alert_rule.extra_config IS 'extra_config';
 
 CREATE TABLE alert_mute (
     id bigserial,
@@ -337,6 +346,7 @@ CREATE TABLE alert_mute (
     disabled smallint not null default 0 ,
     mute_time_type smallint not null default 0,
     periodic_mutes varchar(4096) not null default '',
+    severities varchar(32) not null default '',
     create_at bigint not null default 0,
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
@@ -363,6 +373,7 @@ CREATE TABLE alert_subscribe (
     datasource_ids varchar(255) not null default '' ,
     cluster varchar(128) not null,
     rule_id bigint not null default 0,
+    severities varchar(32) not null default '',
     tags varchar(4096) not null default '' ,
     redefine_severity smallint default 0 ,
     new_severity smallint not null ,
@@ -370,6 +381,7 @@ CREATE TABLE alert_subscribe (
     new_channels varchar(255) not null default '' ,
     user_group_ids varchar(250) not null ,
     webhooks text not null,
+    extra_config text not null,
     redefine_webhooks smallint default 0,
     for_duration bigint not null default 0,
     create_at bigint not null default 0,
@@ -389,8 +401,9 @@ COMMENT ON COLUMN alert_subscribe.new_severity IS '0:Emergency 1:Warning 2:Notic
 COMMENT ON COLUMN alert_subscribe.redefine_channels IS 'is redefine channels?';
 COMMENT ON COLUMN alert_subscribe.new_channels IS 'split by space: sms voice email dingtalk wecom';
 COMMENT ON COLUMN alert_subscribe.user_group_ids IS 'split by space 1 34 5, notify cc to user_group_ids';
+COMMENT ON COLUMN alert_subscribe.extra_config IS 'extra_config';
 
-  
+
 CREATE TABLE target (
     id bigserial,
     group_id bigint not null default 0 ,
@@ -456,6 +469,7 @@ CREATE TABLE recording_rule (
     prom_ql varchar(8192) not null ,
     prom_eval_interval int not null ,
     append_tags varchar(255) default '' ,
+    query_configs text not null ,
     create_at bigint default '0',
     create_by varchar(64) default '',
     update_at bigint default '0',
@@ -472,6 +486,7 @@ COMMENT ON COLUMN recording_rule.disabled IS '0:enabled 1:disabled';
 COMMENT ON COLUMN recording_rule.prom_ql IS 'promql';
 COMMENT ON COLUMN recording_rule.prom_eval_interval IS 'evaluate interval';
 COMMENT ON COLUMN recording_rule.append_tags IS 'split by space: service=n9e mod=api';
+COMMENT ON COLUMN recording_rule.query_configs IS 'query configs';
 
 
 CREATE TABLE alert_aggr_view (
@@ -733,3 +748,20 @@ CREATE TABLE sso_config (
     PRIMARY KEY (id),
     UNIQUE (name)
 ) ;
+
+
+CREATE TABLE es_index_pattern (
+    id bigserial,
+    datasource_id bigint not null default 0,
+    name varchar(191) not null,
+    time_field varchar(128) not null default '@timestamp',
+    allow_hide_system_indices smallint not null default 0,
+    fields_format varchar(4096) not null default '',
+    create_at bigint default '0',
+    create_by varchar(64) default '',
+    update_at bigint default '0',
+    update_by varchar(64) default '',
+    PRIMARY KEY (id),
+    UNIQUE (datasource_id, name)
+) ;
+COMMENT ON COLUMN es_index_pattern.datasource_id IS 'datasource id';
