@@ -25,6 +25,9 @@ type TagFilter struct {
 
 func GetTagFilters(jsonArr ormx.JSONArr) ([]TagFilter, error) {
 	bFilters := make([]TagFilter, 0)
+	if jsonArr == nil {
+		return nil, nil
+	}
 	err := json.Unmarshal(jsonArr, &bFilters)
 	if err != nil {
 		return nil, err
