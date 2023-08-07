@@ -2,8 +2,6 @@ package aconf
 
 import (
 	"path"
-
-	"github.com/toolkits/pkg/runner"
 )
 
 type Alert struct {
@@ -55,9 +53,9 @@ type Ibex struct {
 	Timeout       int64
 }
 
-func (a *Alert) PreCheck() {
+func (a *Alert) PreCheck(configDir string) {
 	if a.Alerting.TemplatesDir == "" {
-		a.Alerting.TemplatesDir = path.Join(runner.Cwd, "etc", "template")
+		a.Alerting.TemplatesDir = path.Join(configDir, "template")
 	}
 
 	if a.Alerting.NotifyConcurrency == 0 {

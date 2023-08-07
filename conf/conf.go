@@ -48,7 +48,7 @@ func InitConfig(configDir, cryptoKey string) (*ConfigType, error) {
 	}
 
 	config.Pushgw.PreCheck()
-	config.Alert.PreCheck()
+	config.Alert.PreCheck(configDir)
 	config.Center.PreCheck()
 
 	err := decryptConfig(config, cryptoKey)
