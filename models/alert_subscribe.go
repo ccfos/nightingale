@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -46,6 +45,8 @@ type AlertSubscribe struct {
 	UpdateBy          string       `json:"update_by"`
 	UpdateAt          int64        `json:"update_at"`
 	ITags             []TagFilter  `json:"-" gorm:"-"` // inner tags
+	BusiGroups        ormx.JSONArr `json:"busi_groups"`
+	IBusiGroups       []TagFilter  `json:"-" gorm:"-"` // inner busiGroups
 }
 
 func (s *AlertSubscribe) TableName() string {
@@ -162,26 +163,12 @@ func (s *AlertSubscribe) DB2FE() error {
 }
 
 func (s *AlertSubscribe) Parse() error {
-	err := json.Unmarshal(s.Tags, &s.ITags)
+	var err error
+	s.ITags, err = GetTagFilters(s.Tags)
 	if err != nil {
 		return err
 	}
-
-	for i := 0; i < len(s.ITags); i++ {
-		if s.ITags[i].Func == "=~" || s.ITags[i].Func == "!~" {
-			s.ITags[i].Regexp, err = regexp.Compile(s.ITags[i].Value)
-			if err != nil {
-				return err
-			}
-		} else if s.ITags[i].Func == "in" || s.ITags[i].Func == "not in" {
-			arr := strings.Fields(s.ITags[i].Value)
-			s.ITags[i].Vset = make(map[string]struct{})
-			for j := 0; j < len(arr); j++ {
-				s.ITags[i].Vset[arr[j]] = struct{}{}
-			}
-		}
-	}
-
+	s.IBusiGroups, err = GetTagFilters(s.BusiGroups)
 	return err
 }
 
@@ -246,7 +233,7 @@ func (s *AlertSubscribe) FillUserGroups(ctx *ctx.Context, cache map[int64]*UserG
 	}
 
 	exists := make([]string, 0, count)
-	delete := false
+	isDelete := false
 	for i := range ugids {
 		id, _ := strconv.ParseInt(ugids[i], 10, 64)
 
@@ -263,7 +250,7 @@ func (s *AlertSubscribe) FillUserGroups(ctx *ctx.Context, cache map[int64]*UserG
 		}
 
 		if ug == nil {
-			delete = true
+			isDelete = true
 		} else {
 			exists = append(exists, ugids[i])
 			s.UserGroups = append(s.UserGroups, *ug)
@@ -271,7 +258,7 @@ func (s *AlertSubscribe) FillUserGroups(ctx *ctx.Context, cache map[int64]*UserG
 		}
 	}
 
-	if delete {
+	if isDelete {
 		// some user-group already deleted
 		DB(ctx).Model(s).Update("user_group_ids", strings.Join(exists, " "))
 		s.UserGroupIds = strings.Join(exists, " ")

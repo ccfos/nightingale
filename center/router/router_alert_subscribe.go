@@ -101,6 +101,7 @@ func (rt *Router) alertSubscribePut(c *gin.Context) {
 			"redefine_webhooks",
 			"severities",
 			"extra_config",
+			"busi_groups",
 		))
 	}
 

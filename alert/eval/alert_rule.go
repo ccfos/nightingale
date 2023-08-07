@@ -85,6 +85,10 @@ func (s *Scheduler) syncAlertRules() {
 		if rule == nil {
 			continue
 		}
+		// 同步rule到Scheduler时，未生效的rule应该直接drop，减少对时序数据库查询次数
+		if rule.TimeSpanMuteStrategy() {
+			continue
+		}
 		if rule.IsPrometheusRule() {
 			datasourceIds := s.promClients.Hit(rule.DatasourceIdsJson)
 			for _, dsId := range datasourceIds {

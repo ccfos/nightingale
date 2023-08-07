@@ -23,6 +23,34 @@ type TagFilter struct {
 	Vset   map[string]struct{} // parse value to regexp if func = 'in' or 'not in'
 }
 
+func GetTagFilters(jsonArr ormx.JSONArr) ([]TagFilter, error) {
+	if jsonArr == nil || len([]byte(jsonArr)) == 0 {
+		return []TagFilter{}, nil
+	}
+
+	bFilters := make([]TagFilter, 0)
+	err := json.Unmarshal(jsonArr, &bFilters)
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(bFilters); i++ {
+		if bFilters[i].Func == "=~" || bFilters[i].Func == "!~" {
+			bFilters[i].Regexp, err = regexp.Compile(bFilters[i].Value)
+			if err != nil {
+				return nil, err
+			}
+		} else if bFilters[i].Func == "in" || bFilters[i].Func == "not in" {
+			arr := strings.Fields(bFilters[i].Value)
+			bFilters[i].Vset = make(map[string]struct{})
+			for j := 0; j < len(arr); j++ {
+				bFilters[i].Vset[arr[j]] = struct{}{}
+			}
+		}
+	}
+
+	return bFilters, nil
+}
+
 const TimeRange int = 0
 const Periodic int = 1
 
@@ -139,24 +167,10 @@ func (m *AlertMute) Verify() error {
 }
 
 func (m *AlertMute) Parse() error {
-	err := json.Unmarshal(m.Tags, &m.ITags)
+	var err error
+	m.ITags, err = GetTagFilters(m.Tags)
 	if err != nil {
 		return err
-	}
-
-	for i := 0; i < len(m.ITags); i++ {
-		if m.ITags[i].Func == "=~" || m.ITags[i].Func == "!~" {
-			m.ITags[i].Regexp, err = regexp.Compile(m.ITags[i].Value)
-			if err != nil {
-				return err
-			}
-		} else if m.ITags[i].Func == "in" || m.ITags[i].Func == "not in" {
-			arr := strings.Fields(m.ITags[i].Value)
-			m.ITags[i].Vset = make(map[string]struct{})
-			for j := 0; j < len(arr); j++ {
-				m.ITags[i].Vset[arr[j]] = struct{}{}
-			}
-		}
 	}
 
 	return nil
@@ -222,8 +236,11 @@ func (m *AlertMute) FE2DB() error {
 }
 
 func (m *AlertMute) DB2FE() error {
-	json.Unmarshal([]byte(m.DatasourceIds), &m.DatasourceIdsJson)
-	err := json.Unmarshal([]byte(m.PeriodicMutes), &m.PeriodicMutesJson)
+	err := json.Unmarshal([]byte(m.DatasourceIds), &m.DatasourceIdsJson)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal([]byte(m.PeriodicMutes), &m.PeriodicMutesJson)
 	if err != nil {
 		return err
 	}
