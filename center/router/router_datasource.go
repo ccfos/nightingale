@@ -137,12 +137,11 @@ func DatasourceCheck(ds models.Datasource) error {
 	if ds.PluginType == models.PROMETHEUS {
 		subPath := "/api/v1/query"
 		query := url.Values{}
-		// if strings.Contains(fullURL, "loki") {
-		// 	subPath = "/api/v1/labels"
-		// } else {
-		// 	query.Add("query", "1+1")
-		// }
-		query.Add("query", "mock_metric_name")
+		if ds.HTTPJson.IsLoki() {
+			subPath = "/api/v1/labels"
+		} else {
+			query.Add("query", "1+1")
+		}
 		fullURL = fmt.Sprintf("%s%s?%s", ds.HTTPJson.Url, subPath, query.Encode())
 
 		req, err = http.NewRequest("GET", fullURL, nil)
