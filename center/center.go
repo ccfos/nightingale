@@ -45,7 +45,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	i18nx.Init()
+	i18nx.Init(configDir)
 	cstats.Init()
 
 	db, err := storage.New(config.DB)
