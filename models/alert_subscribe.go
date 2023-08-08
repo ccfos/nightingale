@@ -96,9 +96,8 @@ func (s *AlertSubscribe) Verify() error {
 	if err := s.Parse(); err != nil {
 		return err
 	}
-
-	if len(s.ITags) == 0 && s.RuleId == 0 {
-		return errors.New("rule_id and tags are both blank")
+	if len(s.IBusiGroups) == 0 && len(s.ITags) == 0 && s.RuleId == 0 {
+		return errors.New("none of busi_groups, rule_id, and tags have been assigned any values.")
 	}
 
 	ugids := strings.Fields(s.UserGroupIds)
