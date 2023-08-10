@@ -31,4 +31,5 @@ var TemplateFuncMap = template.FuncMap{
 	"div":                       Divide,
 	"now":                       Now,
 	"toString":                  ToString,
+	"formatDecimal":             FormatDecimal,
 }
