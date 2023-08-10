@@ -352,3 +352,13 @@ func Divide(a, b interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("divide: unknown type for %q (%T)", av, a)
 	}
 }
+
+func FormatDecimal(s string, n int) string {
+	num, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return s
+	}
+
+	format := fmt.Sprintf("%%.%df", n)
+	return fmt.Sprintf(format, num)
+}
