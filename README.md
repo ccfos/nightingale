@@ -62,7 +62,7 @@
 
 ## Getting Started
 
-[English Doc](https://n9e.github.io/) |  [中文文档](http://n9e.flashcat.cloud/)
+[https://n9e.github.io/](https://n9e.github.io/)
 
 ## Screenshots
 
