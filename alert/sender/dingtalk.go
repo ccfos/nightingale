@@ -81,7 +81,7 @@ func (ds *DingtalkSender) extract(users []*models.User) ([]string, []string) {
 		}
 		if token, has := user.ExtractToken(models.Dingtalk); has {
 			url := token
-			if !strings.HasPrefix(token, "https://") {
+			if !strings.HasPrefix(token, "https://") && !strings.HasPrefix(token, "http://") {
 				url = "https://oapi.dingtalk.com/robot/send?access_token=" + token
 			}
 			urls = append(urls, url)

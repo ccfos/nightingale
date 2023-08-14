@@ -125,7 +125,7 @@ func (fs *FeishuCardSender) extract(users []*models.User) ([]string, []string) {
 	for i := range users {
 		if token, has := users[i].ExtractToken(models.FeishuCard); has {
 			url := token
-			if !strings.HasPrefix(token, "https://") {
+			if !strings.HasPrefix(token, "https://") && !strings.HasPrefix(token, "http://") {
 				url = "https://open.feishu.cn/open-apis/bot/v2/hook/" + strings.TrimSpace(token)
 			}
 			urls = append(urls, url)
