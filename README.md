@@ -25,7 +25,7 @@
   We recommend upgrading your <b>Prometheus + AlertManager + Grafana</b> combination to Nightingale!
 </p>
 
-[English](./README.md) | [中文](./README_ZH.md)
+[English](./README.md) | [中文](./README_zh.md)
 
 
 ## Highlighted Features
