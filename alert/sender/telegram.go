@@ -55,7 +55,7 @@ func SendTelegram(message TelegramMessage) {
 			continue
 		}
 		var url string
-		if strings.HasPrefix(message.Tokens[i], "https://") {
+		if strings.HasPrefix(message.Tokens[i], "https://") || strings.HasPrefix(message.Tokens[i], "http://") {
 			url = message.Tokens[i]
 		} else {
 			array := strings.Split(message.Tokens[i], "/")

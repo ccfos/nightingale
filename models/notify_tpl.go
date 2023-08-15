@@ -443,7 +443,7 @@ var TplMap = map[string]string{
 	
 				<footer>
 					<div class="copyright" style="font-style: italic">
-						我们希望与您一起，将监控这个事情，做到极致！
+						报警太多？使用 <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> 做告警聚合降噪、排班OnCall！
 					</div>
 				</footer>
 			</div>

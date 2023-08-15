@@ -1,6 +1,10 @@
 package prom
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/ccfos/nightingale/v6/pkg/tlsx"
+)
 
 type PromOption struct {
 	ClusterName   string
@@ -15,6 +19,8 @@ type PromOption struct {
 	MaxIdleConnsPerHost int
 
 	Headers []string
+
+	tlsx.ClientConfig
 }
 
 func (po *PromOption) Equal(target PromOption) bool {

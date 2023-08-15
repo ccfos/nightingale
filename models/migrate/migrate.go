@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
@@ -46,8 +47,9 @@ type AlertRule struct {
 }
 
 type AlertSubscribe struct {
-	ExtraConfig string `gorm:"type:text;not null;column:extra_config"` // extra config
-	Severities  string `gorm:"column:severities;type:varchar(32);not null;default:''"`
+	ExtraConfig string       `gorm:"type:text;not null;column:extra_config"` // extra config
+	Severities  string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
+	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096);not null;default:'[]'"`
 }
 
 type AlertMute struct {

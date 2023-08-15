@@ -95,8 +95,8 @@ func (e *Dispatch) relaodTpls() error {
 	}
 
 	e.RwLock.RLock()
-	for channel, sender := range e.ExtraSenders {
-		senders[channel] = sender
+	for channelName, extraSender := range e.ExtraSenders {
+		senders[channelName] = extraSender
 	}
 	e.RwLock.RUnlock()
 
@@ -185,6 +185,10 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 	if !common.MatchTags(event.TagsMap, sub.ITags) {
 		return
 	}
+	// event BusiGroups filter
+	if !common.MatchGroupsName(event.GroupName, sub.IBusiGroups) {
+		return
+	}
 	if sub.ForDuration > (event.TriggerTime - event.FirstTriggerTime) {
 		return
 	}
@@ -213,7 +217,7 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	needSend := e.BeforeSenderHook(event)
 	if needSend {
 		for channel, uids := range notifyTarget.ToChannelUserMap() {
-			ctx := sender.BuildMessageContext(rule, []*models.AlertCurEvent{event}, uids, e.userCache)
+			msgCtx := sender.BuildMessageContext(rule, []*models.AlertCurEvent{event}, uids, e.userCache)
 			e.RwLock.RLock()
 			s := e.Senders[channel]
 			e.RwLock.RUnlock()
@@ -221,7 +225,7 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 				logger.Debugf("no sender for channel: %s", channel)
 				continue
 			}
-			s.Send(ctx)
+			s.Send(msgCtx)
 		}
 	}
 

@@ -67,7 +67,7 @@ func (rt *Router) esIndexPatternGetList(c *gin.Context) {
 	} else {
 		lst, err = models.EsIndexPatternGets(rt.Ctx, "")
 	}
-  
+
 	ginx.NewRender(c).Data(lst, err)
 }
 

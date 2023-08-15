@@ -77,4 +77,3 @@ Committer 记录并公示于 **[COMMITTERS](https://github.com/ccfos/nightingale
 2. 提问之前请先搜索 [Github Issues](https://github.com/ccfos/nightingale/issues "Github Issue")；
 3. 我们优先推荐通过提交 [Github Issue](https://github.com/ccfos/nightingale/issues "Github Issue") 来提问，如果[有问题点击这里](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&template=bug_report.yml "有问题点击这里") | [有需求建议点击这里](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Ffeature&template=enhancement.md "有需求建议点击这里")；
 
-最后，我们推荐你加入微信群，针对相关开放式问题，相互交流咨询 (请先加好友：[UlricGO](https://www.gitlink.org.cn/UlricQin/gist/tree/master/self.jpeg "UlricGO") 备注：夜莺加群+姓名+公司，交流群里会有开发者团队和专业、热心的群友回答问题)。

@@ -7,11 +7,10 @@ import (
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/runner"
 )
 
-func Init() {
-	filePath := path.Join(runner.Cwd, "etc", "i18n.json")
+func Init(configDir string) {
+	filePath := path.Join(configDir, "i18n.json")
 	m := make(map[string]map[string]string)
 
 	var content string

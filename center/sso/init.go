@@ -29,6 +29,8 @@ Port = 389
 BaseDn = 'dc=example,dc=org'
 BindUser = 'cn=manager,dc=example,dc=org'
 BindPass = '*******'
+# openldap format e.g. (&(uid=%s))
+# AD format e.g. (&(sAMAccountName=%s))
 AuthFilter = '(&(uid=%s))'
 CoverAttributes = true
 TLS = false
