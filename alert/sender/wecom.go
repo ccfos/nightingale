@@ -46,7 +46,7 @@ func (ws *WecomSender) extract(users []*models.User) []string {
 	for _, user := range users {
 		if token, has := user.ExtractToken(models.Wecom); has {
 			url := token
-			if !strings.HasPrefix(token, "https://") {
+			if !strings.HasPrefix(token, "https://") && !strings.HasPrefix(token, "http://") {
 				url = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=" + token
 			}
 			urls = append(urls, url)
