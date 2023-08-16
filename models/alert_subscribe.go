@@ -96,8 +96,8 @@ func (s *AlertSubscribe) Verify() error {
 	if err := s.Parse(); err != nil {
 		return err
 	}
-	if len(s.IBusiGroups) == 0 && len(s.ITags) == 0 && s.RuleId == 0 {
-		return errors.New("none of busi_groups, rule_id, and tags have been assigned any values.")
+	if len(s.DatasourceIdsJson) == 0 && len(s.IBusiGroups) == 0 && len(s.ITags) == 0 && s.RuleId == 0 {
+		return errors.New("none of datasource_ids, busi_groups, rule_id, and tags have been assigned any values.")
 	}
 
 	ugids := strings.Fields(s.UserGroupIds)
@@ -111,11 +111,10 @@ func (s *AlertSubscribe) Verify() error {
 }
 
 func (s *AlertSubscribe) FE2DB() error {
-	idsByte, err := json.Marshal(s.DatasourceIdsJson)
-	if err != nil {
-		return err
+	if len(s.DatasourceIdsJson) > 0 {
+		idsByte, _ := json.Marshal(s.DatasourceIdsJson)
+		s.DatasourceIds = string(idsByte)
 	}
-	s.DatasourceIds = string(idsByte)
 
 	if len(s.WebhooksJson) > 0 {
 		b, _ := json.Marshal(s.WebhooksJson)
@@ -323,6 +322,10 @@ func AlertSubscribeGetsAll(ctx *ctx.Context) ([]*AlertSubscribe, error) {
 }
 
 func (s *AlertSubscribe) MatchProd(prod string) bool {
+	//Replace 'prod' with optional item
+	if s.Prod == "" {
+		return true
+	}
 	return s.Prod == prod
 }
 
