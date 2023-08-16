@@ -305,6 +305,11 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 		ancs := make([]string, 0, len(f.NotifyChannelsJSON)) //absent Notify Channels
 		for i := range f.NotifyChannelsJSON {
 			flag := true
+			//ignore non-default channels
+			if _, is := models.DefaultChannelSet[f.NotifyChannelsJSON[i]]; !is {
+				continue
+			}
+			//default channels
 			for ui := range users {
 				if _, b := users[ui].ExtractToken(f.NotifyChannelsJSON[i]); b {
 					flag = false
@@ -317,7 +322,7 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 		}
 
 		if len(ancs) > 0 {
-			ginx.NewRender(c).Message(i18n.Sprintf(c.GetHeader("X-Language"), "All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", ancs))
+			ginx.NewRender(c).Message("All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", ancs)
 			return
 		}
 
