@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
@@ -69,6 +70,16 @@ func (c *AlertSubscribeCacheType) Get(ruleId int64) ([]*models.AlertSubscribe, b
 	return lst, has
 }
 
+func (c *AlertSubscribeCacheType) GetAll() []*models.AlertSubscribe {
+	c.RLock()
+	defer c.RUnlock()
+	var ret []*models.AlertSubscribe
+	for _, v := range c.subs {
+		ret = append(ret, v...)
+	}
+	return ret
+}
+
 func (c *AlertSubscribeCacheType) GetStructs(ruleId int64) []models.AlertSubscribe {
 	c.RLock()
 	defer c.RUnlock()
@@ -110,19 +121,21 @@ func (c *AlertSubscribeCacheType) syncAlertSubscribes() error {
 	start := time.Now()
 	stat, err := models.AlertSubscribeStatistics(c.ctx)
 	if err != nil {
+		dumper.PutSyncRecord("alert_subscribes", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
 		return errors.WithMessage(err, "failed to exec AlertSubscribeStatistics")
 	}
 
 	if !c.StatChanged(stat.Total, stat.LastUpdated) {
 		c.stats.GaugeCronDuration.WithLabelValues("sync_alert_subscribes").Set(0)
 		c.stats.GaugeSyncNumber.WithLabelValues("sync_alert_subscribes").Set(0)
-		logger.Debug("alert subscribes not changed")
+		dumper.PutSyncRecord("alert_subscribes", start.Unix(), -1, -1, "not changed")
 		return nil
 	}
 
 	lst, err := models.AlertSubscribeGetsAll(c.ctx)
 	if err != nil {
-		return errors.WithMessage(err, "failed to exec AlertSubscribeGetsByCluster")
+		dumper.PutSyncRecord("alert_subscribes", start.Unix(), -1, -1, "failed to query records: "+err.Error())
+		return errors.WithMessage(err, "failed to exec AlertSubscribeGetsAll")
 	}
 
 	subs := make(map[int64][]*models.AlertSubscribe)
@@ -155,6 +168,7 @@ func (c *AlertSubscribeCacheType) syncAlertSubscribes() error {
 	c.stats.GaugeCronDuration.WithLabelValues("sync_alert_subscribes").Set(float64(ms))
 	c.stats.GaugeSyncNumber.WithLabelValues("sync_alert_subscribes").Set(float64(len(lst)))
 	logger.Infof("timer: sync subscribes done, cost: %dms, number: %d", ms, len(lst))
+	dumper.PutSyncRecord("alert_subscribes", start.Unix(), ms, len(lst), "success")
 
 	return nil
 }

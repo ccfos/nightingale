@@ -31,11 +31,11 @@ type FeishuSender struct {
 }
 
 func (fs *FeishuSender) Send(ctx MessageContext) {
-	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
+	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
 	urls, ats := fs.extract(ctx.Users)
-	message := BuildTplMessage(fs.tpl, ctx.Event)
+	message := BuildTplMessage(fs.tpl, ctx.Events)
 	for _, url := range urls {
 		body := feishu{
 			Msgtype: "text",
@@ -63,7 +63,7 @@ func (fs *FeishuSender) extract(users []*models.User) ([]string, []string) {
 		}
 		if token, has := user.ExtractToken(models.Feishu); has {
 			url := token
-			if !strings.HasPrefix(token, "https://") {
+			if !strings.HasPrefix(token, "https://") && !strings.HasPrefix(token, "http://") {
 				url = "https://open.feishu.cn/open-apis/bot/v2/hook/" + token
 			}
 			urls = append(urls, url)

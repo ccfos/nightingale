@@ -26,11 +26,11 @@ type TelegramSender struct {
 }
 
 func (ts *TelegramSender) Send(ctx MessageContext) {
-	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
+	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
 	tokens := ts.extract(ctx.Users)
-	message := BuildTplMessage(ts.tpl, ctx.Event)
+	message := BuildTplMessage(ts.tpl, ctx.Events)
 
 	SendTelegram(TelegramMessage{
 		Text:   message,
@@ -55,7 +55,7 @@ func SendTelegram(message TelegramMessage) {
 			continue
 		}
 		var url string
-		if strings.HasPrefix(message.Tokens[i], "https://") {
+		if strings.HasPrefix(message.Tokens[i], "https://") || strings.HasPrefix(message.Tokens[i], "http://") {
 			url = message.Tokens[i]
 		} else {
 			array := strings.Split(message.Tokens[i], "/")

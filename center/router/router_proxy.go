@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -15,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 type queryFormItem struct {
@@ -32,10 +34,14 @@ type batchQueryForm struct {
 func (rt *Router) promBatchQueryRange(c *gin.Context) {
 	var f batchQueryForm
 	ginx.Dangerous(c.BindJSON(&f))
+	var lst []model.Value
 
 	cli := rt.PromClients.GetCli(f.DatasourceId)
-
-	var lst []model.Value
+	if cli == nil {
+		logger.Warningf("no such datasource id: %d", f.DatasourceId)
+		ginx.NewRender(c).Data(lst, nil)
+		return
+	}
 
 	for _, item := range f.Queries {
 		r := pkgprom.Range{
@@ -67,9 +73,14 @@ func (rt *Router) promBatchQueryInstant(c *gin.Context) {
 	var f batchInstantForm
 	ginx.Dangerous(c.BindJSON(&f))
 
-	cli := rt.PromClients.GetCli(f.DatasourceId)
-
 	var lst []model.Value
+
+	cli := rt.PromClients.GetCli(f.DatasourceId)
+	if cli == nil {
+		logger.Warningf("no such datasource id: %d", f.DatasourceId)
+		ginx.NewRender(c).Data(lst, nil)
+		return
+	}
 
 	for _, item := range f.Queries {
 		resp, _, err := cli.Query(context.Background(), item.Query, time.Unix(item.Time, 0))
@@ -154,10 +165,18 @@ func (rt *Router) dsProxy(c *gin.Context) {
 		transportPut(dsId, ds.UpdatedAt, transport)
 	}
 
+	modifyResponse := func(r *http.Response) error {
+		if r.StatusCode == http.StatusUnauthorized {
+			return fmt.Errorf("unauthorized access")
+		}
+		return nil
+	}
+
 	proxy := &httputil.ReverseProxy{
-		Director:     director,
-		Transport:    transport,
-		ErrorHandler: errFunc,
+		Director:       director,
+		Transport:      transport,
+		ErrorHandler:   errFunc,
+		ModifyResponse: modifyResponse,
 	}
 
 	proxy.ServeHTTP(c.Writer, c.Request)

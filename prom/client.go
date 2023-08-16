@@ -99,4 +99,5 @@ func (pc *PromClientMap) Del(datasourceId int64) {
 	pc.Lock()
 	defer pc.Unlock()
 	delete(pc.ReaderClients, datasourceId)
+	delete(pc.WriterClients, datasourceId)
 }

@@ -1,31 +1,21 @@
-## RabbitMQ Dashboard & Configuration
+# RabbitMQ
 
-使用[categraf](https://github.com/flashcatcloud/categraf)中[inputs.prometheus](https://github.com/flashcatcloud/categraf/tree/main/inputs/prometheus)插件采集[RabbitMQ](https://www.rabbitmq.com/)默认暴露的指标数据:
+高版本（3.8以上版本）的 RabbitMQ，已经内置支持了暴露 Prometheus 协议的监控数据。所以，直接使用 categraf 的 prometheus 插件即可采集。开启 RabbitMQ Prometheus 访问：
 
-
-### 配置文件示例：
-
-初始化好集群后，使用`rabbitmq-plugins enable rabbitmq_prometheus`命令开启集群默认暴露Prometheus指标，配置测试版本为3.8.19，理论上版本大于3.8+的版本都可以使用。
-
-```toml
-# conf/input.prometheus/prometheus.toml
-[[instances]]
-urls = [
-    "http://192.168.x.11:15692/metrics",
-    "http://192.168.x.12:15692/metrics"
-]
-
-url_label_key = "instance"
-url_label_value = "{{.Host}}"
-labels = {service="rabbitmq-cluster"}
-
+```bash
+rabbitmq-plugins enable rabbitmq_prometheus
 ```
 
-### 告警规则
+启用成功的话，rabbitmq 默认会在 15692 端口起监听，访问 `http://localhost:15692/metrics` 即可看到符合 prometheus 协议的监控数据。
 
-[alerts](../alerts/alerts.json)
+如果低于 3.8 的版本，还是需要使用 categraf 的 rabbitmq 插件来采集监控数据。
 
+## 告警规则
 
-### 效果图：
+夜莺内置了 RabbitMQ 的告警规则，克隆到自己的业务组下即可使用。
 
-![rabbitmq](./rabbitmq.png)
+## 仪表盘
+
+夜莺内置了 RabbitMQ 的仪表盘，克隆到自己的业务组下即可使用。`rabbitmq_v3.8_gt` 是大于等于 3.8 版本的仪表盘，`rabbitmq_v3.8_lt` 是小于 3.8 版本的仪表盘。
+
+![20230802082542](https://download.flashcat.cloud/ulric/20230802082542.png)

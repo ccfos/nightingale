@@ -1,0 +1,1103 @@
+{
+  "name": "GitLab - PostgreSQL",
+  "tags": "",
+  "ident": "",
+  "configs": {
+    "version": "3.0.0",
+    "links": [],
+    "var": [
+      {
+        "name": "DS_PROMETHEUS",
+        "type": "datasource",
+        "definition": "prometheus",
+        "defaultValue": 5
+      },
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(up{job=~'postgres'},instance)",
+        "reg": "",
+        "multi": false
+      },
+      {
+        "name": "datname",
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(datname)",
+        "reg": "/^(?!template)/",
+        "multi": true,
+        "allOption": false
+      }
+    ],
+    "panels": [
+      {
+        "type": "stat",
+        "id": "dbbd49e7-f2e4-49e1-ad75-1010e5c24266",
+        "layout": {
+          "h": 4,
+          "w": 5,
+          "x": 0,
+          "y": 1,
+          "i": "dbbd49e7-f2e4-49e1-ad75-1010e5c24266"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "min(pg_postmaster_start_time_seconds{instance=~\"$instance\"} * 1000)",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Start Time",
+        "links": [],
+        "description": "start time of the process",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "standardOptions": {
+            "util": "datetimeMilliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#56A64B",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "hexbin",
+        "id": "0a2e21b9-2cb0-46b4-99f3-141896ddce93",
+        "layout": {
+          "h": 4,
+          "w": 15,
+          "x": 5,
+          "y": 1,
+          "i": "0a2e21b9-2cb0-46b4-99f3-141896ddce93"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "pg_settings_shared_buffers_bytes{instance=~\"$instance\"}",
+            "legend": "Shared Buffers"
+          },
+          {
+            "refId": "B",
+            "expr": "pg_settings_wal_buffers_bytes{instance=~\"$instance\"}",
+            "legend": "WAL Buffers"
+          },
+          {
+            "refId": "D",
+            "expr": "pg_settings_work_mem_bytes{instance=~\"$instance\"}",
+            "legend": "Work Mem"
+          },
+          {
+            "refId": "E",
+            "expr": "pg_settings_maintenance_work_mem_bytes{instance=~\"$instance\"}",
+            "legend": "Maintenance Work Mem"
+          },
+          {
+            "refId": "F",
+            "expr": "pg_settings_temp_buffers_bytes{instance=~\"$instance\"}",
+            "legend": "Temp Buffers"
+          },
+          {
+            "refId": "G",
+            "expr": "pg_settings_wal_buffers_bytes{instance=~\"$instance\"}",
+            "legend": "WAL Buffers"
+          },
+          {
+            "refId": "H",
+            "expr": "pg_settings_wal_segment_size_bytes{instance=~\"$instance\"}",
+            "legend": "WAL Segment Size"
+          },
+          {
+            "refId": "I",
+            "expr": "pg_settings_wal_keep_segments{instance=~\"$instance\"}",
+            "legend": "WAL Keep Segments"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "memory status",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "valueAndName",
+          "calc": "lastNotNull",
+          "colorRange": [
+            "#83c898",
+            "#c2c2c2",
+            "#fc653f"
+          ],
+          "reverseColorOrder": false,
+          "colorDomainAuto": true
+        },
+        "options": {
+          "standardOptions": {}
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "87c6f320-cf0c-4b71-9a95-53144518cb4a",
+        "layout": {
+          "h": 4,
+          "w": 4,
+          "x": 20,
+          "y": 1,
+          "i": "87c6f320-cf0c-4b71-9a95-53144518cb4a"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "pg_settings_max_worker_processes{instance=~\"$instance\"}",
+            "legend": "Max Workers"
+          },
+          {
+            "refId": "B",
+            "expr": "pg_settings_max_parallel_workers{instance=~\"$instance\"}",
+            "legend": "Max Parallel Workers"
+          },
+          {
+            "refId": "C",
+            "expr": "pg_settings_max_parallel_workers_per_gather{instance=~\"$instance\"}",
+            "legend": "Max Parallel Workers Per Gather"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Worker",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "6e5f1534-1f9f-401f-b1bb-b42690b59b76",
+        "layout": {
+          "h": 4,
+          "w": 4,
+          "x": 0,
+          "y": 5,
+          "i": "6e5f1534-1f9f-401f-b1bb-b42690b59b76"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(pg_stat_activity_count{datname=~\"$datname\", instance=~\"$instance\"})",
+            "legend": " Current Conn"
+          },
+          {
+            "refId": "B",
+            "expr": "pg_settings_max_connections{instance=~\"$instance\"}",
+            "legend": " {{instance}}-Max Conn"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Current Conn",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "af3c4f59-a47b-4556-bcd5-e1ca89057e86",
+        "layout": {
+          "h": 4,
+          "w": 3,
+          "x": 4,
+          "y": 5,
+          "i": "af3c4f59-a47b-4556-bcd5-e1ca89057e86"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "max(pg_replication_lag{instance=\"$instance\"})",
+            "legend": "",
+            "time": {
+              "start": "now-15m",
+              "end": "now"
+            },
+            "step": 120
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Replication Lag ",
+        "links": [],
+        "description": "Lag behind master in seconds.\n\nOnly available on a standby System.",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "valueMappings": [],
+          "standardOptions": {
+            "util": "bytesSI"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "c923682c-4337-4d20-82f5-db463714234b",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 7,
+          "y": 5,
+          "i": "c923682c-4337-4d20-82f5-db463714234b"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(pg_stat_database_tup_inserted{datname=~\"$datname\", instance=~\"$instance\"})",
+            "legend": "Tuples Inserted"
+          },
+          {
+            "refId": "B",
+            "expr": "sum(pg_stat_database_tup_updated{datname=~\"$datname\", instance=~\"$instance\"})",
+            "legend": "Tuples Updated"
+          },
+          {
+            "refId": "C",
+            "expr": "sum(pg_stat_database_tup_deleted{datname=~\"$datname\", instance=~\"$instance\"})",
+            "legend": "Tuples Deleted"
+          },
+          {
+            "refId": "D",
+            "expr": "sum(pg_stat_database_tup_fetched{datname=~\"$datname\", instance=~\"$instance\"})",
+            "legend": "Tuples Fetched"
+          },
+          {
+            "refId": "E",
+            "expr": "sum(pg_stat_database_tup_returned{datname=~\"$datname\", instance=~\"$instance\"})",
+            "legend": "Tuples Returned"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "SQL",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "d8c5523d-0fa2-417f-8739-d20e5d48e234",
+        "layout": {
+          "h": 4,
+          "w": 9,
+          "x": 15,
+          "y": 5,
+          "i": "d8c5523d-0fa2-417f-8739-d20e5d48e234"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "B",
+            "expr": "sum(pg_database_size_bytes{instance=~\"$instance\",datname!~\"template.*|postgres.*\"}) by (datname)",
+            "legend": " {{datname}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Database Size",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "08ab8c71-d04a-463e-9857-e52c05f08877",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 9,
+          "i": "08ab8c71-d04a-463e-9857-e52c05f08877"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(pg_stat_activity_count{instance=~\"$instance\"})",
+            "legend": "CurrConn"
+          },
+          {
+            "refId": "B",
+            "expr": "sum(pg_settings_max_connections{instance=~\"$instance\"})",
+            "legend": "MaxConn"
+          },
+          {
+            "refId": "C",
+            "expr": "sum(pg_stat_activity_count{instance=~\"$instance\"}) * 100 / sum(pg_settings_max_connections{instance=~\"$instance\"})",
+            "legend": "RatioConn"
+          },
+          {
+            "refId": "D",
+            "expr": "sum(pg_stat_activity_count{instance=~\"$instance\",state!~\"idle\"}) * 100 / sum(pg_stat_activity_count{instance=~\"$instance\"})",
+            "legend": "SaturationConn"
+          },
+          {
+            "refId": "E",
+            "expr": "sum(pg_stat_activity_count{instance=~\"$instance\"}) by (state)",
+            "legend": "{{state}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Connections",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.1,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "9f4089ed-bd47-47a5-a26d-17ab97262ee0",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 9,
+          "i": "9f4089ed-bd47-47a5-a26d-17ab97262ee0"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "pg_stat_database_blks_hit{instance=~\"$instance\",datname=~\"$datname\"} / (pg_stat_database_blks_read{instance=~\"$instance\"} + pg_stat_database_blks_hit{instance=~\"$instance\"})",
+            "legend": "Cache Hit Ratio - {{datname}} "
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Cache Hit Rate",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "16780d96-8d43-439a-acae-cdf763074884",
+        "layout": {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 18,
+          "i": "16780d96-8d43-439a-acae-cdf763074884"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(pg_stat_database_xact_commit{instance=~\"$instance\"}[1m])) by (datname) !=0",
+            "legend": "commit-{{datname}}"
+          },
+          {
+            "refId": "B",
+            "expr": "sum(rate(pg_stat_database_xact_rollback{instance=~\"$instance\"}[1m])) by (datname) !=0",
+            "legend": "rollback-{{datname}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Transactions",
+        "links": [],
+        "description": "1 Minute rate of transactions committed or rollback.",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.1,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "bb023ef8-c926-4380-8c40-a972a5d69dd3",
+        "layout": {
+          "h": 9,
+          "w": 12,
+          "x": 12,
+          "y": 18,
+          "i": "bb023ef8-c926-4380-8c40-a972a5d69dd3"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(pg_stat_activity_max_tx_duration{instance=~\"$instance\"}) by (datname)",
+            "legend": "{{datname}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Longest Transaction",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "seconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.1,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "2db8688d-c88a-4d8c-93cf-5889de67e3db",
+        "layout": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 27,
+          "i": "2db8688d-c88a-4d8c-93cf-5889de67e3db"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (datname) (pg_stat_database_deadlocks{instance=~\"$instance\"})",
+            "legend": "{{datname}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Deadlocks",
+        "links": [],
+        "description": "Should be 0 \n\nSource: pg_stat_database\n\nWith log_lock_waits turned on, deadlocks will be logged to the PostgreSQL Logfiles.",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none",
+            "min": 0
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.1,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "c96d2e4e-1e72-484f-bbbe-7194ac306d97",
+        "layout": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 27,
+          "i": "c96d2e4e-1e72-484f-bbbe-7194ac306d97"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (mode) (pg_locks_count{instance=~\"$instance\",datname=~\"$datname\"})",
+            "legend": "{{mode}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Locks by state",
+        "links": [],
+        "description": "Source: pg_locks",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.1,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "bc11b349-8f36-4606-9ac1-a229ebe9a709",
+        "layout": {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 38,
+          "i": "bc11b349-8f36-4606-9ac1-a229ebe9a709"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum (pg_stat_database_blk_read_time{instance=~\"$instance\",datname=~\"$datname\"})",
+            "legend": "blk_read_time"
+          },
+          {
+            "refId": "B",
+            "expr": "sum (pg_stat_database_blk_write_time{instance=~\"$instance\",datname=~\"$datname\"})",
+            "legend": "blk_write_time"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "I/O Read/Write Time",
+        "links": [],
+        "description": "* blk_read_time: Time spent reading data file blocks by backends in this database, in milliseconds\n* blk_write_time: Time spent writing data file blocks by backends in this database, in milliseconds\n\ntrack_io_timings needs to be activated",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds",
+            "min": 0
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.1,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "a67d7b7a-c34a-4277-b3fc-fc10b4b88ec5",
+        "layout": {
+          "h": 9,
+          "w": 12,
+          "x": 12,
+          "y": 38,
+          "i": "a67d7b7a-c34a-4277-b3fc-fc10b4b88ec5"
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "B",
+            "expr": "irate(pg_stat_bgwriter_checkpoint_write_time_total{instance=~\"$instance\"}[5m])",
+            "legend": "write_time"
+          },
+          {
+            "refId": "A",
+            "expr": "irate(pg_stat_bgwriter_checkpoint_sync_time_total{instance=~\"$instance\"}[5m])",
+            "legend": "sync_time"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Checkpoint Stats",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.1,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      }
+    ]
+  }
+}

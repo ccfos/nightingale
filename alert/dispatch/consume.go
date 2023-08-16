@@ -83,6 +83,10 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 }
 
 func (e *Consumer) persist(event *models.AlertCurEvent) {
+	if event.Status != 0 {
+		return
+	}
+
 	if !e.ctx.IsCenter {
 		event.DB2FE()
 		err := poster.PostByUrls(e.ctx, "/v1/n9e/event-persist", event)

@@ -70,6 +70,8 @@ type AlertRule struct {
 	AppendTagsJSON        []string          `json:"append_tags" gorm:"-"`          // for fe
 	Annotations           string            `json:"-"`                             //
 	AnnotationsJSON       map[string]string `json:"annotations" gorm:"-"`          // for fe
+	ExtraConfig           string            `json:"-" gorm:"extra_config"`         // extra config
+	ExtraConfigJSON       interface{}       `json:"extra_config" gorm:"-"`         // for fe
 	CreateAt              int64             `json:"create_at"`
 	CreateBy              string            `json:"create_by"`
 	UpdateAt              int64             `json:"update_at"`
@@ -550,6 +552,7 @@ func (ar *AlertRule) FE2DB() error {
 			return fmt.Errorf("marshal rule_config err:%v", err)
 		}
 		ar.RuleConfig = string(b)
+		ar.PromQl = ""
 	}
 
 	if ar.AnnotationsJSON != nil {
@@ -558,6 +561,14 @@ func (ar *AlertRule) FE2DB() error {
 			return fmt.Errorf("marshal annotations err:%v", err)
 		}
 		ar.Annotations = string(b)
+	}
+
+	if ar.ExtraConfigJSON != nil {
+		b, err := json.Marshal(ar.ExtraConfigJSON)
+		if err != nil {
+			return fmt.Errorf("marshal extra_config err:%v", err)
+		}
+		ar.ExtraConfig = string(b)
 	}
 
 	return nil
@@ -586,6 +597,7 @@ func (ar *AlertRule) DB2FE() error {
 	json.Unmarshal([]byte(ar.AlgoParams), &ar.AlgoParamsJson)
 	json.Unmarshal([]byte(ar.RuleConfig), &ar.RuleConfigJson)
 	json.Unmarshal([]byte(ar.Annotations), &ar.AnnotationsJSON)
+	json.Unmarshal([]byte(ar.ExtraConfig), &ar.ExtraConfigJSON)
 
 	err := ar.FillDatasourceIds()
 	return err
@@ -895,4 +907,51 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 
 	}
 	return nil
+}
+
+// TimeSpanMuteStrategy 根据规则配置的告警生效时间段过滤,如果产生的告警不在规则配置的告警生效时间段内,则不告警,即被mute
+// 时间范围，左闭右开，默认范围：00:00-24:00
+func (ar *AlertRule) TimeSpanMuteStrategy() bool {
+	tm := time.Unix(time.Now().Unix(), 0)
+	triggerTime := tm.Format("15:04")
+	triggerWeek := strconv.Itoa(int(tm.Weekday()))
+
+	enableStime := strings.Fields(ar.EnableStime)
+	enableEtime := strings.Fields(ar.EnableEtime)
+	enableDaysOfWeek := strings.Split(ar.EnableDaysOfWeek, ";")
+	length := len(enableDaysOfWeek)
+	// enableStime,enableEtime,enableDaysOfWeek三者长度肯定相同，这里循环一个即可
+	for i := 0; i < length; i++ {
+		enableDaysOfWeek[i] = strings.Replace(enableDaysOfWeek[i], "7", "0", 1)
+		if !strings.Contains(enableDaysOfWeek[i], triggerWeek) {
+			continue
+		}
+
+		if enableStime[i] < enableEtime[i] {
+			if enableEtime[i] == "23:59" {
+				// 02:00-23:59，这种情况做个特殊处理，相当于左闭右闭区间了
+				if triggerTime < enableStime[i] {
+					// mute, 即没生效
+					continue
+				}
+			} else {
+				// 02:00-04:00 或者 02:00-24:00
+				if triggerTime < enableStime[i] || triggerTime >= enableEtime[i] {
+					// mute, 即没生效
+					continue
+				}
+			}
+		} else if enableStime[i] > enableEtime[i] {
+			// 21:00-09:00
+			if triggerTime < enableStime[i] && triggerTime >= enableEtime[i] {
+				// mute, 即没生效
+				continue
+			}
+		}
+
+		// 到这里说明当前时刻在告警规则的某组生效时间范围内，即没有 mute，直接返回 false
+		return false
+	}
+
+	return true
 }

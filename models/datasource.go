@@ -51,6 +51,21 @@ type HTTP struct {
 	Headers             map[string]string `json:"headers"`
 }
 
+func (h HTTP) IsLoki() bool {
+	if strings.Contains(h.Url, "loki") {
+		return true
+	}
+
+	for k := range h.Headers {
+		tmp := strings.ToLower(k)
+		if strings.Contains(tmp, "loki") {
+			return true
+		}
+	}
+
+	return false
+}
+
 type TLS struct {
 	SkipTlsVerify bool `json:"skip_tls_verify"`
 }

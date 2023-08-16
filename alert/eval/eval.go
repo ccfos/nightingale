@@ -69,14 +69,16 @@ func (arw *AlertRuleWorker) Start() {
 	if interval <= 0 {
 		interval = 10
 	}
+
+	ticker := time.NewTicker(time.Duration(interval) * time.Second)
 	go func() {
+		defer ticker.Stop()
 		for {
 			select {
 			case <-arw.quit:
 				return
-			default:
+			case <-ticker.C:
 				arw.Eval()
-				time.Sleep(time.Duration(interval) * time.Second)
 			}
 		}
 	}()
@@ -163,6 +165,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 		points := common.ConvertAnomalyPoints(value)
 		for i := 0; i < len(points); i++ {
 			points[i].Severity = query.Severity
+			points[i].Query = promql
 		}
 		lst = append(lst, points...)
 	}

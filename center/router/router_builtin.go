@@ -91,6 +91,9 @@ func (rt *Router) builtinBoardCateGets(c *gin.Context) {
 		boardCate.Name = dir
 		files, err := file.FilesUnder(fp + "/" + dir + "/dashboards")
 		ginx.Dangerous(err)
+		if len(files) == 0 {
+			continue
+		}
 
 		var boards []Payload
 		for _, f := range files {
@@ -243,6 +246,9 @@ func (rt *Router) builtinAlertRules(c *gin.Context) {
 		alertCate.Name = dir
 		files, err := file.FilesUnder(fp + "/" + dir + "/alerts")
 		ginx.Dangerous(err)
+		if len(files) == 0 {
+			continue
+		}
 
 		alertRules := make(map[string][]models.AlertRule)
 		for _, f := range files {
@@ -308,4 +314,27 @@ func (rt *Router) builtinIcon(c *gin.Context) {
 	cate := ginx.UrlParamStr(c, "cate")
 	iconPath := fp + "/" + cate + "/icon/" + ginx.UrlParamStr(c, "name")
 	c.File(path.Join(iconPath))
+}
+
+func (rt *Router) builtinMarkdown(c *gin.Context) {
+	fp := rt.Center.BuiltinIntegrationsDir
+	if fp == "" {
+		fp = path.Join(runner.Cwd, "integrations")
+	}
+	cate := ginx.UrlParamStr(c, "cate")
+
+	var markdown []byte
+	markdownDir := fp + "/" + cate + "/markdown"
+	markdownFiles, err := file.FilesUnder(markdownDir)
+	if err != nil {
+		logger.Warningf("get markdown fail: %v", err)
+	} else if len(markdownFiles) > 0 {
+		f := markdownFiles[0]
+		fn := markdownDir + "/" + f
+		markdown, err = file.ReadBytes(fn)
+		if err != nil {
+			logger.Warningf("get collect fail: %v", err)
+		}
+	}
+	ginx.NewRender(c).Data(string(markdown), nil)
 }

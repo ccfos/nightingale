@@ -25,11 +25,11 @@ type WecomSender struct {
 }
 
 func (ws *WecomSender) Send(ctx MessageContext) {
-	if len(ctx.Users) == 0 || ctx.Rule == nil || ctx.Event == nil {
+	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
 	urls := ws.extract(ctx.Users)
-	message := BuildTplMessage(ws.tpl, ctx.Event)
+	message := BuildTplMessage(ws.tpl, ctx.Events)
 	for _, url := range urls {
 		body := wecom{
 			Msgtype: "markdown",
@@ -46,7 +46,7 @@ func (ws *WecomSender) extract(users []*models.User) []string {
 	for _, user := range users {
 		if token, has := user.ExtractToken(models.Wecom); has {
 			url := token
-			if !strings.HasPrefix(token, "https://") {
+			if !strings.HasPrefix(token, "https://") && !strings.HasPrefix(token, "http://") {
 				url = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=" + token
 			}
 			urls = append(urls, url)

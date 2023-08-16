@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
@@ -83,19 +84,20 @@ func (c *BusiGroupCacheType) syncBusiGroups() error {
 
 	stat, err := models.BusiGroupStatistics(c.ctx)
 	if err != nil {
+		dumper.PutSyncRecord("busi_groups", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
 		return errors.WithMessage(err, "failed to call BusiGroupStatistics")
 	}
 
 	if !c.StatChanged(stat.Total, stat.LastUpdated) {
 		c.stats.GaugeCronDuration.WithLabelValues("sync_busi_groups").Set(0)
 		c.stats.GaugeSyncNumber.WithLabelValues("sync_busi_groups").Set(0)
-
-		logger.Debug("busi_group not changed")
+		dumper.PutSyncRecord("busi_groups", start.Unix(), -1, -1, "not changed")
 		return nil
 	}
 
 	m, err := models.BusiGroupGetMap(c.ctx)
 	if err != nil {
+		dumper.PutSyncRecord("busi_groups", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to call BusiGroupGetMap")
 	}
 
@@ -106,6 +108,7 @@ func (c *BusiGroupCacheType) syncBusiGroups() error {
 	c.stats.GaugeSyncNumber.WithLabelValues("sync_busi_groups").Set(float64(len(m)))
 
 	logger.Infof("timer: sync busi groups done, cost: %dms, number: %d", ms, len(m))
+	dumper.PutSyncRecord("busi_groups", start.Unix(), ms, len(m), "success")
 
 	return nil
 }

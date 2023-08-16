@@ -9,6 +9,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/toolkits/pkg/ginx"
 )
 
 func extractMetricFromTimeSeries(s *prompb.TimeSeries) string {
@@ -20,7 +21,7 @@ func extractMetricFromTimeSeries(s *prompb.TimeSeries) string {
 	return ""
 }
 
-func extractIdentFromTimeSeries(s *prompb.TimeSeries) string {
+func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool) string {
 	for i := 0; i < len(s.Labels); i++ {
 		if s.Labels[i].Name == "ident" {
 			return s.Labels[i].Value
@@ -35,11 +36,13 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries) string {
 		}
 	}
 
-	// telegraf, output plugin: http, format: prometheusremotewrite
-	for i := 0; i < len(s.Labels); i++ {
-		if s.Labels[i].Name == "host" {
-			s.Labels[i].Name = "ident"
-			return s.Labels[i].Value
+	if !ignoreIdent {
+		// telegraf, output plugin: http, format: prometheusremotewrite
+		for i := 0; i < len(s.Labels); i++ {
+			if s.Labels[i].Name == "host" {
+				s.Labels[i].Name = "ident"
+				return s.Labels[i].Value
+			}
 		}
 	}
 
@@ -79,9 +82,8 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 	}
 
 	var (
-		ident  string
-		metric string
-		ids    = make(map[string]struct{})
+		ident string
+		ids   = make(map[string]struct{})
 	)
 
 	for i := 0; i < count; i++ {
@@ -89,7 +91,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 			continue
 		}
 
-		ident = extractIdentFromTimeSeries(req.Timeseries[i])
+		ident = extractIdentFromTimeSeries(req.Timeseries[i], ginx.QueryBool(c, "ignore_ident", false))
 		if len(ident) > 0 {
 			// has ident tag or agent_hostname tag
 			// register host in table target
@@ -102,24 +104,10 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 			}
 		}
 
-		rt.EnrichLabels(req.Timeseries[i])
-		rt.debugSample(c.Request.RemoteAddr, req.Timeseries[i])
-
 		if len(ident) > 0 {
-			// use ident as hash key, cause "out of bounds" problem
-			rt.Writers.PushSample(ident, req.Timeseries[i])
+			rt.ForwardByIdent(c.ClientIP(), ident, req.Timeseries[i])
 		} else {
-			// no ident tag, use metric name as hash key
-			// sharding again cause there are too many series with the same metric name
-			metric = extractMetricFromTimeSeries(req.Timeseries[i])
-			var hashkey string
-			if len(metric) >= 2 {
-				hashkey = metric[0:2]
-			} else {
-				hashkey = metric[0:1]
-			}
-
-			rt.Writers.PushSample(hashkey, req.Timeseries[i])
+			rt.ForwardByMetric(c.ClientIP(), extractMetricFromTimeSeries(req.Timeseries[i]), req.Timeseries[i])
 		}
 	}
 

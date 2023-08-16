@@ -281,6 +281,7 @@ CREATE TABLE `alert_rule` (
     `runbook_url` varchar(255),
     `append_tags` varchar(255) not null default '' comment 'split by space: service=n9e mod=api',
     `annotations` text not null comment 'annotations',
+    `extra_config` text not null comment 'extra_config',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
@@ -305,6 +306,7 @@ CREATE TABLE `alert_mute` (
     `disabled` tinyint(1) not null default 0 comment '0:enabled 1:disabled',
     `mute_time_type` tinyint(1) not null default 0,
     `periodic_mutes` varchar(4096) not null default '',
+    `severities` varchar(32) not null default '',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
@@ -324,6 +326,7 @@ CREATE TABLE `alert_subscribe` (
     `datasource_ids` varchar(255) not null default '' comment 'datasource ids',
     `cluster` varchar(128) not null,
     `rule_id` bigint not null default 0,
+    `severities` varchar(32) not null default '',
     `tags` varchar(4096) not null default '' comment 'json,map,tagkey->regexp|value',
     `redefine_severity` tinyint(1) default 0 comment 'is redefine severity?',
     `new_severity` tinyint(1) not null comment '0:Emergency 1:Warning 2:Notice',
@@ -331,6 +334,7 @@ CREATE TABLE `alert_subscribe` (
     `new_channels` varchar(255) not null default '' comment 'split by space: sms voice email dingtalk wecom',
     `user_group_ids` varchar(250) not null comment 'split by space 1 34 5, notify cc to user_group_ids',
     `webhooks` text not null,
+    `extra_config` text not null comment 'extra_config',
     `redefine_webhooks` tinyint(1) default 0,
     `for_duration` bigint not null default 0,
     `create_at` bigint not null default 0,
@@ -614,4 +618,19 @@ CREATE TABLE `sso_config` (
     `content` text not null,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`name`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `es_index_pattern` (
+    `id` bigint unsigned not null auto_increment,
+    `datasource_id` bigint not null default 0 comment 'datasource id',
+    `name` varchar(191) not null,
+    `time_field` varchar(128) not null default '@timestamp',
+    `allow_hide_system_indices` tinyint(1) not null default 0,
+    `fields_format` varchar(4096) not null default '',
+    `create_at` bigint default '0',
+    `create_by` varchar(64) default '',
+    `update_at` bigint default '0',
+    `update_by` varchar(64) default '',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY (`datasource_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

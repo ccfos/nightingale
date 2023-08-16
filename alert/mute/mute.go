@@ -13,9 +13,14 @@ import (
 )
 
 func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, alertMuteCache *memsto.AlertMuteCacheType) bool {
-	if TimeNonEffectiveMuteStrategy(rule, event) {
+	if rule.Disabled == 1 {
 		return true
 	}
+
+	// 移到Sync Rule之前就判断
+	// if TimeSpanMuteStrategy(rule, event) {
+	// 	return true
+	// }
 
 	if IdentNotExistsMuteStrategy(rule, event, targetCache) {
 		return true
@@ -30,41 +35,6 @@ func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *m
 	}
 
 	return false
-}
-
-// TimeNonEffectiveMuteStrategy 根据规则配置的告警时间过滤,如果产生的告警不在规则配置的告警时间内,则不告警
-func TimeNonEffectiveMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
-	if rule.Disabled == 1 {
-		return true
-	}
-
-	tm := time.Unix(event.TriggerTime, 0)
-	triggerTime := tm.Format("15:04")
-	triggerWeek := strconv.Itoa(int(tm.Weekday()))
-
-	enableStime := strings.Fields(rule.EnableStime)
-	enableEtime := strings.Fields(rule.EnableEtime)
-	enableDaysOfWeek := strings.Split(rule.EnableDaysOfWeek, ";")
-	length := len(enableDaysOfWeek)
-	// enableStime,enableEtime,enableDaysOfWeek三者长度肯定相同，这里循环一个即可
-	for i := 0; i < length; i++ {
-		enableDaysOfWeek[i] = strings.Replace(enableDaysOfWeek[i], "7", "0", 1)
-		if !strings.Contains(enableDaysOfWeek[i], triggerWeek) {
-			continue
-		}
-		if enableStime[i] <= enableEtime[i] {
-			if triggerTime < enableStime[i] || triggerTime > enableEtime[i] {
-				continue
-			}
-		} else {
-			if triggerTime < enableStime[i] && triggerTime > enableEtime[i] {
-				continue
-			}
-		}
-		// 到这里说明当前时刻在告警规则的某组生效时间范围内，直接返回 false
-		return false
-	}
-	return true
 }
 
 // IdentNotExistsMuteStrategy 根据ident是否存在过滤,如果ident不存在,则target_up的告警直接过滤掉
@@ -165,7 +135,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 						break
 					}
 				} else {
-					if triggerTime < mute.PeriodicMutesJson[i].EnableStime || triggerTime >= mute.PeriodicMutesJson[i].EnableEtime {
+					if triggerTime >= mute.PeriodicMutesJson[i].EnableStime || triggerTime < mute.PeriodicMutesJson[i].EnableEtime {
 						matchTime = true
 						break
 					}
@@ -174,6 +144,22 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		}
 	}
 	if !matchTime {
+		return false
+	}
+
+	var matchSeverity bool
+	if len(mute.SeveritiesJson) > 0 {
+		for _, s := range mute.SeveritiesJson {
+			if event.Severity == s || s == 0 {
+				matchSeverity = true
+				break
+			}
+		}
+	} else {
+		matchSeverity = true
+	}
+
+	if !matchSeverity {
 		return false
 	}
 

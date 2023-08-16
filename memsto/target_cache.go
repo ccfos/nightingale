@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/storage"
@@ -129,18 +130,20 @@ func (tc *TargetCacheType) syncTargets() error {
 
 	stat, err := models.TargetStatistics(tc.ctx)
 	if err != nil {
+		dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
 		return errors.WithMessage(err, "failed to call TargetStatistics")
 	}
 
 	if !tc.StatChanged(stat.Total, stat.LastUpdated) {
 		tc.stats.GaugeCronDuration.WithLabelValues("sync_targets").Set(0)
 		tc.stats.GaugeSyncNumber.WithLabelValues("sync_targets").Set(0)
-		logger.Debug("targets not changed")
+		dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "not changed")
 		return nil
 	}
 
 	lst, err := models.TargetGetsAll(tc.ctx)
 	if err != nil {
+		dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to call TargetGetsAll")
 	}
 
@@ -164,6 +167,7 @@ func (tc *TargetCacheType) syncTargets() error {
 	tc.stats.GaugeCronDuration.WithLabelValues("sync_targets").Set(float64(ms))
 	tc.stats.GaugeSyncNumber.WithLabelValues("sync_targets").Set(float64(len(lst)))
 	logger.Infof("timer: sync targets done, cost: %dms, number: %d", ms, len(lst))
+	dumper.PutSyncRecord("targets", start.Unix(), ms, len(lst), "success")
 
 	return nil
 }

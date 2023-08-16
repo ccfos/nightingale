@@ -70,6 +70,16 @@ Enable = false
 HeaderUserNameKey = "X-User-Name"
 DefaultRoles = ["Standard"]
 
+[HTTP.RSA]
+# open RSA
+OpenRSA = false
+# RSA public key
+RSAPublicKeyPath = "/etc/n9e/public.pem"
+# RSA private key
+RSAPrivateKeyPath = "/etc/n9e/private.pem"
+# RSA private key password
+RSAPassWord = ""
+
 [DB]
 # postgres: host=%s port=%s user=%s dbname=%s password=%s sslmode=%s
 DSN="root:1234@tcp(127.0.0.1:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local&allowNativePasswords=true"

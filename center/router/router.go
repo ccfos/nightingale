@@ -17,12 +17,14 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
+	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
+	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 )
@@ -42,6 +44,8 @@ type Router struct {
 	UserCache         *memsto.UserCacheType
 	UserGroupCache    *memsto.UserGroupCacheType
 	Ctx               *ctx.Context
+
+	DatasourceCheckHook func(*gin.Context) bool
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
@@ -62,6 +66,8 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		UserCache:         uc,
 		UserGroupCache:    ugc,
 		Ctx:               ctx,
+
+		DatasourceCheckHook: func(ctx *gin.Context) bool { return false },
 	}
 }
 
@@ -106,7 +112,7 @@ func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 		suffix := arr[len(arr)-1]
 
 		switch suffix {
-		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map":
+		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf":
 			if !rt.Center.UseFileAssets {
 				c.FileFromFS(c.Request.URL.Path, *fs)
 			} else {
@@ -175,6 +181,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/auth/ifshowcaptcha", rt.ifShowCaptcha)
 
 		pages.GET("/auth/sso-config", rt.ssoConfigNameGet)
+		pages.GET("/auth/rsa-config", rt.rsaConfigGet)
 		pages.GET("/auth/redirect", rt.loginRedirect)
 		pages.GET("/auth/redirect/cas", rt.loginRedirectCas)
 		pages.GET("/auth/redirect/oauth", rt.loginRedirectOAuth)
@@ -242,6 +249,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/builtin-boards-cates", rt.auth(), rt.user(), rt.builtinBoardCateGets)
 		pages.POST("/builtin-boards-detail", rt.auth(), rt.user(), rt.builtinBoardDetailGets)
 		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
+		pages.GET("/integrations/makedown/:cate", rt.builtinMarkdown)
 
 		pages.GET("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.bgro(), rt.boardGets)
 		pages.POST("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards/add"), rt.bgrw(), rt.boardAdd)
@@ -364,7 +372,23 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigGet)
 		pages.PUT("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigPut)
+
+		pages.GET("/es-index-pattern", rt.auth(), rt.esIndexPatternGet)
+		pages.GET("/es-index-pattern-list", rt.auth(), rt.esIndexPatternGetList)
+		pages.POST("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternAdd)
+		pages.PUT("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternPut)
+		pages.DELETE("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternDel)
 	}
+
+	r.GET("/api/n9e/versions", func(c *gin.Context) {
+		v := version.Version
+		lastIndex := strings.LastIndex(version.Version, "-")
+		if lastIndex != -1 {
+			v = version.Version[:lastIndex]
+		}
+
+		ginx.NewRender(c).Data(gin.H{"version": v, "github_verison": version.GithubVersion.Load().(string)}, nil)
+	})
 
 	if rt.HTTP.APIForService.Enable {
 		service := r.Group("/v1/n9e")
@@ -410,6 +434,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/alert-cur-events-get-by-rid", rt.alertCurEventsGetByRid)
 			service.GET("/alert-his-events", rt.alertHisEventsList)
 			service.GET("/alert-his-event/:eid", rt.alertHisEventGet)
+
+			service.GET("/task-tpl/:tid", rt.taskTplGetByService)
 
 			service.GET("/config/:id", rt.configGet)
 			service.GET("/configs", rt.configsGet)
