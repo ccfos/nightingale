@@ -2,13 +2,11 @@ package router
 
 import (
 	"encoding/json"
-	"strings"
-	"time"
-
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pelletier/go-toml/v2"
@@ -202,33 +200,7 @@ func (rt *Router) attemptSendEmail(c *gin.Context) {
 	if email = strings.TrimSpace(email); email != "" && !str.IsMail(email) {
 		ginx.Bomb(200, "email(%s) invalid", email)
 	}
-	tmpTpls, err := models.ListTpls(rt.Ctx)
-	ginx.Dangerous(err)
-
-	context := mockMsgContext(email)
-
-	subject := sender.BuildTplMessage(tmpTpls[models.EmailSubject], context.Events)
-	content := sender.BuildTplMessage(tmpTpls[models.Email], context.Events)
 	smtp := rt.NotifyConfigCache.GetSMTP()
 
-	ginx.NewRender(c).Message(sender.SendEmail(subject, content, []string{email}, smtp))
-}
-
-func mockMsgContext(email string) sender.MessageContext {
-	oldTriggerValue := "99"
-	mocktag := `__name__=mem_available_percent,,ident=identmock,,rulename=mock rule name,,tag=serviceL1`
-	ruleNote := `When an alert is recovered, it typically means that no results are available temporarily.
-				Therefore, the 'TriggerValue' in the 'Recovered' state represents an old value, 
-				not the query result at the time of recovery.`
-	event := &models.AlertCurEvent{RuleName: "mock rule name", LastEvalTime: time.Now().Unix(),
-		TriggerValue: oldTriggerValue, Tags: mocktag, Severity: 3,
-		RuleNote:   ruleNote,
-		TargetNote: "mock TargetNote"}
-	event.DB2Mem()
-	event.IsRecovered = true
-	user := &models.User{Email: email}
-	mockMsgContext := sender.MessageContext{
-		Events: []*models.AlertCurEvent{event},
-		Users:  []*models.User{user}}
-	return mockMsgContext
+	ginx.NewRender(c).Message(sender.SendEmail("Email test", "email content", []string{email}, smtp))
 }

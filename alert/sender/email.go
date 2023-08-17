@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"html/template"
-	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
@@ -95,22 +94,20 @@ func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
 }
 
 var mailQuit = make(chan struct{})
-var wg sync.WaitGroup
 
 func RestartEmailSender(smtp aconf.SMTPConfig) {
 	close(mailQuit)
-	wg.Wait()
 	mailQuit = make(chan struct{})
-	StartEmailSender(smtp)
+	startEmailSender(smtp)
 }
 
-func StartEmailSender(smtp aconf.SMTPConfig) {
-	wg.Add(1)
-	defer wg.Done()
+func InitEmailSender(smtp aconf.SMTPConfig) {
 	mailch = make(chan *gomail.Message, 100000)
+	startEmailSender(smtp)
+}
 
+func startEmailSender(smtp aconf.SMTPConfig) {
 	conf := smtp
-
 	if conf.Host == "" || conf.Port == 0 {
 		logger.Warning("SMTP configurations invalid")
 		return
