@@ -56,6 +56,7 @@ func New(cf Config) *SsoClient {
 		return &cli
 	}
 
+	cli.Enable = cf.Enable
 	cli.Config = cf
 	cli.SsoAddr = cf.SsoAddr
 	cli.CallbackAddr = cf.RedirectURL
