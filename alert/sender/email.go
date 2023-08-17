@@ -2,6 +2,7 @@ package sender
 
 import (
 	"crypto/tls"
+	"errors"
 	"html/template"
 	"sync"
 	"time"
@@ -48,7 +49,7 @@ func extract(users []*models.User) []string {
 	return tos
 }
 
-func (es *EmailSender) SendEmail(subject, content string, tos []string, stmp aconf.SMTPConfig) {
+func SendEmail(subject, content string, tos []string, stmp aconf.SMTPConfig) error {
 	conf := stmp
 
 	d := gomail.NewDialer(conf.Host, conf.Port, conf.User, conf.Pass)
@@ -65,8 +66,9 @@ func (es *EmailSender) SendEmail(subject, content string, tos []string, stmp aco
 
 	err := d.DialAndSend(m)
 	if err != nil {
-		logger.Errorf("email_sender: failed to send: %v", err)
+		return errors.New("email_sender: failed to send: " + err.Error())
 	}
+	return nil
 }
 
 func (es *EmailSender) WriteEmail(subject, content string, tos []string) {

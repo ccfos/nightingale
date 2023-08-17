@@ -204,9 +204,14 @@ func (rt *Router) attemptSendEmail(c *gin.Context) {
 	}
 	tmpTpls, err := models.ListTpls(rt.Ctx)
 	ginx.Dangerous(err)
-	newSender := sender.NewSender(models.Email, tmpTpls, rt.NotifyConfigCache.GetSMTP())
-	newSender.Send(mockMsgContext(email))
-	ginx.NewRender(c).Message(nil)
+
+	context := mockMsgContext(email)
+
+	subject := sender.BuildTplMessage(tmpTpls[models.EmailSubject], context.Events)
+	content := sender.BuildTplMessage(tmpTpls[models.Email], context.Events)
+	smtp := rt.NotifyConfigCache.GetSMTP()
+
+	ginx.NewRender(c).Message(sender.SendEmail(subject, content, []string{email}, smtp))
 }
 
 func mockMsgContext(email string) sender.MessageContext {
