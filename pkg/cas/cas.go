@@ -3,6 +3,8 @@ package cas
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"net/http"
 	"net/url"
 	"strings"
 	"sync"
@@ -22,6 +24,7 @@ type Config struct {
 	RedirectURL     string
 	DisplayName     string
 	CoverAttributes bool
+	SkipTlsVerify   bool
 	Attributes      struct {
 		Nickname string
 		Phone    string
@@ -43,6 +46,7 @@ type SsoClient struct {
 	}
 	DefaultRoles    []string
 	CoverAttributes bool
+	HTTPClient      *http.Client
 	sync.RWMutex
 }
 
@@ -83,6 +87,14 @@ func (s *SsoClient) Reload(cf Config) {
 	s.Attributes.Email = cf.Attributes.Email
 	s.DefaultRoles = cf.DefaultRoles
 	s.CoverAttributes = cf.CoverAttributes
+
+	if cf.SkipTlsVerify {
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+
+		s.HTTPClient = &http.Client{Transport: transport}
+	}
 }
 
 func (s *SsoClient) GetDisplayName() string {
@@ -180,6 +192,11 @@ func (s *SsoClient) ValidateServiceTicket(ctx context.Context, ticket, state str
 		CasURL:     casUrl,
 		ServiceURL: serviceUrl,
 	}
+
+	if s.HTTPClient != nil {
+		resOptions.Client = s.HTTPClient
+	}
+
 	resCli := cas.NewRestClient(resOptions)
 	authRet, err := resCli.ValidateServiceTicket(cas.ServiceTicket(ticket))
 	if err != nil {
