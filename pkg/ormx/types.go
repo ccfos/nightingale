@@ -59,7 +59,7 @@ func (j *JSONObj) UnmarshalJSON(data []byte) error {
 func (j *JSONArr) Scan(value interface{}) error {
 	bytes, ok := value.([]byte)
 	if !ok {
-		// 判断是不是string类型  Postgre的varchar scan出来是string类型
+		// 判断是不是string类型  Postgres的varchar scan出来是string类型
 		strings, ok := value.(string)
 		if !ok {
 			return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
