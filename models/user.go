@@ -37,10 +37,7 @@ const (
 )
 
 var (
-	DefaultChannels   = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard}
-	DefStruct         = struct{}{}
-	DefaultChannelSet = map[string]struct{}{Dingtalk: DefStruct, Wecom: DefStruct, Feishu: DefStruct, Mm: DefStruct,
-		Telegram: DefStruct, Email: DefStruct, FeishuCard: DefStruct}
+	DefaultChannels = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard}
 )
 
 type User struct {

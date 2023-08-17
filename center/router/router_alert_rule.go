@@ -306,7 +306,11 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 		for i := range f.NotifyChannelsJSON {
 			flag := true
 			//ignore non-default channels
-			if _, is := models.DefaultChannelSet[f.NotifyChannelsJSON[i]]; !is {
+			switch f.NotifyChannelsJSON[i] {
+			case models.Dingtalk, models.Wecom, models.Feishu, models.Mm,
+				models.Telegram, models.Email, models.FeishuCard:
+				// do nothing
+			default:
 				continue
 			}
 			//default channels
