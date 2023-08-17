@@ -184,6 +184,9 @@ func (rt *Router) alertCurEventDel(c *gin.Context) {
 
 	set := make(map[int64]struct{})
 
+	// event group id is 0, ignore perm check
+	set[0] = struct{}{}
+
 	for i := 0; i < len(f.Ids); i++ {
 		event, err := models.AlertCurEventGetById(rt.Ctx, f.Ids[i])
 		ginx.Dangerous(err)
