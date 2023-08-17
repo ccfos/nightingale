@@ -3,6 +3,7 @@ package oauth2x
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -37,6 +38,7 @@ type SsoClient struct {
 	UserinfoPrefix  string
 	DefaultRoles    []string
 
+	Ctx context.Context
 	sync.RWMutex
 }
 
@@ -51,6 +53,7 @@ type Config struct {
 	ClientId        string
 	ClientSecret    string
 	CoverAttributes bool
+	SkipTlsVerify   bool
 	Attributes      struct {
 		Username string
 		Nickname string
@@ -94,6 +97,18 @@ func (s *SsoClient) Reload(cf Config) {
 	s.UserinfoIsArray = cf.UserinfoIsArray
 	s.UserinfoPrefix = cf.UserinfoPrefix
 	s.DefaultRoles = cf.DefaultRoles
+
+	s.Ctx = context.Background()
+
+	if cf.SkipTlsVerify {
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+
+		// Create an HTTP client that uses our custom transport
+		client := &http.Client{Transport: transport}
+		s.Ctx = context.WithValue(s.Ctx, oauth2.HTTPClient, client)
+	}
 
 	s.Config = oauth2.Config{
 		ClientID:     cf.ClientId,
@@ -176,13 +191,12 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	s.RLock()
 	defer s.RUnlock()
 
-	ctx := context.Background()
-	oauth2Token, err := s.Config.Exchange(ctx, code)
+	oauth2Token, err := s.Config.Exchange(s.Ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange token: %s", err)
 	}
 
-	userInfo, err := getUserInfo(s.UserInfoAddr, oauth2Token.AccessToken, s.TranTokenMethod)
+	userInfo, err := s.getUserInfo(s.UserInfoAddr, oauth2Token.AccessToken, s.TranTokenMethod)
 	if err != nil {
 		logger.Errorf("failed to get user info: %s", err)
 		return nil, fmt.Errorf("failed to get user info: %s", err)
@@ -197,7 +211,7 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	}, nil
 }
 
-func getUserInfo(UserInfoAddr, accessToken string, TranTokenMethod string) ([]byte, error) {
+func (s *SsoClient) getUserInfo(UserInfoAddr, accessToken string, TranTokenMethod string) ([]byte, error) {
 	var req *http.Request
 	if TranTokenMethod == "formdata" {
 		body := bytes.NewBuffer([]byte("access_token=" + accessToken))
@@ -222,7 +236,14 @@ func getUserInfo(UserInfoAddr, accessToken string, TranTokenMethod string) ([]by
 		r.Header.Add("Authorization", "Bearer "+accessToken)
 		req = r
 	}
-	resp, err := http.DefaultClient.Do(req)
+
+	client := http.DefaultClient
+	c := s.Ctx.Value(oauth2.HTTPClient)
+	if c != nil {
+		client = c.(*http.Client)
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
