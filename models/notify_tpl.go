@@ -222,7 +222,7 @@ func getNotifyTpl(tplDir string) map[string]string {
 }
 
 var TplMap = map[string]string{
-	"dingtalk": `#### {{if .IsRecovered}}<font color="#008800">S{{.Severity}} - Recovered - {{.RuleName}}</font>{{else}}<font color="#FF0000">S{{.Severity}} - Triggered - {{.RuleName}}</font>{{end}}
+	Dingtalk: `#### {{if .IsRecovered}}<font color="#008800">S{{.Severity}} - Recovered - {{.RuleName}}</font>{{else}}<font color="#FF0000">S{{.Severity}} - Triggered - {{.RuleName}}</font>{{end}}
 
 ---
 
@@ -234,7 +234,7 @@ var TplMap = map[string]string{
 - {{if .IsRecovered}}**恢复时间**: {{timeformat .LastEvalTime}}{{else}}**触发时间**: {{timeformat .TriggerTime}}{{end}}
 - **发送时间**: {{timestamp}}
 	`,
-	"email": `<!DOCTYPE html>
+	Email: `<!DOCTYPE html>
 	<html lang="en">
 	<head>
 		<meta charset="UTF-8">
@@ -451,14 +451,14 @@ var TplMap = map[string]string{
 	</div>
 	</body>
 	</html>`,
-	"feishu": `级别状态: S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}}   
+	Feishu: `级别状态: S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}}   
 规则名称: {{.RuleName}}{{if .RuleNote}}   
 规则备注: {{.RuleNote}}{{end}}   
 监控指标: {{.TagsJSON}}
 {{if .IsRecovered}}恢复时间：{{timeformat .LastEvalTime}}{{else}}触发时间: {{timeformat .TriggerTime}}
 触发时值: {{.TriggerValue}}{{end}}
 发送时间: {{timestamp}}`,
-	"feishucard": `{{ if .IsRecovered }}
+	FeishuCard: `{{ if .IsRecovered }}
 {{- if ne .Cate "host"}}
 **告警集群:** {{.Cluster}}{{end}}   
 **级别状态:** S{{.Severity}} Recovered   
@@ -475,15 +475,15 @@ var TplMap = map[string]string{
 **触发时值:** {{.TriggerValue}}   
 {{if .RuleNote }}**告警描述:** **{{.RuleNote}}**{{end}}   
 {{- end -}}`,
-	"mailsubject": `{{if .IsRecovered}}Recovered{{else}}Triggered{{end}}: {{.RuleName}} {{.TagsJSON}}`,
-	"mm": `级别状态: S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}}   
+	EmailSubject: `{{if .IsRecovered}}Recovered{{else}}Triggered{{end}}: {{.RuleName}} {{.TagsJSON}}`,
+	Mm: `级别状态: S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}}   
 规则名称: {{.RuleName}}{{if .RuleNote}}   
 规则备注: {{.RuleNote}}{{end}}   
 监控指标: {{.TagsJSON}}   
 {{if .IsRecovered}}恢复时间：{{timeformat .LastEvalTime}}{{else}}触发时间: {{timeformat .TriggerTime}}   
 触发时值: {{.TriggerValue}}{{end}}   
 发送时间: {{timestamp}}`,
-	"telegram": `**级别状态**: {{if .IsRecovered}}<font color="info">S{{.Severity}} Recovered</font>{{else}}<font color="warning">S{{.Severity}} Triggered</font>{{end}}   
+	Telegram: `**级别状态**: {{if .IsRecovered}}<font color="info">S{{.Severity}} Recovered</font>{{else}}<font color="warning">S{{.Severity}} Triggered</font>{{end}}   
 **规则标题**: {{.RuleName}}{{if .RuleNote}}   
 **规则备注**: {{.RuleNote}}{{end}}{{if .TargetIdent}}   
 **监控对象**: {{.TargetIdent}}{{end}}   
@@ -492,7 +492,7 @@ var TplMap = map[string]string{
 {{if .IsRecovered}}**恢复时间**: {{timeformat .LastEvalTime}}{{else}}**首次触发时间**: {{timeformat .FirstTriggerTime}}{{end}}   
 {{$time_duration := sub now.Unix .FirstTriggerTime }}{{if .IsRecovered}}{{$time_duration = sub .LastEvalTime .FirstTriggerTime }}{{end}}**距离首次告警**: {{humanizeDurationInterface $time_duration}}
 **发送时间**: {{timestamp}}`,
-	"wecom": `**级别状态**: {{if .IsRecovered}}<font color="info">S{{.Severity}} Recovered</font>{{else}}<font color="warning">S{{.Severity}} Triggered</font>{{end}}   
+	Wecom: `**级别状态**: {{if .IsRecovered}}<font color="info">S{{.Severity}} Recovered</font>{{else}}<font color="warning">S{{.Severity}} Triggered</font>{{end}}   
 **规则标题**: {{.RuleName}}{{if .RuleNote}}   
 **规则备注**: {{.RuleNote}}{{end}}{{if .TargetIdent}}   
 **监控对象**: {{.TargetIdent}}{{end}}   
