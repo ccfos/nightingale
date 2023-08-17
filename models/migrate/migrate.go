@@ -1,14 +1,13 @@
 package migrate
 
 import (
-	"github.com/ccfos/nightingale/v6/models/migrate/postgres"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
 
-func Migrate(db *gorm.DB, dbType string) {
-	MigrateRecordingTable(db, dbType)
+func Migrate(db *gorm.DB) {
+	MigrateRecordingTable(db)
 	MigrateEsIndexPatternTable(db)
 }
 
@@ -16,7 +15,7 @@ type RecordingRule struct {
 	QueryConfigs string `gorm:"type:text;not null;column:query_configs"` // query_configs
 }
 
-func MigrateRecordingTable(db *gorm.DB, dbType string) error {
+func MigrateRecordingTable(db *gorm.DB) error {
 	err := db.AutoMigrate(&RecordingRule{})
 	if err != nil {
 		logger.Errorf("failed to migrate recording rule table: %v", err)
@@ -29,18 +28,10 @@ func MigrateRecordingTable(db *gorm.DB, dbType string) error {
 		return err
 	}
 
-	if dbType == "mysql" {
-		err = db.AutoMigrate(&AlertSubscribe{})
-		if err != nil {
-			logger.Errorf("failed to migrate recording rule table: %v", err)
-			return err
-		}
-	} else {
-		err = postgres.MigratePgTable(db)
-		if err != nil {
-			logger.Errorf("failed to migrate recording rule table: %v", err)
-			return err
-		}
+	err = db.AutoMigrate(&AlertSubscribe{})
+	if err != nil {
+		logger.Errorf("failed to migrate recording rule table: %v", err)
+		return err
 	}
 
 	err = db.AutoMigrate(&AlertMute{})

@@ -374,7 +374,7 @@ CREATE TABLE alert_subscribe (
     cluster varchar(128) not null,
     rule_id bigint not null default 0,
     severities varchar(32) not null default '',
-    tags jsonb not null default '[]',
+    tags varchar(4096) not null default '[]',
     redefine_severity smallint default 0 ,
     new_severity smallint not null ,
     redefine_channels smallint default 0 ,
