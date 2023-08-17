@@ -3,6 +3,7 @@ package sender
 import (
 	"crypto/tls"
 	"html/template"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
@@ -92,14 +93,18 @@ func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
 }
 
 var mailQuit = make(chan struct{})
+var wg sync.WaitGroup
 
 func RestartEmailSender(smtp aconf.SMTPConfig) {
 	close(mailQuit)
+	wg.Wait()
 	mailQuit = make(chan struct{})
 	StartEmailSender(smtp)
 }
 
 func StartEmailSender(smtp aconf.SMTPConfig) {
+	wg.Add(1)
+	defer wg.Done()
 	mailch = make(chan *gomail.Message, 100000)
 
 	conf := smtp

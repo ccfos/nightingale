@@ -2,15 +2,18 @@ package router
 
 import (
 	"encoding/json"
+	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/pelletier/go-toml/v2"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/str"
 )
 
 func (rt *Router) webhookGets(c *gin.Context) {
@@ -190,4 +193,37 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(nil)
+}
+
+//After configuring the aconf.SMTPConfig, attempt to send the email.
+func (rt *Router) attemptSendEmail(c *gin.Context) {
+	//input is an email address
+	email := ginx.QueryStr(c, "email")
+	if email = strings.TrimSpace(email); email != "" && !str.IsMail(email) {
+		ginx.Bomb(200, "email(%s) invalid", email)
+	}
+	tmpTpls, err := models.ListTpls(rt.Ctx)
+	ginx.Dangerous(err)
+	newSender := sender.NewSender(models.Email, tmpTpls, rt.NotifyConfigCache.GetSMTP())
+	newSender.Send(mockMsgContext(email))
+	ginx.NewRender(c).Message(nil)
+}
+
+func mockMsgContext(email string) sender.MessageContext {
+	oldTriggerValue := "99"
+	mocktag := `__name__=mem_available_percent,,ident=identmock,,rulename=mock rule name,,tag=serviceL1`
+	ruleNote := `When an alert is recovered, it typically means that no results are available temporarily.
+				Therefore, the 'TriggerValue' in the 'Recovered' state represents an old value, 
+				not the query result at the time of recovery.`
+	event := &models.AlertCurEvent{RuleName: "mock rule name", LastEvalTime: time.Now().Unix(),
+		TriggerValue: oldTriggerValue, Tags: mocktag, Severity: 3,
+		RuleNote:   ruleNote,
+		TargetNote: "mock TargetNote"}
+	event.DB2Mem()
+	event.IsRecovered = true
+	user := &models.User{Email: email}
+	mockMsgContext := sender.MessageContext{
+		Events: []*models.AlertCurEvent{event},
+		Users:  []*models.User{user}}
+	return mockMsgContext
 }
