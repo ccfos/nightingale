@@ -67,6 +67,14 @@ func New(cf Config) *SsoClient {
 	cli.DefaultRoles = cf.DefaultRoles
 	cli.CoverAttributes = cf.CoverAttributes
 
+	if cf.SkipTlsVerify {
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+
+		cli.HTTPClient = &http.Client{Transport: transport}
+	}
+
 	return &cli
 }
 
