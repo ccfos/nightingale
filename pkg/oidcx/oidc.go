@@ -187,8 +187,7 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	s.RLock()
 	defer s.RUnlock()
 
-	ctx := context.Background()
-	oauth2Token, err := s.Config.Exchange(ctx, code)
+	oauth2Token, err := s.Config.Exchange(s.Ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange token: %v", err)
 	}
@@ -198,7 +197,7 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 		return nil, fmt.Errorf("no id_token field in oauth2 token. ")
 	}
 
-	idToken, err := s.Verifier.Verify(ctx, rawIDToken)
+	idToken, err := s.Verifier.Verify(s.Ctx, rawIDToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify ID Token: %v", err)
 	}
