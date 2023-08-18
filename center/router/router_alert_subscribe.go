@@ -14,21 +14,18 @@ import (
 func (rt *Router) alertSubscribeGets(c *gin.Context) {
 	bgid := ginx.UrlParamInt64(c, "id")
 	lst, err := models.AlertSubscribeGets(rt.Ctx, bgid)
-	if err == nil {
-		ugcache := make(map[int64]*models.UserGroup)
-		for i := 0; i < len(lst); i++ {
-			ginx.Dangerous(lst[i].FillUserGroups(rt.Ctx, ugcache))
-		}
+	ginx.Dangerous(err)
 
-		rulecache := make(map[int64]string)
-		for i := 0; i < len(lst); i++ {
-			ginx.Dangerous(lst[i].FillRuleName(rt.Ctx, rulecache))
-		}
+	ugcache := make(map[int64]*models.UserGroup)
+	rulecache := make(map[int64]string)
 
-		for i := 0; i < len(lst); i++ {
-			ginx.Dangerous(lst[i].FillDatasourceIds(rt.Ctx))
-		}
+	for i := 0; i < len(lst); i++ {
+		ginx.Dangerous(lst[i].FillUserGroups(rt.Ctx, ugcache))
+		ginx.Dangerous(lst[i].FillRuleName(rt.Ctx, rulecache))
+		ginx.Dangerous(lst[i].FillDatasourceIds(rt.Ctx))
+		ginx.Dangerous(lst[i].DB2FE())
 	}
+
 	ginx.NewRender(c).Data(lst, err)
 }
 
