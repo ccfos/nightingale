@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
 	"github.com/redis/go-redis/v9"
@@ -26,22 +25,7 @@ type RedisConfig struct {
 	SentinelPassword string
 }
 
-type Redis interface {
-	Pipeline() redis.Pipeliner
-	Del(ctx context.Context, keys ...string) *redis.IntCmd
-	Get(ctx context.Context, key string) *redis.StringCmd
-	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
-	HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd
-	HSet(ctx context.Context, key string, values ...interface{}) *redis.IntCmd
-	HDel(ctx context.Context, key string, fields ...string) *redis.IntCmd
-	LPush(ctx context.Context, key string, values ...interface{}) *redis.IntCmd
-	RPop(ctx context.Context, key string) *redis.StringCmd
-	RPopCount(ctx context.Context, key string, count int) *redis.StringSliceCmd
-	LLen(ctx context.Context, key string) *redis.IntCmd
-	Close() error
-	Ping(ctx context.Context) *redis.StatusCmd
-	Publish(ctx context.Context, channel string, message interface{}) *redis.IntCmd
-}
+type Redis redis.Cmdable
 
 func NewRedis(cfg RedisConfig) (Redis, error) {
 	var redisClient Redis

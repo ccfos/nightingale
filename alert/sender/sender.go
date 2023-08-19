@@ -23,7 +23,7 @@ type (
 	}
 )
 
-func NewSender(key string, tpls map[string]*template.Template, smtp aconf.SMTPConfig) Sender {
+func NewSender(key string, tpls map[string]*template.Template, smtp ...aconf.SMTPConfig) Sender {
 	switch key {
 	case models.Dingtalk:
 		return &DingtalkSender{tpl: tpls[models.Dingtalk]}
@@ -34,7 +34,7 @@ func NewSender(key string, tpls map[string]*template.Template, smtp aconf.SMTPCo
 	case models.FeishuCard:
 		return &FeishuCardSender{tpl: tpls[models.FeishuCard]}
 	case models.Email:
-		return &EmailSender{subjectTpl: tpls["mailsubject"], contentTpl: tpls[models.Email], smtp: smtp}
+		return &EmailSender{subjectTpl: tpls[models.EmailSubject], contentTpl: tpls[models.Email], smtp: smtp[0]}
 	case models.Mm:
 		return &MmSender{tpl: tpls[models.Mm]}
 	case models.Telegram:

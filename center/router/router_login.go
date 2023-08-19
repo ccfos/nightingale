@@ -515,10 +515,23 @@ type SsoConfigOutput struct {
 }
 
 func (rt *Router) ssoConfigNameGet(c *gin.Context) {
+	var oidcDisplayName, casDisplayName, oauthDisplayName string
+	if rt.Sso.OIDC != nil {
+		oidcDisplayName = rt.Sso.OIDC.GetDisplayName()
+	}
+
+	if rt.Sso.CAS != nil {
+		casDisplayName = rt.Sso.CAS.GetDisplayName()
+	}
+
+	if rt.Sso.OAuth2 != nil {
+		oauthDisplayName = rt.Sso.OAuth2.GetDisplayName()
+	}
+
 	ginx.NewRender(c).Data(SsoConfigOutput{
-		OidcDisplayName:  rt.Sso.OIDC.GetDisplayName(),
-		CasDisplayName:   rt.Sso.CAS.GetDisplayName(),
-		OauthDisplayName: rt.Sso.OAuth2.GetDisplayName(),
+		OidcDisplayName:  oidcDisplayName,
+		CasDisplayName:   casDisplayName,
+		OauthDisplayName: oauthDisplayName,
 	}, nil)
 }
 
@@ -543,8 +556,7 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 		var config oidcx.Config
 		err := toml.Unmarshal([]byte(f.Content), &config)
 		ginx.Dangerous(err)
-
-		err = rt.Sso.OIDC.Reload(config)
+		rt.Sso.OIDC, err = oidcx.New(config)
 		ginx.Dangerous(err)
 	case "CAS":
 		var config cas.Config
