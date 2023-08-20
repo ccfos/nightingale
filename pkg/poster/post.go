@@ -105,7 +105,7 @@ func PostByUrls(ctx *ctx.Context, path string, v interface{}) (err error) {
 		}
 	}
 
-	if err == nil {
+	if len(addrs) < 1 {
 		err = fmt.Errorf("submission of the POST request from the center has failed, "+
 			"path= %s, v= %s, ctx.CenterApi.Addrs= %s", path, v, addrs)
 	}
@@ -119,6 +119,9 @@ func PostByUrl(url string, cfg conf.CenterApi, v interface{}) (err error) {
 		return
 	}
 	bf := bytes.NewBuffer(bs)
+	if cfg.Timeout < 1 {
+		cfg.Timeout = 5
+	}
 	client := http.Client{
 		Timeout: time.Duration(cfg.Timeout) * time.Millisecond,
 	}
