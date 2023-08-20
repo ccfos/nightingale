@@ -2,12 +2,13 @@ package router
 
 import (
 	"encoding/json"
+	"strings"
+	
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
-	"strings"
-
+	
 	"github.com/gin-gonic/gin"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/toolkits/pkg/ginx"
