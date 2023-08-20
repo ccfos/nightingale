@@ -53,7 +53,7 @@ func GetByUrl[T any](url string, cfg conf.CenterApi) (T, error) {
 		req.SetBasicAuth(cfg.BasicAuthUser, cfg.BasicAuthPass)
 	}
 	if cfg.Timeout < 1 {
-		cfg.Timeout = 5
+		cfg.Timeout = 5000
 	}
 	client := &http.Client{
 		Timeout: time.Duration(cfg.Timeout) * time.Millisecond,
@@ -120,7 +120,7 @@ func PostByUrl(url string, cfg conf.CenterApi, v interface{}) (err error) {
 	}
 	bf := bytes.NewBuffer(bs)
 	if cfg.Timeout < 1 {
-		cfg.Timeout = 5
+		cfg.Timeout = 5000
 	}
 	client := http.Client{
 		Timeout: time.Duration(cfg.Timeout) * time.Millisecond,
