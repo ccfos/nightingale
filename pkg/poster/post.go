@@ -37,6 +37,7 @@ func GetByUrls[T any](ctx *ctx.Context, path string) (T, error) {
 	}
 
 	var dat T
+	err = fmt.Errorf("failed to get data from center, path= %s, ctx.CenterApi.Addrs= %s", path, addrs)
 	return dat, err
 }
 
@@ -51,7 +52,9 @@ func GetByUrl[T any](url string, cfg conf.CenterApi) (T, error) {
 	if len(cfg.BasicAuthUser) > 0 {
 		req.SetBasicAuth(cfg.BasicAuthUser, cfg.BasicAuthPass)
 	}
-
+	if cfg.Timeout < 1 {
+		cfg.Timeout = 5
+	}
 	client := &http.Client{
 		Timeout: time.Duration(cfg.Timeout) * time.Millisecond,
 	}
@@ -100,6 +103,11 @@ func PostByUrls(ctx *ctx.Context, path string, v interface{}) (err error) {
 		if err == nil {
 			return
 		}
+	}
+
+	if err == nil {
+		err = fmt.Errorf("submission of the POST request from the center has failed, "+
+			"path= %s, v= %s, ctx.CenterApi.Addrs= %s", path, v, addrs)
 	}
 	return
 }
