@@ -33,7 +33,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 	//check CenterApi is default value
-	if len(config.CenterApi.Addrs) < 1 && config.CenterApi.Timeout == 0 {
+	if len(config.CenterApi.Addrs) < 1 {
 		return nil, errors.New("failed to init config: the CenterApi configuration is missing")
 	}
 	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
