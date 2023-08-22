@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/alert"
@@ -31,7 +32,10 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-
+	//check CenterApi is default value
+	if len(config.CenterApi.Addrs) < 1 {
+		return nil, errors.New("failed to init config: the CenterApi configuration is missing")
+	}
 	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
 
 	syncStats := memsto.NewSyncStats()
