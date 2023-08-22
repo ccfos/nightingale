@@ -21,7 +21,7 @@ func (rt *Router) notifyTplGets(c *gin.Context) {
 	for _, channel := range models.DefaultChannels {
 		m[channel] = struct{}{}
 	}
-	m["mailsubject"] = struct{}{}
+	m[models.EmailSubject] = struct{}{}
 
 	lst, err := models.NotifyTplGets(rt.Ctx)
 	for i := 0; i < len(lst); i++ {

@@ -2,15 +2,17 @@ package router
 
 import (
 	"encoding/json"
-
+	"strings"
+	
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/pelletier/go-toml/v2"
-
+	
 	"github.com/gin-gonic/gin"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/str"
 )
 
 func (rt *Router) webhookGets(c *gin.Context) {
@@ -190,4 +192,16 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(nil)
+}
+
+//After configuring the aconf.SMTPConfig, attempt to send the email.
+func (rt *Router) attemptSendEmail(c *gin.Context) {
+	//input is an email address
+	email := ginx.QueryStr(c, "email")
+	if email = strings.TrimSpace(email); email != "" && !str.IsMail(email) {
+		ginx.Bomb(200, "email(%s) invalid", email)
+	}
+	smtp := rt.NotifyConfigCache.GetSMTP()
+
+	ginx.NewRender(c).Message(sender.SendEmail("Email test", "email content", []string{email}, smtp))
 }
