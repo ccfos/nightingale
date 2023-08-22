@@ -2,7 +2,9 @@ package oidcx
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -30,6 +32,7 @@ type SsoClient struct {
 	}
 	DefaultRoles []string
 
+	Ctx context.Context
 	sync.RWMutex
 }
 
@@ -41,6 +44,7 @@ type Config struct {
 	ClientId        string
 	ClientSecret    string
 	CoverAttributes bool
+	SkipTlsVerify   bool
 	Attributes      struct {
 		Nickname string
 		Username string
@@ -81,7 +85,19 @@ func (s *SsoClient) Reload(cf Config) error {
 	s.Attributes.Email = cf.Attributes.Email
 	s.DisplayName = cf.DisplayName
 	s.DefaultRoles = cf.DefaultRoles
-	provider, err := oidc.NewProvider(context.Background(), cf.SsoAddr)
+	s.Ctx = context.Background()
+
+	if cf.SkipTlsVerify {
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+
+		// Create an HTTP client that uses our custom transport
+		client := &http.Client{Transport: transport}
+		s.Ctx = context.WithValue(s.Ctx, oauth2.HTTPClient, client)
+	}
+
+	provider, err := oidc.NewProvider(s.Ctx, cf.SsoAddr)
 	if err != nil {
 		return err
 	}
@@ -171,8 +187,7 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	s.RLock()
 	defer s.RUnlock()
 
-	ctx := context.Background()
-	oauth2Token, err := s.Config.Exchange(ctx, code)
+	oauth2Token, err := s.Config.Exchange(s.Ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange token: %v", err)
 	}
@@ -182,7 +197,7 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 		return nil, fmt.Errorf("no id_token field in oauth2 token. ")
 	}
 
-	idToken, err := s.Verifier.Verify(ctx, rawIDToken)
+	idToken, err := s.Verifier.Verify(s.Ctx, rawIDToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify ID Token: %v", err)
 	}

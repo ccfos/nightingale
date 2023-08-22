@@ -96,8 +96,9 @@ func (s *AlertSubscribe) Verify() error {
 	if err := s.Parse(); err != nil {
 		return err
 	}
-	if len(s.DatasourceIdsJson) == 0 && len(s.IBusiGroups) == 0 && len(s.ITags) == 0 && s.RuleId == 0 {
-		return errors.New("none of datasource_ids, busi_groups, rule_id, and tags have been assigned any values.")
+
+	if len(s.SeveritiesJson) == 0 {
+		return errors.New("severities is required")
 	}
 
 	ugids := strings.Fields(s.UserGroupIds)
