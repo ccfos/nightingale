@@ -560,3 +560,25 @@ func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 	}
 	return nil
 }
+
+func AlertCurEventTotalMap(ctx *ctx.Context, where map[string]interface{}) (int64, error) {
+
+	return Count(DB(ctx).Model(&AlertCurEvent{}).Where(where))
+}
+
+func AlertCurEventGetsMap(ctx *ctx.Context, where map[string]interface{}, limit int) ([]*AlertCurEvent, error) {
+	var lst []*AlertCurEvent
+	tx := DB(ctx).Where(where).Order("id desc")
+	if limit != 0 {
+		tx.Limit(limit)
+	}
+	err := tx.Find(&lst).Error
+
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
+
+	return lst, err
+}

@@ -5,7 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/mute"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -28,15 +30,79 @@ func (rt *Router) alertMuteGets(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
+//When creating a mute rule, allow preview of the active alerts that will be matched,
+//and provide an option to delete these active alerts with one click
+
+type form struct {
+	models.AlertMute
+	DelCurAlert bool `json:"del_alert_cur"`
+}
+
 func (rt *Router) alertMuteAdd(c *gin.Context) {
-	var f models.AlertMute
+
+	var f form
 	ginx.BindJSON(c, &f)
 
 	username := c.MustGet("username").(string)
 	f.CreateBy = username
 	f.GroupId = ginx.UrlParamInt64(c, "id")
+	err := f.Add(rt.Ctx)
+	ginx.NewRender(c).Message(err)
+	if f.DelCurAlert && err == nil {
+		//find match events,and delete alert_cur by id
 
-	ginx.NewRender(c).Message(f.Add(rt.Ctx))
+		m := map[string]interface{}{"group_id": ginx.UrlParamInt64(c, "id")}
+		events, _ := searchCurEvents(rt.Ctx, m, 0)
+		events = mute.CurEventMatchMuteStrategyFilter(events, &f.AlertMute)
+		ids := make([]int64, 0, len(events))
+		for i := range events {
+			ids = append(ids, events[i].Id)
+		}
+		rt.checkCurEventBusiGroupRWPermission(c, ids)
+		ginx.NewRender(c).Message(models.AlertCurEventDel(rt.Ctx, ids))
+	}
+}
+
+//preview events(alert_cur_event) match mute strategy
+func (rt *Router) alertMutePreview(c *gin.Context) {
+	//Generally the match of events would be less，so just shows first 100 line(list,order by id desc limit 100)
+	//and return the value of match total count(match_total_count).
+
+	var f models.AlertMute
+	ginx.BindJSON(c, &f)
+	username := c.MustGet("username").(string)
+	bgid := ginx.UrlParamInt64(c, "id")
+	f.CreateBy = username
+	f.GroupId = bgid
+	ginx.Dangerous(f.Verify())
+	ginx.Dangerous(f.FE2DB())
+
+	//Prevent accidental muting
+	m := map[string]interface{}{"group_id": bgid}
+	events, mtc := searchCurEvents(rt.Ctx, m, 100)
+	//events max is limit
+	events = mute.CurEventMatchMuteStrategyFilter(events, &f)
+
+	ginx.NewRender(c).Data(gin.H{
+		"list":              events,
+		"match_total_count": mtc,
+	}, nil)
+
+}
+
+// if limit is set to 0, it indicates no limit.
+func searchCurEvents(ctx *ctx.Context, where map[string]interface{}, limit int) ([]*models.AlertCurEvent, int64) {
+
+	total, err := models.AlertCurEventTotalMap(ctx, where)
+	ginx.Dangerous(err)
+	list, err := models.AlertCurEventGetsMap(ctx, where, limit)
+	ginx.Dangerous(err)
+
+	cache := make(map[int64]*models.UserGroup)
+	for i := 0; i < len(list); i++ {
+		list[i].FillNotifyGroups(ctx, cache)
+	}
+	return list, total
 }
 
 func (rt *Router) alertMuteAddByService(c *gin.Context) {
