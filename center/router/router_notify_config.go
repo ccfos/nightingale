@@ -198,13 +198,13 @@ func smtpValidate(smtpStr string) aconf.SMTPConfig {
 	return smtp
 }
 
+type form struct {
+	models.Configs
+	Email string `json:"email"`
+}
+
 //After configuring the aconf.SMTPConfig, users can choose to perform a test. In this test, the function attempts to send an email
 func (rt *Router) attemptSendEmail(c *gin.Context) {
-
-	type form struct {
-		models.Configs
-		Email string
-	}
 	var f form
 	ginx.BindJSON(c, &f)
 
@@ -212,12 +212,10 @@ func (rt *Router) attemptSendEmail(c *gin.Context) {
 		ginx.Bomb(200, "email(%s) invalid", f.Email)
 	}
 
-	switch f.Ckey {
-	case models.SMTP:
-		smtp := smtpValidate(f.Cval)
-		ginx.NewRender(c).Message(sender.SendEmail("Email test", "email content", []string{f.Email}, smtp))
-	default:
+	if f.Ckey != models.SMTP {
 		ginx.Bomb(200, "config(%v) invalid", f)
 	}
+	smtp := smtpValidate(f.Cval)
+	ginx.NewRender(c).Message(sender.SendEmail("Email test", "email content", []string{f.Email}, smtp))
 
 }
