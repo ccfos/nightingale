@@ -310,7 +310,7 @@ func (e *AlertCurEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 
 func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
-	if stime == 0 || etime == 0 {
+	if stime != 0 && etime != 0 {
 		session.Where("trigger_time between ? and ?", stime, etime)
 	}
 	if len(prods) != 0 {
@@ -346,7 +346,7 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 
 func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
-	if stime == 0 || etime == 0 {
+	if stime != 0 && etime != 0 {
 		session.Where("trigger_time between ? and ?", stime, etime)
 	}
 	if len(prods) != 0 {
