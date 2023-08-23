@@ -3,6 +3,7 @@ package mute
 import (
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/common"
@@ -142,16 +143,22 @@ func CurEventMatchMuteStrategyFilter(events []*models.AlertCurEvent, mute *model
 	if mute == nil {
 		return events
 	}
+	var wg sync.WaitGroup
 	for i := range events {
 		if events[i] == nil {
 			continue
 		}
-		b := matchMute(events[i], mute)
-		logger.Debugf("match(%t) event_muted: rule_id=%d %s", b, events[i].RuleId, events[i].Hash)
-		if b {
-			res = append(res, events[i])
-		}
+		wg.Add(1)
+		go func(t []*models.AlertCurEvent) {
+			defer wg.Done()
+			b := matchMute(events[i], mute)
+			logger.Debugf("match(%t) event_muted: rule_id=%d %s", b, events[i].RuleId, events[i].Hash)
+			if b {
+				t = append(t, events[i])
+			}
+		}(res)
 	}
+	wg.Wait()
 	return res
 }
 

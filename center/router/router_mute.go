@@ -50,14 +50,8 @@ func (rt *Router) alertMuteAdd(c *gin.Context) {
 	ginx.NewRender(c).Message(err)
 	if f.DelCurAlert && err == nil {
 		//find match events,and delete alert_cur by id
-
-		m := map[string]interface{}{"group_id": ginx.UrlParamInt64(c, "id")}
-		events, _ := searchCurEvents(rt.Ctx, m, 0)
-		events = mute.CurEventMatchMuteStrategyFilter(events, &f.AlertMute)
-		ids := make([]int64, 0, len(events))
-		for i := range events {
-			ids = append(ids, events[i].Id)
-		}
+		events := matchMuteEvents(rt.Ctx, ginx.UrlParamInt64(c, "id"), &f.AlertMute)
+		ids := eventsIdFilter(events)
 		rt.checkCurEventBusiGroupRWPermission(c, ids)
 		ginx.NewRender(c).Message(models.AlertCurEventDel(rt.Ctx, ids))
 	}
@@ -65,7 +59,7 @@ func (rt *Router) alertMuteAdd(c *gin.Context) {
 
 //preview events(alert_cur_event) match mute strategy
 func (rt *Router) alertMutePreview(c *gin.Context) {
-	//Generally the match of events would be less，so just shows first 100 line(list,order by id desc limit 100)
+	//Generally the match of events would be less
 	//and return the value of match total count(match_total_count).
 
 	var f models.AlertMute
@@ -77,20 +71,33 @@ func (rt *Router) alertMutePreview(c *gin.Context) {
 	ginx.Dangerous(f.Verify())
 	ginx.Dangerous(f.FE2DB())
 
-	//Prevent accidental muting
-	m := map[string]interface{}{"group_id": bgid}
-	events, mtc := searchCurEvents(rt.Ctx, m, 100)
-	//events max is limit
-	events = mute.CurEventMatchMuteStrategyFilter(events, &f)
+	events := matchMuteEvents(rt.Ctx, bgid, &f)
 
 	ginx.NewRender(c).Data(gin.H{
-		"list":              events,
-		"match_total_count": mtc,
+		"list": events,
 	}, nil)
 
 }
 
-// if limit is set to 0, it indicates no limit.
+//retrieve the current events for a specific business group ID and filter out the events that match the mute strategy.
+func matchMuteEvents(ctx *ctx.Context, bgid int64, alertMute *models.AlertMute) []*models.AlertCurEvent {
+	//Prevent accidental muting
+	m := map[string]interface{}{"group_id": bgid}
+	events, _ := searchCurEvents(ctx, m, 0)
+	events = mute.CurEventMatchMuteStrategyFilter(events, alertMute)
+	return events
+}
+
+// return the IDs of the events
+func eventsIdFilter(events []*models.AlertCurEvent) []int64 {
+	ids := make([]int64, 0, len(events))
+	for i := range events {
+		ids = append(ids, events[i].Id)
+	}
+	return ids
+}
+
+// select current events from db. if limit is set to 0, it indicates no limit.
 func searchCurEvents(ctx *ctx.Context, where map[string]interface{}, limit int) ([]*models.AlertCurEvent, int64) {
 
 	total, err := models.AlertCurEventTotalMap(ctx, where)
