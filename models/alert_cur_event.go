@@ -13,6 +13,8 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/toolkits/pkg/logger"
+
+	"gorm.io/gorm"
 )
 
 type AlertCurEvent struct {
@@ -307,8 +309,10 @@ func (e *AlertCurEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 }
 
 func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
-	session := DB(ctx).Model(&AlertCurEvent{}).Where("trigger_time between ? and ?", stime, etime)
-
+	session := DB(ctx).Model(&AlertCurEvent{})
+	if stime == 0 || etime == 0 {
+		session.Where("trigger_time between ? and ?", stime, etime)
+	}
 	if len(prods) != 0 {
 		session = session.Where("rule_prod in ?", prods)
 	}
@@ -341,8 +345,10 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 }
 
 func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
-	session := DB(ctx).Where("trigger_time between ? and ?", stime, etime)
-
+	session := DB(ctx).Model(&AlertCurEvent{})
+	if stime == 0 || etime == 0 {
+		session.Where("trigger_time between ? and ?", stime, etime)
+	}
 	if len(prods) != 0 {
 		session = session.Where("rule_prod in ?", prods)
 	}
@@ -565,10 +571,21 @@ func AlertCurEventTotalMap(ctx *ctx.Context, where map[string]interface{}) (int6
 
 	return Count(DB(ctx).Model(&AlertCurEvent{}).Where(where))
 }
+func EventDatasource(datasourceIds []int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where("datasource_id IN (?)", datasourceIds)
+	}
+}
+func EventSeverity(severities []int) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where("severity IN (?)", severities)
+	}
+}
 
-func AlertCurEventGetsMap(ctx *ctx.Context, where map[string]interface{}, limit int) ([]*AlertCurEvent, error) {
+// AlertCurEventGetsMap find current events from db. if limit is set to 0, it indicates no limit.
+func AlertCurEventGetsMap(ctx *ctx.Context, where map[string]interface{}, limit int, funcs ...func(*gorm.DB) *gorm.DB) ([]*AlertCurEvent, error) {
 	var lst []*AlertCurEvent
-	tx := DB(ctx).Where(where).Order("id desc")
+	tx := DB(ctx).Scopes(funcs...).Where(where).Order("id desc")
 	if limit != 0 {
 		tx.Limit(limit)
 	}

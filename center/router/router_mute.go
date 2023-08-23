@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"gorm.io/gorm"
 )
 
 // Return all, front-end search and paging
@@ -30,48 +31,30 @@ func (rt *Router) alertMuteGets(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
-//When creating a mute rule, allow preview of the active alerts that will be matched,
-//and provide an option to delete these active alerts with one click
-
-type form struct {
-	models.AlertMute
-	DelCurAlert bool `json:"del_alert_cur"`
-}
-
 func (rt *Router) alertMuteAdd(c *gin.Context) {
 
-	var f form
+	var f models.AlertMute
 	ginx.BindJSON(c, &f)
 
 	username := c.MustGet("username").(string)
 	f.CreateBy = username
 	f.GroupId = ginx.UrlParamInt64(c, "id")
-	err := f.Add(rt.Ctx)
-	ginx.NewRender(c).Message(err)
-	if f.DelCurAlert && err == nil {
-		//find match events,and delete alert_cur by id
-		events := matchMuteEvents(rt.Ctx, ginx.UrlParamInt64(c, "id"), &f.AlertMute)
-		ids := eventsIdFilter(events)
-		rt.checkCurEventBusiGroupRWPermission(c, ids)
-		ginx.NewRender(c).Message(models.AlertCurEventDel(rt.Ctx, ids))
-	}
+	ginx.NewRender(c).Message(f.Add(rt.Ctx))
 }
 
-//preview events(alert_cur_event) match mute strategy
+//Preview events (alert_cur_event) that match the mute strategy based on the following criteria:
+//business group ID (group_id, group_id), product (prod, rule_prod),
+//alert event severity (severities, severity), and event tags (tags, tags).
+//For products of type not 'host', also consider the category (cate, cate) and datasource ID (datasource_ids, datasource_id).
 func (rt *Router) alertMutePreview(c *gin.Context) {
-	//Generally the match of events would be less
-	//and return the value of match total count(match_total_count).
+	//Generally the match of events would be less.
 
 	var f models.AlertMute
 	ginx.BindJSON(c, &f)
-	username := c.MustGet("username").(string)
-	bgid := ginx.UrlParamInt64(c, "id")
-	f.CreateBy = username
-	f.GroupId = bgid
-	ginx.Dangerous(f.Verify())
-	ginx.Dangerous(f.FE2DB())
+	f.GroupId = ginx.UrlParamInt64(c, "id")
+	ginx.Dangerous(f.Verify()) //verify and parse tags json to ITags
 
-	events := matchMuteEvents(rt.Ctx, bgid, &f)
+	events := matchMuteEvents(rt.Ctx, &f)
 
 	ginx.NewRender(c).Data(gin.H{
 		"list": events,
@@ -79,37 +62,29 @@ func (rt *Router) alertMutePreview(c *gin.Context) {
 
 }
 
-//retrieve the current events for a specific business group ID and filter out the events that match the mute strategy.
-func matchMuteEvents(ctx *ctx.Context, bgid int64, alertMute *models.AlertMute) []*models.AlertCurEvent {
+//Retrieve the current events based on specific criteria and filter out the events that match the mute strategy.
+func matchMuteEvents(ctx *ctx.Context, alertMute *models.AlertMute) []*models.AlertCurEvent {
 	//Prevent accidental muting
-	m := map[string]interface{}{"group_id": bgid}
-	events, _ := searchCurEvents(ctx, m, 0)
+	m := map[string]interface{}{"group_id": alertMute.GroupId, "rule_prod": alertMute.Prod} // for table alert_cur_event
+	funcs := make([]func(*gorm.DB) *gorm.DB, 0, 2)
+	funcs = append(funcs, models.EventSeverity(alertMute.SeveritiesJson))
+	if alertMute.Prod != models.HOST {
+		m["cate"] = alertMute.Cate
+		if !models.IsAllDatasource(alertMute.DatasourceIdsJson) {
+			funcs = append(funcs, models.EventDatasource(alertMute.DatasourceIdsJson))
+		}
+	}
+	events, err := models.AlertCurEventGetsMap(ctx, m, 0, funcs...)
+	ginx.Dangerous(err)
 	events = mute.CurEventMatchMuteStrategyFilter(events, alertMute)
-	return events
-}
 
-// return the IDs of the events
-func eventsIdFilter(events []*models.AlertCurEvent) []int64 {
-	ids := make([]int64, 0, len(events))
-	for i := range events {
-		ids = append(ids, events[i].Id)
-	}
-	return ids
-}
-
-// select current events from db. if limit is set to 0, it indicates no limit.
-func searchCurEvents(ctx *ctx.Context, where map[string]interface{}, limit int) ([]*models.AlertCurEvent, int64) {
-
-	total, err := models.AlertCurEventTotalMap(ctx, where)
-	ginx.Dangerous(err)
-	list, err := models.AlertCurEventGetsMap(ctx, where, limit)
-	ginx.Dangerous(err)
-
+	// for webui operation
 	cache := make(map[int64]*models.UserGroup)
-	for i := 0; i < len(list); i++ {
-		list[i].FillNotifyGroups(ctx, cache)
+	for i := 0; i < len(events); i++ {
+		events[i].FillNotifyGroups(ctx, cache)
 	}
-	return list, total
+
+	return events
 }
 
 func (rt *Router) alertMuteAddByService(c *gin.Context) {
