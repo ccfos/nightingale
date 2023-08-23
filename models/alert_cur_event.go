@@ -565,28 +565,23 @@ func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 	return nil
 }
 
-// AlertCurEventGetsFromAlertMute find current events from db. if limit is set to 0, it indicates no limit.
-func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute, limit int) ([]*AlertCurEvent, error) {
+// AlertCurEventGetsFromAlertMute find current events from db.
+func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute) ([]*AlertCurEvent, error) {
 	var lst []*AlertCurEvent
 
-	m := map[string]interface{}{
-		"group_id":  alertMute.GroupId,
-		"rule_prod": alertMute.Prod}
-	tx := DB(ctx)
+	tx := DB(ctx).Where("group_id = ? and rule_prod = ?", alertMute.GroupId, alertMute.Prod)
+
 	if len(alertMute.SeveritiesJson) != 0 {
 		tx = tx.Where("severity IN (?)", alertMute.SeveritiesJson)
 	}
 	if alertMute.Prod != HOST {
-		m["cate"] = alertMute.Cate
-		if !IsAllDatasource(alertMute.DatasourceIdsJson) {
+		tx.Where("cate = ?", alertMute.Cate)
+		if alertMute.DatasourceIdsJson != nil && !IsAllDatasource(alertMute.DatasourceIdsJson) {
 			tx = tx.Where("datasource_id IN (?)", alertMute.DatasourceIdsJson)
 		}
 	}
-	tx = tx.Where(m).Order("id desc")
-	if limit != 0 {
-		tx.Limit(limit)
-	}
-	err := tx.Find(&lst).Error
+
+	err := tx.Order("id desc").Find(&lst).Error
 
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
