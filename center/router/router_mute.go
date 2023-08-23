@@ -11,7 +11,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"gorm.io/gorm"
 )
 
 // Return all, front-end search and paging
@@ -64,27 +63,11 @@ func (rt *Router) alertMutePreview(c *gin.Context) {
 
 //Retrieve the current events based on specific criteria and filter out the events that match the mute strategy.
 func matchMuteEvents(ctx *ctx.Context, alertMute *models.AlertMute) []*models.AlertCurEvent {
-	//Prevent accidental muting
-	m := map[string]interface{}{"group_id": alertMute.GroupId, "rule_prod": alertMute.Prod} // for table alert_cur_event
-	funcs := make([]func(*gorm.DB) *gorm.DB, 0, 2)
-	funcs = append(funcs, models.EventSeverity(alertMute.SeveritiesJson))
-	if alertMute.Prod != models.HOST {
-		m["cate"] = alertMute.Cate
-		if !models.IsAllDatasource(alertMute.DatasourceIdsJson) {
-			funcs = append(funcs, models.EventDatasource(alertMute.DatasourceIdsJson))
-		}
-	}
-	events, err := models.AlertCurEventGetsMap(ctx, m, 0, funcs...)
+
+	events, err := models.AlertCurEventGetsFromAlertMute(ctx, alertMute, 0)
 	ginx.Dangerous(err)
-	events = mute.CurEventMatchMuteStrategyFilter(events, alertMute)
 
-	// for webui operation
-	cache := make(map[int64]*models.UserGroup)
-	for i := 0; i < len(events); i++ {
-		events[i].FillNotifyGroups(ctx, cache)
-	}
-
-	return events
+	return mute.CurEventMatchMuteStrategyFilter(events, alertMute)
 }
 
 func (rt *Router) alertMuteAddByService(c *gin.Context) {

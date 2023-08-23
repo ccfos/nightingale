@@ -13,8 +13,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/toolkits/pkg/logger"
-
-	"gorm.io/gorm"
 )
 
 type AlertCurEvent struct {
@@ -567,25 +565,24 @@ func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 	return nil
 }
 
-func AlertCurEventTotalMap(ctx *ctx.Context, where map[string]interface{}) (int64, error) {
-
-	return Count(DB(ctx).Model(&AlertCurEvent{}).Where(where))
-}
-func EventDatasource(datasourceIds []int64) func(db *gorm.DB) *gorm.DB {
-	return func(db *gorm.DB) *gorm.DB {
-		return db.Where("datasource_id IN (?)", datasourceIds)
-	}
-}
-func EventSeverity(severities []int) func(db *gorm.DB) *gorm.DB {
-	return func(db *gorm.DB) *gorm.DB {
-		return db.Where("severity IN (?)", severities)
-	}
-}
-
-// AlertCurEventGetsMap find current events from db. if limit is set to 0, it indicates no limit.
-func AlertCurEventGetsMap(ctx *ctx.Context, where map[string]interface{}, limit int, funcs ...func(*gorm.DB) *gorm.DB) ([]*AlertCurEvent, error) {
+// AlertCurEventGetsFromAlertMute find current events from db. if limit is set to 0, it indicates no limit.
+func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute, limit int) ([]*AlertCurEvent, error) {
 	var lst []*AlertCurEvent
-	tx := DB(ctx).Scopes(funcs...).Where(where).Order("id desc")
+
+	m := map[string]interface{}{
+		"group_id":  alertMute.GroupId,
+		"rule_prod": alertMute.Prod}
+	tx := DB(ctx)
+	if len(alertMute.SeveritiesJson) != 0 {
+		tx = tx.Where("severity IN (?)", alertMute.SeveritiesJson)
+	}
+	if alertMute.Prod != HOST {
+		m["cate"] = alertMute.Cate
+		if !IsAllDatasource(alertMute.DatasourceIdsJson) {
+			tx = tx.Where("datasource_id IN (?)", alertMute.DatasourceIdsJson)
+		}
+	}
+	tx = tx.Where(m).Order("id desc")
 	if limit != 0 {
 		tx.Limit(limit)
 	}

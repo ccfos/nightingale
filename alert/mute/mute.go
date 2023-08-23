@@ -1,7 +1,6 @@
 package mute
 
 import (
-	"encoding/json"
 	"strconv"
 	"strings"
 	"time"
@@ -150,12 +149,7 @@ func CurEventMatchMuteStrategyFilter(events []*models.AlertCurEvent, mute *model
 		if events[i].TagsMap == nil {
 			events[i].DB2Mem()
 		}
-		b := common.MatchTags(events[i].TagsMap, mute.ITags)
-		logger.Debugf("event Tags match(%t): rule_id=%d %s", b, events[i].RuleId, events[i].Hash)
-		if b {
-			//for fe
-			json.Unmarshal([]byte(events[i].Annotations), &events[i].AnnotationsJSON)
-			json.Unmarshal([]byte(events[i].RuleConfig), &events[i].RuleConfigJson)
+		if b := common.MatchTags(events[i].TagsMap, mute.ITags); b {
 			res = append(res, events[i])
 		}
 	}
