@@ -1,0 +1,21 @@
+# # collect interval
+# interval = 60
+[[instances]]
+# # endpoint region 参考 https://help.aliyun.com/document_detail/28616.html#section-72p-xhs-6qt
+# region="cn-beijing"
+# endpoint="metrics.cn-hangzhou.aliyuncs.com"
+# access_key_id="your-access-key-id"
+# access_key_secret="your-access-key-secret"
+# interval_times=4
+# delay="10m"
+# period="60s"
+# # namespace 参考 https://help.aliyun.com/document_detail/163515.htm?spm=a2c4g.11186623.0.0.44d65c58mhgNw3
+# namespaces=["acs_ecs_dashboard"]
+# [[instances.metric_filters]]
+# # metric name 参考 https://help.aliyun.com/document_detail/163515.htm?spm=a2c4g.11186623.0.0.401d15c73Z0dZh
+# # 参考页面中的Metric Id 填入下面的metricName ,页面中包含中文的Metric Name对应接口中的Description
+# metric_names=["cpu_cores","vm.TcpCount"]
+# namespace=""
+# ratelimit=25
+# catch_ttl="1h"
+# timeout="5s"

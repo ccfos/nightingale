@@ -1,0 +1,131 @@
+{
+    "name": "TCP detection by UlricQin",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "panels": [
+            {
+                "type": "table",
+                "id": "73c6eaf9-1685-4a7a-bf53-3d52afa1792e",
+                "layout": {
+                    "h": 15,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "73c6eaf9-1685-4a7a-bf53-3d52afa1792e",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "max(net_response_result_code) by (target)",
+                        "legend": "UP?",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(net_response_response_time) by (target) * 1000",
+                        "legend": "Latency(ms)",
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "indexByName": {
+                                "target": 0
+                            }
+                        }
+                    }
+                ],
+                "name": "Targets",
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelValuesToRows",
+                    "aggrDimension": "target"
+                },
+                "options": {
+                    "valueMappings": [],
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "value": "A"
+                        },
+                        "properties": {
+                            "standardOptions": {},
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "special": 0
+                                    },
+                                    "result": {
+                                        "color": "#2c9d3d",
+                                        "text": "UP"
+                                    },
+                                    "type": "special"
+                                },
+                                {
+                                    "match": {
+                                        "from": 1,
+                                        "special": 1
+                                    },
+                                    "result": {
+                                        "color": "#e90f0f",
+                                        "text": "DOWN"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "type": "special",
+                        "matcher": {
+                            "value": "C"
+                        },
+                        "properties": {
+                            "valueMappings": [
+                                {
+                                    "type": "range",
+                                    "result": {
+                                        "color": "#f10c0c"
+                                    },
+                                    "match": {
+                                        "from": 1
+                                    }
+                                },
+                                {
+                                    "type": "range",
+                                    "result": {
+                                        "color": "#2c9d3d"
+                                    },
+                                    "match": {
+                                        "to": 1
+                                    }
+                                }
+                            ],
+                            "standardOptions": {
+                                "util": "milliseconds",
+                                "decimals": 3
+                            }
+                        }
+                    }
+                ]
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "prom",
+                "type": "datasource"
+            }
+        ],
+        "version": "3.0.0"
+    }
+}
