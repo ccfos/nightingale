@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
+
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -582,17 +583,5 @@ func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute) ([]*
 	}
 
 	err := tx.Order("id desc").Find(&lst).Error
-	if err != nil {
-		return err 
-	}
-
-	var matchEvents []*AlertCurEvent
-	for i := 0; i < len(lst); i++ {
-		lst[i].DB2Mem()
-		if common.MatchTags(lst[i].TagsMap, alertMute.ITags) {
-			matchEvents = append(matchEvents,lst[i])
-		}
-	}
-
-	return matchEvents, err
+	return lst, err
 }

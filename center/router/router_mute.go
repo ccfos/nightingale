@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
@@ -50,8 +51,17 @@ func (rt *Router) alertMutePreview(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 	f.GroupId = ginx.UrlParamInt64(c, "id")
 	ginx.Dangerous(f.Verify()) //verify and parse tags json to ITags
+	events, err := models.AlertCurEventGetsFromAlertMute(rt.Ctx, &f)
+	ginx.Dangerous(err)
 
-	ginx.NewRender(c).Data(models.AlertCurEventGetsFromAlertMute(rt.Ctx, &f))
+	matchEvents := make([]*models.AlertCurEvent, 0, len(events))
+	for i := 0; i < len(events); i++ {
+		events[i].DB2Mem()
+		if common.MatchTags(events[i].TagsMap, f.ITags) {
+			matchEvents = append(matchEvents, events[i])
+		}
+	}
+	ginx.NewRender(c).Data(matchEvents, err)
 
 }
 
