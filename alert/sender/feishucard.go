@@ -4,12 +4,8 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/poster"
-
-	"github.com/toolkits/pkg/logger"
 )
 
 type Conf struct {
@@ -115,7 +111,7 @@ func (fs *FeishuCardSender) Send(ctx MessageContext) {
 	body.Card.Elements[0].Text.Content = message
 	body.Card.Elements[2].Elements[0].Content = SendTitle
 	for _, url := range urls {
-		fs.doSend(url, body)
+		doSend(url, body, models.FeishuCard, ctx.Stats)
 	}
 }
 
@@ -132,13 +128,4 @@ func (fs *FeishuCardSender) extract(users []*models.User) ([]string, []string) {
 		}
 	}
 	return urls, ats
-}
-
-func (fs *FeishuCardSender) doSend(url string, body feishuCard) {
-	res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
-	if err != nil {
-		logger.Errorf("feishucard_sender: result=fail url=%s code=%d error=%v response=%s", url, code, err, string(res))
-	} else {
-		logger.Debugf("feishucard_sender: result=succ url=%s code=%d response=%s", url, code, string(res))
-	}
 }

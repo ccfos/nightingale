@@ -350,7 +350,6 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 		p.fires.Set(e.Hash, e)
 	}
 
-	p.stats.CounterAlertsTotal.WithLabelValues(fmt.Sprintf("%d", e.DatasourceId)).Inc()
 	dispatch.LogEvent(e, "push_queue")
 	if !queue.EventQueue.PushFront(e) {
 		logger.Warningf("event_push_queue: queue is full, event:%+v", e)
