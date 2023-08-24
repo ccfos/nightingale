@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
+
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -307,8 +308,10 @@ func (e *AlertCurEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 }
 
 func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
-	session := DB(ctx).Model(&AlertCurEvent{}).Where("trigger_time between ? and ?", stime, etime)
-
+	session := DB(ctx).Model(&AlertCurEvent{})
+	if stime != 0 && etime != 0 {
+		session = session.Where("trigger_time between ? and ?", stime, etime)
+	}
 	if len(prods) != 0 {
 		session = session.Where("rule_prod in ?", prods)
 	}
@@ -341,8 +344,10 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 }
 
 func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
-	session := DB(ctx).Where("trigger_time between ? and ?", stime, etime)
-
+	session := DB(ctx).Model(&AlertCurEvent{})
+	if stime != 0 && etime != 0 {
+		session = session.Where("trigger_time between ? and ?", stime, etime)
+	}
 	if len(prods) != 0 {
 		session = session.Where("rule_prod in ?", prods)
 	}
@@ -559,4 +564,24 @@ func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 		}
 	}
 	return nil
+}
+
+// AlertCurEventGetsFromAlertMute find current events from db.
+func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute) ([]*AlertCurEvent, error) {
+	var lst []*AlertCurEvent
+
+	tx := DB(ctx).Where("group_id = ? and rule_prod = ?", alertMute.GroupId, alertMute.Prod)
+
+	if len(alertMute.SeveritiesJson) != 0 {
+		tx = tx.Where("severity IN (?)", alertMute.SeveritiesJson)
+	}
+	if alertMute.Prod != HOST {
+		tx = tx.Where("cate = ?", alertMute.Cate)
+		if alertMute.DatasourceIdsJson != nil && !IsAllDatasource(alertMute.DatasourceIdsJson) {
+			tx = tx.Where("datasource_id IN (?)", alertMute.DatasourceIdsJson)
+		}
+	}
+
+	err := tx.Order("id desc").Find(&lst).Error
+	return lst, err
 }

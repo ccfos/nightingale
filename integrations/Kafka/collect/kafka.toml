@@ -1,0 +1,99 @@
+# # collect interval
+# interval = 15
+
+############################################################################
+# !!! uncomment [[instances]] to enable this plugin
+[[instances]]
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+# append some labels to metrics
+# cluster is a preferred tag with the cluster name. If none is provided, the first of kafka_uris will be used
+labels = { cluster="kafka-cluster-01" }
+
+# log level only for kafka exporter
+log_level = "error"
+
+# Address (host:port) of Kafka server.
+# kafka_uris = ["127.0.0.1:9092","127.0.0.1:9092","127.0.0.1:9092"]
+kafka_uris = []
+
+# Connect using SASL/PLAIN
+# Default is false
+# use_sasl = false
+
+# Only set this to false if using a non-Kafka SASL proxy
+# Default is true
+# use_sasl_handshake = false
+
+# SASL user name
+# sasl_username = "username"
+
+# SASL user password
+# sasl_password = "password"
+
+# The SASL SCRAM SHA algorithm sha256 or sha512 as mechanism
+# sasl_mechanism = ""
+
+# Connect using TLS
+# use_tls = false
+
+# The optional certificate authority file for TLS client authentication
+# ca_file = ""
+
+# The optional certificate file for TLS client authentication
+# cert_file = ""
+
+# The optional key file for TLS client authentication
+# key_file = ""
+
+# If true, the server's certificate will not be checked for validity. This will make your HTTPS connections insecure
+# insecure_skip_verify = true
+
+# Kafka broker version
+# Default is 2.0.0
+# kafka_version = "2.0.0"
+
+# if you need to use a group from zookeeper
+# Default is false
+# use_zookeeper_lag = false
+
+# Address array (hosts) of zookeeper server.
+# zookeeper_uris = []
+
+# Metadata refresh interval
+# Default is 1m
+# metadata_refresh_interval = "1m"
+
+# Whether show the offset/lag for all consumer group, otherwise, only show connected consumer groups, default is true
+# Default is true
+# offset_show_all = true
+
+# If true, all scrapes will trigger kafka operations otherwise, they will share results. WARN: This should be disabled on large clusters
+# Default is false
+# allow_concurrency = false
+
+# Maximum number of offsets to store in the interpolation table for a partition
+# Default is 1000
+# max_offsets = 1000
+
+# How frequently should the interpolation table be pruned, in seconds.
+# Default is 30
+# prune_interval_seconds = 30
+
+# Regex filter for topics to be monitored
+# Default is ".*"
+# topics_filter_regex = ".*"
+
+# Regex filter for consumer groups to be monitored
+# Default is ".*"
+# groups_filter_regex = ".*"
+
+# if rename  kafka_consumergroup_uncommitted_offsets to kafka_consumergroup_lag
+# Default is false
+# rename_uncommit_offset_to_lag = false
+
+
+# if disable calculating lag rate
+# Default is false
+# disable_calculate_lag_rate = false

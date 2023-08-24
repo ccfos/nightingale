@@ -1,0 +1,63 @@
+# # collect interval
+# interval = 15
+
+############################################################################
+# !!! uncomment [[instances]] to enable this plugin
+[[instances]]
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+# append some labels to metrics
+# labels = { cluster="cloud-n9e-es" }
+
+## specify a list of one or more Elasticsearch servers
+# servers = ["http://localhost:9200"]
+servers = []
+
+## Timeout for HTTP requests to the elastic search server(s)
+http_timeout = "10s"
+
+# either /_nodes/stats or /_nodes/_local/stats depending on this setting
+local = false
+
+## Set cluster_health to true when you want to obtain cluster health stats
+cluster_health = true
+
+## Adjust cluster_health_level when you want to obtain detailed health stats
+## The options are
+##  - indices (default)
+##  - cluster
+cluster_health_level = "cluster"
+
+## Set cluster_stats to true when you want to obtain cluster stats.
+cluster_stats = true
+
+## Indices to collect; can be one or more indices names or _all
+## Use of wildcards is allowed. Use a wildcard at the end to retrieve index names that end with a changing value, like a date.
+# indices_include = ["zipkin*"]
+
+## use "shards" or blank string for indices level
+indices_level = ""
+
+## node_stats is a list of sub-stats that you want to have gathered. Valid options
+## are "indices", "os", "process", "jvm", "thread_pool", "fs", "transport", "http",
+## "breaker". Per default, all stats are gathered.
+node_stats = ["jvm", "breaker", "process", "os", "fs", "indices", "thread_pool", "transport"]
+
+## HTTP Basic Authentication username and password.
+username = "elastic"
+password = "password"
+
+## Optional TLS Config
+# use_tls = false
+# tls_ca = "/etc/categraf/ca.pem"
+# tls_cert = "/etc/categraf/cert.pem"
+# tls_key = "/etc/categraf/key.pem"
+## Use TLS but skip chain & host verification
+# insecure_skip_verify = true
+
+## Sets the number of most recent indices to return for indices that are configured with a date-stamped suffix.
+## Each 'indices_include' entry ending with a wildcard (*) or glob matching pattern will group together all indices that match it, and 
+## sort them by the date or number after the wildcard. Metrics then are gathered for only the 'num_most_recent_indices' amount of most 
+## recent indices.
+num_most_recent_indices = 1
