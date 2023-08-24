@@ -11,7 +11,7 @@ import (
 
 // 创建 ES Index Pattern
 func (rt *Router) esIndexPatternAdd(c *gin.Context) {
-	var f models.EsIndexPatternFe
+	var f models.EsIndexPattern
 	ginx.BindJSON(c, &f)
 
 	username := c.MustGet("username").(string)
@@ -27,7 +27,7 @@ func (rt *Router) esIndexPatternAdd(c *gin.Context) {
 
 // 更新 ES Index Pattern
 func (rt *Router) esIndexPatternPut(c *gin.Context) {
-	var f models.EsIndexPatternFe
+	var f models.EsIndexPattern
 	ginx.BindJSON(c, &f)
 
 	id := ginx.QueryInt64(c, "id")
@@ -61,7 +61,7 @@ func (rt *Router) esIndexPatternDel(c *gin.Context) {
 func (rt *Router) esIndexPatternGetList(c *gin.Context) {
 	datasourceId := ginx.QueryInt64(c, "datasource_id", 0)
 
-	var lst []*models.EsIndexPatternFe
+	var lst []*models.EsIndexPattern
 	var err error
 	if datasourceId != 0 {
 		lst, err = models.EsIndexPatternGets(rt.Ctx, "datasource_id = ?", datasourceId)
