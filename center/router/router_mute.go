@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
@@ -29,14 +30,39 @@ func (rt *Router) alertMuteGets(c *gin.Context) {
 }
 
 func (rt *Router) alertMuteAdd(c *gin.Context) {
+
 	var f models.AlertMute
 	ginx.BindJSON(c, &f)
 
 	username := c.MustGet("username").(string)
 	f.CreateBy = username
 	f.GroupId = ginx.UrlParamInt64(c, "id")
-
 	ginx.NewRender(c).Message(f.Add(rt.Ctx))
+}
+
+//Preview events (alert_cur_event) that match the mute strategy based on the following criteria:
+//business group ID (group_id, group_id), product (prod, rule_prod),
+//alert event severity (severities, severity), and event tags (tags, tags).
+//For products of type not 'host', also consider the category (cate, cate) and datasource ID (datasource_ids, datasource_id).
+func (rt *Router) alertMutePreview(c *gin.Context) {
+	//Generally the match of events would be less.
+
+	var f models.AlertMute
+	ginx.BindJSON(c, &f)
+	f.GroupId = ginx.UrlParamInt64(c, "id")
+	ginx.Dangerous(f.Verify()) //verify and parse tags json to ITags
+	events, err := models.AlertCurEventGetsFromAlertMute(rt.Ctx, &f)
+	ginx.Dangerous(err)
+
+	matchEvents := make([]*models.AlertCurEvent, 0, len(events))
+	for i := 0; i < len(events); i++ {
+		events[i].DB2Mem()
+		if common.MatchTags(events[i].TagsMap, f.ITags) {
+			matchEvents = append(matchEvents, events[i])
+		}
+	}
+	ginx.NewRender(c).Data(matchEvents, err)
+
 }
 
 func (rt *Router) alertMuteAddByService(c *gin.Context) {
