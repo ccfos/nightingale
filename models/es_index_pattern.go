@@ -14,7 +14,7 @@ type EsIndexPattern struct {
 	Name                       string `json:"name"`
 	TimeField                  string `json:"time_field"`
 	AllowHideSystemIndices     int    `json:"-" gorm:"allow_hide_system_indices"`
-	AllowHideSystemIndicesJson bool   `json:"allow_hide_system_indices" gorm:"-"`
+	AllowHideSystemIndicesBool bool   `json:"allow_hide_system_indices" gorm:"-"`
 	FieldsFormat               string `json:"fields_format"`
 	CreateAt                   int64  `json:"create_at"`
 	CreateBy                   string `json:"create_by"`
@@ -72,14 +72,14 @@ func (ei *EsIndexPattern) Update(ctx *ctx.Context, eip EsIndexPattern) error {
 
 func (dbIndexPatten *EsIndexPattern) DB2FE() {
 	if dbIndexPatten.AllowHideSystemIndices == 0 {
-		dbIndexPatten.AllowHideSystemIndicesJson = false
+		dbIndexPatten.AllowHideSystemIndicesBool = false
 	} else {
-		dbIndexPatten.AllowHideSystemIndicesJson = true
+		dbIndexPatten.AllowHideSystemIndicesBool = true
 	}
 }
 
 func (feIndexPatten *EsIndexPattern) FE2DB() {
-	if !feIndexPatten.AllowHideSystemIndicesJson {
+	if !feIndexPatten.AllowHideSystemIndicesBool {
 		feIndexPatten.AllowHideSystemIndices = 0
 	} else {
 		feIndexPatten.AllowHideSystemIndices = 1
