@@ -41,6 +41,7 @@ func (rt *Router) esIndexPatternPut(c *gin.Context) {
 	}
 
 	f.UpdateBy = c.MustGet("username").(string)
+
 	ginx.NewRender(c).Message(esIndexPattern.Update(rt.Ctx, f))
 }
 
