@@ -588,8 +588,8 @@ func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute) ([]*
 
 	var matchEvents []*AlertCurEvent
 	for i := 0; i < len(lst); i++ {
+		lst[i].DB2Mem()
 		if common.MatchTags(lst[i].TagsMap, alertMute.ITags) {
-			lst[i].DB2FE()
 			matchEvents = append(matchEvents,lst[i])
 		}
 	}
