@@ -278,17 +278,6 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 	var f models.AlertRule //new
 	ginx.BindJSON(c, &f)
 
-	arid := ginx.UrlParamInt64(c, "arid")
-	ar, err := models.AlertRuleGetById(rt.Ctx, arid)
-	ginx.Dangerous(err)
-
-	if ar == nil {
-		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
-		return
-	}
-
-	rt.bgrwCheck(c, ar.GroupId)
-
 	if len(f.NotifyChannelsJSON) > 0 && len(f.NotifyGroupsJSON) > 0 { //Validation NotifyChannels
 		ngids := make([]int64, 0, len(f.NotifyChannelsJSON))
 		for i := range f.NotifyGroupsJSON {
