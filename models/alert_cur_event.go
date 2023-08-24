@@ -309,7 +309,7 @@ func (e *AlertCurEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
 	if stime != 0 && etime != 0 {
-		session.Where("trigger_time between ? and ?", stime, etime)
+		session = session.Where("trigger_time between ? and ?", stime, etime)
 	}
 	if len(prods) != 0 {
 		session = session.Where("rule_prod in ?", prods)
@@ -345,7 +345,7 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
 	if stime != 0 && etime != 0 {
-		session.Where("trigger_time between ? and ?", stime, etime)
+		session = session.Where("trigger_time between ? and ?", stime, etime)
 	}
 	if len(prods) != 0 {
 		session = session.Where("rule_prod in ?", prods)
@@ -575,19 +575,24 @@ func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute) ([]*
 		tx = tx.Where("severity IN (?)", alertMute.SeveritiesJson)
 	}
 	if alertMute.Prod != HOST {
-		tx.Where("cate = ?", alertMute.Cate)
+		tx = tx.Where("cate = ?", alertMute.Cate)
 		if alertMute.DatasourceIdsJson != nil && !IsAllDatasource(alertMute.DatasourceIdsJson) {
 			tx = tx.Where("datasource_id IN (?)", alertMute.DatasourceIdsJson)
 		}
 	}
 
 	err := tx.Order("id desc").Find(&lst).Error
+	if err != nil {
+		return err 
+	}
 
-	if err == nil {
-		for i := 0; i < len(lst); i++ {
+	var matchEvents []*AlertCurEvent
+	for i := 0; i < len(lst); i++ {
+		if common.MatchTags(lst[i].TagsMap, alertMute.ITags) {
 			lst[i].DB2FE()
+			matchEvents = append(matchEvents,lst[i])
 		}
 	}
 
-	return lst, err
+	return matchEvents, err
 }
