@@ -5,9 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/alert/mute"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -53,19 +51,8 @@ func (rt *Router) alertMutePreview(c *gin.Context) {
 	f.GroupId = ginx.UrlParamInt64(c, "id")
 	ginx.Dangerous(f.Verify()) //verify and parse tags json to ITags
 
-	events := matchMuteEvents(rt.Ctx, &f)
+	ginx.NewRender(c).Data(models.AlertCurEventGetsFromAlertMute(rt.Ctx, &f))
 
-	ginx.NewRender(c).Data(events, nil)
-
-}
-
-//Retrieve the current events based on specific criteria and filter out the events that match the mute strategy.
-func matchMuteEvents(ctx *ctx.Context, alertMute *models.AlertMute) []*models.AlertCurEvent {
-
-	events, err := models.AlertCurEventGetsFromAlertMute(ctx, alertMute)
-	ginx.Dangerous(err)
-
-	return mute.CurEventMatchMuteStrategyFilter(events, alertMute)
 }
 
 func (rt *Router) alertMuteAddByService(c *gin.Context) {
