@@ -71,17 +71,13 @@ func (ei *EsIndexPattern) Update(ctx *ctx.Context, eip EsIndexPattern) error {
 }
 
 func (dbIndexPatten *EsIndexPattern) DB2FE() {
-	if dbIndexPatten.AllowHideSystemIndices == 0 {
-		dbIndexPatten.AllowHideSystemIndicesBool = false
-	} else {
+	if dbIndexPatten.AllowHideSystemIndices == 1 {
 		dbIndexPatten.AllowHideSystemIndicesBool = true
 	}
 }
 
 func (feIndexPatten *EsIndexPattern) FE2DB() {
-	if !feIndexPatten.AllowHideSystemIndicesBool {
-		feIndexPatten.AllowHideSystemIndices = 0
-	} else {
+	if feIndexPatten.AllowHideSystemIndicesBool {
 		feIndexPatten.AllowHideSystemIndices = 1
 	}
 }
