@@ -136,26 +136,6 @@ func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.Alert
 	return false
 }
 
-// CurEventMatchMuteStrategyFilter return the events where is match the mute strategy
-func CurEventMatchMuteStrategyFilter(events []*models.AlertCurEvent, mute *models.AlertMute) []*models.AlertCurEvent {
-	res := make([]*models.AlertCurEvent, 0, len(events))
-	if mute == nil {
-		return events
-	}
-	for i := range events {
-		if events[i] == nil || mute.ITags == nil {
-			continue
-		}
-		if events[i].TagsMap == nil {
-			events[i].DB2Mem()
-		}
-		if b := common.MatchTags(events[i].TagsMap, mute.ITags); b {
-			res = append(res, events[i])
-		}
-	}
-	return res
-}
-
 // matchMute 如果传入了clock这个可选参数，就表示使用这个clock表示的时间，否则就从event的字段中取TriggerTime
 func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int64) bool {
 	if mute.Disabled == 1 {
