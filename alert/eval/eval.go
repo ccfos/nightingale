@@ -90,6 +90,7 @@ func (arw *AlertRuleWorker) Eval() {
 		//logger.Errorf("rule_eval:%s rule not found", arw.Key())
 		return
 	}
+	arw.processor.Stats.CounterRuleEval.WithLabelValues().Inc()
 
 	typ := cachedRule.GetRuleType()
 	var lst []common.AnomalyPoint
@@ -153,11 +154,13 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 		value, warnings, err := readerClient.Query(context.Background(), promql, time.Now())
 		if err != nil {
 			logger.Errorf("rule_eval:%s promql:%s, error:%v", arw.Key(), promql, err)
+			arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 			continue
 		}
 
 		if len(warnings) > 0 {
 			logger.Errorf("rule_eval:%s promql:%s, warnings:%v", arw.Key(), promql, warnings)
+			arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 			continue
 		}
 
@@ -201,6 +204,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			targets, err := models.MissTargetGetsByFilter(arw.ctx, query, t)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
+				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				continue
 			}
 			for _, target := range targets {
@@ -222,6 +226,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
+				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				continue
 			}
 			var targetMap = make(map[string]*models.Target)
@@ -253,12 +258,14 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			count, err := models.MissTargetCountByFilter(arw.ctx, query, t)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
+				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				continue
 			}
 
 			total, err := models.TargetCountByFilter(arw.ctx, query)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
+				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				continue
 			}
 			pct := float64(count) / float64(total) * 100

@@ -10,13 +10,38 @@ const (
 )
 
 type Stats struct {
-	AlertNotifyTotal      *prometheus.CounterVec
-	AlertNotifyErrorTotal *prometheus.CounterVec
-	CounterAlertsTotal    *prometheus.CounterVec
-	GaugeAlertQueueSize   prometheus.Gauge
+	AlertNotifyTotal            *prometheus.CounterVec
+	AlertNotifyErrorTotal       *prometheus.CounterVec
+	CounterAlertsTotal          *prometheus.CounterVec
+	GaugeAlertQueueSize         prometheus.Gauge
+	CounterRuleEval             *prometheus.CounterVec
+	CounterQueryDataErrorTotal  *prometheus.CounterVec
+	CounterRecordEval           *prometheus.CounterVec
+	CounterRecordEvalErrorTotal *prometheus.CounterVec
 }
 
 func NewSyncStats() *Stats {
+	CounterRuleEval := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "rule_eval_total",
+		Help:      "Number of rule eval.",
+	}, []string{})
+
+	CounterRecordEval := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "record_eval_total",
+		Help:      "Number of record eval.",
+	}, []string{})
+
+	CounterRecordEvalErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "record_eval_error_total",
+		Help:      "Number of record eval error.",
+	}, []string{})
+
 	AlertNotifyTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
@@ -47,17 +72,32 @@ func NewSyncStats() *Stats {
 		Help:      "The size of alert queue.",
 	})
 
+	CounterQueryDataErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "query_data_error_total",
+		Help:      "Number of query data error.",
+	}, []string{"datasource"})
+
 	prometheus.MustRegister(
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
 		AlertNotifyTotal,
 		AlertNotifyErrorTotal,
+		CounterRuleEval,
+		CounterQueryDataErrorTotal,
+		CounterRecordEval,
+		CounterRecordEvalErrorTotal,
 	)
 
 	return &Stats{
-		CounterAlertsTotal:    CounterAlertsTotal,
-		GaugeAlertQueueSize:   GaugeAlertQueueSize,
-		AlertNotifyTotal:      AlertNotifyTotal,
-		AlertNotifyErrorTotal: AlertNotifyErrorTotal,
+		CounterAlertsTotal:          CounterAlertsTotal,
+		GaugeAlertQueueSize:         GaugeAlertQueueSize,
+		AlertNotifyTotal:            AlertNotifyTotal,
+		AlertNotifyErrorTotal:       AlertNotifyErrorTotal,
+		CounterRuleEval:             CounterRuleEval,
+		CounterQueryDataErrorTotal:  CounterQueryDataErrorTotal,
+		CounterRecordEval:           CounterRecordEval,
+		CounterRecordEvalErrorTotal: CounterRecordEvalErrorTotal,
 	}
 }

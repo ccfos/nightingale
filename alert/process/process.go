@@ -69,7 +69,7 @@ type Processor struct {
 
 	promClients *prom.PromClientMap
 	ctx         *ctx.Context
-	stats       *astats.Stats
+	Stats       *astats.Stats
 
 	HandleFireEventHook    HandleEventFunc
 	HandleRecoverEventHook HandleEventFunc
@@ -109,7 +109,7 @@ func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *me
 
 		promClients: promClients,
 		ctx:         ctx,
-		stats:       stats,
+		Stats:       stats,
 
 		HandleFireEventHook:    func(event *models.AlertCurEvent) {},
 		HandleRecoverEventHook: func(event *models.AlertCurEvent) {},
