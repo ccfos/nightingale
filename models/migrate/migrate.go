@@ -7,49 +7,46 @@ import (
 )
 
 func Migrate(db *gorm.DB) {
-	MigrateRecordingTable(db)
+	MigrateTables(db)
 	MigrateEsIndexPatternTable(db)
 }
 
-func MigrateRecordingTable(db *gorm.DB) error {
-	err := db.AutoMigrate(&RecordingRule{})
+func MigrateTables(db *gorm.DB) error {
+	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{}, &TaskRecord{}, &ChartShare{}}
+	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
+		dts = append(dts, &AlertHisEvent{})
+	}
+	err := db.AutoMigrate(dts...)
 	if err != nil {
-		logger.Errorf("failed to migrate recording rule table: %v", err)
+		logger.Errorf("failed to migrate table: %v", err)
 		return err
 	}
 
-	err = db.AutoMigrate(&AlertRule{})
-	if err != nil {
-		logger.Errorf("failed to migrate recording rule table: %v", err)
-		return err
-	}
-
-	err = db.AutoMigrate(&AlertSubscribe{})
-	if err != nil {
-		logger.Errorf("failed to migrate recording rule table: %v", err)
-		return err
-	}
-
-	err = db.AutoMigrate(&AlertMute{})
-	if err != nil {
-		logger.Errorf("failed to migrate recording rule table: %v", err)
-		return err
-	}
 	if db.Migrator().HasColumn(&AlertingEngines{}, "cluster") {
 		err = db.Migrator().RenameColumn(&AlertingEngines{}, "cluster", "engine_cluster")
 		if err != nil {
-			logger.Errorf("failed to migrate recording rule table: %v", err)
+			logger.Errorf("failed to renameColumn table: %v", err)
 			return err
 		}
 	}
 
-	err = db.AutoMigrate(TaskRecord{}, ChartShare{})
-	if err != nil {
-		logger.Errorf("failed to migrate recording rule table: %v", err)
-		return err
-	}
-
 	return nil
+}
+
+func columnHasIndex(db *gorm.DB, dst interface{}, indexColumn string) bool {
+	indexes, err := db.Migrator().GetIndexes(dst)
+	if err != nil {
+		logger.Errorf("failed to table getIndexes: %v", err)
+		return false
+	}
+	for i := range indexes {
+		for j := range indexes[i].Columns() {
+			if indexes[i].Columns()[j] == indexColumn {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 type AlertRule struct {
@@ -80,4 +77,7 @@ type ChartShare struct {
 }
 type TaskRecord struct {
 	EventId int64 `gorm:"column:event_id;bigint(20);not null;default:0;comment:event id;index:idx_event_id"`
+}
+type AlertHisEvent struct {
+	LastEvalTime int64 `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
 }
