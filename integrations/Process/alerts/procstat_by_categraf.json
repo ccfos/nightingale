@@ -1,0 +1,152 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "process handle limit is too low",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 3,
+    "severities": [
+      3
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "procstat_rlimit_num_fds_soft < 2048",
+          "severity": 3
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "email",
+      "dingtalk",
+      "wecom"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null,
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "name": "there is a process count of 0, indicating that a certain process may have crashed",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 1,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "algo_params": null,
+      "inhibit": false,
+      "prom_ql": "",
+      "queries": [
+        {
+          "prom_ql": "procstat_lookup_count == 0",
+          "severity": 1
+        }
+      ],
+      "severity": 0
+    },
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "23:59",
+    "enable_etimes": [
+      "23:59"
+    ],
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "0"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "email",
+      "dingtalk",
+      "wecom"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": null,
+    "extra_config": null
+  }
+]

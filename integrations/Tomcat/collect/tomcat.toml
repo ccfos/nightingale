@@ -1,0 +1,30 @@
+# # collect interval
+# interval = 15
+
+# Gather metrics from the Tomcat server status page.
+[[instances]]
+## URL of the Tomcat server status
+# url = "http://127.0.0.1:8080/manager/status/all?XML=true"
+url = ""
+
+## HTTP Basic Auth Credentials
+# username = "tomcat"
+# password = "s3cret"
+
+## Request timeout
+# timeout = "5s"
+
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+# important! use global unique string to specify instance
+# labels = { instance="192.168.1.2:8080", url="-" }
+
+## Optional TLS Config
+# use_tls = false
+# tls_min_version = "1.2"
+# tls_ca = "/etc/categraf/ca.pem"
+# tls_cert = "/etc/categraf/cert.pem"
+# tls_key = "/etc/categraf/key.pem"
+## Use TLS but skip chain & host verification
+# insecure_skip_verify = true

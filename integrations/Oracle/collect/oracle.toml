@@ -1,0 +1,33 @@
+# # collect interval
+# interval = 15
+
+#[[instances]]
+# address = "10.1.2.3:1521/orcl"
+# username = "monitor"
+# password = "123456"
+# is_sys_dba = false
+# is_sys_oper = false
+# disable_connection_pool = false
+# max_open_connections = 5
+# # interval = global.interval * interval_times
+# interval_times = 1
+# labels = { region="cloud" }
+
+# [[instances.metrics]]
+# mesurement = "sessions"
+# label_fields = [ "status", "type" ]
+# metric_fields = [ "value" ]
+# timeout = "3s"
+# request = '''
+# SELECT status, type, COUNT(*) as value FROM v$session GROUP BY status, type
+# '''
+
+# [[instances]]
+# address = "192.168.10.10:1521/orcl"
+# username = "monitor"
+# password = "123456"
+# is_sys_dba = false
+# is_sys_oper = false
+# disable_connection_pool = false
+# max_open_connections = 5
+# # labels = { region="local" }

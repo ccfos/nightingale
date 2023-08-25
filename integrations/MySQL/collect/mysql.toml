@@ -1,0 +1,65 @@
+# # collect interval
+# interval = 15
+
+# [[queries]]
+# mesurement = "users"
+# metric_fields = [ "total" ]
+# label_fields = [ "service" ]
+# timeout = "3s"
+# request = '''
+# select 'n9e' as service, count(*) as total from n9e_v5.users
+# '''
+
+
+[[instances]]
+# address = "127.0.0.1:3306"
+# username = "root"
+# password = "1234"
+
+# # set tls=custom to enable tls
+# parameters = "tls=false"
+
+# extra_status_metrics = true
+# extra_innodb_metrics = false
+# gather_processlist_processes_by_state = false
+# gather_processlist_processes_by_user = false
+# gather_schema_size = true
+# gather_table_size = false
+# gather_system_table_size = false
+# gather_slave_status = true
+
+# # timeout
+# timeout_seconds = 3
+
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+# important! use global unique string to specify instance
+# labels = { instance="n9e-10.2.3.4:3306" }
+
+## Optional TLS Config
+# use_tls = false
+# tls_min_version = "1.2"
+# tls_ca = "/etc/categraf/ca.pem"
+# tls_cert = "/etc/categraf/cert.pem"
+# tls_key = "/etc/categraf/key.pem"
+## Use TLS but skip chain & host verification
+# insecure_skip_verify = true
+
+#[[instances.queries]]
+# mesurement = "lock_wait"
+# metric_fields = [ "total" ]
+# timeout = "3s"
+# request = '''
+#SELECT count(*) as total FROM information_schema.innodb_trx WHERE trx_state='LOCK WAIT'
+#'''
+
+# [[instances.queries]]
+# mesurement = "users"
+# metric_fields = [ "total" ]
+# label_fields = [ "service" ]
+# # field_to_append = ""
+# timeout = "3s"
+# request = '''
+# select 'n9e' as service, count(*) as total from n9e_v5.users
+# '''

@@ -1,0 +1,43 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+# send ping packets to
+targets = [
+#     "www.baidu.com",
+#     "127.0.0.1",
+#     "10.4.5.6",
+#     "10.4.5.7"
+]
+
+# # append some labels for series
+# labels = { region="cloud", product="n9e" }
+
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+## Number of ping packets to send per interval.  Corresponds to the "-c"
+## option of the ping command.
+# count = 1
+
+## Time to wait between sending ping packets in seconds.  Operates like the
+## "-i" option of the ping command.
+# ping_interval = 1.0
+
+## If set, the time to wait for a ping response in seconds.  Operates like
+## the "-W" option of the ping command.
+# timeout = 3.0
+
+## Interface or source address to send ping from.  Operates like the -I or -S
+## option of the ping command.
+# interface = ""
+
+## Use only IPv6 addresses when resolving a hostname.
+# ipv6 = false
+
+## Number of data bytes to be sent. Corresponds to the "-s"
+## option of the ping command.
+# size = 56
+
+# max concurrency coroutine
+# concurrency = 50
