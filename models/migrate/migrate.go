@@ -29,6 +29,12 @@ func MigrateTables(db *gorm.DB) error {
 			return err
 		}
 	}
+	if db.Migrator().HasColumn(&ChartShare{}, "chart_share") {
+		err = db.Migrator().DropColumn(&ChartShare{}, "chart_share")
+		if err != nil {
+			logger.Errorf("failed to DropColumn table: %v", err)
+		}
+	}
 
 	return nil
 }
