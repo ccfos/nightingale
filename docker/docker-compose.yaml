@@ -2,7 +2,6 @@ version: "3.7"
 
 services:
   mysql:
-    # platform: linux/x86_64
     image: "mysql:8"
     container_name: mysql
     hostname: mysql
@@ -43,22 +42,22 @@ services:
       - "--enable-feature=remote-write-receiver"
       - "--query.lookback-delta=2m"
 
-  # ibex:
-  #   image: ulric2019/ibex:0.3
-  #   container_name: ibex
-  #   hostname: ibex
-  #   restart: always
-  #   environment:
-  #     GIN_MODE: release
-  #     TZ: Asia/Shanghai
-  #     WAIT_HOSTS: 127.0.0.1:3306
-  #   volumes:
-  #     - ./ibexetc:/app/etc
-  #   network_mode: host
-  #   depends_on:
-  #     - mysql
-  #   command: >
-  #     sh -c "/wait && /app/ibex server"
+  ibex:
+    image: ulric2019/ibex:0.3
+    container_name: ibex
+    hostname: ibex
+    restart: always
+    environment:
+      GIN_MODE: release
+      TZ: Asia/Shanghai
+      WAIT_HOSTS: 127.0.0.1:3306
+    volumes:
+      - ./ibexetc:/app/etc
+    network_mode: host
+    depends_on:
+      - mysql
+    command: >
+      sh -c "/app/ibex server"
 
   n9e:
     image: flashcatcloud/nightingale:latest
@@ -76,7 +75,6 @@ services:
       - mysql
       - redis
       - prometheus
-      # - ibex
     command: >
       sh -c "/wait && /app/n9e"
 
@@ -97,4 +95,3 @@ services:
     network_mode: host
     depends_on:
       - n9e
-      # - ibex
