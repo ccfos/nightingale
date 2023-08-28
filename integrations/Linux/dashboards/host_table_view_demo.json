@@ -1,5 +1,5 @@
 {
-    "name": "机器台账表格视图配置样例",
+    "name": "机器台账表格视图",
     "tags": "",
     "ident": "",
     "configs": {
@@ -21,35 +21,35 @@
                 "id": "77bf513a-8504-4d33-9efe-75aaf9abc9e4",
                 "layout": {
                     "h": 13,
+                    "i": "77bf513a-8504-4d33-9efe-75aaf9abc9e4",
+                    "isResizable": true,
                     "w": 24,
                     "x": 0,
-                    "y": 0,
-                    "i": "77bf513a-8504-4d33-9efe-75aaf9abc9e4",
-                    "isResizable": true
+                    "y": 0
                 },
                 "version": "3.0.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "refId": "A",
                         "expr": "avg(cpu_usage_active{cpu=\"cpu-total\", ident=~\"$ident\"}) by (ident)",
-                        "legend": "CPU使用率"
+                        "legend": "CPU使用率",
+                        "refId": "A"
                     },
                     {
                         "expr": "avg(mem_used_percent{ident=~\"$ident\"}) by (ident)",
-                        "refId": "B",
-                        "legend": "内存使用率"
+                        "legend": "内存使用率",
+                        "refId": "B"
                     },
                     {
                         "expr": "avg(mem_total{ident=~\"$ident\"}) by (ident)",
-                        "refId": "C",
-                        "legend": "总内存"
+                        "legend": "总内存",
+                        "refId": "C"
                     },
                     {
-                        "expr": "avg(mem_free{ident=~\"$ident\"}) by (ident)",
-                        "refId": "D",
-                        "legend": "剩余内存"
+                        "expr": "avg(disk_used_percent{ident=~\"$ident\",path=\"/\"}) by (ident)",
+                        "legend": "根分区使用率",
+                        "refId": "D"
                     }
                 ],
                 "transformations": [
@@ -62,7 +62,8 @@
                         }
                     }
                 ],
-                "name": "表格配置样例",
+                "name": "机器列表",
+                "maxPerRow": 4,
                 "custom": {
                     "showHeader": true,
                     "colorMode": "background",
@@ -70,7 +71,13 @@
                     "displayMode": "labelValuesToRows",
                     "aggrDimension": "ident",
                     "sortColumn": "ident",
-                    "sortOrder": "ascend"
+                    "sortOrder": "ascend",
+                    "links": [
+                        {
+                            "title": "详情",
+                            "url": "/dashboards/linux-host-by-categraf?ident=${__field.labels.ident}"
+                        }
+                    ]
                 },
                 "options": {
                     "standardOptions": {}
@@ -81,104 +88,124 @@
                             "value": "A"
                         },
                         "properties": {
+                            "standardOptions": {
+                                "util": "percent"
+                            },
                             "valueMappings": [
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "to": 65
+                                    },
                                     "result": {
                                         "color": "#2c9d3d"
                                     },
-                                    "match": {
-                                        "to": 65
-                                    }
+                                    "type": "range"
                                 },
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "to": 90
+                                    },
                                     "result": {
                                         "color": "#ff656b"
                                     },
-                                    "match": {
-                                        "to": 90
-                                    }
+                                    "type": "range"
                                 },
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "from": 90
+                                    },
                                     "result": {
                                         "color": "#f50505"
                                     },
-                                    "match": {
-                                        "from": 90
-                                    }
+                                    "type": "range"
                                 }
-                            ],
-                            "standardOptions": {
-                                "util": "percent"
-                            }
+                            ]
                         }
                     },
                     {
-                        "type": "special",
                         "matcher": {
                             "value": "B"
                         },
                         "properties": {
+                            "standardOptions": {
+                                "util": "percent"
+                            },
                             "valueMappings": [
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "to": 65
+                                    },
                                     "result": {
                                         "color": "#2c9d3d"
                                     },
-                                    "match": {
-                                        "to": 65
-                                    }
+                                    "type": "range"
                                 },
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "to": 90
+                                    },
                                     "result": {
                                         "color": "#ff656b"
                                     },
-                                    "match": {
-                                        "to": 90
-                                    }
+                                    "type": "range"
                                 },
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "from": 90
+                                    },
                                     "result": {
                                         "color": "#fa0a0a"
                                     },
-                                    "match": {
-                                        "from": 90
-                                    }
+                                    "type": "range"
                                 }
-                            ],
-                            "standardOptions": {
-                                "util": "percent"
-                            }
-                        }
+                            ]
+                        },
+                        "type": "special"
                     },
                     {
-                        "type": "special",
                         "matcher": {
                             "value": "C"
                         },
                         "properties": {
-                            "valueMappings": [],
                             "standardOptions": {
-                                "util": "bytesIEC",
-                                "decimals": 2
-                            }
-                        }
+                                "decimals": 2,
+                                "util": "bytesIEC"
+                            },
+                            "valueMappings": []
+                        },
+                        "type": "special"
                     },
                     {
-                        "type": "special",
                         "matcher": {
                             "value": "D"
                         },
                         "properties": {
                             "standardOptions": {
-                                "util": "bytesIEC",
-                                "decimals": 2
-                            }
-                        }
+                                "decimals": 2,
+                                "util": "percent"
+                            },
+                            "valueMappings": [
+                                {
+                                    "type": "range",
+                                    "result": {
+                                        "color": "#2c9d3d"
+                                    },
+                                    "match": {
+                                        "to": 90
+                                    }
+                                },
+                                {
+                                    "type": "range",
+                                    "result": {
+                                        "color": "#ff656b"
+                                    },
+                                    "match": {
+                                        "from": 90
+                                    }
+                                }
+                            ]
+                        },
+                        "type": "special"
                     }
                 ]
             }
