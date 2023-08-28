@@ -585,3 +585,37 @@ func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute) ([]*
 	err := tx.Order("id desc").Find(&lst).Error
 	return lst, err
 }
+
+func AlertCurEventStatistics(ctx *ctx.Context, stime time.Time) (map[string]interface{}, error) {
+	res := make(map[string]interface{}, 5)
+	stime24HoursAgoUnix := stime.Add(-24 * time.Hour).Unix()
+	//Beginning of today
+	stimeMidnightUnix := time.Date(stime.Year(), stime.Month(), stime.Day(), 0, 0, 0, 0, stime.Location()).Unix()
+	//The time from one week ago at 00:00
+	stimeOneWeekAgoUnix := time.Date(stime.Year(), stime.Month(), stime.Day()-7, 0, 0, 0, 0, stime.Location()).Unix()
+	var count int64
+	err := DB(ctx).Table("alert_cur_event").Count(&count).Error
+	if err != nil {
+		return res, err
+	}
+	res["total"], count = count, 0
+
+	err = DB(ctx).Table("alert_cur_event").Where("trigger_time < ?", stime24HoursAgoUnix).Count(&count).Error
+	if err != nil {
+		return res, err
+	}
+	res["total_24ago"], count = count, 0
+
+	err = DB(ctx).Table("alert_his_event").Where("trigger_time >= ? and is_recovered = ? ", stimeMidnightUnix, 0).Count(&count).Error
+	if err != nil {
+		return res, err
+	}
+	res["total_today"], count = count, 0
+
+	err = DB(ctx).Table("alert_his_event").Where("trigger_time >= ? and is_recovered = ? ", stimeOneWeekAgoUnix, 0).Count(&count).Error
+	if err != nil {
+		return res, err
+	}
+	res["total_week"], count = count, 0
+	return res, err
+}
