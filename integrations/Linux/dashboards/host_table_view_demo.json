@@ -17,15 +17,151 @@
         ],
         "panels": [
             {
+                "type": "hexbin",
+                "id": "21b8b3ab-26aa-47cb-b814-f310f2d143aa",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0,
+                    "i": "21b8b3ab-26aa-47cb-b814-f310f2d143aa",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "cpu_usage_active{cpu=\"cpu-total\", ident=~\"$ident\"}",
+                        "legend": "{{ident}}",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU利用率",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "calc": "lastNotNull",
+                    "colorRange": [
+                        "thresholds"
+                    ],
+                    "detailUrl": "/dashboards/linux-host-by-categraf?ident=${__field.labels.ident}"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#ef3c3c",
+                                "value": 95,
+                                "type": ""
+                            },
+                            {
+                                "color": "#ff656b",
+                                "value": 85,
+                                "type": ""
+                            },
+                            {
+                                "color": "#ffae39",
+                                "value": 75,
+                                "type": ""
+                            },
+                            {
+                                "color": "#2c9d3d",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    }
+                }
+            },
+            {
+                "type": "hexbin",
+                "id": "86d4a502-21f7-4981-9b38-ed8e696b6f49",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0,
+                    "i": "872b2040-c5b0-43fe-92c7-e37cb77edffc",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "mem_used_percent{ident=~\"$ident\"}",
+                        "legend": "{{ident}}",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内存利用率",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "calc": "lastNotNull",
+                    "colorRange": [
+                        "thresholds"
+                    ],
+                    "detailUrl": "/dashboards/linux-host-by-categraf?ident=${__field.labels.ident}"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#ef3c3c",
+                                "value": 95,
+                                "type": ""
+                            },
+                            {
+                                "color": "#ff656b",
+                                "value": 85,
+                                "type": ""
+                            },
+                            {
+                                "color": "#ffae39",
+                                "value": 75,
+                                "type": ""
+                            },
+                            {
+                                "color": "#2c9d3d",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    }
+                }
+            },
+            {
                 "type": "table",
                 "id": "77bf513a-8504-4d33-9efe-75aaf9abc9e4",
                 "layout": {
-                    "h": 13,
-                    "i": "77bf513a-8504-4d33-9efe-75aaf9abc9e4",
-                    "isResizable": true,
+                    "h": 11,
                     "w": 24,
                     "x": 0,
-                    "y": 0
+                    "y": 5,
+                    "i": "77bf513a-8504-4d33-9efe-75aaf9abc9e4",
+                    "isResizable": true
                 },
                 "version": "3.0.0",
                 "datasourceCate": "prometheus",
