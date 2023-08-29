@@ -596,8 +596,8 @@ func AlertCurEventStatistics(ctx *ctx.Context, stime time.Time) (res struct {
 	stime24HoursAgoUnix := stime.Add(-24 * time.Hour).Unix()
 	//Beginning of today
 	stimeMidnightUnix := time.Date(stime.Year(), stime.Month(), stime.Day(), 0, 0, 0, 0, stime.Location()).Unix()
-	///Beginning of this week(Monday) at 00:00
-	daysToMonday := (int(stime.Weekday()) - 1 + 7) % 7 // (dayOfWeek - Monday(1) + aWeekDays(7))/aWeekDays(7)
+	///Monday of the current week, starting at 00:00
+	daysToMonday := (int(stime.Weekday()) - 1 + 7) % 7 // (DayOfTheWeek - Monday(1) + DaysAWeek(7))/DaysAWeek(7)
 	stimeOneWeekAgoUnix := time.Date(stime.Year(), stime.Month(), stime.Day()-daysToMonday, 0, 0, 0, 0, stime.Location()).Unix()
 
 	err := DB(ctx).Model(&AlertCurEvent{}).Count(&res.Total).Error
