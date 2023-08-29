@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 
@@ -214,4 +215,9 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(event, nil)
+}
+
+func (rt *Router) alertCurEventsStatistics(c *gin.Context) {
+
+	ginx.NewRender(c).Data(models.AlertCurEventStatistics(rt.Ctx, time.Now()), nil)
 }
