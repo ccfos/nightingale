@@ -1,0 +1,36 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+## An array of Nginx stub_status URI to gather stats.
+urls = [
+#    "http://192.168.0.216:8000/nginx_status",
+#    "https://www.baidu.com/ngx_status"
+]
+
+## append some labels for series
+# labels = { region="cloud", product="n9e" }
+
+## interval = global.interval * interval_times
+# interval_times = 1
+
+## Set response_timeout (default 5 seconds)
+response_timeout = "5s"
+
+## Whether to follow redirects from the server (defaults to false)
+# follow_redirects = false
+
+## Optional HTTP Basic Auth Credentials
+#username = "admin"
+#password = "admin"
+
+## Optional headers
+# headers = ["X-From", "categraf", "X-Xyz", "abc"]
+
+## Optional TLS Config
+# use_tls = false
+# tls_ca = "/etc/categraf/ca.pem"
+# tls_cert = "/etc/categraf/cert.pem"
+# tls_key = "/etc/categraf/key.pem"
+## Use TLS but skip chain & host verification
+# insecure_skip_verify = false

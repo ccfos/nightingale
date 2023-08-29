@@ -474,7 +474,7 @@
     "datasource_ids": [
       0
     ],
-    "name": "大于200G的盘，空间不足了",
+    "name": "A disk larger than 200G is running out of space",
     "note": "",
     "prod": "metric",
     "algorithm": "",
@@ -543,7 +543,7 @@
     "datasource_ids": [
       0
     ],
-    "name": "小于200G的盘，空间不足了",
+    "name": "A disk smaller than 200G is running out of space",
     "note": "",
     "prod": "metric",
     "algorithm": "",

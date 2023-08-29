@@ -1,0 +1,106 @@
+[[metrics]]
+mesurement = "sessions"
+label_fields = [ "status", "type" ]
+metric_fields = [ "value" ]
+timeout = "3s"
+request = '''
+SELECT status, type, COUNT(*) as value FROM v$session GROUP BY status, type
+'''
+
+[[metrics]]
+mesurement = "lock"
+metric_fields = [ "cnt" ]
+timeout = "3s"
+request = '''
+SELECT COUNT(*) AS cnt
+  FROM ALL_OBJECTS A, V$LOCKED_OBJECT B, SYS.GV_$SESSION C
+ WHERE A.OBJECT_ID = B.OBJECT_ID
+   AND B.PROCESS = C.PROCESS
+'''
+
+[[metrics]]
+mesurement = "slow_queries"
+metric_fields = [ "p95_time_usecs" , "p99_time_usecs"]
+timeout = "3s"
+request = '''
+select  percentile_disc(0.95)  within group (order by elapsed_time) as p95_time_usecs, 
+  percentile_disc(0.99)  within group (order by elapsed_time) as p99_time_usecs 
+from v$sql where last_active_time >= sysdate - 5/(24*60)
+'''
+
+[[metrics]]
+mesurement = "resource"
+label_fields = [ "resource_name" ]
+metric_fields = [ "current_utilization", "limit_value" ]
+timeout = "3s"
+request = '''
+SELECT resource_name,current_utilization,CASE WHEN TRIM(limit_value) LIKE 'UNLIMITED' THEN '-1' ELSE TRIM(limit_value) END as limit_value FROM v$resource_limit
+'''
+
+[[metrics]]
+mesurement = "asm_diskgroup"
+label_fields = [ "name" ]
+metric_fields = [ "total", "free" ]
+timeout = "3s"
+request = '''
+SELECT name,total_mb*1024*1024 as total,free_mb*1024*1024 as free FROM v$asm_diskgroup_stat where exists (select 1 from v$datafile where name like '+%')
+'''
+IgnoreZeroResult = true
+
+[[metrics]]
+mesurement = "activity"
+metric_fields = [ "value" ]
+field_to_append = "name"
+timeout = "3s"
+request = '''
+SELECT name, value FROM v$sysstat WHERE name IN ('parse count (total)', 'execute count', 'user commits', 'user rollbacks')
+'''
+
+[[metrics]]
+mesurement = "process"
+metric_fields = [ "count" ]
+timeout = "3s"
+request = '''
+SELECT COUNT(*) as count FROM v$process
+'''
+
+[[metrics]]
+mesurement = "wait_time"
+metric_fields = [ "value" ]
+label_fields = ["wait_class"]
+timeout = "3s"
+request = '''
+SELECT
+  n.wait_class as WAIT_CLASS,
+  round(m.time_waited/m.INTSIZE_CSEC,3) as VALUE
+FROM
+  v$waitclassmetric  m, v$system_wait_class n
+WHERE
+  m.wait_class_id=n.wait_class_id AND n.wait_class != 'Idle'
+'''
+
+[[metrics]]
+mesurement = "tablespace"
+label_fields = [ "tablespace", "type" ]
+metric_fields = [ "bytes", "max_bytes", "free" ]
+timeout = "3s"
+request = '''
+SELECT
+    dt.tablespace_name as tablespace,
+    dt.contents as type,
+    dt.block_size * dtum.used_space as bytes,
+    dt.block_size * dtum.tablespace_size as max_bytes,
+    dt.block_size * (dtum.tablespace_size - dtum.used_space) as free
+FROM  dba_tablespace_usage_metrics dtum, dba_tablespaces dt
+WHERE dtum.tablespace_name = dt.tablespace_name
+ORDER by tablespace
+'''
+
+[[metrics]]
+mesurement = "sysmetric"
+metric_fields = [ "value" ]
+field_to_append = "metric_name"
+timeout = "3s"
+request = '''
+select METRIC_NAME,VALUE from v$sysmetric where group_id=2
+'''

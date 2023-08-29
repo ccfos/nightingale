@@ -285,6 +285,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/busi-group/:id/recording-rules/fields", rt.auth(), rt.user(), rt.perm("/recording-rules/put"), rt.recordingRulePutFields)
 
 		pages.GET("/busi-group/:id/alert-mutes", rt.auth(), rt.user(), rt.perm("/alert-mutes"), rt.bgro(), rt.alertMuteGetsByBG)
+		pages.POST("/busi-group/:id/alert-mutes/preview", rt.auth(), rt.user(), rt.perm("/alert-mutes/add"), rt.bgrw(), rt.alertMutePreview)
 		pages.POST("/busi-group/:id/alert-mutes", rt.auth(), rt.user(), rt.perm("/alert-mutes/add"), rt.bgrw(), rt.alertMuteAdd)
 		pages.DELETE("/busi-group/:id/alert-mutes", rt.auth(), rt.user(), rt.perm("/alert-mutes/del"), rt.bgrw(), rt.alertMuteDel)
 		pages.PUT("/busi-group/:id/alert-mute/:amid", rt.auth(), rt.user(), rt.perm("/alert-mutes/put"), rt.alertMutePutByFE)
@@ -310,6 +311,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", rt.auth(), rt.alertHisEventsList)
 		pages.DELETE("/alert-cur-events", rt.auth(), rt.user(), rt.perm("/alert-cur-events/del"), rt.alertCurEventDel)
+		pages.GET("/alert-cur-events/stats", rt.auth(), rt.alertCurEventsStatistics)
 
 		pages.GET("/alert-aggr-views", rt.auth(), rt.alertAggrViewGets)
 		pages.DELETE("/alert-aggr-views", rt.auth(), rt.user(), rt.alertAggrViewDel)
