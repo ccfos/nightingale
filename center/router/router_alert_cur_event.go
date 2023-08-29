@@ -219,8 +219,5 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 
 func (rt *Router) alertCurEventsStatistics(c *gin.Context) {
 
-	res, err := models.AlertCurEventStatistics(rt.Ctx, time.Now())
-	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Data(res, nil)
+	ginx.NewRender(c).Data(models.AlertCurEventStatistics(rt.Ctx, time.Now()), nil)
 }
