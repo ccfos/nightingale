@@ -734,7 +734,7 @@ func (h *httpAPI) QueryRange(ctx context.Context, query string, r Range) (model.
 
 	var qres queryResult
 
-	return model.Value(qres.v), warnings, json.Unmarshal(body, &qres)
+	return qres.v, warnings, json.Unmarshal(body, &qres)
 }
 
 func (h *httpAPI) Series(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]model.LabelSet, Warnings, error) {
