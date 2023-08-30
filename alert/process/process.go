@@ -142,6 +142,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
 		if mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache) {
+			p.Stats.CounterMuteTotal.WithLabelValues(event.GroupName).Inc()
 			logger.Debugf("rule_eval:%s event:%v is muted", p.Key(), event)
 			continue
 		}

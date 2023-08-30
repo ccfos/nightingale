@@ -18,6 +18,7 @@ type Stats struct {
 	CounterQueryDataErrorTotal  *prometheus.CounterVec
 	CounterRecordEval           *prometheus.CounterVec
 	CounterRecordEvalErrorTotal *prometheus.CounterVec
+	CounterMuteTotal            *prometheus.CounterVec
 }
 
 func NewSyncStats() *Stats {
@@ -79,6 +80,13 @@ func NewSyncStats() *Stats {
 		Help:      "Number of query data error.",
 	}, []string{"datasource"})
 
+	CounterMuteTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "mute_total",
+		Help:      "Number of mute.",
+	}, []string{"group"})
+
 	prometheus.MustRegister(
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
@@ -88,6 +96,7 @@ func NewSyncStats() *Stats {
 		CounterQueryDataErrorTotal,
 		CounterRecordEval,
 		CounterRecordEvalErrorTotal,
+		CounterMuteTotal,
 	)
 
 	return &Stats{
@@ -99,5 +108,6 @@ func NewSyncStats() *Stats {
 		CounterQueryDataErrorTotal:  CounterQueryDataErrorTotal,
 		CounterRecordEval:           CounterRecordEval,
 		CounterRecordEvalErrorTotal: CounterRecordEvalErrorTotal,
+		CounterMuteTotal:            CounterMuteTotal,
 	}
 }
