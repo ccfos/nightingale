@@ -207,6 +207,10 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 		return nil, err
 	}
 
+	for k, v := range data {
+		logger.Debugf("oidc info key:%s value:%v", k, v)
+	}
+
 	v := func(k string) string {
 		if in := data[k]; in == nil {
 			return ""

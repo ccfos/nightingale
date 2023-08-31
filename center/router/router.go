@@ -311,6 +311,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", rt.auth(), rt.alertHisEventsList)
 		pages.DELETE("/alert-cur-events", rt.auth(), rt.user(), rt.perm("/alert-cur-events/del"), rt.alertCurEventDel)
+		pages.GET("/alert-cur-events/stats", rt.auth(), rt.alertCurEventsStatistics)
 
 		pages.GET("/alert-aggr-views", rt.auth(), rt.alertAggrViewGets)
 		pages.DELETE("/alert-aggr-views", rt.auth(), rt.user(), rt.alertAggrViewDel)

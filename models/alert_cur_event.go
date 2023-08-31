@@ -585,3 +585,37 @@ func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute) ([]*
 	err := tx.Order("id desc").Find(&lst).Error
 	return lst, err
 }
+
+func AlertCurEventStatistics(ctx *ctx.Context, stime time.Time) map[string]interface{} {
+	stime24HoursAgoUnix := stime.Add(-24 * time.Hour).Unix()
+	//Beginning of today
+	stimeMidnightUnix := time.Date(stime.Year(), stime.Month(), stime.Day(), 0, 0, 0, 0, stime.Location()).Unix()
+	///Monday of the current week, starting at 00:00
+	daysToMonday := (int(stime.Weekday()) - 1 + 7) % 7 // (DayOfTheWeek - Monday(1) + DaysAWeek(7))/DaysAWeek(7)
+	stimeOneWeekAgoUnix := time.Date(stime.Year(), stime.Month(), stime.Day()-daysToMonday, 0, 0, 0, 0, stime.Location()).Unix()
+
+	var err error
+	res := make(map[string]interface{})
+
+	res["total"], err = Count(DB(ctx).Model(&AlertCurEvent{}))
+	if err != nil {
+		logger.Debugf("count alert current rule failed(total), %v", err)
+	}
+
+	res["total_24_ago"], err = Count(DB(ctx).Model(&AlertCurEvent{}).Where("trigger_time < ?", stime24HoursAgoUnix))
+	if err != nil {
+		logger.Debugf("count alert current rule failed(total_24ago), %v", err)
+	}
+
+	res["total_today"], err = Count(DB(ctx).Model(&AlertHisEvent{}).Where("trigger_time >= ? and is_recovered = ? ", stimeMidnightUnix, 0))
+	if err != nil {
+		logger.Debugf("count alert his rule failed(total_today), %v", err)
+	}
+
+	res["total_week"], err = Count(DB(ctx).Model(&AlertHisEvent{}).Where("trigger_time >= ? and is_recovered = ? ", stimeOneWeekAgoUnix, 0))
+	if err != nil {
+		logger.Debugf("count alert his rule failed(total_today), %v", err)
+	}
+
+	return res
+}
