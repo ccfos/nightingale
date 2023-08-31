@@ -151,6 +151,18 @@ func DatasourceCheck(ds models.Datasource) error {
 		}
 	}
 
+	if ds.PluginType == models.LOKI {
+		subPath := "/api/v1/labels"
+
+		fullURL = fmt.Sprintf("%s%s", ds.HTTPJson.Url, subPath)
+
+		req, err = http.NewRequest("GET", fullURL, nil)
+		if err != nil {
+			logger.Errorf("Error creating request: %v", err)
+			return fmt.Errorf("request url:%s failed", fullURL)
+		}
+	}
+
 	if ds.AuthJson.BasicAuthUser != "" {
 		req.SetBasicAuth(ds.AuthJson.BasicAuthUser, ds.AuthJson.BasicAuthPassword)
 	}

@@ -107,6 +107,18 @@ func (s *Scheduler) syncAlertRules() {
 				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.ctx)
 				alertRuleWorkers[alertRule.Hash()] = alertRule
 			}
+		} else if rule.IsLokiRule() {
+			datasourceIds := s.promClients.Hit(rule.DatasourceIdsJson)
+			for _, dsId := range datasourceIds {
+				if !naming.DatasourceHashRing.IsHit(dsId, fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
+					continue
+				}
+
+				processor := process.NewProcessor(rule, dsId, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.promClients, s.ctx, s.stats)
+
+				alertRuleWorker := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.ctx)
+				alertRuleWorkers[alertRuleWorker.Hash()] = alertRuleWorker
+			}
 		} else if rule.IsHostRule() && s.ctx.IsCenter {
 			// all host rule will be processed by center instance
 			if !naming.DatasourceHashRing.IsHit(naming.HostDatasource, fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {

@@ -87,7 +87,7 @@ func (arw *AlertRuleWorker) Start() {
 func (arw *AlertRuleWorker) Eval() {
 	cachedRule := arw.rule
 	if cachedRule == nil {
-		//logger.Errorf("rule_eval:%s rule not found", arw.Key())
+		// logger.Errorf("rule_eval:%s rule not found", arw.Key())
 		return
 	}
 
@@ -98,6 +98,8 @@ func (arw *AlertRuleWorker) Eval() {
 		lst = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
 	case models.HOST:
 		lst = arw.GetHostAnomalyPoint(cachedRule.RuleConfig)
+	case models.LOKI:
+		lst = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
 	default:
 		return
 	}
