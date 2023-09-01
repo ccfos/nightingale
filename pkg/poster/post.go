@@ -52,11 +52,11 @@ func GetByUrl[T any](url string, cfg conf.CenterApi) (T, error) {
 	if len(cfg.BasicAuthUser) > 0 {
 		req.SetBasicAuth(cfg.BasicAuthUser, cfg.BasicAuthPass)
 	}
-	
+
 	if cfg.Timeout < 1 {
 		cfg.Timeout = 5000
 	}
-	
+
 	client := &http.Client{
 		Timeout: time.Duration(cfg.Timeout) * time.Millisecond,
 	}

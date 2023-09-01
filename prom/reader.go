@@ -43,6 +43,8 @@ func (pc *PromClientMap) loadFromDatabase() {
 	var err error
 	if !pc.ctx.IsCenter {
 		datasources, err = poster.GetByUrls[[]*models.Datasource](pc.ctx, "/v1/n9e/datasources?typ="+models.PROMETHEUS)
+		lokiDatasource, err := poster.GetByUrls[[]*models.Datasource](pc.ctx, "/v1/n9e/datasources?typ="+models.LOKI)
+		datasources = append(datasources, lokiDatasource...)
 		if err != nil {
 			logger.Errorf("failed to get datasources, error: %v", err)
 			return
@@ -52,6 +54,8 @@ func (pc *PromClientMap) loadFromDatabase() {
 		}
 	} else {
 		datasources, err = models.GetDatasourcesGetsBy(pc.ctx, models.PROMETHEUS, "", "", "")
+		lokiDatasource, err := models.GetDatasourcesGetsBy(pc.ctx, models.LOKI, "", "", "")
+		datasources = append(datasources, lokiDatasource...)
 		if err != nil {
 			logger.Errorf("failed to get datasources, error: %v", err)
 			return
