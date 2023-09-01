@@ -788,9 +788,11 @@ func AlertRuleStatistics(ctx *ctx.Context) (*Statistics, error) {
 func (ar *AlertRule) IsPrometheusRule() bool {
 	return ar.Prod == METRIC && ar.Cate == PROMETHEUS
 }
+
 func (ar *AlertRule) IsLokiRule() bool {
-	return ar.Prod == LOKI
+	return ar.Prod == LOKI || ar.Cate == LOKI
 }
+
 func (ar *AlertRule) IsHostRule() bool {
 	return ar.Prod == HOST
 }

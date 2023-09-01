@@ -14,7 +14,7 @@ var Plugins = []Plugin{
 		TypeName: "Elasticsearch",
 	},
 	{
-		Id:       2,
+		Id:       3,
 		Category: "loki",
 		Type:     "loki",
 		TypeName: "Loki",
