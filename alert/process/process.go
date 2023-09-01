@@ -94,7 +94,7 @@ func (p *Processor) Hash() string {
 }
 
 func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *memsto.AlertRuleCacheType, targetCache *memsto.TargetCacheType,
-	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, promClients *prom.PromClientMap, ctx *ctx.Context,
+	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, ctx *ctx.Context,
 	stats *astats.Stats) *Processor {
 
 	p := &Processor{
@@ -107,9 +107,8 @@ func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *me
 		atertRuleCache:  atertRuleCache,
 		datasourceCache: datasourceCache,
 
-		promClients: promClients,
-		ctx:         ctx,
-		Stats:       stats,
+		ctx:   ctx,
+		Stats: stats,
 
 		HandleFireEventHook:    func(event *models.AlertCurEvent) {},
 		HandleRecoverEventHook: func(event *models.AlertCurEvent) {},

@@ -20,6 +20,7 @@ const (
 	HOST   = "host"
 
 	PROMETHEUS = "prometheus"
+	TDENGINE   = "tdengine"
 )
 
 type AlertRule struct {
@@ -790,6 +791,10 @@ func (ar *AlertRule) IsPrometheusRule() bool {
 
 func (ar *AlertRule) IsHostRule() bool {
 	return ar.Prod == HOST
+}
+
+func (ar *AlertRule) IsTdengineRule() bool {
+	return ar.Cate == TDENGINE
 }
 
 func (ar *AlertRule) GetRuleType() string {

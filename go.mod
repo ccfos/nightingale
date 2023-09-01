@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/coreos/go-oidc v2.2.1+incompatible
+	github.com/davecgh/go-spew v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1
@@ -27,6 +28,7 @@ require (
 	github.com/prometheus/prometheus v2.5.0+incompatible
 	github.com/rakyll/statik v0.1.7
 	github.com/redis/go-redis/v9 v9.0.2
+	github.com/spaolacci/murmur3 v1.1.0
 	github.com/tidwall/gjson v1.14.0
 	github.com/toolkits/pkg v1.3.3
 	golang.org/x/oauth2 v0.4.0
@@ -74,7 +76,6 @@ require (
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect

@@ -11,8 +11,11 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/hash"
+	"github.com/ccfos/nightingale/v6/pkg/parser"
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
+	"github.com/ccfos/nightingale/v6/tdengine"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
@@ -28,19 +31,21 @@ type AlertRuleWorker struct {
 
 	processor *process.Processor
 
-	promClients *prom.PromClientMap
-	ctx         *ctx.Context
+	promClients     *prom.PromClientMap
+	tdengineClients *tdengine.TdengineClientMap
+	ctx             *ctx.Context
 }
 
-func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, processor *process.Processor, promClients *prom.PromClientMap, ctx *ctx.Context) *AlertRuleWorker {
+func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, processor *process.Processor, promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, ctx *ctx.Context) *AlertRuleWorker {
 	arw := &AlertRuleWorker{
 		datasourceId: datasourceId,
 		quit:         make(chan struct{}),
 		rule:         rule,
 		processor:    processor,
 
-		promClients: promClients,
-		ctx:         ctx,
+		promClients:     promClients,
+		tdengineClients: tdengineClients,
+		ctx:             ctx,
 	}
 
 	return arw
@@ -93,12 +98,15 @@ func (arw *AlertRuleWorker) Eval() {
 	arw.processor.Stats.CounterRuleEval.WithLabelValues().Inc()
 
 	typ := cachedRule.GetRuleType()
-	var lst []common.AnomalyPoint
+	var anomalyPoints []common.AnomalyPoint
+	var recoverPoints []common.AnomalyPoint
 	switch typ {
 	case models.PROMETHEUS:
-		lst = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
+		anomalyPoints = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
 	case models.HOST:
-		lst = arw.GetHostAnomalyPoint(cachedRule.RuleConfig)
+		anomalyPoints = arw.GetHostAnomalyPoint(cachedRule.RuleConfig)
+	case models.TDENGINE:
+		anomalyPoints, recoverPoints = arw.GetTdengineAnomalyPoint(cachedRule, arw.processor.DatasourceId())
 	default:
 		return
 	}
@@ -108,7 +116,11 @@ func (arw *AlertRuleWorker) Eval() {
 		return
 	}
 
-	arw.processor.Handle(lst, "inner", arw.inhibit)
+	arw.processor.Handle(anomalyPoints, "inner", arw.inhibit)
+	for _, point := range recoverPoints {
+		str := fmt.Sprintf("%v", point.Value)
+		arw.processor.RecoverSingle(process.Hash(cachedRule.Id, arw.processor.DatasourceId(), point), point.Timestamp, &str)
+	}
 }
 
 func (arw *AlertRuleWorker) Stop() {
@@ -173,6 +185,110 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 		lst = append(lst, points...)
 	}
 	return lst
+}
+
+func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId int64) ([]common.AnomalyPoint, []common.AnomalyPoint) {
+	// 获取查询和规则判断条件
+	points := []common.AnomalyPoint{}
+	recoverPoints := []common.AnomalyPoint{}
+	ruleConfig := strings.TrimSpace(rule.RuleConfig)
+	if ruleConfig == "" {
+		logger.Warningf("rule_eval:%d promql is blank", rule.Id)
+		return points, recoverPoints
+	}
+
+	var ruleQuery models.RuleQuery
+	err := json.Unmarshal([]byte(ruleConfig), &ruleQuery)
+	if err != nil {
+		logger.Warningf("rule_eval:%d promql parse error:%s", rule.Id, err.Error())
+		return points, recoverPoints
+	}
+
+	if len(ruleQuery.Queries) > 0 {
+		seriesStore := make(map[uint64]*models.DataResp)
+		seriesTagIndex := make(map[uint64][]uint64)
+
+		for _, query := range ruleQuery.Queries {
+			cli := arw.tdengineClients.GetCli(dsId)
+			if cli == nil {
+				logger.Warningf("rule_eval:%d tdengine client is nil", rule.Id)
+				continue
+			}
+
+			series, err := cli.Query(query)
+			if err != nil {
+				logger.Warningf("rule_eval rid:%d query data error: %v", rule.Id, err)
+				continue
+			}
+
+			//  此条日志很重要，是告警判断的现场值
+			logger.Debugf("rule_eval rid:%d req:%+v resp:%+v", rule.Id, query, series)
+			for i := 0; i < len(series); i++ {
+				serieHash := hash.GetHash(series[i].Metric, series[i].Ref)
+				tagHash := hash.GetTagHash(series[i].Metric)
+				seriesStore[serieHash] = series[i]
+
+				// 将曲线按照相同的 tag 分组
+				if _, exists := seriesTagIndex[tagHash]; !exists {
+					seriesTagIndex[tagHash] = make([]uint64, 0)
+				}
+				seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], serieHash)
+			}
+		}
+
+		// 判断
+		for _, trigger := range ruleQuery.Triggers {
+			for _, seriesHash := range seriesTagIndex {
+				m := make(map[string]float64)
+				var ts int64
+				var sample *models.DataResp
+				var value float64
+				for _, serieHash := range seriesHash {
+					series, exists := seriesStore[serieHash]
+					if !exists {
+						logger.Warningf("rule_eval rid:%d series:%+v not found", rule.Id, series)
+						continue
+					}
+					t, v, exists := series.Last()
+					if !exists {
+						logger.Warningf("rule_eval rid:%d series:%+v value not found", rule.Id, series)
+						continue
+					}
+
+					if !strings.Contains(trigger.Exp, "$"+series.Ref) {
+						// 表达式中不包含该变量
+						continue
+					}
+
+					m["$"+series.Ref] = v
+					m["$"+series.Ref+"."+series.MetricName()] = v
+					ts = int64(t)
+					sample = series
+					value = v
+				}
+				isTriggered := parser.Calc(trigger.Exp, m)
+				//  此条日志很重要，是告警判断的现场值
+				logger.Debugf("rule_eval rid:%d trigger:%+v exp:%s res:%v m:%v", rule.Id, trigger, trigger.Exp, isTriggered, m)
+
+				point := common.AnomalyPoint{
+					Key:       sample.MetricName(),
+					Labels:    sample.Metric,
+					Timestamp: int64(ts),
+					Value:     value,
+					Severity:  trigger.Severity,
+					Triggered: isTriggered,
+				}
+
+				if isTriggered {
+					points = append(points, point)
+				} else {
+					recoverPoints = append(recoverPoints, point)
+				}
+			}
+		}
+	}
+
+	return points, recoverPoints
 }
 
 func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.AnomalyPoint {
