@@ -158,17 +158,17 @@ func deleteRedirect(redis storage.Redis, ctx context.Context, state string) erro
 func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, state string) (*CallbackOutput, error) {
 	ret, err := s.exchangeUser(code)
 	if err != nil {
-		return nil, fmt.Errorf("ilegal user:%v", err)
+		return nil, fmt.Errorf("sso_exchange_user fail. code:%s, error:%v", code, err)
 	}
 
 	ret.Redirect, err = fetchRedirect(redis, ctx, state)
 	if err != nil {
-		logger.Debugf("get redirect err:%v code:%s state:%s", code, state, err)
+		logger.Errorf("get redirect err:%v code:%s state:%s", code, state, err)
 	}
 
 	err = deleteRedirect(redis, ctx, state)
 	if err != nil {
-		logger.Debugf("delete redirect err:%v code:%s state:%s", code, state, err)
+		logger.Errorf("delete redirect err:%v code:%s state:%s", code, state, err)
 	}
 	return ret, nil
 }
@@ -199,8 +199,12 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 
 	idToken, err := s.Verifier.Verify(s.Ctx, rawIDToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify ID Token: %v", err)
+		rerr := fmt.Errorf("sso_exchange_user: failed to verify id_token: %s, error:%v", rawIDToken, err)
+		logger.Error(rerr)
+		return nil, rerr
 	}
+
+	logger.Infof("sso_exchange_user: verify id_token success. token:%s", rawIDToken)
 
 	data := map[string]interface{}{}
 	if err := idToken.Claims(&data); err != nil {
