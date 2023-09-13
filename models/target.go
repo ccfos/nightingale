@@ -22,6 +22,7 @@ type Target struct {
 	TagsJSON []string          `json:"tags" gorm:"-"`
 	TagsMap  map[string]string `json:"tags_maps" gorm:"-"` // internal use, append tags to series
 	UpdateAt int64             `json:"update_at"`
+	HostIp   string            `json:"host_ip"` //ipv4，do not needs range select
 
 	UnixTime   int64   `json:"unixtime" gorm:"-"`
 	Offset     int64   `json:"offset" gorm:"-"`
