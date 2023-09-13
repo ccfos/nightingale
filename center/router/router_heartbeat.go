@@ -4,10 +4,10 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"io/ioutil"
-	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pushgw/idents"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -46,26 +46,15 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	}
 
 	rt.MetaSet.Set(req.Hostname, req)
-	var items = make(map[string]struct{})
-	items[req.Hostname] = struct{}{}
-	rt.IdentSet.MSet(items)
+	var items = make(map[string]*idents.TargetHeadBeat)
+	items[req.Hostname] = &idents.TargetHeadBeat{HostIp: req.HostIp}
+	rt.IdentSet.MSetTHB(items)
 
 	gid := ginx.QueryInt64(c, "gid", 0)
-
 	if gid != 0 {
 		target, has := rt.TargetCache.Get(req.Hostname)
 		if has && target.GroupId != gid {
 			err = models.TargetUpdateBgid(rt.Ctx, []string{req.Hostname}, gid, false)
-		}
-	}
-	ginx.Dangerous(err)
-
-	hostIp := strings.TrimSpace(ginx.QueryStr(c, "host_ip", ""))
-
-	if hostIp != "" {
-		target, has := rt.TargetCache.Get(req.Hostname)
-		if has && target.HostIp != hostIp {
-			err = models.TargetUpdateHostIp(rt.Ctx, []string{req.Hostname}, hostIp)
 		}
 	}
 	ginx.NewRender(c).Message(err)
