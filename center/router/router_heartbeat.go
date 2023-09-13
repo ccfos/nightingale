@@ -60,7 +60,7 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	}
 	ginx.Dangerous(err)
 
-	hostIp := strings.TrimSpace(ginx.QueryStr(c, "hostip", ""))
+	hostIp := strings.TrimSpace(ginx.QueryStr(c, "host_ip", ""))
 
 	if hostIp != "" {
 		target, has := rt.TargetCache.Get(req.Hostname)
