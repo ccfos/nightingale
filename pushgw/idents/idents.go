@@ -16,16 +16,16 @@ import (
 
 type Set struct {
 	sync.Mutex
-	items map[string]*TargetHeadBeat
+	items map[string]*TargetHeartBeat
 	ctx   *ctx.Context
 }
-type TargetHeadBeat struct {
+type TargetHeartBeat struct {
 	HostIp string `json:"host_ip"`
 }
 
 func New(ctx *ctx.Context) *Set {
 	set := &Set{
-		items: make(map[string]*TargetHeadBeat),
+		items: make(map[string]*TargetHeartBeat),
 		ctx:   ctx,
 	}
 
@@ -47,19 +47,19 @@ func (s *Set) MSet(items map[string]struct{}) {
 
 // MSetTHB updates the internal items map with new host IP info.
 //
-// It takes in a map of ident -> TargetHeadBeat structs.
+// It takes in a map of ident -> TargetHeartBeat structs.
 //
-// The TargetHeadBeat struct contains the latest host IP for that ident.
+// The TargetHeartBeat struct contains the latest host IP for that ident.
 //
 // This allows efficiently updating the cached host IP mappings in one call.
 //
 // The items map will be locked during the update to prevent concurrent access.
 //
-func (s *Set) MSetTHB(items map[string]*TargetHeadBeat) {
+func (s *Set) MSetTHB(items map[string]*TargetHeartBeat) {
 	s.Lock()
 	defer s.Unlock()
 	for ident, thb := range items {
-		s.items[ident] = &TargetHeadBeat{thb.HostIp}
+		s.items[ident] = &TargetHeartBeat{thb.HostIp}
 	}
 }
 
@@ -71,7 +71,7 @@ func (s *Set) LoopPersist() {
 }
 
 func (s *Set) persist() {
-	var items map[string]*TargetHeadBeat
+	var items map[string]*TargetHeartBeat
 
 	s.Lock()
 	if len(s.items) == 0 {
@@ -80,15 +80,15 @@ func (s *Set) persist() {
 	}
 
 	items = s.items
-	s.items = make(map[string]*TargetHeadBeat)
+	s.items = make(map[string]*TargetHeartBeat)
 	s.Unlock()
 
 	s.updateTimestamp(items)
 }
 
-func (s *Set) updateTimestamp(items map[string]*TargetHeadBeat) {
+func (s *Set) updateTimestamp(items map[string]*TargetHeartBeat) {
 	lst := make([]string, 0, 100)
-	lsThb := make([]*TargetHeadBeat, 0, 100)
+	lsThb := make([]*TargetHeartBeat, 0, 100)
 	now := time.Now().Unix()
 	num := 0
 	for ident, thb := range items {
@@ -118,9 +118,9 @@ func (s *Set) updateTimestamp(items map[string]*TargetHeadBeat) {
 }
 
 type TargetUpdate struct {
-	Lst   []string          `json:"lst"`
-	LsThb []*TargetHeadBeat `json:"ls_thb"`
-	Now   int64             `json:"now"`
+	Lst   []string           `json:"lst"`
+	LsThb []*TargetHeartBeat `json:"ls_thb"`
+	Now   int64              `json:"now"`
 }
 
 // UpdateTargets updates the targets in the database.
@@ -128,7 +128,7 @@ type TargetUpdate struct {
 // It takes in:
 //
 //  - lst - a slice of target idents to update
-//  - lsThb - a slice of TargetHeadBeat structs containing latest host IP info
+//  - lsThb - a slice of TargetHeartBeat structs containing latest host IP info
 //  - now - the timestamp to set the update_at field to
 //
 // If lsThb is nil, it will just update the timestamp for the idents in lst.
@@ -141,7 +141,7 @@ type TargetUpdate struct {
 // If any idents in lst don't exist in the DB, it will insert the missing ones.
 //
 // Returns any error encountered.
-func (s *Set) UpdateTargets(lst []string, lsThb []*TargetHeadBeat, now int64) error {
+func (s *Set) UpdateTargets(lst []string, lsThb []*TargetHeartBeat, now int64) error {
 	if !s.ctx.IsCenter {
 		t := TargetUpdate{
 			Lst:   lst,
@@ -161,7 +161,7 @@ func (s *Set) UpdateTargets(lst []string, lsThb []*TargetHeadBeat, now int64) er
 		logger.Debugf("come from remote write. idents = %+v", lst)
 		ret = s.ctx.DB.Table("target").Where("ident in ?", lst).Update("update_at", now)
 	} else {
-		logger.Debugf("come from heartbeat. idents = %+v,TargetHeadBeat = %+v", lst, lsThb)
+		logger.Debugf("come from heartbeat. idents = %+v,TargetHeartBeat = %+v", lst, lsThb)
 		if len(lst) != len(lsThb) {
 			return fmt.Errorf("invalid args len(lst)= %v,len(lsThb)= %v", len(lst), len(lsThb))
 		}
@@ -199,7 +199,7 @@ func (s *Set) UpdateTargets(lst []string, lsThb []*TargetHeadBeat, now int64) er
 //
 // The parameters are:
 //   - lst: A slice of target idents to update
-//   - lsThb: A slice of TargetHeadBeat structs containing the latest host IP data
+//   - lsThb: A slice of TargetHeartBeat structs containing the latest host IP data
 //   - now: The timestamp to set the update_at field to
 //
 // The return value is the updated gorm DB struct to allow chaining further operations.
@@ -210,7 +210,7 @@ func (s *Set) UpdateTargets(lst []string, lsThb []*TargetHeadBeat, now int64) er
 //   UPDATE target SET host_ip = CASE ident WHEN 'i1' THEN 'ip1' WHEN 'i2' THEN 'ip2' END, update_at = <now>
 //   WHERE ident IN ('i1', 'i2', ...)
 //
-func (s *Set) batchUpdateTHB(lst []string, lsThb []*TargetHeadBeat, now int64) *gorm.DB {
+func (s *Set) batchUpdateTHB(lst []string, lsThb []*TargetHeartBeat, now int64) *gorm.DB {
 	var b strings.Builder
 	b.WriteString("UPDATE target SET host_ip = CASE ident ")
 	for i := range lst {
