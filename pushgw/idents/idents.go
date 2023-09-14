@@ -2,10 +2,10 @@ package idents
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
@@ -16,16 +16,16 @@ import (
 
 type Set struct {
 	sync.Mutex
-	items map[string]*TargetHeartBeat
+	items map[string]*TargetHeartbeat
 	ctx   *ctx.Context
 }
-type TargetHeartBeat struct {
+type TargetHeartbeat struct {
 	HostIp string `json:"host_ip"`
 }
 
 func New(ctx *ctx.Context) *Set {
 	set := &Set{
-		items: make(map[string]*TargetHeartBeat),
+		items: make(map[string]*TargetHeartbeat),
 		ctx:   ctx,
 	}
 
@@ -45,21 +45,11 @@ func (s *Set) MSet(items map[string]struct{}) {
 	}
 }
 
-// MSetTHB updates the internal items map with new host IP info.
-//
-// It takes in a map of ident -> TargetHeartBeat structs.
-//
-// The TargetHeartBeat struct contains the latest host IP for that ident.
-//
-// This allows efficiently updating the cached host IP mappings in one call.
-//
-// The items map will be locked during the update to prevent concurrent access.
-//
-func (s *Set) MSetTHB(items map[string]*TargetHeartBeat) {
+func (s *Set) MSetTargetHeartbeat(items map[string]*TargetHeartbeat) {
 	s.Lock()
 	defer s.Unlock()
 	for ident, thb := range items {
-		s.items[ident] = &TargetHeartBeat{thb.HostIp}
+		s.items[ident] = &TargetHeartbeat{thb.HostIp}
 	}
 }
 
@@ -71,7 +61,7 @@ func (s *Set) LoopPersist() {
 }
 
 func (s *Set) persist() {
-	var items map[string]*TargetHeartBeat
+	var items map[string]*TargetHeartbeat
 
 	s.Lock()
 	if len(s.items) == 0 {
@@ -80,92 +70,99 @@ func (s *Set) persist() {
 	}
 
 	items = s.items
-	s.items = make(map[string]*TargetHeartBeat)
+	s.items = make(map[string]*TargetHeartbeat)
 	s.Unlock()
 
 	s.updateTimestamp(items)
 }
 
-func (s *Set) updateTimestamp(items map[string]*TargetHeartBeat) {
-	lst := make([]string, 0, 100)
-	lsThb := make([]*TargetHeartBeat, 0, 100)
+func (s *Set) updateTimestamp(items map[string]*TargetHeartbeat) {
+	idents := make([]string, 0, 100)
+	targetHeartbeats := make([]*TargetHeartbeat, 0, 100)
 	now := time.Now().Unix()
 	num := 0
-	for ident, thb := range items {
-		lst = append(lst, ident)
-		if thb != nil {
-			lsThb = append(lsThb, thb)
+	for ident, th := range items {
+		idents = append(idents, ident)
+		if th != nil {
+			targetHeartbeats = append(targetHeartbeats, th)
 		}
 		num++
 		if num == 100 {
-			if len(lsThb) == 0 {
-				lsThb = nil
+			if len(targetHeartbeats) == 0 {
+				targetHeartbeats = nil
 			}
-			if err := s.UpdateTargets(lst, lsThb, now); err != nil {
+			if err := s.UpdateTargets(idents, targetHeartbeats, now); err != nil {
 				logger.Errorf("failed to update targets: %v", err)
 			}
-			lst = lst[:0]
-			lsThb = lsThb[:0]
+			idents = idents[:0]
+			targetHeartbeats = targetHeartbeats[:0]
 			num = 0
 		}
 	}
-	if len(lsThb) == 0 {
-		lsThb = nil
+	if len(targetHeartbeats) == 0 {
+		targetHeartbeats = nil
 	}
-	if err := s.UpdateTargets(lst, lsThb, now); err != nil {
+	if err := s.UpdateTargets(idents, targetHeartbeats, now); err != nil {
 		logger.Errorf("failed to update targets: %v", err)
 	}
 }
 
 type TargetUpdate struct {
-	Lst   []string           `json:"lst"`
-	LsThb []*TargetHeartBeat `json:"ls_thb"`
-	Now   int64              `json:"now"`
+	Idents           []string           `json:"Idents"`
+	TargetHeartbeats []*TargetHeartbeat `json:"target_heartbeats"`
+	Now              int64              `json:"now"`
 }
 
-// UpdateTargets updates the targets in the database.
+// UpdateTargets updates a batch of target records in the database.
 //
-// It takes in:
+// It takes the following parameters:
 //
-//  - lst - a slice of target idents to update
-//  - lsThb - a slice of TargetHeartBeat structs containing latest host IP info
-//  - now - the timestamp to set the update_at field to
+// idents []string:
+//   - A slice of target idents to update.
 //
-// If lsThb is nil, it will just update the timestamp for the idents in lst.
+// targetHeartbeats []*TargetHeartbeat:
+//   - A slice containing latest host IP info for the idents. Can be nil.
 //
-// Otherwise, it will do a batch update to set the host_ip and update_at from
-// the info in lsThb.
+// now int64:
+//   - The timestamp to set the update_at field to.
 //
-// The batch update uses a SQL CASE statement for efficiency.
+// If not the central node, it will send the update info to the central node.
 //
-// If any idents in lst don't exist in the DB, it will insert the missing ones.
+// Otherwise, it checks the number of idents and returns early if none.
+//
+// It then performs the update based on whether targetHeartbeats is nil:
+//
+// - nil -> update only timestamps, from remote write path
+// - non-nil -> update host IPs also, from heartbeat path
+//
+// After updating, it checks if any idents were not found, and inserts them.
 //
 // Returns any error encountered.
-func (s *Set) UpdateTargets(lst []string, lsThb []*TargetHeartBeat, now int64) error {
+func (s *Set) UpdateTargets(idents []string, targetHeartbeats []*TargetHeartbeat, now int64) error {
 	if !s.ctx.IsCenter {
 		t := TargetUpdate{
-			Lst:   lst,
-			LsThb: lsThb,
-			Now:   now,
+			Idents:           idents,
+			TargetHeartbeats: targetHeartbeats,
+			Now:              now,
 		}
 		err := poster.PostByUrls(s.ctx, "/v1/n9e/target-update", t)
 		return err
 	}
 
-	count := int64(len(lst))
+	count := int64(len(idents))
 	if count == 0 {
 		return nil
 	}
 	var ret *gorm.DB
-	if lsThb == nil {
-		logger.Debugf("come from remote write. idents = %+v", lst)
-		ret = s.ctx.DB.Table("target").Where("ident in ?", lst).Update("update_at", now)
+	if targetHeartbeats == nil {
+		logger.Debugf("come from remote write. Idents = %+v", idents)
+		ret = s.ctx.DB.Table("target").Where("ident in ?", idents).Update("update_at", now)
 	} else {
-		logger.Debugf("come from heartbeat. idents = %+v,TargetHeartBeat = %+v", lst, lsThb)
-		if len(lst) != len(lsThb) {
-			return fmt.Errorf("invalid args len(lst)= %v,len(lsThb)= %v", len(lst), len(lsThb))
+		logger.Debugf("come from heartbeat. Idents = %+v,TargetHeartbeats = %+v", idents, targetHeartbeats)
+		if len(idents) != len(targetHeartbeats) {
+			return fmt.Errorf("invalid args len(Idents)= %v,len(targetHeartbeats)= %v", len(idents), len(targetHeartbeats))
 		}
-		ret = s.batchUpdateTHB(lst, lsThb, now)
+		ret = s.batchUpdateTargets(idents, targetHeartbeats, now)
 	}
 
 	if ret.Error != nil {
@@ -176,14 +173,14 @@ func (s *Set) UpdateTargets(lst []string, lsThb []*TargetHeartBeat, now int64) e
 		return nil
 	}
 
-	// there are some idents not found in db, so insert them
+	// there are some Idents not found in db, so insert them
 	var exists []string
-	err := s.ctx.DB.Table("target").Where("ident in ?", lst).Pluck("ident", &exists).Error
+	err := s.ctx.DB.Table("target").Where("ident in ?", idents).Pluck("ident", &exists).Error
 	if err != nil {
 		return err
 	}
 
-	news := slice.SubString(lst, exists)
+	news := slice.SubString(idents, exists)
 	for i := 0; i < len(news); i++ {
 		err = s.ctx.DB.Exec("INSERT INTO target(ident, update_at) VALUES(?, ?)", news[i], now).Error
 		if err != nil {
@@ -194,32 +191,48 @@ func (s *Set) UpdateTargets(lst []string, lsThb []*TargetHeartBeat, now int64) e
 	return nil
 }
 
-// batchUpdateTHB performs a batch update of targets in the database using host IP data from heartbeat messages.
-// It generates a SQL CASE statement to efficiently update multiple rows in one query.
+// batchUpdateTargets performs a batch update of target records in the database.
 //
-// The parameters are:
-//   - lst: A slice of target idents to update
-//   - lsThb: A slice of TargetHeartBeat structs containing the latest host IP data
-//   - now: The timestamp to set the update_at field to
+// It takes the following parameters:
 //
-// The return value is the updated gorm DB struct to allow chaining further operations.
+// Idents []string:
+//   - A slice of target Idents to update.
 //
-// This allows efficiently updating potentially many ident->IP mappings in one query instead
-// of individual updates. The generated SQL will be like:
+// targetHeartbeats []*TargetHeartbeat:
+//   - A slice containing the latest host IP info for each ident.
 //
-//   UPDATE target SET host_ip = CASE ident WHEN 'i1' THEN 'ip1' WHEN 'i2' THEN 'ip2' END, update_at = <now>
-//   WHERE ident IN ('i1', 'i2', ...)
+// now int64:
+//   - The timestamp to set the update_at field to.
 //
-func (s *Set) batchUpdateTHB(lst []string, lsThb []*TargetHeartBeat, now int64) *gorm.DB {
-	var b strings.Builder
-	b.WriteString("UPDATE target SET host_ip = CASE ident ")
-	for i := range lst {
-		b.WriteString("WHEN '")
-		b.WriteString(lst[i])
-		b.WriteString("' THEN '")
-		b.WriteString(lsThb[i].HostIp)
-		b.WriteString("'")
+// It starts a database transaction, and loops through the Idents performing an
+// update on each one. The HostIp and UpdateAt fields are set based on the
+// corresponding info in targetHeartbeats and now param.
+//
+// If any update fails, the transaction is rolled back.
+//
+// Returns the transaction handle to allow checking for errors.
+func (s *Set) batchUpdateTargets(idents []string, targetHeartbeats []*TargetHeartbeat, now int64) *gorm.DB {
+	tx := s.ctx.DB.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := tx.Error; err != nil {
+		return tx
 	}
-	b.WriteString("END, update_at = ? \nWHERE ident IN(?)")
-	return s.ctx.DB.Exec(b.String(), now, lst)
+	for i := range idents {
+		targetNew := models.Target{HostIp: targetHeartbeats[i].HostIp, UpdateAt: now}
+		tx.Model(&models.Target{}).Where("ident = ? ", idents[i]).Updates(targetNew)
+		if err := tx.Error; err != nil {
+			tx.Rollback()
+			return tx
+		}
+	}
+	defer func() {
+		tx.RowsAffected = int64(len(idents))
+	}()
+	return tx.Commit()
 }

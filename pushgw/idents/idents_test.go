@@ -32,9 +32,9 @@ func TestSet_updateTimestamp(t *testing.T) {
 
 	t.Run("test1", func(t *testing.T) {
 
-		s.updateTimestamp(map[string]*TargetHeartBeat{
-			"ident3": &TargetHeartBeat{HostIp: "3.1.1.1"},
-			"ident4": &TargetHeartBeat{HostIp: "4.2.2.2"},
+		s.updateTimestamp(map[string]*TargetHeartbeat{
+			"ident3": &TargetHeartbeat{HostIp: "3.1.1.1"},
+			"ident4": &TargetHeartbeat{HostIp: "4.2.2.2"},
 		})
 	})
 
