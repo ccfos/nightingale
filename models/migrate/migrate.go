@@ -12,7 +12,7 @@ func Migrate(db *gorm.DB) {
 }
 
 func MigrateTables(db *gorm.DB) error {
-	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{}, &TaskRecord{}, &ChartShare{}}
+	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{}, &TaskRecord{}, &ChartShare{}, &Target{}}
 	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
 		dts = append(dts, &AlertHisEvent{})
 	}
@@ -86,4 +86,7 @@ type TaskRecord struct {
 }
 type AlertHisEvent struct {
 	LastEvalTime int64 `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
+}
+type Target struct {
+	HostIp string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip""`
 }

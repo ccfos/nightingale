@@ -22,6 +22,7 @@ type Target struct {
 	TagsJSON []string          `json:"tags" gorm:"-"`
 	TagsMap  map[string]string `json:"tags_maps" gorm:"-"` // internal use, append tags to series
 	UpdateAt int64             `json:"update_at"`
+	HostIp   string            `json:"host_ip"` //ipv4，do not needs range select
 
 	UnixTime   int64   `json:"unixtime" gorm:"-"`
 	Offset     int64   `json:"offset" gorm:"-"`
@@ -213,6 +214,14 @@ func TargetUpdateBgid(ctx *ctx.Context, idents []string, bgid int64, clearTags b
 	}
 
 	return DB(ctx).Model(&Target{}).Where("ident in ?", idents).Updates(fields).Error
+}
+
+func TargetUpdateHostIpAndBgid(ctx *ctx.Context, ident string, ipv4 string, bgid int64) error {
+	return DB(ctx).Model(&Target{}).Where("ident = ?", ident).Updates(map[string]interface{}{
+		"host_ip":   ipv4,
+		"group_id":  bgid,
+		"update_at": time.Now().Unix(),
+	}).Error
 }
 
 func TargetGet(ctx *ctx.Context, where string, args ...interface{}) (*Target, error) {
