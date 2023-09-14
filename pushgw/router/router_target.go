@@ -10,5 +10,5 @@ func (rt *Router) targetUpdate(c *gin.Context) {
 	var f idents.TargetUpdate
 	ginx.BindJSON(c, &f)
 
-	ginx.NewRender(c).Message(rt.IdentSet.UpdateTargets(f.Idents, f.TargetHeartbeats, f.Now))
+	ginx.NewRender(c).Message(rt.IdentSet.UpdateTargets(f.Lst, f.Now))
 }
