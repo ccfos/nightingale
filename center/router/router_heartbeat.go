@@ -50,23 +50,17 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	items[req.Hostname] = struct{}{}
 	rt.IdentSet.MSet(items)
 
-	gid := ginx.QueryInt64(c, "gid", 0)
-
-	if gid != 0 {
-		target, has := rt.TargetCache.Get(req.Hostname)
-		if has && target.GroupId != gid {
-			err = models.TargetUpdateBgid(rt.Ctx, []string{req.Hostname}, gid, false)
+	if target, has := rt.TargetCache.Get(req.Hostname); has && target != nil {
+		var defGid int64 = -1
+		gid := ginx.QueryInt64(c, "gid", defGid)
+		hostIpStr := strings.TrimSpace(req.HostIp)
+		if gid == defGid { //set gid value from cache
+			gid = target.GroupId
+		}
+		if gid != target.GroupId || hostIpStr != target.HostIp { // if either gid or host_ip has a new value
+			err = models.TargetUpdateHostIpAndBgid(rt.Ctx, req.Hostname, hostIpStr, gid)
 		}
 	}
-	ginx.Dangerous(err)
 
-	hostIp := strings.TrimSpace(ginx.QueryStr(c, "host_ip", ""))
-
-	if hostIp != "" {
-		target, has := rt.TargetCache.Get(req.Hostname)
-		if has && target.HostIp != hostIp {
-			err = models.TargetUpdateHostIp(rt.Ctx, []string{req.Hostname}, hostIp)
-		}
-	}
 	ginx.NewRender(c).Message(err)
 }
