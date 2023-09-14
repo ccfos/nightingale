@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 func (rt *Router) heartbeat(c *gin.Context) {
@@ -57,6 +58,7 @@ func (rt *Router) heartbeat(c *gin.Context) {
 		if gid == defGid { //set gid value from cache
 			gid = target.GroupId
 		}
+		logger.Debugf("heartbeat gid: %v, host_ip: '%v', target: %v", gid, hostIpStr, *target)
 		if gid != target.GroupId || hostIpStr != target.HostIp { // if either gid or host_ip has a new value
 			err = models.TargetUpdateHostIpAndBgid(rt.Ctx, req.Hostname, hostIpStr, gid)
 		}
