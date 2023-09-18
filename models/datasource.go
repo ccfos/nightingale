@@ -79,6 +79,10 @@ func (ds *Datasource) Verify() error {
 		return errors.New("Name has invalid characters")
 	}
 
+	if ds.Category == "" {
+		return errors.New("category can not be empty")
+	}
+
 	err := ds.FE2DB()
 	return err
 }

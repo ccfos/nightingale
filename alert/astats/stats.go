@@ -63,7 +63,7 @@ func NewSyncStats() *Stats {
 		Subsystem: subsystem,
 		Name:      "alerts_total",
 		Help:      "Total number alert events.",
-	}, []string{"cluster", "type", "busi-group"})
+	}, []string{"cluster", "type", "busi_group"})
 
 	// 内存中的告警事件队列的长度
 	GaugeAlertQueueSize := prometheus.NewGauge(prometheus.GaugeOpts{

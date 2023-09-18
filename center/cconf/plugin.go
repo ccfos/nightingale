@@ -13,4 +13,10 @@ var Plugins = []Plugin{
 		Type:     "elasticsearch",
 		TypeName: "Elasticsearch",
 	},
+	{
+		Id:       3,
+		Category: "timeseries",
+		Type:     "tdengine",
+		TypeName: "TDengine",
+	},
 }

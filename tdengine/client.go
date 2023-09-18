@@ -116,13 +116,15 @@ func (pc *TdengineClientMap) Del(datasourceId int64) {
 }
 
 type tdengineClient struct {
-	cfg    *models.Datasource
+	url    string
 	client *http.Client
 	header map[string][]string
 }
 
 func newTdengine(po TdengineOption) *tdengineClient {
-	tc := &tdengineClient{}
+	tc := &tdengineClient{
+		url: po.Url,
+	}
 	tc.client = &http.Client{
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
@@ -166,8 +168,7 @@ type APIResponse struct {
 
 func (tc *tdengineClient) QueryTable(query string) (APIResponse, error) {
 	var apiResp APIResponse
-
-	req, err := http.NewRequest("POST", tc.cfg.HTTPJson.Url+"/rest/sql", strings.NewReader(query))
+	req, err := http.NewRequest("POST", tc.url+"/rest/sql", strings.NewReader(query))
 	if err != nil {
 		return apiResp, err
 	}
@@ -190,8 +191,21 @@ func (tc *tdengineClient) QueryTable(query string) (APIResponse, error) {
 	return apiResp, err
 }
 
+func (tc *tdengineClient) QueryLog(query interface{}) (APIResponse, error) {
+	q := query.(map[string]interface{})
+	return tc.QueryTable(q["query"].(string))
+}
+
 func (tc *tdengineClient) Query(query interface{}) ([]*models.DataResp, error) {
-	q := query.(TdengineQuery)
+	b, err := json.Marshal(query)
+	if err != nil {
+		return nil, err
+	}
+	var q TdengineQuery
+	err = json.Unmarshal(b, &q)
+	if err != nil {
+		return nil, err
+	}
 
 	replacements := map[string]string{
 		"$from":     q.From,

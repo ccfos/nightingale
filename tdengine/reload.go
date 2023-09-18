@@ -17,6 +17,7 @@ func NewTdengineClient(ctx *ctx.Context, heartbeat aconf.HeartbeatConfig) *Tdeng
 	pc := &TdengineClientMap{
 		ReaderClients: make(map[int64]*tdengineClient),
 		heartbeat:     heartbeat,
+		ctx:           ctx,
 	}
 	pc.InitReader()
 	return pc

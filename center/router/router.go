@@ -170,18 +170,24 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/query-instant-batch", rt.promBatchQueryInstant)
 			pages.GET("/datasource/brief", rt.datasourceBriefs)
 
-			pages.GET("/tdengine-databases", rt.tdengineDatabases)
-			pages.GET("/tdengine-tables", rt.tdengineTables)
-			pages.GET("/tdengine-columns", rt.tdengineColumns)
+			pages.POST("/ds-query", rt.QueryData)
+			pages.POST("/logs-query", rt.QueryLog)
+
+			pages.POST("/tdengine-databases", rt.tdengineDatabases)
+			pages.POST("/tdengine-tables", rt.tdengineTables)
+			pages.POST("/tdengine-columns", rt.tdengineColumns)
 		} else {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.auth(), rt.promBatchQueryInstant)
 			pages.GET("/datasource/brief", rt.auth(), rt.datasourceBriefs)
 
-			pages.GET("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
-			pages.GET("/tdengine-tables", rt.auth(), rt.tdengineTables)
-			pages.GET("/tdengine-columns", rt.auth(), rt.tdengineColumns)
+			pages.POST("/ds-query", rt.auth(), rt.QueryData)
+			pages.POST("/logs-query", rt.auth(), rt.QueryLog)
+
+			pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
+			pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
+			pages.POST("/tdengine-columns", rt.auth(), rt.tdengineColumns)
 		}
 
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
