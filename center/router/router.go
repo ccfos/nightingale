@@ -176,6 +176,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/tdengine-databases", rt.tdengineDatabases)
 			pages.POST("/tdengine-tables", rt.tdengineTables)
 			pages.POST("/tdengine-columns", rt.tdengineColumns)
+
+			pages.GET("/sql-template", rt.QuerySqlTemplate)
 		} else {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)

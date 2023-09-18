@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 
+	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
@@ -103,4 +104,15 @@ func (rt *Router) QueryLog(c *gin.Context) {
 		return
 	}
 	ginx.NewRender(c).Data(tdClient.QueryLog(f.Querys[0]))
+}
+
+// query sql template
+func (rt *Router) QuerySqlTemplate(c *gin.Context) {
+	cate := ginx.QueryStr(c, "cate")
+	m := make(map[string]string)
+	switch cate {
+	case models.TDENGINE:
+		m = cconf.TDengineSQLTpl
+	}
+	ginx.NewRender(c).Data(m, nil)
 }
