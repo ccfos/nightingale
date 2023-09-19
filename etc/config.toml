@@ -73,12 +73,14 @@ DefaultRoles = ["Standard"]
 [HTTP.RSA]
 # open RSA
 OpenRSA = false
+# open RSA For config
+OpenConfigRSA =false
 # RSA public key
-RSAPublicKeyPath = "/etc/n9e/public.pem"
+RSAPublicKeyPath = "etc/n9e/public.pem"
 # RSA private key
-RSAPrivateKeyPath = "/etc/n9e/private.pem"
+RSAPrivateKeyPath = "etc/n9e/private.pem"
 # RSA private key password
-RSAPassWord = ""
+RSAPassWord = "n9e@n9e!"
 
 [DB]
 # postgres: host=%s port=%s user=%s dbname=%s password=%s sslmode=%s

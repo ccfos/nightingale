@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"fmt"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -35,4 +36,22 @@ func Decrypt(cipherText string, privateKeyByte []byte, password string) (decrypt
 		return "", err
 	}
 	return string(decryptedByte), err
+}
+
+func EncryptValue(value string, publicKeyData []byte) (string, error) {
+	publicKeyBlock, _ := pem.Decode(publicKeyData)
+	parsedPublicKey, err := x509.ParsePKIXPublicKey(publicKeyBlock.Bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse public key: %v", err)
+	}
+	publicKey, ok := parsedPublicKey.(*rsa.PublicKey)
+	if !ok {
+		return "", fmt.Errorf("failed to assert parsed key as RSA public key")
+	}
+
+	ciphertext, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, []byte(value))
+	if err != nil {
+		return "", fmt.Errorf("failed to encrypt value: %w", err)
+	}
+	return BASE64StdEncode(ciphertext), nil
 }

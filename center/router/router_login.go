@@ -574,17 +574,19 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 }
 
 type RSAConfigOutput struct {
-	OpenRSA      bool
-	RSAPublicKey string
+	OpenRSA       bool
+	OpenConfigRSA bool
+	RSAPublicKey  string
 }
 
 func (rt *Router) rsaConfigGet(c *gin.Context) {
 	publicKey := ""
-	if rt.HTTP.RSA.OpenRSA {
+	if rt.HTTP.RSA.OpenRSA || rt.HTTP.RSA.OpenConfigRSA {
 		publicKey = base64.StdEncoding.EncodeToString(rt.HTTP.RSA.RSAPublicKey)
 	}
 	ginx.NewRender(c).Data(RSAConfigOutput{
-		OpenRSA:      rt.HTTP.RSA.OpenRSA,
-		RSAPublicKey: publicKey,
+		OpenRSA:       rt.HTTP.RSA.OpenRSA,
+		OpenConfigRSA: rt.HTTP.RSA.OpenConfigRSA,
+		RSAPublicKey:  publicKey,
 	}, nil)
 }

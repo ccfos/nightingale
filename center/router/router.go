@@ -381,6 +381,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternAdd)
 		pages.PUT("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternPut)
 		pages.DELETE("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternDel)
+		//user-variable-config
+		pages.GET("/user-variable-configs", rt.auth(), rt.admin(), rt.userVariableConfigGets)
+		pages.POST("/user-variable-config", rt.auth(), rt.admin(), rt.userVariableConfigAdd)
+		pages.PUT("/user-variable-config/", rt.auth(), rt.admin(), rt.userVariableConfigPut)
+		pages.DELETE("/user-variable-config/:id", rt.auth(), rt.admin(), rt.userVariableConfigDel)
+
+		//todo for test plaintext to ciphertext
+		pages.GET("/user-variable-ras", rt.auth(), rt.admin(), rt.userVariableEncrypted)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
@@ -443,6 +451,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/config/:id", rt.configGet)
 			service.GET("/configs", rt.configsGet)
 			service.GET("/config", rt.configGetByKey)
+			service.GET("/config-plus", rt.configGetPlusByKey)
 			service.PUT("/configs", rt.configsPut)
 			service.POST("/configs", rt.configsPost)
 			service.DELETE("/configs", rt.configsDel)
