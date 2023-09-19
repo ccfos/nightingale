@@ -222,10 +222,7 @@ func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
 	if err != nil {
 		return err
 	}
-	if len(objs) < 0 {
-		return fmt.Errorf("ckey found: %s", conf.Ckey)
-	}
-	if objs[0].Id != conf.Id {
+	if len(objs) > 0 && objs[0].Id != conf.Id {
 		return fmt.Errorf("duplicate ckey(external) value found: %s", conf.Ckey)
 	}
 	return DB(context).Model(&Configs{Id: validId}).Select("ckey", "cval", "note", "external", "encrypted").Updates(conf).Error
