@@ -1,9 +1,7 @@
 package router
 
 import (
-	"encoding/base64"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/pkg/secu"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -57,15 +55,4 @@ func (rt *Router) userVariableConfigDel(context *gin.Context) {
 	} else {
 		ginx.NewRender(context).Message(nil)
 	}
-}
-
-//todo for test
-func (rt *Router) userVariableEncrypted(context *gin.Context) {
-	publicKey := ginx.QueryStr(context, "public_key")
-	decodeCipher, errKey := base64.StdEncoding.DecodeString(publicKey)
-	ginx.Dangerous(errKey)
-	// got a plaintext need to encrypting
-	ciphertext, err := secu.EncryptValue(ginx.QueryStr(context, "plaintext"), decodeCipher)
-	ginx.NewRender(context).Data(ciphertext, err)
-
 }

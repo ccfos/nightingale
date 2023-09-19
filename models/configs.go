@@ -1,7 +1,6 @@
 package models
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -11,8 +10,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
-	"github.com/ccfos/nightingale/v6/pkg/tplx"
-
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/runner"
 	"github.com/toolkits/pkg/slice"
@@ -83,47 +80,6 @@ func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) {
 	return "", nil
 }
 
-// ConfigsGetPlus retrieves the value for the given config key with decryption and macro variable expansion.
-//
-// Parameters:
-// - ctx: Context containing environment info
-// - ckey: The config key to lookup
-// - rsaConfig: RSA config for decrypting encrypted config values
-//
-// Returns:
-// - string: The decrypted, expanded config value
-// - error: Any error encountered
-//
-// If on edge node, does a remote lookup.
-// If config not found, returns empty string.
-// If found, tries to decrypt if encrypted and expand any macro variables.
-// Returns original value if decryption or macro expansion fails.
-func ConfigsGetPlus(ctx *ctx.Context, ckey string, rsaConfig *httpx.RSAConfig) (string, error) {
-	if !ctx.IsCenter {
-		s, err := poster.GetByUrls[string](ctx, "/v1/n9e/config-plus?key="+ckey)
-		return s, err
-	}
-
-	objs, err := ConfigsSelectByCkey(ctx, ckey)
-	if err != nil {
-		return "", err
-	}
-
-	if len(objs) > 0 {
-		//Try to decode macro variables
-		var b *bytes.Buffer
-		if b, err = ConfigsMacroVariablesVerify(ctx, objs[0], rsaConfig); err != nil {
-			if !errors.As(err, &MacroVariablesNotFoundError{objs[0].Cval}) {
-				return objs[0].Cval, err
-			} else {
-				return decodeConfig(objs[0], rsaConfig) // no macro variables
-			}
-		}
-		return b.String(), nil
-	}
-	return "", nil
-}
-
 func decodeConfig(objs Configs, rsaConfig *httpx.RSAConfig) (string, error) {
 	if objs.Encrypted == Config_Encrypted && rsaConfig != nil && rsaConfig.OpenConfigRSA {
 		decrypted, err := secu.Decrypt(objs.Cval, rsaConfig.RSAPrivateKey, rsaConfig.RSAPassWord)
@@ -166,18 +122,10 @@ func ConfigsSetPlus(ctx *ctx.Context, conf Configs, rsaConfig *httpx.RSAConfig, 
 	if conf.External == Config_External && len(objs) == 0 && conf.IsInternal() {
 		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
 	}
-	//Try to decode macro variables (config with maro variable must not encrypt)
-	if _, err = ConfigsMacroVariablesVerify(ctx, conf, rsaConfig); err != nil {
-		if !errors.As(err, &MacroVariablesNotFoundError{conf.Cval}) {
-			return err
-		}
-		err = nil
-	}
 	if len(objs) == 0 { // insert
 		conf.Id = 0
 		err = DB(ctx).Create(&conf).Error
 	} else { // update
-
 		err = DB(ctx).Model(&Configs{Id: objs[0].Id}).Select("cval", "note", "external", "encrypted").Updates(conf).Error
 	}
 	return err
@@ -247,53 +195,8 @@ func ConfigsDel(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(&Configs{}).Error
 }
 
-func ConfigsGetsByKey(ctx *ctx.Context, ckeys []string, rsa *httpx.RSAConfig) (map[string]string, error) {
-	var objs []Configs
-	err := DB(ctx).Where("ckey in ?", ckeys).Find(&objs).Error
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to gets configs")
-	}
-
-	count := len(objs)
-	kvmap := make(map[string]string, count)
-	for i := 0; i < len(objs); i++ {
-		configCval, err := decodeConfig(objs[i], rsa)
-		if err != nil {
-			return nil, errors.WithMessage(err, "failed in ConfigsGetsByKey,ckey= "+objs[i].Ckey)
-		}
-		kvmap[objs[i].Ckey] = configCval
-	}
-
-	return kvmap, nil
-}
-
-type MacroVariablesNotFoundError struct {
-	Cval string
-}
-
-func (e MacroVariablesNotFoundError) Error() string {
-	return fmt.Sprintf("unable to find any macro variables for '%s'", e.Cval)
-}
-
 func (c *Configs) IsInternal() bool {
 	return slice.ContainsString(INTERNAL_CKEY_SLICE, c.Ckey)
-}
-
-func ConfigsMacroVariablesVerify(ctx *ctx.Context, f Configs, rsa *httpx.RSAConfig) (b *bytes.Buffer, err error) {
-	variables := tplx.ExtractTemplateVariables(f.Cval) //secret keys
-	if len(variables) < 1 {
-		return nil, MacroVariablesNotFoundError{f.Cval}
-	}
-	var macroMap map[string]string
-	macroMap, err = ConfigsGetsByKey(ctx, variables, rsa)
-	if err != nil {
-		return nil, err
-	}
-	if len(macroMap) != len(variables) {
-		return nil, fmt.Errorf("missing required macro variable configurations. need %v configurations, found %v", len(variables), len(macroMap))
-	}
-	b, err = tplx.ReplaceMacroVariables(f.Ckey, f.Cval, macroMap) //try to decode secret
-	return
 }
 
 func ConfigsGetUserVariable(context *ctx.Context, query string) ([]Configs, error) {

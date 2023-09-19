@@ -52,8 +52,3 @@ func (rt *Router) configsPost(c *gin.Context) {
 
 	ginx.NewRender(c).Message(nil)
 }
-
-func (rt *Router) configGetPlusByKey(c *gin.Context) { //for edge
-	config, err := models.ConfigsGetPlus(rt.Ctx, ginx.QueryStr(c, "key"), &rt.HTTP.RSA)
-	ginx.NewRender(c).Data(config, err)
-}
