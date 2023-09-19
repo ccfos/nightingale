@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -11,8 +10,7 @@ import (
 )
 
 func (rt *Router) userVariableConfigGets(context *gin.Context) {
-	query := strings.TrimSpace(ginx.QueryStr(context, "query", ""))
-	userVariables, err := models.ConfigsGetUserVariable(rt.Ctx, query)
+	userVariables, err := models.ConfigsGetUserVariable(rt.Ctx)
 	ginx.NewRender(context).Data(userVariables, err)
 }
 func (rt *Router) userVariableConfigAdd(context *gin.Context) {
@@ -20,29 +18,18 @@ func (rt *Router) userVariableConfigAdd(context *gin.Context) {
 	ginx.BindJSON(context, &f)
 	f.Ckey = strings.TrimSpace(f.Ckey)
 	//insert external config. needs to make sure not plaintext for an encrypted type config
-	objs, err := models.ConfigsSelectByCkey(rt.Ctx, f.Ckey)
-	ginx.Dangerous(err)
-	if len(objs) > 0 {
-		ginx.NewRender(context).Message(fmt.Errorf("duplicate ckey found: '%s'", f.Ckey))
-	} else {
-		ginx.NewRender(context).Message(models.ConfigsSetPlus(rt.Ctx, f, &rt.HTTP.RSA))
-	}
+	ginx.NewRender(context).Message(models.ConfigsUserVariableInsert(rt.Ctx, f))
+
 }
 
 func (rt *Router) userVariableConfigPut(context *gin.Context) {
 	var f models.Configs
 	ginx.BindJSON(context, &f)
+	f.Id = ginx.UrlParamInt64(context, "id")
 	f.Ckey = strings.TrimSpace(f.Ckey)
-	//insert external config. needs to make sure not plaintext for an encrypted type config
-	objs, err := models.ConfigsSelectByCkey(rt.Ctx, f.Ckey)
-	ginx.Dangerous(err)
-	if len(objs) == 0 {
-		ginx.NewRender(context).Message(fmt.Errorf("not found ckey: '%s'", f.Ckey))
-	} else {
-		//update external config. needs to make sure not plaintext for an encrypted type config
-		//updating with struct it will update all fields ("cval", "note", "external", "encrypted"),not non-zero fields.
-		ginx.NewRender(context).Message(models.ConfigsSetPlus(rt.Ctx, f, &rt.HTTP.RSA))
-	}
+	//update external config. needs to make sure not plaintext for an encrypted type config
+	//updating with struct it will update all fields ("ckey", "cval", "note", "external", "encrypted"), not non-zero fields.
+	ginx.NewRender(context).Message(models.ConfigsUserVariableUpdate(rt.Ctx, f))
 }
 
 func (rt *Router) userVariableConfigDel(context *gin.Context) {
@@ -50,7 +37,7 @@ func (rt *Router) userVariableConfigDel(context *gin.Context) {
 	configs, err := models.ConfigGet(rt.Ctx, id)
 	ginx.Dangerous(err)
 
-	if configs != nil && configs.External == models.Config_External {
+	if configs != nil && configs.External == models.ConfigExternal {
 		ginx.NewRender(context).Message(models.ConfigsDel(rt.Ctx, []int64{id}))
 	} else {
 		ginx.NewRender(context).Message(nil)

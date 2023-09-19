@@ -384,7 +384,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		//user-variable-config
 		pages.GET("/user-variable-configs", rt.auth(), rt.admin(), rt.userVariableConfigGets)
 		pages.POST("/user-variable-config", rt.auth(), rt.admin(), rt.userVariableConfigAdd)
-		pages.PUT("/user-variable-config/", rt.auth(), rt.admin(), rt.userVariableConfigPut)
+		pages.PUT("/user-variable-config/:id", rt.auth(), rt.admin(), rt.userVariableConfigPut)
 		pages.DELETE("/user-variable-config/:id", rt.auth(), rt.admin(), rt.userVariableConfigDel)
 
 	}

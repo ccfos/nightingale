@@ -13,13 +13,9 @@ func Migrate(db *gorm.DB) {
 
 func MigrateTables(db *gorm.DB) error {
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
-		&TaskRecord{}, &ChartShare{}, &Target{}}
+		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}}
 	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
 		dts = append(dts, &AlertHisEvent{})
-	}
-	config := getDatabaseType(db, ConfigsMysql{}, ConfigsPostgres{})
-	if config != nil {
-		dts = append(dts, &config)
 	}
 	err := db.AutoMigrate(dts...)
 	if err != nil {
@@ -42,16 +38,6 @@ func MigrateTables(db *gorm.DB) error {
 	}
 
 	return nil
-}
-func getDatabaseType(db *gorm.DB, mysqlT, postgresT interface{}) interface{} {
-	switch db.Dialector.Name() {
-	case "mysql":
-		return mysqlT
-	case "postgres":
-		return postgresT
-	default:
-		return nil
-	}
 }
 
 func columnHasIndex(db *gorm.DB, dst interface{}, indexColumn string) bool {
@@ -105,23 +91,9 @@ type AlertHisEvent struct {
 type Target struct {
 	HostIp string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip""`
 }
-type ConfigsMysql struct {
+type Configs struct {
 	Note string `gorm:"column:note;type:varchar(1024);comment:note"`
 	//mysql tinyint//postgresql smallint
-	External  int `gorm:"column:external;type:tinyint;not null;default:0;comment:0\\:built-in 1\\:external"`
-	Encrypted int `gorm:"column:encrypted;type:tinyint;not null;default:0;comment:0\\:plaintext 1\\:ciphertext"`
-}
-
-func (ConfigsMysql) TableName() string {
-	return "configs"
-}
-
-type ConfigsPostgres struct {
-	Note      string `gorm:"column:note;type:varchar(1024);comment:note"`
-	External  int    `gorm:"column:external;type:smallint;not null;default:0;comment:0\\:built-in 1\\:external"`
-	Encrypted int    `gorm:"column:encrypted;type:smallint;not null;default:0;comment:0\\:plaintext 1\\:ciphertext"`
-}
-
-func (ConfigsPostgres) TableName() string {
-	return "configs"
+	External  int `gorm:"column:external;type:int;not null;default:0;comment:0\\:built-in 1\\:external"`
+	Encrypted int `gorm:"column:encrypted;type:int;not null;default:0;comment:0\\:plaintext 1\\:ciphertext"`
 }

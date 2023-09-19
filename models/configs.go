@@ -30,8 +30,8 @@ func (Configs) TableName() string {
 }
 
 var (
-	Config_External  = 1 //external type
-	Config_Encrypted = 1 //ciphertext
+	ConfigExternal  = 1 //external type
+	ConfigEncrypted = 1 //ciphertext
 )
 
 func (c *Configs) DB2FE() error {
@@ -81,7 +81,7 @@ func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) {
 }
 
 func decodeConfig(objs Configs, rsaConfig *httpx.RSAConfig) (string, error) {
-	if objs.Encrypted == Config_Encrypted && rsaConfig != nil && rsaConfig.OpenConfigRSA {
+	if objs.Encrypted == ConfigEncrypted && rsaConfig != nil && rsaConfig.OpenConfigRSA {
 		decrypted, err := secu.Decrypt(objs.Cval, rsaConfig.RSAPrivateKey, rsaConfig.RSAPassWord)
 		if err != nil {
 			return objs.Cval, fmt.Errorf("failed to decode config (%+v),error info %s", objs, err.Error())
@@ -110,44 +110,25 @@ func ConfigsSet(ctx *ctx.Context, ckey, cval string) error {
 	return err
 }
 
-func ConfigsSetPlus(ctx *ctx.Context, conf Configs, rsaConfig *httpx.RSAConfig, isInternal ...bool) error {
-	if len(isInternal) < 1 || !isInternal[0] { //conf.External change default value to Config_External
-		conf.External = Config_External
-	}
-	objs, err := ConfigsSelectByCkey(ctx, conf.Ckey)
-	if err != nil {
-		return err
-	}
-	//Before inserting external conf, check if they are already defined as built-in conf
-	if conf.External == Config_External && len(objs) == 0 && conf.IsInternal() {
-		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
-	}
-	if len(objs) == 0 { // insert
-		conf.Id = 0
-		err = DB(ctx).Create(&conf).Error
-	} else { // update
-		err = DB(ctx).Model(&Configs{Id: objs[0].Id}).Select("cval", "note", "external", "encrypted").Updates(conf).Error
-	}
-	return err
-}
-
 func ConfigsSelectByCkey(ctx *ctx.Context, ckey string) ([]Configs, error) {
 	var objs []Configs
 	err := DB(ctx).Where("ckey=?", ckey).Find(&objs).Error
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to select conf")
 	}
-	return objs, err
+	return objs, nil
 }
 
 func ConfigGet(ctx *ctx.Context, id int64) (*Configs, error) {
 	var objs []*Configs
 	err := DB(ctx).Where("id=?", id).Find(&objs).Error
-
+	if err != nil {
+		return nil, err
+	}
 	if len(objs) == 0 {
 		return nil, nil
 	}
-	return objs[0], err
+	return objs[0], nil
 }
 
 func ConfigsGets(ctx *ctx.Context, prefix string, limit, offset int) ([]*Configs, error) {
@@ -196,20 +177,51 @@ func ConfigsDel(ctx *ctx.Context, ids []int64) error {
 }
 
 func (c *Configs) IsInternal() bool {
-	return slice.ContainsString(INTERNAL_CKEY_SLICE, c.Ckey)
+	return slice.ContainsString(InternalCkeySlice, c.Ckey)
 }
 
-func ConfigsGetUserVariable(context *ctx.Context, query string) ([]Configs, error) {
+func ConfigsGetUserVariable(context *ctx.Context) ([]Configs, error) {
 	var objs []Configs
-	tx := DB(context).Where("external = ?", Config_External)
-	if "" != query {
-		q := "%" + query + "%"
-		tx.Where("ckey like ? or note like ?", q, q)
-	}
+	tx := DB(context).Where("external = ?", ConfigExternal).Order("id desc")
 	err := tx.Find(&objs).Error
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to gets user variable")
 	}
 
 	return objs, nil
+}
+
+func ConfigsUserVariableInsert(context *ctx.Context, conf Configs) error {
+	conf.External = ConfigExternal
+	conf.Id = 0
+	//Before inserting external conf, check if they are already defined as built-in conf
+	if conf.IsInternal() {
+		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
+	}
+	objs, err := ConfigsSelectByCkey(context, conf.Ckey)
+	if err != nil {
+		return err
+	}
+	if len(objs) > 0 {
+		fmt.Errorf("duplicate ckey found: %s", conf.Ckey)
+	}
+	return DB(context).Create(&conf).Error
+}
+
+func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
+	conf.External = ConfigExternal
+	if conf.IsInternal() {
+		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
+	}
+	obj, err := ConfigGet(context, conf.Id)
+	if err != nil {
+		return err
+	}
+	if obj == nil {
+		return fmt.Errorf("not found ckey: %s", conf.Ckey)
+	}
+	if obj.Id != conf.Id {
+		return fmt.Errorf("duplicate ckey(external) value found: %s", conf.Ckey)
+	}
+	return DB(context).Model(&Configs{Id: obj.Id}).Select("ckey", "cval", "note", "external", "encrypted").Updates(conf).Error
 }
