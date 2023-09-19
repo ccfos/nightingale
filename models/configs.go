@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
+
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/runner"
 	"github.com/toolkits/pkg/slice"
@@ -17,12 +18,12 @@ import (
 )
 
 type Configs struct {
-	Id        int64  `gorm:"primaryKey"`
-	Ckey      string //Unique field. Before inserting external configs, check if they are already defined as built-in configs.
-	Cval      string
-	Note      string
-	External  int //Controls frontend list display: 0 hides built-in (default), 1 shows external
-	Encrypted int //Indicates whether the value(cval) is encrypted (1 for ciphertext, 0 for plaintext(default))
+	Id        int64  `json:"id" gorm:"primaryKey"`
+	Ckey      string `json:"ckey"` //Unique field. Before inserting external configs, check if they are already defined as built-in configs.
+	Cval      string `json:"cval"`
+	Note      string `json:"note"`
+	External  int    `json:"external"`  //Controls frontend list display: 0 hides built-in (default), 1 shows external
+	Encrypted int    `json:"encrypted"` //Indicates whether the value(cval) is encrypted (1 for ciphertext, 0 for plaintext(default))
 }
 
 func (Configs) TableName() string {
@@ -203,7 +204,7 @@ func ConfigsUserVariableInsert(context *ctx.Context, conf Configs) error {
 		return err
 	}
 	if len(objs) > 0 {
-		fmt.Errorf("duplicate ckey found: %s", conf.Ckey)
+		return fmt.Errorf("duplicate ckey found: %s", conf.Ckey)
 	}
 	return DB(context).Create(&conf).Error
 }
@@ -213,15 +214,33 @@ func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
 	if conf.IsInternal() {
 		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
 	}
-	obj, err := ConfigGet(context, conf.Id)
+	validId, errId := userVariableIdCheck(context, conf)
+	if errId != nil {
+		return errId
+	}
+	objs, err := ConfigsSelectByCkey(context, conf.Ckey)
 	if err != nil {
 		return err
 	}
-	if obj == nil {
-		return fmt.Errorf("not found ckey: %s", conf.Ckey)
+	if len(objs) < 0 {
+		return fmt.Errorf("ckey found: %s", conf.Ckey)
 	}
-	if obj.Id != conf.Id {
+	if objs[0].Id != conf.Id {
 		return fmt.Errorf("duplicate ckey(external) value found: %s", conf.Ckey)
 	}
-	return DB(context).Model(&Configs{Id: obj.Id}).Select("ckey", "cval", "note", "external", "encrypted").Updates(conf).Error
+	return DB(context).Model(&Configs{Id: validId}).Select("ckey", "cval", "note", "external", "encrypted").Updates(conf).Error
+}
+
+func userVariableIdCheck(context *ctx.Context, conf Configs) (int64, error) {
+	obj, err := ConfigGet(context, conf.Id)
+	if err != nil {
+		return -1, err
+	}
+	if obj == nil {
+		return -1, fmt.Errorf("not found id: %d", conf.Id)
+	}
+	if obj.External != ConfigExternal {
+		return -1, fmt.Errorf("user variable only: %d", conf.Id)
+	}
+	return obj.Id, err
 }

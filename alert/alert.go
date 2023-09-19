@@ -41,6 +41,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
+	httpx.InitRSAConfig(&config.HTTP.RSA)
 
 	targetCache := memsto.NewTargetCache(ctx, syncStats, nil)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)

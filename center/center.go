@@ -68,6 +68,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertStats := astats.NewSyncStats()
 
 	sso := sso.Init(config.Center, ctx)
+	httpx.InitRSAConfig(&config.HTTP.RSA)
 
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
@@ -85,7 +86,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	writers := writer.NewWriters(config.Pushgw)
 
-	httpx.InitRSAConfig(&config.HTTP.RSA)
 	go version.GetGithubVersion()
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
