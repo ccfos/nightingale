@@ -92,6 +92,7 @@ func (s *Scheduler) syncAlertRules() {
 
 		if rule.IsPrometheusRule() || rule.IsLokiRule() || rule.IsTdengineRule() {
 			datasourceIds := s.promClients.Hit(rule.DatasourceIdsJson)
+			datasourceIds = append(datasourceIds, s.tdengineClients.Hit(rule.DatasourceIdsJson)...)
 			for _, dsId := range datasourceIds {
 				if !naming.DatasourceHashRing.IsHit(dsId, fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
 					continue

@@ -235,7 +235,7 @@ func (tc *tdengineClient) Query(query interface{}) ([]*models.DataResp, error) {
 	}
 	logger.Debugf("tdengine query:%s result: %+v", q.Query, data)
 
-	return ConvertToTStData(data, q.Keys)
+	return ConvertToTStData(data, q.Keys, q.Ref)
 }
 
 // get tdendgine databases
@@ -349,7 +349,7 @@ func (tc *tdengineClient) GetColumns(database, table string) ([]Column, error) {
 //     "err": ""
 // }
 
-func ConvertToTStData(src APIResponse, key Keys) ([]*models.DataResp, error) {
+func ConvertToTStData(src APIResponse, key Keys, ref string) ([]*models.DataResp, error) {
 	metricIdxMap := make(map[string]int)
 	labelIdxMap := make(map[string]int)
 
@@ -434,6 +434,7 @@ func ConvertToTStData(src APIResponse, key Keys) ([]*models.DataResp, error) {
 	}
 
 	for _, v := range m {
+		v.Ref = ref
 		result = append(result, v)
 	}
 
