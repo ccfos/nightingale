@@ -369,7 +369,7 @@ func ConvertToTStData(src APIResponse, key Keys) ([]*models.DataResp, error) {
 		}
 	}
 
-	var tsIdx int
+	tsIdx := -1
 	for colIndex, colData := range src.ColumnMeta {
 		//  类型参考 https://docs.taosdata.com/taos-sql/data-type/
 		colName := colData[0].(string)
@@ -389,6 +389,10 @@ func ConvertToTStData(src APIResponse, key Keys) ([]*models.DataResp, error) {
 			}
 			labelIdxMap[colName] = colIndex
 		}
+	}
+
+	if tsIdx == -1 {
+		return nil, fmt.Errorf("not found timestamp column")
 	}
 
 	var result []*models.DataResp
