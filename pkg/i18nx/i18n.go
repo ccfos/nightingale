@@ -21,7 +21,9 @@ func Init(configDir string) {
 		logger.Errorf("parse i18n config file %s fail: %s\n", filePath, err)
 		return
 	}
-	if file.IsExist(filePath) {
+	if !file.IsExist(filePath) {
+		m = buildInConf
+	} else {
 		//expand config
 		//prioritize the settings within the expand config options in case of conflicts
 		content, err = file.ToTrimString(filePath)
