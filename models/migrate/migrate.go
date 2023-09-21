@@ -13,7 +13,7 @@ func Migrate(db *gorm.DB) {
 
 func MigrateTables(db *gorm.DB) error {
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
-		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}}
+		&TaskRecord{}, &ChartShare{}, &Target{}}
 	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
 		dts = append(dts, &AlertHisEvent{})
 	}
@@ -21,6 +21,23 @@ func MigrateTables(db *gorm.DB) error {
 	if err != nil {
 		logger.Errorf("failed to migrate table: %v", err)
 		return err
+	}
+	if !db.Migrator().HasColumn(&ConfigsAdd{}, "encrypted") {
+		err := db.AutoMigrate(&ConfigsAdd{})
+		if err != nil {
+			logger.Errorf("failed to migrate configs table: %v", err)
+			return err
+		}
+		//updates the database table by adding default values to existing rows.
+		err = db.Model(&Configs{}).Select("external", "encrypted").Where("1=1").Updates(Configs{Encrypted: 0, External: 0}).Error
+		if err != nil {
+			logger.Errorf("update configs default value failed, %v", err)
+		}
+		err = db.AutoMigrate(&Configs{})
+		if err != nil {
+			logger.Errorf("failed to migrate configs table: %v", err)
+			return err
+		}
 	}
 
 	if db.Migrator().HasColumn(&AlertingEngines{}, "cluster") {
@@ -91,6 +108,16 @@ type AlertHisEvent struct {
 type Target struct {
 	HostIp string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip""`
 }
+type ConfigsAdd struct {
+	Note      string `gorm:"column:note;type:varchar(1024);comment:note"`
+	External  int    `gorm:"column:external;type:int;default:0;comment:0\\:built-in 1\\:external"`
+	Encrypted int    `gorm:"column:encrypted;type:int;default:0;comment:0\\:plaintext 1\\:ciphertext"`
+}
+
+func (ConfigsAdd) TableName() string {
+	return "configs"
+}
+
 type Configs struct {
 	Note string `gorm:"column:note;type:varchar(1024);comment:note"`
 	//mysql tinyint//postgresql smallint
