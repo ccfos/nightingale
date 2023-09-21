@@ -103,7 +103,10 @@ func (rt *Router) QueryLog(c *gin.Context) {
 		ginx.Bomb(200, "querys is empty")
 		return
 	}
-	ginx.NewRender(c).Data(tdClient.QueryLog(f.Querys[0]))
+
+	data, err := tdClient.QueryLog(f.Querys[0])
+	logger.Debugf("tdengine query:%s result: %+v", f.Querys[0], data)
+	ginx.NewRender(c).Data(data, err)
 }
 
 // query sql template

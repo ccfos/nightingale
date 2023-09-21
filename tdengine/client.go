@@ -220,6 +220,7 @@ func (tc *tdengineClient) Query(query interface{}) ([]*models.DataResp, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("tdengine query:%s result: %+v", q.Query, data)
 
 	return ConvertToTStData(data, q.Keys)
 }
