@@ -210,20 +210,12 @@ func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
 func userVariableCheck(context *ctx.Context, conf Configs) (int64, error) {
 	var objs []*Configs
 	// id and ckey both unique
-	//select * from configs where external = 1 and (id= xxx or ckey = xxx)
-	err := DB(context).Where("external = ?", ConfigExternal).Where(
-		DB(context).Where("id=?", conf.Id).Or("ckey = ?", conf.Ckey)).Find(&objs).Error
+	err := DB(context).Where("id <> ? and ckey = ? ", conf.Id, conf.Ckey).Find(&objs).Error
 	if err != nil {
 		return -1, err
 	}
 	if len(objs) == 0 {
-		return -1, fmt.Errorf("not found id: %d ", conf.Id)
+		return conf.Id, nil
 	}
-	if len(objs) > 1 {
-		return -1, fmt.Errorf("duplicate ckey(external) value found: %s", conf.Ckey)
-	}
-	if objs[0].Id != conf.Id {
-		return -1, fmt.Errorf("not found id: %d ,and duplicate ckeyckey(external) value: %s ", conf.Id, conf.Ckey)
-	}
-	return objs[0].Id, nil
+	return -1, fmt.Errorf("duplicate ckey value found: %s", conf.Ckey)
 }

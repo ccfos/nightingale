@@ -386,7 +386,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/user-variable-config", rt.auth(), rt.admin(), rt.userVariableConfigAdd)
 		pages.PUT("/user-variable-config/:id", rt.auth(), rt.admin(), rt.userVariableConfigPut)
 		pages.DELETE("/user-variable-config/:id", rt.auth(), rt.admin(), rt.userVariableConfigDel)
-		pages.GET("/user-variable-public", rt.auth(), rt.admin(), rt.userVariablePublicKey)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
