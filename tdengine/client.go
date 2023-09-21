@@ -400,7 +400,8 @@ func ConvertToTStData(src APIResponse, key Keys) ([]*models.DataResp, error) {
 				logger.Warningf("parse %v timestamp failed: %v", row, err)
 				continue
 			}
-			timestamp := t.UnixNano() / 1e6
+
+			timestamp := t.Unix()
 			if _, ok := m[metric.String()]; !ok {
 				m[metric.String()] = &models.DataResp{
 					Metric: metric,
