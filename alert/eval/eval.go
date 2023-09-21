@@ -92,7 +92,7 @@ func (arw *AlertRuleWorker) Start() {
 func (arw *AlertRuleWorker) Eval() {
 	cachedRule := arw.rule
 	if cachedRule == nil {
-		//logger.Errorf("rule_eval:%s rule not found", arw.Key())
+		// logger.Errorf("rule_eval:%s rule not found", arw.Key())
 		return
 	}
 	arw.processor.Stats.CounterRuleEval.WithLabelValues().Inc()
@@ -107,6 +107,8 @@ func (arw *AlertRuleWorker) Eval() {
 		anomalyPoints = arw.GetHostAnomalyPoint(cachedRule.RuleConfig)
 	case models.TDENGINE:
 		anomalyPoints, recoverPoints = arw.GetTdengineAnomalyPoint(cachedRule, arw.processor.DatasourceId())
+	case models.LOKI:
+		anomalyPoints = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
 	default:
 		return
 	}

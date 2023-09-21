@@ -15,6 +15,12 @@ var Plugins = []Plugin{
 	},
 	{
 		Id:       3,
+		Category: "loki",
+		Type:     "loki",
+		TypeName: "Loki",
+	},
+	{
+		Id:       4,
 		Category: "timeseries",
 		Type:     "tdengine",
 		TypeName: "TDengine",

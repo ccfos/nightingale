@@ -203,7 +203,7 @@ type form struct {
 	Email string `json:"email"`
 }
 
-//After configuring the aconf.SMTPConfig, users can choose to perform a test. In this test, the function attempts to send an email
+// After configuring the aconf.SMTPConfig, users can choose to perform a test. In this test, the function attempts to send an email
 func (rt *Router) attemptSendEmail(c *gin.Context) {
 	var f form
 	ginx.BindJSON(c, &f)

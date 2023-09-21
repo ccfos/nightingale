@@ -40,10 +40,10 @@ func (rt *Router) alertMuteAdd(c *gin.Context) {
 	ginx.NewRender(c).Message(f.Add(rt.Ctx))
 }
 
-//Preview events (alert_cur_event) that match the mute strategy based on the following criteria:
-//business group ID (group_id, group_id), product (prod, rule_prod),
-//alert event severity (severities, severity), and event tags (tags, tags).
-//For products of type not 'host', also consider the category (cate, cate) and datasource ID (datasource_ids, datasource_id).
+// Preview events (alert_cur_event) that match the mute strategy based on the following criteria:
+// business group ID (group_id, group_id), product (prod, rule_prod),
+// alert event severity (severities, severity), and event tags (tags, tags).
+// For products of type not 'host', also consider the category (cate, cate) and datasource ID (datasource_ids, datasource_id).
 func (rt *Router) alertMutePreview(c *gin.Context) {
 	//Generally the match of events would be less.
 

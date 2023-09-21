@@ -18,6 +18,7 @@ import (
 const (
 	METRIC = "metric"
 	HOST   = "host"
+	LOKI   = "loki"
 
 	PROMETHEUS = "prometheus"
 	TDENGINE   = "tdengine"
@@ -421,7 +422,7 @@ func (ar *AlertRule) FillDatasourceIds() error {
 
 func (ar *AlertRule) FillSeverities() error {
 	if ar.RuleConfig != "" {
-		if ar.Cate == PROMETHEUS {
+		if ar.Cate == PROMETHEUS || ar.Cate == LOKI {
 			var rule PromRuleConfig
 			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
 				return err
@@ -787,6 +788,10 @@ func AlertRuleStatistics(ctx *ctx.Context) (*Statistics, error) {
 
 func (ar *AlertRule) IsPrometheusRule() bool {
 	return ar.Prod == METRIC && ar.Cate == PROMETHEUS
+}
+
+func (ar *AlertRule) IsLokiRule() bool {
+	return ar.Prod == LOKI || ar.Cate == LOKI
 }
 
 func (ar *AlertRule) IsHostRule() bool {

@@ -400,6 +400,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternAdd)
 		pages.PUT("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternPut)
 		pages.DELETE("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternDel)
+
+		pages.GET("/config", rt.auth(), rt.admin(), rt.configGetByKey)
+		pages.PUT("/config", rt.auth(), rt.admin(), rt.configPutByKey)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

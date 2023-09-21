@@ -427,7 +427,13 @@ func (p *Processor) mayHandleIdent() {
 		if target, exists := p.TargetCache.Get(ident); exists {
 			p.target = target.Ident
 			p.targetNote = target.Note
+		} else {
+			p.target = ident
+			p.targetNote = ""
 		}
+	} else {
+		p.target = ""
+		p.targetNote = ""
 	}
 }
 

@@ -230,7 +230,7 @@ func (rt *Router) loginCallback(c *gin.Context) {
 
 	ret, err := rt.Sso.OIDC.Callback(rt.Redis, c.Request.Context(), code, state)
 	if err != nil {
-		logger.Debugf("sso.callback() get ret %+v error %v", ret, err)
+		logger.Errorf("sso_callback fail. code:%s, state:%s, get ret: %+v. error: %v", code, state, ret, err)
 		ginx.NewRender(c).Data(CallbackOutput{}, err)
 		return
 	}
