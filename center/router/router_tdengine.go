@@ -83,11 +83,7 @@ func (rt *Router) QueryData(c *gin.Context) {
 	tdClient := rt.TdendgineClients.GetCli(f.DatasourceId)
 	for _, q := range f.Querys {
 		datas, err := tdClient.Query(q)
-		if err != nil {
-			logger.Warningf("query tdengine error: %v", err)
-			continue
-		}
-
+		ginx.Dangerous(err)
 		resp = append(resp, datas...)
 	}
 

@@ -379,15 +379,24 @@ func ConvertToTStData(src APIResponse, key Keys, ref string) ([]*models.DataResp
 			tsIdx = colIndex
 		case "BIGINT", "INT", "INT UNSIGNED", "BIGINT UNSIGNED", "FLOAT", "DOUBLE",
 			"SMALLINT", "SMALLINT UNSIGNED", "TINYINT", "TINYINT UNSIGNED", "BOOL":
-			if _, ok := metricMap[colName]; ok {
-				continue
+			if len(metricMap) > 0 {
+				if _, ok := metricMap[colName]; !ok {
+					continue
+				}
+				metricIdxMap[colName] = colIndex
+			} else {
+				metricIdxMap[colName] = colIndex
 			}
-			metricIdxMap[colName] = colIndex
+
 		default:
-			if _, ok := labelMap[colName]; ok {
-				continue
+			if len(labelMap) > 0 {
+				if _, ok := labelMap[colName]; !ok {
+					continue
+				}
+				labelIdxMap[colName] = colIndex
+			} else {
+				labelIdxMap[colName] = colIndex
 			}
-			labelIdxMap[colName] = colIndex
 		}
 	}
 
