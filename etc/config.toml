@@ -73,14 +73,12 @@ DefaultRoles = ["Standard"]
 [HTTP.RSA]
 # open RSA
 OpenRSA = false
-# open RSA For config
-OpenConfigRSA =false
 # RSA public key
-RSAPublicKeyPath = "etc/n9e/public.pem"
+RSAPublicKeyPath = "/etc/n9e/public.pem"
 # RSA private key
-RSAPrivateKeyPath = "etc/n9e/private.pem"
+RSAPrivateKeyPath = "/etc/n9e/private.pem"
 # RSA private key password
-RSAPassWord = "n9e@n9e!"
+RSAPassWord = ""
 
 [DB]
 # postgres: host=%s port=%s user=%s dbname=%s password=%s sslmode=%s
@@ -134,6 +132,14 @@ I18NHeaderKey = "X-Language"
 [Center.AnonymousAccess]
 PromQuerier = true
 AlertDetail = true
+
+[Center.Encryption]
+# RSA public key
+RSAPublicKeyPath = "etc/n9e/public.pem"
+# RSA private key
+RSAPrivateKeyPath = "etc/n9e/private.pem"
+# RSA private key password
+RSAPassWord = "n9e@n9e!"
 
 [Pushgw]
 # use target labels in database instead of in series

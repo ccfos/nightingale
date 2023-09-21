@@ -7,9 +7,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
-	"github.com/ccfos/nightingale/v6/pkg/secu"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/runner"
@@ -79,17 +77,6 @@ func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) {
 	}
 
 	return "", nil
-}
-
-func decodeConfig(objs Configs, rsaConfig *httpx.RSAConfig) (string, error) {
-	if objs.Encrypted == ConfigEncrypted && rsaConfig != nil && rsaConfig.OpenConfigRSA {
-		decrypted, err := secu.Decrypt(objs.Cval, rsaConfig.RSAPrivateKey, rsaConfig.RSAPassWord)
-		if err != nil {
-			return objs.Cval, fmt.Errorf("failed to decode config (%+v),error info %s", objs, err.Error())
-		}
-		objs.Cval = decrypted
-	}
-	return objs.Cval, nil
 }
 
 func ConfigsSet(ctx *ctx.Context, ckey, cval string) error {

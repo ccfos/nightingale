@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/base64"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -42,4 +43,9 @@ func (rt *Router) userVariableConfigDel(context *gin.Context) {
 	} else {
 		ginx.NewRender(context).Message(nil)
 	}
+}
+
+func (rt *Router) userVariablePublicKey(context *gin.Context) {
+	m := map[string]string{"public_key": base64.StdEncoding.EncodeToString(rt.Center.Encryption.RSAPublicKey)}
+	ginx.NewRender(context).Data(m, nil)
 }

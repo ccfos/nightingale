@@ -39,7 +39,6 @@ type Config struct {
 
 type RSAConfig struct {
 	OpenRSA           bool
-	OpenConfigRSA     bool
 	RSAPublicKey      []byte
 	RSAPublicKeyPath  string
 	RSAPrivateKey     []byte
@@ -163,7 +162,7 @@ func Init(cfg Config, handler http.Handler) func() {
 }
 
 func InitRSAConfig(rsaConfig *RSAConfig) {
-	if !rsaConfig.OpenRSA && !rsaConfig.OpenConfigRSA {
+	if !rsaConfig.OpenRSA {
 		return
 	}
 	// 读取公钥配置文件
