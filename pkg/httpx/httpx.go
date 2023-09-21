@@ -189,14 +189,14 @@ func initRSAFile(encryption *RSAConfig) error {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		err := os.MkdirAll(dirPath, os.ModePerm)
 		if err != nil {
-			return fmt.Errorf("could not create directory for Center.Encryption %q: %v", dirPath, err)
+			return fmt.Errorf("could not create directory for initRSAFile %q: %v", dirPath, err)
 		}
 	}
 	// Check if the file exists
 	if _, err := os.Stat(encryption.RSAPrivateKeyPath); os.IsNotExist(err) {
 		err := secu.GenerateKeyWithPassword(encryption.RSAPrivateKeyPath, encryption.RSAPublicKeyPath, encryption.RSAPassWord)
 		if err != nil {
-			return fmt.Errorf("could not create file for Center.Encryption %+v: %v", encryption, err)
+			return fmt.Errorf("could not create file for initRSAFile %+v: %v", encryption, err)
 		}
 	}
 	return nil
