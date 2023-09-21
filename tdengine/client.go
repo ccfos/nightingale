@@ -207,11 +207,24 @@ func (tc *tdengineClient) Query(query interface{}) ([]*models.DataResp, error) {
 		return nil, err
 	}
 
-	replacements := map[string]string{
-		"$from":     q.From,
-		"$to":       q.To,
-		"$interval": strconv.FormatInt(q.Interval, 10),
+	if q.Interval == 0 {
+		q.Interval = 60
 	}
+
+	if q.From == "" {
+		// 2023-09-21T05:37:30.000Z format
+		to := time.Now().Unix()
+		q.To = time.Unix(to, 0).UTC().Format(time.RFC3339)
+		from := to - q.Interval
+		q.From = time.Unix(from, 0).UTC().Format(time.RFC3339)
+	}
+
+	replacements := map[string]string{
+		"$from":     fmt.Sprintf("'%s'", q.From),
+		"$to":       fmt.Sprintf("'%s'", q.To),
+		"$interval": fmt.Sprintf("%ds", q.Interval),
+	}
+
 	for key, val := range replacements {
 		q.Query = strings.ReplaceAll(q.Query, key, val)
 	}
@@ -366,12 +379,12 @@ func ConvertToTStData(src APIResponse, key Keys) ([]*models.DataResp, error) {
 			tsIdx = colIndex
 		case "BIGINT", "INT", "INT UNSIGNED", "BIGINT UNSIGNED", "FLOAT", "DOUBLE",
 			"SMALLINT", "SMALLINT UNSIGNED", "TINYINT", "TINYINT UNSIGNED", "BOOL":
-			if _, ok := metricMap[colName]; !ok {
+			if _, ok := metricMap[colName]; ok {
 				continue
 			}
 			metricIdxMap[colName] = colIndex
 		default:
-			if _, ok := labelMap[colName]; !ok {
+			if _, ok := labelMap[colName]; ok {
 				continue
 			}
 			labelIdxMap[colName] = colIndex
