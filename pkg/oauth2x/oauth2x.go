@@ -201,19 +201,7 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 		logger.Errorf("failed to get user info: %s", err)
 		return nil, fmt.Errorf("failed to get user info: %s", err)
 	}
-	var data jsoniter.RawMessage
-	var userInfoStr string
-	err = jsoniter.Unmarshal(userInfo, &data)
-	if err != nil {
-		logger.Errorf("failed to get user info(Unmarshal): %s", err)
-		return nil, fmt.Errorf("failed to get user info(Unmarshal): %s", err)
-	}
-	userInfoStr, err = jsoniter.MarshalToString(data)
-	if err != nil {
-		logger.Errorf("failed to get user info(MarshalToString): %s", err)
-		return nil, fmt.Errorf("failed to get user info(MarshalToString): %s", err)
-	}
-	logger.Debugf("get userInfo: %s", userInfoStr)
+	logger.Debugf("get userInfo: %s", string(userInfo))
 	return &CallbackOutput{
 		AccessToken: oauth2Token.AccessToken,
 		Username:    getUserinfoField(userInfo, s.UserinfoIsArray, s.UserinfoPrefix, s.Attributes.Username),
@@ -262,9 +250,6 @@ func (s *SsoClient) getUserInfo(UserInfoAddr, accessToken string, TranTokenMetho
 
 	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
 	return body, err
 }
 
