@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/aop"
+	"github.com/ccfos/nightingale/v6/pkg/secu"
 	"github.com/ccfos/nightingale/v6/pkg/version"
+
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -162,8 +165,8 @@ func Init(cfg Config, handler http.Handler) func() {
 }
 
 func InitRSAConfig(rsaConfig *RSAConfig) {
-	if !rsaConfig.OpenRSA {
-		return
+	if err := initRSAFile(rsaConfig); err != nil {
+		panic(err)
 	}
 	// 读取公钥配置文件
 	//获取文件内容
@@ -178,4 +181,23 @@ func InitRSAConfig(rsaConfig *RSAConfig) {
 		panic(fmt.Errorf("could not read RSAPrivateKeyPath %q: %v", rsaConfig.RSAPrivateKeyPath, err))
 	}
 	rsaConfig.RSAPrivateKey = privateBuf
+}
+
+func initRSAFile(encryption *RSAConfig) error {
+	dirPath := filepath.Dir(encryption.RSAPrivateKeyPath)
+	// Check if the directory exists
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		err := os.MkdirAll(dirPath, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("could not create directory for Center.Encryption %q: %v", dirPath, err)
+		}
+	}
+	// Check if the file exists
+	if _, err := os.Stat(encryption.RSAPrivateKeyPath); os.IsNotExist(err) {
+		err := secu.GenerateKeyWithPassword(encryption.RSAPrivateKeyPath, encryption.RSAPublicKeyPath, encryption.RSAPassWord)
+		if err != nil {
+			return fmt.Errorf("could not create file for Center.Encryption %+v: %v", encryption, err)
+		}
+	}
+	return nil
 }

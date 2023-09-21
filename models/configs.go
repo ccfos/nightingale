@@ -197,34 +197,33 @@ func ConfigsUserVariableInsert(context *ctx.Context, conf Configs) error {
 }
 
 func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
-	conf.External = ConfigExternal
 	if conf.IsInternal() {
 		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
 	}
-	validId, errId := userVariableIdCheck(context, conf)
-	if errId != nil {
-		return errId
-	}
-	objs, err := ConfigsSelectByCkey(context, conf.Ckey)
+	validId, err := userVariableCheck(context, conf)
 	if err != nil {
 		return err
 	}
-	if len(objs) > 0 && objs[0].Id != conf.Id {
-		return fmt.Errorf("duplicate ckey(external) value found: %s", conf.Ckey)
-	}
-	return DB(context).Model(&Configs{Id: validId}).Select("ckey", "cval", "note", "external", "encrypted").Updates(conf).Error
+	return DB(context).Model(&Configs{Id: validId}).Select("ckey", "cval", "note", "encrypted").Updates(conf).Error
 }
 
-func userVariableIdCheck(context *ctx.Context, conf Configs) (int64, error) {
-	obj, err := ConfigGet(context, conf.Id)
+func userVariableCheck(context *ctx.Context, conf Configs) (int64, error) {
+	var objs []*Configs
+	// id and ckey both unique
+	//select * from configs where external = 1 and (id= xxx or ckey = xxx)
+	err := DB(context).Where("external = ?", ConfigExternal).Where(
+		DB(context).Where("id=?", conf.Id).Or("ckey = ?", conf.Ckey)).Find(&objs).Error
 	if err != nil {
 		return -1, err
 	}
-	if obj == nil {
-		return -1, fmt.Errorf("not found id: %d", conf.Id)
+	if len(objs) == 0 {
+		return -1, fmt.Errorf("not found id: %d ", conf.Id)
 	}
-	if obj.External != ConfigExternal {
-		return -1, fmt.Errorf("user variable only: %d", conf.Id)
+	if len(objs) > 1 {
+		return -1, fmt.Errorf("duplicate ckey(external) value found: %s", conf.Ckey)
 	}
-	return obj.Id, err
+	if objs[0].Id != conf.Id {
+		return -1, fmt.Errorf("not found id: %d ,and duplicate ckeyckey(external) value: %s ", conf.Id, conf.Ckey)
+	}
+	return objs[0].Id, nil
 }

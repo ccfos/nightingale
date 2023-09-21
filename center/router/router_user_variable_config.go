@@ -29,7 +29,7 @@ func (rt *Router) userVariableConfigPut(context *gin.Context) {
 	f.Id = ginx.UrlParamInt64(context, "id")
 	f.Ckey = strings.TrimSpace(f.Ckey)
 	//update external config. needs to make sure not plaintext for an encrypted type config
-	//updating with struct it will update all fields ("ckey", "cval", "note", "external", "encrypted"), not non-zero fields.
+	//updating with struct it will update all fields ("ckey", "cval", "note", "encrypted"), not non-zero fields.
 	ginx.NewRender(context).Message(models.ConfigsUserVariableUpdate(rt.Ctx, f))
 }
 
@@ -46,6 +46,6 @@ func (rt *Router) userVariableConfigDel(context *gin.Context) {
 }
 
 func (rt *Router) userVariablePublicKey(context *gin.Context) {
-	m := map[string]string{"public_key": base64.StdEncoding.EncodeToString(rt.Center.Encryption.RSAPublicKey)}
+	m := map[string]string{"public_key": base64.StdEncoding.EncodeToString(rt.HTTP.RSA.RSAPublicKey)}
 	ginx.NewRender(context).Data(m, nil)
 }

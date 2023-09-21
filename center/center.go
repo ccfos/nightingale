@@ -55,7 +55,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	ctx := ctx.NewContext(context.Background(), db, true)
 	models.InitRoot(ctx)
 	migrate.Migrate(db)
-	config.Center.InitRSAEncryption() //Init User Variable Encryption
+	httpx.InitRSAConfig(&config.HTTP.RSA)
 
 	redis, err := storage.NewRedis(config.Redis)
 	if err != nil {
@@ -86,7 +86,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	writers := writer.NewWriters(config.Pushgw)
 
-	httpx.InitRSAConfig(&config.HTTP.RSA)
 	go version.GetGithubVersion()
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
