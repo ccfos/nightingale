@@ -192,8 +192,39 @@ func (tc *tdengineClient) QueryTable(query string) (APIResponse, error) {
 }
 
 func (tc *tdengineClient) QueryLog(query interface{}) (APIResponse, error) {
-	q := query.(map[string]interface{})
-	return tc.QueryTable(q["query"].(string))
+	b, err := json.Marshal(query)
+	if err != nil {
+		return APIResponse{}, err
+	}
+	var q TdengineQuery
+	err = json.Unmarshal(b, &q)
+	if err != nil {
+		return APIResponse{}, err
+	}
+
+	if q.Interval == 0 {
+		q.Interval = 60
+	}
+
+	if q.From == "" {
+		// 2023-09-21T05:37:30.000Z format
+		to := time.Now().Unix()
+		q.To = time.Unix(to, 0).UTC().Format(time.RFC3339)
+		from := to - q.Interval
+		q.From = time.Unix(from, 0).UTC().Format(time.RFC3339)
+	}
+
+	replacements := map[string]string{
+		"$from":     fmt.Sprintf("'%s'", q.From),
+		"$to":       fmt.Sprintf("'%s'", q.To),
+		"$interval": fmt.Sprintf("%ds", q.Interval),
+	}
+
+	for key, val := range replacements {
+		q.Query = strings.ReplaceAll(q.Query, key, val)
+	}
+
+	return tc.QueryTable(q.Query)
 }
 
 func (tc *tdengineClient) Query(query interface{}) ([]*models.DataResp, error) {
