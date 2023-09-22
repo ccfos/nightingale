@@ -1,8 +1,6 @@
 package cconf
 
 var TDengineSQLTpl = map[string]string{
-	"getDatabases":         "show databases",
-	"getTables":            "show dbName.tables",
 	"load5":                "SELECT _wstart as ts, last(load5) FROM $database.system WHERE host = '$server' and _ts >= $from and _ts <= $to interval($interval) fill(null)",
 	"process_total":        "SELECT _wstart as ts, last(total) FROM $database.processes WHERE host = '$server' and _ts >= $from and _ts <= $to interval($interval) fill(null)",
 	"thread_total":         "SELECT _wstart as ts, last(total) FROM $database.threads WHERE host = '$server' and _ts >= $from and _ts <= $to interval($interval) fill(null)",
