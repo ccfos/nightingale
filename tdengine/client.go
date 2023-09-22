@@ -224,6 +224,10 @@ func (tc *tdengineClient) QueryLog(query interface{}) (APIResponse, error) {
 		q.Query = strings.ReplaceAll(q.Query, key, val)
 	}
 
+	if !strings.Contains(q.Query, "limit") {
+		q.Query = q.Query + " limit 200"
+	}
+
 	return tc.QueryTable(q.Query)
 }
 
