@@ -11,7 +11,8 @@ import (
 
 func Init(configDir string) {
 	filePath := path.Join(configDir, "i18n.json")
-	m, buildInConf := make(map[string]map[string]string), make(map[string]map[string]string)
+	m := make(map[string]map[string]string)
+	buildInConf := make(map[string]map[string]string)
 
 	var content = I18N
 	var err error
@@ -36,15 +37,24 @@ func Init(configDir string) {
 			logger.Errorf("parse i18n config file %s fail: %s\n", filePath, err)
 			return
 		}
-		for kL, vL := range buildInConf {
-			if _, hasL := m[kL]; hasL { //languages
-				for k, v := range vL {
-					if _, has := m[kL][k]; !has {
-						m[kL][k] = v
+		// json Example:
+		//{
+		//  "zh": {
+		//    "username":"用户名"
+		//	},
+		//  "fr": {
+		//    "username":"nom d'utilisateur"
+		//	}
+		//}
+		for languageKey, languageDict := range buildInConf {
+			if _, hasL := m[languageKey]; hasL { //languages
+				for k, v := range languageDict {
+					if _, has := m[languageKey][k]; !has {
+						m[languageKey][k] = v
 					}
 				}
 			} else {
-				m[kL] = vL
+				m[languageKey] = languageDict
 			}
 		}
 	}
