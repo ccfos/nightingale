@@ -195,8 +195,7 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange token: %s", err)
 	}
-	var userInfo []byte
-	userInfo, err = s.getUserInfo(s.UserInfoAddr, oauth2Token.AccessToken, s.TranTokenMethod)
+	userInfo, err := s.getUserInfo(s.UserInfoAddr, oauth2Token.AccessToken, s.TranTokenMethod)
 	if err != nil {
 		logger.Errorf("failed to get user info: %s", err)
 		return nil, fmt.Errorf("failed to get user info: %s", err)
