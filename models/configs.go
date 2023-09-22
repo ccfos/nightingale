@@ -200,22 +200,22 @@ func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
 	if conf.IsInternal() {
 		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
 	}
-	_, err := userVariableCheck(context, conf)
+	err := userVariableCheck(context, conf)
 	if err != nil {
 		return err
 	}
 	return DB(context).Model(&Configs{Id: conf.Id}).Select("ckey", "cval", "note", "encrypted").Updates(conf).Error
 }
 
-func userVariableCheck(context *ctx.Context, conf Configs) (bool, error) {
+func userVariableCheck(context *ctx.Context, conf Configs) error {
 	var objs []*Configs
 	// id and ckey both unique
 	err := DB(context).Where("id <> ? and ckey = ? ", conf.Id, conf.Ckey).Find(&objs).Error
 	if err != nil {
-		return false, err
+		return err
 	}
 	if len(objs) == 0 {
-		return true, nil
+		return nil
 	}
-	return false, fmt.Errorf("duplicate ckey value found: %s", conf.Ckey)
+	return fmt.Errorf("duplicate ckey value found: %s", conf.Ckey)
 }
