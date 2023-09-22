@@ -401,7 +401,7 @@ func ConvertToTStData(src APIResponse, key Keys, ref string) ([]*models.DataResp
 	}
 
 	if tsIdx == -1 {
-		return nil, fmt.Errorf("not found timestamp column")
+		return nil, fmt.Errorf("timestamp column not found, please check your query")
 	}
 
 	var result []*models.DataResp
