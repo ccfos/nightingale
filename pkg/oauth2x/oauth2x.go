@@ -195,13 +195,12 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange token: %s", err)
 	}
-
 	userInfo, err := s.getUserInfo(s.UserInfoAddr, oauth2Token.AccessToken, s.TranTokenMethod)
 	if err != nil {
 		logger.Errorf("failed to get user info: %s", err)
 		return nil, fmt.Errorf("failed to get user info: %s", err)
 	}
-
+	logger.Debugf("get userInfo: %s", string(userInfo))
 	return &CallbackOutput{
 		AccessToken: oauth2Token.AccessToken,
 		Username:    getUserinfoField(userInfo, s.UserinfoIsArray, s.UserinfoPrefix, s.Attributes.Username),
@@ -250,9 +249,6 @@ func (s *SsoClient) getUserInfo(UserInfoAddr, accessToken string, TranTokenMetho
 
 	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
-	if err != nil {
-		return nil, nil
-	}
 	return body, err
 }
 

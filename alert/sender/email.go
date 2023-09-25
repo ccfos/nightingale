@@ -36,6 +36,8 @@ func (es *EmailSender) Send(ctx MessageContext) {
 	}
 	content := BuildTplMessage(es.contentTpl, ctx.Events)
 	es.WriteEmail(subject, content, tos)
+
+	ctx.Stats.AlertNotifyTotal.WithLabelValues(models.Email).Add(float64(len(tos)))
 }
 
 func extract(users []*models.User) []string {

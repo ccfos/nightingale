@@ -25,6 +25,12 @@ func (rt *Router) configGetByKey(c *gin.Context) {
 	ginx.NewRender(c).Data(config, err)
 }
 
+func (rt *Router) configPutByKey(c *gin.Context) {
+	var f models.Configs
+	ginx.BindJSON(c, &f)
+	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, f.Ckey, f.Cval))
+}
+
 func (rt *Router) configsDel(c *gin.Context) {
 	var f idsForm
 	ginx.BindJSON(c, &f)

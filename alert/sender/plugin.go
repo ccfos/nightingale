@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/toolkits/pkg/file"
@@ -13,20 +14,22 @@ import (
 	"github.com/toolkits/pkg/sys"
 )
 
-func MayPluginNotify(noticeBytes []byte, notifyScript models.NotifyScript) {
+func MayPluginNotify(noticeBytes []byte, notifyScript models.NotifyScript, stats *astats.Stats) {
 	if len(noticeBytes) == 0 {
 		return
 	}
-	alertingCallScript(noticeBytes, notifyScript)
+	alertingCallScript(noticeBytes, notifyScript, stats)
 }
 
-func alertingCallScript(stdinBytes []byte, notifyScript models.NotifyScript) {
+func alertingCallScript(stdinBytes []byte, notifyScript models.NotifyScript, stats *astats.Stats) {
 	// not enable or no notify.py? do nothing
 	config := notifyScript
 	if !config.Enable || config.Content == "" {
 		return
 	}
 
+	channel := "script"
+	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
 	fpath := ".notify_scriptt"
 	if config.Type == 1 {
 		fpath = config.Content
@@ -36,6 +39,7 @@ func alertingCallScript(stdinBytes []byte, notifyScript models.NotifyScript) {
 			oldContent, err := file.ToString(fpath)
 			if err != nil {
 				logger.Errorf("event_script_notify_fail: read script file err: %v", err)
+				stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
 				return
 			}
 
@@ -48,12 +52,14 @@ func alertingCallScript(stdinBytes []byte, notifyScript models.NotifyScript) {
 			_, err := file.WriteString(fpath, config.Content)
 			if err != nil {
 				logger.Errorf("event_script_notify_fail: write script file err: %v", err)
+				stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
 				return
 			}
 
 			err = os.Chmod(fpath, 0777)
 			if err != nil {
 				logger.Errorf("event_script_notify_fail: chmod script file err: %v", err)
+				stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
 				return
 			}
 		}
@@ -83,13 +89,14 @@ func alertingCallScript(stdinBytes []byte, notifyScript models.NotifyScript) {
 
 		if err != nil {
 			logger.Errorf("event_script_notify_fail: kill process %s occur error %v", fpath, err)
+			stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
 		}
-
 		return
 	}
 
 	if err != nil {
 		logger.Errorf("event_script_notify_fail: exec script %s occur error: %v, output: %s", fpath, err, buf.String())
+		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
 		return
 	}
 

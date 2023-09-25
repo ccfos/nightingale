@@ -3,16 +3,17 @@ package sender
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/toolkits/pkg/logger"
 )
 
-func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent) {
+func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
 	for _, conf := range webhooks {
 		if conf.Url == "" || !conf.Enable {
 			continue
@@ -50,9 +51,11 @@ func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent) {
 			Timeout: time.Duration(conf.Timeout) * time.Second,
 		}
 
+		stats.AlertNotifyTotal.WithLabelValues("webhook").Inc()
 		var resp *http.Response
 		resp, err = client.Do(req)
 		if err != nil {
+			stats.AlertNotifyErrorTotal.WithLabelValues("webhook").Inc()
 			logger.Errorf("event_webhook_fail, ruleId: [%d], eventId: [%d], url: [%s], error: [%s]", event.RuleId, event.Id, conf.Url, err)
 			continue
 		}
@@ -60,7 +63,7 @@ func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent) {
 		var body []byte
 		if resp.Body != nil {
 			defer resp.Body.Close()
-			body, _ = ioutil.ReadAll(resp.Body)
+			body, _ = io.ReadAll(resp.Body)
 		}
 
 		logger.Debugf("event_webhook_succ, url: %s, response code: %d, body: %s", conf.Url, resp.StatusCode, string(body))

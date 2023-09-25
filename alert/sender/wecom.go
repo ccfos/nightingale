@@ -3,12 +3,8 @@ package sender
 import (
 	"html/template"
 	"strings"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/poster"
-
-	"github.com/toolkits/pkg/logger"
 )
 
 type wecomMarkdown struct {
@@ -37,7 +33,7 @@ func (ws *WecomSender) Send(ctx MessageContext) {
 				Content: message,
 			},
 		}
-		ws.doSend(url, body)
+		doSend(url, body, models.Wecom, ctx.Stats)
 	}
 }
 
@@ -53,13 +49,4 @@ func (ws *WecomSender) extract(users []*models.User) []string {
 		}
 	}
 	return urls
-}
-
-func (ws *WecomSender) doSend(url string, body wecom) {
-	res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
-	if err != nil {
-		logger.Errorf("wecom_sender: result=fail url=%s code=%d error=%v response=%s", url, code, err, string(res))
-	} else {
-		logger.Infof("wecom_sender: result=succ url=%s code=%d response=%s", url, code, string(res))
-	}
 }
