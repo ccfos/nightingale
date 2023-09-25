@@ -88,6 +88,7 @@ func ConfigsSet(ctx *ctx.Context, ckey, cval string) error {
 	if err != nil {
 		return errors.WithMessage(err, "failed to count configs")
 	}
+
 	if num == 0 {
 		// insert
 		err = DB(ctx).Create(&Configs{
@@ -220,7 +221,6 @@ func userVariableCheck(context *ctx.Context, conf Configs) error {
 	}
 	if len(objs) == 0 {
 		return nil
-	}
 	return fmt.Errorf("duplicate ckey value found: %s", conf.Ckey)
 }
 
@@ -238,6 +238,7 @@ func ConfigsUserVariableStatistics(context *ctx.Context) (*Statistics, error) {
 	if err != nil {
 		return nil, err
 	}
+	return fmt.Errorf("duplicate ckey value found: %s", conf.Ckey)
 
 	return stats[0], nil
 }
