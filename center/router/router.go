@@ -386,6 +386,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/user-variable-config", rt.auth(), rt.admin(), rt.userVariableConfigAdd)
 		pages.PUT("/user-variable-config/:id", rt.auth(), rt.admin(), rt.userVariableConfigPut)
 		pages.DELETE("/user-variable-config/:id", rt.auth(), rt.admin(), rt.userVariableConfigDel)
+		//todo for test
+		pages.GET("/user-variable-ras", rt.auth(), rt.admin(), rt.userVariableEncrypted)
+
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
@@ -460,6 +463,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/notify-tpls", rt.notifyTplGets)
 
 			service.POST("/task-record-add", rt.taskRecordAdd)
+
+			service.GET("/macro-variables", rt.MacroVariableGetDecryptByService)
 		}
 	}
 

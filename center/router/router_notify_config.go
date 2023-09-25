@@ -2,15 +2,19 @@ package router
 
 import (
 	"encoding/json"
+	"fmt"
+
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/str"
 )
@@ -172,30 +176,39 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 	default:
 		ginx.Bomb(200, "key %s can not modify", f.Ckey)
 	}
-
-	err := models.ConfigsSet(rt.Ctx, f.Ckey, f.Cval)
-	if err != nil {
-		ginx.Bomb(200, err.Error())
-	}
-
+	//insert or update build-in config
+	models.ConfigsSet(rt.Ctx, f.Ckey, f.Cval)
 	if f.Ckey == models.SMTP {
 		// 重置邮件发送器
-		smtp := smtpValidate(f.Cval)
-
+		smtp, errSmtp := SmtpValidate(rt.Ctx, f)
+		ginx.Dangerous(errSmtp)
 		go sender.RestartEmailSender(smtp)
 	}
 
 	ginx.NewRender(c).Message(nil)
 }
-
-func smtpValidate(smtpStr string) aconf.SMTPConfig {
+func SmtpValidate(context *ctx.Context, configs models.Configs) (aconf.SMTPConfig, error) {
 	var smtp aconf.SMTPConfig
-	ginx.Dangerous(toml.Unmarshal([]byte(smtpStr), &smtp))
-
-	if smtp.Host == "" || smtp.Port == 0 {
-		ginx.Bomb(200, "smtp host or port can not be empty")
+	var err error
+	cvalFun := func() (string, string, error) {
+		return configs.Ckey, configs.Cval, nil
 	}
-	return smtp
+	mvCache := context.Ctx.Value(memsto.MacroVariableKey).(*memsto.MacroVariableCache)
+	if mvCache == nil {
+		return smtp, fmt.Errorf("failed to get configs(macroMap). %s", memsto.MacroVariableKey)
+	}
+	configs.Cval, err = models.ConfigsGetDecryption(cvalFun, mvCache.Get())
+	if err != nil {
+		return smtp, errors.WithMessage(err, "failed to validation smtp.")
+	}
+	err = toml.Unmarshal([]byte(configs.Cval), &smtp)
+	if err != nil {
+		return smtp, err
+	}
+	if smtp.Host == "" || smtp.Port == 0 {
+		return smtp, fmt.Errorf("smtp host or port can not be empty")
+	}
+	return smtp, err
 }
 
 type form struct {
@@ -215,7 +228,9 @@ func (rt *Router) attemptSendEmail(c *gin.Context) {
 	if f.Ckey != models.SMTP {
 		ginx.Bomb(200, "config(%v) invalid", f)
 	}
-	smtp := smtpValidate(f.Cval)
+	smtp, err := SmtpValidate(rt.Ctx, f.Configs)
+	ginx.Dangerous(err)
+
 	ginx.NewRender(c).Message(sender.SendEmail("Email test", "email content", []string{f.Email}, smtp))
 
 }

@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/secu"
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
 	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
@@ -218,4 +222,71 @@ func userVariableCheck(context *ctx.Context, conf Configs) error {
 		return nil
 	}
 	return fmt.Errorf("duplicate ckey value found: %s", conf.Ckey)
+}
+
+func ConfigsUserVariableStatistics(context *ctx.Context) (*Statistics, error) {
+	if !context.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](context, "/v1/n9e/statistic?name=user_variable")
+		return s, err
+	}
+
+	session := DB(context).Model(&Configs{}).Select(
+		"count(*) as total", "1 as last_updated").Where("external = ?", ConfigExternal)
+
+	var stats []*Statistics
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return stats[0], nil
+}
+
+func MacroVariableGetDecryptMap(context *ctx.Context, privateKey []byte, passWord string) (map[string]string, error) {
+
+	if !context.IsCenter {
+		ret, err := poster.GetByUrls[map[string]string](context, "/v1/n9e/macro-variable")
+		if err != nil {
+			return nil, err
+		}
+		return ret, nil
+	}
+	lst, err := ConfigsGetUserVariable(context)
+	if err != nil {
+		return nil, err
+	}
+	ret := make(map[string]string, len(lst))
+	for i := 0; i < len(lst); i++ {
+		if lst[i].Encrypted != ConfigEncrypted {
+			ret[lst[i].Ckey] = lst[i].Cval
+		} else {
+			var decCval = ""
+			var decErr error
+			decCval, decErr = secu.Decrypt(lst[i].Cval, privateKey, passWord)
+			if decErr != nil {
+				logger.Errorf("RSA Decrypt failed: %v. Ckey: %s", err, lst[i].Ckey)
+			}
+			ret[lst[i].Ckey] = decCval
+		}
+	}
+
+	return ret, nil
+}
+
+func ConfigsGetDecryption(cvalFun func() (string, string, error), macroMap map[string]string) (string, error) {
+	ckey, cval, err := cvalFun()
+	if err != nil {
+		return "", errors.WithMessage(err, "failed to gets ConfigsGetDecryption.")
+	}
+	if strings.TrimSpace(cval) == "" {
+		return cval, nil
+	}
+	tplxBuffer, replaceErr := tplx.ReplaceMacroVariables(ckey, cval, macroMap)
+	if replaceErr != nil {
+		return "", errors.WithMessage(replaceErr, "failed to gets ConfigsGetDecryption. ReplaceMacroVariables error.")
+	}
+	if tplxBuffer != nil {
+		return tplxBuffer.String(), nil
+	}
+	return "", fmt.Errorf("unexpected error. ckey:%s, cval:%s, macroMap:%+v,tplxBuffer(pointer):%v", ckey, cval, macroMap, tplxBuffer)
 }
