@@ -80,7 +80,7 @@ func GenerateKeyWithPassword(privateFilePath, publicFilePath, password string) e
 	if err != nil {
 		return fmt.Errorf("failed to pem.Encode: %v", err)
 	}
-	logger.Debug("Private key with password encrypted and saved to", privateFilePath)
+	logger.Debug("Private key with password encrypted and saved to ", privateFilePath)
 
 	publicKey := &privateKey.PublicKey
 	publicKeyBytes, err := x509.MarshalPKIXPublicKey(publicKey)
