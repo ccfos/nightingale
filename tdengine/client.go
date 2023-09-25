@@ -29,8 +29,9 @@ type TdengineQuery struct {
 }
 
 type Keys struct {
-	LabelKey  string `json:"labelKey"`  // 多个用空格分隔
-	MetricKey string `json:"metricKey"` // 多个用空格分隔
+	LabelKey   string `json:"labelKey"`  // 多个用空格分隔
+	MetricKey  string `json:"metricKey"` // 多个用空格分隔
+	TimeFormat string `json:"timeFormat"`
 }
 
 type TdengineClientMap struct {
@@ -228,7 +229,54 @@ func (tc *tdengineClient) QueryLog(query interface{}) (APIResponse, error) {
 		q.Query = q.Query + " limit 200"
 	}
 
-	return tc.QueryTable(q.Query)
+	data, err := tc.QueryTable(q.Query)
+	if err != nil {
+		return data, err
+	}
+
+	return TimeFormat(data, q.Keys.TimeFormat), err
+}
+
+func TimeFormat(src APIResponse, timeFormat string) APIResponse {
+	if timeFormat == "" {
+		return src
+	}
+
+	tsIdx := -1
+	for colIndex, colData := range src.ColumnMeta {
+		//  类型参考 https://docs.taosdata.com/taos-sql/data-type/
+		colType, ok := colData[1].(string)
+		if !ok {
+			logger.Warningf("unexpected column type: %v", colData[1])
+			return src
+		}
+
+		if colType == "TIMESTAMP" {
+			tsIdx = colIndex
+			break
+		}
+	}
+
+	if tsIdx == -1 {
+		return src
+	}
+
+	for i := range src.Data {
+		ts, ok := src.Data[i][tsIdx].(string)
+		if !ok {
+			logger.Warningf("unexpected timestamp type: %v", src.Data[i][tsIdx])
+			continue
+		}
+
+		t, err := time.Parse(time.RFC3339Nano, ts)
+		if err != nil {
+			logger.Warningf("parse %v timestamp failed: %v", src.Data[i], err)
+			continue
+		}
+
+		src.Data[i][tsIdx] = t.In(time.Local).Format(timeFormat)
+	}
+	return src
 }
 
 func (tc *tdengineClient) Query(query interface{}) ([]*models.DataResp, error) {
@@ -487,6 +535,10 @@ func ConvertToTStData(src APIResponse, key Keys, ref string) ([]*models.DataResp
 
 func interfaceToFloat64(input interface{}) (float64, error) {
 	// Check for the kind of the value first
+	if input == nil {
+		return 0, fmt.Errorf("unsupported type: %T", input)
+	}
+
 	kind := reflect.TypeOf(input).Kind()
 	switch kind {
 	case reflect.Float64:
