@@ -141,7 +141,7 @@ func (c *Configs) Add(ctx *ctx.Context) error {
 		return errors.WithMessage(err, "failed to count configs")
 	}
 	if num > 0 {
-		return errors.WithMessage(err, "key is exists")
+		return errors.New("key is exists")
 	}
 
 	// insert
@@ -158,7 +158,7 @@ func (c *Configs) Update(ctx *ctx.Context) error {
 		return errors.WithMessage(err, "failed to count configs")
 	}
 	if num > 0 {
-		return errors.WithMessage(err, "key is exists")
+		return errors.New("key is exists")
 	}
 
 	err = DB(ctx).Model(&Configs{}).Where("id=?", c.Id).Updates(c).Error
@@ -221,13 +221,13 @@ func userVariableCheck(context *ctx.Context, conf Configs) error {
 	}
 	if len(objs) == 0 {
 		return nil
+	}
 	return fmt.Errorf("duplicate ckey value found: %s", conf.Ckey)
 }
 
 func ConfigsUserVariableStatistics(context *ctx.Context) (*Statistics, error) {
 	if !context.IsCenter {
-		s, err := poster.GetByUrls[*Statistics](context, "/v1/n9e/statistic?name=user_variable")
-		return s, err
+		return poster.GetByUrls[*Statistics](context, "/v1/n9e/statistic?name=user_variable")
 	}
 
 	session := DB(context).Model(&Configs{}).Select(
@@ -238,8 +238,6 @@ func ConfigsUserVariableStatistics(context *ctx.Context) (*Statistics, error) {
 	if err != nil {
 		return nil, err
 	}
-	return fmt.Errorf("duplicate ckey value found: %s", conf.Ckey)
-
 	return stats[0], nil
 }
 
@@ -261,11 +259,10 @@ func MacroVariableGetDecryptMap(context *ctx.Context, privateKey []byte, passWor
 		if lst[i].Encrypted != ConfigEncrypted {
 			ret[lst[i].Ckey] = lst[i].Cval
 		} else {
-			var decCval = ""
-			var decErr error
-			decCval, decErr = secu.Decrypt(lst[i].Cval, privateKey, passWord)
+			decCval, decErr := secu.Decrypt(lst[i].Cval, privateKey, passWord)
 			if decErr != nil {
-				logger.Errorf("RSA Decrypt failed: %v. Ckey: %s", err, lst[i].Ckey)
+				logger.Errorf("RSA Decrypt failed: %v. Ckey: %s", decErr, lst[i].Ckey)
+				decCval = ""
 			}
 			ret[lst[i].Ckey] = decCval
 		}
