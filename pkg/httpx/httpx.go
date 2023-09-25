@@ -174,13 +174,13 @@ func InitRSAConfig(rsaConfig *RSAConfig) {
 	//获取文件内容
 	publicBuf, err := os.ReadFile(rsaConfig.RSAPublicKeyPath)
 	if err != nil {
-		logger.Warningf("could not read RSAPublicKeyPath %s: %v", rsaConfig.RSAPublicKeyPath, err)
+		logger.Warningf("could not read RSAPublicKeyPath %q: %v", rsaConfig.RSAPublicKeyPath, err)
 	}
 	rsaConfig.RSAPublicKey = publicBuf
 	// 读取私钥配置文件
 	privateBuf, err := os.ReadFile(rsaConfig.RSAPrivateKeyPath)
 	if err != nil {
-		logger.Warningf("could not read RSAPrivateKeyPath %s: %v", rsaConfig.RSAPrivateKeyPath, err)
+		logger.Warningf("could not read RSAPrivateKeyPath %q: %v", rsaConfig.RSAPrivateKeyPath, err)
 	}
 	rsaConfig.RSAPrivateKey = privateBuf
 }
