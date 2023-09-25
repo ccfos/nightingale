@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+
 	"path/filepath"
 	"strings"
 	"time"
@@ -17,6 +18,8 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/toolkits/pkg/file"
+	"github.com/toolkits/pkg/logger"
 )
 
 type Config struct {
@@ -166,19 +169,19 @@ func Init(cfg Config, handler http.Handler) func() {
 
 func InitRSAConfig(rsaConfig *RSAConfig) {
 	if err := initRSAFile(rsaConfig); err != nil {
-		panic(err)
+		logger.Warning(err)
 	}
 	// 读取公钥配置文件
 	//获取文件内容
 	publicBuf, err := os.ReadFile(rsaConfig.RSAPublicKeyPath)
 	if err != nil {
-		panic(fmt.Errorf("could not read RSAPublicKeyPath %q: %v", rsaConfig.RSAPublicKeyPath, err))
+		logger.Warningf("could not read RSAPublicKeyPath %s: %v", rsaConfig.RSAPublicKeyPath, err)
 	}
 	rsaConfig.RSAPublicKey = publicBuf
 	// 读取私钥配置文件
 	privateBuf, err := os.ReadFile(rsaConfig.RSAPrivateKeyPath)
 	if err != nil {
-		panic(fmt.Errorf("could not read RSAPrivateKeyPath %q: %v", rsaConfig.RSAPrivateKeyPath, err))
+		logger.Warningf("could not read RSAPrivateKeyPath %s: %v", rsaConfig.RSAPrivateKeyPath, err)
 	}
 	rsaConfig.RSAPrivateKey = privateBuf
 }
@@ -186,17 +189,15 @@ func InitRSAConfig(rsaConfig *RSAConfig) {
 func initRSAFile(encryption *RSAConfig) error {
 	dirPath := filepath.Dir(encryption.RSAPrivateKeyPath)
 	// Check if the directory exists
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		err := os.MkdirAll(dirPath, os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("could not create directory for initRSAFile %q: %v", dirPath, err)
-		}
+	errCreateDir := file.InsureDir(dirPath)
+	if errCreateDir != nil {
+		return fmt.Errorf("could not create directory for initRSAFile %q: %v", dirPath, errCreateDir)
 	}
 	// Check if the file exists
-	if _, err := os.Stat(encryption.RSAPrivateKeyPath); os.IsNotExist(err) {
-		err := secu.GenerateKeyWithPassword(encryption.RSAPrivateKeyPath, encryption.RSAPublicKeyPath, encryption.RSAPassWord)
-		if err != nil {
-			return fmt.Errorf("could not create file for initRSAFile %+v: %v", encryption, err)
+	if file.IsExist(encryption.RSAPrivateKeyPath) {
+		errGen := secu.GenerateKeyWithPassword(encryption.RSAPrivateKeyPath, encryption.RSAPublicKeyPath, encryption.RSAPassWord)
+		if errGen != nil {
+			return fmt.Errorf("could not create file for initRSAFile %+v: %v", encryption, errGen)
 		}
 	}
 	return nil
