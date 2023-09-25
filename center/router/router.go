@@ -21,6 +21,7 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
+	"github.com/ccfos/nightingale/v6/tdengine"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
@@ -36,6 +37,7 @@ type Router struct {
 	DatasourceCache   *memsto.DatasourceCacheType
 	NotifyConfigCache *memsto.NotifyConfigCacheType
 	PromClients       *prom.PromClientMap
+	TdendgineClients  *tdengine.TdengineClientMap
 	Redis             storage.Redis
 	MetaSet           *metas.Set
 	IdentSet          *idents.Set
@@ -49,7 +51,7 @@ type Router struct {
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
-	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType,
+	pc *prom.PromClientMap, tdendgineClients *tdengine.TdengineClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType,
 	uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType) *Router {
 	return &Router{
 		HTTP:              httpConfig,
@@ -58,6 +60,7 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		DatasourceCache:   ds,
 		NotifyConfigCache: ncc,
 		PromClients:       pc,
+		TdendgineClients:  tdendgineClients,
 		Redis:             redis,
 		MetaSet:           metaSet,
 		IdentSet:          idents,
@@ -166,11 +169,27 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/query-range-batch", rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.promBatchQueryInstant)
 			pages.GET("/datasource/brief", rt.datasourceBriefs)
+
+			pages.POST("/ds-query", rt.QueryData)
+			pages.POST("/logs-query", rt.QueryLog)
+
+			pages.POST("/tdengine-databases", rt.tdengineDatabases)
+			pages.POST("/tdengine-tables", rt.tdengineTables)
+			pages.POST("/tdengine-columns", rt.tdengineColumns)
+
+			pages.GET("/sql-template", rt.QuerySqlTemplate)
 		} else {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.auth(), rt.promBatchQueryInstant)
 			pages.GET("/datasource/brief", rt.auth(), rt.datasourceBriefs)
+
+			pages.POST("/ds-query", rt.auth(), rt.QueryData)
+			pages.POST("/logs-query", rt.auth(), rt.QueryLog)
+
+			pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
+			pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
+			pages.POST("/tdengine-columns", rt.auth(), rt.tdengineColumns)
 		}
 
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)

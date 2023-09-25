@@ -35,6 +35,12 @@ def convert_alert(rule, interval):
         for v in rule['annotations'].values():
             note = v
             break
+    
+    annotations = {}
+    if 'annotations' in rule:
+        for k, v in rule['annotations'].items():
+            annotations[k] = v
+           
 
     append_tags = []
     severity = 2
@@ -50,7 +56,7 @@ def convert_alert(rule, interval):
             # elif v == 'warning':
             #     severity = 2
 
-
+ 
     n9e_alert_rule = {
         "name": name,
         "note": note,
@@ -77,7 +83,8 @@ def convert_alert(rule, interval):
         "recover_duration": 0,
         "callbacks": [],
         "runbook_url": "",
-        "append_tags": append_tags
+        "append_tags": append_tags,
+        "annotations":annotations
     }
     return n9e_alert_rule
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
+	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
@@ -33,7 +34,8 @@ type Dispatch struct {
 	ExtraSenders     map[string]sender.Sender
 	BeforeSenderHook func(*models.AlertCurEvent) bool
 
-	ctx *ctx.Context
+	ctx    *ctx.Context
+	astats *astats.Stats
 
 	RwLock sync.RWMutex
 }
@@ -41,7 +43,7 @@ type Dispatch struct {
 // 创建一个 Notify 实例
 func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
 	alertSubscribeCache *memsto.AlertSubscribeCacheType, targetCache *memsto.TargetCacheType, notifyConfigCache *memsto.NotifyConfigCacheType,
-	alerting aconf.Alerting, ctx *ctx.Context) *Dispatch {
+	alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
 	notify := &Dispatch{
 		alertRuleCache:      alertRuleCache,
 		userCache:           userCache,
@@ -57,7 +59,8 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 		ExtraSenders:     make(map[string]sender.Sender),
 		BeforeSenderHook: func(*models.AlertCurEvent) bool { return true },
 
-		ctx: ctx,
+		ctx:    ctx,
+		astats: astats,
 	}
 	return notify
 }
@@ -217,7 +220,7 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	needSend := e.BeforeSenderHook(event)
 	if needSend {
 		for channel, uids := range notifyTarget.ToChannelUserMap() {
-			msgCtx := sender.BuildMessageContext(rule, []*models.AlertCurEvent{event}, uids, e.userCache)
+			msgCtx := sender.BuildMessageContext(rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.astats)
 			e.RwLock.RLock()
 			s := e.Senders[channel]
 			e.RwLock.RUnlock()
@@ -230,13 +233,13 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	}
 
 	// handle event callbacks
-	sender.SendCallbacks(e.ctx, notifyTarget.ToCallbackList(), event, e.targetCache, e.userCache, e.notifyConfigCache.GetIbex())
+	sender.SendCallbacks(e.ctx, notifyTarget.ToCallbackList(), event, e.targetCache, e.userCache, e.notifyConfigCache.GetIbex(), e.astats)
 
 	// handle global webhooks
-	sender.SendWebhooks(notifyTarget.ToWebhookList(), event)
+	sender.SendWebhooks(notifyTarget.ToWebhookList(), event, e.astats)
 
 	// handle plugin call
-	go sender.MayPluginNotify(e.genNoticeBytes(event), e.notifyConfigCache.GetNotifyScript())
+	go sender.MayPluginNotify(e.genNoticeBytes(event), e.notifyConfigCache.GetNotifyScript(), e.astats)
 }
 
 type Notice struct {
