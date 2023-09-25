@@ -3,6 +3,7 @@ package router
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -149,6 +150,13 @@ func DatasourceCheck(ds models.Datasource) error {
 			logger.Errorf("Error creating request: %v", err)
 			return fmt.Errorf("request url:%s failed", fullURL)
 		}
+	} else if ds.PluginType == models.TDENGINE {
+		fullURL = fmt.Sprintf("%s/rest/sql", ds.HTTPJson.Url)
+		req, err = http.NewRequest("POST", fullURL, strings.NewReader("show databases"))
+		if err != nil {
+			logger.Errorf("Error creating request: %v", err)
+			return fmt.Errorf("request url:%s failed", fullURL)
+		}
 	}
 
 	if ds.PluginType == models.LOKI {
@@ -180,7 +188,8 @@ func DatasourceCheck(ds models.Datasource) error {
 
 	if resp.StatusCode != 200 {
 		logger.Errorf("Error making request: %v\n", resp.StatusCode)
-		return fmt.Errorf("request url:%s failed code:%d", fullURL, resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("request url:%s failed code:%d body:%s", fullURL, resp.StatusCode, string(body))
 	}
 
 	return nil

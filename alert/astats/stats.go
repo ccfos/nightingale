@@ -10,22 +10,52 @@ const (
 )
 
 type Stats struct {
-	CounterSampleTotal   *prometheus.CounterVec
-	CounterAlertsTotal   *prometheus.CounterVec
-	GaugeAlertQueueSize  prometheus.Gauge
-	GaugeSampleQueueSize *prometheus.GaugeVec
-	RequestDuration      *prometheus.HistogramVec
-	ForwardDuration      *prometheus.HistogramVec
+	AlertNotifyTotal            *prometheus.CounterVec
+	AlertNotifyErrorTotal       *prometheus.CounterVec
+	CounterAlertsTotal          *prometheus.CounterVec
+	GaugeAlertQueueSize         prometheus.Gauge
+	CounterRuleEval             *prometheus.CounterVec
+	CounterQueryDataErrorTotal  *prometheus.CounterVec
+	CounterRecordEval           *prometheus.CounterVec
+	CounterRecordEvalErrorTotal *prometheus.CounterVec
+	CounterMuteTotal            *prometheus.CounterVec
 }
 
 func NewSyncStats() *Stats {
-	// 从各个接收接口接收到的监控数据总量
-	CounterSampleTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+	CounterRuleEval := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
-		Name:      "samples_received_total",
-		Help:      "Total number samples received.",
-	}, []string{"cluster", "channel"})
+		Name:      "rule_eval_total",
+		Help:      "Number of rule eval.",
+	}, []string{})
+
+	CounterRecordEval := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "record_eval_total",
+		Help:      "Number of record eval.",
+	}, []string{})
+
+	CounterRecordEvalErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "record_eval_error_total",
+		Help:      "Number of record eval error.",
+	}, []string{})
+
+	AlertNotifyTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "alert_notify_total",
+		Help:      "Number of send msg.",
+	}, []string{"channel"})
+
+	AlertNotifyErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "alert_notify_error_total",
+		Help:      "Number of send msg.",
+	}, []string{"channel"})
 
 	// 产生的告警总量
 	CounterAlertsTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -33,7 +63,7 @@ func NewSyncStats() *Stats {
 		Subsystem: subsystem,
 		Name:      "alerts_total",
 		Help:      "Total number alert events.",
-	}, []string{"cluster"})
+	}, []string{"cluster", "type", "busi_group"})
 
 	// 内存中的告警事件队列的长度
 	GaugeAlertQueueSize := prometheus.NewGauge(prometheus.GaugeOpts{
@@ -43,51 +73,41 @@ func NewSyncStats() *Stats {
 		Help:      "The size of alert queue.",
 	})
 
-	// 数据转发队列，各个队列的长度
-	GaugeSampleQueueSize := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	CounterQueryDataErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
-		Name:      "sample_queue_size",
-		Help:      "The size of sample queue.",
-	}, []string{"cluster", "channel_number"})
+		Name:      "query_data_error_total",
+		Help:      "Number of query data error.",
+	}, []string{"datasource"})
 
-	// 一些重要的请求，比如接收数据的请求，应该统计一下延迟情况
-	RequestDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Buckets:   []float64{.01, .1, 1},
-			Name:      "http_request_duration_seconds",
-			Help:      "HTTP request latencies in seconds.",
-		}, []string{"code", "path", "method"},
-	)
-
-	// 发往后端TSDB，延迟如何
-	ForwardDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Buckets:   []float64{.1, 1, 10},
-			Name:      "forward_duration_seconds",
-			Help:      "Forward samples to TSDB. latencies in seconds.",
-		}, []string{"cluster", "channel_number"},
-	)
+	CounterMuteTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "mute_total",
+		Help:      "Number of mute.",
+	}, []string{"group"})
 
 	prometheus.MustRegister(
-		CounterSampleTotal,
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
-		GaugeSampleQueueSize,
-		RequestDuration,
-		ForwardDuration,
+		AlertNotifyTotal,
+		AlertNotifyErrorTotal,
+		CounterRuleEval,
+		CounterQueryDataErrorTotal,
+		CounterRecordEval,
+		CounterRecordEvalErrorTotal,
+		CounterMuteTotal,
 	)
 
 	return &Stats{
-		CounterSampleTotal:   CounterSampleTotal,
-		CounterAlertsTotal:   CounterAlertsTotal,
-		GaugeAlertQueueSize:  GaugeAlertQueueSize,
-		GaugeSampleQueueSize: GaugeSampleQueueSize,
-		RequestDuration:      RequestDuration,
-		ForwardDuration:      ForwardDuration,
+		CounterAlertsTotal:          CounterAlertsTotal,
+		GaugeAlertQueueSize:         GaugeAlertQueueSize,
+		AlertNotifyTotal:            AlertNotifyTotal,
+		AlertNotifyErrorTotal:       AlertNotifyErrorTotal,
+		CounterRuleEval:             CounterRuleEval,
+		CounterQueryDataErrorTotal:  CounterQueryDataErrorTotal,
+		CounterRecordEval:           CounterRecordEval,
+		CounterRecordEvalErrorTotal: CounterRecordEvalErrorTotal,
+		CounterMuteTotal:            CounterMuteTotal,
 	}
 }

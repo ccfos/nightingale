@@ -17,6 +17,7 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
+	"github.com/ccfos/nightingale/v6/tdengine"
 
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
@@ -58,9 +59,11 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 
 		promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
+		tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
 		externalProcessors := process.NewExternalProcessors()
 
-		alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, userCache, userGroupCache)
+		alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache,
+			alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
 
 		alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 

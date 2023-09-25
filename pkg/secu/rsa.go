@@ -17,8 +17,9 @@ func Decrypt(cipherText string, privateKeyByte []byte, password string) (decrypt
 	//pem解码
 	block, _ := pem.Decode(privateKeyByte)
 	var privateKey *rsa.PrivateKey
+	var decryptedPrivateKeyBytes []byte
 	if password != "" {
-		decryptedPrivateKeyBytes, err := x509.DecryptPEMBlock(block, []byte(password))
+		decryptedPrivateKeyBytes, err = x509.DecryptPEMBlock(block, []byte(password))
 		if err != nil {
 			logger.Error("Failed to DecryptPEMBlock:", err)
 			return "", err
