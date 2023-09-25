@@ -101,6 +101,6 @@ func GenerateKeyWithPassword(privateFilePath, publicFilePath, password string) e
 		return fmt.Errorf("failed to pem.Encode: %v", err)
 	}
 
-	logger.Debug("Public key saved to", publicFilePath)
+	logger.Debug("Public key saved to ", publicFilePath)
 	return nil
 }
