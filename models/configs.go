@@ -11,26 +11,37 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/runner"
+	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 )
 
 type Configs struct {
-	Id   int64 `gorm:"primaryKey"`
-	Ckey string
-	Cval string
+	Id        int64  `json:"id" gorm:"primaryKey"`
+	Ckey      string `json:"ckey"` //Unique field. Before inserting external configs, check if they are already defined as built-in configs.
+	Cval      string `json:"cval"`
+	Note      string `json:"note"`
+	External  int    `json:"external"`  //Controls frontend list display: 0 hides built-in (default), 1 shows external
+	Encrypted int    `json:"encrypted"` //Indicates whether the value(cval) is encrypted (1 for ciphertext, 0 for plaintext(default))
 }
 
 func (Configs) TableName() string {
 	return "configs"
 }
 
+var (
+	ConfigExternal  = 1 //external type
+	ConfigEncrypted = 1 //ciphertext
+)
+
 func (c *Configs) DB2FE() error {
 	return nil
 }
 
+const SALT = "salt"
+
 // InitSalt generate random salt
 func InitSalt(ctx *ctx.Context) {
-	val, err := ConfigsGet(ctx, "salt")
+	val, err := ConfigsGet(ctx, SALT)
 	if err != nil {
 		log.Fatalln("cannot query salt", err)
 	}
@@ -41,7 +52,7 @@ func InitSalt(ctx *ctx.Context) {
 
 	content := fmt.Sprintf("%s%d%d%s", runner.Hostname, os.Getpid(), time.Now().UnixNano(), str.RandLetters(6))
 	salt := str.MD5(content)
-	err = ConfigsSet(ctx, "salt", salt)
+	err = ConfigsSet(ctx, SALT, salt)
 	if err != nil {
 		log.Fatalln("init salt in mysql", err)
 	}
@@ -73,7 +84,6 @@ func ConfigsSet(ctx *ctx.Context, ckey, cval string) error {
 	if err != nil {
 		return errors.WithMessage(err, "failed to count configs")
 	}
-
 	if num == 0 {
 		// insert
 		err = DB(ctx).Create(&Configs{
@@ -88,14 +98,25 @@ func ConfigsSet(ctx *ctx.Context, ckey, cval string) error {
 	return err
 }
 
+func ConfigsSelectByCkey(ctx *ctx.Context, ckey string) ([]Configs, error) {
+	var objs []Configs
+	err := DB(ctx).Where("ckey=?", ckey).Find(&objs).Error
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to select conf")
+	}
+	return objs, nil
+}
+
 func ConfigGet(ctx *ctx.Context, id int64) (*Configs, error) {
 	var objs []*Configs
 	err := DB(ctx).Where("id=?", id).Find(&objs).Error
-
+	if err != nil {
+		return nil, err
+	}
 	if len(objs) == 0 {
 		return nil, nil
 	}
-	return objs[0], err
+	return objs[0], nil
 }
 
 func ConfigsGets(ctx *ctx.Context, prefix string, limit, offset int) ([]*Configs, error) {
@@ -143,22 +164,58 @@ func ConfigsDel(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(&Configs{}).Error
 }
 
-func ConfigsGetsByKey(ctx *ctx.Context, ckeys []string) (map[string]string, error) {
+func (c *Configs) IsInternal() bool {
+	return slice.ContainsString(InternalCkeySlice, c.Ckey)
+}
+
+func ConfigsGetUserVariable(context *ctx.Context) ([]Configs, error) {
 	var objs []Configs
-	err := DB(ctx).Where("ckey in ?", ckeys).Find(&objs).Error
+	tx := DB(context).Where("external = ?", ConfigExternal).Order("id desc")
+	err := tx.Find(&objs).Error
 	if err != nil {
-		return nil, errors.WithMessage(err, "failed to gets configs")
+		return nil, errors.WithMessage(err, "failed to gets user variable")
 	}
 
-	count := len(ckeys)
-	kvmap := make(map[string]string, count)
-	for i := 0; i < count; i++ {
-		kvmap[ckeys[i]] = ""
-	}
+	return objs, nil
+}
 
-	for i := 0; i < len(objs); i++ {
-		kvmap[objs[i].Ckey] = objs[i].Cval
+func ConfigsUserVariableInsert(context *ctx.Context, conf Configs) error {
+	conf.External = ConfigExternal
+	conf.Id = 0
+	//Before inserting external conf, check if they are already defined as built-in conf
+	if conf.IsInternal() {
+		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
 	}
+	objs, err := ConfigsSelectByCkey(context, conf.Ckey)
+	if err != nil {
+		return err
+	}
+	if len(objs) > 0 {
+		return fmt.Errorf("duplicate ckey found: %s", conf.Ckey)
+	}
+	return DB(context).Create(&conf).Error
+}
 
-	return kvmap, nil
+func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
+	if conf.IsInternal() {
+		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
+	}
+	err := userVariableCheck(context, conf)
+	if err != nil {
+		return err
+	}
+	return DB(context).Model(&Configs{Id: conf.Id}).Select("ckey", "cval", "note", "encrypted").Updates(conf).Error
+}
+
+func userVariableCheck(context *ctx.Context, conf Configs) error {
+	var objs []*Configs
+	// id and ckey both unique
+	err := DB(context).Where("id <> ? and ckey = ? ", conf.Id, conf.Ckey).Find(&objs).Error
+	if err != nil {
+		return err
+	}
+	if len(objs) == 0 {
+		return nil
+	}
+	return fmt.Errorf("duplicate ckey value found: %s", conf.Ckey)
 }

@@ -7,6 +7,8 @@ const NOTIFYCONTACT = "notify_contact"
 const SMTP = "smtp_config"
 const IBEX = "ibex_server"
 
+var InternalCkeySlice = []string{SALT, IBEX, SMTP, NOTIFYCONTACT, NOTIFYCHANNEL, NOTIFYSCRIPT, WEBHOOKKEY}
+
 type Webhook struct {
 	Enable        bool              `json:"enable"`
 	Url           string            `json:"url"`
