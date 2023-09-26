@@ -26,6 +26,10 @@ type Configs struct {
 	Note      string `json:"note"`
 	External  int    `json:"external"`  //Controls frontend list display: 0 hides built-in (default), 1 shows external
 	Encrypted int    `json:"encrypted"` //Indicates whether the value(cval) is encrypted (1 for ciphertext, 0 for plaintext(default))
+	CreateAt  int64  `json:"create_at"`
+	CreateBy  string `json:"create_by"`
+	UpdateAt  int64  `json:"update_at"`
+	UpdateBy  string `json:"update_by"`
 }
 
 func (Configs) TableName() string {
@@ -84,20 +88,31 @@ func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) {
 }
 
 func ConfigsSet(ctx *ctx.Context, ckey, cval string) error {
+	return ConfigsSetWithUname(ctx, ckey, cval, "default")
+}
+func ConfigsSetWithUname(ctx *ctx.Context, ckey, cval, uName string) error {
 	num, err := Count(DB(ctx).Model(&Configs{}).Where("ckey=?", ckey))
 	if err != nil {
 		return errors.WithMessage(err, "failed to count configs")
 	}
-
+	now := time.Now().Unix()
 	if num == 0 {
 		// insert
 		err = DB(ctx).Create(&Configs{
-			Ckey: ckey,
-			Cval: cval,
+			Ckey:     ckey,
+			Cval:     cval,
+			CreateBy: uName,
+			UpdateBy: uName,
+			CreateAt: now,
+			UpdateAt: now,
 		}).Error
 	} else {
 		// update
-		err = DB(ctx).Model(&Configs{}).Where("ckey=?", ckey).Update("cval", cval).Error
+		err = DB(ctx).Model(&Configs{}).Where("ckey=?", ckey).Updates(map[string]interface{}{
+			"cval":      cval,
+			"update_by": uName,
+			"update_at": now,
+		}).Error
 	}
 
 	return err
@@ -146,8 +161,12 @@ func (c *Configs) Add(ctx *ctx.Context) error {
 
 	// insert
 	err = DB(ctx).Create(&Configs{
-		Ckey: c.Ckey,
-		Cval: c.Cval,
+		Ckey:     c.Ckey,
+		Cval:     c.Cval,
+		CreateBy: c.CreateBy,
+		UpdateBy: c.CreateBy,
+		CreateAt: c.CreateAt,
+		UpdateAt: c.CreateAt,
 	}).Error
 	return err
 }
@@ -160,7 +179,6 @@ func (c *Configs) Update(ctx *ctx.Context) error {
 	if num > 0 {
 		return errors.New("key is exists")
 	}
-
 	err = DB(ctx).Model(&Configs{}).Where("id=?", c.Id).Updates(c).Error
 	return err
 }
@@ -209,7 +227,8 @@ func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
 	if err != nil {
 		return err
 	}
-	return DB(context).Model(&Configs{Id: conf.Id}).Select("ckey", "cval", "note", "encrypted").Updates(conf).Error
+	return DB(context).Model(&Configs{Id: conf.Id}).Select(
+		"ckey", "cval", "note", "encrypted", "update_by", "update_at").Updates(conf).Error
 }
 
 func userVariableCheck(context *ctx.Context, conf Configs) error {
@@ -231,7 +250,7 @@ func ConfigsUserVariableStatistics(context *ctx.Context) (*Statistics, error) {
 	}
 
 	session := DB(context).Model(&Configs{}).Select(
-		"count(*) as total", "1 as last_updated").Where("external = ?", ConfigExternal)
+		"count(*) as total", "max(update_at) as last_updated").Where("external = ?", ConfigExternal)
 
 	var stats []*Statistics
 	err := session.Find(&stats).Error
@@ -241,10 +260,10 @@ func ConfigsUserVariableStatistics(context *ctx.Context) (*Statistics, error) {
 	return stats[0], nil
 }
 
-func MacroVariableGetDecryptMap(context *ctx.Context, privateKey []byte, passWord string) (map[string]string, error) {
+func ConfigUserVariableGetDecryptMap(context *ctx.Context, privateKey []byte, passWord string) (map[string]string, error) {
 
 	if !context.IsCenter {
-		ret, err := poster.GetByUrls[map[string]string](context, "/v1/n9e/macro-variable")
+		ret, err := poster.GetByUrls[map[string]string](context, "/v1/n9e/user-variable/decrypt")
 		if err != nil {
 			return nil, err
 		}
@@ -271,7 +290,7 @@ func MacroVariableGetDecryptMap(context *ctx.Context, privateKey []byte, passWor
 	return ret, nil
 }
 
-func ConfigsGetDecryption(cvalFun func() (string, string, error), macroMap map[string]string) (string, error) {
+func ConfigsGetDecryption(cvalFun func() (string, string, error), userVariableMap map[string]string) (string, error) {
 	ckey, cval, err := cvalFun()
 	if err != nil {
 		return "", errors.WithMessage(err, "failed to gets ConfigsGetDecryption.")
@@ -279,12 +298,12 @@ func ConfigsGetDecryption(cvalFun func() (string, string, error), macroMap map[s
 	if strings.TrimSpace(cval) == "" {
 		return cval, nil
 	}
-	tplxBuffer, replaceErr := tplx.ReplaceMacroVariables(ckey, cval, macroMap)
+	tplxBuffer, replaceErr := tplx.ReplaceMacroVariables(ckey, cval, userVariableMap)
 	if replaceErr != nil {
 		return "", errors.WithMessage(replaceErr, "failed to gets ConfigsGetDecryption. ReplaceMacroVariables error.")
 	}
 	if tplxBuffer != nil {
 		return tplxBuffer.String(), nil
 	}
-	return "", fmt.Errorf("unexpected error. ckey:%s, cval:%s, macroMap:%+v,tplxBuffer(pointer):%v", ckey, cval, macroMap, tplxBuffer)
+	return "", fmt.Errorf("unexpected error. ckey:%s, cval:%s, userVariableMap:%+v,tplxBuffer(pointer):%v", ckey, cval, userVariableMap, tplxBuffer)
 }

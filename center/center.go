@@ -71,7 +71,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	sso := sso.Init(config.Center, ctx)
 
-	memsto.NewMacroVariableCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
+	memsto.NewConfigsCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
 	dsCache := memsto.NewDatasourceCache(ctx, syncStats)

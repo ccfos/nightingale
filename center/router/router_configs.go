@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/ccfos/nightingale/v6/models"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -28,7 +29,8 @@ func (rt *Router) configGetByKey(c *gin.Context) {
 func (rt *Router) configPutByKey(c *gin.Context) {
 	var f models.Configs
 	ginx.BindJSON(c, &f)
-	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, f.Ckey, f.Cval))
+	username := c.MustGet("username").(string)
+	ginx.NewRender(c).Message(models.ConfigsSetWithUname(rt.Ctx, f.Ckey, f.Cval, username))
 }
 
 func (rt *Router) configsDel(c *gin.Context) {
@@ -37,22 +39,30 @@ func (rt *Router) configsDel(c *gin.Context) {
 	ginx.NewRender(c).Message(models.ConfigsDel(rt.Ctx, f.Ids))
 }
 
-func (rt *Router) configsPut(c *gin.Context) {
+func (rt *Router) configsPut(c *gin.Context) { //for open APIForService
 	var arr []models.Configs
+	username := c.MustGet("user").(string)
 	ginx.BindJSON(c, &arr)
-
+	now := time.Now().Unix()
 	for i := 0; i < len(arr); i++ {
+		arr[i].UpdateBy = username
+		arr[i].UpdateAt = now
 		ginx.Dangerous(arr[i].Update(rt.Ctx))
 	}
 
 	ginx.NewRender(c).Message(nil)
 }
 
-func (rt *Router) configsPost(c *gin.Context) {
+func (rt *Router) configsPost(c *gin.Context) { //for open APIForService
 	var arr []models.Configs
 	ginx.BindJSON(c, &arr)
-
+	username := c.MustGet("user").(string)
+	now := time.Now().Unix()
 	for i := 0; i < len(arr); i++ {
+		arr[i].CreateBy = username
+		arr[i].UpdateBy = username
+		arr[i].CreateAt = now
+		arr[i].UpdateAt = now
 		ginx.Dangerous(arr[i].Add(rt.Ctx))
 	}
 

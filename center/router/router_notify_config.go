@@ -47,8 +47,8 @@ func (rt *Router) webhookPuts(c *gin.Context) {
 
 	data, err := json.Marshal(webhooks)
 	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, models.WEBHOOKKEY, string(data)))
+	username := c.MustGet("username").(string)
+	ginx.NewRender(c).Message(models.ConfigsSetWithUname(rt.Ctx, models.WEBHOOKKEY, string(data), username))
 }
 
 func (rt *Router) notifyScriptGet(c *gin.Context) {
@@ -71,8 +71,8 @@ func (rt *Router) notifyScriptPut(c *gin.Context) {
 
 	data, err := json.Marshal(notifyScript)
 	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, models.NOTIFYSCRIPT, string(data)))
+	username := c.MustGet("username").(string)
+	ginx.NewRender(c).Message(models.ConfigsSetWithUname(rt.Ctx, models.NOTIFYSCRIPT, string(data), username))
 }
 
 func (rt *Router) notifyChannelGets(c *gin.Context) {
@@ -107,8 +107,8 @@ func (rt *Router) notifyChannelPuts(c *gin.Context) {
 
 	data, err := json.Marshal(notifyChannels)
 	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, models.NOTIFYCHANNEL, string(data)))
+	username := c.MustGet("username").(string)
+	ginx.NewRender(c).Message(models.ConfigsSetWithUname(rt.Ctx, models.NOTIFYCHANNEL, string(data), username))
 }
 
 func (rt *Router) notifyContactGets(c *gin.Context) {
@@ -143,8 +143,8 @@ func (rt *Router) notifyContactPuts(c *gin.Context) {
 
 	data, err := json.Marshal(notifyContacts)
 	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, models.NOTIFYCONTACT, string(data)))
+	username := c.MustGet("username").(string)
+	ginx.NewRender(c).Message(models.ConfigsSetWithUname(rt.Ctx, models.NOTIFYCONTACT, string(data), username))
 }
 
 func (rt *Router) notifyConfigGet(c *gin.Context) {
@@ -176,8 +176,9 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 	default:
 		ginx.Bomb(200, "key %s can not modify", f.Ckey)
 	}
+	username := c.MustGet("username").(string)
 	//insert or update build-in config
-	models.ConfigsSet(rt.Ctx, f.Ckey, f.Cval)
+	models.ConfigsSetWithUname(rt.Ctx, f.Ckey, f.Cval, username)
 	if f.Ckey == models.SMTP {
 		// 重置邮件发送器
 		smtp, errSmtp := SmtpValidate(rt.Ctx, f)
@@ -193,11 +194,11 @@ func SmtpValidate(context *ctx.Context, configs models.Configs) (aconf.SMTPConfi
 	cvalFun := func() (string, string, error) {
 		return configs.Ckey, configs.Cval, nil
 	}
-	mvCache := context.Ctx.Value(memsto.MacroVariableKey).(*memsto.MacroVariableCache)
-	if mvCache == nil {
-		return smtp, fmt.Errorf("failed to get configs(macroMap). %s", memsto.MacroVariableKey)
+	configCache := context.Ctx.Value(memsto.ConfigUserVariableKey).(*memsto.ConfigCache)
+	if configCache == nil {
+		return smtp, fmt.Errorf("failed to get configs. %s", memsto.ConfigUserVariableKey)
 	}
-	configs.Cval, err = models.ConfigsGetDecryption(cvalFun, mvCache.Get())
+	configs.Cval, err = models.ConfigsGetDecryption(cvalFun, configCache.Get())
 	if err != nil {
 		return smtp, errors.WithMessage(err, "failed to validation smtp.")
 	}
