@@ -409,9 +409,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/config", rt.auth(), rt.admin(), rt.configGetByKey)
 		pages.PUT("/config", rt.auth(), rt.admin(), rt.configPutByKey)
 
-		//todo for test
-		pages.GET("/user-variable-ras", rt.auth(), rt.admin(), rt.userVariableEncrypted)
-
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

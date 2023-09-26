@@ -79,7 +79,7 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	w.RWMutex.Lock()
 	defer w.RWMutex.Unlock()
 	mvCache := w.ctx.Ctx.Value(MacroVariableKey).(*MacroVariableCache)
-	if mvCache == nil { //for edge
+	if mvCache == nil { //for edge and alert
 		ret, err := poster.GetByUrls[map[string]string](w.ctx, "/v1/n9e/macro-variable")
 		if err != nil {
 			return errors.WithMessage(err, "failed to sync notify configs(macroMap).")

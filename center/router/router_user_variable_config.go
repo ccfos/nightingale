@@ -1,12 +1,9 @@
 package router
 
 import (
-	"encoding/base64"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/secu"
-
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
@@ -49,15 +46,4 @@ func (rt *Router) userVariableConfigDel(context *gin.Context) {
 func (rt *Router) MacroVariableGetDecryptByService(context *gin.Context) {
 	decryptMap, decryptErr := models.MacroVariableGetDecryptMap(rt.Ctx, rt.HTTP.RSA.RSAPrivateKey, rt.HTTP.RSA.RSAPassWord)
 	ginx.NewRender(context).Data(decryptMap, decryptErr)
-}
-
-//todo for test
-func (rt *Router) userVariableEncrypted(context *gin.Context) {
-	publicKey := ginx.QueryStr(context, "public_key")
-	decodeCipher, errKey := base64.StdEncoding.DecodeString(publicKey)
-	ginx.Dangerous(errKey)
-	// got a plaintext need to encrypting
-	ciphertext, err := secu.EncryptValue(ginx.QueryStr(context, "plaintext"), decodeCipher)
-	ginx.NewRender(context).Data(ciphertext, err)
-
 }
