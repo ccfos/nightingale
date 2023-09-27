@@ -1,7 +1,6 @@
 package memsto
 
 import (
-	"context"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -24,28 +23,7 @@ type ConfigCache struct {
 	userVariableMap map[string]string
 }
 
-const ConfigUserVariableKey = "userVariableCache"
-
-// NewConfigsCache creates a new ConfigCache instance.
-//
-// Usage:
-//   uvCache := ctx.Value(memsto.ConfigUserVariableKey).(*memsto.ConfigCache)
-//   if uvCache != nil {
-//     get := uvCache.Get()
-//     fmt.Printf("UserVariable: %+v", get)
-//   }
-//
-// It takes in the following parameters:
-//   - ctx: a context.Context used for database queries and other operations.
-//   - status: a Stats instance used to record metrics.
-//   - privateKey: the private key used for decrypting user variables.
-//   - passWord: the password used along with the private key for decryption.
-//
-// It initializes the userVariableMap field to an empty map.
-// It calls initSyncConfigs() to perform the initial sync of user variables.
-// It adds the ConfigCache instance to the context for later retrieval.
-// It returns a pointer to the initialized ConfigCache.
-func NewConfigsCache(ctx *ctx.Context, status *Stats, privateKey []byte, passWord string) *ConfigCache {
+func NewConfigCache(ctx *ctx.Context, status *Stats, privateKey []byte, passWord string) *ConfigCache {
 	configCache := &ConfigCache{
 		statTotal:       -1,
 		statLastUpdated: -1,
@@ -56,7 +34,6 @@ func NewConfigsCache(ctx *ctx.Context, status *Stats, privateKey []byte, passWor
 		userVariableMap: make(map[string]string),
 	}
 	configCache.initSyncConfigs()
-	ctx.Ctx = context.WithValue(ctx.Ctx, ConfigUserVariableKey, configCache) //add pointer to context
 	return configCache
 }
 
@@ -115,7 +92,7 @@ func (c *ConfigCache) syncConfigs() error {
 }
 
 func (c *ConfigCache) statChanged(total int64, updated int64) bool {
-	if c.statTotal == total {
+	if c.statTotal == total && c.statLastUpdated == updated {
 		return false
 	}
 	return true

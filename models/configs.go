@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
-	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
@@ -288,22 +286,4 @@ func ConfigUserVariableGetDecryptMap(context *ctx.Context, privateKey []byte, pa
 	}
 
 	return ret, nil
-}
-
-func ConfigsGetDecryption(cvalFun func() (string, string, error), userVariableMap map[string]string) (string, error) {
-	ckey, cval, err := cvalFun()
-	if err != nil {
-		return "", errors.WithMessage(err, "failed to gets ConfigsGetDecryption.")
-	}
-	if strings.TrimSpace(cval) == "" {
-		return cval, nil
-	}
-	tplxBuffer, replaceErr := tplx.ReplaceMacroVariables(ckey, cval, userVariableMap)
-	if replaceErr != nil {
-		return "", errors.WithMessage(replaceErr, "failed to gets ConfigsGetDecryption. ReplaceMacroVariables error.")
-	}
-	if tplxBuffer != nil {
-		return tplxBuffer.String(), nil
-	}
-	return "", fmt.Errorf("unexpected error. ckey:%s, cval:%s, userVariableMap:%+v,tplxBuffer(pointer):%v", ckey, cval, userVariableMap, tplxBuffer)
 }

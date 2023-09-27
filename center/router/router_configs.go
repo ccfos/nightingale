@@ -41,8 +41,11 @@ func (rt *Router) configsDel(c *gin.Context) {
 
 func (rt *Router) configsPut(c *gin.Context) { //for open APIForService
 	var arr []models.Configs
-	username := c.MustGet("user").(string)
 	ginx.BindJSON(c, &arr)
+	username := c.GetString("user")
+	if username == "" {
+		username = "default"
+	}
 	now := time.Now().Unix()
 	for i := 0; i < len(arr); i++ {
 		arr[i].UpdateBy = username
@@ -56,7 +59,10 @@ func (rt *Router) configsPut(c *gin.Context) { //for open APIForService
 func (rt *Router) configsPost(c *gin.Context) { //for open APIForService
 	var arr []models.Configs
 	ginx.BindJSON(c, &arr)
-	username := c.MustGet("user").(string)
+	username := c.GetString("user")
+	if username == "" {
+		username = "default"
+	}
 	now := time.Now().Unix()
 	for i := 0; i < len(arr); i++ {
 		arr[i].CreateBy = username

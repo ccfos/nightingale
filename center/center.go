@@ -71,13 +71,13 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	sso := sso.Init(config.Center, ctx)
 
-	memsto.NewConfigsCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
+	configCache := memsto.NewConfigCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
 	dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
-	notifyConfigCache := memsto.NewNotifyConfigCache(ctx)
+	notifyConfigCache := memsto.NewNotifyConfigCache(ctx, configCache)
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 

@@ -47,7 +47,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
-	notifyConfigCache := memsto.NewNotifyConfigCache(ctx)
+	notifyConfigCache := memsto.NewNotifyConfigCache(ctx, nil)
 	dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
