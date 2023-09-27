@@ -2,12 +2,10 @@ package memsto
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
 	"github.com/BurntSushi/toml"
@@ -15,13 +13,12 @@ import (
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 )
 
 type NotifyConfigCacheType struct {
 	ctx         *ctx.Context
-	configCache *ConfigCache
+	ConfigCache *ConfigCache
 	webhooks    []*models.Webhook
 	smtp        aconf.SMTPConfig
 	script      models.NotifyScript
@@ -50,7 +47,7 @@ Timeout = 3000
 func NewNotifyConfigCache(ctx *ctx.Context, configCache *ConfigCache) *NotifyConfigCacheType {
 	w := &NotifyConfigCacheType{
 		ctx:         ctx,
-		configCache: configCache,
+		ConfigCache: configCache,
 	}
 	w.SyncNotifyConfigs()
 	return w
@@ -77,17 +74,7 @@ func (w *NotifyConfigCacheType) loopSyncNotifyConfigs() {
 
 func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	start := time.Now()
-	userVariableMap := make(map[string]string)
-
-	if w.configCache == nil { //for edge and alert
-		var err error
-		userVariableMap, err = poster.GetByUrls[map[string]string](w.ctx, "/v1/n9e/user-variable/decrypt")
-		if err != nil {
-			return errors.WithMessage(err, "failed to get configs.")
-		}
-	} else {
-		userVariableMap = w.configCache.Get()
-	}
+	userVariableMap := w.ConfigCache.Get()
 
 	w.RWMutex.Lock()
 	defer w.RWMutex.Unlock()
@@ -115,14 +102,7 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 		return err
 	}
 
-	tplxBuffer, replaceErr := tplx.ReplaceMacroVariables(models.SMTP, cval, userVariableMap)
-	if replaceErr != nil {
-		return fmt.Errorf("failed to ReplaceMacroVariables %q:%q. error:%v", models.SMTP, cval, replaceErr)
-	}
-	if tplxBuffer == nil {
-		return fmt.Errorf("unexpected error. %q:%q, userVariableMap:%+v,tplxBuffer(pointer):%v", models.SMTP, cval, userVariableMap, tplxBuffer)
-	}
-	cval = tplxBuffer.String()
+	cval = tplx.ReplaceMacroVariables(models.SMTP, cval, userVariableMap)
 
 	if strings.TrimSpace(cval) != "" {
 		err = toml.Unmarshal([]byte(cval), &w.smtp)
@@ -203,10 +183,4 @@ func (w *NotifyConfigCacheType) GetIbex() aconf.Ibex {
 	w.RWMutex.RLock()
 	defer w.RWMutex.RUnlock()
 	return w.ibex
-}
-
-func (w *NotifyConfigCacheType) GetComfigCache() *ConfigCache {
-	w.RWMutex.RLock()
-	defer w.RWMutex.RUnlock()
-	return w.configCache
 }

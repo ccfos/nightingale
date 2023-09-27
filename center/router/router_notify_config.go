@@ -13,7 +13,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pelletier/go-toml/v2"
-	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/str"
 )
@@ -180,28 +179,20 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 	ginx.Dangerous(models.ConfigsSetWithUname(rt.Ctx, f.Ckey, f.Cval, username))
 	if f.Ckey == models.SMTP {
 		// 重置邮件发送器
-		smtp, errSmtp := SmtpValidate(rt.NotifyConfigCache.GetComfigCache(), f)
+		userVariableMap := rt.NotifyConfigCache.ConfigCache.Get()
+		text := tplx.ReplaceMacroVariables(f.Ckey, f.Cval, userVariableMap)
+		smtp, errSmtp := SmtpValidate(text)
 		ginx.Dangerous(errSmtp)
 		go sender.RestartEmailSender(smtp)
 	}
 
 	ginx.NewRender(c).Message(nil)
 }
-func SmtpValidate(configCache *memsto.ConfigCache, configs models.Configs) (aconf.SMTPConfig, error) {
+func SmtpValidate(text string) (aconf.SMTPConfig, error) {
 	var smtp aconf.SMTPConfig
 	var err error
-	if configCache == nil {
-		return smtp, fmt.Errorf("failed to get configCache")
-	}
-	userVariableMap := configCache.Get()
-	tplxBuffer, replaceErr := tplx.ReplaceMacroVariables(configs.Ckey, configs.Cval, userVariableMap)
-	if replaceErr != nil {
-		return smtp, errors.WithMessagef(replaceErr, "failed to ReplaceMacroVariables %q:%q.", configs.Ckey, configs.Cval)
-	}
-	if tplxBuffer == nil {
-		return smtp, fmt.Errorf("unexpected error. %q:%q, userVariableMap:%+v,tplxBuffer(pointer):%v", configs.Ckey, configs.Cval, userVariableMap, tplxBuffer)
-	}
-	err = toml.Unmarshal([]byte(tplxBuffer.String()), &smtp)
+
+	err = toml.Unmarshal([]byte(text), &smtp)
 	if err != nil {
 		return smtp, err
 	}
@@ -228,7 +219,7 @@ func (rt *Router) attemptSendEmail(c *gin.Context) {
 	if f.Ckey != models.SMTP {
 		ginx.Bomb(200, "config(%v) invalid", f)
 	}
-	smtp, err := SmtpValidate(rt.NotifyConfigCache.GetComfigCache(), f.Configs)
+	smtp, err := SmtpValidate(f.Configs.Cval)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Message(sender.SendEmail("Email test", "email content", []string{f.Email}, smtp))

@@ -2,11 +2,12 @@ package tplx
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"net/url"
 	"regexp"
 	"strings"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 var TemplateFuncMap = template.FuncMap{
@@ -38,46 +39,46 @@ var TemplateFuncMap = template.FuncMap{
 
 // ReplaceMacroVariables replaces variables in a template string with values.
 //
-// It takes a template name, the template text, and a struct of macro values.
-// It parses the template, executes it with the macro values, and returns the result
-// as a bytes.Buffer.
+// It accepts the following parameters:
 //
-// The name parameter is the template name to use when parsing.
+// - name: The name to use when parsing the template
 //
-// The templateText parameter is the template string to process.
+// - templateText: The template string containing variables to replace
 //
-// The macroValue parameter is a struct that contains fields to replace the
-// variables in the template with.
+// - macroValue: A struct containing fields to replace the variables
 //
-// For example:
+// It parses the templateText into a template using template.New and template.Parse.
 //
-//   type Macro struct {
-//     Name string
-//     Count int
-//   }
+// It executes the parsed template with macroValue as the data, writing the result
+// to a bytes.Buffer.
 //
-//   macros := Macro{
-//     Name: "John",
-//     Count: 123,
-//   }
+// Any {{.Field}} variables in templateText are replaced with values from macroValue.
 //
-//   templateText := "Hello {{.Name}}, your count is {{.Count}}"
+// If there are any errors parsing or executing the template, they are logged and
+// an empty string is returned.
 //
-//   output, err := ReplaceMacroVariables("mytemplate", templateText, macros)
+// The rendered template string is returned on success.
 //
-// This would replace the {{.Name}} and {{.Count}} variables in the
-// template with the values from the macro struct.
+// Example usage:
 //
-// It returns the processed template as a bytes.Buffer or an error if there was
-// a problem parsing or executing the template.
-func ReplaceMacroVariables(name string, templateText string, macroValue any) (*bytes.Buffer, error) {
+//  type Data struct {
+//    Name string
+//  }
+//
+//  data := Data{"John"}
+//
+//  output := ReplaceMacroVariables("mytpl", "Hello {{.Name}}!", data)
+//
+func ReplaceMacroVariables(name string, templateText string, macroValue any) string {
 	tpl, err := template.New(name).Parse(templateText)
 	if err != nil {
-		return nil, fmt.Errorf("parse config error: %v", err)
+		logger.Warningf("parse config error: %v", err)
+		return templateText
 	}
 	var body bytes.Buffer
 	if err := tpl.Execute(&body, macroValue); err != nil {
-		return nil, fmt.Errorf("execute config error: %v", err)
+		logger.Warningf("execute config error: %v", err)
+		return templateText
 	}
-	return &body, nil
+	return body.String()
 }

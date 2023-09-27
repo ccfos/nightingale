@@ -43,11 +43,12 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
 
+	configCache := memsto.NewConfigCache(ctx, syncStats, nil, "")
 	targetCache := memsto.NewTargetCache(ctx, syncStats, nil)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
-	notifyConfigCache := memsto.NewNotifyConfigCache(ctx, nil)
+	notifyConfigCache := memsto.NewNotifyConfigCache(ctx, configCache)
 	dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
