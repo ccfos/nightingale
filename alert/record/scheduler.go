@@ -72,7 +72,7 @@ func (s *Scheduler) syncRecordRules() {
 				continue
 			}
 
-			recordRule := NewRecordRuleContext(rule, dsId, s.promClients, s.writers)
+			recordRule := NewRecordRuleContext(rule, dsId, s.promClients, s.writers, s.stats)
 			recordRules[recordRule.Hash()] = recordRule
 		}
 	}

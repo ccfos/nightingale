@@ -3,12 +3,8 @@ package sender
 import (
 	"html/template"
 	"strings"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/poster"
-
-	"github.com/toolkits/pkg/logger"
 )
 
 type feishuContent struct {
@@ -49,7 +45,7 @@ func (fs *FeishuSender) Send(ctx MessageContext) {
 				IsAtAll:   false,
 			}
 		}
-		fs.doSend(url, body)
+		doSend(url, body, models.Feishu, ctx.Stats)
 	}
 }
 
@@ -70,13 +66,4 @@ func (fs *FeishuSender) extract(users []*models.User) ([]string, []string) {
 		}
 	}
 	return urls, ats
-}
-
-func (fs *FeishuSender) doSend(url string, body feishu) {
-	res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
-	if err != nil {
-		logger.Errorf("feishu_sender: result=fail url=%s code=%d error=%v response=%s", url, code, err, string(res))
-	} else {
-		logger.Infof("feishu_sender: result=succ url=%s code=%d response=%s", url, code, string(res))
-	}
 }

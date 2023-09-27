@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
@@ -18,18 +19,18 @@ type RecordRuleContext struct {
 	datasourceId int64
 	quit         chan struct{}
 
-	rule *models.RecordingRule
-	// writers     *writer.WritersType
+	rule        *models.RecordingRule
 	promClients *prom.PromClientMap
+	stats       *astats.Stats
 }
 
-func NewRecordRuleContext(rule *models.RecordingRule, datasourceId int64, promClients *prom.PromClientMap, writers *writer.WritersType) *RecordRuleContext {
+func NewRecordRuleContext(rule *models.RecordingRule, datasourceId int64, promClients *prom.PromClientMap, writers *writer.WritersType, stats *astats.Stats) *RecordRuleContext {
 	return &RecordRuleContext{
 		datasourceId: datasourceId,
 		quit:         make(chan struct{}),
 		rule:         rule,
 		promClients:  promClients,
-		//writers:      writers,
+		stats:        stats,
 	}
 }
 
@@ -70,6 +71,7 @@ func (rrc *RecordRuleContext) Start() {
 }
 
 func (rrc *RecordRuleContext) Eval() {
+	rrc.stats.CounterRecordEval.WithLabelValues().Inc()
 	promql := strings.TrimSpace(rrc.rule.PromQl)
 	if promql == "" {
 		logger.Errorf("eval:%s promql is blank", rrc.Key())
@@ -78,17 +80,20 @@ func (rrc *RecordRuleContext) Eval() {
 
 	if rrc.promClients.IsNil(rrc.datasourceId) {
 		logger.Errorf("eval:%s reader client is nil", rrc.Key())
+		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues().Inc()
 		return
 	}
 
 	value, warnings, err := rrc.promClients.GetCli(rrc.datasourceId).Query(context.Background(), promql, time.Now())
 	if err != nil {
 		logger.Errorf("eval:%s promql:%s, error:%v", rrc.Key(), promql, err)
+		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues().Inc()
 		return
 	}
 
 	if len(warnings) > 0 {
 		logger.Errorf("eval:%s promql:%s, warnings:%v", rrc.Key(), promql, warnings)
+		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues().Inc()
 		return
 	}
 
