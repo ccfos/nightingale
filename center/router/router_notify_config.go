@@ -3,14 +3,14 @@ package router
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/pkg/tplx"
-
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
+
 	"github.com/gin-gonic/gin"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/pkg/errors"

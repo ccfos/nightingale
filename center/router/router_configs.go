@@ -39,7 +39,7 @@ func (rt *Router) configsDel(c *gin.Context) {
 	ginx.NewRender(c).Message(models.ConfigsDel(rt.Ctx, f.Ids))
 }
 
-func (rt *Router) configsPut(c *gin.Context) { //for open APIForService
+func (rt *Router) configsPut(c *gin.Context) { //for APIForService
 	var arr []models.Configs
 	ginx.BindJSON(c, &arr)
 	username := c.GetString("user")
@@ -56,7 +56,7 @@ func (rt *Router) configsPut(c *gin.Context) { //for open APIForService
 	ginx.NewRender(c).Message(nil)
 }
 
-func (rt *Router) configsPost(c *gin.Context) { //for open APIForService
+func (rt *Router) configsPost(c *gin.Context) { //for APIForService
 	var arr []models.Configs
 	ginx.BindJSON(c, &arr)
 	username := c.GetString("user")
