@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -207,13 +208,11 @@ func ConfigsUserVariableInsert(context *ctx.Context, conf Configs) error {
 	if conf.IsInternal() {
 		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
 	}
-	objs, err := ConfigsSelectByCkey(context, conf.Ckey)
+	err := userVariableCheck(context, conf.Ckey, nil)
 	if err != nil {
 		return err
 	}
-	if len(objs) > 0 {
-		return fmt.Errorf("duplicate ckey found: %s", conf.Ckey)
-	}
+
 	return DB(context).Create(&conf).Error
 }
 
@@ -221,7 +220,7 @@ func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
 	if conf.IsInternal() {
 		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
 	}
-	err := userVariableCheck(context, conf)
+	err := userVariableCheck(context, conf.Ckey, &conf.Id)
 	if err != nil {
 		return err
 	}
@@ -229,17 +228,24 @@ func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
 		"ckey", "cval", "note", "encrypted", "update_by", "update_at").Updates(conf).Error
 }
 
-func userVariableCheck(context *ctx.Context, conf Configs) error {
+func userVariableCheck(context *ctx.Context, ckey string, id *int64) error {
 	var objs []*Configs
 	// id and ckey both unique
-	err := DB(context).Where("id <> ? and ckey = ? ", conf.Id, conf.Ckey).Find(&objs).Error
+	tx := DB(context)
+	if id != nil {
+		tx.Where("id <> ? ", &id)
+	}
+	err := tx.Where("ckey = ? ", ckey).Find(&objs).Error
 	if err != nil {
 		return err
+	}
+	if strings.Contains(ckey, ".") {
+		return fmt.Errorf("illegel symbol %q", ".")
 	}
 	if len(objs) == 0 {
 		return nil
 	}
-	return fmt.Errorf("duplicate ckey value found: %s", conf.Ckey)
+	return fmt.Errorf("duplicate ckey value found: %s", ckey)
 }
 
 func ConfigsUserVariableStatistics(context *ctx.Context) (*Statistics, error) {
