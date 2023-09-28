@@ -401,8 +401,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternPut)
 		pages.DELETE("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternDel)
 
+		pages.GET("/user-variable-configs", rt.auth(), rt.admin(), rt.userVariableConfigGets)
+		pages.POST("/user-variable-config", rt.auth(), rt.admin(), rt.userVariableConfigAdd)
+		pages.PUT("/user-variable-config/:id", rt.auth(), rt.admin(), rt.userVariableConfigPut)
+		pages.DELETE("/user-variable-config/:id", rt.auth(), rt.admin(), rt.userVariableConfigDel)
+
 		pages.GET("/config", rt.auth(), rt.admin(), rt.configGetByKey)
 		pages.PUT("/config", rt.auth(), rt.admin(), rt.configPutByKey)
+
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

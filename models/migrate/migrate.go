@@ -21,6 +21,18 @@ func MigrateTables(db *gorm.DB) error {
 		logger.Errorf("failed to migrate table: %v", err)
 		return err
 	}
+	if !db.Migrator().HasColumn(&Configs{}, "encrypted") {
+		err := db.AutoMigrate(&Configs{})
+		if err != nil {
+			logger.Errorf("failed to migrate configs table: %v", err)
+			return err
+		}
+		//updates the database table by adding default values to existing rows.
+		err = db.Model(&Configs{}).Select("external", "encrypted").Where("1=1").Updates(Configs{Encrypted: 0, External: 0}).Error
+		if err != nil {
+			logger.Errorf("update configs default value failed, %v", err)
+		}
+	}
 
 	if db.Migrator().HasColumn(&AlertingEngines{}, "cluster") {
 		err = db.Migrator().RenameColumn(&AlertingEngines{}, "cluster", "engine_cluster")
@@ -93,4 +105,11 @@ type Target struct {
 
 type Datasource struct {
 	IsDefault bool `gorm:"column:is_default;tinyint(1);not null;default:0;comment:is default datasource"`
+}
+
+type Configs struct {
+	Note string `gorm:"column:note;type:varchar(1024);comment:note"`
+	//mysql tinyint//postgresql smallint
+	External  int `gorm:"column:external;type:int;default:0;comment:0\\:built-in 1\\:external"`
+	Encrypted int `gorm:"column:encrypted;type:int;default:0;comment:0\\:plaintext 1\\:ciphertext"`
 }
