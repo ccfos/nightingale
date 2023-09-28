@@ -18,9 +18,9 @@ import (
 	"github.com/toolkits/pkg/str"
 )
 
-type Configs struct {
+type Configs struct { //ckey+external
 	Id        int64  `json:"id" gorm:"primaryKey"`
-	Ckey      string `json:"ckey"` //Unique field. Before inserting external configs, check if they are already defined as built-in configs.
+	Ckey      string `json:"ckey"` // Before inserting external configs, check if they are already defined as built-in configs.
 	Cval      string `json:"cval"`
 	Note      string `json:"note"`
 	External  int    `json:"external"`  //Controls frontend list display: 0 hides built-in (default), 1 shows external
@@ -89,8 +89,8 @@ func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) {
 func ConfigsSet(ctx *ctx.Context, ckey, cval string) error {
 	return ConfigsSetWithUname(ctx, ckey, cval, "default")
 }
-func ConfigsSetWithUname(ctx *ctx.Context, ckey, cval, uName string) error {
-	num, err := Count(DB(ctx).Model(&Configs{}).Where("ckey=?", ckey))
+func ConfigsSetWithUname(ctx *ctx.Context, ckey, cval, uName string) error { //built-in
+	num, err := Count(DB(ctx).Model(&Configs{}).Where("ckey=? and external=?", ckey, 0)) //built-in type
 	if err != nil {
 		return errors.WithMessage(err, "failed to count configs")
 	}
@@ -150,7 +150,7 @@ func ConfigsGets(ctx *ctx.Context, prefix string, limit, offset int) ([]*Configs
 }
 
 func (c *Configs) Add(ctx *ctx.Context) error {
-	num, err := Count(DB(ctx).Model(&Configs{}).Where("ckey=?", c.Ckey))
+	num, err := Count(DB(ctx).Model(&Configs{}).Where("ckey=? and external=? ", c.Ckey, c.External))
 	if err != nil {
 		return errors.WithMessage(err, "failed to count configs")
 	}
@@ -171,7 +171,7 @@ func (c *Configs) Add(ctx *ctx.Context) error {
 }
 
 func (c *Configs) Update(ctx *ctx.Context) error {
-	num, err := Count(DB(ctx).Model(&Configs{}).Where("id<>? and ckey=?", c.Id, c.Ckey))
+	num, err := Count(DB(ctx).Model(&Configs{}).Where("id<>? and ckey=? and external=? ", c.Id, c.Ckey, c.External))
 	if err != nil {
 		return errors.WithMessage(err, "failed to count configs")
 	}
@@ -235,7 +235,7 @@ func userVariableCheck(context *ctx.Context, ckey string, id *int64) error {
 	if id != nil {
 		tx.Where("id <> ? ", &id)
 	}
-	err := tx.Where("ckey = ? ", ckey).Find(&objs).Error
+	err := tx.Where("ckey = ? and external=?", ckey, ConfigExternal).Find(&objs).Error
 	if err != nil {
 		return err
 	}

@@ -55,20 +55,19 @@ var TemplateFuncMap = template.FuncMap{
 // Any {{.Field}} variables in templateText are replaced with values from macroValue.
 //
 // If there are any errors parsing or executing the template, they are logged and
-// an empty string is returned.
+// the original templateText is returned.
 //
 // The rendered template string is returned on success.
 //
 // Example usage:
 //
-//  type Data struct {
-//    Name string
-//  }
+//	type Data struct {
+//	  Name string
+//	}
 //
-//  data := Data{"John"}
+//	data := Data{"John"}
 //
-//  output := ReplaceMacroVariables("mytpl", "Hello {{.Name}}!", data)
-//
+//	output := ReplaceMacroVariables("mytpl", "Hello {{.Name}}!", data)
 func ReplaceMacroVariables(name string, templateText string, macroValue any) string {
 	tpl, err := template.New(name).Parse(templateText)
 	if err != nil {

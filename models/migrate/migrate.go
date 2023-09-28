@@ -36,6 +36,12 @@ func MigrateTables(db *gorm.DB) error {
 			logger.Errorf("failed to DropColumn table: %v", err)
 		}
 	}
+	if db.Migrator().HasIndex(&Configs{}, "ckey") {
+		err = db.Migrator().DropIndex(&Configs{}, "ckey")
+		if err != nil {
+			logger.Errorf("failed to DropIndex ckey error: %v", err)
+		}
+	}
 
 	return nil
 }
@@ -92,6 +98,7 @@ type Target struct {
 	HostIp string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip""`
 }
 type Configs struct {
+	Ckey string `gorm:"column:ckey;type:varchar(191);not null;comment:ckey,ckey+external=uniqueness"`
 	Note string `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
 	//mysql tinyint//postgresql smallint
 	External  int    `gorm:"column:external;type:int;default:0;comment:0\\:built-in 1\\:external"`
