@@ -104,7 +104,7 @@ type Target struct {
 }
 
 type Datasource struct {
-	IsDefault bool `gorm:"column:is_default;tinyint(1);not null;default:0;comment:is default datasource"`
+	IsDefault bool `gorm:"column:is_default;int;not null;default:0;comment:is default datasource"`
 }
 
 type Configs struct {
