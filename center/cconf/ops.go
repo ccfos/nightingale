@@ -40,17 +40,17 @@ func GetAllOps(ops []Ops) []string {
 }
 
 func MergeOperationConf() error {
-	opsBuildIn := Operation{}
-	err := yaml.Unmarshal([]byte(buildInOps), &opsBuildIn)
+	opsBuiltIn := Operation{}
+	err := yaml.Unmarshal([]byte(builtInOps), &opsBuiltIn)
 	if err != nil {
-		return fmt.Errorf("cannot parse buildInOps: %s", err.Error())
+		return fmt.Errorf("cannot parse builtInOps: %s", err.Error())
 	}
 	configOpsMap := make(map[string]struct{})
 	for _, op := range Operations.Ops {
 		configOpsMap[op.Name] = struct{}{}
 	}
 	//If the opBu.Name is not a constant in the target (Operations.Ops), add Ops from the built-in options
-	for _, opBu := range opsBuildIn.Ops {
+	for _, opBu := range opsBuiltIn.Ops {
 		if _, has := configOpsMap[opBu.Name]; !has {
 			Operations.Ops = append(Operations.Ops, opBu)
 		}
@@ -59,7 +59,7 @@ func MergeOperationConf() error {
 }
 
 const (
-	buildInOps = `
+	builtInOps = `
 ops:
 - name: dashboards
   cname: 仪表盘
