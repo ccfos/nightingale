@@ -12,8 +12,7 @@ func Migrate(db *gorm.DB) {
 }
 
 func MigrateTables(db *gorm.DB) error {
-	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
-		&TaskRecord{}, &ChartShare{}, &Target{}}
+	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{}, &TaskRecord{}, &ChartShare{}, &Target{}, &Datasource{}}
 	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
 		dts = append(dts, &AlertHisEvent{})
 	}
@@ -101,8 +100,13 @@ type AlertHisEvent struct {
 	LastEvalTime int64 `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
 }
 type Target struct {
-	HostIp string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip""`
+	HostIp string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip"`
 }
+
+type Datasource struct {
+	IsDefault bool `gorm:"column:is_default;int;not null;default:0;comment:is default datasource"`
+}
+
 type Configs struct {
 	Note string `gorm:"column:note;type:varchar(1024);comment:note"`
 	//mysql tinyint//postgresql smallint

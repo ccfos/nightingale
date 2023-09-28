@@ -33,6 +33,7 @@ type Datasource struct {
 	UpdatedAt      int64                  `json:"updated_at"`
 	CreatedBy      string                 `json:"created_by"`
 	UpdatedBy      string                 `json:"updated_by"`
+	IsDefault      bool                   `json:"is_default"`
 	Transport      *http.Transport        `json:"-" gorm:"-"`
 }
 
