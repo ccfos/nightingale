@@ -83,6 +83,7 @@ ops:
   ops:
     - "/alert-mutes"
     - "/alert-mutes/add"
+    - "/alert-mutes/put"
     - "/alert-mutes/del"
   
 - name: alert-subscribes
@@ -118,12 +119,7 @@ ops:
   cname: 日志分析
   ops:
   - "/log/explorer"
-
-- name: trace
-  cname: 链路追踪
-  ops:
-  - "/trace/explorer"
-  - "/trace/dependencies"
+  - "/log/index-patterns"
 
 - name: targets
   cname: 基础设施

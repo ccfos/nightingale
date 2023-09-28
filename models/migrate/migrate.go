@@ -72,62 +72,25 @@ func columnHasIndex(db *gorm.DB, dst interface{}, indexColumn string) bool {
 func InsertPermPoints(db *gorm.DB) {
 	var ops []models.RoleOperation
 	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
+		RoleName:  "Standard",
 		Operation: "/alert-mutes",
 	})
 	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
+		RoleName:  "Standard",
 		Operation: "/alert-mutes/add",
 	})
 	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
+		RoleName:  "Standard",
+		Operation: "/alert-mutes/put",
+	})
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
 		Operation: "/alert-mutes/del",
 	})
 
 	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/users",
-	})
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/user-groups",
-	})
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/user-groups/add",
-	})
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/user-groups/put",
-	})
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/user-groups/del",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/help/servers",
-	})
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/help/source",
-	})
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/help/sso",
-	})
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/help/notification-tpls",
-	})
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/help/notification-settings",
-	})
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/help/migrate",
+		RoleName:  "Standard",
+		Operation: "/log/index-patterns",
 	})
 
 	for _, op := range ops {
