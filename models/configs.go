@@ -200,7 +200,7 @@ func ConfigsGetUserVariable(context *ctx.Context) ([]Configs, error) {
 func ConfigsUserVariableInsert(context *ctx.Context, conf Configs) error {
 	conf.External = ConfigExternal
 	conf.Id = 0
-	err := userVariableCheck(context, conf.Ckey, nil)
+	err := userVariableCheck(context, conf.Ckey, conf.Id)
 	if err != nil {
 		return err
 	}
@@ -209,34 +209,31 @@ func ConfigsUserVariableInsert(context *ctx.Context, conf Configs) error {
 }
 
 func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
-	err := userVariableCheck(context, conf.Ckey, &conf.Id)
+	err := userVariableCheck(context, conf.Ckey, conf.Id)
 	if err != nil {
 		return err
 	}
 	configOld, _ := ConfigGet(context, conf.Id)
-	if configOld == nil { //not valid id
-		return nil
-	}
-	if configOld.External != ConfigExternal {
+	if configOld == nil || configOld.External != ConfigExternal { //not valid id
 		return fmt.Errorf("not valid configs(id)")
 	}
 	return DB(context).Model(&Configs{Id: conf.Id}).Select(
 		"ckey", "cval", "note", "encrypted", "update_by", "update_at").Updates(conf).Error
 }
 
-func userVariableCheck(context *ctx.Context, ckey string, id *int64) error {
+func userVariableCheck(context *ctx.Context, ckey string, id int64) error {
 	var objs []*Configs
 	var err error
-	if id != nil { //update
+	if strings.Contains(ckey, ".") {
+		return fmt.Errorf("illegel symbol %q", ".")
+	}
+	if id != 0 { //update
 		err = DB(context).Where("id <> ? and ckey = ? and external=?", &id, ckey, ConfigExternal).Find(&objs).Error
 	} else {
 		err = DB(context).Where("ckey = ? and external=?", ckey, ConfigExternal).Find(&objs).Error
 	}
 	if err != nil {
 		return err
-	}
-	if strings.Contains(ckey, ".") {
-		return fmt.Errorf("illegel symbol %q", ".")
 	}
 	if len(objs) == 0 {
 		return nil
