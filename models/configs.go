@@ -14,7 +14,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
-	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 )
 
@@ -65,7 +64,7 @@ func InitSalt(ctx *ctx.Context) {
 	}
 }
 
-func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) {
+func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) { //select built-in type configs
 	if !ctx.IsCenter {
 		if !ctx.IsCenter {
 			s, err := poster.GetByUrls[string](ctx, "/v1/n9e/config?key="+ckey)
@@ -74,7 +73,7 @@ func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) {
 	}
 
 	var lst []string
-	err := DB(ctx).Model(&Configs{}).Where("ckey=?", ckey).Pluck("cval", &lst).Error
+	err := DB(ctx).Model(&Configs{}).Where("ckey=?  and external=? ", ckey, 0).Pluck("cval", &lst).Error
 	if err != nil {
 		return "", errors.WithMessage(err, "failed to query configs")
 	}
@@ -187,10 +186,6 @@ func ConfigsDel(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(&Configs{}).Error
 }
 
-func (c *Configs) IsInternal() bool {
-	return slice.ContainsString(InternalCkeySlice, c.Ckey)
-}
-
 func ConfigsGetUserVariable(context *ctx.Context) ([]Configs, error) {
 	var objs []Configs
 	tx := DB(context).Where("external = ?", ConfigExternal).Order("id desc")
@@ -205,10 +200,6 @@ func ConfigsGetUserVariable(context *ctx.Context) ([]Configs, error) {
 func ConfigsUserVariableInsert(context *ctx.Context, conf Configs) error {
 	conf.External = ConfigExternal
 	conf.Id = 0
-	//Before inserting external conf, check if they are already defined as built-in conf
-	if conf.IsInternal() {
-		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
-	}
 	err := userVariableCheck(context, conf.Ckey, nil)
 	if err != nil {
 		return err
@@ -218,12 +209,16 @@ func ConfigsUserVariableInsert(context *ctx.Context, conf Configs) error {
 }
 
 func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
-	if conf.IsInternal() {
-		return fmt.Errorf("duplicate ckey(internal) value found: %s", conf.Ckey)
-	}
 	err := userVariableCheck(context, conf.Ckey, &conf.Id)
 	if err != nil {
 		return err
+	}
+	configOld, _ := ConfigGet(context, conf.Id)
+	if configOld == nil { //not valid id
+		return nil
+	}
+	if configOld.External != ConfigExternal {
+		return fmt.Errorf("not valid configs(id)")
 	}
 	return DB(context).Model(&Configs{Id: conf.Id}).Select(
 		"ckey", "cval", "note", "encrypted", "update_by", "update_at").Updates(conf).Error
@@ -231,11 +226,12 @@ func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
 
 func userVariableCheck(context *ctx.Context, ckey string, id *int64) error {
 	var objs []*Configs
-	tx := DB(context)
-	if id != nil {
-		tx.Where("id <> ? ", &id)
+	var err error
+	if id != nil { //update
+		err = DB(context).Where("id <> ? and ckey = ? and external=?", &id, ckey, ConfigExternal).Find(&objs).Error
+	} else {
+		err = DB(context).Where("ckey = ? and external=?", ckey, ConfigExternal).Find(&objs).Error
 	}
-	err := tx.Where("ckey = ? and external=?", ckey, ConfigExternal).Find(&objs).Error
 	if err != nil {
 		return err
 	}
