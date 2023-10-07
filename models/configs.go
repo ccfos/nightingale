@@ -162,6 +162,7 @@ func (c *Configs) Add(ctx *ctx.Context) error {
 	err = DB(ctx).Create(&Configs{
 		Ckey:     c.Ckey,
 		Cval:     c.Cval,
+		External: c.External,
 		CreateBy: c.CreateBy,
 		UpdateBy: c.CreateBy,
 		CreateAt: c.CreateAt,
@@ -230,7 +231,6 @@ func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
 
 func userVariableCheck(context *ctx.Context, ckey string, id *int64) error {
 	var objs []*Configs
-	// id and ckey both unique
 	tx := DB(context)
 	if id != nil {
 		tx.Where("id <> ? ", &id)
