@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
+	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -16,7 +17,8 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType, ibexConf aconf.Ibex) {
+func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType,
+	ibexConf aconf.Ibex, stats *astats.Stats) {
 	for _, url := range urls {
 		if url == "" {
 			continue
@@ -33,9 +35,11 @@ func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent,
 			url = "http://" + url
 		}
 
+		stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 		resp, code, err := poster.PostJSON(url, 5*time.Second, event, 3)
 		if err != nil {
 			logger.Errorf("event_callback_fail(rule_id=%d url=%s), resp: %s, err: %v, code: %d", event.RuleId, url, string(resp), err, code)
+			stats.AlertNotifyErrorTotal.WithLabelValues("rule_callback").Inc()
 		} else {
 			logger.Infof("event_callback_succ(rule_id=%d url=%s), resp: %s, code: %d", event.RuleId, url, string(resp), code)
 		}

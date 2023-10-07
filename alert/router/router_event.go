@@ -72,8 +72,6 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 	event.NotifyChannels = strings.Join(event.NotifyChannelsJSON, " ")
 	event.NotifyGroups = strings.Join(event.NotifyGroupsJSON, " ")
 
-	rt.AlertStats.CounterAlertsTotal.WithLabelValues(event.Cluster).Inc()
-
 	dispatch.LogEvent(event, "http_push_queue")
 	if !queue.EventQueue.PushFront(event) {
 		msg := fmt.Sprintf("event:%+v push_queue err: queue is full", event)

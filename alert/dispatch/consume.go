@@ -61,6 +61,13 @@ func (e *Consumer) consume(events []interface{}, sema *semaphore.Semaphore) {
 func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 	LogEvent(event, "consume")
 
+	eventType := "alert"
+	if event.IsRecovered {
+		eventType = "recovery"
+	}
+
+	e.dispatch.astats.CounterAlertsTotal.WithLabelValues(event.Cluster, eventType, event.GroupName).Inc()
+
 	if err := event.ParseRule("rule_name"); err != nil {
 		event.RuleName = fmt.Sprintf("failed to parse rule name: %v", err)
 	}

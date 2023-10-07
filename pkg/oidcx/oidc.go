@@ -194,7 +194,9 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
-		return nil, fmt.Errorf("no id_token field in oauth2 token. ")
+		rerr := fmt.Errorf("sso_exchange_user: no id_token field in oauth2 token %v", oauth2Token)
+		logger.Error(rerr)
+		return nil, rerr
 	}
 
 	idToken, err := s.Verifier.Verify(s.Ctx, rawIDToken)
@@ -208,11 +210,13 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 
 	data := map[string]interface{}{}
 	if err := idToken.Claims(&data); err != nil {
-		return nil, err
+		rerr := fmt.Errorf("sso_exchange_user: failed to parse id_token: %s, error:%+v", rawIDToken, err)
+		logger.Error(rerr)
+		return nil, rerr
 	}
 
 	for k, v := range data {
-		logger.Debugf("oidc info key:%s value:%v", k, v)
+		logger.Debugf("sso_exchange_user: oidc info key:%s value:%v", k, v)
 	}
 
 	v := func(k string) string {
