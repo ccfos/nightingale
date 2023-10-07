@@ -73,19 +73,7 @@ func InsertPermPoints(db *gorm.DB) {
 	var ops []models.RoleOperation
 	ops = append(ops, models.RoleOperation{
 		RoleName:  "Standard",
-		Operation: "/alert-mutes",
-	})
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/alert-mutes/add",
-	})
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
 		Operation: "/alert-mutes/put",
-	})
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/alert-mutes/del",
 	})
 
 	ops = append(ops, models.RoleOperation{
