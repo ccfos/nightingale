@@ -41,6 +41,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	cconf.LoadMetricsYaml(configDir, config.Center.MetricsYamlFile)
 	cconf.LoadOpsYaml(configDir, config.Center.OpsYamlFile)
 
+	cconf.MergeOperationConf()
+
 	logxClean, err := logx.Init(config.Log)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
@@ -47,7 +48,7 @@ func MigrateTables(db *gorm.DB) error {
 			logger.Errorf("failed to DropColumn table: %v", err)
 		}
 	}
-
+	InsertPermPoints(db)
 	return nil
 }
 
@@ -65,6 +66,34 @@ func columnHasIndex(db *gorm.DB, dst interface{}, indexColumn string) bool {
 		}
 	}
 	return false
+}
+
+func InsertPermPoints(db *gorm.DB) {
+	var ops []models.RoleOperation
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/alert-mutes/put",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/log/index-patterns",
+	})
+
+	for _, op := range ops {
+		exists, err := models.Exists(db.Model(&models.RoleOperation{}).Where("operation = ? and role_name = ?", op.Operation, op.RoleName))
+		if err != nil {
+			logger.Errorf("check role operation exists failed, %v", err)
+			continue
+		}
+		if exists {
+			continue
+		}
+		err = db.Create(&op).Error
+		if err != nil {
+			logger.Errorf("insert role operation failed, %v", err)
+		}
+	}
 }
 
 type AlertRule struct {
