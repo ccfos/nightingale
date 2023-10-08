@@ -16,6 +16,10 @@ func TestPostByUrls(t *testing.T) {
 		path string
 		v    interface{}
 	}
+	type testCase struct {
+		name string
+		args args
+	}
 
 	info := struct {
 		a string
@@ -29,24 +33,20 @@ func TestPostByUrls(t *testing.T) {
 		json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
-	tests := []struct {
-		name string
-		args args
-	}{
-		{"a", args{ctx: &ctx.Context{
+
+	tc := testCase{
+		"a",
+		args{ctx: &ctx.Context{
 			CenterApi: conf.CenterApi{
 				Addrs: []string{server.URL},
 			},
-		}, path: "/v1/n9e/server-heartbeat", v: info}},
-	}
+		}, path: "/v1/n9e/server-heartbeat", v: info}}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := PostByUrls(tt.args.ctx, tt.args.path, tt.args.v); err != nil {
-				t.Errorf("PostByUrls() error = %v ", err)
-			}
-		})
-	}
+	t.Run(tc.name, func(t *testing.T) {
+		if err := PostByUrls(tc.args.ctx, tc.args.path, tc.args.v); err != nil {
+			t.Errorf("PostByUrls() error = %v ", err)
+		}
+	})
 }
 
 func TestPostByUrlsWithResp(t *testing.T) {
@@ -71,19 +71,20 @@ func TestPostByUrlsWithResp(t *testing.T) {
 		json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
-	tests := []testCase[int64]{{"a-resp", args{ctx: &ctx.Context{
+
+	tc := testCase[int64]{"a-resp", args{ctx: &ctx.Context{
 		CenterApi: conf.CenterApi{
 			Addrs: []string{server.URL},
 		}}, path: "/v1/n9e/event-persist",
-		v: info}}}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotT, err := PostByUrlsWithResp[int64](tt.args.ctx, tt.args.path, tt.args.v)
-			if err != nil {
-				t.Errorf("PostByUrlsWithResp() error = %v", err)
-				return
-			}
-			t.Logf("PostByUrlsWithResp() gotT = %v", gotT)
-		})
-	}
+		v: info}}
+
+	t.Run(tc.name, func(t *testing.T) {
+		gotT, err := PostByUrlsWithResp[int64](tc.args.ctx, tc.args.path, tc.args.v)
+		if err != nil {
+			t.Errorf("PostByUrlsWithResp() error = %v", err)
+			return
+		}
+		t.Logf("PostByUrlsWithResp() gotT = %v", gotT)
+	})
+
 }
