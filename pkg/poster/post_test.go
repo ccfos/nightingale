@@ -11,80 +11,45 @@ import (
 )
 
 func TestPostByUrls(t *testing.T) {
-	type args struct {
-		ctx  *ctx.Context
-		path string
-		v    interface{}
-	}
-	type testCase struct {
-		name string
-		args args
-	}
 
-	info := struct {
-		a string
-		b int
-	}{
-		a: "aaa",
-		b: 888,
-	}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response := DataResponse[interface{}]{Dat: "", Err: ""}
 		json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
-	tc := testCase{
-		"a",
-		args{ctx: &ctx.Context{
-			CenterApi: conf.CenterApi{
-				Addrs: []string{server.URL},
-			},
-		}, path: "/v1/n9e/server-heartbeat", v: info}}
+	ctx := &ctx.Context{
+		CenterApi: conf.CenterApi{
+			Addrs: []string{server.URL},
+		}}
 
-	t.Run(tc.name, func(t *testing.T) {
-		if err := PostByUrls(tc.args.ctx, tc.args.path, tc.args.v); err != nil {
-			t.Errorf("PostByUrls() error = %v ", err)
-		}
-	})
+	if err := PostByUrls(ctx, "/v1/n9e/server-heartbeat", map[string]string{"a": "aa"}); err != nil {
+		t.Errorf("PostByUrls() error = %v ", err)
+	}
 }
 
 func TestPostByUrlsWithResp(t *testing.T) {
-	type args struct {
-		ctx  *ctx.Context
-		path string
-		v    interface{}
-	}
-	type testCase[T any] struct {
-		name string
-		args args
-	}
-	info := struct {
-		a string
-		b int
-	}{
-		a: "aaa",
-		b: 888,
-	}
+
+	expected := int64(123)
+
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		response := DataResponse[int64]{Dat: 123, Err: ""}
+		response := DataResponse[int64]{Dat: expected, Err: ""}
 		json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
-	tc := testCase[int64]{"a-resp", args{ctx: &ctx.Context{
+	ctx := &ctx.Context{
 		CenterApi: conf.CenterApi{
 			Addrs: []string{server.URL},
-		}}, path: "/v1/n9e/event-persist",
-		v: info}}
+		}}
 
-	t.Run(tc.name, func(t *testing.T) {
-		gotT, err := PostByUrlsWithResp[int64](tc.args.ctx, tc.args.path, tc.args.v)
-		if err != nil {
-			t.Errorf("PostByUrlsWithResp() error = %v", err)
-			return
-		}
-		t.Logf("PostByUrlsWithResp() gotT = %v", gotT)
-	})
+	gotT, err := PostByUrlsWithResp[int64](ctx, "/v1/n9e/event-persist", map[string]string{"b": "bb"})
+	if err != nil {
+		t.Errorf("PostByUrlsWithResp() error = %v", err)
+		return
+	}
+	if gotT != expected {
+		t.Errorf("PostByUrlsWithResp() gotT = %v,expected = %v", gotT, expected)
+	}
 
 }
