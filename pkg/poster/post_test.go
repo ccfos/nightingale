@@ -1,19 +1,14 @@
 package poster
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
-
-var c = &ctx.Context{
-	CenterApi: conf.CenterApi{
-		Addrs:         []string{"http://127.0.0.1:17000"},
-		BasicAuthUser: "user001",
-		BasicAuthPass: "ccc26da7b9aba533cbb263a36c07dcc5",
-	},
-}
 
 type HeartbeatInfo struct {
 	Instance      string `json:"instance"`
@@ -33,12 +28,22 @@ func TestPostByUrls(t *testing.T) {
 		EngineCluster: "cluster",
 		DatasourceId:  888,
 	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := DataResponse[interface{}]{Dat: "", Err: ""}
+		json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
 	tests := []struct {
 		name string
 		args args
 	}{
-		{"a", args{ctx: c, path: "/v1/n9e/server-heartbeat", v: info}},
+		{"a", args{ctx: &ctx.Context{
+			CenterApi: conf.CenterApi{
+				Addrs: []string{server.URL},
+			},
+		}, path: "/v1/n9e/server-heartbeat", v: info}},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := PostByUrls(tt.args.ctx, tt.args.path, tt.args.v); err != nil {
@@ -76,9 +81,19 @@ func TestPostByUrlsWithResp(t *testing.T) {
 		name string
 		args args
 	}
-	tests := []testCase[int64]{{
-		"a-resp",
-		args{ctx: c, path: "/v1/n9e/event-persist", v: AlertCurEvent_Temp{PromQl: "PromQl", Cate: "Cate"}},
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := DataResponse[int64]{Dat: 123, Err: ""}
+		json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+	tests := []testCase[int64]{{"a-resp", args{
+		ctx: &ctx.Context{
+			CenterApi: conf.CenterApi{
+				Addrs: []string{server.URL},
+			}},
+		path: "/v1/n9e/event-persist",
+		v:    AlertCurEvent_Temp{PromQl: "PromQl", Cate: "Cate"},
+	},
 	},
 	}
 	for _, tt := range tests {
