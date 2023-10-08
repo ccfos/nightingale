@@ -91,19 +91,14 @@ func GetByUrl[T any](url string, cfg conf.CenterApi) (T, error) {
 	return dataResp.Dat, nil
 }
 
-type PostResponse struct {
-	Err string      `json:"err"`
-	Dat interface{} `json:"dat"`
-}
-
 func PostByUrls(ctx *ctx.Context, path string, v interface{}) (err error) {
 	addrs := ctx.CenterApi.Addrs
 
 	rand.Shuffle(len(addrs), func(i, j int) { addrs[i], addrs[j] = addrs[j], addrs[i] })
 	for _, addr := range addrs {
 		url := fmt.Sprintf("%s%s", addr, path)
-		var res PostResponse
-		err = PostByUrl(url, ctx.CenterApi, v, praseErr(&res))
+
+		_, err = PostByUrl[interface{}](url, ctx.CenterApi, v)
 		if err == nil {
 			return
 		}
@@ -115,7 +110,7 @@ func PostByUrls(ctx *ctx.Context, path string, v interface{}) (err error) {
 	}
 	return
 }
-func PostByUrlsWithResponseJson(ctx *ctx.Context, path string, v interface{}) (res PostResponse, err error) {
+func PostByUrlsWithResp[T any](ctx *ctx.Context, path string, v interface{}) (t T, err error) {
 	addrs := ctx.CenterApi.Addrs
 	if len(addrs) < 1 {
 		err = fmt.Errorf("submission of the POST request from the center has failed, "+
@@ -124,8 +119,7 @@ func PostByUrlsWithResponseJson(ctx *ctx.Context, path string, v interface{}) (r
 	}
 	rand.Shuffle(len(addrs), func(i, j int) { addrs[i], addrs[j] = addrs[j], addrs[i] })
 	for _, addr := range addrs {
-		res.Err = "" //init before loop
-		err = PostByUrl(fmt.Sprintf("%s%s", addr, path), ctx.CenterApi, v, praseErr(&res))
+		t, err = PostByUrl[T](fmt.Sprintf("%s%s", addr, path), ctx.CenterApi, v)
 		if err == nil {
 			break
 		}
@@ -133,20 +127,7 @@ func PostByUrlsWithResponseJson(ctx *ctx.Context, path string, v interface{}) (r
 	return
 }
 
-func praseErr(res *PostResponse) func(responseBody []byte) (e error) {
-	return func(responseBody []byte) (e error) {
-		e = json.Unmarshal(responseBody, res)
-		if e != nil {
-			return fmt.Errorf("failed to decode response: %w body:%s", e, string(responseBody))
-		}
-		if res.Err != "" {
-			return fmt.Errorf("error from server: %s", res.Err)
-		}
-		return nil
-	}
-}
-
-func PostByUrl(url string, cfg conf.CenterApi, v interface{}, handleResponseFunc func(responseBody []byte) (e error)) (err error) {
+func PostByUrl[T any](url string, cfg conf.CenterApi, v interface{}) (t T, err error) {
 	var bs []byte
 	bs, err = json.Marshal(v)
 	if err != nil {
@@ -161,6 +142,9 @@ func PostByUrl(url string, cfg conf.CenterApi, v interface{}, handleResponseFunc
 	}
 
 	req, err := http.NewRequest("POST", url, bf)
+	if err != nil {
+		return t, fmt.Errorf("failed to create request %q: %w", url, err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	if len(cfg.BasicAuthUser) > 0 {
@@ -169,20 +153,32 @@ func PostByUrl(url string, cfg conf.CenterApi, v interface{}, handleResponseFunc
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to fetch from url: %w", err)
+		return t, fmt.Errorf("failed to fetch from url: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return t, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+		return t, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	return handleResponseFunc(body)
+	var dataResp DataResponse[T]
+	err = json.Unmarshal(body, &dataResp)
+	if err != nil {
+		return t, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if dataResp.Err != "" {
+		return t, fmt.Errorf("error from server: %s", dataResp.Err)
+	}
+
+	logger.Debugf("get data from %s, data: %+v", url, dataResp.Dat)
+	return dataResp.Dat, nil
+
 }
 
 func PostJSON(url string, timeout time.Duration, v interface{}, retries ...int) (response []byte, code int, err error) {

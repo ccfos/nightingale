@@ -96,16 +96,10 @@ func (e *Consumer) persist(event *models.AlertCurEvent) {
 
 	if !e.ctx.IsCenter {
 		event.DB2FE()
-		postResponse, err := poster.PostByUrlsWithResponseJson(e.ctx, "/v1/n9e/event-persist", event)
+		var err error
+		event.Id, err = poster.PostByUrlsWithResp[int64](e.ctx, "/v1/n9e/event-persist", event)
 		if err != nil {
-			logger.Errorf("event%+v persist err:%v", event, err)
-			return
-		}
-		if num, ok := postResponse.Dat.(float64); ok {
-			logger.Debugf("event%+v persist success,event id:%v", event, num)
-			event.Id = int64(num)
-		} else {
-			logger.Errorf("event%+v persist err（id is not an float64, parse error）:%v", event, postResponse.Dat)
+			logger.Errorf("event:%+v persist err:%v", event, err)
 		}
 		return
 	}
