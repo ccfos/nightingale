@@ -1,30 +1,19 @@
 package poster
 
 import (
-	"context"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
-func init() {
-	dir, errWD := os.Getwd()
-	if errWD != nil {
-		panic(errWD)
-	}
-	rootPath := filepath.Dir(filepath.Dir(dir))
-	config, err := conf.InitConfig(rootPath+"/etc/edge", "")
-	if err != nil {
-		panic(err)
-	}
-	c = ctx.NewContext(context.Background(), nil, false, config.CenterApi)
-
+var c = &ctx.Context{
+	CenterApi: conf.CenterApi{
+		Addrs:         []string{"http://127.0.0.1:17000"},
+		BasicAuthUser: "user001",
+		BasicAuthPass: "ccc26da7b9aba533cbb263a36c07dcc5",
+	},
 }
-
-var c *ctx.Context
 
 type HeartbeatInfo struct {
 	Instance      string `json:"instance"`
