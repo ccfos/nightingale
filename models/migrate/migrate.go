@@ -23,18 +23,6 @@ func MigrateTables(db *gorm.DB) error {
 		logger.Errorf("failed to migrate table: %v", err)
 		return err
 	}
-	if !db.Migrator().HasColumn(&Configs{}, "encrypted") {
-		err := db.AutoMigrate(&Configs{})
-		if err != nil {
-			logger.Errorf("failed to migrate configs table: %v", err)
-			return err
-		}
-		//updates the database table by adding default values to existing rows.
-		err = db.Model(&Configs{}).Select("external", "encrypted").Where("1=1").Updates(Configs{Encrypted: 0, External: 0}).Error
-		if err != nil {
-			logger.Errorf("update configs default value failed, %v", err)
-		}
-	}
 
 	if db.Migrator().HasColumn(&AlertingEngines{}, "cluster") {
 		err = db.Migrator().RenameColumn(&AlertingEngines{}, "cluster", "engine_cluster")
@@ -49,14 +37,38 @@ func MigrateTables(db *gorm.DB) error {
 			logger.Errorf("failed to DropColumn table: %v", err)
 		}
 	}
-	if db.Migrator().HasIndex(&Configs{}, "ckey") {
-		err = db.Migrator().DropIndex(&Configs{}, "ckey")
-		if err != nil {
-			logger.Errorf("failed to DropIndex ckey error: %v", err)
-		}
-	}
+	DropUniqueFiledLimit(db, &Configs{}, "ckey")
 	InsertPermPoints(db)
 	return nil
+}
+
+func DropUniqueFiledLimit(db *gorm.DB, dst interface{}, uniqueFiled string) { // UNIQUE KEY (`ckey`)
+	if indexs, _ := db.Migrator().GetIndexes(dst); indexs != nil && len(indexs) > 1 {
+		for i := range indexs {
+			pk, _ := indexs[i].PrimaryKey()
+			if pk {
+				continue
+			}
+			if len(indexs[i].Columns()) > 1 || indexs[i].Columns()[0] != uniqueFiled {
+				continue
+			}
+			switch db.Name() {
+			case "postgres":
+				err := db.Migrator().DropConstraint(dst, indexs[i].Name()) //pg  DROP CONSTRAINT
+				if err != nil {
+					logger.Errorf("failed to DropConstraint(%s) error: %v", indexs[i].Name(), err)
+				}
+			case "mysql":
+				err := db.Migrator().DropIndex(dst, indexs[i].Name()) //mysql  DROP INDEX
+				if err != nil {
+					logger.Errorf("failed to DropIndex(%s) error: %v", indexs[i].Name(), err)
+				}
+
+			default:
+				logger.Errorf("unexpected type of db...")
+			}
+		}
+	}
 }
 
 func columnHasIndex(db *gorm.DB, dst interface{}, indexColumn string) bool {
