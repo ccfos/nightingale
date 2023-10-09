@@ -140,6 +140,7 @@ func (t *TaskTpl) CleanFields() error {
 	if t.Script == "" {
 		return errors.New("arg(script) is required")
 	}
+	t.Script = strings.Replace(t.Script, "\r\n", "\n", -1)
 
 	if str.Dangerous(t.Args) {
 		return errors.New("arg(args) is dangerous")

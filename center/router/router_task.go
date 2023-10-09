@@ -92,6 +92,7 @@ func (f *taskForm) Verify() error {
 	if f.Script == "" {
 		return fmt.Errorf("arg(script) is required")
 	}
+	f.Script = strings.Replace(f.Script, "\r\n", "\n", -1)
 
 	if str.Dangerous(f.Args) {
 		return fmt.Errorf("arg(args) is dangerous")
