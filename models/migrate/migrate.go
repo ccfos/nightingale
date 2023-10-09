@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
@@ -13,7 +14,7 @@ func Migrate(db *gorm.DB) {
 
 func MigrateTables(db *gorm.DB) error {
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
-		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}}
+		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}}
 	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
 		dts = append(dts, &AlertHisEvent{})
 	}
@@ -21,6 +22,18 @@ func MigrateTables(db *gorm.DB) error {
 	if err != nil {
 		logger.Errorf("failed to migrate table: %v", err)
 		return err
+	}
+	if !db.Migrator().HasColumn(&Configs{}, "encrypted") {
+		err := db.AutoMigrate(&Configs{})
+		if err != nil {
+			logger.Errorf("failed to migrate configs table: %v", err)
+			return err
+		}
+		//updates the database table by adding default values to existing rows.
+		err = db.Model(&Configs{}).Select("external", "encrypted").Where("1=1").Updates(Configs{Encrypted: 0, External: 0}).Error
+		if err != nil {
+			logger.Errorf("update configs default value failed, %v", err)
+		}
 	}
 
 	if db.Migrator().HasColumn(&AlertingEngines{}, "cluster") {
@@ -42,7 +55,7 @@ func MigrateTables(db *gorm.DB) error {
 			logger.Errorf("failed to DropIndex ckey error: %v", err)
 		}
 	}
-
+	InsertPermPoints(db)
 	return nil
 }
 
@@ -60,6 +73,34 @@ func columnHasIndex(db *gorm.DB, dst interface{}, indexColumn string) bool {
 		}
 	}
 	return false
+}
+
+func InsertPermPoints(db *gorm.DB) {
+	var ops []models.RoleOperation
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/alert-mutes/put",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/log/index-patterns",
+	})
+
+	for _, op := range ops {
+		exists, err := models.Exists(db.Model(&models.RoleOperation{}).Where("operation = ? and role_name = ?", op.Operation, op.RoleName))
+		if err != nil {
+			logger.Errorf("check role operation exists failed, %v", err)
+			continue
+		}
+		if exists {
+			continue
+		}
+		err = db.Create(&op).Error
+		if err != nil {
+			logger.Errorf("insert role operation failed, %v", err)
+		}
+	}
 }
 
 type AlertRule struct {
@@ -95,8 +136,13 @@ type AlertHisEvent struct {
 	LastEvalTime int64 `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
 }
 type Target struct {
-	HostIp string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip""`
+	HostIp string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip"`
 }
+
+type Datasource struct {
+	IsDefault bool `gorm:"column:is_default;int;not null;default:0;comment:is default datasource"`
+}
+
 type Configs struct {
 	Note string `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
 	//mysql tinyint//postgresql smallint

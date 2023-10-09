@@ -12,18 +12,18 @@ import (
 func Init(configDir string) {
 	filePath := path.Join(configDir, "i18n.json")
 	m := make(map[string]map[string]string)
-	buildInConf := make(map[string]map[string]string)
+	builtInConf := make(map[string]map[string]string)
 
 	var content = I18N
 	var err error
-	//use build in config
-	err = json.Unmarshal([]byte(content), &buildInConf)
+	//use built-in config
+	err = json.Unmarshal([]byte(content), &builtInConf)
 	if err != nil {
 		logger.Errorf("parse i18n config file %s fail: %s\n", filePath, err)
 		return
 	}
 	if !file.IsExist(filePath) {
-		m = buildInConf
+		m = builtInConf
 	} else {
 		//expand config
 		//prioritize the settings within the expand config options in case of conflicts
@@ -46,7 +46,7 @@ func Init(configDir string) {
 		//    "username":"nom d'utilisateur"
 		//	}
 		//}
-		for languageKey, languageDict := range buildInConf {
+		for languageKey, languageDict := range builtInConf {
 			if _, hasL := m[languageKey]; hasL { //languages
 				for k, v := range languageDict {
 					if _, has := m[languageKey][k]; !has {

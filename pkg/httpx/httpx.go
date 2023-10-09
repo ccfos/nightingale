@@ -193,7 +193,7 @@ func initRSAFile(encryption *RSAConfig) error {
 		return fmt.Errorf("could not create directory for initRSAFile %q: %v", dirPath, errCreateDir)
 	}
 	// Check if the file exists
-	if file.IsExist(encryption.RSAPrivateKeyPath) {
+	if !file.IsExist(encryption.RSAPrivateKeyPath) {
 		errGen := secu.GenerateKeyWithPassword(encryption.RSAPrivateKeyPath, encryption.RSAPublicKeyPath, encryption.RSAPassWord)
 		if errGen != nil {
 			return fmt.Errorf("could not create file for initRSAFile %+v: %v", encryption, errGen)
