@@ -25,14 +25,22 @@ func (rt *Router) boardAdd(c *gin.Context) {
 
 	me := c.MustGet("user").(*models.User)
 
+	//fixbug， resolve show uuid of user with oidc
+	username := ""
+	if me.Nickname != "" {
+		username = me.Nickname
+	} else {
+		username = me.Username
+	}
+
 	board := &models.Board{
 		GroupId:  ginx.UrlParamInt64(c, "id"),
 		Name:     f.Name,
 		Ident:    f.Ident,
 		Tags:     f.Tags,
 		Configs:  f.Configs,
-		CreateBy: me.Username,
-		UpdateBy: me.Username,
+		CreateBy: username,
+		UpdateBy: username,
 	}
 
 	err := board.Add(rt.Ctx)
@@ -137,11 +145,17 @@ func (rt *Router) boardPut(c *gin.Context) {
 	if !can {
 		ginx.Bomb(http.StatusOK, "Ident duplicate")
 	}
-
+	//fixbug， resolve show uuid of user with oidc
+	username := ""
+	if me.Nickname != "" {
+		username = me.Nickname
+	} else {
+		username = me.Username
+	}
 	bo.Name = f.Name
 	bo.Ident = f.Ident
 	bo.Tags = f.Tags
-	bo.UpdateBy = me.Username
+	bo.UpdateBy = username
 	bo.UpdateAt = time.Now().Unix()
 
 	err = bo.Update(rt.Ctx, "name", "ident", "tags", "update_by", "update_at")

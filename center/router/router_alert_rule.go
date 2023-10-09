@@ -56,7 +56,7 @@ func (rt *Router) alertRulesGetByService(c *gin.Context) {
 
 // single or import
 func (rt *Router) alertRuleAddByFE(c *gin.Context) {
-	username := c.MustGet("username").(string)
+	me := c.MustGet("user").(*models.User)
 
 	var lst []models.AlertRule
 	ginx.BindJSON(c, &lst)
@@ -65,7 +65,13 @@ func (rt *Router) alertRuleAddByFE(c *gin.Context) {
 	if count == 0 {
 		ginx.Bomb(http.StatusBadRequest, "input json is empty")
 	}
-
+	//fixbug， resolve show uuid of user with oidc
+	username := ""
+	if me.Nickname != "" {
+		username = me.Nickname
+	} else {
+		username = me.Username
+	}
 	bgid := ginx.UrlParamInt64(c, "id")
 	reterr := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
 
@@ -73,7 +79,7 @@ func (rt *Router) alertRuleAddByFE(c *gin.Context) {
 }
 
 func (rt *Router) alertRuleAddByImport(c *gin.Context) {
-	username := c.MustGet("username").(string)
+	me := c.MustGet("user").(*models.User)
 
 	var lst []models.AlertRule
 	ginx.BindJSON(c, &lst)
@@ -82,7 +88,13 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 	if count == 0 {
 		ginx.Bomb(http.StatusBadRequest, "input json is empty")
 	}
-
+	//fixbug， resolve show uuid of user with oidc
+	username := ""
+	if me.Nickname != "" {
+		username = me.Nickname
+	} else {
+		username = me.Username
+	}
 	bgid := ginx.UrlParamInt64(c, "id")
 	reterr := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
 
@@ -183,7 +195,13 @@ func (rt *Router) alertRulePutByFE(c *gin.Context) {
 
 	rt.bgrwCheck(c, ar.GroupId)
 
-	f.UpdateBy = c.MustGet("username").(string)
+	//fixbug， resolve show uuid of user with oidc
+	me := c.MustGet("user").(*models.User)
+	if me.Nickname != "" {
+		f.UpdateBy = me.Nickname
+	} else {
+		f.UpdateBy = me.Username
+	}
 	ginx.NewRender(c).Message(ar.Update(rt.Ctx, f))
 }
 
