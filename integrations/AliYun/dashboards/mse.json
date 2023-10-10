@@ -1,0 +1,475 @@
+{
+  "name": "MSE监控大盘",
+  "tags": "",
+  "ident": "MSE-Monitor",
+  "configs": {
+    "var": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "definition": "prometheus",
+        "defaultValue": ""
+      },
+      {
+        "name": "envoy_clusterid",
+        "label": "envoy_clusterid",
+        "type": "query",
+        "hide": false,
+        "definition": "label_values(envoy_cluster_bind_errors, envoy_clusterid)",
+        "multi": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        }
+      }
+    ],
+    "panels": [
+      {
+        "type": "stat",
+        "id": "aba69dc0-5a11-4bcd-add9-335b5a677bee",
+        "layout": {
+          "h": 5,
+          "w": 6,
+          "x": 0,
+          "y": 0,
+          "i": "aba69dc0-5a11-4bcd-add9-335b5a677bee",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 7,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(delta(envoy_http_rq_total{envoy_clusterid=\"$envoy_clusterid\"}[1m]))"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "PV（一分钟）",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "valueAndName",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        }
+      },
+      {
+        "type": "pie",
+        "id": "e34a272e-6125-4afa-a2c1-80d7d9078673",
+        "layout": {
+          "h": 5,
+          "w": 9,
+          "x": 6,
+          "y": 0,
+          "i": "116a5607-5860-426e-a560-d3241da88b57",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 7,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(delta(envoy_http_downstream_rq{envoy_clusterid=\"$envoy_clusterid\"}[3m])) by (response_code_class)",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "请求成功率",
+        "maxPerRow": 4,
+        "custom": {
+          "calc": "lastNotNull",
+          "legengPosition": "right",
+          "detailName": "详情"
+        },
+        "options": {
+          "standardOptions": {
+            "util": "percentUnit",
+            "decimals": 0
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "a8917108-58a6-479a-8ec4-571f1b5a79c2",
+        "layout": {
+          "h": 5,
+          "w": 9,
+          "x": 15,
+          "y": 0,
+          "i": "9be66a1f-c0bb-47dc-a3c0-ad43b588789b",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 7,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(delta(envoy_http_downstream_cx_rx_bytes_total{envoy_clusterid=\"$envoy_clusterid\"}[1m]))",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "请求量（一分钟）",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list"
+          },
+          "standardOptions": {
+            "util": "bytesSI"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "1b102bee-ccc9-49a0-a1d1-cc097bb6a987",
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 0,
+          "y": 5,
+          "i": "1b102bee-ccc9-49a0-a1d1-cc097bb6a987",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 7,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(rate(envoy_http_downstream_rq_time_sum{envoy_clusterid=\"$envoy_clusterid\"}[10m])) / sum(rate(envoy_http_downstream_rq_time_count{envoy_clusterid=\"$envoy_clusterid\"}[10m]))",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "平均延迟",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "b432fc11-2f9d-4b72-826b-6ca787401859",
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 8,
+          "y": 5,
+          "i": "ea4c1073-07d3-4adc-a4d3-4812cc55ad7c",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 7,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.95, sum(rate(envoy_http_downstream_rq_time_bucket{envoy_clusterid=\"$envoy_clusterid\"}[10m])) by (le, service))",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "P95",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "9062d707-d8a7-4a93-82e5-46f6059e8d70",
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 16,
+          "y": 5,
+          "i": "d36246b9-4a9c-4ab0-9171-c5ac330be0ca",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 7,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(irate(envoy_http_downstream_rq{envoy_clusterid=\"$envoy_clusterid\"}[2m]))",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "QPS",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "barGauge",
+        "id": "c3f64cfd-adb2-4316-bb84-55f88ed513a3",
+        "layout": {
+          "h": 6,
+          "w": 24,
+          "x": 0,
+          "y": 11,
+          "i": "807c34f9-bd61-4da3-ad88-41bb3e045605",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 7,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "label_replace(label_replace(topk(10, sum(delta(envoy_cluster_upstream_rq_total{envoy_clusterid=\"$envoy_clusterid\", cluster_name=~\"outbound_([0-9]+)_(.*)_(.*).svc.cluster.local$\", cluster_name!~\".*waf-proxy.static\", cluster_name!~\"outbound_([0-9]+)_(.*)_kubernetes.default.svc.cluster.local\", cluster_name!~\"outbound_([0-9]+)_(.*)_(.*).kube-system.svc.cluster.local\", cluster_name!~\"outbound_([0-9]+)_(.*)_(.*).arms-prom.svc.cluster.local\"}[1m])) by (cluster_name)), \"service_name\", \"$3\", \"cluster_name\", \"outbound_([0-9]+)_(.*)_(.*).svc.cluster.local$\"), \"port\", \"$1\", \"cluster_name\", \"outbound_([0-9]+)_(.*)_(.*).svc.cluster.local$\")",
+            "legend": "{{service_name}}:{{port}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Top Service Request",
+        "maxPerRow": 4,
+        "custom": {
+          "calc": "lastNotNull",
+          "baseColor": "#9470FF",
+          "serieWidth": 40,
+          "sortOrder": "desc"
+        },
+        "options": {
+          "standardOptions": {}
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "8df57678-ff19-4b63-b768-4dad3f12222b",
+        "layout": {
+          "h": 5,
+          "w": 24,
+          "x": 0,
+          "y": 17,
+          "i": "44f413ba-3262-4ccf-a4b1-c1165bafaaff",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 7,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "label_replace(label_replace(avg(delta(envoy_cluster_upstream_rq_time_sum{envoy_clusterid=\"$envoy_clusterid\", cluster_name=~\"outbound_([0-9]+)_(.*)_(.*)$\"}[3m])) by (cluster_name) / avg(delta(envoy_cluster_upstream_rq_time_count{envoy_clusterid=\"$envoy_clusterid\", cluster_name=~\"outbound_([0-9]+)_(.*)_(.*)$\"}[1m])) by (cluster_name), \"service_name\", \"$3\", \"cluster_name\", \"outbound_([0-9]+)_(.*)_(.*)$\"), \"port\", \"$1\", \"cluster_name\", \"outbound_([0-9]+)_(.*)_(.*)$\")",
+            "legend": "{{service_name}}:{{port}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Top Service RT",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      }
+    ],
+    "version": "3.0.0"
+  }
+}
