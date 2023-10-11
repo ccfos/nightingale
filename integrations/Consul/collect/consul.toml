@@ -1,0 +1,41 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+  ## Consul server address
+  # address = "localhost:8500"
+
+  ## URI scheme for the Consul server, one of "http", "https"
+  # scheme = "http"
+
+  ## ACL token used in every request
+  # token = ""
+
+  ## HTTP Basic Authentication username and password.
+  # username = ""
+  # password = ""
+
+  ## Data center to query the health checks from
+  # datacenter = ""
+
+  ## Allows any Consul server (non-leader) to service a read.
+  ## Default is true
+  # allow_stale = true
+
+  ## Forces the read to be fully consistent.
+  ## Default is false
+  # require_consistent = false
+
+  ## Prefix from which to expose key/value pairs.
+  # kv_prefix = ""
+
+  ## Regex that determines which keys to expose.
+  ## Default is ".*"
+  # kv_filter = ".*"
+
+  ## Optional TLS Config
+  # tls_ca = "/etc/telegraf/ca.pem"
+  # tls_cert = "/etc/telegraf/cert.pem"
+  # tls_key = "/etc/telegraf/key.pem"
+  ## Use TLS but skip chain & host verification
+  # insecure_skip_verify = true

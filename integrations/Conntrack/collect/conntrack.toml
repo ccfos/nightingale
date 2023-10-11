@@ -1,0 +1,17 @@
+# # collect interval
+# interval = 15
+
+files = [
+    "ip_conntrack_count",
+    "ip_conntrack_max",
+    "nf_conntrack_count",
+    "nf_conntrack_max"
+]
+
+dirs = [
+    "/proc/sys/net/ipv4/netfilter",
+    "/proc/sys/net/netfilter"
+]
+
+# ignore errors
+quiet = true
