@@ -85,7 +85,8 @@ func (rt *Router) eventPersist(c *gin.Context) {
 	var event *models.AlertCurEvent
 	ginx.BindJSON(c, &event)
 	event.FE2DB()
-	ginx.NewRender(c).Message(models.EventPersist(rt.Ctx, event))
+	err := models.EventPersist(rt.Ctx, event)
+	ginx.NewRender(c).Data(event.Id, err)
 }
 
 type eventForm struct {
