@@ -19,17 +19,11 @@ func Decrypt(cipherText string, privateKeyByte []byte, password string) (decrypt
 	var privateKey *rsa.PrivateKey
 	var decryptedPrivateKeyBytes []byte
 	decryptedPrivateKeyBytes, err = x509.DecryptPEMBlock(block, []byte(password))
-	if err != nil {
-		if password == "" {
-			privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
-		} else {
-			logger.Error("Failed to DecryptPEMBlock:", err)
-			return "", err
-		}
-	} else {
+	if err == nil {
 		privateKey, err = x509.ParsePKCS1PrivateKey(decryptedPrivateKeyBytes)
+	} else if password == "" { // has error. retry unencrypted
+		privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 	}
-
 	if err != nil {
 		logger.Error("Failed to parse private key:", err)
 		return "", err
