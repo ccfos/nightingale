@@ -18,14 +18,10 @@ func Decrypt(cipherText string, privateKeyByte []byte, password string) (decrypt
 	block, _ := pem.Decode(privateKeyByte)
 	var privateKey *rsa.PrivateKey
 	var decryptedPrivateKeyBytes []byte
-	if password != "" {
-		decryptedPrivateKeyBytes, err = x509.DecryptPEMBlock(block, []byte(password))
-		if err != nil {
-			logger.Error("Failed to DecryptPEMBlock:", err)
-			return "", err
-		}
+	decryptedPrivateKeyBytes, err = x509.DecryptPEMBlock(block, []byte(password))
+	if err == nil {
 		privateKey, err = x509.ParsePKCS1PrivateKey(decryptedPrivateKeyBytes)
-	} else {
+	} else if password == "" { // has error. retry unencrypted
 		privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 	}
 	if err != nil {
@@ -76,7 +72,11 @@ func GenerateKeyWithPassword(privateFilePath, publicFilePath, password string) e
 		return fmt.Errorf("failed to create private key file: %v", err)
 	}
 	defer privateKeyFile.Close()
-	pem.Encode(privateKeyFile, encryptedBlock)
+	if password == "" {
+		err = pem.Encode(privateKeyFile, block)
+	} else {
+		err = pem.Encode(privateKeyFile, encryptedBlock)
+	}
 	if err != nil {
 		return fmt.Errorf("failed to pem.Encode: %v", err)
 	}
@@ -96,7 +96,7 @@ func GenerateKeyWithPassword(privateFilePath, publicFilePath, password string) e
 		return fmt.Errorf("failed to create public key file: %v", err)
 	}
 	defer publicKeyFile.Close()
-	pem.Encode(publicKeyFile, block)
+	err = pem.Encode(publicKeyFile, block)
 	if err != nil {
 		return fmt.Errorf("failed to pem.Encode: %v", err)
 	}
