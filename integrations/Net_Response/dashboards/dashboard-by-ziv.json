@@ -1,0 +1,137 @@
+{
+  "name": "Net Response Dashboard",
+  "tags": "",
+  "configs": {
+    "version": "2.0.0",
+    "panels": [
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "max(net_response_result_code{ident=~\"$ident\"}) without (protocol, source)",
+            "legend": ""
+          }
+        ],
+        "name": "Targets",
+        "custom": {
+          "showHeader": true,
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "displayMode": "labelsOfSeriesToRows",
+          "sortColumn": "value",
+          "sortOrder": "descend"
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "type": "special",
+              "result": {
+                "color": "#3fc453",
+                "text": "up"
+              },
+              "match": {
+                "special": 0
+              }
+            },
+            {
+              "type": "range",
+              "result": {
+                "color": "#ff656b",
+                "text": "down"
+              },
+              "match": {
+                "from": 1
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "properties": {
+              "valueMappings": [
+                {
+                  "type": "special",
+                  "match": {
+                    "special": 0
+                  },
+                  "result": {
+                    "text": "UP",
+                    "color": "#417505"
+                  }
+                },
+                {
+                  "type": "range",
+                  "match": {
+                    "special": 1,
+                    "from": 1
+                  },
+                  "result": {
+                    "text": "DOWN",
+                    "color": "#e90f0f"
+                  }
+                }
+              ],
+              "standardOptions": {}
+            },
+            "matcher": {
+              "value": "A"
+            }
+          }
+        ],
+        "version": "2.0.0",
+        "type": "table",
+        "layout": {
+          "h": 6,
+          "w": 24,
+          "x": 0,
+          "y": 1,
+          "i": "efe3939b-33ec-415b-982f-92f0218626ec",
+          "isResizable": true
+        },
+        "id": "efe3939b-33ec-415b-982f-92f0218626ec"
+      },
+      {
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "max(net_response_response_time{ident=~\"$ident\"}) without (protocol, source)"
+          }
+        ],
+        "name": "Latency (s)",
+        "custom": {
+          "showHeader": true,
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "displayMode": "labelsOfSeriesToRows"
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "overrides": [
+          {}
+        ],
+        "version": "2.0.0",
+        "type": "table",
+        "layout": {
+          "h": 7,
+          "w": 24,
+          "x": 0,
+          "y": 7,
+          "i": "11b58922-d7a4-418f-912f-50500d312ed5",
+          "isResizable": true
+        },
+        "id": "11b58922-d7a4-418f-912f-50500d312ed5"
+      }
+    ],
+    "var": [
+      {
+        "type": "query",
+        "name": "ident",
+        "definition": "label_values(net_response_result_code, ident)",
+        "multi": true,
+        "allOption": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+[[instances]]
+# progs = "/path/to/prog1" # prog dir1
+# logs = ["/path/to/a.log", "path/to/b.log"]
+# override_timezone = "Asia/Shanghai"
+# emit_metric_timestamp = "true" #string type
+
+# [[instances]]
+# progs = "/path/to/prog2" # prog dir2
+# logs = ["/path/to/logdir/"]
+# override_timezone = "Asia/Shanghai"
+# emit_metric_timestamp = "true" # string type

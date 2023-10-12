@@ -1,0 +1,4 @@
+
+# sockstat
+## protocol to collect, valid values are "tcp", "udp", "tcp6", "udp6", "udplite", "raw", "frag", "udplite6", "raw6", "frag6"
+protocols = ["tcp", "udp", "tcp6", "udp6"]

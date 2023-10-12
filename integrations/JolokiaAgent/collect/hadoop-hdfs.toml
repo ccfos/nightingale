@@ -1,0 +1,85 @@
+################
+# NAMENODE     #
+################
+[[instances]]
+  urls = ["http://localhost:8778/jolokia"]
+  metrics_name_prefix = "hadoop_hdfs_namenode_"
+
+  [[instances.metric]]
+    name = "FSNamesystem"
+    mbean = "Hadoop:name=FSNamesystem,service=NameNode"
+    paths = ["CapacityTotal", "CapacityRemaining", "CapacityUsedNonDFS", "NumLiveDataNodes", "NumDeadDataNodes", "NumInMaintenanceDeadDataNodes", "NumDecomDeadDataNodes"]
+
+  [[instances.metric]]
+    name = "FSNamesystemState"
+    mbean = "Hadoop:name=FSNamesystemState,service=NameNode"
+    paths = ["VolumeFailuresTotal", "UnderReplicatedBlocks", "BlocksTotal"]
+  
+  [[instances.metric]]
+    name = "OperatingSystem"
+    mbean = "java.lang:type=OperatingSystem"
+    paths = ["ProcessCpuLoad", "SystemLoadAverage", "SystemCpuLoad"]
+
+  [[instances.metric]]
+    name = "jvm_runtime"
+    mbean = "java.lang:type=Runtime"
+    paths = ["Uptime"]
+
+  [[instances.metric]]
+    name = "jvm_memory"
+    mbean = "java.lang:type=Memory"
+    paths = ["HeapMemoryUsage", "NonHeapMemoryUsage", "ObjectPendingFinalizationCount"]
+
+  [[instances.metric]]
+    name = "jvm_garbage_collector"
+    mbean = "java.lang:name=*,type=GarbageCollector"
+    paths = ["CollectionTime", "CollectionCount"]
+    tag_keys = ["name"]
+
+  [[instances.metric]]
+    name = "jvm_memory_pool"
+    mbean = "java.lang:name=*,type=MemoryPool"
+    paths = ["Usage", "PeakUsage", "CollectionUsage"]
+    tag_keys = ["name"]
+    tag_prefix = "pool_"
+
+
+################
+# DATANODE     #
+################
+[[instances]]
+  urls = ["http://localhost:7778/jolokia"]
+  metrics_name_prefix = "hadoop_hdfs_datanode_"
+
+  [[instances.metric]]
+    name = "FSDatasetState"
+    mbean = "Hadoop:name=FSDatasetState,service=DataNode"
+    paths = ["Capacity", "DfsUsed", "Remaining", "NumBlocksFailedToUnCache", "NumBlocksFailedToCache", "NumBlocksCached"]
+
+  [[instances.metric]]
+    name = "OperatingSystem"
+    mbean = "java.lang:type=OperatingSystem"
+    paths = ["ProcessCpuLoad", "SystemLoadAverage", "SystemCpuLoad"]
+
+  [[instances.metric]]
+    name = "jvm_runtime"
+    mbean = "java.lang:type=Runtime"
+    paths = ["Uptime"]
+
+  [[instances.metric]]
+    name = "jvm_memory"
+    mbean = "java.lang:type=Memory"
+    paths = ["HeapMemoryUsage", "NonHeapMemoryUsage", "ObjectPendingFinalizationCount"]
+
+  [[instances.metric]]
+    name = "jvm_garbage_collector"
+    mbean = "java.lang:name=*,type=GarbageCollector"
+    paths = ["CollectionTime", "CollectionCount"]
+    tag_keys = ["name"]
+
+  [[instances.metric]]
+    name = "jvm_memory_pool"
+    mbean = "java.lang:name=*,type=MemoryPool"
+    paths = ["Usage", "PeakUsage", "CollectionUsage"]
+    tag_keys = ["name"]
+    tag_prefix = "pool_"

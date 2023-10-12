@@ -1,0 +1,57 @@
+## JolokiaAgent is bundled with ActiveMQ
+
+[[instances]]
+  urls = ["http://localhost:8161/api/jolokia"]
+  metrics_name_prefix = "activemq_"
+  username = "admin"
+  password = "admin"
+
+  ### JVM Generic
+
+  [[instances.metric]]
+    name  = "OperatingSystem"
+    mbean = "java.lang:type=OperatingSystem"
+    paths = ["ProcessCpuLoad","SystemLoadAverage","SystemCpuLoad"]
+
+  [[instances.metric]]
+    name  = "jvm_runtime"
+    mbean = "java.lang:type=Runtime"
+    paths = ["Uptime"]
+
+  [[instances.metric]]
+    name  = "jvm_memory"
+    mbean = "java.lang:type=Memory"
+    paths = ["HeapMemoryUsage", "NonHeapMemoryUsage", "ObjectPendingFinalizationCount"]
+
+  [[instances.metric]]
+    name     = "jvm_garbage_collector"
+    mbean    = "java.lang:name=*,type=GarbageCollector"
+    paths    = ["CollectionTime", "CollectionCount"]
+    tag_keys = ["name"]
+
+  [[instances.metric]]
+    name       = "jvm_memory_pool"
+    mbean      = "java.lang:name=*,type=MemoryPool"
+    paths      = ["Usage", "PeakUsage", "CollectionUsage"]
+    tag_keys   = ["name"]
+    tag_prefix = "pool_"
+
+  ### ACTIVEMQ
+
+  [[instances.metric]]
+    name     = "queue"
+    mbean    = "org.apache.activemq:brokerName=*,destinationName=*,destinationType=Queue,type=Broker"
+    paths    = ["QueueSize","EnqueueCount","ConsumerCount","DispatchCount","DequeueCount","ProducerCount","InFlightCount"]
+    tag_keys = ["brokerName","destinationName"]
+
+  [[instances.metric]]
+    name     = "topic"
+    mbean    = "org.apache.activemq:brokerName=*,destinationName=*,destinationType=Topic,type=Broker"
+    paths    = ["ProducerCount","DequeueCount","ConsumerCount","QueueSize","EnqueueCount"]
+    tag_keys = ["brokerName","destinationName"]
+
+  [[instances.metric]]
+    name     = "broker"
+    mbean    = "org.apache.activemq:brokerName=*,type=Broker"
+    paths    = ["TotalConsumerCount","TotalMessageCount","TotalEnqueueCount","TotalDequeueCount","MemoryLimit","MemoryPercentUsage","StoreLimit","StorePercentUsage","TempPercentUsage","TempLimit"]
+    tag_keys = ["brokerName"]

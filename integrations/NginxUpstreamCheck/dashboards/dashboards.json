@@ -1,0 +1,139 @@
+{
+    "name": "Nginx Upstream",
+    "tags": "",
+    "configs": {
+        "version": "2.0.0",
+        "links": [],
+        "var": [
+            {
+                "name": "target",
+                "allOption": false,
+                "multi": false,
+                "definition": "label_values(nginx_upstream_check_status_code,target)",
+                "reg": "/http:\\/\\//"
+            },
+            {
+                "name": "upstream",
+                "definition": "label_values(nginx_upstream_check_status_code,upstream)"
+            }
+        ],
+        "panels": [
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "nginx_upstream_check_status_code{target=\"$target\"}",
+                        "legend": ""
+                    }
+                ],
+                "name": "Requests",
+                "links": [],
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "type": "special",
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "text": "UP"
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "text": "DOWN"
+                            }
+                        }
+                    ],
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 7,
+                    "w": 2,
+                    "x": 0,
+                    "y": 0,
+                    "i": "f29b8521-eb9f-41d5-8a79-1e222baabf9d",
+                    "isResizable": true
+                },
+                "id": "f29b8521-eb9f-41d5-8a79-1e222baabf9d"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "nginx_upstream_check_rise{target=\"$target\",upstream=\"$upstream\"}",
+                        "legend": ""
+                    }
+                ],
+                "name": "Rise check",
+                "links": [],
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 2,
+                    "y": 0,
+                    "i": "c0d3d10a-fd3b-485c-97e4-9f68ffc7a026",
+                    "isResizable": true
+                },
+                "id": "c0d3d10a-fd3b-485c-97e4-9f68ffc7a026"
+            },
+            {
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "nginx_upstream_check_fall{target=\"$target\",upstream=\"$upstream\"}",
+                        "legend": ""
+                    }
+                ],
+                "name": "Fall Check",
+                "links": [],
+                "custom": {
+                    "textMode": "value",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "version": "2.0.0",
+                "type": "stat",
+                "layout": {
+                    "h": 7,
+                    "w": 6,
+                    "x": 8,
+                    "y": 0,
+                    "i": "abbce8f8-222f-4e07-9e5e-fc85e7780672",
+                    "isResizable": true
+                },
+                "id": "abbce8f8-222f-4e07-9e5e-fc85e7780672"
+            }
+        ]
+    }
+}
