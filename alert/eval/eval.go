@@ -206,6 +206,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 		return points, recoverPoints
 	}
 
+	arw.inhibit = ruleQuery.Inhibit
 	if len(ruleQuery.Queries) > 0 {
 		seriesStore := make(map[uint64]*models.DataResp)
 		seriesTagIndex := make(map[uint64][]uint64)
