@@ -77,9 +77,9 @@ OpenRSA = false
 # It is recommended to decrypt and remove all encrypted values from the database before replacing the key file.
 # This will prevent any potential issues with accessing or decrypting the variables using the new key file.
 # RSA public key (auto carete)
-RSAPublicKeyPath = "etc/n9e/public.pem"
+RSAPublicKeyPath = "etc/rsa/public.pem"
 # RSA private key (auto carete)
-RSAPrivateKeyPath = "etc/n9e/private.pem"
+RSAPrivateKeyPath = "etc/rsa/private.pem"
 # RSA private key password
 RSAPassWord = "n9e@n9e!"
 
