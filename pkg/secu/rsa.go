@@ -63,20 +63,24 @@ func GenerateKeyWithPassword(privateFilePath, publicFilePath, password string) e
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
 	}
-	encryptedBlock, err := x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(password), x509.PEMCipherAES256)
-	if err != nil {
-		return fmt.Errorf("failed to EncryptPEMBlock: %v", err)
+
+	var encryptedBlock *pem.Block
+	if password != "" {
+		encryptedBlock, err = x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(password), x509.PEMCipherAES256)
+		if err != nil {
+			return fmt.Errorf("failed to EncryptPEMBlock: %v", err)
+		}
+	} else {
+		encryptedBlock = block
 	}
+
 	privateKeyFile, err := os.Create(privateFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to create private key file: %v", err)
 	}
 	defer privateKeyFile.Close()
-	if password == "" {
-		err = pem.Encode(privateKeyFile, block)
-	} else {
-		err = pem.Encode(privateKeyFile, encryptedBlock)
-	}
+
+	err = pem.Encode(privateKeyFile, encryptedBlock)
 	if err != nil {
 		return fmt.Errorf("failed to pem.Encode: %v", err)
 	}
