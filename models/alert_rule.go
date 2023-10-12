@@ -17,6 +17,7 @@ import (
 
 const (
 	METRIC = "metric"
+	LOG    = "logging"
 	HOST   = "host"
 	LOKI   = "loki"
 
@@ -804,7 +805,7 @@ func (ar *AlertRule) IsTdengineRule() bool {
 }
 
 func (ar *AlertRule) GetRuleType() string {
-	if ar.Prod == METRIC {
+	if ar.Prod == METRIC || ar.Prod == LOG {
 		return ar.Cate
 	}
 
