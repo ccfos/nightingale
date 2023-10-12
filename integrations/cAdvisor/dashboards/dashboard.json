@@ -1,260 +1,33 @@
 {
-  "name": "阿里云REDIS",
+  "name": "cAdvisor",
   "tags": "",
   "ident": "",
   "configs": {
+    "links": [],
     "panels": [
       {
         "custom": {
           "drawStyle": "lines",
           "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "spanNulls": false,
-          "stack": "off"
+          "lineInterpolation": "linear",
+          "stack": "off",
+          "version": "2.0.0"
         },
-        "datasourceCate": "prometheus",
-        "id": "01f4d444-aa2d-466d-9615-c76baf60a40c",
+        "id": "eeb56afe-8a3e-46d6-8923-aeb3d0f124ea",
         "layout": {
-          "h": 4,
-          "i": "01f4d444-aa2d-466d-9615-c76baf60a40c",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 0
-        },
-        "maxPerRow": 4,
-        "name": "CPU平均使用率",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(aliyun_acs_kvstore_cpu_usage_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "spanNulls": false,
-          "stack": "off"
-        },
-        "datasourceCate": "prometheus",
-        "id": "c43eb882-915f-4c38-a0b5-8f33c21ab44a",
-        "layout": {
-          "h": 4,
-          "i": "09903231-6557-42be-9cf3-2873878e9bf2",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 0
-        },
-        "maxPerRow": 4,
-        "name": "内存平均使用率",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(aliyun_acs_kvstore_memory_usage_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "spanNulls": false,
-          "stack": "off"
-        },
-        "datasourceCate": "prometheus",
-        "id": "37447883-ad79-46bc-888a-1be2835c1c64",
-        "layout": {
-          "h": 4,
-          "i": "378a5a26-c28e-4612-af09-f82ec2e11d80",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 4
-        },
-        "maxPerRow": 4,
-        "name": "连接数平均使用率",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(aliyun_acs_kvstore_connection_usage_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "spanNulls": false,
-          "stack": "off"
-        },
-        "datasourceCate": "prometheus",
-        "id": "c9735607-3f24-44a7-bbf1-3ad39441c5c9",
-        "layout": {
-          "h": 4,
-          "i": "93a4c8a6-ac23-4e26-8a38-781ec1668820",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 4
-        },
-        "maxPerRow": 4,
-        "name": "失败统计平均使用率",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(aliyun_acs_kvstore_failed_count_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "spanNulls": false,
-          "stack": "off"
-        },
-        "datasourceCate": "prometheus",
-        "id": "b516e7dc-8022-409d-b907-18c4143df891",
-        "layout": {
-          "h": 5,
-          "i": "b516e7dc-8022-409d-b907-18c4143df891",
+          "h": 7,
+          "i": "eeb56afe-8a3e-46d6-8923-aeb3d0f124ea",
           "isResizable": true,
           "w": 24,
           "x": 0,
-          "y": 8
+          "y": 0
         },
+        "links": [],
         "maxPerRow": 4,
-        "name": "网络流量",
+        "name": "CPU Usage",
         "options": {
           "legend": {
             "displayMode": "hidden"
-          },
-          "standardOptions": {
-            "util": "bitsSI"
           },
           "thresholds": {
             "steps": [
@@ -272,18 +45,214 @@
         },
         "targets": [
           {
-            "expr": "sum(aliyun_acs_kvstore_intranet_in_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "legend": "in",
+            "expr": "sum(rate(container_cpu_usage_seconds_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[5m])) by (name) *100",
+            "legend": "{{name}}",
             "refId": "A"
-          },
-          {
-            "expr": "sum(aliyun_acs_kvstore_intranet_out_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "legend": "out",
-            "refId": "B"
           }
         ],
         "type": "timeseries",
         "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "linear",
+          "stack": "off",
+          "version": "2.0.0"
+        },
+        "id": "6690fff4-c159-40e5-b340-65a3ba85e37e",
+        "layout": {
+          "h": 8,
+          "i": "6690fff4-c159-40e5-b340-65a3ba85e37e",
+          "isResizable": true,
+          "w": 12,
+          "x": 0,
+          "y": 7
+        },
+        "links": [],
+        "maxPerRow": 4,
+        "name": "Memory Usage",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "type": "base",
+                "value": null
+              }
+            ]
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(container_memory_rss{instance=~\"$host\",name=~\"$container\",name=~\".+\"}) by (name)",
+            "legend": "{{name}}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "linear",
+          "stack": "off",
+          "version": "2.0.0"
+        },
+        "id": "3c798af5-cfae-4962-9b70-85736df44bb1",
+        "layout": {
+          "h": 8,
+          "i": "3c798af5-cfae-4962-9b70-85736df44bb1",
+          "isResizable": true,
+          "w": 12,
+          "x": 12,
+          "y": 7
+        },
+        "links": [],
+        "maxPerRow": 4,
+        "name": "Memory Cached",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "type": "base",
+                "value": null
+              }
+            ]
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(container_memory_cache{instance=~\"$host\",name=~\"$container\",name=~\".+\"}) by (name)",
+            "legend": "{{name}}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "linear",
+          "stack": "off",
+          "version": "2.0.0"
+        },
+        "id": "111835e1-cfb5-40db-bb52-1aca74cf1a00",
+        "layout": {
+          "h": 8,
+          "i": "111835e1-cfb5-40db-bb52-1aca74cf1a00",
+          "isResizable": true,
+          "w": 12,
+          "x": 0,
+          "y": 15
+        },
+        "links": [],
+        "maxPerRow": 4,
+        "name": "Received Network Traffic",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "type": "base",
+                "value": null
+              }
+            ]
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(container_network_receive_bytes_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[5m])) by (name)",
+            "legend": "{{name}}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "linear",
+          "stack": "off",
+          "version": "2.0.0"
+        },
+        "id": "b8050f8f-aee7-4fa5-888d-b6025df14aa1",
+        "layout": {
+          "h": 8,
+          "i": "b8050f8f-aee7-4fa5-888d-b6025df14aa1",
+          "isResizable": true,
+          "w": 12,
+          "x": 12,
+          "y": 15
+        },
+        "links": [],
+        "maxPerRow": 4,
+        "name": "Sent Network Traffic",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "type": "base",
+                "value": null
+              }
+            ]
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(container_network_transmit_bytes_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[5m])) by (name)",
+            "legend": "{{name}}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
         "datasourceValue": "${datasource}"
       }
     ],
@@ -294,14 +263,30 @@
         "definition": "prometheus"
       },
       {
+        "allOption": true,
+        "allValue": ".*",
+        "definition": "label_values({__name__=~\"container.*\"},instance)",
+        "multi": false,
+        "name": "host",
+        "reg": "",
+        "type": "query",
         "datasource": {
           "cate": "prometheus",
           "value": "${datasource}"
-        },
-        "definition": "label_values(aliyun_acs_kvstore_cpu_usage_average,instance_id)",
+        }
+      },
+      {
+        "allOption": true,
+        "allValue": ".*",
+        "definition": "label_values({__name__=~\"container.*\", instance=~\"$host\"},name)",
         "multi": false,
-        "name": "instance_id",
-        "type": "query"
+        "name": "container",
+        "reg": "",
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        }
       }
     ],
     "version": "3.0.0"

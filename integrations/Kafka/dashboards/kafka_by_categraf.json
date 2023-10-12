@@ -3,368 +3,395 @@
   "tags": "Kafka Prometheus Categraf",
   "ident": "",
   "configs": {
-    "var": [
+    "links": [
       {
-        "name": "cluster",
-        "definition": "label_values(kafka_brokers,  cluster)",
-        "type": "query"
+        "targetBlank": true,
+        "title": "文档",
+        "url": "https://github.com/ccfos/nightingale/tree/main/integrations/kafka/markdown/"
       }
     ],
-    "version": "2.0.0",
     "panels": [
       {
+        "collapsed": true,
         "id": "51502c3a-dd6f-41c7-b8f1-87b88826c96e",
-        "type": "row",
-        "name": "overview",
         "layout": {
           "h": 1,
+          "i": "51502c3a-dd6f-41c7-b8f1-87b88826c96e",
+          "isResizable": false,
           "w": 24,
           "x": 0,
-          "y": 0,
-          "i": "51502c3a-dd6f-41c7-b8f1-87b88826c96e",
-          "isResizable": false
+          "y": 0
         },
-        "collapsed": true
+        "name": "overview",
+        "type": "row"
       },
       {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "kafka_brokers{cluster=\"$cluster\"}"
-          }
-        ],
-        "name": "brokers",
         "custom": {
-          "textMode": "value",
-          "colorMode": "value",
           "calc": "lastNotNull",
           "colSpan": 1,
+          "colorMode": "value",
+          "textMode": "value",
           "textSize": {
             "value": 50
           }
         },
-        "options": {
-          "standardOptions": {}
-        },
-        "version": "2.0.0",
-        "type": "stat",
+        "id": "e2c1d271-ec43-4821-aa19-451e856af755",
         "layout": {
           "h": 3,
+          "i": "e2c1d271-ec43-4821-aa19-451e856af755",
+          "isResizable": true,
           "w": 6,
           "x": 0,
-          "y": 1,
-          "i": "e2c1d271-ec43-4821-aa19-451e856af755",
-          "isResizable": true
+          "y": 1
         },
-        "id": "e2c1d271-ec43-4821-aa19-451e856af755"
-      },
-      {
+        "name": "brokers",
+        "options": {
+          "standardOptions": {}
+        },
         "targets": [
           {
-            "refId": "A",
-            "expr": "count(count by (topic) (kafka_topic_partitions{cluster=\"$cluster\"}))"
+            "expr": "kafka_brokers{cluster=\"$cluster\"}",
+            "refId": "A"
           }
         ],
-        "name": "topics",
+        "type": "stat",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
-          "textMode": "value",
-          "colorMode": "value",
           "calc": "lastNotNull",
           "colSpan": 1,
+          "colorMode": "value",
+          "textMode": "value",
           "textSize": {
             "value": 50
           }
         },
-        "options": {
-          "standardOptions": {}
-        },
-        "version": "2.0.0",
-        "type": "stat",
+        "id": "fd3a0b9f-fd67-4360-a94c-869fee7b5b98",
         "layout": {
           "h": 3,
+          "i": "fd3a0b9f-fd67-4360-a94c-869fee7b5b98",
+          "isResizable": true,
           "w": 6,
           "x": 6,
-          "y": 1,
-          "i": "fd3a0b9f-fd67-4360-a94c-869fee7b5b98",
-          "isResizable": true
+          "y": 1
         },
-        "id": "fd3a0b9f-fd67-4360-a94c-869fee7b5b98"
-      },
-      {
+        "name": "topics",
+        "options": {
+          "standardOptions": {}
+        },
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(kafka_topic_partitions{cluster=\"$cluster\"})"
+            "expr": "count(count by (topic) (kafka_topic_partitions{cluster=\"$cluster\"}))",
+            "refId": "A"
           }
         ],
-        "name": "partitions",
+        "type": "stat",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
-          "textMode": "value",
-          "colorMode": "value",
           "calc": "lastNotNull",
           "colSpan": 1,
+          "colorMode": "value",
+          "textMode": "value",
           "textSize": {
             "value": 50
           }
         },
-        "options": {
-          "standardOptions": {}
-        },
-        "version": "2.0.0",
-        "type": "stat",
+        "id": "e228d857-746b-41b6-8d2d-0152453c46f4",
         "layout": {
           "h": 3,
+          "i": "e228d857-746b-41b6-8d2d-0152453c46f4",
+          "isResizable": true,
           "w": 6,
           "x": 12,
-          "y": 1,
-          "i": "e228d857-746b-41b6-8d2d-0152453c46f4",
-          "isResizable": true
+          "y": 1
         },
-        "id": "e228d857-746b-41b6-8d2d-0152453c46f4"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(kafka_topic_partition_replicas{cluster=\"$cluster\"})"
-          }
-        ],
-        "name": "Replicas",
-        "custom": {
-          "textMode": "valueAndName",
-          "colorMode": "value",
-          "calc": "lastNotNull",
-          "colSpan": 1,
-          "textSize": {}
-        },
+        "name": "partitions",
         "options": {
           "standardOptions": {}
         },
-        "version": "2.0.0",
+        "targets": [
+          {
+            "expr": "sum(kafka_topic_partitions{cluster=\"$cluster\"})",
+            "refId": "A"
+          }
+        ],
         "type": "stat",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "colorMode": "value",
+          "textMode": "valueAndName",
+          "textSize": {}
+        },
+        "id": "85438099-8d6b-4817-b9b9-1d0ed36029cd",
         "layout": {
           "h": 3,
+          "i": "85438099-8d6b-4817-b9b9-1d0ed36029cd",
+          "isResizable": true,
           "w": 6,
           "x": 18,
-          "y": 1,
-          "i": "85438099-8d6b-4817-b9b9-1d0ed36029cd",
-          "isResizable": true
+          "y": 1
         },
-        "id": "85438099-8d6b-4817-b9b9-1d0ed36029cd"
+        "name": "Replicas",
+        "options": {
+          "standardOptions": {}
+        },
+        "targets": [
+          {
+            "expr": "sum(kafka_topic_partition_replicas{cluster=\"$cluster\"})",
+            "refId": "A"
+          }
+        ],
+        "type": "stat",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
+        "collapsed": true,
         "id": "0db4aac4-86cf-44cd-950e-6c6a99be8ff4",
-        "type": "row",
-        "name": "throughput",
         "layout": {
           "h": 1,
+          "i": "0db4aac4-86cf-44cd-950e-6c6a99be8ff4",
+          "isResizable": false,
           "w": 24,
           "x": 0,
-          "y": 4,
-          "i": "0db4aac4-86cf-44cd-950e-6c6a99be8ff4",
-          "isResizable": false
+          "y": 4
         },
-        "collapsed": true
+        "name": "throughput",
+        "type": "row"
       },
       {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "c2ec4036-3081-45cc-b672-024c6df93833",
+        "layout": {
+          "h": 7,
+          "i": "c2ec4036-3081-45cc-b672-024c6df93833",
+          "isResizable": true,
+          "w": 8,
+          "x": 0,
+          "y": 5
+        },
+        "name": "Messages produced per second",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
         "targets": [
           {
             "expr": "sum(rate(kafka_topic_partition_current_offset{cluster=\"$cluster\"}[1m])) by (topic)"
           }
         ],
-        "name": "Messages produced per second",
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "7ad651a6-c12c-4d46-8d01-749fa776faef",
+        "layout": {
+          "h": 7,
+          "i": "7ad651a6-c12c-4d46-8d01-749fa776faef",
+          "isResizable": true,
+          "w": 8,
+          "x": 8,
+          "y": 5
+        },
+        "name": "Messages consumed per second",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {},
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 8,
-          "x": 0,
-          "y": 5,
-          "i": "c2ec4036-3081-45cc-b672-024c6df93833",
-          "isResizable": true
-        },
-        "id": "c2ec4036-3081-45cc-b672-024c6df93833"
-      },
-      {
         "targets": [
           {
             "expr": "sum(rate(kafka_consumergroup_current_offset{cluster=\"$cluster\"}[1m])) by (topic)"
           }
         ],
-        "name": "Messages consumed per second",
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {}
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
         "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 8,
-          "x": 8,
-          "y": 5,
-          "i": "7ad651a6-c12c-4d46-8d01-749fa776faef",
-          "isResizable": true
-        },
-        "id": "7ad651a6-c12c-4d46-8d01-749fa776faef"
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
-        "targets": [
-          {
-            "expr": "sum(kafka_consumer_lag_millis{cluster=\"$cluster\"}) by (consumergroup, topic)",
-            "legend": "{{consumergroup}} (topic: {{topic}})"
-          }
-        ],
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "855aa8f5-0c51-42d4-b9a4-5460b7cd0f5a",
+        "layout": {
+          "h": 7,
+          "i": "855aa8f5-0c51-42d4-b9a4-5460b7cd0f5a",
+          "isResizable": true,
+          "w": 8,
+          "x": 16,
+          "y": 5
+        },
         "name": "Latency by Consumer Group",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
             "util": "humantimeMilliseconds"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
+        "targets": [
+          {
+            "expr": "sum(kafka_consumer_lag_millis{cluster=\"$cluster\"}) by (consumergroup, topic)",
+            "legend": "{{consumergroup}} (topic: {{topic}})"
+          }
+        ],
         "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 8,
-          "x": 16,
-          "y": 5,
-          "i": "855aa8f5-0c51-42d4-b9a4-5460b7cd0f5a",
-          "isResizable": true
-        },
-        "id": "855aa8f5-0c51-42d4-b9a4-5460b7cd0f5a"
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
+        "collapsed": true,
         "id": "20166830-7f85-4665-8f39-bf904267af29",
-        "type": "row",
-        "name": "patition/replicate",
         "layout": {
           "h": 1,
+          "i": "20166830-7f85-4665-8f39-bf904267af29",
+          "isResizable": false,
           "w": 24,
           "x": 0,
-          "y": 18,
-          "i": "20166830-7f85-4665-8f39-bf904267af29",
-          "isResizable": false
+          "y": 18
         },
-        "collapsed": true
+        "name": "patition/replicate",
+        "type": "row"
       },
       {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "kafka_topic_partitions{cluster=\"$cluster\"}",
-            "legend": "{{topic}}"
-          }
-        ],
-        "name": "Partitions per Topic",
         "custom": {
-          "showHeader": true,
-          "colorMode": "value",
           "calc": "lastNotNull",
-          "displayMode": "seriesToRows"
+          "colorMode": "value",
+          "displayMode": "seriesToRows",
+          "showHeader": true
         },
-        "options": {
-          "standardOptions": {}
-        },
-        "overrides": [
-          {}
-        ],
-        "version": "2.0.0",
-        "type": "table",
+        "id": "8837a52e-c9eb-4afa-acc1-c3a5dac72d3b",
         "layout": {
           "h": 7,
+          "i": "8837a52e-c9eb-4afa-acc1-c3a5dac72d3b",
+          "isResizable": true,
           "w": 12,
           "x": 0,
-          "y": 19,
-          "i": "8837a52e-c9eb-4afa-acc1-c3a5dac72d3b",
-          "isResizable": true
+          "y": 19
         },
-        "id": "8837a52e-c9eb-4afa-acc1-c3a5dac72d3b"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "kafka_topic_partition_under_replicated_partition{cluster=\"$cluster\"}",
-            "legend": "{{topic}}-{{partition}}"
-          }
-        ],
-        "name": "Partitions Under Replicated",
-        "description": "副本不同步预案\n1. Restart the Zookeeper leader.\n2. Restart the broker\\brokers that are not replicating some of the partitions.",
-        "custom": {
-          "showHeader": true,
-          "colorMode": "value",
-          "calc": "lastNotNull",
-          "displayMode": "seriesToRows"
-        },
+        "name": "Partitions per Topic",
         "options": {
           "standardOptions": {}
         },
         "overrides": [
           {}
         ],
-        "version": "2.0.0",
+        "targets": [
+          {
+            "expr": "kafka_topic_partitions{cluster=\"$cluster\"}",
+            "legend": "{{topic}}",
+            "refId": "A"
+          }
+        ],
         "type": "table",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "calc": "lastNotNull",
+          "colorMode": "value",
+          "displayMode": "seriesToRows",
+          "showHeader": true
+        },
+        "description": "副本不同步预案\n1. Restart the Zookeeper leader.\n2. Restart the broker\\brokers that are not replicating some of the partitions.",
+        "id": "dd615767-dda7-4da6-b37f-0d484553aac6",
         "layout": {
           "h": 7,
+          "i": "dd615767-dda7-4da6-b37f-0d484553aac6",
+          "isResizable": true,
           "w": 12,
           "x": 12,
-          "y": 19,
-          "i": "dd615767-dda7-4da6-b37f-0d484553aac6",
-          "isResizable": true
+          "y": 19
         },
-        "id": "dd615767-dda7-4da6-b37f-0d484553aac6"
+        "name": "Partitions Under Replicated",
+        "options": {
+          "standardOptions": {}
+        },
+        "overrides": [
+          {}
+        ],
+        "targets": [
+          {
+            "expr": "kafka_topic_partition_under_replicated_partition{cluster=\"$cluster\"}",
+            "legend": "{{topic}}-{{partition}}",
+            "refId": "A"
+          }
+        ],
+        "type": "table",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       }
     ],
-    "links": [
+    "var": [
       {
-        "title": "文档",
-        "url": "https://github.com/ccfos/nightingale/tree/main/integrations/kafka/markdown/",
-        "targetBlank": true
+        "name": "datasource",
+        "type": "datasource",
+        "definition": "prometheus"
+      },
+      {
+        "definition": "label_values(kafka_brokers,  cluster)",
+        "name": "cluster",
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        }
       }
-    ]
+    ],
+    "version": "3.0.0"
   }
 }

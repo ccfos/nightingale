@@ -3,28 +3,31 @@
   "tags": "Categraf",
   "ident": "",
   "configs": {
-    "version": "2.0.0",
     "links": [],
-    "var": [],
     "panels": [
       {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "up{job=\"apiserver\"}",
-            "legend": "{{ instance }}"
-          }
-        ],
-        "name": "API Server - Health Status",
-        "links": [],
-        "description": "apiserver的实例健康状态，0表示down，1表示up",
         "custom": {
-          "showHeader": true,
-          "colorMode": "value",
           "calc": "lastNotNull",
-          "displayMode": "seriesToRows"
+          "colorMode": "value",
+          "displayMode": "seriesToRows",
+          "showHeader": true
         },
+        "description": "apiserver的实例健康状态，0表示down，1表示up",
+        "id": "98f46bc1-c078-40f2-915c-f0836957bf2f",
+        "layout": {
+          "h": 8,
+          "i": "98f46bc1-c078-40f2-915c-f0836957bf2f",
+          "isResizable": true,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "links": [],
+        "name": "API Server - Health Status",
         "options": {
+          "standardOptions": {
+            "util": "none"
+          },
           "valueMappings": [
             {
               "options": {
@@ -38,291 +41,255 @@
               "type": "value"
             },
             {
-              "type": "special",
+              "match": {
+                "special": 1
+              },
               "result": {
                 "color": "#3fc453",
                 "text": "UP"
               },
-              "match": {
-                "special": 1
-              }
+              "type": "special"
             },
             {
-              "type": "special",
+              "match": {
+                "special": 0
+              },
               "result": {
                 "color": "#f80202",
                 "text": "DOWN"
               },
-              "match": {
-                "special": 0
-              }
+              "type": "special"
             }
-          ],
-          "standardOptions": {
-            "util": "none"
-          }
+          ]
         },
         "overrides": [
           {}
         ],
-        "version": "2.0.0",
-        "type": "table",
-        "layout": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 0,
-          "i": "98f46bc1-c078-40f2-915c-f0836957bf2f",
-          "isResizable": true
-        },
-        "id": "98f46bc1-c078-40f2-915c-f0836957bf2f"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "apiserver_requested_deprecated_apis{job=\"apiserver\"}",
-            "legend": ""
+            "expr": "up{job=\"apiserver\"}",
+            "legend": "{{ instance }}",
+            "refId": "A"
           }
         ],
-        "name": "Deprecated Kubernetes Resources",
-        "links": [],
-        "description": "当前版本apiserver使用，未来版本中要移除的资源",
+        "type": "table",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
-          "showHeader": true,
-          "colorMode": "value",
           "calc": "lastNotNull",
-          "displayMode": "labelsOfSeriesToRows",
+          "colorMode": "value",
           "columns": [
             "group",
             "version",
             "resource",
             "removed_release"
           ],
+          "displayMode": "labelsOfSeriesToRows",
+          "showHeader": true,
           "sortOrder": "ascend"
         },
+        "description": "当前版本apiserver使用，未来版本中要移除的资源",
+        "id": "73beb13a-bd10-4a68-bb9e-5b9ab63da154",
+        "layout": {
+          "h": 8,
+          "i": "73beb13a-bd10-4a68-bb9e-5b9ab63da154",
+          "isResizable": true,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "links": [],
+        "name": "Deprecated Kubernetes Resources",
         "options": {
           "standardOptions": {}
         },
         "overrides": [
           {}
         ],
-        "version": "2.0.0",
+        "targets": [
+          {
+            "expr": "apiserver_requested_deprecated_apis{job=\"apiserver\"}",
+            "legend": "",
+            "refId": "A"
+          }
+        ],
         "type": "table",
-        "layout": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 0,
-          "i": "73beb13a-bd10-4a68-bb9e-5b9ab63da154",
-          "isResizable": true
-        },
-        "id": "73beb13a-bd10-4a68-bb9e-5b9ab63da154"
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum by (instance,code) (rate(apiserver_request_total{job=\"apiserver\"}[5m]))",
-            "legend": "{{ instance }} {{ code }}"
-          }
-        ],
-        "name": "API Server - HTTP Requests by code",
-        "links": [],
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "stack": "off"
+        },
         "description": "按照返回码分类统计apiserver请求数",
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "id": "1cfa42b1-9dcf-471c-90ff-8ffe656d4b11",
         "layout": {
           "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 8,
           "i": "1cfa42b1-9dcf-471c-90ff-8ffe656d4b11",
-          "isResizable": true
-        },
-        "id": "1cfa42b1-9dcf-471c-90ff-8ffe656d4b11"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum by (instance,verb) (rate(apiserver_request_total{job=\"apiserver\"}[5m]))",
-            "legend": "{{ instance }} {{ verb }}"
-          }
-        ],
-        "name": "API Server - HTTP Requests by verb",
-        "links": [],
-        "description": "按照请求动作分类统计apiserver的请求数",
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          },
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 8,
-          "i": "94def0cb-0b86-42f7-a4b2-dde714bbb918",
-          "isResizable": true
-        },
-        "id": "94def0cb-0b86-42f7-a4b2-dde714bbb918"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "apiserver_current_inflight_requests{job=\"apiserver\"}",
-            "legend": "{{ instance }} {{ request_kind }}"
-          }
-        ],
-        "name": "API Server - Current Inflight Requests by kind",
-        "links": [],
-        "description": "当前并发请求apiserver的数量",
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          },
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 8,
+          "isResizable": true,
           "w": 12,
           "x": 0,
-          "y": 16,
-          "i": "ce5a15ad-11c6-44a2-a071-be57009162e1",
-          "isResizable": true
+          "y": 8
         },
-        "id": "fb6266a3-3da0-4310-bfe8-c64a53db5db3"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "histogram_quantile(0.9, sum(rate(apiserver_request_duration_seconds_bucket{job=\"apiserver\"}[5m])) by (instance,verb,le))*1000",
-            "legend": "{{ instance }} {{ verb }}"
-          }
-        ],
-        "name": "API Server - HTTP Requets Latency by verb",
         "links": [],
-        "description": "apiserver的响应延迟，按请求动作分类统计",
+        "name": "API Server - HTTP Requests by code",
         "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          },
           "tooltip": {
             "mode": "all",
             "sort": "none"
-          },
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum by (instance,code) (rate(apiserver_request_total{job=\"apiserver\"}[5m]))",
+            "legend": "{{ instance }} {{ code }}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "stack": "off"
+        },
+        "description": "按照请求动作分类统计apiserver的请求数",
+        "id": "94def0cb-0b86-42f7-a4b2-dde714bbb918",
+        "layout": {
+          "h": 8,
+          "i": "94def0cb-0b86-42f7-a4b2-dde714bbb918",
+          "isResizable": true,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "links": [],
+        "name": "API Server - HTTP Requests by verb",
+        "options": {
           "legend": {
             "displayMode": "list",
             "placement": "bottom"
           },
           "standardOptions": {
-            "util": "milliseconds"
+            "util": "none"
           },
           "thresholds": {
             "steps": []
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
           }
         },
+        "targets": [
+          {
+            "expr": "sum by (instance,verb) (rate(apiserver_request_total{job=\"apiserver\"}[5m]))",
+            "legend": "{{ instance }} {{ verb }}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
           "fillOpacity": 0.25,
           "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "当前并发请求apiserver的数量",
+        "id": "fb6266a3-3da0-4310-bfe8-c64a53db5db3",
         "layout": {
           "h": 8,
+          "i": "ce5a15ad-11c6-44a2-a071-be57009162e1",
+          "isResizable": true,
           "w": 12,
-          "x": 12,
-          "y": 16,
+          "x": 0,
+          "y": 16
+        },
+        "links": [],
+        "name": "API Server - Current Inflight Requests by kind",
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "expr": "apiserver_current_inflight_requests{job=\"apiserver\"}",
+            "legend": "{{ instance }} {{ request_kind }}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "stack": "off"
+        },
+        "description": "apiserver的响应延迟，按请求动作分类统计",
+        "id": "045dca2d-d69b-47a7-b25e-656adb357e11",
+        "layout": {
+          "h": 8,
           "i": "045dca2d-d69b-47a7-b25e-656adb357e11",
-          "isResizable": true
+          "isResizable": true,
+          "w": 12,
+          "x": 12,
+          "y": 16
         },
-        "id": "045dca2d-d69b-47a7-b25e-656adb357e11"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "histogram_quantile(0.9, sum(rate(apiserver_request_duration_seconds_bucket {job=\"apiserver\",verb!=\"WATCH\"}[5m])) by (instance,le))*1000",
-            "legend": "{{ instance }}"
-          }
-        ],
-        "name": "API Server - HTTP Requets Latency by instance",
         "links": [],
-        "description": "apiserver的响应延迟(非watch请求）",
+        "name": "API Server - HTTP Requets Latency by verb",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          },
           "legend": {
             "displayMode": "list",
             "placement": "bottom"
@@ -332,185 +299,95 @@
           },
           "thresholds": {
             "steps": []
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
           }
         },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.9, sum(rate(apiserver_request_duration_seconds_bucket{job=\"apiserver\"}[5m])) by (instance,verb,le))*1000",
+            "legend": "{{ instance }} {{ verb }}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
           "fillOpacity": 0.25,
           "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "apiserver的响应延迟(非watch请求）",
+        "id": "1e775704-9ee4-45ce-9d24-b49af89fb5c7",
         "layout": {
           "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 24,
           "i": "1e775704-9ee4-45ce-9d24-b49af89fb5c7",
-          "isResizable": true
-        },
-        "id": "1e775704-9ee4-45ce-9d24-b49af89fb5c7"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum by(instance,verb) (rate(apiserver_request_total{code=~\"5..\",job=\"apiserver\"}[5m]))\n / sum by(instance,verb) (rate(apiserver_request_total{job=\"apiserver\"}[5m]))",
-            "legend": "{{ instance }}  {{ verb }}"
-          }
-        ],
-        "name": "API Server - Errors by verb",
-        "links": [],
-        "description": "apiserver的5xx错误率，按请求动作分类统计",
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          },
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 24,
-          "i": "1ca62e0b-72df-47d1-93ba-048ed49e9cb5",
-          "isResizable": true
-        },
-        "id": "1ca62e0b-72df-47d1-93ba-048ed49e9cb5"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum by(instance) (rate(apiserver_request_total{code=~\"5..\", job=\"apiserver\"}[5m]))\n / sum by(instance) (rate(apiserver_request_total{job=\"apiserver\"}[5m]))",
-            "legend": "{{ instance }}"
-          }
-        ],
-        "name": "API Server - Errors by Instance",
-        "links": [],
-        "description": "apiserver的5xx 错误率(5xx请求数/总请求数)",
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          },
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 8,
+          "isResizable": true,
           "w": 12,
           "x": 0,
-          "y": 32,
-          "i": "92a209a1-7d30-4627-9ae1-55ded5095ed7",
-          "isResizable": true
+          "y": 24
         },
-        "id": "92a209a1-7d30-4627-9ae1-55ded5095ed7"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(workqueue_depth{job=\"apiserver\"}[5m])) by (instance,name)",
-            "legend": "{{ instance }} {{ name }}"
-          }
-        ],
-        "name": "API Server - Work Queue by instance",
         "links": [],
-        "description": "apiserver工作队列深度，越接近0越好",
+        "name": "API Server - HTTP Requets Latency by instance",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          },
           "legend": {
             "displayMode": "list",
             "placement": "bottom"
           },
           "standardOptions": {
-            "util": "none"
+            "util": "milliseconds"
           },
           "thresholds": {
             "steps": []
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
           }
         },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.9, sum(rate(apiserver_request_duration_seconds_bucket {job=\"apiserver\",verb!=\"WATCH\"}[5m])) by (instance,le))*1000",
+            "legend": "{{ instance }}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
           "fillOpacity": 0.25,
           "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "apiserver的5xx错误率，按请求动作分类统计",
+        "id": "1ca62e0b-72df-47d1-93ba-048ed49e9cb5",
         "layout": {
           "h": 8,
+          "i": "1ca62e0b-72df-47d1-93ba-048ed49e9cb5",
+          "isResizable": true,
           "w": 12,
           "x": 12,
-          "y": 32,
-          "i": "83f22cf4-9c65-4ad3-900b-fa6fc914dd88",
-          "isResizable": true
+          "y": 24
         },
-        "id": "83f22cf4-9c65-4ad3-900b-fa6fc914dd88"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(apiserver_request_total{job=\"apiserver\"}[5m])) by (instance)",
-            "legend": "{{ instance }}"
-          }
-        ],
-        "name": "API Server - HTTP Requests by instance",
         "links": [],
-        "description": "5分钟内apiserver的请求数统计",
+        "name": "API Server - Errors by verb",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          },
           "legend": {
             "displayMode": "list",
             "placement": "bottom"
@@ -520,92 +397,243 @@
           },
           "thresholds": {
             "steps": []
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
           }
         },
+        "targets": [
+          {
+            "expr": "sum by(instance,verb) (rate(apiserver_request_total{code=~\"5..\",job=\"apiserver\"}[5m]))\n / sum by(instance,verb) (rate(apiserver_request_total{job=\"apiserver\"}[5m]))",
+            "legend": "{{ instance }}  {{ verb }}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
           "fillOpacity": 0.25,
           "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "stack": "off"
+        },
+        "description": "apiserver的5xx 错误率(5xx请求数/总请求数)",
+        "id": "92a209a1-7d30-4627-9ae1-55ded5095ed7",
+        "layout": {
+          "h": 8,
+          "i": "92a209a1-7d30-4627-9ae1-55ded5095ed7",
+          "isResizable": true,
+          "w": 12,
+          "x": 0,
+          "y": 32
+        },
+        "links": [],
+        "name": "API Server - Errors by Instance",
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum by(instance) (rate(apiserver_request_total{code=~\"5..\", job=\"apiserver\"}[5m]))\n / sum by(instance) (rate(apiserver_request_total{job=\"apiserver\"}[5m]))",
+            "legend": "{{ instance }}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "stack": "off"
+        },
+        "description": "apiserver工作队列深度，越接近0越好",
+        "id": "83f22cf4-9c65-4ad3-900b-fa6fc914dd88",
+        "layout": {
+          "h": 8,
+          "i": "83f22cf4-9c65-4ad3-900b-fa6fc914dd88",
+          "isResizable": true,
+          "w": 12,
+          "x": 12,
+          "y": 32
+        },
+        "links": [],
+        "name": "API Server - Work Queue by instance",
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "steps": []
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(workqueue_depth{job=\"apiserver\"}[5m])) by (instance,name)",
+            "legend": "{{ instance }} {{ name }}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
           "stack": "normal"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "5分钟内apiserver的请求数统计",
+        "id": "3e9f9df7-d9fb-4791-b3b2-2c52678f060f",
         "layout": {
           "h": 8,
+          "i": "3e9f9df7-d9fb-4791-b3b2-2c52678f060f",
+          "isResizable": true,
           "w": 12,
           "x": 0,
-          "y": 40,
-          "i": "3e9f9df7-d9fb-4791-b3b2-2c52678f060f",
-          "isResizable": true
+          "y": 40
         },
-        "id": "3e9f9df7-d9fb-4791-b3b2-2c52678f060f"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "rate(process_cpu_seconds_total{job=\"apiserver\"}[5m])",
-            "legend": "{{ instance }}"
-          }
-        ],
-        "name": "API Server - CPU Usage by instance",
         "links": [],
-        "description": "apiserver的cpu使用率",
+        "name": "API Server - HTTP Requests by instance",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          },
           "legend": {
             "displayMode": "list",
             "placement": "bottom"
           },
           "standardOptions": {
-            "util": "percent",
-            "decimals": 2
+            "util": "none"
           },
           "thresholds": {
             "steps": []
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 40,
-          "i": "3d5c1ae5-e640-4986-9202-78258169bffb",
-          "isResizable": true
-        },
-        "id": "3d5c1ae5-e640-4986-9202-78258169bffb"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "process_resident_memory_bytes{job=\"apiserver\"}",
-            "legend": "{{ instance }}"
-          }
-        ],
-        "name": "API Server - Memory Usage by instance",
-        "links": [],
-        "description": "apiserver的内存使用量",
-        "options": {
+          },
           "tooltip": {
             "mode": "all",
             "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(apiserver_request_total{job=\"apiserver\"}[5m])) by (instance)",
+            "legend": "{{ instance }}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "stack": "off"
+        },
+        "description": "apiserver的cpu使用率",
+        "id": "3d5c1ae5-e640-4986-9202-78258169bffb",
+        "layout": {
+          "h": 8,
+          "i": "3d5c1ae5-e640-4986-9202-78258169bffb",
+          "isResizable": true,
+          "w": 12,
+          "x": 12,
+          "y": 40
+        },
+        "links": [],
+        "name": "API Server - CPU Usage by instance",
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
           },
+          "standardOptions": {
+            "decimals": 2,
+            "util": "percent"
+          },
+          "thresholds": {
+            "steps": []
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "expr": "rate(process_cpu_seconds_total{job=\"apiserver\"}[5m])",
+            "legend": "{{ instance }}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.25,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "stack": "off"
+        },
+        "description": "apiserver的内存使用量",
+        "id": "1550a2d5-c808-4174-865a-a41b2c16b486",
+        "layout": {
+          "h": 8,
+          "i": "1550a2d5-c808-4174-865a-a41b2c16b486",
+          "isResizable": true,
+          "w": 12,
+          "x": 0,
+          "y": 48
+        },
+        "links": [],
+        "name": "API Server - Memory Usage by instance",
+        "options": {
           "legend": {
             "displayMode": "list",
             "placement": "bottom"
@@ -615,28 +643,32 @@
           },
           "thresholds": {
             "steps": []
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
           }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "stack": "off"
-        },
-        "version": "2.0.0",
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes{job=\"apiserver\"}",
+            "legend": "{{ instance }}",
+            "refId": "A"
+          }
+        ],
         "type": "timeseries",
-        "layout": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 48,
-          "i": "1550a2d5-c808-4174-865a-a41b2c16b486",
-          "isResizable": true
-        },
-        "id": "1550a2d5-c808-4174-865a-a41b2c16b486"
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       }
-    ]
+    ],
+    "var": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "definition": "prometheus"
+      }
+    ],
+    "version": "3.0.0"
   }
 }
