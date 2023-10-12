@@ -28,6 +28,7 @@ func Decrypt(cipherText string, privateKeyByte []byte, password string) (decrypt
 	} else {
 		privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 	}
+
 	if err != nil {
 		logger.Error("Failed to parse private key:", err)
 		return "", err
