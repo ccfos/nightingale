@@ -24,8 +24,8 @@ type WriterType struct {
 	Client           api.Client
 }
 
-func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSeries {
-	ritems := make([]*prompb.TimeSeries, 0, len(items))
+func (w WriterType) writeRelabel(items []prompb.TimeSeries) []prompb.TimeSeries {
+	ritems := make([]prompb.TimeSeries, 0, len(items))
 	for _, item := range items {
 		lbls := Process(item.Labels, w.Opts.WriteRelabels...)
 		if len(lbls) == 0 {
@@ -36,7 +36,7 @@ func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSerie
 	return ritems
 }
 
-func (w WriterType) Write(key string, items []*prompb.TimeSeries, headers ...map[string]string) {
+func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[string]string) {
 	if len(items) == 0 {
 		return
 	}

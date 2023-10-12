@@ -27,7 +27,7 @@ func (rt *Router) AppendLabels(pt *prompb.TimeSeries, target *models.Target, bgC
 			continue
 		}
 
-		pt.Labels = append(pt.Labels, &prompb.Label{
+		pt.Labels = append(pt.Labels, prompb.Label{
 			Name:  key,
 			Value: value,
 		})
@@ -57,7 +57,7 @@ func (rt *Router) AppendLabels(pt *prompb.TimeSeries, target *models.Target, bgC
 			return
 		}
 
-		pt.Labels = append(pt.Labels, &prompb.Label{
+		pt.Labels = append(pt.Labels, prompb.Label{
 			Name:  rt.Pushgw.BusiGroupLabelKey,
 			Value: bg.LabelValue,
 		})

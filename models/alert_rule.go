@@ -829,7 +829,6 @@ func (ar *AlertRule) UpdateEvent(event *AlertCurEvent) {
 	event.RuleProd = ar.Prod
 	event.RuleAlgo = ar.Algorithm
 	event.PromForDuration = ar.PromForDuration
-	event.PromQl = ar.PromQl
 	event.RuleConfig = ar.RuleConfig
 	event.RuleConfigJson = ar.RuleConfigJson
 	event.PromEvalInterval = ar.PromEvalInterval
