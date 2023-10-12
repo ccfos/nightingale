@@ -18,15 +18,14 @@ func Decrypt(cipherText string, privateKeyByte []byte, password string) (decrypt
 	block, _ := pem.Decode(privateKeyByte)
 	var privateKey *rsa.PrivateKey
 	var decryptedPrivateKeyBytes []byte
-	if password != "" {
-		decryptedPrivateKeyBytes, err = x509.DecryptPEMBlock(block, []byte(password))
-		if err != nil {
-			logger.Error("Failed to DecryptPEMBlock:", err)
-			return "", err
-		}
-		privateKey, err = x509.ParsePKCS1PrivateKey(decryptedPrivateKeyBytes)
-	} else {
+	decryptedPrivateKeyBytes, err = x509.DecryptPEMBlock(block, []byte(password))
+	if err != nil && password == "" {
 		privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	} else if err != nil {
+		logger.Error("Failed to DecryptPEMBlock:", err)
+		return "", err
+	} else {
+		privateKey, err = x509.ParsePKCS1PrivateKey(decryptedPrivateKeyBytes)
 	}
 
 	if err != nil {
