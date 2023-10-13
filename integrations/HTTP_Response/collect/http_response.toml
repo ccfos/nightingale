@@ -1,0 +1,65 @@
+## collect interval
+# interval = 15
+
+## Set the mapping of extra tags in batches
+[mappings]
+# "http://localhost" = { "job" = "local" }
+# "https://www.baidu.com" = { "job" = "baidu" }
+
+[[instances]]
+targets = [
+#     "http://localhost",
+#     "https://www.baidu.com"
+]
+
+## append some labels for series
+# labels = { region="cloud", product="n9e" }
+
+## interval = global.interval * interval_times
+# interval_times = 1
+
+## Set http_proxy (categraf uses the system wide proxy settings if it's is not set)
+# http_proxy = "http://localhost:8888"
+
+## Interface to use when dialing an address
+# interface = "eth0"
+
+## HTTP Request Method
+# method = "GET"
+
+## Set response_timeout (default 5 seconds)
+# response_timeout = "5s"
+
+## Whether to follow redirects from the server (defaults to false)
+# follow_redirects = false
+
+## Optional HTTP Basic Auth Credentials
+# username = "username"
+# password = "pa$$word"
+
+## Optional headers
+# headers = ["Header-Key-1", "Header-Value-1", "Header-Key-2", "Header-Value-2"]
+
+## Optional HTTP Request Body
+# body = '''
+# {'fake':'data'}
+# '''
+
+## Optional substring or regular expression match in body of the response(substring case sensitive).
+## When both of the following parameters are enabled, one of them can be satisfied.
+# expect_response_substring = "ok"
+# expect_response_regular_expression = "green|yellow"
+
+## Optional expected response status codes.
+## "expect_response_status_codes" Supports adding multiple codes by delimiter("|" or ",").
+## When both of the following parameters are enabled, one of them can be satisfied.
+# expect_response_status_code = 0
+# expect_response_status_codes = "200|301"
+
+## Optional TLS Config
+# use_tls = false
+# tls_ca = "/etc/categraf/ca.pem"
+# tls_cert = "/etc/categraf/cert.pem"
+# tls_key = "/etc/categraf/key.pem"
+## Use TLS but skip chain & host verification
+# insecure_skip_verify = false
