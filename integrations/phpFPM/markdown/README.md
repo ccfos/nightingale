@@ -1,6 +1,6 @@
 # PHP-FPM
 
-*PHP-FPM(PHP FastCGI Process Manager)* 监控采集插件，由telegraf的phpfpm改造而来。
+*PHP-FPM* (PHP FastCGI Process Manager) 监控采集插件，由telegraf的phpfpm改造而来。
 
 该插件需要更改phpfpm的配置文件，开启 *pm.status_path*配置项
 ```
@@ -10,7 +10,7 @@ pm.status_path = /status
 
 ## Configuration
 
-请参考配置[示例](../collect/phpfpm.toml)文件
+请参考配置[示例](https://github.com/flashcatcloud/categraf/blob/main/conf/input.phpfpm/phpfpm.toml)文件
 
 ### 注意事项：
 1. 如下配置 仅生效于HTTP的url

@@ -1,7 +1,7 @@
 # nsq
 forked from [telegraf/nsq](https://github.com/influxdata/telegraf/blob/master/plugins/inputs/nsq/nsq.go)
 ## Configuration
-- 配置文件，[参考示例](../collect/nsq.toml)
+- 配置文件，[参考示例](https://github.com/flashcatcloud/categraf/blob/main/conf/input.nsq/nsq.toml)
 
 ## 指标列表
 ### nsq_client类
