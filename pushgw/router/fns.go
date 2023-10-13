@@ -99,7 +99,7 @@ func (rt *Router) debugSample(remoteAddr string, v *prompb.TimeSeries) {
 
 func (rt *Router) ForwardByIdent(clientIP string, ident string, v *prompb.TimeSeries) {
 	rt.BeforePush(clientIP, v)
-	rt.Writers.PushSample(ident, v)
+	rt.Writers.PushSample(ident, *v)
 }
 
 func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.TimeSeries) {
@@ -111,7 +111,7 @@ func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.Time
 	} else {
 		hashkey = metric[0:1]
 	}
-	rt.Writers.PushSample(hashkey, v)
+	rt.Writers.PushSample(hashkey, *v)
 }
 
 func (rt *Router) BeforePush(clientIP string, v *prompb.TimeSeries) {
