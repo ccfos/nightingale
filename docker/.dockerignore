@@ -1,7 +1,5 @@
-ibexetc
+compose-host-network
+compose-postgres
+compose-bridge
 initsql
-mysqletc
-n9eetc
-prometc
 build.sh
-docker-compose.yaml

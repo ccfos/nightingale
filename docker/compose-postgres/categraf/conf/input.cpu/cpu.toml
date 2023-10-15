@@ -1,0 +1,5 @@
+# # collect interval
+# interval = 15
+
+# # whether collect per cpu
+# collect_per_cpu = false
