@@ -15,7 +15,7 @@ const (
 	LabelName = "__name__"
 )
 
-func ConvertToTimeSeries(value model.Value, rule *models.RecordingRule) (lst []*prompb.TimeSeries) {
+func ConvertToTimeSeries(value model.Value, rule *models.RecordingRule) (lst []prompb.TimeSeries) {
 	switch value.Type() {
 	case model.ValVector:
 		items, ok := value.(model.Vector)
@@ -31,7 +31,7 @@ func ConvertToTimeSeries(value model.Value, rule *models.RecordingRule) (lst []*
 			s.Timestamp = time.Unix(item.Timestamp.Unix(), 0).UnixNano() / 1e6
 			s.Value = float64(item.Value)
 			l := labelsToLabelsProto(item.Metric, rule)
-			lst = append(lst, &prompb.TimeSeries{
+			lst = append(lst, prompb.TimeSeries{
 				Labels:  l,
 				Samples: []prompb.Sample{s},
 			})
@@ -63,7 +63,7 @@ func ConvertToTimeSeries(value model.Value, rule *models.RecordingRule) (lst []*
 					Value:     float64(v.Value),
 				})
 			}
-			lst = append(lst, &prompb.TimeSeries{
+			lst = append(lst, prompb.TimeSeries{
 				Labels:  l,
 				Samples: slst,
 			})
@@ -78,7 +78,7 @@ func ConvertToTimeSeries(value model.Value, rule *models.RecordingRule) (lst []*
 			return
 		}
 
-		lst = append(lst, &prompb.TimeSeries{
+		lst = append(lst, prompb.TimeSeries{
 			Labels:  nil,
 			Samples: []prompb.Sample{{Value: float64(item.Value), Timestamp: time.Unix(item.Timestamp.Unix(), 0).UnixNano() / 1e6}},
 		})
@@ -89,9 +89,9 @@ func ConvertToTimeSeries(value model.Value, rule *models.RecordingRule) (lst []*
 	return
 }
 
-func labelsToLabelsProto(labels model.Metric, rule *models.RecordingRule) (result []*prompb.Label) {
+func labelsToLabelsProto(labels model.Metric, rule *models.RecordingRule) (result []prompb.Label) {
 	//name
-	nameLs := &prompb.Label{
+	nameLs := prompb.Label{
 		Name:  LabelName,
 		Value: rule.Name,
 	}
@@ -101,7 +101,7 @@ func labelsToLabelsProto(labels model.Metric, rule *models.RecordingRule) (resul
 			continue
 		}
 		if model.LabelNameRE.MatchString(string(k)) {
-			result = append(result, &prompb.Label{
+			result = append(result, prompb.Label{
 				Name:  string(k),
 				Value: string(v),
 			})
@@ -111,7 +111,7 @@ func labelsToLabelsProto(labels model.Metric, rule *models.RecordingRule) (resul
 		for _, v := range rule.AppendTagsJSON {
 			index := strings.Index(v, "=")
 			if model.LabelNameRE.MatchString(v[:index]) {
-				result = append(result, &prompb.Label{
+				result = append(result, prompb.Label{
 					Name:  v[:index],
 					Value: v[index+1:],
 				})

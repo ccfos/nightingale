@@ -27,7 +27,7 @@ func (rt *Router) AppendLabels(pt *prompb.TimeSeries, target *models.Target, bgC
 			continue
 		}
 
-		pt.Labels = append(pt.Labels, &prompb.Label{
+		pt.Labels = append(pt.Labels, prompb.Label{
 			Name:  key,
 			Value: value,
 		})
@@ -57,7 +57,7 @@ func (rt *Router) AppendLabels(pt *prompb.TimeSeries, target *models.Target, bgC
 			return
 		}
 
-		pt.Labels = append(pt.Labels, &prompb.Label{
+		pt.Labels = append(pt.Labels, prompb.Label{
 			Name:  rt.Pushgw.BusiGroupLabelKey,
 			Value: bg.LabelValue,
 		})
@@ -99,7 +99,7 @@ func (rt *Router) debugSample(remoteAddr string, v *prompb.TimeSeries) {
 
 func (rt *Router) ForwardByIdent(clientIP string, ident string, v *prompb.TimeSeries) {
 	rt.BeforePush(clientIP, v)
-	rt.Writers.PushSample(ident, v)
+	rt.Writers.PushSample(ident, *v)
 }
 
 func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.TimeSeries) {
@@ -111,7 +111,7 @@ func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.Time
 	} else {
 		hashkey = metric[0:1]
 	}
-	rt.Writers.PushSample(hashkey, v)
+	rt.Writers.PushSample(hashkey, *v)
 }
 
 func (rt *Router) BeforePush(clientIP string, v *prompb.TimeSeries) {

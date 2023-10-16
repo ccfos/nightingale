@@ -30,6 +30,7 @@ _test
 /dist
 /etc/*.local.yml
 /etc/*.local.conf
+/etc/rsa/*
 /etc/plugins/*.local.yml
 /etc/script/rules.yaml
 /etc/script/alert-rules.json
@@ -43,8 +44,9 @@ _test
 /n9e
 /docker/pub
 /docker/n9e
-/docker/mysqldata
-/docker/experience_pg_vm/pgdata
+/docker/compose-bridge/mysqldata
+/docker/compose-host-network/mysqldata
+/docker/compose-postgres/pgdata
 /etc.local*
 /front/statik/statik.go
 

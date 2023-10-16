@@ -59,7 +59,7 @@ func (m *DatadogMetric) ToProm() (*prompb.TimeSeries, string, error) {
 		return nil, "", fmt.Errorf("invalid metric name: %s", m.Metric)
 	}
 
-	pt.Labels = append(pt.Labels, &prompb.Label{
+	pt.Labels = append(pt.Labels, prompb.Label{
 		Name:  model.MetricNameLabel,
 		Value: m.Metric,
 	})
@@ -77,7 +77,7 @@ func (m *DatadogMetric) ToProm() (*prompb.TimeSeries, string, error) {
 
 		if key == "ident" {
 			identInTag = arr[1]
-			pt.Labels = append(pt.Labels, &prompb.Label{
+			pt.Labels = append(pt.Labels, prompb.Label{
 				Name:  key,
 				Value: arr[1],
 			})
@@ -101,7 +101,7 @@ func (m *DatadogMetric) ToProm() (*prompb.TimeSeries, string, error) {
 			return nil, "", fmt.Errorf("invalid tag name: %s", key)
 		}
 
-		pt.Labels = append(pt.Labels, &prompb.Label{
+		pt.Labels = append(pt.Labels, prompb.Label{
 			Name:  key,
 			Value: arr[1],
 		})
@@ -114,12 +114,12 @@ func (m *DatadogMetric) ToProm() (*prompb.TimeSeries, string, error) {
 
 	if hostInTag != "" {
 		if identInTag != "" {
-			pt.Labels = append(pt.Labels, &prompb.Label{
+			pt.Labels = append(pt.Labels, prompb.Label{
 				Name:  "host",
 				Value: hostInTag,
 			})
 		} else {
-			pt.Labels = append(pt.Labels, &prompb.Label{
+			pt.Labels = append(pt.Labels, prompb.Label{
 				Name:  "ident",
 				Value: hostInTag,
 			})

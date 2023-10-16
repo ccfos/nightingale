@@ -84,9 +84,8 @@ RSAPrivateKeyPath = "etc/rsa/private.pem"
 RSAPassWord = "n9e@n9e!"
 
 [DB]
-# postgres: host=%s port=%s user=%s dbname=%s password=%s sslmode=%s
 # postgres: DSN="host=127.0.0.1 port=5432 user=root dbname=n9e_v6 password=1234 sslmode=disable"
-DSN="root:1234@tcp(127.0.0.1:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local&allowNativePasswords=true"
+DSN="root:1234@tcp(mysql:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local&allowNativePasswords=true"
 # enable debug mode or not
 Debug = false
 # mysql postgres
@@ -104,7 +103,7 @@ TablePrefix = ""
 
 [Redis]
 # address, ip:port or ip1:port,ip2:port for cluster and sentinel(SentinelAddrs)
-Address = "127.0.0.1:6379"
+Address = "redis:6379"
 # Username = ""
 # Password = ""
 # DB = 0
@@ -133,8 +132,8 @@ MetricsYamlFile = "./etc/metrics.yaml"
 I18NHeaderKey = "X-Language"
 
 [Center.AnonymousAccess]
-PromQuerier = true
-AlertDetail = true
+PromQuerier = false
+AlertDetail = false
 
 [Pushgw]
 # use target labels in database instead of in series
@@ -153,7 +152,7 @@ LabelRewrite = true
 
 [[Pushgw.Writers]] 
 # Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"
-Url = "http://127.0.0.1:9090/api/v1/write"
+Url = "http://victoriametrics:8428/api/v1/write"
 # Basic auth username
 BasicAuthUser = ""
 # Basic auth password

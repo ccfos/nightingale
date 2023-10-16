@@ -31,23 +31,23 @@ func (sl *SafeList) PushFrontBatch(vs []interface{}) {
 	sl.Unlock()
 }
 
-func (sl *SafeList) PopBack(max int) []*prompb.TimeSeries {
+func (sl *SafeList) PopBack(max int) []prompb.TimeSeries {
 	sl.Lock()
 
 	count := sl.L.Len()
 	if count == 0 {
 		sl.Unlock()
-		return []*prompb.TimeSeries{}
+		return []prompb.TimeSeries{}
 	}
 
 	if count > max {
 		count = max
 	}
 
-	items := make([]*prompb.TimeSeries, 0, count)
+	items := make([]prompb.TimeSeries, 0, count)
 	for i := 0; i < count; i++ {
 		item := sl.L.Remove(sl.L.Back())
-		sample, ok := item.(*prompb.TimeSeries)
+		sample, ok := item.(prompb.TimeSeries)
 		if ok {
 			items = append(items, sample)
 		}
@@ -80,7 +80,7 @@ func NewSafeListLimited(maxSize int) *SafeListLimited {
 	return &SafeListLimited{SL: NewSafeList(), maxSize: maxSize}
 }
 
-func (sll *SafeListLimited) PopBack(max int) []*prompb.TimeSeries {
+func (sll *SafeListLimited) PopBack(max int) []prompb.TimeSeries {
 	return sll.SL.PopBack(max)
 }
 

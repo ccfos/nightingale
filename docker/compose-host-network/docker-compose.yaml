@@ -11,8 +11,8 @@ services:
       MYSQL_ROOT_PASSWORD: 1234
     volumes:
       - ./mysqldata:/var/lib/mysql/
-      - ./initsql:/docker-entrypoint-initdb.d/
-      - ./mysqletc/my.cnf:/etc/my.cnf
+      - ../initsql:/docker-entrypoint-initdb.d/
+      - ./etc-mysql/my.cnf:/etc/my.cnf
     network_mode: host
 
   redis:
@@ -32,7 +32,7 @@ services:
     environment:
       TZ: Asia/Shanghai
     volumes:
-      - ./prometc:/etc/prometheus
+      - ./etc-prometheus:/etc/prometheus
     network_mode: host
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -43,7 +43,7 @@ services:
       - "--query.lookback-delta=2m"
 
   ibex:
-    image: ulric2019/ibex:0.3
+    image: flashcatcloud/ibex:v0.5.0
     container_name: ibex
     hostname: ibex
     restart: always
@@ -52,7 +52,7 @@ services:
       TZ: Asia/Shanghai
       WAIT_HOSTS: 127.0.0.1:3306
     volumes:
-      - ./ibexetc:/app/etc
+      - ./etc-ibex:/app/etc
     network_mode: host
     depends_on:
       - mysql
@@ -69,7 +69,7 @@ services:
       TZ: Asia/Shanghai
       WAIT_HOSTS: 127.0.0.1:3306, 127.0.0.1:6379
     volumes:
-      - ../etc:/app/etc
+      - ./etc-nightingale:/app/etc
     network_mode: host
     depends_on:
       - mysql
@@ -89,9 +89,8 @@ services:
       HOST_SYS: /hostfs/sys
       HOST_MOUNT_PREFIX: /hostfs
     volumes:
-      - ./categraf/conf:/etc/categraf/conf
+      - ./etc-categraf:/etc/categraf/conf
       - /:/hostfs
-      - /var/run/docker.sock:/var/run/docker.sock
     network_mode: host
     depends_on:
       - n9e
