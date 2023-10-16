@@ -23,7 +23,7 @@ const (
 	Uppercase string = "uppercase"
 )
 
-func Process(labels []*prompb.Label, cfgs ...*pconf.RelabelConfig) []*prompb.Label {
+func Process(labels []prompb.Label, cfgs ...*pconf.RelabelConfig) []prompb.Label {
 	for _, cfg := range cfgs {
 		labels = relabel(labels, cfg)
 		if labels == nil {
@@ -33,7 +33,7 @@ func Process(labels []*prompb.Label, cfgs ...*pconf.RelabelConfig) []*prompb.Lab
 	return labels
 }
 
-func getValue(ls []*prompb.Label, name model.LabelName) string {
+func getValue(ls []prompb.Label, name model.LabelName) string {
 	for _, l := range ls {
 		if l.Name == string(name) {
 			return l.Value
@@ -46,7 +46,7 @@ type LabelBuilder struct {
 	LabelSet map[string]string
 }
 
-func newBuilder(ls []*prompb.Label) *LabelBuilder {
+func newBuilder(ls []prompb.Label) *LabelBuilder {
 	lset := make(map[string]string, len(ls))
 	for _, l := range ls {
 		lset[l.Name] = l.Value
@@ -70,14 +70,14 @@ func (l *LabelBuilder) del(ns ...string) *LabelBuilder {
 	return l
 }
 
-func (l *LabelBuilder) labels() []*prompb.Label {
-	ls := make([]*prompb.Label, 0, len(l.LabelSet))
+func (l *LabelBuilder) labels() []prompb.Label {
+	ls := make([]prompb.Label, 0, len(l.LabelSet))
 	if len(l.LabelSet) == 0 {
 		return ls
 	}
 
 	for k, v := range l.LabelSet {
-		ls = append(ls, &prompb.Label{
+		ls = append(ls, prompb.Label{
 			Name:  k,
 			Value: v,
 		})
@@ -89,7 +89,7 @@ func (l *LabelBuilder) labels() []*prompb.Label {
 	return ls
 }
 
-func relabel(lset []*prompb.Label, cfg *pconf.RelabelConfig) []*prompb.Label {
+func relabel(lset []prompb.Label, cfg *pconf.RelabelConfig) []prompb.Label {
 	values := make([]string, 0, len(cfg.SourceLabels))
 	for _, ln := range cfg.SourceLabels {
 		values = append(values, getValue(lset, ln))

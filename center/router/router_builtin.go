@@ -78,7 +78,7 @@ func (rt *Router) builtinBoardCateGets(c *gin.Context) {
 	}
 
 	me := c.MustGet("user").(*models.User)
-	buildinFavoritesMap, err := models.BuiltinCateGetByUserId(rt.Ctx, me.Id)
+	builtinFavoritesMap, err := models.BuiltinCateGetByUserId(rt.Ctx, me.Id)
 	if err != nil {
 		logger.Warningf("get builtin favorites fail: %v", err)
 	}
@@ -117,7 +117,7 @@ func (rt *Router) builtinBoardCateGets(c *gin.Context) {
 		}
 		boardCate.Boards = boards
 
-		if _, ok := buildinFavoritesMap[dir]; ok {
+		if _, ok := builtinFavoritesMap[dir]; ok {
 			boardCate.Favorite = true
 		}
 
@@ -173,7 +173,7 @@ func (rt *Router) builtinAlertCateGets(c *gin.Context) {
 	}
 
 	me := c.MustGet("user").(*models.User)
-	buildinFavoritesMap, err := models.BuiltinCateGetByUserId(rt.Ctx, me.Id)
+	builtinFavoritesMap, err := models.BuiltinCateGetByUserId(rt.Ctx, me.Id)
 	if err != nil {
 		logger.Warningf("get builtin favorites fail: %v", err)
 	}
@@ -210,7 +210,7 @@ func (rt *Router) builtinAlertCateGets(c *gin.Context) {
 			alertCate.IconUrl = fmt.Sprintf("/api/n9e/integrations/icon/%s/%s", dir, iconFiles[0])
 		}
 
-		if _, ok := buildinFavoritesMap[dir]; ok {
+		if _, ok := builtinFavoritesMap[dir]; ok {
 			alertCate.Favorite = true
 		}
 
@@ -233,7 +233,7 @@ func (rt *Router) builtinAlertRules(c *gin.Context) {
 	}
 
 	me := c.MustGet("user").(*models.User)
-	buildinFavoritesMap, err := models.BuiltinCateGetByUserId(rt.Ctx, me.Id)
+	builtinFavoritesMap, err := models.BuiltinCateGetByUserId(rt.Ctx, me.Id)
 	if err != nil {
 		logger.Warningf("get builtin favorites fail: %v", err)
 	}
@@ -274,7 +274,7 @@ func (rt *Router) builtinAlertRules(c *gin.Context) {
 			alertCate.IconUrl = fmt.Sprintf("/api/n9e/integrations/icon/%s/%s", dir, iconFiles[0])
 		}
 
-		if _, ok := buildinFavoritesMap[dir]; ok {
+		if _, ok := builtinFavoritesMap[dir]; ok {
 			alertCate.Favorite = true
 		}
 

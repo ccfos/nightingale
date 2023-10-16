@@ -84,7 +84,7 @@ func (m *FalconMetric) ToProm() (*prompb.TimeSeries, string, error) {
 		return nil, "", fmt.Errorf("invalid metric name: %s", m.Metric)
 	}
 
-	pt.Labels = append(pt.Labels, &prompb.Label{
+	pt.Labels = append(pt.Labels, prompb.Label{
 		Name:  model.MetricNameLabel,
 		Value: m.Metric,
 	})
@@ -128,7 +128,7 @@ func (m *FalconMetric) ToProm() (*prompb.TimeSeries, string, error) {
 			return nil, "", fmt.Errorf("invalid tag name: %s", key)
 		}
 
-		pt.Labels = append(pt.Labels, &prompb.Label{
+		pt.Labels = append(pt.Labels, prompb.Label{
 			Name:  key,
 			Value: value,
 		})

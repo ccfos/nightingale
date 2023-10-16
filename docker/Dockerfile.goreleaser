@@ -5,8 +5,7 @@ WORKDIR /app
 ADD n9e /app/
 ADD etc /app/
 ADD integrations /app/integrations/
-ADD --chmod=755 https://github.com/ufoscout/docker-compose-wait/releases/download/2.11.0/wait_x86_64 /wait
-RUN chmod +x /wait && pip install requests
+RUN pip install requests
 
 EXPOSE 17000
 

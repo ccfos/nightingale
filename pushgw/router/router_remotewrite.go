@@ -87,11 +87,11 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 	)
 
 	for i := 0; i < count; i++ {
-		if duplicateLabelKey(req.Timeseries[i]) {
+		if duplicateLabelKey(&req.Timeseries[i]) {
 			continue
 		}
 
-		ident = extractIdentFromTimeSeries(req.Timeseries[i], ginx.QueryBool(c, "ignore_ident", false))
+		ident = extractIdentFromTimeSeries(&req.Timeseries[i], ginx.QueryBool(c, "ignore_ident", false))
 		if len(ident) > 0 {
 			// has ident tag or agent_hostname tag
 			// register host in table target
@@ -100,14 +100,14 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 			// enrich host labels
 			target, has := rt.TargetCache.Get(ident)
 			if has {
-				rt.AppendLabels(req.Timeseries[i], target, rt.BusiGroupCache)
+				rt.AppendLabels(&req.Timeseries[i], target, rt.BusiGroupCache)
 			}
 		}
 
 		if len(ident) > 0 {
-			rt.ForwardByIdent(c.ClientIP(), ident, req.Timeseries[i])
+			rt.ForwardByIdent(c.ClientIP(), ident, &req.Timeseries[i])
 		} else {
-			rt.ForwardByMetric(c.ClientIP(), extractMetricFromTimeSeries(req.Timeseries[i]), req.Timeseries[i])
+			rt.ForwardByMetric(c.ClientIP(), extractMetricFromTimeSeries(&req.Timeseries[i]), &req.Timeseries[i])
 		}
 	}
 

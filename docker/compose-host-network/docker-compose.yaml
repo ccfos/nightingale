@@ -1,0 +1,97 @@
+version: "3.7"
+
+services:
+  mysql:
+    image: "mysql:8"
+    container_name: mysql
+    hostname: mysql
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: 1234
+    volumes:
+      - ./mysqldata:/var/lib/mysql/
+      - ../initsql:/docker-entrypoint-initdb.d/
+      - ./etc-mysql/my.cnf:/etc/my.cnf
+    network_mode: host
+
+  redis:
+    image: "redis:6.2"
+    container_name: redis
+    hostname: redis
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    network_mode: host
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    hostname: prometheus
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - ./etc-prometheus:/etc/prometheus
+    network_mode: host
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--enable-feature=remote-write-receiver"
+      - "--query.lookback-delta=2m"
+
+  ibex:
+    image: flashcatcloud/ibex:v0.5.0
+    container_name: ibex
+    hostname: ibex
+    restart: always
+    environment:
+      GIN_MODE: release
+      TZ: Asia/Shanghai
+      WAIT_HOSTS: 127.0.0.1:3306
+    volumes:
+      - ./etc-ibex:/app/etc
+    network_mode: host
+    depends_on:
+      - mysql
+    command: >
+      sh -c "/app/ibex server"
+
+  n9e:
+    image: flashcatcloud/nightingale:latest
+    container_name: n9e
+    hostname: n9e
+    restart: always
+    environment:
+      GIN_MODE: release
+      TZ: Asia/Shanghai
+      WAIT_HOSTS: 127.0.0.1:3306, 127.0.0.1:6379
+    volumes:
+      - ./etc-nightingale:/app/etc
+    network_mode: host
+    depends_on:
+      - mysql
+      - redis
+      - prometheus
+    command: >
+      sh -c "/app/n9e"
+
+  categraf:
+    image: "flashcatcloud/categraf:latest"
+    container_name: "categraf"
+    hostname: "categraf01"
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+      HOST_PROC: /hostfs/proc
+      HOST_SYS: /hostfs/sys
+      HOST_MOUNT_PREFIX: /hostfs
+      WAIT_HOSTS: 127.0.0.1:17000, 127.0.0.1:20090
+    volumes:
+      - ./etc-categraf:/etc/categraf/conf
+      - /:/hostfs
+    network_mode: host
+    depends_on:
+      - n9e

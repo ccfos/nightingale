@@ -580,7 +580,7 @@ type RSAConfigOutput struct {
 
 func (rt *Router) rsaConfigGet(c *gin.Context) {
 	publicKey := ""
-	if rt.HTTP.RSA.OpenRSA {
+	if len(rt.HTTP.RSA.RSAPublicKey) > 0 {
 		publicKey = base64.StdEncoding.EncodeToString(rt.HTTP.RSA.RSAPublicKey)
 	}
 	ginx.NewRender(c).Data(RSAConfigOutput{

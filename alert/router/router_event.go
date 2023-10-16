@@ -72,8 +72,6 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 	event.NotifyChannels = strings.Join(event.NotifyChannelsJSON, " ")
 	event.NotifyGroups = strings.Join(event.NotifyGroupsJSON, " ")
 
-	rt.AlertStats.CounterAlertsTotal.WithLabelValues(event.Cluster).Inc()
-
 	dispatch.LogEvent(event, "http_push_queue")
 	if !queue.EventQueue.PushFront(event) {
 		msg := fmt.Sprintf("event:%+v push_queue err: queue is full", event)
@@ -87,7 +85,8 @@ func (rt *Router) eventPersist(c *gin.Context) {
 	var event *models.AlertCurEvent
 	ginx.BindJSON(c, &event)
 	event.FE2DB()
-	ginx.NewRender(c).Message(models.EventPersist(rt.Ctx, event))
+	err := models.EventPersist(rt.Ctx, event)
+	ginx.NewRender(c).Data(event.Id, err)
 }
 
 type eventForm struct {

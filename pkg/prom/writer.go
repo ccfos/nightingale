@@ -26,7 +26,7 @@ func NewWriter(cli api.Client, opt ClientOptions) WriterType {
 	return writer
 }
 
-func (w WriterType) Write(items []*prompb.TimeSeries, headers ...map[string]string) {
+func (w WriterType) Write(items []prompb.TimeSeries, headers ...map[string]string) {
 	if len(items) == 0 {
 		return
 	}

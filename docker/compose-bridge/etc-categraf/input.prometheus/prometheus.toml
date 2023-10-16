@@ -1,0 +1,4 @@
+[[instances]]
+urls = [
+    "http://nightingale:17000/metrics"
+]

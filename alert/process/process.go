@@ -69,7 +69,7 @@ type Processor struct {
 
 	promClients *prom.PromClientMap
 	ctx         *ctx.Context
-	stats       *astats.Stats
+	Stats       *astats.Stats
 
 	HandleFireEventHook    HandleEventFunc
 	HandleRecoverEventHook HandleEventFunc
@@ -94,7 +94,7 @@ func (p *Processor) Hash() string {
 }
 
 func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *memsto.AlertRuleCacheType, targetCache *memsto.TargetCacheType,
-	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, promClients *prom.PromClientMap, ctx *ctx.Context,
+	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, ctx *ctx.Context,
 	stats *astats.Stats) *Processor {
 
 	p := &Processor{
@@ -107,9 +107,8 @@ func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *me
 		atertRuleCache:  atertRuleCache,
 		datasourceCache: datasourceCache,
 
-		promClients: promClients,
-		ctx:         ctx,
-		stats:       stats,
+		ctx:   ctx,
+		Stats: stats,
 
 		HandleFireEventHook:    func(event *models.AlertCurEvent) {},
 		HandleRecoverEventHook: func(event *models.AlertCurEvent) {},
@@ -142,6 +141,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
 		if mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache) {
+			p.Stats.CounterMuteTotal.WithLabelValues(event.GroupName).Inc()
 			logger.Debugf("rule_eval:%s event:%v is muted", p.Key(), event)
 			continue
 		}
@@ -350,7 +350,6 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 		p.fires.Set(e.Hash, e)
 	}
 
-	p.stats.CounterAlertsTotal.WithLabelValues(fmt.Sprintf("%d", e.DatasourceId)).Inc()
 	dispatch.LogEvent(e, "push_queue")
 	if !queue.EventQueue.PushFront(e) {
 		logger.Warningf("event_push_queue: queue is full, event:%+v", e)

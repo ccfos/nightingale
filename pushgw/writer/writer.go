@@ -15,7 +15,6 @@ import (
 	"github.com/golang/snappy"
 	"github.com/prometheus/client_golang/api"
 	"github.com/prometheus/prometheus/prompb"
-	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -25,8 +24,8 @@ type WriterType struct {
 	Client           api.Client
 }
 
-func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSeries {
-	ritems := make([]*prompb.TimeSeries, 0, len(items))
+func (w WriterType) writeRelabel(items []prompb.TimeSeries) []prompb.TimeSeries {
+	ritems := make([]prompb.TimeSeries, 0, len(items))
 	for _, item := range items {
 		lbls := Process(item.Labels, w.Opts.WriteRelabels...)
 		if len(lbls) == 0 {
@@ -37,8 +36,7 @@ func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSerie
 	return ritems
 }
 
-func (w WriterType) Write(items []*prompb.TimeSeries, sema *semaphore.Semaphore, headers ...map[string]string) {
-	defer sema.Release()
+func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[string]string) {
 	if len(items) == 0 {
 		return
 	}
@@ -47,6 +45,12 @@ func (w WriterType) Write(items []*prompb.TimeSeries, sema *semaphore.Semaphore,
 	if len(items) == 0 {
 		return
 	}
+
+	CounterWirteTotal.WithLabelValues(key).Add(float64(len(items)))
+	start := time.Now()
+	defer func() {
+		ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
+	}()
 
 	if w.ForceUseServerTS {
 		ts := time.Now().UnixMilli()
@@ -124,7 +128,6 @@ type WritersType struct {
 	pushgw   pconf.Pushgw
 	backends map[string]WriterType
 	queues   map[string]*IdentQueue
-	sema     *semaphore.Semaphore
 	sync.RWMutex
 }
 
@@ -139,7 +142,6 @@ func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 		backends: make(map[string]WriterType),
 		queues:   make(map[string]*IdentQueue),
 		pushgw:   pushgwConfig,
-		sema:     semaphore.NewSemaphore(pushgwConfig.WriteConcurrency),
 	}
 
 	writers.Init()
@@ -210,8 +212,7 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 				continue
 			}
 			for key := range ws.backends {
-				ws.sema.Acquire()
-				go ws.backends[key].Write(series, ws.sema)
+				ws.backends[key].Write(key, series)
 			}
 		}
 	}

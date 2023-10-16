@@ -1,0 +1,774 @@
+zh:
+  ip_conntrack_count: 连接跟踪表条目总数（单位：int, count）
+  ip_conntrack_max: 连接跟踪表最大容量（单位：int, size）
+  cpu_usage_idle: CPU空闲率（单位：%）
+  cpu_usage_active: CPU使用率（单位：%）
+  cpu_usage_system: CPU内核态时间占比（单位：%）
+  cpu_usage_user: CPU用户态时间占比（单位：%）
+  cpu_usage_nice: 低优先级用户态CPU时间占比，也就是进程nice值被调整为1-19之间的CPU时间。这里注意，nice可取值范围是-20到19，数值越大，优先级反而越低（单位：%）
+  cpu_usage_iowait: CPU等待I/O的时间占比（单位：%）
+  cpu_usage_irq: CPU处理硬中断的时间占比（单位：%）
+  cpu_usage_softirq: CPU处理软中断的时间占比（单位：%）
+  cpu_usage_steal: 在虚拟机环境下有该指标，表示CPU被其他虚拟机争用的时间占比，超过20就表示争抢严重（单位：%）
+  cpu_usage_guest: 通过虚拟化运行其他操作系统的时间，也就是运行虚拟机的CPU时间占比（单位：%）
+  cpu_usage_guest_nice: 以低优先级运行虚拟机的时间占比（单位：%）
+
+  disk_free: 硬盘分区剩余量（单位：byte）
+  disk_used: 硬盘分区使用量（单位：byte）
+  disk_used_percent: 硬盘分区使用率（单位：%）
+  disk_total: 硬盘分区总量（单位：byte）
+  disk_inodes_free: 硬盘分区inode剩余量
+  disk_inodes_used: 硬盘分区inode使用量
+  disk_inodes_total: 硬盘分区inode总量
+
+  diskio_io_time: 从设备视角来看I/O请求总时间，队列中有I/O请求就计数（单位：毫秒），counter类型，需要用函数求rate才有使用价值
+  diskio_iops_in_progress: 已经分配给设备驱动且尚未完成的IO请求，不包含在队列中但尚未分配给设备驱动的IO请求，gauge类型
+  diskio_merged_reads: 相邻读请求merge读的次数，counter类型
+  diskio_merged_writes: 相邻写请求merge写的次数，counter类型
+  diskio_read_bytes: 读取的byte数量，counter类型，需要用函数求rate才有使用价值
+  diskio_read_time: 读请求总时间（单位：毫秒），counter类型，需要用函数求rate才有使用价值
+  diskio_reads: 读请求次数，counter类型，需要用函数求rate才有使用价值
+  diskio_weighted_io_time: 从I/O请求视角来看I/O等待总时间，如果同时有多个I/O请求，时间会叠加（单位：毫秒）
+  diskio_write_bytes: 写入的byte数量，counter类型，需要用函数求rate才有使用价值
+  diskio_write_time: 写请求总时间（单位：毫秒），counter类型，需要用函数求rate才有使用价值
+  diskio_writes: 写请求次数，counter类型，需要用函数求rate才有使用价值
+
+  kernel_boot_time: 内核启动时间
+  kernel_context_switches: 内核上下文切换次数
+  kernel_entropy_avail: linux系统内部的熵池
+  kernel_interrupts: 内核中断次数
+  kernel_processes_forked: fork的进程数
+
+  mem_active: 活跃使用的内存总数(包括cache和buffer内存)
+  mem_available: 可用内存大小(bytes)
+  mem_available_percent: 内存剩余百分比(0~100)
+  mem_buffered: 用来给文件做缓冲大小
+  mem_cached: 被高速缓冲存储器（cache memory）用的内存的大小（等于 diskcache minus SwapCache ）
+  mem_commit_limit: 根据超额分配比率（'vm.overcommit_ratio'），这是当前在系统上分配可用的内存总量，这个限制只是在模式2('vm.overcommit_memory')时启用
+  mem_committed_as: 目前在系统上分配的内存量。是所有进程申请的内存的总和
+  mem_dirty: 等待被写回到磁盘的内存大小
+  mem_free: 空闲内存大小(bytes)
+  mem_high_free: 未被使用的高位内存大小
+  mem_high_total: 高位内存总大小（Highmem是指所有内存高于860MB的物理内存,Highmem区域供用户程序使用，或用于页面缓存。该区域不是直接映射到内核空间。内核必须使用不同的手法使用该段内存）
+  mem_huge_page_size: 每个大页的大小
+  mem_huge_pages_free: 池中尚未分配的 HugePages 数量
+  mem_huge_pages_total: 预留HugePages的总个数
+  mem_inactive: 空闲的内存数(包括free和avalible的内存)
+  mem_low_free: 未被使用的低位大小
+  mem_low_total: 低位内存总大小,低位可以达到高位内存一样的作用，而且它还能够被内核用来记录一些自己的数据结构
+  mem_mapped: 设备和文件等映射的大小
+  mem_page_tables: 管理内存分页页面的索引表的大小
+  mem_shared: 多个进程共享的内存总额
+  mem_slab: 内核数据结构缓存的大小，可以减少申请和释放内存带来的消耗
+  mem_sreclaimable: 可收回Slab的大小
+  mem_sunreclaim: 不可收回Slab的大小（SUnreclaim+SReclaimable＝Slab）
+  mem_swap_cached: 被高速缓冲存储器（cache memory）用的交换空间的大小，已经被交换出来的内存，但仍然被存放在swapfile中。用来在需要的时候很快的被替换而不需要再次打开I/O端口
+  mem_swap_free: 未被使用交换空间的大小
+  mem_swap_total: 交换空间的总大小
+  mem_total: 内存总数
+  mem_used: 已用内存数
+  mem_used_percent: 已用内存数百分比(0~100)
+  mem_vmalloc_chunk: 最大的连续未被使用的vmalloc区域
+  mem_vmalloc_totalL: 可以vmalloc虚拟内存大小
+  mem_vmalloc_used: vmalloc已使用的虚拟内存大小
+  mem_write_back: 正在被写回到磁盘的内存大小
+  mem_write_back_tmp: FUSE用于临时写回缓冲区的内存
+
+  net_bytes_recv: 网卡收包总数(bytes)，计算每秒速率时需要用到rate/irate函数
+  net_bytes_sent: 网卡发包总数(bytes)，计算每秒速率时需要用到rate/irate函数
+  net_drop_in: 网卡收丢包数量
+  net_drop_out: 网卡发丢包数量
+  net_err_in: 网卡收包错误数量
+  net_err_out: 网卡发包错误数量
+  net_packets_recv: 网卡收包数量
+  net_packets_sent: 网卡发包数量
+  net_bits_recv: 网卡收包总数(bits)，计算每秒速率时需要用到rate/irate函数
+  net_bits_sent: 网卡发包总数(bits)，计算每秒速率时需要用到rate/irate函数
+
+  netstat_tcp_established: ESTABLISHED状态的网络链接数
+  netstat_tcp_fin_wait1: FIN_WAIT1状态的网络链接数
+  netstat_tcp_fin_wait2: FIN_WAIT2状态的网络链接数
+  netstat_tcp_last_ack: LAST_ACK状态的网络链接数
+  netstat_tcp_listen: LISTEN状态的网络链接数
+  netstat_tcp_syn_recv: SYN_RECV状态的网络链接数
+  netstat_tcp_syn_sent: SYN_SENT状态的网络链接数
+  netstat_tcp_time_wait: TIME_WAIT状态的网络链接数
+  netstat_udp_socket: UDP状态的网络链接数
+
+  netstat_sockets_used: 已使用的所有协议套接字总量
+  netstat_tcp_inuse: 正在使用（正在侦听）的TCP套接字数量
+  netstat_tcp_orphan: 无主（不属于任何进程）的TCP连接数（无用、待销毁的TCP socket数）
+  netstat_tcp_tw: TIME_WAIT状态的TCP连接数
+  netstat_tcp_alloc: 已分配（已建立、已申请到sk_buff）的TCP套接字数量
+  netstat_tcp_mem: TCP套接字内存Page使用量
+  netstat_udp_inuse: 在使用的UDP套接字数量
+  netstat_udp_mem: UDP套接字内存Page使用量
+  netstat_udplite_inuse: 正在使用的 udp lite 数量
+  netstat_raw_inuse: 正在使用的 raw socket 数量
+  netstat_frag_inuse: ip fragement 数量
+  netstat_frag_memory: ip fragement 已经分配的内存(byte）
+
+  #[ping]
+  ping_percent_packet_loss: ping数据包丢失百分比(%)
+  ping_result_code: ping返回码('0','1')
+
+  net_response_result_code: 网络探测结果，0表示正常，非0表示异常
+  net_response_response_time: 网络探测时延，单位：秒
+
+  processes_blocked: 不可中断的睡眠状态下的进程数('U','D','L')
+  processes_dead: 回收中的进程数('X')
+  processes_idle: 挂起的空闲进程数('I')
+  processes_paging: 分页进程数('P')
+  processes_running: 运行中的进程数('R')
+  processes_sleeping: 可中断进程数('S')
+  processes_stopped: 暂停状态进程数('T')
+  processes_total: 总进程数
+  processes_total_threads: 总线程数
+  processes_unknown: 未知状态进程数
+  processes_zombies: 僵尸态进程数('Z')
+
+  swap_used_percent: Swap空间换出数据量
+
+  system_load1: 1分钟平均load值
+  system_load5: 5分钟平均load值
+  system_load15: 15分钟平均load值
+  system_load_norm_1: 1分钟平均load值/逻辑CPU个数
+  system_load_norm_5: 5分钟平均load值/逻辑CPU个数
+  system_load_norm_15: 15分钟平均load值/逻辑CPU个数
+  system_n_users: 用户数
+  system_n_cpus: CPU核数
+  system_uptime: 系统启动时间
+
+  nginx_accepts: 自nginx启动起,与客户端建立过得连接总数
+  nginx_active: 当前nginx正在处理的活动连接数,等于Reading/Writing/Waiting总和
+  nginx_handled: 自nginx启动起,处理过的客户端连接总数
+  nginx_reading: 正在读取HTTP请求头部的连接总数
+  nginx_requests: 自nginx启动起,处理过的客户端请求总数,由于存在HTTP Krrp-Alive请求,该值会大于handled值
+  nginx_upstream_check_fall: upstream_check模块检测到后端失败的次数
+  nginx_upstream_check_rise: upstream_check模块对后端的检测次数
+  nginx_upstream_check_status_code: 后端upstream的状态,up为1,down为0
+  nginx_waiting: 开启 keep-alive 的情况下,这个值等于 active – (reading+writing), 意思就是 Nginx 已经处理完正在等候下一次请求指令的驻留连接
+  nginx_writing: 正在向客户端发送响应的连接总数
+
+  http_response_content_length: HTTP消息实体的传输长度
+  http_response_http_response_code: http响应状态码
+  http_response_response_time: http响应用时
+  http_response_result_code: url探测结果0为正常否则url无法访问
+
+  # [aws cloudwatch rds]
+  cloudwatch_aws_rds_bin_log_disk_usage_average: rds 磁盘使用平均值
+  cloudwatch_aws_rds_bin_log_disk_usage_maximum: rds 磁盘使用量最大值
+  cloudwatch_aws_rds_bin_log_disk_usage_minimum: rds binlog 磁盘使用量最低
+  cloudwatch_aws_rds_bin_log_disk_usage_sample_count: rds binlog 磁盘使用情况样本计数
+  cloudwatch_aws_rds_bin_log_disk_usage_sum: rds binlog 磁盘使用总和
+  cloudwatch_aws_rds_burst_balance_average: rds 突发余额平均值
+  cloudwatch_aws_rds_burst_balance_maximum: rds 突发余额最大值
+  cloudwatch_aws_rds_burst_balance_minimum: rds 突发余额最低
+  cloudwatch_aws_rds_burst_balance_sample_count: rds 突发平衡样本计数
+  cloudwatch_aws_rds_burst_balance_sum: rds 突发余额总和
+  cloudwatch_aws_rds_cpu_utilization_average: rds cpu 利用率平均值
+  cloudwatch_aws_rds_cpu_utilization_maximum: rds cpu 利用率最大值
+  cloudwatch_aws_rds_cpu_utilization_minimum: rds cpu 利用率最低
+  cloudwatch_aws_rds_cpu_utilization_sample_count: rds cpu 利用率样本计数
+  cloudwatch_aws_rds_cpu_utilization_sum: rds cpu 利用率总和
+  cloudwatch_aws_rds_database_connections_average: rds 数据库连接平均值
+  cloudwatch_aws_rds_database_connections_maximum: rds 数据库连接数最大值
+  cloudwatch_aws_rds_database_connections_minimum: rds 数据库连接最小
+  cloudwatch_aws_rds_database_connections_sample_count: rds 数据库连接样本数
+  cloudwatch_aws_rds_database_connections_sum: rds 数据库连接总和
+  cloudwatch_aws_rds_db_load_average: rds db 平均负载
+  cloudwatch_aws_rds_db_load_cpu_average: rds db 负载 cpu 平均值
+  cloudwatch_aws_rds_db_load_cpu_maximum: rds db 负载 cpu 最大值
+  cloudwatch_aws_rds_db_load_cpu_minimum: rds db 负载 cpu 最小值
+  cloudwatch_aws_rds_db_load_cpu_sample_count: rds db 加载 CPU 样本数
+  cloudwatch_aws_rds_db_load_cpu_sum: rds db 加载cpu总和
+  cloudwatch_aws_rds_db_load_maximum: rds 数据库负载最大值
+  cloudwatch_aws_rds_db_load_minimum: rds 数据库负载最小值
+  cloudwatch_aws_rds_db_load_non_cpu_average: rds 加载非 CPU 平均值
+  cloudwatch_aws_rds_db_load_non_cpu_maximum: rds 加载非 cpu 最大值
+  cloudwatch_aws_rds_db_load_non_cpu_minimum: rds 加载非 cpu 最小值
+  cloudwatch_aws_rds_db_load_non_cpu_sample_count: rds 加载非 cpu 样本计数
+  cloudwatch_aws_rds_db_load_non_cpu_sum: rds 加载非cpu总和
+  cloudwatch_aws_rds_db_load_sample_count: rds db 加载样本计数
+  cloudwatch_aws_rds_db_load_sum: rds db 负载总和
+  cloudwatch_aws_rds_disk_queue_depth_average: rds 磁盘队列深度平均值
+  cloudwatch_aws_rds_disk_queue_depth_maximum: rds 磁盘队列深度最大值
+  cloudwatch_aws_rds_disk_queue_depth_minimum: rds 磁盘队列深度最小值
+  cloudwatch_aws_rds_disk_queue_depth_sample_count: rds 磁盘队列深度样本计数
+  cloudwatch_aws_rds_disk_queue_depth_sum: rds 磁盘队列深度总和
+  cloudwatch_aws_rds_ebs_byte_balance__average: rds ebs 字节余额平均值
+  cloudwatch_aws_rds_ebs_byte_balance__maximum: rds ebs 字节余额最大值
+  cloudwatch_aws_rds_ebs_byte_balance__minimum: rds ebs 字节余额最低
+  cloudwatch_aws_rds_ebs_byte_balance__sample_count: rds ebs 字节余额样本数
+  cloudwatch_aws_rds_ebs_byte_balance__sum: rds ebs 字节余额总和
+  cloudwatch_aws_rds_ebsio_balance__average: rds ebsio 余额平均值
+  cloudwatch_aws_rds_ebsio_balance__maximum: rds ebsio 余额最大值
+  cloudwatch_aws_rds_ebsio_balance__minimum: rds ebsio 余额最低
+  cloudwatch_aws_rds_ebsio_balance__sample_count: rds ebsio 平衡样本计数
+  cloudwatch_aws_rds_ebsio_balance__sum: rds ebsio 余额总和
+  cloudwatch_aws_rds_free_storage_space_average: rds 免费存储空间平均
+  cloudwatch_aws_rds_free_storage_space_maximum: rds 最大可用存储空间
+  cloudwatch_aws_rds_free_storage_space_minimum: rds 最低可用存储空间
+  cloudwatch_aws_rds_free_storage_space_sample_count: rds 可用存储空间样本数
+  cloudwatch_aws_rds_free_storage_space_sum: rds 免费存储空间总和
+  cloudwatch_aws_rds_freeable_memory_average: rds 可用内存平均值
+  cloudwatch_aws_rds_freeable_memory_maximum: rds 最大可用内存
+  cloudwatch_aws_rds_freeable_memory_minimum: rds 最小可用内存
+  cloudwatch_aws_rds_freeable_memory_sample_count: rds 可释放内存样本数
+  cloudwatch_aws_rds_freeable_memory_sum: rds 可释放内存总和
+  cloudwatch_aws_rds_lvm_read_iops_average: rds lvm 读取 iops 平均值
+  cloudwatch_aws_rds_lvm_read_iops_maximum: rds lvm 读取 iops 最大值
+  cloudwatch_aws_rds_lvm_read_iops_minimum: rds lvm 读取 iops 最低
+  cloudwatch_aws_rds_lvm_read_iops_sample_count: rds lvm 读取 iops 样本计数
+  cloudwatch_aws_rds_lvm_read_iops_sum: rds lvm 读取 iops 总和
+  cloudwatch_aws_rds_lvm_write_iops_average: rds lvm 写入 iops 平均值
+  cloudwatch_aws_rds_lvm_write_iops_maximum: rds lvm 写入 iops 最大值
+  cloudwatch_aws_rds_lvm_write_iops_minimum: rds lvm 写入 iops 最低
+  cloudwatch_aws_rds_lvm_write_iops_sample_count: rds lvm 写入 iops 样本计数
+  cloudwatch_aws_rds_lvm_write_iops_sum: rds lvm 写入 iops 总和
+  cloudwatch_aws_rds_network_receive_throughput_average: rds 网络接收吞吐量平均
+  cloudwatch_aws_rds_network_receive_throughput_maximum: rds 网络接收吞吐量最大值
+  cloudwatch_aws_rds_network_receive_throughput_minimum: rds 网络接收吞吐量最小值
+  cloudwatch_aws_rds_network_receive_throughput_sample_count: rds 网络接收吞吐量样本计数
+  cloudwatch_aws_rds_network_receive_throughput_sum: rds 网络接收吞吐量总和
+  cloudwatch_aws_rds_network_transmit_throughput_average: rds 网络传输吞吐量平均值
+  cloudwatch_aws_rds_network_transmit_throughput_maximum: rds 网络传输吞吐量最大
+  cloudwatch_aws_rds_network_transmit_throughput_minimum: rds 网络传输吞吐量最小值
+  cloudwatch_aws_rds_network_transmit_throughput_sample_count: rds 网络传输吞吐量样本计数
+  cloudwatch_aws_rds_network_transmit_throughput_sum: rds 网络传输吞吐量总和
+  cloudwatch_aws_rds_read_iops_average: rds 读取 iops 平均值
+  cloudwatch_aws_rds_read_iops_maximum: rds 最大读取 iops
+  cloudwatch_aws_rds_read_iops_minimum: rds 读取 iops 最低
+  cloudwatch_aws_rds_read_iops_sample_count: rds 读取 iops 样本计数
+  cloudwatch_aws_rds_read_iops_sum: rds 读取 iops 总和
+  cloudwatch_aws_rds_read_latency_average: rds 读取延迟平均值
+  cloudwatch_aws_rds_read_latency_maximum: rds 读取延迟最大值
+  cloudwatch_aws_rds_read_latency_minimum: rds 最小读取延迟
+  cloudwatch_aws_rds_read_latency_sample_count: rds 读取延迟样本计数
+  cloudwatch_aws_rds_read_latency_sum: rds 读取延迟总和
+  cloudwatch_aws_rds_read_throughput_average: rds 读取吞吐量平均值
+  cloudwatch_aws_rds_read_throughput_maximum: rds 最大读取吞吐量
+  cloudwatch_aws_rds_read_throughput_minimum: rds 最小读取吞吐量
+  cloudwatch_aws_rds_read_throughput_sample_count: rds 读取吞吐量样本计数
+  cloudwatch_aws_rds_read_throughput_sum: rds 读取吞吐量总和
+  cloudwatch_aws_rds_swap_usage_average: rds 交换使用平均值
+  cloudwatch_aws_rds_swap_usage_maximum: rds 交换使用最大值
+  cloudwatch_aws_rds_swap_usage_minimum: rds 交换使用量最低
+  cloudwatch_aws_rds_swap_usage_sample_count: rds 交换使用示例计数
+  cloudwatch_aws_rds_swap_usage_sum: rds 交换使用总和
+  cloudwatch_aws_rds_write_iops_average: rds 写入 iops 平均值
+  cloudwatch_aws_rds_write_iops_maximum: rds 写入 iops 最大值
+  cloudwatch_aws_rds_write_iops_minimum: rds 写入 iops 最低
+  cloudwatch_aws_rds_write_iops_sample_count: rds 写入 iops 样本计数
+  cloudwatch_aws_rds_write_iops_sum: rds 写入 iops 总和
+  cloudwatch_aws_rds_write_latency_average: rds 写入延迟平均值
+  cloudwatch_aws_rds_write_latency_maximum: rds 最大写入延迟
+  cloudwatch_aws_rds_write_latency_minimum: rds 写入延迟最小值
+  cloudwatch_aws_rds_write_latency_sample_count: rds 写入延迟样本计数
+  cloudwatch_aws_rds_write_latency_sum: rds 写入延迟总和
+  cloudwatch_aws_rds_write_throughput_average: rds 写入吞吐量平均值
+  cloudwatch_aws_rds_write_throughput_maximum: rds 最大写入吞吐量
+  cloudwatch_aws_rds_write_throughput_minimum: rds 写入吞吐量最小值
+  cloudwatch_aws_rds_write_throughput_sample_count: rds 写入吞吐量样本计数
+  cloudwatch_aws_rds_write_throughput_sum: rds 写入吞吐量总和
+
+en:
+  ip_conntrack_count: the number of entries in the conntrack table（unit：int, count）
+  ip_conntrack_max: the max capacity of the conntrack table（unit：int, size）
+  cpu_usage_idle: "CPU idle rate(unit：%)"
+  cpu_usage_active: "CPU usage rate(unit：%)"
+  cpu_usage_system: "CPU kernel state time proportion(unit：%)"
+  cpu_usage_user: "CPU user attitude time proportion(unit：%)"
+  cpu_usage_nice: "The proportion of low priority CPU time, that is, the process NICE value is adjusted to the CPU time between 1-19. Note here that the value range of NICE is -20 to 19, the larger the value, the lower the priority, the lower the priority(unit：%)"
+  cpu_usage_iowait: "CPU waiting for I/O time proportion(unit：%)"
+  cpu_usage_irq: "CPU processing hard interrupt time proportion(unit：%)"
+  cpu_usage_softirq: "CPU processing soft interrupt time proportion(unit：%)"
+  cpu_usage_steal: "In the virtual machine environment, there is this indicator, which means that the CPU is used by other virtual machines for the proportion of time.(unit：%)"
+  cpu_usage_guest: "The time to run other operating systems by virtualization, that is, the proportion of CPU time running the virtual machine(unit：%)"
+  cpu_usage_guest_nice: "The proportion of time to run the virtual machine at low priority(unit：%)"
+
+  disk_free: "The remaining amount of the hard disk partition (unit: byte)"
+  disk_used: "Hard disk partitional use (unit: byte)"
+  disk_used_percent: "Hard disk partitional use rate (unit:%)"
+  disk_total: "Total amount of hard disk partition (unit: byte)"
+  disk_inodes_free: "Hard disk partition INODE remaining amount"
+  disk_inodes_used: "Hard disk partition INODE usage amount"
+  disk_inodes_total: "The total amount of hard disk partition INODE"
+
+  diskio_io_time: "From the perspective of the device perspective, the total time of I/O request, the I/O request in the queue is count (unit: millisecond), the counter type, you need to use the function to find the value"
+  diskio_iops_in_progress: "IO requests that have been assigned to device -driven and have not yet been completed, not included in the queue but not yet assigned to the device -driven IO request, Gauge type"
+  diskio_merged_reads: "The number of times of adjacent reading request Merge, the counter type"
+  diskio_merged_writes: "The number of times the request Merge writes, the counter type"
+  diskio_read_bytes: "The number of byte reads, the counter type, you need to use the function to find the Rate to use the value"
+  diskio_read_time: "The total time of reading request (unit: millisecond), the counter type, you need to use the function to find the Rate to have the value of use"
+  diskio_reads: "Read the number of requests, the counter type, you need to use the function to find the Rate to use the value"
+  diskio_weighted_io_time: "From the perspective of the I/O request perspective, I/O wait for the total time. If there are multiple I/O requests at the same time, the time will be superimposed (unit: millisecond)"
+  diskio_write_bytes: "The number of bytes written, the counter type, you need to use the function to find the Rate to use the value"
+  diskio_write_time: "The total time of the request (unit: millisecond), the counter type, you need to use the function to find the rate to have the value of use"
+  diskio_writes: "Write the number of requests, the counter type, you need to use the function to find the rate to use value"
+
+  kernel_boot_time: "Kernel startup time"
+  kernel_context_switches: "Number of kernel context switching times"
+  kernel_entropy_avail: "Entropy pool inside the Linux system"
+  kernel_interrupts: "Number of kernel interruption"
+  kernel_processes_forked: "ForK's process number"
+
+  mem_active: "The total number of memory (including Cache and BUFFER memory)"
+  mem_available: "Application can use memory numbers"
+  mem_available_percent: "Memory remaining percentage (0 ~ 100)"
+  mem_buffered: "Used to make buffer size for the file"
+  mem_cached: "The size of the memory used by the cache memory (equal to diskcache minus Swap Cache )"
+  mem_commit_limit: "According to the over allocation ratio ('vm.overCommit _ Ratio'), this is the current total memory that can be allocated on the system."
+  mem_committed_as: "Currently allocated on the system. It is the sum of the memory of all process applications"
+  mem_dirty: "Waiting to be written back to the memory size of the disk"
+  mem_free: "Senior memory number"
+  mem_high_free: "Unused high memory size"
+  mem_high_total: "The total memory size of the high memory (Highmem refers to all the physical memory that is higher than 860 MB of memory, the HighMem area is used for user programs, or for page cache. This area is not directly mapped to the kernel space. The kernels must use different methods to use this section of memory. )"
+  mem_huge_page_size: "The size of each big page"
+  mem_huge_pages_free: "The number of Huge Pages in the pool that have not been allocated"
+  mem_huge_pages_total: "Reserve the total number of Huge Pages"
+  mem_inactive: "Free memory (including the memory of free and avalible)"
+  mem_low_free: "Unused low size"
+  mem_low_total: "The total size of the low memory memory can achieve the same role of high memory, and it can be used by the kernel to record some of its own data structure"
+  mem_mapped: "The size of the mapping of equipment and files"
+  mem_page_tables: "The size of the index table of the management of the memory paging page"
+  mem_shared: "The total memory shared by multiple processes"
+  mem_slab: "The size of the kernel data structure cache can reduce the consumption of application and release memory"
+  mem_sreclaimable: "The size of the SLAB can be recovered"
+  mem_sunreclaim: "The size of the SLAB cannot be recovered(SUnreclaim+SReclaimable＝Slab)"
+  mem_swap_cached: "The size of the swap space used by the cache memory (cache memory), the memory that has been swapped out, but is still stored in the swapfile. Used to be quickly replaced when needed without opening the I/O port again"
+  mem_swap_free: "The size of the switching space is not used"
+  mem_swap_total: "The total size of the exchange space"
+  mem_total: "Total memory"
+  mem_used: "Memory number"
+  mem_used_percent: "The memory has been used by several percentage (0 ~ 100)"
+  mem_vmalloc_chunk: "The largest continuous unused vmalloc area"
+  mem_vmalloc_totalL: "You can vmalloc virtual memory size"
+  mem_vmalloc_used: "Vmalloc's virtual memory size"
+  mem_write_back: "The memory size of the disk is being written back to the disk"
+  mem_write_back_tmp: "Fuse is used to temporarily write back the memory of the buffer area"
+
+  net_bytes_recv: "Total inbound traffic(bytes) of network card"
+  net_bytes_sent: "Total outbound traffic(bytes) of network card"
+  net_bits_recv: "Total inbound traffic(bits) of network card"
+  net_bits_sent: "Total outbound traffic(bits) of network card"
+  net_drop_in: "The number of packets for network cards"
+  net_drop_out: "The number of packets issued by the network card"
+  net_err_in: "The number of incorrect packets of the network card"
+  net_err_out: "Number of incorrect number of network cards"
+  net_packets_recv: "Net card collection quantity"
+  net_packets_sent: "Number of network card issuance"
+
+  netstat_tcp_established: "ESTABLISHED status network link number"
+  netstat_tcp_fin_wait1: "FIN _ WAIT1 status network link number"
+  netstat_tcp_fin_wait2: "FIN _ WAIT2 status number of network links"
+  netstat_tcp_last_ack: "LAST_ ACK status number of network links"
+  netstat_tcp_listen: "Number of network links in Listen status"
+  netstat_tcp_syn_recv: "SYN _ RECV status number of network links"
+  netstat_tcp_syn_sent: "SYN _ SENT status number of network links"
+  netstat_tcp_time_wait: "Time _ WAIT status network link number"
+  netstat_udp_socket: "Number of network links in UDP status"
+
+  processes_blocked: "The number of processes in the unreprudible sleep state('U','D','L')"
+  processes_dead: "Number of processes in recycling('X')"
+  processes_idle: "Number of idle processes hanging('I')"
+  processes_paging: "Number of paging processes('P')"
+  processes_running: "Number of processes during operation('R')"
+  processes_sleeping: "Can interrupt the number of processes('S')"
+  processes_stopped: "Pushing status process number('T')"
+  processes_total: "Total process number"
+  processes_total_threads: "Number of threads"
+  processes_unknown: "Unknown status process number"
+  processes_zombies: "Number of zombies('Z')"
+
+  swap_used_percent: "SWAP space replace the data volume"
+
+  system_load1: "1 minute average load value"
+  system_load5: "5 minutes average load value"
+  system_load15: "15 minutes average load value"
+  system_load_norm_1: "1 minute average load value/logical CPU number"
+  system_load_norm_5: "5 minutes average load value/logical CPU number"
+  system_load_norm_15: "15 minutes average load value/logical CPU number"
+  system_n_users: "User number"
+  system_n_cpus: "CPU nuclear number"
+  system_uptime: "System startup time"
+
+  nginx_accepts: "Since Nginx started, the total number of connections has been established with the client"
+  nginx_active: "The current number of activity connections that Nginx is being processed is equal to Reading/Writing/Waiting"
+  nginx_handled: "Starting from Nginx, the total number of client connections that have been processed"
+  nginx_reading: "Reading the total number of connections on the http request header"
+  nginx_requests: "Since nginx is started, the total number of client requests processed, due to the existence of HTTP Krrp - Alive requests, this value will be greater than the handled value"
+  nginx_upstream_check_fall: "UPStream_CHECK module detects the number of back -end failures"
+  nginx_upstream_check_rise: "UPSTREAM _ Check module to detect the number of back -end"
+  nginx_upstream_check_status_code: "The state of the backstream is 1, and the down is 0"
+  nginx_waiting: "When keep-alive is enabled, this value is equal to active – (reading+writing), which means that Nginx has processed the resident connection that is waiting for the next request command"
+  nginx_writing: "The total number of connections to send a response to the client"
+
+  http_response_content_length: "HTTP message entity transmission length"
+  http_response_http_response_code: "http response status code"
+  http_response_response_time: "When http ring application"
+  http_response_result_code: "URL detection result 0 is normal, otherwise the URL cannot be accessed"
+
+  # [mysqld_exporter]
+  mysql_global_status_uptime: The number of seconds that the server has been up.(Gauge)
+  mysql_global_status_uptime_since_flush_status: The number of seconds since the most recent FLUSH STATUS statement.(Gauge)
+  mysql_global_status_queries: The number of statements executed by the server. This variable includes statements executed within stored programs, unlike the Questions variable. It does not count COM_PING or COM_STATISTICS commands.(Counter)
+  mysql_global_status_threads_connected: The number of currently open connections.(Counter)
+  mysql_global_status_connections: The number of connection attempts (successful or not) to the MySQL server.(Gauge)
+  mysql_global_status_max_used_connections: The maximum number of connections that have been in use simultaneously since the server started.(Gauge)
+  mysql_global_status_threads_running: The number of threads that are not sleeping.(Gauge)
+  mysql_global_status_questions: The number of statements executed by the server. This includes only statements sent to the server by clients and not statements executed within stored programs, unlike the Queries variable. This variable does not count COM_PING, COM_STATISTICS, COM_STMT_PREPARE, COM_STMT_CLOSE, or COM_STMT_RESET commands.(Counter)
+  mysql_global_status_threads_cached: The number of threads in the thread cache.(Counter)
+  mysql_global_status_threads_created: The number of threads created to handle connections. If Threads_created is big, you may want to increase the thread_cache_size value. The cache miss rate can be calculated as Threads_created/Connections.(Counter)
+  mysql_global_status_created_tmp_tables: The number of internal temporary tables created by the server while executing statements.(Counter)
+  mysql_global_status_created_tmp_disk_tables: The number of internal on-disk temporary tables created by the server while executing statements. You can compare the number of internal on-disk temporary tables created to the total number of internal temporary tables created by comparing Created_tmp_disk_tables and Created_tmp_tables values.(Counter)
+  mysql_global_status_created_tmp_files: How many temporary files mysqld has created.(Counter)
+  mysql_global_status_select_full_join: The number of joins that perform table scans because they do not use indexes. If this value is not 0, you should carefully check the indexes of your tables.(Counter)
+  mysql_global_status_select_full_range_join: The number of joins that used a range search on a reference table.(Counter)
+  mysql_global_status_select_range: The number of joins that used ranges on the first table. This is normally not a critical issue even if the value is quite large.(Counter)
+  mysql_global_status_select_range_check: The number of joins without keys that check for key usage after each row. If this is not 0, you should carefully check the indexes of your tables.(Counter)
+  mysql_global_status_select_scan: The number of joins that did a full scan of the first table.(Counter)
+  mysql_global_status_sort_rows: The number of sorted rows.(Counter)
+  mysql_global_status_sort_range: The number of sorts that were done using ranges.(Counter)
+  mysql_global_status_sort_merge_passes: The number of merge passes that the sort algorithm has had to do. If this value is large, you should consider increasing the value of the sort_buffer_size system variable.(Counter)
+  mysql_global_status_sort_scan: The number of sorts that were done by scanning the table.(Counter)
+  mysql_global_status_slow_queries: The number of queries that have taken more than long_query_time seconds. This counter increments regardless of whether the slow query log is enabled.(Counter)
+  mysql_global_status_aborted_connects: The number of failed attempts to connect to the MySQL server.(Counter)
+  mysql_global_status_aborted_clients: The number of connections that were aborted because the client died without closing the connection properly.(Counter)
+  mysql_global_status_table_locks_immediate: The number of times that a request for a table lock could be granted immediately. Locks Immediate rising and falling is normal activity.(Counter)
+  mysql_global_status_table_locks_waited: The number of times that a request for a table lock could not be granted immediately and a wait was needed. If this is high and you have performance problems, you should first optimize your queries, and then either split your table or tables or use replication.(Counter)
+  mysql_global_status_bytes_received: The number of bytes received from all clients.(Counter)
+  mysql_global_status_bytes_sent: The number of bytes sent to all clients.(Counter)
+  mysql_global_status_innodb_page_size: InnoDB page size (default 16KB). Many values are counted in pages; the page size enables them to be easily converted to bytes.(Gauge)
+  mysql_global_status_buffer_pool_pages: The number of pages in the InnoDB buffer pool.(Gauge)
+  mysql_global_status_commands_total: The number of times each xxx statement has been executed.(Counter)
+  mysql_global_status_handlers_total: Handler statistics are internal statistics on how MySQL is selecting, updating, inserting, and modifying rows, tables, and indexes. This is in fact the layer between the Storage Engine and MySQL.(Counter)
+  mysql_global_status_opened_files: The number of files that have been opened with my_open() (a mysys library function). Parts of the server that open files without using this function do not increment the count.(Counter)
+  mysql_global_status_open_tables: The number of tables that are open.(Gauge)
+  mysql_global_status_opened_tables: The number of tables that have been opened. If Opened_tables is big, your table_open_cache value is probably too small.(Counter)
+  mysql_global_status_table_open_cache_hits: The number of hits for open tables cache lookups.(Counter)
+  mysql_global_status_table_open_cache_misses: The number of misses for open tables cache lookups.(Counter)
+  mysql_global_status_table_open_cache_overflows: The number of overflows for the open tables cache.(Counter)
+  mysql_global_status_innodb_num_open_files: The number of files InnoDB currently holds open.(Gauge)
+  mysql_global_status_connection_errors_total: These variables provide information about errors that occur during the client connection process.(Counter)
+  mysql_global_status_innodb_buffer_pool_read_requests: The number of logical read requests.(Counter)
+  mysql_global_status_innodb_buffer_pool_reads: The number of logical reads that InnoDB could not satisfy from the buffer pool, and had to read directly from disk.(Counter)
+
+  mysql_global_variables_thread_cache_size: How many threads the server should cache for reuse.(Gauge)
+  mysql_global_variables_max_connections: The maximum permitted number of simultaneous client connections.(Gauge)
+  mysql_global_variables_innodb_buffer_pool_size: The size in bytes of the buffer pool, the memory area where InnoDB caches table and index data. The default value is 134217728 bytes (128MB).(Gauge)
+  mysql_global_variables_innodb_log_buffer_size: The size in bytes of the buffer that InnoDB uses to write to the log files on disk.(Gauge)
+  mysql_global_variables_key_buffer_size: Index blocks for MyISAM tables are buffered and are shared by all threads.(Gauge)
+  mysql_global_variables_query_cache_size: The amount of memory allocated for caching query results.(Gauge)
+  mysql_global_variables_table_open_cache: The number of open tables for all threads.(Gauge)
+  mysql_global_variables_open_files_limit: The number of file descriptors available to mysqld from the operating system.(Gauge)
+
+  # [redis_exporter]
+  redis_active_defrag_running: When activedefrag is enabled, this indicates whether defragmentation is currently active, and the CPU percentage it intends to utilize.
+  redis_allocator_active_bytes: Total bytes in the allocator active pages, this includes external-fragmentation.
+  redis_allocator_allocated_bytes: Total bytes allocated form the allocator, including internal-fragmentation. Normally the same as used_memory.
+  redis_allocator_frag_bytes: Delta between allocator_active and allocator_allocated. See note about mem_fragmentation_bytes.
+  redis_allocator_frag_ratio: Ratio between allocator_active and allocator_allocated. This is the true (external) fragmentation metric (not mem_fragmentation_ratio).
+  redis_allocator_resident_bytes: Total bytes resident (RSS) in the allocator, this includes pages that can be released to the OS (by MEMORY PURGE, or just waiting).
+  redis_allocator_rss_bytes: Delta between allocator_resident and allocator_active.
+  redis_allocator_rss_ratio: Ratio between allocator_resident and allocator_active. This usually indicates pages that the allocator can and probably will soon release back to the OS.
+  redis_aof_current_rewrite_duration_sec: Duration of the on-going AOF rewrite operation if any.
+  redis_aof_enabled: Flag indicating AOF logging is activated.
+  redis_aof_last_bgrewrite_status: Status of the last AOF rewrite operation.
+  redis_aof_last_cow_size_bytes: The size in bytes of copy-on-write memory during the last AOF rewrite operation.
+  redis_aof_last_rewrite_duration_sec: Duration of the last AOF rewrite operation in seconds.
+  redis_aof_last_write_status: Status of the last write operation to the AOF.
+  redis_aof_rewrite_in_progress: Flag indicating a AOF rewrite operation is on-going.
+  redis_aof_rewrite_scheduled: Flag indicating an AOF rewrite operation will be scheduled once the on-going RDB save is complete.
+  redis_blocked_clients: Number of clients pending on a blocking call (BLPOP, BRPOP, BRPOPLPUSH, BLMOVE, BZPOPMIN, BZPOPMAX).
+  redis_client_recent_max_input_buffer_bytes: Biggest input buffer among current client connections.
+  redis_client_recent_max_output_buffer_bytes: Biggest output buffer among current client connections.
+  redis_cluster_enabled: Indicate Redis cluster is enabled.
+  redis_commands_duration_seconds_total: The total CPU time consumed by these commands.(Counter)
+  redis_commands_processed_total: Total number of commands processed by the server.(Counter)
+  redis_commands_total: The number of calls that reached command execution (not rejected).(Counter)
+  redis_config_maxclients: The value of the maxclients configuration directive. This is the upper limit for the sum of connected_clients, connected_slaves and cluster_connections.
+  redis_config_maxmemory: The value of the maxmemory configuration directive.
+  redis_connected_clients: Number of client connections (excluding connections from replicas).
+  redis_connected_slaves: Number of connected replicas.
+  redis_connections_received_total: Total number of connections accepted by the server.(Counter)
+  redis_cpu_sys_children_seconds_total: System CPU consumed by the background processes.(Counter)
+  redis_cpu_sys_seconds_total: System CPU consumed by the Redis server, which is the sum of system CPU consumed by all threads of the server process (main thread and background threads).(Counter)
+  redis_cpu_user_children_seconds_total: User CPU consumed by the background processes.(Counter)
+  redis_cpu_user_seconds_total: User CPU consumed by the Redis server, which is the sum of user CPU consumed by all threads of the server process (main thread and background threads).(Counter)
+  redis_db_keys: Total number of keys by DB.
+  redis_db_keys_expiring: Total number of expiring keys by DB
+  redis_defrag_hits: Number of value reallocations performed by active the defragmentation process.
+  redis_defrag_misses: Number of aborted value reallocations started by the active defragmentation process.
+  redis_defrag_key_hits: Number of keys that were actively defragmented.
+  redis_defrag_key_misses: Number of keys that were skipped by the active defragmentation process.
+  redis_evicted_keys_total: Number of evicted keys due to maxmemory limit.(Counter)
+  redis_expired_keys_total: Total number of key expiration events.(Counter)
+  redis_expired_stale_percentage: The percentage of keys probably expired.
+  redis_expired_time_cap_reached_total: The count of times that active expiry cycles have stopped early.
+  redis_exporter_last_scrape_connect_time_seconds: The duration(in seconds) to connect when scrape.
+  redis_exporter_last_scrape_duration_seconds: The last scrape duration.
+  redis_exporter_last_scrape_error: The last scrape error status.
+  redis_exporter_scrape_duration_seconds_count: Durations of scrapes by the exporter
+  redis_exporter_scrape_duration_seconds_sum: Durations of scrapes by the exporter
+  redis_exporter_scrapes_total: Current total redis scrapes.(Counter)
+  redis_instance_info: Information about the Redis instance.
+  redis_keyspace_hits_total: Hits total.(Counter)
+  redis_keyspace_misses_total: Misses total.(Counter)
+  redis_last_key_groups_scrape_duration_milliseconds: Duration of the last key group metrics scrape in milliseconds.
+  redis_last_slow_execution_duration_seconds: The amount of time needed for last slow execution, in seconds.
+  redis_latest_fork_seconds: The amount of time needed for last fork, in seconds.
+  redis_lazyfree_pending_objects: The number of objects waiting to be freed (as a result of calling UNLINK, or FLUSHDB and FLUSHALL with the ASYNC option).
+  redis_master_repl_offset: The server's current replication offset.
+  redis_mem_clients_normal: Memory used by normal clients.(Gauge)
+  redis_mem_clients_slaves: Memory used by replica clients - Starting Redis 7.0, replica buffers share memory with the replication backlog, so this field can show 0 when replicas don't trigger an increase of memory usage.
+  redis_mem_fragmentation_bytes: Delta between used_memory_rss and used_memory. Note that when the total fragmentation bytes is low (few megabytes), a high ratio (e.g. 1.5 and above) is not an indication of an issue.
+  redis_mem_fragmentation_ratio: Ratio between used_memory_rss and used_memory. Note that this doesn't only includes fragmentation, but also other process overheads (see the allocator_* metrics), and also overheads like code, shared libraries, stack, etc.
+  redis_mem_not_counted_for_eviction_bytes: (Gauge)
+  redis_memory_max_bytes: Max memory limit in bytes.
+  redis_memory_used_bytes: Total number of bytes allocated by Redis using its allocator (either standard libc, jemalloc, or an alternative allocator such as tcmalloc)
+  redis_memory_used_dataset_bytes: The size in bytes of the dataset (used_memory_overhead subtracted from used_memory)
+  redis_memory_used_lua_bytes: Number of bytes used by the Lua engine.
+  redis_memory_used_overhead_bytes: The sum in bytes of all overheads that the server allocated for managing its internal data structures.
+  redis_memory_used_peak_bytes: Peak memory consumed by Redis (in bytes)
+  redis_memory_used_rss_bytes: Number of bytes that Redis allocated as seen by the operating system (a.k.a resident set size). This is the number reported by tools such as top(1) and ps(1)
+  redis_memory_used_scripts_bytes: Number of bytes used by cached Lua scripts
+  redis_memory_used_startup_bytes: Initial amount of memory consumed by Redis at startup in bytes
+  redis_migrate_cached_sockets_total: The number of sockets open for MIGRATE purposes
+  redis_net_input_bytes_total: Total input bytes(Counter)
+  redis_net_output_bytes_total: Total output bytes(Counter)
+  redis_process_id: Process ID
+  redis_pubsub_channels: Global number of pub/sub channels with client subscriptions
+  redis_pubsub_patterns: Global number of pub/sub pattern with client subscriptions
+  redis_rdb_bgsave_in_progress: Flag indicating a RDB save is on-going
+  redis_rdb_changes_since_last_save: Number of changes since the last dump
+  redis_rdb_current_bgsave_duration_sec: Duration of the on-going RDB save operation if any
+  redis_rdb_last_bgsave_duration_sec: Duration of the last RDB save operation in seconds
+  redis_rdb_last_bgsave_status: Status of the last RDB save operation
+  redis_rdb_last_cow_size_bytes: The size in bytes of copy-on-write memory during the last RDB save operation
+  redis_rdb_last_save_timestamp_seconds: Epoch-based timestamp of last successful RDB save
+  redis_rejected_connections_total: Number of connections rejected because of maxclients limit(Counter)
+  redis_repl_backlog_first_byte_offset: The master offset of the replication backlog buffer
+  redis_repl_backlog_history_bytes: Size in bytes of the data in the replication backlog buffer
+  redis_repl_backlog_is_active: Flag indicating replication backlog is active
+  redis_replica_partial_resync_accepted: The number of accepted partial resync requests(Gauge)
+  redis_replica_partial_resync_denied: The number of denied partial resync requests(Gauge)
+  redis_replica_resyncs_full: The number of full resyncs with replicas
+  redis_replication_backlog_bytes: Memory used by replication backlog
+  redis_second_repl_offset: The offset up to which replication IDs are accepted.
+  redis_slave_expires_tracked_keys: The number of keys tracked for expiry purposes (applicable only to writable replicas)(Gauge)
+  redis_slowlog_last_id: Last id of slowlog
+  redis_slowlog_length: Total slowlog
+  redis_start_time_seconds: Start time of the Redis instance since unix epoch in seconds.
+  redis_target_scrape_request_errors_total: Errors in requests to the exporter
+  redis_up: Flag indicating redis instance is up
+  redis_uptime_in_seconds: Number of seconds since Redis server start
+
+  # [windows_exporter]
+  windows_cpu_clock_interrupts_total: Total number of received and serviced clock tick interrupts(counter)
+  windows_cpu_core_frequency_mhz: Core frequency in megahertz(gauge)
+  windows_cpu_cstate_seconds_total: Time spent in low-power idle state(counter)
+  windows_cpu_dpcs_total: Total number of received and serviced deferred procedure calls (DPCs)(counter)
+  windows_cpu_idle_break_events_total: Total number of time processor was woken from idle(counter)
+  windows_cpu_interrupts_total: Total number of received and serviced hardware interrupts(counter)
+  windows_cpu_parking_status: Parking Status represents whether a processor is parked or not(gauge)
+  windows_cpu_processor_performance: Processor Performance is the average performance of the processor while it is executing instructions, as a percentage of the nominal performance of the processor. On some processors, Processor Performance may exceed 100%(gauge)
+  windows_cpu_time_total: Time that processor spent in different modes (idle, user, system, ...)(counter)
+  windows_cs_hostname: Labeled system hostname information as provided by ComputerSystem.DNSHostName and ComputerSystem.Domain(gauge)
+  windows_cs_logical_processors: ComputerSystem.NumberOfLogicalProcessors(gauge)
+  windows_cs_physical_memory_bytes: ComputerSystem.TotalPhysicalMemory(gauge)
+  windows_exporter_build_info: A metric with a constant '1' value labeled by version, revision, branch, and goversion from which windows_exporter was built.(gauge)
+  windows_exporter_collector_duration_seconds: Duration of a collection.(gauge)
+  windows_exporter_collector_success: Whether the collector was successful.(gauge)
+  windows_exporter_collector_timeout: Whether the collector timed out.(gauge)
+  windows_exporter_perflib_snapshot_duration_seconds: Duration of perflib snapshot capture(gauge)
+  windows_logical_disk_free_bytes: Free space in bytes (LogicalDisk.PercentFreeSpace)(gauge)
+  windows_logical_disk_idle_seconds_total: Seconds that the disk was idle (LogicalDisk.PercentIdleTime)(counter)
+  windows_logical_disk_read_bytes_total: The number of bytes transferred from the disk during read operations (LogicalDisk.DiskReadBytesPerSec)(counter)
+  windows_logical_disk_read_latency_seconds_total: Shows the average time, in seconds, of a read operation from the disk (LogicalDisk.AvgDiskSecPerRead)(counter)
+  windows_logical_disk_read_seconds_total: Seconds that the disk was busy servicing read requests (LogicalDisk.PercentDiskReadTime)(counter)
+  windows_logical_disk_read_write_latency_seconds_total: Shows the time, in seconds, of the average disk transfer (LogicalDisk.AvgDiskSecPerTransfer)(counter)
+  windows_logical_disk_reads_total: The number of read operations on the disk (LogicalDisk.DiskReadsPerSec)(counter)
+  windows_logical_disk_requests_queued: The number of requests queued to the disk (LogicalDisk.CurrentDiskQueueLength)(gauge)
+  windows_logical_disk_size_bytes: Total space in bytes (LogicalDisk.PercentFreeSpace_Base)(gauge)
+  windows_logical_disk_split_ios_total: The number of I/Os to the disk were split into multiple I/Os (LogicalDisk.SplitIOPerSec)(counter)
+  windows_logical_disk_write_bytes_total: The number of bytes transferred to the disk during write operations (LogicalDisk.DiskWriteBytesPerSec)(counter)
+  windows_logical_disk_write_latency_seconds_total: Shows the average time, in seconds, of a write operation to the disk (LogicalDisk.AvgDiskSecPerWrite)(counter)
+  windows_logical_disk_write_seconds_total: Seconds that the disk was busy servicing write requests (LogicalDisk.PercentDiskWriteTime)(counter)
+  windows_logical_disk_writes_total: The number of write operations on the disk (LogicalDisk.DiskWritesPerSec)(counter)
+  windows_net_bytes_received_total: (Network.BytesReceivedPerSec)(counter)
+  windows_net_bytes_sent_total: (Network.BytesSentPerSec)(counter)
+  windows_net_bytes_total: (Network.BytesTotalPerSec)(counter)
+  windows_net_current_bandwidth: (Network.CurrentBandwidth)(gauge)
+  windows_net_packets_outbound_discarded_total: (Network.PacketsOutboundDiscarded)(counter)
+  windows_net_packets_outbound_errors_total: (Network.PacketsOutboundErrors)(counter)
+  windows_net_packets_received_discarded_total: (Network.PacketsReceivedDiscarded)(counter)
+  windows_net_packets_received_errors_total: (Network.PacketsReceivedErrors)(counter)
+  windows_net_packets_received_total: (Network.PacketsReceivedPerSec)(counter)
+  windows_net_packets_received_unknown_total: (Network.PacketsReceivedUnknown)(counter)
+  windows_net_packets_sent_total: (Network.PacketsSentPerSec)(counter)
+  windows_net_packets_total: (Network.PacketsPerSec)(counter)
+  windows_os_info: OperatingSystem.Caption, OperatingSystem.Version(gauge)
+  windows_os_paging_free_bytes: OperatingSystem.FreeSpaceInPagingFiles(gauge)
+  windows_os_paging_limit_bytes: OperatingSystem.SizeStoredInPagingFiles(gauge)
+  windows_os_physical_memory_free_bytes: OperatingSystem.FreePhysicalMemory(gauge)
+  windows_os_process_memory_limix_bytes: OperatingSystem.MaxProcessMemorySize(gauge)
+  windows_os_processes: OperatingSystem.NumberOfProcesses(gauge)
+  windows_os_processes_limit: OperatingSystem.MaxNumberOfProcesses(gauge)
+  windows_os_time: OperatingSystem.LocalDateTime(gauge)
+  windows_os_timezone: OperatingSystem.LocalDateTime(gauge)
+  windows_os_users: OperatingSystem.NumberOfUsers(gauge)
+  windows_os_virtual_memory_bytes: OperatingSystem.TotalVirtualMemorySize(gauge)
+  windows_os_virtual_memory_free_bytes: OperatingSystem.FreeVirtualMemory(gauge)
+  windows_os_visible_memory_bytes: OperatingSystem.TotalVisibleMemorySize(gauge)
+  windows_service_info: A metric with a constant '1' value labeled with service information(gauge)
+  windows_service_start_mode: The start mode of the service (StartMode)(gauge)
+  windows_service_state: The state of the service (State)(gauge)
+  windows_service_status: The status of the service (Status)(gauge)
+  windows_system_context_switches_total: Total number of context switches (WMI source is PerfOS_System.ContextSwitchesPersec)(counter)
+  windows_system_exception_dispatches_total: Total number of exceptions dispatched (WMI source is PerfOS_System.ExceptionDispatchesPersec)(counter)
+  windows_system_processor_queue_length: Length of processor queue (WMI source is PerfOS_System.ProcessorQueueLength)(gauge)
+  windows_system_system_calls_total: Total number of system calls (WMI source is PerfOS_System.SystemCallsPersec)(counter)
+  windows_system_system_up_time: System boot time (WMI source is PerfOS_System.SystemUpTime)(gauge)
+  windows_system_threads: Current number of threads (WMI source is PerfOS_System.Threads)(gauge)
+
+  # [node_exporter]
+  # SYSTEM
+  # CPU context switch 次数
+  node_context_switches_total: context_switches
+  # Interrupts 次数
+  node_intr_total: Interrupts
+  # 运行的进程数
+  node_procs_running: Processes in runnable state
+  # 熵池大小
+  node_entropy_available_bits: Entropy available to random number generators
+  node_time_seconds: System time in seconds since epoch (1970)
+  node_boot_time_seconds: Node boot time, in unixtime
+  # CPU
+  node_cpu_seconds_total: Seconds the CPUs spent in each mode
+  node_load1: cpu load 1m
+  node_load5: cpu load 5m
+  node_load15: cpu load 15m
+
+  # MEM
+  # 内核态
+  # 内核用于缓存数据结构供自己使用的内存
+  node_memory_Slab_bytes: Memory used by the kernel to cache data structures for its own use
+  # slab中可回收的部分
+  node_memory_SReclaimable_bytes: SReclaimable - Part of Slab, that might be reclaimed, such as caches
+  # slab中不可回收的部分
+  node_memory_SUnreclaim_bytes: Part of Slab, that cannot be reclaimed on memory pressure
+  # Vmalloc内存区的大小
+  node_memory_VmallocTotal_bytes: Total size of vmalloc memory area
+  # vmalloc已分配的内存，虚拟地址空间上的连续的内存
+  node_memory_VmallocUsed_bytes: Amount of vmalloc area which is used
+  # vmalloc区可用的连续最大快的大小，通过此指标可以知道vmalloc可分配连续内存的最大值
+  node_memory_VmallocChunk_bytes: Largest contigious block of vmalloc area which is free
+  # 内存的硬件故障删除掉的内存页的总大小
+  node_memory_HardwareCorrupted_bytes: Amount of RAM that the kernel identified as corrupted / not working
+  # 用于在虚拟和物理内存地址之间映射的内存
+  node_memory_PageTables_bytes: Memory used to map between virtual and physical memory addresses (gauge)
+  # 内核栈内存，常驻内存，不可回收
+  node_memory_KernelStack_bytes: Kernel memory stack. This is not reclaimable
+  # 用来访问高端内存，复制高端内存的临时buffer，称为“bounce buffering”，会降低I/O 性能
+  node_memory_Bounce_bytes: Memory used for block device bounce buffers
+  #用户态
+  # 单个巨页大小
+  node_memory_Hugepagesize_bytes: Huge Page size
+  # 系统分配的常驻巨页数
+  node_memory_HugePages_Total: Total size of the pool of huge pages
+  # 系统空闲的巨页数
+  node_memory_HugePages_Free: Huge pages in the pool that are not yet allocated
+  # 进程已申请但未使用的巨页数
+  node_memory_HugePages_Rsvd: Huge pages for which a commitment to allocate from the pool has been made, but no allocation
+  # 超过系统设定的常驻HugePages数量的个数
+  node_memory_HugePages_Surp: Huge pages in the pool above the value in /proc/sys/vm/nr_hugepages
+  # 透明巨页 Transparent HugePages (THP)
+  node_memory_AnonHugePages_bytes: Memory in anonymous huge pages
+  # inactivelist中的File-backed内存
+  node_memory_Inactive_file_bytes: File-backed memory on inactive LRU list
+  # inactivelist中的Anonymous内存
+  node_memory_Inactive_anon_bytes: Anonymous and swap cache on inactive LRU list, including tmpfs (shmem)
+  # activelist中的File-backed内存
+  node_memory_Active_file_bytes: File-backed memory on active LRU list
+  # activelist中的Anonymous内存
+  node_memory_Active_anon_bytes: Anonymous and swap cache on active least-recently-used (LRU) list, including tmpfs
+  # 禁止换出的页，对应 Unevictable 链表
+  node_memory_Unevictable_bytes: Amount of unevictable memory that can't be swapped out for a variety of reasons
+  # 共享内存
+  node_memory_Shmem_bytes: Used shared memory (shared between several processes, thus including RAM disks)
+  # 匿名页内存大小
+  node_memory_AnonPages_bytes: Memory in user pages not backed by files
+  # 被关联的内存页大小
+  node_memory_Mapped_bytes: Used memory in mapped pages files which have been mmaped, such as libraries
+  # file-backed内存页缓存大小
+  node_memory_Cached_bytes: Parked file data (file content) cache
+  # 系统中有多少匿名页曾经被swap-out、现在又被swap-in并且swap-in之后页面中的内容一直没发生变化
+  node_memory_SwapCached_bytes: Memory that keeps track of pages that have been fetched from swap but not yet been modified
+  # 被mlock()系统调用锁定的内存大小
+  node_memory_Mlocked_bytes: Size of pages locked to memory using the mlock() system call
+  # 块设备(block device)所占用的缓存页
+  node_memory_Buffers_bytes: Block device (e.g. harddisk) cache
+  node_memory_SwapTotal_bytes: Memory information field SwapTotal_bytes
+  node_memory_SwapFree_bytes: Memory information field SwapFree_bytes
+
+  # DISK
+  node_filesystem_avail_bytes: Filesystem space available to non-root users in byte
+  node_filesystem_free_bytes: Filesystem free space in bytes
+  node_filesystem_size_bytes: Filesystem size in bytes
+  node_filesystem_files_free: Filesystem total free file nodes
+  node_filesystem_files: Filesystem total free file nodes
+  node_filefd_maximum: Max open files
+  node_filefd_allocated: Open files
+  node_filesystem_readonly: Filesystem read-only status
+  node_filesystem_device_error: Whether an error occurred while getting statistics for the given device
+  node_disk_reads_completed_total: The total number of reads completed successfully
+  node_disk_writes_completed_total: The total number of writes completed successfully
+  node_disk_reads_merged_total: The number of reads merged
+  node_disk_writes_merged_total: The number of writes merged
+  node_disk_read_bytes_total: The total number of bytes read successfully
+  node_disk_written_bytes_total: The total number of bytes written successfully
+  node_disk_io_time_seconds_total: Total seconds spent doing I/Os
+  node_disk_read_time_seconds_total: The total number of seconds spent by all reads
+  node_disk_write_time_seconds_total: The total number of seconds spent by all writes
+  node_disk_io_time_weighted_seconds_total: The weighted of seconds spent doing I/Os
+
+  # NET
+  node_network_receive_bytes_total: Network device statistic receive_bytes (counter)
+  node_network_transmit_bytes_total: Network device statistic transmit_bytes (counter)
+  node_network_receive_packets_total: Network device statistic receive_bytes
+  node_network_transmit_packets_total: Network device statistic transmit_bytes
+  node_network_receive_errs_total: Network device statistic receive_errs
+  node_network_transmit_errs_total: Network device statistic transmit_errs
+  node_network_receive_drop_total: Network device statistic receive_drop
+  node_network_transmit_drop_total: Network device statistic transmit_drop
+  node_nf_conntrack_entries: Number of currently allocated flow entries for connection tracking
+  node_sockstat_TCP_alloc: Number of TCP sockets in state alloc
+  node_sockstat_TCP_inuse: Number of TCP sockets in state inuse
+  node_sockstat_TCP_orphan: Number of TCP sockets in state orphan
+  node_sockstat_TCP_tw: Number of TCP sockets in state tw
+  node_netstat_Tcp_CurrEstab: Statistic TcpCurrEstab
+  node_sockstat_sockets_used: Number of IPv4 sockets in use
+
+  # [kafka_exporter]
+  kafka_brokers: count of kafka_brokers (gauge)
+  kafka_topic_partitions: Number of partitions for this Topic (gauge)
+  kafka_topic_partition_current_offset: Current Offset of a Broker at Topic/Partition (gauge)
+  kafka_consumergroup_current_offset: Current Offset of a ConsumerGroup at Topic/Partition (gauge)
+  kafka_consumer_lag_millis: Current approximation of consumer lag for a ConsumerGroup at Topic/Partition (gauge)
+  kafka_topic_partition_under_replicated_partition: 1 if Topic/Partition is under Replicated
+
+  # [zookeeper_exporter]
+  zk_znode_count: The total count of znodes stored
+  zk_ephemerals_count: The number of Ephemerals nodes
+  zk_watch_count: The number of watchers setup over Zookeeper nodes.
+  zk_approximate_data_size: Size of data in bytes that a zookeeper server has in its data tree
+  zk_outstanding_requests: Number of currently executing requests
+  zk_packets_sent: Count of the number of zookeeper packets sent from a server
+  zk_packets_received: Count of the number of zookeeper packets received by a server
+  zk_num_alive_connections: Number of active clients connected to a zookeeper server
+  zk_open_file_descriptor_count: Number of file descriptors that a zookeeper server has open
+  zk_max_file_descriptor_count: Maximum number of file descriptors that a zookeeper server can open
+  zk_avg_latency: Average time in milliseconds for requests to be processed
+  zk_min_latency: Maximum time in milliseconds for a request to be processed
+  zk_max_latency: Minimum time in milliseconds for a request to be processed

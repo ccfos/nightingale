@@ -1,0 +1,132 @@
+version: "3.7"
+
+networks:
+  nightingale:
+    driver: bridge
+
+services:
+  mysql:
+    image: "mysql:8"
+    container_name: mysql
+    hostname: mysql
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: 1234
+    volumes:
+      - ./mysqldata:/var/lib/mysql/
+      - ../initsql:/docker-entrypoint-initdb.d/
+      - ./etc-mysql/my.cnf:/etc/my.cnf
+    networks:
+      - nightingale
+    ports:
+      - "3306:3306"
+
+  redis:
+    image: "redis:6.2"
+    container_name: redis
+    hostname: redis
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    networks:
+      - nightingale
+    ports:
+      - "6379:6379"
+
+  # prometheus:
+  #   image: prom/prometheus
+  #   container_name: prometheus
+  #   hostname: prometheus
+  #   restart: always
+  #   environment:
+  #     TZ: Asia/Shanghai
+  #   volumes:
+  #     - ./etc-prometheus:/etc/prometheus
+  #   command:
+  #     - "--config.file=/etc/prometheus/prometheus.yml"
+  #     - "--storage.tsdb.path=/prometheus"
+  #     - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+  #     - "--web.console.templates=/usr/share/prometheus/consoles"
+  #     - "--enable-feature=remote-write-receiver"
+  #     - "--query.lookback-delta=2m"
+  #   networks:
+  #     - nightingale
+  #   ports:
+  #     - "9090:9090"
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.79.12
+    container_name: victoriametrics
+    hostname: victoriametrics
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "8428:8428"
+    networks:
+      - nightingale
+    command:
+      - "--loggerTimezone=Asia/Shanghai"
+
+  ibex:
+    image: flashcatcloud/ibex:v1.2.0
+    container_name: ibex
+    hostname: ibex
+    restart: always
+    environment:
+      GIN_MODE: release
+      TZ: Asia/Shanghai
+      WAIT_HOSTS: mysql:3306
+    volumes:
+      - ./etc-ibex:/app/etc
+    networks:
+      - nightingale
+    ports:
+      - "10090:10090"
+      - "20090:20090"
+    depends_on:
+      - mysql
+    command: >
+      sh -c "/app/ibex server"
+
+  nightingale:
+    image: flashcatcloud/nightingale:latest
+    container_name: nightingale
+    hostname: nightingale
+    restart: always
+    environment:
+      GIN_MODE: release
+      TZ: Asia/Shanghai
+      WAIT_HOSTS: mysql:3306, redis:6379
+    volumes:
+      - ./etc-nightingale:/app/etc
+    networks:
+      - nightingale
+    ports:
+      - "17000:17000"
+    depends_on:
+      - mysql
+      - redis
+      - victoriametrics
+    command: >
+      sh -c "/app/n9e"
+
+  categraf:
+    image: "flashcatcloud/categraf:latest"
+    container_name: "categraf"
+    hostname: "categraf01"
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+      HOST_PROC: /hostfs/proc
+      HOST_SYS: /hostfs/sys
+      HOST_MOUNT_PREFIX: /hostfs
+      WAIT_HOSTS: nightingale:17000, ibex:20090
+    volumes:
+      - ./etc-categraf:/etc/categraf/conf
+      - /:/hostfs
+    networks:
+      - nightingale
+    depends_on:
+      - nightingale
