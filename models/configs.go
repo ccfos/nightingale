@@ -2,12 +2,12 @@ package models
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
 
@@ -45,22 +45,72 @@ func (c *Configs) DB2FE() error {
 
 const SALT = "salt"
 
+const RSA_PRIVATE_KEY = "rsa_private_key"
+
+const RSA_PUBLIC_KEY = "rsa_public_key"
+
 // InitSalt generate random salt
-func InitSalt(ctx *ctx.Context) {
+func InitSalt(ctx *ctx.Context) string {
 	val, err := ConfigsGet(ctx, SALT)
 	if err != nil {
-		log.Fatalln("cannot query salt", err)
+		logger.Error("cannot query salt", err)
 	}
 
 	if val != "" {
-		return
+		return val
 	}
 
 	content := fmt.Sprintf("%s%d%d%s", runner.Hostname, os.Getpid(), time.Now().UnixNano(), str.RandLetters(6))
 	salt := str.MD5(content)
 	err = ConfigsSet(ctx, SALT, salt)
 	if err != nil {
-		log.Fatalln("init salt in mysql", err)
+		logger.Error("init salt in mysql", err)
+	}
+	return salt
+
+}
+
+func InitRSAKeyPairs(ctx *ctx.Context, rsaConfig *httpx.RSAConfig) {
+	val, err := ConfigsGet(ctx, RSA_PRIVATE_KEY)
+	if err != nil {
+		logger.Errorf("cannot query config(%s): %v", RSA_PRIVATE_KEY, err)
+	}
+	gengrateFlag := true
+	if val != "" {
+		rsaConfig.RSAPrivateKey = []byte(val)
+		gengrateFlag = false
+	}
+	val, err = ConfigsGet(ctx, RSA_PUBLIC_KEY)
+	if err != nil {
+		logger.Errorf("cannot query config(%s): %v", RSA_PUBLIC_KEY, err)
+	}
+	if val != "" && !gengrateFlag {
+		rsaConfig.RSAPublicKey = []byte(val)
+		return
+	}
+
+	// Generate RSA keys
+
+	// Generate RSA password
+	if rsaConfig.RSAPassWord == "" {
+		rsaConfig.RSAPassWord = InitSalt(ctx)
+	}
+	var privateByte []byte
+	var publicByte []byte
+	privateByte, publicByte, err = secu.GenerateRsaKeyPair(rsaConfig.RSAPassWord)
+	if err != nil {
+		logger.Errorf("failed to generate rsa key pair: %v", err)
+	}
+	// Save generated RSA keys
+	rsaConfig.RSAPrivateKey = privateByte
+	rsaConfig.RSAPublicKey = publicByte
+	err = ConfigsSet(ctx, RSA_PRIVATE_KEY, string(privateByte))
+	if err != nil {
+		logger.Errorf("failed to set config(%s): %v", RSA_PRIVATE_KEY, err)
+	}
+	err = ConfigsSet(ctx, RSA_PUBLIC_KEY, string(publicByte))
+	if err != nil {
+		logger.Errorf("failed to set config(%s): %v", RSA_PUBLIC_KEY, err)
 	}
 }
 

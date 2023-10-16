@@ -58,8 +58,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	ctx := ctx.NewContext(context.Background(), db, true)
 	models.InitRoot(ctx)
 	migrate.Migrate(db)
-	httpx.InitRSAConfig(&config.HTTP.RSA)
-
+	if httpx.InitRSAConfig(&config.HTTP.RSA) {
+		models.InitRSAKeyPairs(ctx, &config.HTTP.RSA)
+	}
 	redis, err := storage.NewRedis(config.Redis)
 	if err != nil {
 		return nil, err

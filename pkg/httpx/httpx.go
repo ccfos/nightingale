@@ -6,12 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/aop"
-	"github.com/ccfos/nightingale/v6/pkg/secu"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 
 	"github.com/gin-contrib/pprof"
@@ -166,38 +164,25 @@ func Init(cfg Config, handler http.Handler) func() {
 	}
 }
 
-func InitRSAConfig(rsaConfig *RSAConfig) {
-	if err := initRSAFile(rsaConfig); err != nil {
-		logger.Warning(err)
+func InitRSAConfig(rsaConfig *RSAConfig) bool {
+	// Read RSA configuration from file if exists
+	if file.IsExist(rsaConfig.RSAPrivateKeyPath) && file.IsExist(rsaConfig.RSAPublicKeyPath) {
+		readConfigFile(rsaConfig)
+		return false
 	}
-	// 读取公钥配置文件
-	//获取文件内容
+	return true
+
+}
+
+func readConfigFile(rsaConfig *RSAConfig) {
 	publicBuf, err := os.ReadFile(rsaConfig.RSAPublicKeyPath)
 	if err != nil {
 		logger.Warningf("could not read RSAPublicKeyPath %q: %v", rsaConfig.RSAPublicKeyPath, err)
 	}
 	rsaConfig.RSAPublicKey = publicBuf
-	// 读取私钥配置文件
 	privateBuf, err := os.ReadFile(rsaConfig.RSAPrivateKeyPath)
 	if err != nil {
 		logger.Warningf("could not read RSAPrivateKeyPath %q: %v", rsaConfig.RSAPrivateKeyPath, err)
 	}
 	rsaConfig.RSAPrivateKey = privateBuf
-}
-
-func initRSAFile(encryption *RSAConfig) error {
-	dirPath := filepath.Dir(encryption.RSAPrivateKeyPath)
-	// Check if the directory exists
-	errCreateDir := file.InsureDir(dirPath)
-	if errCreateDir != nil {
-		return fmt.Errorf("could not create directory for initRSAFile %q: %v", dirPath, errCreateDir)
-	}
-	// Check if the file exists
-	if !file.IsExist(encryption.RSAPrivateKeyPath) {
-		errGen := secu.GenerateKeyWithPassword(encryption.RSAPrivateKeyPath, encryption.RSAPublicKeyPath, encryption.RSAPassWord)
-		if errGen != nil {
-			return fmt.Errorf("could not create file for initRSAFile %+v: %v", encryption, errGen)
-		}
-	}
-	return nil
 }
