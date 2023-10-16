@@ -52,7 +52,7 @@ services:
       - "--loggerTimezone=Asia/Shanghai"
 
   ibex:
-    image: ulric2019/ibex:0.3
+    image: flashcatcloud/ibex:v1.2.0
     container_name: ibex
     hostname: ibex
     restart: always
@@ -72,12 +72,12 @@ services:
     links:
       - postgres:postgres
     command: >
-      sh -c "/wait && /app/ibex server"
+      sh -c "/app/ibex server"
 
-  n9e:
+  nightingale:
     image: flashcatcloud/nightingale:latest
-    container_name: n9e
-    hostname: n9e
+    container_name: nightingale
+    hostname: nightingale
     restart: always
     environment:
       GIN_MODE: release
@@ -100,7 +100,7 @@ services:
       - victoriametrics:victoriametrics
       - ibex:ibex
     command: >
-      sh -c "/wait && /app/n9e"
+      sh -c "/app/n9e"
 
   categraf:
     image: "flashcatcloud/categraf:latest"
@@ -112,6 +112,7 @@ services:
       HOST_PROC: /hostfs/proc
       HOST_SYS: /hostfs/sys
       HOST_MOUNT_PREFIX: /hostfs
+      WAIT_HOSTS: nightingale:17000, ibex:20090
     volumes:
       - ./categraf/conf:/etc/categraf/conf
       - /:/hostfs
@@ -122,8 +123,8 @@ services:
     networks:
       - nightingale
     depends_on:
-      - n9e
+      - nightingale
       - ibex
     links:
-      - n9e:n9e
+      - nightingale:nightingale
       - ibex:ibex

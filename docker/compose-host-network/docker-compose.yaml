@@ -76,7 +76,7 @@ services:
       - redis
       - prometheus
     command: >
-      sh -c "/wait && /app/n9e"
+      sh -c "/app/n9e"
 
   categraf:
     image: "flashcatcloud/categraf:latest"
@@ -88,6 +88,7 @@ services:
       HOST_PROC: /hostfs/proc
       HOST_SYS: /hostfs/sys
       HOST_MOUNT_PREFIX: /hostfs
+      WAIT_HOSTS: 127.0.0.1:17000, 127.0.0.1:20090
     volumes:
       - ./etc-categraf:/etc/categraf/conf
       - /:/hostfs
