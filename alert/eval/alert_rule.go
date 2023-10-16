@@ -90,6 +90,7 @@ func (s *Scheduler) syncAlertRules() {
 			continue
 		}
 
+		ruleType := rule.GetRuleType()
 		if rule.IsPrometheusRule() || rule.IsLokiRule() || rule.IsTdengineRule() {
 			datasourceIds := s.promClients.Hit(rule.DatasourceIdsJson)
 			datasourceIds = append(datasourceIds, s.tdengineClients.Hit(rule.DatasourceIdsJson)...)
@@ -100,6 +101,11 @@ func (s *Scheduler) syncAlertRules() {
 				ds := s.datasourceCache.GetById(dsId)
 				if ds == nil {
 					logger.Debugf("datasource %d not found", dsId)
+					continue
+				}
+
+				if ds.PluginType != ruleType {
+					logger.Debugf("datasource %d category is %s not %s", dsId, ds.PluginType, ruleType)
 					continue
 				}
 
