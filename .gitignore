@@ -49,6 +49,7 @@ _test
 /docker/compose-postgres/pgdata
 /etc.local*
 /front/statik/statik.go
+/docker/compose-bridge/etc-nightingale/rsa/
 
 .alerts
 .idea
