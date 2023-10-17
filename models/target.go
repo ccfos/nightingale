@@ -216,14 +216,6 @@ func TargetUpdateBgid(ctx *ctx.Context, idents []string, bgid int64, clearTags b
 	return DB(ctx).Model(&Target{}).Where("ident in ?", idents).Updates(fields).Error
 }
 
-func TargetUpdateHostIpAndBgid(ctx *ctx.Context, ident string, ipv4 string, bgid int64) error {
-	return DB(ctx).Model(&Target{}).Where("ident = ?", ident).Updates(map[string]interface{}{
-		"host_ip":   ipv4,
-		"group_id":  bgid,
-		"update_at": time.Now().Unix(),
-	}).Error
-}
-
 func TargetGet(ctx *ctx.Context, where string, args ...interface{}) (*Target, error) {
 	var lst []*Target
 	err := DB(ctx).Where(where, args...).Find(&lst).Error

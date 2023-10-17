@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"io/ioutil"
+	"sort"
 	"strings"
 	"time"
 
@@ -52,16 +53,37 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	rt.IdentSet.MSet(items)
 
 	if target, has := rt.TargetCache.Get(req.Hostname); has && target != nil {
-		var defGid int64 = -1
-		gid := ginx.QueryInt64(c, "gid", defGid)
-		hostIpStr := strings.TrimSpace(req.HostIp)
-		if gid == defGid { //set gid value from cache
-			gid = target.GroupId
+		gid := ginx.QueryInt64(c, "gid", 0)
+		hostIp := strings.TrimSpace(req.HostIp)
+
+		filed := make(map[string]interface{})
+		if gid != 0 && gid != target.GroupId {
+			filed["group_id"] = gid
 		}
-		logger.Debugf("heartbeat gid: %v, host_ip: '%v', target: %v", gid, hostIpStr, *target)
-		if gid != target.GroupId || hostIpStr != target.HostIp { // if either gid or host_ip has a new value
-			err = models.TargetUpdateHostIpAndBgid(rt.Ctx, req.Hostname, hostIpStr, gid)
+
+		if hostIp != "" && hostIp != target.HostIp {
+			filed["host_ip"] = hostIp
 		}
+
+		if len(req.GlobalLabels) > 0 {
+			lst := []string{}
+			for k, v := range req.GlobalLabels {
+				lst = append(lst, k+"="+v)
+			}
+			sort.Strings(lst)
+			labels := strings.Join(lst, " ")
+			if target.Tags != labels {
+				filed["tags"] = labels
+			}
+		}
+
+		if len(filed) > 0 {
+			err := target.UpdateFieldsMap(rt.Ctx, filed)
+			if err != nil {
+				logger.Errorf("update target fields failed, err: %v", err)
+			}
+		}
+		logger.Debugf("heartbeat field:%+v target: %v", filed, *target)
 	}
 
 	ginx.NewRender(c).Message(err)
