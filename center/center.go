@@ -8,6 +8,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/center/cconf"
+	"github.com/ccfos/nightingale/v6/center/cconf/rsa"
 	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/center/sso"
@@ -58,10 +59,14 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	ctx := ctx.NewContext(context.Background(), db, true)
 	models.InitRoot(ctx)
 	migrate.Migrate(db)
-	if httpx.InitRSAConfig(&config.HTTP.RSA) {
-		models.InitRSAKeyPairs(ctx, &config.HTTP.RSA)
+
+	err = rsa.InitRSAConfig(ctx, &config.HTTP.RSA)
+	if err != nil {
+		return nil, err
 	}
-	redis, err := storage.NewRedis(config.Redis)
+
+	var redis storage.Redis
+	redis, err = storage.NewRedis(config.Redis)
 	if err != nil {
 		return nil, err
 	}

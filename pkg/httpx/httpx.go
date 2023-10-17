@@ -15,8 +15,6 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/logger"
 )
 
 type Config struct {
@@ -162,27 +160,4 @@ func Init(cfg Config, handler http.Handler) func() {
 			fmt.Println("http server stopped")
 		}
 	}
-}
-
-func InitRSAConfig(rsaConfig *RSAConfig) bool {
-	// Read RSA configuration from file if exists
-	if file.IsExist(rsaConfig.RSAPrivateKeyPath) && file.IsExist(rsaConfig.RSAPublicKeyPath) {
-		readConfigFile(rsaConfig)
-		return false
-	}
-	return true
-
-}
-
-func readConfigFile(rsaConfig *RSAConfig) {
-	publicBuf, err := os.ReadFile(rsaConfig.RSAPublicKeyPath)
-	if err != nil {
-		logger.Warningf("could not read RSAPublicKeyPath %q: %v", rsaConfig.RSAPublicKeyPath, err)
-	}
-	rsaConfig.RSAPublicKey = publicBuf
-	privateBuf, err := os.ReadFile(rsaConfig.RSAPrivateKeyPath)
-	if err != nil {
-		logger.Warningf("could not read RSAPrivateKeyPath %q: %v", rsaConfig.RSAPrivateKeyPath, err)
-	}
-	rsaConfig.RSAPrivateKey = privateBuf
 }

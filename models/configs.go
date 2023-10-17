@@ -2,12 +2,12 @@ package models
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
 
@@ -43,75 +43,48 @@ func (c *Configs) DB2FE() error {
 	return nil
 }
 
-const SALT = "salt"
-
-const RSA_PRIVATE_KEY = "rsa_private_key"
-
-const RSA_PUBLIC_KEY = "rsa_public_key"
+const (
+	SALT            = "salt"
+	RSA_PRIVATE_KEY = "rsa_private_key"
+	RSA_PUBLIC_KEY  = "rsa_public_key"
+	RSA_PASSWORD    = "rsa_password"
+)
 
 // InitSalt generate random salt
-func InitSalt(ctx *ctx.Context) string {
+func InitSalt(ctx *ctx.Context) {
 	val, err := ConfigsGet(ctx, SALT)
 	if err != nil {
-		logger.Error("cannot query salt", err)
+		log.Fatalln("init salt in mysql", err)
 	}
 
 	if val != "" {
-		return val
+		return
 	}
 
 	content := fmt.Sprintf("%s%d%d%s", runner.Hostname, os.Getpid(), time.Now().UnixNano(), str.RandLetters(6))
 	salt := str.MD5(content)
 	err = ConfigsSet(ctx, SALT, salt)
 	if err != nil {
-		logger.Error("init salt in mysql", err)
+		log.Fatalln("init salt in mysql", err)
 	}
-	return salt
 
 }
+func InitRSAPassWord(ctx *ctx.Context) (string, error) {
 
-func InitRSAKeyPairs(ctx *ctx.Context, rsaConfig *httpx.RSAConfig) {
-	val, err := ConfigsGet(ctx, RSA_PRIVATE_KEY)
+	val, err := ConfigsGet(ctx, RSA_PASSWORD)
 	if err != nil {
-		logger.Errorf("cannot query config(%s): %v", RSA_PRIVATE_KEY, err)
+		return "", errors.WithMessage(err, "failed to get rsa password")
 	}
-	gengrateFlag := true
 	if val != "" {
-		rsaConfig.RSAPrivateKey = []byte(val)
-		gengrateFlag = false
+		return val, nil
 	}
-	val, err = ConfigsGet(ctx, RSA_PUBLIC_KEY)
+	content := fmt.Sprintf("%s%d%d%s", runner.Hostname, os.Getpid(), time.Now().UnixNano(), str.RandLetters(6))
+	pwd := str.MD5(content)
+	err = ConfigsSet(ctx, RSA_PASSWORD, pwd)
 	if err != nil {
-		logger.Errorf("cannot query config(%s): %v", RSA_PUBLIC_KEY, err)
+		return "", errors.WithMessage(err, "failed to set rsa password")
 	}
-	if val != "" && !gengrateFlag {
-		rsaConfig.RSAPublicKey = []byte(val)
-		return
-	}
-
-	// Generate RSA keys
-
-	// Generate RSA password
-	if rsaConfig.RSAPassWord == "" {
-		rsaConfig.RSAPassWord = InitSalt(ctx)
-	}
-	var privateByte []byte
-	var publicByte []byte
-	privateByte, publicByte, err = secu.GenerateRsaKeyPair(rsaConfig.RSAPassWord)
-	if err != nil {
-		logger.Errorf("failed to generate rsa key pair: %v", err)
-	}
-	// Save generated RSA keys
-	rsaConfig.RSAPrivateKey = privateByte
-	rsaConfig.RSAPublicKey = publicByte
-	err = ConfigsSet(ctx, RSA_PRIVATE_KEY, string(privateByte))
-	if err != nil {
-		logger.Errorf("failed to set config(%s): %v", RSA_PRIVATE_KEY, err)
-	}
-	err = ConfigsSet(ctx, RSA_PUBLIC_KEY, string(publicByte))
-	if err != nil {
-		logger.Errorf("failed to set config(%s): %v", RSA_PUBLIC_KEY, err)
-	}
+	return pwd, nil
 }
 
 func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) { //select built-in type configs
