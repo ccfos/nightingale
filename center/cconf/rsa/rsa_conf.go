@@ -16,26 +16,18 @@ import (
 func InitRSAConfig(ctx *ctx.Context, rsaConfig *httpx.RSAConfig) error {
 
 	// 1.Load RSA keys from Database
-	var (
-		hasPrivateKey bool
-		hasPublicKey  bool
-	)
-	val, err := models.ConfigsGet(ctx, models.RSA_PRIVATE_KEY)
+
+	privateKeyVal, err := models.ConfigsGet(ctx, models.RSA_PRIVATE_KEY)
 	if err != nil {
 		return errors.WithMessagef(err, "cannot query config(%s)", models.RSA_PRIVATE_KEY)
 	}
-	if hasPrivateKey = val != ""; hasPrivateKey {
-		rsaConfig.RSAPrivateKey = []byte(val)
-	}
-	val, err = models.ConfigsGet(ctx, models.RSA_PUBLIC_KEY)
+	publicKeyVal, err := models.ConfigsGet(ctx, models.RSA_PUBLIC_KEY)
 	if err != nil {
 		return errors.WithMessagef(err, "cannot query config(%s)", models.RSA_PUBLIC_KEY)
 	}
-	if hasPublicKey = val != ""; hasPublicKey {
-		rsaConfig.RSAPublicKey = []byte(val)
-	}
-
-	if hasPrivateKey && hasPublicKey {
+	if privateKeyVal != "" && publicKeyVal != "" {
+		rsaConfig.RSAPrivateKey = []byte(privateKeyVal)
+		rsaConfig.RSAPublicKey = []byte(publicKeyVal)
 		return nil
 	}
 
