@@ -3,45 +3,33 @@
   "tags": "",
   "ident": "",
   "configs": {
-    "var": [
-      {
-        "name": "instance_id",
-        "type": "query",
-        "datasource": {
-          "cate": "prometheus"
-        },
-        "definition": "label_values(aliyun_acs_rds_dashboard_cpu_usage_average,instance_id)",
-        "multi": false
-      }
-    ],
     "panels": [
       {
-        "type": "timeseries",
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "spanNulls": false,
+          "stack": "off"
+        },
+        "datasourceCate": "prometheus",
         "id": "01f4d444-aa2d-466d-9615-c76baf60a40c",
         "layout": {
           "h": 4,
+          "i": "01f4d444-aa2d-466d-9615-c76baf60a40c",
+          "isResizable": true,
           "w": 12,
           "x": 0,
-          "y": 0,
-          "i": "01f4d444-aa2d-466d-9615-c76baf60a40c",
-          "isResizable": true
+          "y": 0
         },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(aliyun_acs_rds_dashboard_cpu_usage_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "legend": ""
-          }
-        ],
-        "name": "CPU平均使用率",
         "maxPerRow": 4,
+        "name": "CPU平均使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
@@ -50,52 +38,53 @@
             "steps": [
               {
                 "color": "#634CD9",
-                "value": null,
-                "type": "base"
+                "type": "base",
+                "value": null
               }
             ]
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
           }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
+        "targets": [
+          {
+            "expr": "sum(aliyun_acs_rds_dashboard_cpu_usage_average{instance_id=\"$instance_id\"}) by (instance_id)",
+            "legend": "",
+            "refId": "A"
           }
-        }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceValue": "${datasource}"
       },
       {
-        "type": "timeseries",
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "spanNulls": false,
+          "stack": "off"
+        },
+        "datasourceCate": "prometheus",
         "id": "c43eb882-915f-4c38-a0b5-8f33c21ab44a",
         "layout": {
           "h": 4,
+          "i": "09903231-6557-42be-9cf3-2873878e9bf2",
+          "isResizable": true,
           "w": 12,
           "x": 12,
-          "y": 0,
-          "i": "09903231-6557-42be-9cf3-2873878e9bf2",
-          "isResizable": true
+          "y": 0
         },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(aliyun_acs_rds_dashboard_memory_usage_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "legend": ""
-          }
-        ],
-        "name": "内存平均使用率",
         "maxPerRow": 4,
+        "name": "内存平均使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
@@ -104,52 +93,53 @@
             "steps": [
               {
                 "color": "#634CD9",
-                "value": null,
-                "type": "base"
+                "type": "base",
+                "value": null
               }
             ]
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
           }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
+        "targets": [
+          {
+            "expr": "sum(aliyun_acs_rds_dashboard_memory_usage_average{instance_id=\"$instance_id\"}) by (instance_id)",
+            "legend": "",
+            "refId": "A"
           }
-        }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceValue": "${datasource}"
       },
       {
-        "type": "timeseries",
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "spanNulls": false,
+          "stack": "off"
+        },
+        "datasourceCate": "prometheus",
         "id": "37447883-ad79-46bc-888a-1be2835c1c64",
         "layout": {
           "h": 4,
+          "i": "378a5a26-c28e-4612-af09-f82ec2e11d80",
+          "isResizable": true,
           "w": 12,
           "x": 0,
-          "y": 4,
-          "i": "378a5a26-c28e-4612-af09-f82ec2e11d80",
-          "isResizable": true
+          "y": 4
         },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(aliyun_acs_rds_dashboard_disk_usage_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "legend": ""
-          }
-        ],
-        "name": "磁盘平均使用率",
         "maxPerRow": 4,
+        "name": "磁盘平均使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
@@ -158,52 +148,53 @@
             "steps": [
               {
                 "color": "#634CD9",
-                "value": null,
-                "type": "base"
+                "type": "base",
+                "value": null
               }
             ]
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
           }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
+        "targets": [
+          {
+            "expr": "sum(aliyun_acs_rds_dashboard_disk_usage_average{instance_id=\"$instance_id\"}) by (instance_id)",
+            "legend": "",
+            "refId": "A"
           }
-        }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceValue": "${datasource}"
       },
       {
-        "type": "timeseries",
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "spanNulls": false,
+          "stack": "off"
+        },
+        "datasourceCate": "prometheus",
         "id": "c9735607-3f24-44a7-bbf1-3ad39441c5c9",
         "layout": {
           "h": 4,
+          "i": "93a4c8a6-ac23-4e26-8a38-781ec1668820",
+          "isResizable": true,
           "w": 12,
           "x": 12,
-          "y": 4,
-          "i": "93a4c8a6-ac23-4e26-8a38-781ec1668820",
-          "isResizable": true
+          "y": 4
         },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(aliyun_acs_rds_dashboard_iops_usage_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "legend": ""
-          }
-        ],
-        "name": "IOPS平均使用率",
         "maxPerRow": 4,
+        "name": "IOPS平均使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
@@ -212,72 +203,53 @@
             "steps": [
               {
                 "color": "#634CD9",
-                "value": null,
-                "type": "base"
+                "type": "base",
+                "value": null
               }
             ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
-      },
-      {
-        "type": "timeseries",
-        "id": "b516e7dc-8022-409d-b907-18c4143df891",
-        "layout": {
-          "h": 5,
-          "w": 24,
-          "x": 0,
-          "y": 8,
-          "i": "b516e7dc-8022-409d-b907-18c4143df891",
-          "isResizable": true
-        },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_delete_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "legend": "delete"
           },
-          {
-            "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_insert_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "refId": "B",
-            "legend": "insert"
-          },
-          {
-            "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_insert_select_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "refId": "C",
-            "legend": "insert_select"
-          },
-          {
-            "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_update_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "refId": "D",
-            "legend": "update"
-          },
-          {
-            "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_select_average{instance_id=\"$instance_id\"}) by (instance_id)",
-            "refId": "E",
-            "legend": "select"
-          }
-        ],
-        "name": "SQL执行量",
-        "maxPerRow": 4,
-        "options": {
           "tooltip": {
             "mode": "all",
             "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(aliyun_acs_rds_dashboard_iops_usage_average{instance_id=\"$instance_id\"}) by (instance_id)",
+            "legend": "",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "scaleDistribution": {
+            "type": "linear"
           },
+          "spanNulls": false,
+          "stack": "off"
+        },
+        "datasourceCate": "prometheus",
+        "id": "b516e7dc-8022-409d-b907-18c4143df891",
+        "layout": {
+          "h": 5,
+          "i": "b516e7dc-8022-409d-b907-18c4143df891",
+          "isResizable": true,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
+        "maxPerRow": 4,
+        "name": "SQL执行量",
+        "options": {
           "legend": {
             "displayMode": "hidden"
           },
@@ -288,26 +260,65 @@
             "steps": [
               {
                 "color": "#634CD9",
-                "value": null,
-                "type": "base"
+                "type": "base",
+                "value": null
               }
             ]
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
           }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
+        "targets": [
+          {
+            "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_delete_average{instance_id=\"$instance_id\"}) by (instance_id)",
+            "legend": "delete",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_insert_average{instance_id=\"$instance_id\"}) by (instance_id)",
+            "legend": "insert",
+            "refId": "B"
+          },
+          {
+            "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_insert_select_average{instance_id=\"$instance_id\"}) by (instance_id)",
+            "legend": "insert_select",
+            "refId": "C"
+          },
+          {
+            "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_update_average{instance_id=\"$instance_id\"}) by (instance_id)",
+            "legend": "update",
+            "refId": "D"
+          },
+          {
+            "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_select_average{instance_id=\"$instance_id\"}) by (instance_id)",
+            "legend": "select",
+            "refId": "E"
           }
-        }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceValue": "${datasource}"
       }
     ],
-    "version": "2.0.0"
+    "var": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "definition": "prometheus"
+      },
+      {
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        },
+        "definition": "label_values(aliyun_acs_rds_dashboard_cpu_usage_average,instance_id)",
+        "multi": false,
+        "name": "instance_id",
+        "type": "query"
+      }
+    ],
+    "version": "3.0.0"
   }
 }

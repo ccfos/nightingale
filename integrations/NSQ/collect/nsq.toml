@@ -1,0 +1,20 @@
+# # collect interval
+# interval = 15
+
+# [[instances]]
+## The Nsq API URI used to collect statistical information.
+# targets = ["http://localhost:4151"]
+ 
+# headers={Authorization="", X-Forwarded-For="", Host=""}
+ 
+# timeout="5s"
+
+# # basic auth
+# username=""
+# password=""
+
+## append some labels for series
+# labels = { product="nsq" }
+
+## interval = global.interval * interval_times
+# interval_times = 1

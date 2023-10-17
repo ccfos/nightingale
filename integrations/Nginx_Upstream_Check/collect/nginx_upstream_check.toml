@@ -1,0 +1,44 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+targets = [
+    # "http://127.0.0.1/status?format=json",
+    # "http://10.2.3.56/status?format=json"
+]
+
+# # append some labels for series
+# labels = { region="cloud", product="n9e" }
+
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+## Set http_proxy (categraf uses the system wide proxy settings if it's is not set)
+# http_proxy = "http://localhost:8888"
+
+## Interface to use when dialing an address
+# interface = "eth0"
+
+## HTTP Request Method
+# method = "GET"
+
+## Set timeout (default 5 seconds)
+# timeout = "5s"
+
+## Whether to follow redirects from the server (defaults to false)
+# follow_redirects = false
+
+## Optional HTTP Basic Auth Credentials
+# username = "username"
+# password = "pa$$word"
+
+## Optional headers
+# headers = ["X-From", "categraf", "X-Xyz", "abc"]
+
+## Optional TLS Config
+# use_tls = false
+# tls_ca = "/etc/categraf/ca.pem"
+# tls_cert = "/etc/categraf/cert.pem"
+# tls_key = "/etc/categraf/key.pem"
+## Use TLS but skip chain & host verification
+# insecure_skip_verify = false

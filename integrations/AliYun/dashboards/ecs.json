@@ -3,46 +3,34 @@
   "tags": "",
   "ident": "",
   "configs": {
-    "var": [
-      {
-        "name": "ident",
-        "type": "query",
-        "datasource": {
-          "cate": "prometheus"
-        },
-        "definition": "label_values(aliyun_acs_ecs_dashboard_cpu_utilization_average,ident)",
-        "multi": true,
-        "allOption": true
-      }
-    ],
     "panels": [
       {
-        "type": "timeseries",
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "spanNulls": false,
+          "stack": "off"
+        },
+        "datasourceCate": "prometheus",
+        "datasourceName": "Default",
         "id": "8606d5ad-c3c7-4b1d-86bf-474d3302ee17",
         "layout": {
           "h": 4,
+          "i": "8606d5ad-c3c7-4b1d-86bf-474d3302ee17",
+          "isResizable": true,
           "w": 12,
           "x": 0,
-          "y": 0,
-          "i": "8606d5ad-c3c7-4b1d-86bf-474d3302ee17",
-          "isResizable": true
+          "y": 0
         },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceName": "Default",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(aliyun_acs_ecs_dashboard_cpu_utilization_average{ident=~\"$ident\"}) by (ident,instance_id)"
-          }
-        ],
-        "name": "CPU平均使用率",
         "maxPerRow": 4,
+        "name": "CPU平均使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
@@ -51,52 +39,53 @@
             "steps": [
               {
                 "color": "#634CD9",
-                "value": null,
-                "type": "base"
+                "type": "base",
+                "value": null
               }
             ]
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
           }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
+        "targets": [
+          {
+            "expr": "sum(aliyun_acs_ecs_dashboard_cpu_utilization_average{ident=~\"$ident\"}) by (ident,instance_id)",
+            "refId": "A"
           }
-        }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceValue": "${datasource}"
       },
       {
-        "type": "timeseries",
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "spanNulls": false,
+          "stack": "off"
+        },
+        "datasourceCate": "prometheus",
+        "datasourceName": "Default",
         "id": "c7034fe3-5521-4867-a8bd-429767cc03a2",
         "layout": {
           "h": 4,
+          "i": "55404296-0bd9-409d-aeaf-e9c7cceea0dd",
+          "isResizable": true,
           "w": 12,
           "x": 12,
-          "y": 0,
-          "i": "55404296-0bd9-409d-aeaf-e9c7cceea0dd",
-          "isResizable": true
+          "y": 0
         },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceName": "Default",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(aliyun_acs_ecs_dashboard_memory_usedutilization_average{ident=~\"$ident\"}) by (ident,instance_id)"
-          }
-        ],
-        "name": "内存平均使用率",
         "maxPerRow": 4,
+        "name": "内存平均使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
@@ -105,109 +94,111 @@
             "steps": [
               {
                 "color": "#634CD9",
-                "value": null,
-                "type": "base"
+                "type": "base",
+                "value": null
               }
             ]
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
           }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
+        "targets": [
+          {
+            "expr": "sum(aliyun_acs_ecs_dashboard_memory_usedutilization_average{ident=~\"$ident\"}) by (ident,instance_id)",
+            "refId": "A"
           }
-        }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceValue": "${datasource}"
       },
       {
-        "type": "timeseries",
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "spanNulls": false,
+          "stack": "off"
+        },
+        "datasourceCate": "prometheus",
+        "datasourceName": "Default",
         "id": "e4c11925-b359-4edb-9269-4bdd4d230224",
         "layout": {
           "h": 4,
+          "i": "0c7b3a5a-ef12-4349-be9b-7a245bf01418",
+          "isResizable": true,
           "w": 12,
           "x": 0,
-          "y": 4,
-          "i": "0c7b3a5a-ef12-4349-be9b-7a245bf01418",
-          "isResizable": true
+          "y": 4
         },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceName": "Default",
+        "maxPerRow": 4,
+        "name": "系统负载[5m]",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {
+            "util": "percent"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "type": "base",
+                "value": null
+              }
+            ]
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
         "targets": [
           {
             "expr": "sum(aliyun_acs_ecs_dashboard_load_5m_average{ident=~\"$ident\"}) by (ident,instance_id)",
-            "refId": "B",
-            "legend": "{{ident}} {{instance_id}} 5分钟负载"
+            "legend": "{{ident}} {{instance_id}} 5分钟负载",
+            "refId": "B"
           }
         ],
-        "name": "系统负载[5m]",
-        "maxPerRow": 4,
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {
-            "util": "percent"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "value": null,
-                "type": "base"
-              }
-            ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceValue": "${datasource}"
       },
       {
-        "type": "timeseries",
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "spanNulls": false,
+          "stack": "off"
+        },
+        "datasourceCate": "prometheus",
+        "datasourceName": "Default",
         "id": "388d4da6-eb1f-48f1-955d-37579809dfec",
         "layout": {
           "h": 4,
+          "i": "5abea3d2-ea82-4bdb-a4f0-4dd1316c0377",
+          "isResizable": true,
           "w": 12,
           "x": 12,
-          "y": 5,
-          "i": "5abea3d2-ea82-4bdb-a4f0-4dd1316c0377",
-          "isResizable": true
+          "y": 5
         },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceName": "Default",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(aliyun_acs_ecs_dashboard_diskusage_utilization_average{ident=~\"$ident\"}) by (ident,instance_id)"
-          }
-        ],
-        "name": "磁盘平均使用率",
         "maxPerRow": 4,
+        "name": "磁盘平均使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
@@ -218,66 +209,51 @@
             "steps": [
               {
                 "color": "#634CD9",
-                "value": null,
-                "type": "base"
+                "type": "base",
+                "value": null
               }
             ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
-      },
-      {
-        "type": "timeseries",
-        "id": "f8d19cc9-0168-4c13-b9a9-c7980eced974",
-        "layout": {
-          "x": 0,
-          "y": 9,
-          "w": 12,
-          "h": 4,
-          "i": "f8d19cc9-0168-4c13-b9a9-c7980eced974"
-        },
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(aliyun_acs_ecs_dashboard_intranet_in_average{ident=~\"$ident\"}) by (ident,instance_id)",
-            "legend": "主机：{{ident}} 实例ID: {{instance_id}} 入流量",
-            "step": 300,
-            "time": {
-              "start": "now-5m",
-              "end": "now"
-            }
           },
-          {
-            "expr": "sum(aliyun_acs_ecs_dashboard_intranet_out_average{ident=~\"$ident\"}) by (ident,instance_id)",
-            "refId": "B",
-            "legend": "主机：{{ident}} 实例ID: {{instance_id}} 出流量",
-            "step": 300,
-            "time": {
-              "start": "now-5m",
-              "end": "now"
-            }
-          }
-        ],
-        "name": "网络流量",
-        "maxPerRow": 4,
-        "options": {
           "tooltip": {
             "mode": "all",
             "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(aliyun_acs_ecs_dashboard_diskusage_utilization_average{ident=~\"$ident\"}) by (ident,instance_id)",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
+          "scaleDistribution": {
+            "type": "linear"
           },
+          "spanNulls": false,
+          "stack": "off"
+        },
+        "datasourceCate": "prometheus",
+        "id": "f8d19cc9-0168-4c13-b9a9-c7980eced974",
+        "layout": {
+          "h": 4,
+          "i": "f8d19cc9-0168-4c13-b9a9-c7980eced974",
+          "w": 12,
+          "x": 0,
+          "y": 9
+        },
+        "maxPerRow": 4,
+        "name": "网络流量",
+        "options": {
           "legend": {
             "displayMode": "hidden"
           },
@@ -288,26 +264,61 @@
             "steps": [
               {
                 "color": "#634CD9",
-                "value": null,
-                "type": "base"
+                "type": "base",
+                "value": null
               }
             ]
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
           }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
+        "targets": [
+          {
+            "expr": "sum(aliyun_acs_ecs_dashboard_intranet_in_average{ident=~\"$ident\"}) by (ident,instance_id)",
+            "legend": "主机：{{ident}} 实例ID: {{instance_id}} 入流量",
+            "refId": "A",
+            "step": 300,
+            "time": {
+              "end": "now",
+              "start": "now-5m"
+            }
+          },
+          {
+            "expr": "sum(aliyun_acs_ecs_dashboard_intranet_out_average{ident=~\"$ident\"}) by (ident,instance_id)",
+            "legend": "主机：{{ident}} 实例ID: {{instance_id}} 出流量",
+            "refId": "B",
+            "step": 300,
+            "time": {
+              "end": "now",
+              "start": "now-5m"
+            }
           }
-        }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceValue": "${datasource}"
       }
     ],
-    "version": "2.0.0"
+    "var": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "definition": "prometheus"
+      },
+      {
+        "allOption": true,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        },
+        "definition": "label_values(aliyun_acs_ecs_dashboard_cpu_utilization_average,ident)",
+        "multi": true,
+        "name": "ident",
+        "type": "query"
+      }
+    ],
+    "version": "3.0.0"
   }
 }

@@ -1,0 +1,545 @@
+{
+    "name": "网络交换机",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "1cb95ad2-81f1-4977-9924-4af57a542490",
+                "layout": {
+                    "h": 1,
+                    "i": "1cb95ad2-81f1-4977-9924-4af57a542490",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "总体概览",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "id": "6c851c33-4ea4-4b76-be59-d4c19c5b2844",
+                "layout": {
+                    "h": 4,
+                    "i": "6c851c33-4ea4-4b76-be59-d4c19c5b2844",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 0,
+                    "y": 1
+                },
+                "name": "交换机数目",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "count(switch_legacy_sysUpTime)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "baseColor": "#FF656B",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "id": "23220dc3-ab9a-40f9-b1d3-135bb3bbb734",
+                "layout": {
+                    "h": 4,
+                    "i": "23220dc3-ab9a-40f9-b1d3-135bb3bbb734",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 3,
+                    "y": 1
+                },
+                "name": "CPU使用率排名",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "switch_legacy_cpu_util",
+                        "legend": "{{ip}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "baseColor": "#FF656B",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "id": "5bf72a5b-8273-4a40-94f9-8d671b01f16e",
+                "layout": {
+                    "h": 4,
+                    "i": "5bf72a5b-8273-4a40-94f9-8d671b01f16e",
+                    "isResizable": true,
+                    "w": 13,
+                    "x": 11,
+                    "y": 1
+                },
+                "name": "网络in流量大于300MB",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "max(switch_legacy_if_in) by(ip)>300000000",
+                        "legend": "{{ip}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "donut": true,
+                    "labelWithName": false,
+                    "legengPosition": "hidden"
+                },
+                "datasourceCate": "prometheus",
+                "id": "bb0b07f1-e193-46ed-bc6e-c40d42e4eb4a",
+                "layout": {
+                    "h": 4,
+                    "i": "43fa2e2d-8c69-4cc0-bb6b-6f359395f5c9",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 0,
+                    "y": 5
+                },
+                "name": "采集耗时",
+                "targets": [
+                    {
+                        "expr": "switch_legacy_ifstat_use_time_sec",
+                        "legend": "{{ip}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "pie",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "baseColor": "#FF656B",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "id": "7f36ea1c-fd51-43bf-93ab-2787d630c530",
+                "layout": {
+                    "h": 4,
+                    "i": "7f36ea1c-fd51-43bf-93ab-2787d630c530",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 3,
+                    "y": 5
+                },
+                "name": "内存使用率排名",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "switch_legacy_mem_util",
+                        "legend": "{{ip}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "baseColor": "#FF656B",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "id": "6f9ce40e-7927-43b3-a34f-16772bf88b7f",
+                "layout": {
+                    "h": 4,
+                    "i": "3387f6ea-dcca-41a8-ae18-ef3d8a065d94",
+                    "isResizable": true,
+                    "w": 13,
+                    "x": 11,
+                    "y": 5
+                },
+                "name": "网络out流量大于300MB",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "max(switch_legacy_if_out) by(ip)>300000000",
+                        "legend": "{{ip}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "baseColor": "#FF656B",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "id": "356fe265-4a02-411d-9b3f-1578146c49a1",
+                "layout": {
+                    "h": 4,
+                    "i": "31b68228-1f52-4ef9-aaa3-f605f490516f",
+                    "isResizable": true,
+                    "w": 11,
+                    "x": 0,
+                    "y": 9
+                },
+                "name": "设备运行时长",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "switch_legacy_sysUpTime/100/(24*3600)",
+                        "legend": "{{ip}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "baseColor": "#FF656B",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "id": "eec57d38-9a9f-4530-a0b5-e524d867759d",
+                "layout": {
+                    "h": 4,
+                    "i": "eec57d38-9a9f-4530-a0b5-e524d867759d",
+                    "isResizable": true,
+                    "w": 13,
+                    "x": 11,
+                    "y": 9
+                },
+                "name": "设备温度",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "switch_legacy_TempStatus",
+                        "legend": "{{ip}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "collapsed": true,
+                "id": "559f99bc-2519-406e-b2b6-8c2e0895bd53",
+                "layout": {
+                    "h": 1,
+                    "i": "559f99bc-2519-406e-b2b6-8c2e0895bd53",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 13
+                },
+                "name": "单机详情",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "id": "69a26105-9170-4f00-a3c2-0fa866f9d5b8",
+                "layout": {
+                    "h": 5,
+                    "i": "69a26105-9170-4f00-a3c2-0fa866f9d5b8",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 14
+                },
+                "name": "cpu使用率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "switch_legacy_cpu_util{ip=\"$IP\"}",
+                        "legend": "{{ip}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "id": "cc38fed9-f224-4684-9541-6a57e543062d",
+                "layout": {
+                    "h": 5,
+                    "i": "b90ba3f4-58ac-4fa1-ac69-f63388536126",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 14
+                },
+                "name": "网络in流量",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "switch_legacy_if_in{ip=\"$IP\"}>0",
+                        "legend": "{{ip}}-{{ifname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "id": "1b84f22c-2535-4e16-b884-86e95bed444f",
+                "layout": {
+                    "h": 5,
+                    "i": "0158a0bb-6cb3-4a61-ab32-c4ff470eee8c",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 19
+                },
+                "name": "内存使用率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "switch_legacy_mem_util{ip=\"$IP\"}",
+                        "legend": "{{ip}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "id": "2e08574d-0378-45c1-9384-a80559e1df99",
+                "layout": {
+                    "h": 5,
+                    "i": "6d230fe8-9bd8-4c10-8fde-4e34ed3a62e3",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 19
+                },
+                "name": "网络out流量",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "switch_legacy_if_out{ip=\"$IP\"}>0",
+                        "legend": "{{ip}}-{{ifname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            }
+        ],
+        "var": [
+            {
+                "name": "datasource",
+                "type": "datasource",
+                "definition": "prometheus"
+            },
+            {
+                "definition": "label_values(switch_legacy_if_in,ip)",
+                "multi": false,
+                "name": "IP",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(switch_legacy_if_in{ip=\"$IP\"},ifname)",
+                "name": "Interface",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    }
+}

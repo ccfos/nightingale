@@ -1,0 +1,504 @@
+{
+  "name": "logstash",
+  "tags": "logging Prometheus",
+  "ident": "",
+  "configs": {
+    "panels": [
+      {
+        "collapsed": true,
+        "id": "9c88279f-7f15-4527-aa96-7df23cff9562",
+        "layout": {
+          "h": 1,
+          "i": "9c88279f-7f15-4527-aa96-7df23cff9562",
+          "isResizable": false,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "name": "Events",
+        "panels": [],
+        "type": "row"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "a8c3db4a-708d-405f-b788-150537e2c2e4",
+        "layout": {
+          "h": 4,
+          "i": "a8c3db4a-708d-405f-b788-150537e2c2e4",
+          "isResizable": true,
+          "w": 12,
+          "x": 0,
+          "y": 1
+        },
+        "name": "Event Received Rate(/s)",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(logstash_events_in[1m])) by (pipeline)",
+            "legend": "{{pipeline}}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "34fbd572-c71a-475b-91a9-168df988cec3",
+        "layout": {
+          "h": 4,
+          "i": "1e465bd5-c3ed-4f93-8df7-a980299805b4",
+          "isResizable": true,
+          "w": 12,
+          "x": 12,
+          "y": 1
+        },
+        "name": "Event emmited Rate(/s)",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(logstash_events_out[1m])) by (pipeline)",
+            "legend": "output",
+            "refId": "B"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "1bb9f546-bd57-48fd-8221-b8b43687a12a",
+        "layout": {
+          "h": 4,
+          "i": "3c350ca9-5fcd-4605-9fee-c9834d7bb3b5",
+          "isResizable": true,
+          "w": 12,
+          "x": 0,
+          "y": 5
+        },
+        "name": "Event queue(ms)",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "(sum(rate(logstash_events_queue_push_duration_in_millis[1m])) by (pipeline))/(count(sum(logstash_events_queue_push_duration_in_millis[1m]) by(ident)))",
+            "legend": "{{pipeline}}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "99f557e3-d368-4de1-b065-44e2006f1d21",
+        "layout": {
+          "h": 4,
+          "i": "1b808724-fbac-4b9b-b7ce-a5725e30e4f8",
+          "isResizable": true,
+          "w": 12,
+          "x": 12,
+          "y": 5
+        },
+        "name": "Event esp(ms)",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(logstash_events_duration_in_millis[1m] )/rate(logstash_events_out[1m])) by(pipeline)",
+            "legend": "{{pipeline}}",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "collapsed": true,
+        "id": "5f12a28c-9ca4-4f10-aa0c-116dff2193cf",
+        "layout": {
+          "h": 1,
+          "i": "5f12a28c-9ca4-4f10-aa0c-116dff2193cf",
+          "isResizable": false,
+          "w": 24,
+          "x": 0,
+          "y": 9
+        },
+        "name": "memory",
+        "panels": [],
+        "type": "row"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "57867483-a372-45c9-9cd0-53aa160b57fb",
+        "layout": {
+          "h": 4,
+          "i": "f170fe2a-fd1e-49f0-aa7b-0c3ac42894e6",
+          "isResizable": true,
+          "w": 12,
+          "x": 0,
+          "y": 10
+        },
+        "name": "jvm gc count",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "increase(logstash_jvm_gc_collectors_old_collection_count)",
+            "legend": "old gc - {{ident}}",
+            "refId": "A"
+          },
+          {
+            "expr": "increase(logstash_jvm_gc_collectors_young_collection_count)",
+            "legend": "young  gc  - {{ident}}",
+            "refId": "B"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "e61be63c-81d6-4aab-a4de-d23ea444d802",
+        "layout": {
+          "h": 4,
+          "i": "9ccb2af0-fa05-4a66-814d-53b77e320303",
+          "isResizable": true,
+          "w": 12,
+          "x": 12,
+          "y": 10
+        },
+        "name": "jvm gc time(ms)",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "increase(logstash_jvm_gc_collectors_old_collection_time_in_millis)",
+            "legend": "old gc - {{ident}}",
+            "refId": "A"
+          },
+          {
+            "expr": "increase(logstash_jvm_gc_collectors_young_collection_time_in_millis)",
+            "legend": "yougn gc  - {{ident}}",
+            "refId": "B"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.29,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "86329740-9696-4435-bd28-120107914b40",
+        "layout": {
+          "h": 4,
+          "i": "ab5fd3bd-81c8-4f3f-a403-6111dd6fce43",
+          "isResizable": true,
+          "w": 12,
+          "x": 0,
+          "y": 14
+        },
+        "name": "jvm heap ",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "logstash_jvm_mem_heap_max_in_bytes",
+            "legend": " max - {{ident}}",
+            "refId": "A"
+          },
+          {
+            "expr": "logstash_jvm_mem_heap_used_in_bytes",
+            "legend": "used  - {{ident}}",
+            "refId": "B"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.29,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "8d82f269-d625-4da9-8dfd-33a0888c396d",
+        "layout": {
+          "h": 4,
+          "i": "ced26104-67f8-4537-b564-038d824f3be1",
+          "isResizable": true,
+          "w": 12,
+          "x": 12,
+          "y": 14
+        },
+        "name": "jvm no heap ",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "logstash_jvm_mem_non_heap_committed_in_bytes",
+            "legend": "committed  - {{ident}}",
+            "refId": "A"
+          },
+          {
+            "expr": "logstash_jvm_mem_non_heap_used_in_bytes",
+            "legend": "used  - {{ident}}",
+            "refId": "B"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "collapsed": false,
+        "id": "9ca74da3-b31f-4ac9-ba76-397027da677d",
+        "layout": {
+          "h": 1,
+          "i": "9ca74da3-b31f-4ac9-ba76-397027da677d",
+          "isResizable": false,
+          "w": 24,
+          "x": 0,
+          "y": 18
+        },
+        "name": "cpu",
+        "panels": [
+          {
+            "custom": {
+              "drawStyle": "lines",
+              "fillOpacity": 0.29,
+              "lineInterpolation": "smooth",
+              "stack": "off"
+            },
+            "id": "5d507c1a-8043-4abf-9c7a-94e3c9189cc1",
+            "layout": {
+              "h": 4,
+              "i": "5fffbff5-cd86-4447-9c54-1f5abdeffa5c",
+              "isResizable": true,
+              "w": 12,
+              "x": 0,
+              "y": 19
+            },
+            "name": "cpu Utlization",
+            "options": {
+              "legend": {
+                "displayMode": "hidden"
+              },
+              "standardOptions": {
+                "util": "percent"
+              },
+              "thresholds": {},
+              "tooltip": {
+                "mode": "all",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "expr": "logstash_process_cpu_percent",
+                "legend": "{{ident}}",
+                "refId": "A"
+              }
+            ],
+            "type": "timeseries",
+            "version": "2.0.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}"
+          },
+          {
+            "custom": {
+              "drawStyle": "lines",
+              "fillOpacity": 0.29,
+              "lineInterpolation": "smooth",
+              "stack": "off"
+            },
+            "id": "87f9c763-e082-416a-994d-a1ed12d58e05",
+            "layout": {
+              "h": 4,
+              "i": "8ad83037-8df6-4f3a-936a-db9c26bc5071",
+              "isResizable": true,
+              "w": 12,
+              "x": 12,
+              "y": 19
+            },
+            "name": "system load",
+            "options": {
+              "legend": {
+                "displayMode": "hidden"
+              },
+              "standardOptions": {},
+              "thresholds": {},
+              "tooltip": {
+                "mode": "all",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "expr": "logstash_process_cpu_load_average_1m",
+                "legend": "1m  - {{ident}}",
+                "refId": "A"
+              },
+              {
+                "expr": "logstash_process_cpu_load_average_5m",
+                "legend": "5m  - {{ident}}",
+                "refId": "B"
+              },
+              {
+                "expr": "logstash_process_cpu_load_average_15m",
+                "legend": "15m  - {{ident}}",
+                "refId": "C"
+              }
+            ],
+            "type": "timeseries",
+            "version": "2.0.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}"
+          }
+        ],
+        "type": "row"
+      }
+    ],
+    "var": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "definition": "prometheus"
+      },
+      {
+        "definition": "label_values(logstash_events_in,  instance)",
+        "name": "instance",
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        }
+      }
+    ],
+    "version": "3.0.0"
+  }
+}

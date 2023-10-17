@@ -1,0 +1,735 @@
+{
+    "name": "HAProxy By Categraf",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "links": [
+            {
+                "targetBlank": true,
+                "title": "GitHub",
+                "url": "https://github.com/rfmoz/grafana-dashboards"
+            },
+            {
+                "targetBlank": true,
+                "title": "Grafana",
+                "url": "https://grafana.com/grafana/dashboards/12693-haproxy-2-full/"
+            }
+        ],
+        "panels": [
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "id": "3895acd5-4825-4ea6-b120-383b9b96d8de",
+                "layout": {
+                    "h": 6,
+                    "i": "3895acd5-4825-4ea6-b120-383b9b96d8de",
+                    "isResizable": true,
+                    "w": 2,
+                    "x": 0,
+                    "y": 0
+                },
+                "links": [],
+                "name": "Stats API UP?",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#2c9d3d",
+                                "text": "UP"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "#ce4f52",
+                                "text": "DOWN"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "haproxy_up",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "columns": [
+                        "backend",
+                        "value"
+                    ],
+                    "displayMode": "labelsOfSeriesToRows",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "id": "f98cd0f9-9979-4f4d-807f-757241d72d06",
+                "layout": {
+                    "h": 6,
+                    "i": "39b7c4ea-e19d-45b2-8a02-35b6cd1a0348",
+                    "isResizable": true,
+                    "w": 5,
+                    "x": 2,
+                    "y": 0
+                },
+                "links": [],
+                "name": "Backends UP?",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#2c9d3d",
+                                "text": "UP"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "to": 0
+                            },
+                            "result": {
+                                "color": "#e91515",
+                                "text": "DOWN"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "overrides": [
+                    {}
+                ],
+                "targets": [
+                    {
+                        "expr": "haproxy_backend_up{ident=\"$ident\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "columns": [
+                        "backend",
+                        "server",
+                        "value"
+                    ],
+                    "displayMode": "labelsOfSeriesToRows",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "id": "fb61f168-1f3e-4385-93e8-2bb168e01945",
+                "layout": {
+                    "h": 6,
+                    "i": "18fdab37-131a-4f24-8f0f-c173d5c8c9f9",
+                    "isResizable": true,
+                    "w": 5,
+                    "x": 7,
+                    "y": 0
+                },
+                "links": [],
+                "name": "Servers UP?",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#2c9d3d",
+                                "text": "UP"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0,
+                                "to": 0
+                            },
+                            "result": {
+                                "color": "#e91515",
+                                "text": "DOWN"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "overrides": [
+                    {}
+                ],
+                "targets": [
+                    {
+                        "expr": "haproxy_server_up{ident=\"$ident\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "description": "",
+                "id": "aeeb951c-a4d6-4b0e-918e-2f81c2f3b3be",
+                "layout": {
+                    "h": 6,
+                    "i": "aeeb951c-a4d6-4b0e-918e-2f81c2f3b3be",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0
+                },
+                "links": [],
+                "name": "Active sessions",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(haproxy_frontend_current_sessions{frontend=~\"$frontend\",ident=\"$ident\"}) by (frontend)",
+                        "legend": "Front-{{frontend}}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "sum(haproxy_backend_current_sessions{backend=~\"$backend\",ident=\"$ident\"}) by (backend)",
+                        "legend": "Back-{{backend}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "description": "",
+                "id": "96ca72c3-745e-458a-902f-fd3841b5453d",
+                "layout": {
+                    "h": 6,
+                    "i": "96ca72c3-745e-458a-902f-fd3841b5453d",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 6
+                },
+                "links": [],
+                "name": "Frontend responses by code",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(haproxy_frontend_http_responses_total{frontend=~\"$frontend\",code=~\"$code\",ident=\"$ident\"}[5m])) by (code)",
+                        "legend": "{{ code }}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "description": "",
+                "id": "cbadd1e1-25e2-41bd-9fe2-f5e932753c02",
+                "layout": {
+                    "h": 6,
+                    "i": "e9d01556-c4d0-4c2e-b555-97f0d99f7f6a",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 6
+                },
+                "links": [],
+                "name": "Backend responses by code",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(haproxy_backend_http_responses_total{backend=~\"$backend\",code=~\"$code\",ident=\"$ident\"}[5m])) by (code)",
+                        "legend": "{{ code }}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "description": "",
+                "id": "bb9db80d-7f9c-4b6b-8434-24e3ec480d5b",
+                "layout": {
+                    "h": 6,
+                    "i": "bb9db80d-7f9c-4b6b-8434-24e3ec480d5b",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 12
+                },
+                "links": [],
+                "name": "Incoming / Outgoing bits (Frontend)",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "bitsIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(haproxy_frontend_bytes_in_total{frontend=~\"$frontend\",ident=\"$ident\"}[5m])*8) by (frontend)",
+                        "legend": "IN {{frontend}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "-sum(rate(haproxy_frontend_bytes_out_total{frontend=~\"$frontend\",ident=\"$ident\"}[5m])*8) by (frontend)",
+                        "legend": "OUT {{frontend}}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "description": "",
+                "id": "6ab18da8-c354-4349-b25b-a50cdb02aae8",
+                "layout": {
+                    "h": 6,
+                    "i": "299e6721-990a-4070-afdd-6f6e402ca3af",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 12
+                },
+                "links": [],
+                "name": "Incoming / Outgoing bits(Backend)",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "bitsIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(haproxy_backend_bytes_in_total{backend=~\"$backend\",ident=\"$ident\"}[5m])*8) by (backend)",
+                        "legend": "IN {{backend}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "-sum(rate(haproxy_backend_bytes_out_total{backend=~\"$backend\",ident=\"$ident\"}[5m])*8) by (backend)",
+                        "legend": "OUT {{backend}}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "description": "",
+                "id": "5805c4b5-66c9-40d2-846d-4acc8a434ecd",
+                "layout": {
+                    "h": 7,
+                    "i": "5805c4b5-66c9-40d2-846d-4acc8a434ecd",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 18
+                },
+                "links": [],
+                "name": "Frontend Requests",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(haproxy_frontend_http_requests_total{frontend=~\"$frontend\",ident=\"$ident\"}[5m])) by (frontend)",
+                        "legend": "Front requests - {{frontend}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(rate(haproxy_frontend_request_errors_total{frontend=~\"$frontend\",ident=\"$ident\"}[5m])) by (frontend)",
+                        "legend": "Front requests errors - {{frontend}}",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "sum(rate(haproxy_frontend_requests_denied_total{frontend=~\"$frontend\",ident=\"$ident\"}[5m])) by (frontend)",
+                        "legend": "Front request denied - {{frontend}}",
+                        "refId": "F"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "description": "",
+                "id": "d1d2d177-eab6-43f5-a778-7999c6cd646c",
+                "layout": {
+                    "h": 7,
+                    "i": "5530a396-b52e-491b-8ca2-4c18ebf9c3f2",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 18
+                },
+                "links": [],
+                "name": "Backend Requests",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(haproxy_backend_redispatch_warnings_total{backend=~\"$backend\",ident=\"$ident\"}[5m])) by (backend)",
+                        "legend": "Back redispatch warnings + {{backend}}",
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "sum(rate(haproxy_backend_retry_warnings_total{backend=~\"$backend\",ident=\"$ident\"}[5m])) by (backend)",
+                        "legend": "Back retry warnings + {{backend}}",
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "sum(rate(haproxy_backend_response_errors_total{backend=~\"$backend\",ident=\"$ident\"}[5m])) by (backend)",
+                        "legend": "Back response errors + {{backend}}",
+                        "refId": "I"
+                    },
+                    {
+                        "expr": "sum(haproxy_backend_current_queue{backend=~\"$backend\",ident=\"$host\"}) by (backend)",
+                        "legend": "Back queued requests + {{backend}}",
+                        "refId": "G"
+                    },
+                    {
+                        "expr": "sum(rate(haproxy_backend_connection_errors_total{backend=~\"$backend\", ident=\"$ident\"}[5m])) by (backend)",
+                        "legend": "Back conn errors + {{backend}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0",
+                "datasourceValue": "${datasource}"
+            }
+        ],
+        "var": [
+            {
+                "name": "datasource",
+                "type": "datasource",
+                "definition": "prometheus"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(haproxy_up,ident)",
+                "multi": false,
+                "name": "ident",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(haproxy_frontend_bytes_in_total{ident=\"$ident\"}, frontend)",
+                "multi": true,
+                "name": "frontend",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(haproxy_backend_bytes_in_total{ident=\"$ident\"}, backend)",
+                "multi": true,
+                "name": "backend",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(haproxy_server_bytes_in_total{ident=\"$ident\", backend=~\"$backend\"}, server)",
+                "multi": true,
+                "name": "server",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(haproxy_server_http_responses_total{ident=\"$ident\",backend=~\"$backend\", server=~\"$server\"}, code)",
+                "multi": true,
+                "name": "code",
+                "reg": "",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    }
+}

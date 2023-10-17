@@ -1,0 +1,26 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+# url = "https://1.2.3.4:10250"
+# type = "kubelet"
+## url = "http://1.2.3.4:8080/metrics"
+## type = "cadvisor"
+
+# url_label_key = "instance"
+# url_label_value = "{{.Host}}"
+# bearer_token_string = "eyJlonglongxxxx.eyJlonglongyyyy.oQsXlonglongZZZ"
+## bearer_token_file = "/path/to/token/file"
+
+# ignore_label_keys = ["id","name", "container_label*"]
+## choose_label_keys = ["id"]
+
+# timeout = "3s"
+
+# use_tls = true
+## tls_min_version = "1.2"
+## tls_ca = "/etc/categraf/ca.pem"
+## tls_cert = "/etc/categraf/cert.pem"
+## tls_key = "/etc/categraf/key.pem"
+## Use TLS but skip chain & host verification
+## insecure_skip_verify = true

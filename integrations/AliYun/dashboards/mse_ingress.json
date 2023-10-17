@@ -1,0 +1,1168 @@
+{
+  "name": "阿里云-MSE Ingress监控中心",
+  "tags": "",
+  "ident": "",
+  "configs": {
+    "var": [],
+    "panels": [
+      {
+        "type": "stat",
+        "id": "9b83dfe3-ae9d-40bd-aaa9-a0bdafd4aa1f",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 0,
+          "y": 0,
+          "i": "90391556-26c1-4648-b5df-3f9b36de4540",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "raw",
+              "keys": {
+                "timeKey": "",
+                "timeFormat": ""
+              },
+              "query": "*  | select diff[1] as total, round((diff[1] - diff[2]) / diff[2] * 100, 2) as inc from(select compare( pv , 86400) as diff from (select count(1) as pv from log))",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log",
+              "power_sql": true
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "访问PV",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "total",
+          "colSpan": 1,
+          "textSize": {
+            "value": 30
+          }
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "61a19ed5-d33e-45de-ae62-4c2b65403a8b",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 4,
+          "y": 0,
+          "i": "e4ae6352-4fe3-4231-85f6-df325d79bce4",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "raw",
+              "keys": {
+                "timeKey": "",
+                "timeFormat": ""
+              },
+              "query": "* | select diff[1] as total, round((diff[1] - diff[2]) / diff[2] * 100, 2) as inc from(select compare(uv , 86400) as diff from (select approx_distinct(\"x_forwarded_for\") as uv from log))",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log",
+              "power_sql": true
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "访问UV",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "total",
+          "colSpan": 1,
+          "textSize": {
+            "value": 30
+          }
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "4a4ee041-c741-4335-9ae8-4e866681c99f",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 8,
+          "y": 0,
+          "i": "3b8bebab-963b-4103-8113-404d4c0b39d5",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "raw",
+              "keys": {
+                "timeKey": "",
+                "timeFormat": ""
+              },
+              "query": "* | select diff[1] as total, round((diff[1] - diff[2]) / diff[2] * 100, 2) as inc from(select compare(count , 86400) as diff from (select round(sum(\"bytes_received\") / 1024.0 / 1024.0, 3) as count from log))",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log",
+              "power_sql": true
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "入流量",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "total",
+          "colSpan": 1,
+          "textSize": {
+            "value": 30
+          }
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "c59f3602-d10b-4c9f-96c1-7b8041a142c1",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 12,
+          "y": 0,
+          "i": "dba06bc9-2894-4662-9e83-cacad1d71374",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "raw",
+              "keys": {
+                "timeKey": "",
+                "timeFormat": ""
+              },
+              "query": "* | select diff[1] as total, round((diff[1] - diff[2]) / diff[2] * 100, 2) as inc from(select compare(count , 86400) as diff from (select round(sum(\"bytes_sent\") / 1024.0 / 1024.0, 3) as count from log))",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log",
+              "power_sql": true
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "出流量",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "total",
+          "colSpan": 1,
+          "textSize": {
+            "value": 30
+          }
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          }
+        }
+      },
+      {
+        "type": "pie",
+        "id": "9559e53e-f35a-4f5b-a0cd-14394ada673e",
+        "layout": {
+          "h": 4,
+          "w": 4,
+          "x": 16,
+          "y": 0,
+          "i": "9559e53e-f35a-4f5b-a0cd-14394ada673e",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "timeSeries",
+              "keys": {
+                "timeKey": "",
+                "timeFormat": "",
+                "labelKey": [
+                  "status"
+                ],
+                "valueKey": [
+                  "percent"
+                ]
+              },
+              "query": "* | SELECT response_code AS status, c AS count,round(c * 100.0 /(sum(c) over()), 2) AS  percent  FROM (SELECT response_code ,count(*) AS c FROM mse_gw_access_log  GROUP BY response_code)",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log",
+              "power_sql": true
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "状态码分布",
+        "maxPerRow": 4,
+        "custom": {
+          "calc": "lastNotNull",
+          "legengPosition": "right",
+          "donut": true,
+          "labelWithName": false,
+          "labelWithValue": true,
+          "detailName": "详情"
+        },
+        "options": {
+          "standardOptions": {
+            "util": "none"
+          }
+        }
+      },
+      {
+        "type": "pie",
+        "id": "fc62a300-298a-4679-8191-4179ef7e1c62",
+        "layout": {
+          "h": 9,
+          "w": 4,
+          "x": 20,
+          "y": 0,
+          "i": "3965ef53-ff88-440a-9539-527936b962dd",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "timeSeries",
+              "keys": {
+                "timeKey": "",
+                "timeFormat": ""
+              },
+              "query": "* | select count(*) as c, __time__-__time__%60 as t group by t",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log",
+              "power_sql": false
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "请求网关实例分布",
+        "maxPerRow": 4,
+        "custom": {
+          "calc": "lastNotNull",
+          "legengPosition": "right",
+          "donut": true,
+          "labelWithName": true,
+          "labelWithValue": true,
+          "detailName": "详情"
+        },
+        "options": {
+          "standardOptions": {}
+        }
+      },
+      {
+        "type": "stat",
+        "id": "c9f87589-a9e9-47e2-9f0f-f71e9626c4e7",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 0,
+          "y": 3,
+          "i": "c9f87589-a9e9-47e2-9f0f-f71e9626c4e7",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "raw",
+              "keys": {
+                "timeKey": "Time",
+                "timeFormat": "%H:%i:%s"
+              },
+              "query": "* | select round(diff[1],4) as total, round((diff[1] - diff[2]) * 100, 2) as inc from(select compare(count , 86400) as diff from (select sum(case when response_code < 400 then 1 else 0 end) * 100.0 / count(1) as count from log))",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log"
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "请求成功率(%)",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "total",
+          "colSpan": 1,
+          "textSize": {
+            "value": 30
+          }
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "percent"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "5387c575-130c-4c53-9697-4b8b9b3a4b86",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 4,
+          "y": 3,
+          "i": "bc8e5456-4407-434e-b7e0-420550884ae9",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "raw",
+              "keys": {
+                "timeKey": "Time",
+                "timeFormat": "%H:%i:%s"
+              },
+              "query": "* | select diff[1] as total, round((diff[1] - diff[2]) / diff[2] * 100, 2) as inc from(select compare(count , 86400) as diff from (select round(sum(case when response_code = 404 then 1 else 0 end) * 100.0 / count(1), 3) as count from log))",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log"
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "404比例(%)",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "total",
+          "colSpan": 1,
+          "textSize": {
+            "value": 30
+          }
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "percent"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "ef94dab6-4e7f-4b7d-82b0-8be3b3181416",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 8,
+          "y": 3,
+          "i": "b0a54a5f-4843-424f-88a0-ca9113896da4",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "raw",
+              "keys": {
+                "timeKey": "Time",
+                "timeFormat": "%H:%i:%s"
+              },
+              "query": "* | select diff[1] as total, round((diff[1] - diff[2]) / diff[2] * 100, 2) as inc from(select compare(count , 86400) as diff from (select round(sum(case when response_code >= 500 then 1 else 0 end) * 100.0 / count(1), 3) as count from log))",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log"
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "5XX比例(%)",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "total",
+          "colSpan": 1,
+          "textSize": {
+            "value": 30
+          }
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "percent"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "34170226-818c-4957-8fc2-1c715bf58dfe",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 12,
+          "y": 3,
+          "i": "40533536-c200-4d70-8fa7-84b485b8f8d1",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "raw",
+              "keys": {
+                "timeKey": "Time",
+                "timeFormat": "%H:%i:%s"
+              },
+              "query": "* | select diff[1] as total, round((diff[1] - diff[2]) / diff[2] * 100, 2) as inc from(select compare(count , 86400) as diff from (select round(sum(case when length(upstream_cluster) <= 3 then 1 else 0 end) * 100.0 / count(1), 3) as count from log))",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log"
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "请求未转发比例(%)",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "total",
+          "colSpan": 1,
+          "textSize": {
+            "value": 30
+          }
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "percent"
+          }
+        }
+      },
+      {
+        "type": "pie",
+        "id": "d0892226-2486-44a1-b571-96d960eb3701",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 16,
+          "y": 4,
+          "i": "025649db-dae7-4a10-8799-1e508ba8131e",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "timeSeries",
+              "keys": {
+                "timeKey": "",
+                "timeFormat": "",
+                "labelKey": [
+                  "method"
+                ],
+                "valueKey": [
+                  "percent"
+                ]
+              },
+              "query": "* | SELECT method AS method, c AS count,round(c * 100.0 /(sum(c) over()), 3) AS percent  FROM (SELECT method,count(*) AS c FROM mse_gw_access_log  GROUP BY method)",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log",
+              "power_sql": true
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Method分布",
+        "maxPerRow": 4,
+        "custom": {
+          "calc": "lastNotNull",
+          "legengPosition": "right",
+          "donut": true,
+          "labelWithName": false,
+          "labelWithValue": true,
+          "detailName": "详情"
+        },
+        "options": {
+          "standardOptions": {
+            "util": "none"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "27426563-b7af-487c-a746-f1ca55e76690",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 0,
+          "y": 6,
+          "i": "392dd9f2-20e0-4aaf-851c-56eee7f1cced",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "raw",
+              "keys": {
+                "timeKey": "Time",
+                "timeFormat": "%H:%i:%s"
+              },
+              "query": "* | select diff[1] as total, round((diff[1] - diff[2]) / diff[2] * 100, 2) as inc from(select compare(count , 86400) as diff from (select round(avg(\"duration\" / 1000.0) * 1000, 3) as count  from log))",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log"
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "平均延迟",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "total",
+          "colSpan": 1,
+          "textSize": {
+            "value": 30
+          }
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "58ab0978-0c1a-43c1-b515-adc6cece4b14",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 4,
+          "y": 6,
+          "i": "e1fc7d03-1967-454d-aa84-4c166f9fee25",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "raw",
+              "keys": {
+                "timeKey": "Time",
+                "timeFormat": "%H:%i:%s"
+              },
+              "query": "* | select diff[1] as total, round((diff[1] - diff[2]) / diff[2] * 100, 2) as inc from(select compare(count , 86400) as diff from (select round(approx_percentile(\"duration\" / 1000.0, 0.95) * 1000, 3) as count  from log))",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log"
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "P95延迟",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "total",
+          "colSpan": 1,
+          "textSize": {
+            "value": 30
+          }
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "ba973145-3cef-483a-916b-bfb52d1ffd9a",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 8,
+          "y": 6,
+          "i": "b8a89c5a-ea4d-4acc-801e-0c525d0dfd46",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "raw",
+              "keys": {
+                "timeKey": "Time",
+                "timeFormat": "%H:%i:%s"
+              },
+              "query": "* | select diff[1] as total, round((diff[1] - diff[2]) / diff[2] * 100, 2) as inc from(select compare(count , 86400) as diff from (select round(approx_percentile(\"duration\" / 1000.0, 0.99) * 1000, 3) as count  from log))",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log"
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "P99延迟",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "total",
+          "colSpan": 1,
+          "textSize": {
+            "value": 30
+          }
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "f5829df2-e4a9-4e5e-8681-8794654edaec",
+        "layout": {
+          "h": 3,
+          "w": 4,
+          "x": 12,
+          "y": 6,
+          "i": "b6e0fdbc-5578-4648-848e-aa39cfdae5de",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "raw",
+              "keys": {
+                "timeKey": "Time",
+                "timeFormat": "%H:%i:%s"
+              },
+              "query": "* | select diff[1] as total, round((diff[1] - diff[2]) / diff[2] * 100, 2) as inc from(select compare(count , 86400) as diff from (select round(approx_percentile(\"duration\" / 1000.0, 0.9999) * 1000, 3) as count  from log))",
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log"
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "P9999延迟",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "total",
+          "colSpan": 1,
+          "textSize": {
+            "value": 30
+          }
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "b0dfe2aa-1a10-44ad-9a03-274d7e3e0793",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 0,
+          "y": 9,
+          "i": "b0dfe2aa-1a10-44ad-9a03-274d7e3e0793",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "timeSeries",
+              "keys": {
+                "timeKey": "time_t",
+                "timeFormat": "",
+                "valueKey": [
+                  "PV",
+                  "UV"
+                ],
+                "labelKey": []
+              },
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log",
+              "query": "* | select arbitrary(__time__)  time_t, date_format(from_unixtime(__time__ - __time__ % 60), '%m-%d %H:%i') as time,  count(1) as PV, approx_distinct(\"x_forwarded_for\") as UV    group by time  order by time_t  limit 14400",
+              "power_sql": true
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "PV&UV",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "8e882e87-a53a-444e-8cc1-15daf8724d8e",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 8,
+          "y": 9,
+          "i": "d778721c-cb9a-4ab4-891b-d39be5802804",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "timeSeries",
+              "keys": {
+                "timeKey": "time_t",
+                "timeFormat": "",
+                "valueKey": [
+                  "404比例%",
+                  "5XX比例%",
+                  "失败率%"
+                ],
+                "labelKey": []
+              },
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log",
+              "query": "* | select arbitrary(__time__)  time_t, date_format(from_unixtime(__time__ - __time__ % 60), '%m-%d %H:%i') as time, round(sum(case when \"response_code\" >= 400 then 1 else 0 end) * 100.0 / count(1), 3) as \"失败率%\", round(sum(case when \"response_code\" = 404 then 1 else 0 end) * 100.0 / count(1), 3) as \"404比例%\", round(sum(case when \"response_code\" >= 500 then 1 else 0 end) * 100.0 / count(1), 3) as \"5XX比例%\"    group by time  order by time_t  limit 14400",
+              "power_sql": true
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "失败率",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "18cd7213-6dcb-4047-b1b7-e8db975ee2c2",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 16,
+          "y": 9,
+          "i": "f72abca9-307e-42f1-9711-b4036b3cea6e",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "aliyun-sls",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "query": {
+              "mode": "timeSeries",
+              "keys": {
+                "timeKey": "time_t",
+                "timeFormat": "",
+                "valueKey": [
+                  "平均延迟",
+                  "P95延迟",
+                  "P99延迟",
+                  "P9999延迟"
+                ],
+                "labelKey": []
+              },
+              "project": "aliyun-product-data-1236007804394041-cn-beijing",
+              "logstore": "mse_gw_access_log",
+              "query": "* | select arbitrary(__time__)  time_t, date_format(from_unixtime(__time__ - __time__ % 60), '%m-%d %H:%i') as time,  round(avg(\"duration\" / 1000.0) * 1000, 3) as \"平均延迟\", round(approx_percentile(\"duration\" / 1000.0, 0.95) * 1000, 3) as \"P95延迟\",  round(approx_percentile(\"duration\" / 1000.0, 0.99) * 1000, 3) as \"P99延迟\", round(approx_percentile(\"duration\" / 1000.0, 0.9999) * 1000, 3) as \"P9999延迟\"   group by time  order by time_t  limit 14400",
+              "power_sql": true
+            }
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "失败率",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0.5,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      }
+    ],
+    "version": "3.0.0"
+  }
+}

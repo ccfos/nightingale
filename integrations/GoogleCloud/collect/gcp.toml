@@ -1,0 +1,11 @@
+#interval=60
+#[[instances]]
+#project_id="your-project-id"
+#credentials_file="/path/to/your/key.json"
+#delay="2m"
+#period="1m"
+#filter="metric.type=\"compute.googleapis.com/instance/cpu/utilization\" AND resource.labels.zone=\"asia-northeast1-a\""
+#timeout="5s"
+#cache_ttl="1h"
+#gce_host_tag="xxx"
+#request_inflight=30

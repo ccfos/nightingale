@@ -1,0 +1,54 @@
+#interval=15s
+
+[[instances]]
+#url_base = "http://{{.ip}}:{{.port}}/a.json?metric-path={{.metric_path}}&time-range-type=BETWEEN_TIMES&start-time={{.start_time}}&end-time={{.end_time}}&output=JSON"
+#url_vars = [
+#    { ip="127.0.0.1", port="8090", application="cms", metric_path="Application Infrastructure Performance|AdminServer|Individual Nodes|xxxxx|Agent|App|Availability", start_time="$START_TIME", end_time="$END_TIME"},
+#]
+
+# # 指定url_vars中哪些key 作为最终的label附加
+# url_var_label_keys= []
+
+# #从url中提取变量
+# url_label_key="instance"
+# url_label_value="{{.Host}}"
+# #自定义 http header
+#headers = { Authorization="", X-Forwarded-For="", Host=""}
+# #每次请求的超时时间
+#timeout="5s"
+
+# # precision of start-time and end-time
+#precision="ms"
+
+## basic auth
+#username=""
+#password=""
+
+# #  endtime = now - delay
+#delay = "1m"
+# # starttime = now - delay - period = endtime - period
+#period = "1m"
+
+# # 想要添加的额外label
+#labels = {application="cms"}
+# # 从返回中过滤哪些指标
+filters = ["current", "max", "min", "value","sum", "count"]
+
+# # 限制并发请求量, 最多同时有多少个请求
+# # 默认范围(0,100)
+#request_inflight= 10
+## 强制开启100以上的并发请求 (不推荐)
+# force_request_inflight =  1000
+
+# # 是否开启 tls
+# use_tls = true
+# # tls 最小版本
+## tls_min_version = "1.2"
+# # tls ca证书路径
+## tls_ca = "/etc/categraf/ca.pem"
+# # tls cert 路径
+## tls_cert = "/etc/categraf/cert.pem"
+# # tls key 路径
+## tls_key = "/etc/categraf/key.pem"
+# # 是否跳过证书验证
+## insecure_skip_verify = true

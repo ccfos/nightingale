@@ -1,0 +1,161 @@
+{
+    "name": "Nginx Upstream",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "id": "f29b8521-eb9f-41d5-8a79-1e222baabf9d",
+                "layout": {
+                    "h": 7,
+                    "i": "f29b8521-eb9f-41d5-8a79-1e222baabf9d",
+                    "isResizable": true,
+                    "w": 2,
+                    "x": 0,
+                    "y": 0
+                },
+                "links": [],
+                "name": "Requests",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "text": "UP"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "text": "DOWN"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "nginx_upstream_check_status_code{target=\"$target\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "id": "c0d3d10a-fd3b-485c-97e4-9f68ffc7a026",
+                "layout": {
+                    "h": 7,
+                    "i": "c0d3d10a-fd3b-485c-97e4-9f68ffc7a026",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 2,
+                    "y": 0
+                },
+                "links": [],
+                "name": "Rise check",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "nginx_upstream_check_rise{target=\"$target\",upstream=\"$upstream\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "id": "abbce8f8-222f-4e07-9e5e-fc85e7780672",
+                "layout": {
+                    "h": 7,
+                    "i": "abbce8f8-222f-4e07-9e5e-fc85e7780672",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 8,
+                    "y": 0
+                },
+                "links": [],
+                "name": "Fall Check",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "nginx_upstream_check_fall{target=\"$target\",upstream=\"$upstream\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            }
+        ],
+        "var": [
+            {
+                "name": "datasource",
+                "type": "datasource",
+                "definition": "prometheus"
+            },
+            {
+                "allOption": false,
+                "definition": "label_values(nginx_upstream_check_status_code,target)",
+                "multi": false,
+                "name": "target",
+                "reg": "/http:\\/\\//",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "definition": "label_values(nginx_upstream_check_status_code,upstream)",
+                "name": "upstream",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            }
+        ],
+        "version": "3.0.0"
+    }
+}

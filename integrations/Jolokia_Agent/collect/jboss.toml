@@ -1,0 +1,59 @@
+[[instances]]
+  urls = ["http://localhost:8080/jolokia"]
+  metrics_name_prefix = "jboss_"
+
+  ### JVM Generic
+
+  [[instances.metric]]
+    name  = "OperatingSystem"
+    mbean = "java.lang:type=OperatingSystem"
+    paths = ["ProcessCpuLoad","SystemLoadAverage","SystemCpuLoad"]
+
+  [[instances.metric]]
+    name  = "jvm_runtime"
+    mbean = "java.lang:type=Runtime"
+    paths = ["Uptime"]
+
+  [[instances.metric]]
+    name  = "jvm_memory"
+    mbean = "java.lang:type=Memory"
+    paths = ["HeapMemoryUsage", "NonHeapMemoryUsage", "ObjectPendingFinalizationCount"]
+
+  [[instances.metric]]
+    name     = "jvm_garbage_collector"
+    mbean    = "java.lang:name=*,type=GarbageCollector"
+    paths    = ["CollectionTime", "CollectionCount"]
+    tag_keys = ["name"]
+
+  [[instances.metric]]
+    name       = "jvm_memory_pool"
+    mbean      = "java.lang:name=*,type=MemoryPool"
+    paths      = ["Usage", "PeakUsage", "CollectionUsage"]
+    tag_keys   = ["name"]
+    tag_prefix = "pool_"
+
+  ### JBOSS
+
+  [[instances.metric]]
+    name     = "connectors.http"
+    mbean    = "jboss.as:https-listener=*,server=*,subsystem=undertow"
+    paths    = ["bytesReceived","bytesSent","errorCount","requestCount"]
+    tag_keys = ["server","https-listener"]
+
+  [[instances.metric]]
+    name     = "connectors.http"
+    mbean    = "jboss.as:http-listener=*,server=*,subsystem=undertow"
+    paths    = ["bytesReceived","bytesSent","errorCount","requestCount"]
+    tag_keys = ["server","http-listener"]
+
+  [[instances.metric]]
+    name     = "datasource.jdbc"
+    mbean    = "jboss.as:data-source=*,statistics=jdbc,subsystem=datasources"
+    paths    = ["PreparedStatementCacheAccessCount","PreparedStatementCacheHitCount","PreparedStatementCacheMissCount"]
+    tag_keys = ["data-source"]
+
+  [[instances.metric]]
+    name     = "datasource.pool"
+    mbean    = "jboss.as:data-source=*,statistics=pool,subsystem=datasources"
+    paths    = ["AvailableCount","ActiveCount","MaxUsedCount"]
+    tag_keys = ["data-source"]

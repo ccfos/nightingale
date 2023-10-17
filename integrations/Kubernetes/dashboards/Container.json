@@ -3,1603 +3,1691 @@
   "tags": "Categraf",
   "ident": "",
   "configs": {
-    "var": [
-      {
-        "name": "pod_name",
-        "definition": "label_values(container_cpu_usage_seconds_total, pod)",
-        "multi": false,
-        "reg": ""
-      }
-    ],
-    "version": "2.0.0",
     "panels": [
       {
+        "collapsed": true,
         "id": "79d7e3b0-b64f-4591-b5dd-994ce16b68ca",
-        "type": "row",
-        "name": "整体概况",
         "layout": {
           "h": 1,
+          "i": "79d7e3b0-b64f-4591-b5dd-994ce16b68ca",
+          "isResizable": false,
           "w": 24,
           "x": 0,
-          "y": 0,
-          "i": "79d7e3b0-b64f-4591-b5dd-994ce16b68ca",
-          "isResizable": false
+          "y": 0
         },
-        "collapsed": true
+        "name": "整体概况",
+        "type": "row"
       },
       {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_cpu_usage_seconds_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)",
-            "legend": ""
-          }
-        ],
-        "name": "容器CPU使用率",
-        "description": "容器1min CPU平均使用率，如果pod内有多个容器，会分别显示各个容器CPU使用率（pause容器默认不会显示）；如果容器配置了4核，使用率400%表示当前用满4核，容器配置2核，使用率200%表示当前用满2核。",
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {
-            "util": "percent",
-            "min": 0,
-            "max": null
-          },
-          "thresholds": {}
-        },
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "容器1min CPU平均使用率，如果pod内有多个容器，会分别显示各个容器CPU使用率（pause容器默认不会显示）；如果容器配置了4核，使用率400%表示当前用满4核，容器配置2核，使用率200%表示当前用满2核。",
+        "id": "860c1484-1f83-497e-a061-a50fbb3ff1dc",
         "layout": {
           "h": 7,
+          "i": "860c1484-1f83-497e-a061-a50fbb3ff1dc",
+          "isResizable": true,
           "w": 6,
           "x": 0,
-          "y": 1,
-          "i": "860c1484-1f83-497e-a061-a50fbb3ff1dc",
-          "isResizable": true
+          "y": 1
         },
-        "id": "860c1484-1f83-497e-a061-a50fbb3ff1dc"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_cpu_usage_seconds_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)/((sum(container_spec_cpu_quota{pod=\"$pod_name\"}/container_spec_cpu_period{pod=\"$pod_name\"}) by (name)))",
-            "legend": ""
-          }
-        ],
-        "name": "容器CPU归一化后使用率",
-        "description": "容器1min CPU平均使用率，如果pod内有多个容器，会分别显示各个容器CPU使用率（pause容器默认不会显示）；如果容器配置了4核，使用率100%表示当前用满4核，容器配置2核，使用率100%表示当前用满2核，如果容器没有配置cpu limit，则不会显示该数值",
+        "name": "容器CPU使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
-            "util": "percent",
+            "max": null,
             "min": 0,
-            "max": null
+            "util": "percent"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_usage_seconds_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)",
+            "legend": "",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "容器1min CPU平均使用率，如果pod内有多个容器，会分别显示各个容器CPU使用率（pause容器默认不会显示）；如果容器配置了4核，使用率100%表示当前用满4核，容器配置2核，使用率100%表示当前用满2核，如果容器没有配置cpu limit，则不会显示该数值",
+        "id": "bb66b2cc-3658-4cae-817a-61ec3fbb93e4",
         "layout": {
           "h": 7,
+          "i": "bb66b2cc-3658-4cae-817a-61ec3fbb93e4",
+          "isResizable": true,
           "w": 6,
           "x": 6,
-          "y": 1,
-          "i": "bb66b2cc-3658-4cae-817a-61ec3fbb93e4",
-          "isResizable": true
+          "y": 1
         },
-        "id": "bb66b2cc-3658-4cae-817a-61ec3fbb93e4"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "(sum(container_memory_usage_bytes{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name)) "
-          }
-        ],
-        "name": "容器内存使用",
-        "description": "container_memory_rss + container_memory_cache + container_memory_swap + kernel memory",
+        "name": "容器CPU归一化后使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
-            "util": "bytesIEC",
-            "max": null
+            "max": null,
+            "min": 0,
+            "util": "percent"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_usage_seconds_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)/((sum(container_spec_cpu_quota{pod=\"$pod_name\"}/container_spec_cpu_period{pod=\"$pod_name\"}) by (name)))",
+            "legend": "",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "container_memory_rss + container_memory_cache + container_memory_swap + kernel memory",
+        "id": "4d5f9cbb-3b78-4fe6-8a4e-59ca52a49666",
         "layout": {
           "h": 7,
+          "i": "4d5f9cbb-3b78-4fe6-8a4e-59ca52a49666",
+          "isResizable": true,
           "w": 6,
           "x": 12,
-          "y": 1,
-          "i": "4d5f9cbb-3b78-4fe6-8a4e-59ca52a49666",
-          "isResizable": true
+          "y": 1
         },
-        "id": "4d5f9cbb-3b78-4fe6-8a4e-59ca52a49666"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_fs_writes_bytes_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)",
-            "legend": ""
-          }
-        ],
-        "name": "文件系统写入速率",
-        "description": "",
+        "name": "容器内存使用",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
-            "util": "bytesIEC",
-            "min": 0,
-            "max": null
+            "max": null,
+            "util": "bytesIEC"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
+        "targets": [
+          {
+            "expr": "(sum(container_memory_usage_bytes{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name)) ",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "",
+        "id": "978e93a0-770e-42f5-a374-cafb5b4fc585",
         "layout": {
           "h": 7,
+          "i": "978e93a0-770e-42f5-a374-cafb5b4fc585",
+          "isResizable": true,
           "w": 6,
           "x": 18,
-          "y": 1,
-          "i": "978e93a0-770e-42f5-a374-cafb5b4fc585",
-          "isResizable": true
+          "y": 1
         },
-        "id": "978e93a0-770e-42f5-a374-cafb5b4fc585"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_fs_reads_bytes_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)",
-            "legend": ""
-          }
-        ],
-        "name": "文件系统读取速率",
-        "description": "",
+        "name": "文件系统写入速率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
-            "util": "bytesIEC",
+            "max": null,
             "min": 0,
-            "max": null
+            "util": "bytesIEC"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
+        "targets": [
+          {
+            "expr": "sum(rate(container_fs_writes_bytes_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)",
+            "legend": "",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "",
+        "id": "f385736d-fd05-4705-a27d-41e67fb6c843",
         "layout": {
           "h": 7,
+          "i": "f385736d-fd05-4705-a27d-41e67fb6c843",
+          "isResizable": true,
           "w": 6,
           "x": 0,
-          "y": 8,
-          "i": "f385736d-fd05-4705-a27d-41e67fb6c843",
-          "isResizable": true
+          "y": 8
         },
-        "id": "f385736d-fd05-4705-a27d-41e67fb6c843"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_network_transmit_bytes_total{pod=\"$pod_name\"}[1m])) by(name, interface)"
-          }
-        ],
-        "name": "网络发送速率",
-        "description": "容器网络发送的字节数（1 分钟内）",
+        "name": "文件系统读取速率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
+            "max": null,
+            "min": 0,
             "util": "bytesIEC"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
+        "targets": [
+          {
+            "expr": "sum(rate(container_fs_reads_bytes_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)",
+            "legend": "",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "容器网络发送的字节数（1 分钟内）",
+        "id": "f9b140e8-0b44-4b32-9d54-9360b06faa48",
         "layout": {
           "h": 7,
+          "i": "f9b140e8-0b44-4b32-9d54-9360b06faa48",
+          "isResizable": true,
           "w": 6,
           "x": 6,
-          "y": 8,
-          "i": "f9b140e8-0b44-4b32-9d54-9360b06faa48",
-          "isResizable": true
+          "y": 8
         },
-        "id": "f9b140e8-0b44-4b32-9d54-9360b06faa48"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_network_receive_bytes_total{pod=\"$pod_name\"}[1m])) by(name, interface)"
-          }
-        ],
-        "name": "网络接收速率",
-        "description": "容器网络接收的字节数（1 分钟内）",
+        "name": "网络发送速率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
             "util": "bytesIEC"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 12,
-          "y": 8,
-          "i": "8f98a264-7058-4fa0-8efc-3c87954a0370",
-          "isResizable": true
-        },
-        "id": "8f98a264-7058-4fa0-8efc-3c87954a0370"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum((time()-container_start_time_seconds{pod=\"$pod_name\", image!~\".*pause.*\"})) by (name)"
+            "expr": "sum(rate(container_network_transmit_bytes_total{pod=\"$pod_name\"}[1m])) by(name, interface)",
+            "refId": "A"
           }
         ],
-        "name": "容器启动时长（小时）",
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
-          "textMode": "valueAndName",
-          "colorMode": "value",
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "description": "容器网络接收的字节数（1 分钟内）",
+        "id": "8f98a264-7058-4fa0-8efc-3c87954a0370",
+        "layout": {
+          "h": 7,
+          "i": "8f98a264-7058-4fa0-8efc-3c87954a0370",
+          "isResizable": true,
+          "w": 6,
+          "x": 12,
+          "y": 8
+        },
+        "name": "网络接收速率",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {
+            "util": "bytesIEC"
+          },
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(container_network_receive_bytes_total{pod=\"$pod_name\"}[1m])) by(name, interface)",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
           "calc": "lastNotNull",
           "colSpan": 1,
+          "colorMode": "value",
+          "textMode": "valueAndName",
           "textSize": {}
         },
+        "id": "1868973e-c3d3-4fd4-83b0-36ec2e06dfe0",
+        "layout": {
+          "h": 7,
+          "i": "1868973e-c3d3-4fd4-83b0-36ec2e06dfe0",
+          "isResizable": true,
+          "w": 6,
+          "x": 18,
+          "y": 8
+        },
+        "name": "容器启动时长（小时）",
         "options": {
           "standardOptions": {
             "util": "humantimeSeconds"
           }
         },
-        "version": "2.0.0",
+        "targets": [
+          {
+            "expr": "sum((time()-container_start_time_seconds{pod=\"$pod_name\", image!~\".*pause.*\"})) by (name)",
+            "refId": "A"
+          }
+        ],
         "type": "stat",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 18,
-          "y": 8,
-          "i": "1868973e-c3d3-4fd4-83b0-36ec2e06dfe0",
-          "isResizable": true
-        },
-        "id": "1868973e-c3d3-4fd4-83b0-36ec2e06dfe0"
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
+        "collapsed": true,
         "id": "8a4942a2-81a3-4473-81be-79b3541e09a3",
-        "type": "row",
-        "name": "CPU",
         "layout": {
           "h": 1,
+          "i": "8a4942a2-81a3-4473-81be-79b3541e09a3",
+          "isResizable": false,
           "w": 24,
           "x": 0,
-          "y": 15,
-          "i": "8a4942a2-81a3-4473-81be-79b3541e09a3",
-          "isResizable": false
+          "y": 15
         },
-        "collapsed": true
+        "name": "CPU",
+        "type": "row"
       },
       {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_cpu_usage_seconds_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)"
-          }
-        ],
-        "name": "容器CPU使用率",
-        "description": "容器1min CPU平均使用率，如果pod内有多个容器，会分别显示各个容器CPU使用率（pause容器默认不会显示）；如果容器配置了4核，使用率400%表示当前用满4核，容器配置2核，使用率200%表示当前用满2核。",
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {
-            "util": "percent",
-            "max": null
-          },
-          "thresholds": {}
-        },
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "容器1min CPU平均使用率，如果pod内有多个容器，会分别显示各个容器CPU使用率（pause容器默认不会显示）；如果容器配置了4核，使用率400%表示当前用满4核，容器配置2核，使用率200%表示当前用满2核。",
+        "id": "54650fe9-007f-4b16-a523-baf2e91ef823",
         "layout": {
           "h": 7,
+          "i": "54650fe9-007f-4b16-a523-baf2e91ef823",
+          "isResizable": true,
           "w": 6,
           "x": 0,
-          "y": 16,
-          "i": "54650fe9-007f-4b16-a523-baf2e91ef823",
-          "isResizable": true
+          "y": 16
         },
-        "id": "54650fe9-007f-4b16-a523-baf2e91ef823"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_cpu_usage_seconds_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)/((sum(container_spec_cpu_quota{pod=\"$pod_name\"}/container_spec_cpu_period{pod=\"$pod_name\"}) by (name)))"
-          }
-        ],
-        "name": "容器CPU归一化后使用率",
-        "description": "容器1min CPU平均使用率，如果pod内有多个容器，会分别显示各个容器CPU使用率（pause容器默认不会显示）；如果容器配置了4核，使用率100%表示当前用满4核，容器配置2核，使用率100%表示当前用满2核，如果容器没有配置cpu limit，则不会显示该数值",
+        "name": "容器CPU使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
-            "util": "percent",
-            "max": null
+            "max": null,
+            "util": "percent"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_usage_seconds_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "容器1min CPU平均使用率，如果pod内有多个容器，会分别显示各个容器CPU使用率（pause容器默认不会显示）；如果容器配置了4核，使用率100%表示当前用满4核，容器配置2核，使用率100%表示当前用满2核，如果容器没有配置cpu limit，则不会显示该数值",
+        "id": "715c1e5a-c504-4f2c-a790-dad1c73aae29",
         "layout": {
           "h": 7,
+          "i": "715c1e5a-c504-4f2c-a790-dad1c73aae29",
+          "isResizable": true,
           "w": 6,
           "x": 6,
-          "y": 16,
-          "i": "715c1e5a-c504-4f2c-a790-dad1c73aae29",
-          "isResizable": true
+          "y": 16
         },
-        "id": "715c1e5a-c504-4f2c-a790-dad1c73aae29"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_cpu_system_seconds_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)"
-          }
-        ],
-        "name": "容器内核态CPU使用率",
-        "description": "容器1min 内核态CPU平均使用率，如果pod内有多个容器，会分别显示各个容器内核态CPU使用率（pause容器默认不会显示）；如果容器配置了4核，使用率400%表示当前内核态用满4核，容器配置2核，使用率200%表示当前内核态用满2核。",
+        "name": "容器CPU归一化后使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
-            "util": "percent",
-            "max": null
+            "max": null,
+            "util": "percent"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_usage_seconds_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)/((sum(container_spec_cpu_quota{pod=\"$pod_name\"}/container_spec_cpu_period{pod=\"$pod_name\"}) by (name)))",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "容器1min 内核态CPU平均使用率，如果pod内有多个容器，会分别显示各个容器内核态CPU使用率（pause容器默认不会显示）；如果容器配置了4核，使用率400%表示当前内核态用满4核，容器配置2核，使用率200%表示当前内核态用满2核。",
+        "id": "d23a509d-3bb0-4680-b579-b89a411830a4",
         "layout": {
           "h": 7,
+          "i": "d23a509d-3bb0-4680-b579-b89a411830a4",
+          "isResizable": true,
           "w": 6,
           "x": 12,
-          "y": 16,
-          "i": "d23a509d-3bb0-4680-b579-b89a411830a4",
-          "isResizable": true
+          "y": 16
         },
-        "id": "d23a509d-3bb0-4680-b579-b89a411830a4"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_cpu_user_seconds_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)"
-          }
-        ],
-        "name": "容器用户态CPU使用率",
-        "description": "容器1min 内核态CPU平均使用率，如果pod内有多个容器，会分别显示各个容器用户态CPU使用率（pause容器默认不会显示）；如果容器配置了4核，使用率400%表示当前用户态用满4核，容器配置2核，使用率200%表示当前用户态用满2核。",
+        "name": "容器内核态CPU使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
-            "util": "percent",
-            "max": null
+            "max": null,
+            "util": "percent"
           },
-          "thresholds": {}
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 18,
-          "y": 16,
-          "i": "2921e6d0-1b9c-449d-9dd8-fb29dce8ca7d",
-          "isResizable": true
-        },
-        "id": "2921e6d0-1b9c-449d-9dd8-fb29dce8ca7d"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_cpu_cfs_throttled_periods_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m]))by(name) *100"
-          }
-        ],
-        "name": "容器发生CPU throttle的比率",
-        "description": "该值大于0，说明CPU在运行期间发生throttle情况，即容器设置的CPU规格，不满足容器当前对CPU的实际需求，在这种情况下，往往需要调大容器CPU规格，或者优化程序，降低CPU开销。",
-        "options": {
+          "thresholds": {},
           "tooltip": {
             "mode": "all",
             "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_system_seconds_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "description": "容器1min 内核态CPU平均使用率，如果pod内有多个容器，会分别显示各个容器用户态CPU使用率（pause容器默认不会显示）；如果容器配置了4核，使用率400%表示当前用户态用满4核，容器配置2核，使用率200%表示当前用户态用满2核。",
+        "id": "2921e6d0-1b9c-449d-9dd8-fb29dce8ca7d",
+        "layout": {
+          "h": 7,
+          "i": "2921e6d0-1b9c-449d-9dd8-fb29dce8ca7d",
+          "isResizable": true,
+          "w": 6,
+          "x": 18,
+          "y": 16
+        },
+        "name": "容器用户态CPU使用率",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
           },
+          "standardOptions": {
+            "max": null,
+            "util": "percent"
+          },
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_user_seconds_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "description": "该值大于0，说明CPU在运行期间发生throttle情况，即容器设置的CPU规格，不满足容器当前对CPU的实际需求，在这种情况下，往往需要调大容器CPU规格，或者优化程序，降低CPU开销。",
+        "id": "b302c1a0-a499-4a99-aff2-d460685846ab",
+        "layout": {
+          "h": 7,
+          "i": "b302c1a0-a499-4a99-aff2-d460685846ab",
+          "isResizable": true,
+          "w": 6,
+          "x": 0,
+          "y": 23
+        },
+        "name": "容器发生CPU throttle的比率",
+        "options": {
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
             "util": "percent"
           },
-          "thresholds": {}
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 0,
-          "y": 23,
-          "i": "b302c1a0-a499-4a99-aff2-d460685846ab",
-          "isResizable": true
-        },
-        "id": "b302c1a0-a499-4a99-aff2-d460685846ab"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "(sum(container_spec_cpu_quota{pod=\"$pod_name\"}/container_spec_cpu_period{pod=\"$pod_name\"}) by (name))"
-          }
-        ],
-        "name": "容器CPU Limit",
-        "description": "容器CPU Limit，2代表容器CPU Limit为2核， 0.2代表容器CPU Limit为0.2核， 没有数据表明没有设置Limit值",
-        "custom": {
-          "textMode": "valueAndName",
-          "colorMode": "value",
-          "calc": "lastNotNull",
-          "colSpan": 1,
-          "textSize": {}
-        },
-        "options": {
-          "standardOptions": {}
-        },
-        "version": "2.0.0",
-        "type": "stat",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 6,
-          "y": 23,
-          "i": "cd5e8b99-8a76-4dea-b8b2-3bff825a7f8d",
-          "isResizable": true
-        },
-        "id": "cd5e8b99-8a76-4dea-b8b2-3bff825a7f8d"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(container_cpu_load_average_10s{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name)"
-          }
-        ],
-        "name": "容器CPU load 10",
-        "description": "过去10s的CPU负载",
-        "options": {
+          "thresholds": {},
           "tooltip": {
             "mode": "all",
             "sort": "none"
-          },
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_cfs_throttled_periods_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m]))by(name) *100",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "calc": "lastNotNull",
+          "colSpan": 1,
+          "colorMode": "value",
+          "textMode": "valueAndName",
+          "textSize": {}
+        },
+        "description": "容器CPU Limit，2代表容器CPU Limit为2核， 0.2代表容器CPU Limit为0.2核， 没有数据表明没有设置Limit值",
+        "id": "cd5e8b99-8a76-4dea-b8b2-3bff825a7f8d",
+        "layout": {
+          "h": 7,
+          "i": "cd5e8b99-8a76-4dea-b8b2-3bff825a7f8d",
+          "isResizable": true,
+          "w": 6,
+          "x": 6,
+          "y": 23
+        },
+        "name": "容器CPU Limit",
+        "options": {
+          "standardOptions": {}
+        },
+        "targets": [
+          {
+            "expr": "(sum(container_spec_cpu_quota{pod=\"$pod_name\"}/container_spec_cpu_period{pod=\"$pod_name\"}) by (name))",
+            "refId": "A"
+          }
+        ],
+        "type": "stat",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "description": "过去10s的CPU负载",
+        "id": "408c29b9-2a49-49a2-a98b-3ad7da9c57bd",
+        "layout": {
+          "h": 7,
+          "i": "408c29b9-2a49-49a2-a98b-3ad7da9c57bd",
+          "isResizable": true,
+          "w": 6,
+          "x": 12,
+          "y": 23
+        },
+        "name": "容器CPU load 10",
+        "options": {
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
             "max": null
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 12,
-          "y": 23,
-          "i": "408c29b9-2a49-49a2-a98b-3ad7da9c57bd",
-          "isResizable": true
-        },
-        "id": "408c29b9-2a49-49a2-a98b-3ad7da9c57bd"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(container_tasks_state{pod=\"$pod_name\", image!~\".*pause.*\", state=\"uninterruptible\"}) by (name)"
+            "expr": "sum(container_cpu_load_average_10s{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+            "refId": "A"
           }
         ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "fe62f7db-4f87-4da1-bfc3-60ed5039e31e",
+        "layout": {
+          "h": 7,
+          "i": "fe62f7db-4f87-4da1-bfc3-60ed5039e31e",
+          "isResizable": true,
+          "w": 6,
+          "x": 18,
+          "y": 23
+        },
         "name": "uninterruptible task 数量",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {},
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 18,
-          "y": 23,
-          "i": "fe62f7db-4f87-4da1-bfc3-60ed5039e31e",
-          "isResizable": true
-        },
-        "id": "fe62f7db-4f87-4da1-bfc3-60ed5039e31e"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(container_tasks_state{pod=\"$pod_name\", image!~\".*pause.*\", state=\"running\"}) by (name)"
+            "expr": "sum(container_tasks_state{pod=\"$pod_name\", image!~\".*pause.*\", state=\"uninterruptible\"}) by (name)",
+            "refId": "A"
           }
         ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "7152f66a-d907-4ee9-afd3-a04b12f1019b",
+        "layout": {
+          "h": 7,
+          "i": "7152f66a-d907-4ee9-afd3-a04b12f1019b",
+          "isResizable": true,
+          "w": 6,
+          "x": 0,
+          "y": 30
+        },
         "name": "running task 数量",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {},
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 0,
-          "y": 30,
-          "i": "7152f66a-d907-4ee9-afd3-a04b12f1019b",
-          "isResizable": true
-        },
-        "id": "7152f66a-d907-4ee9-afd3-a04b12f1019b"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(container_tasks_state{pod=\"$pod_name\", image!~\".*pause.*\", state=\"iowaiting\"}) by (name)"
+            "expr": "sum(container_tasks_state{pod=\"$pod_name\", image!~\".*pause.*\", state=\"running\"}) by (name)",
+            "refId": "A"
           }
         ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "d2627af4-5753-4384-880b-84bead73002a",
+        "layout": {
+          "h": 7,
+          "i": "d2627af4-5753-4384-880b-84bead73002a",
+          "isResizable": true,
+          "w": 6,
+          "x": 6,
+          "y": 30
+        },
         "name": "ioawaiting task 数量",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {},
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 6,
-          "y": 30,
-          "i": "d2627af4-5753-4384-880b-84bead73002a",
-          "isResizable": true
-        },
-        "id": "d2627af4-5753-4384-880b-84bead73002a"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(container_tasks_state{pod=\"$pod_name\", image!~\".*pause.*\", state=\"sleeping\"}) by (name)"
+            "expr": "sum(container_tasks_state{pod=\"$pod_name\", image!~\".*pause.*\", state=\"iowaiting\"}) by (name)",
+            "refId": "A"
           }
         ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "78801242-2aae-48dc-a3c3-3d0050fac92c",
+        "layout": {
+          "h": 7,
+          "i": "78801242-2aae-48dc-a3c3-3d0050fac92c",
+          "isResizable": true,
+          "w": 6,
+          "x": 12,
+          "y": 30
+        },
         "name": "sleeping task 数量",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {},
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 12,
-          "y": 30,
-          "i": "78801242-2aae-48dc-a3c3-3d0050fac92c",
-          "isResizable": true
-        },
-        "id": "78801242-2aae-48dc-a3c3-3d0050fac92c"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(container_tasks_state{pod=\"$pod_name\", image!~\".*pause.*\", state=\"stopped\"}) by (name)"
+            "expr": "sum(container_tasks_state{pod=\"$pod_name\", image!~\".*pause.*\", state=\"sleeping\"}) by (name)",
+            "refId": "A"
           }
         ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "723a4b98-52e8-4284-b193-98a470189415",
+        "layout": {
+          "h": 7,
+          "i": "723a4b98-52e8-4284-b193-98a470189415",
+          "isResizable": true,
+          "w": 6,
+          "x": 18,
+          "y": 30
+        },
         "name": "stopped task 数量",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {},
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
+        "targets": [
+          {
+            "expr": "sum(container_tasks_state{pod=\"$pod_name\", image!~\".*pause.*\", state=\"stopped\"}) by (name)",
+            "refId": "A"
+          }
+        ],
         "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 18,
-          "y": 30,
-          "i": "723a4b98-52e8-4284-b193-98a470189415",
-          "isResizable": true
-        },
-        "id": "723a4b98-52e8-4284-b193-98a470189415"
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
+        "collapsed": true,
         "id": "39a8bcef-7b91-4ec4-8644-4e5674267437",
-        "type": "row",
-        "name": "内存",
         "layout": {
           "h": 1,
+          "i": "39a8bcef-7b91-4ec4-8644-4e5674267437",
+          "isResizable": false,
           "w": 24,
           "x": 0,
-          "y": 37,
-          "i": "39a8bcef-7b91-4ec4-8644-4e5674267437",
-          "isResizable": false
+          "y": 37
         },
-        "collapsed": true
+        "name": "内存",
+        "type": "row"
       },
       {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "((sum(container_memory_usage_bytes{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name)) /(sum(container_spec_memory_limit_bytes{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name)))*100"
-          }
-        ],
-        "name": "容器内存使用率",
-        "description": "(container_memory_rss + container_memory_cache + container_memory_swap + kernel memory)/ (memory limit), 没有数据表明容器配置没有设置mem limit",
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {
-            "util": "percent",
-            "max": null
-          },
-          "thresholds": {}
-        },
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
           "fillOpacity": 0.5,
           "gradientMode": "none",
+          "lineInterpolation": "smooth",
+          "lineWidth": 1,
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "(container_memory_rss + container_memory_cache + container_memory_swap + kernel memory)/ (memory limit), 没有数据表明容器配置没有设置mem limit",
+        "id": "e7b80412-d9b2-4589-8175-abf93a62a524",
         "layout": {
           "h": 7,
+          "i": "e7b80412-d9b2-4589-8175-abf93a62a524",
+          "isResizable": true,
           "w": 6,
           "x": 0,
-          "y": 38,
-          "i": "e7b80412-d9b2-4589-8175-abf93a62a524",
-          "isResizable": true
+          "y": 38
         },
-        "id": "e7b80412-d9b2-4589-8175-abf93a62a524"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "(sum(container_memory_usage_bytes{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name)) "
-          }
-        ],
-        "name": "容器内存使用",
-        "description": "container_memory_rss + container_memory_cache + container_memory_swap + kernel memory",
+        "name": "容器内存使用率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
-            "util": "bytesIEC"
+            "max": null,
+            "util": "percent"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
+        "targets": [
+          {
+            "expr": "((sum(container_memory_usage_bytes{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name)) /(sum(container_spec_memory_limit_bytes{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name)))*100",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "container_memory_rss + container_memory_cache + container_memory_swap + kernel memory",
+        "id": "4c2e1b54-1adb-480e-a581-1763bec5113f",
         "layout": {
           "h": 7,
+          "i": "4c2e1b54-1adb-480e-a581-1763bec5113f",
+          "isResizable": true,
           "w": 6,
           "x": 6,
-          "y": 38,
-          "i": "4c2e1b54-1adb-480e-a581-1763bec5113f",
-          "isResizable": true
+          "y": 38
         },
-        "id": "4c2e1b54-1adb-480e-a581-1763bec5113f"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "(sum(container_memory_cache{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name))"
-          }
-        ],
-        "name": "容器cache使用",
-        "description": "容器cache 占用大小",
+        "name": "容器内存使用",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
             "util": "bytesIEC"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
+        "targets": [
+          {
+            "expr": "(sum(container_memory_usage_bytes{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name)) ",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "容器cache 占用大小",
+        "id": "429e0214-7b71-4fc0-a771-945363948999",
         "layout": {
           "h": 7,
+          "i": "429e0214-7b71-4fc0-a771-945363948999",
+          "isResizable": true,
           "w": 6,
           "x": 12,
-          "y": 38,
-          "i": "429e0214-7b71-4fc0-a771-945363948999",
-          "isResizable": true
+          "y": 38
         },
-        "id": "429e0214-7b71-4fc0-a771-945363948999"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "(sum(container_memory_rss{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name))"
-          }
-        ],
-        "name": "容器RSS内存使用",
-        "description": "容器RSS内存占用大小。",
+        "name": "容器cache使用",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
             "util": "bytesIEC"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
+        "targets": [
+          {
+            "expr": "(sum(container_memory_cache{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name))",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "容器RSS内存占用大小。",
+        "id": "27c1a22c-bdf3-4a8d-bd31-16c66a307f3f",
         "layout": {
           "h": 7,
+          "i": "27c1a22c-bdf3-4a8d-bd31-16c66a307f3f",
+          "isResizable": true,
           "w": 6,
           "x": 18,
-          "y": 38,
-          "i": "27c1a22c-bdf3-4a8d-bd31-16c66a307f3f",
-          "isResizable": true
+          "y": 38
         },
-        "id": "27c1a22c-bdf3-4a8d-bd31-16c66a307f3f"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(container_spec_memory_limit_bytes{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name)"
-          }
-        ],
-        "name": "容器内存 Limit",
-        "description": "容器内存Limit配置，0表示没有设置内存 Limit",
+        "name": "容器RSS内存使用",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
             "util": "bytesIEC"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 0,
-          "y": 45,
-          "i": "13173c71-14a9-43a0-9cbe-34c1bb453f2b",
-          "isResizable": true
-        },
-        "id": "13173c71-14a9-43a0-9cbe-34c1bb453f2b"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(container_oom_events_total{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name) "
+            "expr": "(sum(container_memory_rss{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name))",
+            "refId": "A"
           }
         ],
-        "name": "容器发生OOM次数",
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
-          "textMode": "valueAndName",
-          "colorMode": "value",
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "description": "容器内存Limit配置，0表示没有设置内存 Limit",
+        "id": "13173c71-14a9-43a0-9cbe-34c1bb453f2b",
+        "layout": {
+          "h": 7,
+          "i": "13173c71-14a9-43a0-9cbe-34c1bb453f2b",
+          "isResizable": true,
+          "w": 6,
+          "x": 0,
+          "y": 45
+        },
+        "name": "容器内存 Limit",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {
+            "util": "bytesIEC"
+          },
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(container_spec_memory_limit_bytes{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
           "calc": "lastNotNull",
           "colSpan": 1,
+          "colorMode": "value",
+          "textMode": "valueAndName",
           "textSize": {}
         },
+        "id": "d3a7153b-f174-473c-a5ae-1ec8ff4ef318",
+        "layout": {
+          "h": 7,
+          "i": "d3a7153b-f174-473c-a5ae-1ec8ff4ef318",
+          "isResizable": true,
+          "w": 6,
+          "x": 6,
+          "y": 45
+        },
+        "name": "容器发生OOM次数",
         "options": {
           "standardOptions": {}
         },
-        "version": "2.0.0",
-        "type": "stat",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 6,
-          "y": 45,
-          "i": "d3a7153b-f174-473c-a5ae-1ec8ff4ef318",
-          "isResizable": true
-        },
-        "id": "d3a7153b-f174-473c-a5ae-1ec8ff4ef318"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(rate(container_network_receive_errors_total{pod=\"$pod_name\"}[1m])) by(name, interface)"
+            "expr": "sum(container_oom_events_total{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name) ",
+            "refId": "A"
           }
         ],
-        "name": "网络接收错误数",
-        "description": "网络接收错误数（1分钟内）",
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {}
-        },
+        "type": "stat",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "网络接收错误数（1分钟内）",
+        "id": "271d8ff6-2382-488d-b479-83e38b247012",
         "layout": {
           "h": 7,
+          "i": "271d8ff6-2382-488d-b479-83e38b247012",
+          "isResizable": true,
           "w": 6,
           "x": 12,
-          "y": 45,
-          "i": "271d8ff6-2382-488d-b479-83e38b247012",
-          "isResizable": true
+          "y": 45
         },
-        "id": "271d8ff6-2382-488d-b479-83e38b247012"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_network_receive_packets_dropped_total{pod=\"$pod_name\"}[1m])) by(name, interface)"
-          }
-        ],
-        "name": "网络接收丢包数",
-        "description": "网络接收丢包数（1分钟内）",
+        "name": "网络接收错误数",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {},
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 18,
-          "y": 45,
-          "i": "e7a0879b-82a9-4518-8c5c-93bc73548401",
-          "isResizable": true
-        },
-        "id": "e7a0879b-82a9-4518-8c5c-93bc73548401"
-      },
-      {
-        "id": "8d49afd3-d8fa-4714-aaa2-b10e045c8976",
-        "type": "row",
-        "name": "磁盘",
-        "layout": {
-          "h": 1,
-          "w": 24,
-          "x": 0,
-          "y": 52,
-          "i": "8d49afd3-d8fa-4714-aaa2-b10e045c8976",
-          "isResizable": false
-        },
-        "collapsed": true
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(rate(container_fs_reads_bytes_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)"
+            "expr": "sum(rate(container_network_receive_errors_total{pod=\"$pod_name\"}[1m])) by(name, interface)",
+            "refId": "A"
           }
         ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "description": "网络接收丢包数（1分钟内）",
+        "id": "e7a0879b-82a9-4518-8c5c-93bc73548401",
+        "layout": {
+          "h": 7,
+          "i": "e7a0879b-82a9-4518-8c5c-93bc73548401",
+          "isResizable": true,
+          "w": 6,
+          "x": 18,
+          "y": 45
+        },
+        "name": "网络接收丢包数",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
+          },
+          "standardOptions": {},
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(container_network_receive_packets_dropped_total{pod=\"$pod_name\"}[1m])) by(name, interface)",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "collapsed": true,
+        "id": "8d49afd3-d8fa-4714-aaa2-b10e045c8976",
+        "layout": {
+          "h": 1,
+          "i": "8d49afd3-d8fa-4714-aaa2-b10e045c8976",
+          "isResizable": false,
+          "w": 24,
+          "x": 0,
+          "y": 52
+        },
+        "name": "磁盘",
+        "type": "row"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "ef7e1b00-2a77-4a34-a138-5c8207088476",
+        "layout": {
+          "h": 7,
+          "i": "ef7e1b00-2a77-4a34-a138-5c8207088476",
+          "isResizable": true,
+          "w": 6,
+          "x": 0,
+          "y": 53
+        },
         "name": "文件系统读取速率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
             "util": "bytesIEC"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 0,
-          "y": 53,
-          "i": "ef7e1b00-2a77-4a34-a138-5c8207088476",
-          "isResizable": true
-        },
-        "id": "ef7e1b00-2a77-4a34-a138-5c8207088476"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(rate(container_fs_writes_bytes_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)"
+            "expr": "sum(rate(container_fs_reads_bytes_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)",
+            "refId": "A"
           }
         ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "e55b7db3-2b13-43f9-aa2d-e9a0a929df4b",
+        "layout": {
+          "h": 7,
+          "i": "e55b7db3-2b13-43f9-aa2d-e9a0a929df4b",
+          "isResizable": true,
+          "w": 6,
+          "x": 6,
+          "y": 53
+        },
         "name": "文件系统写入速率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
             "util": "bytesIEC"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 6,
-          "y": 53,
-          "i": "e55b7db3-2b13-43f9-aa2d-e9a0a929df4b",
-          "isResizable": true
-        },
-        "id": "e55b7db3-2b13-43f9-aa2d-e9a0a929df4b"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(container_fs_io_current{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name) "
+            "expr": "sum(rate(container_fs_writes_bytes_total{pod=\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)",
+            "refId": "A"
           }
         ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "a2d7ba64-fd4d-4713-9295-8663fa72f675",
+        "layout": {
+          "h": 7,
+          "i": "a2d7ba64-fd4d-4713-9295-8663fa72f675",
+          "isResizable": true,
+          "w": 6,
+          "x": 12,
+          "y": 53
+        },
         "name": "容器I/O",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {},
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 12,
-          "y": 53,
-          "i": "a2d7ba64-fd4d-4713-9295-8663fa72f675",
-          "isResizable": true
-        },
-        "id": "a2d7ba64-fd4d-4713-9295-8663fa72f675"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(container_fs_inodes_total{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name) "
+            "expr": "sum(container_fs_io_current{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name) ",
+            "refId": "A"
           }
         ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "2b4e94ef-c994-4910-b72b-428bf5156a21",
+        "layout": {
+          "h": 7,
+          "i": "2b4e94ef-c994-4910-b72b-428bf5156a21",
+          "isResizable": true,
+          "w": 6,
+          "x": 18,
+          "y": 53
+        },
         "name": "inode数量",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {},
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 18,
-          "y": 53,
-          "i": "2b4e94ef-c994-4910-b72b-428bf5156a21",
-          "isResizable": true
-        },
-        "id": "2b4e94ef-c994-4910-b72b-428bf5156a21"
-      },
-      {
         "targets": [
           {
-            "refId": "A",
-            "expr": "sum(container_fs_usage_bytes{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name) "
+            "expr": "sum(container_fs_inodes_total{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name) ",
+            "refId": "A"
           }
         ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "id": "3abade99-8f34-4a1e-bb48-c5ba1e128749",
+        "layout": {
+          "h": 7,
+          "i": "3abade99-8f34-4a1e-bb48-c5ba1e128749",
+          "isResizable": true,
+          "w": 6,
+          "x": 0,
+          "y": 60
+        },
         "name": "容器已使用的文件系统大小",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
             "util": "bytesIEC"
           },
-          "thresholds": {}
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 0,
-          "y": 60,
-          "i": "3abade99-8f34-4a1e-bb48-c5ba1e128749",
-          "isResizable": true
-        },
-        "id": "3abade99-8f34-4a1e-bb48-c5ba1e128749"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_network_receive_packets_total{pod=\"$pod_name\"}[1m])) by(name, interface)"
-          }
-        ],
-        "name": "网络接收数据包数",
-        "description": "网络接收数据包数（1分钟内）",
-        "options": {
+          "thresholds": {},
           "tooltip": {
             "mode": "all",
             "sort": "none"
-          },
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(container_fs_usage_bytes{pod=\"$pod_name\", image!~\".*pause.*\"}) by (name) ",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "description": "网络接收数据包数（1分钟内）",
+        "id": "8b0bac93-8bd0-4452-a200-a9cea74345b3",
+        "layout": {
+          "h": 7,
+          "i": "8b0bac93-8bd0-4452-a200-a9cea74345b3",
+          "isResizable": true,
+          "w": 6,
+          "x": 6,
+          "y": 60
+        },
+        "name": "网络接收数据包数",
+        "options": {
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {},
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
+        "targets": [
+          {
+            "expr": "sum(rate(container_network_receive_packets_total{pod=\"$pod_name\"}[1m])) by(name, interface)",
+            "refId": "A"
+          }
+        ],
         "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 6,
-          "y": 60,
-          "i": "8b0bac93-8bd0-4452-a200-a9cea74345b3",
-          "isResizable": true
-        },
-        "id": "8b0bac93-8bd0-4452-a200-a9cea74345b3"
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       },
       {
+        "collapsed": true,
         "id": "fde213bc-fe49-431a-9495-2219fcaaa01a",
-        "type": "row",
-        "name": "网络",
         "layout": {
           "h": 1,
+          "i": "fde213bc-fe49-431a-9495-2219fcaaa01a",
+          "isResizable": false,
           "w": 24,
           "x": 0,
-          "y": 67,
-          "i": "fde213bc-fe49-431a-9495-2219fcaaa01a",
-          "isResizable": false
+          "y": 67
         },
-        "collapsed": true
+        "name": "网络",
+        "type": "row"
       },
       {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_network_transmit_bytes_total{pod=\"$pod_name\"}[1m])) by(name, interface)"
-          }
-        ],
-        "name": "网络发送速率",
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
         "description": "容器网络发送的字节数（1 分钟内）",
+        "id": "4e70bc47-1510-41fe-a924-3ffa36d11f0f",
+        "layout": {
+          "h": 7,
+          "i": "4e70bc47-1510-41fe-a924-3ffa36d11f0f",
+          "isResizable": true,
+          "w": 6,
+          "x": 0,
+          "y": 68
+        },
+        "name": "网络发送速率",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
             "util": "bytesIEC"
           },
-          "thresholds": {}
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 0,
-          "y": 68,
-          "i": "4e70bc47-1510-41fe-a924-3ffa36d11f0f",
-          "isResizable": true
-        },
-        "id": "4e70bc47-1510-41fe-a924-3ffa36d11f0f"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_network_transmit_packets_total{pod=\"$pod_name\"}[1m])) by(name, interface)"
-          }
-        ],
-        "name": "网络发送数据包",
-        "description": "网络发送数据包数（1分钟内）",
-        "options": {
+          "thresholds": {},
           "tooltip": {
             "mode": "all",
             "sort": "none"
-          },
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {}
+          }
         },
+        "targets": [
+          {
+            "expr": "sum(rate(container_network_transmit_bytes_total{pod=\"$pod_name\"}[1m])) by(name, interface)",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "网络发送数据包数（1分钟内）",
+        "id": "00ca29e5-7c97-491d-a28f-0f2d66ea47c5",
         "layout": {
           "h": 7,
+          "i": "00ca29e5-7c97-491d-a28f-0f2d66ea47c5",
+          "isResizable": true,
           "w": 6,
           "x": 6,
-          "y": 68,
-          "i": "00ca29e5-7c97-491d-a28f-0f2d66ea47c5",
-          "isResizable": true
+          "y": 68
         },
-        "id": "00ca29e5-7c97-491d-a28f-0f2d66ea47c5"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_network_transmit_errors_total{pod=\"$pod_name\"}[1m])) by(name, interface)"
-          }
-        ],
-        "name": "网络发送错误数",
-        "description": "网络发送错误数（1分钟内）",
+        "name": "网络发送数据包",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {},
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
+        "targets": [
+          {
+            "expr": "sum(rate(container_network_transmit_packets_total{pod=\"$pod_name\"}[1m])) by(name, interface)",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
         "custom": {
           "drawStyle": "lines",
-          "lineInterpolation": "smooth",
           "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
           "stack": "off"
         },
-        "version": "2.0.0",
-        "type": "timeseries",
+        "description": "网络发送错误数（1分钟内）",
+        "id": "8cd76b5f-5bba-421a-9fda-42f406f54ed5",
         "layout": {
           "h": 7,
+          "i": "8cd76b5f-5bba-421a-9fda-42f406f54ed5",
+          "isResizable": true,
           "w": 6,
           "x": 12,
-          "y": 68,
-          "i": "8cd76b5f-5bba-421a-9fda-42f406f54ed5",
-          "isResizable": true
+          "y": 68
         },
-        "id": "8cd76b5f-5bba-421a-9fda-42f406f54ed5"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_network_transmit_packets_dropped_total{pod=\"$pod_name\"}[1m])) by(name, interface)"
-          }
-        ],
-        "name": "网络发送丢包数",
-        "description": "网络发送丢包数（1分钟内）",
+        "name": "网络发送错误数",
         "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {},
-          "thresholds": {}
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
-        "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 18,
-          "y": 68,
-          "i": "58aaebbb-b1cf-4089-bcb5-70b03c05318d",
-          "isResizable": true
-        },
-        "id": "58aaebbb-b1cf-4089-bcb5-70b03c05318d"
-      },
-      {
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum(rate(container_network_receive_bytes_total{pod=\"$pod_name\"}[1m])) by(name, interface)"
-          }
-        ],
-        "name": "网络接收速率",
-        "description": "容器网络接收的字节数（1 分钟内）",
-        "options": {
+          "thresholds": {},
           "tooltip": {
             "mode": "all",
             "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(container_network_transmit_errors_total{pod=\"$pod_name\"}[1m])) by(name, interface)",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "description": "网络发送丢包数（1分钟内）",
+        "id": "58aaebbb-b1cf-4089-bcb5-70b03c05318d",
+        "layout": {
+          "h": 7,
+          "i": "58aaebbb-b1cf-4089-bcb5-70b03c05318d",
+          "isResizable": true,
+          "w": 6,
+          "x": 18,
+          "y": 68
+        },
+        "name": "网络发送丢包数",
+        "options": {
+          "legend": {
+            "displayMode": "hidden"
           },
+          "standardOptions": {},
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(container_network_transmit_packets_dropped_total{pod=\"$pod_name\"}[1m])) by(name, interface)",
+            "refId": "A"
+          }
+        ],
+        "type": "timeseries",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "drawStyle": "lines",
+          "fillOpacity": 0.5,
+          "lineInterpolation": "smooth",
+          "stack": "off"
+        },
+        "description": "容器网络接收的字节数（1 分钟内）",
+        "id": "120d3540-cce5-4b08-b596-0ec6a5b2d497",
+        "layout": {
+          "h": 7,
+          "i": "120d3540-cce5-4b08-b596-0ec6a5b2d497",
+          "isResizable": true,
+          "w": 6,
+          "x": 0,
+          "y": 75
+        },
+        "name": "网络接收速率",
+        "options": {
           "legend": {
             "displayMode": "hidden"
           },
           "standardOptions": {
             "util": "bytesIEC"
           },
-          "thresholds": {}
+          "thresholds": {},
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
         },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "fillOpacity": 0.5,
-          "stack": "off"
-        },
-        "version": "2.0.0",
+        "targets": [
+          {
+            "expr": "sum(rate(container_network_receive_bytes_total{pod=\"$pod_name\"}[1m])) by(name, interface)",
+            "refId": "A"
+          }
+        ],
         "type": "timeseries",
-        "layout": {
-          "h": 7,
-          "w": 6,
-          "x": 0,
-          "y": 75,
-          "i": "120d3540-cce5-4b08-b596-0ec6a5b2d497",
-          "isResizable": true
-        },
-        "id": "120d3540-cce5-4b08-b596-0ec6a5b2d497"
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
       }
-    ]
+    ],
+    "var": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "definition": "prometheus"
+      },
+      {
+        "definition": "label_values(container_cpu_usage_seconds_total, pod)",
+        "multi": false,
+        "name": "pod_name",
+        "reg": "",
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        }
+      }
+    ],
+    "version": "3.0.0"
   }
 }

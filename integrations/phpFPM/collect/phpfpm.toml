@@ -1,0 +1,46 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+## An array of Nginx stub_status URI to gather stats.
+urls = [
+## HTTP: the URL must start with http:// or https://, ie:
+#    "http://localhost/status",
+#    "https://www.baidu.com/phpfpm-status",
+## fcgi: the URL must start with fcgi:// or cgi://, and port must be present, ie:
+#    "fcgi://127.0.0.1:9001",
+#    "cgi://192.168.0.1:9000/status",
+## Unix socket: path to fpm socket, ie:
+#    "/run/php/php7.2-fpm.sock",
+##    or using a custom fpm status path:
+#    "/var/run/php5-fpm.sock:/fpm-custom-status-path",
+##    glob patterns are also supported:
+#    "/var/run/php*.sock"
+]
+
+## append some labels for series
+# labels = { region="cloud", product="n9e" }
+
+## interval = global.interval * interval_times
+# interval_times = 1
+
+## Set response_timeout (default 5 seconds),HTTP urls only
+response_timeout = "5s"
+
+## Whether to follow redirects from the server (defaults to false),HTTP urls only
+# follow_redirects = false
+
+## Optional HTTP Basic Auth Credentials,HTTP urls only
+#username = "admin"
+#password = "admin"
+
+## Optional headers,HTTP urls only
+# headers = ["X-From", "categraf", "X-Xyz", "abc"]
+
+## Optional TLS Config,only http
+# use_tls = false
+# tls_ca = "/etc/categraf/ca.pem"
+# tls_cert = "/etc/categraf/cert.pem"
+# tls_key = "/etc/categraf/key.pem"
+## Use TLS but skip chain & host verification
+# insecure_skip_verify = false

@@ -1,0 +1,32 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+# # append some labels for series
+# labels = { region="cloud", product="n9e" }
+
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+# # 
+auto_detect_local_dns_server  = false
+
+## servers to query
+# servers = ["8.8.8.8"]
+servers = []
+
+## Network is the network protocol name.
+# network = "udp"
+
+## Domains or subdomains to query.
+# domains = ["."]
+
+## Query record type.
+## Possible values: A, AAAA, CNAME, MX, NS, PTR, TXT, SOA, SPF, SRV.
+# record_type = "A"
+
+## Dns server port.
+# port = 53
+
+## Query timeout in seconds.
+# timeout = 2

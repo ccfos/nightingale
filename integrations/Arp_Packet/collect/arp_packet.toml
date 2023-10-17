@@ -1,0 +1,5 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+#eth_device="ens192"

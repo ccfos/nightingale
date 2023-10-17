@@ -1,0 +1,40 @@
+
+[[instances]]
+  urls = ["http://localhost:8080/jolokia"]
+
+  [[instances.metric]]
+    name  = "java_runtime"
+    mbean = "java.lang:type=Runtime"
+    paths = ["Uptime"]
+
+  [[instances.metric]]
+    name  = "java_memory"
+    mbean = "java.lang:type=Memory"
+    paths = ["HeapMemoryUsage", "NonHeapMemoryUsage", "ObjectPendingFinalizationCount"]
+
+  [[instances.metric]]
+    name     = "java_garbage_collector"
+    mbean    = "java.lang:name=*,type=GarbageCollector"
+    paths    = ["CollectionTime", "CollectionCount"]
+    tag_keys = ["name"]
+
+  [[instances.metric]]
+    name  = "java_last_garbage_collection"
+    mbean = "java.lang:name=G1 Young Generation,type=GarbageCollector"
+    paths = ["LastGcInfo/duration", "LastGcInfo/GcThreadCount", "LastGcInfo/memoryUsageAfterGc"]
+
+  [[instances.metric]]
+    name  = "java_threading"
+    mbean = "java.lang:type=Threading"
+    paths = ["TotalStartedThreadCount", "ThreadCount", "DaemonThreadCount", "PeakThreadCount"]
+
+  [[instances.metric]]
+    name  = "java_class_loading"
+    mbean = "java.lang:type=ClassLoading"
+    paths = ["LoadedClassCount", "UnloadedClassCount", "TotalLoadedClassCount"]
+
+  [[instances.metric]]
+    name     = "java_memory_pool"
+    mbean    = "java.lang:name=*,type=MemoryPool"
+    paths    = ["Usage", "PeakUsage", "CollectionUsage"]
+    tag_keys = ["name"]

@@ -1,0 +1,5 @@
+# Query statistics from AMD Graphics cards using rocm-smi binary
+# bin_path = "/opt/rocm/bin/rocm-smi"
+
+## Optional: timeout for GPU polling
+# timeout = "5s"

@@ -1,0 +1,151 @@
+{
+  "name": "Net Response Dashboard",
+  "tags": "",
+  "ident": "",
+  "configs": {
+    "panels": [
+      {
+        "custom": {
+          "calc": "lastNotNull",
+          "colorMode": "value",
+          "displayMode": "labelsOfSeriesToRows",
+          "showHeader": true,
+          "sortColumn": "value",
+          "sortOrder": "descend"
+        },
+        "id": "efe3939b-33ec-415b-982f-92f0218626ec",
+        "layout": {
+          "h": 6,
+          "i": "efe3939b-33ec-415b-982f-92f0218626ec",
+          "isResizable": true,
+          "w": 24,
+          "x": 0,
+          "y": 1
+        },
+        "name": "Targets",
+        "options": {
+          "standardOptions": {},
+          "valueMappings": [
+            {
+              "match": {
+                "special": 0
+              },
+              "result": {
+                "color": "#3fc453",
+                "text": "up"
+              },
+              "type": "special"
+            },
+            {
+              "match": {
+                "from": 1
+              },
+              "result": {
+                "color": "#ff656b",
+                "text": "down"
+              },
+              "type": "range"
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "value": "A"
+            },
+            "properties": {
+              "standardOptions": {},
+              "valueMappings": [
+                {
+                  "match": {
+                    "special": 0
+                  },
+                  "result": {
+                    "color": "#417505",
+                    "text": "UP"
+                  },
+                  "type": "special"
+                },
+                {
+                  "match": {
+                    "from": 1,
+                    "special": 1
+                  },
+                  "result": {
+                    "color": "#e90f0f",
+                    "text": "DOWN"
+                  },
+                  "type": "range"
+                }
+              ]
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "max(net_response_result_code{ident=~\"$ident\"}) without (protocol, source)",
+            "legend": "",
+            "refId": "A"
+          }
+        ],
+        "type": "table",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      },
+      {
+        "custom": {
+          "calc": "lastNotNull",
+          "colorMode": "value",
+          "displayMode": "labelsOfSeriesToRows",
+          "showHeader": true
+        },
+        "id": "11b58922-d7a4-418f-912f-50500d312ed5",
+        "layout": {
+          "h": 7,
+          "i": "11b58922-d7a4-418f-912f-50500d312ed5",
+          "isResizable": true,
+          "w": 24,
+          "x": 0,
+          "y": 7
+        },
+        "name": "Latency (s)",
+        "options": {
+          "standardOptions": {}
+        },
+        "overrides": [
+          {}
+        ],
+        "targets": [
+          {
+            "expr": "max(net_response_response_time{ident=~\"$ident\"}) without (protocol, source)",
+            "refId": "A"
+          }
+        ],
+        "type": "table",
+        "version": "2.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}"
+      }
+    ],
+    "var": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "definition": "prometheus"
+      },
+      {
+        "allOption": true,
+        "definition": "label_values(net_response_result_code, ident)",
+        "multi": true,
+        "name": "ident",
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        }
+      }
+    ],
+    "version": "3.0.0"
+  }
+}
