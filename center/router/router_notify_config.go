@@ -162,10 +162,12 @@ func (rt *Router) notifyConfigGet(c *gin.Context) {
 func (rt *Router) notifyConfigPut(c *gin.Context) {
 	var f models.Configs
 	ginx.BindJSON(c, &f)
+	userVariableMap := rt.NotifyConfigCache.ConfigCache.Get()
+	text := tplx.ReplaceMacroVariables(f.Ckey, f.Cval, userVariableMap)
 	switch f.Ckey {
 	case models.SMTP:
 		var smtp aconf.SMTPConfig
-		err := toml.Unmarshal([]byte(f.Cval), &smtp)
+		err := toml.Unmarshal([]byte(text), &smtp)
 		ginx.Dangerous(err)
 	case models.IBEX:
 		var ibex aconf.Ibex
@@ -179,8 +181,7 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 	ginx.Dangerous(models.ConfigsSetWithUname(rt.Ctx, f.Ckey, f.Cval, username))
 	if f.Ckey == models.SMTP {
 		// 重置邮件发送器
-		userVariableMap := rt.NotifyConfigCache.ConfigCache.Get()
-		text := tplx.ReplaceMacroVariables(f.Ckey, f.Cval, userVariableMap)
+
 		smtp, errSmtp := SmtpValidate(text)
 		ginx.Dangerous(errSmtp)
 		go sender.RestartEmailSender(smtp)
@@ -219,7 +220,9 @@ func (rt *Router) attemptSendEmail(c *gin.Context) {
 	if f.Ckey != models.SMTP {
 		ginx.Bomb(200, "config(%v) invalid", f)
 	}
-	smtp, err := SmtpValidate(f.Configs.Cval)
+	userVariableMap := rt.NotifyConfigCache.ConfigCache.Get()
+	text := tplx.ReplaceMacroVariables(f.Ckey, f.Cval, userVariableMap)
+	smtp, err := SmtpValidate(text)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Message(sender.SendEmail("Email test", "email content", []string{f.Email}, smtp))

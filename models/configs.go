@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
+	"regexp"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -244,11 +244,16 @@ func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
 		"ckey", "cval", "note", "encrypted", "update_by", "update_at").Updates(conf).Error
 }
 
+func isCStyleIdentifier(str string) bool {
+	regex := regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
+	return regex.MatchString(str)
+}
+
 func userVariableCheck(context *ctx.Context, ckey string, id int64) error {
 	var objs []*Configs
 	var err error
-	if strings.Contains(ckey, ".") {
-		return fmt.Errorf("illegel symbol %q", ".")
+	if !isCStyleIdentifier(ckey) {
+		return fmt.Errorf("invalid key(%q), please use C-style naming convention ", ckey)
 	}
 	if id != 0 { //update
 		err = DB(context).Where("id <> ? and ckey = ? and external=?", &id, ckey, ConfigExternal).Find(&objs).Error
