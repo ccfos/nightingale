@@ -114,7 +114,7 @@ func startEmailSender(smtp aconf.SMTPConfig) {
 		logger.Warning("SMTP configurations invalid")
 		return
 	}
-	logger.Infof("start email sender... %+v", conf)
+	logger.Infof("start email sender... conf.Host:%+v,conf.Port:%+v", conf.Host, conf.Port)
 
 	d := gomail.NewDialer(conf.Host, conf.Port, conf.User, conf.Pass)
 	if conf.InsecureSkipVerify {
