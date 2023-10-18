@@ -92,7 +92,7 @@ func (arc *AlertRuleCacheType) SyncAlertRules() {
 }
 
 func (arc *AlertRuleCacheType) loopSyncAlertRules() {
-	duration := time.Duration(9000) * time.Millisecond
+	duration := time.Duration(arc.ctx.CenterApi.Interval) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := arc.syncAlertRules(); err != nil {

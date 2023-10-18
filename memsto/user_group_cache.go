@@ -97,7 +97,7 @@ func (ugc *UserGroupCacheType) SyncUserGroups() {
 }
 
 func (ugc *UserGroupCacheType) loopSyncUserGroups() {
-	duration := time.Duration(9000) * time.Millisecond
+	duration := time.Duration(ugc.ctx.CenterApi.Interval) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := ugc.syncUserGroups(); err != nil {

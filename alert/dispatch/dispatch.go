@@ -71,7 +71,7 @@ func (e *Dispatch) ReloadTpls() error {
 		logger.Errorf("failed to reload tpls: %v", err)
 	}
 
-	duration := time.Duration(9000) * time.Millisecond
+	duration := time.Duration(e.ctx.CenterApi.Interval) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := e.relaodTpls(); err != nil {

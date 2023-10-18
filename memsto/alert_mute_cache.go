@@ -95,7 +95,7 @@ func (amc *AlertMuteCacheType) SyncAlertMutes() {
 }
 
 func (amc *AlertMuteCacheType) loopSyncAlertMutes() {
-	duration := time.Duration(9000) * time.Millisecond
+	duration := time.Duration(amc.ctx.CenterApi.Interval) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := amc.syncAlertMutes(); err != nil {

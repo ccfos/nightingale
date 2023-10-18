@@ -69,7 +69,7 @@ func (d *DatasourceCacheType) SyncDatasources() {
 }
 
 func (d *DatasourceCacheType) loopSyncDatasources() {
-	duration := time.Duration(9000) * time.Millisecond
+	duration := time.Duration(d.ctx.CenterApi.Interval) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := d.syncDatasources(); err != nil {

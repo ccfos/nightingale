@@ -92,7 +92,7 @@ func (rrc *RecordingRuleCacheType) SyncRecordingRules() {
 }
 
 func (rrc *RecordingRuleCacheType) loopSyncRecordingRules() {
-	duration := time.Duration(9000) * time.Millisecond
+	duration := time.Duration(rrc.ctx.CenterApi.Interval) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := rrc.syncRecordingRules(); err != nil {

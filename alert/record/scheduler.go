@@ -46,7 +46,7 @@ func NewScheduler(aconf aconf.Alert, rrc *memsto.RecordingRuleCacheType, promCli
 
 func (s *Scheduler) LoopSyncRules(ctx context.Context) {
 	time.Sleep(time.Duration(s.aconf.EngineDelay) * time.Second)
-	duration := 9000 * time.Millisecond
+	duration := time.Duration(s.aconf.Heartbeat.Interval) * time.Millisecond
 	for {
 		select {
 		case <-ctx.Done():

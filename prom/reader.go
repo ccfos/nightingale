@@ -29,10 +29,12 @@ func NewPromClient(ctx *ctx.Context, heartbeat aconf.HeartbeatConfig) *PromClien
 }
 
 func (pc *PromClientMap) InitReader() error {
+	duration := time.Duration(pc.ctx.CenterApi.Interval) * time.Millisecond
 	go func() {
 		for {
+			time.Sleep(duration)
 			pc.loadFromDatabase()
-			time.Sleep(time.Second)
+
 		}
 	}()
 	return nil

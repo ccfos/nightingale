@@ -70,7 +70,7 @@ func (c *BusiGroupCacheType) SyncBusiGroups() {
 }
 
 func (c *BusiGroupCacheType) loopSyncBusiGroups() {
-	duration := time.Duration(9000) * time.Millisecond
+	duration := time.Duration(c.ctx.CenterApi.Interval) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := c.syncBusiGroups(); err != nil {

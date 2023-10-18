@@ -34,6 +34,7 @@ type CenterApi struct {
 	BasicAuthUser string
 	BasicAuthPass string
 	Timeout       int64
+	Interval      int64
 }
 
 type GlobalConfig struct {
@@ -54,6 +55,10 @@ func InitConfig(configDir, cryptoKey string) (*ConfigType, error) {
 	err := decryptConfig(config, cryptoKey)
 	if err != nil {
 		return nil, err
+	}
+
+	if config.CenterApi.Interval == 0 {
+		config.CenterApi.Interval = 9000
 	}
 
 	if config.Alert.Heartbeat.IP == "" {

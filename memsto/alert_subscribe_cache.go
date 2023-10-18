@@ -108,7 +108,7 @@ func (c *AlertSubscribeCacheType) SyncAlertSubscribes() {
 }
 
 func (c *AlertSubscribeCacheType) loopSyncAlertSubscribes() {
-	duration := time.Duration(9000) * time.Millisecond
+	duration := time.Duration(c.ctx.CenterApi.Interval) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := c.syncAlertSubscribes(); err != nil {

@@ -40,8 +40,9 @@ func (s *Set) MSet(items map[string]struct{}) {
 }
 
 func (s *Set) LoopPersist() {
+	duration := time.Duration(s.ctx.CenterApi.Interval) * time.Millisecond
 	for {
-		time.Sleep(time.Second)
+		time.Sleep(duration)
 		s.persist()
 	}
 }

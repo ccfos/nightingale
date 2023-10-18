@@ -116,7 +116,7 @@ func (tc *TargetCacheType) SyncTargets() {
 }
 
 func (tc *TargetCacheType) loopSyncTargets() {
-	duration := time.Duration(9000) * time.Millisecond
+	duration := time.Duration(tc.ctx.CenterApi.Interval) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := tc.syncTargets(); err != nil {

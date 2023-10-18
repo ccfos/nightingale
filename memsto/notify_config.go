@@ -59,7 +59,7 @@ func (w *NotifyConfigCacheType) SyncNotifyConfigs() {
 }
 
 func (w *NotifyConfigCacheType) loopSyncNotifyConfigs() {
-	duration := time.Duration(9000) * time.Millisecond
+	duration := time.Duration(w.ctx.CenterApi.Interval) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := w.syncNotifyConfigs(); err != nil {

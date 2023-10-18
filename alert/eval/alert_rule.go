@@ -69,7 +69,7 @@ func NewScheduler(aconf aconf.Alert, externalProcessors *process.ExternalProcess
 
 func (s *Scheduler) LoopSyncRules(ctx context.Context) {
 	time.Sleep(time.Duration(s.aconf.EngineDelay) * time.Second)
-	duration := 9000 * time.Millisecond
+	duration := time.Duration(s.ctx.CenterApi.Interval) * time.Millisecond
 	for {
 		select {
 		case <-ctx.Done():

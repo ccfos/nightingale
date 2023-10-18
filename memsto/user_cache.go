@@ -126,7 +126,7 @@ func (uc *UserCacheType) SyncUsers() {
 }
 
 func (uc *UserCacheType) loopSyncUsers() {
-	duration := time.Duration(9000) * time.Millisecond
+	duration := time.Duration(uc.ctx.CenterApi.Interval) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := uc.syncUsers(); err != nil {

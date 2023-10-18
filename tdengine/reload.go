@@ -24,10 +24,12 @@ func NewTdengineClient(ctx *ctx.Context, heartbeat aconf.HeartbeatConfig) *Tdeng
 }
 
 func (pc *TdengineClientMap) InitReader() error {
+	duration := time.Duration(pc.ctx.CenterApi.Interval) * time.Millisecond
 	go func() {
 		for {
+			time.Sleep(duration)
 			pc.loadFromDatabase()
-			time.Sleep(time.Second)
+
 		}
 	}()
 	return nil
