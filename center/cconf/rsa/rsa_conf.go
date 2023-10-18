@@ -16,7 +16,10 @@ import (
 func InitRSAConfig(ctx *ctx.Context, rsaConfig *httpx.RSAConfig) error {
 
 	// 1.Load RSA keys from Database
-
+	rsaPassWord, err := models.ConfigsGet(ctx, models.RSA_PASSWORD)
+	if err != nil {
+		return errors.WithMessagef(err, "cannot query config(%s)", models.RSA_PASSWORD)
+	}
 	privateKeyVal, err := models.ConfigsGet(ctx, models.RSA_PRIVATE_KEY)
 	if err != nil {
 		return errors.WithMessagef(err, "cannot query config(%s)", models.RSA_PRIVATE_KEY)
@@ -25,7 +28,8 @@ func InitRSAConfig(ctx *ctx.Context, rsaConfig *httpx.RSAConfig) error {
 	if err != nil {
 		return errors.WithMessagef(err, "cannot query config(%s)", models.RSA_PUBLIC_KEY)
 	}
-	if privateKeyVal != "" && publicKeyVal != "" {
+	if rsaPassWord != "" && privateKeyVal != "" && publicKeyVal != "" {
+		rsaConfig.RSAPassWord = rsaPassWord
 		rsaConfig.RSAPrivateKey = []byte(privateKeyVal)
 		rsaConfig.RSAPublicKey = []byte(publicKeyVal)
 		return nil
@@ -33,62 +37,69 @@ func InitRSAConfig(ctx *ctx.Context, rsaConfig *httpx.RSAConfig) error {
 
 	// 2.Read RSA configuration from file if exists
 	if file.IsExist(rsaConfig.RSAPrivateKeyPath) && file.IsExist(rsaConfig.RSAPublicKeyPath) {
-		err = readConfigFile(rsaConfig)
+		//password already read from config
+		rsaConfig.RSAPrivateKey, rsaConfig.RSAPublicKey, err = readConfigFile(rsaConfig)
 		if err != nil {
 			return errors.WithMessage(err, "failed to read rsa config from file")
 		}
 		return nil
 	}
 	// 3.Generate RSA keys if not exist
-	err = initRSAKeyPairs(ctx, rsaConfig)
+	rsaConfig.RSAPassWord, rsaConfig.RSAPrivateKey, rsaConfig.RSAPublicKey, err = initRSAKeyPairs(ctx, rsaConfig.RSAPassWord)
 	if err != nil {
 		return errors.WithMessage(err, "failed to generate rsa key pair")
 	}
-
 	return nil
 }
 
-func initRSAKeyPairs(ctx *ctx.Context, rsaConfig *httpx.RSAConfig) (err error) {
+func initRSAKeyPairs(ctx *ctx.Context, rsaPassWord string) (password string, privateByte, publicByte []byte, err error) {
 
 	// Generate RSA keys
 
 	// Generate RSA password
-	if rsaConfig.RSAPassWord != "" {
+	if rsaPassWord != "" {
 		logger.Debug("Using existing RSA password")
-	} else {
-		rsaConfig.RSAPassWord, err = models.InitRSAPassWord(ctx)
+		password = rsaPassWord
+		err = models.ConfigsSet(ctx, models.RSA_PASSWORD, password)
 		if err != nil {
-			return errors.WithMessage(err, "failed to generate rsa password")
+			err = errors.WithMessagef(err, "failed to set config(%s)", models.RSA_PASSWORD)
+			return
+		}
+	} else {
+		password, err = models.InitRSAPassWord(ctx)
+		if err != nil {
+			err = errors.WithMessage(err, "failed to generate rsa password")
+			return
 		}
 	}
-	privateByte, publicByte, err := secu.GenerateRsaKeyPair(rsaConfig.RSAPassWord)
+	privateByte, publicByte, err = secu.GenerateRsaKeyPair(password)
 	if err != nil {
-		return errors.WithMessage(err, "failed to generate rsa key pair")
+		err = errors.WithMessage(err, "failed to generate rsa key pair")
+		return
 	}
 	// Save generated RSA keys
 	err = models.ConfigsSet(ctx, models.RSA_PRIVATE_KEY, string(privateByte))
 	if err != nil {
-		return errors.WithMessagef(err, "failed to set config(%s)", models.RSA_PRIVATE_KEY)
+		err = errors.WithMessagef(err, "failed to set config(%s)", models.RSA_PRIVATE_KEY)
+		return
 	}
 	err = models.ConfigsSet(ctx, models.RSA_PUBLIC_KEY, string(publicByte))
 	if err != nil {
-		return errors.WithMessagef(err, "failed to set config(%s)", models.RSA_PUBLIC_KEY)
+		err = errors.WithMessagef(err, "failed to set config(%s)", models.RSA_PUBLIC_KEY)
+		return
 	}
-	rsaConfig.RSAPrivateKey = privateByte
-	rsaConfig.RSAPublicKey = publicByte
-	return nil
+	return
 }
 
-func readConfigFile(rsaConfig *httpx.RSAConfig) error {
-	publicBuf, err := os.ReadFile(rsaConfig.RSAPublicKeyPath)
+func readConfigFile(rsaConfig *httpx.RSAConfig) (privateBuf, publicBuf []byte, err error) {
+	publicBuf, err = os.ReadFile(rsaConfig.RSAPublicKeyPath)
 	if err != nil {
-		return errors.WithMessagef(err, "could not read RSAPublicKeyPath %q", rsaConfig.RSAPublicKeyPath)
+		err = errors.WithMessagef(err, "could not read RSAPublicKeyPath %q", rsaConfig.RSAPublicKeyPath)
+		return
 	}
-	rsaConfig.RSAPublicKey = publicBuf
-	privateBuf, err := os.ReadFile(rsaConfig.RSAPrivateKeyPath)
+	privateBuf, err = os.ReadFile(rsaConfig.RSAPrivateKeyPath)
 	if err != nil {
-		return errors.WithMessagef(err, "could not read RSAPrivateKeyPath %q", rsaConfig.RSAPrivateKeyPath)
+		err = errors.WithMessagef(err, "could not read RSAPrivateKeyPath %q", rsaConfig.RSAPrivateKeyPath)
 	}
-	rsaConfig.RSAPrivateKey = privateBuf
-	return nil
+	return
 }
