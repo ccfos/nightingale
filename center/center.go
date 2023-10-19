@@ -8,6 +8,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/center/cconf"
+	"github.com/ccfos/nightingale/v6/center/cconf/rsa"
 	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/center/sso"
@@ -56,11 +57,16 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 	ctx := ctx.NewContext(context.Background(), db, true)
-	models.InitRoot(ctx)
 	migrate.Migrate(db)
-	httpx.InitRSAConfig(&config.HTTP.RSA)
+	models.InitRoot(ctx)
 
-	redis, err := storage.NewRedis(config.Redis)
+	err = rsa.InitRSAConfig(ctx, &config.HTTP.RSA)
+	if err != nil {
+		return nil, err
+	}
+
+	var redis storage.Redis
+	redis, err = storage.NewRedis(config.Redis)
 	if err != nil {
 		return nil, err
 	}
@@ -73,12 +79,13 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	sso := sso.Init(config.Center, ctx)
 
+	configCache := memsto.NewConfigCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
 	dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
-	notifyConfigCache := memsto.NewNotifyConfigCache(ctx)
+	notifyConfigCache := memsto.NewNotifyConfigCache(ctx, configCache)
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 

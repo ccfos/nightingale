@@ -13,7 +13,8 @@ func Migrate(db *gorm.DB) {
 }
 
 func MigrateTables(db *gorm.DB) error {
-	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{}, &TaskRecord{}, &ChartShare{}, &Target{}, &Datasource{}}
+	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
+		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}}
 	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
 		dts = append(dts, &AlertHisEvent{})
 	}
@@ -21,18 +22,6 @@ func MigrateTables(db *gorm.DB) error {
 	if err != nil {
 		logger.Errorf("failed to migrate table: %v", err)
 		return err
-	}
-	if !db.Migrator().HasColumn(&Configs{}, "encrypted") {
-		err := db.AutoMigrate(&Configs{})
-		if err != nil {
-			logger.Errorf("failed to migrate configs table: %v", err)
-			return err
-		}
-		//updates the database table by adding default values to existing rows.
-		err = db.Model(&Configs{}).Select("external", "encrypted").Where("1=1").Updates(Configs{Encrypted: 0, External: 0}).Error
-		if err != nil {
-			logger.Errorf("update configs default value failed, %v", err)
-		}
 	}
 
 	if db.Migrator().HasColumn(&AlertingEngines{}, "cluster") {
@@ -48,8 +37,24 @@ func MigrateTables(db *gorm.DB) error {
 			logger.Errorf("failed to DropColumn table: %v", err)
 		}
 	}
+	DropUniqueFiledLimit(db, &Configs{}, "ckey", "configs_ckey_key")
 	InsertPermPoints(db)
 	return nil
+}
+
+func DropUniqueFiledLimit(db *gorm.DB, dst interface{}, uniqueFiled string, pgUniqueFiled string) { // UNIQUE KEY (`ckey`)
+	if db.Migrator().HasIndex(dst, uniqueFiled) {
+		err := db.Migrator().DropIndex(dst, uniqueFiled) //mysql  DROP INDEX
+		if err != nil {
+			logger.Errorf("failed to DropIndex(%s) error: %v", uniqueFiled, err)
+		}
+	}
+	if db.Migrator().HasConstraint(dst, pgUniqueFiled) {
+		err := db.Migrator().DropConstraint(dst, pgUniqueFiled) //pg  DROP CONSTRAINT
+		if err != nil {
+			logger.Errorf("failed to DropConstraint(%s) error: %v", pgUniqueFiled, err)
+		}
+	}
 }
 
 func columnHasIndex(db *gorm.DB, dst interface{}, indexColumn string) bool {
@@ -137,8 +142,12 @@ type Datasource struct {
 }
 
 type Configs struct {
-	Note string `gorm:"column:note;type:varchar(1024);comment:note"`
+	Note string `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
 	//mysql tinyint//postgresql smallint
-	External  int `gorm:"column:external;type:int;default:0;comment:0\\:built-in 1\\:external"`
-	Encrypted int `gorm:"column:encrypted;type:int;default:0;comment:0\\:plaintext 1\\:ciphertext"`
+	External  int    `gorm:"column:external;type:int;default:0;comment:0\\:built-in 1\\:external"`
+	Encrypted int    `gorm:"column:encrypted;type:int;default:0;comment:0\\:plaintext 1\\:ciphertext"`
+	CreateAt  int64  `gorm:"column:create_at;type:int;default:0;comment:create_at"`
+	CreateBy  string `gorm:"column:create_by;type:varchar(64);default:'';comment:cerate_by"`
+	UpdateAt  int64  `gorm:"column:update_at;type:int;default:0;comment:update_at"`
+	UpdateBy  string `gorm:"column:update_by;type:varchar(64);default:'';comment:update_by"`
 }

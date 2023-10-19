@@ -2,12 +2,14 @@ package router
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pelletier/go-toml/v2"
@@ -43,8 +45,8 @@ func (rt *Router) webhookPuts(c *gin.Context) {
 
 	data, err := json.Marshal(webhooks)
 	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, models.WEBHOOKKEY, string(data)))
+	username := c.MustGet("username").(string)
+	ginx.NewRender(c).Message(models.ConfigsSetWithUname(rt.Ctx, models.WEBHOOKKEY, string(data), username))
 }
 
 func (rt *Router) notifyScriptGet(c *gin.Context) {
@@ -67,8 +69,8 @@ func (rt *Router) notifyScriptPut(c *gin.Context) {
 
 	data, err := json.Marshal(notifyScript)
 	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, models.NOTIFYSCRIPT, string(data)))
+	username := c.MustGet("username").(string)
+	ginx.NewRender(c).Message(models.ConfigsSetWithUname(rt.Ctx, models.NOTIFYSCRIPT, string(data), username))
 }
 
 func (rt *Router) notifyChannelGets(c *gin.Context) {
@@ -103,8 +105,8 @@ func (rt *Router) notifyChannelPuts(c *gin.Context) {
 
 	data, err := json.Marshal(notifyChannels)
 	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, models.NOTIFYCHANNEL, string(data)))
+	username := c.MustGet("username").(string)
+	ginx.NewRender(c).Message(models.ConfigsSetWithUname(rt.Ctx, models.NOTIFYCHANNEL, string(data), username))
 }
 
 func (rt *Router) notifyContactGets(c *gin.Context) {
@@ -139,8 +141,8 @@ func (rt *Router) notifyContactPuts(c *gin.Context) {
 
 	data, err := json.Marshal(notifyContacts)
 	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Message(models.ConfigsSet(rt.Ctx, models.NOTIFYCONTACT, string(data)))
+	username := c.MustGet("username").(string)
+	ginx.NewRender(c).Message(models.ConfigsSetWithUname(rt.Ctx, models.NOTIFYCONTACT, string(data), username))
 }
 
 func (rt *Router) notifyConfigGet(c *gin.Context) {
@@ -160,10 +162,12 @@ func (rt *Router) notifyConfigGet(c *gin.Context) {
 func (rt *Router) notifyConfigPut(c *gin.Context) {
 	var f models.Configs
 	ginx.BindJSON(c, &f)
+	userVariableMap := rt.NotifyConfigCache.ConfigCache.Get()
+	text := tplx.ReplaceMacroVariables(f.Ckey, f.Cval, userVariableMap)
 	switch f.Ckey {
 	case models.SMTP:
 		var smtp aconf.SMTPConfig
-		err := toml.Unmarshal([]byte(f.Cval), &smtp)
+		err := toml.Unmarshal([]byte(text), &smtp)
 		ginx.Dangerous(err)
 	case models.IBEX:
 		var ibex aconf.Ibex
@@ -172,30 +176,31 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 	default:
 		ginx.Bomb(200, "key %s can not modify", f.Ckey)
 	}
-
-	err := models.ConfigsSet(rt.Ctx, f.Ckey, f.Cval)
-	if err != nil {
-		ginx.Bomb(200, err.Error())
-	}
-
+	username := c.MustGet("username").(string)
+	//insert or update build-in config
+	ginx.Dangerous(models.ConfigsSetWithUname(rt.Ctx, f.Ckey, f.Cval, username))
 	if f.Ckey == models.SMTP {
 		// 重置邮件发送器
-		smtp := smtpValidate(f.Cval)
 
+		smtp, errSmtp := SmtpValidate(text)
+		ginx.Dangerous(errSmtp)
 		go sender.RestartEmailSender(smtp)
 	}
 
 	ginx.NewRender(c).Message(nil)
 }
-
-func smtpValidate(smtpStr string) aconf.SMTPConfig {
+func SmtpValidate(text string) (aconf.SMTPConfig, error) {
 	var smtp aconf.SMTPConfig
-	ginx.Dangerous(toml.Unmarshal([]byte(smtpStr), &smtp))
+	var err error
 
-	if smtp.Host == "" || smtp.Port == 0 {
-		ginx.Bomb(200, "smtp host or port can not be empty")
+	err = toml.Unmarshal([]byte(text), &smtp)
+	if err != nil {
+		return smtp, err
 	}
-	return smtp
+	if smtp.Host == "" || smtp.Port == 0 {
+		return smtp, fmt.Errorf("smtp host or port can not be empty")
+	}
+	return smtp, err
 }
 
 type form struct {
@@ -215,7 +220,11 @@ func (rt *Router) attemptSendEmail(c *gin.Context) {
 	if f.Ckey != models.SMTP {
 		ginx.Bomb(200, "config(%v) invalid", f)
 	}
-	smtp := smtpValidate(f.Cval)
+	userVariableMap := rt.NotifyConfigCache.ConfigCache.Get()
+	text := tplx.ReplaceMacroVariables(f.Ckey, f.Cval, userVariableMap)
+	smtp, err := SmtpValidate(text)
+	ginx.Dangerous(err)
+
 	ginx.NewRender(c).Message(sender.SendEmail("Email test", "email content", []string{f.Email}, smtp))
 
 }

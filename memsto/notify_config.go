@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
+
 	"github.com/BurntSushi/toml"
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/dumper"
@@ -15,11 +17,12 @@ import (
 )
 
 type NotifyConfigCacheType struct {
-	ctx      *ctx.Context
-	webhooks []*models.Webhook
-	smtp     aconf.SMTPConfig
-	script   models.NotifyScript
-	ibex     aconf.Ibex
+	ctx         *ctx.Context
+	ConfigCache *ConfigCache
+	webhooks    []*models.Webhook
+	smtp        aconf.SMTPConfig
+	script      models.NotifyScript
+	ibex        aconf.Ibex
 
 	sync.RWMutex
 }
@@ -41,9 +44,10 @@ BasicAuthPass = "ibex"
 Timeout = 3000
 `
 
-func NewNotifyConfigCache(ctx *ctx.Context) *NotifyConfigCacheType {
+func NewNotifyConfigCache(ctx *ctx.Context, configCache *ConfigCache) *NotifyConfigCacheType {
 	w := &NotifyConfigCacheType{
-		ctx: ctx,
+		ctx:         ctx,
+		ConfigCache: configCache,
 	}
 	w.SyncNotifyConfigs()
 	return w
@@ -70,6 +74,7 @@ func (w *NotifyConfigCacheType) loopSyncNotifyConfigs() {
 
 func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	start := time.Now()
+	userVariableMap := w.ConfigCache.Get()
 
 	w.RWMutex.Lock()
 	defer w.RWMutex.Unlock()
@@ -96,6 +101,8 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 		dumper.PutSyncRecord("smtp", start.Unix(), -1, -1, "failed to query configs.smtp_config: "+err.Error())
 		return err
 	}
+
+	cval = tplx.ReplaceMacroVariables(models.SMTP, cval, userVariableMap)
 
 	if strings.TrimSpace(cval) != "" {
 		err = toml.Unmarshal([]byte(cval), &w.smtp)

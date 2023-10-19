@@ -44,6 +44,10 @@ func (rt *Router) statistic(c *gin.Context) {
 		statistics, err = models.DatasourceStatistics(rt.Ctx)
 		ginx.NewRender(c).Data(statistics, err)
 		return
+	case "user_variable":
+		statistics, err = models.ConfigsUserVariableStatistics(rt.Ctx)
+		ginx.NewRender(c).Data(statistics, err)
+		return
 	default:
 		ginx.Bomb(http.StatusBadRequest, "invalid name")
 	}
