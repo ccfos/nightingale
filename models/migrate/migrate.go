@@ -52,20 +52,17 @@ func DropUniqueFiledLimit(db *gorm.DB, dst interface{}, uniqueFiled string) { //
 			if len(indexs[i].Columns()) > 1 || indexs[i].Columns()[0] != uniqueFiled {
 				continue
 			}
-			switch db.Name() {
-			case "postgres":
+			if db.Migrator().HasConstraint(dst, indexs[i].Name()) {
 				err := db.Migrator().DropConstraint(dst, indexs[i].Name()) //pg  DROP CONSTRAINT
 				if err != nil {
 					logger.Errorf("failed to DropConstraint(%s) error: %v", indexs[i].Name(), err)
 				}
-			case "mysql":
+			}
+			if db.Migrator().HasIndex(dst, indexs[i].Name()) {
 				err := db.Migrator().DropIndex(dst, indexs[i].Name()) //mysql  DROP INDEX
 				if err != nil {
 					logger.Errorf("failed to DropIndex(%s) error: %v", indexs[i].Name(), err)
 				}
-
-			default:
-				logger.Errorf("unexpected type of db...")
 			}
 		}
 	}
