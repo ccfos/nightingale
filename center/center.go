@@ -57,8 +57,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 	ctx := ctx.NewContext(context.Background(), db, true)
-	models.InitRoot(ctx)
 	migrate.Migrate(db)
+	models.InitRoot(ctx)
 
 	err = rsa.InitRSAConfig(ctx, &config.HTTP.RSA)
 	if err != nil {
