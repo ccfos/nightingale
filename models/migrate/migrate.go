@@ -143,6 +143,7 @@ type Datasource struct {
 
 type Configs struct {
 	Note string `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
+	Cval string `gorm:"column:cval;type:text;comment:config value"`
 	//mysql tinyint//postgresql smallint
 	External  int    `gorm:"column:external;type:int;default:0;comment:0\\:built-in 1\\:external"`
 	Encrypted int    `gorm:"column:encrypted;type:int;default:0;comment:0\\:plaintext 1\\:ciphertext"`
