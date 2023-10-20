@@ -102,11 +102,11 @@ func InsertPermPoints(db *gorm.DB) {
 }
 
 type AlertRule struct {
-	ExtraConfig string `gorm:"type:text;not null;column:extra_config"` // extra config
+	ExtraConfig string `gorm:"type:text;column:extra_config"` // extra config
 }
 
 type AlertSubscribe struct {
-	ExtraConfig string       `gorm:"type:text;not null;column:extra_config"` // extra config
+	ExtraConfig string       `gorm:"type:text;column:extra_config"` // extra config
 	Severities  string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
 	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096);not null;default:'[]'"`
 }
