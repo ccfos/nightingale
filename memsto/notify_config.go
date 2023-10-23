@@ -102,7 +102,7 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 		return err
 	}
 
-	cval = tplx.ReplaceTemplateUseHtml(models.SMTP, cval, userVariableMap)
+	cval = tplx.ReplaceTemplateUseText(models.SMTP, cval, userVariableMap)
 
 	if strings.TrimSpace(cval) != "" {
 		err = toml.Unmarshal([]byte(cval), &w.smtp)
