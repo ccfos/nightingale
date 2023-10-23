@@ -221,7 +221,7 @@ func (rt *Router) attemptSendEmail(c *gin.Context) {
 		ginx.Bomb(200, "config(%v) invalid", f)
 	}
 	userVariableMap := rt.NotifyConfigCache.ConfigCache.Get()
-	text := tplx.ReplaceTemplateUseText(f.Ckey, f.Cval, userVariableMap)
+	text := tplx.ReplaceMacroVariables(f.Ckey, f.Cval, userVariableMap)
 	smtp, err := SmtpValidate(text)
 	ginx.Dangerous(err)
 
