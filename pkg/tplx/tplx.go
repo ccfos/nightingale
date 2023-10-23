@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	templateT "text/template"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -37,7 +38,7 @@ var TemplateFuncMap = template.FuncMap{
 	"formatDecimal":             FormatDecimal,
 }
 
-// ReplaceMacroVariables replaces variables in a template string with values.
+// ReplaceTemplateUseHtml replaces variables in a template string with values.
 //
 // It accepts the following parameters:
 //
@@ -45,14 +46,14 @@ var TemplateFuncMap = template.FuncMap{
 //
 // - templateText: The template string containing variables to replace
 //
-// - macroValue: A struct containing fields to replace the variables
+// - templateData: A struct containing fields to replace the variables
 //
 // It parses the templateText into a template using template.New and template.Parse.
 //
-// It executes the parsed template with macroValue as the data, writing the result
+// It executes the parsed template with templateData as the data, writing the result
 // to a bytes.Buffer.
 //
-// Any {{.Field}} variables in templateText are replaced with values from macroValue.
+// Any {{.Field}} variables in templateText are replaced with values from templateData.
 //
 // If there are any errors parsing or executing the template, they are logged and
 // the original templateText is returned.
@@ -67,16 +68,30 @@ var TemplateFuncMap = template.FuncMap{
 //
 //	data := Data{"John"}
 //
-//	output := ReplaceMacroVariables("mytpl", "Hello {{.Name}}!", data)
-func ReplaceMacroVariables(name string, templateText string, macroValue any) string {
+//	output := ReplaceTemplateUseHtml("mytpl", "Hello {{.Name}}!", data)
+func ReplaceTemplateUseHtml(name string, templateText string, templateData any) string {
 	tpl, err := template.New(name).Parse(templateText)
 	if err != nil {
 		logger.Warningf("parse config error: %v", err)
 		return templateText
 	}
 	var body bytes.Buffer
-	if err := tpl.Execute(&body, macroValue); err != nil {
+	if err := tpl.Execute(&body, templateData); err != nil {
 		logger.Warningf("execute config error: %v", err)
+		return templateText
+	}
+	return body.String()
+}
+
+func ReplaceTemplateUseText(name string, templateText string, templateData any) string {
+	tpl, err := templateT.New(name).Parse(templateText)
+	if err != nil {
+		logger.Warningf("text parse config error: %v", err)
+		return templateText
+	}
+	var body bytes.Buffer
+	if err := tpl.Execute(&body, templateData); err != nil {
+		logger.Warningf("text execute config error: %v", err)
 		return templateText
 	}
 	return body.String()

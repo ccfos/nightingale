@@ -163,7 +163,7 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 	var f models.Configs
 	ginx.BindJSON(c, &f)
 	userVariableMap := rt.NotifyConfigCache.ConfigCache.Get()
-	text := tplx.ReplaceMacroVariables(f.Ckey, f.Cval, userVariableMap)
+	text := tplx.ReplaceTemplateUseHtml(f.Ckey, f.Cval, userVariableMap)
 	switch f.Ckey {
 	case models.SMTP:
 		var smtp aconf.SMTPConfig
@@ -221,7 +221,7 @@ func (rt *Router) attemptSendEmail(c *gin.Context) {
 		ginx.Bomb(200, "config(%v) invalid", f)
 	}
 	userVariableMap := rt.NotifyConfigCache.ConfigCache.Get()
-	text := tplx.ReplaceMacroVariables(f.Ckey, f.Cval, userVariableMap)
+	text := tplx.ReplaceTemplateUseHtml(f.Ckey, f.Cval, userVariableMap)
 	smtp, err := SmtpValidate(text)
 	ginx.Dangerous(err)
 
