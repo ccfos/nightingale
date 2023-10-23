@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -40,7 +41,8 @@ type LoggerConfig struct {
 
 	// Output is a writer where logs are written.
 	// Optional. Default value is gin.DefaultWriter.
-	Output io.Writer
+	Output    io.Writer
+	PrintBody bool
 
 	// SkipPaths is a url path array which logs are not written.
 	// Optional.
@@ -177,7 +179,7 @@ func ErrorLoggerT(typ gin.ErrorType) gin.HandlerFunc {
 
 // Logger instances a Logger middleware that will write the logs to gin.DefaultWriter.
 // By default gin.DefaultWriter = os.Stdout.
-func Logger() gin.HandlerFunc {
+func Logger(conf LoggerConfig) gin.HandlerFunc {
 	return LoggerWithConfig(LoggerConfig{})
 }
 
@@ -234,18 +236,18 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
 
-		// var (
-		// 	rdr1 io.ReadCloser
-		// 	rdr2 io.ReadCloser
-		// )
+		var (
+			rdr1 io.ReadCloser
+			rdr2 io.ReadCloser
+		)
 
-		// if c.Request.Method != "GET" {
-		// 	buf, _ := ioutil.ReadAll(c.Request.Body)
-		// 	rdr1 = ioutil.NopCloser(bytes.NewBuffer(buf))
-		// 	rdr2 = ioutil.NopCloser(bytes.NewBuffer(buf))
+		if conf.PrintBody && c.Request.Method != "GET" {
+			buf, _ := ioutil.ReadAll(c.Request.Body)
+			rdr1 = ioutil.NopCloser(bytes.NewBuffer(buf))
+			rdr2 = ioutil.NopCloser(bytes.NewBuffer(buf))
 
-		// 	c.Request.Body = rdr2
-		// }
+			c.Request.Body = rdr2
+		}
 
 		// Process request
 		c.Next()
@@ -278,9 +280,9 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 			// fmt.Fprint(out, formatter(param))
 			logger.Info(formatter(param))
 
-			// if c.Request.Method != "GET" {
-			// 	logger.Debug(readBody(rdr1))
-			// }
+			if conf.PrintBody && c.Request.Method != "GET" {
+				logger.Debug(readBody(rdr1))
+			}
 		}
 	}
 }

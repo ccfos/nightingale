@@ -24,6 +24,7 @@ type Config struct {
 	KeyFile          string
 	PProf            bool
 	PrintAccessLog   bool
+	PrintBody        bool
 	ExposeMetrics    bool
 	ShutdownTimeout  int
 	MaxContentLength int64
@@ -72,7 +73,7 @@ type JWTAuth struct {
 func GinEngine(mode string, cfg Config) *gin.Engine {
 	gin.SetMode(mode)
 
-	loggerMid := aop.Logger()
+	loggerMid := aop.Logger(aop.LoggerConfig{PrintBody: cfg.PrintBody})
 	recoveryMid := aop.Recovery()
 
 	if strings.ToLower(mode) == "release" {
