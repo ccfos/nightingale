@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	templateT "text/template"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -77,6 +78,20 @@ func ReplaceMacroVariables(name string, templateText string, macroValue any) str
 	var body bytes.Buffer
 	if err := tpl.Execute(&body, macroValue); err != nil {
 		logger.Warningf("execute config error: %v", err)
+		return templateText
+	}
+	return body.String()
+}
+
+func ReplaceMacroVariablesUseTextPackage(name string, templateText string, macroValue any) string {
+	tpl, err := templateT.New(name).Parse(templateText)
+	if err != nil {
+		logger.Warningf("text parse config error: %v", err)
+		return templateText
+	}
+	var body bytes.Buffer
+	if err := tpl.Execute(&body, macroValue); err != nil {
+		logger.Warningf("text execute config error: %v", err)
 		return templateText
 	}
 	return body.String()
