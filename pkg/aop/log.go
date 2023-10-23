@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -180,7 +179,7 @@ func ErrorLoggerT(typ gin.ErrorType) gin.HandlerFunc {
 // Logger instances a Logger middleware that will write the logs to gin.DefaultWriter.
 // By default gin.DefaultWriter = os.Stdout.
 func Logger(conf LoggerConfig) gin.HandlerFunc {
-	return LoggerWithConfig(LoggerConfig{})
+	return LoggerWithConfig(LoggerConfig{PrintBody: conf.PrintBody})
 }
 
 // LoggerWithFormatter instance a Logger middleware with the specified log format function.
@@ -197,6 +196,21 @@ func LoggerWithWriter(out io.Writer, notlogged ...string) gin.HandlerFunc {
 		Output:    out,
 		SkipPaths: notlogged,
 	})
+}
+
+type CustomResponseWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w CustomResponseWriter) Write(data []byte) (int, error) {
+	w.body.Write(data)
+	return w.ResponseWriter.Write(data)
+}
+
+func (w CustomResponseWriter) WriteString(s string) (int, error) {
+	w.body.WriteString(s)
+	return w.ResponseWriter.WriteString(s)
 }
 
 // LoggerWithConfig instance a Logger middleware with config.
@@ -241,10 +255,16 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 			rdr2 io.ReadCloser
 		)
 
-		if conf.PrintBody && c.Request.Method != "GET" {
-			buf, _ := ioutil.ReadAll(c.Request.Body)
-			rdr1 = ioutil.NopCloser(bytes.NewBuffer(buf))
-			rdr2 = ioutil.NopCloser(bytes.NewBuffer(buf))
+		bodyWriter := &CustomResponseWriter{
+			ResponseWriter: c.Writer,
+			body:           bytes.NewBufferString(""),
+		}
+		c.Writer = bodyWriter
+
+		if conf.PrintBody {
+			buf, _ := io.ReadAll(c.Request.Body)
+			rdr1 = io.NopCloser(bytes.NewBuffer(buf))
+			rdr2 = io.NopCloser(bytes.NewBuffer(buf))
 
 			c.Request.Body = rdr2
 		}
@@ -279,9 +299,9 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 
 			// fmt.Fprint(out, formatter(param))
 			logger.Info(formatter(param))
-
-			if conf.PrintBody && c.Request.Method != "GET" {
-				logger.Debug(readBody(rdr1))
+			if conf.PrintBody {
+				respBody := bodyWriter.body.String()
+				logger.Debugf("path:%s req body:%s resp:%s", path, readBody(rdr1), respBody)
 			}
 		}
 	}
