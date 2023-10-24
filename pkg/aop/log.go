@@ -179,8 +179,13 @@ func ErrorLoggerT(typ gin.ErrorType) gin.HandlerFunc {
 
 // Logger instances a Logger middleware that will write the logs to gin.DefaultWriter.
 // By default gin.DefaultWriter = os.Stdout.
-func Logger(conf LoggerConfig) gin.HandlerFunc {
-	return LoggerWithConfig(LoggerConfig{PrintBody: conf.PrintBody})
+func Logger(conf ...LoggerConfig) gin.HandlerFunc {
+	var configuration LoggerConfig
+	if len(conf) > 0 {
+		configuration = conf[0]
+	}
+
+	return LoggerWithConfig(configuration)
 }
 
 // LoggerWithFormatter instance a Logger middleware with the specified log format function.
