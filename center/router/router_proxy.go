@@ -167,8 +167,10 @@ func (rt *Router) dsProxy(c *gin.Context) {
 
 	modifyResponse := func(r *http.Response) error {
 		if r.StatusCode == http.StatusUnauthorized {
+			logger.Warningf("proxy path:%s unauthorized access ", c.Request.URL.Path)
 			return fmt.Errorf("unauthorized access")
 		}
+
 		return nil
 	}
 
@@ -180,6 +182,7 @@ func (rt *Router) dsProxy(c *gin.Context) {
 	}
 
 	proxy.ServeHTTP(c.Writer, c.Request)
+
 }
 
 var (
