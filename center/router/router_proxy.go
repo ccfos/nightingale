@@ -1,9 +1,11 @@
 package router
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -167,8 +169,21 @@ func (rt *Router) dsProxy(c *gin.Context) {
 
 	modifyResponse := func(r *http.Response) error {
 		if r.StatusCode == http.StatusUnauthorized {
+			logger.Warningf("proxy path:%s unauthorized access ", c.Request.URL.Path)
 			return fmt.Errorf("unauthorized access")
 		}
+
+		// 复制原始响应体的内容到缓冲区
+		var bodyBytes []byte
+		if r.Body != nil {
+			bodyBytes, _ = io.ReadAll(r.Body)
+		}
+
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		bodyString := string(bodyBytes)
+		logger.Debugf("proxy path:%s  resp body: %s", c.Request.URL.Path, bodyString) // 根据你的日志系统而定
+
 		return nil
 	}
 
