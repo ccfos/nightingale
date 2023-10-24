@@ -2,6 +2,7 @@ package aop
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"net/http"
@@ -300,7 +301,16 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 			// fmt.Fprint(out, formatter(param))
 			logger.Info(formatter(param))
 			if conf.PrintBody {
+				contentEncoding := c.Request.Header.Get("Content-Encoding")
 				respBody := bodyWriter.body.String()
+				if contentEncoding == "gzip" {
+					gzipReader, err := gzip.NewReader(bodyWriter.body)
+					if err == nil {
+						defer gzipReader.Close()
+						respBody = readBody(gzipReader)
+					}
+				}
+
 				logger.Debugf("path:%s req body:%s resp:%s", path, readBody(rdr1), respBody)
 			}
 		}

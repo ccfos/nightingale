@@ -2,6 +2,7 @@ package router
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -173,16 +174,40 @@ func (rt *Router) dsProxy(c *gin.Context) {
 			return fmt.Errorf("unauthorized access")
 		}
 
-		// 复制原始响应体的内容到缓冲区
-		var bodyBytes []byte
-		if r.Body != nil {
-			bodyBytes, _ = io.ReadAll(r.Body)
+		contentEncoding := r.Header.Get("Content-Encoding")
+		contentType := r.Header.Get("Content-Type")
+
+		if contentEncoding == "gzip" && r.Body != nil {
+			gzipReader, err := gzip.NewReader(r.Body)
+			if err != nil {
+				return fmt.Errorf("failed to create gzip reader: %v", err)
+			}
+			defer gzipReader.Close()
+
+			uncompressedBody, err := io.ReadAll(gzipReader)
+			if err != nil {
+				return fmt.Errorf("failed to read gzip response body: %v", err)
+			}
+
+			r.Body = io.NopCloser(bytes.NewBuffer(uncompressedBody))
+
+			if strings.Contains(contentType, "json") {
+				logger.Debugf("proxy path:%s Response body: %s", c.Request.URL.Path, string(uncompressedBody))
+			} else {
+				logger.Debugf("proxy path:%s Received non-JSON response of size: %d bytes, Content-Type: %s", c.Request.URL.Path, len(uncompressedBody), contentType)
+			}
+		} else {
+			var bodyBytes []byte
+
+			if r.Body != nil {
+				bodyBytes, _ = io.ReadAll(r.Body)
+			}
+
+			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+			bodyString := string(bodyBytes)
+			logger.Debugf("proxy path:%s  resp body: %s", c.Request.URL.Path, bodyString)
 		}
-
-		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-
-		bodyString := string(bodyBytes)
-		logger.Debugf("proxy path:%s  resp body: %s", c.Request.URL.Path, bodyString) // 根据你的日志系统而定
 
 		return nil
 	}
