@@ -258,7 +258,7 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 
 		bodyWriter := &CustomResponseWriter{
 			ResponseWriter: c.Writer,
-			body:           bytes.NewBufferString(""),
+			body:           bytes.NewBuffer(nil),
 		}
 		c.Writer = bodyWriter
 
@@ -308,6 +308,7 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 		}
 	}
 }
+
 func readBody(reader io.Reader, encoding string) string {
 	var bodyBytes []byte
 	var err error
@@ -315,18 +316,18 @@ func readBody(reader io.Reader, encoding string) string {
 	if encoding == "gzip" {
 		gzipReader, err := gzip.NewReader(reader)
 		if err != nil {
-			return "unable to read body"
+			return fmt.Sprintf("failed to create gzip reader: %v", err)
 		}
 		defer gzipReader.Close()
 
 		bodyBytes, err = io.ReadAll(gzipReader)
 		if err != nil {
-			return "unable to read decompressed body"
+			return fmt.Sprintf("failed to read gzip response body: %v", err)
 		}
 	} else {
 		bodyBytes, err = io.ReadAll(reader)
 		if err != nil {
-			return "unable to read body"
+			return fmt.Sprintf("failed to read response body: %v", err)
 		}
 	}
 
