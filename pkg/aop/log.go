@@ -301,26 +301,34 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 			// fmt.Fprint(out, formatter(param))
 			logger.Info(formatter(param))
 			if conf.PrintBody {
-				contentEncoding := c.Request.Header.Get("Content-Encoding")
-				respBody := bodyWriter.body.String()
-				if contentEncoding == "gzip" {
-					gzipReader, err := gzip.NewReader(bodyWriter.body)
-					if err == nil {
-						defer gzipReader.Close()
-						respBody = readBody(gzipReader)
-					}
-				}
-
-				logger.Debugf("path:%s req body:%s resp:%s", path, readBody(rdr1), respBody)
+				respBody := readBody(bytes.NewReader(bodyWriter.body.Bytes()), c.Writer.Header().Get("Content-Encoding"))
+				reqBody := readBody(rdr1, c.Request.Header.Get("Content-Encoding"))
+				logger.Debugf("path:%s req body:%s resp:%s", path, reqBody, respBody)
 			}
 		}
 	}
 }
+func readBody(reader io.Reader, encoding string) string {
+	var bodyBytes []byte
+	var err error
 
-func readBody(reader io.Reader) string {
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(reader)
+	if encoding == "gzip" {
+		gzipReader, err := gzip.NewReader(reader)
+		if err != nil {
+			return "unable to read body"
+		}
+		defer gzipReader.Close()
 
-	s := buf.String()
-	return s
+		bodyBytes, err = io.ReadAll(gzipReader)
+		if err != nil {
+			return "unable to read decompressed body"
+		}
+	} else {
+		bodyBytes, err = io.ReadAll(reader)
+		if err != nil {
+			return "unable to read body"
+		}
+	}
+
+	return string(bodyBytes)
 }
