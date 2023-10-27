@@ -149,6 +149,11 @@ ops:
   - "/user-groups/put"
   - "/user-groups/del"
 
+- name: permissions
+  cname: 权限管理
+  ops:
+  - "/permissions"
+
 - name: busi-groups
   cname: 业务分组管理
   ops:
@@ -160,6 +165,7 @@ ops:
 - name: system
   cname: 系统信息
   ops:
+  - "/help/variable-configs"
   - "/help/version"
   - "/help/servers"
   - "/help/source"

@@ -85,6 +85,16 @@ func InsertPermPoints(db *gorm.DB) {
 		Operation: "/log/index-patterns",
 	})
 
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/help/variable-configs",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/help/variable-configs/add",
+	})
+
 	for _, op := range ops {
 		exists, err := models.Exists(db.Model(&models.RoleOperation{}).Where("operation = ? and role_name = ?", op.Operation, op.RoleName))
 		if err != nil {
