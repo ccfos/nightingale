@@ -367,7 +367,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/role/:id/ops", rt.auth(), rt.admin(), rt.roleBindOperation)
 		pages.GET("/operation", rt.operations)
 
-		pages.GET("/notify-tpls", rt.auth(), rt.admin(), rt.notifyTplGets)
+		pages.GET("/notify-tpls", rt.auth(), rt.user(), rt.perm("/help/notification-tpls"), rt.notifyTplGets)
 		pages.PUT("/notify-tpl/content", rt.auth(), rt.admin(), rt.notifyTplUpdateContent)
 		pages.PUT("/notify-tpl", rt.auth(), rt.admin(), rt.notifyTplUpdate)
 		pages.POST("/notify-tpl", rt.auth(), rt.admin(), rt.notifyTplAdd)
@@ -377,19 +377,19 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/sso-configs", rt.auth(), rt.admin(), rt.ssoConfigGets)
 		pages.PUT("/sso-config", rt.auth(), rt.admin(), rt.ssoConfigUpdate)
 
-		pages.GET("/webhooks", rt.auth(), rt.admin(), rt.webhookGets)
+		pages.GET("/webhooks", rt.auth(), rt.user(), rt.webhookGets)
 		pages.PUT("/webhooks", rt.auth(), rt.admin(), rt.webhookPuts)
 
-		pages.GET("/notify-script", rt.auth(), rt.admin(), rt.notifyScriptGet)
+		pages.GET("/notify-script", rt.auth(), rt.user(), rt.perm("/help/notification-settings"), rt.notifyScriptGet)
 		pages.PUT("/notify-script", rt.auth(), rt.admin(), rt.notifyScriptPut)
 
-		pages.GET("/notify-channel", rt.auth(), rt.admin(), rt.notifyChannelGets)
+		pages.GET("/notify-channel", rt.auth(), rt.user(), rt.perm("/help/notification-settings"), rt.notifyChannelGets)
 		pages.PUT("/notify-channel", rt.auth(), rt.admin(), rt.notifyChannelPuts)
 
-		pages.GET("/notify-contact", rt.auth(), rt.admin(), rt.notifyContactGets)
+		pages.GET("/notify-contact", rt.auth(), rt.user(), rt.perm("/help/notification-settings"), rt.notifyContactGets)
 		pages.PUT("/notify-contact", rt.auth(), rt.admin(), rt.notifyContactPuts)
 
-		pages.GET("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigGet)
+		pages.GET("/notify-config", rt.auth(), rt.user(), rt.perm("/help/notification-settings"), rt.notifyConfigGet)
 		pages.PUT("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigPut)
 		pages.PUT("/smtp-config-test", rt.auth(), rt.admin(), rt.attemptSendEmail)
 
