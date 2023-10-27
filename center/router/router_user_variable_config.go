@@ -34,10 +34,15 @@ func (rt *Router) userVariableConfigPut(context *gin.Context) {
 	ginx.BindJSON(context, &f)
 	f.Id = ginx.UrlParamInt64(context, "id")
 	f.Ckey = strings.TrimSpace(f.Ckey)
-	//update external config. needs to make sure not plaintext for an encrypted type config
-	//updating with struct it will update all fields ("ckey", "cval", "note", "encrypted", "update_by", "update_at"), not non-zero fields.
 	f.UpdateBy = context.MustGet("username").(string)
 	f.UpdateAt = time.Now().Unix()
+
+	user := context.MustGet("user").(*models.User)
+	if !user.IsAdmin() && f.CreateBy != user.Username {
+		// only admin or creator can update
+		ginx.Bomb(403, "no permission")
+	}
+
 	ginx.NewRender(context).Message(models.ConfigsUserVariableUpdate(rt.Ctx, f))
 }
 
@@ -45,6 +50,12 @@ func (rt *Router) userVariableConfigDel(context *gin.Context) {
 	id := ginx.UrlParamInt64(context, "id")
 	configs, err := models.ConfigGet(rt.Ctx, id)
 	ginx.Dangerous(err)
+
+	user := context.MustGet("user").(*models.User)
+	if !user.IsAdmin() && configs.CreateBy != user.Username {
+		// only admin or creator can delete
+		ginx.Bomb(403, "no permission")
+	}
 
 	if configs != nil && configs.External == models.ConfigExternal {
 		ginx.NewRender(context).Message(models.ConfigsDel(rt.Ctx, []int64{id}))
