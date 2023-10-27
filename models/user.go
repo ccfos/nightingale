@@ -567,9 +567,10 @@ func (u *User) UserGroups(ctx *ctx.Context, limit int, query string) ([]UserGrou
 			return lst, err
 		}
 
+		var user *User
 		if len(lst) == 0 && len(query) > 0 {
 			// 隐藏功能，一般人不告诉，哈哈。query可能是给的用户名，所以上面的sql没有查到，当做user来查一下试试
-			user, err := UserGetByUsername(ctx, query)
+			user, err = UserGetByUsername(ctx, query)
 			if user == nil {
 				return lst, err
 			}
