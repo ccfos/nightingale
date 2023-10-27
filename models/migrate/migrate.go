@@ -92,7 +92,7 @@ func InsertPermPoints(db *gorm.DB) {
 
 	ops = append(ops, models.RoleOperation{
 		RoleName:  "Standard",
-		Operation: "/help/variable-configs/add",
+		Operation: "/permissions",
 	})
 
 	for _, op := range ops {
