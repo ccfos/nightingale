@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +18,15 @@ func (rt *Router) rolesGets(c *gin.Context) {
 
 func (rt *Router) permsGets(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
+	if user.IsAdmin() {
+		var lst []string
+		for _, ops := range cconf.Operations.Ops {
+			lst = append(lst, ops.Ops...)
+		}
+		ginx.NewRender(c).Data(lst, nil)
+		return
+	}
+
 	lst, err := models.OperationsOfRole(rt.Ctx, strings.Fields(user.Roles))
 	ginx.NewRender(c).Data(lst, err)
 }

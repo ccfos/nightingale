@@ -91,7 +91,7 @@ func InsertPermPoints(db *gorm.DB) {
 	})
 
 	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
+		RoleName:  "Admin",
 		Operation: "/permissions",
 	})
 
