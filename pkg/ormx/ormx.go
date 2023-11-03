@@ -5,9 +5,11 @@ import (
 	"strings"
 	"time"
 
+	tklog "github.com/toolkits/pkg/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 )
 
@@ -20,6 +22,13 @@ type DBConfig struct {
 	MaxOpenConns int
 	MaxIdleConns int
 	TablePrefix  string
+}
+type TKitLogger struct {
+	logger *tklog.Logger
+}
+
+func (l *TKitLogger) Printf(s string, i ...interface{}) {
+	l.logger.Warningf(s, i...)
 }
 
 // New Create gorm.DB instance
@@ -40,6 +49,15 @@ func New(c DBConfig) (*gorm.DB, error) {
 			TablePrefix:   c.TablePrefix,
 			SingularTable: true,
 		},
+		Logger: logger.New(
+			&TKitLogger{tklog.GetLogger()},
+			logger.Config{
+				SlowThreshold:             2 * time.Second,
+				LogLevel:                  logger.Warn,
+				IgnoreRecordNotFoundError: false,
+				Colorful:                  true,
+			},
+		),
 	}
 
 	db, err := gorm.Open(dialector, gconfig)
