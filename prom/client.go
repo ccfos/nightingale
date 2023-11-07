@@ -3,7 +3,6 @@ package prom
 import (
 	"sync"
 
-	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
@@ -12,7 +11,6 @@ import (
 type PromClientMap struct {
 	sync.RWMutex
 	ctx           *ctx.Context
-	heartbeat     aconf.HeartbeatConfig
 	ReaderClients map[int64]prom.API
 	WriterClients map[int64]prom.WriterType
 }
