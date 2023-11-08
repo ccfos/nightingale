@@ -119,6 +119,7 @@ type AlertSubscribe struct {
 	ExtraConfig string       `gorm:"type:text;column:extra_config"` // extra config
 	Severities  string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
 	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096);not null;default:'[]'"`
+	Note        string       `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
 }
 
 type AlertMute struct {

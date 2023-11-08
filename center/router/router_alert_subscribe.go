@@ -99,6 +99,7 @@ func (rt *Router) alertSubscribePut(c *gin.Context) {
 			"severities",
 			"extra_config",
 			"busi_groups",
+			"note",
 		))
 	}
 

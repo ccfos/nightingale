@@ -40,6 +40,7 @@ type AlertSubscribe struct {
 	WebhooksJson      []string     `json:"webhooks" gorm:"-"`
 	ExtraConfig       string       `json:"-" grom:"extra_config"`
 	ExtraConfigJson   interface{}  `json:"extra_config" gorm:"-"` // for fe
+	Note              string       `json:"note"`
 	CreateBy          string       `json:"create_by"`
 	CreateAt          int64        `json:"create_at"`
 	UpdateBy          string       `json:"update_by"`
