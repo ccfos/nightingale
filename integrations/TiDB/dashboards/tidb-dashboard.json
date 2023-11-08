@@ -6,12 +6,12 @@
         "version": "3.0.0",
         "links": [
             {
-                "url": "http://10.100.69.11:2479/dashboard/#/slow_query",
+                "url": "",
                 "targetBlank": true,
                 "title": "慢sql监控"
             },
             {
-                "url": "http://10.100.2.15:3000",
+                "url": "",
                 "targetBlank": true,
                 "title": "详细指标-DBA"
             }
@@ -21,8 +21,7 @@
                 "name": "tidb_datasource",
                 "type": "datasource",
                 "hide": true,
-                "definition": "prometheus",
-                "defaultValue": 7
+                "definition": "prometheus"
             },
             {
                 "name": "k8s_cluster",
