@@ -407,6 +407,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/config", rt.auth(), rt.admin(), rt.configGetByKey)
 		pages.PUT("/config", rt.auth(), rt.admin(), rt.configPutByKey)
 
+		// for admin api
+		pages.GET("/user/busi-groups", rt.auth(), rt.admin(), rt.userBusiGroupsGets)
+
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
