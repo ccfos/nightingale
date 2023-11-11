@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/ccfos/nightingale">
-    <img src="doc/img/nightingale_logo_h.png" alt="nightingale - cloud native monitoring" width="240" /></a>
+    <img src="doc/img/Nightingale_L_V.png" alt="nightingale - cloud native monitoring" width="240" /></a>
 </p>
 
 <p align="center">
