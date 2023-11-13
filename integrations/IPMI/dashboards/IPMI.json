@@ -7,8 +7,7 @@
       {
         "name": "datasource",
         "type": "datasource",
-        "definition": "prometheus",
-        "defaultValue": 5
+        "definition": "prometheus"
       },
       {
         "type": "query",

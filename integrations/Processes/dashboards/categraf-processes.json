@@ -8,8 +8,7 @@
                 "name": "Datasource",
                 "label": "",
                 "type": "datasource",
-                "definition": "prometheus",
-                "defaultValue": 37
+                "definition": "prometheus"
             },
             {
                 "name": "ident",
