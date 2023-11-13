@@ -14,8 +14,7 @@
       {
         "name": "DS_PROMETHEUS",
         "type": "datasource",
-        "definition": "prometheus",
-        "defaultValue": 5
+        "definition": "prometheus"
       }
     ],
     "panels": [

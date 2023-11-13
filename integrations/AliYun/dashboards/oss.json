@@ -2551,8 +2551,7 @@
       {
         "name": "datasource",
         "type": "datasource",
-        "definition": "prometheus",
-        "defaultValue": 1
+        "definition": "prometheus"
       },
       {
         "name": "user_id",
