@@ -634,3 +634,48 @@ CREATE TABLE `es_index_pattern` (
     PRIMARY KEY (`id`),
     UNIQUE KEY (`datasource_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- Alter table for AlertRule
+ALTER TABLE alert_rules ADD COLUMN extra_config TEXT;
+
+-- Alter table for AlertSubscribe
+ALTER TABLE alert_subscribes ADD COLUMN extra_config TEXT;
+ALTER TABLE alert_subscribes ADD COLUMN severities VARCHAR(32) NOT NULL DEFAULT '';
+ALTER TABLE alert_subscribes ADD COLUMN busi_groups VARCHAR(4096) NOT NULL DEFAULT '[]';
+ALTER TABLE alert_subscribes ADD COLUMN note VARCHAR(1024) DEFAULT '' COMMENT 'note';
+
+-- Alter table for AlertMute
+ALTER TABLE alert_mutes ADD COLUMN severities VARCHAR(32) NOT NULL DEFAULT '';
+
+-- Alter table for RecordingRule
+ALTER TABLE recording_rules ADD COLUMN query_configs TEXT NOT NULL;
+ALTER TABLE recording_rules ADD COLUMN datasource_ids VARCHAR(255) DEFAULT '' COMMENT 'datasource ids';
+
+-- Rename column for AlertingEngines (if applicable)
+ALTER TABLE alerting_engines CHANGE COLUMN cluster engine_cluster VARCHAR(128) DEFAULT '' COMMENT 'n9e engine cluster';
+
+-- Drop column for ChartShare (if applicable)
+ALTER TABLE chart_shares DROP COLUMN dashboard_id;
+
+-- Alter table for TaskRecord
+ALTER TABLE task_records ADD COLUMN event_id BIGINT(20) NOT NULL DEFAULT 0 COMMENT 'event id';
+
+-- Alter table for AlertHisEvent
+CREATE INDEX idx_last_eval_time ON alert_his_events (last_eval_time);
+
+-- Alter table for Target
+ALTER TABLE targets ADD COLUMN host_ip VARCHAR(15) DEFAULT '' COMMENT 'IPv4 string';
+
+-- Alter table for Datasource
+ALTER TABLE datasources ADD COLUMN is_default TINYINT NOT NULL DEFAULT 0 COMMENT 'is default datasource';
+
+-- Alter table for Configs
+ALTER TABLE configs ADD COLUMN note VARCHAR(1024) DEFAULT '' COMMENT 'note';
+ALTER TABLE configs ADD COLUMN cval TEXT COMMENT 'config value';
+ALTER TABLE configs ADD COLUMN external INT DEFAULT 0 COMMENT '0: built-in 1: external';
+ALTER TABLE configs ADD COLUMN encrypted INT DEFAULT 0 COMMENT '0: plaintext 1: ciphertext';
+ALTER TABLE configs ADD COLUMN create_at INT DEFAULT 0 COMMENT 'create_at';
+ALTER TABLE configs ADD COLUMN create_by VARCHAR(64) DEFAULT '' COMMENT 'create_by';
+ALTER TABLE configs ADD COLUMN update_at INT DEFAULT 0 COMMENT 'update_at';
+ALTER TABLE configs ADD COLUMN update_by VARCHAR(64) DEFAULT '' COMMENT 'update_by';
+ALTER TABLE configs DROP INDEX ckey;
