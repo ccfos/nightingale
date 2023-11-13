@@ -1,3 +1,5 @@
+use n9e_v6;
+
 -- Alter table for AlertSubscribe
 ALTER TABLE alert_subscribe ADD COLUMN busi_groups VARCHAR(4096) NOT NULL DEFAULT '[]';
 ALTER TABLE alert_subscribe ADD COLUMN note VARCHAR(1024) DEFAULT '' COMMENT 'note';
