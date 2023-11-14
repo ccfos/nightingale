@@ -99,6 +99,7 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 
 		resp.Body.Close()
 		if err != nil {
+			logger.Warningf("push data with remote write:%s request got error: %v", url, err)
 			continue
 		}
 
