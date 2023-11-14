@@ -122,14 +122,10 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 			continue
 		}
 
+		resp.Body.Close()
 		if resp.StatusCode >= 400 {
 			err = fmt.Errorf("push data with remote write:%s request got status code: %v, response body: %s", url, resp.StatusCode, string(body))
 			logger.Warning(err)
-		}
-
-		resp.Body.Close()
-		if err != nil {
-			logger.Warningf("push data with remote write:%s request got error: %v", url, err)
 			continue
 		}
 
