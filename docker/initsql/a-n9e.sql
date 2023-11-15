@@ -277,7 +277,7 @@ CREATE TABLE `alert_rule` (
     `notify_repeat_step` int not null default 0 comment 'unit: min',
     `notify_max_number` int not null default 0 comment '',
     `recover_duration` int not null default 0 comment 'unit: s',
-    `callbacks` varchar(255) not null default '' comment 'split by space: http://a.com/api/x http://a.com/api/y',
+    `callbacks` varchar(1024) not null default '' comment 'split by space: http://a.com/api/x http://a.com/api/y',
     `runbook_url` varchar(255),
     `append_tags` varchar(255) not null default '' comment 'split by space: service=n9e mod=api',
     `annotations` text not null comment 'annotations',
