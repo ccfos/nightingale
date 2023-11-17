@@ -142,6 +142,14 @@ func AlertMuteGetsByBG(ctx *ctx.Context, groupId int64) (lst []AlertMute, err er
 	return
 }
 
+func AlertMuteGetsByBGIds(ctx *ctx.Context, bgIds []int64) (lst []AlertMute, err error) {
+	err = DB(ctx).Where("group_id in (?)", bgIds).Order("id desc").Find(&lst).Error
+	for i := 0; i < len(lst); i++ {
+		lst[i].DB2FE()
+	}
+	return
+}
+
 func (m *AlertMute) Verify() error {
 	if m.GroupId < 0 {
 		return errors.New("group_id invalid")
