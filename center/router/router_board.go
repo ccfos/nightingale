@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/str"
 )
 
 type boardForm struct {
@@ -204,6 +205,14 @@ func (rt *Router) boardGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 
 	boards, err := models.BoardGetsByGroupId(rt.Ctx, bgid, query)
+	ginx.NewRender(c).Data(boards, err)
+}
+
+func (rt *Router) boardGetsByGids(c *gin.Context) {
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
+	query := ginx.QueryStr(c, "query", "")
+
+	boards, err := models.BoardGetsByBGIds(rt.Ctx, gids, query)
 	ginx.NewRender(c).Data(boards, err)
 }
 

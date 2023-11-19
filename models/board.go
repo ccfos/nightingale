@@ -172,6 +172,27 @@ func BoardGetsByGroupId(ctx *ctx.Context, groupId int64, query string) ([]Board,
 	return objs, err
 }
 
+func BoardGetsByBGIds(ctx *ctx.Context, gids []int64, query string) ([]Board, error) {
+	session := DB(ctx).Where("group_id in (?)", gids).Order("name")
+
+	arr := strings.Fields(query)
+	if len(arr) > 0 {
+		for i := 0; i < len(arr); i++ {
+			if strings.HasPrefix(arr[i], "-") {
+				q := "%" + arr[i][1:] + "%"
+				session = session.Where("name not like ? and tags not like ?", q, q)
+			} else {
+				q := "%" + arr[i] + "%"
+				session = session.Where("(name like ? or tags like ?)", q, q)
+			}
+		}
+	}
+
+	var objs []Board
+	err := session.Find(&objs).Error
+	return objs, err
+}
+
 func BoardGets(ctx *ctx.Context, query, where string, args ...interface{}) ([]Board, error) {
 	session := DB(ctx).Order("name")
 	if where != "" {
