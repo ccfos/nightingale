@@ -63,8 +63,12 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 		})
 	}
 
-	user := c.MustGet("user").(*models.User)
-	ginx.NewRender(c).Data(rt.DatasourceCache.DatasourceFilter(dss, user.Id), err)
+	if !rt.Center.AnonymousAccess.PromQuerier {
+		user := c.MustGet("user").(*models.User)
+		dss = rt.DatasourceCache.DatasourceFilter(dss, user.Id)
+	}
+
+	ginx.NewRender(c).Data(dss, err)
 }
 
 func (rt *Router) datasourceUpsert(c *gin.Context) {
