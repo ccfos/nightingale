@@ -46,8 +46,6 @@ type Router struct {
 	UserCache         *memsto.UserCacheType
 	UserGroupCache    *memsto.UserGroupCacheType
 	Ctx               *ctx.Context
-
-	DatasourceCheckHook func(*gin.Context) bool
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType, pc *prom.PromClientMap, tdendgineClients *tdengine.TdengineClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType) *Router {
@@ -67,8 +65,6 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		UserCache:         uc,
 		UserGroupCache:    ugc,
 		Ctx:               ctx,
-
-		DatasourceCheckHook: func(ctx *gin.Context) bool { return false },
 	}
 }
 
@@ -180,7 +176,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.auth(), rt.promBatchQueryInstant)
-			pages.GET("/datasource/brief", rt.auth(), rt.datasourceBriefs)
+			pages.GET("/datasource/brief", rt.auth(), rt.user(), rt.datasourceBriefs)
 
 			pages.POST("/ds-query", rt.auth(), rt.QueryData)
 			pages.POST("/logs-query", rt.auth(), rt.QueryLog)
@@ -351,7 +347,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/servers", rt.auth(), rt.admin(), rt.serversGet)
 		pages.GET("/server-clusters", rt.auth(), rt.admin(), rt.serverClustersGet)
 
-		pages.POST("/datasource/list", rt.auth(), rt.datasourceList)
+		pages.POST("/datasource/list", rt.auth(), rt.user(), rt.datasourceList)
 		pages.POST("/datasource/plugin/list", rt.auth(), rt.pluginList)
 		pages.POST("/datasource/upsert", rt.auth(), rt.admin(), rt.datasourceUpsert)
 		pages.POST("/datasource/desc", rt.auth(), rt.admin(), rt.datasourceGet)

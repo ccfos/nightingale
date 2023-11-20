@@ -26,7 +26,7 @@ type listReq struct {
 }
 
 func (rt *Router) datasourceList(c *gin.Context) {
-	if rt.DatasourceCheckHook(c) {
+	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
 		return
 	}
@@ -38,8 +38,10 @@ func (rt *Router) datasourceList(c *gin.Context) {
 	category := req.Category
 	name := req.Name
 
+	user := c.MustGet("user").(*models.User)
+
 	list, err := models.GetDatasourcesGetsBy(rt.Ctx, typ, category, name, "")
-	Render(c, list, err)
+	Render(c, rt.DatasourceCache.DatasourceFilter(list, user), err)
 }
 
 func (rt *Router) datasourceGetsByService(c *gin.Context) {
@@ -48,30 +50,29 @@ func (rt *Router) datasourceGetsByService(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
-type datasourceBrief struct {
-	Id         int64  `json:"id"`
-	Name       string `json:"name"`
-	PluginType string `json:"plugin_type"`
-}
-
 func (rt *Router) datasourceBriefs(c *gin.Context) {
-	var dss []datasourceBrief
+	var dss []*models.Datasource
 	list, err := models.GetDatasourcesGetsBy(rt.Ctx, "", "", "", "")
 	ginx.Dangerous(err)
 
 	for i := range list {
-		dss = append(dss, datasourceBrief{
+		dss = append(dss, &models.Datasource{
 			Id:         list[i].Id,
 			Name:       list[i].Name,
 			PluginType: list[i].PluginType,
 		})
 	}
 
+	if !rt.Center.AnonymousAccess.PromQuerier {
+		user := c.MustGet("user").(*models.User)
+		dss = rt.DatasourceCache.DatasourceFilter(dss, user)
+	}
+
 	ginx.NewRender(c).Data(dss, err)
 }
 
 func (rt *Router) datasourceUpsert(c *gin.Context) {
-	if rt.DatasourceCheckHook(c) {
+	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
 		return
 	}
@@ -196,7 +197,7 @@ func DatasourceCheck(ds models.Datasource) error {
 }
 
 func (rt *Router) datasourceGet(c *gin.Context) {
-	if rt.DatasourceCheckHook(c) {
+	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
 		return
 	}
@@ -208,7 +209,7 @@ func (rt *Router) datasourceGet(c *gin.Context) {
 }
 
 func (rt *Router) datasourceUpdataStatus(c *gin.Context) {
-	if rt.DatasourceCheckHook(c) {
+	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
 		return
 	}
@@ -222,7 +223,7 @@ func (rt *Router) datasourceUpdataStatus(c *gin.Context) {
 }
 
 func (rt *Router) datasourceDel(c *gin.Context) {
-	if rt.DatasourceCheckHook(c) {
+	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
 		return
 	}

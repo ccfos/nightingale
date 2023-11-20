@@ -8,16 +8,19 @@ import (
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/gin-gonic/gin"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 )
 
 type DatasourceCacheType struct {
-	statTotal       int64
-	statLastUpdated int64
-	ctx             *ctx.Context
-	stats           *Stats
+	statTotal           int64
+	statLastUpdated     int64
+	ctx                 *ctx.Context
+	stats               *Stats
+	DatasourceCheckHook func(*gin.Context) bool
+	DatasourceFilter    func([]*models.Datasource, *models.User) []*models.Datasource
 
 	sync.RWMutex
 	ds map[int64]*models.Datasource // key: id
@@ -25,11 +28,13 @@ type DatasourceCacheType struct {
 
 func NewDatasourceCache(ctx *ctx.Context, stats *Stats) *DatasourceCacheType {
 	ds := &DatasourceCacheType{
-		statTotal:       -1,
-		statLastUpdated: -1,
-		ctx:             ctx,
-		stats:           stats,
-		ds:              make(map[int64]*models.Datasource),
+		statTotal:           -1,
+		statLastUpdated:     -1,
+		ctx:                 ctx,
+		stats:               stats,
+		ds:                  make(map[int64]*models.Datasource),
+		DatasourceCheckHook: func(ctx *gin.Context) bool { return false },
+		DatasourceFilter:    func(ds []*models.Datasource, user *models.User) []*models.Datasource { return ds },
 	}
 	ds.SyncDatasources()
 	return ds
