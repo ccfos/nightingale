@@ -26,7 +26,7 @@ type listReq struct {
 }
 
 func (rt *Router) datasourceList(c *gin.Context) {
-	if rt.DatasourceCheckHook(c) {
+	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
 		return
 	}
@@ -39,7 +39,7 @@ func (rt *Router) datasourceList(c *gin.Context) {
 	name := req.Name
 
 	list, err := models.GetDatasourcesGetsBy(rt.Ctx, typ, category, name, "")
-	Render(c, list, err)
+	Render(c, rt.DatasourceCache.DatasourceFilter(list), err)
 }
 
 func (rt *Router) datasourceGetsByService(c *gin.Context) {
@@ -71,7 +71,7 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 }
 
 func (rt *Router) datasourceUpsert(c *gin.Context) {
-	if rt.DatasourceCheckHook(c) {
+	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
 		return
 	}
@@ -196,7 +196,7 @@ func DatasourceCheck(ds models.Datasource) error {
 }
 
 func (rt *Router) datasourceGet(c *gin.Context) {
-	if rt.DatasourceCheckHook(c) {
+	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
 		return
 	}
@@ -208,7 +208,7 @@ func (rt *Router) datasourceGet(c *gin.Context) {
 }
 
 func (rt *Router) datasourceUpdataStatus(c *gin.Context) {
-	if rt.DatasourceCheckHook(c) {
+	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
 		return
 	}
@@ -222,7 +222,7 @@ func (rt *Router) datasourceUpdataStatus(c *gin.Context) {
 }
 
 func (rt *Router) datasourceDel(c *gin.Context) {
-	if rt.DatasourceCheckHook(c) {
+	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
 		return
 	}
