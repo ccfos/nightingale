@@ -50,26 +50,21 @@ func (rt *Router) datasourceGetsByService(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
-type datasourceBrief struct {
-	Id         int64  `json:"id"`
-	Name       string `json:"name"`
-	PluginType string `json:"plugin_type"`
-}
-
 func (rt *Router) datasourceBriefs(c *gin.Context) {
-	var dss []datasourceBrief
+	var dss []*models.Datasource
 	list, err := models.GetDatasourcesGetsBy(rt.Ctx, "", "", "", "")
 	ginx.Dangerous(err)
 
 	for i := range list {
-		dss = append(dss, datasourceBrief{
+		dss = append(dss, &models.Datasource{
 			Id:         list[i].Id,
 			Name:       list[i].Name,
 			PluginType: list[i].PluginType,
 		})
 	}
 
-	ginx.NewRender(c).Data(dss, err)
+	user := c.MustGet("user").(*models.User)
+	ginx.NewRender(c).Data(rt.DatasourceCache.DatasourceFilter(dss, user.Id), err)
 }
 
 func (rt *Router) datasourceUpsert(c *gin.Context) {
