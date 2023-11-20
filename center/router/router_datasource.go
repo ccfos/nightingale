@@ -41,7 +41,7 @@ func (rt *Router) datasourceList(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
 
 	list, err := models.GetDatasourcesGetsBy(rt.Ctx, typ, category, name, "")
-	Render(c, rt.DatasourceCache.DatasourceFilter(list, user.Id), err)
+	Render(c, rt.DatasourceCache.DatasourceFilter(list, user), err)
 }
 
 func (rt *Router) datasourceGetsByService(c *gin.Context) {
@@ -65,7 +65,7 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 
 	if !rt.Center.AnonymousAccess.PromQuerier {
 		user := c.MustGet("user").(*models.User)
-		dss = rt.DatasourceCache.DatasourceFilter(dss, user.Id)
+		dss = rt.DatasourceCache.DatasourceFilter(dss, user)
 	}
 
 	ginx.NewRender(c).Data(dss, err)
