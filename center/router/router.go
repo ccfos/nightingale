@@ -347,7 +347,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/servers", rt.auth(), rt.admin(), rt.serversGet)
 		pages.GET("/server-clusters", rt.auth(), rt.admin(), rt.serverClustersGet)
 
-		pages.POST("/datasource/list", rt.auth(), rt.datasourceList)
+		pages.POST("/datasource/list", rt.auth(), rt.user(), rt.datasourceList)
 		pages.POST("/datasource/plugin/list", rt.auth(), rt.pluginList)
 		pages.POST("/datasource/upsert", rt.auth(), rt.admin(), rt.datasourceUpsert)
 		pages.POST("/datasource/desc", rt.auth(), rt.admin(), rt.datasourceGet)

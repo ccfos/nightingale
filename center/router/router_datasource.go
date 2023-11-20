@@ -38,8 +38,10 @@ func (rt *Router) datasourceList(c *gin.Context) {
 	category := req.Category
 	name := req.Name
 
+	user := c.MustGet("user").(*models.User)
+
 	list, err := models.GetDatasourcesGetsBy(rt.Ctx, typ, category, name, "")
-	Render(c, rt.DatasourceCache.DatasourceFilter(list), err)
+	Render(c, rt.DatasourceCache.DatasourceFilter(list, user.Id), err)
 }
 
 func (rt *Router) datasourceGetsByService(c *gin.Context) {

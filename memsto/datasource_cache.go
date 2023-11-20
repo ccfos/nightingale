@@ -20,7 +20,7 @@ type DatasourceCacheType struct {
 	ctx                 *ctx.Context
 	stats               *Stats
 	DatasourceCheckHook func(*gin.Context) bool
-	DatasourceFilter    func([]*models.Datasource) []*models.Datasource
+	DatasourceFilter    func([]*models.Datasource, int64) []*models.Datasource
 
 	sync.RWMutex
 	ds map[int64]*models.Datasource // key: id
@@ -34,7 +34,7 @@ func NewDatasourceCache(ctx *ctx.Context, stats *Stats) *DatasourceCacheType {
 		stats:               stats,
 		ds:                  make(map[int64]*models.Datasource),
 		DatasourceCheckHook: func(ctx *gin.Context) bool { return false },
-		DatasourceFilter:    func(ds []*models.Datasource) []*models.Datasource { return ds },
+		DatasourceFilter:    func(ds []*models.Datasource, uid int64) []*models.Datasource { return ds },
 	}
 	ds.SyncDatasources()
 	return ds
