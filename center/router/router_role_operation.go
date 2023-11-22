@@ -18,6 +18,15 @@ func (rt *Router) operationOfRole(c *gin.Context) {
 		ginx.Bomb(http.StatusOK, "role not found")
 	}
 
+	if role.Name == "Admin" {
+		var lst []string
+		for _, ops := range cconf.Operations.Ops {
+			lst = append(lst, ops.Ops...)
+		}
+		ginx.NewRender(c).Data(lst, nil)
+		return
+	}
+
 	ops, err := models.OperationsOfRole(rt.Ctx, []string{role.Name})
 	ginx.NewRender(c).Data(ops, err)
 }
