@@ -96,7 +96,7 @@ func (fs *FeishuCardSender) Send(ctx MessageContext) {
 		return
 	}
 	urls, _ := fs.extract(ctx.Users)
-	message := BuildTplMessage(fs.tpl, ctx.Events)
+	message := BuildTplMessage(models.FeishuCard, fs.tpl, ctx.Events)
 	color := "red"
 	lowerUnicode := strings.ToLower(message)
 	if strings.Count(lowerUnicode, Recovered) > 0 && strings.Count(lowerUnicode, Triggered) > 0 {

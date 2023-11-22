@@ -31,7 +31,7 @@ func (fs *FeishuSender) Send(ctx MessageContext) {
 		return
 	}
 	urls, ats := fs.extract(ctx.Users)
-	message := BuildTplMessage(fs.tpl, ctx.Events)
+	message := BuildTplMessage(models.Feishu, fs.tpl, ctx.Events)
 	for _, url := range urls {
 		body := feishu{
 			Msgtype: "text",

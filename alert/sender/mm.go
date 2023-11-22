@@ -36,7 +36,7 @@ func (ms *MmSender) Send(ctx MessageContext) {
 	if len(urls) == 0 {
 		return
 	}
-	message := BuildTplMessage(ms.tpl, ctx.Events)
+	message := BuildTplMessage(models.Mm, ms.tpl, ctx.Events)
 
 	SendMM(MatterMostMessage{
 		Text:   message,
