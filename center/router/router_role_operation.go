@@ -3,9 +3,11 @@ package router
 import (
 	"net/http"
 
+	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 )
 
 func (rt *Router) operationOfRole(c *gin.Context) {
@@ -39,5 +41,11 @@ func (rt *Router) roleBindOperation(c *gin.Context) {
 }
 
 func (rt *Router) operations(c *gin.Context) {
-	ginx.NewRender(c).Data(rt.Operations.Ops, nil)
+	var ops []cconf.Ops
+	for _, v := range rt.Operations.Ops {
+		v.Cname = i18n.Sprintf(c.GetHeader("X-Language"), v.Cname)
+		ops = append(ops, v)
+	}
+
+	ginx.NewRender(c).Data(ops, nil)
 }
