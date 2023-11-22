@@ -49,7 +49,6 @@ var I18N = `
       "url path invalid":"url非法",
       "no such server":"无此实例",
       "admin role can not be modified":"管理员角色不允许修改",
-	  "All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s":"全部用户缺少通知渠道配置。请检查缺少的token（每个渠道至少配置一个用户）。 %s"
   }
 }
 `

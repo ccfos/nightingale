@@ -30,7 +30,7 @@ require (
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/tidwall/gjson v1.14.0
-	github.com/toolkits/pkg v1.3.5
+	github.com/toolkits/pkg v1.3.6
 	golang.org/x/oauth2 v0.10.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/yaml.v2 v2.4.0
