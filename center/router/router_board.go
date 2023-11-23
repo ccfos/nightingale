@@ -212,7 +212,7 @@ func (rt *Router) boardClone(c *gin.Context) {
 	bo := rt.Board(ginx.UrlParamInt64(c, "bid"))
 
 	newBoard := &models.Board{
-		Name:     bo.Name + " Copy",
+		Name:     bo.Name + " Cloned",
 		Tags:     bo.Tags,
 		GroupId:  bo.GroupId,
 		CreateBy: me.Username,
