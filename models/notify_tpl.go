@@ -17,11 +17,15 @@ import (
 )
 
 type NotifyTpl struct {
-	Id      int64  `json:"id"`
-	Name    string `json:"name"`
-	Channel string `json:"channel"`
-	Content string `json:"content"`
-	BuiltIn bool   `json:"built_in" gorm:"-"`
+	Id       int64  `json:"id"`
+	Name     string `json:"name"`
+	Channel  string `json:"channel"`
+	Content  string `json:"content"`
+	BuiltIn  bool   `json:"built_in" gorm:"-"`
+	CreateAt int64  `json:"create_at"`
+	CreateBy string `json:"create_by"`
+	UpdateAt int64  `json:"update_at"`
+	UpdateBy string `json:"update_by"`
 }
 
 func (n *NotifyTpl) TableName() string {
@@ -37,11 +41,11 @@ func (n *NotifyTpl) Create(c *ctx.Context) error {
 }
 
 func (n *NotifyTpl) UpdateContent(c *ctx.Context) error {
-	return DB(c).Model(n).Update("content", n.Content).Error
+	return DB(c).Model(n).Select("content", "update_at", "update_by").Updates(n).Error
 }
 
 func (n *NotifyTpl) Update(c *ctx.Context) error {
-	return DB(c).Model(n).Select("name").Updates(n).Error
+	return DB(c).Model(n).Select("name", "update_at", "update_by").Updates(n).Error
 }
 
 func (n *NotifyTpl) CreateIfNotExists(c *ctx.Context, channel string) error {
@@ -100,6 +104,13 @@ func ListTpls(c *ctx.Context) (map[string]*template.Template, error) {
 		tpls[notifyTpl.Channel] = tpl
 	}
 	return tpls, nil
+}
+
+// get notify by id
+func NotifyTplGet(c *ctx.Context, id int64) (*NotifyTpl, error) {
+	var tpl NotifyTpl
+	err := DB(c).Where("id=?", id).First(&tpl).Error
+	return &tpl, err
 }
 
 func InitNotifyConfig(c *ctx.Context, tplDir string) {

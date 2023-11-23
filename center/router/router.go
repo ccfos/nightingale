@@ -364,11 +364,11 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/operation", rt.operations)
 
 		pages.GET("/notify-tpls", rt.auth(), rt.user(), rt.perm("/help/notification-tpls"), rt.notifyTplGets)
-		pages.PUT("/notify-tpl/content", rt.auth(), rt.admin(), rt.notifyTplUpdateContent)
-		pages.PUT("/notify-tpl", rt.auth(), rt.admin(), rt.notifyTplUpdate)
-		pages.POST("/notify-tpl", rt.auth(), rt.admin(), rt.notifyTplAdd)
-		pages.DELETE("/notify-tpl/:id", rt.auth(), rt.admin(), rt.notifyTplDel)
-		pages.POST("/notify-tpl/preview", rt.auth(), rt.admin(), rt.notifyTplPreview)
+		pages.PUT("/notify-tpl/content", rt.auth(), rt.user(), rt.notifyTplUpdateContent)
+		pages.PUT("/notify-tpl", rt.auth(), rt.user(), rt.notifyTplUpdate)
+		pages.POST("/notify-tpl", rt.auth(), rt.user(), rt.notifyTplAdd)
+		pages.DELETE("/notify-tpl/:id", rt.auth(), rt.user(), rt.notifyTplDel)
+		pages.POST("/notify-tpl/preview", rt.auth(), rt.user(), rt.notifyTplPreview)
 
 		pages.GET("/sso-configs", rt.auth(), rt.admin(), rt.ssoConfigGets)
 		pages.PUT("/sso-config", rt.auth(), rt.admin(), rt.ssoConfigUpdate)
