@@ -36,6 +36,11 @@ func (rt *Router) alertSubscribeGetsByGids(c *gin.Context) {
 		ginx.NewRender(c, http.StatusBadRequest).Message("arg(gids) is empty")
 		return
 	}
+
+	for _, gid := range gids {
+		rt.bgroCheck(c, gid)
+	}
+
 	lst, err := models.AlertSubscribeGetsByBGIds(rt.Ctx, gids)
 	ginx.Dangerous(err)
 
