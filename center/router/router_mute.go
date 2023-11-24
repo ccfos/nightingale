@@ -23,6 +23,10 @@ func (rt *Router) alertMuteGetsByBG(c *gin.Context) {
 
 func (rt *Router) alertMuteGetsByGids(c *gin.Context) {
 	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
+	for _, gid := range gids {
+		rt.bgroCheck(c, gid)
+	}
+
 	lst, err := models.AlertMuteGetsByBGIds(rt.Ctx, gids)
 
 	ginx.NewRender(c).Data(lst, err)

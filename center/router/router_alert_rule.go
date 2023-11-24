@@ -30,6 +30,11 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 
 func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
+
+	for _, gid := range gids {
+		rt.bgroCheck(c, gid)
+	}
+
 	ars, err := models.AlertRuleGetsByBGIds(rt.Ctx, gids)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)

@@ -212,6 +212,10 @@ func (rt *Router) boardGetsByGids(c *gin.Context) {
 	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
 	query := ginx.QueryStr(c, "query", "")
 
+	for _, gid := range gids {
+		rt.bgroCheck(c, gid)
+	}
+
 	boards, err := models.BoardGetsByBGIds(rt.Ctx, gids, query)
 	ginx.NewRender(c).Data(boards, err)
 }
