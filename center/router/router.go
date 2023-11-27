@@ -413,6 +413,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/config", rt.auth(), rt.admin(), rt.configGetByKey)
 		pages.PUT("/config", rt.auth(), rt.admin(), rt.configPutByKey)
+		pages.GET("/site-info", rt.siteInfo)
 
 		// for admin api
 		pages.GET("/user/busi-groups", rt.auth(), rt.admin(), rt.userBusiGroupsGets)
