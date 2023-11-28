@@ -11,12 +11,34 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
+	"github.com/toolkits/pkg/str"
 )
 
 // Return all, front-end search and paging
 func (rt *Router) alertRuleGets(c *gin.Context) {
 	busiGroupId := ginx.UrlParamInt64(c, "id")
 	ars, err := models.AlertRuleGets(rt.Ctx, busiGroupId)
+	if err == nil {
+		cache := make(map[int64]*models.UserGroup)
+		for i := 0; i < len(ars); i++ {
+			ars[i].FillNotifyGroups(rt.Ctx, cache)
+			ars[i].FillSeverities()
+		}
+	}
+	ginx.NewRender(c).Data(ars, err)
+}
+
+func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
+	if len(gids) == 0 {
+		ginx.NewRender(c, http.StatusBadRequest).Message("arg(gids) is empty")
+		return
+	}
+	for _, gid := range gids {
+		rt.bgroCheck(c, gid)
+	}
+
+	ars, err := models.AlertRuleGetsByBGIds(rt.Ctx, gids)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(ars); i++ {

@@ -10,12 +10,29 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/str"
 )
 
 // Return all, front-end search and paging
 func (rt *Router) alertMuteGetsByBG(c *gin.Context) {
 	bgid := ginx.UrlParamInt64(c, "id")
 	lst, err := models.AlertMuteGetsByBG(rt.Ctx, bgid)
+
+	ginx.NewRender(c).Data(lst, err)
+}
+
+func (rt *Router) alertMuteGetsByGids(c *gin.Context) {
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
+	if len(gids) == 0 {
+		ginx.NewRender(c, http.StatusBadRequest).Message("arg(gids) is empty")
+		return
+	}
+
+	for _, gid := range gids {
+		rt.bgroCheck(c, gid)
+	}
+
+	lst, err := models.AlertMuteGetsByBGIds(rt.Ctx, gids)
 
 	ginx.NewRender(c).Data(lst, err)
 }

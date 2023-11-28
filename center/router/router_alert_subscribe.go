@@ -8,12 +8,40 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/str"
 )
 
 // Return all, front-end search and paging
 func (rt *Router) alertSubscribeGets(c *gin.Context) {
 	bgid := ginx.UrlParamInt64(c, "id")
 	lst, err := models.AlertSubscribeGets(rt.Ctx, bgid)
+	ginx.Dangerous(err)
+
+	ugcache := make(map[int64]*models.UserGroup)
+	rulecache := make(map[int64]string)
+
+	for i := 0; i < len(lst); i++ {
+		ginx.Dangerous(lst[i].FillUserGroups(rt.Ctx, ugcache))
+		ginx.Dangerous(lst[i].FillRuleName(rt.Ctx, rulecache))
+		ginx.Dangerous(lst[i].FillDatasourceIds(rt.Ctx))
+		ginx.Dangerous(lst[i].DB2FE())
+	}
+
+	ginx.NewRender(c).Data(lst, err)
+}
+
+func (rt *Router) alertSubscribeGetsByGids(c *gin.Context) {
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
+	if len(gids) == 0 {
+		ginx.NewRender(c, http.StatusBadRequest).Message("arg(gids) is empty")
+		return
+	}
+
+	for _, gid := range gids {
+		rt.bgroCheck(c, gid)
+	}
+
+	lst, err := models.AlertSubscribeGetsByBGIds(rt.Ctx, gids)
 	ginx.Dangerous(err)
 
 	ugcache := make(map[int64]*models.UserGroup)
