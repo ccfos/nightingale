@@ -174,5 +174,6 @@ ops:
   - "/help/notification-tpls"
   - "/help/notification-settings"
   - "/help/migrate"
+  - "/site-settings"
 `
 )
