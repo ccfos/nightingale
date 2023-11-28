@@ -25,7 +25,7 @@ type DBConfig struct {
 	TablePrefix  string
 }
 
-var t_log = logger.New(
+var gormLogger = logger.New(
 	&TKitLogger{tklog.GetLogger()},
 	logger.Config{
 		SlowThreshold:             2 * time.Second,
@@ -34,38 +34,38 @@ var t_log = logger.New(
 		Colorful:                  true,
 	},
 )
-var t_log_level map[string]logger.LogLevel
+var logLevelMap map[string]logger.LogLevel
 
 func init() {
-	t_log_level = make(map[string]logger.LogLevel, 8)
-	v := reflect.ValueOf(t_log).Elem()
-	t_log_level[v.FieldByName("infoStr").String()] = logger.Info
-	t_log_level[v.FieldByName("warnStr").String()] = logger.Warn
-	t_log_level[v.FieldByName("errStr").String()] = logger.Error
-	t_log_level[v.FieldByName("traceStr").String()] = logger.Info
-	t_log_level[v.FieldByName("traceWarnStr").String()] = logger.Warn
-	t_log_level[v.FieldByName("traceErrStr").String()] = logger.Error
+	logLevelMap = make(map[string]logger.LogLevel, 8)
+	v := reflect.ValueOf(gormLogger).Elem()
+	logLevelMap[v.FieldByName("infoStr").String()] = logger.Info
+	logLevelMap[v.FieldByName("warnStr").String()] = logger.Warn
+	logLevelMap[v.FieldByName("errStr").String()] = logger.Error
+	logLevelMap[v.FieldByName("traceStr").String()] = logger.Info
+	logLevelMap[v.FieldByName("traceWarnStr").String()] = logger.Warn
+	logLevelMap[v.FieldByName("traceErrStr").String()] = logger.Error
 
 }
 
 type TKitLogger struct {
-	logger *tklog.Logger
+	writer *tklog.Logger
 }
 
 func (l *TKitLogger) Printf(s string, i ...interface{}) {
-	level, ok := t_log_level[s]
+	level, ok := logLevelMap[s]
 	if !ok {
-		l.logger.Debugf(s, i...)
+		l.writer.Debugf(s, i...)
 	}
 	switch level {
 	case logger.Info:
-		l.logger.Infof(s, i...)
+		l.writer.Infof(s, i...)
 	case logger.Warn:
-		l.logger.Warningf(s, i...)
+		l.writer.Warningf(s, i...)
 	case logger.Error:
-		l.logger.Errorf(s, i...)
+		l.writer.Errorf(s, i...)
 	default:
-		l.logger.Debugf(s, i...)
+		l.writer.Debugf(s, i...)
 	}
 }
 
@@ -87,7 +87,7 @@ func New(c DBConfig) (*gorm.DB, error) {
 			TablePrefix:   c.TablePrefix,
 			SingularTable: true,
 		},
-		Logger: t_log,
+		Logger: gormLogger,
 	}
 
 	db, err := gorm.Open(dialector, gconfig)
