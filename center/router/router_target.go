@@ -43,15 +43,14 @@ func (rt *Router) targetGetsByHostFilter(c *gin.Context) {
 }
 
 func (rt *Router) targetGets(c *gin.Context) {
-	bgid := ginx.QueryInt64(c, "bgid", -1)
-	bgids := str.IdsInt64(ginx.QueryStr(c, "bgids"), ",")
+	bgids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 30)
 	downtime := ginx.QueryInt64(c, "downtime", 0)
 	dsIds := queryDatasourceIds(c)
 
 	var err error
-	if bgid == -1 && len(bgids) == 0 {
+	if len(bgids) == 0 {
 		user := c.MustGet("user").(*models.User)
 		if !user.IsAdmin() {
 			// 如果是非 admin 用户，全部对象的情况，找到用户有权限的业务组
@@ -64,8 +63,6 @@ func (rt *Router) targetGets(c *gin.Context) {
 			// 将未分配业务组的对象也加入到列表中
 			bgids = append(bgids, 0)
 		}
-	} else if bgid != -1 {
-		bgids = append(bgids, bgid)
 	}
 
 	total, err := models.TargetTotal(rt.Ctx, bgids, dsIds, query, downtime)
