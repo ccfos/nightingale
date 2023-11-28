@@ -95,6 +95,11 @@ func InsertPermPoints(db *gorm.DB) {
 		Operation: "/permissions",
 	})
 
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/ibex-settings",
+	})
+
 	for _, op := range ops {
 		exists, err := models.Exists(db.Model(&models.RoleOperation{}).Where("operation = ? and role_name = ?", op.Operation, op.RoleName))
 		if err != nil {
@@ -119,6 +124,7 @@ type AlertSubscribe struct {
 	ExtraConfig string       `gorm:"type:text;column:extra_config"` // extra config
 	Severities  string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
 	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096);not null;default:'[]'"`
+	Note        string       `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
 }
 
 type AlertMute struct {
@@ -144,7 +150,8 @@ type AlertHisEvent struct {
 	LastEvalTime int64 `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
 }
 type Target struct {
-	HostIp string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip"`
+	HostIp       string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip"`
+	AgentVersion string `gorm:"column:agent_version;varchar(255);default:'';comment:agent version;index:idx_agent_version"`
 }
 
 type Datasource struct {

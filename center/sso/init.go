@@ -69,6 +69,7 @@ Email = 'email'
 const CAS = `
 Enable = false
 SsoAddr = 'https://cas.example.com/cas/'
+# LoginPath = ''
 RedirectURL = 'http://127.0.0.1:18000/callback/cas'
 DisplayName = 'CAS登录'
 CoverAttributes = false

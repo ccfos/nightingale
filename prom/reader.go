@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
@@ -17,12 +16,11 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func NewPromClient(ctx *ctx.Context, heartbeat aconf.HeartbeatConfig) *PromClientMap {
+func NewPromClient(ctx *ctx.Context) *PromClientMap {
 	pc := &PromClientMap{
 		ReaderClients: make(map[int64]prom.API),
 		WriterClients: make(map[int64]prom.WriterType),
 		ctx:           ctx,
-		heartbeat:     heartbeat,
 	}
 	pc.InitReader()
 	return pc

@@ -139,6 +139,7 @@ ops:
     - "/job-tasks"
     - "/job-tasks/add"
     - "/job-tasks/put"
+    - "/ibex-settings"
 
 - name: user
   cname: 用户管理

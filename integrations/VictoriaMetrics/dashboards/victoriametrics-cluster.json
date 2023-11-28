@@ -26,8 +26,7 @@
                 "name": "datasource",
                 "label": "",
                 "type": "datasource",
-                "definition": "prometheus",
-                "defaultValue": ""
+                "definition": "prometheus"
             },
             {
                 "name": "job",
