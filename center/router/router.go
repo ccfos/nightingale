@@ -171,7 +171,6 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/tdengine-tables", rt.tdengineTables)
 			pages.POST("/tdengine-columns", rt.tdengineColumns)
 
-			pages.GET("/sql-template", rt.QuerySqlTemplate)
 		} else {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
@@ -186,6 +185,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/tdengine-columns", rt.auth(), rt.tdengineColumns)
 		}
 
+		pages.GET("/sql-template", rt.QuerySqlTemplate)
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
 		pages.POST("/auth/logout", rt.jwtMock(), rt.auth(), rt.logoutPost)
 		pages.POST("/auth/refresh", rt.jwtMock(), rt.refreshPost)
