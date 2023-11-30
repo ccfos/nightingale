@@ -48,7 +48,7 @@ var I18N = `
       "invalid ibex address: %s":"ibex %s 地址无效",
       "url path invalid":"url非法",
       "no such server":"无此实例",
-      "admin role can not be modified":"管理员角色不允许修改",
+      "admin role can not be modified":"管理员角色不允许修改"
   }
 }
 `
