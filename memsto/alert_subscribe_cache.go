@@ -141,6 +141,10 @@ func (c *AlertSubscribeCacheType) syncAlertSubscribes() error {
 	subs := make(map[int64][]*models.AlertSubscribe)
 
 	for i := 0; i < len(lst); i++ {
+		if lst[i].Disabled == 1 {
+			continue
+		}
+
 		err = lst[i].Parse()
 		if err != nil {
 			logger.Warningf("failed to parse alert subscribe, id: %d", lst[i].Id)

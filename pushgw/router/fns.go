@@ -99,6 +99,9 @@ func (rt *Router) debugSample(remoteAddr string, v *prompb.TimeSeries) {
 
 func (rt *Router) ForwardByIdent(clientIP string, ident string, v *prompb.TimeSeries) {
 	rt.BeforePush(clientIP, v)
+	if v == nil {
+		return
+	}
 	rt.Writers.PushSample(ident, *v)
 }
 
@@ -115,6 +118,6 @@ func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.Time
 }
 
 func (rt *Router) BeforePush(clientIP string, v *prompb.TimeSeries) {
-	rt.EnrichLabels(v)
+	rt.HandleTS(v)
 	rt.debugSample(clientIP, v)
 }

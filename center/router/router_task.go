@@ -30,10 +30,46 @@ func (rt *Router) taskGets(c *gin.Context) {
 
 	beginTime := time.Now().Unix() - days*24*3600
 
-	total, err := models.TaskRecordTotal(rt.Ctx, bgid, beginTime, creator, query)
+	total, err := models.TaskRecordTotal(rt.Ctx, []int64{bgid}, beginTime, creator, query)
 	ginx.Dangerous(err)
 
-	list, err := models.TaskRecordGets(rt.Ctx, bgid, beginTime, creator, query, limit, ginx.Offset(c, limit))
+	list, err := models.TaskRecordGets(rt.Ctx, []int64{bgid}, beginTime, creator, query, limit, ginx.Offset(c, limit))
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(gin.H{
+		"total": total,
+		"list":  list,
+	}, nil)
+}
+
+func (rt *Router) taskGetsByGids(c *gin.Context) {
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
+	if len(gids) == 0 {
+		ginx.NewRender(c, http.StatusBadRequest).Message("arg(gids) is empty")
+		return
+	}
+
+	for _, gid := range gids {
+		rt.bgroCheck(c, gid)
+	}
+
+	mine := ginx.QueryBool(c, "mine", false)
+	days := ginx.QueryInt64(c, "days", 7)
+	limit := ginx.QueryInt(c, "limit", 20)
+	query := ginx.QueryStr(c, "query", "")
+	user := c.MustGet("user").(*models.User)
+
+	creator := ""
+	if mine {
+		creator = user.Username
+	}
+
+	beginTime := time.Now().Unix() - days*24*3600
+
+	total, err := models.TaskRecordTotal(rt.Ctx, gids, beginTime, creator, query)
+	ginx.Dangerous(err)
+
+	list, err := models.TaskRecordGets(rt.Ctx, gids, beginTime, creator, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{

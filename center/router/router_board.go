@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/str"
 )
 
 type boardForm struct {
@@ -207,12 +208,24 @@ func (rt *Router) boardGets(c *gin.Context) {
 	ginx.NewRender(c).Data(boards, err)
 }
 
+func (rt *Router) boardGetsByGids(c *gin.Context) {
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
+	query := ginx.QueryStr(c, "query", "")
+
+	for _, gid := range gids {
+		rt.bgroCheck(c, gid)
+	}
+
+	boards, err := models.BoardGetsByBGIds(rt.Ctx, gids, query)
+	ginx.NewRender(c).Data(boards, err)
+}
+
 func (rt *Router) boardClone(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	bo := rt.Board(ginx.UrlParamInt64(c, "bid"))
 
 	newBoard := &models.Board{
-		Name:     bo.Name + " Copy",
+		Name:     bo.Name + " Cloned",
 		Tags:     bo.Tags,
 		GroupId:  bo.GroupId,
 		CreateBy: me.Username,

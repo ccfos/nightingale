@@ -40,6 +40,7 @@ type AlertSubscribe struct {
 	WebhooksJson      []string     `json:"webhooks" gorm:"-"`
 	ExtraConfig       string       `json:"-" grom:"extra_config"`
 	ExtraConfigJson   interface{}  `json:"extra_config" gorm:"-"` // for fe
+	Note              string       `json:"note"`
 	CreateBy          string       `json:"create_by"`
 	CreateAt          int64        `json:"create_at"`
 	UpdateBy          string       `json:"update_by"`
@@ -55,6 +56,11 @@ func (s *AlertSubscribe) TableName() string {
 
 func AlertSubscribeGets(ctx *ctx.Context, groupId int64) (lst []AlertSubscribe, err error) {
 	err = DB(ctx).Where("group_id=?", groupId).Order("id desc").Find(&lst).Error
+	return
+}
+
+func AlertSubscribeGetsByBGIds(ctx *ctx.Context, bgIds []int64) (lst []AlertSubscribe, err error) {
+	err = DB(ctx).Where("group_id in (?)", bgIds).Order("id desc").Find(&lst).Error
 	return
 }
 

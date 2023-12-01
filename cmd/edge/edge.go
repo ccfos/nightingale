@@ -59,7 +59,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		userCache := memsto.NewUserCache(ctx, syncStats)
 		userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 
-		promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
+		promClients := prom.NewPromClient(ctx)
 		tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
 		externalProcessors := process.NewExternalProcessors()
 
