@@ -97,16 +97,50 @@ func (rt *Router) debugSample(remoteAddr string, v *prompb.TimeSeries) {
 	logger.Debugf("--> debug sample from: %s, sample: %s", remoteAddr, v.String())
 }
 
+func (rt *Router) FilterSample(remoteAddr string, v *prompb.TimeSeries) bool {
+	filter := rt.Pushgw.DropSample
+	if len(filter) == 0 {
+		return false
+	}
+
+	labelMap := make(map[string]string)
+	for i := 0; i < len(v.Labels); i++ {
+		labelMap[v.Labels[i].Name] = v.Labels[i].Value
+	}
+
+	for k, v := range filter {
+		labelValue, exists := labelMap[k]
+		if !exists {
+			return false
+		}
+
+		if labelValue != v {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (rt *Router) ForwardByIdent(clientIP string, ident string, v *prompb.TimeSeries) {
 	rt.BeforePush(clientIP, v)
 	if v == nil {
 		return
 	}
+
+	if rt.FilterSample(clientIP, v) {
+		return
+	}
+
 	rt.Writers.PushSample(ident, *v)
 }
 
 func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.TimeSeries) {
 	rt.BeforePush(clientIP, v)
+
+	if rt.FilterSample(clientIP, v) {
+		return
+	}
 
 	var hashkey string
 	if len(metric) >= 2 {
