@@ -98,8 +98,8 @@ func (rt *Router) debugSample(remoteAddr string, v *prompb.TimeSeries) {
 }
 
 func (rt *Router) FilterSample(remoteAddr string, v *prompb.TimeSeries) bool {
-	filter := rt.Pushgw.DropSample
-	if len(filter) == 0 {
+	filters := rt.Pushgw.DropSample
+	if len(filters) == 0 {
 		return false
 	}
 
@@ -108,8 +108,22 @@ func (rt *Router) FilterSample(remoteAddr string, v *prompb.TimeSeries) bool {
 		labelMap[v.Labels[i].Name] = v.Labels[i].Value
 	}
 
-	for k, v := range filter {
-		labelValue, exists := labelMap[k]
+	for _, filter := range filters {
+		if len(filter) == 0 {
+			continue
+		}
+
+		if matchSample(filter, labelMap) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func matchSample(filterMap, sampleMap map[string]string) bool {
+	for k, v := range filterMap {
+		labelValue, exists := sampleMap[k]
 		if !exists {
 			return false
 		}
@@ -118,7 +132,6 @@ func (rt *Router) FilterSample(remoteAddr string, v *prompb.TimeSeries) bool {
 			return false
 		}
 	}
-
 	return true
 }
 
