@@ -11,6 +11,7 @@ import (
 
 type Pushgw struct {
 	BusiGroupLabelKey string
+	IdentMetrics      []string
 	WriteConcurrency  int
 	LabelRewrite      bool
 	ForceUseServerTS  bool
