@@ -16,6 +16,7 @@ type Pushgw struct {
 	LabelRewrite      bool
 	ForceUseServerTS  bool
 	DebugSample       map[string]string
+	DropSample        []map[string]string
 	WriterOpt         WriterGlobalOpt
 	Writers           []WriterOptions
 }
