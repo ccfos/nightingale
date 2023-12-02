@@ -169,3 +169,10 @@ type Configs struct {
 	UpdateAt  int64  `gorm:"column:update_at;type:int;default:0;comment:update_at"`
 	UpdateBy  string `gorm:"column:update_by;type:varchar(64);default:'';comment:update_by"`
 }
+
+type NotifyTpl struct {
+	CreateAt int64  `gorm:"column:create_at;type:int;default:0;comment:create_at"`
+	CreateBy string `gorm:"column:create_by;type:varchar(64);default:'';comment:cerate_by"`
+	UpdateAt int64  `gorm:"column:update_at;type:int;default:0;comment:update_at"`
+	UpdateBy string `gorm:"column:update_by;type:varchar(64);default:'';comment:update_by"`
+}

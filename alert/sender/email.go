@@ -30,11 +30,11 @@ func (es *EmailSender) Send(ctx MessageContext) {
 	var subject string
 
 	if es.subjectTpl != nil {
-		subject = BuildTplMessage(es.subjectTpl, []*models.AlertCurEvent{ctx.Events[0]})
+		subject = BuildTplMessage(models.Email, es.subjectTpl, []*models.AlertCurEvent{ctx.Events[0]})
 	} else {
 		subject = ctx.Events[0].RuleName
 	}
-	content := BuildTplMessage(es.contentTpl, ctx.Events)
+	content := BuildTplMessage(models.Email, es.contentTpl, ctx.Events)
 	es.WriteEmail(subject, content, tos)
 
 	ctx.Stats.AlertNotifyTotal.WithLabelValues(models.Email).Add(float64(len(tos)))

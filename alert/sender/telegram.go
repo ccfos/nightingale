@@ -30,7 +30,7 @@ func (ts *TelegramSender) Send(ctx MessageContext) {
 		return
 	}
 	tokens := ts.extract(ctx.Users)
-	message := BuildTplMessage(ts.tpl, ctx.Events)
+	message := BuildTplMessage(models.Telegram, ts.tpl, ctx.Events)
 
 	SendTelegram(TelegramMessage{
 		Text:   message,

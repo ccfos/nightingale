@@ -55,11 +55,11 @@ func BuildMessageContext(rule *models.AlertRule, events []*models.AlertCurEvent,
 	}
 }
 
-type BuildTplMessageFunc func(tpl *template.Template, events []*models.AlertCurEvent) string
+type BuildTplMessageFunc func(channel string, tpl *template.Template, events []*models.AlertCurEvent) string
 
 var BuildTplMessage BuildTplMessageFunc = buildTplMessage
 
-func buildTplMessage(tpl *template.Template, events []*models.AlertCurEvent) string {
+func buildTplMessage(channel string, tpl *template.Template, events []*models.AlertCurEvent) string {
 	if tpl == nil {
 		return "tpl for current sender not found, please check configuration"
 	}

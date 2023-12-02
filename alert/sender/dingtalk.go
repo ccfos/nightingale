@@ -41,7 +41,7 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 	if len(urls) == 0 {
 		return
 	}
-	message := BuildTplMessage(ds.tpl, ctx.Events)
+	message := BuildTplMessage(models.Dingtalk, ds.tpl, ctx.Events)
 
 	for _, url := range urls {
 		var body dingtalk

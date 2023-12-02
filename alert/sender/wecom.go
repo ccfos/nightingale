@@ -25,7 +25,7 @@ func (ws *WecomSender) Send(ctx MessageContext) {
 		return
 	}
 	urls := ws.extract(ctx.Users)
-	message := BuildTplMessage(ws.tpl, ctx.Events)
+	message := BuildTplMessage(models.Wecom, ws.tpl, ctx.Events)
 	for _, url := range urls {
 		body := wecom{
 			Msgtype: "markdown",
