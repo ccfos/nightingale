@@ -219,6 +219,10 @@ func (w CustomResponseWriter) WriteString(s string) (int, error) {
 	return w.ResponseWriter.WriteString(s)
 }
 
+func (w CustomResponseWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
+}
+
 // LoggerWithConfig instance a Logger middleware with config.
 func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 	formatter := conf.Formatter
