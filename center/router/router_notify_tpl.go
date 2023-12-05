@@ -68,7 +68,7 @@ func (rt *Router) notifyTplUpdate(c *gin.Context) {
 	}
 
 	// get the count of the same channel and name but different id
-	count, err := models.Count(models.DB(rt.Ctx).Where("channel = ? or name = ? and id <> ?", f.Channel, f.Name, f.Id))
+	count, err := models.Count(models.DB(rt.Ctx).Model(&models.NotifyTpl{}).Where("channel = ? or name = ? and id <> ?", f.Channel, f.Name, f.Id))
 	ginx.Dangerous(err)
 	if count != 0 {
 		ginx.Bomb(200, "Refuse to create duplicate channel or name")
@@ -164,7 +164,7 @@ func (rt *Router) notifyTplAdd(c *gin.Context) {
 	f.Channel = strings.TrimSpace(f.Channel)
 	ginx.Dangerous(templateValidate(f))
 
-	count, err := models.Count(models.DB(rt.Ctx).Where("channel = ? or name = ? and id <> ?", f.Channel, f.Name, f.Id))
+	count, err := models.Count(models.DB(rt.Ctx).Model(&models.NotifyTpl{}).Where("channel = ? or name = ?", f.Channel, f.Name))
 	ginx.Dangerous(err)
 	if count != 0 {
 		ginx.Bomb(200, "Refuse to create duplicate channel(unique)")
