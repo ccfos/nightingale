@@ -12,7 +12,7 @@ import (
 type Pushgw struct {
 	BusiGroupLabelKey   string
 	IdentMetrics        []string
-	IdentStatsThreshold int64
+	IdentStatsThreshold int
 	WriteConcurrency    int
 	LabelRewrite        bool
 	ForceUseServerTS    bool

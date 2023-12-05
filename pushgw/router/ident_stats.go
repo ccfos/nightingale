@@ -18,7 +18,7 @@ func (rt *Router) ReportIdentStats() (interface{}, bool) {
 		m := IdentStats.Items()
 		IdentStats.Flush()
 		for k, v := range m {
-			count := v.Object.(int64)
+			count := v.Object.(int)
 			if count > rt.Pushgw.IdentStatsThreshold {
 				GaugeSampleReceivedByIdent.WithLabelValues(k).Set(float64(count))
 			}
