@@ -20,7 +20,6 @@ type Stats struct {
 	CounterRecordEval           *prometheus.CounterVec
 	CounterRecordEvalErrorTotal *prometheus.CounterVec
 	CounterMuteTotal            *prometheus.CounterVec
-	CounterExternalErrorTotal   *prometheus.CounterVec
 	CounterRuleEvalErrorTotal   *prometheus.CounterVec
 	CounterHeartbeatErrorTotal  *prometheus.CounterVec
 }
