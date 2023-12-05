@@ -66,7 +66,7 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 		eventType = "recovery"
 	}
 
-	e.dispatch.astats.CounterAlertsTotal.WithLabelValues(event.Cluster, eventType, event.GroupName).Inc()
+	e.dispatch.Astats.CounterAlertsTotal.WithLabelValues(event.Cluster, eventType, event.GroupName).Inc()
 
 	if err := event.ParseRule("rule_name"); err != nil {
 		event.RuleName = fmt.Sprintf("failed to parse rule name: %v", err)
@@ -100,7 +100,7 @@ func (e *Consumer) persist(event *models.AlertCurEvent) {
 		event.Id, err = poster.PostByUrlsWithResp[int64](e.ctx, "/v1/n9e/event-persist", event)
 		if err != nil {
 			logger.Errorf("event:%+v persist err:%v", event, err)
-			e.dispatch.astats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", event.DatasourceId), "persist_event").Inc()
+			e.dispatch.Astats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", event.DatasourceId), "persist_event").Inc()
 		}
 		return
 	}
@@ -108,6 +108,6 @@ func (e *Consumer) persist(event *models.AlertCurEvent) {
 	err := models.EventPersist(e.ctx, event)
 	if err != nil {
 		logger.Errorf("event%+v persist err:%v", event, err)
-		e.dispatch.astats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", event.DatasourceId), "persist_event").Inc()
+		e.dispatch.Astats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", event.DatasourceId), "persist_event").Inc()
 	}
 }
