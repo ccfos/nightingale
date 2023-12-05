@@ -10,15 +10,16 @@ import (
 )
 
 type Pushgw struct {
-	BusiGroupLabelKey string
-	IdentMetrics      []string
-	WriteConcurrency  int
-	LabelRewrite      bool
-	ForceUseServerTS  bool
-	DebugSample       map[string]string
-	DropSample        []map[string]string
-	WriterOpt         WriterGlobalOpt
-	Writers           []WriterOptions
+	BusiGroupLabelKey   string
+	IdentMetrics        []string
+	IdentStatsThreshold int64
+	WriteConcurrency    int
+	LabelRewrite        bool
+	ForceUseServerTS    bool
+	DebugSample         map[string]string
+	DropSample          []map[string]string
+	WriterOpt           WriterGlobalOpt
+	Writers             []WriterOptions
 }
 
 type WriterGlobalOpt struct {
@@ -75,6 +76,10 @@ func (p *Pushgw) PreCheck() {
 
 	if p.WriteConcurrency <= 0 {
 		p.WriteConcurrency = 5000
+	}
+
+	if p.IdentStatsThreshold <= 0 {
+		p.IdentStatsThreshold = 400
 	}
 
 	for _, writer := range p.Writers {

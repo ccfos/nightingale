@@ -25,11 +25,27 @@ var (
 		Name:      "write_total",
 		Help:      "Number of write.",
 	}, []string{"url"})
+
+	CounterWirteErrorTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "write_error_total",
+		Help:      "Number of write error.",
+	}, []string{"url"})
+
+	CounterPushQueueErrorTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "push_queue_error_total",
+		Help:      "Number of push queue error.",
+	}, []string{"ident"})
 )
 
 func init() {
 	prometheus.MustRegister(
 		ForwardDuration,
 		CounterWirteTotal,
+		CounterWirteErrorTotal,
+		CounterPushQueueErrorTotal,
 	)
 }

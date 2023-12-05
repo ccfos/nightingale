@@ -74,6 +74,7 @@ func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[
 	}
 
 	if err := w.Post(snappy.Encode(nil, data), headers...); err != nil {
+		CounterWirteErrorTotal.WithLabelValues(key).Add(float64(len(items)))
 		logger.Warningf("post to %s got error: %v", w.Opts.Url, err)
 		logger.Warning("example timeseries:", items[0].String())
 	}
@@ -206,6 +207,7 @@ func (ws *WritersType) PushSample(ident string, v interface{}) {
 	succ := identQueue.list.PushFront(v)
 	if !succ {
 		logger.Warningf("Write channel(%s) full, current channel size: %d", ident, identQueue.list.Len())
+		CounterPushQueueErrorTotal.WithLabelValues(ident).Inc()
 	}
 }
 
