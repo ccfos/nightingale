@@ -22,6 +22,7 @@ type Stats struct {
 	CounterMuteTotal            *prometheus.CounterVec
 	CounterRuleEvalErrorTotal   *prometheus.CounterVec
 	CounterHeartbeatErrorTotal  *prometheus.CounterVec
+	CounterSubEventTotal        *prometheus.CounterVec
 }
 
 func NewSyncStats() *Stats {
@@ -104,6 +105,13 @@ func NewSyncStats() *Stats {
 		Help:      "Number of mute.",
 	}, []string{"group"})
 
+	CounterSubEventTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "sub_event_total",
+		Help:      "Number of sub event.",
+	}, []string{"group"})
+
 	CounterHeartbeatErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
@@ -124,6 +132,7 @@ func NewSyncStats() *Stats {
 		CounterMuteTotal,
 		CounterRuleEvalErrorTotal,
 		CounterHeartbeatErrorTotal,
+		CounterSubEventTotal,
 	)
 
 	return &Stats{
@@ -139,5 +148,6 @@ func NewSyncStats() *Stats {
 		CounterMuteTotal:            CounterMuteTotal,
 		CounterRuleEvalErrorTotal:   CounterRuleEvalErrorTotal,
 		CounterHeartbeatErrorTotal:  CounterHeartbeatErrorTotal,
+		CounterSubEventTotal:        CounterSubEventTotal,
 	}
 }

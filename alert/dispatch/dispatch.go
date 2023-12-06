@@ -209,6 +209,7 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 		}
 	}
 
+	e.Astats.CounterSubEventTotal.WithLabelValues(event.GroupName).Inc()
 	sub.ModifyEvent(&event)
 	LogEvent(&event, "subscribe")
 
