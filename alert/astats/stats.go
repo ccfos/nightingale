@@ -58,14 +58,14 @@ func NewSyncStats() *Stats {
 		Subsystem: subsystem,
 		Name:      "record_eval_total",
 		Help:      "Number of record eval.",
-	}, []string{})
+	}, []string{"datasource"})
 
 	CounterRecordEvalErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "record_eval_error_total",
 		Help:      "Number of record eval error.",
-	}, []string{})
+	}, []string{"datasource"})
 
 	AlertNotifyTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,

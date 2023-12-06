@@ -152,7 +152,7 @@ func (ws *WritersType) ReportQueueStats(ident string, identQueue *IdentQueue) (i
 	for {
 		time.Sleep(60 * time.Second)
 		count := identQueue.list.Len()
-		if count > ws.pushgw.IdentStatsThreshold && time.Now().Unix()-identQueue.ts < 600 {
+		if count > ws.pushgw.IdentStatsThreshold {
 			GaugeSampleQueueSize.WithLabelValues(ident).Set(float64(count))
 		}
 	}
