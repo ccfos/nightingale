@@ -148,6 +148,16 @@ type IdentQueue struct {
 	ts      int64
 }
 
+func (ws *WritersType) ReportQueueStats(ident string, identQueue *IdentQueue) (interface{}, bool) {
+	for {
+		time.Sleep(60 * time.Second)
+		count := identQueue.list.Len()
+		if count > ws.pushgw.IdentStatsThreshold && time.Now().Unix()-identQueue.ts < 600 {
+			GaugeSampleQueueSize.WithLabelValues(ident).Set(float64(count))
+		}
+	}
+}
+
 func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 	writers := &WritersType{
 		backends: make(map[string]WriterType),
@@ -200,6 +210,7 @@ func (ws *WritersType) PushSample(ident string, v interface{}) {
 		ws.queues[ident] = identQueue
 		ws.Unlock()
 
+		go ws.ReportQueueStats(ident, identQueue)
 		go ws.StartConsumer(identQueue)
 	}
 

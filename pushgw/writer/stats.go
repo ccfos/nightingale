@@ -19,6 +19,15 @@ var (
 		}, []string{"url"},
 	)
 
+	GaugeSampleQueueSize = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "sample_queue_size",
+			Help:      "The size of sample queue.",
+		}, []string{"ident"},
+	)
+
 	CounterWirteTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
