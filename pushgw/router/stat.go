@@ -22,7 +22,7 @@ var (
 		Help:      "Number of drop sample.",
 	}, []string{"client_ip"})
 
-	GaugeSampleReceivedByIdent = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	CounterSampleReceivedByIdent = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "sample_received_by_ident",
@@ -34,6 +34,6 @@ func registerMetrics() {
 	prometheus.MustRegister(
 		CounterSampleTotal,
 		CounterDropSampleTotal,
-		GaugeSampleReceivedByIdent,
+		CounterSampleReceivedByIdent,
 	)
 }

@@ -20,7 +20,7 @@ func (rt *Router) ReportIdentStats() (interface{}, bool) {
 		for k, v := range m {
 			count := v.Object.(int)
 			if count > rt.Pushgw.IdentStatsThreshold {
-				GaugeSampleReceivedByIdent.WithLabelValues(k).Set(float64(count))
+				CounterSampleReceivedByIdent.WithLabelValues(k).Add(float64(count))
 			}
 		}
 	}
