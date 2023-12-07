@@ -27,9 +27,9 @@ func NewWriter(cli api.Client, opt ClientOptions) WriterType {
 	return writer
 }
 
-func (w WriterType) Write(items []prompb.TimeSeries, headers ...map[string]string) {
+func (w WriterType) Write(items []prompb.TimeSeries, headers ...map[string]string) error {
 	if len(items) == 0 {
-		return
+		return nil
 	}
 
 	req := &prompb.WriteRequest{
@@ -39,13 +39,14 @@ func (w WriterType) Write(items []prompb.TimeSeries, headers ...map[string]strin
 	data, err := proto.Marshal(req)
 	if err != nil {
 		logger.Warningf("marshal prom data to proto got error: %v, data: %+v", err, items)
-		return
+		return nil
 	}
 
 	if err := w.Post(snappy.Encode(nil, data), headers...); err != nil {
 		logger.Warningf("%v post to %s got error: %v", w.Opts, w.Opts.Url, err)
 		logger.Debug("example timeseries:", items[0].String())
 	}
+	return err
 }
 
 func (w WriterType) Post(req []byte, headers ...map[string]string) error {

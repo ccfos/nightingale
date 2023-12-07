@@ -35,7 +35,7 @@ type Dispatch struct {
 	BeforeSenderHook func(*models.AlertCurEvent) bool
 
 	ctx    *ctx.Context
-	astats *astats.Stats
+	Astats *astats.Stats
 
 	RwLock sync.RWMutex
 }
@@ -60,7 +60,7 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 		BeforeSenderHook: func(*models.AlertCurEvent) bool { return true },
 
 		ctx:    ctx,
-		astats: astats,
+		Astats: astats,
 	}
 	return notify
 }
@@ -209,6 +209,7 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 		}
 	}
 
+	e.Astats.CounterSubEventTotal.WithLabelValues(event.GroupName).Inc()
 	sub.ModifyEvent(&event)
 	LogEvent(&event, "subscribe")
 
@@ -220,7 +221,7 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	needSend := e.BeforeSenderHook(event)
 	if needSend {
 		for channel, uids := range notifyTarget.ToChannelUserMap() {
-			msgCtx := sender.BuildMessageContext(rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.astats)
+			msgCtx := sender.BuildMessageContext(rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.Astats)
 			e.RwLock.RLock()
 			s := e.Senders[channel]
 			e.RwLock.RUnlock()
@@ -233,13 +234,13 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	}
 
 	// handle event callbacks
-	sender.SendCallbacks(e.ctx, notifyTarget.ToCallbackList(), event, e.targetCache, e.userCache, e.notifyConfigCache.GetIbex(), e.astats)
+	sender.SendCallbacks(e.ctx, notifyTarget.ToCallbackList(), event, e.targetCache, e.userCache, e.notifyConfigCache.GetIbex(), e.Astats)
 
 	// handle global webhooks
-	sender.SendWebhooks(notifyTarget.ToWebhookList(), event, e.astats)
+	sender.SendWebhooks(notifyTarget.ToWebhookList(), event, e.Astats)
 
 	// handle plugin call
-	go sender.MayPluginNotify(e.genNoticeBytes(event), e.notifyConfigCache.GetNotifyScript(), e.astats)
+	go sender.MayPluginNotify(e.genNoticeBytes(event), e.notifyConfigCache.GetNotifyScript(), e.Astats)
 }
 
 type Notice struct {
