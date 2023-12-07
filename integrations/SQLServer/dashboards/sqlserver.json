@@ -1,0 +1,554 @@
+{
+  "name": "Microsoft SQL Server",
+  "tags": "",
+  "ident": "",
+  "configs": {
+    "version": "3.0.0",
+    "links": [],
+    "var": [
+      {
+        "type": "datasource",
+        "name": "DS_PROMETHEUS",
+        "definition": "prometheus"
+      },
+      {
+        "type": "query",
+        "name": "Job",
+        "definition": "label_values(mssql_instance_local_time, job)",
+        "allValue": null,
+        "allOption": false,
+        "multi": false,
+        "reg": "",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${DS_PROMETHEUS}"
+        }
+      },
+      {
+        "type": "query",
+        "name": "database",
+        "definition": "label_values(mssql_connections,database)",
+        "allValue": null,
+        "allOption": true,
+        "multi": false,
+        "reg": "",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${DS_PROMETHEUS}"
+        }
+      }
+    ],
+    "panels": [
+      {
+        "type": "table",
+        "id": "28f81145-c0d2-49bc-9b6c-28e969c25537",
+        "layout": {
+          "h": 3,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "28f81145-c0d2-49bc-9b6c-28e969c25537",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "mssql_total_physical_memory_kb{job=~\"$Job\"}-0",
+            "refId": "A",
+            "legend": "Total RAM"
+          },
+          {
+            "expr": "mssql_available_physical_memory_kb{job=~\"$Job\"}-0",
+            "refId": "B",
+            "legend": "RAM availbable"
+          },
+          {
+            "expr": "mssql_available_page_file_kb{job=~\"$Job\"}-0",
+            "refId": "C",
+            "legend": "Pagefile  available size"
+          },
+          {
+            "expr": "mssql_page_fault_count{job=~\"$Job\"}-0",
+            "refId": "D",
+            "legend": "Total page faults"
+          },
+          {
+            "expr": "mssql_batch_requests{job=~\"$Job\"}-0",
+            "refId": "E",
+            "legend": "Batch reqs /sec"
+          },
+          {
+            "expr": "mssql_page_life_expectancy{job=~\"$Job\"}-0",
+            "refId": "F",
+            "legend": "Page life expectancy(sec)"
+          },
+          {
+            "expr": "mssql_deadlocks{job=~\"$Job\"}-0",
+            "refId": "G",
+            "legend": "Deadlocks"
+          },
+          {
+            "expr": "mssql_user_errors{job=~\"$Job\"}-0",
+            "refId": "H",
+            "legend": "User errors /sec"
+          },
+          {
+            "expr": "mssql_kill_connection_errors{job=~\"$Job\"}-0",
+            "refId": "I",
+            "legend": "Kill conn errors /sec"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "$Job：Server resource overview",
+        "maxPerRow": 4,
+        "custom": {
+          "showHeader": true,
+          "colorMode": "background",
+          "calc": "lastNotNull",
+          "displayMode": "labelValuesToRows",
+          "aggrDimension": [],
+          "linkMode": "appendLinkColumn"
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "value": "F"
+            },
+            "properties": {
+              "standardOptions": {
+                "util": "seconds"
+              },
+              "valueMappings": [
+                {
+                  "type": "range",
+                  "result": {
+                    "color": "#ff9919"
+                  },
+                  "match": {
+                    "special": 0,
+                    "from": 0,
+                    "to": 100
+                  }
+                },
+                {
+                  "type": "range",
+                  "result": {
+                    "color": "#3fc453"
+                  },
+                  "match": {
+                    "from": 100
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "type": "special",
+            "matcher": {
+              "id": "byFrameRefID",
+              "value": "D"
+            },
+            "properties": {
+              "standardOptions": {
+                "util": "none"
+              }
+            }
+          },
+          {
+            "type": "special",
+            "matcher": {
+              "id": "byFrameRefID",
+              "value": "H"
+            },
+            "properties": {
+              "standardOptions": {
+                "util": "bytesSecSI"
+              }
+            }
+          },
+          {
+            "type": "special",
+            "matcher": {
+              "id": "byFrameRefID",
+              "value": "B"
+            },
+            "properties": {
+              "valueMappings": [
+                {
+                  "type": "range",
+                  "result": {
+                    "color": "#2c9d3d"
+                  },
+                  "match": {
+                    "textValue": "200",
+                    "from": 102400000,
+                    "to": null
+                  }
+                },
+                {
+                  "type": "range",
+                  "result": {
+                    "color": "#ffae39"
+                  },
+                  "match": {
+                    "from": 0,
+                    "to": 100000000
+                  }
+                }
+              ],
+              "standardOptions": {
+                "util": "bytesIEC"
+              }
+            }
+          },
+          {
+            "type": "special",
+            "matcher": {
+              "id": "byFrameRefID",
+              "value": "G"
+            },
+            "properties": {
+              "valueMappings": [
+                {
+                  "type": "special",
+                  "result": {
+                    "color": "#3fc453"
+                  },
+                  "match": {
+                    "special": 0
+                  }
+                }
+              ],
+              "standardOptions": {}
+            }
+          },
+          {
+            "type": "special",
+            "matcher": {
+              "id": "byFrameRefID",
+              "value": "I"
+            },
+            "properties": {
+              "valueMappings": [
+                {
+                  "type": "special",
+                  "result": {
+                    "color": "#3fc453"
+                  },
+                  "match": {
+                    "special": 0
+                  }
+                },
+                {
+                  "type": "range",
+                  "result": {
+                    "color": "#ff9919"
+                  },
+                  "match": {
+                    "from": 1
+                  }
+                }
+              ],
+              "standardOptions": {}
+            }
+          }
+        ]
+      },
+      {
+        "version": "3.0.0",
+        "id": "77467d35-8002-4211-a95d-ed6278567ab4",
+        "type": "row",
+        "name": "Summary",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 3,
+          "i": "77467d35-8002-4211-a95d-ed6278567ab4",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "barGauge",
+        "id": "f8795e89-0e61-43ec-9c05-90424bf7eb60",
+        "layout": {
+          "h": 7,
+          "w": 7,
+          "x": 0,
+          "y": 4,
+          "i": "f8795e89-0e61-43ec-9c05-90424bf7eb60",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "mssql_connections{}",
+            "legend": "{{database}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Current database connections",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "calc": "lastNotNull",
+          "baseColor": "#2c9d3d",
+          "serieWidth": 20,
+          "sortOrder": "desc"
+        },
+        "options": {
+          "valueMappings": [],
+          "standardOptions": {
+            "util": "none"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "9247c782-4abf-4423-84ba-6453d5491e23",
+        "layout": {
+          "h": 7,
+          "w": 9,
+          "x": 7,
+          "y": 4,
+          "i": "9247c782-4abf-4423-84ba-6453d5491e23",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "mssql_log_growths",
+            "legend": "{{database}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "DB Log growth since last restart",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "right",
+            "columns": [
+              "last"
+            ],
+            "behaviour": "showItem"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "47686441-a9d6-4ede-8901-5d05ce3ef8b8",
+        "layout": {
+          "h": 7,
+          "w": 8,
+          "x": 16,
+          "y": 4,
+          "i": "47686441-a9d6-4ede-8901-5d05ce3ef8b8",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "mssql_io_stall_total{job=~\"$Job\"}",
+            "legend": "{{database}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Total wait time of I/O stall",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "right",
+            "columns": [
+              "last"
+            ],
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      },
+      {
+        "version": "3.0.0",
+        "id": "bb996a6d-ddec-46c3-8c64-dd2a57a13fd4",
+        "type": "row",
+        "name": "Database I/O wait of stall detailed",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 11,
+          "i": "bb996a6d-ddec-46c3-8c64-dd2a57a13fd4",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "9c5037d4-563c-412f-b4e9-103d90ecc62d",
+        "layout": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 12,
+          "i": "9c5037d4-563c-412f-b4e9-103d90ecc62d",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "mssql_io_stall{database=~\"^$database\"}",
+            "legend": "{{type}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Database ${database} wait by I/O stall ",
+        "links": [],
+        "description": "",
+        "repeat": "database",
+        "maxPerRow": 3,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "right",
+            "columns": [
+              "last"
+            ],
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        }
+      }
+    ]
+  }
+}
