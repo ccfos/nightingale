@@ -27,7 +27,7 @@ var (
 		Subsystem: subsystem,
 		Name:      "sample_received_by_ident",
 		Help:      "Number of sample push by ident.",
-	}, []string{"ident"})
+	}, []string{"host_ident"})
 )
 
 func registerMetrics() {

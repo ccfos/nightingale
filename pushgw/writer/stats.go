@@ -25,7 +25,7 @@ var (
 			Subsystem: subsystem,
 			Name:      "sample_queue_size",
 			Help:      "The size of sample queue.",
-		}, []string{"ident"},
+		}, []string{"host_ident"},
 	)
 
 	CounterWirteTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -47,7 +47,7 @@ var (
 		Subsystem: subsystem,
 		Name:      "push_queue_error_total",
 		Help:      "Number of push queue error.",
-	}, []string{"ident"})
+	}, []string{"host_ident"})
 )
 
 func init() {
