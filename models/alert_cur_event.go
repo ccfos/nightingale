@@ -114,7 +114,8 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 
 	if field == "annotations" {
 		e.Annotations = body.String()
-		json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
+		err := json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
+		return err
 	}
 
 	return nil

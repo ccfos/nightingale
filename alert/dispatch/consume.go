@@ -69,15 +69,19 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 	e.dispatch.astats.CounterAlertsTotal.WithLabelValues(event.Cluster, eventType, event.GroupName).Inc()
 
 	if err := event.ParseRule("rule_name"); err != nil {
+		logger.Warningf("ruleid:%d failed to parse rule name: %v", event.RuleId, err)
 		event.RuleName = fmt.Sprintf("failed to parse rule name: %v", err)
 	}
 
 	if err := event.ParseRule("rule_note"); err != nil {
+		logger.Warningf("ruleid:%d failed to parse rule note: %v", event.RuleId, err)
 		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
 	}
 
 	if err := event.ParseRule("annotations"); err != nil {
-		event.Annotations = fmt.Sprintf("failed to parse rule note: %v", err)
+		logger.Warningf("ruleid:%d failed to parse annotations: %v", event.RuleId, err)
+		event.Annotations = fmt.Sprintf("failed to parse annotations: %v", err)
+		event.AnnotationsJSON["error"] = event.Annotations
 	}
 
 	e.persist(event)

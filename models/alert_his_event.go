@@ -68,7 +68,14 @@ func (e *AlertHisEvent) DB2FE() {
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
 	e.CallbacksJSON = strings.Fields(e.Callbacks)
 	e.TagsJSON = strings.Split(e.Tags, ",,")
-	json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
+
+	if len(e.Annotations) > 0 {
+		err := json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
+		if err != nil {
+			e.AnnotationsJSON["error"] = e.Annotations
+		}
+	}
+
 	json.Unmarshal([]byte(e.RuleConfig), &e.RuleConfigJson)
 }
 

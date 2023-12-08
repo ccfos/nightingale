@@ -66,6 +66,6 @@ func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent, stats
 			body, _ = io.ReadAll(resp.Body)
 		}
 
-		logger.Debugf("event_webhook_succ, url: %s, response code: %d, body: %s", conf.Url, resp.StatusCode, string(body))
+		logger.Debugf("event_webhook_succ, url: %s, response code: %d, body: %s event:%+v", conf.Url, resp.StatusCode, string(body), event)
 	}
 }
