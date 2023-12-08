@@ -173,6 +173,8 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 		dsName = ds.Name
 	}
 
+	bg := p.BusiGroupCache.GetByBusiGroupId(p.rule.GroupId)
+
 	event := p.rule.GenerateNewEvent(p.ctx)
 	event.TriggerTime = anomalyPoint.Timestamp
 	event.TagsMap = p.tagsMap
@@ -183,7 +185,7 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.TargetNote = p.targetNote
 	event.TriggerValue = anomalyPoint.ReadableValue()
 	event.TagsJSON = p.tagsArr
-	event.GroupName = p.groupName
+	event.GroupName = bg.Name
 	event.Tags = strings.Join(p.tagsArr, ",,")
 	event.IsRecovered = false
 	event.Callbacks = p.rule.Callbacks
