@@ -6,8 +6,10 @@ import (
 	"html/template"
 	"math"
 	"net"
+	"net/url"
 	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +31,30 @@ var (
 
 	errNaNOrInf = errors.New("value is NaN or Inf")
 )
+
+type sample struct {
+	Labels map[string]string
+	Value  float64
+}
+
+type queryResult []*sample
+
+type queryResultByLabelSorter struct {
+	results queryResult
+	by      string
+}
+
+func (q queryResultByLabelSorter) Len() int {
+	return len(q.results)
+}
+
+func (q queryResultByLabelSorter) Less(i, j int) bool {
+	return q.results[i].Labels[q.by] < q.results[j].Labels[q.by]
+}
+
+func (q queryResultByLabelSorter) Swap(i, j int) {
+	q.results[i], q.results[j] = q.results[j], q.results[i]
+}
 
 func Unescaped(str string) interface{} {
 	return template.HTML(str)
@@ -195,6 +221,23 @@ func HumanizePercentageH(s string) string {
 		return s
 	}
 	return fmt.Sprintf("%.2f%%", v)
+}
+
+func HumanizeTimestamp(i interface{}) (string, error) {
+	v, err := convertToFloat(i)
+	if err != nil {
+		return "", err
+	}
+
+	tm, err := floatToTime(v)
+	switch {
+	case errors.Is(err, errNaNOrInf):
+		return fmt.Sprintf("%.4g", v), nil
+	case err != nil:
+		return "", err
+	}
+
+	return fmt.Sprint(tm), nil
 }
 
 // Add returns the sum of a and b.
@@ -383,13 +426,6 @@ func FormatDecimal(s string, n int) string {
 	return fmt.Sprintf(format, num)
 }
 
-type sample struct {
-	Labels map[string]string
-	Value  float64
-}
-
-type queryResult []*sample
-
 func First(v queryResult) (*sample, error) {
 	if len(v) > 0 {
 		return v[0], nil
@@ -403,6 +439,10 @@ func Label(label string, s *sample) string {
 
 func Value(s *sample) float64 {
 	return s.Value
+}
+
+func StrValue(s *sample) string {
+	return s.Labels["__value__"]
 }
 
 func SafeHtml(text string) template.HTML {
@@ -426,6 +466,16 @@ func ToLower(s string) string {
 
 func GraphLink(expr string) string {
 	return strutil.GraphLinkForExpression(expr)
+}
+
+func TableLink(expr string) string {
+	return strutil.TableLinkForExpression(expr)
+}
+
+func SortByLabel(label string, v queryResult) queryResult {
+	sorter := queryResultByLabelSorter{v[:], label}
+	sort.Stable(sorter)
+	return v
 }
 
 func StripPort(hostPort string) string {
@@ -458,6 +508,22 @@ func ToTime(i interface{}) (*time.Time, error) {
 		return nil, err
 	}
 	return floatToTime(v)
+}
+
+func PathPrefix(externalURL *url.URL) string {
+	return externalURL.Path
+}
+
+func ExternalURL(externalURL *url.URL) string {
+	return externalURL.String()
+}
+
+func ParseDuration(d string) (float64, error) {
+	v, err := model.ParseDuration(d)
+	if err != nil {
+		return 0, err
+	}
+	return float64(time.Duration(v)) / float64(time.Second), nil
 }
 
 func floatToTime(v float64) (*time.Time, error) {
