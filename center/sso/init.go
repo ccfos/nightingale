@@ -146,6 +146,7 @@ func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
 			if err != nil {
 				log.Fatalln("init oidc failed:", err)
 			}
+			logger.Info("init oidc..")
 			oidcClient, err := oidcx.New(config)
 			if err != nil {
 				logger.Error("init oidc failed:", err)

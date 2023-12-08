@@ -21,6 +21,7 @@ require (
 	github.com/mailru/easyjson v0.7.7
 	github.com/mattn/go-isatty v0.0.19
 	github.com/mojocn/base64Captcha v1.3.5
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pelletier/go-toml/v2 v2.0.8
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.16.0

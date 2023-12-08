@@ -36,6 +36,14 @@ type AlertRuleWorker struct {
 	ctx             *ctx.Context
 }
 
+const (
+	GET_RULE_CONFIG = "get_rule_config"
+	GET_PROCESSOR   = "get_processor"
+	CHECK_QUERY     = "check_query_config"
+	GET_CLIENT      = "get_client"
+	QUERY_DATA      = "query_data"
+)
+
 func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, processor *process.Processor, promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, ctx *ctx.Context) *AlertRuleWorker {
 	arw := &AlertRuleWorker{
 		datasourceId: datasourceId,
@@ -115,6 +123,7 @@ func (arw *AlertRuleWorker) Eval() {
 
 	if arw.processor == nil {
 		logger.Warningf("rule_eval:%s processor is nil", arw.Key())
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_PROCESSOR).Inc()
 		return
 	}
 
@@ -137,11 +146,13 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 	var rule *models.PromRuleConfig
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:%v", arw.Key(), ruleConfig, err)
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
 		return lst
 	}
 
 	if rule == nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:rule is nil", arw.Key(), ruleConfig)
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
 		return lst
 	}
 
@@ -153,28 +164,33 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 
 		promql := strings.TrimSpace(query.PromQl)
 		if promql == "" {
-			logger.Errorf("rule_eval:%s promql is blank", arw.Key())
+			logger.Warningf("rule_eval:%s promql is blank", arw.Key())
+			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), CHECK_QUERY).Inc()
 			continue
 		}
 
 		if arw.promClients.IsNil(arw.datasourceId) {
-			logger.Errorf("rule_eval:%s error reader client is nil", arw.Key())
+			logger.Warningf("rule_eval:%s error reader client is nil", arw.Key())
+			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_CLIENT).Inc()
 			continue
 		}
 
 		readerClient := arw.promClients.GetCli(arw.datasourceId)
 
 		var warnings promsdk.Warnings
+		arw.processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 		value, warnings, err := readerClient.Query(context.Background(), promql, time.Now())
 		if err != nil {
 			logger.Errorf("rule_eval:%s promql:%s, error:%v", arw.Key(), promql, err)
 			arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
+			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
 			continue
 		}
 
 		if len(warnings) > 0 {
 			logger.Errorf("rule_eval:%s promql:%s, warnings:%v", arw.Key(), promql, warnings)
 			arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
+			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
 			continue
 		}
 
@@ -196,6 +212,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 	ruleConfig := strings.TrimSpace(rule.RuleConfig)
 	if ruleConfig == "" {
 		logger.Warningf("rule_eval:%d promql is blank", rule.Id)
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
 		return points, recoverPoints
 	}
 
@@ -203,6 +220,8 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 	err := json.Unmarshal([]byte(ruleConfig), &ruleQuery)
 	if err != nil {
 		logger.Warningf("rule_eval:%d promql parse error:%s", rule.Id, err.Error())
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId())).Inc()
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
 		return points, recoverPoints
 	}
 
@@ -212,15 +231,21 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 		seriesTagIndex := make(map[uint64][]uint64)
 
 		for _, query := range ruleQuery.Queries {
+			arw.processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 			cli := arw.tdengineClients.GetCli(dsId)
 			if cli == nil {
 				logger.Warningf("rule_eval:%d tdengine client is nil", rule.Id)
+				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_CLIENT).Inc()
 				continue
 			}
 
 			series, err := cli.Query(query)
+			arw.processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 			if err != nil {
 				logger.Warningf("rule_eval rid:%d query data error: %v", rule.Id, err)
+				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
 				continue
 			}
 
@@ -301,11 +326,13 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 	var rule *models.HostRuleConfig
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:%v", arw.Key(), ruleConfig, err)
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
 		return lst
 	}
 
 	if rule == nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:rule is nil", arw.Key(), ruleConfig)
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
 		return lst
 	}
 
@@ -323,6 +350,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			targets, err := models.MissTargetGetsByFilter(arw.ctx, query, t)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
 				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				continue
 			}
@@ -345,6 +373,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
 				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				continue
 			}
@@ -377,6 +406,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			count, err := models.MissTargetCountByFilter(arw.ctx, query, t)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
 				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				continue
 			}
@@ -384,6 +414,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			total, err := models.TargetCountByFilter(arw.ctx, query)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
 				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				continue
 			}

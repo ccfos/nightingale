@@ -71,7 +71,7 @@ func (rrc *RecordRuleContext) Start() {
 }
 
 func (rrc *RecordRuleContext) Eval() {
-	rrc.stats.CounterRecordEval.WithLabelValues().Inc()
+	rrc.stats.CounterRecordEval.WithLabelValues(fmt.Sprintf("%d", rrc.datasourceId)).Inc()
 	promql := strings.TrimSpace(rrc.rule.PromQl)
 	if promql == "" {
 		logger.Errorf("eval:%s promql is blank", rrc.Key())
@@ -80,26 +80,30 @@ func (rrc *RecordRuleContext) Eval() {
 
 	if rrc.promClients.IsNil(rrc.datasourceId) {
 		logger.Errorf("eval:%s reader client is nil", rrc.Key())
-		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues().Inc()
+		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(fmt.Sprintf("%d", rrc.datasourceId)).Inc()
 		return
 	}
 
 	value, warnings, err := rrc.promClients.GetCli(rrc.datasourceId).Query(context.Background(), promql, time.Now())
 	if err != nil {
 		logger.Errorf("eval:%s promql:%s, error:%v", rrc.Key(), promql, err)
-		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues().Inc()
+		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(fmt.Sprintf("%d", rrc.datasourceId)).Inc()
 		return
 	}
 
 	if len(warnings) > 0 {
 		logger.Errorf("eval:%s promql:%s, warnings:%v", rrc.Key(), promql, warnings)
-		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues().Inc()
+		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(fmt.Sprintf("%d", rrc.datasourceId)).Inc()
 		return
 	}
 
 	ts := ConvertToTimeSeries(value, rrc.rule)
 	if len(ts) != 0 {
-		rrc.promClients.GetWriterCli(rrc.datasourceId).Write(ts)
+		err := rrc.promClients.GetWriterCli(rrc.datasourceId).Write(ts)
+		if err != nil {
+			logger.Errorf("eval:%s promql:%s, error:%v", rrc.Key(), promql, err)
+			rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(fmt.Sprintf("%d", rrc.datasourceId)).Inc()
+		}
 	}
 }
 

@@ -81,7 +81,7 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 
 	go models.InitNotifyConfig(ctx, alertc.Alerting.TemplatesDir)
 
-	naming := naming.NewNaming(ctx, alertc.Heartbeat)
+	naming := naming.NewNaming(ctx, alertc.Heartbeat, alertStats)
 
 	writers := writer.NewWriters(pushgwc)
 	record.NewScheduler(alertc, recordingRuleCache, promClients, writers, alertStats)

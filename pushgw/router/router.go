@@ -44,6 +44,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	}
 
 	registerMetrics()
+	go rt.ReportIdentStats()
 
 	// datadog url: http://n9e-pushgw.foo.com/datadog
 	// use apiKey not basic auth

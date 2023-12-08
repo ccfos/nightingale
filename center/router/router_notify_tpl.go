@@ -178,7 +178,7 @@ func (rt *Router) notifyTplDel(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
 	user := c.MustGet("user").(*models.User)
 
-	notifyTpl, err := models.NotifyTplGet(rt.Ctx, f.Id)
+	notifyTpl, err := models.NotifyTplGet(rt.Ctx, id)
 	ginx.Dangerous(err)
 
 	if notifyTpl.CreateBy != user.Username && !user.IsAdmin() {
