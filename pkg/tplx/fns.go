@@ -1,13 +1,33 @@
 package tplx
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"math"
+	"net"
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/util/strutil"
+)
+
+var (
+	templateTextExpansionFailures = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "prometheus_template_text_expansion_failures_total",
+		Help: "The total number of template text expansion failures.",
+	})
+	templateTextExpansionTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "prometheus_template_text_expansions_total",
+		Help: "The total number of template text expansions.",
+	})
+
+	errNaNOrInf = errors.New("value is NaN or Inf")
 )
 
 func Unescaped(str string) interface{} {
@@ -361,4 +381,112 @@ func FormatDecimal(s string, n int) string {
 
 	format := fmt.Sprintf("%%.%df", n)
 	return fmt.Sprintf(format, num)
+}
+
+type sample struct {
+	Labels map[string]string
+	Value  float64
+}
+
+type queryResult []*sample
+
+func First(v queryResult) (*sample, error) {
+	if len(v) > 0 {
+		return v[0], nil
+	}
+	return nil, errors.New("first() called on vector with no elements")
+}
+
+func Label(label string, s *sample) string {
+	return s.Labels[label]
+}
+
+func Value(s *sample) float64 {
+	return s.Value
+}
+
+func SafeHtml(text string) template.HTML {
+	return template.HTML(text)
+}
+
+func Match(pattern, s string) (bool, error) {
+	return regexp.MatchString(pattern, s)
+}
+func Title(s string) string {
+	return strings.Title(s)
+}
+
+func ToUpper(s string) string {
+	return strings.ToUpper(s)
+}
+
+func ToLower(s string) string {
+	return strings.ToLower(s)
+}
+
+func GraphLink(expr string) string {
+	return strutil.GraphLinkForExpression(expr)
+}
+
+func StripPort(hostPort string) string {
+	host, _, err := net.SplitHostPort(hostPort)
+	if err != nil {
+		return hostPort
+	}
+	return host
+}
+
+func StripDomain(hostPort string) string {
+	host, port, err := net.SplitHostPort(hostPort)
+	if err != nil {
+		host = hostPort
+	}
+	ip := net.ParseIP(host)
+	if ip != nil {
+		return hostPort
+	}
+	host = strings.Split(host, ".")[0]
+	if port != "" {
+		return net.JoinHostPort(host, port)
+	}
+	return host
+}
+
+func ToTime(i interface{}) (*time.Time, error) {
+	v, err := convertToFloat(i)
+	if err != nil {
+		return nil, err
+	}
+	return floatToTime(v)
+}
+
+func floatToTime(v float64) (*time.Time, error) {
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		return nil, errNaNOrInf
+	}
+	timestamp := v * 1e9
+	if timestamp > math.MaxInt64 || timestamp < math.MinInt64 {
+		return nil, fmt.Errorf("%v cannot be represented as a nanoseconds timestamp since it overflows int64", v)
+	}
+	t := model.TimeFromUnixNano(int64(timestamp)).Time().UTC()
+	return &t, nil
+}
+
+func convertToFloat(i interface{}) (float64, error) {
+	switch v := i.(type) {
+	case float64:
+		return v, nil
+	case string:
+		return strconv.ParseFloat(v, 64)
+	case int:
+		return float64(v), nil
+	case uint:
+		return float64(v), nil
+	case int64:
+		return float64(v), nil
+	case uint64:
+		return float64(v), nil
+	default:
+		return 0, fmt.Errorf("can't convert %T to float", v)
+	}
 }
