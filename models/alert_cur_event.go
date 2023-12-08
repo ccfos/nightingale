@@ -105,16 +105,18 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 			text := strings.Join(append(defs, f), "")
 			t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
 			if err != nil {
-				return err
+				e.AnnotationsJSON[k] = fmt.Sprintf("failed to parse annotations: %v", err)
+				continue
 			}
 
 			var body bytes.Buffer
 			err = t.Execute(&body, e)
 			if err != nil {
 				e.AnnotationsJSON[k] = fmt.Sprintf("failed to parse annotations: %v", err)
-			} else {
-				e.AnnotationsJSON[k] = body.String()
+				continue
 			}
+
+			e.AnnotationsJSON[k] = body.String()
 		}
 
 		b, err := json.Marshal(e.AnnotationsJSON)
