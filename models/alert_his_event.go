@@ -72,6 +72,7 @@ func (e *AlertHisEvent) DB2FE() {
 	if len(e.Annotations) > 0 {
 		err := json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
 		if err != nil {
+			e.AnnotationsJSON = make(map[string]string)
 			e.AnnotationsJSON["error"] = e.Annotations
 		}
 	}
