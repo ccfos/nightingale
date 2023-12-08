@@ -526,6 +526,24 @@ func ParseDuration(d string) (float64, error) {
 	return float64(time.Duration(v)) / float64(time.Second), nil
 }
 
+func Printf(format string, value interface{}) string {
+	valType := reflect.TypeOf(value).Kind()
+
+	switch valType {
+	case reflect.String:
+		// Try converting string to float
+		if floatValue, err := strconv.ParseFloat(value.(string), 64); err == nil {
+			return fmt.Sprintf(format, floatValue)
+		}
+		return fmt.Sprintf(format, value)
+	case reflect.Float64, reflect.Float32:
+		return fmt.Sprintf(format, value)
+	default:
+		// Handle other types as per requirement
+		return fmt.Sprintf(format, value)
+	}
+}
+
 func floatToTime(v float64) (*time.Time, error) {
 	if math.IsNaN(v) || math.IsInf(v, 0) {
 		return nil, errNaNOrInf

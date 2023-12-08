@@ -11,123 +11,6 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-// func First(v queryResult) (*sample, error) {
-// 	if len(v) > 0 {
-// 		return v[0], nil
-// 	}
-// 	return nil, errors.New("first() called on vector with no elements")
-// }
-
-// func Label(label string, s *sample) string {
-// 	return s.Labels[label]
-// }
-
-// func Value(s *sample) float64 {
-// 	return s.Value
-// }
-
-// func SafeHtml(text string) template.HTML {
-// 	return template.HTML(text)
-// }
-
-// func Match(pattern, s string) (bool, error) {
-// 	return regexp.MatchString(pattern, s)
-// }
-// func Title(s string) string {
-// 	return strings.Title(s)
-// }
-
-// func ToUpper(s string) string {
-// 	return strings.ToUpper(s)
-// }
-
-// func ToLower(s string) string {
-// 	return strings.ToLower(s)
-// }
-
-// func GraphLink(expr string) string {
-// 	return strutil.GraphLinkForExpression(expr)
-// }
-
-// func StripPort(hostPort string) string {
-// 	host, _, err := net.SplitHostPort(hostPort)
-// 	if err != nil {
-// 		return hostPort
-// 	}
-// 	return host
-// }
-
-// func StripDomain(hostPort string) string {
-// 	host, port, err := net.SplitHostPort(hostPort)
-// 	if err != nil {
-// 		host = hostPort
-// 	}
-// 	ip := net.ParseIP(host)
-// 	if ip != nil {
-// 		return hostPort
-// 	}
-// 	host = strings.Split(host, ".")[0]
-// 	if port != "" {
-// 		return net.JoinHostPort(host, port)
-// 	}
-// 	return host
-// }
-
-// func ToTime(i interface{}) (*time.Time, error) {
-// 	v, err := convertToFloat(i)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return floatToTime(v)
-// }
-
-// func PathPrefix(externalURL *url.URL) string {
-// 	return externalURL.Path
-// }
-
-// func ExternalURL(externalURL *url.URL) string {
-// 	return externalURL.String()
-// }
-
-// func ParseDuration(d string) (float64, error) {
-// 	v, err := model.ParseDuration(d)
-// 	if err != nil {
-// 		return 0, err
-// 	}
-// 	return float64(time.Duration(v)) / float64(time.Second), nil
-// }
-
-// func floatToTime(v float64) (*time.Time, error) {
-// 	if math.IsNaN(v) || math.IsInf(v, 0) {
-// 		return nil, errNaNOrInf
-// 	}
-// 	timestamp := v * 1e9
-// 	if timestamp > math.MaxInt64 || timestamp < math.MinInt64 {
-// 		return nil, fmt.Errorf("%v cannot be represented as a nanoseconds timestamp since it overflows int64", v)
-// 	}
-// 	t := model.TimeFromUnixNano(int64(timestamp)).Time().UTC()
-// 	return &t, nil
-// }
-
-// func convertToFloat(i interface{}) (float64, error) {
-// 	switch v := i.(type) {
-// 	case float64:
-// 		return v, nil
-// 	case string:
-// 		return strconv.ParseFloat(v, 64)
-// 	case int:
-// 		return float64(v), nil
-// 	case uint:
-// 		return float64(v), nil
-// 	case int64:
-// 		return float64(v), nil
-// 	case uint64:
-// 		return float64(v), nil
-// 	default:
-// 		return 0, fmt.Errorf("can't convert %T to float", v)
-// 	}
-// }
-
 var TemplateFuncMap = template.FuncMap{
 	"escape":                    url.PathEscape,
 	"unescaped":                 Unescaped,
@@ -168,6 +51,7 @@ var TemplateFuncMap = template.FuncMap{
 	"pathPrefix":                PathPrefix,
 	"externalURL":               ExternalURL,
 	"parseDuration":             ParseDuration,
+	"printf":                    Printf,
 }
 
 // ReplaceTemplateUseHtml replaces variables in a template string with values.
