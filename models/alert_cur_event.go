@@ -87,6 +87,47 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 		return nil
 	}
 
+	if field == "annotations" {
+		err := json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
+		if err != nil {
+			logger.Warningf("ruleid:%d failed to parse annotations: %v", e.RuleId, err)
+			e.AnnotationsJSON = make(map[string]string)
+			e.AnnotationsJSON["error"] = e.Annotations
+		}
+
+		for k, v := range e.AnnotationsJSON {
+			f = v
+			var defs = []string{
+				"{{$labels := .TagsMap}}",
+				"{{$value := .TriggerValue}}",
+			}
+
+			text := strings.Join(append(defs, f), "")
+			t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
+			if err != nil {
+				return err
+			}
+
+			var body bytes.Buffer
+			err = t.Execute(&body, e)
+			if err != nil {
+				e.AnnotationsJSON[k] = fmt.Sprintf("failed to parse annotations: %v", err)
+			} else {
+				e.AnnotationsJSON[k] = body.String()
+			}
+		}
+
+		b, err := json.Marshal(e.AnnotationsJSON)
+		if err != nil {
+			e.AnnotationsJSON = make(map[string]string)
+			e.AnnotationsJSON["error"] = fmt.Sprintf("failed to parse annotations: %v", err)
+		} else {
+			e.Annotations = string(b)
+		}
+
+		return nil
+	}
+
 	var defs = []string{
 		"{{$labels := .TagsMap}}",
 		"{{$value := .TriggerValue}}",
@@ -110,12 +151,6 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 
 	if field == "rule_note" {
 		e.RuleNote = body.String()
-	}
-
-	if field == "annotations" {
-		e.Annotations = body.String()
-		err := json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
-		return err
 	}
 
 	return nil

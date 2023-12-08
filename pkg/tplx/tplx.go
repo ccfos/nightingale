@@ -36,6 +36,22 @@ var TemplateFuncMap = template.FuncMap{
 	"now":                       Now,
 	"toString":                  ToString,
 	"formatDecimal":             FormatDecimal,
+	"first":                     First,
+	"label":                     Label,
+	"value":                     Value,
+	"strvalue":                  StrValue,
+	"safeHtml":                  SafeHtml,
+	"title":                     Title,
+	"graphLink":                 GraphLink,
+	"tableLink":                 TableLink,
+	"sortByLabel":               SortByLabel,
+	"stripPort":                 StripPort,
+	"stripDomain":               StripDomain,
+	"toTime":                    ToTime,
+	"pathPrefix":                PathPrefix,
+	"externalURL":               ExternalURL,
+	"parseDuration":             ParseDuration,
+	"printf":                    Printf,
 }
 
 // ReplaceTemplateUseHtml replaces variables in a template string with values.
