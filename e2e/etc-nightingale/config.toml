@@ -1,0 +1,183 @@
+[Global]
+RunMode = "release"
+
+[Log]
+# log write dir
+Dir = "logs"
+# log level: DEBUG INFO WARNING ERROR
+Level = "DEBUG"
+# stdout, stderr, file
+Output = "stdout"
+# # rotate by time
+# KeepHours = 4
+# # rotate by size
+# RotateNum = 3
+# # unit: MB
+# RotateSize = 256
+
+[HTTP]
+# http listening address
+Host = "0.0.0.0"
+# http listening port
+Port = 17000
+# https cert file path
+CertFile = ""
+# https key file path
+KeyFile = ""
+# whether print access log
+PrintAccessLog = false
+# whether enable pprof
+PProf = false
+# expose prometheus /metrics?
+ExposeMetrics = true
+# http graceful shutdown timeout, unit: s
+ShutdownTimeout = 30
+# max content length: 64M
+MaxContentLength = 67108864
+# http server read timeout, unit: s
+ReadTimeout = 20
+# http server write timeout, unit: s
+WriteTimeout = 40
+# http server idle timeout, unit: s
+IdleTimeout = 120
+
+[HTTP.ShowCaptcha]
+Enable = false 
+
+[HTTP.APIForAgent]
+Enable = true 
+# [HTTP.APIForAgent.BasicAuth]
+# user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[HTTP.APIForService]
+Enable = true 
+[HTTP.APIForService.BasicAuth]
+user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
+[HTTP.JWTAuth]
+# signing key
+SigningKey = "5b94a0fd640fe2765af826acfe42d151"
+# unit: min
+AccessExpired = 1500
+# unit: min
+RefreshExpired = 10080
+RedisKeyPrefix = "/jwt/"
+
+[HTTP.ProxyAuth]
+# if proxy auth enabled, jwt auth is disabled
+Enable = false
+# username key in http proxy header
+HeaderUserNameKey = "X-User-Name"
+DefaultRoles = ["Standard"]
+
+[HTTP.RSA]
+# open RSA
+OpenRSA = false
+# Before replacing the key file, make sure that there are no encrypted variables in the database "configs".
+# It is recommended to decrypt and remove all encrypted values from the database before replacing the key file.
+# This will prevent any potential issues with accessing or decrypting the variables using the new key file.
+# RSA public key (auto carete)
+RSAPublicKeyPath = "etc/rsa/public.pem"
+# RSA private key (auto carete)
+RSAPrivateKeyPath = "etc/rsa/private.pem"
+# RSA private key password
+RSAPassWord = "n9e@n9e!"
+
+[DB]
+# postgres: DSN="host=127.0.0.1 port=5432 user=root dbname=n9e_v6 password=1234 sslmode=disable"
+DSN="root:1234@tcp(mysql:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local&allowNativePasswords=true"
+# enable debug mode or not
+Debug = false
+# mysql postgres
+DBType = "mysql"
+# unit: s
+MaxLifetime = 7200
+# max open connections
+MaxOpenConns = 150
+# max idle connections
+MaxIdleConns = 50
+# table prefix
+TablePrefix = ""
+# enable auto migrate or not
+# EnableAutoMigrate = false
+
+[Redis]
+# address, ip:port or ip1:port,ip2:port for cluster and sentinel(SentinelAddrs)
+Address = "redis:6379"
+# Username = ""
+# Password = ""
+# DB = 0
+# UseTLS = false
+# TLSMinVersion = "1.2"
+# standalone cluster sentinel
+RedisType = "standalone"
+# Mastername for sentinel type
+# MasterName = "mymaster"
+# SentinelUsername = ""
+# SentinelPassword = ""
+
+[Alert]
+[Alert.Heartbeat]
+# auto detect if blank
+IP = ""
+# unit ms
+Interval = 1000
+EngineName = "default"
+
+# [Alert.Alerting]
+# NotifyConcurrency = 10
+
+[Center]
+MetricsYamlFile = "./etc/metrics.yaml"
+I18NHeaderKey = "X-Language"
+
+[Center.AnonymousAccess]
+PromQuerier = false
+AlertDetail = false
+
+[Pushgw]
+# use target labels in database instead of in series
+LabelRewrite = true
+# # default busigroup key name
+# BusiGroupLabelKey = "busigroup"
+# ForceUseServerTS = false
+
+# [Pushgw.DebugSample]
+# ident = "xx"
+# __name__ = "xx"
+
+# [Pushgw.WriterOpt]
+# QueueMaxSize = 1000000
+# QueuePopSize = 1000
+
+[[Pushgw.Writers]] 
+# Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"
+Url = "http://victoriametrics:8428/api/v1/write"
+# Basic auth username
+BasicAuthUser = ""
+# Basic auth password
+BasicAuthPass = ""
+# timeout settings, unit: ms
+Headers = ["X-From", "n9e"]
+Timeout = 10000
+DialTimeout = 3000
+TLSHandshakeTimeout = 30000
+ExpectContinueTimeout = 1000
+IdleConnTimeout = 90000
+# time duration, unit: ms
+KeepAlive = 30000
+MaxConnsPerHost = 0
+MaxIdleConns = 100
+MaxIdleConnsPerHost = 100
+## Optional TLS Config
+# UseTLS = false
+# TLSCA = "/etc/n9e/ca.pem"
+# TLSCert = "/etc/n9e/cert.pem"
+# TLSKey = "/etc/n9e/key.pem"
+# InsecureSkipVerify = false
+# [[Writers.WriteRelabels]]
+# Action = "replace"
+# SourceLabels = ["__address__"]
+# Regex = "([^:]+)(?::\\d+)?"
+# Replacement = "$1:80"
+# TargetLabel = "__address__"

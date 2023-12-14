@@ -1,0 +1,63 @@
+#!api-testing
+# yaml-language-server: $schema=https://linuxsuren.github.io/api-testing/api-testing-schema.json
+name: nightingale
+api: |
+  {{default "http://localhost:17000" (env "SERVER")}}
+param:
+  user: "{{ randAlpha 6 }}"
+  passwd: "{{ randAlpha 6 }}"
+items:
+- name: login
+  before:
+    items:
+      - sleep(3)
+  request:
+    api: /api/n9e/auth/login
+    method: POST
+    body: |
+      {
+        "username": "root",
+        "password": "root.2020"
+      }
+- name: createUser
+  request:
+    api: /api/n9e/users
+    method: POST
+    header:
+      Content-Type: application/json
+      Authorization: "Bearer {{ .login.dat.access_token }}"
+    body: |
+      {
+        "username": "{{ .param.user }}",
+        "password": "{{ .param.passwd }}",
+        "roles": [
+          "Admin"
+        ],
+        "contacts": {}
+      }
+- name: resetPassword
+  request:
+    api: /api/n9e/user/2/password
+    method: PUT
+    header:
+      Content-Type: application/json
+      Authorization: "Bearer {{ .login.dat.access_token }}"
+    body: |
+      {
+        "password": "{{ .param.passwd }}",
+        "confirm": "{{ .param.passwd }}"
+      }
+- name: queryUser
+  request:
+    api: /api/n9e/users?query={{ .param.user }}
+    header:
+      Authorization: "Bearer {{ .login.dat.access_token }}"
+  expect:
+    bodyFieldsExpect:
+      dat.total: 1
+- name: deleteUser
+  request:
+    api: /api/n9e/user/{{ (index .queryUser.dat.list 0).id}}
+    method: DELETE
+    header:
+      Authorization: "Bearer {{ .login.dat.access_token }}"

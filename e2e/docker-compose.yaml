@@ -1,0 +1,88 @@
+version: "3.7"
+
+services:
+  testing:
+    build:
+      context: .
+    environment:
+      SERVER: http://nightingale:17000
+    depends_on:
+      nightingale:
+        condition: service_started
+    links:
+      - nightingale
+
+  nightingale:
+    image: flashcatcloud/nightingale:latest
+    pull_policy: never
+    environment:
+      TZ: Asia/Shanghai
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/17000"]
+      interval: 3s
+      timeout: 60s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - ./etc-nightingale:/app/etc
+    links:
+      - redis
+      - mysql
+      - victoriametrics
+    ports:
+      - "17000:17000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      victoriametrics:
+        condition: service_started
+    command: >
+      sh -c "/app/n9e"
+
+  mysql:
+    image: "mysql:8"
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: 1234
+    volumes:
+      - ./initsql:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/3306"]
+      interval: 3s
+      timeout: 60s
+      retries: 10
+      start_period: 3s
+
+  redis:
+    image: "redis:6.2"
+    environment:
+      TZ: Asia/Shanghai
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/6379"]
+      interval: 3s
+      timeout: 60s
+      retries: 10
+      start_period: 3s
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.79.12
+    environment:
+      TZ: Asia/Shanghai
+    command:
+      - "--loggerTimezone=Asia/Shanghai"
+
+  ibex:
+    image: flashcatcloud/ibex:v1.2.0
+    environment:
+      GIN_MODE: release
+      TZ: Asia/Shanghai
+      WAIT_HOSTS: mysql:3306
+    volumes:
+      - ./etc-ibex:/app/etc
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: >
+      sh -c "/app/ibex server"

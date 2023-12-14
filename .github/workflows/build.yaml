@@ -1,0 +1,31 @@
+name: Build
+
+on:
+  - pull_request
+
+jobs:
+  Build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Go Environment
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v3
+        with:
+          version: latest
+          args: build --snapshot --clean
+      - name: Image
+        run: |
+          cp dist/build_linux_amd64_v1/n9e n9e
+          docker build . -t flashcatcloud/nightingale:latest -f docker/Dockerfile.goreleaser
+      - name: Run e2e
+        run: |
+          sudo curl -L https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+          sudo chmod u+x /usr/local/bin/docker-compose
+          cd e2e && ./start.sh
