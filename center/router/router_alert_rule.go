@@ -123,6 +123,17 @@ func (rt *Router) alertRuleAddByService(c *gin.Context) {
 	ginx.NewRender(c).Data(reterr, nil)
 }
 
+func (rt *Router) alertRuleAddOneByService(c *gin.Context) {
+	var f models.AlertRule
+	ginx.BindJSON(c, &f)
+
+	err := f.FE2DB()
+	ginx.Dangerous(err)
+
+	err = f.Add(rt.Ctx)
+	ginx.NewRender(c).Data(f.Id, err)
+}
+
 func (rt *Router) alertRuleAddForService(lst []models.AlertRule, username string) map[string]string {
 	count := len(lst)
 	// alert rule name -> error string
