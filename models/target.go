@@ -308,13 +308,16 @@ func (t *Target) DelTags(ctx *ctx.Context, tags []string) error {
 func (t *Target) FillTagsMap() {
 	t.TagsJSON = strings.Fields(t.Tags)
 	t.TagsMap = make(map[string]string)
+	m := make(map[string]string)
 	for _, item := range t.TagsJSON {
 		arr := strings.Split(item, "=")
 		if len(arr) != 2 {
 			continue
 		}
-		t.TagsMap[arr[0]] = arr[1]
+		m[arr[0]] = arr[1]
 	}
+
+	t.TagsMap = m
 }
 
 func (t *Target) FillMeta(meta *HostMeta) {
