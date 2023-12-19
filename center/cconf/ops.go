@@ -128,6 +128,7 @@ ops:
     - "/targets/add"
     - "/targets/put"
     - "/targets/del"
+    - "/targets/bind"
 
 - name: job
   cname: 任务管理
