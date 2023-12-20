@@ -158,3 +158,12 @@ func TaskCreate(v interface{}, ibexc aconf.Ibex) (int64, error) {
 
 	return res.Dat, nil
 }
+
+func Username(c *gin.Context) string {
+	username := c.GetString(gin.AuthUserKey)
+	if username == "" {
+		user := c.MustGet("user").(*models.User)
+		username = user.Username
+	}
+	return username
+}

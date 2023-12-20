@@ -439,6 +439,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		{
 			service.Any("/prometheus/*url", rt.dsProxy)
 			service.POST("/users", rt.userAddPost)
+			service.PUT("/user/:id", rt.userProfilePutByService)
+			service.DELETE("/user/:id", rt.userDel)
 			service.GET("/users", rt.userFindAll)
 
 			service.GET("/user-groups", rt.userGroupGetsByService)

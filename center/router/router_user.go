@@ -79,7 +79,7 @@ func (rt *Router) userAddPost(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "roles empty")
 	}
 
-	user := c.MustGet("user").(*models.User)
+	username := Username(c)
 
 	u := models.User{
 		Username: f.Username,
@@ -90,8 +90,8 @@ func (rt *Router) userAddPost(c *gin.Context) {
 		Portrait: f.Portrait,
 		Roles:    strings.Join(f.Roles, " "),
 		Contacts: f.Contacts,
-		CreateBy: user.Username,
-		UpdateBy: user.Username,
+		CreateBy: username,
+		UpdateBy: username,
 	}
 
 	ginx.NewRender(c).Message(u.Add(rt.Ctx))
@@ -108,6 +108,30 @@ type userProfileForm struct {
 	Email    string       `json:"email"`
 	Roles    []string     `json:"roles"`
 	Contacts ormx.JSONObj `json:"contacts"`
+}
+
+func (rt *Router) userProfilePutByService(c *gin.Context) {
+	var f models.User
+	ginx.BindJSON(c, &f)
+
+	if len(f.RolesLst) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "roles empty")
+	}
+
+	password, err := models.CryptoPass(rt.Ctx, f.Password)
+	ginx.Dangerous(err)
+
+	target := User(rt.Ctx, ginx.UrlParamInt64(c, "id"))
+	target.Nickname = f.Nickname
+	target.Password = password
+	target.Phone = f.Phone
+	target.Email = f.Email
+	target.Portrait = f.Portrait
+	target.Roles = strings.Join(f.RolesLst, " ")
+	target.Contacts = f.Contacts
+	target.UpdateBy = Username(c)
+
+	ginx.NewRender(c).Message(target.UpdateAllFields(rt.Ctx))
 }
 
 func (rt *Router) userProfilePut(c *gin.Context) {

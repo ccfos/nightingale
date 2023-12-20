@@ -240,8 +240,3 @@ func (rt *Router) getDatasourceIds(c *gin.Context) {
 
 	ginx.NewRender(c).Data(datasourceIds, err)
 }
-
-func Username(c *gin.Context) string {
-
-	return c.MustGet("username").(string)
-}
