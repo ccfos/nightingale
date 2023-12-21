@@ -2,6 +2,7 @@ package metas
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	"time"
 
@@ -96,9 +97,30 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 	}
 
 	newMap := make(map[string]interface{}, count)
+	extendMap := make(map[string]interface{})
 	for ident, meta := range m {
+		if meta.ExtendInfo != nil {
+			extendMeta := meta.ExtendInfo
+			meta.ExtendInfo = make(map[string]interface{})
+			extendMetaStr, err := json.Marshal(extendMeta)
+			if err != nil {
+				return err
+			}
+			extendMap[models.WrapExtendIdent(ident)] = extendMetaStr
+		}
 		newMap[models.WrapIdent(ident)] = meta
 	}
 	err := storage.MSet(context.Background(), s.redis, newMap)
+	if err != nil {
+		return err
+	}
+
+	if len(extendMap) > 0 {
+		err = storage.MSet(context.Background(), s.redis, extendMap)
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }
