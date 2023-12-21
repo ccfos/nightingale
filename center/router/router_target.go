@@ -121,6 +121,27 @@ func (rt *Router) targetGets(c *gin.Context) {
 	}, nil)
 }
 
+func (rt *Router) targetExtendInfoByIdent(c *gin.Context) {
+	ident := ginx.QueryStr(c, "ident", "")
+	key := models.WrapExtendIdent(ident)
+	vals := storage.MGet(context.Background(), rt.Redis, []string{key})
+	if len(vals) > 0 {
+		extInfo := string(vals[0])
+		if extInfo == "null" {
+			extInfo = ""
+		}
+		ginx.NewRender(c).Data(gin.H{
+			"extend_info": extInfo,
+			"ident":       ident,
+		}, nil)
+		return
+	}
+	ginx.NewRender(c).Data(gin.H{
+		"extend_info": "",
+		"ident":       ident,
+	}, nil)
+}
+
 func (rt *Router) targetGetsByService(c *gin.Context) {
 	lst, err := models.TargetGetsAll(rt.Ctx)
 	ginx.NewRender(c).Data(lst, err)
