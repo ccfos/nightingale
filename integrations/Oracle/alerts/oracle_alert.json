@@ -1,0 +1,362 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      2
+    ],
+    "name": "Oracle: {{$labels.address}}，数据库归档日志量大于100",
+    "note": "Job:{{$labels.job}};Address:{{$labels.address}};Region:{{$labels.region}};",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 300,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "oracle_archivelog_count>100",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 60,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "wecom",
+      "email",
+      "sms"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 5,
+    "recover_duration": 120,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      2
+    ],
+    "name": "Oracle: {{$labels.address}}，数据库总连接数大于500",
+    "note": "Job:{{$labels.job}};Address:{{$labels.address}};Region:{{$labels.region}};",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2,
+      3
+    ],
+    "disabled": 0,
+    "prom_for_duration": 300,
+    "prom_ql": "",
+    "rule_config": {
+      "inhibit": true,
+      "queries": [
+        {
+          "prom_ql": "oracle_process_count > 500",
+          "severity": 2
+        },
+        {
+          "prom_ql": "oracle_process_count > 800",
+          "severity": 3
+        }
+      ]
+    },
+    "prom_eval_interval": 60,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "wecom",
+      "email",
+      "sms"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 5,
+    "recover_duration": 120,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      2
+    ],
+    "name": "Oracle: {{$labels.address}}，数据库活跃连接数大于100",
+    "note": "Job:{{$labels.job}};Address:{{$labels.address}};Region:{{$labels.region}};",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 300,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "oracle_sessions_value{address='localhost:1111/erpdb',status='ACTIVE',type='USER'}>100",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 60,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "wecom",
+      "email",
+      "sms"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 5,
+    "recover_duration": 120,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      2
+    ],
+    "name": "Oracle:{{$labels.address}} 监控失活！",
+    "note": "Job:{{$labels.job}};Address:{{$labels.address}};Tablespace:{{$labels.tablespace}};Region:{{$labels.region}};",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 0,
+    "prom_for_duration": 90,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "oracle_up != 1",
+          "severity": 1
+        }
+      ]
+    },
+    "prom_eval_interval": 30,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "wecom",
+      "email"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 2,
+    "recover_duration": 120,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": null
+  },
+  {
+    "cate": "prometheus",
+    "datasource_ids": [
+      2
+    ],
+    "name": "Oracle:{{$labels.address}}，表空间{{$labels.tablespace}}使用率大于95%",
+    "note": "Job:{{$labels.job}};Address:{{$labels.address}};Tablespace:{{$labels.tablespace}};Region:{{$labels.region}};",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "oracle_tablespace_bytes/oracle_tablespace_max_bytes*100>95",
+          "severity": 2
+        }
+      ]
+    },
+    "prom_eval_interval": 60,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [
+      "wecom",
+      "email",
+      "sms"
+    ],
+    "notify_repeat_step": 60,
+    "notify_max_number": 5,
+    "recover_duration": 120,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": null
+  }
+]
