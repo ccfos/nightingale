@@ -320,6 +320,19 @@ func (t *Target) FillTagsMap() {
 	t.TagsMap = m
 }
 
+func (t *Target) GetTagsMap() map[string]string {
+	tagsJSON := strings.Fields(t.Tags)
+	m := make(map[string]string)
+	for _, item := range tagsJSON {
+		arr := strings.Split(item, "=")
+		if len(arr) != 2 {
+			continue
+		}
+		m[arr[0]] = arr[1]
+	}
+	return m
+}
+
 func (t *Target) FillMeta(meta *HostMeta) {
 	t.MemUtil = meta.MemUtil
 	t.CpuUtil = meta.CpuUtil
