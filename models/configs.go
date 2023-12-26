@@ -253,8 +253,17 @@ func userVariableCheck(context *ctx.Context, ckey string, id int64) error {
 	var objs []*Configs
 	var err error
 	if !isCStyleIdentifier(ckey) {
-		return fmt.Errorf("invalid key(%q), please use C-style naming convention ", ckey)
+		return fmt.Errorf("invalid key(%q), please use ^[a-zA-Z_][a-zA-Z0-9_]*$ ", ckey)
 	}
+
+	//  reserved words
+	words := []string{"Scheme", "Host", "Hostname", "Port", "Path", "Query", "Fragment"}
+	for _, word := range words {
+		if ckey == word {
+			return fmt.Errorf("invalid key(%q), reserved words, please use other key", ckey)
+		}
+	}
+
 	if id != 0 { //update
 		err = DB(context).Where("id <> ? and ckey = ? and external=?", &id, ckey, ConfigExternal).Find(&objs).Error
 	} else {
