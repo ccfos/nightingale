@@ -32,7 +32,8 @@ type SsoClient struct {
 	}
 	DefaultRoles []string
 
-	Ctx context.Context
+	Ctx      context.Context
+	Provider *oidc.Provider
 	sync.RWMutex
 }
 
@@ -106,6 +107,7 @@ func (s *SsoClient) Reload(cf Config) error {
 	}
 
 	s.Verifier = provider.Verifier(oidcConfig)
+	s.Provider = provider
 	s.Config = oauth2.Config{
 		ClientID:     cf.ClientId,
 		ClientSecret: cf.ClientSecret,
@@ -219,19 +221,50 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 		logger.Debugf("sso_exchange_user: oidc info key:%s value:%v", k, v)
 	}
 
-	v := func(k string) string {
-		if in := data[k]; in == nil {
-			return ""
-		} else {
-			return in.(string)
-		}
+	output := &CallbackOutput{
+		AccessToken: oauth2Token.AccessToken,
+		Username:    extractClaim(data, s.Attributes.Username),
+		Nickname:    extractClaim(data, s.Attributes.Nickname),
+		Phone:       extractClaim(data, s.Attributes.Phone),
+		Email:       extractClaim(data, s.Attributes.Email),
 	}
 
-	return &CallbackOutput{
-		AccessToken: oauth2Token.AccessToken,
-		Username:    v(s.Attributes.Username),
-		Nickname:    v(s.Attributes.Nickname),
-		Phone:       v(s.Attributes.Phone),
-		Email:       v(s.Attributes.Email),
-	}, nil
+	userInfo, err := s.Provider.UserInfo(s.Ctx, oauth2.StaticTokenSource(oauth2Token))
+	if err != nil {
+		logger.Errorf("sso_exchange_user: failed to get userinfo: %v", err)
+		return output, nil
+	}
+
+	if userInfo == nil {
+		logger.Errorf("sso_exchange_user: userinfo is nil")
+		return output, nil
+	}
+
+	logger.Debugf("sso_exchange_user: userinfo subject:%s email:%s profile:%s", userInfo.Subject, userInfo.Email, userInfo.Profile)
+	if output.Email == "" {
+		output.Email = userInfo.Email
+	}
+
+	data = map[string]interface{}{}
+	userInfo.Claims(&data)
+	logger.Debugf("sso_exchange_user: userinfo claims:%+v", data)
+
+	if output.Nickname == "" {
+		output.Nickname = extractClaim(data, s.Attributes.Nickname)
+	}
+
+	if output.Phone == "" {
+		output.Phone = extractClaim(data, s.Attributes.Phone)
+	}
+
+	return output, nil
+}
+
+func extractClaim(data map[string]interface{}, key string) string {
+	if value, ok := data[key]; ok {
+		if strValue, ok := value.(string); ok {
+			return strValue
+		}
+	}
+	return ""
 }
