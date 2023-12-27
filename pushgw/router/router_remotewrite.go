@@ -31,6 +31,21 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMet
 		labelMap[label.Name] = i
 	}
 
+	var ident string
+	// agent_hostname for grafana-agent and categraf
+	if idx, ok := labelMap["agent_hostname"]; ok {
+		s.Labels[idx].Name = "ident"
+		ident = s.Labels[idx].Value
+	}
+
+	if !ignoreIdent && ident == "" {
+		// telegraf, output plugin: http, format: prometheusremotewrite
+		if idx, ok := labelMap["host"]; ok {
+			s.Labels[idx].Name = "ident"
+			ident = s.Labels[idx].Value
+		}
+	}
+
 	if len(identMetrics) > 0 {
 		metricFound := false
 		for _, identMetric := range identMetrics {
@@ -46,24 +61,10 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMet
 	}
 
 	if idx, ok := labelMap["ident"]; ok {
-		return s.Labels[idx].Value
+		ident = s.Labels[idx].Value
 	}
 
-	// agent_hostname for grafana-agent and categraf
-	if idx, ok := labelMap["agent_hostname"]; ok {
-		s.Labels[idx].Name = "ident"
-		return s.Labels[idx].Value
-	}
-
-	if !ignoreIdent {
-		// telegraf, output plugin: http, format: prometheusremotewrite
-		if idx, ok := labelMap["host"]; ok {
-			s.Labels[idx].Name = "ident"
-			return s.Labels[idx].Value
-		}
-	}
-
-	return ""
+	return ident
 }
 
 func duplicateLabelKey(series *prompb.TimeSeries) bool {
