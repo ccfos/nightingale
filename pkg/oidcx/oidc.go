@@ -221,20 +221,12 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 		logger.Debugf("sso_exchange_user: oidc info key:%s value:%v", k, v)
 	}
 
-	v := func(k string) string {
-		if in := data[k]; in == nil {
-			return ""
-		} else {
-			return in.(string)
-		}
-	}
-
 	output := &CallbackOutput{
 		AccessToken: oauth2Token.AccessToken,
-		Username:    v(s.Attributes.Username),
-		Nickname:    v(s.Attributes.Nickname),
-		Phone:       v(s.Attributes.Phone),
-		Email:       v(s.Attributes.Email),
+		Username:    extractClaim(data, s.Attributes.Username),
+		Nickname:    extractClaim(data, s.Attributes.Nickname),
+		Phone:       extractClaim(data, s.Attributes.Phone),
+		Email:       extractClaim(data, s.Attributes.Email),
 	}
 
 	userInfo, err := s.Provider.UserInfo(s.Ctx, oauth2.StaticTokenSource(oauth2Token))
@@ -257,21 +249,22 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	userInfo.Claims(&data)
 	logger.Debugf("sso_exchange_user: userinfo claims:%+v", data)
 
-	v = func(k string) string {
-		if in := data[k]; in == nil {
-			return ""
-		} else {
-			return in.(string)
-		}
-	}
-
 	if output.Nickname == "" {
-		output.Nickname = v("nickname")
+		output.Nickname = extractClaim(data, s.Attributes.Nickname)
 	}
 
 	if output.Phone == "" {
-		output.Phone = v("phone_number")
+		output.Phone = extractClaim(data, s.Attributes.Phone)
 	}
 
 	return output, nil
+}
+
+func extractClaim(data map[string]interface{}, key string) string {
+	if value, ok := data[key]; ok {
+		if strValue, ok := value.(string); ok {
+			return strValue
+		}
+	}
+	return ""
 }
