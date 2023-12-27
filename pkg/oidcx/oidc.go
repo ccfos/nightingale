@@ -248,13 +248,14 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 		return output, nil
 	}
 
-	logger.Debugf("sso_exchange_user: userinfo:%+v", userInfo)
+	logger.Debugf("sso_exchange_user: userinfo subject:%s email:%s profile:%s", userInfo.Subject, userInfo.Email, userInfo.Profile)
 	if output.Email == "" {
 		output.Email = userInfo.Email
 	}
 
 	data = map[string]interface{}{}
 	userInfo.Claims(&data)
+	logger.Debugf("sso_exchange_user: userinfo claims:%+v", data)
 
 	v = func(k string) string {
 		if in := data[k]; in == nil {
