@@ -32,7 +32,8 @@ type SsoClient struct {
 	}
 	DefaultRoles []string
 
-	Ctx context.Context
+	Ctx      context.Context
+	Provider *oidc.Provider
 	sync.RWMutex
 }
 
@@ -106,6 +107,7 @@ func (s *SsoClient) Reload(cf Config) error {
 	}
 
 	s.Verifier = provider.Verifier(oidcConfig)
+	s.Provider = provider
 	s.Config = oauth2.Config{
 		ClientID:     cf.ClientId,
 		ClientSecret: cf.ClientSecret,
@@ -227,11 +229,48 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 		}
 	}
 
-	return &CallbackOutput{
+	output := &CallbackOutput{
 		AccessToken: oauth2Token.AccessToken,
 		Username:    v(s.Attributes.Username),
 		Nickname:    v(s.Attributes.Nickname),
 		Phone:       v(s.Attributes.Phone),
 		Email:       v(s.Attributes.Email),
-	}, nil
+	}
+
+	userInfo, err := s.Provider.UserInfo(s.Ctx, oauth2.StaticTokenSource(oauth2Token))
+	if err != nil {
+		logger.Errorf("sso_exchange_user: failed to get userinfo: %v", err)
+		return output, nil
+	}
+
+	if userInfo == nil {
+		logger.Errorf("sso_exchange_user: userinfo is nil")
+		return output, nil
+	}
+
+	logger.Debugf("sso_exchange_user: userinfo:%+v", userInfo)
+	if output.Email == "" {
+		output.Email = userInfo.Email
+	}
+
+	data = map[string]interface{}{}
+	userInfo.Claims(&data)
+
+	v = func(k string) string {
+		if in := data[k]; in == nil {
+			return ""
+		} else {
+			return in.(string)
+		}
+	}
+
+	if output.Nickname == "" {
+		output.Nickname = v("nickname")
+	}
+
+	if output.Phone == "" {
+		output.Phone = v("phone_number")
+	}
+
+	return output, nil
 }
