@@ -356,3 +356,28 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 
 	ginx.NewRender(c).Message("")
 }
+
+func (rt *Router) alertRuleCallbacks(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+	gids, err := models.MyGroupIds(rt.Ctx, user.Id)
+	ginx.Dangerous(err)
+
+	bussGroupIds, err := models.BusiGroupIds(rt.Ctx, gids)
+	ginx.Dangerous(err)
+
+	ars, err := models.AlertRuleGetsByBGIds(rt.Ctx, bussGroupIds)
+	ginx.Dangerous(err)
+
+	var callbacks []string
+	callbackFilter := make(map[string]struct{})
+	for i := range ars {
+		for _, callback := range ars[i].CallbacksJSON {
+			if _, ok := callbackFilter[callback]; !ok {
+				callbackFilter[callback] = struct{}{}
+				callbacks = append(callbacks, callback)
+			}
+		}
+	}
+
+	ginx.NewRender(c).Data(callbacks, nil)
+}
