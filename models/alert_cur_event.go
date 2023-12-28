@@ -48,6 +48,7 @@ type AlertCurEvent struct {
 	TargetNote         string            `json:"target_note"`
 	TriggerTime        int64             `json:"trigger_time"`
 	TriggerValue       string            `json:"trigger_value"`
+	TriggerValues      string            `json:"trigger_values" gorm:"-"`
 	Tags               string            `json:"-"`                         // for db
 	TagsJSON           []string          `json:"tags" gorm:"-"`             // for fe
 	TagsMap            map[string]string `json:"tags_map" gorm:"-"`         // for internal usage

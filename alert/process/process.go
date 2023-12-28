@@ -184,6 +184,7 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.TargetIdent = p.target
 	event.TargetNote = p.targetNote
 	event.TriggerValue = anomalyPoint.ReadableValue()
+	event.TriggerValues = anomalyPoint.Values
 	event.TagsJSON = p.tagsArr
 	event.GroupName = bg.Name
 	event.Tags = strings.Join(p.tagsArr, ",,")
