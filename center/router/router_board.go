@@ -76,13 +76,7 @@ func (rt *Router) boardGet(c *gin.Context) {
 
 		me := c.MustGet("user").(*models.User)
 		if !me.IsAdmin() {
-			ugids, err := models.MyGroupIds(rt.Ctx, me.Id)
-			ginx.Dangerous(err)
-			if len(ugids) == 0 {
-				ginx.Bomb(http.StatusForbidden, "forbidden")
-			}
-
-			bgids, err := models.BusiGroupIds(rt.Ctx, ugids, "rw")
+			bgids, err := models.MyBusiGroupIds(rt.Ctx, me.Id)
 			ginx.Dangerous(err)
 			if len(bgids) == 0 {
 				ginx.Bomb(http.StatusForbidden, "forbidden")
@@ -251,17 +245,8 @@ func (rt *Router) boardGets(c *gin.Context) {
 func (rt *Router) publicBoardGets(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 
-	ugids, err := models.MyGroupIds(rt.Ctx, me.Id)
+	bgids, err := models.MyBusiGroupIds(rt.Ctx, me.Id)
 	ginx.Dangerous(err)
-	if len(ugids) == 0 {
-		ginx.Bomb(http.StatusForbidden, "forbidden")
-	}
-
-	bgids, err := models.BusiGroupIds(rt.Ctx, ugids, "rw")
-	ginx.Dangerous(err)
-	if len(bgids) == 0 {
-		ginx.Bomb(http.StatusForbidden, "forbidden")
-	}
 
 	boardIds, err := models.BoardIdsByBusiGroupIds(rt.Ctx, bgids)
 	ginx.Dangerous(err)
@@ -274,8 +259,17 @@ func (rt *Router) boardGetsByGids(c *gin.Context) {
 	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
 	query := ginx.QueryStr(c, "query", "")
 
-	for _, gid := range gids {
-		rt.bgroCheck(c, gid)
+	if len(gids) > 0 {
+		for _, gid := range gids {
+			rt.bgroCheck(c, gid)
+		}
+	} else {
+		me := c.MustGet("user").(*models.User)
+		if !me.IsAdmin() {
+			var err error
+			gids, err = models.MyBusiGroupIds(rt.Ctx, me.Id)
+			ginx.Dangerous(err)
+		}
 	}
 
 	boards, err := models.BoardGetsByBGIds(rt.Ctx, gids, query)
