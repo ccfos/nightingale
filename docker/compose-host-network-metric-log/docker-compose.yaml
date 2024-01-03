@@ -101,6 +101,7 @@ services:
 
   zookeeper:
     image: wurstmeister/zookeeper
+    restart: always
     environment: 
       TZ: Asia/Shanghai
       WAIT_HOSTS: 127.0.0.1:2181
@@ -110,6 +111,7 @@ services:
   kafka:
     image: wurstmeister/kafka
     container_name: "kafka"
+    restart: always
     environment:
       TZ: Asia/Shanghai
       WAIT_HOSTS: 127.0.0.1:9092
@@ -126,6 +128,7 @@ services:
   elasticsearch:    
     image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1    
     container_name: "elasticsearch"
+    restart: always
     environment:
       TZ: Asia/Shanghai
       WAIT_HOSTS: 127.0.0.1:9200, 127.0.0.1:9300
