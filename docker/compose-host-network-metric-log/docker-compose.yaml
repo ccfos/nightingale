@@ -89,7 +89,7 @@ services:
       HOST_PROC: /hostfs/proc
       HOST_SYS: /hostfs/sys
       HOST_MOUNT_PREFIX: /hostfs
-      WAIT_HOSTS: 127.0.0.1:17000, 127.0.0.1:20090
+      WAIT_HOSTS: 127.0.0.1:17000, 127.0.0.1:20090, 127.0.0.1:9092
     volumes:
       - ./etc-categraf:/etc/categraf/conf
       - ./n9e-logs:/logs
