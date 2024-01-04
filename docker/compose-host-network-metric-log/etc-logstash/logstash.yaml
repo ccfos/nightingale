@@ -12,6 +12,6 @@ filter {
 output {
   elasticsearch {
     hosts => ["127.0.0.1:9200"]
-    index => "your_index"
+    index => "n9e-%{+YYYY.MM.DD}"
    }
 }

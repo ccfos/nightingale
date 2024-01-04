@@ -104,6 +104,7 @@ services:
     container_name: "zookeeper"
     restart: always
     environment:
+      - TZ=Asia/Shanghai
       - ALLOW_ANONYMOUS_LOGIN=yes
     network_mode: host
     depends_on:
@@ -114,6 +115,7 @@ services:
     container_name: "kafka"
     restart: always
     environment:
+      TZ: Asia/Shanghai
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ZOOKEEPER_CONNECT: 127.0.0.1:2181
@@ -127,6 +129,7 @@ services:
     container_name: "elasticsearch"
     restart: always
     environment:
+      - TZ=Asia/Shanghai
       - discovery.type=single-node
     network_mode: host
     depends_on:
@@ -138,6 +141,7 @@ services:
     container_name: "logstash"
     restart: always
     environment:
+      - TZ=Asia/Shanghai
       - LS_JAVA_OPTS=-Xmx256m -Xms256m
     volumes:
       - ./etc-logstash/logstash.yaml:/etc/logstash/conf.d/logstash.yaml
