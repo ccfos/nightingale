@@ -70,14 +70,14 @@ services:
       WAIT_HOSTS: 127.0.0.1:3306, 127.0.0.1:6379
     volumes:
       - ./etc-nightingale:/app/etc
-      - ./n9e-log:/app/log
+      - ./n9e-logs:/app/logs
     network_mode: host
     depends_on:
       - mysql
       - redis
       - prometheus
     command: >
-      sh -c "/app/n9e > /app/log/nohup.log"
+      sh -c "/app/n9e"
 
   categraf:
     image: "flashcatcloud/categraf:latest"
@@ -92,7 +92,7 @@ services:
       WAIT_HOSTS: 127.0.0.1:17000, 127.0.0.1:20090
     volumes:
       - ./etc-categraf:/etc/categraf/conf
-      - ./n9e-log:/log
+      - ./n9e-logs:/logs
       - /:/hostfs
     network_mode: host
     depends_on:
@@ -100,26 +100,20 @@ services:
       - kafka
 
   zookeeper:
-    image: wurstmeister/zookeeper
-    restart: always
-    environment: 
-      TZ: Asia/Shanghai
-      WAIT_HOSTS: 127.0.0.1:2181
+    image: bitnami/zookeeper:3.9
+    container_name: "zookeeper"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
     network_mode: host
 
 
   kafka:
-    image: wurstmeister/kafka
+    image: bitnami/kafka:3.4
     container_name: "kafka"
-    restart: always
     environment:
-      TZ: Asia/Shanghai
-      WAIT_HOSTS: 127.0.0.1:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ZOOKEEPER_CONNECT: 127.0.0.1:2181
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - zookeeper
     network_mode: host
@@ -129,9 +123,6 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1    
     container_name: "elasticsearch"
     restart: always
-    environment:
-      TZ: Asia/Shanghai
-      WAIT_HOSTS: 127.0.0.1:9200, 127.0.0.1:9300
     environment:
       - discovery.type=single-node
     depends_on:

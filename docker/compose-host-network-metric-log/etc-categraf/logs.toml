@@ -67,7 +67,7 @@ collect_container_all = false
   ## file/journald/tcp/udp
   type = "file"
   ## type=file, path is required; type=journald/tcp/udp, port is required
-  path = "/log/*.log"
+  path = "/logs/*.log"
   source = "n9e"
   service = "n9e_service"
 
