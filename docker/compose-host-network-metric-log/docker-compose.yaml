@@ -102,21 +102,24 @@ services:
   zookeeper:
     image: bitnami/zookeeper:3.9
     container_name: "zookeeper"
+    restart: always
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
     network_mode: host
-
+    depends_on:
+      - n9e
 
   kafka:
     image: bitnami/kafka:3.4
     container_name: "kafka"
+    restart: always
     environment:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ZOOKEEPER_CONNECT: 127.0.0.1:2181
+    network_mode: host
     depends_on:
       - zookeeper
-    network_mode: host
 
       
   elasticsearch:    
@@ -125,9 +128,9 @@ services:
     restart: always
     environment:
       - discovery.type=single-node
+    network_mode: host
     depends_on:
       - kafka 
-    network_mode: host
 
 
   logstash:
@@ -142,12 +145,13 @@ services:
       - logstash
       - -f
       - /etc/logstash/conf.d/logstash.yaml
+    network_mode: host
     depends_on:
       - elasticsearch
+      - kafka
     logging:
       driver: "json-file"
       options:
         max-size: "200m"
         max-file: "3"
-    network_mode: host
 
