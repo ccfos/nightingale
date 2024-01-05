@@ -272,7 +272,21 @@ func (rt *Router) boardGetsByGids(c *gin.Context) {
 		}
 	}
 
+	boardBusigroups, err := models.BoardBusigroupGets(rt.Ctx)
+	ginx.Dangerous(err)
+	m := make(map[int64][]int64)
+	for _, boardBusigroup := range boardBusigroups {
+		m[boardBusigroup.BoardId] = append(m[boardBusigroup.BoardId], boardBusigroup.BusiGroupId)
+	}
+
 	boards, err := models.BoardGetsByBGIds(rt.Ctx, gids, query)
+	ginx.Dangerous(err)
+	for i := 0; i < len(boards); i++ {
+		if ids, ok := m[boards[i].Id]; ok {
+			boards[i].Bgids = ids
+		}
+	}
+
 	ginx.NewRender(c).Data(boards, err)
 }
 

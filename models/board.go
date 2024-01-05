@@ -17,20 +17,21 @@ const (
 )
 
 type Board struct {
-	Id         int64  `json:"id" gorm:"primaryKey"`
-	GroupId    int64  `json:"group_id"`
-	Name       string `json:"name"`
-	Ident      string `json:"ident"`
-	Tags       string `json:"tags"`
-	CreateAt   int64  `json:"create_at"`
-	CreateBy   string `json:"create_by"`
-	UpdateAt   int64  `json:"update_at"`
-	UpdateBy   string `json:"update_by"`
-	Configs    string `json:"configs" gorm:"-"`
-	Public     int    `json:"public"`      // 0: false, 1: true
-	PublicCate int    `json:"public_cate"` // 0: anonymous, 1: login, 2: busi
-	BuiltIn    int    `json:"built_in"`    // 0: false, 1: true
-	Hide       int    `json:"hide"`        // 0: false, 1: true
+	Id         int64   `json:"id" gorm:"primaryKey"`
+	GroupId    int64   `json:"group_id"`
+	Name       string  `json:"name"`
+	Ident      string  `json:"ident"`
+	Tags       string  `json:"tags"`
+	CreateAt   int64   `json:"create_at"`
+	CreateBy   string  `json:"create_by"`
+	UpdateAt   int64   `json:"update_at"`
+	UpdateBy   string  `json:"update_by"`
+	Configs    string  `json:"configs" gorm:"-"`
+	Public     int     `json:"public"`      // 0: false, 1: true
+	PublicCate int     `json:"public_cate"` // 0: anonymous, 1: login, 2: busi
+	Bgids      []int64 `json:"bgids" gorm:"-"`
+	BuiltIn    int     `json:"built_in"` // 0: false, 1: true
+	Hide       int     `json:"hide"`     // 0: false, 1: true
 }
 
 func (b *Board) TableName() string {

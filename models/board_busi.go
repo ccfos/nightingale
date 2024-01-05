@@ -56,6 +56,12 @@ func BoardBusigroupCheck(ctx *ctx.Context, boardId int64, busiGroupIds []int64) 
 	return count > 0, err
 }
 
+func BoardBusigroupGets(ctx *ctx.Context) ([]BoardBusigroup, error) {
+	var objs []BoardBusigroup
+	err := DB(ctx).Find(&objs).Error
+	return objs, err
+}
+
 // get board ids by  busi group ids
 func BoardIdsByBusiGroupIds(ctx *ctx.Context, busiGroupIds []int64) ([]int64, error) {
 	var ids []int64

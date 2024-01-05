@@ -14,25 +14,28 @@ func Migrate(db *gorm.DB) {
 
 func MigrateTables(db *gorm.DB) error {
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
-		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{}}
+		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{}, &Board{}, &BoardBusigroup{}}
+
 	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
 		dts = append(dts, &AlertHisEvent{})
 	}
-	err := db.AutoMigrate(dts...)
-	if err != nil {
-		logger.Errorf("failed to migrate table: %v", err)
-		return err
+
+	for _, dt := range dts {
+		err := db.AutoMigrate(dt)
+		if err != nil {
+			logger.Errorf("failed to migrate table: %v", err)
+		}
 	}
 
 	if db.Migrator().HasColumn(&AlertingEngines{}, "cluster") {
-		err = db.Migrator().RenameColumn(&AlertingEngines{}, "cluster", "engine_cluster")
+		err := db.Migrator().RenameColumn(&AlertingEngines{}, "cluster", "engine_cluster")
 		if err != nil {
 			logger.Errorf("failed to renameColumn table: %v", err)
-			return err
 		}
 	}
+
 	if db.Migrator().HasColumn(&ChartShare{}, "dashboard_id") {
-		err = db.Migrator().DropColumn(&ChartShare{}, "dashboard_id")
+		err := db.Migrator().DropColumn(&ChartShare{}, "dashboard_id")
 		if err != nil {
 			logger.Errorf("failed to DropColumn table: %v", err)
 		}
@@ -175,4 +178,13 @@ type NotifyTpl struct {
 	CreateBy string `gorm:"column:create_by;type:varchar(64);default:'';comment:cerate_by"`
 	UpdateAt int64  `gorm:"column:update_at;type:int;default:0;comment:update_at"`
 	UpdateBy string `gorm:"column:update_by;type:varchar(64);default:'';comment:update_by"`
+}
+
+type Board struct {
+	PublicCate int `gorm:"column:public_cate;int;not null;default:0;comment:0 anonymous 1 login 2 busi"`
+}
+
+type BoardBusigroup struct {
+	BusiGroupId int64 `gorm:"column:busi_group_id;bigint(20);not null;default:0;comment:busi group id"`
+	BoardId     int64 `gorm:"column:board_id;bigint(20);not null;default:0;comment:board id"`
 }
