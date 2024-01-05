@@ -164,6 +164,12 @@ func (c *AlertSubscribeCacheType) syncAlertSubscribes() error {
 		}
 
 		subs[lst[i].RuleId] = append(subs[lst[i].RuleId], lst[i])
+
+		for _, sub := range lst {
+			for _, rid := range sub.RuleIds {
+				subs[rid] = append(subs[rid], sub)
+			}
+		}
 	}
 
 	c.Set(subs, stat.Total, stat.LastUpdated)

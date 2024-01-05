@@ -48,6 +48,8 @@ type AlertSubscribe struct {
 	ITags             []TagFilter  `json:"-" gorm:"-"` // inner tags
 	BusiGroups        ormx.JSONArr `json:"busi_groups"`
 	IBusiGroups       []TagFilter  `json:"-" gorm:"-"` // inner busiGroups
+	RuleIds           []int64      `json:"rule_ids" gorm:"serializer:json"`
+	RuleNames         []string     `json:"rule_names" gorm:"serializer:json"`
 }
 
 func (s *AlertSubscribe) TableName() string {
@@ -215,6 +217,47 @@ func (s *AlertSubscribe) FillRuleName(ctx *ctx.Context, cache map[int64]string) 
 
 	s.RuleName = name
 	cache[s.RuleId] = name
+
+	return nil
+}
+
+func (s *AlertSubscribe) FillRuleNames(ctx *ctx.Context, cache map[int64]string) error {
+	s.RuleIds = append(s.RuleIds, s.RuleId)
+
+	idNameHas := make(map[int64]string, len(s.RuleIds))
+	idsNotInCache := make([]int64, 0)
+	for _, rid := range s.RuleIds {
+		rname, exist := cache[rid]
+		if exist {
+			idNameHas[rid] = rname
+		} else {
+			idsNotInCache = append(idsNotInCache, rid)
+		}
+	}
+
+	if len(idsNotInCache) > 0 {
+		dbIdNameHas, err := AlertRuleGetNames(ctx, idsNotInCache)
+		if err != nil {
+			return err
+		}
+		for id, name := range dbIdNameHas {
+			idNameHas[id] = name
+			cache[id] = name
+		}
+	}
+
+	names := make([]string, len(s.RuleIds))
+	for i, rid := range s.RuleIds {
+		if name, exist := idNameHas[rid]; exist {
+			names[i] = name
+		} else if rid == 0 {
+			names[i] = ""
+		} else {
+			names[i] = "Error: AlertRule not found"
+		}
+	}
+	s.RuleNames = names
+
 	return nil
 }
 
