@@ -181,7 +181,10 @@ func BoardGetsByGroupId(ctx *ctx.Context, groupId int64, query string) ([]Board,
 }
 
 func BoardGetsByBGIds(ctx *ctx.Context, gids []int64, query string) ([]Board, error) {
-	session := DB(ctx).Where("group_id in (?)", gids).Order("name")
+	session := DB(ctx)
+	if len(gids) > 0 {
+		session = session.Where("group_id in (?)", gids).Order("name")
+	}
 
 	arr := strings.Fields(query)
 	if len(arr) > 0 {
