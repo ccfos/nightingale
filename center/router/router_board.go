@@ -256,7 +256,7 @@ func (rt *Router) publicBoardGets(c *gin.Context) {
 }
 
 func (rt *Router) boardGetsByGids(c *gin.Context) {
-	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
 	query := ginx.QueryStr(c, "query", "")
 
 	if len(gids) > 0 {
