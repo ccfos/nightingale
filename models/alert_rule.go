@@ -783,20 +783,6 @@ func AlertRuleGetById(ctx *ctx.Context, id int64) (*AlertRule, error) {
 	return AlertRuleGet(ctx, "id=?", id)
 }
 
-func AlertRuleGetName(ctx *ctx.Context, id int64) (string, error) {
-	var names []string
-	err := DB(ctx).Model(new(AlertRule)).Where("id = ?", id).Pluck("name", &names).Error
-	if err != nil {
-		return "", err
-	}
-
-	if len(names) == 0 {
-		return "", nil
-	}
-
-	return names[0], nil
-}
-
 func AlertRuleGetNames(ctx *ctx.Context, ids []int64) (map[int64]string, error) {
 	type IdName struct {
 		Id   int64
