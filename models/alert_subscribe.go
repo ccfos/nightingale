@@ -194,33 +194,6 @@ func (s *AlertSubscribe) Add(ctx *ctx.Context) error {
 	return Insert(ctx, s)
 }
 
-func (s *AlertSubscribe) FillRuleName(ctx *ctx.Context, cache map[int64]string) error {
-	if s.RuleId <= 0 {
-		s.RuleName = ""
-		return nil
-	}
-
-	name, has := cache[s.RuleId]
-	if has {
-		s.RuleName = name
-		return nil
-	}
-
-	name, err := AlertRuleGetName(ctx, s.RuleId)
-	if err != nil {
-		return err
-	}
-
-	if name == "" {
-		name = "Error: AlertRule not found"
-	}
-
-	s.RuleName = name
-	cache[s.RuleId] = name
-
-	return nil
-}
-
 func (s *AlertSubscribe) FillRuleNames(ctx *ctx.Context, cache map[int64]string) error {
 	if s.RuleIds == nil && s.RuleId != 0 {
 		s.RuleIds = append(s.RuleIds, s.RuleId)
