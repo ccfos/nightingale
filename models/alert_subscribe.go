@@ -222,7 +222,13 @@ func (s *AlertSubscribe) FillRuleName(ctx *ctx.Context, cache map[int64]string) 
 }
 
 func (s *AlertSubscribe) FillRuleNames(ctx *ctx.Context, cache map[int64]string) error {
-	s.RuleIds = append(s.RuleIds, s.RuleId)
+	if s.RuleIds == nil && s.RuleId != 0 {
+		s.RuleIds = append(s.RuleIds, s.RuleId)
+	}
+	if len(s.RuleIds) == 0 {
+		s.RuleNames = nil
+		return nil
+	}
 
 	idNameHas := make(map[int64]string, len(s.RuleIds))
 	idsNotInCache := make([]int64, 0)
@@ -250,14 +256,15 @@ func (s *AlertSubscribe) FillRuleNames(ctx *ctx.Context, cache map[int64]string)
 	for i, rid := range s.RuleIds {
 		if name, exist := idNameHas[rid]; exist {
 			names[i] = name
-		} else if rid == 0 {
-			names[i] = ""
 		} else {
 			names[i] = "Error: AlertRule not found"
 		}
 	}
-	s.RuleNames = names
 
+	s.RuleNames = names
+	if s.RuleId != 0 {
+		s.RuleName = idNameHas[s.RuleId]
+	}
 	return nil
 }
 
