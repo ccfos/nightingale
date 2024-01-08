@@ -112,7 +112,7 @@ func (rt *Router) alertSubscribePut(c *gin.Context) {
 			"cate",
 			"datasource_ids",
 			"cluster",
-			"rule_id",
+			"rule_ids",
 			"tags",
 			"redefine_severity",
 			"new_severity",
