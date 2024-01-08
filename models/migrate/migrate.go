@@ -126,7 +126,6 @@ type AlertSubscribe struct {
 	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096);not null;default:'[]'"`
 	Note        string       `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
 	RuleIds     []int64      `gorm:"column:rule_ids;type:varchar(1024);default:'';comment:rule_ids"`
-	RuleNames   []string     `gorm:"column:rule_names;type:varchar(4096);default:'';comment:rule_names"`
 }
 
 type AlertMute struct {

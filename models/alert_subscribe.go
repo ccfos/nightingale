@@ -49,7 +49,7 @@ type AlertSubscribe struct {
 	BusiGroups        ormx.JSONArr `json:"busi_groups"`
 	IBusiGroups       []TagFilter  `json:"-" gorm:"-"` // inner busiGroups
 	RuleIds           []int64      `json:"rule_ids" gorm:"serializer:json"`
-	RuleNames         []string     `json:"rule_names" gorm:"serializer:json"`
+	RuleNames         []string     `json:"rule_names" gorm:"-"`
 }
 
 func (s *AlertSubscribe) TableName() string {
@@ -195,11 +195,10 @@ func (s *AlertSubscribe) Add(ctx *ctx.Context) error {
 }
 
 func (s *AlertSubscribe) FillRuleNames(ctx *ctx.Context, cache map[int64]string) error {
-	if s.RuleIds == nil && s.RuleId != 0 {
+	if len(s.RuleIds) == 0 && s.RuleId != 0 {
 		s.RuleIds = append(s.RuleIds, s.RuleId)
 	}
 	if len(s.RuleIds) == 0 {
-		s.RuleNames = nil
 		return nil
 	}
 
@@ -215,11 +214,11 @@ func (s *AlertSubscribe) FillRuleNames(ctx *ctx.Context, cache map[int64]string)
 	}
 
 	if len(idsNotInCache) > 0 {
-		dbIdNameHas, err := AlertRuleGetNames(ctx, idsNotInCache)
+		dbIdNamePair, err := AlertRuleGetIdNamePair(ctx, idsNotInCache)
 		if err != nil {
 			return err
 		}
-		for id, name := range dbIdNameHas {
+		for id, name := range dbIdNamePair {
 			idNameHas[id] = name
 			cache[id] = name
 		}

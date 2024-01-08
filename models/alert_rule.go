@@ -783,22 +783,17 @@ func AlertRuleGetById(ctx *ctx.Context, id int64) (*AlertRule, error) {
 	return AlertRuleGet(ctx, "id=?", id)
 }
 
-func AlertRuleGetNames(ctx *ctx.Context, ids []int64) (map[int64]string, error) {
-	type IdName struct {
-		Id   int64
-		Name string
-	}
-	idNames := make([]IdName, 0, len(ids))
-	err := DB(ctx).Model(new(AlertRule)).Where("id in ?", ids).Scan(&idNames).Error
+func AlertRuleGetIdNamePair(ctx *ctx.Context, ids []int64) (map[int64]string, error) {
+	alertRules := make([]AlertRule, 0, len(ids))
+	err := DB(ctx).Model(new(AlertRule)).Where("id in ?", ids).Find(&alertRules).Error
 	if err != nil {
 		return nil, err
 	}
-
-	if len(idNames) == 0 {
+	if len(alertRules) == 0 {
 		return nil, nil
 	}
-	idNameHas := make(map[int64]string, len(idNames))
-	for _, pair := range idNames {
+	idNameHas := make(map[int64]string, len(alertRules))
+	for _, pair := range alertRules {
 		idNameHas[pair.Id] = pair.Name
 	}
 	return idNameHas, nil

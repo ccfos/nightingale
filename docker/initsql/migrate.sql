@@ -4,7 +4,6 @@ use n9e_v6;
 ALTER TABLE alert_subscribe ADD COLUMN busi_groups VARCHAR(4096) NOT NULL DEFAULT '[]';
 ALTER TABLE alert_subscribe ADD COLUMN note VARCHAR(1024) DEFAULT '' COMMENT 'note';
 ALTER TABLE alert_subscribe ADD COLUMN rule_ids VARCHAR(1024) DEFAULT '' COMMENT 'rule_ids';
-ALTER TABLE alert_subscribe ADD COLUMN rule_names VARCHAR(1024) DEFAULT '' COMMENT 'rule_names';
 
 -- Alter table for TaskRecord
 ALTER TABLE task_records ADD COLUMN event_id BIGINT(20) NOT NULL DEFAULT 0 COMMENT 'event id';
