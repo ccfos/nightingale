@@ -265,6 +265,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
 		pages.GET("/integrations/makedown/:cate", rt.builtinMarkdown)
 
+		pages.GET("/busi-groups/public-boards", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.publicBoardGets)
 		pages.GET("/busi-groups/boards", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.boardGetsByGids)
 		pages.GET("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.bgro(), rt.boardGets)
 		pages.POST("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards/add"), rt.bgrw(), rt.boardAdd)
