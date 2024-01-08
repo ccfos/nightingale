@@ -214,13 +214,13 @@ func (s *AlertSubscribe) FillRuleNames(ctx *ctx.Context, cache map[int64]string)
 	}
 
 	if len(idsNotInCache) > 0 {
-		dbIdNamePair, err := AlertRuleGetIdNamePair(ctx, idsNotInCache)
+		lst, err := AlertRuleGetsByIds(ctx, idsNotInCache)
 		if err != nil {
 			return err
 		}
-		for id, name := range dbIdNamePair {
-			idNameHas[id] = name
-			cache[id] = name
+		for _, alterRule := range lst {
+			idNameHas[alterRule.Id] = alterRule.Name
+			cache[alterRule.Id] = alterRule.Name
 		}
 	}
 
@@ -228,15 +228,14 @@ func (s *AlertSubscribe) FillRuleNames(ctx *ctx.Context, cache map[int64]string)
 	for i, rid := range s.RuleIds {
 		if name, exist := idNameHas[rid]; exist {
 			names[i] = name
+		} else if rid == 0 {
+			names[i] = ""
 		} else {
 			names[i] = "Error: AlertRule not found"
 		}
 	}
-
 	s.RuleNames = names
-	if s.RuleId != 0 {
-		s.RuleName = idNameHas[s.RuleId]
-	}
+
 	return nil
 }
 
