@@ -797,6 +797,27 @@ func AlertRuleGetName(ctx *ctx.Context, id int64) (string, error) {
 	return names[0], nil
 }
 
+func AlertRuleGetNames(ctx *ctx.Context, ids []int64) (map[int64]string, error) {
+	type IdName struct {
+		Id   int64
+		Name string
+	}
+	idNames := make([]IdName, 0, len(ids))
+	err := DB(ctx).Model(new(AlertRule)).Where("id in ?", ids).Scan(&idNames).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(idNames) == 0 {
+		return nil, nil
+	}
+	idNameHas := make(map[int64]string, len(idNames))
+	for _, pair := range idNames {
+		idNameHas[pair.Id] = pair.Name
+	}
+	return idNameHas, nil
+}
+
 func AlertRuleStatistics(ctx *ctx.Context) (*Statistics, error) {
 	if !ctx.IsCenter {
 		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=alert_rule")
