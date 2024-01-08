@@ -10,20 +10,28 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	PublicAnonymous = 0
+	PublicLogin     = 1
+	PublicBusi      = 2
+)
+
 type Board struct {
-	Id       int64  `json:"id" gorm:"primaryKey"`
-	GroupId  int64  `json:"group_id"`
-	Name     string `json:"name"`
-	Ident    string `json:"ident"`
-	Tags     string `json:"tags"`
-	CreateAt int64  `json:"create_at"`
-	CreateBy string `json:"create_by"`
-	UpdateAt int64  `json:"update_at"`
-	UpdateBy string `json:"update_by"`
-	Configs  string `json:"configs" gorm:"-"`
-	Public   int    `json:"public"`   // 0: false, 1: true
-	BuiltIn  int    `json:"built_in"` // 0: false, 1: true
-	Hide     int    `json:"hide"`     // 0: false, 1: true
+	Id         int64   `json:"id" gorm:"primaryKey"`
+	GroupId    int64   `json:"group_id"`
+	Name       string  `json:"name"`
+	Ident      string  `json:"ident"`
+	Tags       string  `json:"tags"`
+	CreateAt   int64   `json:"create_at"`
+	CreateBy   string  `json:"create_by"`
+	UpdateAt   int64   `json:"update_at"`
+	UpdateBy   string  `json:"update_by"`
+	Configs    string  `json:"configs" gorm:"-"`
+	Public     int     `json:"public"`      // 0: false, 1: true
+	PublicCate int     `json:"public_cate"` // 0: anonymous, 1: login, 2: busi
+	Bgids      []int64 `json:"bgids" gorm:"-"`
+	BuiltIn    int     `json:"built_in"` // 0: false, 1: true
+	Hide       int     `json:"hide"`     // 0: false, 1: true
 }
 
 func (b *Board) TableName() string {
@@ -173,7 +181,10 @@ func BoardGetsByGroupId(ctx *ctx.Context, groupId int64, query string) ([]Board,
 }
 
 func BoardGetsByBGIds(ctx *ctx.Context, gids []int64, query string) ([]Board, error) {
-	session := DB(ctx).Where("group_id in (?)", gids).Order("name")
+	session := DB(ctx)
+	if len(gids) > 0 {
+		session = session.Where("group_id in (?)", gids).Order("name")
+	}
 
 	arr := strings.Fields(query)
 	if len(arr) > 0 {

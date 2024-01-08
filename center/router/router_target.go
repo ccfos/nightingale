@@ -54,10 +54,8 @@ func (rt *Router) targetGets(c *gin.Context) {
 		user := c.MustGet("user").(*models.User)
 		if !user.IsAdmin() {
 			// 如果是非 admin 用户，全部对象的情况，找到用户有权限的业务组
-			userGroupIds, err := models.MyGroupIds(rt.Ctx, user.Id)
-			ginx.Dangerous(err)
-
-			bgids, err = models.BusiGroupIds(rt.Ctx, userGroupIds)
+			var err error
+			bgids, err = models.MyBusiGroupIds(rt.Ctx, user.Id)
 			ginx.Dangerous(err)
 
 			// 将未分配业务组的对象也加入到列表中
