@@ -3,7 +3,6 @@ use n9e_v6;
 -- Alter table for AlertSubscribe
 ALTER TABLE alert_subscribe ADD COLUMN busi_groups VARCHAR(4096) NOT NULL DEFAULT '[]';
 ALTER TABLE alert_subscribe ADD COLUMN note VARCHAR(1024) DEFAULT '' COMMENT 'note';
-ALTER TABLE alert_subscribe ADD COLUMN note VARCHAR(1024) DEFAULT '' COMMENT 'note';
 ALTER TABLE alert_subscribe ADD COLUMN rule_ids VARCHAR(1024) DEFAULT '' COMMENT 'rule_ids';
 ALTER TABLE alert_subscribe ADD COLUMN rule_names VARCHAR(1024) DEFAULT '' COMMENT 'rule_names';
 
