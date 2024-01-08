@@ -791,7 +791,7 @@ func AlertRuleGetsByIds(ctx *ctx.Context, ids []int64) ([]AlertRule, error) {
 			lst[i].DB2FE()
 		}
 	}
-	return lst, nil
+	return lst, err
 }
 
 func AlertRuleStatistics(ctx *ctx.Context) (*Statistics, error) {
