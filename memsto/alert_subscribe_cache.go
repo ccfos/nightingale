@@ -163,7 +163,7 @@ func (c *AlertSubscribeCacheType) syncAlertSubscribes() error {
 			continue
 		}
 
-		lst[i].CompatibleWithOldId()
+		lst[i].CompatibleWithOldRuleId()
 		// To cache the subscription rule without id, the default id is 0
 		if len(lst[i].RuleIds) == 0 && lst[i].RuleId == 0 {
 			lst[i].RuleIds = append(lst[i].RuleIds, 0)
