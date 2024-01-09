@@ -104,6 +104,9 @@ func (rt *Router) alertSubscribePut(c *gin.Context) {
 	for i := 0; i < len(fs); i++ {
 		fs[i].UpdateBy = username
 		fs[i].UpdateAt = timestamp
+		//After adding the function of batch subscription alert rules, rule_ids is used instead of rule_id.
+		//When the subscription rules are updated, set rule_id=0 to prevent the wrong subscription caused by the old rule_id.
+		fs[i].RuleId = 0
 		ginx.Dangerous(fs[i].Update(
 			rt.Ctx,
 			"name",
