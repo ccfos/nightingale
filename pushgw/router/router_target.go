@@ -10,5 +10,11 @@ func (rt *Router) targetUpdate(c *gin.Context) {
 	var f idents.TargetUpdate
 	ginx.BindJSON(c, &f)
 
-	ginx.NewRender(c).Message(rt.IdentSet.UpdateTargets(f.Lst, f.Now))
+	m := make(map[string]struct{})
+	for _, ident := range f.Lst {
+		m[ident] = struct{}{}
+	}
+
+	rt.IdentSet.MSet(m)
+	ginx.NewRender(c).Message(nil)
 }
