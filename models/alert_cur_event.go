@@ -609,16 +609,16 @@ func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute) ([]*AlertCurEvent, error) {
 	var lst []*AlertCurEvent
 
-	tx := DB(ctx).Where("group_id = ? and rule_prod = ?", alertMute.GroupId, alertMute.Prod)
+	tx := DB(ctx).Where("group_id = ?", alertMute.GroupId)
 
 	if len(alertMute.SeveritiesJson) != 0 {
 		tx = tx.Where("severity IN (?)", alertMute.SeveritiesJson)
 	}
-	if alertMute.Prod != HOST {
+	if alertMute.Cate != "" {
 		tx = tx.Where("cate = ?", alertMute.Cate)
-		if alertMute.DatasourceIdsJson != nil && !IsAllDatasource(alertMute.DatasourceIdsJson) {
-			tx = tx.Where("datasource_id IN (?)", alertMute.DatasourceIdsJson)
-		}
+	}
+	if len(alertMute.DatasourceIdsJson) != 0 && !IsAllDatasource(alertMute.DatasourceIdsJson) {
+		tx = tx.Where("datasource_id IN (?)", alertMute.DatasourceIdsJson)
 	}
 
 	err := tx.Order("id desc").Find(&lst).Error
