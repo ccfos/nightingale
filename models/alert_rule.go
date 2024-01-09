@@ -678,7 +678,10 @@ func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {
 }
 
 func AlertRuleGetsByBGIds(ctx *ctx.Context, bgids []int64) ([]AlertRule, error) {
-	session := DB(ctx).Where("group_id in (?)", bgids).Order("name")
+	session := DB(ctx)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in (?)", bgids).Order("name")
+	}
 
 	var lst []AlertRule
 	err := session.Find(&lst).Error
