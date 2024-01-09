@@ -786,18 +786,15 @@ func AlertRuleGetById(ctx *ctx.Context, id int64) (*AlertRule, error) {
 	return AlertRuleGet(ctx, "id=?", id)
 }
 
-func AlertRuleGetName(ctx *ctx.Context, id int64) (string, error) {
-	var names []string
-	err := DB(ctx).Model(new(AlertRule)).Where("id = ?", id).Pluck("name", &names).Error
-	if err != nil {
-		return "", err
+func AlertRuleGetsByIds(ctx *ctx.Context, ids []int64) ([]AlertRule, error) {
+	lst := make([]AlertRule, 0, len(ids))
+	err := DB(ctx).Model(new(AlertRule)).Where("id in ?", ids).Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
 	}
-
-	if len(names) == 0 {
-		return "", nil
-	}
-
-	return names[0], nil
+	return lst, err
 }
 
 func AlertRuleStatistics(ctx *ctx.Context) (*Statistics, error) {

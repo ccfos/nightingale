@@ -48,6 +48,8 @@ type AlertSubscribe struct {
 	ITags             []TagFilter  `json:"-" gorm:"-"` // inner tags
 	BusiGroups        ormx.JSONArr `json:"busi_groups"`
 	IBusiGroups       []TagFilter  `json:"-" gorm:"-"` // inner busiGroups
+	RuleIds           []int64      `json:"rule_ids" gorm:"serializer:json"`
+	RuleNames         []string     `json:"rule_names" gorm:"-"`
 }
 
 func (s *AlertSubscribe) TableName() string {
@@ -192,29 +194,52 @@ func (s *AlertSubscribe) Add(ctx *ctx.Context) error {
 	return Insert(ctx, s)
 }
 
-func (s *AlertSubscribe) FillRuleName(ctx *ctx.Context, cache map[int64]string) error {
-	if s.RuleId <= 0 {
-		s.RuleName = ""
+func (s *AlertSubscribe) CompatibleWithOldRuleId() {
+	if len(s.RuleIds) == 0 && s.RuleId != 0 {
+		s.RuleIds = append(s.RuleIds, s.RuleId)
+	}
+}
+
+func (s *AlertSubscribe) FillRuleNames(ctx *ctx.Context, cache map[int64]string) error {
+	s.CompatibleWithOldRuleId()
+	if len(s.RuleIds) == 0 {
 		return nil
 	}
 
-	name, has := cache[s.RuleId]
-	if has {
-		s.RuleName = name
-		return nil
+	idNameHas := make(map[int64]string, len(s.RuleIds))
+	idsNotInCache := make([]int64, 0)
+	for _, rid := range s.RuleIds {
+		rname, exist := cache[rid]
+		if exist {
+			idNameHas[rid] = rname
+		} else {
+			idsNotInCache = append(idsNotInCache, rid)
+		}
 	}
 
-	name, err := AlertRuleGetName(ctx, s.RuleId)
-	if err != nil {
-		return err
+	if len(idsNotInCache) > 0 {
+		lst, err := AlertRuleGetsByIds(ctx, idsNotInCache)
+		if err != nil {
+			return err
+		}
+		for _, alterRule := range lst {
+			idNameHas[alterRule.Id] = alterRule.Name
+			cache[alterRule.Id] = alterRule.Name
+		}
 	}
 
-	if name == "" {
-		name = "Error: AlertRule not found"
+	names := make([]string, len(s.RuleIds))
+	for i, rid := range s.RuleIds {
+		if name, exist := idNameHas[rid]; exist {
+			names[i] = name
+		} else if rid == 0 {
+			names[i] = ""
+		} else {
+			names[i] = "Error: AlertRule not found"
+		}
 	}
+	s.RuleNames = names
 
-	s.RuleName = name
-	cache[s.RuleId] = name
 	return nil
 }
 
