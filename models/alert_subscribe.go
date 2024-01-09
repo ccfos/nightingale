@@ -194,10 +194,14 @@ func (s *AlertSubscribe) Add(ctx *ctx.Context) error {
 	return Insert(ctx, s)
 }
 
-func (s *AlertSubscribe) FillRuleNames(ctx *ctx.Context, cache map[int64]string) error {
+func (s *AlertSubscribe) CompatibleWithOldId() {
 	if len(s.RuleIds) == 0 && s.RuleId != 0 {
 		s.RuleIds = append(s.RuleIds, s.RuleId)
 	}
+}
+
+func (s *AlertSubscribe) FillRuleNames(ctx *ctx.Context, cache map[int64]string) error {
+	s.CompatibleWithOldId()
 	if len(s.RuleIds) == 0 {
 		return nil
 	}

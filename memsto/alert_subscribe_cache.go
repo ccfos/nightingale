@@ -163,14 +163,12 @@ func (c *AlertSubscribeCacheType) syncAlertSubscribes() error {
 			continue
 		}
 
-		if len(lst[i].RuleIds) == 0 {
-			if lst[i].RuleId != 0 {
-				lst[i].RuleIds = append(lst[i].RuleIds, lst[i].RuleId)
-			} else {
-				// To cache the subscription rule without id, the default id is 0
-				lst[i].RuleIds = append(lst[i].RuleIds, 0)
-			}
+		lst[i].CompatibleWithOldId()
+		// To cache the subscription rule without id, the default id is 0
+		if len(lst[i].RuleIds) == 0 && lst[i].RuleId == 0 {
+			lst[i].RuleIds = append(lst[i].RuleIds, 0)
 		}
+
 		for _, rid := range lst[i].RuleIds {
 			subs[rid] = append(subs[rid], lst[i])
 		}
