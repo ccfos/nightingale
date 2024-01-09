@@ -21,9 +21,9 @@ func extractMetricFromTimeSeries(s *prompb.TimeSeries) string {
 	return ""
 }
 
-func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMetrics []string) string {
+func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMetrics []string) (string, string) {
 	if s == nil {
-		return ""
+		return "", ""
 	}
 
 	labelMap := make(map[string]int)
@@ -32,6 +32,7 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMet
 	}
 
 	var ident string
+	var heartbeatIdent string
 	// agent_hostname for grafana-agent and categraf
 	if idx, ok := labelMap["agent_hostname"]; ok {
 		s.Labels[idx].Name = "ident"
@@ -46,6 +47,11 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMet
 		}
 	}
 
+	if idx, ok := labelMap["ident"]; ok {
+		ident = s.Labels[idx].Value
+	}
+
+	heartbeatIdent = ident
 	if len(identMetrics) > 0 {
 		metricFound := false
 		for _, identMetric := range identMetrics {
@@ -56,15 +62,11 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMet
 		}
 
 		if !metricFound {
-			return ""
+			heartbeatIdent = ""
 		}
 	}
 
-	if idx, ok := labelMap["ident"]; ok {
-		ident = s.Labels[idx].Value
-	}
-
-	return ident
+	return ident, heartbeatIdent
 }
 
 func duplicateLabelKey(series *prompb.TimeSeries) bool {
@@ -99,27 +101,26 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		return
 	}
 
-	var (
-		ident string
-		ids   = make(map[string]struct{})
-	)
+	var ids = make(map[string]struct{})
 
 	for i := 0; i < count; i++ {
 		if duplicateLabelKey(&req.Timeseries[i]) {
 			continue
 		}
 
-		ident = extractIdentFromTimeSeries(&req.Timeseries[i], ginx.QueryBool(c, "ignore_ident", false), rt.Pushgw.IdentMetrics)
+		ident, heartbeatIdent := extractIdentFromTimeSeries(&req.Timeseries[i], ginx.QueryBool(c, "ignore_ident", false), rt.Pushgw.IdentMetrics)
 		if len(ident) > 0 {
-			// has ident tag or agent_hostname tag
-			// register host in table target
-			ids[ident] = struct{}{}
-
 			// enrich host labels
 			target, has := rt.TargetCache.Get(ident)
 			if has {
 				rt.AppendLabels(&req.Timeseries[i], target, rt.BusiGroupCache)
 			}
+		}
+
+		if len(heartbeatIdent) > 0 {
+			// has ident tag or agent_hostname tag
+			// register host in table target
+			ids[ident] = struct{}{}
 		}
 
 		if len(ident) > 0 {
