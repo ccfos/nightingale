@@ -614,9 +614,6 @@ func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute) ([]*
 	if len(alertMute.SeveritiesJson) != 0 {
 		tx = tx.Where("severity IN (?)", alertMute.SeveritiesJson)
 	}
-	if alertMute.Cate != "" {
-		tx = tx.Where("cate = ?", alertMute.Cate)
-	}
 	if len(alertMute.DatasourceIdsJson) != 0 && !IsAllDatasource(alertMute.DatasourceIdsJson) {
 		tx = tx.Where("datasource_id IN (?)", alertMute.DatasourceIdsJson)
 	}
