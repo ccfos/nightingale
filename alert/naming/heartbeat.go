@@ -33,6 +33,7 @@ func NewNaming(ctx *ctx.Context, heartbeat aconf.HeartbeatConfig, alertStats *as
 
 // local servers
 var localss map[int64]string
+var localHostServers map[string]string
 
 func (n *Naming) Heartbeats() error {
 	localss = make(map[int64]string)
@@ -102,11 +103,8 @@ func (n *Naming) heartbeat() error {
 	}
 
 	if len(datasourceIds) == 0 {
-		DatasourceHashRing.Clear()
+		DatasourceHashRing.Clear(n.heartbeatConfig.EngineName)
 		for dsId := range localss {
-			if dsId == HostDatasource {
-				continue
-			}
 			delete(localss, dsId)
 		}
 	}
@@ -127,37 +125,34 @@ func (n *Naming) heartbeat() error {
 			continue
 		}
 
-		RebuildConsistentHashRing(datasourceIds[i], servers)
+		RebuildConsistentHashRing(fmt.Sprintf("%d", datasourceIds[i]), servers)
 		localss[datasourceIds[i]] = newss
 	}
 
-	if n.ctx.IsCenter {
-		// 如果是中心节点，还需要处理 host 类型的告警规则，host 类型告警规则，和数据源无关，想复用下数据源的 hash ring，想用一个虚假的数据源 id 来处理
-		// if is center node, we need to handle host type alerting rules, host type alerting rules are not related to datasource, we want to reuse the hash ring of datasource, we want to use a fake datasource id to handle it
-		err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.EngineName, HostDatasource)
-		if err != nil {
-			logger.Warningf("heartbeat with cluster %s err:%v", "", err)
-			n.astats.CounterHeartbeatErrorTotal.WithLabelValues().Inc()
-		}
-
-		servers, err := n.ActiveServers(HostDatasource)
-		if err != nil {
-			logger.Warningf("hearbeat %d get active server err:%v", HostDatasource, err)
-			n.astats.CounterHeartbeatErrorTotal.WithLabelValues().Inc()
-			return nil
-		}
-
-		sort.Strings(servers)
-		newss := strings.Join(servers, " ")
-
-		oldss, exists := localss[HostDatasource]
-		if exists && oldss == newss {
-			return nil
-		}
-
-		RebuildConsistentHashRing(HostDatasource, servers)
-		localss[HostDatasource] = newss
+	// host 告警使用的是 hash ring
+	err = models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.EngineName, HostDatasource)
+	if err != nil {
+		logger.Warningf("heartbeat with cluster %s err:%v", "", err)
+		n.astats.CounterHeartbeatErrorTotal.WithLabelValues().Inc()
 	}
+
+	servers, err := n.ActiveServersByEngineName()
+	if err != nil {
+		logger.Warningf("hearbeat %d get active server err:%v", HostDatasource, err)
+		n.astats.CounterHeartbeatErrorTotal.WithLabelValues().Inc()
+		return nil
+	}
+
+	sort.Strings(servers)
+	newss := strings.Join(servers, " ")
+
+	oldss, exists := localHostServers[n.heartbeatConfig.EngineName]
+	if exists && oldss == newss {
+		return nil
+	}
+
+	RebuildConsistentHashRing(n.heartbeatConfig.EngineName, servers)
+	localHostServers[n.heartbeatConfig.EngineName] = newss
 
 	return nil
 }

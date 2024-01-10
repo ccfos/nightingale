@@ -3,6 +3,7 @@ package eval
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
@@ -95,7 +96,7 @@ func (s *Scheduler) syncAlertRules() {
 			datasourceIds := s.promClients.Hit(rule.DatasourceIdsJson)
 			datasourceIds = append(datasourceIds, s.tdengineClients.Hit(rule.DatasourceIdsJson)...)
 			for _, dsId := range datasourceIds {
-				if !naming.DatasourceHashRing.IsHit(dsId, fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
+				if !naming.DatasourceHashRing.IsHit(strconv.FormatInt(dsId, 10), fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
 					continue
 				}
 				ds := s.datasourceCache.GetById(dsId)
@@ -120,7 +121,7 @@ func (s *Scheduler) syncAlertRules() {
 			}
 		} else if rule.IsHostRule() && s.ctx.IsCenter {
 			// all host rule will be processed by center instance
-			if !naming.DatasourceHashRing.IsHit(naming.HostDatasource, fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
+			if !naming.DatasourceHashRing.IsHit(s.aconf.Heartbeat.EngineName, strconv.FormatInt(rule.Id, 10), s.aconf.Heartbeat.Endpoint) {
 				continue
 			}
 			processor := process.NewProcessor(rule, 0, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
