@@ -5,6 +5,7 @@ import (
 	"github.com/prometheus/prometheus/prompb"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
+	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
@@ -22,12 +23,15 @@ type Router struct {
 	TargetCache    *memsto.TargetCacheType
 	BusiGroupCache *memsto.BusiGroupCacheType
 	IdentSet       *idents.Set
+	MetaSet        *metas.Set
 	Writers        *writer.WritersType
 	Ctx            *ctx.Context
 	HandleTS       HandleTSFunc
 }
 
-func New(httpConfig httpx.Config, pushgw pconf.Pushgw, aconf aconf.Alert, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType, idents *idents.Set, writers *writer.WritersType, ctx *ctx.Context) *Router {
+func New(httpConfig httpx.Config, pushgw pconf.Pushgw, aconf aconf.Alert, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType,
+	idents *idents.Set, metas *metas.Set,
+	writers *writer.WritersType, ctx *ctx.Context) *Router {
 	return &Router{
 		HTTP:           httpConfig,
 		Pushgw:         pushgw,
@@ -37,6 +41,7 @@ func New(httpConfig httpx.Config, pushgw pconf.Pushgw, aconf aconf.Alert, tc *me
 		TargetCache:    tc,
 		BusiGroupCache: bg,
 		IdentSet:       idents,
+		MetaSet:        metas,
 		HandleTS:       func(pt *prompb.TimeSeries) {},
 	}
 }

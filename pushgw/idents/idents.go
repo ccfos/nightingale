@@ -1,11 +1,15 @@
 package idents
 
 import (
+	"context"
+	"fmt"
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
@@ -14,12 +18,14 @@ import (
 type Set struct {
 	sync.Mutex
 	items map[string]struct{}
+	redis storage.Redis
 	ctx   *ctx.Context
 }
 
-func New(ctx *ctx.Context) *Set {
+func New(ctx *ctx.Context, redis storage.Redis) *Set {
 	set := &Set{
 		items: make(map[string]struct{}),
+		redis: redis,
 		ctx:   ctx,
 	}
 
@@ -89,14 +95,18 @@ type TargetUpdate struct {
 }
 
 func (s *Set) UpdateTargets(lst []string, now int64) error {
-	// 更新 update_time to redis
-
 	if !s.ctx.IsCenter {
 		t := TargetUpdate{
 			Lst: lst,
 			Now: now,
 		}
-		err := poster.PostByUrls(s.ctx, "/v1/n9e/target-update", t)
+
+		err := updateTargetsUpdateTs(lst, now, s.redis)
+		if err != nil {
+			logger.Errorf("failed to update targets:%v update_ts: %v", lst, err)
+		}
+
+		err = poster.PostByUrls(s.ctx, "/v1/n9e/target-update", t)
 		return err
 	}
 
@@ -130,4 +140,23 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 	}
 
 	return nil
+}
+
+func updateTargetsUpdateTs(lst []string, now int64, redis storage.Redis) error {
+	if redis == nil {
+		return fmt.Errorf("redis is nil")
+	}
+
+	count := int64(len(lst))
+	if count == 0 {
+		return nil
+	}
+
+	newMap := make(map[string]interface{}, count)
+	for _, ident := range lst {
+		newMap[models.WrapIdentUpdateTime(ident)] = now
+	}
+
+	err := storage.MSet(context.Background(), redis, newMap)
+	return err
 }

@@ -36,7 +36,7 @@ func RebuildConsistentHashRing(datasourceId string, nodes []string) {
 	}
 
 	DatasourceHashRing.Set(datasourceId, r)
-	logger.Infof("hash ring %d rebuild %+v", datasourceId, r.Members())
+	logger.Infof("hash ring %s rebuild %+v", datasourceId, r.Members())
 }
 
 func (chr *DatasourceHashRingType) GetNode(datasourceId string, pk string) (string, error) {

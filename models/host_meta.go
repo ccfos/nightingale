@@ -34,3 +34,7 @@ func WrapIdent(ident string) string {
 func WrapExtendIdent(ident string) string {
 	return "n9e_extend_meta_" + ident
 }
+
+func WrapIdentUpdateTime(ident string) string {
+	return "n9e_meta_update_time_" + ident
+}
