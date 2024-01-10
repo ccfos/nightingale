@@ -2,8 +2,8 @@ package router
 
 import (
 	"compress/gzip"
-	json "encoding/json"
-	"io/ioutil"
+	"encoding/json"
+	"io"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -25,11 +25,11 @@ func (rt *Router) heartbeat(c *gin.Context) {
 			return
 		}
 		defer r.Close()
-		bs, err = ioutil.ReadAll(r)
+		bs, err = io.ReadAll(r)
 		ginx.Dangerous(err)
 	} else {
 		defer c.Request.Body.Close()
-		bs, err = ioutil.ReadAll(c.Request.Body)
+		bs, err = io.ReadAll(c.Request.Body)
 		ginx.Dangerous(err)
 	}
 
@@ -39,6 +39,10 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	req.Offset = (time.Now().UnixMilli() - req.UnixTime)
 	req.RemoteAddr = c.ClientIP()
 	gid := ginx.QueryStr(c, "gid", "")
+
+	req.EngineName = rt.Aconf.Heartbeat.EngineName
+
+	// 更新机器 unix_time 到 redis
 
 	ginx.NewRender(c).Message(poster.PostByUrls(rt.Ctx, "/v1/n9e/heartbeat?gid="+gid, req))
 }

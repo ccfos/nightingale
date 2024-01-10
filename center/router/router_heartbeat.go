@@ -47,6 +47,10 @@ func (rt *Router) heartbeat(c *gin.Context) {
 		req.RemoteAddr = c.ClientIP()
 	}
 
+	if req.EngineName == "" {
+		req.EngineName = rt.Alert.Heartbeat.EngineName
+	}
+
 	rt.MetaSet.Set(req.Hostname, req)
 	var items = make(map[string]struct{})
 	items[req.Hostname] = struct{}{}

@@ -42,7 +42,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	writers := writer.NewWriters(config.Pushgw)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
-	rt := router.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
+	rt := router.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, writers, ctx)
 	rt.Config(r)
 
 	httpClean := httpx.Init(config.HTTP, r)

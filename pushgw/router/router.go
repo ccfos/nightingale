@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/prometheus/prompb"
 
+	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
@@ -17,6 +18,7 @@ type HandleTSFunc func(pt *prompb.TimeSeries)
 type Router struct {
 	HTTP           httpx.Config
 	Pushgw         pconf.Pushgw
+	Aconf          aconf.Alert
 	TargetCache    *memsto.TargetCacheType
 	BusiGroupCache *memsto.BusiGroupCacheType
 	IdentSet       *idents.Set
@@ -25,10 +27,11 @@ type Router struct {
 	HandleTS       HandleTSFunc
 }
 
-func New(httpConfig httpx.Config, pushgw pconf.Pushgw, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType, idents *idents.Set, writers *writer.WritersType, ctx *ctx.Context) *Router {
+func New(httpConfig httpx.Config, pushgw pconf.Pushgw, aconf aconf.Alert, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType, idents *idents.Set, writers *writer.WritersType, ctx *ctx.Context) *Router {
 	return &Router{
 		HTTP:           httpConfig,
 		Pushgw:         pushgw,
+		Aconf:          aconf,
 		Writers:        writers,
 		Ctx:            ctx,
 		TargetCache:    tc,

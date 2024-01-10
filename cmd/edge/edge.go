@@ -45,7 +45,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	idents := idents.New(ctx)
 	writers := writer.NewWriters(config.Pushgw)
-	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
+	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, writers, ctx)
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 	pushgwRouter.Config(r)
 

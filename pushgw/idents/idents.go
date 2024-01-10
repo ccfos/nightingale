@@ -89,6 +89,8 @@ type TargetUpdate struct {
 }
 
 func (s *Set) UpdateTargets(lst []string, now int64) error {
+	// 更新 update_time to redis
+
 	if !s.ctx.IsCenter {
 		t := TargetUpdate{
 			Lst: lst,

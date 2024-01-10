@@ -14,6 +14,7 @@ type HostMeta struct {
 	UnixTime     int64                  `json:"unixtime"`
 	RemoteAddr   string                 `json:"remote_addr"`
 	HostIp       string                 `json:"host_ip"`
+	EngineName   string                 `json:"engine_name"`
 	GlobalLabels map[string]string      `json:"global_labels"`
 	ExtendInfo   map[string]interface{} `json:"extend_info"`
 }
