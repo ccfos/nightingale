@@ -113,7 +113,7 @@ func (tc *TargetCacheType) CleanTargets() {
 	if err != nil {
 		log.Fatalln("failed to clean loss targets:", err)
 	}
-	tc.loopCleanTargets()
+	go tc.loopCleanTargets()
 }
 
 func (tc *TargetCacheType) loopCleanTargets() {
