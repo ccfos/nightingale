@@ -20,11 +20,12 @@ import (
 // 1. append note to alert_event
 // 2. append tags to series
 type TargetCacheType struct {
-	statTotal       int64
-	statLastUpdated int64
-	ctx             *ctx.Context
-	stats           *Stats
-	redis           storage.Redis
+	statTotal        int64
+	statLastUpdated  int64
+	statEarlyUpdated int64
+	ctx              *ctx.Context
+	stats            *Stats
+	redis            storage.Redis
 
 	sync.RWMutex
 	targets map[string]*models.Target // key: ident
@@ -127,6 +128,10 @@ func (tc *TargetCacheType) loopSyncTargets() {
 
 func (tc *TargetCacheType) syncTargets() error {
 	start := time.Now()
+	overWeek := func(st, et int64) bool {
+		return (et - st) >= 3600*24*7
+	}
+	needClearLossMachine := overWeek(tc.statEarlyUpdated, start.Unix())
 
 	stat, err := models.TargetStatistics(tc.ctx)
 	if err != nil {
@@ -134,7 +139,7 @@ func (tc *TargetCacheType) syncTargets() error {
 		return errors.WithMessage(err, "failed to call TargetStatistics")
 	}
 
-	if !tc.StatChanged(stat.Total, stat.LastUpdated) {
+	if !needClearLossMachine && !tc.StatChanged(stat.Total, stat.LastUpdated) {
 		tc.stats.GaugeCronDuration.WithLabelValues("sync_targets").Set(0)
 		tc.stats.GaugeSyncNumber.WithLabelValues("sync_targets").Set(0)
 		dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "not changed")
@@ -156,10 +161,25 @@ func (tc *TargetCacheType) syncTargets() error {
 			}
 		}
 	}
-
+	lossMachineIdents := make([]string, 0)
+	var earlyUpdated int64
 	for i := 0; i < len(lst); i++ {
-		m[lst[i].Ident] = lst[i]
+		if needClearLossMachine && overWeek(lst[i].UpdateAt, start.Unix()) {
+			lossMachineIdents = append(lossMachineIdents, lst[i].Ident)
+		} else {
+			m[lst[i].Ident] = lst[i]
+			if earlyUpdated == 0 || earlyUpdated > lst[i].UpdateAt {
+				earlyUpdated = lst[i].UpdateAt
+			}
+		}
 	}
+	if len(lossMachineIdents) > 0 {
+		if err := models.TargetDel(tc.ctx, lossMachineIdents); err != nil {
+			dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "failed to delete records: "+err.Error())
+			return errors.WithMessage(err, "failed to call TargetDel")
+		}
+	}
+	tc.statEarlyUpdated = earlyUpdated
 
 	tc.Set(m, stat.Total, stat.LastUpdated)
 
