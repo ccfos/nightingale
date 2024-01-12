@@ -22,7 +22,7 @@ func (rt *Router) alertSubscribeGets(c *gin.Context) {
 
 	for i := 0; i < len(lst); i++ {
 		ginx.Dangerous(lst[i].FillUserGroups(rt.Ctx, ugcache))
-		ginx.Dangerous(lst[i].FillRuleName(rt.Ctx, rulecache))
+		ginx.Dangerous(lst[i].FillRuleNames(rt.Ctx, rulecache))
 		ginx.Dangerous(lst[i].FillDatasourceIds(rt.Ctx))
 		ginx.Dangerous(lst[i].DB2FE())
 	}
@@ -49,7 +49,7 @@ func (rt *Router) alertSubscribeGetsByGids(c *gin.Context) {
 
 	for i := 0; i < len(lst); i++ {
 		ginx.Dangerous(lst[i].FillUserGroups(rt.Ctx, ugcache))
-		ginx.Dangerous(lst[i].FillRuleName(rt.Ctx, rulecache))
+		ginx.Dangerous(lst[i].FillRuleNames(rt.Ctx, rulecache))
 		ginx.Dangerous(lst[i].FillDatasourceIds(rt.Ctx))
 		ginx.Dangerous(lst[i].DB2FE())
 	}
@@ -72,7 +72,7 @@ func (rt *Router) alertSubscribeGet(c *gin.Context) {
 	ginx.Dangerous(sub.FillUserGroups(rt.Ctx, ugcache))
 
 	rulecache := make(map[int64]string)
-	ginx.Dangerous(sub.FillRuleName(rt.Ctx, rulecache))
+	ginx.Dangerous(sub.FillRuleNames(rt.Ctx, rulecache))
 	ginx.Dangerous(sub.FillDatasourceIds(rt.Ctx))
 	ginx.Dangerous(sub.DB2FE())
 
@@ -104,6 +104,9 @@ func (rt *Router) alertSubscribePut(c *gin.Context) {
 	for i := 0; i < len(fs); i++ {
 		fs[i].UpdateBy = username
 		fs[i].UpdateAt = timestamp
+		//After adding the function of batch subscription alert rules, rule_ids is used instead of rule_id.
+		//When the subscription rules are updated, set rule_id=0 to prevent the wrong subscription caused by the old rule_id.
+		fs[i].RuleId = 0
 		ginx.Dangerous(fs[i].Update(
 			rt.Ctx,
 			"name",
@@ -113,6 +116,7 @@ func (rt *Router) alertSubscribePut(c *gin.Context) {
 			"datasource_ids",
 			"cluster",
 			"rule_id",
+			"rule_ids",
 			"tags",
 			"redefine_severity",
 			"new_severity",
