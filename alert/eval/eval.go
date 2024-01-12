@@ -123,7 +123,6 @@ func (arw *AlertRuleWorker) Eval() {
 
 	if arw.processor == nil {
 		logger.Warningf("rule_eval:%s processor is nil", arw.Key())
-		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_PROCESSOR).Inc()
 		return
 	}
 
