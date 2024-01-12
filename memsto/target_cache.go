@@ -120,7 +120,7 @@ func (tc *TargetCacheType) loopCleanTargets() {
 	for {
 		time.Sleep(duration)
 		if err := models.TargetDelLoss(tc.ctx); err != nil {
-			log.Fatalln("failed to clean loss targets:", err)
+			logger.Warning("failed to clean loss targets:", err)
 		}
 	}
 }
