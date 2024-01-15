@@ -21,7 +21,7 @@ type TargetOfAlertRuleCacheType struct {
 	redis           storage.Redis
 
 	sync.RWMutex
-	targets map[int64][]*models.Target // key: ident
+	targets map[string]map[int64][]string // key: ident
 }
 
 func NewTargetOfAlertRuleCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) *TargetOfAlertRuleCacheType {
@@ -31,7 +31,7 @@ func NewTargetOfAlertRuleCache(ctx *ctx.Context, stats *Stats, redis storage.Red
 		ctx:             ctx,
 		stats:           stats,
 		redis:           redis,
-		targets:         make(map[int64][]*models.Target),
+		targets:         make(map[string]map[int64][]string),
 	}
 
 	tc.SyncTargets()
@@ -44,7 +44,7 @@ func (tc *TargetOfAlertRuleCacheType) Reset() {
 
 	tc.statTotal = -1
 	tc.statLastUpdated = -1
-	tc.targets = make(map[int64][]*models.Target)
+	tc.targets = make(map[string]map[int64][]string)
 }
 
 func (tc *TargetOfAlertRuleCacheType) StatChanged(total, lastUpdated int64) bool {
@@ -55,7 +55,7 @@ func (tc *TargetOfAlertRuleCacheType) StatChanged(total, lastUpdated int64) bool
 	return true
 }
 
-func (tc *TargetOfAlertRuleCacheType) Set(m map[int64][]*models.Target, total, lastUpdated int64) {
+func (tc *TargetOfAlertRuleCacheType) Set(m map[string]map[int64][]string, total, lastUpdated int64) {
 	tc.Lock()
 	tc.targets = m
 	tc.Unlock()
@@ -65,10 +65,15 @@ func (tc *TargetOfAlertRuleCacheType) Set(m map[int64][]*models.Target, total, l
 	tc.statLastUpdated = lastUpdated
 }
 
-func (tc *TargetOfAlertRuleCacheType) Get(rid int64) ([]*models.Target, bool) {
+func (tc *TargetOfAlertRuleCacheType) Get(engineName string, rid int64) ([]string, bool) {
 	tc.RLock()
 	defer tc.RUnlock()
-	lst, has := tc.targets[rid]
+	m, has := tc.targets[engineName]
+	if !has {
+		return nil, false
+	}
+
+	lst, has := m[rid]
 	return lst, has
 }
 
@@ -92,10 +97,11 @@ func (tc *TargetOfAlertRuleCacheType) loopSyncTargets() {
 }
 
 func (tc *TargetOfAlertRuleCacheType) syncTargets() error {
-	// m, err := models.GetTargetsOfHostAlertRule(tc.ctx)
-	// if err != nil {
-	// 	return err
-	// }
-	// tc.Set(m, 0, 0)
+	m, err := models.GetTargetsOfHostAlertRule(tc.ctx)
+	if err != nil {
+		return err
+	}
+
+	tc.Set(m, 0, 0)
 	return nil
 }
