@@ -979,7 +979,7 @@ func GetTargetsOfHostAlertRule(ctx *ctx.Context) (map[string]map[int64][]string,
 
 		for _, target := range lst {
 			if _, exists := m[target.EngineName]; !exists {
-				m[target.Ident] = make(map[int64][]string)
+				m[target.EngineName] = make(map[int64][]string)
 			}
 
 			if _, exists := m[target.EngineName][hostAlertRules[i].Id]; !exists {
