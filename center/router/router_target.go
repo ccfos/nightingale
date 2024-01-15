@@ -390,3 +390,9 @@ func (rt *Router) checkTargetPerm(c *gin.Context, idents []string) {
 		ginx.Bomb(http.StatusForbidden, "No permission to operate the targets: %s", strings.Join(nopri, ", "))
 	}
 }
+
+func (rt *Router) targetsOfAlertRule(c *gin.Context) {
+	engineName := ginx.QueryStr(c, "engine_name", "")
+	m, err := models.GetTargetsOfHostAlertRule(rt.Ctx, engineName)
+	ginx.NewRender(c).Data(m, err)
+}

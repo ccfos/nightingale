@@ -504,6 +504,9 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.POST("/task-record-add", rt.taskRecordAdd)
 
 			service.GET("/user-variable/decrypt", rt.userVariableGetDecryptByService)
+
+			service.GET("/targets-of-alert-rule", rt.targetsOfAlertRule)
+
 		}
 	}
 

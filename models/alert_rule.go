@@ -949,7 +949,12 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 	return nil
 }
 
-func GetTargetsOfHostAlertRule(ctx *ctx.Context) (map[string]map[int64][]string, error) {
+func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]map[int64][]string, error) {
+	if !ctx.IsCenter {
+		m, err := poster.GetByUrls[map[string]map[int64][]string](ctx, "/v1/n9e/targets-of-alert-rule?engine_name="+engineName)
+		return m, err
+	}
+
 	m := make(map[string]map[int64][]string)
 	hostAlertRules, err := AlertRulesGetsBy(ctx, []string{"host"}, "", "", "", []string{}, 0)
 	if err != nil {

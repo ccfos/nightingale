@@ -15,16 +15,18 @@ type TargetsOfAlertRuleCacheType struct {
 	statLastUpdated int64
 	ctx             *ctx.Context
 	stats           *Stats
+	engineName      string
 
 	sync.RWMutex
 	targets map[string]map[int64][]string // key: ident
 }
 
-func NewTargetOfAlertRuleCache(ctx *ctx.Context, stats *Stats) *TargetsOfAlertRuleCacheType {
+func NewTargetOfAlertRuleCache(ctx *ctx.Context, engineName string, stats *Stats) *TargetsOfAlertRuleCacheType {
 	tc := &TargetsOfAlertRuleCacheType{
 		statTotal:       -1,
 		statLastUpdated: -1,
 		ctx:             ctx,
+		engineName:      engineName,
 		stats:           stats,
 		targets:         make(map[string]map[int64][]string),
 	}
@@ -84,7 +86,7 @@ func (tc *TargetsOfAlertRuleCacheType) loopSyncTargets() {
 }
 
 func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
-	m, err := models.GetTargetsOfHostAlertRule(tc.ctx)
+	m, err := models.GetTargetsOfHostAlertRule(tc.ctx, tc.engineName)
 	if err != nil {
 		return err
 	}
