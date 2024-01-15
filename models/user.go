@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"os"
 	"strings"
 	"time"
@@ -631,4 +632,38 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	default:
 		return "", false
 	}
+}
+
+func (u *User) SyncAddToFlashDuty(ctx *ctx.Context) error {
+	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
+	if err != nil {
+		return err
+	}
+	if appKey == "" {
+		return nil
+	}
+	fdmerbers := &flashduty.Members{}
+	fdmerbers.Users = append(fdmerbers.Users, flashduty.User{
+		Email:      u.Email,
+		Phone:      u.Phone,
+		MemberName: u.Username,
+	})
+	err = fdmerbers.AddMembers(appKey)
+	return err
+}
+
+func (u *User) SyncDelToFlashDuty(ctx *ctx.Context) error {
+	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
+	if err != nil {
+		return err
+	}
+	if appKey == "" {
+		return nil
+	}
+	fduser := &flashduty.User{
+		Email: u.Email,
+		Phone: u.Phone,
+	}
+	err = fduser.DelMember(appKey)
+	return err
 }

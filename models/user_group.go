@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -64,7 +65,7 @@ func (ug *UserGroup) Add(ctx *ctx.Context) error {
 	}
 
 	if num > 0 {
-		return errors.New("UserGroup already exists")
+		return errors.New("Team already exists")
 	}
 
 	now := time.Now().Unix()
@@ -163,4 +164,115 @@ func UserGroupStatistics(ctx *ctx.Context) (*Statistics, error) {
 	}
 
 	return stats[0], nil
+}
+
+func (ug *UserGroup) SyncAddToFlashDuty(ctx *ctx.Context) error {
+	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
+	if err != nil {
+		return err
+	}
+	if appKey == "" {
+		return nil
+	}
+	fdug := flashduty.Team{
+		TeamName:    ug.Name,
+		Description: ug.Note,
+	}
+	err = fdug.AddTeam(appKey)
+	return err
+}
+
+func (ug *UserGroup) SyncPutToFlashDuty(ctx *ctx.Context, oldUGName string) error {
+	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
+	if err != nil {
+		return err
+	}
+	if appKey == "" {
+		return nil
+	}
+
+	fdt := flashduty.Team{
+		TeamName:    ug.Name,
+		Description: ug.Note,
+	}
+	if err := fdt.UpdateTeam(appKey); err != nil {
+		return err
+	}
+	if oldUGName != ug.Name {
+		err = fdt.DelUserGroup(appKey)
+	}
+
+	return err
+}
+
+func (ug *UserGroup) SyncDelToFlashDuty(ctx *ctx.Context) error {
+	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
+	if err != nil {
+		return err
+	}
+	if appKey == "" {
+		return nil
+	}
+	fdt := flashduty.Team{
+		TeamName:    ug.Name,
+		Description: ug.Note,
+	}
+	err = fdt.DelUserGroup(appKey)
+	return err
+}
+
+func (ug *UserGroup) SyncMembersPutToFlashDuty(ctx *ctx.Context) error {
+	uids, err := MemberIds(ctx, ug.Id)
+	if err != nil {
+		return err
+	}
+	users, err := UserGetsByIds(ctx, uids)
+	if err != nil {
+		return err
+	}
+
+	err = ug.syncMemberToFlashDuty(ctx, users)
+	return err
+}
+
+func (ug *UserGroup) syncMemberToFlashDuty(ctx *ctx.Context, users []User) error {
+	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
+	if err != nil {
+		return err
+	}
+	if appKey == "" {
+		return nil
+	}
+
+	fdmembers := flashduty.Members{
+		Users: make([]flashduty.User, 0, len(users)),
+	}
+	for _, user := range users {
+		fduser := flashduty.User{
+			Email:      user.Email,
+			Phone:      user.Phone,
+			MemberName: user.Username,
+		}
+		fdmembers.Users = append(fdmembers.Users, fduser)
+	}
+	if err := fdmembers.AddMembers(appKey); err != nil {
+		return err
+	}
+
+	emails, phones := make([]string, 0), make([]string, 0)
+	for _, user := range fdmembers.Users {
+		if user.Email != "" {
+			emails = append(emails, user.Email)
+		} else if user.Phone != "" {
+			phones = append(phones, user.Phone)
+		}
+	}
+
+	fdt := flashduty.Team{
+		TeamName: ug.Name,
+		Emails:   emails,
+		Phones:   phones,
+	}
+	err = fdt.UpdateTeam(appKey)
+	return err
 }
