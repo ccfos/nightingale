@@ -353,6 +353,17 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 				continue
 			}
 
+			if arw.ctx.IsCenter {
+				// 如果是中心节点, 将不再上报数据的主机 engineName 为空的机器，也加入到 targets 中
+				lst, exists := arw.processor.TargetsOfAlertRuleCache.Get("", arw.rule.Id)
+				if !exists {
+					logger.Warningf("rule_eval:%s targets not found engineName:%s", arw.Key(), arw.processor.EngineName)
+					arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
+				} else {
+					idents = append(idents, lst...)
+				}
+			}
+
 			var missTargets []string
 			targetUpdateTimeMap := arw.processor.TargetCache.GetHostUpdateTime(idents)
 			for ident, updateTime := range targetUpdateTimeMap {
