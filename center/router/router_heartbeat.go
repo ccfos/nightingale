@@ -81,6 +81,10 @@ func (rt *Router) heartbeat(c *gin.Context) {
 			}
 		}
 
+		if req.EngineName != "" && req.EngineName != target.EngineName {
+			filed["engine_name"] = req.EngineName
+		}
+
 		if len(filed) > 0 {
 			err := target.UpdateFieldsMap(rt.Ctx, filed)
 			if err != nil {
