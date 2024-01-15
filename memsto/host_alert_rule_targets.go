@@ -7,30 +7,25 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/toolkits/pkg/logger"
 )
 
-// 1. append note to alert_event
-// 2. append tags to series
-type TargetOfAlertRuleCacheType struct {
+type TargetsOfAlertRuleCacheType struct {
 	statTotal       int64
 	statLastUpdated int64
 	ctx             *ctx.Context
 	stats           *Stats
-	redis           storage.Redis
 
 	sync.RWMutex
 	targets map[string]map[int64][]string // key: ident
 }
 
-func NewTargetOfAlertRuleCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) *TargetOfAlertRuleCacheType {
-	tc := &TargetOfAlertRuleCacheType{
+func NewTargetOfAlertRuleCache(ctx *ctx.Context, stats *Stats) *TargetsOfAlertRuleCacheType {
+	tc := &TargetsOfAlertRuleCacheType{
 		statTotal:       -1,
 		statLastUpdated: -1,
 		ctx:             ctx,
 		stats:           stats,
-		redis:           redis,
 		targets:         make(map[string]map[int64][]string),
 	}
 
@@ -38,7 +33,7 @@ func NewTargetOfAlertRuleCache(ctx *ctx.Context, stats *Stats, redis storage.Red
 	return tc
 }
 
-func (tc *TargetOfAlertRuleCacheType) Reset() {
+func (tc *TargetsOfAlertRuleCacheType) Reset() {
 	tc.Lock()
 	defer tc.Unlock()
 
@@ -47,15 +42,7 @@ func (tc *TargetOfAlertRuleCacheType) Reset() {
 	tc.targets = make(map[string]map[int64][]string)
 }
 
-func (tc *TargetOfAlertRuleCacheType) StatChanged(total, lastUpdated int64) bool {
-	if tc.statTotal == total && tc.statLastUpdated == lastUpdated {
-		return false
-	}
-
-	return true
-}
-
-func (tc *TargetOfAlertRuleCacheType) Set(m map[string]map[int64][]string, total, lastUpdated int64) {
+func (tc *TargetsOfAlertRuleCacheType) Set(m map[string]map[int64][]string, total, lastUpdated int64) {
 	tc.Lock()
 	tc.targets = m
 	tc.Unlock()
@@ -65,7 +52,7 @@ func (tc *TargetOfAlertRuleCacheType) Set(m map[string]map[int64][]string, total
 	tc.statLastUpdated = lastUpdated
 }
 
-func (tc *TargetOfAlertRuleCacheType) Get(engineName string, rid int64) ([]string, bool) {
+func (tc *TargetsOfAlertRuleCacheType) Get(engineName string, rid int64) ([]string, bool) {
 	tc.RLock()
 	defer tc.RUnlock()
 	m, has := tc.targets[engineName]
@@ -77,7 +64,7 @@ func (tc *TargetOfAlertRuleCacheType) Get(engineName string, rid int64) ([]strin
 	return lst, has
 }
 
-func (tc *TargetOfAlertRuleCacheType) SyncTargets() {
+func (tc *TargetsOfAlertRuleCacheType) SyncTargets() {
 	err := tc.syncTargets()
 	if err != nil {
 		log.Fatalln("failed to sync targets:", err)
@@ -86,17 +73,17 @@ func (tc *TargetOfAlertRuleCacheType) SyncTargets() {
 	go tc.loopSyncTargets()
 }
 
-func (tc *TargetOfAlertRuleCacheType) loopSyncTargets() {
+func (tc *TargetsOfAlertRuleCacheType) loopSyncTargets() {
 	duration := time.Duration(9000) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := tc.syncTargets(); err != nil {
-			logger.Warning("failed to sync targets:", err)
+			logger.Warning("failed to sync host alert rule targets:", err)
 		}
 	}
 }
 
-func (tc *TargetOfAlertRuleCacheType) syncTargets() error {
+func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 	m, err := models.GetTargetsOfHostAlertRule(tc.ctx)
 	if err != nil {
 		return err

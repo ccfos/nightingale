@@ -26,11 +26,12 @@ type Scheduler struct {
 
 	aconf aconf.Alert
 
-	alertRuleCache  *memsto.AlertRuleCacheType
-	targetCache     *memsto.TargetCacheType
-	busiGroupCache  *memsto.BusiGroupCacheType
-	alertMuteCache  *memsto.AlertMuteCacheType
-	datasourceCache *memsto.DatasourceCacheType
+	alertRuleCache          *memsto.AlertRuleCacheType
+	targetCache             *memsto.TargetCacheType
+	targetsOfAlertRuleCache *memsto.TargetsOfAlertRuleCacheType
+	busiGroupCache          *memsto.BusiGroupCacheType
+	alertMuteCache          *memsto.AlertMuteCacheType
+	datasourceCache         *memsto.DatasourceCacheType
 
 	promClients     *prom.PromClientMap
 	tdengineClients *tdengine.TdengineClientMap
@@ -41,7 +42,8 @@ type Scheduler struct {
 	stats *astats.Stats
 }
 
-func NewScheduler(aconf aconf.Alert, externalProcessors *process.ExternalProcessorsType, arc *memsto.AlertRuleCacheType, targetCache *memsto.TargetCacheType,
+func NewScheduler(aconf aconf.Alert, externalProcessors *process.ExternalProcessorsType, arc *memsto.AlertRuleCacheType,
+	targetCache *memsto.TargetCacheType, toarc *memsto.TargetsOfAlertRuleCacheType,
 	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType,
 	promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, naming *naming.Naming, ctx *ctx.Context, stats *astats.Stats) *Scheduler {
 	scheduler := &Scheduler{
@@ -50,11 +52,12 @@ func NewScheduler(aconf aconf.Alert, externalProcessors *process.ExternalProcess
 
 		ExternalProcessors: externalProcessors,
 
-		alertRuleCache:  arc,
-		targetCache:     targetCache,
-		busiGroupCache:  busiGroupCache,
-		alertMuteCache:  alertMuteCache,
-		datasourceCache: datasourceCache,
+		alertRuleCache:          arc,
+		targetCache:             targetCache,
+		targetsOfAlertRuleCache: toarc,
+		busiGroupCache:          busiGroupCache,
+		alertMuteCache:          alertMuteCache,
+		datasourceCache:         datasourceCache,
 
 		promClients:     promClients,
 		tdengineClients: tdengineClients,
@@ -114,7 +117,7 @@ func (s *Scheduler) syncAlertRules() {
 					logger.Debugf("datasource %d status is %s", dsId, ds.Status)
 					continue
 				}
-				processor := process.NewProcessor(rule, dsId, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
+				processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
 
 				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.tdengineClients, s.ctx)
 				alertRuleWorkers[alertRule.Hash()] = alertRule
@@ -124,7 +127,7 @@ func (s *Scheduler) syncAlertRules() {
 			if !naming.DatasourceHashRing.IsHit(s.aconf.Heartbeat.EngineName, strconv.FormatInt(rule.Id, 10), s.aconf.Heartbeat.Endpoint) {
 				continue
 			}
-			processor := process.NewProcessor(rule, 0, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
+			processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, 0, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
 			alertRule := NewAlertRuleWorker(rule, 0, processor, s.promClients, s.tdengineClients, s.ctx)
 			alertRuleWorkers[alertRule.Hash()] = alertRule
 		} else {
@@ -141,7 +144,7 @@ func (s *Scheduler) syncAlertRules() {
 					logger.Debugf("datasource %d status is %s", dsId, ds.Status)
 					continue
 				}
-				processor := process.NewProcessor(rule, dsId, s.alertRuleCache, s.targetCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
+				processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
 				externalRuleWorkers[processor.Key()] = processor
 			}
 		}

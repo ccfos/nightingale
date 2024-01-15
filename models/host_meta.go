@@ -19,6 +19,16 @@ type HostMeta struct {
 	ExtendInfo   map[string]interface{} `json:"extend_info"`
 }
 
+type HostUpdteTime struct {
+	Ident      string `json:"ident"`
+	UpdateTime int64  `json:"update_time"`
+}
+
+type HostUnixTime struct {
+	Ident    string `json:"ident"`
+	UnixTime int64  `json:"unixtime"`
+}
+
 func (h HostMeta) MarshalBinary() ([]byte, error) {
 	return json.Marshal(h)
 }

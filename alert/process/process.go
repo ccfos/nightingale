@@ -48,6 +48,7 @@ type HandleEventFunc func(event *models.AlertCurEvent)
 
 type Processor struct {
 	datasourceId int64
+	EngineName   string
 
 	rule     *models.AlertRule
 	fires    *AlertCurEventMap
@@ -60,11 +61,12 @@ type Processor struct {
 	targetNote string
 	groupName  string
 
-	atertRuleCache  *memsto.AlertRuleCacheType
-	TargetCache     *memsto.TargetCacheType
-	BusiGroupCache  *memsto.BusiGroupCacheType
-	alertMuteCache  *memsto.AlertMuteCacheType
-	datasourceCache *memsto.DatasourceCacheType
+	atertRuleCache          *memsto.AlertRuleCacheType
+	TargetCache             *memsto.TargetCacheType
+	TargetsOfAlertRuleCache *memsto.TargetsOfAlertRuleCacheType
+	BusiGroupCache          *memsto.BusiGroupCacheType
+	alertMuteCache          *memsto.AlertMuteCacheType
+	datasourceCache         *memsto.DatasourceCacheType
 
 	ctx   *ctx.Context
 	Stats *astats.Stats
@@ -91,19 +93,22 @@ func (p *Processor) Hash() string {
 	))
 }
 
-func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *memsto.AlertRuleCacheType, targetCache *memsto.TargetCacheType,
+func NewProcessor(engineName string, rule *models.AlertRule, datasourceId int64, atertRuleCache *memsto.AlertRuleCacheType,
+	targetCache *memsto.TargetCacheType, targetsOfAlertRuleCache *memsto.TargetsOfAlertRuleCacheType,
 	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, ctx *ctx.Context,
 	stats *astats.Stats) *Processor {
 
 	p := &Processor{
+		EngineName:   engineName,
 		datasourceId: datasourceId,
 		rule:         rule,
 
-		TargetCache:     targetCache,
-		BusiGroupCache:  busiGroupCache,
-		alertMuteCache:  alertMuteCache,
-		atertRuleCache:  atertRuleCache,
-		datasourceCache: datasourceCache,
+		TargetCache:             targetCache,
+		TargetsOfAlertRuleCache: targetsOfAlertRuleCache,
+		BusiGroupCache:          busiGroupCache,
+		alertMuteCache:          alertMuteCache,
+		atertRuleCache:          atertRuleCache,
+		datasourceCache:         datasourceCache,
 
 		ctx:   ctx,
 		Stats: stats,

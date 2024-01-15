@@ -343,17 +343,25 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			arw.severity = trigger.Severity
 		}
 
-		query := models.GetHostsQuery(rule.Queries)
 		switch trigger.Type {
 		case "target_miss":
 			t := now - int64(trigger.Duration)
-			targets, err := models.MissTargetGetsByFilter(arw.ctx, query, t)
-			if err != nil {
-				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
+			idents, exists := arw.processor.TargetsOfAlertRuleCache.Get(arw.processor.EngineName, arw.rule.Id)
+			if !exists {
+				logger.Warningf("rule_eval:%s targets not found", arw.Key())
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
-				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				continue
 			}
+
+			var missTargets []string
+			targetUpdateTimeMap := arw.processor.TargetCache.GetHostUpdateTime(idents)
+			for ident, updateTime := range targetUpdateTimeMap {
+				if updateTime < t {
+					missTargets = append(missTargets, ident)
+				}
+			}
+
+			targets := arw.processor.TargetCache.Gets(missTargets)
 			for _, target := range targets {
 				m := make(map[string]string)
 				target.FillTagsMap()
@@ -370,22 +378,40 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(now-target.UpdateAt), trigger.Severity))
 			}
 		case "offset":
-			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0)
-			if err != nil {
-				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
+			idents, exists := arw.processor.TargetsOfAlertRuleCache.Get(arw.processor.EngineName, arw.rule.Id)
+			if !exists {
+				logger.Warningf("rule_eval:%s targets not found", arw.Key())
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
-				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				continue
 			}
-			var targetMap = make(map[string]*models.Target)
-			for _, target := range targets {
-				targetMap[target.Ident] = target
+
+			now := time.Now().UnixMilli()
+
+			targets := arw.processor.TargetCache.Gets(idents)
+
+			offsetIdents := make(map[string]int64)
+			targetsMeta := arw.processor.TargetCache.GetHostMetas(targets)
+			for ident, meta := range targetsMeta {
+				if meta.CpuNum <= 0 {
+					// means this target is not collect by categraf, do not check offset
+					continue
+				}
+
+				// if now-meta.UpdateAt > 120 {
+				// 	// means this target is not a active host, do not check offset
+				// 	continue
+				// }
+
+				offset := now - meta.UnixTime
+
+				if offset > int64(trigger.Duration) {
+					offsetIdents[ident] = offset
+				}
 			}
 
-			hostOffsetMap := arw.processor.TargetCache.GetOffsetHost(targets, now, int64(trigger.Duration))
-			for host, offset := range hostOffsetMap {
+			for host, offset := range offsetIdents {
 				m := make(map[string]string)
-				target, exists := targetMap[host]
+				target, exists := arw.processor.TargetCache.Get(host)
 				if exists {
 					target.FillTagsMap()
 					for k, v := range target.TagsMap {
@@ -403,22 +429,22 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			}
 		case "pct_target_miss":
 			t := now - int64(trigger.Duration)
-			count, err := models.MissTargetCountByFilter(arw.ctx, query, t)
-			if err != nil {
-				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
+			idents, exists := arw.processor.TargetsOfAlertRuleCache.Get(arw.processor.EngineName, arw.rule.Id)
+			if !exists {
+				logger.Warningf("rule_eval:%s targets not found", arw.Key())
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
-				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				continue
 			}
 
-			total, err := models.TargetCountByFilter(arw.ctx, query)
-			if err != nil {
-				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
-				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
-				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
-				continue
+			var missTargets []string
+			targetUpdateTimeMap := arw.processor.TargetCache.GetHostUpdateTime(idents)
+			for ident, updateTime := range targetUpdateTimeMap {
+				if updateTime < t {
+					missTargets = append(missTargets, ident)
+				}
 			}
-			pct := float64(count) / float64(total) * 100
+
+			pct := float64(len(missTargets)) / float64(len(idents)) * 100
 			if pct >= float64(trigger.Percent) {
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, nil, now, pct, trigger.Severity))
 			}

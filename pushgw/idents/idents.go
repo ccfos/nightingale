@@ -154,7 +154,11 @@ func updateTargetsUpdateTs(lst []string, now int64, redis storage.Redis) error {
 
 	newMap := make(map[string]interface{}, count)
 	for _, ident := range lst {
-		newMap[models.WrapIdentUpdateTime(ident)] = now
+		hostUpdateTime := models.HostUpdteTime{
+			UpdateTime: now,
+			Ident:      ident,
+		}
+		newMap[models.WrapIdentUpdateTime(ident)] = hostUpdateTime
 	}
 
 	err := storage.MSet(context.Background(), redis, newMap)
