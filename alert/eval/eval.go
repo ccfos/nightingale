@@ -348,7 +348,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			t := now - int64(trigger.Duration)
 			idents, exists := arw.processor.TargetsOfAlertRuleCache.Get(arw.processor.EngineName, arw.rule.Id)
 			if !exists {
-				logger.Warningf("rule_eval:%s targets not found", arw.Key())
+				logger.Warningf("rule_eval:%s targets not found engineName:%s", arw.Key(), arw.processor.EngineName)
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
 				continue
 			}

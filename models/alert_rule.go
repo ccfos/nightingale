@@ -987,6 +987,7 @@ func GetTargetsOfHostAlertRule(ctx *ctx.Context) (map[string]map[int64][]string,
 			}
 
 			m[target.EngineName][hostAlertRules[i].Id] = append(m[target.EngineName][hostAlertRules[i].Id], target.Ident)
+			logger.Debugf("get_targets_of_alert_rule engine:%s, rule:%d, target:%s", target.EngineName, hostAlertRules[i].Id, target.Ident)
 		}
 	}
 

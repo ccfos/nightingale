@@ -89,6 +89,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 		return err
 	}
 
+	logger.Debugf("get_targets_of_alert_rule total: %d", len(m))
 	tc.Set(m, 0, 0)
 	return nil
 }
