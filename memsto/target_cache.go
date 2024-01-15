@@ -230,6 +230,16 @@ func (tc *TargetCacheType) GetHostUpdateTime(targets []string) map[string]int64 
 		metaMap[hostUpdateTime.Ident] = hostUpdateTime.UpdateTime
 	}
 
+	for _, ident := range targets {
+		if _, ok := metaMap[ident]; !ok {
+			// if not exists, get from cache
+			target, exists := tc.Get(ident)
+			if exists {
+				metaMap[ident] = target.UpdateAt
+			}
+		}
+	}
+
 	return metaMap
 }
 

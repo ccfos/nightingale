@@ -95,18 +95,17 @@ type TargetUpdate struct {
 }
 
 func (s *Set) UpdateTargets(lst []string, now int64) error {
+	err := updateTargetsUpdateTs(lst, now, s.redis)
+	if err != nil {
+		logger.Errorf("failed to update targets:%v update_ts: %v", lst, err)
+	}
+
 	if !s.ctx.IsCenter {
 		t := TargetUpdate{
 			Lst: lst,
 			Now: now,
 		}
-
-		err := updateTargetsUpdateTs(lst, now, s.redis)
-		if err != nil {
-			logger.Errorf("failed to update targets:%v update_ts: %v", lst, err)
-		}
-
-		err = poster.PostByUrls(s.ctx, "/v1/n9e/target-update", t)
+		err := poster.PostByUrls(s.ctx, "/v1/n9e/target-update", t)
 		return err
 	}
 
@@ -126,7 +125,7 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 
 	// there are some idents not found in db, so insert them
 	var exists []string
-	err := s.ctx.DB.Table("target").Where("ident in ?", lst).Pluck("ident", &exists).Error
+	err = s.ctx.DB.Table("target").Where("ident in ?", lst).Pluck("ident", &exists).Error
 	if err != nil {
 		return err
 	}

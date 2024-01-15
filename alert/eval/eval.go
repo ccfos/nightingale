@@ -405,6 +405,10 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			now := time.Now().UnixMilli()
 
 			targets := arw.processor.TargetCache.Gets(idents)
+			targetMap := make(map[string]*models.Target)
+			for _, target := range targets {
+				targetMap[target.Ident] = target
+			}
 
 			offsetIdents := make(map[string]int64)
 			targetsMeta := arw.processor.TargetCache.GetHostMetas(targets)
@@ -414,10 +418,12 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 					continue
 				}
 
-				// if now-meta.UpdateAt > 120 {
-				// 	// means this target is not a active host, do not check offset
-				// 	continue
-				// }
+				if target, exists := targetMap[ident]; exists {
+					if now-target.UpdateAt > 120 {
+						// means this target is not a active host, do not check offset
+						continue
+					}
+				}
 
 				offset := now - meta.UnixTime
 
