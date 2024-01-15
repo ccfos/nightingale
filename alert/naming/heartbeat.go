@@ -37,6 +37,7 @@ var localHostServers map[string]string
 
 func (n *Naming) Heartbeats() error {
 	localss = make(map[int64]string)
+	localHostServers = make(map[string]string)
 	if err := n.heartbeat(); err != nil {
 		fmt.Println("failed to heartbeat:", err)
 		return err
