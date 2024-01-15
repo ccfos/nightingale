@@ -20,12 +20,11 @@ import (
 // 1. append note to alert_event
 // 2. append tags to series
 type TargetCacheType struct {
-	statTotal        int64
-	statLastUpdated  int64
-	statEarlyUpdated int64
-	ctx              *ctx.Context
-	stats            *Stats
-	redis            storage.Redis
+	statTotal       int64
+	statLastUpdated int64
+	ctx             *ctx.Context
+	stats           *Stats
+	redis           storage.Redis
 
 	sync.RWMutex
 	targets map[string]*models.Target // key: ident
@@ -113,7 +112,7 @@ func (tc *TargetCacheType) CleanTargets() {
 	if err != nil {
 		log.Fatalln("failed to clean loss targets:", err)
 	}
-	tc.loopCleanTargets()
+	go tc.loopCleanTargets()
 }
 
 func (tc *TargetCacheType) loopCleanTargets() {
@@ -121,7 +120,7 @@ func (tc *TargetCacheType) loopCleanTargets() {
 	for {
 		time.Sleep(duration)
 		if err := models.TargetDelLoss(tc.ctx); err != nil {
-			log.Fatalln("failed to clean loss targets:", err)
+			logger.Warning("failed to clean loss targets:", err)
 		}
 	}
 }
