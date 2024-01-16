@@ -24,6 +24,14 @@ type HostUpdteTime struct {
 	UpdateTime int64  `json:"update_time"`
 }
 
+func (h HostUpdteTime) MarshalBinary() ([]byte, error) {
+	return json.Marshal(h)
+}
+
+func (h *HostUpdteTime) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, h)
+}
+
 type HostUnixTime struct {
 	Ident    string `json:"ident"`
 	UnixTime int64  `json:"unixtime"`
