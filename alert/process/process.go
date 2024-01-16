@@ -385,8 +385,8 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 	for _, event := range curEvents {
 		if event.Cate == models.HOST {
 			target, exists := p.TargetCache.Get(event.TargetIdent)
-			if exists && target.EngineName != p.EngineName {
-				// 如果是 host rule，且 target 的 engineName 不是当前的 engineName，就跳过
+			if exists && target.EngineName != p.EngineName && !(p.ctx.IsCenter && target.EngineName == "") {
+				// 如果是 host rule，且 target 的 engineName 不是当前的 engineName 或者是中心机房 target EngineName 为空，就跳过
 				continue
 			}
 		}
