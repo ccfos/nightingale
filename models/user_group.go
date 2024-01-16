@@ -174,11 +174,11 @@ func (ug *UserGroup) SyncAddToFlashDuty(ctx *ctx.Context) error {
 	if appKey == "" {
 		return nil
 	}
-	fdug := flashduty.Team{
+	fdt := flashduty.Team{
 		TeamName:    ug.Name,
 		Description: ug.Note,
 	}
-	err = fdug.AddTeam(appKey)
+	err = fdt.AddTeam(appKey)
 	return err
 }
 
@@ -191,15 +191,21 @@ func (ug *UserGroup) SyncPutToFlashDuty(ctx *ctx.Context, oldUGName string) erro
 		return nil
 	}
 
-	fdt := flashduty.Team{
-		TeamName:    ug.Name,
-		Description: ug.Note,
-	}
-	if err := fdt.UpdateTeam(appKey); err != nil {
+	uids, err := MemberIds(ctx, ug.Id)
+	if err != nil {
 		return err
 	}
+	users, err := UserGetsByIds(ctx, uids)
+	if err != nil {
+		return err
+	}
+	err = ug.syncMemberToFlashDuty(appKey, users)
+
+	fdt := flashduty.Team{
+		TeamName: ug.Name,
+	}
 	if oldUGName != ug.Name {
-		err = fdt.DelUserGroup(appKey)
+		err = fdt.DelTeam(appKey)
 	}
 
 	return err
@@ -214,14 +220,21 @@ func (ug *UserGroup) SyncDelToFlashDuty(ctx *ctx.Context) error {
 		return nil
 	}
 	fdt := flashduty.Team{
-		TeamName:    ug.Name,
-		Description: ug.Note,
+		TeamName: ug.Name,
 	}
-	err = fdt.DelUserGroup(appKey)
+	err = fdt.DelTeam(appKey)
 	return err
 }
 
 func (ug *UserGroup) SyncMembersPutToFlashDuty(ctx *ctx.Context) error {
+	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
+	if err != nil {
+		return err
+	}
+	if appKey == "" {
+		return nil
+	}
+
 	uids, err := MemberIds(ctx, ug.Id)
 	if err != nil {
 		return err
@@ -231,19 +244,11 @@ func (ug *UserGroup) SyncMembersPutToFlashDuty(ctx *ctx.Context) error {
 		return err
 	}
 
-	err = ug.syncMemberToFlashDuty(ctx, users)
+	err = ug.syncMemberToFlashDuty(appKey, users)
 	return err
 }
 
-func (ug *UserGroup) syncMemberToFlashDuty(ctx *ctx.Context, users []User) error {
-	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
-	if err != nil {
-		return err
-	}
-	if appKey == "" {
-		return nil
-	}
-
+func (ug *UserGroup) syncMemberToFlashDuty(appKey string, users []User) error {
 	fdmembers := flashduty.Members{
 		Users: make([]flashduty.User, 0, len(users)),
 	}
@@ -273,6 +278,6 @@ func (ug *UserGroup) syncMemberToFlashDuty(ctx *ctx.Context, users []User) error
 		Emails:   emails,
 		Phones:   phones,
 	}
-	err = fdt.UpdateTeam(appKey)
+	err := fdt.UpdateTeam(appKey)
 	return err
 }

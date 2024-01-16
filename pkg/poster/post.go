@@ -243,7 +243,7 @@ func PostJSON(url string, timeout time.Duration, v interface{}, retries ...int) 
 func PostFlashDuty(path string, appKey string, body interface{}) (response []byte, code int, err error) {
 	bodyParams := url.Values{}
 	bodyParams.Add("app_key", appKey)
-	url := fmt.Sprintf("%s%s?%s", "https://api.flashcat.cloud", path, bodyParams.Encode())
+	url := fmt.Sprintf("%s%s?%s", "https://jira.flashcat.cloud/api", path, bodyParams.Encode())
 	fmt.Println(url)
 
 	var bs []byte
