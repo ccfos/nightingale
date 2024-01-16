@@ -182,7 +182,7 @@ func (ug *UserGroup) SyncAddToFlashDuty(ctx *ctx.Context) error {
 	return err
 }
 
-func (ug *UserGroup) SyncPutToFlashDuty(ctx *ctx.Context, oldUGName string) error {
+func (ug *UserGroup) SyncPutToFlashDuty(ctx *ctx.Context, oldTeamName string) error {
 	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
 	if err != nil {
 		return err
@@ -202,9 +202,9 @@ func (ug *UserGroup) SyncPutToFlashDuty(ctx *ctx.Context, oldUGName string) erro
 	err = ug.syncMemberToFlashDuty(appKey, users)
 
 	fdt := flashduty.Team{
-		TeamName: ug.Name,
+		TeamName: oldTeamName,
 	}
-	if oldUGName != ug.Name {
+	if oldTeamName != ug.Name {
 		err = fdt.DelTeam(appKey)
 	}
 
