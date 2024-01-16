@@ -178,8 +178,10 @@ func (ug *UserGroup) SyncPutToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDut
 	}
 
 	if oldTeamName != ug.Name {
-		ug.Name = oldTeamName
-		if err := ug.SyncDelToFlashDuty(ctx, fdConf); err != nil {
+		oldUg := &UserGroup{
+			Name: oldTeamName,
+		}
+		if err := oldUg.SyncDelToFlashDuty(ctx, fdConf); err != nil {
 			return err
 		}
 	}
