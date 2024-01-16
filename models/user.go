@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"os"
 	"strings"
@@ -634,7 +635,7 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	}
 }
 
-func (u *User) SyncAddToFlashDuty(ctx *ctx.Context) error {
+func SyncChangeToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty, dbUsers []*User, cacheUsers map[int64]*User) error {
 	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
 	if err != nil {
 		return err
@@ -642,28 +643,44 @@ func (u *User) SyncAddToFlashDuty(ctx *ctx.Context) error {
 	if appKey == "" {
 		return nil
 	}
-	fdmerbers := &flashduty.Members{}
-	fdmerbers.Users = append(fdmerbers.Users, flashduty.User{
-		Email:      u.Email,
-		Phone:      u.Phone,
-		MemberName: u.Username,
-	})
-	err = fdmerbers.AddMembers(appKey)
-	return err
+
+	dbUsersHas := sliceToMap(dbUsers)
+	fdAddUsers := usersToFdUsers(diffMap(dbUsersHas, cacheUsers))
+	if err := flashduty.AddUsers(fdConf, appKey, fdAddUsers); err != nil {
+		return err
+	}
+	fdDelUsers := usersToFdUsers(diffMap(cacheUsers, dbUsersHas))
+	flashduty.DelUsers(fdConf, appKey, fdDelUsers)
+	return nil
 }
 
-func (u *User) SyncDelToFlashDuty(ctx *ctx.Context) error {
-	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
-	if err != nil {
-		return err
+func sliceToMap(dbUsers []*User) map[int64]*User {
+	m := make(map[int64]*User, len(dbUsers))
+	for _, user := range dbUsers {
+		m[user.Id] = user
 	}
-	if appKey == "" {
-		return nil
+	return m
+}
+
+// in m1 and not in m2
+func diffMap(m1, m2 map[int64]*User) []*User {
+	var diff []*User
+	for i := range m1 {
+		if _, ok := m2[i]; !ok {
+			diff = append(diff, m1[i])
+		}
 	}
-	fduser := &flashduty.User{
-		Email: u.Email,
-		Phone: u.Phone,
+	return diff
+}
+
+func usersToFdUsers(users []*User) []flashduty.User {
+	fdUsers := make([]flashduty.User, 0, len(users))
+	for i := range users {
+		fdUsers = append(fdUsers, flashduty.User{
+			Email:      users[i].Email,
+			Phone:      users[i].Phone,
+			MemberName: users[i].Username,
+		})
 	}
-	err = fduser.DelMember(appKey)
-	return err
+	return fdUsers
 }

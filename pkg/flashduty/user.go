@@ -18,6 +18,21 @@ type Members struct {
 	Users []User `json:"members"`
 }
 
+func AddUsers(fdConf *cconf.FlashDuty, appKey string, users []User) error {
+	members := &Members{
+		Users: users,
+	}
+	return members.AddMembers(fdConf, appKey)
+}
+
+func DelUsers(fdConf *cconf.FlashDuty, appKey string, users []User) {
+	for _, user := range users {
+		if err := user.DelMember(fdConf, appKey); err != nil {
+			logger.Error("failed to delete user: %v", err)
+		}
+	}
+}
+
 func (m *Members) AddMembers(fdConf *cconf.FlashDuty, appKey string) error {
 	if len(m.Users) == 0 {
 		return nil

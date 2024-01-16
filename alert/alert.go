@@ -50,7 +50,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
 	notifyConfigCache := memsto.NewNotifyConfigCache(ctx, configCache)
 	dsCache := memsto.NewDatasourceCache(ctx, syncStats)
-	userCache := memsto.NewUserCache(ctx, syncStats)
+	userCache := memsto.NewUserCache(ctx, syncStats, &config.Center.FlashDuty)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 
 	promClients := prom.NewPromClient(ctx)
