@@ -90,8 +90,11 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 	if err != nil {
 		return err
 	}
+	logger.Debugf("get_targets_of_alert_rule total: %d engine_name:%s", len(m), tc.engineName)
+	for k, v := range m {
+		logger.Debugf("get_targets_of_alert_rule key:%s value:%v", k, v)
+	}
 
-	logger.Debugf("get_targets_of_alert_rule total: %d", len(m))
 	tc.Set(m, 0, 0)
 	return nil
 }
