@@ -122,7 +122,7 @@ func (s *Scheduler) syncAlertRules() {
 				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.tdengineClients, s.ctx)
 				alertRuleWorkers[alertRule.Hash()] = alertRule
 			}
-		} else if rule.IsHostRule() && s.ctx.IsCenter {
+		} else if rule.IsHostRule() {
 			// all host rule will be processed by center instance
 			if !naming.DatasourceHashRing.IsHit(s.aconf.Heartbeat.EngineName, strconv.FormatInt(rule.Id, 10), s.aconf.Heartbeat.Endpoint) {
 				continue
