@@ -383,6 +383,14 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 
 	fireMap := make(map[string]*models.AlertCurEvent)
 	for _, event := range curEvents {
+		if event.Cate == models.HOST {
+			target, exists := p.TargetCache.Get(event.TargetIdent)
+			if exists && target.EngineName != p.EngineName {
+				// 如果是 host rule，且 target 的 engineName 不是当前的 engineName，就跳过
+				continue
+			}
+		}
+
 		event.DB2Mem()
 		fireMap[event.Hash] = event
 	}
