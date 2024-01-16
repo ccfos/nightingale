@@ -2,7 +2,8 @@ package flashduty
 
 import (
 	"errors"
-	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/center/cconf"
+	"github.com/toolkits/pkg/logger"
 )
 
 type User struct {
@@ -17,23 +18,24 @@ type Members struct {
 	Users []User `json:"members"`
 }
 
-func (m *Members) AddMembers(appKey string) error {
+func (m *Members) AddMembers(fdConf *cconf.FlashDuty, appKey string) error {
 	if len(m.Users) == 0 {
 		return nil
 	}
-	for _, user := range m.Users {
+	for i, user := range m.Users {
 		if user.Email == "" && (user.Phone == "" || user.MemberName == "") {
-			return errors.New("phones and email must be selected one of two, and the member_name must be added when selecting the phone")
+			logger.Error("phones and email must be selected one of two, and the member_name must be added when selecting the phone")
+			m.Users = append(m.Users[:i], m.Users[i+1:]...)
 		}
 	}
-	_, _, err := poster.PostFlashDuty("/member/invite", appKey, m)
+	_, _, err := PostFlashDuty(fdConf.Api, "/member/invite", fdConf.Timeout, appKey, m)
 	return err
 }
 
-func (user *User) DelMember(appKey string) error {
+func (user *User) DelMember(fdConf *cconf.FlashDuty, appKey string) error {
 	if user.Email == "" && user.Phone == "" {
 		return errors.New("phones and email must be selected one of two")
 	}
-	_, _, err := poster.PostFlashDuty("/member/delete", appKey, user)
+	_, _, err := PostFlashDuty(fdConf.Api, "/member/delete", fdConf.Timeout, appKey, user)
 	return err
 }

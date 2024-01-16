@@ -1,7 +1,9 @@
 package models
 
 import (
+	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
+	"github.com/toolkits/pkg/logger"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -166,58 +168,25 @@ func UserGroupStatistics(ctx *ctx.Context) (*Statistics, error) {
 	return stats[0], nil
 }
 
-func (ug *UserGroup) SyncAddToFlashDuty(ctx *ctx.Context) error {
-	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
-	if err != nil {
-		return err
-	}
-	if appKey == "" {
-		return nil
-	}
-
-	uids, err := MemberIds(ctx, ug.Id)
-	if err != nil {
-		return err
-	}
-	users, err := UserGetsByIds(ctx, uids)
-	if err != nil {
-		return err
-	}
-	err = ug.syncMemberToFlashDuty(appKey, users)
-
-	return err
+func (ug *UserGroup) SyncAddToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty) error {
+	return ug.syncTeamMemberToFlashDuty(ctx, fdConf)
 }
 
-func (ug *UserGroup) SyncPutToFlashDuty(ctx *ctx.Context, oldTeamName string) error {
-	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
-	if err != nil {
+func (ug *UserGroup) SyncPutToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty, oldTeamName string) error {
+	if err := ug.syncTeamMemberToFlashDuty(ctx, fdConf); err != nil {
 		return err
-	}
-	if appKey == "" {
-		return nil
 	}
 
-	uids, err := MemberIds(ctx, ug.Id)
-	if err != nil {
-		return err
-	}
-	users, err := UserGetsByIds(ctx, uids)
-	if err != nil {
-		return err
-	}
-	err = ug.syncMemberToFlashDuty(appKey, users)
-
-	fdt := flashduty.Team{
-		TeamName: oldTeamName,
-	}
 	if oldTeamName != ug.Name {
-		err = fdt.DelTeam(appKey)
+		ug.Name = oldTeamName
+		if err := ug.SyncDelToFlashDuty(ctx, fdConf); err != nil {
+			return err
+		}
 	}
-
-	return err
+	return nil
 }
 
-func (ug *UserGroup) SyncDelToFlashDuty(ctx *ctx.Context) error {
+func (ug *UserGroup) SyncDelToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty) error {
 	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
 	if err != nil {
 		return err
@@ -228,16 +197,21 @@ func (ug *UserGroup) SyncDelToFlashDuty(ctx *ctx.Context) error {
 	fdt := flashduty.Team{
 		TeamName: ug.Name,
 	}
-	err = fdt.DelTeam(appKey)
+	err = fdt.DelTeam(fdConf, appKey)
 	return err
 }
 
-func (ug *UserGroup) SyncMembersPutToFlashDuty(ctx *ctx.Context) error {
+func (ug *UserGroup) SyncMembersPutToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty) error {
+	return ug.syncTeamMemberToFlashDuty(ctx, fdConf)
+}
+
+func (ug *UserGroup) syncTeamMemberToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty) error {
 	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
 	if err != nil {
 		return err
 	}
 	if appKey == "" {
+		logger.Warningf("The app_key is empty and failed to sync to flashduty")
 		return nil
 	}
 
@@ -249,12 +223,12 @@ func (ug *UserGroup) SyncMembersPutToFlashDuty(ctx *ctx.Context) error {
 	if err != nil {
 		return err
 	}
+	err = ug.addMemberToFDTeam(fdConf, appKey, users)
 
-	err = ug.syncMemberToFlashDuty(appKey, users)
 	return err
 }
 
-func (ug *UserGroup) syncMemberToFlashDuty(appKey string, users []User) error {
+func (ug *UserGroup) addMemberToFDTeam(fdConf *cconf.FlashDuty, appKey string, users []User) error {
 	fdmembers := flashduty.Members{
 		Users: make([]flashduty.User, 0, len(users)),
 	}
@@ -266,7 +240,7 @@ func (ug *UserGroup) syncMemberToFlashDuty(appKey string, users []User) error {
 		}
 		fdmembers.Users = append(fdmembers.Users, fduser)
 	}
-	if err := fdmembers.AddMembers(appKey); err != nil {
+	if err := fdmembers.AddMembers(fdConf, appKey); err != nil {
 		return err
 	}
 
@@ -276,6 +250,8 @@ func (ug *UserGroup) syncMemberToFlashDuty(appKey string, users []User) error {
 			emails = append(emails, user.Email)
 		} else if user.Phone != "" {
 			phones = append(phones, user.Phone)
+		} else {
+			logger.Warningf("The user %s has no email and phone, and failed to sync to flashduty's team", user.MemberName)
 		}
 	}
 
@@ -284,6 +260,6 @@ func (ug *UserGroup) syncMemberToFlashDuty(appKey string, users []User) error {
 		Emails:   emails,
 		Phones:   phones,
 	}
-	err := fdt.UpdateTeam(appKey)
+	err := fdt.UpdateTeam(fdConf, appKey)
 	return err
 }

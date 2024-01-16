@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/conf"
@@ -237,43 +236,5 @@ func PostJSON(url string, timeout time.Duration, v interface{}, retries ...int) 
 		response, err = ioutil.ReadAll(resp.Body)
 	}
 
-	return
-}
-
-func PostFlashDuty(path string, appKey string, body interface{}) (response []byte, code int, err error) {
-	bodyParams := url.Values{}
-	bodyParams.Add("app_key", appKey)
-	url := fmt.Sprintf("%s%s?%s", "https://jira.flashcat.cloud/api", path, bodyParams.Encode())
-	fmt.Println(url)
-
-	var bs []byte
-	bs, err = json.Marshal(body)
-	if err != nil {
-		return
-	}
-	bf := bytes.NewBuffer(bs)
-
-	req, err := http.NewRequest("POST", url, bf)
-	if err != nil {
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	client := http.Client{
-		Timeout: time.Duration(5) * time.Second,
-	}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return
-	}
-
-	code = resp.StatusCode
-
-	if resp.Body != nil {
-		defer resp.Body.Close()
-		response, err = ioutil.ReadAll(resp.Body)
-	}
 	return
 }

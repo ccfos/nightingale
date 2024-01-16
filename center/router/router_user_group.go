@@ -66,7 +66,7 @@ func (rt *Router) userGroupAdd(c *gin.Context) {
 		models.UserGroupMemberAdd(rt.Ctx, ug.Id, me.Id)
 	}
 	if f.IsSyncToFlashDuty {
-		err = ug.SyncAddToFlashDuty(rt.Ctx)
+		err = ug.SyncAddToFlashDuty(rt.Ctx, &rt.Center.FlashDuty)
 	}
 	ginx.NewRender(c).Data(ug.Id, err)
 
@@ -95,7 +95,7 @@ func (rt *Router) userGroupPut(c *gin.Context) {
 	ug.UpdateBy = me.Username
 	ug.UpdateAt = time.Now().Unix()
 	if f.IsSyncToFlashDuty {
-		err := ug.SyncPutToFlashDuty(rt.Ctx, oldUGName)
+		err := ug.SyncPutToFlashDuty(rt.Ctx, &rt.Center.FlashDuty, oldUGName)
 		ginx.Dangerous(err)
 	}
 	ginx.NewRender(c).Message(ug.Update(rt.Ctx, "Name", "Note", "UpdateAt", "UpdateBy"))
@@ -127,7 +127,7 @@ func (rt *Router) userGroupDel(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 	ug := c.MustGet("user_group").(*models.UserGroup)
 	if f.IsSyncToFlashDuty {
-		err := ug.SyncDelToFlashDuty(rt.Ctx)
+		err := ug.SyncDelToFlashDuty(rt.Ctx, &rt.Center.FlashDuty)
 		if err != nil {
 			ginx.Dangerous(err)
 		}
@@ -152,7 +152,7 @@ func (rt *Router) userGroupMemberAdd(c *gin.Context) {
 		ug.Update(rt.Ctx, "UpdateAt", "UpdateBy")
 	}
 	if f.IsSyncToFlashDuty {
-		err = ug.SyncMembersPutToFlashDuty(rt.Ctx)
+		err = ug.SyncMembersPutToFlashDuty(rt.Ctx, &rt.Center.FlashDuty)
 	}
 	ginx.NewRender(c).Message(err)
 
@@ -173,7 +173,7 @@ func (rt *Router) userGroupMemberDel(c *gin.Context) {
 		ug.Update(rt.Ctx, "UpdateAt", "UpdateBy")
 	}
 	if f.IsSyncToFlashDuty {
-		err = ug.SyncMembersPutToFlashDuty(rt.Ctx)
+		err = ug.SyncMembersPutToFlashDuty(rt.Ctx, &rt.Center.FlashDuty)
 	}
 	ginx.NewRender(c).Message(err)
 }
