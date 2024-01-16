@@ -95,9 +95,6 @@ func (rt *Router) userAddPost(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(u.Add(rt.Ctx))
-	err = u.SyncAddToFlashDuty(rt.Ctx)
-	ginx.Dangerous(err)
-
 }
 
 func (rt *Router) userProfileGet(c *gin.Context) {
@@ -154,8 +151,6 @@ func (rt *Router) userProfilePut(c *gin.Context) {
 	target.UpdateBy = c.MustGet("username").(string)
 
 	ginx.NewRender(c).Message(target.UpdateAllFields(rt.Ctx))
-	err := target.SyncAddToFlashDuty(rt.Ctx)
-	ginx.Dangerous(err)
 }
 
 type userPasswordForm struct {
@@ -185,6 +180,4 @@ func (rt *Router) userDel(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(target.Del(rt.Ctx))
-	err = target.SyncDelToFlashDuty(rt.Ctx)
-	ginx.Dangerous(err)
 }
