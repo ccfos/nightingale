@@ -174,11 +174,17 @@ func (ug *UserGroup) SyncAddToFlashDuty(ctx *ctx.Context) error {
 	if appKey == "" {
 		return nil
 	}
-	fdt := flashduty.Team{
-		TeamName:    ug.Name,
-		Description: ug.Note,
+
+	uids, err := MemberIds(ctx, ug.Id)
+	if err != nil {
+		return err
 	}
-	err = fdt.AddTeam(appKey)
+	users, err := UserGetsByIds(ctx, uids)
+	if err != nil {
+		return err
+	}
+	err = ug.syncMemberToFlashDuty(appKey, users)
+
 	return err
 }
 
