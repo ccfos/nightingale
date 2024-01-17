@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"os"
 	"strings"
@@ -635,7 +634,7 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	}
 }
 
-func SyncChangeToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty, dbUsers []*User, cacheUsers map[int64]*User) error {
+func SyncChangeToFlashDuty(ctx *ctx.Context, dbUsers []*User, cacheUsers map[int64]*User) error {
 	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
 	if err != nil {
 		return err
@@ -646,11 +645,11 @@ func SyncChangeToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty, dbUsers []
 
 	dbUsersHas := sliceToMap(dbUsers)
 	fdAddUsers := usersToFdUsers(diffMap(dbUsersHas, cacheUsers))
-	if err := flashduty.AddUsers(fdConf, appKey, fdAddUsers); err != nil {
+	if err := flashduty.AddUsers(appKey, fdAddUsers); err != nil {
 		return err
 	}
 	fdDelUsers := usersToFdUsers(diffMap(cacheUsers, dbUsersHas))
-	flashduty.DelUsers(fdConf, appKey, fdDelUsers)
+	flashduty.DelUsers(appKey, fdDelUsers)
 	return nil
 }
 
@@ -663,17 +662,17 @@ func sliceToMap(dbUsers []*User) map[int64]*User {
 }
 
 // in m1 and not in m2
-func diffMap(m1, m2 map[int64]*User) []*User {
-	var diff []*User
+func diffMap(m1, m2 map[int64]*User) []User {
+	var diff []User
 	for i := range m1 {
 		if _, ok := m2[i]; !ok {
-			diff = append(diff, m1[i])
+			diff = append(diff, *m1[i])
 		}
 	}
 	return diff
 }
 
-func usersToFdUsers(users []*User) []flashduty.User {
+func usersToFdUsers(users []User) []flashduty.User {
 	fdUsers := make([]flashduty.User, 0, len(users))
 	for i := range users {
 		fdUsers = append(fdUsers, flashduty.User{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -50,13 +51,15 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	pushgwRouter.Config(r)
 
 	if !config.Alert.Disable {
+		flashduty.Init(config.Center.FlashDuty)
+
 		configCache := memsto.NewConfigCache(ctx, syncStats, nil, "")
 		alertStats := astats.NewSyncStats()
 		dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 		alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 		alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
 		notifyConfigCache := memsto.NewNotifyConfigCache(ctx, configCache)
-		userCache := memsto.NewUserCache(ctx, syncStats, &config.Center.FlashDuty)
+		userCache := memsto.NewUserCache(ctx, syncStats)
 		userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 
 		promClients := prom.NewPromClient(ctx)

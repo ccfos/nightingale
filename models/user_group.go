@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/toolkits/pkg/logger"
 	"time"
@@ -168,12 +167,12 @@ func UserGroupStatistics(ctx *ctx.Context) (*Statistics, error) {
 	return stats[0], nil
 }
 
-func (ug *UserGroup) SyncAddToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty) error {
-	return ug.syncTeamMemberToFlashDuty(ctx, fdConf)
+func (ug *UserGroup) SyncAddToFlashDuty(ctx *ctx.Context) error {
+	return ug.syncTeamMemberToFlashDuty(ctx)
 }
 
-func (ug *UserGroup) SyncPutToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty, oldTeamName string) error {
-	if err := ug.syncTeamMemberToFlashDuty(ctx, fdConf); err != nil {
+func (ug *UserGroup) SyncPutToFlashDuty(ctx *ctx.Context, oldTeamName string) error {
+	if err := ug.syncTeamMemberToFlashDuty(ctx); err != nil {
 		return err
 	}
 
@@ -181,14 +180,14 @@ func (ug *UserGroup) SyncPutToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDut
 		oldUg := &UserGroup{
 			Name: oldTeamName,
 		}
-		if err := oldUg.SyncDelToFlashDuty(ctx, fdConf); err != nil {
+		if err := oldUg.SyncDelToFlashDuty(ctx); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (ug *UserGroup) SyncDelToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty) error {
+func (ug *UserGroup) SyncDelToFlashDuty(ctx *ctx.Context) error {
 	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
 	if err != nil {
 		return err
@@ -199,15 +198,15 @@ func (ug *UserGroup) SyncDelToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDut
 	fdt := flashduty.Team{
 		TeamName: ug.Name,
 	}
-	err = fdt.DelTeam(fdConf, appKey)
+	err = fdt.DelTeam(appKey)
 	return err
 }
 
-func (ug *UserGroup) SyncMembersPutToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty) error {
-	return ug.syncTeamMemberToFlashDuty(ctx, fdConf)
+func (ug *UserGroup) SyncMembersPutToFlashDuty(ctx *ctx.Context) error {
+	return ug.syncTeamMemberToFlashDuty(ctx)
 }
 
-func (ug *UserGroup) syncTeamMemberToFlashDuty(ctx *ctx.Context, fdConf *cconf.FlashDuty) error {
+func (ug *UserGroup) syncTeamMemberToFlashDuty(ctx *ctx.Context) error {
 	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
 	if err != nil {
 		return err
@@ -225,21 +224,14 @@ func (ug *UserGroup) syncTeamMemberToFlashDuty(ctx *ctx.Context, fdConf *cconf.F
 	if err != nil {
 		return err
 	}
-	err = ug.addMemberToFDTeam(fdConf, appKey, users)
+	err = ug.addMemberToFDTeam(appKey, users)
 
 	return err
 }
 
-func (ug *UserGroup) addMemberToFDTeam(fdConf *cconf.FlashDuty, appKey string, users []User) error {
-	fdusers := make([]flashduty.User, 0, len(users))
-	for _, user := range users {
-		fdusers = append(fdusers, flashduty.User{
-			Email:      user.Email,
-			Phone:      user.Phone,
-			MemberName: user.Username,
-		})
-	}
-	if err := flashduty.AddUsers(fdConf, appKey, fdusers); err != nil {
+func (ug *UserGroup) addMemberToFDTeam(appKey string, users []User) error {
+	fdusers := usersToFdUsers(users)
+	if err := flashduty.AddUsers(appKey, fdusers); err != nil {
 		return err
 	}
 
@@ -260,6 +252,6 @@ func (ug *UserGroup) addMemberToFDTeam(fdConf *cconf.FlashDuty, appKey string, u
 		Emails:   emails,
 		Phones:   phones,
 	}
-	err := fdt.UpdateTeam(fdConf, appKey)
+	err := fdt.UpdateTeam(appKey)
 	return err
 }

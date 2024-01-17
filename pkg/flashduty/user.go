@@ -2,7 +2,7 @@ package flashduty
 
 import (
 	"errors"
-	"github.com/ccfos/nightingale/v6/center/cconf"
+
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -18,39 +18,43 @@ type Members struct {
 	Users []User `json:"members"`
 }
 
-func AddUsers(fdConf *cconf.FlashDuty, appKey string, users []User) error {
+func AddUsers(appKey string, users []User) error {
 	members := &Members{
 		Users: users,
 	}
-	return members.addMembers(fdConf, appKey)
+	return members.addMembers(appKey)
 }
 
-func DelUsers(fdConf *cconf.FlashDuty, appKey string, users []User) {
+func DelUsers(appKey string, users []User) {
 	for _, user := range users {
-		if err := user.delMember(fdConf, appKey); err != nil {
+		if err := user.delMember(appKey); err != nil {
 			logger.Error("failed to delete user: %v", err)
 		}
 	}
 }
 
-func (m *Members) addMembers(fdConf *cconf.FlashDuty, appKey string) error {
+func (m *Members) addMembers(appKey string) error {
 	if len(m.Users) == 0 {
 		return nil
 	}
-	for i, user := range m.Users {
+	validUsers := make([]User, 0, len(m.Users))
+	for _, user := range m.Users {
 		if user.Email == "" && (user.Phone == "" || user.MemberName == "") {
 			logger.Error("phones and email must be selected one of two, and the member_name must be added when selecting the phone")
-			m.Users = append(m.Users[:i], m.Users[i+1:]...)
+		} else {
+			validUsers = append(validUsers, user)
 		}
 	}
-	_, _, err := PostFlashDuty(fdConf.Api, "/member/invite", fdConf.Timeout, appKey, m)
+	m.Users = validUsers
+	_, _, err := PostFlashDuty("/member/invite", appKey, m)
 	return err
 }
 
-func (user *User) delMember(fdConf *cconf.FlashDuty, appKey string) error {
+func (user *User) delMember(appKey string) error {
 	if user.Email == "" && user.Phone == "" {
 		return errors.New("phones and email must be selected one of two")
 	}
-	_, _, err := PostFlashDuty(fdConf.Api, "/member/delete", fdConf.Timeout, appKey, user)
+	_, _, err := PostFlashDuty("/member/delete", appKey, user)
+	logger.Infof("/member/delet: code=%d, response=%s")
 	return err
 }

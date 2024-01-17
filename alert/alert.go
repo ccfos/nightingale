@@ -3,6 +3,7 @@ package alert
 import (
 	"context"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -38,6 +39,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
+	flashduty.Init(config.Center.FlashDuty)
+
 	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
 
 	syncStats := memsto.NewSyncStats()
@@ -50,7 +53,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
 	notifyConfigCache := memsto.NewNotifyConfigCache(ctx, configCache)
 	dsCache := memsto.NewDatasourceCache(ctx, syncStats)
-	userCache := memsto.NewUserCache(ctx, syncStats, &config.Center.FlashDuty)
+	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 
 	promClients := prom.NewPromClient(ctx)

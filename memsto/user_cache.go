@@ -2,7 +2,6 @@ package memsto
 
 import (
 	"fmt"
-	"github.com/ccfos/nightingale/v6/center/cconf"
 	"sync"
 	"time"
 
@@ -24,7 +23,7 @@ type UserCacheType struct {
 	users map[int64]*models.User // key: id
 }
 
-func NewUserCache(ctx *ctx.Context, stats *Stats, fdConf *cconf.FlashDuty) *UserCacheType {
+func NewUserCache(ctx *ctx.Context, stats *Stats) *UserCacheType {
 	uc := &UserCacheType{
 		statTotal:       -1,
 		statLastUpdated: -1,
@@ -32,7 +31,7 @@ func NewUserCache(ctx *ctx.Context, stats *Stats, fdConf *cconf.FlashDuty) *User
 		stats:           stats,
 		users:           make(map[int64]*models.User),
 	}
-	uc.SyncUsers(fdConf)
+	uc.SyncUsers()
 	return uc
 }
 
@@ -116,27 +115,27 @@ func (uc *UserCacheType) GetMaintainerUsers() []*models.User {
 	return users
 }
 
-func (uc *UserCacheType) SyncUsers(fdConf *cconf.FlashDuty) {
-	err := uc.syncUsers(fdConf)
+func (uc *UserCacheType) SyncUsers() {
+	err := uc.syncUsers()
 	if err != nil {
 		fmt.Println("failed to sync users:", err)
 		exit(1)
 	}
 
-	go uc.loopSyncUsers(fdConf)
+	go uc.loopSyncUsers()
 }
 
-func (uc *UserCacheType) loopSyncUsers(fdConf *cconf.FlashDuty) {
+func (uc *UserCacheType) loopSyncUsers() {
 	duration := time.Duration(9000) * time.Millisecond
 	for {
 		time.Sleep(duration)
-		if err := uc.syncUsers(fdConf); err != nil {
+		if err := uc.syncUsers(); err != nil {
 			logger.Warning("failed to sync users:", err)
 		}
 	}
 }
 
-func (uc *UserCacheType) syncUsers(fdConf *cconf.FlashDuty) error {
+func (uc *UserCacheType) syncUsers() error {
 	start := time.Now()
 
 	stat, err := models.UserStatistics(uc.ctx)
@@ -157,9 +156,8 @@ func (uc *UserCacheType) syncUsers(fdConf *cconf.FlashDuty) error {
 		dumper.PutSyncRecord("users", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to exec UserGetAll")
 	}
-	if err := models.SyncChangeToFlashDuty(uc.ctx, fdConf, lst, uc.users); err != nil {
+	if err := models.SyncChangeToFlashDuty(uc.ctx, lst, uc.users); err != nil {
 		dumper.PutSyncRecord("users", start.Unix(), -1, -1, "failed to sync to flashduty: "+err.Error())
-		return errors.WithMessage(err, "failed to exec SyncChangeToFlashDuty")
 	}
 
 	m := make(map[int64]*models.User)

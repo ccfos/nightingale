@@ -2,22 +2,39 @@ package flashduty
 
 import (
 	"fmt"
-	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"net/url"
 	"time"
+
+	"github.com/ccfos/nightingale/v6/center/cconf"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
+	
+	"github.com/toolkits/pkg/logger"
 )
 
-func PostFlashDuty(fdUrl, path string, timeout time.Duration, appKey string, body interface{}) (response []byte, code int, err error) {
+var (
+	Api     string
+	Timeout time.Duration
+)
+
+func Init(fdConf cconf.FlashDuty) {
+	Api = fdConf.Api
+	if fdConf.Timeout == 0 {
+		Timeout = 5 * time.Second
+	} else {
+		Timeout = fdConf.Timeout
+	}
+}
+
+func PostFlashDuty(path string, appKey string, body interface{}) (response []byte, code int, err error) {
 	urlParams := url.Values{}
 	urlParams.Add("app_key", appKey)
 	var url string
-	if fdUrl != "" {
-		url = fmt.Sprintf("%s%s?%s", fdUrl, path, urlParams.Encode())
+	if Api != "" {
+		url = fmt.Sprintf("%s%s?%s", Api, path, urlParams.Encode())
 	} else {
 		url = fmt.Sprintf("%s%s?%s", "https://api.flashcat.cloud", path, urlParams.Encode())
 	}
-	if timeout == 0 {
-		timeout = 5 * time.Second
-	}
-	return poster.PostJSON(url, timeout, body)
+	response, code, err = poster.PostJSON(url, Timeout, body)
+	logger.Infof("exec PostFlashDuty: url=%s, body=%v; response=%s, code=%d", url, body, response, code)
+	return
 }
