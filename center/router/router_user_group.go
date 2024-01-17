@@ -159,7 +159,7 @@ func (rt *Router) userGroupMemberAdd(c *gin.Context) {
 	if f.IsSyncToFlashDuty {
 		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
 		ginx.Dangerous(err)
-		err = ugs.SyncMembersPut()
+		err = ugs.SyncMembersAdd()
 	}
 	ginx.NewRender(c).Message(err)
 
@@ -182,7 +182,7 @@ func (rt *Router) userGroupMemberDel(c *gin.Context) {
 	if f.IsSyncToFlashDuty {
 		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
 		ginx.Dangerous(err)
-		err = ugs.SyncMembersPut()
+		err = ugs.SyncMembersDel()
 	}
 	ginx.NewRender(c).Message(err)
 }

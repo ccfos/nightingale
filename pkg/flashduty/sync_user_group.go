@@ -53,7 +53,11 @@ func (ugs *UserGroupSyncer) SyncUGDel(ugName string) error {
 	return err
 }
 
-func (ugs *UserGroupSyncer) SyncMembersPut() error {
+func (ugs *UserGroupSyncer) SyncMembersAdd() error {
+	return ugs.syncTeamMember()
+}
+
+func (ugs *UserGroupSyncer) SyncMembersDel() error {
 	return ugs.syncTeamMember()
 }
 
