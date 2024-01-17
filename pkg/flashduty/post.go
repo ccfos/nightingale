@@ -7,7 +7,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
-	
+
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -21,7 +21,7 @@ func Init(fdConf cconf.FlashDuty) {
 	if fdConf.Timeout == 0 {
 		Timeout = 5 * time.Second
 	} else {
-		Timeout = fdConf.Timeout
+		Timeout = fdConf.Timeout * time.Millisecond
 	}
 }
 
@@ -32,7 +32,7 @@ func PostFlashDuty(path string, appKey string, body interface{}) (response []byt
 	if Api != "" {
 		url = fmt.Sprintf("%s%s?%s", Api, path, urlParams.Encode())
 	} else {
-		url = fmt.Sprintf("%s%s?%s", "https://api.flashcat.cloud", path, urlParams.Encode())
+		url = fmt.Sprintf("%s%s?%s", "https://jira.flashcat.cloud/api", path, urlParams.Encode())
 	}
 	response, code, err = poster.PostJSON(url, Timeout, body)
 	logger.Infof("exec PostFlashDuty: url=%s, body=%v; response=%s, code=%d", url, body, response, code)
