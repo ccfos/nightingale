@@ -91,6 +91,11 @@ func (s *Set) updateMeta(items map[string]models.HostMeta) {
 }
 
 func (s *Set) updateTargets(m map[string]models.HostMeta) error {
+	if s.redis == nil {
+		logger.Warningf("redis is nil")
+		return nil
+	}
+
 	count := int64(len(m))
 	if count == 0 {
 		return nil
