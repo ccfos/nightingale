@@ -2,13 +2,14 @@ package memsto
 
 import (
 	"fmt"
-	"github.com/ccfos/nightingale/v6/pkg/flashduty"
+
 	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
