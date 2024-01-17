@@ -64,7 +64,7 @@ func (ug *UserGroup) Add(ctx *ctx.Context) error {
 	}
 
 	if num > 0 {
-		return errors.New("Team already exists")
+		return errors.New("UserGroup already exists")
 	}
 
 	now := time.Now().Unix()
