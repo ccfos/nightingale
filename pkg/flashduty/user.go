@@ -55,6 +55,5 @@ func (user *User) delMember(appKey string) error {
 		return errors.New("phones and email must be selected one of two")
 	}
 	_, _, err := PostFlashDuty("/member/delete", appKey, user)
-	logger.Infof("/member/delet: code=%d, response=%s")
 	return err
 }
