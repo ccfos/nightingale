@@ -55,12 +55,12 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 	list, err := models.GetDatasourcesGetsBy(rt.Ctx, "", "", "", "")
 	ginx.Dangerous(err)
 
-	for i := range list {
-		dss = append(dss, &models.Datasource{
-			Id:         list[i].Id,
-			Name:       list[i].Name,
-			PluginType: list[i].PluginType,
-		})
+	for _, item := range list {
+		item.AuthJson.BasicAuthPassword = ""
+		if item.PluginType != models.PROMETHEUS {
+			item.SettingsJson = nil
+		}
+		dss = append(dss, item)
 	}
 
 	if !rt.Center.AnonymousAccess.PromQuerier {
