@@ -8,6 +8,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
+	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/memsto"
@@ -17,6 +18,7 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
+	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
@@ -39,13 +41,22 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
 
+	var redis storage.Redis
+	if config.Redis.Address != "" {
+		redis, err = storage.NewRedis(config.Redis)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	syncStats := memsto.NewSyncStats()
 
 	targetCache := memsto.NewTargetCache(ctx, syncStats, nil)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
-	idents := idents.New(ctx)
+	idents := idents.New(ctx, redis)
+	metas := metas.New(redis)
 	writers := writer.NewWriters(config.Pushgw)
-	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
+	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 	pushgwRouter.Config(r)
 
