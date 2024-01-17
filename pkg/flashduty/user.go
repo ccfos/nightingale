@@ -22,18 +22,18 @@ func AddUsers(fdConf *cconf.FlashDuty, appKey string, users []User) error {
 	members := &Members{
 		Users: users,
 	}
-	return members.AddMembers(fdConf, appKey)
+	return members.addMembers(fdConf, appKey)
 }
 
 func DelUsers(fdConf *cconf.FlashDuty, appKey string, users []User) {
 	for _, user := range users {
-		if err := user.DelMember(fdConf, appKey); err != nil {
+		if err := user.delMember(fdConf, appKey); err != nil {
 			logger.Error("failed to delete user: %v", err)
 		}
 	}
 }
 
-func (m *Members) AddMembers(fdConf *cconf.FlashDuty, appKey string) error {
+func (m *Members) addMembers(fdConf *cconf.FlashDuty, appKey string) error {
 	if len(m.Users) == 0 {
 		return nil
 	}
@@ -47,7 +47,7 @@ func (m *Members) AddMembers(fdConf *cconf.FlashDuty, appKey string) error {
 	return err
 }
 
-func (user *User) DelMember(fdConf *cconf.FlashDuty, appKey string) error {
+func (user *User) delMember(fdConf *cconf.FlashDuty, appKey string) error {
 	if user.Email == "" && user.Phone == "" {
 		return errors.New("phones and email must be selected one of two")
 	}

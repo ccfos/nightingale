@@ -231,23 +231,21 @@ func (ug *UserGroup) syncTeamMemberToFlashDuty(ctx *ctx.Context, fdConf *cconf.F
 }
 
 func (ug *UserGroup) addMemberToFDTeam(fdConf *cconf.FlashDuty, appKey string, users []User) error {
-	fdmembers := flashduty.Members{
-		Users: make([]flashduty.User, 0, len(users)),
-	}
+	fdusers := make([]flashduty.User, 0, len(users))
 	for _, user := range users {
-		fduser := flashduty.User{
+		fdusers = append(fdusers, flashduty.User{
 			Email:      user.Email,
 			Phone:      user.Phone,
 			MemberName: user.Username,
-		}
-		fdmembers.Users = append(fdmembers.Users, fduser)
+		})
 	}
-	if err := fdmembers.AddMembers(fdConf, appKey); err != nil {
+	if err := flashduty.AddUsers(fdConf, appKey, fdusers); err != nil {
 		return err
 	}
 
-	emails, phones := make([]string, 0), make([]string, 0)
-	for _, user := range fdmembers.Users {
+	emails := make([]string, 0)
+	phones := make([]string, 0)
+	for _, user := range fdusers {
 		if user.Email != "" {
 			emails = append(emails, user.Email)
 		} else if user.Phone != "" {
