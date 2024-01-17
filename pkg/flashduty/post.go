@@ -14,7 +14,7 @@ func PostFlashDuty(fdUrl, path string, timeout time.Duration, appKey string, bod
 	if fdUrl != "" {
 		url = fmt.Sprintf("%s%s?%s", fdUrl, path, urlParams.Encode())
 	} else {
-		url = fmt.Sprintf("%s%s?%s", "https://jira.flashcat.cloud/api", path, urlParams.Encode())
+		url = fmt.Sprintf("%s%s?%s", "https://api.flashcat.cloud", path, urlParams.Encode())
 	}
 	if timeout == 0 {
 		timeout = 5 * time.Second
