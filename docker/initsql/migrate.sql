@@ -13,6 +13,7 @@ CREATE INDEX idx_last_eval_time ON alert_his_event (last_eval_time);
 -- Alter table for Target
 ALTER TABLE target ADD COLUMN host_ip VARCHAR(15) DEFAULT '' COMMENT 'IPv4 string';
 ALTER TABLE target ADD COLUMN agent_version VARCHAR(255) DEFAULT '' COMMENT 'agent version';
+ALTER TABLE target ADD COLUMN engine_name VARCHAR(255) DEFAULT '' COMMENT 'engine_name';
 
 -- Alter table for Datasource
 ALTER TABLE datasource ADD COLUMN is_default TINYINT NOT NULL DEFAULT 0 COMMENT 'is default datasource';
