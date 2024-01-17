@@ -2,6 +2,7 @@ package memsto
 
 import (
 	"fmt"
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"sync"
 	"time"
 
@@ -156,7 +157,7 @@ func (uc *UserCacheType) syncUsers() error {
 		dumper.PutSyncRecord("users", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to exec UserGetAll")
 	}
-	if err := models.SyncChangeToFlashDuty(uc.ctx, lst, uc.users); err != nil {
+	if err := flashduty.SyncUsersChange(uc.ctx, lst, uc.users); err != nil {
 		dumper.PutSyncRecord("users", start.Unix(), -1, -1, "failed to sync to flashduty: "+err.Error())
 	}
 

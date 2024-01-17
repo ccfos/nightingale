@@ -1,8 +1,6 @@
 package models
 
 import (
-	"github.com/ccfos/nightingale/v6/pkg/flashduty"
-	"github.com/toolkits/pkg/logger"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -165,93 +163,4 @@ func UserGroupStatistics(ctx *ctx.Context) (*Statistics, error) {
 	}
 
 	return stats[0], nil
-}
-
-func (ug *UserGroup) SyncAddToFlashDuty(ctx *ctx.Context) error {
-	return ug.syncTeamMemberToFlashDuty(ctx)
-}
-
-func (ug *UserGroup) SyncPutToFlashDuty(ctx *ctx.Context, oldTeamName string) error {
-	if err := ug.syncTeamMemberToFlashDuty(ctx); err != nil {
-		return err
-	}
-
-	if oldTeamName != ug.Name {
-		oldUg := &UserGroup{
-			Name: oldTeamName,
-		}
-		if err := oldUg.SyncDelToFlashDuty(ctx); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (ug *UserGroup) SyncDelToFlashDuty(ctx *ctx.Context) error {
-	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
-	if err != nil {
-		return err
-	}
-	if appKey == "" {
-		return nil
-	}
-	fdt := flashduty.Team{
-		TeamName: ug.Name,
-	}
-	err = fdt.DelTeam(appKey)
-	return err
-}
-
-func (ug *UserGroup) SyncMembersPutToFlashDuty(ctx *ctx.Context) error {
-	return ug.syncTeamMemberToFlashDuty(ctx)
-}
-
-func (ug *UserGroup) syncTeamMemberToFlashDuty(ctx *ctx.Context) error {
-	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
-	if err != nil {
-		return err
-	}
-	if appKey == "" {
-		logger.Warningf("The app_key is empty and failed to sync to flashduty")
-		return nil
-	}
-
-	uids, err := MemberIds(ctx, ug.Id)
-	if err != nil {
-		return err
-	}
-	users, err := UserGetsByIds(ctx, uids)
-	if err != nil {
-		return err
-	}
-	err = ug.addMemberToFDTeam(appKey, users)
-
-	return err
-}
-
-func (ug *UserGroup) addMemberToFDTeam(appKey string, users []User) error {
-	fdusers := usersToFdUsers(users)
-	if err := flashduty.AddUsers(appKey, fdusers); err != nil {
-		return err
-	}
-
-	emails := make([]string, 0)
-	phones := make([]string, 0)
-	for _, user := range fdusers {
-		if user.Email != "" {
-			emails = append(emails, user.Email)
-		} else if user.Phone != "" {
-			phones = append(phones, user.Phone)
-		} else {
-			logger.Warningf("The user %s has no email and phone, and failed to sync to flashduty's team", user.MemberName)
-		}
-	}
-
-	fdt := flashduty.Team{
-		TeamName: ug.Name,
-		Emails:   emails,
-		Phones:   phones,
-	}
-	err := fdt.UpdateTeam(appKey)
-	return err
 }

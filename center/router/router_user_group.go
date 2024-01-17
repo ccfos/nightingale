@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"net/http"
 	"time"
 
@@ -66,7 +67,9 @@ func (rt *Router) userGroupAdd(c *gin.Context) {
 		models.UserGroupMemberAdd(rt.Ctx, ug.Id, me.Id)
 	}
 	if f.IsSyncToFlashDuty {
-		err = ug.SyncAddToFlashDuty(rt.Ctx)
+		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, &ug)
+		ginx.Dangerous(err)
+		err = ugs.SyncUGAdd()
 	}
 	ginx.NewRender(c).Data(ug.Id, err)
 
@@ -95,7 +98,9 @@ func (rt *Router) userGroupPut(c *gin.Context) {
 	ug.UpdateBy = me.Username
 	ug.UpdateAt = time.Now().Unix()
 	if f.IsSyncToFlashDuty {
-		err := ug.SyncPutToFlashDuty(rt.Ctx, oldUGName)
+		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
+		ginx.Dangerous(err)
+		err = ugs.SyncUGPut(oldUGName)
 		ginx.Dangerous(err)
 	}
 	ginx.NewRender(c).Message(ug.Update(rt.Ctx, "Name", "Note", "UpdateAt", "UpdateBy"))
@@ -127,10 +132,10 @@ func (rt *Router) userGroupDel(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 	ug := c.MustGet("user_group").(*models.UserGroup)
 	if f.IsSyncToFlashDuty {
-		err := ug.SyncDelToFlashDuty(rt.Ctx)
-		if err != nil {
-			ginx.Dangerous(err)
-		}
+		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
+		ginx.Dangerous(err)
+		err = ugs.SyncUGDel(ug.Name)
+		ginx.Dangerous(err)
 	}
 	ginx.NewRender(c).Message(ug.Del(rt.Ctx))
 
@@ -152,7 +157,9 @@ func (rt *Router) userGroupMemberAdd(c *gin.Context) {
 		ug.Update(rt.Ctx, "UpdateAt", "UpdateBy")
 	}
 	if f.IsSyncToFlashDuty {
-		err = ug.SyncMembersPutToFlashDuty(rt.Ctx)
+		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
+		ginx.Dangerous(err)
+		err = ugs.SyncMembersPut()
 	}
 	ginx.NewRender(c).Message(err)
 
@@ -173,7 +180,9 @@ func (rt *Router) userGroupMemberDel(c *gin.Context) {
 		ug.Update(rt.Ctx, "UpdateAt", "UpdateBy")
 	}
 	if f.IsSyncToFlashDuty {
-		err = ug.SyncMembersPutToFlashDuty(rt.Ctx)
+		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
+		ginx.Dangerous(err)
+		err = ugs.SyncMembersPut()
 	}
 	ginx.NewRender(c).Message(err)
 }

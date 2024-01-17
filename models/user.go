@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"os"
 	"strings"
 	"time"
@@ -632,54 +631,4 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	default:
 		return "", false
 	}
-}
-
-func SyncChangeToFlashDuty(ctx *ctx.Context, dbUsers []*User, cacheUsers map[int64]*User) error {
-	appKey, err := ConfigsGetFlashDutyAppKey(ctx)
-	if err != nil {
-		return err
-	}
-	if appKey == "" {
-		return nil
-	}
-
-	dbUsersHas := sliceToMap(dbUsers)
-	fdAddUsers := usersToFdUsers(diffMap(dbUsersHas, cacheUsers))
-	if err := flashduty.AddUsers(appKey, fdAddUsers); err != nil {
-		return err
-	}
-	fdDelUsers := usersToFdUsers(diffMap(cacheUsers, dbUsersHas))
-	flashduty.DelUsers(appKey, fdDelUsers)
-	return nil
-}
-
-func sliceToMap(dbUsers []*User) map[int64]*User {
-	m := make(map[int64]*User, len(dbUsers))
-	for _, user := range dbUsers {
-		m[user.Id] = user
-	}
-	return m
-}
-
-// in m1 and not in m2
-func diffMap(m1, m2 map[int64]*User) []User {
-	var diff []User
-	for i := range m1 {
-		if _, ok := m2[i]; !ok {
-			diff = append(diff, *m1[i])
-		}
-	}
-	return diff
-}
-
-func usersToFdUsers(users []User) []flashduty.User {
-	fdUsers := make([]flashduty.User, 0, len(users))
-	for i := range users {
-		fdUsers = append(fdUsers, flashduty.User{
-			Email:      users[i].Email,
-			Phone:      users[i].Phone,
-			MemberName: users[i].Username,
-		})
-	}
-	return fdUsers
 }
