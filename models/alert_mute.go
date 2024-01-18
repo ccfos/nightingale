@@ -352,13 +352,8 @@ func AlertMuteUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 		}
 		lst[i].DatasourceIds = string(b)
 
-		if lst[i].Cate == "" {
-			lst[i].Cate = PROMETHEUS
-		}
-
 		err = lst[i].UpdateFieldsMap(ctx, map[string]interface{}{
 			"datasource_ids": lst[i].DatasourceIds,
-			"cate":           lst[i].Cate,
 		})
 		if err != nil {
 			logger.Errorf("update alert rule:%d datasource ids failed, %v", lst[i].Id, err)
