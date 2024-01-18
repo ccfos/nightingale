@@ -66,11 +66,8 @@ func (rt *Router) taskTplGet(c *gin.Context) {
 		ginx.Bomb(404, "no such task template")
 	}
 
-	hosts, err := tpl.Hosts(rt.Ctx)
-
 	ginx.NewRender(c).Data(gin.H{
-		"tpl":   tpl,
-		"hosts": hosts,
+		"tpl": tpl,
 	}, err)
 }
 
@@ -87,46 +84,23 @@ func (rt *Router) taskTplGetByService(c *gin.Context) {
 	ginx.NewRender(c).Data(tpl, err)
 }
 
-type taskTplForm struct {
-	Title     string   `json:"title" binding:"required"`
-	Batch     int      `json:"batch"`
-	Tolerance int      `json:"tolerance"`
-	Timeout   int      `json:"timeout"`
-	Pause     string   `json:"pause"`
-	Script    string   `json:"script"`
-	Args      string   `json:"args"`
-	Tags      []string `json:"tags"`
-	Account   string   `json:"account"`
-	Hosts     []string `json:"hosts"`
-}
-
 func (rt *Router) taskTplAdd(c *gin.Context) {
-	var f taskTplForm
-	ginx.BindJSON(c, &f)
+	var tpl models.TaskTpl
+	ginx.BindJSON(c, &tpl)
 
 	user := c.MustGet("user").(*models.User)
 	now := time.Now().Unix()
 
-	sort.Strings(f.Tags)
+	sort.Strings(tpl.TagsJSON)
 
-	tpl := &models.TaskTpl{
-		GroupId:   ginx.UrlParamInt64(c, "id"),
-		Title:     f.Title,
-		Batch:     f.Batch,
-		Tolerance: f.Tolerance,
-		Timeout:   f.Timeout,
-		Pause:     f.Pause,
-		Script:    f.Script,
-		Args:      f.Args,
-		Tags:      strings.Join(f.Tags, " ") + " ",
-		Account:   f.Account,
-		CreateBy:  user.Username,
-		UpdateBy:  user.Username,
-		CreateAt:  now,
-		UpdateAt:  now,
-	}
+	tpl.Tags = strings.Join(tpl.TagsJSON, " ") + " "
+	tpl.GroupId = ginx.UrlParamInt64(c, "id")
+	tpl.CreateBy = user.Username
+	tpl.UpdateBy = user.Username
+	tpl.CreateAt = now
+	tpl.UpdateAt = now
 
-	ginx.NewRender(c).Message(tpl.Save(rt.Ctx, f.Hosts))
+	ginx.NewRender(c).Message(tpl.Save(rt.Ctx))
 }
 
 func (rt *Router) taskTplPut(c *gin.Context) {
@@ -142,10 +116,10 @@ func (rt *Router) taskTplPut(c *gin.Context) {
 
 	user := c.MustGet("user").(*models.User)
 
-	var f taskTplForm
+	var f models.TaskTpl
 	ginx.BindJSON(c, &f)
 
-	sort.Strings(f.Tags)
+	sort.Strings(f.TagsJSON)
 
 	tpl.Title = f.Title
 	tpl.Batch = f.Batch
@@ -154,12 +128,13 @@ func (rt *Router) taskTplPut(c *gin.Context) {
 	tpl.Pause = f.Pause
 	tpl.Script = f.Script
 	tpl.Args = f.Args
-	tpl.Tags = strings.Join(f.Tags, " ") + " "
+	tpl.Tags = strings.Join(f.TagsJSON, " ") + " "
+	tpl.Hosts = f.Hosts
 	tpl.Account = f.Account
 	tpl.UpdateBy = user.Username
 	tpl.UpdateAt = time.Now().Unix()
 
-	ginx.NewRender(c).Message(tpl.Update(rt.Ctx, f.Hosts))
+	ginx.NewRender(c).Message(tpl.Update(rt.Ctx))
 }
 
 func (rt *Router) taskTplDel(c *gin.Context) {

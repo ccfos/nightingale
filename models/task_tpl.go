@@ -31,6 +31,7 @@ type TaskTpl struct {
 	CreateBy  string   `json:"create_by"`
 	UpdateAt  int64    `json:"update_at"`
 	UpdateBy  string   `json:"update_by"`
+	Hosts     []string `json:"hosts" gorm:"serializer:json"`
 }
 
 func (t *TaskTpl) TableName() string {
@@ -157,7 +158,7 @@ func (t *TaskTpl) CleanFields() error {
 	return nil
 }
 
-func (t *TaskTpl) Save(ctx *ctx.Context, hosts []string) error {
+func (t *TaskTpl) Save(ctx *ctx.Context) error {
 	if err := t.CleanFields(); err != nil {
 		return err
 	}
@@ -171,38 +172,10 @@ func (t *TaskTpl) Save(ctx *ctx.Context, hosts []string) error {
 		return fmt.Errorf("task template already exists")
 	}
 
-	return DB(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(t).Error; err != nil {
-			return err
-		}
-
-		for i := 0; i < len(hosts); i++ {
-			host := strings.TrimSpace(hosts[i])
-			if host == "" {
-				continue
-			}
-
-			err := tx.Table("task_tpl_host").Create(map[string]interface{}{
-				"id":   t.Id,
-				"host": host,
-			}).Error
-
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
+	return DB(ctx).Create(t).Error
 }
 
-func (t *TaskTpl) Hosts(ctx *ctx.Context) ([]string, error) {
-	var arr []string
-	err := DB(ctx).Table("task_tpl_host").Where("id=?", t.Id).Order("ii").Pluck("host", &arr).Error
-	return arr, err
-}
-
-func (t *TaskTpl) Update(ctx *ctx.Context, hosts []string) error {
+func (t *TaskTpl) Update(ctx *ctx.Context) error {
 	if err := t.CleanFields(); err != nil {
 		return err
 	}
@@ -229,33 +202,14 @@ func (t *TaskTpl) Update(ctx *ctx.Context, hosts []string) error {
 			"account":   t.Account,
 			"update_by": t.UpdateBy,
 			"update_at": t.UpdateAt,
+			"hosts":     t.Hosts,
 		}).Error
 
 		if err != nil {
 			return err
 		}
 
-		if err = tx.Exec("DELETE FROM task_tpl_host WHERE id = ?", t.Id).Error; err != nil {
-			return err
-		}
-
-		for i := 0; i < len(hosts); i++ {
-			host := strings.TrimSpace(hosts[i])
-			if host == "" {
-				continue
-			}
-
-			err := tx.Table("task_tpl_host").Create(map[string]interface{}{
-				"id":   t.Id,
-				"host": host,
-			}).Error
-
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return tx.Exec("DELETE FROM task_tpl_host WHERE id = ?", t.Id).Error
 	})
 }
 
