@@ -175,6 +175,12 @@ func (t *TaskTpl) Save(ctx *ctx.Context) error {
 	return DB(ctx).Create(t).Error
 }
 
+func (t *TaskTpl) OldVersionHosts(ctx *ctx.Context) ([]string, error) {
+	var arr []string
+	err := DB(ctx).Table("task_tpl_host").Where("id=?", t.Id).Order("ii").Pluck("host", &arr).Error
+	return arr, err
+}
+
 func (t *TaskTpl) Update(ctx *ctx.Context) error {
 	if err := t.CleanFields(); err != nil {
 		return err

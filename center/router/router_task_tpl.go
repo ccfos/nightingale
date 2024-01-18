@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/toolkits/pkg/logger"
 	"net/http"
 	"sort"
 	"strings"
@@ -66,8 +67,18 @@ func (rt *Router) taskTplGet(c *gin.Context) {
 		ginx.Bomb(404, "no such task template")
 	}
 
+	if len(tpl.Hosts) == 0 {
+		hosts, err := tpl.OldVersionHosts(rt.Ctx)
+		if err != nil {
+			logger.Warning("failed to get older version of hosts: %v", err)
+		} else {
+			tpl.Hosts = hosts
+		}
+	}
+
 	ginx.NewRender(c).Data(gin.H{
-		"tpl":   tpl,
+		"tpl": tpl,
+		// To be compatible with the old front-end
 		"hosts": tpl.Hosts,
 	}, err)
 }
