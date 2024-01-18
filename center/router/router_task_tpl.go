@@ -67,7 +67,8 @@ func (rt *Router) taskTplGet(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(gin.H{
-		"tpl": tpl,
+		"tpl":  tpl,
+		"host": tpl.Hosts,
 	}, err)
 }
 
