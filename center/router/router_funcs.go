@@ -69,7 +69,8 @@ func queryDatasourceIds(c *gin.Context) []int64 {
 }
 
 type idsForm struct {
-	Ids []int64 `json:"ids"`
+	Ids               []int64 `json:"ids"`
+	IsSyncToFlashDuty bool    `json:"is_sync_to_flashduty"`
 }
 
 func (f idsForm) Verify() {

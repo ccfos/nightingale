@@ -1,5 +1,7 @@
 package cconf
 
+import "time"
+
 type Center struct {
 	Plugins                []Plugin
 	MetricsYamlFile        string
@@ -9,6 +11,7 @@ type Center struct {
 	MetricDesc             MetricDescType
 	AnonymousAccess        AnonymousAccess
 	UseFileAssets          bool
+	FlashDuty              FlashDuty
 }
 
 type Plugin struct {
@@ -16,6 +19,11 @@ type Plugin struct {
 	Category string `json:"category"`
 	Type     string `json:"plugin_type"`
 	TypeName string `json:"plugin_type_name"`
+}
+
+type FlashDuty struct {
+	Api     string        `json:"api"`
+	Timeout time.Duration `json:"timeout"`
 }
 
 type AnonymousAccess struct {

@@ -18,6 +18,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/models/migrate"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/i18nx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
@@ -51,6 +52,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	i18nx.Init(configDir)
 	cstats.Init()
+	flashduty.Init(config.Center.FlashDuty)
 
 	db, err := storage.New(config.DB)
 	if err != nil {
