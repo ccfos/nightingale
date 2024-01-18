@@ -97,7 +97,7 @@ func (rt *Router) debugSample(remoteAddr string, v *prompb.TimeSeries) {
 	logger.Debugf("--> debug sample from: %s, sample: %s", remoteAddr, v.String())
 }
 
-func (rt *Router) DropSample(remoteAddr string, v *prompb.TimeSeries) bool {
+func (rt *Router) DropSample(v *prompb.TimeSeries) bool {
 	filters := rt.Pushgw.DropSample
 	if len(filters) == 0 {
 		return false
@@ -142,8 +142,13 @@ func (rt *Router) ForwardByIdent(clientIP string, ident string, v *prompb.TimeSe
 	}
 
 	IdentStatsInc(ident)
-	if rt.DropSample(clientIP, v) {
-		CounterDropSampleTotal.WithLabelValues(clientIP).Inc()
+	if rt.DropSample(v) {
+		CounterDropSampleTotal.WithLabelValues(ident).Inc()
+		return
+	}
+
+	if DropIdets.Exists(ident) {
+		CounterDropSampleTotal.WithLabelValues(ident).Inc()
 		return
 	}
 
@@ -157,8 +162,8 @@ func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.Time
 	}
 
 	IdentStatsInc(metric)
-	if rt.DropSample(clientIP, v) {
-		CounterDropSampleTotal.WithLabelValues(clientIP).Inc()
+	if rt.DropSample(v) {
+		CounterDropSampleTotal.WithLabelValues(metric).Inc()
 		return
 	}
 
