@@ -58,6 +58,7 @@ func (chr *DatasourceHashRingType) IsHit(datasourceId string, pk string, current
 		}
 		return false
 	}
+	logger.Debugf("rule id:%s is work, datasource id:%s, node:%s currentNode:%s", pk, datasourceId, node, currentNode)
 	return node == currentNode
 }
 
