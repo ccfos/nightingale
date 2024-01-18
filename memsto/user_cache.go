@@ -159,6 +159,7 @@ func (uc *UserCacheType) syncUsers() error {
 		return errors.WithMessage(err, "failed to exec UserGetAll")
 	}
 	if err := flashduty.SyncUsersChange(uc.ctx, lst, uc.users); err != nil {
+		logger.Warning("failed to sync users to flashduty:", err)
 		dumper.PutSyncRecord("users", start.Unix(), -1, -1, "failed to sync to flashduty: "+err.Error())
 	}
 

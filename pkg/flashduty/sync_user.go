@@ -59,8 +59,7 @@ func (user *User) delMember(appKey string) error {
 	if user.Email == "" && user.Phone == "" {
 		return errors.New("phones and email must be selected one of two")
 	}
-	_, _, err := PostFlashDuty("/member/delete", appKey, user)
-	return err
+	return PostFlashDuty("/member/delete", appKey, user)
 }
 
 type Members struct {
@@ -74,14 +73,13 @@ func (m *Members) addMembers(appKey string) error {
 	validUsers := make([]User, 0, len(m.Users))
 	for _, user := range m.Users {
 		if user.Email == "" && (user.Phone == "" || user.MemberName == "") {
-			logger.Error("phones and email must be selected one of two, and the member_name must be added when selecting the phone")
+			logger.Errorf("user(%v) phone and email must be selected one of two, and the member_name must be added when selecting the phone", user)
 		} else {
 			validUsers = append(validUsers, user)
 		}
 	}
 	m.Users = validUsers
-	_, _, err := PostFlashDuty("/member/invite", appKey, m)
-	return err
+	return PostFlashDuty("/member/invite", appKey, m)
 }
 
 func fdAddUsers(appKey string, users []models.User) error {

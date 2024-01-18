@@ -113,8 +113,7 @@ func (t *Team) AddTeam(appKey string) error {
 	if t.TeamName == "" {
 		return errors.New("team_name must be set")
 	}
-	_, _, err := PostFlashDuty("/team/upsert", appKey, t)
-	return err
+	return PostFlashDuty("/team/upsert", appKey, t)
 }
 
 func (t *Team) UpdateTeam(appKey string) error {
@@ -127,6 +126,5 @@ func (t *Team) DelTeam(appKey string) error {
 	if t.TeamName == "" {
 		return errors.New("team_name must be set")
 	}
-	_, _, err := PostFlashDuty("/team/delete", appKey, t)
-	return err
+	return PostFlashDuty("/team/delete", appKey, t)
 }

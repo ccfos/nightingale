@@ -25,7 +25,7 @@ func Init(fdConf cconf.FlashDuty) {
 	}
 }
 
-func PostFlashDuty(path string, appKey string, body interface{}) (response []byte, code int, err error) {
+func PostFlashDuty(path string, appKey string, body interface{}) error {
 	urlParams := url.Values{}
 	urlParams.Add("app_key", appKey)
 	var url string
@@ -34,7 +34,7 @@ func PostFlashDuty(path string, appKey string, body interface{}) (response []byt
 	} else {
 		url = fmt.Sprintf("%s%s?%s", "https://api.flashcat.cloud", path, urlParams.Encode())
 	}
-	response, code, err = poster.PostJSON(url, Timeout, body)
+	response, code, err := poster.PostJSON(url, Timeout, body)
 	logger.Infof("exec PostFlashDuty: url=%s, body=%v; response=%s, code=%d", url, body, response, code)
-	return
+	return err
 }
