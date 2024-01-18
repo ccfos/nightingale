@@ -59,6 +59,13 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 		item.AuthJson.BasicAuthPassword = ""
 		if item.PluginType != models.PROMETHEUS {
 			item.SettingsJson = nil
+		} else {
+			for k, v := range item.SettingsJson {
+				if strings.HasPrefix(k, "prometheus.") {
+					item.SettingsJson[strings.TrimPrefix(k, "prometheus.")] = v
+					delete(item.SettingsJson, k)
+				}
+			}
 		}
 		dss = append(dss, item)
 	}
