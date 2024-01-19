@@ -139,11 +139,11 @@ func TargetGets(ctx *ctx.Context, bgids []int64, dsIds []int64, query string, do
 // 根据 groupids, tags, hosts 查询 targets
 func TargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, limit, offset int, isOrderByIdent bool) ([]*Target, error) {
 	var lst []*Target
-	var err error
 	session := TargetFilterQueryBuild(ctx, query, limit, offset)
 	if isOrderByIdent {
-		err = session.Order("ident").Find(&lst).Error
+		session = session.Order("ident")
 	}
+	err := session.Find(&lst).Error
 	cache := make(map[int64]*BusiGroup)
 	for i := 0; i < len(lst); i++ {
 		lst[i].TagsJSON = strings.Fields(lst[i].Tags)
