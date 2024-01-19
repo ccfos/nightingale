@@ -153,7 +153,7 @@ type TaskRecord struct {
 }
 
 type TaskTpl struct {
-	HostsQuery []models.HostQuery `json:"hosts_query" gorm:"serializer:json"`
+	HostsQuery []models.HostQuery `json:"hosts_query" gorm:"column:hosts_query;varchar(4096);default:'';comment:hosts_query;serializer:json"`
 }
 
 type AlertHisEvent struct {

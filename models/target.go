@@ -137,10 +137,10 @@ func TargetGets(ctx *ctx.Context, bgids []int64, dsIds []int64, query string, do
 }
 
 // 根据 groupids, tags, hosts 查询 targets
-func TargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, limit, offset int, isOrderByIdent bool) ([]*Target, error) {
+func TargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, limit, offset int, noOrderByIdent ...struct{}) ([]*Target, error) {
 	var lst []*Target
 	session := TargetFilterQueryBuild(ctx, query, limit, offset)
-	if isOrderByIdent {
+	if len(noOrderByIdent) == 0 {
 		session = session.Order("ident")
 	}
 	err := session.Find(&lst).Error
@@ -150,12 +150,6 @@ func TargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, limit,
 		lst[i].FillGroup(ctx, cache)
 	}
 
-	return lst, err
-}
-
-func TargetGetsByHosts(ctx *ctx.Context, hosts []string) ([]*Target, error) {
-	var lst []*Target
-	err := DB(ctx).Model(&Target{}).Where("ident in ?", hosts).Find(&lst).Error
 	return lst, err
 }
 

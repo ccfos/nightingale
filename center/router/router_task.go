@@ -1,7 +1,6 @@
 package router
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -167,10 +166,10 @@ func (rt *Router) taskAdd(c *gin.Context) {
 
 	query := models.GetHostsQuery(f.HostsQuery)
 	// set limit 0,0 to get all hosts
-	targets, err := models.TargetGetsByFilter(rt.Ctx, query, 0, 0, false)
+	targets, err := models.TargetGetsByFilter(rt.Ctx, query, 0, 0, struct{}{})
 	ginx.Dangerous(err)
 	if len(targets) == 0 {
-		ginx.Dangerous(errors.New(fmt.Sprintf("no targets found by %v", f.HostsQuery)))
+		ginx.Bomb(http.StatusBadRequest, "no targets found by %v", f.HostsQuery)
 	}
 	f.Hosts = make([]string, 0, len(targets))
 	for _, t := range targets {

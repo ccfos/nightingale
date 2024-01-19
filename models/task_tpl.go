@@ -176,26 +176,17 @@ func (t *TaskTpl) Save(ctx *ctx.Context) error {
 }
 
 func (t *TaskTpl) HostsToHostsQuery(ctx *ctx.Context) ([]HostQuery, error) {
-	var hosts []string
+	var hosts []interface{}
 	err := DB(ctx).Table("task_tpl_host").Where("id=?", t.Id).Order("ii").Pluck("host", &hosts).Error
 	if err != nil {
 		return nil, err
 	}
 
-	targets, err := TargetGetsByHosts(ctx, hosts)
-	if err != nil {
-		return nil, err
-	}
-
-	hostQuery := HostQuery{
-		Key: "hosts",
-		Op:  "==",
-	}
-	for _, target := range targets {
-		hostQuery.Values = append(hostQuery.Values, target.Ident)
-	}
-
-	return []HostQuery{hostQuery}, nil
+	return []HostQuery{{
+		Key:    "hosts",
+		Op:     "==",
+		Values: hosts,
+	}}, nil
 }
 
 func (t *TaskTpl) Update(ctx *ctx.Context) error {
