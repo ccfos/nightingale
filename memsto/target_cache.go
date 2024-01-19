@@ -41,6 +41,7 @@ func NewTargetCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) *Target
 	}
 
 	tc.SyncTargets()
+	tc.CleanTargets()
 	return tc
 }
 
@@ -104,6 +105,24 @@ func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, now, offset i
 	}
 
 	return hostOffset
+}
+
+func (tc *TargetCacheType) CleanTargets() {
+	err := models.TargetDelLoss(tc.ctx)
+	if err != nil {
+		log.Fatalln("failed to clean loss targets:", err)
+	}
+	go tc.loopCleanTargets()
+}
+
+func (tc *TargetCacheType) loopCleanTargets() {
+	duration := 24 * time.Hour
+	for {
+		time.Sleep(duration)
+		if err := models.TargetDelLoss(tc.ctx); err != nil {
+			logger.Warning("failed to clean loss targets:", err)
+		}
+	}
 }
 
 func (tc *TargetCacheType) SyncTargets() {

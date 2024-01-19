@@ -87,6 +87,10 @@ func TargetDel(ctx *ctx.Context, idents []string) error {
 	return DB(ctx).Where("ident in ?", idents).Delete(new(Target)).Error
 }
 
+func TargetDelLoss(ctx *ctx.Context) error {
+	return DB(ctx).Where("update_at  < UNIX_TIMESTAMP(NOW() - INTERVAL 1 WEEK)").Delete(new(Target)).Error
+}
+
 func buildTargetWhere(ctx *ctx.Context, bgids []int64, dsIds []int64, query string, downtime int64) *gorm.DB {
 	session := DB(ctx).Model(&Target{})
 
