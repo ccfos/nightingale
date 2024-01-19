@@ -3,7 +3,6 @@ package router
 import (
 	"errors"
 	"fmt"
-	"github.com/toolkits/pkg/logger"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -168,17 +167,15 @@ func (rt *Router) taskAdd(c *gin.Context) {
 
 	query := models.GetHostsQuery(f.HostsQuery)
 	// set limit 0,0 to get all hosts
-	targets, err := models.TargetGetsByFilter(rt.Ctx, query, 0, 0)
+	targets, err := models.TargetGetsByFilter(rt.Ctx, query, 0, 0, false)
 	ginx.Dangerous(err)
 	if len(targets) == 0 {
 		ginx.Dangerous(errors.New(fmt.Sprintf("no targets found by %v", f.HostsQuery)))
 	}
-	logger.Debugf("=========targets: %v", targets)
 	f.Hosts = make([]string, 0, len(targets))
 	for _, t := range targets {
 		f.Hosts = append(f.Hosts, t.Ident)
 	}
-	logger.Debugf("=========f.Hosts: %v", f.Hosts)
 
 	bgid := ginx.UrlParamInt64(c, "id")
 	user := c.MustGet("user").(*models.User)

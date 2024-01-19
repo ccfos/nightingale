@@ -369,7 +369,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(now-target.UpdateAt), trigger.Severity))
 			}
 		case "offset":
-			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0)
+			targets, err := models.TargetGetsByFilter(arw.ctx, query, 0, 0, true)
 			if err != nil {
 				logger.Errorf("rule_eval:%s query:%v, error:%v", arw.Key(), query, err)
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
