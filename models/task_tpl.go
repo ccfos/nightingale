@@ -188,7 +188,7 @@ func (t *TaskTpl) HostsToHostsQuery(ctx *ctx.Context) ([]HostQuery, error) {
 	}
 
 	hostQuery := HostQuery{
-		Key: "ident",
+		Key: "hosts",
 		Op:  "==",
 	}
 	for _, target := range targets {
