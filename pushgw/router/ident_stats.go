@@ -3,33 +3,24 @@ package router
 import (
 	"time"
 
-	"github.com/patrickmn/go-cache"
+	"github.com/ccfos/nightingale/v6/memsto"
 )
 
-var IdentStats *cache.Cache
+var IdentStats *memsto.IdentCountCacheType
 
 func init() {
-	IdentStats = cache.New(2*time.Minute, 5*time.Minute)
+	IdentStats = memsto.NewIdentCountCache()
 }
 
 func (rt *Router) ReportIdentStats() (interface{}, bool) {
 	for {
 		time.Sleep(60 * time.Second)
-		m := IdentStats.Items()
-		IdentStats.Flush()
+		m := IdentStats.GetsAndFlush()
 		for k, v := range m {
-			count := v.Object.(int)
+			count := v.Count
 			if count > rt.Pushgw.IdentStatsThreshold {
 				CounterSampleReceivedByIdent.WithLabelValues(k).Add(float64(count))
 			}
 		}
 	}
-}
-
-func IdentStatsInc(name string) {
-	_, exists := IdentStats.Get(name)
-	if !exists {
-		IdentStats.Set(name, 1, cache.DefaultExpiration)
-	}
-	IdentStats.Increment(name, 1)
 }
