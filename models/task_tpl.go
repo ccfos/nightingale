@@ -15,23 +15,23 @@ import (
 )
 
 type TaskTpl struct {
-	Id        int64    `json:"id" gorm:"primaryKey"`
-	GroupId   int64    `json:"group_id"`
-	Title     string   `json:"title"`
-	Batch     int      `json:"batch"`
-	Tolerance int      `json:"tolerance"`
-	Timeout   int      `json:"timeout"`
-	Pause     string   `json:"pause"`
-	Script    string   `json:"script"`
-	Args      string   `json:"args"`
-	Tags      string   `json:"-"`
-	TagsJSON  []string `json:"tags" gorm:"-"`
-	Account   string   `json:"account"`
-	CreateAt  int64    `json:"create_at"`
-	CreateBy  string   `json:"create_by"`
-	UpdateAt  int64    `json:"update_at"`
-	UpdateBy  string   `json:"update_by"`
-	Hosts     []string `json:"hosts" gorm:"serializer:json"`
+	Id         int64       `json:"id" gorm:"primaryKey"`
+	GroupId    int64       `json:"group_id"`
+	Title      string      `json:"title"`
+	Batch      int         `json:"batch"`
+	Tolerance  int         `json:"tolerance"`
+	Timeout    int         `json:"timeout"`
+	Pause      string      `json:"pause"`
+	Script     string      `json:"script"`
+	Args       string      `json:"args"`
+	Tags       string      `json:"-"`
+	TagsJSON   []string    `json:"tags" gorm:"-"`
+	Account    string      `json:"account"`
+	CreateAt   int64       `json:"create_at"`
+	CreateBy   string      `json:"create_by"`
+	UpdateAt   int64       `json:"update_at"`
+	UpdateBy   string      `json:"update_by"`
+	HostsQuery []HostQuery `json:"hosts_query" gorm:"serializer:json"`
 }
 
 func (t *TaskTpl) TableName() string {
@@ -175,10 +175,27 @@ func (t *TaskTpl) Save(ctx *ctx.Context) error {
 	return DB(ctx).Create(t).Error
 }
 
-func (t *TaskTpl) OldVersionHosts(ctx *ctx.Context) ([]string, error) {
-	var arr []string
-	err := DB(ctx).Table("task_tpl_host").Where("id=?", t.Id).Order("ii").Pluck("host", &arr).Error
-	return arr, err
+func (t *TaskTpl) HostsToHostsQuery(ctx *ctx.Context) ([]HostQuery, error) {
+	var hosts []string
+	err := DB(ctx).Table("task_tpl_host").Where("id=?", t.Id).Order("ii").Pluck("host", &hosts).Error
+	if err != nil {
+		return nil, err
+	}
+
+	targets, err := TargetGetsByHosts(ctx, hosts)
+	if err != nil {
+		return nil, err
+	}
+
+	hostQuery := HostQuery{
+		Key: "ident",
+		Op:  "==",
+	}
+	for _, target := range targets {
+		hostQuery.Values = append(hostQuery.Values, target.Ident)
+	}
+
+	return []HostQuery{hostQuery}, nil
 }
 
 func (t *TaskTpl) Update(ctx *ctx.Context) error {
@@ -197,18 +214,18 @@ func (t *TaskTpl) Update(ctx *ctx.Context) error {
 
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
 		err := tx.Model(t).Updates(map[string]interface{}{
-			"title":     t.Title,
-			"batch":     t.Batch,
-			"tolerance": t.Tolerance,
-			"timeout":   t.Timeout,
-			"pause":     t.Pause,
-			"script":    t.Script,
-			"args":      t.Args,
-			"tags":      t.Tags,
-			"account":   t.Account,
-			"update_by": t.UpdateBy,
-			"update_at": t.UpdateAt,
-			"hosts":     t.Hosts,
+			"title":       t.Title,
+			"batch":       t.Batch,
+			"tolerance":   t.Tolerance,
+			"timeout":     t.Timeout,
+			"pause":       t.Pause,
+			"script":      t.Script,
+			"args":        t.Args,
+			"tags":        t.Tags,
+			"account":     t.Account,
+			"update_by":   t.UpdateBy,
+			"update_at":   t.UpdateAt,
+			"hosts_query": t.HostsQuery,
 		}).Error
 
 		if err != nil {

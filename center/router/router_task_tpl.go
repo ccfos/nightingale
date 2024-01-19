@@ -67,19 +67,17 @@ func (rt *Router) taskTplGet(c *gin.Context) {
 		ginx.Bomb(404, "no such task template")
 	}
 
-	if len(tpl.Hosts) == 0 {
-		hosts, err := tpl.OldVersionHosts(rt.Ctx)
+	if len(tpl.HostsQuery) == 0 {
+		hostsQuery, err := tpl.HostsToHostsQuery(rt.Ctx)
 		if err != nil {
 			logger.Warning("failed to get older version of hosts: %v", err)
 		} else {
-			tpl.Hosts = hosts
+			tpl.HostsQuery = hostsQuery
 		}
 	}
 
 	ginx.NewRender(c).Data(gin.H{
 		"tpl": tpl,
-		// To be compatible with the old front-end
-		"hosts": tpl.Hosts,
 	}, err)
 }
 
@@ -141,7 +139,7 @@ func (rt *Router) taskTplPut(c *gin.Context) {
 	tpl.Script = f.Script
 	tpl.Args = f.Args
 	tpl.Tags = strings.Join(f.TagsJSON, " ") + " "
-	tpl.Hosts = f.Hosts
+	tpl.HostsQuery = f.HostsQuery
 	tpl.Account = f.Account
 	tpl.UpdateBy = user.Username
 	tpl.UpdateAt = time.Now().Unix()

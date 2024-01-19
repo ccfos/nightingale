@@ -146,6 +146,12 @@ func TargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, limit,
 	return lst, err
 }
 
+func TargetGetsByHosts(ctx *ctx.Context, hosts []string) ([]*Target, error) {
+	var lst []*Target
+	err := DB(ctx).Model(&Target{}).Where("host_ip in ?", hosts).Find(&lst).Error
+	return lst, err
+}
+
 func TargetCountByFilter(ctx *ctx.Context, query []map[string]interface{}) (int64, error) {
 	session := TargetFilterQueryBuild(ctx, query, 0, 0)
 	return Count(session)

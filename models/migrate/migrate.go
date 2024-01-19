@@ -3,6 +3,7 @@ package migrate
 import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
+
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
@@ -152,7 +153,7 @@ type TaskRecord struct {
 }
 
 type TaskTpl struct {
-	Hosts []string `gorm:"serializer:json"`
+	HostsQuery []models.HostQuery `json:"hosts_query" gorm:"serializer:json"`
 }
 
 type AlertHisEvent struct {
