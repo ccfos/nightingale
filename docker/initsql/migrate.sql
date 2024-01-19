@@ -34,4 +34,4 @@ ALTER TABLE notify_tpl ADD COLUMN update_at INT DEFAULT 0 COMMENT 'update_at';
 ALTER TABLE notify_tpl ADD COLUMN update_by VARCHAR(64) DEFAULT '' COMMENT 'update_by';
 
 -- Alter table for task_tpl
-ALTER TABLE task_tpl ADD COLUMN hosts VARCHAR(4096) DEFAULT '' COMMENT 'hosts';
+ALTER TABLE task_tpl ADD COLUMN hosts_query VARCHAR(4096) DEFAULT '' COMMENT 'hosts_query';
