@@ -152,7 +152,7 @@ func TargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, limit,
 
 func TargetGetsByHosts(ctx *ctx.Context, hosts []string) ([]*Target, error) {
 	var lst []*Target
-	err := DB(ctx).Model(&Target{}).Where("host_ip in ?", hosts).Find(&lst).Error
+	err := DB(ctx).Model(&Target{}).Where("ident in ?", hosts).Find(&lst).Error
 	return lst, err
 }
 
