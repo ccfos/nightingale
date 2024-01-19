@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/toolkits/pkg/logger"
 	"net/http"
 	"sort"
 	"strings"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
 
