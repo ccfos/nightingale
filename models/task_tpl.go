@@ -213,21 +213,8 @@ func (t *TaskTpl) Update(ctx *ctx.Context) error {
 	}
 
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
-		err := tx.Model(t).Updates(map[string]interface{}{
-			"title":       t.Title,
-			"batch":       t.Batch,
-			"tolerance":   t.Tolerance,
-			"timeout":     t.Timeout,
-			"pause":       t.Pause,
-			"script":      t.Script,
-			"args":        t.Args,
-			"tags":        t.Tags,
-			"account":     t.Account,
-			"update_by":   t.UpdateBy,
-			"update_at":   t.UpdateAt,
-			"hosts_query": t.HostsQuery,
-		}).Error
-
+		err := tx.Model(t).Select("title", "batch", "tolerance", "timeout", "pause", "script",
+			"args", "tags", "account", "update_by", "update_at", "hosts_query").Updates(t).Error
 		if err != nil {
 			return err
 		}
