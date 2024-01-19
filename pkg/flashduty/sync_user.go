@@ -10,6 +10,10 @@ import (
 )
 
 func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User, cacheUsers map[int64]*models.User) error {
+	if !ctx.IsCenter {
+		return nil
+	}
+
 	appKey, err := models.ConfigsGetFlashDutyAppKey(ctx)
 	if err != nil {
 		return err
