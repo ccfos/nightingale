@@ -141,13 +141,14 @@ func (rt *Router) ForwardByIdent(clientIP string, ident string, v *prompb.TimeSe
 		return
 	}
 
-	IdentStatsInc(ident)
+	IdentStats.Increment(ident, 1)
 	if rt.DropSample(v) {
 		CounterDropSampleTotal.WithLabelValues(ident).Inc()
 		return
 	}
 
-	if DropIdets.Exists(ident) {
+	count := IdentStats.Get(ident)
+	if count > rt.Pushgw.IdentDropThreshold {
 		CounterDropSampleTotal.WithLabelValues(ident).Inc()
 		return
 	}
@@ -161,7 +162,7 @@ func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.Time
 		return
 	}
 
-	IdentStatsInc(metric)
+	IdentStats.Increment(metric, 1)
 	if rt.DropSample(v) {
 		CounterDropSampleTotal.WithLabelValues(metric).Inc()
 		return

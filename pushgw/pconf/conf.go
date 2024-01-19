@@ -80,11 +80,11 @@ func (p *Pushgw) PreCheck() {
 	}
 
 	if p.IdentStatsThreshold <= 0 {
-		p.IdentStatsThreshold = 400
+		p.IdentStatsThreshold = 1500
 	}
 
 	if p.IdentDropThreshold <= 0 {
-		p.IdentDropThreshold = 10000
+		p.IdentDropThreshold = 20000
 	}
 
 	for _, writer := range p.Writers {
