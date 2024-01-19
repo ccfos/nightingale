@@ -91,7 +91,7 @@ type taskForm struct {
 	Args       string             `json:"args"`
 	Action     string             `json:"action" binding:"required"`
 	Creator    string             `json:"creator"`
-	Hosts      []string           `json:"-"`
+	Hosts      []string           `json:"hosts"`
 	HostsQuery []models.HostQuery `json:"hosts_query" binding:"required"`
 }
 
@@ -165,6 +165,7 @@ func (rt *Router) taskRecordAdd(c *gin.Context) {
 func (rt *Router) taskAdd(c *gin.Context) {
 	var f taskForm
 	ginx.BindJSON(c, &f)
+
 	query := models.GetHostsQuery(f.HostsQuery)
 	// set limit 0,0 to get all hosts
 	targets, err := models.TargetGetsByFilter(rt.Ctx, query, 0, 0)
