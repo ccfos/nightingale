@@ -6,7 +6,7 @@ ALTER TABLE alert_subscribe ADD COLUMN note VARCHAR(1024) DEFAULT '' COMMENT 'no
 ALTER TABLE alert_subscribe ADD COLUMN rule_ids VARCHAR(1024) DEFAULT '' COMMENT 'rule_ids';
 
 -- Alter table for TaskRecord
-ALTER TABLE task_records ADD COLUMN event_id BIGINT(20) NOT NULL DEFAULT 0 COMMENT 'event id';
+ALTER TABLE task_record ADD COLUMN event_id BIGINT(20) NOT NULL DEFAULT 0 COMMENT 'event id';
 
 -- Alter table for AlertHisEvent
 CREATE INDEX idx_last_eval_time ON alert_his_event (last_eval_time);

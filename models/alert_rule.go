@@ -21,8 +21,9 @@ const (
 	HOST   = "host"
 	LOKI   = "loki"
 
-	PROMETHEUS = "prometheus"
-	TDENGINE   = "tdengine"
+	PROMETHEUS   = "prometheus"
+	PROMETHEUSV2 = "prometheus_v2"
+	TDENGINE     = "tdengine"
 )
 
 type AlertRule struct {
