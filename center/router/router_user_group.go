@@ -62,14 +62,15 @@ func (rt *Router) userGroupAdd(c *gin.Context) {
 
 	err := ug.Add(rt.Ctx)
 	ginx.Dangerous(err)
-	if err == nil {
-		// Even failure is not a big deal
-		models.UserGroupMemberAdd(rt.Ctx, ug.Id, me.Id)
-	}
-	if f.IsSyncToFlashDuty {
+
+	// Even failure is not a big deal
+	models.UserGroupMemberAdd(rt.Ctx, ug.Id, me.Id)
+
+	if f.IsSyncToFlashDuty || flashduty.NeedSyncTeam(rt.Ctx) {
 		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, &ug)
 		ginx.Dangerous(err)
 		err = ugs.SyncUGAdd()
+		ginx.Dangerous(err)
 	}
 	ginx.NewRender(c).Data(ug.Id, err)
 
@@ -97,7 +98,7 @@ func (rt *Router) userGroupPut(c *gin.Context) {
 	ug.Note = f.Note
 	ug.UpdateBy = me.Username
 	ug.UpdateAt = time.Now().Unix()
-	if f.IsSyncToFlashDuty {
+	if f.IsSyncToFlashDuty || flashduty.NeedSyncTeam(rt.Ctx) {
 		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
 		ginx.Dangerous(err)
 		err = ugs.SyncUGPut(oldUGName)
@@ -131,7 +132,7 @@ func (rt *Router) userGroupDel(c *gin.Context) {
 	var f userGroupDelForm
 	ginx.BindJSON(c, &f)
 	ug := c.MustGet("user_group").(*models.UserGroup)
-	if f.IsSyncToFlashDuty {
+	if f.IsSyncToFlashDuty || flashduty.NeedSyncTeam(rt.Ctx) {
 		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
 		ginx.Dangerous(err)
 		err = ugs.SyncUGDel(ug.Name)
@@ -156,10 +157,12 @@ func (rt *Router) userGroupMemberAdd(c *gin.Context) {
 		ug.UpdateBy = me.Username
 		ug.Update(rt.Ctx, "UpdateAt", "UpdateBy")
 	}
-	if f.IsSyncToFlashDuty {
+
+	if f.IsSyncToFlashDuty || flashduty.NeedSyncTeam(rt.Ctx) {
 		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
 		ginx.Dangerous(err)
 		err = ugs.SyncMembersAdd()
+		ginx.Dangerous(err)
 	}
 	ginx.NewRender(c).Message(err)
 
@@ -179,10 +182,12 @@ func (rt *Router) userGroupMemberDel(c *gin.Context) {
 		ug.UpdateBy = me.Username
 		ug.Update(rt.Ctx, "UpdateAt", "UpdateBy")
 	}
-	if f.IsSyncToFlashDuty {
+	if f.IsSyncToFlashDuty || flashduty.NeedSyncTeam(rt.Ctx) {
 		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
 		ginx.Dangerous(err)
 		err = ugs.SyncMembersDel()
+		ginx.Dangerous(err)
 	}
+
 	ginx.NewRender(c).Message(err)
 }

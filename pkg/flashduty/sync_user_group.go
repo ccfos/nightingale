@@ -128,3 +128,17 @@ func (t *Team) DelTeam(appKey string) error {
 	}
 	return PostFlashDuty("/team/delete", appKey, t)
 }
+
+func NeedSyncTeam(ctx *ctx.Context) bool {
+	configs, err := models.ConfigsSelectByCkey(ctx, "flashduty_sync_team")
+	if err != nil {
+		logger.Warningf("failed to query flashduty_sync_team: %v", err)
+		return false
+	}
+
+	if len(configs) == 0 || configs[0].Cval == "" {
+		return false
+	}
+
+	return configs[0].Cval == "true"
+}
