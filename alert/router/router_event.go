@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -102,7 +103,7 @@ func (rt *Router) makeEvent(c *gin.Context) {
 	ginx.BindJSON(c, &events)
 	//now := time.Now().Unix()
 	for i := 0; i < len(events); i++ {
-		node, err := naming.DatasourceHashRing.GetNode(events[i].DatasourceId, fmt.Sprintf("%d", events[i].RuleId))
+		node, err := naming.DatasourceHashRing.GetNode(strconv.FormatInt(events[i].DatasourceId, 10), fmt.Sprintf("%d", events[i].RuleId))
 		if err != nil {
 			logger.Warningf("event:%+v get node err:%v", events[i], err)
 			ginx.Bomb(200, "event node not exists")

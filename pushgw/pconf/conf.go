@@ -13,6 +13,7 @@ type Pushgw struct {
 	BusiGroupLabelKey   string
 	IdentMetrics        []string
 	IdentStatsThreshold int
+	IdentDropThreshold  int
 	WriteConcurrency    int
 	LabelRewrite        bool
 	ForceUseServerTS    bool
@@ -79,7 +80,11 @@ func (p *Pushgw) PreCheck() {
 	}
 
 	if p.IdentStatsThreshold <= 0 {
-		p.IdentStatsThreshold = 400
+		p.IdentStatsThreshold = 1500
+	}
+
+	if p.IdentDropThreshold <= 0 {
+		p.IdentDropThreshold = 20000
 	}
 
 	for _, writer := range p.Writers {

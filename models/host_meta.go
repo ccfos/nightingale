@@ -14,8 +14,27 @@ type HostMeta struct {
 	UnixTime     int64                  `json:"unixtime"`
 	RemoteAddr   string                 `json:"remote_addr"`
 	HostIp       string                 `json:"host_ip"`
+	EngineName   string                 `json:"engine_name"`
 	GlobalLabels map[string]string      `json:"global_labels"`
 	ExtendInfo   map[string]interface{} `json:"extend_info"`
+}
+
+type HostUpdteTime struct {
+	Ident      string `json:"ident"`
+	UpdateTime int64  `json:"update_time"`
+}
+
+func (h HostUpdteTime) MarshalBinary() ([]byte, error) {
+	return json.Marshal(h)
+}
+
+func (h *HostUpdteTime) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, h)
+}
+
+type HostUnixTime struct {
+	Ident    string `json:"ident"`
+	UnixTime int64  `json:"unixtime"`
 }
 
 func (h HostMeta) MarshalBinary() ([]byte, error) {
@@ -32,4 +51,8 @@ func WrapIdent(ident string) string {
 
 func WrapExtendIdent(ident string) string {
 	return "n9e_extend_meta_" + ident
+}
+
+func WrapIdentUpdateTime(ident string) string {
+	return "n9e_meta_update_time_" + ident
 }

@@ -2,12 +2,14 @@ package memsto
 
 import (
 	"fmt"
+
 	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
@@ -155,6 +157,11 @@ func (uc *UserCacheType) syncUsers() error {
 	if err != nil {
 		dumper.PutSyncRecord("users", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to exec UserGetAll")
+	}
+
+	if err := flashduty.SyncUsersChange(uc.ctx, lst, uc.users); err != nil {
+		logger.Warning("failed to sync users to flashduty:", err)
+		dumper.PutSyncRecord("users", start.Unix(), -1, -1, "failed to sync to flashduty: "+err.Error())
 	}
 
 	m := make(map[int64]*models.User)

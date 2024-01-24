@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -12,6 +13,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/router"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
+	"github.com/ccfos/nightingale/v6/storage"
 )
 
 type PushgwProvider struct {
@@ -32,7 +34,15 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
 
-	idents := idents.New(ctx)
+	var redis storage.Redis
+	if config.Redis.Address != "" {
+		redis, err = storage.NewRedis(config.Redis)
+		if err != nil {
+			return nil, err
+		}
+	}
+	idents := idents.New(ctx, redis)
+	metas := metas.New(redis)
 
 	stats := memsto.NewSyncStats()
 
@@ -42,7 +52,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	writers := writer.NewWriters(config.Pushgw)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
-	rt := router.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
+	rt := router.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 	rt.Config(r)
 
 	httpClean := httpx.Init(config.HTTP, r)
