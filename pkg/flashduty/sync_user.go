@@ -98,7 +98,7 @@ func fdDelUsers(appKey string, users []models.User) {
 	fdUsers := usersToFdUsers(users)
 	for _, fdUser := range fdUsers {
 		if err := fdUser.delMember(appKey); err != nil {
-			logger.Error("failed to delete user: %v", err)
+			logger.Errorf("failed to delete user: %v", err)
 		}
 	}
 }
