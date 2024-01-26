@@ -119,6 +119,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ZOOKEEPER_CONNECT: 127.0.0.1:2181
+      KAFKA_CFG_MESSAGE_MAX_BYTES: 2000000
     network_mode: host
     depends_on:
       - zookeeper
