@@ -84,7 +84,7 @@ func (p *Pushgw) PreCheck() {
 	}
 
 	if p.IdentDropThreshold <= 0 {
-		p.IdentDropThreshold = 20000
+		p.IdentDropThreshold = 5000000
 	}
 
 	for _, writer := range p.Writers {
