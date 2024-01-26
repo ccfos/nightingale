@@ -142,3 +142,17 @@ func NeedSyncTeam(ctx *ctx.Context) bool {
 
 	return configs[0].Cval == "true"
 }
+
+func NeedSyncUser(ctx *ctx.Context) bool {
+	configs, err := models.ConfigsSelectByCkey(ctx, "flashduty_app_key")
+	if err != nil {
+		logger.Warningf("failed to query flashduty_app_key: %v", err)
+		return false
+	}
+
+	if len(configs) == 0 || configs[0].Cval == "" {
+		return false
+	}
+
+	return true
+}

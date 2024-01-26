@@ -16,13 +16,16 @@ import (
 )
 
 type UserCacheType struct {
-	statTotal       int64
-	statLastUpdated int64
-	ctx             *ctx.Context
-	stats           *Stats
+	statTotal          int64
+	statLastUpdated    int64
+	configsTotal       int64
+	configsLastUpdated int64
+	ctx                *ctx.Context
+	stats              *Stats
 
 	sync.RWMutex
-	users map[int64]*models.User // key: id
+	users     map[int64]*models.User // key: id
+	dutyUsers map[int64]*models.User // key: id
 }
 
 func NewUserCache(ctx *ctx.Context, stats *Stats) *UserCacheType {
@@ -37,15 +40,15 @@ func NewUserCache(ctx *ctx.Context, stats *Stats) *UserCacheType {
 	return uc
 }
 
-func (uc *UserCacheType) StatChanged(total, lastUpdated int64) bool {
-	if uc.statTotal == total && uc.statLastUpdated == lastUpdated {
+func (uc *UserCacheType) StatChanged(total, lastUpdated, configsTotal, configsLastUpdated int64) bool {
+	if uc.statTotal == total && uc.statLastUpdated == lastUpdated && uc.configsTotal == configsTotal && uc.configsLastUpdated == configsLastUpdated {
 		return false
 	}
 
 	return true
 }
 
-func (uc *UserCacheType) Set(m map[int64]*models.User, total, lastUpdated int64) {
+func (uc *UserCacheType) Set(m map[int64]*models.User, total, lastUpdated, configsTotal, configsLastUpdated int64) {
 	uc.Lock()
 	uc.users = m
 	uc.Unlock()
@@ -53,6 +56,8 @@ func (uc *UserCacheType) Set(m map[int64]*models.User, total, lastUpdated int64)
 	// only one goroutine used, so no need lock
 	uc.statTotal = total
 	uc.statLastUpdated = lastUpdated
+	uc.configsTotal = configsTotal
+	uc.configsLastUpdated = configsLastUpdated
 }
 
 func (uc *UserCacheType) GetByUserId(id int64) *models.User {
@@ -146,7 +151,13 @@ func (uc *UserCacheType) syncUsers() error {
 		return errors.WithMessage(err, "failed to exec UserStatistics")
 	}
 
-	if !uc.StatChanged(stat.Total, stat.LastUpdated) {
+	configsStat, err := models.ConfigsUserVariableStatistics(uc.ctx)
+	if err != nil {
+		dumper.PutSyncRecord("user_variables", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
+		return errors.WithMessage(err, "failed to exec ConfigsUserVariableStatistics")
+	}
+
+	if !uc.StatChanged(stat.Total, stat.LastUpdated, configsStat.Total, configsStat.LastUpdated) {
 		uc.stats.GaugeCronDuration.WithLabelValues("sync_users").Set(0)
 		uc.stats.GaugeSyncNumber.WithLabelValues("sync_users").Set(0)
 		dumper.PutSyncRecord("users", start.Unix(), -1, -1, "not changed")
@@ -159,17 +170,20 @@ func (uc *UserCacheType) syncUsers() error {
 		return errors.WithMessage(err, "failed to exec UserGetAll")
 	}
 
-	if err := flashduty.SyncUsersChange(uc.ctx, lst, uc.users); err != nil {
-		logger.Warning("failed to sync users to flashduty:", err)
-		dumper.PutSyncRecord("users", start.Unix(), -1, -1, "failed to sync to flashduty: "+err.Error())
-	}
-
 	m := make(map[int64]*models.User)
 	for i := 0; i < len(lst); i++ {
 		m[lst[i].Id] = lst[i]
 	}
+	uc.Set(m, stat.Total, stat.LastUpdated, configsStat.Total, configsStat.LastUpdated)
 
-	uc.Set(m, stat.Total, stat.LastUpdated)
+	if flashduty.NeedSyncUser(uc.ctx) {
+		if err := flashduty.SyncUsersChange(uc.ctx, lst, uc.dutyUsers); err != nil {
+			logger.Warning("failed to sync users to flashduty:", err)
+			dumper.PutSyncRecord("users", start.Unix(), -1, -1, "failed to sync to flashduty: "+err.Error())
+		} else {
+			uc.dutyUsers = m
+		}
+	}
 
 	ms := time.Since(start).Milliseconds()
 	uc.stats.GaugeCronDuration.WithLabelValues("sync_users").Set(float64(ms))
