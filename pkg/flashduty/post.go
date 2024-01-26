@@ -1,6 +1,7 @@
 package flashduty
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"time"
@@ -25,6 +26,14 @@ func Init(fdConf cconf.FlashDuty) {
 	}
 }
 
+type dutyResp struct {
+	RequestId string `json:"request_id"`
+	Error     struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
+}
+
 func PostFlashDuty(path string, appKey string, body interface{}) error {
 	urlParams := url.Values{}
 	urlParams.Add("app_key", appKey)
@@ -36,5 +45,14 @@ func PostFlashDuty(path string, appKey string, body interface{}) error {
 	}
 	response, code, err := poster.PostJSON(url, Timeout, body)
 	logger.Infof("exec PostFlashDuty: url=%s, body=%v; response=%s, code=%d", url, body, response, code)
+
+	var resp dutyResp
+	if err == nil {
+		e := json.Unmarshal(response, &resp)
+		if e == nil && resp.Error.Message != "" {
+			err = fmt.Errorf("flashduty post error: %s", resp.Error.Message)
+		}
+	}
+
 	return err
 }
