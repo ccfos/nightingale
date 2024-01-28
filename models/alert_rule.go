@@ -109,6 +109,7 @@ type HostTrigger struct {
 }
 
 type RuleQuery struct {
+	Version  string        `json:"version"`
 	Inhibit  bool          `json:"inhibit"`
 	Queries  []interface{} `json:"queries"`
 	Triggers []Trigger     `json:"triggers"`
