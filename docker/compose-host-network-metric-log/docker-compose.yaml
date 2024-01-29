@@ -124,7 +124,6 @@ services:
     depends_on:
       - zookeeper
 
-      
   elasticsearch:    
     image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1    
     container_name: "elasticsearch"
@@ -135,7 +134,6 @@ services:
     network_mode: host
     depends_on:
       - kafka 
-
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.11.3
