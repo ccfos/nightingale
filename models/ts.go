@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/prometheus/common/model"
+	"github.com/toolkits/pkg/logger"
 )
 
 type DataResp struct {
@@ -95,6 +96,7 @@ func Convert2DataResp(value model.Value, ref ...string) (resp []DataResp) {
 			resp = append(resp, item)
 		}
 	default:
+		logger.Warningf("unknown value type: %s", value.Type())
 		return
 	}
 
