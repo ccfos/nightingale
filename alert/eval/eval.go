@@ -474,6 +474,10 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndex ma
 				Query:     fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
 			}
 
+			if sample.Query != "" {
+				point.Query = sample.Query
+			}
+
 			if isTriggered {
 				points = append(points, point)
 			} else {

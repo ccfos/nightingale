@@ -12,6 +12,7 @@ type DataResp struct {
 	Metric model.Metric `json:"metric"`
 	Labels string       `json:"-"`
 	Values [][]float64  `json:"values"`
+	Query  string       `json:"query"`
 }
 
 func (d *DataResp) Last() (float64, float64, bool) {
