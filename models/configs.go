@@ -151,6 +151,10 @@ func ConfigsGetFlashDutyAppKey(ctx *ctx.Context) (string, error) {
 }
 
 func ConfigsSelectByCkey(ctx *ctx.Context, ckey string) ([]Configs, error) {
+	if !ctx.IsCenter {
+		return []Configs{}, nil
+	}
+
 	var objs []Configs
 	err := DB(ctx).Where("ckey=?", ckey).Find(&objs).Error
 	if err != nil {
