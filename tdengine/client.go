@@ -279,7 +279,7 @@ func TimeFormat(src APIResponse, timeFormat string) APIResponse {
 	return src
 }
 
-func (tc *tdengineClient) Query(query interface{}) ([]*models.DataResp, error) {
+func (tc *tdengineClient) Query(query interface{}) ([]models.DataResp, error) {
 	b, err := json.Marshal(query)
 	if err != nil {
 		return nil, err
@@ -432,7 +432,7 @@ func (tc *tdengineClient) GetColumns(database, table string) ([]Column, error) {
 //     "err": ""
 // }
 
-func ConvertToTStData(src APIResponse, key Keys, ref string) ([]*models.DataResp, error) {
+func ConvertToTStData(src APIResponse, key Keys, ref string) ([]models.DataResp, error) {
 	metricIdxMap := make(map[string]int)
 	labelIdxMap := make(map[string]int)
 
@@ -487,7 +487,7 @@ func ConvertToTStData(src APIResponse, key Keys, ref string) ([]*models.DataResp
 		return nil, fmt.Errorf("timestamp column not found, please check your query")
 	}
 
-	var result []*models.DataResp
+	var result []models.DataResp
 	m := make(map[string]*models.DataResp)
 	for _, row := range src.Data {
 		for metricName, metricIdx := range metricIdxMap {
@@ -527,7 +527,7 @@ func ConvertToTStData(src APIResponse, key Keys, ref string) ([]*models.DataResp
 
 	for _, v := range m {
 		v.Ref = ref
-		result = append(result, v)
+		result = append(result, *v)
 	}
 
 	return result, nil
