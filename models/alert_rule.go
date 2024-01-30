@@ -438,7 +438,13 @@ func (ar *AlertRule) FillDatasourceIds() error {
 
 func (ar *AlertRule) FillSeverities() error {
 	if ar.RuleConfig != "" {
-		if ar.Cate == PROMETHEUS || ar.Cate == LOKI {
+		var rule RuleQuery
+		if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
+			return err
+		}
+
+		m := make(map[int]struct{})
+		if (ar.Cate == PROMETHEUS || ar.Cate == LOKI) && rule.Version != "v2" {
 			var rule PromRuleConfig
 			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
 				return err
@@ -448,18 +454,17 @@ func (ar *AlertRule) FillSeverities() error {
 				ar.Severities = append(ar.Severities, rule.Severity)
 				return nil
 			}
-
 			for i := range rule.Queries {
-				ar.Severities = append(ar.Severities, rule.Queries[i].Severity)
+				m[rule.Queries[i].Severity] = struct{}{}
 			}
 		} else {
-			var rule HostRuleConfig
-			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
-				return err
-			}
 			for i := range rule.Triggers {
-				ar.Severities = append(ar.Severities, rule.Triggers[i].Severity)
+				m[rule.Triggers[i].Severity] = struct{}{}
 			}
+		}
+
+		for k := range m {
+			ar.Severities = append(ar.Severities, k)
 		}
 	}
 	return nil
