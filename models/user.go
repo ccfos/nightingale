@@ -128,6 +128,7 @@ func (u *User) Add(ctx *ctx.Context) error {
 }
 
 func (u *User) AddSso(ctx *ctx.Context, sso string) error {
+	u.From = sso
 	user, err := SsoUserGetByUsername(ctx, u.Username, sso)
 	if err != nil {
 		return errors.WithMessage(err, "failed to query sso user")
