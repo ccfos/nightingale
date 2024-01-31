@@ -60,6 +60,7 @@ func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 			delIds = append(delIds, user.Id)
 		}
 		if err := models.SsoUsersDelByIds(ctx, delIds, ldap); err != nil {
+			fmt.Println("failed to del ", delIds, ": ", err.Error())
 			return err
 		}
 	}
