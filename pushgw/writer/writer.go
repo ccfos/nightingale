@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/fasttime"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 
 	"github.com/golang/protobuf/proto"
@@ -54,7 +55,7 @@ func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[
 	}()
 
 	if w.ForceUseServerTS {
-		ts := time.Now().UnixMilli()
+		ts := int64(fasttime.UnixTimestamp()) * 1000
 		for i := 0; i < len(items); i++ {
 			if len(items[i].Samples) == 0 {
 				continue
