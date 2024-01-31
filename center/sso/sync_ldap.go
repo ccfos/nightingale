@@ -37,7 +37,7 @@ func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 	start := time.Now()
 
 	usersSso, err := s.LDAP.LdapGetAllUsers()
-	fmt.Printf("%#v", usersSso)
+	fmt.Printf("ssousers: %#v\n", usersSso)
 	if err != nil {
 		fmt.Println(err.Error())
 		dumper.PutSyncRecord("sso_users", start.Unix(), -1, -1, "failed to query all users: "+err.Error())
@@ -45,12 +45,14 @@ func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 	}
 
 	usersDbArr, err := models.UserGetsBySso(ctx, ldap)
+	fmt.Printf("du_users: %#v\n", usersDbArr)
 	usersDbMap := make(map[string]*models.User, len(usersDbArr))
 	for i, user := range usersDbArr {
 		usersDbMap[user.Username] = &usersDbArr[i]
 	}
 
 	del, add, update := diff(usersDbMap, usersSso)
+	fmt.Printf("del: %d, add %d, update: %d\n", len(del), len(add), len(update))
 
 	if len(del) > 0 {
 		delIds := make([]int64, 0, len(del))
@@ -64,6 +66,7 @@ func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 
 	for _, user := range add {
 		if err := user.AddSso(ctx, ldap); err != nil {
+			fmt.Printf("add_err: %s\n", err.Error())
 			return err
 		}
 	}
