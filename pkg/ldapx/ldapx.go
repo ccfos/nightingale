@@ -21,6 +21,7 @@ type Config struct {
 	BaseDn          string
 	BindUser        string
 	BindPass        string
+	SyncToMysql     bool
 	AuthFilter      string
 	Attributes      LdapAttributes
 	CoverAttributes bool
@@ -82,6 +83,7 @@ func (s *SsoClient) Reload(cf Config) {
 	s.TLS = cf.TLS
 	s.StartTLS = cf.StartTLS
 	s.DefaultRoles = cf.DefaultRoles
+	s.SyncToMysql = cf.SyncToMysql
 }
 
 func (s *SsoClient) genLdapAttributeSearchList() []string {
