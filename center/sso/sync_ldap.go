@@ -24,7 +24,7 @@ func (s *SsoClient) SyncSsoUsers(ctx *ctx.Context) {
 }
 
 func (s *SsoClient) loopSyncSsoUsers(ctx *ctx.Context) {
-	duration := time.Duration(1000) * time.Millisecond
+	duration := time.Duration(9000) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := s.syncSsoUsers(ctx); err != nil {
