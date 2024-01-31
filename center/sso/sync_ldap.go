@@ -24,7 +24,7 @@ func (s *SsoClient) SyncSsoUsers(ctx *ctx.Context) {
 }
 
 func (s *SsoClient) loopSyncSsoUsers(ctx *ctx.Context) {
-	duration := time.Duration(9000) * time.Millisecond
+	duration := time.Duration(1000) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := s.syncSsoUsers(ctx); err != nil {
@@ -37,7 +37,9 @@ func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 	start := time.Now()
 
 	usersSso, err := s.LDAP.LdapGetAllUsers()
+	fmt.Printf("%#v", usersSso)
 	if err != nil {
+		fmt.Println(err.Error())
 		dumper.PutSyncRecord("sso_users", start.Unix(), -1, -1, "failed to query all users: "+err.Error())
 		return errors.WithMessage(err, "failed to exec LdapGetAllUsers")
 	}
