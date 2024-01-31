@@ -89,7 +89,7 @@ func diff(base, m map[string]*models.User) (del, add, update []*models.User) {
 	for username, user := range m {
 		baseUser, exist := base[username]
 		if !exist {
-			del = append(del, user)
+			add = append(add, user)
 		} else {
 			if baseUser.Nickname != user.Nickname || baseUser.Phone != user.Phone || baseUser.Email != user.Email {
 				update = append(update, user)
