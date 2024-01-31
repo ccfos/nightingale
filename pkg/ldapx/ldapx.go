@@ -3,10 +3,15 @@ package ldapx
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/models"
+	"strings"
 	"sync"
+	"time"
+
+	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/go-ldap/ldap/v3"
+	"github.com/pkg/errors"
 )
 
 type Config struct {
@@ -208,4 +213,68 @@ func entryAttributeToUser(entry *ldap.Entry) *models.User {
 	user.Phone = entry.GetAttributeValue("phone")
 	user.Nickname = entry.GetAttributeValue("nickname")
 	return &user
+}
+
+func LdapLogin(ctx *ctx.Context, username, pass, roles string, ldap *SsoClient) (*models.User, error) {
+	sr, err := ldap.LdapReq(username, pass)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := models.UserGetByUsername(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		// default user settings
+		user = &models.User{
+			Username: username,
+			Nickname: username,
+		}
+	}
+
+	// copy attributes from ldap
+	ldap.RLock()
+	attrs := ldap.Attributes
+	coverAttributes := ldap.CoverAttributes
+	ldap.RUnlock()
+
+	if attrs.Nickname != "" {
+		user.Nickname = sr.Entries[0].GetAttributeValue(attrs.Nickname)
+	}
+	if attrs.Email != "" {
+		user.Email = sr.Entries[0].GetAttributeValue(attrs.Email)
+	}
+	if attrs.Phone != "" {
+		user.Phone = strings.Replace(sr.Entries[0].GetAttributeValue(attrs.Phone), " ", "", -1)
+	}
+
+	if user.Roles == "" {
+		user.Roles = roles
+	}
+
+	if user.Id > 0 {
+		if coverAttributes {
+			err := models.DB(ctx).Updates(user).Error
+			if err != nil {
+				return nil, errors.WithMessage(err, "failed to update user")
+			}
+		}
+		return user, nil
+	}
+
+	now := time.Now().Unix()
+
+	user.Password = "******"
+	user.Portrait = ""
+
+	user.Contacts = []byte("{}")
+	user.CreateAt = now
+	user.UpdateAt = now
+	user.CreateBy = "ldap"
+	user.UpdateBy = "ldap"
+
+	err = models.DB(ctx).Create(user).Error
+	return user, err
 }

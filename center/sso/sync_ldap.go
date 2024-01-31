@@ -14,29 +14,29 @@ import (
 
 const ldap = "ldap"
 
-func (ss *SsoClient) SyncSsoUsers(ctx *ctx.Context) {
-	err := ss.syncSsoUsers(ctx)
+func (s *SsoClient) SyncSsoUsers(ctx *ctx.Context) {
+	err := s.syncSsoUsers(ctx)
 	if err != nil {
 		fmt.Println("failed to sync ldap:", err)
 	}
 
-	go ss.loopSyncSsoUsers(ctx)
+	go s.loopSyncSsoUsers(ctx)
 }
 
-func (ss *SsoClient) loopSyncSsoUsers(ctx *ctx.Context) {
+func (s *SsoClient) loopSyncSsoUsers(ctx *ctx.Context) {
 	duration := time.Duration(9000) * time.Millisecond
 	for {
 		time.Sleep(duration)
-		if err := ss.syncSsoUsers(ctx); err != nil {
+		if err := s.syncSsoUsers(ctx); err != nil {
 			logger.Warning("failed to sync ldap:", err)
 		}
 	}
 }
 
-func (ss *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
+func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 	start := time.Now()
 
-	usersSso, err := ss.LDAP.LdapGetAllUsers()
+	usersSso, err := s.LDAP.LdapGetAllUsers()
 	if err != nil {
 		dumper.PutSyncRecord("sso_users", start.Unix(), -1, -1, "failed to query all users: "+err.Error())
 		return errors.WithMessage(err, "failed to exec LdapGetAllUsers")

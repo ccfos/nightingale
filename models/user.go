@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
@@ -287,70 +286,6 @@ func PassLogin(ctx *ctx.Context, username, pass string) (*User, error) {
 	}
 
 	return user, nil
-}
-
-func LdapLogin(ctx *ctx.Context, username, pass, roles string, ldap *ldapx.SsoClient) (*User, error) {
-	sr, err := ldap.LdapReq(username, pass)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := UserGetByUsername(ctx, username)
-	if err != nil {
-		return nil, err
-	}
-
-	if user == nil {
-		// default user settings
-		user = &User{
-			Username: username,
-			Nickname: username,
-		}
-	}
-
-	// copy attributes from ldap
-	ldap.RLock()
-	attrs := ldap.Attributes
-	coverAttributes := ldap.CoverAttributes
-	ldap.RUnlock()
-
-	if attrs.Nickname != "" {
-		user.Nickname = sr.Entries[0].GetAttributeValue(attrs.Nickname)
-	}
-	if attrs.Email != "" {
-		user.Email = sr.Entries[0].GetAttributeValue(attrs.Email)
-	}
-	if attrs.Phone != "" {
-		user.Phone = strings.Replace(sr.Entries[0].GetAttributeValue(attrs.Phone), " ", "", -1)
-	}
-
-	if user.Roles == "" {
-		user.Roles = roles
-	}
-
-	if user.Id > 0 {
-		if coverAttributes {
-			err := DB(ctx).Updates(user).Error
-			if err != nil {
-				return nil, errors.WithMessage(err, "failed to update user")
-			}
-		}
-		return user, nil
-	}
-
-	now := time.Now().Unix()
-
-	user.Password = "******"
-	user.Portrait = ""
-
-	user.Contacts = []byte("{}")
-	user.CreateAt = now
-	user.UpdateAt = now
-	user.CreateBy = "ldap"
-	user.UpdateBy = "ldap"
-
-	err = DB(ctx).Create(user).Error
-	return user, err
 }
 
 func UserTotal(ctx *ctx.Context, query string) (num int64, err error) {

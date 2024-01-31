@@ -56,7 +56,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 		// pass validate fail, try ldap
 		if rt.Sso.LDAP.Enable {
 			roles := strings.Join(rt.Sso.LDAP.DefaultRoles, " ")
-			user, err = models.LdapLogin(rt.Ctx, f.Username, authPassWord, roles, rt.Sso.LDAP)
+			user, err = ldapx.LdapLogin(rt.Ctx, f.Username, authPassWord, roles, rt.Sso.LDAP)
 			if err != nil {
 				logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
 				ginx.NewRender(c).Message(err)
