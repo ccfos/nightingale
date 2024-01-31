@@ -35,24 +35,23 @@ func (s *SsoClient) loopSyncSsoUsers(ctx *ctx.Context) {
 
 func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 	start := time.Now()
+	if !s.LDAP.SyncToMysql {
+		return nil
+	}
 
 	usersSso, err := s.LDAP.LdapGetAllUsers()
-	fmt.Printf("ssousers: %#v\n", usersSso)
 	if err != nil {
-		fmt.Println(err.Error())
 		dumper.PutSyncRecord("sso_users", start.Unix(), -1, -1, "failed to query all users: "+err.Error())
 		return errors.WithMessage(err, "failed to exec LdapGetAllUsers")
 	}
 
 	usersDbArr, err := models.UserGetsBySso(ctx, ldap)
-	fmt.Printf("du_users: %#v\n", usersDbArr)
 	usersDbMap := make(map[string]*models.User, len(usersDbArr))
 	for i, user := range usersDbArr {
 		usersDbMap[user.Username] = &usersDbArr[i]
 	}
 
 	del, add, update := diff(usersDbMap, usersSso)
-	fmt.Printf("del: %d, add %d, update: %d\n", len(del), len(add), len(update))
 
 	if len(del) > 0 {
 		delIds := make([]int64, 0, len(del))
@@ -60,14 +59,12 @@ func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 			delIds = append(delIds, user.Id)
 		}
 		if err := models.SsoUsersDelByIds(ctx, delIds, ldap); err != nil {
-			fmt.Println("failed to del ", delIds, ": ", err.Error())
 			return err
 		}
 	}
 
 	for _, user := range add {
 		if err := user.AddSso(ctx, ldap); err != nil {
-			fmt.Printf("add_err: %s\n", err.Error())
 			return err
 		}
 	}

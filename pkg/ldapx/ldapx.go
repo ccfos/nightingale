@@ -36,6 +36,7 @@ type SsoClient struct {
 	BaseDn          string
 	BindUser        string
 	BindPass        string
+	SyncToMysql     bool
 	AuthFilter      string
 	Attributes      LdapAttributes
 	CoverAttributes bool
