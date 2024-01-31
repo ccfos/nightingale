@@ -3,6 +3,7 @@ package ldapx
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/models"
 	"sync"
 
 	"github.com/go-ldap/ldap/v3"
@@ -78,7 +79,7 @@ func (s *SsoClient) Reload(cf Config) {
 }
 
 func (s *SsoClient) genLdapAttributeSearchList() []string {
-	var ldapAttributes []string
+	ldapAttributes := []string{"uid"}
 
 	s.RLock()
 	attrs := s.Attributes
@@ -96,17 +97,13 @@ func (s *SsoClient) genLdapAttributeSearchList() []string {
 	return ldapAttributes
 }
 
-func (s *SsoClient) LdapReq(user, pass string) (*ldap.SearchResult, error) {
+func (s *SsoClient) newLdapConn() (*ldap.Conn, error) {
 	var conn *ldap.Conn
 	var err error
 
-	s.RLock()
-	lc := s
-	s.RUnlock()
+	addr := fmt.Sprintf("%s:%d", s.Host, s.Port)
 
-	addr := fmt.Sprintf("%s:%d", lc.Host, lc.Port)
-
-	if lc.TLS {
+	if s.TLS {
 		conn, err = ldap.DialTLS("tcp", addr, &tls.Config{InsecureSkipVerify: true})
 	} else {
 		conn, err = ldap.Dial("tcp", addr)
@@ -116,21 +113,33 @@ func (s *SsoClient) LdapReq(user, pass string) (*ldap.SearchResult, error) {
 		return nil, fmt.Errorf("ldap.error: cannot dial ldap(%s): %v", addr, err)
 	}
 
-	defer conn.Close()
-
-	if !lc.TLS && lc.StartTLS {
+	if !s.TLS && s.StartTLS {
 		if err := conn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
 			return nil, fmt.Errorf("ldap.error: conn startTLS fail: %v", err)
 		}
 	}
 
 	// if bindUser is empty, anonymousSearch mode
-	if lc.BindUser != "" {
+	if s.BindUser != "" {
 		// BindSearch mode
-		if err := conn.Bind(lc.BindUser, lc.BindPass); err != nil {
-			return nil, fmt.Errorf("ldap.error: bind ldap fail: %v, use user(%s) to bind", err, lc.BindUser)
+		if err := conn.Bind(s.BindUser, s.BindPass); err != nil {
+			return nil, fmt.Errorf("ldap.error: bind ldap fail: %v, use user(%s) to bind", err, s.BindUser)
 		}
 	}
+
+	return conn, nil
+}
+
+func (s *SsoClient) LdapReq(user, pass string) (*ldap.SearchResult, error) {
+	s.RLock()
+	lc := s
+	s.RUnlock()
+
+	conn, err := lc.newLdapConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
 
 	searchRequest := ldap.NewSearchRequest(
 		lc.BaseDn, // The base dn to search
@@ -158,4 +167,45 @@ func (s *SsoClient) LdapReq(user, pass string) (*ldap.SearchResult, error) {
 	}
 
 	return sr, nil
+}
+
+func (s *SsoClient) LdapGetAllUsers() (map[string]*models.User, error) {
+	s.RLock()
+	lc := s
+	s.RUnlock()
+
+	conn, err := lc.newLdapConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	searchRequest := ldap.NewSearchRequest(
+		lc.BaseDn, // The base dn to search
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		fmt.Sprintf("(&(uid=*))"),      // The filter to apply
+		s.genLdapAttributeSearchList(), // A list attributes to retrieve
+		nil,
+	)
+
+	sr, err := conn.Search(searchRequest)
+	if err != nil {
+		return nil, fmt.Errorf("ldap.error: ldap search fail: %v", err)
+	}
+
+	res := make(map[string]*models.User, len(sr.Entries)/2)
+	for _, entry := range sr.Entries {
+		res[entry.GetAttributeValue("uid")] = entryAttributeToUser(entry)
+	}
+
+	return res, nil
+}
+
+func entryAttributeToUser(entry *ldap.Entry) *models.User {
+	var user models.User
+	user.Username = entry.GetAttributeValue("uid")
+	user.Email = entry.GetAttributeValue("mail")
+	user.Phone = entry.GetAttributeValue("phone")
+	user.Nickname = entry.GetAttributeValue("nickname")
+	return &user
 }
