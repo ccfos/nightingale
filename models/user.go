@@ -157,7 +157,7 @@ func (u *User) UpdateSso(ctx *ctx.Context, sso string, selectField interface{}, 
 		return err
 	}
 
-	return DB(ctx).Where("from=?", sso).Model(u).Select(selectField, selectFields...).Updates(u).Error
+	return DB(ctx).Where("`from`=?", sso).Model(u).Select(selectField, selectFields...).Updates(u).Error
 }
 
 func (u *User) UpdateAllFields(ctx *ctx.Context) error {
@@ -380,7 +380,7 @@ func UserGetsBySso(ctx *ctx.Context, sso string) ([]User, error) {
 }
 
 func SsoUsersDelByIds(ctx *ctx.Context, userIds []int64, sso string) error {
-	return DB(ctx).Where("uid in ? and `from`=?", userIds, sso).Delete(&User{}).Error
+	return DB(ctx).Where("id in ? and `from`=?", userIds, sso).Delete(&User{}).Error
 }
 
 func (u *User) CanModifyUserGroup(ctx *ctx.Context, ug *UserGroup) (bool, error) {
