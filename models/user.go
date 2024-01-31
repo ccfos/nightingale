@@ -229,7 +229,7 @@ func UserGetByUsername(ctx *ctx.Context, username string) (*User, error) {
 	return UserGet(ctx, "username=?", username)
 }
 func SsoUserGetByUsername(ctx *ctx.Context, username, sso string) (*User, error) {
-	return UserGet(ctx, "username=? and from=?", sso, username)
+	return UserGet(ctx, "username=? and `from`=?", sso, username)
 }
 
 func UserGetById(ctx *ctx.Context, id int64) (*User, error) {
@@ -361,7 +361,7 @@ func UserGetsByIds(ctx *ctx.Context, ids []int64) ([]User, error) {
 }
 
 func UserGetsBySso(ctx *ctx.Context, sso string) ([]User, error) {
-	session := DB(ctx).Where("from=?", sso).Order("username")
+	session := DB(ctx).Where("`from`=?", sso).Order("username")
 
 	var users []User
 	err := session.Find(&users).Error
