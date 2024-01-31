@@ -380,7 +380,7 @@ func UserGetsBySso(ctx *ctx.Context, sso string) ([]User, error) {
 }
 
 func SsoUsersDelByIds(ctx *ctx.Context, userIds []int64, sso string) error {
-	return DB(ctx).Where("uid in ? and from=?", userIds, sso).Error
+	return DB(ctx).Where("uid in ? and `from`=?", userIds, sso).Error
 }
 
 func (u *User) CanModifyUserGroup(ctx *ctx.Context, ug *UserGroup) (bool, error) {
