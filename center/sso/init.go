@@ -141,7 +141,7 @@ func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
 			var config ldapx.Config
 			err := toml.Unmarshal([]byte(cfg.Content), &config)
 			if err != nil {
-				log.Fatalln("init LDAPNAME failed", err)
+				log.Fatalln("init ldap failed", err)
 			}
 			ssoClient.LDAP = ldapx.New(config)
 		case "OIDC":
