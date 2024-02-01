@@ -24,7 +24,7 @@ func (s *SsoClient) SyncSsoUsers(ctx *ctx.Context) {
 }
 
 func (s *SsoClient) loopSyncSsoUsers(ctx *ctx.Context) {
-	duration := s.LDAP.SyncCycle
+	duration := s.LDAP.SyncCycle * time.Second
 	if duration == 0 {
 		duration = 24 * time.Hour
 	}

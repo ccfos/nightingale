@@ -29,9 +29,13 @@ Port = 389
 BaseDn = 'dc=example,dc=org'
 BindUser = 'cn=manager,dc=example,dc=org'
 BindPass = '*******'
+SyncUsers = false
+# unit: s
+SyncCycle = 3600*24
 # openldap format e.g. (&(uid=%s))
 # AD format e.g. (&(sAMAccountName=%s))
 AuthFilter = '(&(uid=%s))'
+UserFilter = '(&(uid=*))'
 CoverAttributes = true
 TLS = false
 StartTLS = true
