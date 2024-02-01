@@ -253,7 +253,7 @@ func (s *SsoClient) UserExist(uid string) (bool, error) {
 	}
 	defer conn.Close()
 
-	sr, err := s.ldapReq(conn, "&(uid=%s)", uid)
+	sr, err := s.ldapReq(conn, "(&(uid=%s))", uid)
 	if err != nil {
 		return false, err
 	}
