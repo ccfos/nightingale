@@ -8,7 +8,6 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
-	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -17,40 +16,40 @@ const LDAPNAME = "ldap"
 func (s *SsoClient) SyncSsoUsers(ctx *ctx.Context) {
 	err := s.syncSsoUsers(ctx)
 	if err != nil {
-		fmt.Println("failed to sync LDAPNAME:", err)
+		fmt.Println("failed to sync ldap:", err)
 	}
 
 	go s.loopSyncSsoUsers(ctx)
 }
 
 func (s *SsoClient) loopSyncSsoUsers(ctx *ctx.Context) {
-	duration := s.LDAP.SyncCycle * time.Second
-	if duration == 0 {
-		duration = 24 * time.Hour
-	}
+	var err error
 	for {
-		time.Sleep(duration)
-		if err := s.syncSsoUsers(ctx); err != nil {
-			logger.Warningf("failed to sync %s: %v", LDAPNAME, err)
+		select {
+		case <-s.LDAP.Ticker.C:
+			if s.LDAP.SyncUsers {
+				err = s.syncSsoUsers(ctx)
+			} else {
+				err = s.syncDelSsoUser(ctx)
+			}
+
+			if err != nil {
+				logger.Warningf("failed to sync ldap: %v", err)
+			}
 		}
 	}
 }
 
 func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
-	if !s.LDAP.Enable {
+	if !s.LDAP.Enable || !s.LDAP.SyncUsers {
 		return nil
 	}
 
 	start := time.Now()
 
-	usersFromSso, err := s.LDAP.LdapGetAllUsers()
+	usersFromSso, usersFromDb, err := s.getUsersFromSsoAndDb(ctx)
 	if err != nil {
-		dumper.PutSyncRecord("sso_users", start.Unix(), -1, -1, "failed to query all users: "+err.Error())
-		return errors.WithMessage(err, "failed to exec LdapGetAllUsers")
-	}
-
-	usersFromDb, err := models.UserGetsBySso(ctx, LDAPNAME)
-	if err != nil {
+		dumper.PutSyncRecord("sso_user", start.Unix(), -1, -1, "failed to query users: "+err.Error())
 		return err
 	}
 
@@ -60,13 +59,9 @@ func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 		for _, user := range usersToBeDel {
 			delIds = append(delIds, user.Id)
 		}
-		if err := models.UsersDelByIds(ctx, delIds); err != nil {
-			logger.Warningf("failed to sync del users[%v] to db,err: %v", usersToBeDel, err)
+		if err := models.UserDelByIds(ctx, delIds); err != nil {
+			logger.Warningf("failed to sync del users[%v] to db, err: %v", usersToBeDel, err)
 		}
-	}
-
-	if !s.LDAP.SyncUsers {
-		return nil
 	}
 
 	usersToBeAdd := getExtraUsers(usersFromDb, usersFromSso)
@@ -81,6 +76,50 @@ func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 	logger.Infof("timer: sync sso users done, cost: %dms, number: %d", ms, len(usersToBeDel)+len(usersToBeAdd))
 	dumper.PutSyncRecord("sso_user", start.Unix(), ms, len(usersToBeDel)+len(usersToBeAdd), "success")
 	return nil
+}
+
+func (s *SsoClient) syncDelSsoUser(ctx *ctx.Context) error {
+	start := time.Now()
+
+	usersFromDb, err := models.UserGetsBySso(ctx, LDAPNAME)
+	if err != nil {
+		dumper.PutSyncRecord("sso_user", start.Unix(), -1, -1, "failed to query users: "+err.Error())
+		return err
+	}
+
+	delIds := make([]int64, 0)
+	for _, user := range usersFromDb {
+		exist, err := s.LDAP.UserExist(user.Username)
+		if err != nil {
+			dumper.PutSyncRecord("sso_user", start.Unix(), -1, -1, "failed to check whether the user exists: "+err.Error())
+		} else if !exist {
+			delIds = append(delIds, user.Id)
+		}
+	}
+
+	if len(delIds) > 0 {
+		if err := models.UserDelByIds(ctx, delIds); err != nil {
+			dumper.PutSyncRecord("sso_user", start.Unix(), -1, -1, "failed to sync del users: "+err.Error())
+			return err
+		}
+	}
+
+	dumper.PutSyncRecord("sso_user", start.Unix(), time.Since(start).Milliseconds(), len(delIds), "success")
+	return nil
+}
+
+func (s *SsoClient) getUsersFromSsoAndDb(ctx *ctx.Context) (usersFromSso, usersFromDb map[string]*models.User, err error) {
+	usersFromSso, err = s.LDAP.UserGetAll()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	usersFromDb, err = models.UserGetsBySso(ctx, LDAPNAME)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return
 }
 
 // in m not in base

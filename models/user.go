@@ -135,14 +135,6 @@ func (u *User) Update(ctx *ctx.Context, selectField interface{}, selectFields ..
 	return DB(ctx).Model(u).Select(selectField, selectFields...).Updates(u).Error
 }
 
-func (u *User) UpdateSso(ctx *ctx.Context, sso string, selectField interface{}, selectFields ...interface{}) error {
-	if err := u.Verify(); err != nil {
-		return err
-	}
-
-	return DB(ctx).Where("`from`=?", sso).Model(u).Select(selectField, selectFields...).Updates(u).Error
-}
-
 func (u *User) UpdateAllFields(ctx *ctx.Context) error {
 	if err := u.Verify(); err != nil {
 		return err
@@ -358,7 +350,7 @@ func UserGetsBySso(ctx *ctx.Context, sso string) (map[string]*User, error) {
 	return usersMap, nil
 }
 
-func UsersDelByIds(ctx *ctx.Context, userIds []int64) error {
+func UserDelByIds(ctx *ctx.Context, userIds []int64) error {
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("user_id in ?", userIds).Delete(&UserGroupMember{}).Error; err != nil {
 			return err

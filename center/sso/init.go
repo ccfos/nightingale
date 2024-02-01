@@ -31,7 +31,7 @@ BindUser = 'cn=manager,dc=example,dc=org'
 BindPass = '*******'
 SyncUsers = false
 # unit: s
-SyncCycle = 86400
+SyncInterval = 86400
 # openldap format e.g. (&(uid=%s))
 # AD format e.g. (&(sAMAccountName=%s))
 AuthFilter = '(&(uid=%s))'
