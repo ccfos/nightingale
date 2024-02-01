@@ -153,11 +153,11 @@ func (s *SsoClient) newLdapConn() (*ldap.Conn, error) {
 	return conn, nil
 }
 
-func (s *SsoClient) ldapReq(conn *ldap.Conn, filter string, values ...string) (*ldap.SearchResult, error) {
+func (s *SsoClient) ldapReq(conn *ldap.Conn, filter string, values ...interface{}) (*ldap.SearchResult, error) {
 	searchRequest := ldap.NewSearchRequest(
 		s.BaseDn, // The base dn to search
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf(filter, values),    // The filter to apply
+		fmt.Sprintf(filter, values...), // The filter to apply
 		s.genLdapAttributeSearchList(), // A list attributes to retrieve
 		nil,
 	)
