@@ -24,7 +24,7 @@ type SsoClient struct {
 
 const LDAP = `
 Enable = false
-Host = 'LDAPNAME.example.org'
+Host = 'ldap.example.org'
 Port = 389
 BaseDn = 'dc=example,dc=org'
 BindUser = 'cn=manager,dc=example,dc=org'
