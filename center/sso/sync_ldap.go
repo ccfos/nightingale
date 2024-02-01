@@ -103,6 +103,8 @@ func (s *SsoClient) syncDelSsoUser(ctx *ctx.Context) error {
 		}
 	}
 
+	ms := time.Since(start).Milliseconds()
+	logger.Infof("timer: sync del sso users done, cost: %dms, number: %d", ms, len(delIds))
 	dumper.PutSyncRecord("sso_user", start.Unix(), time.Since(start).Milliseconds(), len(delIds), "success")
 	return nil
 }
