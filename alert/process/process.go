@@ -233,11 +233,12 @@ func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64) {
 	}
 }
 
-func (p *Processor) RecoverSingle(hash string, now int64, value *string) {
+func (p *Processor) RecoverSingle(hash string, now int64, value *string, values ...string) {
 	cachedRule := p.rule
 	if cachedRule == nil {
 		return
 	}
+
 	event, has := p.fires.Get(hash)
 	if !has {
 		return
@@ -249,6 +250,9 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string) {
 	}
 	if value != nil {
 		event.TriggerValue = *value
+		if len(values) > 0 {
+			event.TriggerValues = values[0]
+		}
 	}
 
 	// 没查到触发阈值的vector，姑且就认为这个vector的值恢复了
