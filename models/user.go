@@ -127,22 +127,6 @@ func (u *User) Add(ctx *ctx.Context) error {
 	return Insert(ctx, u)
 }
 
-func (u *User) AddFromSso(ctx *ctx.Context) error {
-	user, err := UserGetByUsernameAndSso(ctx, u.Username, u.Belong)
-	if err != nil {
-		return errors.WithMessage(err, "failed to query user")
-	}
-
-	if user != nil {
-		return errors.New("Username already exists")
-	}
-
-	now := time.Now().Unix()
-	u.CreateAt = now
-	u.UpdateAt = now
-	return Insert(ctx, u)
-}
-
 func (u *User) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
 	if err := u.Verify(); err != nil {
 		return err
@@ -227,10 +211,6 @@ func UserGet(ctx *ctx.Context, where string, args ...interface{}) (*User, error)
 
 func UserGetByUsername(ctx *ctx.Context, username string) (*User, error) {
 	return UserGet(ctx, "username=?", username)
-}
-
-func UserGetByUsernameAndSso(ctx *ctx.Context, username, sso string) (*User, error) {
-	return UserGet(ctx, "username=? and belong=?", username, sso)
 }
 
 func UserGetById(ctx *ctx.Context, id int64) (*User, error) {

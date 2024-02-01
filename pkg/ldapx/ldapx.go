@@ -220,7 +220,7 @@ func entryAttributeToUser(entry *ldap.Entry) *models.User {
 	user.Username = entry.GetAttributeValue("uid")
 	user.Email = entry.GetAttributeValue("mail")
 	user.Phone = entry.GetAttributeValue("phone")
-	user.Nickname = entry.GetAttributeValue("nickname")
+	user.Nickname = entry.GetAttributeValue("cn")
 	return &user
 }
 

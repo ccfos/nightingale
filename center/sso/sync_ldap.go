@@ -72,13 +72,13 @@ func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 	usersToBeAdd := getExtraUsers(usersFromDb, usersFromSso)
 	for _, user := range usersToBeAdd {
 		user.Belong = LDAPNAME
-		if err := user.AddFromSso(ctx); err != nil {
+		if err := user.Add(ctx); err != nil {
 			logger.Warningf("failed to sync add user[%v] to db, err: %v", *user, err)
 		}
 	}
 
 	ms := time.Since(start).Milliseconds()
-	logger.Infof("timer: sync sso users done, cost: %dms, number: %d, number: %d", ms, len(usersToBeDel)+len(usersToBeAdd))
+	logger.Infof("timer: sync sso users done, cost: %dms, number: %d", ms, len(usersToBeDel)+len(usersToBeAdd))
 	dumper.PutSyncRecord("sso_user", start.Unix(), ms, len(usersToBeDel)+len(usersToBeAdd), "success")
 	return nil
 }
