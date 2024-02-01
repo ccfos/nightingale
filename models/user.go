@@ -55,7 +55,7 @@ type User struct {
 	CreateBy   string       `json:"create_by"`
 	UpdateAt   int64        `json:"update_at"`
 	UpdateBy   string       `json:"update_by"`
-	From       string       `json:"from"`
+	Belong     string       `json:"Belong"`
 	Admin      bool         `json:"admin" gorm:"-"` // 方便前端使用
 }
 
@@ -115,23 +115,6 @@ func (u *User) Add(ctx *ctx.Context) error {
 	user, err := UserGetByUsername(ctx, u.Username)
 	if err != nil {
 		return errors.WithMessage(err, "failed to query user")
-	}
-
-	if user != nil {
-		return errors.New("Username already exists")
-	}
-
-	now := time.Now().Unix()
-	u.CreateAt = now
-	u.UpdateAt = now
-	return Insert(ctx, u)
-}
-
-func (u *User) AddSso(ctx *ctx.Context, sso string) error {
-	u.From = sso
-	user, err := SsoUserGetByUsername(ctx, u.Username, sso)
-	if err != nil {
-		return errors.WithMessage(err, "failed to query sso user")
 	}
 
 	if user != nil {
@@ -228,9 +211,6 @@ func UserGet(ctx *ctx.Context, where string, args ...interface{}) (*User, error)
 
 func UserGetByUsername(ctx *ctx.Context, username string) (*User, error) {
 	return UserGet(ctx, "username=?", username)
-}
-func SsoUserGetByUsername(ctx *ctx.Context, username, sso string) (*User, error) {
-	return UserGet(ctx, "username=? and `from`=?", sso, username)
 }
 
 func UserGetById(ctx *ctx.Context, id int64) (*User, error) {
@@ -361,26 +341,35 @@ func UserGetsByIds(ctx *ctx.Context, ids []int64) ([]User, error) {
 	return lst, err
 }
 
-func UserGetsBySso(ctx *ctx.Context, sso string) ([]User, error) {
-	session := DB(ctx).Where("`from`=?", sso).Order("username")
+func UserGetsBySso(ctx *ctx.Context, sso string) (map[string]*User, error) {
+	session := DB(ctx).Where("belong=?", sso).Order("username")
 
 	var users []User
 	err := session.Find(&users).Error
 	if err != nil {
-		return users, errors.WithMessage(err, "failed to query user")
+		return nil, errors.WithMessage(err, "failed to query user")
 	}
 
-	for i := 0; i < len(users); i++ {
-		users[i].RolesLst = strings.Fields(users[i].Roles)
-		users[i].Admin = users[i].IsAdmin()
-		users[i].Password = ""
+	usersMap := make(map[string]*User, len(users))
+	for i, user := range users {
+		usersMap[user.Username] = &users[i]
 	}
 
-	return users, nil
+	return usersMap, nil
 }
 
-func SsoUsersDelByIds(ctx *ctx.Context, userIds []int64, sso string) error {
-	return DB(ctx).Where("id in ? and `from`=?", userIds, sso).Delete(&User{}).Error
+func UsersDelByIds(ctx *ctx.Context, userIds []int64) error {
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("user_id in ?", userIds).Delete(&UserGroupMember{}).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Where("id in ?", userIds).Delete(&User{}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func (u *User) CanModifyUserGroup(ctx *ctx.Context, ug *UserGroup) (bool, error) {

@@ -193,5 +193,5 @@ type BoardBusigroup struct {
 }
 
 type Users struct {
-	From string `gorm:"column:from;varchar(16);default:'';comment:from"`
+	Belong string `gorm:"column:from;varchar(16);default:'';comment:Belong"`
 }

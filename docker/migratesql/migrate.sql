@@ -34,4 +34,5 @@ ALTER TABLE notify_tpl ADD COLUMN create_by VARCHAR(64) DEFAULT '' COMMENT 'crea
 ALTER TABLE notify_tpl ADD COLUMN update_at INT DEFAULT 0 COMMENT 'update_at';
 ALTER TABLE notify_tpl ADD COLUMN update_by VARCHAR(64) DEFAULT '' COMMENT 'update_by';
 
-ALTER TABLE users ADD COLUMN from VARCHAR(16) DEFAULT '' COMMENT 'from';
+-- Alter table for Users
+ALTER TABLE users ADD COLUMN belong VARCHAR(16) DEFAULT '' COMMENT 'belong';

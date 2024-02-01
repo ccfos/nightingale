@@ -24,7 +24,7 @@ type SsoClient struct {
 
 const LDAP = `
 Enable = false
-Host = 'ldap.example.org'
+Host = 'LDAPNAME.example.org'
 Port = 389
 BaseDn = 'dc=example,dc=org'
 BindUser = 'cn=manager,dc=example,dc=org'
@@ -137,7 +137,7 @@ func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
 			var config ldapx.Config
 			err := toml.Unmarshal([]byte(cfg.Content), &config)
 			if err != nil {
-				log.Fatalln("init ldap failed", err)
+				log.Fatalln("init LDAPNAME failed", err)
 			}
 			ssoClient.LDAP = ldapx.New(config)
 		case "OIDC":

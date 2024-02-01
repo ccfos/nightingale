@@ -21,7 +21,9 @@ type Config struct {
 	BaseDn          string
 	BindUser        string
 	BindPass        string
-	SyncToMysql     bool
+	SyncUsers       bool
+	SyncCycle       time.Duration
+	UserFilter      string
 	AuthFilter      string
 	Attributes      LdapAttributes
 	CoverAttributes bool
@@ -37,7 +39,9 @@ type SsoClient struct {
 	BaseDn          string
 	BindUser        string
 	BindPass        string
-	SyncToMysql     bool
+	SyncUsers       bool
+	SyncCycle       time.Duration
+	UserFilter      string
 	AuthFilter      string
 	Attributes      LdapAttributes
 	CoverAttributes bool
@@ -83,7 +87,9 @@ func (s *SsoClient) Reload(cf Config) {
 	s.TLS = cf.TLS
 	s.StartTLS = cf.StartTLS
 	s.DefaultRoles = cf.DefaultRoles
-	s.SyncToMysql = cf.SyncToMysql
+	s.SyncUsers = cf.SyncUsers
+	s.SyncCycle = cf.SyncCycle
+	s.UserFilter = cf.UserFilter
 }
 
 func (s *SsoClient) genLdapAttributeSearchList() []string {
@@ -191,7 +197,7 @@ func (s *SsoClient) LdapGetAllUsers() (map[string]*models.User, error) {
 	searchRequest := ldap.NewSearchRequest(
 		lc.BaseDn, // The base dn to search
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(&(uid=*))"),      // The filter to apply
+		fmt.Sprintf(s.UserFilter),      // The filter to apply
 		s.genLdapAttributeSearchList(), // A list attributes to retrieve
 		nil,
 	)
