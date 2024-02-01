@@ -66,7 +66,6 @@ func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 
 	usersToBeAdd := getExtraUsers(usersFromDb, usersFromSso)
 	for _, user := range usersToBeAdd {
-		user.Belong = LDAPNAME
 		if err := user.Add(ctx); err != nil {
 			logger.Warningf("failed to sync add user[%v] to db, err: %v", *user, err)
 		}

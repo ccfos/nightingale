@@ -226,12 +226,20 @@ func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
 }
 
 func entryAttributeToUser(entry *ldap.Entry) *models.User {
-	var user models.User
+	user := new(models.User)
 	user.Username = entry.GetAttributeValue("uid")
 	user.Email = entry.GetAttributeValue("mail")
 	user.Phone = entry.GetAttributeValue("phone")
 	user.Nickname = entry.GetAttributeValue("cn")
-	return &user
+
+	user.Password = "******"
+	user.Portrait = ""
+	user.Contacts = []byte("{}")
+	user.CreateBy = "ldap"
+	user.UpdateBy = "ldap"
+	user.Belong = "ldap"
+
+	return user
 }
 
 func (s *SsoClient) UserExist(uid string) (bool, error) {
@@ -310,7 +318,6 @@ func LdapLogin(ctx *ctx.Context, username, pass, roles string, ldap *SsoClient) 
 
 	user.Password = "******"
 	user.Portrait = ""
-
 	user.Contacts = []byte("{}")
 	user.CreateAt = now
 	user.UpdateAt = now
