@@ -22,7 +22,7 @@ type Config struct {
 	BindUser        string
 	BindPass        string
 	SyncUsers       bool
-	SyncCycle       time.Duration
+	SyncInterval    time.Duration
 	UserFilter      string
 	AuthFilter      string
 	Attributes      LdapAttributes
@@ -93,7 +93,7 @@ func (s *SsoClient) Reload(cf Config) {
 	s.StartTLS = cf.StartTLS
 	s.DefaultRoles = cf.DefaultRoles
 	s.SyncUsers = cf.SyncUsers
-	s.SyncInterval = cf.SyncCycle
+	s.SyncInterval = cf.SyncInterval
 	s.UserFilter = cf.UserFilter
 
 	if s.SyncInterval > 0 {
