@@ -51,22 +51,26 @@ func (rt *Router) loginPost(c *gin.Context) {
 		}
 		authPassWord = decPassWord
 	}
-	user, err := models.PassLogin(rt.Ctx, f.Username, authPassWord)
-	if err != nil {
-		// pass validate fail, try ldap
-		if rt.Sso.LDAP.Enable {
-			roles := strings.Join(rt.Sso.LDAP.DefaultRoles, " ")
-			user, err = models.LdapLogin(rt.Ctx, f.Username, authPassWord, roles, rt.Sso.LDAP)
-			if err != nil {
-				logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
-				ginx.NewRender(c).Message(err)
+
+	var user *models.User
+	var err error
+	if rt.Sso.LDAP.Enable {
+		roles := strings.Join(rt.Sso.LDAP.DefaultRoles, " ")
+		user, err = ldapx.LdapLogin(rt.Ctx, f.Username, authPassWord, roles, rt.Sso.LDAP)
+		if err != nil {
+			logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
+			var errLoginInN9e error
+			// to use n9e as the minimum guarantee for login
+			if user, errLoginInN9e = models.PassLogin(rt.Ctx, f.Username, authPassWord); errLoginInN9e != nil {
+				ginx.NewRender(c).Message("ldap login failed: %v; n9e login failed: %v", err, errLoginInN9e)
 				return
 			}
-			user.RolesLst = strings.Fields(user.Roles)
 		} else {
-			ginx.NewRender(c).Message(err)
-			return
+			user.RolesLst = strings.Fields(user.Roles)
 		}
+	} else {
+		user, err = models.PassLogin(rt.Ctx, f.Username, authPassWord)
+		ginx.Dangerous(err)
 	}
 
 	if user == nil {

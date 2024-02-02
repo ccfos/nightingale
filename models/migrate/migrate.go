@@ -14,7 +14,8 @@ func Migrate(db *gorm.DB) {
 
 func MigrateTables(db *gorm.DB) error {
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
-		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{}, &Board{}, &BoardBusigroup{}}
+		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
+		&Board{}, &BoardBusigroup{}, &Users{}}
 
 	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
 		dts = append(dts, &AlertHisEvent{})
@@ -189,4 +190,8 @@ type Board struct {
 type BoardBusigroup struct {
 	BusiGroupId int64 `gorm:"column:busi_group_id;bigint(20);not null;default:0;comment:busi group id"`
 	BoardId     int64 `gorm:"column:board_id;bigint(20);not null;default:0;comment:board id"`
+}
+
+type Users struct {
+	Belong string `gorm:"column:belong;varchar(16);default:'';comment:belong"`
 }

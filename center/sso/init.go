@@ -29,9 +29,13 @@ Port = 389
 BaseDn = 'dc=example,dc=org'
 BindUser = 'cn=manager,dc=example,dc=org'
 BindPass = '*******'
+SyncUsers = false
+# unit: s
+SyncInterval = 86400
 # openldap format e.g. (&(uid=%s))
 # AD format e.g. (&(sAMAccountName=%s))
 AuthFilter = '(&(uid=%s))'
+UserFilter = '(&(uid=*))'
 CoverAttributes = true
 TLS = false
 StartTLS = true
@@ -169,5 +173,8 @@ func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
 			ssoClient.OAuth2 = oauth2x.New(config)
 		}
 	}
+
+	ssoClient.SyncSsoUsers(ctx)
+
 	return ssoClient
 }
