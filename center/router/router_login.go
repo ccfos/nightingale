@@ -106,7 +106,18 @@ func (rt *Router) logoutPost(c *gin.Context) {
 		return
 	}
 
-	ginx.NewRender(c).Message("")
+	var logoutAddr string
+	user := c.MustGet("user").(*models.User)
+	switch user.Belong {
+	case "oidc":
+		logoutAddr = rt.Sso.OIDC.GetSsoLogoutAddr()
+	case "cas":
+		logoutAddr = rt.Sso.CAS.GetSsoLogoutAddr()
+	case "oauth2":
+		logoutAddr = rt.Sso.OAuth2.GetSsoLogoutAddr()
+	}
+
+	ginx.NewRender(c).Data(logoutAddr, nil)
 }
 
 type refreshForm struct {

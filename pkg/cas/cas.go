@@ -20,6 +20,7 @@ import (
 type Config struct {
 	Enable          bool
 	SsoAddr         string
+	SsoLogoutAddr   string
 	LoginPath       string
 	RedirectURL     string
 	DisplayName     string
@@ -34,12 +35,13 @@ type Config struct {
 }
 
 type SsoClient struct {
-	Enable       bool
-	Config       Config
-	SsoAddr      string
-	CallbackAddr string
-	DisplayName  string
-	Attributes   struct {
+	Enable        bool
+	Config        Config
+	SsoAddr       string
+	SsoLogoutAddr string
+	CallbackAddr  string
+	DisplayName   string
+	Attributes    struct {
 		Nickname string
 		Phone    string
 		Email    string
@@ -59,6 +61,7 @@ func New(cf Config) *SsoClient {
 	cli.Enable = cf.Enable
 	cli.Config = cf
 	cli.SsoAddr = cf.SsoAddr
+	cli.SsoLogoutAddr = cf.SsoLogoutAddr
 	cli.CallbackAddr = cf.RedirectURL
 	cli.DisplayName = cf.DisplayName
 	cli.Attributes.Nickname = cf.Attributes.Nickname
@@ -89,6 +92,7 @@ func (s *SsoClient) Reload(cf Config) {
 	s.Enable = cf.Enable
 	s.Config = cf
 	s.SsoAddr = cf.SsoAddr
+	s.SsoLogoutAddr = cf.SsoLogoutAddr
 	s.CallbackAddr = cf.RedirectURL
 	s.DisplayName = cf.DisplayName
 	s.Attributes.Nickname = cf.Attributes.Nickname
@@ -114,6 +118,16 @@ func (s *SsoClient) GetDisplayName() string {
 	}
 
 	return s.DisplayName
+}
+
+func (s *SsoClient) GetSsoLogoutAddr() string {
+	s.RLock()
+	defer s.RUnlock()
+	if !s.Enable {
+		return ""
+	}
+
+	return s.SsoLogoutAddr
 }
 
 // Authorize return the cas authorize location and state

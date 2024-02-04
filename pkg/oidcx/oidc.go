@@ -21,6 +21,7 @@ type SsoClient struct {
 	Verifier        *oidc.IDTokenVerifier
 	Config          oauth2.Config
 	SsoAddr         string
+	SsoLogoutAddr   string
 	CallbackAddr    string
 	CoverAttributes bool
 	DisplayName     string
@@ -42,6 +43,7 @@ type Config struct {
 	DisplayName     string
 	RedirectURL     string
 	SsoAddr         string
+	SsoLoginOutAddr string
 	ClientId        string
 	ClientSecret    string
 	CoverAttributes bool
@@ -78,6 +80,7 @@ func (s *SsoClient) Reload(cf Config) error {
 
 	s.Enable = cf.Enable
 	s.SsoAddr = cf.SsoAddr
+	s.SsoLogoutAddr = cf.SsoLoginOutAddr
 	s.CallbackAddr = cf.RedirectURL
 	s.CoverAttributes = cf.CoverAttributes
 	s.Attributes.Username = cf.Attributes.Username
@@ -126,6 +129,16 @@ func (s *SsoClient) GetDisplayName() string {
 	}
 
 	return s.DisplayName
+}
+
+func (s *SsoClient) GetSsoLogoutAddr() string {
+	s.RLock()
+	defer s.RUnlock()
+	if !s.Enable {
+		return ""
+	}
+
+	return s.SsoLogoutAddr
 }
 
 func wrapStateKey(key string) string {
