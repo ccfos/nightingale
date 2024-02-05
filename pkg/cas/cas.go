@@ -18,15 +18,16 @@ import (
 )
 
 type Config struct {
-	Enable          bool
-	SsoAddr         string
-	SsoLogoutAddr   string
-	LoginPath       string
-	RedirectURL     string
-	DisplayName     string
-	CoverAttributes bool
-	SkipTlsVerify   bool
-	Attributes      struct {
+	Enable           bool
+	SsoAddr          string
+	SsoLogoutAddr    string
+	LoginPath        string
+	TicketVerifyPath string
+	RedirectURL      string
+	DisplayName      string
+	CoverAttributes  bool
+	SkipTlsVerify    bool
+	Attributes       struct {
 		Nickname string
 		Phone    string
 		Email    string
@@ -60,7 +61,7 @@ func New(cf Config) *SsoClient {
 
 	cli.Enable = cf.Enable
 	cli.Config = cf
-	cli.SsoAddr = cf.SsoAddr
+	cli.SsoAddr = cf.SsoAddr + cf.TicketVerifyPath
 	cli.SsoLogoutAddr = cf.SsoLogoutAddr
 	cli.CallbackAddr = cf.RedirectURL
 	cli.DisplayName = cf.DisplayName
