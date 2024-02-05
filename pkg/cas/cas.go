@@ -18,16 +18,15 @@ import (
 )
 
 type Config struct {
-	Enable           bool
-	SsoAddr          string
-	SsoLogoutAddr    string
-	LoginPath        string
-	TicketVerifyPath string
-	RedirectURL      string
-	DisplayName      string
-	CoverAttributes  bool
-	SkipTlsVerify    bool
-	Attributes       struct {
+	Enable          bool
+	SsoAddr         string
+	SsoLogoutAddr   string
+	LoginPath       string
+	RedirectURL     string
+	DisplayName     string
+	CoverAttributes bool
+	SkipTlsVerify   bool
+	Attributes      struct {
 		Nickname string
 		Phone    string
 		Email    string
@@ -61,7 +60,7 @@ func New(cf Config) *SsoClient {
 
 	cli.Enable = cf.Enable
 	cli.Config = cf
-	cli.SsoAddr = cf.SsoAddr + cf.TicketVerifyPath
+	cli.SsoAddr = cf.SsoAddr
 	cli.SsoLogoutAddr = cf.SsoLogoutAddr
 	cli.CallbackAddr = cf.RedirectURL
 	cli.DisplayName = cf.DisplayName
@@ -92,7 +91,7 @@ func (s *SsoClient) Reload(cf Config) {
 
 	s.Enable = cf.Enable
 	s.Config = cf
-	s.SsoAddr = cf.SsoAddr + cf.TicketVerifyPath
+	s.SsoAddr = cf.SsoAddr
 	s.SsoLogoutAddr = cf.SsoLogoutAddr
 	s.CallbackAddr = cf.RedirectURL
 	s.DisplayName = cf.DisplayName
@@ -167,12 +166,12 @@ func (s *SsoClient) genRedirectURL(state string) string {
 
 	if s.Config.LoginPath == "" {
 		if strings.Contains(s.Config.SsoAddr, "p3") {
-			SsoAddr.Path = "login"
+			SsoAddr.Path += "/login"
 		} else {
-			SsoAddr.Path = "cas/login"
+			SsoAddr.Path += "/cas/login"
 		}
 	} else {
-		SsoAddr.Path = s.Config.LoginPath
+		SsoAddr.Path += s.Config.LoginPath
 	}
 
 	buf.WriteString(SsoAddr.String())
