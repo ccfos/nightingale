@@ -3,11 +3,6 @@ package router
 import (
 	"encoding/base64"
 	"fmt"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/cas"
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
@@ -15,6 +10,9 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
 	"github.com/pelletier/go-toml/v2"
+	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -55,8 +53,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 	var user *models.User
 	var err error
 	if rt.Sso.LDAP.Enable {
-		roles := strings.Join(rt.Sso.LDAP.DefaultRoles, " ")
-		user, err = ldapx.LdapLogin(rt.Ctx, f.Username, authPassWord, roles, rt.Sso.LDAP)
+		user, err = ldapx.LdapLogin(rt.Ctx, f.Username, authPassWord, rt.Sso.LDAP.DefaultRoles, rt.Sso.LDAP)
 		if err != nil {
 			logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
 			var errLoginInN9e error
@@ -255,39 +252,12 @@ func (rt *Router) loginCallback(c *gin.Context) {
 
 	if user != nil {
 		if rt.Sso.OIDC.CoverAttributes {
-			if ret.Nickname != "" {
-				user.Nickname = ret.Nickname
-			}
-
-			if ret.Email != "" {
-				user.Email = ret.Email
-			}
-
-			if ret.Phone != "" {
-				user.Phone = ret.Phone
-			}
-
-			user.UpdateAt = time.Now().Unix()
+			user.UpdateSsoFields(ret.Nickname, ret.Phone, ret.Email)
 			user.Update(rt.Ctx, "email", "nickname", "phone", "update_at")
 		}
 	} else {
-		now := time.Now().Unix()
-		user = &models.User{
-			Username: ret.Username,
-			Password: "******",
-			Nickname: ret.Nickname,
-			Phone:    ret.Phone,
-			Email:    ret.Email,
-			Portrait: "",
-			Roles:    strings.Join(rt.Sso.OIDC.DefaultRoles, " "),
-			RolesLst: rt.Sso.OIDC.DefaultRoles,
-			Contacts: []byte("{}"),
-			CreateAt: now,
-			UpdateAt: now,
-			CreateBy: "oidc",
-			UpdateBy: "oidc",
-		}
-
+		user = new(models.User)
+		user.FullSsoFields(ret.Username, ret.Nickname, ret.Phone, ret.Email, "oidc", rt.Sso.OIDC.DefaultRoles)
 		// create user from oidc
 		ginx.Dangerous(user.Add(rt.Ctx))
 	}
@@ -309,6 +279,10 @@ func (rt *Router) loginCallback(c *gin.Context) {
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	}, nil)
+}
+
+func fullSso() {
+
 }
 
 type RedirectOutput struct {
@@ -365,38 +339,12 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 	ginx.Dangerous(err)
 	if user != nil {
 		if rt.Sso.CAS.CoverAttributes {
-			if ret.Nickname != "" {
-				user.Nickname = ret.Nickname
-			}
-
-			if ret.Email != "" {
-				user.Email = ret.Email
-			}
-
-			if ret.Phone != "" {
-				user.Phone = ret.Phone
-			}
-
-			user.UpdateAt = time.Now().Unix()
+			user.UpdateSsoFields(ret.Nickname, ret.Phone, ret.Email)
 			ginx.Dangerous(user.Update(rt.Ctx, "email", "nickname", "phone", "update_at"))
 		}
 	} else {
-		now := time.Now().Unix()
-		user = &models.User{
-			Username: ret.Username,
-			Password: "******",
-			Nickname: ret.Nickname,
-			Portrait: "",
-			Roles:    strings.Join(rt.Sso.CAS.DefaultRoles, " "),
-			RolesLst: rt.Sso.CAS.DefaultRoles,
-			Contacts: []byte("{}"),
-			Phone:    ret.Phone,
-			Email:    ret.Email,
-			CreateAt: now,
-			UpdateAt: now,
-			CreateBy: "CAS",
-			UpdateBy: "CAS",
-		}
+		user := new(models.User)
+		user.FullSsoFields(ret.Username, ret.Nickname, ret.Phone, ret.Email, "cas", rt.Sso.CAS.DefaultRoles)
 		// create user from cas
 		ginx.Dangerous(user.Add(rt.Ctx))
 	}
@@ -467,39 +415,12 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 
 	if user != nil {
 		if rt.Sso.OAuth2.CoverAttributes {
-			if ret.Nickname != "" {
-				user.Nickname = ret.Nickname
-			}
-
-			if ret.Email != "" {
-				user.Email = ret.Email
-			}
-
-			if ret.Phone != "" {
-				user.Phone = ret.Phone
-			}
-
-			user.UpdateAt = time.Now().Unix()
+			user.UpdateSsoFields(ret.Nickname, ret.Phone, ret.Email)
 			user.Update(rt.Ctx, "email", "nickname", "phone", "update_at")
 		}
 	} else {
-		now := time.Now().Unix()
-		user = &models.User{
-			Username: ret.Username,
-			Password: "******",
-			Nickname: ret.Nickname,
-			Phone:    ret.Phone,
-			Email:    ret.Email,
-			Portrait: "",
-			Roles:    strings.Join(rt.Sso.OAuth2.DefaultRoles, " "),
-			RolesLst: rt.Sso.OAuth2.DefaultRoles,
-			Contacts: []byte("{}"),
-			CreateAt: now,
-			UpdateAt: now,
-			CreateBy: "oauth2",
-			UpdateBy: "oauth2",
-		}
-
+		user := new(models.User)
+		user.FullSsoFields(ret.Username, ret.Nickname, ret.Phone, ret.Email, "oauth2", rt.Sso.OAuth2.DefaultRoles)
 		// create user from oidc
 		ginx.Dangerous(user.Add(rt.Ctx))
 	}
