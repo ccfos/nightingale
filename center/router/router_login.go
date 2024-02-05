@@ -343,7 +343,7 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 			ginx.Dangerous(user.Update(rt.Ctx, "email", "nickname", "phone", "update_at"))
 		}
 	} else {
-		user := new(models.User)
+		user = new(models.User)
 		user.FullSsoFields(ret.Username, ret.Nickname, ret.Phone, ret.Email, "cas", rt.Sso.CAS.DefaultRoles)
 		// create user from cas
 		ginx.Dangerous(user.Add(rt.Ctx))
@@ -419,7 +419,7 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 			user.Update(rt.Ctx, "email", "nickname", "phone", "update_at")
 		}
 	} else {
-		user := new(models.User)
+		user = new(models.User)
 		user.FullSsoFields(ret.Username, ret.Nickname, ret.Phone, ret.Email, "oauth2", rt.Sso.OAuth2.DefaultRoles)
 		// create user from oidc
 		ginx.Dangerous(user.Add(rt.Ctx))
