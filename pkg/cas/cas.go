@@ -92,7 +92,7 @@ func (s *SsoClient) Reload(cf Config) {
 
 	s.Enable = cf.Enable
 	s.Config = cf
-	s.SsoAddr = cf.SsoAddr
+	s.SsoAddr = cf.SsoAddr + cf.TicketVerifyPath
 	s.SsoLogoutAddr = cf.SsoLogoutAddr
 	s.CallbackAddr = cf.RedirectURL
 	s.DisplayName = cf.DisplayName
