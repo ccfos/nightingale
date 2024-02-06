@@ -49,8 +49,8 @@ type Config struct {
 	CoverAttributes bool
 	SkipTlsVerify   bool
 	Attributes      struct {
-		Nickname string
 		Username string
+		Nickname string
 		Phone    string
 		Email    string
 	}
@@ -75,7 +75,7 @@ func (s *SsoClient) Reload(cf Config) error {
 	}
 
 	if cf.Attributes.Username == "" {
-		cf.Attributes.Username = "sub"
+		cf.Attributes.Username = "username"
 	}
 
 	s.Enable = cf.Enable
