@@ -120,6 +120,10 @@ func (s *SsoClient) Reload(cf Config) error {
 		Scopes:       cf.Scopes,
 	}
 
+	if len(s.Config.Scopes) == 0 {
+		s.Config.Scopes = []string{oidc.ScopeOpenID, "username", "profile", "email", "phone"}
+	}
+
 	return nil
 }
 
