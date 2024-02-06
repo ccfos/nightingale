@@ -82,7 +82,7 @@ CoverAttributes = false
 DefaultRoles = ['Standard']
 
 [Attributes]
-Username = 'sub'
+Username = 'username'
 Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'
@@ -97,8 +97,10 @@ ClientId = ''
 ClientSecret = ''
 CoverAttributes = true
 DefaultRoles = ['Standard']
+Scopes = ["openid", "profile", "username", "email", "phone"]
 
 [Attributes]
+Username = 'username'
 Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'

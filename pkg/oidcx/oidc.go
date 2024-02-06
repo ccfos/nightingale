@@ -55,6 +55,7 @@ type Config struct {
 		Email    string
 	}
 	DefaultRoles []string
+	Scopes       []string
 }
 
 func New(cf Config) (*SsoClient, error) {
@@ -116,8 +117,9 @@ func (s *SsoClient) Reload(cf Config) error {
 		ClientSecret: cf.ClientSecret,
 		Endpoint:     provider.Endpoint(),
 		RedirectURL:  cf.RedirectURL,
-		Scopes:       []string{oidc.ScopeOpenID, "profile", "email", "phone"},
+		Scopes:       cf.Scopes,
 	}
+
 	return nil
 }
 
