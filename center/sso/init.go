@@ -65,7 +65,7 @@ UserinfoPrefix = 'data'
 Scopes = ['profile', 'email', 'phone']
 
 [Attributes]
-Username = 'username'
+Username = 'sub'
 Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'
@@ -82,7 +82,7 @@ CoverAttributes = false
 DefaultRoles = ['Standard']
 
 [Attributes]
-Username = 'username'
+Username = 'sub'
 Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'
@@ -100,7 +100,7 @@ DefaultRoles = ['Standard']
 Scopes = ["openid", "profile", "username", "email", "phone"]
 
 [Attributes]
-Username = 'username'
+Username = 'sub'
 Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'

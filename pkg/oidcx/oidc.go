@@ -76,7 +76,7 @@ func (s *SsoClient) Reload(cf Config) error {
 	}
 
 	if cf.Attributes.Username == "" {
-		cf.Attributes.Username = "username"
+		cf.Attributes.Username = "sub"
 	}
 
 	s.Enable = cf.Enable
@@ -121,7 +121,7 @@ func (s *SsoClient) Reload(cf Config) error {
 	}
 
 	if len(s.Config.Scopes) == 0 {
-		s.Config.Scopes = []string{oidc.ScopeOpenID, "username", "profile", "email", "phone"}
+		s.Config.Scopes = []string{oidc.ScopeOpenID, "profile", "email", "phone"}
 	}
 
 	return nil
