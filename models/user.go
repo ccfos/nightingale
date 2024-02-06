@@ -111,7 +111,7 @@ func (u *User) Verify() error {
 	return nil
 }
 
-func (u *User) UpdateSsoFields(nickname, phone, email string) {
+func (u *User) UpdateSsoFields(sso string, nickname, phone, email string) {
 	if nickname != "" {
 		u.Nickname = nickname
 	}
@@ -121,6 +121,7 @@ func (u *User) UpdateSsoFields(nickname, phone, email string) {
 	if email != "" {
 		u.Email = email
 	}
+	u.UpdateBy = sso
 	u.UpdateAt = time.Now().Unix()
 }
 

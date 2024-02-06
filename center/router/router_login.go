@@ -252,7 +252,7 @@ func (rt *Router) loginCallback(c *gin.Context) {
 
 	if user != nil {
 		if rt.Sso.OIDC.CoverAttributes {
-			user.UpdateSsoFields(ret.Nickname, ret.Phone, ret.Email)
+			user.UpdateSsoFields("oidc", ret.Nickname, ret.Phone, ret.Email)
 			user.Update(rt.Ctx, "email", "nickname", "phone", "update_at")
 		}
 	} else {
@@ -339,7 +339,7 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 	ginx.Dangerous(err)
 	if user != nil {
 		if rt.Sso.CAS.CoverAttributes {
-			user.UpdateSsoFields(ret.Nickname, ret.Phone, ret.Email)
+			user.UpdateSsoFields("cas", ret.Nickname, ret.Phone, ret.Email)
 			ginx.Dangerous(user.Update(rt.Ctx, "email", "nickname", "phone", "update_at"))
 		}
 	} else {
@@ -415,7 +415,7 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 
 	if user != nil {
 		if rt.Sso.OAuth2.CoverAttributes {
-			user.UpdateSsoFields(ret.Nickname, ret.Phone, ret.Email)
+			user.UpdateSsoFields("oauth2", ret.Nickname, ret.Phone, ret.Email)
 			user.Update(rt.Ctx, "email", "nickname", "phone", "update_at")
 		}
 	} else {

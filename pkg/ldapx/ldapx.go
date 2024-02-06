@@ -293,7 +293,7 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, l
 
 	if user != nil {
 		if user.Id > 0 && coverAttributes {
-			user.UpdateSsoFields(nickname, email, phone)
+			user.UpdateSsoFields("ldap", nickname, email, phone)
 			err := models.DB(ctx).Updates(user).Error
 			if err != nil {
 				return nil, errors.WithMessage(err, "failed to update user")
