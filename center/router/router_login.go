@@ -3,19 +3,20 @@ package router
 import (
 	"encoding/base64"
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/cas"
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
-	"github.com/pelletier/go-toml/v2"
-	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
