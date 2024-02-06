@@ -73,10 +73,10 @@ Email = 'email'
 
 const CAS = `
 Enable = false
+RedirectURL = 'http://127.0.0.1:18000/callback/cas'
 SsoAddr = 'https://cas.example.com/cas/'
 SsoLogoutAddr = 'https://cas.example.com/cas/session/end'
 # LoginPath = ''
-RedirectURL = 'http://127.0.0.1:18000/callback/cas'
 DisplayName = 'CAS登录'
 CoverAttributes = false
 DefaultRoles = ['Standard']

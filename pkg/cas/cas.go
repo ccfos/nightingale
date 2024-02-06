@@ -19,10 +19,10 @@ import (
 
 type Config struct {
 	Enable          bool
+	RedirectURL     string
 	SsoAddr         string
 	SsoLogoutAddr   string
 	LoginPath       string
-	RedirectURL     string
 	DisplayName     string
 	CoverAttributes bool
 	SkipTlsVerify   bool

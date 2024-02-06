@@ -125,7 +125,7 @@ func (u *User) UpdateSsoFields(sso string, nickname, phone, email string) {
 	u.UpdateAt = time.Now().Unix()
 }
 
-func (u *User) FullSsoFields(username, nickname, phone, email, sso string, defaultRoles []string) {
+func (u *User) FullSsoFields(sso, username, nickname, phone, email string, defaultRoles []string) {
 	now := time.Now().Unix()
 
 	u.Username = username
