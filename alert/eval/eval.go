@@ -460,6 +460,9 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndex ma
 
 			var values string
 			for k, v := range m {
+				if !strings.Contains(k, ".") {
+					continue
+				}
 				values += fmt.Sprintf("%s:%v ", k, v)
 			}
 

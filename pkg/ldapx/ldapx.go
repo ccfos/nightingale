@@ -99,12 +99,15 @@ func (s *SsoClient) Reload(cf Config) {
 	if s.SyncInterval > 0 {
 		s.Ticker.Reset(s.SyncInterval * time.Second)
 	}
+<<<<<<< HEAD
 }
 
 func (s *SsoClient) GetAttributes() LdapAttributes {
 	s.RLock()
 	defer s.RUnlock()
 	return s.Attributes
+=======
+>>>>>>> 717394d7e58372662d0c678b17fa51523b4fdc57
 }
 
 func (s *SsoClient) genLdapAttributeSearchList() []string {
@@ -225,6 +228,7 @@ func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
 
 	res := make(map[string]*models.User, len(sr.Entries))
 	for _, entry := range sr.Entries {
+<<<<<<< HEAD
 		attrs := s.GetAttributes()
 		username := entry.GetAttributeValue("uid")
 		nickname := entry.GetAttributeValue(attrs.Nickname)
@@ -235,11 +239,34 @@ func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
 		user.FullSsoFields(username, nickname, phone, email, "ldap", s.DefaultRoles)
 
 		res[entry.GetAttributeValue("uid")] = user
+=======
+		res[entry.GetAttributeValue("uid")] = entryAttributeToUser(entry)
+>>>>>>> 717394d7e58372662d0c678b17fa51523b4fdc57
 	}
 
 	return res, nil
 }
 
+<<<<<<< HEAD
+=======
+func entryAttributeToUser(entry *ldap.Entry) *models.User {
+	user := new(models.User)
+	user.Username = entry.GetAttributeValue("uid")
+	user.Email = entry.GetAttributeValue("mail")
+	user.Phone = entry.GetAttributeValue("phone")
+	user.Nickname = entry.GetAttributeValue("cn")
+
+	user.Password = "******"
+	user.Portrait = ""
+	user.Contacts = []byte("{}")
+	user.CreateBy = "ldap"
+	user.UpdateBy = "ldap"
+	user.Belong = "ldap"
+
+	return user
+}
+
+>>>>>>> 717394d7e58372662d0c678b17fa51523b4fdc57
 func (s *SsoClient) UserExist(uid string) (bool, error) {
 	s.RLock()
 	lc := s
@@ -263,18 +290,39 @@ func (s *SsoClient) UserExist(uid string) (bool, error) {
 	return false, nil
 }
 
+<<<<<<< HEAD
 func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, ldap *SsoClient) (*models.User, error) {
+=======
+func LdapLogin(ctx *ctx.Context, username, pass, roles string, ldap *SsoClient) (*models.User, error) {
+>>>>>>> 717394d7e58372662d0c678b17fa51523b4fdc57
 	sr, err := ldap.LoginCheck(username, pass)
 	if err != nil {
 		return nil, err
 	}
 
+<<<<<<< HEAD
+=======
+	user, err := models.UserGetByUsername(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		// default user settings
+		user = &models.User{
+			Username: username,
+			Nickname: username,
+		}
+	}
+
+>>>>>>> 717394d7e58372662d0c678b17fa51523b4fdc57
 	// copy attributes from ldap
 	ldap.RLock()
 	attrs := ldap.Attributes
 	coverAttributes := ldap.CoverAttributes
 	ldap.RUnlock()
 
+<<<<<<< HEAD
 	var nickname, email, phone string
 	if attrs.Nickname != "" {
 		nickname = sr.Entries[0].GetAttributeValue(attrs.Nickname)
@@ -294,11 +342,30 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, l
 	if user != nil {
 		if user.Id > 0 && coverAttributes {
 			user.UpdateSsoFields("ldap", nickname, email, phone)
+=======
+	if attrs.Nickname != "" {
+		user.Nickname = sr.Entries[0].GetAttributeValue(attrs.Nickname)
+	}
+	if attrs.Email != "" {
+		user.Email = sr.Entries[0].GetAttributeValue(attrs.Email)
+	}
+	if attrs.Phone != "" {
+		user.Phone = strings.Replace(sr.Entries[0].GetAttributeValue(attrs.Phone), " ", "", -1)
+	}
+
+	if user.Roles == "" {
+		user.Roles = roles
+	}
+
+	if user.Id > 0 {
+		if coverAttributes {
+>>>>>>> 717394d7e58372662d0c678b17fa51523b4fdc57
 			err := models.DB(ctx).Updates(user).Error
 			if err != nil {
 				return nil, errors.WithMessage(err, "failed to update user")
 			}
 		}
+<<<<<<< HEAD
 	} else {
 		user = new(models.User)
 		user.FullSsoFields(username, nickname, phone, email, "ldap", defaultRoles)
@@ -307,4 +374,22 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, l
 	}
 
 	return user, nil
+=======
+		return user, nil
+	}
+
+	now := time.Now().Unix()
+
+	user.Password = "******"
+	user.Portrait = ""
+	user.Contacts = []byte("{}")
+	user.CreateAt = now
+	user.UpdateAt = now
+	user.CreateBy = "ldap"
+	user.UpdateBy = "ldap"
+	user.Belong = "ldap"
+
+	err = models.DB(ctx).Create(user).Error
+	return user, err
+>>>>>>> 717394d7e58372662d0c678b17fa51523b4fdc57
 }
