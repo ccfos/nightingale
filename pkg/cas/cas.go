@@ -27,6 +27,7 @@ type Config struct {
 	CoverAttributes bool
 	SkipTlsVerify   bool
 	Attributes      struct {
+		UserName string
 		Nickname string
 		Phone    string
 		Email    string
@@ -42,6 +43,7 @@ type SsoClient struct {
 	CallbackAddr  string
 	DisplayName   string
 	Attributes    struct {
+		UserName string
 		Nickname string
 		Phone    string
 		Email    string
@@ -64,6 +66,7 @@ func New(cf Config) *SsoClient {
 	cli.SsoLogoutAddr = cf.SsoLogoutAddr
 	cli.CallbackAddr = cf.RedirectURL
 	cli.DisplayName = cf.DisplayName
+	cli.Attributes.UserName = cf.Attributes.UserName
 	cli.Attributes.Nickname = cf.Attributes.Nickname
 	cli.Attributes.Phone = cf.Attributes.Phone
 	cli.Attributes.Email = cf.Attributes.Email
@@ -95,6 +98,7 @@ func (s *SsoClient) Reload(cf Config) {
 	s.SsoLogoutAddr = cf.SsoLogoutAddr
 	s.CallbackAddr = cf.RedirectURL
 	s.DisplayName = cf.DisplayName
+	s.Attributes.UserName = cf.Attributes.UserName
 	s.Attributes.Nickname = cf.Attributes.Nickname
 	s.Attributes.Phone = cf.Attributes.Phone
 	s.Attributes.Email = cf.Attributes.Email
@@ -227,7 +231,8 @@ func (s *SsoClient) ValidateServiceTicket(ctx context.Context, ticket, state str
 		return
 	}
 	ret = &CallbackOutput{}
-	ret.Username = authRet.User
+	ret.Username = authRet.Attributes.Get(s.Attributes.UserName)
+	logger.Debugf("CAS Authentication Response's Attributes--[UserName]: %s", ret.Username)
 	ret.Nickname = authRet.Attributes.Get(s.Attributes.Nickname)
 	logger.Debugf("CAS Authentication Response's Attributes--[Nickname]: %s", ret.Nickname)
 	ret.Email = authRet.Attributes.Get(s.Attributes.Email)

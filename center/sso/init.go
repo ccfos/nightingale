@@ -82,6 +82,7 @@ CoverAttributes = false
 DefaultRoles = ['Standard']
 
 [Attributes]
+Username = 'sub'
 Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'
