@@ -42,6 +42,7 @@ StartTLS = true
 DefaultRoles = ['Standard']
 
 [Attributes]
+Username = 'uid'
 Nickname = 'cn'
 Phone = 'mobile'
 Email = 'mail'
