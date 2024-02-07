@@ -169,8 +169,5 @@ func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
 			ssoClient.OAuth2 = oauth2x.New(config)
 		}
 	}
-
-	ssoClient.SyncSsoUsers(ctx)
-
 	return ssoClient
 }

@@ -127,36 +127,12 @@ func (u *User) Add(ctx *ctx.Context) error {
 	return Insert(ctx, u)
 }
 
-func (u *User) AddSso(ctx *ctx.Context, sso string) error {
-	user, err := SsoUserGetByUsername(ctx, u.Username, sso)
-	if err != nil {
-		return errors.WithMessage(err, "failed to query sso user")
-	}
-
-	if user != nil {
-		return errors.New("Username already exists")
-	}
-
-	now := time.Now().Unix()
-	u.CreateAt = now
-	u.UpdateAt = now
-	return Insert(ctx, u)
-}
-
 func (u *User) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
 	if err := u.Verify(); err != nil {
 		return err
 	}
 
 	return DB(ctx).Model(u).Select(selectField, selectFields...).Updates(u).Error
-}
-
-func (u *User) UpdateSso(ctx *ctx.Context, sso string, selectField interface{}, selectFields ...interface{}) error {
-	if err := u.Verify(); err != nil {
-		return err
-	}
-
-	return DB(ctx).Where("from=?", sso).Model(u).Select(selectField, selectFields...).Updates(u).Error
 }
 
 func (u *User) UpdateAllFields(ctx *ctx.Context) error {
@@ -227,9 +203,6 @@ func UserGet(ctx *ctx.Context, where string, args ...interface{}) (*User, error)
 
 func UserGetByUsername(ctx *ctx.Context, username string) (*User, error) {
 	return UserGet(ctx, "username=?", username)
-}
-func SsoUserGetByUsername(ctx *ctx.Context, username, sso string) (*User, error) {
-	return UserGet(ctx, "username=? and from=?", sso, username)
 }
 
 func UserGetById(ctx *ctx.Context, id int64) (*User, error) {
@@ -422,28 +395,6 @@ func UserGetsByIds(ctx *ctx.Context, ids []int64) ([]User, error) {
 	}
 
 	return lst, err
-}
-
-func UserGetsBySso(ctx *ctx.Context, sso string) ([]User, error) {
-	session := DB(ctx).Where("from=?", sso).Order("username")
-
-	var users []User
-	err := session.Find(&users).Error
-	if err != nil {
-		return users, errors.WithMessage(err, "failed to query user")
-	}
-
-	for i := 0; i < len(users); i++ {
-		users[i].RolesLst = strings.Fields(users[i].Roles)
-		users[i].Admin = users[i].IsAdmin()
-		users[i].Password = ""
-	}
-
-	return users, nil
-}
-
-func SsoUsersDelByIds(ctx *ctx.Context, userIds []int64, sso string) error {
-	return DB(ctx).Where("uid in ? and from=?", userIds, sso).Error
 }
 
 func (u *User) CanModifyUserGroup(ctx *ctx.Context, ug *UserGroup) (bool, error) {
