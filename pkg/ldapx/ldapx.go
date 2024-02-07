@@ -107,23 +107,41 @@ func (s *SsoClient) GetAttributes() LdapAttributes {
 	return s.Attributes
 }
 
-func (s *SsoClient) genLdapAttributeSearchList() []string {
-	ldapAttributes := []string{"uid"}
-
+func (s *SsoClient) SafeCopy() *SsoClient {
 	s.RLock()
-	attrs := s.Attributes
+	lc := *s
 	s.RUnlock()
 
-	if attrs.Nickname != "" {
-		ldapAttributes = append(ldapAttributes, attrs.Nickname)
+	return &lc
+}
+
+func (s *SsoClient) LoginCheck(user, pass string) (*ldap.SearchResult, error) {
+	lc := s.SafeCopy()
+
+	conn, err := lc.newLdapConn()
+	if err != nil {
+		return nil, err
 	}
-	if attrs.Email != "" {
-		ldapAttributes = append(ldapAttributes, attrs.Email)
+	defer conn.Close()
+
+	sr, err := lc.ldapReq(conn, lc.AuthFilter, user)
+	if err != nil {
+		return nil, fmt.Errorf("ldap.error: ldap search fail: %v", err)
 	}
-	if attrs.Phone != "" {
-		ldapAttributes = append(ldapAttributes, attrs.Phone)
+
+	if len(sr.Entries) == 0 {
+		return nil, fmt.Errorf("username or password invalid")
 	}
-	return ldapAttributes
+
+	if len(sr.Entries) > 1 {
+		return nil, fmt.Errorf("ldap.error: search user(%s), multi entries found", user)
+	}
+
+	if err := conn.Bind(sr.Entries[0].DN, pass); err != nil {
+		return nil, fmt.Errorf("username or password invalid")
+	}
+
+	return sr, nil
 }
 
 func (s *SsoClient) newLdapConn() (*ldap.Conn, error) {
@@ -176,91 +194,21 @@ func (s *SsoClient) ldapReq(conn *ldap.Conn, filter string, values ...interface{
 	return sr, nil
 }
 
-func (s *SsoClient) LoginCheck(user, pass string) (*ldap.SearchResult, error) {
-	s.RLock()
-	lc := s
-	s.RUnlock()
+func (s *SsoClient) genLdapAttributeSearchList() []string {
+	ldapAttributes := []string{"uid"}
 
-	conn, err := lc.newLdapConn()
-	if err != nil {
-		return nil, err
+	attrs := s.GetAttributes()
+
+	if attrs.Nickname != "" {
+		ldapAttributes = append(ldapAttributes, attrs.Nickname)
 	}
-	defer conn.Close()
-
-	sr, err := lc.ldapReq(conn, lc.AuthFilter, user)
-	if err != nil {
-		return nil, fmt.Errorf("ldap.error: ldap search fail: %v", err)
+	if attrs.Email != "" {
+		ldapAttributes = append(ldapAttributes, attrs.Email)
 	}
-
-	if len(sr.Entries) == 0 {
-		return nil, fmt.Errorf("username or password invalid")
+	if attrs.Phone != "" {
+		ldapAttributes = append(ldapAttributes, attrs.Phone)
 	}
-
-	if len(sr.Entries) > 1 {
-		return nil, fmt.Errorf("ldap.error: search user(%s), multi entries found", user)
-	}
-
-	if err := conn.Bind(sr.Entries[0].DN, pass); err != nil {
-		return nil, fmt.Errorf("username or password invalid")
-	}
-
-	return sr, nil
-}
-
-func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
-	s.RLock()
-	lc := s
-	s.RUnlock()
-
-	conn, err := lc.newLdapConn()
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-
-	sr, err := lc.ldapReq(conn, lc.UserFilter)
-	if err != nil {
-		return nil, fmt.Errorf("ldap.error: ldap search fail: %v", err)
-	}
-
-	res := make(map[string]*models.User, len(sr.Entries))
-	for _, entry := range sr.Entries {
-		attrs := s.GetAttributes()
-		username := entry.GetAttributeValue("uid")
-		nickname := entry.GetAttributeValue(attrs.Nickname)
-		email := entry.GetAttributeValue(attrs.Email)
-		phone := entry.GetAttributeValue(attrs.Phone)
-
-		user := new(models.User)
-		user.FullSsoFields("ldap", username, nickname, phone, email, s.DefaultRoles)
-
-		res[entry.GetAttributeValue("uid")] = user
-	}
-
-	return res, nil
-}
-
-func (s *SsoClient) UserExist(uid string) (bool, error) {
-	s.RLock()
-	lc := s
-	s.RUnlock()
-
-	conn, err := lc.newLdapConn()
-	if err != nil {
-		return false, err
-	}
-	defer conn.Close()
-
-	sr, err := s.ldapReq(conn, "(&(uid=%s))", uid)
-	if err != nil {
-		return false, err
-	}
-
-	if len(sr.Entries) > 0 {
-		return true, nil
-	}
-
-	return false, nil
+	return ldapAttributes
 }
 
 func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, ldap *SsoClient) (*models.User, error) {

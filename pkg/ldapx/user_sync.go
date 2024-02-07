@@ -1,4 +1,4 @@
-package sso
+package ldapx
 
 import (
 	"fmt"
@@ -11,37 +11,8 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-const LDAPNAME = "ldap"
-
-func (s *SsoClient) SyncSsoUsers(ctx *ctx.Context) {
-	err := s.syncSsoUsers(ctx)
-	if err != nil {
-		fmt.Println("failed to sync ldap:", err)
-	}
-
-	go s.loopSyncSsoUsers(ctx)
-}
-
-func (s *SsoClient) loopSyncSsoUsers(ctx *ctx.Context) {
-	var err error
-	for {
-		select {
-		case <-s.LDAP.Ticker.C:
-			if s.LDAP.SyncUsers {
-				err = s.syncSsoUsers(ctx)
-			} else {
-				err = s.syncDelSsoUser(ctx)
-			}
-
-			if err != nil {
-				logger.Warningf("failed to sync ldap: %v", err)
-			}
-		}
-	}
-}
-
-func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
-	if !s.LDAP.Enable || !s.LDAP.SyncUsers {
+func (s *SsoClient) SyncUserAddAndDel(ctx *ctx.Context) error {
+	if !s.Enable || !s.SyncUsers {
 		return nil
 	}
 
@@ -77,10 +48,69 @@ func (s *SsoClient) syncSsoUsers(ctx *ctx.Context) error {
 	return nil
 }
 
-func (s *SsoClient) syncDelSsoUser(ctx *ctx.Context) error {
+func (s *SsoClient) getUsersFromSsoAndDb(ctx *ctx.Context) (usersFromSso, usersFromDb map[string]*models.User, err error) {
+	usersFromSso, err = s.UserGetAll()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	usersFromDb, err = models.UserGetsBySso(ctx, "ldap")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return
+}
+
+func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
+	lc := s.SafeCopy()
+
+	conn, err := lc.newLdapConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	sr, err := lc.ldapReq(conn, lc.UserFilter)
+	if err != nil {
+		return nil, fmt.Errorf("ldap.error: ldap search fail: %v", err)
+	}
+
+	res := make(map[string]*models.User, len(sr.Entries))
+	for _, entry := range sr.Entries {
+		attrs := s.GetAttributes()
+		username := entry.GetAttributeValue("uid")
+		nickname := entry.GetAttributeValue(attrs.Nickname)
+		email := entry.GetAttributeValue(attrs.Email)
+		phone := entry.GetAttributeValue(attrs.Phone)
+
+		user := new(models.User)
+		user.FullSsoFields("ldap", username, nickname, phone, email, s.DefaultRoles)
+
+		res[entry.GetAttributeValue("uid")] = user
+	}
+
+	return res, nil
+}
+
+// in m not in base
+func getExtraUsers(base, m map[string]*models.User) (extraUsers []*models.User) {
+	for username, user := range m {
+		if _, exist := base[username]; !exist {
+			extraUsers = append(extraUsers, user)
+		}
+	}
+	return
+}
+
+func (s *SsoClient) SyncUserDel(ctx *ctx.Context) error {
+	if !s.Enable || s.SyncUsers {
+		return nil
+	}
+
 	start := time.Now()
 
-	usersFromDb, err := models.UserGetsBySso(ctx, LDAPNAME)
+	usersFromDb, err := models.UserGetsBySso(ctx, "ldap")
 	if err != nil {
 		dumper.PutSyncRecord("sso_user", start.Unix(), -1, -1, "failed to query users: "+err.Error())
 		return err
@@ -88,7 +118,7 @@ func (s *SsoClient) syncDelSsoUser(ctx *ctx.Context) error {
 
 	delIds := make([]int64, 0)
 	for _, user := range usersFromDb {
-		exist, err := s.LDAP.UserExist(user.Username)
+		exist, err := s.UserExist(user.Username)
 		if err != nil {
 			dumper.PutSyncRecord("sso_user", start.Unix(), -1, -1, "failed to check whether the user exists: "+err.Error())
 		} else if !exist {
@@ -109,26 +139,23 @@ func (s *SsoClient) syncDelSsoUser(ctx *ctx.Context) error {
 	return nil
 }
 
-func (s *SsoClient) getUsersFromSsoAndDb(ctx *ctx.Context) (usersFromSso, usersFromDb map[string]*models.User, err error) {
-	usersFromSso, err = s.LDAP.UserGetAll()
+func (s *SsoClient) UserExist(uid string) (bool, error) {
+	lc := s.SafeCopy()
+
+	conn, err := lc.newLdapConn()
 	if err != nil {
-		return nil, nil, err
+		return false, err
 	}
+	defer conn.Close()
 
-	usersFromDb, err = models.UserGetsBySso(ctx, LDAPNAME)
+	sr, err := s.ldapReq(conn, "(&(uid=%s))", uid)
 	if err != nil {
-		return nil, nil, err
+		return false, err
 	}
 
-	return
-}
-
-// in m not in base
-func getExtraUsers(base, m map[string]*models.User) (extraUsers []*models.User) {
-	for username, user := range m {
-		if _, exist := base[username]; !exist {
-			extraUsers = append(extraUsers, user)
-		}
+	if len(sr.Entries) > 0 {
+		return true, nil
 	}
-	return
+
+	return false, nil
 }
