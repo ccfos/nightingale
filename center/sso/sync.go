@@ -20,10 +20,8 @@ func (s *SsoClient) loopSyncSsoUsers(ctx *ctx.Context) {
 	for {
 		select {
 		case <-s.LDAP.Ticker.C:
-			if s.LDAP.SyncUsers {
-				if err := s.LDAP.SyncUserAddAndDel(ctx); err != nil {
-					logger.Warningf("failed to sync the addition and deletion of ldap users: %v", err)
-				}
+			if err := s.LDAP.SyncUserAddAndDel(ctx); err != nil {
+				logger.Warningf("failed to sync the addition and deletion of ldap users: %v", err)
 			}
 		}
 	}
@@ -38,7 +36,7 @@ func (s *SsoClient) SyncSsoUserDel(ctx *ctx.Context) {
 }
 
 func (s *SsoClient) loopSyncSsoUserDel(ctx *ctx.Context) {
-	duration := 24 * time.Hour
+	duration := 1 * time.Second
 	for {
 		time.Sleep(duration)
 		if err := s.LDAP.SyncUserDel(ctx); err != nil {
