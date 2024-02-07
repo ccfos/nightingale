@@ -11,8 +11,8 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func (s *SsoClient) SyncUserAddAndDel(ctx *ctx.Context) error {
-	if !s.SafeGetEnable() || !s.SafeGetSyncUsers() {
+func (s *SsoClient) SyncAddAndDelUsers(ctx *ctx.Context) error {
+	if !s.Enable || !s.SyncAdd {
 		return nil
 	}
 
@@ -24,21 +24,24 @@ func (s *SsoClient) SyncUserAddAndDel(ctx *ctx.Context) error {
 		return err
 	}
 
-	usersToBeDel := getExtraUsers(usersFromSso, usersFromDb)
-	if len(usersToBeDel) > 0 {
-		delIds := make([]int64, 0, len(usersToBeDel))
-		for _, user := range usersToBeDel {
-			delIds = append(delIds, user.Id)
-		}
-		if err := models.UserDelByIds(ctx, delIds); err != nil {
-			logger.Warningf("failed to sync del users[%v] to db, err: %v", usersToBeDel, err)
-		}
-	}
-
 	usersToBeAdd := getExtraUsers(usersFromDb, usersFromSso)
 	for _, user := range usersToBeAdd {
 		if err := user.Add(ctx); err != nil {
 			logger.Warningf("failed to sync add user[%v] to db, err: %v", *user, err)
+		}
+	}
+
+	var usersToBeDel []*models.User
+	if s.SyncDel {
+		usersToBeDel = getExtraUsers(usersFromSso, usersFromDb)
+		if len(usersToBeDel) > 0 {
+			delIds := make([]int64, 0, len(usersToBeDel))
+			for _, user := range usersToBeDel {
+				delIds = append(delIds, user.Id)
+			}
+			if err := models.UserDelByIds(ctx, delIds); err != nil {
+				logger.Warningf("failed to sync del users[%v] to db, err: %v", usersToBeDel, err)
+			}
 		}
 	}
 
@@ -63,7 +66,7 @@ func (s *SsoClient) getUsersFromSsoAndDb(ctx *ctx.Context) (usersFromSso, usersF
 }
 
 func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
-	lc := s.SafeCopy()
+	lc := s.Copy()
 
 	conn, err := lc.newLdapConn()
 	if err != nil {
@@ -103,8 +106,8 @@ func getExtraUsers(base, m map[string]*models.User) (extraUsers []*models.User) 
 	return
 }
 
-func (s *SsoClient) SyncUserDel(ctx *ctx.Context) error {
-	if !s.SafeGetEnable() || s.SafeGetSyncUsers() {
+func (s *SsoClient) SyncDelUsers(ctx *ctx.Context) error {
+	if !s.Enable || s.SyncAdd || !s.SyncDel {
 		return nil
 	}
 
@@ -140,7 +143,7 @@ func (s *SsoClient) SyncUserDel(ctx *ctx.Context) error {
 }
 
 func (s *SsoClient) UserExist(username string) (bool, error) {
-	lc := s.SafeCopy()
+	lc := s.Copy()
 
 	conn, err := lc.newLdapConn()
 	if err != nil {

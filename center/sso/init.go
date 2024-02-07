@@ -29,7 +29,8 @@ Port = 389
 BaseDn = 'dc=example,dc=org'
 BindUser = 'cn=manager,dc=example,dc=org'
 BindPass = '*******'
-SyncUsers = false
+SyncAddUsers = false
+SyncDelUsers = false
 # unit: s
 SyncInterval = 86400
 # openldap format e.g. (&(uid=%s))
@@ -182,7 +183,6 @@ func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
 	}
 
 	ssoClient.SyncSsoUsers(ctx)
-	ssoClient.SyncSsoUserDel(ctx)
 
 	return ssoClient
 }

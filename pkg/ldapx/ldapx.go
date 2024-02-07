@@ -21,7 +21,8 @@ type Config struct {
 	BaseDn          string
 	BindUser        string
 	BindPass        string
-	SyncUsers       bool
+	SyncAddUsers    bool
+	SyncDelUsers    bool
 	SyncInterval    time.Duration
 	UserFilter      string
 	AuthFilter      string
@@ -39,7 +40,8 @@ type SsoClient struct {
 	BaseDn          string
 	BindUser        string
 	BindPass        string
-	SyncUsers       bool
+	SyncAdd         bool
+	SyncDel         bool
 	SyncInterval    time.Duration
 	UserFilter      string
 	AuthFilter      string
@@ -93,8 +95,10 @@ func (s *SsoClient) Reload(cf Config) {
 	s.TLS = cf.TLS
 	s.StartTLS = cf.StartTLS
 	s.DefaultRoles = cf.DefaultRoles
-	s.SyncUsers = cf.SyncUsers
+	s.SyncAdd = cf.SyncAddUsers
+	s.SyncDel = cf.SyncDelUsers
 	s.SyncInterval = cf.SyncInterval
+	s.SyncDel = cf.SyncDelUsers
 	s.UserFilter = cf.UserFilter
 
 	if s.SyncInterval > 0 {
@@ -102,31 +106,7 @@ func (s *SsoClient) Reload(cf Config) {
 	}
 }
 
-func (s *SsoClient) SafeGetAttributes() LdapAttributes {
-	s.RLock()
-	defer s.RUnlock()
-	return s.Attributes
-}
-
-func (s *SsoClient) SafeGetEnable() bool {
-	s.RLock()
-	defer s.RUnlock()
-	return s.Enable
-}
-
-func (s *SsoClient) SafeGetSyncUsers() bool {
-	s.RLock()
-	defer s.RUnlock()
-	return s.SyncUsers
-}
-
-func (s *SsoClient) SafeGetDefaultRoles() []string {
-	s.RLock()
-	defer s.RUnlock()
-	return s.DefaultRoles
-}
-
-func (s *SsoClient) SafeCopy() *SsoClient {
+func (s *SsoClient) Copy() *SsoClient {
 	s.RLock()
 	lc := *s
 	s.RUnlock()
@@ -135,7 +115,7 @@ func (s *SsoClient) SafeCopy() *SsoClient {
 }
 
 func (s *SsoClient) LoginCheck(user, pass string) (*ldap.SearchResult, error) {
-	lc := s.SafeCopy()
+	lc := s.Copy()
 
 	conn, err := lc.newLdapConn()
 	if err != nil {
@@ -216,7 +196,7 @@ func (s *SsoClient) ldapReq(conn *ldap.Conn, filter string, values ...interface{
 func (s *SsoClient) genLdapAttributeSearchList() []string {
 	var ldapAttributes []string
 
-	attrs := s.SafeGetAttributes()
+	attrs := s.Attributes
 
 	if attrs.Username == "" {
 		ldapAttributes = append(ldapAttributes, "uid")
