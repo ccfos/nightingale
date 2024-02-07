@@ -318,3 +318,41 @@ func (rt *Router) boardClone(c *gin.Context) {
 
 	ginx.NewRender(c).Message(nil)
 }
+
+type boardsForm struct {
+	BoardIds []int64 `json:"board_ids"`
+}
+
+func (rt *Router) boardBatchClone(c *gin.Context) {
+	me := c.MustGet("user").(*models.User)
+	rt.bgrwCheck(c, ginx.UrlParamInt64(c, "id"))
+
+	var f boardsForm
+	ginx.BindJSON(c, &f)
+
+	for _, bid := range f.BoardIds {
+		bo := rt.Board(bid)
+		newBoard := &models.Board{
+			Name:     bo.Name + " Cloned",
+			Tags:     bo.Tags,
+			GroupId:  bo.GroupId,
+			CreateBy: me.Username,
+			UpdateBy: me.Username,
+		}
+
+		if bo.Ident != "" {
+			newBoard.Ident = uuid.NewString()
+		}
+
+		ginx.Dangerous(newBoard.Add(rt.Ctx))
+
+		payload, err := models.BoardPayloadGet(rt.Ctx, bo.Id)
+		ginx.Dangerous(err)
+
+		if payload != "" {
+			ginx.Dangerous(models.BoardPayloadSave(rt.Ctx, newBoard.Id, payload))
+		}
+	}
+
+	ginx.NewRender(c).Message(nil)
+}
