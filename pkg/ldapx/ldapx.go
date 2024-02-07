@@ -108,7 +108,12 @@ func (s *SsoClient) Reload(cf Config) {
 
 func (s *SsoClient) Copy() *SsoClient {
 	s.RLock()
+
+	newRoles := make([]string, len(s.DefaultRoles))
+	copy(newRoles, s.DefaultRoles)
 	lc := *s
+	lc.DefaultRoles = newRoles
+
 	s.RUnlock()
 
 	return &lc
