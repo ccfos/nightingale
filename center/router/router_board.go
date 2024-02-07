@@ -1,6 +1,8 @@
 package router
 
 import (
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 	"net/http"
 	"time"
 
@@ -332,26 +334,37 @@ func (rt *Router) boardBatchClone(c *gin.Context) {
 
 	for _, bid := range f.BoardIds {
 		bo := rt.Board(bid)
-		newBoard := &models.Board{
-			Name:     bo.Name + " Cloned",
-			Tags:     bo.Tags,
-			GroupId:  bo.GroupId,
-			CreateBy: me.Username,
-			UpdateBy: me.Username,
-		}
-
-		if bo.Ident != "" {
-			newBoard.Ident = uuid.NewString()
-		}
-
-		ginx.Dangerous(newBoard.Add(rt.Ctx))
-
 		payload, err := models.BoardPayloadGet(rt.Ctx, bo.Id)
-		ginx.Dangerous(err)
 
-		if payload != "" {
-			ginx.Dangerous(models.BoardPayloadSave(rt.Ctx, newBoard.Id, payload))
-		}
+		err = models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
+			tCtx := &ctx.Context{
+				DB: tx,
+			}
+			newBoard := &models.Board{
+				Name:     bo.Name + " Cloned",
+				Tags:     bo.Tags,
+				GroupId:  bo.GroupId,
+				CreateBy: me.Username,
+				UpdateBy: me.Username,
+			}
+
+			if bo.Ident != "" {
+				newBoard.Ident = uuid.NewString()
+			}
+
+			if err = newBoard.Add(tCtx); err != nil {
+				return err
+			}
+
+			if payload != "" {
+				if err = models.BoardPayloadSave(tCtx, newBoard.Id, payload); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+
+		ginx.Dangerous(err)
 	}
 
 	ginx.NewRender(c).Message(nil)
