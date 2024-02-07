@@ -52,6 +52,7 @@ Enable = false
 DisplayName = 'OAuth2登录'
 RedirectURL = 'http://127.0.0.1:18000/callback/oauth'
 SsoAddr = 'https://sso.example.com/oauth2/authorize'
+SsoLogoutAddr = 'https://sso.example.com/oauth2/authorize/session/end'
 TokenAddr = 'https://sso.example.com/oauth2/token'
 UserInfoAddr = 'https://api.example.com/api/v1/user/info'
 TranTokenMethod = 'header'
@@ -64,7 +65,7 @@ UserinfoPrefix = 'data'
 Scopes = ['profile', 'email', 'phone']
 
 [Attributes]
-Username = 'username'
+Username = 'sub'
 Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'
@@ -72,14 +73,16 @@ Email = 'email'
 
 const CAS = `
 Enable = false
-SsoAddr = 'https://cas.example.com/cas/'
-# LoginPath = ''
 RedirectURL = 'http://127.0.0.1:18000/callback/cas'
+SsoAddr = 'https://cas.example.com/cas/'
+SsoLogoutAddr = 'https://cas.example.com/cas/session/end'
+# LoginPath = ''
 DisplayName = 'CAS登录'
 CoverAttributes = false
 DefaultRoles = ['Standard']
 
 [Attributes]
+Username = 'sub'
 Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'
@@ -89,12 +92,15 @@ Enable = false
 DisplayName = 'OIDC登录'
 RedirectURL = 'http://n9e.com/callback'
 SsoAddr = 'http://sso.example.org'
+SsoLogoutAddr = 'http://sso.example.org/session/end'
 ClientId = ''
 ClientSecret = ''
 CoverAttributes = true
 DefaultRoles = ['Standard']
+Scopes = ["openid", "profile", "username", "email", "phone"]
 
 [Attributes]
+Username = 'sub'
 Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'

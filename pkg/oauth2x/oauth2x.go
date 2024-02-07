@@ -23,6 +23,7 @@ type SsoClient struct {
 	Enable          bool
 	Config          oauth2.Config
 	SsoAddr         string
+	SsoLogoutAddr   string
 	UserInfoAddr    string
 	TranTokenMethod string
 	CallbackAddr    string
@@ -47,6 +48,7 @@ type Config struct {
 	DisplayName     string
 	RedirectURL     string
 	SsoAddr         string
+	SsoLogoutAddr   string
 	TokenAddr       string
 	UserInfoAddr    string
 	TranTokenMethod string
@@ -85,6 +87,7 @@ func (s *SsoClient) Reload(cf Config) {
 
 	s.Enable = cf.Enable
 	s.SsoAddr = cf.SsoAddr
+	s.SsoLogoutAddr = cf.SsoLogoutAddr
 	s.UserInfoAddr = cf.UserInfoAddr
 	s.TranTokenMethod = cf.TranTokenMethod
 	s.CallbackAddr = cf.RedirectURL
@@ -130,6 +133,16 @@ func (s *SsoClient) GetDisplayName() string {
 	}
 
 	return s.DisplayName
+}
+
+func (s *SsoClient) GetSsoLogoutAddr() string {
+	s.RLock()
+	defer s.RUnlock()
+	if !s.Enable {
+		return ""
+	}
+
+	return s.SsoLogoutAddr
 }
 
 func wrapStateKey(key string) string {

@@ -101,6 +101,12 @@ func (s *SsoClient) Reload(cf Config) {
 	}
 }
 
+func (s *SsoClient) GetAttributes() LdapAttributes {
+	s.RLock()
+	defer s.RUnlock()
+	return s.Attributes
+}
+
 func (s *SsoClient) genLdapAttributeSearchList() []string {
 	ldapAttributes := []string{"uid"}
 
@@ -219,27 +225,19 @@ func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
 
 	res := make(map[string]*models.User, len(sr.Entries))
 	for _, entry := range sr.Entries {
-		res[entry.GetAttributeValue("uid")] = entryAttributeToUser(entry)
+		attrs := s.GetAttributes()
+		username := entry.GetAttributeValue("uid")
+		nickname := entry.GetAttributeValue(attrs.Nickname)
+		email := entry.GetAttributeValue(attrs.Email)
+		phone := entry.GetAttributeValue(attrs.Phone)
+
+		user := new(models.User)
+		user.FullSsoFields("ldap", username, nickname, phone, email, s.DefaultRoles)
+
+		res[entry.GetAttributeValue("uid")] = user
 	}
 
 	return res, nil
-}
-
-func entryAttributeToUser(entry *ldap.Entry) *models.User {
-	user := new(models.User)
-	user.Username = entry.GetAttributeValue("uid")
-	user.Email = entry.GetAttributeValue("mail")
-	user.Phone = entry.GetAttributeValue("phone")
-	user.Nickname = entry.GetAttributeValue("cn")
-
-	user.Password = "******"
-	user.Portrait = ""
-	user.Contacts = []byte("{}")
-	user.CreateBy = "ldap"
-	user.UpdateBy = "ldap"
-	user.Belong = "ldap"
-
-	return user
 }
 
 func (s *SsoClient) UserExist(uid string) (bool, error) {
@@ -265,10 +263,26 @@ func (s *SsoClient) UserExist(uid string) (bool, error) {
 	return false, nil
 }
 
-func LdapLogin(ctx *ctx.Context, username, pass, roles string, ldap *SsoClient) (*models.User, error) {
+func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, ldap *SsoClient) (*models.User, error) {
 	sr, err := ldap.LoginCheck(username, pass)
 	if err != nil {
 		return nil, err
+	}
+	// copy attributes from ldap
+	ldap.RLock()
+	attrs := ldap.Attributes
+	coverAttributes := ldap.CoverAttributes
+	ldap.RUnlock()
+
+	var nickname, email, phone string
+	if attrs.Nickname != "" {
+		nickname = sr.Entries[0].GetAttributeValue(attrs.Nickname)
+	}
+	if attrs.Email != "" {
+		email = sr.Entries[0].GetAttributeValue(attrs.Email)
+	}
+	if attrs.Phone != "" {
+		phone = strings.Replace(sr.Entries[0].GetAttributeValue(attrs.Phone), " ", "", -1)
 	}
 
 	user, err := models.UserGetByUsername(ctx, username)
@@ -276,55 +290,20 @@ func LdapLogin(ctx *ctx.Context, username, pass, roles string, ldap *SsoClient) 
 		return nil, err
 	}
 
-	if user == nil {
-		// default user settings
-		user = &models.User{
-			Username: username,
-			Nickname: username,
-		}
-	}
-
-	// copy attributes from ldap
-	ldap.RLock()
-	attrs := ldap.Attributes
-	coverAttributes := ldap.CoverAttributes
-	ldap.RUnlock()
-
-	if attrs.Nickname != "" {
-		user.Nickname = sr.Entries[0].GetAttributeValue(attrs.Nickname)
-	}
-	if attrs.Email != "" {
-		user.Email = sr.Entries[0].GetAttributeValue(attrs.Email)
-	}
-	if attrs.Phone != "" {
-		user.Phone = strings.Replace(sr.Entries[0].GetAttributeValue(attrs.Phone), " ", "", -1)
-	}
-
-	if user.Roles == "" {
-		user.Roles = roles
-	}
-
-	if user.Id > 0 {
-		if coverAttributes {
-			err := models.DB(ctx).Updates(user).Error
-			if err != nil {
+	if user != nil {
+		if user.Id > 0 && coverAttributes {
+			updatedFields := user.UpdateSsoFields("ldap", nickname, email, phone)
+			if err := user.Update(ctx, "update_at", updatedFields...); err != nil {
 				return nil, errors.WithMessage(err, "failed to update user")
 			}
 		}
-		return user, nil
+	} else {
+		user = new(models.User)
+		user.FullSsoFields("ldap", username, nickname, phone, email, defaultRoles)
+		if err = models.DB(ctx).Create(user).Error; err != nil {
+			return nil, errors.WithMessage(err, "failed to add user")
+		}
 	}
 
-	now := time.Now().Unix()
-
-	user.Password = "******"
-	user.Portrait = ""
-	user.Contacts = []byte("{}")
-	user.CreateAt = now
-	user.UpdateAt = now
-	user.CreateBy = "ldap"
-	user.UpdateBy = "ldap"
-	user.Belong = "ldap"
-
-	err = models.DB(ctx).Create(user).Error
-	return user, err
+	return user, nil
 }

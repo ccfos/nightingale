@@ -190,7 +190,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/sql-template", rt.QuerySqlTemplate)
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
-		pages.POST("/auth/logout", rt.jwtMock(), rt.auth(), rt.logoutPost)
+		pages.POST("/auth/logout", rt.jwtMock(), rt.auth(), rt.user(), rt.logoutPost)
 		pages.POST("/auth/refresh", rt.jwtMock(), rt.refreshPost)
 		pages.POST("/auth/captcha", rt.jwtMock(), rt.generateCaptcha)
 		pages.POST("/auth/captcha-verify", rt.jwtMock(), rt.captchaVerify)

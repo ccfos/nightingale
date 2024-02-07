@@ -111,6 +111,44 @@ func (u *User) Verify() error {
 	return nil
 }
 
+func (u *User) UpdateSsoFields(sso string, nickname, phone, email string) []interface{} {
+	u.UpdateAt = time.Now().Unix()
+
+	if nickname != "" {
+		u.Nickname = nickname
+	}
+	if phone != "" {
+		u.Phone = phone
+	}
+	if email != "" {
+		u.Email = email
+	}
+	u.UpdateBy = sso
+	u.Belong = sso
+
+	updatedFields := []interface{}{"nickname", "phone", "email", "update_by", "belong"}
+	return updatedFields
+}
+
+func (u *User) FullSsoFields(sso, username, nickname, phone, email string, defaultRoles []string) {
+	now := time.Now().Unix()
+
+	u.Username = username
+	u.Password = "******"
+	u.Nickname = nickname
+	u.Phone = phone
+	u.Email = email
+	u.Portrait = ""
+	u.Roles = strings.Join(defaultRoles, " ")
+	u.RolesLst = defaultRoles
+	u.Contacts = []byte("{}")
+	u.CreateAt = now
+	u.UpdateAt = now
+	u.CreateBy = sso
+	u.UpdateBy = sso
+	u.Belong = sso
+}
+
 func (u *User) Add(ctx *ctx.Context) error {
 	user, err := UserGetByUsername(ctx, u.Username)
 	if err != nil {

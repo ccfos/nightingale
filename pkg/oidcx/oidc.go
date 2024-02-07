@@ -21,6 +21,7 @@ type SsoClient struct {
 	Verifier        *oidc.IDTokenVerifier
 	Config          oauth2.Config
 	SsoAddr         string
+	SsoLogoutAddr   string
 	CallbackAddr    string
 	CoverAttributes bool
 	DisplayName     string
@@ -42,17 +43,19 @@ type Config struct {
 	DisplayName     string
 	RedirectURL     string
 	SsoAddr         string
+	SsoLoginOutAddr string
 	ClientId        string
 	ClientSecret    string
 	CoverAttributes bool
 	SkipTlsVerify   bool
 	Attributes      struct {
-		Nickname string
 		Username string
+		Nickname string
 		Phone    string
 		Email    string
 	}
 	DefaultRoles []string
+	Scopes       []string
 }
 
 func New(cf Config) (*SsoClient, error) {
@@ -78,6 +81,7 @@ func (s *SsoClient) Reload(cf Config) error {
 
 	s.Enable = cf.Enable
 	s.SsoAddr = cf.SsoAddr
+	s.SsoLogoutAddr = cf.SsoLoginOutAddr
 	s.CallbackAddr = cf.RedirectURL
 	s.CoverAttributes = cf.CoverAttributes
 	s.Attributes.Username = cf.Attributes.Username
@@ -113,8 +117,13 @@ func (s *SsoClient) Reload(cf Config) error {
 		ClientSecret: cf.ClientSecret,
 		Endpoint:     provider.Endpoint(),
 		RedirectURL:  cf.RedirectURL,
-		Scopes:       []string{oidc.ScopeOpenID, "profile", "email", "phone"},
+		Scopes:       cf.Scopes,
 	}
+
+	if len(s.Config.Scopes) == 0 {
+		s.Config.Scopes = []string{oidc.ScopeOpenID, "profile", "email", "phone"}
+	}
+
 	return nil
 }
 
@@ -126,6 +135,16 @@ func (s *SsoClient) GetDisplayName() string {
 	}
 
 	return s.DisplayName
+}
+
+func (s *SsoClient) GetSsoLogoutAddr() string {
+	s.RLock()
+	defer s.RUnlock()
+	if !s.Enable {
+		return ""
+	}
+
+	return s.SsoLogoutAddr
 }
 
 func wrapStateKey(key string) string {
