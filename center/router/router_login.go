@@ -53,8 +53,9 @@ func (rt *Router) loginPost(c *gin.Context) {
 
 	var user *models.User
 	var err error
-	if rt.Sso.LDAP.Enable {
-		user, err = ldapx.LdapLogin(rt.Ctx, f.Username, authPassWord, rt.Sso.LDAP.DefaultRoles, rt.Sso.LDAP)
+	lc := rt.Sso.LDAP.Copy()
+	if lc.Enable {
+		user, err = ldapx.LdapLogin(rt.Ctx, f.Username, authPassWord, lc.DefaultRoles, lc)
 		if err != nil {
 			logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
 			var errLoginInN9e error

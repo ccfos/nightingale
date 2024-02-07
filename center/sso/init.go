@@ -29,7 +29,8 @@ Port = 389
 BaseDn = 'dc=example,dc=org'
 BindUser = 'cn=manager,dc=example,dc=org'
 BindPass = '*******'
-SyncUsers = false
+SyncAddUsers = false
+SyncDelUsers = false
 # unit: s
 SyncInterval = 86400
 # openldap format e.g. (&(uid=%s))
@@ -42,6 +43,7 @@ StartTLS = true
 DefaultRoles = ['Standard']
 
 [Attributes]
+Username = 'uid'
 Nickname = 'cn'
 Phone = 'mobile'
 Email = 'mail'
