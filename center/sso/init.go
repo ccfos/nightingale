@@ -181,6 +181,7 @@ func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
 	}
 
 	ssoClient.SyncSsoUsers(ctx)
+	ssoClient.SyncSsoUserDel(ctx)
 
 	return ssoClient
 }
