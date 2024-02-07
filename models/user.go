@@ -122,6 +122,7 @@ func (u *User) UpdateSsoFields(sso string, nickname, phone, email string) {
 		u.Email = email
 	}
 	u.UpdateBy = sso
+	u.Belong = sso
 	u.UpdateAt = time.Now().Unix()
 }
 
