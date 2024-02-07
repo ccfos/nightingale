@@ -292,17 +292,17 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, l
 
 	if user != nil {
 		if user.Id > 0 && coverAttributes {
-			user.UpdateSsoFields("ldap", nickname, email, phone)
-			err := models.DB(ctx).Updates(user).Error
-			if err != nil {
+			updatedFields := user.UpdateSsoFields("ldap", nickname, email, phone)
+			if err := user.Update(ctx, "update_at", updatedFields...); err != nil {
 				return nil, errors.WithMessage(err, "failed to update user")
 			}
 		}
 	} else {
 		user = new(models.User)
 		user.FullSsoFields("ldap", username, nickname, phone, email, defaultRoles)
-		err = models.DB(ctx).Create(user).Error
-		return user, err
+		if err = models.DB(ctx).Create(user).Error; err != nil {
+			return nil, errors.WithMessage(err, "failed to add user")
+		}
 	}
 
 	return user, nil

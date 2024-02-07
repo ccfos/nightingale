@@ -253,8 +253,8 @@ func (rt *Router) loginCallback(c *gin.Context) {
 
 	if user != nil {
 		if rt.Sso.OIDC.CoverAttributes {
-			user.UpdateSsoFields("oidc", ret.Nickname, ret.Phone, ret.Email)
-			ginx.Dangerous(user.Update(rt.Ctx, "email", "nickname", "phone", "update_at"))
+			updatedFields := user.UpdateSsoFields("oidc", ret.Nickname, ret.Phone, ret.Email)
+			ginx.Dangerous(user.Update(rt.Ctx, "update_by", updatedFields...))
 		}
 	} else {
 		user = new(models.User)
@@ -336,8 +336,8 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 	ginx.Dangerous(err)
 	if user != nil {
 		if rt.Sso.CAS.CoverAttributes {
-			user.UpdateSsoFields("cas", ret.Nickname, ret.Phone, ret.Email)
-			ginx.Dangerous(user.Update(rt.Ctx, "email", "nickname", "phone", "update_at"))
+			updatedFields := user.UpdateSsoFields("cas", ret.Nickname, ret.Phone, ret.Email)
+			ginx.Dangerous(user.Update(rt.Ctx, "update_at", updatedFields...))
 		}
 	} else {
 		user = new(models.User)
@@ -412,8 +412,8 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 
 	if user != nil {
 		if rt.Sso.OAuth2.CoverAttributes {
-			user.UpdateSsoFields("oauth2", ret.Nickname, ret.Phone, ret.Email)
-			ginx.Dangerous(user.Update(rt.Ctx, "email", "nickname", "phone", "update_at"))
+			updatedFields := user.UpdateSsoFields("oauth2", ret.Nickname, ret.Phone, ret.Email)
+			ginx.Dangerous(user.Update(rt.Ctx, "update_at", updatedFields...))
 		}
 	} else {
 		user = new(models.User)

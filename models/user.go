@@ -111,7 +111,9 @@ func (u *User) Verify() error {
 	return nil
 }
 
-func (u *User) UpdateSsoFields(sso string, nickname, phone, email string) {
+func (u *User) UpdateSsoFields(sso string, nickname, phone, email string) []interface{} {
+	u.UpdateAt = time.Now().Unix()
+
 	if nickname != "" {
 		u.Nickname = nickname
 	}
@@ -123,7 +125,9 @@ func (u *User) UpdateSsoFields(sso string, nickname, phone, email string) {
 	}
 	u.UpdateBy = sso
 	u.Belong = sso
-	u.UpdateAt = time.Now().Unix()
+
+	updatedFields := []interface{}{"nickname", "phone", "email", "update_by", "belong"}
+	return updatedFields
 }
 
 func (u *User) FullSsoFields(sso, username, nickname, phone, email string, defaultRoles []string) {
