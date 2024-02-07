@@ -232,13 +232,10 @@ func (s *SsoClient) ValidateServiceTicket(ctx context.Context, ticket, state str
 	}
 	ret = &CallbackOutput{}
 	ret.Username = authRet.Attributes.Get(s.Attributes.UserName)
-	logger.Debugf("CAS Authentication Response's Attributes--[UserName]: %s", ret.Username)
 	ret.Nickname = authRet.Attributes.Get(s.Attributes.Nickname)
-	logger.Debugf("CAS Authentication Response's Attributes--[Nickname]: %s", ret.Nickname)
 	ret.Email = authRet.Attributes.Get(s.Attributes.Email)
-	logger.Debugf("CAS Authentication Response's Attributes--[Email]: %s", ret.Email)
 	ret.Phone = authRet.Attributes.Get(s.Attributes.Phone)
-	logger.Debugf("CAS Authentication Response's Attributes--[Phone]: %s", ret.Phone)
+
 	ret.Redirect, err = fetchRedirect(ctx, state, redis)
 	if err != nil {
 		logger.Debugf("get redirect err:%s state:%s", state, err)
