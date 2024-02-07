@@ -12,6 +12,11 @@ import (
 )
 
 func (s *SsoClient) SyncUserAddAndDel(ctx *ctx.Context) error {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("SyncUserAddAndDel panic: ", err)
+		}
+	}()
 	s.RLock()
 	if !s.Enable || !s.SyncUsers {
 		return nil
@@ -106,6 +111,11 @@ func getExtraUsers(base, m map[string]*models.User) (extraUsers []*models.User) 
 }
 
 func (s *SsoClient) SyncUserDel(ctx *ctx.Context) error {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("SyncUserDel panic: ", err)
+		}
+	}()
 	s.RLock()
 	if !s.Enable || s.SyncUsers {
 		return nil
