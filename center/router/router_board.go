@@ -1,17 +1,17 @@
 package router
 
 import (
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"gorm.io/gorm"
 	"net/http"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/str"
+	"gorm.io/gorm"
 )
 
 type boardForm struct {
