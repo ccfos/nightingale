@@ -327,7 +327,8 @@ type boardsForm struct {
 
 func (rt *Router) boardBatchClone(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
-	rt.bgrwCheck(c, ginx.UrlParamInt64(c, "id"))
+	bgid := ginx.UrlParamInt64(c, "id")
+	rt.bgrwCheck(c, bgid)
 
 	var f boardsForm
 	ginx.BindJSON(c, &f)
@@ -343,7 +344,7 @@ func (rt *Router) boardBatchClone(c *gin.Context) {
 			newBoard := &models.Board{
 				Name:     bo.Name + " Cloned",
 				Tags:     bo.Tags,
-				GroupId:  bo.GroupId,
+				GroupId:  bgid,
 				CreateBy: me.Username,
 				UpdateBy: me.Username,
 			}
