@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -226,7 +227,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 
 	arw.inhibit = ruleQuery.Inhibit
 	if len(ruleQuery.Queries) > 0 {
-		seriesStore := make(map[uint64]*models.DataResp)
+		seriesStore := make(map[uint64]models.DataResp)
 		seriesTagIndex := make(map[uint64][]uint64)
 
 		for _, query := range ruleQuery.Queries {
@@ -250,69 +251,10 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 
 			//  此条日志很重要，是告警判断的现场值
 			logger.Debugf("rule_eval rid:%d req:%+v resp:%+v", rule.Id, query, series)
-			for i := 0; i < len(series); i++ {
-				serieHash := hash.GetHash(series[i].Metric, series[i].Ref)
-				tagHash := hash.GetTagHash(series[i].Metric)
-				seriesStore[serieHash] = series[i]
-
-				// 将曲线按照相同的 tag 分组
-				if _, exists := seriesTagIndex[tagHash]; !exists {
-					seriesTagIndex[tagHash] = make([]uint64, 0)
-				}
-				seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], serieHash)
-			}
+			MakeSeriesMap(series, seriesTagIndex, seriesStore)
 		}
 
-		// 判断
-		for _, trigger := range ruleQuery.Triggers {
-			for _, seriesHash := range seriesTagIndex {
-				m := make(map[string]float64)
-				var ts int64
-				var sample *models.DataResp
-				var value float64
-				for _, serieHash := range seriesHash {
-					series, exists := seriesStore[serieHash]
-					if !exists {
-						logger.Warningf("rule_eval rid:%d series:%+v not found", rule.Id, series)
-						continue
-					}
-					t, v, exists := series.Last()
-					if !exists {
-						logger.Warningf("rule_eval rid:%d series:%+v value not found", rule.Id, series)
-						continue
-					}
-
-					if !strings.Contains(trigger.Exp, "$"+series.Ref) {
-						// 表达式中不包含该变量
-						continue
-					}
-
-					m["$"+series.Ref] = v
-					m["$"+series.Ref+"."+series.MetricName()] = v
-					ts = int64(t)
-					sample = series
-					value = v
-				}
-				isTriggered := parser.Calc(trigger.Exp, m)
-				//  此条日志很重要，是告警判断的现场值
-				logger.Debugf("rule_eval rid:%d trigger:%+v exp:%s res:%v m:%v", rule.Id, trigger, trigger.Exp, isTriggered, m)
-
-				point := common.AnomalyPoint{
-					Key:       sample.MetricName(),
-					Labels:    sample.Metric,
-					Timestamp: int64(ts),
-					Value:     value,
-					Severity:  trigger.Severity,
-					Triggered: isTriggered,
-				}
-
-				if isTriggered {
-					points = append(points, point)
-				} else {
-					recoverPoints = append(recoverPoints, point)
-				}
-			}
-		}
+		points, recoverPoints = GetAnomalyPoint(rule.Id, ruleQuery, seriesTagIndex, seriesStore)
 	}
 
 	return points, recoverPoints
@@ -473,4 +415,93 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 		}
 	}
 	return lst
+}
+
+func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndex map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]common.AnomalyPoint, []common.AnomalyPoint) {
+	points := []common.AnomalyPoint{}
+	recoverPoints := []common.AnomalyPoint{}
+
+	for _, trigger := range ruleQuery.Triggers {
+		for _, seriesHash := range seriesTagIndex {
+			sort.Slice(seriesHash, func(i, j int) bool {
+				return seriesHash[i] < seriesHash[j]
+			})
+
+			m := make(map[string]float64)
+			var ts int64
+			var sample models.DataResp
+			var value float64
+			for _, serieHash := range seriesHash {
+				series, exists := seriesStore[serieHash]
+				if !exists {
+					logger.Warningf("rule_eval rid:%d series:%+v not found", ruleId, series)
+					continue
+				}
+				t, v, exists := series.Last()
+				if !exists {
+					logger.Warningf("rule_eval rid:%d series:%+v value not found", ruleId, series)
+					continue
+				}
+
+				if !strings.Contains(trigger.Exp, "$"+series.Ref) {
+					// 表达式中不包含该变量
+					continue
+				}
+
+				m["$"+series.Ref] = v
+				m["$"+series.Ref+"."+series.MetricName()] = v
+				ts = int64(t)
+				sample = series
+				value = v
+			}
+			isTriggered := parser.Calc(trigger.Exp, m)
+			//  此条日志很重要，是告警判断的现场值
+			logger.Infof("rule_eval rid:%d trigger:%+v exp:%s res:%v m:%v", ruleId, trigger, trigger.Exp, isTriggered, m)
+
+			var values string
+			for k, v := range m {
+				if !strings.Contains(k, ".") {
+					continue
+				}
+				values += fmt.Sprintf("%s:%v ", k, v)
+			}
+
+			point := common.AnomalyPoint{
+				Key:       sample.MetricName(),
+				Labels:    sample.Metric,
+				Timestamp: int64(ts),
+				Value:     value,
+				Values:    values,
+				Severity:  trigger.Severity,
+				Triggered: isTriggered,
+				Query:     fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
+			}
+
+			if sample.Query != "" {
+				point.Query = sample.Query
+			}
+
+			if isTriggered {
+				points = append(points, point)
+			} else {
+				recoverPoints = append(recoverPoints, point)
+			}
+		}
+	}
+
+	return points, recoverPoints
+}
+
+func MakeSeriesMap(series []models.DataResp, seriesTagIndex map[uint64][]uint64, seriesStore map[uint64]models.DataResp) {
+	for i := 0; i < len(series); i++ {
+		serieHash := hash.GetHash(series[i].Metric, series[i].Ref)
+		tagHash := hash.GetTagHash(series[i].Metric)
+		seriesStore[serieHash] = series[i]
+
+		// 将曲线按照相同的 tag 分组
+		if _, exists := seriesTagIndex[tagHash]; !exists {
+			seriesTagIndex[tagHash] = make([]uint64, 0)
+		}
+		seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], serieHash)
+	}
 }

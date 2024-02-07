@@ -78,7 +78,7 @@ func (rt *Router) QueryData(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
 
-	var resp []*models.DataResp
+	var resp []models.DataResp
 	var err error
 	tdClient := rt.TdendgineClients.GetCli(f.DatasourceId)
 	for _, q := range f.Querys {

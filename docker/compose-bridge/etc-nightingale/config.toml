@@ -140,7 +140,7 @@ AlertDetail = false
 LabelRewrite = true
 # # default busigroup key name
 # BusiGroupLabelKey = "busigroup"
-# ForceUseServerTS = false
+ForceUseServerTS = true
 
 # [Pushgw.DebugSample]
 # ident = "xx"

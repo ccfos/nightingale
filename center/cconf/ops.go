@@ -28,6 +28,14 @@ func LoadOpsYaml(configDir string, opsYamlFile string) error {
 	if !file.IsExist(fp) {
 		return nil
 	}
+
+	hash, _ := file.MD5(fp)
+	if hash == "2f91a9ed265cf2024e266dc1d538ee77" {
+		// ops.yaml 是老的默认文件，删除
+		file.Remove(fp)
+		return nil
+	}
+
 	return file.ReadYaml(fp, &Operations)
 }
 
