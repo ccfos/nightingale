@@ -74,11 +74,6 @@ func New(cf Config) *SsoClient {
 }
 
 func (s *SsoClient) Reload(cf Config) {
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println("Reload ldap config failed:", err)
-		}
-	}()
 	s.Lock()
 	defer s.Unlock()
 	if !cf.Enable {
