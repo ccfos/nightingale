@@ -54,6 +54,7 @@ type SsoClient struct {
 }
 
 type LdapAttributes struct {
+	Username string `yaml:"username"`
 	Nickname string `yaml:"nickname"`
 	Phone    string `yaml:"phone"`
 	Email    string `yaml:"email"`
@@ -195,9 +196,15 @@ func (s *SsoClient) ldapReq(conn *ldap.Conn, filter string, values ...interface{
 }
 
 func (s *SsoClient) genLdapAttributeSearchList() []string {
-	ldapAttributes := []string{"uid"}
+	var ldapAttributes []string
 
 	attrs := s.GetAttributes()
+
+	if attrs.Username == "" {
+		ldapAttributes = append(ldapAttributes, "uid")
+	} else {
+		ldapAttributes = append(ldapAttributes, attrs.Username)
+	}
 
 	if attrs.Nickname != "" {
 		ldapAttributes = append(ldapAttributes, attrs.Nickname)

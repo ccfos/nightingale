@@ -12,9 +12,11 @@ import (
 )
 
 func (s *SsoClient) SyncUserAddAndDel(ctx *ctx.Context) error {
+	s.RLock()
 	if !s.Enable || !s.SyncUsers {
 		return nil
 	}
+	s.RUnlock()
 
 	start := time.Now()
 
@@ -78,16 +80,16 @@ func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
 
 	res := make(map[string]*models.User, len(sr.Entries))
 	for _, entry := range sr.Entries {
-		attrs := s.GetAttributes()
-		username := entry.GetAttributeValue("uid")
+		attrs := lc.Attributes
+		username := entry.GetAttributeValue(attrs.Username)
 		nickname := entry.GetAttributeValue(attrs.Nickname)
 		email := entry.GetAttributeValue(attrs.Email)
 		phone := entry.GetAttributeValue(attrs.Phone)
 
 		user := new(models.User)
-		user.FullSsoFields("ldap", username, nickname, phone, email, s.DefaultRoles)
+		user.FullSsoFields("ldap", username, nickname, phone, email, lc.DefaultRoles)
 
-		res[entry.GetAttributeValue("uid")] = user
+		res[entry.GetAttributeValue(attrs.Username)] = user
 	}
 
 	return res, nil
@@ -104,9 +106,11 @@ func getExtraUsers(base, m map[string]*models.User) (extraUsers []*models.User) 
 }
 
 func (s *SsoClient) SyncUserDel(ctx *ctx.Context) error {
+	s.RLock()
 	if !s.Enable || s.SyncUsers {
 		return nil
 	}
+	s.RUnlock()
 
 	start := time.Now()
 
@@ -139,7 +143,7 @@ func (s *SsoClient) SyncUserDel(ctx *ctx.Context) error {
 	return nil
 }
 
-func (s *SsoClient) UserExist(uid string) (bool, error) {
+func (s *SsoClient) UserExist(username string) (bool, error) {
 	lc := s.SafeCopy()
 
 	conn, err := lc.newLdapConn()
@@ -148,7 +152,7 @@ func (s *SsoClient) UserExist(uid string) (bool, error) {
 	}
 	defer conn.Close()
 
-	sr, err := s.ldapReq(conn, "(&(uid=%s))", uid)
+	sr, err := lc.ldapReq(conn, "(&(%s=%s))", lc.Attributes.Username, username)
 	if err != nil {
 		return false, err
 	}
