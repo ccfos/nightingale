@@ -74,6 +74,11 @@ func New(cf Config) *SsoClient {
 }
 
 func (s *SsoClient) Reload(cf Config) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("Reload ldap config failed:", err)
+		}
+	}()
 	s.Lock()
 	defer s.Unlock()
 	if !cf.Enable {
@@ -102,10 +107,28 @@ func (s *SsoClient) Reload(cf Config) {
 	}
 }
 
-func (s *SsoClient) GetAttributes() LdapAttributes {
+func (s *SsoClient) SafeGetAttributes() LdapAttributes {
 	s.RLock()
 	defer s.RUnlock()
 	return s.Attributes
+}
+
+func (s *SsoClient) SafeGetEnable() bool {
+	s.RLock()
+	defer s.RUnlock()
+	return s.Enable
+}
+
+func (s *SsoClient) SafeGetSyncUsers() bool {
+	s.RLock()
+	defer s.RUnlock()
+	return s.SyncUsers
+}
+
+func (s *SsoClient) SafeGetDefaultRoles() []string {
+	s.RLock()
+	defer s.RUnlock()
+	return s.DefaultRoles
 }
 
 func (s *SsoClient) SafeCopy() *SsoClient {
@@ -198,7 +221,7 @@ func (s *SsoClient) ldapReq(conn *ldap.Conn, filter string, values ...interface{
 func (s *SsoClient) genLdapAttributeSearchList() []string {
 	var ldapAttributes []string
 
-	attrs := s.GetAttributes()
+	attrs := s.SafeGetAttributes()
 
 	if attrs.Username == "" {
 		ldapAttributes = append(ldapAttributes, "uid")
