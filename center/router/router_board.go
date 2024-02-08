@@ -1,17 +1,14 @@
 package router
 
 import (
-	"github.com/toolkits/pkg/i18n"
 	"net/http"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
-
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/str"
-	"gorm.io/gorm"
 )
 
 type boardForm struct {
@@ -330,8 +327,12 @@ func (rt *Router) boardBatchClone(c *gin.Context) {
 
 		newBoard := bo.Clone(me.Username, bgid)
 		payload, err := models.BoardPayloadGet(rt.Ctx, bo.Id)
+		if err != nil {
+			reterr[newBoard.Name] = i18n.Sprintf(lang, err.Error())
+			continue
+		}
 
-		if err = rt.atomicSaveBoard(newBoard, payload); err != nil {
+		if err = newBoard.AtomicAdd(rt.Ctx, payload); err != nil {
 			reterr[newBoard.Name] = i18n.Sprintf(lang, err.Error())
 		} else {
 			reterr[newBoard.Name] = ""
@@ -339,23 +340,4 @@ func (rt *Router) boardBatchClone(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(reterr, nil)
-}
-
-func (rt *Router) atomicSaveBoard(bo *models.Board, payload string) error {
-	return models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
-		tCtx := &ctx.Context{
-			DB: tx,
-		}
-
-		if err := bo.Add(tCtx); err != nil {
-			return err
-		}
-
-		if payload != "" {
-			if err := models.BoardPayloadSave(tCtx, bo.Id, payload); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
 }

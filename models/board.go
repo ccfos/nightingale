@@ -108,6 +108,25 @@ func (b *Board) Add(ctx *ctx.Context) error {
 	return Insert(ctx, b)
 }
 
+func (b *Board) AtomicAdd(c *ctx.Context, payload string) error {
+	return DB(c).Transaction(func(tx *gorm.DB) error {
+		tCtx := &ctx.Context{
+			DB: tx,
+		}
+
+		if err := b.Add(tCtx); err != nil {
+			return err
+		}
+
+		if payload != "" {
+			if err := BoardPayloadSave(tCtx, b.Id, payload); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 func (b *Board) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
 	if err := b.Verify(); err != nil {
 		return err
