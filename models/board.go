@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"strings"
 	"time"
 
@@ -52,6 +53,22 @@ func (b *Board) Verify() error {
 	}
 
 	return nil
+}
+
+func (b *Board) Clone(operatorName string, newBgid int64) *Board {
+	clone := &Board{
+		Name:     b.Name + " Cloned",
+		Tags:     b.Tags,
+		GroupId:  newBgid,
+		CreateBy: operatorName,
+		UpdateBy: operatorName,
+	}
+
+	if b.Ident != "" {
+		clone.Ident = uuid.NewString()
+	}
+
+	return clone
 }
 
 func (b *Board) CanRenameIdent(ctx *ctx.Context, ident string) (bool, error) {

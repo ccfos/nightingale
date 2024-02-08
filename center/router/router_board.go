@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/toolkits/pkg/i18n"
 	"net/http"
 	"time"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/str"
 	"gorm.io/gorm"
@@ -296,17 +296,7 @@ func (rt *Router) boardClone(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	bo := rt.Board(ginx.UrlParamInt64(c, "bid"))
 
-	newBoard := &models.Board{
-		Name:     bo.Name + " Cloned",
-		Tags:     bo.Tags,
-		GroupId:  bo.GroupId,
-		CreateBy: me.Username,
-		UpdateBy: me.Username,
-	}
-
-	if bo.Ident != "" {
-		newBoard.Ident = uuid.NewString()
-	}
+	newBoard := bo.Clone(me.Username, bo.GroupId)
 
 	ginx.Dangerous(newBoard.Add(rt.Ctx))
 
@@ -333,40 +323,37 @@ func (rt *Router) boardBatchClone(c *gin.Context) {
 	var f boardsForm
 	ginx.BindJSON(c, &f)
 
+	reterr := make(map[string]string, len(f.BoardIds))
+	lang := c.GetHeader("X-Language")
 	for _, bid := range f.BoardIds {
 		bo := rt.Board(bid)
+
+		newBoard := bo.Clone(me.Username, bgid)
 		payload, err := models.BoardPayloadGet(rt.Ctx, bo.Id)
 
-		err = models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
-			tCtx := &ctx.Context{
-				DB: tx,
-			}
-			newBoard := &models.Board{
-				Name:     bo.Name + " Cloned",
-				Tags:     bo.Tags,
-				GroupId:  bgid,
-				CreateBy: me.Username,
-				UpdateBy: me.Username,
-			}
-
-			if bo.Ident != "" {
-				newBoard.Ident = uuid.NewString()
-			}
-
-			if err = newBoard.Add(tCtx); err != nil {
-				return err
-			}
-
-			if payload != "" {
-				if err = models.BoardPayloadSave(tCtx, newBoard.Id, payload); err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-
-		ginx.Dangerous(err)
+		if err = rt.atomicSaveBoard(newBoard, payload); err != nil {
+			reterr[newBoard.Name] = i18n.Sprintf(lang, err.Error())
+		}
 	}
 
-	ginx.NewRender(c).Message(nil)
+	ginx.NewRender(c).Data(reterr, nil)
+}
+
+func (rt *Router) atomicSaveBoard(bo *models.Board, payload string) error {
+	return models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
+		tCtx := &ctx.Context{
+			DB: tx,
+		}
+
+		if err := bo.Add(tCtx); err != nil {
+			return err
+		}
+
+		if payload != "" {
+			if err := models.BoardPayloadSave(tCtx, bo.Id, payload); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
