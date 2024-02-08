@@ -333,6 +333,8 @@ func (rt *Router) boardBatchClone(c *gin.Context) {
 
 		if err = rt.atomicSaveBoard(newBoard, payload); err != nil {
 			reterr[newBoard.Name] = i18n.Sprintf(lang, err.Error())
+		} else {
+			reterr[newBoard.Name] = ""
 		}
 	}
 
