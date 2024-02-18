@@ -3,7 +3,6 @@ package sso
 import (
 	"log"
 
-	"github.com/BurntSushi/toml"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/cas"
@@ -12,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
 
+	"github.com/BurntSushi/toml"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -52,7 +52,7 @@ Email = 'mail'
 const OAuth2 = `
 Enable = false
 DisplayName = 'OAuth2登录'
-RedirectURL = 'http://127.0.0.1:18000/callback/oauth'
+RedirectURL = 'http://n9e.com/callback/oauth'
 SsoAddr = 'https://sso.example.com/oauth2/authorize'
 SsoLogoutAddr = 'https://sso.example.com/oauth2/authorize/session/end'
 TokenAddr = 'https://sso.example.com/oauth2/token'
@@ -75,12 +75,12 @@ Email = 'email'
 
 const CAS = `
 Enable = false
-RedirectURL = 'http://127.0.0.1:18000/callback/cas'
+DisplayName = 'CAS登录'
+RedirectURL = 'http://n9e.com/callback/cas'
 SsoAddr = 'https://cas.example.com/cas/'
 SsoLogoutAddr = 'https://cas.example.com/cas/session/end'
 # LoginPath = ''
-DisplayName = 'CAS登录'
-CoverAttributes = false
+CoverAttributes = true
 DefaultRoles = ['Standard']
 
 [Attributes]
@@ -89,6 +89,7 @@ Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'
 `
+
 const OIDC = `
 Enable = false
 DisplayName = 'OIDC登录'
@@ -99,7 +100,7 @@ ClientId = ''
 ClientSecret = ''
 CoverAttributes = true
 DefaultRoles = ['Standard']
-Scopes = ["openid", "profile", "username", "email", "phone"]
+Scopes = ['openid', 'profile', 'email', 'phone']
 
 [Attributes]
 Username = 'sub'
