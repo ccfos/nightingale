@@ -7,8 +7,8 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/str"
 )
 
@@ -294,17 +294,7 @@ func (rt *Router) boardClone(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	bo := rt.Board(ginx.UrlParamInt64(c, "bid"))
 
-	newBoard := &models.Board{
-		Name:     bo.Name + " Cloned",
-		Tags:     bo.Tags,
-		GroupId:  bo.GroupId,
-		CreateBy: me.Username,
-		UpdateBy: me.Username,
-	}
-
-	if bo.Ident != "" {
-		newBoard.Ident = uuid.NewString()
-	}
+	newBoard := bo.Clone(me.Username, bo.GroupId)
 
 	ginx.Dangerous(newBoard.Add(rt.Ctx))
 
@@ -317,4 +307,38 @@ func (rt *Router) boardClone(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(nil)
+}
+
+type boardsForm struct {
+	BoardIds []int64 `json:"board_ids"`
+}
+
+func (rt *Router) boardBatchClone(c *gin.Context) {
+	me := c.MustGet("user").(*models.User)
+	bgid := ginx.UrlParamInt64(c, "id")
+	rt.bgrwCheck(c, bgid)
+
+	var f boardsForm
+	ginx.BindJSON(c, &f)
+
+	reterr := make(map[string]string, len(f.BoardIds))
+	lang := c.GetHeader("X-Language")
+	for _, bid := range f.BoardIds {
+		bo := rt.Board(bid)
+
+		newBoard := bo.Clone(me.Username, bgid)
+		payload, err := models.BoardPayloadGet(rt.Ctx, bo.Id)
+		if err != nil {
+			reterr[newBoard.Name] = i18n.Sprintf(lang, err.Error())
+			continue
+		}
+
+		if err = newBoard.AtomicAdd(rt.Ctx, payload); err != nil {
+			reterr[newBoard.Name] = i18n.Sprintf(lang, err.Error())
+		} else {
+			reterr[newBoard.Name] = ""
+		}
+	}
+
+	ginx.NewRender(c).Data(reterr, nil)
 }
