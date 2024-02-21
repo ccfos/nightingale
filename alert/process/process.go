@@ -165,10 +165,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		p.handleEvent(events)
 	}
 
-	if (cachedRule.Cate == models.PROMETHEUS && !strings.Contains(cachedRule.RuleConfig, "triggers")) || cachedRule.Cate == models.HOST ||
-		cachedRule.Cate == models.LOKI {
-		p.HandleRecover(alertingKeys, now)
-	}
+	p.HandleRecover(alertingKeys, now)
 }
 
 func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, now int64) *models.AlertCurEvent {
