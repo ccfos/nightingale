@@ -229,6 +229,8 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 				logger.Debugf("no sender for channel: %s", channel)
 				continue
 			}
+
+			logger.Debugf("send to channel:%s events:%+v users:%+v", channel, msgCtx.Events, msgCtx.Users)
 			s.Send(msgCtx)
 		}
 	}

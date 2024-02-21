@@ -97,9 +97,9 @@ func doSend(url string, body interface{}, channel string, stats *astats.Stats) {
 
 	res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
 	if err != nil {
-		logger.Errorf("%s_sender: result=fail url=%s code=%d error=%v response=%s", channel, url, code, err, string(res))
+		logger.Errorf("%s_sender: result=fail url=%s code=%d error=%v req:%v response=%s", channel, url, code, err, body, string(res))
 		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
 	} else {
-		logger.Infof("%s_sender: result=succ url=%s code=%d response=%s", channel, url, code, string(res))
+		logger.Infof("%s_sender: result=succ url=%s code=%d req:%v response=%s", channel, url, code, body, string(res))
 	}
 }
