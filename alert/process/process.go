@@ -165,7 +165,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		p.handleEvent(events)
 	}
 
-	if cachedRule.Cate == models.PROMETHEUS && !strings.Contains(cachedRule.RuleConfig, "triggers") {
+	if (cachedRule.Cate == models.PROMETHEUS && !strings.Contains(cachedRule.RuleConfig, "triggers")) || cachedRule.Cate == models.HOST {
 		p.HandleRecover(alertingKeys, now)
 	}
 }
