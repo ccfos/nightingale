@@ -128,11 +128,11 @@ func (arw *AlertRuleWorker) Eval() {
 		return
 	}
 
-	arw.processor.Handle(anomalyPoints, "inner", arw.inhibit)
 	for _, point := range recoverPoints {
 		str := fmt.Sprintf("%v", point.Value)
 		arw.processor.RecoverSingle(process.Hash(cachedRule.Id, arw.processor.DatasourceId(), point), point.Timestamp, &str)
 	}
+	arw.processor.Handle(anomalyPoints, "inner", arw.inhibit)
 }
 
 func (arw *AlertRuleWorker) Stop() {
