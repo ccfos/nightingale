@@ -8,6 +8,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
+	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/dumper"
@@ -66,7 +67,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 		alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 		alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
-		notifyConfigCache := memsto.NewNotifyConfigCache(ctx, configCache)
+		notifyConfigCache := memsto.NewNotifyConfigCache(ctx, configCache, sender.NewEmailRebooter())
 		userCache := memsto.NewUserCache(ctx, syncStats)
 		userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 

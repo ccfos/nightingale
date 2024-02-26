@@ -184,7 +184,7 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 
 		smtp, errSmtp := SmtpValidate(text)
 		ginx.Dangerous(errSmtp)
-		go sender.RestartEmailSender(smtp)
+		go rt.NotifyConfigCache.EmailRebooter.Reset(smtp)
 	}
 
 	ginx.NewRender(c).Message(nil)

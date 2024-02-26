@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/sender/inf"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
 	"github.com/BurntSushi/toml"
@@ -17,13 +18,13 @@ import (
 )
 
 type NotifyConfigCacheType struct {
-	ctx         *ctx.Context
-	ConfigCache *ConfigCache
-	webhooks    []*models.Webhook
-	smtp        aconf.SMTPConfig
-	script      models.NotifyScript
-	ibex        aconf.Ibex
-
+	ctx           *ctx.Context
+	ConfigCache   *ConfigCache
+	webhooks      []*models.Webhook
+	smtp          aconf.SMTPConfig
+	script        models.NotifyScript
+	ibex          aconf.Ibex
+	EmailRebooter inf.EmailRebooter
 	sync.RWMutex
 }
 
@@ -44,10 +45,11 @@ BasicAuthPass = "ibex"
 Timeout = 3000
 `
 
-func NewNotifyConfigCache(ctx *ctx.Context, configCache *ConfigCache) *NotifyConfigCacheType {
+func NewNotifyConfigCache(ctx *ctx.Context, configCache *ConfigCache, em inf.EmailRebooter) *NotifyConfigCacheType {
 	w := &NotifyConfigCacheType{
-		ctx:         ctx,
-		ConfigCache: configCache,
+		ctx:           ctx,
+		ConfigCache:   configCache,
+		EmailRebooter: em,
 	}
 	w.SyncNotifyConfigs()
 	return w
@@ -105,11 +107,18 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	cval = tplx.ReplaceTemplateUseText(models.SMTP, cval, userVariableMap)
 
 	if strings.TrimSpace(cval) != "" {
+		old_smtp := w.smtp //w.smtp is a value data
 		err = toml.Unmarshal([]byte(cval), &w.smtp)
 		if err != nil {
 			dumper.PutSyncRecord("smtp", start.Unix(), -1, -1, "failed to unmarshal configs.smtp_config: "+err.Error())
 			logger.Errorf("failed to unmarshal smtp:%s error:%v", cval, err)
 		}
+		//SMTPConfig is simple struct without slice or map ,use ==
+		if old_smtp != w.smtp {
+			logger.Debug("#####restart email sender")
+			go w.EmailRebooter.Reset(w.smtp)
+		}
+
 	}
 
 	dumper.PutSyncRecord("smtp", start.Unix(), time.Since(start).Milliseconds(), 1, "success, smtp_config:\n"+cval)
