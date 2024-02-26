@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"html/template"
@@ -83,15 +84,26 @@ func (es *EmailSender) WriteEmail(subject, content string, tos []string) {
 	mailch <- m
 }
 
-func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
+var retryInterval = 1 * time.Second
+
+func dialSmtp(d *gomail.Dialer) (closer gomail.SendCloser, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
 	for {
-		if s, err := d.Dial(); err != nil {
-			logger.Errorf("email_sender: failed to dial smtp: %s", err)
-			time.Sleep(time.Second)
-			continue
-		} else {
-			return s
+		select {
+		case <-ctx.Done():
+			return nil, errors.New("email_sender: failed to dial after 1 min, cancel")
+		default:
+
+			if s, err := d.Dial(); err != nil {
+				logger.Errorf("email_sender: failed to dial smtp: %s", err)
+				time.Sleep(retryInterval)
+				retryInterval *= 2
+			} else {
+				return s, nil
+			}
 		}
+
 	}
 }
 
@@ -136,6 +148,7 @@ func startEmailSender(smtp aconf.SMTPConfig) {
 	var s gomail.SendCloser
 	var open bool
 	var size int
+	var err error
 	for {
 		select {
 		case <-mailQuit:
@@ -146,21 +159,28 @@ func startEmailSender(smtp aconf.SMTPConfig) {
 			}
 
 			if !open {
-				s = dialSmtp(d)
+				if s, err = dialSmtp(d); err != nil {
+					logger.Error(err.Error())
+					continue
+				}
 				open = true
 			}
-			if err := gomail.Send(s, m); err != nil {
+			if err = gomail.Send(s, m); err != nil {
 				logger.Errorf("email_sender: failed to send: %s", err)
 
 				// close and retry
-				if err := s.Close(); err != nil {
+				if err = s.Close(); err != nil {
 					logger.Warningf("email_sender: failed to close smtp connection: %s", err)
 				}
 
-				s = dialSmtp(d)
+				if s, err = dialSmtp(d); err != nil {
+					logger.Error(err.Error())
+					continue
+				}
+
 				open = true
 
-				if err := gomail.Send(s, m); err != nil {
+				if err = gomail.Send(s, m); err != nil {
 					logger.Errorf("email_sender: failed to retry send: %s", err)
 				}
 			} else {
@@ -170,7 +190,7 @@ func startEmailSender(smtp aconf.SMTPConfig) {
 			size++
 
 			if size >= conf.Batch {
-				if err := s.Close(); err != nil {
+				if err = s.Close(); err != nil {
 					logger.Warningf("email_sender: failed to close smtp connection: %s", err)
 				}
 				open = false
@@ -181,7 +201,7 @@ func startEmailSender(smtp aconf.SMTPConfig) {
 		// the last 30 seconds.
 		case <-time.After(30 * time.Second):
 			if open {
-				if err := s.Close(); err != nil {
+				if err = s.Close(); err != nil {
 					logger.Warningf("email_sender: failed to close smtp connection: %s", err)
 				}
 				open = false

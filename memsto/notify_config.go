@@ -114,7 +114,8 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 			logger.Errorf("failed to unmarshal smtp:%s error:%v", cval, err)
 		}
 		//SMTPConfig is simple struct without slice or map ,use ==
-		if old_smtp != w.smtp {
+		initConf := aconf.SMTPConfig{}
+		if old_smtp != w.smtp && old_smtp != initConf {
 			logger.Debug("#####restart email sender")
 			go w.EmailRebooter.Reset(w.smtp)
 		}
