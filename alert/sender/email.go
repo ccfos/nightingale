@@ -105,7 +105,7 @@ func (s *emailRebooter) Reset(smtp aconf.SMTPConfig) {
 	startEmailSender(smtp)
 }
 
-func NeEmailRebooter() *emailRebooter {
+func NewEmailRebooter() *emailRebooter {
 	return &emailRebooter{}
 }
 
