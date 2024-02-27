@@ -32,6 +32,13 @@ func (b *SsoConfig) Update(c *ctx.Context) error {
 	return DB(c).Model(b).Select("content").Updates(b).Error
 }
 
+// get sso_config last update time
+func SsoConfigLastUpdateTime(c *ctx.Context) (int64, error) {
+	var lastUpdateTime int64
+	err := DB(c).Model(&SsoConfig{}).Select("max(updated_at)").Row().Scan(&lastUpdateTime)
+	return lastUpdateTime, err
+}
+
 // get sso_config coutn by name
 func SsoConfigCountByName(c *ctx.Context, name string) (int64, error) {
 	var count int64
