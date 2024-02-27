@@ -1,11 +1,16 @@
 package models
 
-import "github.com/ccfos/nightingale/v6/pkg/ctx"
+import (
+	"time"
+
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+)
 
 type SsoConfig struct {
-	Id      int64  `json:"id"`
-	Name    string `json:"name"`
-	Content string `json:"content"`
+	Id       int64  `json:"id"`
+	Name     string `json:"name"`
+	Content  string `json:"content"`
+	UpdateAt int64  `json:"update_at"`
 }
 
 func (b *SsoConfig) TableName() string {
@@ -29,13 +34,14 @@ func (b *SsoConfig) Create(c *ctx.Context) error {
 }
 
 func (b *SsoConfig) Update(c *ctx.Context) error {
-	return DB(c).Model(b).Select("content").Updates(b).Error
+	b.UpdateAt = time.Now().Unix()
+	return DB(c).Model(b).Select("content", "update_at").Updates(b).Error
 }
 
 // get sso_config last update time
 func SsoConfigLastUpdateTime(c *ctx.Context) (int64, error) {
 	var lastUpdateTime int64
-	err := DB(c).Model(&SsoConfig{}).Select("max(updated_at)").Row().Scan(&lastUpdateTime)
+	err := DB(c).Model(&SsoConfig{}).Select("max(update_at)").Row().Scan(&lastUpdateTime)
 	return lastUpdateTime, err
 }
 
