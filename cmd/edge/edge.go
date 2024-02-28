@@ -8,6 +8,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
+	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/dumper"
@@ -17,12 +18,14 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
+	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
-	alertrt "github.com/ccfos/nightingale/v6/alert/router"
-	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
+	"github.com/ulricqin/ibex"
+	ibexConf "github.com/ulricqin/ibex/src/server/config"
+	ibexrt "github.com/ulricqin/ibex/src/server/router"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -80,6 +83,14 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 
 		alertrtRouter.Config(r)
+		ibexrt.ConfigRouter(r)
+
+		ibex.EdgeServerStart(ctx.DB, redis, config.Ibex.RPCListen, ibexConf.CenterApi{
+			Addrs:         config.CenterApi.Addrs,
+			BasicAuthUser: config.CenterApi.BasicAuthUser,
+			BasicAuthPass: config.CenterApi.BasicAuthPass,
+			Timeout:       config.CenterApi.Timeout,
+		})
 	}
 
 	dumper.ConfigRouter(r)

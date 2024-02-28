@@ -3,6 +3,7 @@ package center
 import (
 	"context"
 	"fmt"
+	"github.com/ulricqin/ibex"
 
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -32,6 +33,7 @@ import (
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	centerrt "github.com/ccfos/nightingale/v6/center/router"
 	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
+	ibexrt "github.com/ulricqin/ibex/src/server/router"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -111,9 +113,12 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	centerRouter.Config(r)
 	alertrtRouter.Config(r)
 	pushgwRouter.Config(r)
+	ibexrt.ConfigRouter(r)
 	dumper.ConfigRouter(r)
 
 	httpClean := httpx.Init(config.HTTP, r)
+
+	ibex.CenterServerStart(ctx.DB, redis, config.Ibex.RPCListen)
 
 	return func() {
 		logxClean()

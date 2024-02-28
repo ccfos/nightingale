@@ -9,6 +9,7 @@ type Alert struct {
 	EngineDelay int64
 	Heartbeat   HeartbeatConfig
 	Alerting    Alerting
+	Ibex        Ibex
 }
 
 type SMTPConfig struct {
@@ -50,6 +51,7 @@ type Ibex struct {
 	Address       string
 	BasicAuthUser string
 	BasicAuthPass string
+	RPCListen     string
 	Timeout       int64
 }
 
