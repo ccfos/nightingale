@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -127,11 +128,11 @@ func (arw *AlertRuleWorker) Eval() {
 		return
 	}
 
-	arw.processor.Handle(anomalyPoints, "inner", arw.inhibit)
 	for _, point := range recoverPoints {
 		str := fmt.Sprintf("%v", point.Value)
 		arw.processor.RecoverSingle(process.Hash(cachedRule.Id, arw.processor.DatasourceId(), point), point.Timestamp, &str)
 	}
+	arw.processor.Handle(anomalyPoints, "inner", arw.inhibit)
 }
 
 func (arw *AlertRuleWorker) Stop() {
@@ -343,8 +344,6 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 				continue
 			}
 
-			now := time.Now().UnixMilli()
-
 			targets := arw.processor.TargetCache.Gets(idents)
 			targetMap := make(map[string]*models.Target)
 			for _, target := range targets {
@@ -366,9 +365,8 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 					}
 				}
 
-				offset := now - meta.UnixTime
-
-				if offset > int64(trigger.Duration) {
+				offset := meta.Offset
+				if math.Abs(float64(offset)) > float64(trigger.Duration) {
 					offsetIdents[ident] = offset
 				}
 			}
