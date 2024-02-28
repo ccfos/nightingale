@@ -85,7 +85,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		alertrtRouter.Config(r)
 		ibexrt.ConfigRouter(r)
 
-		ibex.EdgeServerStart(ctx.DB, redis, config.Ibex.RPCListen, ibexConf.CenterApi{
+		ibex.EdgeServerStart(redis, config.Ibex.RPCListen, ibexConf.CenterApi{
 			Addrs:         config.CenterApi.Addrs,
 			BasicAuthUser: config.CenterApi.BasicAuthUser,
 			BasicAuthPass: config.CenterApi.BasicAuthPass,
