@@ -6,10 +6,12 @@ import (
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
+	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cconf/rsa"
 	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/center/metas"
+	centerrt "github.com/ccfos/nightingale/v6/center/router"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/dumper"
@@ -24,14 +26,11 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
+	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
 	"github.com/ulricqin/ibex"
-
-	alertrt "github.com/ccfos/nightingale/v6/alert/router"
-	centerrt "github.com/ccfos/nightingale/v6/center/router"
-	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -113,13 +112,10 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	pushgwRouter.Config(r)
 	dumper.ConfigRouter(r)
 
+	ibex.CenterServerStart(ctx.DB, redis, config.Ibex.RPCListen, config.HTTP.APIForService.BasicAuth, r)
+
 	httpClean := httpx.Init(config.HTTP, r)
 
-	ibex.CenterServerStart(ctx.DB, redis, config.Ibex.RPCListen, config.HTTP.APIForService.BasicAuth, r)
-	fmt.Println(r.Routes())
-	for _, route := range r.Routes() {
-		fmt.Println(route.Method, route.Path)
-	}
 	return func() {
 		logxClean()
 		httpClean()
