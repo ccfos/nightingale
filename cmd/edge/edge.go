@@ -90,7 +90,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 			BasicAuthUser: config.CenterApi.BasicAuthUser,
 			BasicAuthPass: config.CenterApi.BasicAuthPass,
 			Timeout:       config.CenterApi.Timeout,
-		})
+		}, r)
 	}
 
 	dumper.ConfigRouter(r)

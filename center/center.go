@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ulricqin/ibex"
+	ibexConf "github.com/ulricqin/ibex/src/server/config"
 
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -118,8 +119,14 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	httpClean := httpx.Init(config.HTTP, r)
 
-	ibex.CenterServerStart(ctx.DB, redis, config.Ibex.RPCListen)
-
+	ibex.CenterServerStart(ctx.DB, redis, config.Ibex.RPCListen, ibexConf.CenterApi{
+		BasicAuthUser: config.CenterApi.BasicAuthUser,
+		BasicAuthPass: config.CenterApi.BasicAuthPass,
+	}, r)
+	fmt.Println(r.Routes())
+	for _, route := range r.Routes() {
+		fmt.Println(route.Method, route.Path)
+	}
 	return func() {
 		logxClean()
 		httpClean()
