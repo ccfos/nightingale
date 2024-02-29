@@ -25,7 +25,6 @@ import (
 
 	"github.com/ulricqin/ibex"
 	ibexConf "github.com/ulricqin/ibex/src/server/config"
-	ibexrt "github.com/ulricqin/ibex/src/server/router"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -83,7 +82,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 
 		alertrtRouter.Config(r)
-		ibexrt.ConfigRouter(r)
 
 		ibex.EdgeServerStart(redis, config.Ibex.RPCListen, ibexConf.CenterApi{
 			Addrs:         config.CenterApi.Addrs,
