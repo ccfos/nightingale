@@ -212,7 +212,7 @@
                     "links": [
                         {
                             "title": "详情",
-                            "url": "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Host%20by%20Categraf&${__field.labels.ident}&prom=1"
+                            "url": "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Host%20by%20Categraf&ident=${__field.labels.ident}&prom=1"
                         }
                     ]
                 },
