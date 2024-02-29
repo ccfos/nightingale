@@ -3,9 +3,6 @@ package center
 import (
 	"context"
 	"fmt"
-	"github.com/ulricqin/ibex"
-	ibexConf "github.com/ulricqin/ibex/src/server/config"
-
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
@@ -30,6 +27,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
+	"github.com/ulricqin/ibex"
 
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	centerrt "github.com/ccfos/nightingale/v6/center/router"
@@ -117,10 +115,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	httpClean := httpx.Init(config.HTTP, r)
 
-	ibex.CenterServerStart(ctx.DB, redis, config.Ibex.RPCListen, ibexConf.CenterApi{
-		BasicAuthUser: config.CenterApi.BasicAuthUser,
-		BasicAuthPass: config.CenterApi.BasicAuthPass,
-	}, r)
+	ibex.CenterServerStart(ctx.DB, redis, config.Ibex.RPCListen, config.HTTP.APIForService.BasicAuth, r)
 	fmt.Println(r.Routes())
 	for _, route := range r.Routes() {
 		fmt.Println(route.Method, route.Path)
