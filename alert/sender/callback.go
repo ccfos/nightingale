@@ -47,18 +47,19 @@ func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent,
 }
 
 type TaskForm struct {
-	Title     string   `json:"title"`
-	Account   string   `json:"account"`
-	Batch     int      `json:"batch"`
-	Tolerance int      `json:"tolerance"`
-	Timeout   int      `json:"timeout"`
-	Pause     string   `json:"pause"`
-	Script    string   `json:"script"`
-	Args      string   `json:"args"`
-	Stdin     string   `json:"stdin"`
-	Action    string   `json:"action"`
-	Creator   string   `json:"creator"`
-	Hosts     []string `json:"hosts"`
+	Title          string   `json:"title"`
+	Account        string   `json:"account"`
+	Batch          int      `json:"batch"`
+	Tolerance      int      `json:"tolerance"`
+	Timeout        int      `json:"timeout"`
+	Pause          string   `json:"pause"`
+	Script         string   `json:"script"`
+	Args           string   `json:"args"`
+	Stdin          string   `json:"stdin"`
+	Action         string   `json:"action"`
+	Creator        string   `json:"creator"`
+	Hosts          []string `json:"hosts"`
+	AlertTriggered bool     `json:"alert_triggered"`
 }
 
 type TaskCreateReply struct {
@@ -146,18 +147,19 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 
 	// call ibex
 	in := TaskForm{
-		Title:     tpl.Title + " FH: " + host,
-		Account:   tpl.Account,
-		Batch:     tpl.Batch,
-		Tolerance: tpl.Tolerance,
-		Timeout:   tpl.Timeout,
-		Pause:     tpl.Pause,
-		Script:    tpl.Script,
-		Args:      tpl.Args,
-		Stdin:     string(tags),
-		Action:    "start",
-		Creator:   tpl.UpdateBy,
-		Hosts:     []string{host},
+		Title:          tpl.Title + " FH: " + host,
+		Account:        tpl.Account,
+		Batch:          tpl.Batch,
+		Tolerance:      tpl.Tolerance,
+		Timeout:        tpl.Timeout,
+		Pause:          tpl.Pause,
+		Script:         tpl.Script,
+		Args:           tpl.Args,
+		Stdin:          string(tags),
+		Action:         "start",
+		Creator:        tpl.UpdateBy,
+		Hosts:          []string{host},
+		AlertTriggered: true,
 	}
 
 	var res TaskCreateReply
