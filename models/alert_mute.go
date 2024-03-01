@@ -248,6 +248,11 @@ func (m *AlertMute) DB2FE() error {
 	if err != nil {
 		return err
 	}
+
+	if m.DatasourceIdsJson == nil {
+		m.DatasourceIdsJson = []int64{}
+	}
+
 	err = json.Unmarshal([]byte(m.PeriodicMutes), &m.PeriodicMutesJson)
 	if err != nil {
 		return err
