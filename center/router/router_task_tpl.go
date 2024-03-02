@@ -88,9 +88,11 @@ func (rt *Router) taskTplGetByService(c *gin.Context) {
 }
 
 func (rt *Router) taskTplGetsByService(c *gin.Context) {
-	tpls, err := models.TaskTplGetAll(rt.Ctx)
+	ginx.NewRender(c).Data(models.TaskTplGetAll(rt.Ctx))
+}
 
-	ginx.NewRender(c).Data(tpls, err)
+func (rt *Router) taskTplStatistics(c *gin.Context) {
+	ginx.NewRender(c).Data(models.TaskTplStatistics(rt.Ctx))
 }
 
 type taskTplForm struct {

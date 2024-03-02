@@ -57,6 +57,10 @@ func TaskTplCount(ctx *ctx.Context, groupIds []int64, query string) (int64, erro
 }
 
 func TaskTplStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		return poster.GetByUrls[*Statistics](ctx, "/v1/n9e/task-tpl/statistics")
+	}
+
 	session := DB(ctx).Model(&TaskTpl{}).Select("count(*) as total", "max(update_at) as last_updated")
 
 	var stats []*Statistics
