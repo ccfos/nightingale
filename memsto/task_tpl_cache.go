@@ -100,8 +100,8 @@ func (ttc *TaskTplCache) loopSyncTaskTpl() {
 
 func (ttc *TaskTplCache) StatChange(total int64, lastUpdated int64) bool {
 	if ttc.statTotal == total && ttc.statLastUpdated == lastUpdated {
-		return true
+		return false
 	}
 
-	return false
+	return true
 }
