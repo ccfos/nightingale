@@ -41,7 +41,7 @@ func (t *TaskTpl) DB2FE() error {
 	return nil
 }
 
-func TaskTplTotal(ctx *ctx.Context, groupIds []int64, query string) (int64, error) {
+func TaskTplCount(ctx *ctx.Context, groupIds []int64, query string) (int64, error) {
 	session := DB(ctx).Model(&TaskTpl{}).Where("group_id in (?)", groupIds)
 	if query == "" {
 		return Count(session)
@@ -54,6 +54,29 @@ func TaskTplTotal(ctx *ctx.Context, groupIds []int64, query string) (int64, erro
 	}
 
 	return Count(session)
+}
+
+func TaskTplStatistics(ctx *ctx.Context) (*Statistics, error) {
+	session := DB(ctx).Model(&TaskTpl{}).Select("count(*) as total", "max(update_at) as last_updated")
+
+	var stats []*Statistics
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return stats[0], nil
+}
+
+func TaskTplGetAll(ctx *ctx.Context) ([]*TaskTpl, error) {
+	if !ctx.IsCenter {
+		return poster.GetByUrls[[]*TaskTpl](ctx, "/v1/n9e/task-tpls")
+	}
+
+	lst := make([]*TaskTpl, 0)
+	err := DB(ctx).Find(&lst).Error
+	return lst, err
+
 }
 
 func TaskTplGets(ctx *ctx.Context, groupIds []int64, query string, limit, offset int) ([]TaskTpl, error) {

@@ -26,6 +26,7 @@ type Dispatch struct {
 	alertSubscribeCache *memsto.AlertSubscribeCacheType
 	targetCache         *memsto.TargetCacheType
 	notifyConfigCache   *memsto.NotifyConfigCacheType
+	taskTplsCache       *memsto.TaskTplCache
 
 	alerting aconf.Alerting
 
@@ -43,7 +44,7 @@ type Dispatch struct {
 // 创建一个 Notify 实例
 func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
 	alertSubscribeCache *memsto.AlertSubscribeCacheType, targetCache *memsto.TargetCacheType, notifyConfigCache *memsto.NotifyConfigCacheType,
-	alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
+	taskTplsCache *memsto.TaskTplCache, alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
 	notify := &Dispatch{
 		alertRuleCache:      alertRuleCache,
 		userCache:           userCache,
@@ -51,6 +52,7 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 		alertSubscribeCache: alertSubscribeCache,
 		targetCache:         targetCache,
 		notifyConfigCache:   notifyConfigCache,
+		taskTplsCache:       taskTplsCache,
 
 		alerting: alerting,
 

@@ -486,6 +486,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/alert-his-event/:eid", rt.alertHisEventGet)
 
 			service.GET("/task-tpl/:tid", rt.taskTplGetByService)
+			service.GET("task-tpls", rt.taskTplGetsByService)
 
 			service.GET("/config/:id", rt.configGet)
 			service.GET("/configs", rt.configsGet)

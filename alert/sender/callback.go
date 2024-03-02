@@ -2,6 +2,7 @@ package sender
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -18,7 +19,7 @@ import (
 )
 
 func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType,
-	ibexConf aconf.Ibex, stats *astats.Stats) {
+	taskTplCache *memsto.TaskTplCache, ibexConf aconf.Ibex, stats *astats.Stats) {
 	for _, url := range urls {
 		if url == "" {
 			continue
@@ -26,7 +27,7 @@ func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent,
 
 		if strings.HasPrefix(url, "${ibex}") {
 			if !event.IsRecovered {
-				handleIbex(ctx, url, event, targetCache, userCache, ibexConf)
+				handleIbex(ctx, url, event, targetCache, userCache, taskTplCache, ibexConf)
 			}
 			continue
 		}
@@ -67,7 +68,8 @@ type TaskCreateReply struct {
 	Dat int64  `json:"dat"` // task.id
 }
 
-func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType, ibexConf aconf.Ibex) {
+func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType,
+	taskTplCache *memsto.TaskTplCache, ibexConf aconf.Ibex) {
 	arr := strings.Split(url, "/")
 
 	var idstr string
@@ -97,12 +99,7 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 		return
 	}
 
-	tpl, err := models.TaskTplGetById(ctx, id)
-	if err != nil {
-		logger.Errorf("event_callback_ibex: failed to get tpl: %v", err)
-		return
-	}
-
+	tpl := taskTplCache.Get(id)
 	if tpl == nil {
 		logger.Errorf("event_callback_ibex: no such tpl(%d)", id)
 		return
@@ -163,6 +160,9 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 	}
 
 	var res TaskCreateReply
+	fmt.Println("===========================================================,准备调用ibex接口: " +
+		"ibexConf.Address: " + ibexConf.Address + ", ibexConf.BasicAuthUser: " + ibexConf.BasicAuthUser +
+		", ibexConf.BasicAuthPass: " + ibexConf.BasicAuthPass)
 	err = ibex.New(
 		ibexConf.Address,
 		ibexConf.BasicAuthUser,

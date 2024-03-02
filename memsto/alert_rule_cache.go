@@ -104,11 +104,16 @@ func (arc *AlertRuleCacheType) loopSyncAlertRules() {
 func (arc *AlertRuleCacheType) syncAlertRules() error {
 	start := time.Now()
 	stat, err := models.AlertRuleStatistics(arc.ctx)
+	fmt.Printf("################################################\n", arc.rules)
+	for _, rule := range arc.rules {
+		fmt.Printf("################################################, %#v\n", rule)
+	}
+	fmt.Printf("\n\n")
 	if err != nil {
 		dumper.PutSyncRecord("alert_rules", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
 		return errors.WithMessage(err, "failed to exec AlertRuleStatistics")
 	}
-
+	fmt.Printf("################################################, %#v\n", arc.rules)
 	if !arc.StatChanged(stat.Total, stat.LastUpdated) {
 		arc.stats.GaugeCronDuration.WithLabelValues("sync_alert_rules").Set(0)
 		arc.stats.GaugeSyncNumber.WithLabelValues("sync_alert_rules").Set(0)

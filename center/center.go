@@ -89,12 +89,13 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	notifyConfigCache := memsto.NewNotifyConfigCache(ctx, configCache)
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
+	taskTplCache := memsto.NewTaskTplCache(ctx)
 
 	promClients := prom.NewPromClient(ctx)
 	tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
-	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
+	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
 
 	writers := writer.NewWriters(config.Pushgw)
 
