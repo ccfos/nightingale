@@ -89,7 +89,13 @@ func (ttc *TaskTplCache) syncTaskTpl() error {
 }
 
 func (ttc *TaskTplCache) loopSyncTaskTpl() {
-
+	d := time.Duration(9) * time.Second
+	for {
+		time.Sleep(d)
+		if err := ttc.syncTaskTpl(); err != nil {
+			logger.Warning("failed to sync task tpl:", err)
+		}
+	}
 }
 
 func (ttc *TaskTplCache) StatChange(total int64, lastUpdated int64) bool {
