@@ -83,7 +83,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 		alertrtRouter.Config(r)
 
-		if redis != nil {
+		if config.Ibex.Enable {
 			ibex.EdgeServerStart(redis, config.Ibex, ibexConf.CenterApi{
 				Addrs:         config.CenterApi.Addrs,
 				BasicAuthUser: config.CenterApi.BasicAuthUser,
