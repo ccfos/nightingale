@@ -3,7 +3,6 @@ package sender
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/pkg/ibex"
 	"strconv"
 	"strings"
 	"time"
@@ -13,11 +12,10 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ibex"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/toolkits/pkg/logger"
-	ibexServer "github.com/ulricqin/ibex"
-	ibexServerConf "github.com/ulricqin/ibex/src/server/config"
 )
 
 func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType,
@@ -29,12 +27,12 @@ func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent,
 
 		if strings.HasPrefix(url, "${ibex}") {
 			if !event.IsRecovered {
-				if ibexServer.N9eIbex != nil && ibexServer.N9eIbex.Enable {
+				if ibex.Conf != nil && ibex.Conf.Enable {
 					ibexConf = aconf.Ibex{
-						Address:       fmt.Sprintf("127.0.0.1:%d", ibexServerConf.C.HTTP.Port),
-						BasicAuthUser: ibexServer.N9eIbex.BasicAuthUser,
-						BasicAuthPass: ibexServer.N9eIbex.BasicAuthPass,
-						Timeout:       ibexServer.N9eIbex.Timeout,
+						Address:       fmt.Sprintf("127.0.0.1:%d", ibex.HttpPort),
+						BasicAuthUser: ibex.Conf.BasicAuthUser,
+						BasicAuthPass: ibex.Conf.BasicAuthPass,
+						Timeout:       ibex.Conf.Timeout,
 					}
 				}
 

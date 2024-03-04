@@ -3,6 +3,7 @@ package center
 import (
 	"context"
 	"fmt"
+
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
@@ -22,6 +23,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/i18nx"
+	"github.com/ccfos/nightingale/v6/pkg/ibex"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
@@ -30,7 +32,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
-	"github.com/ulricqin/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -112,6 +113,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertrtRouter.Config(r)
 	pushgwRouter.Config(r)
 	dumper.ConfigRouter(r)
+
 	if config.Ibex.Enable {
 		ibex.CenterServerStart(ctx.DB, redis, config.Ibex, r, config.HTTP.Port)
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ulricqin/ibex"
+	"github.com/ccfos/nightingale/v6/pkg/ibex"
 	ibexConf "github.com/ulricqin/ibex/src/server/config"
 
 	"github.com/ccfos/nightingale/v6/alert"
