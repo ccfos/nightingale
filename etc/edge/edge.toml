@@ -115,3 +115,10 @@ MaxIdleConnsPerHost = 100
 # Regex = "([^:]+)(?::\\d+)?"
 # Replacement = "$1:80"
 # TargetLabel = "__address__"
+
+[ibex]
+Enable = true
+BasicAuthUser = "user001"
+BasicAuthPass = "ccc26da7b9aba533cbb263a36c07dcc5"
+RPCListen = "0.0.0.0:20090"
+Timeout = 3000

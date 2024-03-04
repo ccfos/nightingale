@@ -42,7 +42,7 @@ type GlobalConfig struct {
 }
 
 type Ibex struct {
-	Address       string
+	Enable        bool
 	BasicAuthUser string
 	BasicAuthPass string
 	RPCListen     string

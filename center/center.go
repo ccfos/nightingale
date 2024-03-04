@@ -112,8 +112,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertrtRouter.Config(r)
 	pushgwRouter.Config(r)
 	dumper.ConfigRouter(r)
-
-	ibex.CenterServerStart(ctx.DB, redis, config.Ibex.RPCListen, config.HTTP.APIForService.BasicAuth, r)
+	if config.Ibex.Enable {
+		ibex.CenterServerStart(ctx.DB, redis, config.Ibex, r, config.HTTP.Port)
+	}
 
 	httpClean := httpx.Init(config.HTTP, r)
 

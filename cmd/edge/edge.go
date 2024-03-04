@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ulricqin/ibex"
+	ibexConf "github.com/ulricqin/ibex/src/server/config"
 
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -22,9 +24,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
-
-	"github.com/ulricqin/ibex"
-	ibexConf "github.com/ulricqin/ibex/src/server/config"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -84,12 +83,14 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 		alertrtRouter.Config(r)
 
-		ibex.EdgeServerStart(redis, config.Ibex.RPCListen, ibexConf.CenterApi{
-			Addrs:         config.CenterApi.Addrs,
-			BasicAuthUser: config.CenterApi.BasicAuthUser,
-			BasicAuthPass: config.CenterApi.BasicAuthPass,
-			Timeout:       config.CenterApi.Timeout,
-		}, r)
+		if redis != nil {
+			ibex.EdgeServerStart(redis, config.Ibex, ibexConf.CenterApi{
+				Addrs:         config.CenterApi.Addrs,
+				BasicAuthUser: config.CenterApi.BasicAuthUser,
+				BasicAuthPass: config.CenterApi.BasicAuthPass,
+				Timeout:       config.CenterApi.Timeout,
+			}, r, config.HTTP.Port)
+		}
 	}
 
 	dumper.ConfigRouter(r)
