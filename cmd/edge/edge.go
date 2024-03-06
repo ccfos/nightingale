@@ -15,7 +15,6 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
-	"github.com/ccfos/nightingale/v6/pkg/ibex"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
@@ -24,7 +23,7 @@ import (
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
-	ibexConf "github.com/ulricqin/ibex/src/server/config"
+	n9eIbex "github.com/ulricqin/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -85,12 +84,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		alertrtRouter.Config(r)
 
 		if config.Ibex.Enable {
-			ibex.EdgeServerStart(redis, config.Ibex, ibexConf.CenterApi{
-				Addrs:         config.CenterApi.Addrs,
-				BasicAuthUser: config.CenterApi.BasicAuthUser,
-				BasicAuthPass: config.CenterApi.BasicAuthPass,
-				Timeout:       config.CenterApi.Timeout,
-			}, r, config.HTTP.Port)
+			n9eIbex.ServerStart(false, nil, redis, config.Ibex, &config.CenterApi, r, config.HTTP.Port)
 		}
 	}
 
