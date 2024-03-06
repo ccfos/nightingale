@@ -16,6 +16,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/toolkits/pkg/logger"
+	n9eIbex "github.com/ulricqin/ibex"
 )
 
 func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType,
@@ -27,12 +28,12 @@ func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent,
 
 		if strings.HasPrefix(url, "${ibex}") {
 			if !event.IsRecovered {
-				if ibex.Conf != nil && ibex.Conf.Enable {
+				if n9eIbex.Conf != nil && n9eIbex.Conf.Enable {
 					ibexConf = aconf.Ibex{
-						Address:       fmt.Sprintf("127.0.0.1:%d", ibex.HttpPort),
-						BasicAuthUser: ibex.Conf.BasicAuthUser,
-						BasicAuthPass: ibex.Conf.BasicAuthPass,
-						Timeout:       ibex.Conf.Timeout,
+						Address:       fmt.Sprintf("127.0.0.1:%d", n9eIbex.HttpPort),
+						BasicAuthUser: n9eIbex.Conf.BasicAuthUser,
+						BasicAuthPass: n9eIbex.Conf.BasicAuthPass,
+						Timeout:       n9eIbex.Conf.Timeout,
 					}
 				}
 
