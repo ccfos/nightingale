@@ -172,7 +172,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 
 		for i := 0; i < len(mute.PeriodicMutesJson); i++ {
 			if strings.Contains(mute.PeriodicMutesJson[i].EnableDaysOfWeek, triggerWeek) {
-				if mute.PeriodicMutesJson[i].EnableStime == mute.PeriodicMutesJson[i].EnableEtime {
+				if mute.PeriodicMutesJson[i].EnableStime == mute.PeriodicMutesJson[i].EnableEtime || (mute.PeriodicMutesJson[i].EnableStime == "00:00" && mute.PeriodicMutesJson[i].EnableEtime == "23:59") {
 					matchTime = true
 					break
 				} else if mute.PeriodicMutesJson[i].EnableStime < mute.PeriodicMutesJson[i].EnableEtime {
