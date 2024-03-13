@@ -18,7 +18,7 @@ func (rt *Router) taskTplGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
 	groupId := ginx.UrlParamInt64(c, "id")
 
-	total, err := models.TaskTplTotal(rt.Ctx, []int64{groupId}, query)
+	total, err := models.TaskTplCount(rt.Ctx, []int64{groupId}, query)
 	ginx.Dangerous(err)
 
 	list, err := models.TaskTplGets(rt.Ctx, []int64{groupId}, query, limit, ginx.Offset(c, limit))
@@ -44,7 +44,7 @@ func (rt *Router) taskTplGetsByGids(c *gin.Context) {
 		rt.bgroCheck(c, gid)
 	}
 
-	total, err := models.TaskTplTotal(rt.Ctx, gids, query)
+	total, err := models.TaskTplCount(rt.Ctx, gids, query)
 	ginx.Dangerous(err)
 
 	list, err := models.TaskTplGets(rt.Ctx, gids, query, limit, ginx.Offset(c, limit))
@@ -85,6 +85,14 @@ func (rt *Router) taskTplGetByService(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(tpl, err)
+}
+
+func (rt *Router) taskTplGetsByService(c *gin.Context) {
+	ginx.NewRender(c).Data(models.TaskTplGetAll(rt.Ctx))
+}
+
+func (rt *Router) taskTplStatistics(c *gin.Context) {
+	ginx.NewRender(c).Data(models.TaskTplStatistics(rt.Ctx))
 }
 
 type taskTplForm struct {

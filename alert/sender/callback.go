@@ -2,6 +2,7 @@ package sender
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -15,10 +16,11 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/toolkits/pkg/logger"
+	n9eIbex "github.com/ulricqin/ibex"
 )
 
 func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType,
-	ibexConf aconf.Ibex, stats *astats.Stats) {
+	taskTplCache *memsto.TaskTplCache, ibexConf aconf.Ibex, stats *astats.Stats) {
 	for _, url := range urls {
 		if url == "" {
 			continue
@@ -26,7 +28,16 @@ func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent,
 
 		if strings.HasPrefix(url, "${ibex}") {
 			if !event.IsRecovered {
-				handleIbex(ctx, url, event, targetCache, userCache, ibexConf)
+				if n9eIbex.Conf != nil && n9eIbex.Conf.Enable {
+					ibexConf = aconf.Ibex{
+						Address:       fmt.Sprintf("127.0.0.1:%d", n9eIbex.HttpPort),
+						BasicAuthUser: n9eIbex.Conf.BasicAuthUser,
+						BasicAuthPass: n9eIbex.Conf.BasicAuthPass,
+						Timeout:       n9eIbex.Conf.Timeout,
+					}
+				}
+
+				handleIbex(ctx, url, event, targetCache, userCache, taskTplCache, ibexConf)
 			}
 			continue
 		}
@@ -47,18 +58,19 @@ func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent,
 }
 
 type TaskForm struct {
-	Title     string   `json:"title"`
-	Account   string   `json:"account"`
-	Batch     int      `json:"batch"`
-	Tolerance int      `json:"tolerance"`
-	Timeout   int      `json:"timeout"`
-	Pause     string   `json:"pause"`
-	Script    string   `json:"script"`
-	Args      string   `json:"args"`
-	Stdin     string   `json:"stdin"`
-	Action    string   `json:"action"`
-	Creator   string   `json:"creator"`
-	Hosts     []string `json:"hosts"`
+	Title          string   `json:"title"`
+	Account        string   `json:"account"`
+	Batch          int      `json:"batch"`
+	Tolerance      int      `json:"tolerance"`
+	Timeout        int      `json:"timeout"`
+	Pause          string   `json:"pause"`
+	Script         string   `json:"script"`
+	Args           string   `json:"args"`
+	Stdin          string   `json:"stdin"`
+	Action         string   `json:"action"`
+	Creator        string   `json:"creator"`
+	Hosts          []string `json:"hosts"`
+	AlertTriggered bool     `json:"alert_triggered"`
 }
 
 type TaskCreateReply struct {
@@ -66,7 +78,8 @@ type TaskCreateReply struct {
 	Dat int64  `json:"dat"` // task.id
 }
 
-func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType, ibexConf aconf.Ibex) {
+func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType,
+	taskTplCache *memsto.TaskTplCache, ibexConf aconf.Ibex) {
 	arr := strings.Split(url, "/")
 
 	var idstr string
@@ -96,12 +109,7 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 		return
 	}
 
-	tpl, err := models.TaskTplGetById(ctx, id)
-	if err != nil {
-		logger.Errorf("event_callback_ibex: failed to get tpl: %v", err)
-		return
-	}
-
+	tpl := taskTplCache.Get(id)
 	if tpl == nil {
 		logger.Errorf("event_callback_ibex: no such tpl(%d)", id)
 		return
@@ -146,18 +154,19 @@ func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targe
 
 	// call ibex
 	in := TaskForm{
-		Title:     tpl.Title + " FH: " + host,
-		Account:   tpl.Account,
-		Batch:     tpl.Batch,
-		Tolerance: tpl.Tolerance,
-		Timeout:   tpl.Timeout,
-		Pause:     tpl.Pause,
-		Script:    tpl.Script,
-		Args:      tpl.Args,
-		Stdin:     string(tags),
-		Action:    "start",
-		Creator:   tpl.UpdateBy,
-		Hosts:     []string{host},
+		Title:          tpl.Title + " FH: " + host,
+		Account:        tpl.Account,
+		Batch:          tpl.Batch,
+		Tolerance:      tpl.Tolerance,
+		Timeout:        tpl.Timeout,
+		Pause:          tpl.Pause,
+		Script:         tpl.Script,
+		Args:           tpl.Args,
+		Stdin:          string(tags),
+		Action:         "start",
+		Creator:        tpl.UpdateBy,
+		Hosts:          []string{host},
+		AlertTriggered: true,
 	}
 
 	var res TaskCreateReply
