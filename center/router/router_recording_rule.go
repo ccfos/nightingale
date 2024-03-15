@@ -21,7 +21,7 @@ func (rt *Router) recordingRuleGets(c *gin.Context) {
 }
 
 func (rt *Router) recordingRuleGetsByGids(c *gin.Context) {
-	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
 	if len(gids) > 0 {
 		for _, gid := range gids {
 			rt.bgroCheck(c, gid)

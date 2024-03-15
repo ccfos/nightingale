@@ -22,7 +22,7 @@ func (rt *Router) alertMuteGetsByBG(c *gin.Context) {
 }
 
 func (rt *Router) alertMuteGetsByGids(c *gin.Context) {
-	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
 	if len(gids) > 0 {
 		for _, gid := range gids {
 			rt.bgroCheck(c, gid)
