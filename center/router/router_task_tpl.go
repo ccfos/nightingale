@@ -34,14 +34,18 @@ func (rt *Router) taskTplGetsByGids(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 20)
 
-	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
-	if len(gids) == 0 {
-		ginx.NewRender(c, http.StatusBadRequest).Message("arg(gids) is empty")
-		return
-	}
-
-	for _, gid := range gids {
-		rt.bgroCheck(c, gid)
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
+	if len(gids) > 0 {
+		for _, gid := range gids {
+			rt.bgroCheck(c, gid)
+		}
+	} else {
+		me := c.MustGet("user").(*models.User)
+		if !me.IsAdmin() {
+			var err error
+			gids, err = models.MyBusiGroupIds(rt.Ctx, me.Id)
+			ginx.Dangerous(err)
+		}
 	}
 
 	total, err := models.TaskTplTotal(rt.Ctx, gids, query)
