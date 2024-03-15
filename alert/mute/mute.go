@@ -147,7 +147,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 	}
 
 	// 如果不是全局的，判断 匹配的 datasource id
-	if !(len(mute.DatasourceIdsJson) != 0 && mute.DatasourceIdsJson[0] == 0) && event.DatasourceId != 0 {
+	if len(mute.DatasourceIdsJson) != 0 && mute.DatasourceIdsJson[0] != 0 && event.DatasourceId != 0 {
 		idm := make(map[int64]struct{}, len(mute.DatasourceIdsJson))
 		for i := 0; i < len(mute.DatasourceIdsJson); i++ {
 			idm[mute.DatasourceIdsJson[i]] = struct{}{}
