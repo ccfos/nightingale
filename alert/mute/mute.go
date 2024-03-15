@@ -209,5 +209,9 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		return false
 	}
 
+	if mute.ITags == nil || len(mute.ITags) == 0 {
+		return true
+	}
+
 	return common.MatchTags(event.TagsMap, mute.ITags)
 }
