@@ -105,6 +105,7 @@ func (rt *Router) alertMuteDel(c *gin.Context) {
 func (rt *Router) alertMuteGet(c *gin.Context) {
 	amid := ginx.UrlParamInt64(c, "amid")
 	am, err := models.AlertMuteGetById(rt.Ctx, amid)
+	am.DB2FE()
 	ginx.NewRender(c).Data(am, err)
 }
 
