@@ -133,6 +133,7 @@ type AlertSubscribe struct {
 
 type AlertMute struct {
 	Severities string `gorm:"column:severities;type:varchar(32);not null;default:''"`
+	Tags       string `gorm:"column:tags;type:varchar(4096);default:'[]';comment:json,map,tagkey->regexp|value"`
 }
 
 type RecordingRule struct {
