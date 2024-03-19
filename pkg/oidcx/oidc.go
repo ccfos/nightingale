@@ -43,7 +43,7 @@ type Config struct {
 	DisplayName     string
 	RedirectURL     string
 	SsoAddr         string
-	SsoLoginOutAddr string
+	SsoLogoutAddr   string
 	ClientId        string
 	ClientSecret    string
 	CoverAttributes bool
@@ -81,7 +81,7 @@ func (s *SsoClient) Reload(cf Config) error {
 
 	s.Enable = cf.Enable
 	s.SsoAddr = cf.SsoAddr
-	s.SsoLogoutAddr = cf.SsoLoginOutAddr
+	s.SsoLogoutAddr = cf.SsoLogoutAddr
 	s.CallbackAddr = cf.RedirectURL
 	s.CoverAttributes = cf.CoverAttributes
 	s.Attributes.Username = cf.Attributes.Username
