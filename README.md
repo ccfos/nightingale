@@ -62,9 +62,7 @@
 - 报告Bug，优先推荐提交[夜莺GitHub Issue](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&projects=&template=bug_report.yml)
 - 推荐完整浏览[夜莺文档站点](https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v7/introduction/)，了解更多信息
 - 推荐搜索关注夜莺公众号，第一时间获取社区动态：`夜莺监控Nightingale`
-- 日常答疑、技术分享、用户之间的交流，统一使用知识星球，大伙可以免费加入交流
-
-![20240319095409](https://download.flashcat.cloud/ulric/20240319095409.png)
+- 日常答疑、技术分享、用户之间的交流，统一使用知识星球，大伙可以免费加入交流，[入口在这里](https://download.flashcat.cloud/ulric/20240319095409.png)
 
 ## 广受关注
 [![Stargazers over time](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale&Date)
