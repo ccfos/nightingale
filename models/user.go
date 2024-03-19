@@ -55,7 +55,7 @@ type User struct {
 	CreateBy   string       `json:"create_by"`
 	UpdateAt   int64        `json:"update_at"`
 	UpdateBy   string       `json:"update_by"`
-	Belong     string       `json:"Belong"`
+	Belong     string       `json:"belong"`
 	Admin      bool         `json:"admin" gorm:"-"` // 方便前端使用
 }
 
