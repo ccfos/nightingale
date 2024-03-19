@@ -4,7 +4,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/cas"
@@ -13,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
 
+	"github.com/BurntSushi/toml"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -31,15 +31,21 @@ Port = 389
 BaseDn = 'dc=example,dc=org'
 BindUser = 'cn=manager,dc=example,dc=org'
 BindPass = '*******'
+SyncAddUsers = false
+SyncDelUsers = false
+# unit: s
+SyncInterval = 86400
 # openldap format e.g. (&(uid=%s))
 # AD format e.g. (&(sAMAccountName=%s))
 AuthFilter = '(&(uid=%s))'
+UserFilter = '(&(uid=*))'
 CoverAttributes = true
 TLS = false
 StartTLS = true
 DefaultRoles = ['Standard']
 
 [Attributes]
+Username = 'uid'
 Nickname = 'cn'
 Phone = 'mobile'
 Email = 'mail'
@@ -48,8 +54,9 @@ Email = 'mail'
 const OAuth2 = `
 Enable = false
 DisplayName = 'OAuth2登录'
-RedirectURL = 'http://127.0.0.1:18000/callback/oauth'
+RedirectURL = 'http://n9e.com/callback/oauth'
 SsoAddr = 'https://sso.example.com/oauth2/authorize'
+SsoLogoutAddr = 'https://sso.example.com/oauth2/authorize/session/end'
 TokenAddr = 'https://sso.example.com/oauth2/token'
 UserInfoAddr = 'https://api.example.com/api/v1/user/info'
 TranTokenMethod = 'header'
@@ -62,7 +69,7 @@ UserinfoPrefix = 'data'
 Scopes = ['profile', 'email', 'phone']
 
 [Attributes]
-Username = 'username'
+Username = 'sub'
 Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'
@@ -70,29 +77,35 @@ Email = 'email'
 
 const CAS = `
 Enable = false
-SsoAddr = 'https://cas.example.com/cas/'
-# LoginPath = ''
-RedirectURL = 'http://127.0.0.1:18000/callback/cas'
 DisplayName = 'CAS登录'
-CoverAttributes = false
+RedirectURL = 'http://n9e.com/callback/cas'
+SsoAddr = 'https://cas.example.com/cas/'
+SsoLogoutAddr = 'https://cas.example.com/cas/session/end'
+# LoginPath = ''
+CoverAttributes = true
 DefaultRoles = ['Standard']
 
 [Attributes]
+Username = 'sub'
 Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'
 `
+
 const OIDC = `
 Enable = false
 DisplayName = 'OIDC登录'
 RedirectURL = 'http://n9e.com/callback'
 SsoAddr = 'http://sso.example.org'
+SsoLogoutAddr = 'http://sso.example.org/session/end'
 ClientId = ''
 ClientSecret = ''
 CoverAttributes = true
 DefaultRoles = ['Standard']
+Scopes = ['openid', 'profile', 'email', 'phone']
 
 [Attributes]
+Username = 'sub'
 Nickname = 'nickname'
 Phone = 'phone_number'
 Email = 'email'
@@ -171,6 +184,8 @@ func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
 			ssoClient.OAuth2 = oauth2x.New(config)
 		}
 	}
+
+	ssoClient.SyncSsoUsers(ctx)
 	go ssoClient.Reload(ctx)
 	return ssoClient
 }

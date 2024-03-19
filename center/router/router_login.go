@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/cas"
@@ -14,10 +13,10 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
-	"github.com/pelletier/go-toml/v2"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
@@ -51,22 +50,26 @@ func (rt *Router) loginPost(c *gin.Context) {
 		}
 		authPassWord = decPassWord
 	}
-	user, err := models.PassLogin(rt.Ctx, f.Username, authPassWord)
-	if err != nil {
-		// pass validate fail, try ldap
-		if rt.Sso.LDAP.Enable {
-			roles := strings.Join(rt.Sso.LDAP.DefaultRoles, " ")
-			user, err = models.LdapLogin(rt.Ctx, f.Username, authPassWord, roles, rt.Sso.LDAP)
-			if err != nil {
-				logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
-				ginx.NewRender(c).Message(err)
+
+	var user *models.User
+	var err error
+	lc := rt.Sso.LDAP.Copy()
+	if lc.Enable {
+		user, err = ldapx.LdapLogin(rt.Ctx, f.Username, authPassWord, lc.DefaultRoles, lc)
+		if err != nil {
+			logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
+			var errLoginInN9e error
+			// to use n9e as the minimum guarantee for login
+			if user, errLoginInN9e = models.PassLogin(rt.Ctx, f.Username, authPassWord); errLoginInN9e != nil {
+				ginx.NewRender(c).Message("ldap login failed: %v; n9e login failed: %v", err, errLoginInN9e)
 				return
 			}
-			user.RolesLst = strings.Fields(user.Roles)
 		} else {
-			ginx.NewRender(c).Message(err)
-			return
+			user.RolesLst = strings.Fields(user.Roles)
 		}
+	} else {
+		user, err = models.PassLogin(rt.Ctx, f.Username, authPassWord)
+		ginx.Dangerous(err)
 	}
 
 	if user == nil {
@@ -102,7 +105,18 @@ func (rt *Router) logoutPost(c *gin.Context) {
 		return
 	}
 
-	ginx.NewRender(c).Message("")
+	var logoutAddr string
+	user := c.MustGet("user").(*models.User)
+	switch user.Belong {
+	case "oidc":
+		logoutAddr = rt.Sso.OIDC.GetSsoLogoutAddr()
+	case "cas":
+		logoutAddr = rt.Sso.CAS.GetSsoLogoutAddr()
+	case "oauth2":
+		logoutAddr = rt.Sso.OAuth2.GetSsoLogoutAddr()
+	}
+
+	ginx.NewRender(c).Data(logoutAddr, nil)
 }
 
 type refreshForm struct {
@@ -240,39 +254,12 @@ func (rt *Router) loginCallback(c *gin.Context) {
 
 	if user != nil {
 		if rt.Sso.OIDC.CoverAttributes {
-			if ret.Nickname != "" {
-				user.Nickname = ret.Nickname
-			}
-
-			if ret.Email != "" {
-				user.Email = ret.Email
-			}
-
-			if ret.Phone != "" {
-				user.Phone = ret.Phone
-			}
-
-			user.UpdateAt = time.Now().Unix()
-			user.Update(rt.Ctx, "email", "nickname", "phone", "update_at")
+			updatedFields := user.UpdateSsoFields("oidc", ret.Nickname, ret.Phone, ret.Email)
+			ginx.Dangerous(user.Update(rt.Ctx, "update_at", updatedFields...))
 		}
 	} else {
-		now := time.Now().Unix()
-		user = &models.User{
-			Username: ret.Username,
-			Password: "******",
-			Nickname: ret.Nickname,
-			Phone:    ret.Phone,
-			Email:    ret.Email,
-			Portrait: "",
-			Roles:    strings.Join(rt.Sso.OIDC.DefaultRoles, " "),
-			RolesLst: rt.Sso.OIDC.DefaultRoles,
-			Contacts: []byte("{}"),
-			CreateAt: now,
-			UpdateAt: now,
-			CreateBy: "oidc",
-			UpdateBy: "oidc",
-		}
-
+		user = new(models.User)
+		user.FullSsoFields("oidc", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.OIDC.DefaultRoles)
 		// create user from oidc
 		ginx.Dangerous(user.Add(rt.Ctx))
 	}
@@ -350,38 +337,12 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 	ginx.Dangerous(err)
 	if user != nil {
 		if rt.Sso.CAS.CoverAttributes {
-			if ret.Nickname != "" {
-				user.Nickname = ret.Nickname
-			}
-
-			if ret.Email != "" {
-				user.Email = ret.Email
-			}
-
-			if ret.Phone != "" {
-				user.Phone = ret.Phone
-			}
-
-			user.UpdateAt = time.Now().Unix()
-			ginx.Dangerous(user.Update(rt.Ctx, "email", "nickname", "phone", "update_at"))
+			updatedFields := user.UpdateSsoFields("cas", ret.Nickname, ret.Phone, ret.Email)
+			ginx.Dangerous(user.Update(rt.Ctx, "update_at", updatedFields...))
 		}
 	} else {
-		now := time.Now().Unix()
-		user = &models.User{
-			Username: ret.Username,
-			Password: "******",
-			Nickname: ret.Nickname,
-			Portrait: "",
-			Roles:    strings.Join(rt.Sso.CAS.DefaultRoles, " "),
-			RolesLst: rt.Sso.CAS.DefaultRoles,
-			Contacts: []byte("{}"),
-			Phone:    ret.Phone,
-			Email:    ret.Email,
-			CreateAt: now,
-			UpdateAt: now,
-			CreateBy: "CAS",
-			UpdateBy: "CAS",
-		}
+		user = new(models.User)
+		user.FullSsoFields("cas", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.CAS.DefaultRoles)
 		// create user from cas
 		ginx.Dangerous(user.Add(rt.Ctx))
 	}
@@ -452,39 +413,12 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 
 	if user != nil {
 		if rt.Sso.OAuth2.CoverAttributes {
-			if ret.Nickname != "" {
-				user.Nickname = ret.Nickname
-			}
-
-			if ret.Email != "" {
-				user.Email = ret.Email
-			}
-
-			if ret.Phone != "" {
-				user.Phone = ret.Phone
-			}
-
-			user.UpdateAt = time.Now().Unix()
-			user.Update(rt.Ctx, "email", "nickname", "phone", "update_at")
+			updatedFields := user.UpdateSsoFields("oauth2", ret.Nickname, ret.Phone, ret.Email)
+			ginx.Dangerous(user.Update(rt.Ctx, "update_at", updatedFields...))
 		}
 	} else {
-		now := time.Now().Unix()
-		user = &models.User{
-			Username: ret.Username,
-			Password: "******",
-			Nickname: ret.Nickname,
-			Phone:    ret.Phone,
-			Email:    ret.Email,
-			Portrait: "",
-			Roles:    strings.Join(rt.Sso.OAuth2.DefaultRoles, " "),
-			RolesLst: rt.Sso.OAuth2.DefaultRoles,
-			Contacts: []byte("{}"),
-			CreateAt: now,
-			UpdateAt: now,
-			CreateBy: "oauth2",
-			UpdateBy: "oauth2",
-		}
-
+		user = new(models.User)
+		user.FullSsoFields("oauth2", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.OAuth2.DefaultRoles)
 		// create user from oidc
 		ginx.Dangerous(user.Add(rt.Ctx))
 	}
