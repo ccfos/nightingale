@@ -255,7 +255,7 @@ func (rt *Router) loginCallback(c *gin.Context) {
 	if user != nil {
 		if rt.Sso.OIDC.CoverAttributes {
 			updatedFields := user.UpdateSsoFields("oidc", ret.Nickname, ret.Phone, ret.Email)
-			ginx.Dangerous(user.Update(rt.Ctx, "update_by", updatedFields...))
+			ginx.Dangerous(user.Update(rt.Ctx, "update_at", updatedFields...))
 		}
 	} else {
 		user = new(models.User)
