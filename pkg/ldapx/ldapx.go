@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-ldap/ldap/v3"
 	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/logger"
 )
 
 type Config struct {
@@ -143,6 +144,10 @@ func (s *SsoClient) LoginCheck(user, pass string) (*ldap.SearchResult, error) {
 
 	if err := conn.Bind(sr.Entries[0].DN, pass); err != nil {
 		return nil, fmt.Errorf("username or password invalid")
+	}
+
+	for _, info := range sr.Entries[0].Attributes {
+		logger.Infof("ldap.info: user(%s) info: %+v", user, info)
 	}
 
 	return sr, nil

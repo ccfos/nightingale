@@ -142,8 +142,13 @@ func AlertMuteGetsByBG(ctx *ctx.Context, groupId int64) (lst []AlertMute, err er
 	return
 }
 
-func AlertMuteGetsByBGIds(ctx *ctx.Context, bgIds []int64) (lst []AlertMute, err error) {
-	err = DB(ctx).Where("group_id in (?)", bgIds).Order("id desc").Find(&lst).Error
+func AlertMuteGetsByBGIds(ctx *ctx.Context, bgids []int64) (lst []AlertMute, err error) {
+	session := DB(ctx)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in (?)", bgids)
+	}
+
+	err = session.Order("id desc").Find(&lst).Error
 	for i := 0; i < len(lst); i++ {
 		lst[i].DB2FE()
 	}
@@ -165,10 +170,6 @@ func (m *AlertMute) Verify() error {
 
 	if err := m.Parse(); err != nil {
 		return err
-	}
-
-	if len(m.ITags) == 0 {
-		return errors.New("tags is blank")
 	}
 
 	return nil
@@ -248,6 +249,11 @@ func (m *AlertMute) DB2FE() error {
 	if err != nil {
 		return err
 	}
+
+	if m.DatasourceIdsJson == nil {
+		m.DatasourceIdsJson = []int64{}
+	}
+
 	err = json.Unmarshal([]byte(m.PeriodicMutes), &m.PeriodicMutesJson)
 	if err != nil {
 		return err

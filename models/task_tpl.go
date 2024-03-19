@@ -41,8 +41,12 @@ func (t *TaskTpl) DB2FE() error {
 	return nil
 }
 
-func TaskTplTotal(ctx *ctx.Context, groupIds []int64, query string) (int64, error) {
-	session := DB(ctx).Model(&TaskTpl{}).Where("group_id in (?)", groupIds)
+func TaskTplTotal(ctx *ctx.Context, bgids []int64, query string) (int64, error) {
+	session := DB(ctx).Model(&TaskTpl{})
+	if len(bgids) > 0 {
+		session = session.Where("group_id in (?)", bgids)
+	}
+
 	if query == "" {
 		return Count(session)
 	}
@@ -56,8 +60,11 @@ func TaskTplTotal(ctx *ctx.Context, groupIds []int64, query string) (int64, erro
 	return Count(session)
 }
 
-func TaskTplGets(ctx *ctx.Context, groupIds []int64, query string, limit, offset int) ([]TaskTpl, error) {
-	session := DB(ctx).Where("group_id in (?)", groupIds).Order("title").Limit(limit).Offset(offset)
+func TaskTplGets(ctx *ctx.Context, bgids []int64, query string, limit, offset int) ([]TaskTpl, error) {
+	session := DB(ctx).Order("title").Limit(limit).Offset(offset)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in (?)", bgids)
+	}
 
 	var tpls []TaskTpl
 	if query != "" {

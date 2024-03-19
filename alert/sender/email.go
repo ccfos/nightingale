@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/toolkits/pkg/logger"
@@ -103,9 +104,27 @@ func RestartEmailSender(smtp aconf.SMTPConfig) {
 	startEmailSender(smtp)
 }
 
-func InitEmailSender(smtp aconf.SMTPConfig) {
+var smtpConfig aconf.SMTPConfig
+
+func InitEmailSender(ncc *memsto.NotifyConfigCacheType) {
 	mailch = make(chan *gomail.Message, 100000)
-	startEmailSender(smtp)
+	go updateSmtp(ncc)
+	smtpConfig = ncc.GetSMTP()
+	startEmailSender(smtpConfig)
+
+}
+
+func updateSmtp(ncc *memsto.NotifyConfigCacheType) {
+	for {
+		time.Sleep(1 * time.Minute)
+		smtp := ncc.GetSMTP()
+		if smtpConfig.Host != smtp.Host || smtpConfig.Batch != smtp.Batch || smtpConfig.From != smtp.From ||
+			smtpConfig.Pass != smtp.Pass || smtpConfig.User != smtp.User || smtpConfig.Port != smtp.Port ||
+			smtpConfig.InsecureSkipVerify != smtp.InsecureSkipVerify { //diff
+			smtpConfig = smtp
+			RestartEmailSender(smtp)
+		}
+	}
 }
 
 func startEmailSender(smtp aconf.SMTPConfig) {

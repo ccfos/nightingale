@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/str"
 	"gorm.io/gorm"
@@ -54,6 +56,22 @@ func (b *Board) Verify() error {
 	return nil
 }
 
+func (b *Board) Clone(operatorName string, newBgid int64) *Board {
+	clone := &Board{
+		Name:     b.Name + " Cloned",
+		Tags:     b.Tags,
+		GroupId:  newBgid,
+		CreateBy: operatorName,
+		UpdateBy: operatorName,
+	}
+
+	if b.Ident != "" {
+		clone.Ident = uuid.NewString()
+	}
+
+	return clone
+}
+
 func (b *Board) CanRenameIdent(ctx *ctx.Context, ident string) (bool, error) {
 	if ident == "" {
 		return true, nil
@@ -89,6 +107,25 @@ func (b *Board) Add(ctx *ctx.Context) error {
 	b.UpdateAt = now
 
 	return Insert(ctx, b)
+}
+
+func (b *Board) AtomicAdd(c *ctx.Context, payload string) error {
+	return DB(c).Transaction(func(tx *gorm.DB) error {
+		tCtx := &ctx.Context{
+			DB: tx,
+		}
+
+		if err := b.Add(tCtx); err != nil {
+			return err
+		}
+
+		if payload != "" {
+			if err := BoardPayloadSave(tCtx, b.Id, payload); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (b *Board) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {

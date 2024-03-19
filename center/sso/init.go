@@ -2,6 +2,7 @@ package sso
 
 import (
 	"log"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/models"
@@ -16,10 +17,11 @@ import (
 )
 
 type SsoClient struct {
-	OIDC   *oidcx.SsoClient
-	LDAP   *ldapx.SsoClient
-	CAS    *cas.SsoClient
-	OAuth2 *oauth2x.SsoClient
+	OIDC           *oidcx.SsoClient
+	LDAP           *ldapx.SsoClient
+	CAS            *cas.SsoClient
+	OAuth2         *oauth2x.SsoClient
+	LastUpdateTime int64
 }
 
 const LDAP = `
@@ -184,6 +186,79 @@ func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
 	}
 
 	ssoClient.SyncSsoUsers(ctx)
-
+	go ssoClient.Reload(ctx)
 	return ssoClient
+}
+
+// 定期更新sso配置
+func (s *SsoClient) reload(ctx *ctx.Context) error {
+	lastUpdateTime, err := models.SsoConfigLastUpdateTime(ctx)
+	if err != nil {
+		return err
+	}
+
+	if lastUpdateTime == s.LastUpdateTime {
+		return nil
+	}
+
+	configs, err := models.SsoConfigGets(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, cfg := range configs {
+		switch cfg.Name {
+		case "LDAP":
+			var config ldapx.Config
+			err := toml.Unmarshal([]byte(cfg.Content), &config)
+			if err != nil {
+				logger.Warning("reload ldap failed", err)
+				continue
+			}
+			s.LDAP.Reload(config)
+		case "OIDC":
+			var config oidcx.Config
+			err := toml.Unmarshal([]byte(cfg.Content), &config)
+			if err != nil {
+				logger.Warning("reload oidc failed:", err)
+				continue
+			}
+
+			logger.Info("reload oidc..")
+			err = s.OIDC.Reload(config)
+			if err != nil {
+				logger.Error("reload oidc failed:", err)
+				continue
+			}
+		case "CAS":
+			var config cas.Config
+			err := toml.Unmarshal([]byte(cfg.Content), &config)
+			if err != nil {
+				logger.Warning("reload cas failed:", err)
+				continue
+			}
+			s.CAS.Reload(config)
+		case "OAuth2":
+			var config oauth2x.Config
+			err := toml.Unmarshal([]byte(cfg.Content), &config)
+			if err != nil {
+				logger.Warning("reload oauth2 failed:", err)
+				continue
+			}
+			s.OAuth2.Reload(config)
+		}
+	}
+
+	s.LastUpdateTime = lastUpdateTime
+	return nil
+}
+
+func (s *SsoClient) Reload(ctx *ctx.Context) {
+	duration := time.Duration(9000) * time.Millisecond
+	for {
+		time.Sleep(duration)
+		if err := s.reload(ctx); err != nil {
+			logger.Warning("reload sso client err:", err)
+		}
+	}
 }

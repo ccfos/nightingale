@@ -18,6 +18,7 @@
           "stack": "off"
         },
         "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
         "id": "01f4d444-aa2d-466d-9615-c76baf60a40c",
         "layout": {
           "h": 4,
@@ -56,8 +57,7 @@
           }
         ],
         "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
+        "version": "2.0.0"
       },
       {
         "custom": {
@@ -73,6 +73,7 @@
           "stack": "off"
         },
         "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
         "id": "c43eb882-915f-4c38-a0b5-8f33c21ab44a",
         "layout": {
           "h": 4,
@@ -111,8 +112,7 @@
           }
         ],
         "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
+        "version": "2.0.0"
       },
       {
         "custom": {
@@ -128,6 +128,7 @@
           "stack": "off"
         },
         "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
         "id": "37447883-ad79-46bc-888a-1be2835c1c64",
         "layout": {
           "h": 4,
@@ -166,8 +167,7 @@
           }
         ],
         "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
+        "version": "2.0.0"
       },
       {
         "custom": {
@@ -183,6 +183,7 @@
           "stack": "off"
         },
         "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
         "id": "c9735607-3f24-44a7-bbf1-3ad39441c5c9",
         "layout": {
           "h": 4,
@@ -221,8 +222,7 @@
           }
         ],
         "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
+        "version": "2.0.0"
       },
       {
         "custom": {
@@ -238,6 +238,7 @@
           "stack": "off"
         },
         "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
         "id": "b516e7dc-8022-409d-b907-18c4143df891",
         "layout": {
           "h": 5,
@@ -298,8 +299,7 @@
           }
         ],
         "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
+        "version": "2.0.0"
       }
     ],
     "var": [
@@ -309,14 +309,24 @@
         "definition": "prometheus"
       },
       {
+        "name": "name",
+        "type": "query",
         "datasource": {
           "cate": "prometheus",
           "value": "${datasource}"
         },
-        "definition": "label_values(aliyun_acs_rds_dashboard_cpu_usage_average,instance_id)",
-        "multi": false,
+        "definition": "label_values(aliyun_acs_rds_dashboard_cpu_usage_average,name)",
+        "multi": false
+      },
+      {
         "name": "instance_id",
-        "type": "query"
+        "type": "query",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        },
+        "definition": "label_values(aliyun_acs_rds_dashboard_cpu_usage_average{name=\"$name\"},instance_id)",
+        "multi": false
       }
     ],
     "version": "3.0.0"

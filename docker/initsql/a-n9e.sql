@@ -299,7 +299,7 @@ CREATE TABLE `alert_mute` (
     `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `datasource_ids` varchar(255) not null default '' comment 'datasource ids',
-    `tags` varchar(4096) not null default '' comment 'json,map,tagkey->regexp|value',
+    `tags` varchar(4096) default '[]' comment 'json,map,tagkey->regexp|value',
     `cause` varchar(255) not null default '',
     `btime` bigint not null default 0 comment 'begin time',
     `etime` bigint not null default 0 comment 'end time',
