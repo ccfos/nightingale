@@ -36,3 +36,5 @@ ALTER TABLE notify_tpl ADD COLUMN update_by VARCHAR(64) DEFAULT '' COMMENT 'upda
 
 -- Alter table for Users
 ALTER TABLE users ADD COLUMN belong VARCHAR(16) DEFAULT '' COMMENT 'belong';
+
+ALTER TABLE `sso_config` ADD COLUMN `update_at` INT NOT NULL DEFAULT 0 COMMENT 'update_at';

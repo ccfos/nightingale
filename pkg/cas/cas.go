@@ -231,7 +231,8 @@ func (s *SsoClient) ValidateServiceTicket(ctx context.Context, ticket, state str
 		return
 	}
 	ret = &CallbackOutput{}
-	ret.Username = authRet.Attributes.Get(s.Attributes.UserName)
+
+	ret.Username = authRet.User
 	ret.Nickname = authRet.Attributes.Get(s.Attributes.Nickname)
 	ret.Email = authRet.Attributes.Get(s.Attributes.Email)
 	ret.Phone = authRet.Attributes.Get(s.Attributes.Phone)
