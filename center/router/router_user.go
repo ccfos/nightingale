@@ -6,6 +6,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
+	"github.com/ccfos/nightingale/v6/pkg/secu"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -72,7 +73,10 @@ func (rt *Router) userAddPost(c *gin.Context) {
 	var f userAddForm
 	ginx.BindJSON(c, &f)
 
-	password, err := models.CryptoPass(rt.Ctx, f.Password)
+	decPassWord, err := secu.Decrypt(f.Password, rt.HTTP.RSA.RSAPrivateKey, rt.HTTP.RSA.RSAPassWord)
+	ginx.Dangerous(err)
+
+	password, err := models.CryptoPass(rt.Ctx, decPassWord)
 	ginx.Dangerous(err)
 
 	if len(f.Roles) == 0 {
@@ -118,7 +122,10 @@ func (rt *Router) userProfilePutByService(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "roles empty")
 	}
 
-	password, err := models.CryptoPass(rt.Ctx, f.Password)
+	decPassWord, err := secu.Decrypt(f.Password, rt.HTTP.RSA.RSAPrivateKey, rt.HTTP.RSA.RSAPassWord)
+	ginx.Dangerous(err)
+
+	password, err := models.CryptoPass(rt.Ctx, decPassWord)
 	ginx.Dangerous(err)
 
 	target := User(rt.Ctx, ginx.UrlParamInt64(c, "id"))
@@ -163,7 +170,10 @@ func (rt *Router) userPasswordPut(c *gin.Context) {
 
 	target := User(rt.Ctx, ginx.UrlParamInt64(c, "id"))
 
-	cryptoPass, err := models.CryptoPass(rt.Ctx, f.Password)
+	decPassWord, err := secu.Decrypt(f.Password, rt.HTTP.RSA.RSAPrivateKey, rt.HTTP.RSA.RSAPassWord)
+	ginx.Dangerous(err)
+
+	cryptoPass, err := models.CryptoPass(rt.Ctx, decPassWord)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Message(target.UpdatePassword(rt.Ctx, cryptoPass, c.MustGet("username").(string)))
