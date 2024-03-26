@@ -37,5 +37,8 @@ run-alert:
 run-pushgw:
 	nohup ./n9e-pushgw > n9e-pushgw.log 2>&1 &
 
+stop:
+	killall n9e
+
 release:
 	goreleaser --skip-validate --skip-publish --snapshot
