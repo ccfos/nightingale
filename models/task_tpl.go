@@ -336,3 +336,84 @@ func (t *TaskTpl) UpdateGroup(ctx *ctx.Context, groupId int64, updateBy string) 
 		"update_at": time.Now().Unix(),
 	}).Error
 }
+
+type TaskForm struct {
+	Title          string   `json:"title"`
+	Account        string   `json:"account"`
+	Batch          int      `json:"batch"`
+	Tolerance      int      `json:"tolerance"`
+	Timeout        int      `json:"timeout"`
+	Pause          string   `json:"pause"`
+	Script         string   `json:"script"`
+	Args           string   `json:"args"`
+	Stdin          string   `json:"stdin"`
+	Action         string   `json:"action"`
+	Creator        string   `json:"creator"`
+	Hosts          []string `json:"hosts"`
+	AlertTriggered bool     `json:"alert_triggered"`
+}
+
+func (f *TaskForm) Verify() error {
+	if f.Batch < 0 {
+		return fmt.Errorf("arg(batch) should be nonnegative")
+	}
+
+	if f.Tolerance < 0 {
+		return fmt.Errorf("arg(tolerance) should be nonnegative")
+	}
+
+	if f.Timeout < 0 {
+		return fmt.Errorf("arg(timeout) should be nonnegative")
+	}
+
+	if f.Timeout > 3600*24 {
+		return fmt.Errorf("arg(timeout) longer than one day")
+	}
+
+	if f.Timeout == 0 {
+		f.Timeout = 30
+	}
+
+	f.Pause = strings.Replace(f.Pause, "，", ",", -1)
+	f.Pause = strings.Replace(f.Pause, " ", "", -1)
+	f.Args = strings.Replace(f.Args, "，", ",", -1)
+
+	if f.Title == "" {
+		return fmt.Errorf("arg(title) is required")
+	}
+
+	if str.Dangerous(f.Title) {
+		return fmt.Errorf("arg(title) is dangerous")
+	}
+
+	if f.Script == "" {
+		return fmt.Errorf("arg(script) is required")
+	}
+	f.Script = strings.Replace(f.Script, "\r\n", "\n", -1)
+
+	if str.Dangerous(f.Args) {
+		return fmt.Errorf("arg(args) is dangerous")
+	}
+
+	if str.Dangerous(f.Pause) {
+		return fmt.Errorf("arg(pause) is dangerous")
+	}
+
+	if len(f.Hosts) == 0 {
+		return fmt.Errorf("arg(hosts) empty")
+	}
+
+	if f.Action != "start" && f.Action != "pause" {
+		return fmt.Errorf("arg(action) invalid")
+	}
+
+	return nil
+}
+
+func (f *TaskForm) HandleFH(fh string) {
+	i := strings.Index(f.Title, " FH: ")
+	if i > 0 {
+		f.Title = f.Title[:i]
+	}
+	f.Title = f.Title + " FH: " + fh
+}

@@ -48,11 +48,9 @@ type RedisPub struct {
 }
 
 type Ibex struct {
-	Address       string
-	BasicAuthUser string
-	BasicAuthPass string
-	RPCListen     string
-	Timeout       int64
+	Enable    bool
+	RPCListen string
+	Timeout   int64
 }
 
 func (a *Alert) PreCheck(configDir string) {

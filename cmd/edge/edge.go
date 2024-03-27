@@ -23,7 +23,7 @@ import (
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
-	n9eIbex "github.com/ulricqin/ibex"
+	"github.com/ulricqin/ibex/src/cmd/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -84,7 +84,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		alertrtRouter.Config(r)
 
 		if config.Ibex.Enable {
-			n9eIbex.ServerStart(false, nil, redis, config.Ibex, &config.CenterApi, r, config.HTTP.Port)
+			ibex.ServerStart(false, nil, redis, config.Ibex.RPCListen, &config.CenterApi, r, config.HTTP.Port)
 		}
 	}
 

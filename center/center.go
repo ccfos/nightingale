@@ -32,7 +32,7 @@ import (
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
-	n9eIbex "github.com/ulricqin/ibex"
+	"github.com/ulricqin/ibex/src/cmd/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -116,7 +116,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	dumper.ConfigRouter(r)
 
 	if config.Ibex.Enable {
-		n9eIbex.ServerStart(true, ctx.DB, redis, config.Ibex, nil, r, config.HTTP.Port)
+		ibex.ServerStart(true, ctx.DB, redis, config.Ibex.RPCListen, &config.CenterApi, r, config.HTTP.Port)
 	}
 
 	httpClean := httpx.Init(config.HTTP, r)

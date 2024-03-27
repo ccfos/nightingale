@@ -42,11 +42,9 @@ type GlobalConfig struct {
 }
 
 type Ibex struct {
-	Enable        bool
-	BasicAuthUser string
-	BasicAuthPass string
-	RPCListen     string
-	Timeout       int64
+	Enable    bool
+	RPCListen string
+	Timeout   int64
 }
 
 func InitConfig(configDir, cryptoKey string) (*ConfigType, error) {

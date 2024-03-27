@@ -243,7 +243,7 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	}
 
 	// handle event callbacks
-	sender.SendCallbacks(e.ctx, notifyTarget.ToCallbackList(), event, e.targetCache, e.userCache, e.taskTplsCache, e.notifyConfigCache.GetIbex(), e.Astats)
+	sender.SendCallbacks(e.ctx, notifyTarget.ToCallbackList(), event, e.targetCache, e.userCache, e.taskTplsCache, e.Astats)
 
 	// handle global webhooks
 	sender.SendWebhooks(notifyTarget.ToWebhookList(), event, e.Astats)

@@ -1,17 +1,14 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pkg/ibex"
-	"github.com/gin-gonic/gin"
 
+	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
 
@@ -133,31 +130,6 @@ type DoneIdsReply struct {
 type TaskCreateReply struct {
 	Err string `json:"err"`
 	Dat int64  `json:"dat"` // task.id
-}
-
-// return task.id, error
-func TaskCreate(v interface{}, ibexc aconf.Ibex) (int64, error) {
-	var res TaskCreateReply
-	err := ibex.New(
-		ibexc.Address,
-		ibexc.BasicAuthUser,
-		ibexc.BasicAuthPass,
-		ibexc.Timeout,
-	).
-		Path("/ibex/v1/tasks").
-		In(v).
-		Out(&res).
-		POST()
-
-	if err != nil {
-		return 0, err
-	}
-
-	if res.Err != "" {
-		return 0, fmt.Errorf("response.err: %v", res.Err)
-	}
-
-	return res.Dat, nil
 }
 
 func Username(c *gin.Context) string {
