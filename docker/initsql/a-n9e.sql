@@ -637,17 +637,20 @@ CREATE TABLE `es_index_pattern` (
 
 CREATE TABLE `builtin_metrics` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'unique identifier',
-    `collector` varchar(255) NOT NULL COMMENT 'type of collector',
-    `typ` varchar(255) NOT NULL COMMENT 'type of metric',
-    `name` varchar(255) NOT NULL COMMENT 'name of metric',
-    `unit` varchar(255) NOT NULL COMMENT 'unit of metric',
-    `desc_cn` varchar(255) NOT NULL COMMENT 'description of metric in Chinese',
-    `desc_en` varchar(255) NOT NULL COMMENT 'description of metric in English',
-    `expression` varchar(255) NOT NULL COMMENT 'expression of metric',
+    `collector` varchar(191) NOT NULL COMMENT 'type of collector',
+    `typ` varchar(191) NOT NULL COMMENT 'type of metric',
+    `name` varchar(191) NOT NULL COMMENT 'name of metric',
+    `unit` varchar(191) NOT NULL COMMENT 'unit of metric',
+    `desc_cn` varchar(4096) NOT NULL COMMENT 'description of metric in Chinese',
+    `desc_en` varchar(4096) NOT NULL COMMENT 'description of metric in English',
+    `expression` varchar(191) NOT NULL COMMENT 'expression of metric',
     `created_at` bigint NOT NULL DEFAULT 0 COMMENT 'create time',
-    `created_by` varchar(255) NOT NULL DEFAULT 0 COMMENT 'creator',
+    `created_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'creator',
     `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
-    `updated_by` varchar(255) NOT NULL DEFAULT 0 COMMENT 'updater',
+    `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'updater',
     PRIMARY KEY (`id`),
-    UNIQUE KEY (`collector`, `typ`, `name`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+    UNIQUE KEY `idx_collector_typ_name` (`collector`, `typ`, `name`),
+    INDEX `idx_collector` (`collector`),
+    INDEX `idx_typ` (`typ`),
+    INDEX `idx_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
