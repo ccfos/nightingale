@@ -643,7 +643,7 @@ CREATE TABLE `builtin_metrics` (
     `unit` varchar(191) NOT NULL COMMENT 'unit of metric',
     `desc_cn` varchar(4096) NOT NULL COMMENT 'description of metric in Chinese',
     `desc_en` varchar(4096) NOT NULL COMMENT 'description of metric in English',
-    `expression` varchar(191) NOT NULL COMMENT 'expression of metric',
+    `expression` varchar(4096) NOT NULL COMMENT 'expression of metric',
     `created_at` bigint NOT NULL DEFAULT 0 COMMENT 'create time',
     `created_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'creator',
     `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
