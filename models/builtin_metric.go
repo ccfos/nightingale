@@ -3,7 +3,6 @@ package models
 import (
 	"errors"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/toolkits/pkg/logger"
 	"strings"
 	"time"
 )
@@ -53,32 +52,33 @@ func (bm *BuiltinMetric) Verify() error {
 	return nil
 }
 
+// BuiltinMetricExists Check if a BuiltinMetric already exists.
+func BuiltinMetricExists(ctx *ctx.Context, bm *BuiltinMetric) (bool, error) {
+	var count int64
+	err := DB(ctx).Model(bm).Where("collector = ? and type = ? and name = ?", bm.Collector, bm.Typ, bm.Name).Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 // Add a BuiltinMetric, considering safe insert conditions.
 func (bm *BuiltinMetric) Add(ctx *ctx.Context) error {
 	if err := bm.Verify(); err != nil {
 		return err
 	}
+	// check if the builtin metric already exists
+	exists, err := BuiltinMetricExists(ctx, bm)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return errors.New("builtin metric already exists")
+	}
 	now := time.Now().Unix()
 	bm.CreatedAt = now
 	bm.UpdatedAt = now
 	return Insert(ctx, bm)
-}
-
-// AddBuiltinMetrics Add multiple BuiltinMetrics, considering safe insert conditions.
-func AddBuiltinMetrics(ctx *ctx.Context, metrics []BuiltinMetric) error {
-	now := time.Now().Unix()
-	var validMetrics []BuiltinMetric
-	for i := range metrics {
-		if err := metrics[i].Verify(); err != nil {
-			logger.Errorf("failed to verify metric: %v, skip this metric, error: %v", metrics[i], err)
-			continue
-		}
-
-		metrics[i].CreatedAt = now
-		metrics[i].UpdatedAt = now
-		validMetrics = append(validMetrics, metrics[i])
-	}
-	return BatchInsert(ctx, validMetrics)
 }
 
 // Update a BuiltinMetric, considering safe update conditions.

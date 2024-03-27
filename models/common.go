@@ -31,13 +31,6 @@ func Insert(ctx *ctx.Context, obj interface{}) error {
 	return DB(ctx).Create(obj).Error
 }
 
-func BatchInsert[T any](ctx *ctx.Context, objs []T) error {
-	if len(objs) == 0 {
-		return nil // Avoid unnecessary database operations
-	}
-	return DB(ctx).Create(&objs).Error // Pass slice reference for batch insertion
-}
-
 // CryptoPass crypto password use salt
 func CryptoPass(ctx *ctx.Context, raw string) (string, error) {
 	salt, err := ConfigsGet(ctx, SALT)
