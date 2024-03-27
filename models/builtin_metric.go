@@ -95,13 +95,10 @@ func (bm *BuiltinMetric) Update(ctx *ctx.Context, req BuiltinMetric) error {
 }
 
 func BuiltinMetricDels(ctx *ctx.Context, ids []int64) error {
-	for i := 0; i < len(ids); i++ {
-		ret := DB(ctx).Where("id = ?", ids[i]).Delete(&BuiltinMetric{})
-		if ret.Error != nil {
-			return ret.Error
-		}
+	if len(ids) == 0 {
+		return nil
 	}
-	return nil
+	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinMetric)).Error
 }
 
 func BuiltinMetricGets(ctx *ctx.Context, collector, typ, search string, limit, offset int) ([]*BuiltinMetric, error) {
