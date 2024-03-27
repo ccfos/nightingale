@@ -28,15 +28,42 @@ func (rt *Router) builtinMetricsAdd(c *gin.Context) {
 }
 
 func (rt *Router) builtinMetricsGets(c *gin.Context) {
-	// 解析出来的数据
-	// collector, name, typ, descCn, descEn string, limit, offset int
 	collector := ginx.QueryStr(c, "collector", "")
-	name := ginx.QueryStr(c, "name", "")
 	typ := ginx.QueryStr(c, "typ", "")
-	descCn := ginx.QueryStr(c, "desc_cn", "")
-	descEn := ginx.QueryStr(c, "desc_en", "")
+	search := ginx.QueryStr(c, "search", "")
 	limit := ginx.QueryInt(c, "limit", 20)
 
-	bm, err := models.BuiltinMetricGets(rt.Ctx, collector, name, typ, descCn, descEn, limit, ginx.Offset(c, limit))
-	ginx.NewRender(c).Data(bm, err)
+	bm, err := models.BuiltinMetricGets(rt.Ctx, collector, typ, search, limit, ginx.Offset(c, limit))
+	ginx.Dangerous(err)
+
+	total, err := models.BuiltinMetricCount(rt.Ctx, collector, typ, search)
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(gin.H{
+		"list":  bm,
+		"total": total,
+	}, nil)
+}
+
+func (rt *Router) builtinMetricsPut(c *gin.Context) {
+	var req models.BuiltinMetric
+	ginx.BindJSON(c, &req)
+
+	bm, err := models.BuiltinMetricGetByID(rt.Ctx, req.ID)
+	ginx.Dangerous(err)
+	if bm == nil {
+		ginx.NewRender(c, http.StatusNotFound).Message("No such builtin metric")
+		return
+	}
+	username := Username(c)
+
+	req.UpdatedBy = username
+	ginx.NewRender(c).Message(bm.Update(rt.Ctx, req))
+}
+
+func (rt *Router) builtinMetricsDel(c *gin.Context) {
+	var req idsForm
+	ginx.BindJSON(c, &req)
+	req.Verify()
+
+	ginx.NewRender(c).Message(models.BuiltinMetricDels(rt.Ctx, req.Ids))
 }
