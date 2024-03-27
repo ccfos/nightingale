@@ -11,7 +11,7 @@ import (
 type BuiltinMetric struct {
 	ID         int64  `json:"id" gorm:"primaryKey"` // Unique identifier
 	Collector  string `json:"collector"`            // Typ of collector (e.g., 'categraf', 'telegraf')
-	Typ        string `json:"type"`                 // Typ of metric (e.g., 'host', 'mysql', 'redis')
+	Typ        string `json:"typ"`                  // Typ of metric (e.g., 'host', 'mysql', 'redis')
 	Name       string `json:"name"`                 // Name of the metric
 	Unit       string `json:"unit"`                 // Unit of the metric
 	DescCN     string `json:"desc_cn"`              // Description in Chinese
@@ -55,7 +55,7 @@ func (bm *BuiltinMetric) Verify() error {
 // BuiltinMetricExists Check if a BuiltinMetric already exists.
 func BuiltinMetricExists(ctx *ctx.Context, bm *BuiltinMetric) (bool, error) {
 	var count int64
-	err := DB(ctx).Model(bm).Where("collector = ? and type = ? and name = ?", bm.Collector, bm.Typ, bm.Name).Count(&count).Error
+	err := DB(ctx).Model(bm).Where("collector = ? and typ = ? and name = ?", bm.Collector, bm.Typ, bm.Name).Count(&count).Error
 	if err != nil {
 		return false, err
 	}
@@ -82,7 +82,7 @@ func (bm *BuiltinMetric) Add(ctx *ctx.Context) error {
 }
 
 // Update a BuiltinMetric, considering safe update conditions.
-func (bm *BuiltinMetric) Update(ctx *ctx.Context, Collector, Type, Name, Unit, DescCN, DescEN, Expression string, createdBy int64) error {
+func (bm *BuiltinMetric) Update(ctx *ctx.Context, Collector, Typ, Name, Unit, DescCN, DescEN, Expression string, createdBy int64) error {
 	if err := bm.Verify(); err != nil {
 		return err
 	}
@@ -91,13 +91,13 @@ func (bm *BuiltinMetric) Update(ctx *ctx.Context, Collector, Type, Name, Unit, D
 	bm.CreatedBy = createdBy
 
 	bm.Collector = Collector
-	bm.Typ = Type
+	bm.Typ = Typ
 	bm.Name = Name
 	bm.Unit = Unit
 	bm.DescCN = DescCN
 	bm.DescEN = DescEN
 	bm.Expression = Expression
-	return DB(ctx).Model(bm).Select("collector", "type", "name", "unit", "desc_cn", "desc_en", "expression", "updated_at", "created_by").Updates(bm).Error
+	return DB(ctx).Model(bm).Select("collector", "typ", "name", "unit", "desc_cn", "desc_en", "expression", "updated_at", "created_by").Updates(bm).Error
 }
 
 // BuiltinMetricDel Delete a BuiltinMetric, considering safe delete conditions.
