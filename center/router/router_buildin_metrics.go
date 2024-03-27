@@ -48,7 +48,7 @@ func (rt *Router) builtinMetricsPut(c *gin.Context) {
 	var req models.BuiltinMetric
 	ginx.BindJSON(c, &req)
 
-	bm, err := models.BuiltinMetricGetByID(rt.Ctx, req.ID)
+	bm, err := models.BuiltinMetricGet(rt.Ctx, "id = ?", req.ID)
 	ginx.Dangerous(err)
 	if bm == nil {
 		ginx.NewRender(c, http.StatusNotFound).Message("No such builtin metric")

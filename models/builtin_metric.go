@@ -76,6 +76,10 @@ func (bm *BuiltinMetric) Add(ctx *ctx.Context, username string) error {
 }
 
 func (bm *BuiltinMetric) Update(ctx *ctx.Context, req BuiltinMetric) error {
+	if err := req.Verify(); err != nil {
+		return err
+	}
+
 	if bm.Collector != req.Collector && bm.Typ != req.Typ && bm.Name != req.Name {
 		exists, err := BuiltinMetricExists(ctx, &req)
 		if err != nil {
@@ -86,12 +90,6 @@ func (bm *BuiltinMetric) Update(ctx *ctx.Context, req BuiltinMetric) error {
 		}
 	}
 	req.UpdatedAt = time.Now().Unix()
-	req.CreatedAt = bm.CreatedAt
-	req.CreatedBy = bm.CreatedBy
-
-	if err := req.Verify(); err != nil {
-		return err
-	}
 
 	return DB(ctx).Model(bm).Select("*").Updates(req).Error
 }
@@ -104,10 +102,6 @@ func BuiltinMetricDels(ctx *ctx.Context, ids []int64) error {
 		}
 	}
 	return nil
-}
-
-func BuiltinMetricGetByID(ctx *ctx.Context, id int64) (*BuiltinMetric, error) {
-	return BuiltinMetricGet(ctx, "id = ?", id)
 }
 
 func BuiltinMetricGets(ctx *ctx.Context, collector, typ, search string, limit, offset int) ([]*BuiltinMetric, error) {
@@ -139,7 +133,8 @@ func BuiltinMetricCount(ctx *ctx.Context, collector, typ, search string) (int64,
 		session = session.Where("typ = ?", typ)
 	}
 	if search != "" {
-		session = session.Where("name like ?", "%"+search+"%").Where("desc_cn like ?", "%"+search+"%").Where("desc_en like ?", "%"+search+"%")
+		searchPattern := "%" + search + "%"
+		session = session.Where("name LIKE ? OR desc_cn LIKE ? OR desc_en LIKE ?", searchPattern, searchPattern, searchPattern)
 	}
 
 	var cnt int64
