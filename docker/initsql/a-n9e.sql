@@ -634,3 +634,20 @@ CREATE TABLE `es_index_pattern` (
     PRIMARY KEY (`id`),
     UNIQUE KEY (`datasource_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `builtin_metrics` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'unique identifier',
+    `collector` varchar(255) NOT NULL COMMENT 'type of collector',
+    `typ` varchar(255) NOT NULL COMMENT 'type of metric',
+    `name` varchar(255) NOT NULL COMMENT 'name of metric',
+    `unit` varchar(255) NOT NULL COMMENT 'unit of metric',
+    `desc_cn` varchar(255) NOT NULL COMMENT 'description of metric in Chinese',
+    `desc_en` varchar(255) NOT NULL COMMENT 'description of metric in English',
+    `expression` varchar(255) NOT NULL COMMENT 'expression of metric',
+    `created_at` bigint NOT NULL DEFAULT 0 COMMENT 'create time',
+    `created_by` varchar(255) NOT NULL DEFAULT 0 COMMENT 'creator',
+    `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
+    `updated_by` varchar(255) NOT NULL DEFAULT 0 COMMENT 'updater',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY (`collector`, `typ`, `name`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
