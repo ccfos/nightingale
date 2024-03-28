@@ -92,6 +92,10 @@ func (rt *Router) jwtAuth() gin.HandlerFunc {
 	}
 }
 
+func (rt *Router) Auth() gin.HandlerFunc {
+	return rt.auth()
+}
+
 func (rt *Router) auth() gin.HandlerFunc {
 	if rt.HTTP.ProxyAuth.Enable {
 		return rt.proxyAuth()
@@ -118,6 +122,10 @@ func (rt *Router) jwtMock() gin.HandlerFunc {
 		}, nil)
 		c.Abort()
 	}
+}
+
+func (rt *Router) User() gin.HandlerFunc {
+	return rt.user()
 }
 
 func (rt *Router) user() gin.HandlerFunc {
@@ -174,6 +182,23 @@ func (rt *Router) bgro() gin.HandlerFunc {
 }
 
 // bgrw 逐步要被干掉，不安全
+func (rt *Router) Bgrw() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		me := c.MustGet("user").(*models.User)
+		bg := BusiGroup(rt.Ctx, ginx.UrlParamInt64(c, "gid"))
+
+		can, err := me.CanDoBusiGroup(rt.Ctx, bg, "rw")
+		ginx.Dangerous(err)
+
+		if !can {
+			ginx.Bomb(http.StatusForbidden, "forbidden")
+		}
+
+		c.Set("busi_group", bg)
+		c.Next()
+	}
+}
+
 func (rt *Router) bgrw() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		me := c.MustGet("user").(*models.User)
@@ -231,6 +256,10 @@ func (rt *Router) bgroCheck(c *gin.Context, bgid int64) {
 	}
 
 	c.Set("busi_group", bg)
+}
+
+func (rt *Router) Perm(operation string) gin.HandlerFunc {
+	return rt.perm(operation)
 }
 
 func (rt *Router) perm(operation string) gin.HandlerFunc {
