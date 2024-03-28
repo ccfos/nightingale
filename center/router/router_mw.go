@@ -183,20 +183,7 @@ func (rt *Router) bgro() gin.HandlerFunc {
 
 // bgrw 逐步要被干掉，不安全
 func (rt *Router) Bgrw() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		me := c.MustGet("user").(*models.User)
-		bg := BusiGroup(rt.Ctx, ginx.UrlParamInt64(c, "gid"))
-
-		can, err := me.CanDoBusiGroup(rt.Ctx, bg, "rw")
-		ginx.Dangerous(err)
-
-		if !can {
-			ginx.Bomb(http.StatusForbidden, "forbidden")
-		}
-
-		c.Set("busi_group", bg)
-		c.Next()
-	}
+	return rt.bgrw()
 }
 
 func (rt *Router) bgrw() gin.HandlerFunc {
