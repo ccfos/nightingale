@@ -19,13 +19,15 @@ import (
 
 type Config struct {
 	Enable          bool
-	SsoAddr         string
-	LoginPath       string
 	RedirectURL     string
+	SsoAddr         string
+	SsoLogoutAddr   string
+	LoginPath       string
 	DisplayName     string
 	CoverAttributes bool
 	SkipTlsVerify   bool
 	Attributes      struct {
+		UserName string
 		Nickname string
 		Phone    string
 		Email    string
@@ -34,12 +36,14 @@ type Config struct {
 }
 
 type SsoClient struct {
-	Enable       bool
-	Config       Config
-	SsoAddr      string
-	CallbackAddr string
-	DisplayName  string
-	Attributes   struct {
+	Enable        bool
+	Config        Config
+	SsoAddr       string
+	SsoLogoutAddr string
+	CallbackAddr  string
+	DisplayName   string
+	Attributes    struct {
+		UserName string
 		Nickname string
 		Phone    string
 		Email    string
@@ -59,8 +63,10 @@ func New(cf Config) *SsoClient {
 	cli.Enable = cf.Enable
 	cli.Config = cf
 	cli.SsoAddr = cf.SsoAddr
+	cli.SsoLogoutAddr = cf.SsoLogoutAddr
 	cli.CallbackAddr = cf.RedirectURL
 	cli.DisplayName = cf.DisplayName
+	cli.Attributes.UserName = cf.Attributes.UserName
 	cli.Attributes.Nickname = cf.Attributes.Nickname
 	cli.Attributes.Phone = cf.Attributes.Phone
 	cli.Attributes.Email = cf.Attributes.Email
@@ -89,8 +95,10 @@ func (s *SsoClient) Reload(cf Config) {
 	s.Enable = cf.Enable
 	s.Config = cf
 	s.SsoAddr = cf.SsoAddr
+	s.SsoLogoutAddr = cf.SsoLogoutAddr
 	s.CallbackAddr = cf.RedirectURL
 	s.DisplayName = cf.DisplayName
+	s.Attributes.UserName = cf.Attributes.UserName
 	s.Attributes.Nickname = cf.Attributes.Nickname
 	s.Attributes.Phone = cf.Attributes.Phone
 	s.Attributes.Email = cf.Attributes.Email
@@ -114,6 +122,16 @@ func (s *SsoClient) GetDisplayName() string {
 	}
 
 	return s.DisplayName
+}
+
+func (s *SsoClient) GetSsoLogoutAddr() string {
+	s.RLock()
+	defer s.RUnlock()
+	if !s.Enable {
+		return ""
+	}
+
+	return s.SsoLogoutAddr
 }
 
 // Authorize return the cas authorize location and state
@@ -152,12 +170,12 @@ func (s *SsoClient) genRedirectURL(state string) string {
 
 	if s.Config.LoginPath == "" {
 		if strings.Contains(s.Config.SsoAddr, "p3") {
-			SsoAddr.Path = "login"
+			SsoAddr.Path += "/login"
 		} else {
-			SsoAddr.Path = "cas/login"
+			SsoAddr.Path += "/cas/login"
 		}
 	} else {
-		SsoAddr.Path = s.Config.LoginPath
+		SsoAddr.Path += s.Config.LoginPath
 	}
 
 	buf.WriteString(SsoAddr.String())
@@ -213,13 +231,12 @@ func (s *SsoClient) ValidateServiceTicket(ctx context.Context, ticket, state str
 		return
 	}
 	ret = &CallbackOutput{}
+
 	ret.Username = authRet.User
 	ret.Nickname = authRet.Attributes.Get(s.Attributes.Nickname)
-	logger.Debugf("CAS Authentication Response's Attributes--[Nickname]: %s", ret.Nickname)
 	ret.Email = authRet.Attributes.Get(s.Attributes.Email)
-	logger.Debugf("CAS Authentication Response's Attributes--[Email]: %s", ret.Email)
 	ret.Phone = authRet.Attributes.Get(s.Attributes.Phone)
-	logger.Debugf("CAS Authentication Response's Attributes--[Phone]: %s", ret.Phone)
+
 	ret.Redirect, err = fetchRedirect(ctx, state, redis)
 	if err != nil {
 		logger.Debugf("get redirect err:%s state:%s", state, err)

@@ -61,8 +61,13 @@ func AlertSubscribeGets(ctx *ctx.Context, groupId int64) (lst []AlertSubscribe, 
 	return
 }
 
-func AlertSubscribeGetsByBGIds(ctx *ctx.Context, bgIds []int64) (lst []AlertSubscribe, err error) {
-	err = DB(ctx).Where("group_id in (?)", bgIds).Order("id desc").Find(&lst).Error
+func AlertSubscribeGetsByBGIds(ctx *ctx.Context, bgids []int64) (lst []AlertSubscribe, err error) {
+	session := DB(ctx)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in (?)", bgids)
+	}
+
+	err = session.Order("id desc").Find(&lst).Error
 	return
 }
 

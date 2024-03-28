@@ -120,3 +120,18 @@ MaxIdleConnsPerHost = 100
 Enable = true
 RPCListen = "0.0.0.0:20090"
 Timeout = 3000
+
+[Redis]
+# address, ip:port or ip1:port,ip2:port for cluster and sentinel(SentinelAddrs)
+Address = "127.0.0.1:6379"
+# Username = ""
+# Password = ""
+# DB = 0
+# UseTLS = false
+# TLSMinVersion = "1.2"
+# standalone cluster sentinel
+RedisType = "standalone"
+# Mastername for sentinel type
+# MasterName = "mymaster"
+# SentinelUsername = ""
+# SentinelPassword = ""

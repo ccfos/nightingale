@@ -14,7 +14,8 @@ func Migrate(db *gorm.DB) {
 
 func MigrateTables(db *gorm.DB) error {
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
-		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{}, &Board{}, &BoardBusigroup{}, &SsoConfig{}}
+		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
+		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}}
 
 	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
 		dts = append(dts, &AlertHisEvent{})
@@ -133,6 +134,7 @@ type AlertSubscribe struct {
 
 type AlertMute struct {
 	Severities string `gorm:"column:severities;type:varchar(32);not null;default:''"`
+	Tags       string `gorm:"column:tags;type:varchar(4096);default:'[]';comment:json,map,tagkey->regexp|value"`
 }
 
 type RecordingRule struct {
@@ -189,6 +191,10 @@ type Board struct {
 type BoardBusigroup struct {
 	BusiGroupId int64 `gorm:"column:busi_group_id;bigint(20);not null;default:0;comment:busi group id"`
 	BoardId     int64 `gorm:"column:board_id;bigint(20);not null;default:0;comment:board id"`
+}
+
+type Users struct {
+	Belong string `gorm:"column:belong;varchar(16);default:'';comment:belong"`
 }
 
 type SsoConfig struct {

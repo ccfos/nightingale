@@ -61,7 +61,7 @@ type Processor struct {
 	targetNote string
 	groupName  string
 
-	atertRuleCache          *memsto.AlertRuleCacheType
+	alertRuleCache          *memsto.AlertRuleCacheType
 	TargetCache             *memsto.TargetCacheType
 	TargetsOfAlertRuleCache *memsto.TargetsOfAlertRuleCacheType
 	BusiGroupCache          *memsto.BusiGroupCacheType
@@ -93,7 +93,7 @@ func (p *Processor) Hash() string {
 	))
 }
 
-func NewProcessor(engineName string, rule *models.AlertRule, datasourceId int64, atertRuleCache *memsto.AlertRuleCacheType,
+func NewProcessor(engineName string, rule *models.AlertRule, datasourceId int64, alertRuleCache *memsto.AlertRuleCacheType,
 	targetCache *memsto.TargetCacheType, targetsOfAlertRuleCache *memsto.TargetsOfAlertRuleCacheType,
 	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, ctx *ctx.Context,
 	stats *astats.Stats) *Processor {
@@ -107,7 +107,7 @@ func NewProcessor(engineName string, rule *models.AlertRule, datasourceId int64,
 		TargetsOfAlertRuleCache: targetsOfAlertRuleCache,
 		BusiGroupCache:          busiGroupCache,
 		alertMuteCache:          alertMuteCache,
-		atertRuleCache:          atertRuleCache,
+		alertRuleCache:          alertRuleCache,
 		datasourceCache:         datasourceCache,
 
 		ctx:   ctx,
@@ -127,7 +127,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 	// 这些信息的修改是不会引起worker restart的，但是确实会影响告警处理逻辑
 	// 所以，这里直接从memsto.AlertRuleCache中获取并覆盖
 	p.inhibit = inhibit
-	cachedRule := p.atertRuleCache.Get(p.rule.Id)
+	cachedRule := p.alertRuleCache.Get(p.rule.Id)
 	if cachedRule == nil {
 		logger.Errorf("rule not found %+v", anomalyPoints)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "handle_event").Inc()

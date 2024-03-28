@@ -33,3 +33,8 @@ ALTER TABLE notify_tpl ADD COLUMN create_at INT DEFAULT 0 COMMENT 'create_at';
 ALTER TABLE notify_tpl ADD COLUMN create_by VARCHAR(64) DEFAULT '' COMMENT 'create_by';
 ALTER TABLE notify_tpl ADD COLUMN update_at INT DEFAULT 0 COMMENT 'update_at';
 ALTER TABLE notify_tpl ADD COLUMN update_by VARCHAR(64) DEFAULT '' COMMENT 'update_by';
+
+-- Alter table for Users
+ALTER TABLE users ADD COLUMN belong VARCHAR(16) DEFAULT '' COMMENT 'belong';
+
+ALTER TABLE `sso_config` ADD COLUMN `update_at` INT NOT NULL DEFAULT 0 COMMENT 'update_at';

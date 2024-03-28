@@ -16,7 +16,7 @@
     ],
     "disabled": 1,
     "prom_for_duration": 60,
-    "prom_ql": "predict_linear(disk_free[1h], 4*3600) < 0",
+    "prom_ql": "",
     "rule_config": {
       "algo_params": null,
       "inhibit": false,
@@ -30,15 +30,23 @@
       "severity": 0
     },
     "prom_eval_interval": 15,
-    "enable_stime": "",
+    "enable_stime": "00:00",
     "enable_stimes": [
       "00:00"
     ],
-    "enable_etime": "",
+    "enable_etime": "23:59",
     "enable_etimes": [
       "23:59"
     ],
-    "enable_days_of_week": null,
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
     "enable_days_of_weeks": [
       [
         "1",
@@ -63,7 +71,8 @@
     "callbacks": [],
     "runbook_url": "",
     "append_tags": [],
-    "annotations": null
+    "annotations": null,
+    "extra_config": null
   },
   {
     "cate": "prometheus",
@@ -80,9 +89,9 @@
     "severities": [
       2
     ],
-    "disabled": 0,
+    "disabled": 1,
     "prom_for_duration": 60,
-    "prom_ql": "rate(diskio_io_time[1m])/10 > 99",
+    "prom_ql": "",
     "rule_config": {
       "algo_params": null,
       "inhibit": false,
@@ -96,15 +105,23 @@
       "severity": 0
     },
     "prom_eval_interval": 15,
-    "enable_stime": "",
+    "enable_stime": "00:00",
     "enable_stimes": [
       "00:00"
     ],
-    "enable_etime": "",
+    "enable_etime": "23:59",
     "enable_etimes": [
       "23:59"
     ],
-    "enable_days_of_week": null,
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
     "enable_days_of_weeks": [
       [
         "1",
@@ -129,13 +146,12 @@
     "callbacks": [],
     "runbook_url": "",
     "append_tags": [],
-    "annotations": null
+    "annotations": null,
+    "extra_config": null
   },
   {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
+    "cate": "host",
+    "datasource_ids": null,
     "name": "Lost connection with monitoring target - categraf",
     "note": "",
     "prod": "host",
@@ -144,9 +160,9 @@
     "delay": 0,
     "severity": 0,
     "severities": [
-      0
+      2
     ],
-    "disabled": 0,
+    "disabled": 1,
     "prom_for_duration": 0,
     "prom_ql": "",
     "rule_config": {
@@ -167,15 +183,23 @@
       ]
     },
     "prom_eval_interval": 15,
-    "enable_stime": "",
+    "enable_stime": "00:00",
     "enable_stimes": [
       "00:00"
     ],
-    "enable_etime": "",
+    "enable_etime": "23:59",
     "enable_etimes": [
       "23:59"
     ],
-    "enable_days_of_week": null,
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
     "enable_days_of_weeks": [
       [
         "1",
@@ -196,7 +220,11 @@
     "callbacks": [],
     "runbook_url": "",
     "append_tags": [],
-    "annotations": {}
+    "annotations": {},
+    "extra_config": {
+      "escalation": {},
+      "notify_aggregation": {}
+    }
   },
   {
     "cate": "prometheus",
@@ -215,7 +243,7 @@
       2,
       1
     ],
-    "disabled": 0,
+    "disabled": 1,
     "prom_for_duration": 60,
     "prom_ql": "",
     "rule_config": {
@@ -236,15 +264,23 @@
       ]
     },
     "prom_eval_interval": 15,
-    "enable_stime": "",
+    "enable_stime": "00:00",
     "enable_stimes": [
       "00:00"
     ],
-    "enable_etime": "",
+    "enable_etime": "23:59",
     "enable_etimes": [
       "23:59"
     ],
-    "enable_days_of_week": null,
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
     "enable_days_of_weeks": [
       [
         "1",
@@ -269,7 +305,8 @@
     "callbacks": [],
     "runbook_url": "",
     "append_tags": [],
-    "annotations": {}
+    "annotations": {},
+    "extra_config": null
   },
   {
     "cate": "prometheus",
@@ -286,9 +323,9 @@
     "severities": [
       2
     ],
-    "disabled": 0,
+    "disabled": 1,
     "prom_for_duration": 60,
-    "prom_ql": "netstat_tcp_time_wait > 20000",
+    "prom_ql": "",
     "rule_config": {
       "algo_params": null,
       "inhibit": false,
@@ -302,15 +339,23 @@
       "severity": 0
     },
     "prom_eval_interval": 15,
-    "enable_stime": "",
+    "enable_stime": "00:00",
     "enable_stimes": [
       "00:00"
     ],
-    "enable_etime": "",
+    "enable_etime": "23:59",
     "enable_etimes": [
       "23:59"
     ],
-    "enable_days_of_week": null,
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
     "enable_days_of_weeks": [
       [
         "1",
@@ -335,7 +380,8 @@
     "callbacks": [],
     "runbook_url": "",
     "append_tags": [],
-    "annotations": null
+    "annotations": null,
+    "extra_config": null
   },
   {
     "cate": "prometheus",
@@ -352,9 +398,9 @@
     "severities": [
       3
     ],
-    "disabled": 0,
+    "disabled": 1,
     "prom_for_duration": 60,
-    "prom_ql": "increase(net_drop_in[1m]) > 0",
+    "prom_ql": "",
     "rule_config": {
       "algo_params": null,
       "inhibit": false,
@@ -368,15 +414,23 @@
       "severity": 0
     },
     "prom_eval_interval": 15,
-    "enable_stime": "",
+    "enable_stime": "00:00",
     "enable_stimes": [
       "00:00"
     ],
-    "enable_etime": "",
+    "enable_etime": "23:59",
     "enable_etimes": [
       "23:59"
     ],
-    "enable_days_of_week": null,
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
     "enable_days_of_weeks": [
       [
         "1",
@@ -401,7 +455,8 @@
     "callbacks": [],
     "runbook_url": "",
     "append_tags": [],
-    "annotations": null
+    "annotations": null,
+    "extra_config": null
   },
   {
     "cate": "prometheus",
@@ -418,9 +473,9 @@
     "severities": [
       3
     ],
-    "disabled": 0,
+    "disabled": 1,
     "prom_for_duration": 60,
-    "prom_ql": "increase(net_drop_out[1m]) > 0",
+    "prom_ql": "",
     "rule_config": {
       "algo_params": null,
       "inhibit": false,
@@ -434,15 +489,23 @@
       "severity": 0
     },
     "prom_eval_interval": 15,
-    "enable_stime": "",
+    "enable_stime": "00:00",
     "enable_stimes": [
       "00:00"
     ],
-    "enable_etime": "",
+    "enable_etime": "23:59",
     "enable_etimes": [
       "23:59"
     ],
-    "enable_days_of_week": null,
+    "enable_days_of_week": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ],
     "enable_days_of_weeks": [
       [
         "1",
@@ -467,7 +530,8 @@
     "callbacks": [],
     "runbook_url": "",
     "append_tags": [],
-    "annotations": null
+    "annotations": null,
+    "extra_config": null
   },
   {
     "cate": "prometheus",
@@ -486,7 +550,7 @@
       2,
       1
     ],
-    "disabled": 0,
+    "disabled": 1,
     "prom_for_duration": 60,
     "prom_ql": "",
     "rule_config": {
@@ -507,15 +571,23 @@
       ]
     },
     "prom_eval_interval": 30,
-    "enable_stime": "",
+    "enable_stime": "00:00",
     "enable_stimes": [
       "00:00"
     ],
-    "enable_etime": "",
+    "enable_etime": "23:59",
     "enable_etimes": [
       "23:59"
     ],
-    "enable_days_of_week": null,
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
     "enable_days_of_weeks": [
       [
         "0",
@@ -536,7 +608,8 @@
     "callbacks": [],
     "runbook_url": "",
     "append_tags": [],
-    "annotations": {}
+    "annotations": {},
+    "extra_config": null
   },
   {
     "cate": "prometheus",
@@ -551,11 +624,11 @@
     "delay": 0,
     "severity": 0,
     "severities": [
-      3,
       2,
-      1
+      1,
+      3
     ],
-    "disabled": 0,
+    "disabled": 1,
     "prom_for_duration": 60,
     "prom_ql": "",
     "rule_config": {
@@ -576,15 +649,23 @@
       ]
     },
     "prom_eval_interval": 30,
-    "enable_stime": "",
+    "enable_stime": "00:00",
     "enable_stimes": [
       "00:00"
     ],
-    "enable_etime": "",
+    "enable_etime": "23:59",
     "enable_etimes": [
       "23:59"
     ],
-    "enable_days_of_week": null,
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
     "enable_days_of_weeks": [
       [
         "0",
@@ -605,6 +686,7 @@
     "callbacks": [],
     "runbook_url": "",
     "append_tags": [],
-    "annotations": {}
+    "annotations": {},
+    "extra_config": null
   }
 ]

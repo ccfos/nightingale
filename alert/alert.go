@@ -98,5 +98,5 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	go consumer.LoopConsume()
 
 	go queue.ReportQueueSize(alertStats)
-	go sender.InitEmailSender(notifyConfigCache.GetSMTP())
+	go sender.InitEmailSender(notifyConfigCache)
 }

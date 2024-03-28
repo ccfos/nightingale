@@ -18,7 +18,7 @@ func (rt *Router) taskTplGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
 	groupId := ginx.UrlParamInt64(c, "id")
 
-	total, err := models.TaskTplCount(rt.Ctx, []int64{groupId}, query)
+	total, err := models.TaskTplTotal(rt.Ctx, []int64{groupId}, query)
 	ginx.Dangerous(err)
 
 	list, err := models.TaskTplGets(rt.Ctx, []int64{groupId}, query, limit, ginx.Offset(c, limit))
@@ -34,17 +34,21 @@ func (rt *Router) taskTplGetsByGids(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 20)
 
-	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
-	if len(gids) == 0 {
-		ginx.NewRender(c, http.StatusBadRequest).Message("arg(gids) is empty")
-		return
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
+	if len(gids) > 0 {
+		for _, gid := range gids {
+			rt.bgroCheck(c, gid)
+		}
+	} else {
+		me := c.MustGet("user").(*models.User)
+		if !me.IsAdmin() {
+			var err error
+			gids, err = models.MyBusiGroupIds(rt.Ctx, me.Id)
+			ginx.Dangerous(err)
+		}
 	}
 
-	for _, gid := range gids {
-		rt.bgroCheck(c, gid)
-	}
-
-	total, err := models.TaskTplCount(rt.Ctx, gids, query)
+	total, err := models.TaskTplTotal(rt.Ctx, gids, query)
 	ginx.Dangerous(err)
 
 	list, err := models.TaskTplGets(rt.Ctx, gids, query, limit, ginx.Offset(c, limit))
