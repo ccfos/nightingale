@@ -13,7 +13,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	imodels "github.com/ulricqin/ibex/src/models"
 	"github.com/ulricqin/ibex/src/storage"
@@ -206,7 +205,10 @@ func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
 	}
 
 	err := taskMeta.CleanFields()
-	ginx.Dangerous(err)
+	if err != nil {
+		return 0, err
+	}
+
 	taskMeta.HandleFH(hosts[0])
 
 	// 任务类型分为"告警规则触发"和"n9e center用户下发"两种；
@@ -217,28 +219,32 @@ func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
 			// 方法是，redis自增id去防止同一个机房的不同n9e edge生成的id相同；
 			// 但没法防止不同边缘机房生成同样的id，所以，生成id的数据不会上报存入数据库，只用于闭环执行。
 			taskMeta.Id, err = storage.IdGet()
-			ginx.Dangerous(err)
+			if err != nil {
+				return 0, err
+			}
 		}
 
-		if err == nil {
-			taskHost := imodels.TaskHost{
-				Id:     taskMeta.Id,
-				Host:   hosts[0],
-				Status: "running",
-			}
-			if err = taskHost.Create(); err != nil {
-				logger.Warningf("task_add_fail: authUser=%s title=%s err=%s", authUser, taskMeta.Title, err.Error())
-			}
+		taskHost := imodels.TaskHost{
+			Id:     taskMeta.Id,
+			Host:   hosts[0],
+			Status: "running",
+		}
+		if err = taskHost.Create(); err != nil {
+			logger.Warningf("task_add_fail: authUser=%s title=%s err=%s", authUser, taskMeta.Title, err.Error())
 		}
 
 		// 缓存任务元信息和待下发的任务
 		err = taskMeta.Cache(hosts[0])
-		ginx.Dangerous(err)
+		if err != nil {
+			return 0, err
+		}
 
 	} else {
 		// 如果是中心机房，还是保持之前的逻辑
 		err = taskMeta.Save(hosts, f.Action)
-		ginx.Dangerous(err)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	logger.Infof("task_add_succ: authUser=%s title=%s", authUser, taskMeta.Title)
