@@ -233,6 +233,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/builtin-metrics", rt.auth(), rt.user(), rt.builtinMetricsGets)
 		pages.PUT("/builtin-metrics", rt.auth(), rt.user(), rt.builtinMetricsPut)
 		pages.DELETE("/builtin-metrics", rt.auth(), rt.user(), rt.builtinMetricsDel)
+		pages.GET("/builtin-metrics/types", rt.auth(), rt.user(), rt.builtinMetricsTypes)
+		pages.GET("/builtin-metrics/collectors", rt.auth(), rt.user(), rt.builtinMetricsCollectors)
 
 		pages.GET("/user-groups", rt.auth(), rt.user(), rt.userGroupGets)
 		pages.POST("/user-groups", rt.auth(), rt.user(), rt.perm("/user-groups/add"), rt.userGroupAdd)

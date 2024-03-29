@@ -67,3 +67,11 @@ func (rt *Router) builtinMetricsDel(c *gin.Context) {
 
 	ginx.NewRender(c).Message(models.BuiltinMetricDels(rt.Ctx, req.Ids))
 }
+
+func (rt *Router) builtinMetricsTypes(c *gin.Context) {
+	ginx.NewRender(c).Message(models.BuiltinMetricTypes(rt.Ctx))
+}
+
+func (rt *Router) builtinMetricsCollectors(c *gin.Context) {
+	ginx.NewRender(c).Message(models.BuiltinMetricCollectors(rt.Ctx))
+}

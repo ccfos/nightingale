@@ -153,3 +153,15 @@ func BuiltinMetricGet(ctx *ctx.Context, where string, args ...interface{}) (*Bui
 
 	return lst[0], nil
 }
+
+func BuiltinMetricTypes(ctx *ctx.Context) ([]string, error) {
+	var typs []string
+	err := DB(ctx).Model(&BuiltinMetric{}).Select("distinct(typ)").Pluck("typ", &typs).Error
+	return typs, err
+}
+
+func BuiltinMetricCollectors(ctx *ctx.Context) ([]string, error) {
+	var collectors []string
+	err := DB(ctx).Model(&BuiltinMetric{}).Select("distinct(collector)").Pluck("collector", &collectors).Error
+	return collectors, err
+}
