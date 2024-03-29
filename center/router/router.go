@@ -229,12 +229,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/metric-views", rt.auth(), rt.user(), rt.metricViewAdd)
 		pages.PUT("/metric-views", rt.auth(), rt.user(), rt.metricViewPut)
 
-		pages.POST("/builtin-metrics", rt.auth(), rt.user(), rt.builtinMetricsAdd)
-		pages.GET("/builtin-metrics", rt.auth(), rt.user(), rt.builtinMetricsGets)
-		pages.PUT("/builtin-metrics", rt.auth(), rt.user(), rt.builtinMetricsPut)
-		pages.DELETE("/builtin-metrics", rt.auth(), rt.user(), rt.builtinMetricsDel)
-		pages.GET("/builtin-metrics/types", rt.auth(), rt.user(), rt.builtinMetricsTypes)
-		pages.GET("/builtin-metrics/collectors", rt.auth(), rt.user(), rt.builtinMetricsCollectors)
+		pages.POST("/builtin-metrics", rt.auth(), rt.user(), rt.perm("/builtin-metrics/add"), rt.builtinMetricsAdd)
+		pages.GET("/builtin-metrics", rt.auth(), rt.user(), rt.perm("/builtin-metrics"), rt.builtinMetricsGets)
+		pages.PUT("/builtin-metrics", rt.auth(), rt.user(), rt.perm("/builtin-metrics/put"), rt.builtinMetricsPut)
+		pages.DELETE("/builtin-metrics", rt.auth(), rt.user(), rt.perm("/builtin-metrics/del"), rt.builtinMetricsDel)
+		pages.GET("/builtin-metrics/types", rt.auth(), rt.user(), rt.perm("/builtin-metrics"), rt.builtinMetricsTypes)
+		pages.GET("/builtin-metrics/collectors", rt.auth(), rt.user(), rt.perm("/builtin-metrics"), rt.builtinMetricsCollectors)
 
 		pages.GET("/user-groups", rt.auth(), rt.user(), rt.userGroupGets)
 		pages.POST("/user-groups", rt.auth(), rt.user(), rt.perm("/user-groups/add"), rt.userGroupAdd)

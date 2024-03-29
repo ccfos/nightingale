@@ -69,9 +69,9 @@ func (rt *Router) builtinMetricsDel(c *gin.Context) {
 }
 
 func (rt *Router) builtinMetricsTypes(c *gin.Context) {
-	ginx.NewRender(c).Message(models.BuiltinMetricTypes(rt.Ctx))
+	ginx.NewRender(c).Data(models.BuiltinMetricTypes(rt.Ctx))
 }
 
 func (rt *Router) builtinMetricsCollectors(c *gin.Context) {
-	ginx.NewRender(c).Message(models.BuiltinMetricCollectors(rt.Ctx))
+	ginx.NewRender(c).Data(models.BuiltinMetricCollectors(rt.Ctx))
 }

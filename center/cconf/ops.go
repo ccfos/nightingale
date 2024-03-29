@@ -184,5 +184,13 @@ ops:
   - "/help/notification-settings"
   - "/help/migrate"
   - "/site-settings"
+
+- name: builtin-metrics
+  cname: 内置指标
+  ops:
+    - "/builtin-metrics"
+    - "/builtin-metrics/add"
+    - "/builtin-metrics/put"
+    - "/builtin-metrics/del"
 `
 )
