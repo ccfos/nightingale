@@ -30,13 +30,13 @@ func (rt *Router) builtinMetricsAdd(c *gin.Context) {
 func (rt *Router) builtinMetricsGets(c *gin.Context) {
 	collector := ginx.QueryStr(c, "collector", "")
 	typ := ginx.QueryStr(c, "typ", "")
-	search := ginx.QueryStr(c, "search", "")
+	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 20)
 
-	bm, err := models.BuiltinMetricGets(rt.Ctx, collector, typ, search, limit, ginx.Offset(c, limit))
+	bm, err := models.BuiltinMetricGets(rt.Ctx, collector, typ, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
-	total, err := models.BuiltinMetricCount(rt.Ctx, collector, typ, search)
+	total, err := models.BuiltinMetricCount(rt.Ctx, collector, typ, query)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(gin.H{
 		"list":  bm,
@@ -69,9 +69,13 @@ func (rt *Router) builtinMetricsDel(c *gin.Context) {
 }
 
 func (rt *Router) builtinMetricsTypes(c *gin.Context) {
-	ginx.NewRender(c).Data(models.BuiltinMetricTypes(rt.Ctx))
+	query := ginx.QueryStr(c, "query", "")
+
+	ginx.NewRender(c).Data(models.BuiltinMetricTypes(rt.Ctx, query))
 }
 
 func (rt *Router) builtinMetricsCollectors(c *gin.Context) {
-	ginx.NewRender(c).Data(models.BuiltinMetricCollectors(rt.Ctx))
+	query := ginx.QueryStr(c, "query", "")
+
+	ginx.NewRender(c).Data(models.BuiltinMetricCollectors(rt.Ctx, query))
 }

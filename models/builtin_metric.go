@@ -101,7 +101,7 @@ func BuiltinMetricDels(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinMetric)).Error
 }
 
-func BuiltinMetricGets(ctx *ctx.Context, collector, typ, search string, limit, offset int) ([]*BuiltinMetric, error) {
+func BuiltinMetricGets(ctx *ctx.Context, collector, typ, query string, limit, offset int) ([]*BuiltinMetric, error) {
 	session := DB(ctx)
 	if collector != "" {
 		session = session.Where("collector = ?", collector)
@@ -109,9 +109,9 @@ func BuiltinMetricGets(ctx *ctx.Context, collector, typ, search string, limit, o
 	if typ != "" {
 		session = session.Where("typ = ?", typ)
 	}
-	if search != "" {
-		searchPattern := "%" + search + "%"
-		session = session.Where("name LIKE ? OR desc_cn LIKE ? OR desc_en LIKE ?", searchPattern, searchPattern, searchPattern)
+	if query != "" {
+		queryPattern := "%" + query + "%"
+		session = session.Where("name LIKE ? OR desc_cn LIKE ? OR desc_en LIKE ?", queryPattern, queryPattern, queryPattern)
 	}
 
 	var lst []*BuiltinMetric
@@ -121,7 +121,7 @@ func BuiltinMetricGets(ctx *ctx.Context, collector, typ, search string, limit, o
 	return lst, err
 }
 
-func BuiltinMetricCount(ctx *ctx.Context, collector, typ, search string) (int64, error) {
+func BuiltinMetricCount(ctx *ctx.Context, collector, typ, query string) (int64, error) {
 	session := DB(ctx).Model(&BuiltinMetric{})
 	if collector != "" {
 		session = session.Where("collector = ?", collector)
@@ -129,9 +129,9 @@ func BuiltinMetricCount(ctx *ctx.Context, collector, typ, search string) (int64,
 	if typ != "" {
 		session = session.Where("typ = ?", typ)
 	}
-	if search != "" {
-		searchPattern := "%" + search + "%"
-		session = session.Where("name LIKE ? OR desc_cn LIKE ? OR desc_en LIKE ?", searchPattern, searchPattern, searchPattern)
+	if query != "" {
+		queryPattern := "%" + query + "%"
+		session = session.Where("name LIKE ? OR desc_cn LIKE ? OR desc_en LIKE ?", queryPattern, queryPattern, queryPattern)
 	}
 
 	var cnt int64
@@ -154,14 +154,14 @@ func BuiltinMetricGet(ctx *ctx.Context, where string, args ...interface{}) (*Bui
 	return lst[0], nil
 }
 
-func BuiltinMetricTypes(ctx *ctx.Context) ([]string, error) {
+func BuiltinMetricTypes(ctx *ctx.Context, query string) ([]string, error) {
 	var typs []string
-	err := DB(ctx).Model(&BuiltinMetric{}).Select("distinct(typ)").Pluck("typ", &typs).Error
+	err := DB(ctx).Model(&BuiltinMetric{}).Where("typ like ?","%"+query+"%").Select("distinct(typ)").Pluck("typ", &typs).Error
 	return typs, err
 }
 
-func BuiltinMetricCollectors(ctx *ctx.Context) ([]string, error) {
+func BuiltinMetricCollectors(ctx *ctx.Context, query string) ([]string, error) {
 	var collectors []string
-	err := DB(ctx).Model(&BuiltinMetric{}).Select("distinct(collector)").Pluck("collector", &collectors).Error
+	err := DB(ctx).Model(&BuiltinMetric{}).Where("collector like ?","%"+query+"%").Select("distinct(collector)").Pluck("collector", &collectors).Error
 	return collectors, err
 }
