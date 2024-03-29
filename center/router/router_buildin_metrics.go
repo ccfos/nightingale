@@ -69,13 +69,15 @@ func (rt *Router) builtinMetricsDel(c *gin.Context) {
 }
 
 func (rt *Router) builtinMetricsTypes(c *gin.Context) {
+	collector := ginx.QueryStr(c, "collector", "")
 	query := ginx.QueryStr(c, "query", "")
 
-	ginx.NewRender(c).Data(models.BuiltinMetricTypes(rt.Ctx, query))
+	ginx.NewRender(c).Data(models.BuiltinMetricTypes(rt.Ctx, collector, query))
 }
 
 func (rt *Router) builtinMetricsCollectors(c *gin.Context) {
+	typ := ginx.QueryStr(c, "typ", "")
 	query := ginx.QueryStr(c, "query", "")
 
-	ginx.NewRender(c).Data(models.BuiltinMetricCollectors(rt.Ctx, query))
+	ginx.NewRender(c).Data(models.BuiltinMetricCollectors(rt.Ctx, typ, query))
 }

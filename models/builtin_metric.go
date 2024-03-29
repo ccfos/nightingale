@@ -154,14 +154,28 @@ func BuiltinMetricGet(ctx *ctx.Context, where string, args ...interface{}) (*Bui
 	return lst[0], nil
 }
 
-func BuiltinMetricTypes(ctx *ctx.Context, query string) ([]string, error) {
+func BuiltinMetricTypes(ctx *ctx.Context, collector, query string) ([]string, error) {
 	var typs []string
-	err := DB(ctx).Model(&BuiltinMetric{}).Where("typ like ?","%"+query+"%").Select("distinct(typ)").Pluck("typ", &typs).Error
+	session := DB(ctx).Model(&BuiltinMetric{})
+	if collector != "" {
+		session = session.Where("collector = ?", collector)
+	}
+	if query != "" {
+		session = session.Where("typ like ?", "%"+query+"%")
+	}
+	err := session.Select("distinct(typ)").Pluck("typ", &typs).Error
 	return typs, err
 }
 
-func BuiltinMetricCollectors(ctx *ctx.Context, query string) ([]string, error) {
+func BuiltinMetricCollectors(ctx *ctx.Context, typ, query string) ([]string, error) {
 	var collectors []string
-	err := DB(ctx).Model(&BuiltinMetric{}).Where("collector like ?","%"+query+"%").Select("distinct(collector)").Pluck("collector", &collectors).Error
+	session := DB(ctx).Model(&BuiltinMetric{})
+	if typ != "" {
+		session = session.Where("typ = ?", typ)
+	}
+	if query != "" {
+		session = session.Where("collector like ?", "%"+query+"%")
+	}
+	err := session.Select("distinct(collector)").Pluck("collector", &collectors).Error
 	return collectors, err
 }
