@@ -10,18 +10,18 @@ import (
 
 // BuiltinMetric represents a metric along with its metadata.
 type BuiltinMetric struct {
-	ID         int64  `json:"id" gorm:"primaryKey"` // Unique identifier
-	Collector  string `json:"collector"`            // Typ of collector (e.g., 'categraf', 'telegraf')
-	Typ        string `json:"typ"`                  // Typ of metric (e.g., 'host', 'mysql', 'redis')
-	Name       string `json:"name"`                 // Name of the metric
-	Unit       string `json:"unit"`                 // Unit of the metric
-	DescCN     string `json:"desc_cn"`              // Description in Chinese
-	DescEN     string `json:"desc_en"`              // Description in English
-	Expression string `json:"expression"`           // Expression for calculation
-	CreatedAt  int64  `json:"created_at"`           // Creation timestamp (unix time)
-	CreatedBy  string `json:"created_by"`           // Creator
-	UpdatedAt  int64  `json:"updated_at"`           // Update timestamp (unix time)
-	UpdatedBy  string `json:"updated_by"`           // Updater
+    ID         uint64 `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"` // Unique identifier
+    Collector  string `json:"collector" gorm:"type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"`            // Type of collector (e.g., 'categraf', 'telegraf')
+    Typ        string `json:"typ" gorm:"type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`                            // Type of metric (e.g., 'host', 'mysql', 'redis')
+    Name       string `json:"name" gorm:"type:varchar(191);not null;index:idx_name,sort:asc;comment:'name of metric'"`                          // Name of the metric
+    Unit       string `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`                                                   // Unit of the metric
+    DescCN     string `json:"desc_cn" gorm:"type:varchar(4096);not null;comment:'description of metric in Chinese'"`                             // Description in Chinese
+    DescEN     string `json:"desc_en" gorm:"type:varchar(4096);not null;comment:'description of metric in English'"`                            // Description in English
+    Expression string `json:"expression" gorm:"type:varchar(4096);not null;comment:'expression of metric'"`                                     // Expression for calculation
+    CreatedAt  int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`                                           // Creation timestamp (unix time)
+    CreatedBy  string `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`                                        // Creator
+    UpdatedAt  int64  `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`                                           // Update timestamp (unix time)
+    UpdatedBy  string `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`                                        // Updater
 }
 
 func (bm *BuiltinMetric) TableName() string {
