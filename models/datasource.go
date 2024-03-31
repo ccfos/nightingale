@@ -89,7 +89,9 @@ func (ds *Datasource) Update(ctx *ctx.Context, selectField interface{}, selectFi
 		return err
 	}
 
-	ds.UpdatedAt = time.Now().Unix()
+	if ds.UpdatedAt == 0 {
+		ds.UpdatedAt = time.Now().Unix()
+	}
 	return DB(ctx).Model(ds).Select(selectField, selectFields...).Updates(ds).Error
 }
 
