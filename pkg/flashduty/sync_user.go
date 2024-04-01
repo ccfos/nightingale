@@ -45,7 +45,7 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 			Email:    items[i].Email,
 			Phone:    items[i].Phone,
 		}
-		dutyUsers[user.Phone+user.Email] = user
+		dutyUsers[user.Username+user.Email] = user
 	}
 
 	dbUsersHas := sliceToMap(dbUsers)
@@ -64,7 +64,7 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 func sliceToMap(dbUsers []*models.User) map[string]*models.User {
 	m := make(map[string]*models.User, len(dbUsers))
 	for _, user := range dbUsers {
-		m[user.Phone+user.Email] = user
+		m[user.Username+user.Email] = user
 	}
 	return m
 }
@@ -88,9 +88,10 @@ type User struct {
 }
 
 type Updates struct {
-	Email      string `json:"email,omitempty"`
-	Phone      string `json:"phone,omitempty"`
-	MemberName string `json:"member_name,omitempty"`
+	Email       string `json:"email,omitempty"`
+	Phone       string `json:"phone,omitempty"`
+	MemberName  string `json:"member_name,omitempty"`
+	CountryCode string `json:"country_code,omitempty"`
 }
 
 func (user *User) delMember(appKey string) error {
@@ -120,7 +121,7 @@ func (m *Members) addMembers(appKey string) error {
 	validUsers := make([]User, 0, len(m.Users))
 	for _, user := range m.Users {
 		if user.Email == "" && (user.Phone != "" && user.MemberName == "" || user.Phone == "") {
-			logger.Errorf("user(%v) phone and email must be selected one of two, and the member_name must be added when selecting the phone", user)
+			logger.Errorf("user(%+v) phone and email must be selected one of two, and the member_name must be added when selecting the phone", user)
 		} else {
 			validUsers = append(validUsers, user)
 		}
@@ -170,8 +171,9 @@ func UpdateUser(ctx *ctx.Context, target models.User, email, phone string) {
 		if target.Phone != phone {
 			needSync = true
 			flashdutyUser.Updates = Updates{
-				Phone:      phone,
-				MemberName: target.Username,
+				Phone:       phone,
+				MemberName:  target.Username,
+				CountryCode: "CN",
 			}
 		}
 	case "phone":
@@ -197,6 +199,7 @@ func UpdateUser(ctx *ctx.Context, target models.User, email, phone string) {
 		if target.Phone != phone {
 			needSync = true
 			flashdutyUser.Updates.Phone = phone
+			flashdutyUser.Updates.CountryCode = "CN"
 		}
 	}
 
