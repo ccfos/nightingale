@@ -2,6 +2,7 @@ package flashduty
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -69,11 +70,18 @@ func diffMap(m1, m2 map[string]*models.User) []models.User {
 }
 
 type User struct {
-	Email       string `json:"email"`
-	Phone       string `json:"phone"`
-	CountryCode string `json:"country_code"`
-	MemberName  string `json:"member_name"`
-	RoleIds     []int  `json:"role_ids"`
+	Email       string  `json:"email"`
+	Phone       string  `json:"phone"`
+	CountryCode string  `json:"country_code"`
+	MemberName  string  `json:"member_name"`
+	RoleIds     []int   `json:"role_ids"`
+	Updates     Updates `json:"updates,omitempty"`
+}
+
+type Updates struct {
+	Email      string `json:"email"`
+	Phone      string `json:"phone"`
+	MemberName string `json:"member_name"`
 }
 
 func (user *User) delMember(appKey string) error {
@@ -81,6 +89,20 @@ func (user *User) delMember(appKey string) error {
 		return errors.New("phones and email must be selected one of two")
 	}
 	return PostFlashDuty("/member/delete", appKey, user)
+}
+
+func (user *User) UpdateMember(ctx *ctx.Context) error {
+	appKey, err := models.ConfigsGetFlashDutyAppKey(ctx)
+	if err != nil {
+		return err
+	}
+
+	if user.Email == "" && (user.Phone == "" || user.MemberName == "") {
+		logger.Errorf("user(%v) phone and email must be selected one of two, and the member_name must be added when selecting the phone", user)
+		return fmt.Errorf("phone and email must be selected one of two")
+	}
+
+	return PostFlashDuty("/member/info/reset", appKey, user)
 }
 
 type Members struct {

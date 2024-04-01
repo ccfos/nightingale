@@ -637,3 +637,22 @@ func (u *User) ExtractToken(key string) (string, bool) {
 		return "", false
 	}
 }
+
+func (u *User) FindSameContact(email, phone string) string {
+	if u.Email == email {
+		return "email"
+	}
+
+	if u.Phone == phone {
+		return "phone"
+	}
+
+	if email != "" {
+		return "email"
+	}
+
+	if phone != "" {
+		return "phone"
+	}
+	return ""
+}

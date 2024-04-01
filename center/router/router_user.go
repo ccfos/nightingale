@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 
 	"github.com/gin-gonic/gin"
@@ -149,6 +150,42 @@ func (rt *Router) userProfilePut(c *gin.Context) {
 	target.Roles = strings.Join(f.Roles, " ")
 	target.Contacts = f.Contacts
 	target.UpdateBy = c.MustGet("username").(string)
+
+	if flashduty.NeedSyncUser(rt.Ctx) {
+		contact := target.FindSameContact(f.Email, f.Phone)
+		var flashdutyUser flashduty.User
+		var needSync bool
+		switch contact {
+		case "email":
+			flashdutyUser = flashduty.User{
+				Email: target.Email,
+			}
+			if target.Phone != f.Phone {
+				needSync = true
+				flashdutyUser.Updates = flashduty.Updates{
+					Phone:      f.Phone,
+					MemberName: target.Username,
+				}
+			}
+		case "phone":
+			flashdutyUser = flashduty.User{
+				Phone: target.Phone,
+			}
+
+			if target.Email != f.Email {
+				needSync = true
+				flashdutyUser.Updates = flashduty.Updates{
+					Email:      f.Email,
+					MemberName: target.Username,
+				}
+			}
+		}
+
+		if needSync {
+			err := flashdutyUser.UpdateMember(rt.Ctx)
+			ginx.Dangerous(err)
+		}
+	}
 
 	ginx.NewRender(c).Message(target.UpdateAllFields(rt.Ctx))
 }
