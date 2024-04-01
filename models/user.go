@@ -639,11 +639,11 @@ func (u *User) ExtractToken(key string) (string, bool) {
 }
 
 func (u *User) FindSameContact(email, phone string) string {
-	if u.Email == email {
+	if u.Email != "" && u.Email == email {
 		return "email"
 	}
 
-	if u.Phone == phone {
+	if u.Phone != "" && u.Phone == phone {
 		return "phone"
 	}
 

@@ -71,7 +71,8 @@ func PostFlashDutyWithResp(path string, appKey string, body interface{}) (Data, 
 		url = fmt.Sprintf("%s%s?%s", "https://api.flashcat.cloud", path, urlParams.Encode())
 	}
 	response, code, err := PostJSON(url, Timeout, Headers, body)
-	logger.Infof("flashduty post: url=%s, req=%v; response=%s, code=%d", url, body, string(response), code)
+	req, _ := json.Marshal(body)
+	logger.Infof("flashduty post: url=%s, req=%s; response=%s, code=%d", url, string(req), string(response), code)
 
 	var resp dutyResp
 	if err == nil {

@@ -144,6 +144,11 @@ func (rt *Router) userProfilePut(c *gin.Context) {
 	}
 
 	target := User(rt.Ctx, ginx.UrlParamInt64(c, "id"))
+	oldInfo := models.User{
+		Username: target.Username,
+		Phone:    target.Phone,
+		Email:    target.Email,
+	}
 	target.Nickname = f.Nickname
 	target.Phone = f.Phone
 	target.Email = f.Email
@@ -152,51 +157,7 @@ func (rt *Router) userProfilePut(c *gin.Context) {
 	target.UpdateBy = c.MustGet("username").(string)
 
 	if flashduty.NeedSyncUser(rt.Ctx) {
-		contact := target.FindSameContact(f.Email, f.Phone)
-		var flashdutyUser flashduty.User
-		var needSync bool
-		switch contact {
-		case "email":
-			flashdutyUser = flashduty.User{
-				Email: target.Email,
-			}
-			if target.Phone != f.Phone {
-				needSync = true
-				flashdutyUser.Updates = flashduty.Updates{
-					Phone:      f.Phone,
-					MemberName: target.Username,
-				}
-			}
-		case "phone":
-			flashdutyUser = flashduty.User{
-				Phone: target.Phone,
-			}
-
-			if target.Email != f.Email {
-				needSync = true
-				flashdutyUser.Updates = flashduty.Updates{
-					Email:      f.Email,
-					MemberName: target.Username,
-				}
-			}
-		default:
-			flashdutyUser = flashduty.User{
-				MemberName: target.Username,
-			}
-			if target.Email != f.Email {
-				needSync = true
-				flashdutyUser.Updates.Email = f.Email
-			}
-			if target.Phone != f.Phone {
-				needSync = true
-				flashdutyUser.Updates.Phone = f.Phone
-			}
-		}
-
-		if needSync {
-			err := flashdutyUser.UpdateMember(rt.Ctx)
-			ginx.Dangerous(err)
-		}
+		flashduty.UpdateUser(rt.Ctx, oldInfo, f.Email, f.Phone)
 	}
 
 	ginx.NewRender(c).Message(target.UpdateAllFields(rt.Ctx))
