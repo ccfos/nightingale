@@ -647,12 +647,5 @@ func (u *User) FindSameContact(email, phone string) string {
 		return "phone"
 	}
 
-	if email != "" {
-		return "email"
-	}
-
-	if phone != "" {
-		return "phone"
-	}
 	return ""
 }

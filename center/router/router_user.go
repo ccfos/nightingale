@@ -179,6 +179,18 @@ func (rt *Router) userProfilePut(c *gin.Context) {
 					MemberName: target.Username,
 				}
 			}
+		default:
+			flashdutyUser = flashduty.User{
+				MemberName: target.Username,
+			}
+			if target.Email != f.Email {
+				needSync = true
+				flashdutyUser.Updates.Email = f.Email
+			}
+			if target.Phone != f.Phone {
+				needSync = true
+				flashdutyUser.Updates.Phone = f.Phone
+			}
 		}
 
 		if needSync {
