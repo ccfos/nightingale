@@ -9,7 +9,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User, cacheUsers map[int64]*models.User) error {
+func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 	if !ctx.IsCenter {
 		return nil
 	}
@@ -19,29 +19,46 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User, cacheUsers map[in
 		return err
 	}
 
+	req := make(map[string]interface{})
+	req["limit"] = 10000000
+	userList, err := PostFlashDutyWithResp("/member/list", appKey, req)
+	if err != nil {
+		return err
+	}
+
+	dutyUsers := make(map[string]*models.User, len(userList.Items))
+	for i := range userList.Items {
+		user := &models.User{
+			Username: userList.Items[i].MemberName,
+			Email:    userList.Items[i].Email,
+			Phone:    userList.Items[i].Phone,
+		}
+		dutyUsers[user.Phone+user.Email] = user
+	}
+
 	dbUsersHas := sliceToMap(dbUsers)
 
-	addUsers := diffMap(dbUsersHas, cacheUsers)
+	addUsers := diffMap(dbUsersHas, dutyUsers)
 	if err := fdAddUsers(appKey, addUsers); err != nil {
 		return err
 	}
 
-	delUsers := diffMap(cacheUsers, dbUsersHas)
+	delUsers := diffMap(dutyUsers, dbUsersHas)
 	fdDelUsers(appKey, delUsers)
 
 	return nil
 }
 
-func sliceToMap(dbUsers []*models.User) map[int64]*models.User {
-	m := make(map[int64]*models.User, len(dbUsers))
+func sliceToMap(dbUsers []*models.User) map[string]*models.User {
+	m := make(map[string]*models.User, len(dbUsers))
 	for _, user := range dbUsers {
-		m[user.Id] = user
+		m[user.Phone+user.Email] = user
 	}
 	return m
 }
 
 // in m1 and not in m2
-func diffMap(m1, m2 map[int64]*models.User) []models.User {
+func diffMap(m1, m2 map[string]*models.User) []models.User {
 	var diff []models.User
 	for i := range m1 {
 		if _, ok := m2[i]; !ok {
