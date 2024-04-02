@@ -9,7 +9,6 @@ type Alert struct {
 	EngineDelay int64
 	Heartbeat   HeartbeatConfig
 	Alerting    Alerting
-	Ibex        Ibex
 }
 
 type SMTPConfig struct {
@@ -45,12 +44,6 @@ type RedisPub struct {
 	Enable        bool
 	ChannelPrefix string
 	ChannelKey    string
-}
-
-type Ibex struct {
-	Enable    bool
-	RPCListen string
-	Timeout   int64
 }
 
 func (a *Alert) PreCheck(configDir string) {

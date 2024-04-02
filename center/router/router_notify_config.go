@@ -169,10 +169,6 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 		var smtp aconf.SMTPConfig
 		err := toml.Unmarshal([]byte(text), &smtp)
 		ginx.Dangerous(err)
-	case models.IBEX:
-		var ibex aconf.Ibex
-		err := toml.Unmarshal([]byte(f.Cval), &ibex)
-		ginx.Dangerous(err)
 	default:
 		ginx.Bomb(200, "key %s can not modify", f.Ckey)
 	}

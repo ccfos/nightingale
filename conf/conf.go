@@ -45,6 +45,12 @@ type Ibex struct {
 	Enable    bool
 	RPCListen string
 	Timeout   int64
+	Output    Output
+}
+
+type Output struct {
+	ComeFrom string
+	AgtdPort int
 }
 
 func InitConfig(configDir, cryptoKey string) (*ConfigType, error) {

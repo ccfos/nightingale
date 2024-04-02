@@ -116,7 +116,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	dumper.ConfigRouter(r)
 
 	if config.Ibex.Enable {
-		ibex.ServerStart(true, ctx.DB, redis, config.Ibex.RPCListen, config.HTTP.APIForService.BasicAuth, &config.CenterApi, r, centerRouter, config.HTTP.Port)
+		ibex.ServerStart(true, ctx.DB, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, centerRouter, config.Ibex, config.HTTP.Port)
 	}
 
 	httpClean := httpx.Init(config.HTTP, r)
