@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
+	"github.com/ccfos/nightingale/v6/pkg/secu"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -48,5 +49,9 @@ func (rt *Router) selfPasswordPut(c *gin.Context) {
 	var f selfPasswordForm
 	ginx.BindJSON(c, &f)
 	user := c.MustGet("user").(*models.User)
-	ginx.NewRender(c).Message(user.ChangePassword(rt.Ctx, f.OldPass, f.NewPass))
+	decodeOP, err := secu.Decrypt(f.OldPass, rt.HTTP.RSA.RSAPrivateKey, rt.HTTP.RSA.RSAPassWord)
+	ginx.Dangerous(err)
+	decodeNP, err := secu.Decrypt(f.NewPass, rt.HTTP.RSA.RSAPrivateKey, rt.HTTP.RSA.RSAPassWord)
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Message(user.ChangePassword(rt.Ctx, decodeOP, decodeNP))
 }
