@@ -26,7 +26,7 @@ func MigrateIbexTables(db *gorm.DB) {
 	}
 
 	for i := 0; i < 100; i++ {
-		tableName := fmt.Sprintf("task_host_%02d", i)
+		tableName := fmt.Sprintf("task_host_%d", i)
 		err := db.Table(tableName).AutoMigrate(&imodels.TaskHost{})
 		if err != nil {
 			logger.Errorf("failed to migrate table:%s %v", tableName, err)
