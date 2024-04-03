@@ -356,8 +356,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-groups/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks"), rt.taskGetsByGids)
 		pages.GET("/busi-group/:id/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks"), rt.bgro(), rt.taskGets)
 		pages.POST("/busi-group/:id/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks/add"), rt.bgrw(), rt.taskAdd)
-		// pages.GET("/busi-group/:id/task/*url", rt.auth(), rt.user(), rt.perm("/job-tasks"), rt.taskProxy)
-		// pages.PUT("/busi-group/:id/task/*url", rt.auth(), rt.user(), rt.perm("/job-tasks/put"), rt.bgrw(), rt.taskProxy)
 
 		pages.GET("/servers", rt.auth(), rt.admin(), rt.serversGet)
 		pages.GET("/server-clusters", rt.auth(), rt.admin(), rt.serverClustersGet)
