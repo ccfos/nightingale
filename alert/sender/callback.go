@@ -13,9 +13,9 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
+	imodels "github.com/flashcatcloud/ibex/src/models"
+	"github.com/flashcatcloud/ibex/src/storage"
 	"github.com/toolkits/pkg/logger"
-	imodels "github.com/ulricqin/ibex/src/models"
-	"github.com/ulricqin/ibex/src/storage"
 )
 
 func SendCallbacks(ctx *ctx.Context, urls []string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType,

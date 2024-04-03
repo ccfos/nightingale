@@ -32,7 +32,7 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/tidwall/gjson v1.14.0
 	github.com/toolkits/pkg v1.3.6
-	github.com/ulricqin/ibex v0.0.0-00010101000000-000000000000
+	github.com/flashcatcloud/ibex v0.0.0-00010101000000-000000000000
 	golang.org/x/oauth2 v0.10.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/yaml.v2 v2.4.0
@@ -97,4 +97,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/ulricqin/ibex => ../../flashcatcloud/ibex
+replace github.com/flashcatcloud/ibex => ../../flashcatcloud/ibex
