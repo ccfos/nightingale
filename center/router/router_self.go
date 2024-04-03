@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 
 	"github.com/gin-gonic/gin"
@@ -29,12 +30,21 @@ func (rt *Router) selfProfilePut(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 
 	user := c.MustGet("user").(*models.User)
+	oldInfo := models.User{
+		Username: user.Username,
+		Phone:    user.Phone,
+		Email:    user.Email,
+	}
 	user.Nickname = f.Nickname
 	user.Phone = f.Phone
 	user.Email = f.Email
 	user.Portrait = f.Portrait
 	user.Contacts = f.Contacts
 	user.UpdateBy = user.Username
+
+	if flashduty.NeedSyncUser(rt.Ctx) {
+		flashduty.UpdateUser(rt.Ctx, oldInfo, f.Email, f.Phone)
+	}
 
 	ginx.NewRender(c).Message(user.UpdateAllFields(rt.Ctx))
 }

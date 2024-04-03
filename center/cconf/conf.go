@@ -22,8 +22,9 @@ type Plugin struct {
 }
 
 type FlashDuty struct {
-	Api     string        `json:"api"`
-	Timeout time.Duration `json:"timeout"`
+	Api     string
+	Headers map[string]string
+	Timeout time.Duration
 }
 
 type AnonymousAccess struct {

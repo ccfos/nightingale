@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 
 	"github.com/gin-gonic/gin"
@@ -143,12 +144,21 @@ func (rt *Router) userProfilePut(c *gin.Context) {
 	}
 
 	target := User(rt.Ctx, ginx.UrlParamInt64(c, "id"))
+	oldInfo := models.User{
+		Username: target.Username,
+		Phone:    target.Phone,
+		Email:    target.Email,
+	}
 	target.Nickname = f.Nickname
 	target.Phone = f.Phone
 	target.Email = f.Email
 	target.Roles = strings.Join(f.Roles, " ")
 	target.Contacts = f.Contacts
 	target.UpdateBy = c.MustGet("username").(string)
+
+	if flashduty.NeedSyncUser(rt.Ctx) {
+		flashduty.UpdateUser(rt.Ctx, oldInfo, f.Email, f.Phone)
+	}
 
 	ginx.NewRender(c).Message(target.UpdateAllFields(rt.Ctx))
 }
