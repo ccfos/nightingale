@@ -172,6 +172,14 @@ ops:
   - "/busi-groups/put"
   - "/busi-groups/del"
 
+- name: builtin-metrics
+  cname: 内置指标
+  ops:
+    - "/builtin-metrics"
+    - "/builtin-metrics/add"
+    - "/builtin-metrics/put"
+    - "/builtin-metrics/del"
+
 - name: system
   cname: 系统信息
   ops:
