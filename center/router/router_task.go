@@ -116,7 +116,6 @@ func (rt *Router) taskAdd(c *gin.Context) {
 
 	// call ibex
 	taskId, err := sender.TaskAdd(f, user.Username, rt.Ctx.IsCenter)
-	// taskId, err := TaskCreate(f, rt.NotifyConfigCache.GetIbex())
 	ginx.Dangerous(err)
 
 	if taskId <= 0 {
