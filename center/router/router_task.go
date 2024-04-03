@@ -125,11 +125,8 @@ func (rt *Router) taskAdd(c *gin.Context) {
 
 	// write db
 	record := models.TaskRecord{
-		Id:      taskId,
-		GroupId: bgid,
-		// IbexAddress:  rt.NotifyConfigCache.GetIbex().Address,
-		// IbexAuthUser: rt.NotifyConfigCache.GetIbex().BasicAuthUser,
-		// IbexAuthPass: rt.NotifyConfigCache.GetIbex().BasicAuthPass,
+		Id:        taskId,
+		GroupId:   bgid,
 		Title:     f.Title,
 		Account:   f.Account,
 		Batch:     f.Batch,
@@ -145,45 +142,3 @@ func (rt *Router) taskAdd(c *gin.Context) {
 	err = record.Add(rt.Ctx)
 	ginx.NewRender(c).Data(taskId, err)
 }
-
-// func (rt *Router) taskProxy(c *gin.Context) {
-// 	target, err := url.Parse(rt.NotifyConfigCache.GetIbex().Address)
-// 	if err != nil {
-// 		ginx.NewRender(c).Message("invalid ibex address: %s", rt.NotifyConfigCache.GetIbex().Address)
-// 		return
-// 	}
-
-// 	director := func(req *http.Request) {
-// 		req.URL.Scheme = target.Scheme
-// 		req.URL.Host = target.Host
-
-// 		// fe request e.g. /api/n9e/busi-group/:id/task/*url
-// 		index := strings.Index(req.URL.Path, "/task/")
-// 		if index == -1 {
-// 			panic("url path invalid")
-// 		}
-
-// 		req.URL.Path = "/ibex/v1" + req.URL.Path[index:]
-
-// 		if target.RawQuery == "" || req.URL.RawQuery == "" {
-// 			req.URL.RawQuery = target.RawQuery + req.URL.RawQuery
-// 		} else {
-// 			req.URL.RawQuery = target.RawQuery + "&" + req.URL.RawQuery
-// 		}
-
-// 		if rt.NotifyConfigCache.GetIbex().BasicAuthUser != "" {
-// 			req.SetBasicAuth(rt.NotifyConfigCache.GetIbex().BasicAuthUser, rt.NotifyConfigCache.GetIbex().BasicAuthPass)
-// 		}
-// 	}
-
-// 	errFunc := func(w http.ResponseWriter, r *http.Request, err error) {
-// 		ginx.NewRender(c, http.StatusBadGateway).Message(err)
-// 	}
-
-// 	proxy := &httputil.ReverseProxy{
-// 		Director:     director,
-// 		ErrorHandler: errFunc,
-// 	}
-
-// 	proxy.ServeHTTP(c.Writer, c.Request)
-// }
