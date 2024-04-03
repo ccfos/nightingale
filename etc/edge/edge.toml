@@ -117,7 +117,7 @@ MaxIdleConnsPerHost = 100
 # TargetLabel = "__address__"
 
 [ibex]
-Enable = true
+Enable = false
 RPCListen = "0.0.0.0:20090"
 Timeout = 3000
 
