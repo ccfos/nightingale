@@ -44,7 +44,6 @@ type GlobalConfig struct {
 type Ibex struct {
 	Enable    bool
 	RPCListen string
-	Timeout   int64
 	Output    Output
 }
 

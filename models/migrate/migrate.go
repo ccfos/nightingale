@@ -1,15 +1,37 @@
 package migrate
 
 import (
+	"fmt"
+
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
+
 	"github.com/toolkits/pkg/logger"
+	imodels "github.com/ulricqin/ibex/src/models"
 	"gorm.io/gorm"
 )
 
 func Migrate(db *gorm.DB) {
 	MigrateTables(db)
 	MigrateEsIndexPatternTable(db)
+}
+
+func MigrateIbexTables(db *gorm.DB) {
+	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &imodels.TaskSchedulerHealth{}, &imodels.TaskHostDoing{}, &imodels.TaskAction{}}
+	for _, dt := range dts {
+		err := db.AutoMigrate(dt)
+		if err != nil {
+			logger.Errorf("failed to migrate table:%v %v", dt, err)
+		}
+	}
+
+	for i := 0; i < 100; i++ {
+		tableName := fmt.Sprintf("task_host_%02d", i)
+		err := db.Table(tableName).AutoMigrate(&imodels.TaskHost{})
+		if err != nil {
+			logger.Errorf("failed to migrate table:%s %v", tableName, err)
+		}
+	}
 }
 
 func MigrateTables(db *gorm.DB) error {
