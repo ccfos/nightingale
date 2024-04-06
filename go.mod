@@ -8,6 +8,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/expr-lang/expr v1.16.1
+	github.com/flashcatcloud/ibex v1.3.0
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-ldap/ldap/v3 v3.4.4
@@ -32,7 +33,6 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/tidwall/gjson v1.14.0
 	github.com/toolkits/pkg v1.3.6
-	github.com/flashcatcloud/ibex v0.0.0-00010101000000-000000000000
 	golang.org/x/oauth2 v0.10.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/yaml.v2 v2.4.0

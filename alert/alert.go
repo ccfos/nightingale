@@ -24,7 +24,10 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
+	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
+
+	"github.com/flashcatcloud/ibex/src/cmd/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -39,6 +42,14 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
+
+	var redis storage.Redis
+	if config.Redis.Address != "" {
+		redis, err = storage.NewRedis(config.Redis)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
@@ -63,6 +74,11 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 	rt := router.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
+
+	if config.Ibex.Enable {
+		ibex.ServerStart(false, nil, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, nil, config.Ibex, config.HTTP.Port)
+	}
+
 	rt.Config(r)
 	dumper.ConfigRouter(r)
 
