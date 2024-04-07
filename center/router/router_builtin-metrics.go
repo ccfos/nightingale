@@ -18,8 +18,15 @@ func (rt *Router) builtinMetricsAdd(c *gin.Context) {
 	if count == 0 {
 		ginx.Bomb(http.StatusBadRequest, "input json is empty")
 	}
+
+	lang := c.GetHeader("X-Language")
+	if lang == "" {
+		lang = "zh_CN"
+	}
+
 	reterr := make(map[string]string)
 	for i := 0; i < count; i++ {
+		lst[i].Lang = lang
 		if err := lst[i].Add(rt.Ctx, username); err != nil {
 			reterr[lst[i].Name] = err.Error()
 		}
@@ -32,11 +39,15 @@ func (rt *Router) builtinMetricsGets(c *gin.Context) {
 	typ := ginx.QueryStr(c, "typ", "")
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 20)
+	lang := c.GetHeader("X-Language")
+	if lang == "" {
+		lang = "zh_CN"
+	}
 
-	bm, err := models.BuiltinMetricGets(rt.Ctx, collector, typ, query, limit, ginx.Offset(c, limit))
+	bm, err := models.BuiltinMetricGets(rt.Ctx, lang, collector, typ, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
-	total, err := models.BuiltinMetricCount(rt.Ctx, collector, typ, query)
+	total, err := models.BuiltinMetricCount(rt.Ctx, lang, collector, typ, query)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(gin.H{
 		"list":  bm,
@@ -71,13 +82,15 @@ func (rt *Router) builtinMetricsDel(c *gin.Context) {
 func (rt *Router) builtinMetricsTypes(c *gin.Context) {
 	collector := ginx.QueryStr(c, "collector", "")
 	query := ginx.QueryStr(c, "query", "")
+	lang := c.GetHeader("X-Language")
 
-	ginx.NewRender(c).Data(models.BuiltinMetricTypes(rt.Ctx, collector, query))
+	ginx.NewRender(c).Data(models.BuiltinMetricTypes(rt.Ctx, lang, collector, query))
 }
 
 func (rt *Router) builtinMetricsCollectors(c *gin.Context) {
 	typ := ginx.QueryStr(c, "typ", "")
 	query := ginx.QueryStr(c, "query", "")
+	lang := c.GetHeader("X-Language")
 
-	ginx.NewRender(c).Data(models.BuiltinMetricCollectors(rt.Ctx, typ, query))
+	ginx.NewRender(c).Data(models.BuiltinMetricCollectors(rt.Ctx, lang, typ, query))
 }

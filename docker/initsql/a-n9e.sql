@@ -649,8 +649,9 @@ CREATE TABLE `builtin_metrics` (
     `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
     `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'updater',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `idx_collector_typ_name` (`collector`, `typ`, `name`),
+    UNIQUE KEY `idx_collector_typ_name` (`lang`,`collector`, `typ`, `name`),
     INDEX `idx_collector` (`collector`),
     INDEX `idx_typ` (`typ`),
-    INDEX `idx_name` (`name`)
+    INDEX `idx_name` (`name`),
+    INDEX `idx_lang` (`lang`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -50,7 +50,7 @@ func (bm *BuiltinMetric) Verify() error {
 
 func BuiltinMetricExists(ctx *ctx.Context, bm *BuiltinMetric) (bool, error) {
 	var count int64
-	err := DB(ctx).Model(bm).Where("collector = ? and typ = ? and name = ?", bm.Collector, bm.Typ, bm.Name).Count(&count).Error
+	err := DB(ctx).Model(bm).Where("lang = ? and collector = ? and typ = ? and name = ?", bm.Lang, bm.Collector, bm.Typ, bm.Name).Count(&count).Error
 	if err != nil {
 		return false, err
 	}
@@ -81,7 +81,7 @@ func (bm *BuiltinMetric) Update(ctx *ctx.Context, req BuiltinMetric) error {
 		return err
 	}
 
-	if bm.Collector != req.Collector && bm.Typ != req.Typ && bm.Name != req.Name {
+	if bm.Lang != req.Lang && bm.Collector != req.Collector && bm.Typ != req.Typ && bm.Name != req.Name {
 		exists, err := BuiltinMetricExists(ctx, &req)
 		if err != nil {
 			return err
@@ -102,20 +102,21 @@ func BuiltinMetricDels(ctx *ctx.Context, ids []int64) error {
 	if len(ids) == 0 {
 		return nil
 	}
+
 	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinMetric)).Error
 }
 
-func BuiltinMetricGets(ctx *ctx.Context, collector, typ, query string, limit, offset int) ([]*BuiltinMetric, error) {
+func BuiltinMetricGets(ctx *ctx.Context, lang, collector, typ, query string, limit, offset int) ([]*BuiltinMetric, error) {
 	session := DB(ctx)
-	session = builtinMetricQueryBuild(collector, session, typ, query)
+	session = builtinMetricQueryBuild(lang, collector, session, typ, query)
 	var lst []*BuiltinMetric
 	err := session.Limit(limit).Offset(offset).Find(&lst).Error
 	return lst, err
 }
 
-func BuiltinMetricCount(ctx *ctx.Context, collector, typ, query string) (int64, error) {
+func BuiltinMetricCount(ctx *ctx.Context, lang, collector, typ, query string) (int64, error) {
 	session := DB(ctx).Model(&BuiltinMetric{})
-	session = builtinMetricQueryBuild(collector, session, typ, query)
+	session = builtinMetricQueryBuild(lang, collector, session, typ, query)
 
 	var cnt int64
 	err := session.Count(&cnt).Error
@@ -123,13 +124,19 @@ func BuiltinMetricCount(ctx *ctx.Context, collector, typ, query string) (int64, 
 	return cnt, err
 }
 
-func builtinMetricQueryBuild(collector string, session *gorm.DB, typ string, query string) *gorm.DB {
+func builtinMetricQueryBuild(lang, collector string, session *gorm.DB, typ string, query string) *gorm.DB {
+	if lang != "" {
+		session = session.Where("lang = ?", lang)
+	}
+
 	if collector != "" {
 		session = session.Where("collector = ?", collector)
 	}
+
 	if typ != "" {
 		session = session.Where("typ = ?", typ)
 	}
+
 	if query != "" {
 		queryPattern := "%" + query + "%"
 		session = session.Where("name LIKE ? OR desc LIKE ?", queryPattern, queryPattern)
@@ -151,28 +158,40 @@ func BuiltinMetricGet(ctx *ctx.Context, where string, args ...interface{}) (*Bui
 	return lst[0], nil
 }
 
-func BuiltinMetricTypes(ctx *ctx.Context, collector, query string) ([]string, error) {
+func BuiltinMetricTypes(ctx *ctx.Context, lang, collector, query string) ([]string, error) {
 	var typs []string
 	session := DB(ctx).Model(&BuiltinMetric{})
+	if lang != "" {
+		session = session.Where("lang = ?", lang)
+	}
+
 	if collector != "" {
 		session = session.Where("collector = ?", collector)
 	}
+
 	if query != "" {
 		session = session.Where("typ like ?", "%"+query+"%")
 	}
+
 	err := session.Select("distinct(typ)").Pluck("typ", &typs).Error
 	return typs, err
 }
 
-func BuiltinMetricCollectors(ctx *ctx.Context, typ, query string) ([]string, error) {
+func BuiltinMetricCollectors(ctx *ctx.Context, lang, typ, query string) ([]string, error) {
 	var collectors []string
 	session := DB(ctx).Model(&BuiltinMetric{})
+	if lang != "" {
+		session = session.Where("lang = ?", lang)
+	}
+
 	if typ != "" {
 		session = session.Where("typ = ?", typ)
 	}
+
 	if query != "" {
 		session = session.Where("collector like ?", "%"+query+"%")
 	}
+
 	err := session.Select("distinct(collector)").Pluck("collector", &collectors).Error
 	return collectors, err
 }
