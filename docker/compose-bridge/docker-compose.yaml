@@ -69,27 +69,6 @@ services:
     command:
       - "--loggerTimezone=Asia/Shanghai"
 
-  ibex:
-    image: flashcatcloud/ibex:v1.2.0
-    container_name: ibex
-    hostname: ibex
-    restart: always
-    environment:
-      GIN_MODE: release
-      TZ: Asia/Shanghai
-      WAIT_HOSTS: mysql:3306
-    volumes:
-      - ./etc-ibex:/app/etc
-    networks:
-      - nightingale
-    ports:
-      - "10090:10090"
-      - "20090:20090"
-    depends_on:
-      - mysql
-    command: >
-      sh -c "/app/ibex server"
-
   nightingale:
     image: flashcatcloud/nightingale:latest
     container_name: nightingale
@@ -122,7 +101,7 @@ services:
       HOST_PROC: /hostfs/proc
       HOST_SYS: /hostfs/sys
       HOST_MOUNT_PREFIX: /hostfs
-      WAIT_HOSTS: nightingale:17000, ibex:20090
+      WAIT_HOSTS: nightingale:17000, nightingale:20090
     volumes:
       - ./etc-categraf:/etc/categraf/conf
       - /:/hostfs

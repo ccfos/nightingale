@@ -181,3 +181,7 @@ MaxIdleConnsPerHost = 100
 # Regex = "([^:]+)(?::\\d+)?"
 # Replacement = "$1:80"
 # TargetLabel = "__address__"
+
+[Ibex]
+Enable = true
+RPCListen = "0.0.0.0:20090"
