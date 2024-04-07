@@ -92,14 +92,14 @@ func languageDetector(i18NHeaderKey string) gin.HandlerFunc {
 			lang := c.GetHeader(headerKey)
 			if lang != "" {
 				if strings.HasPrefix(lang, "zh") {
-					c.Request.Header.Set("X-Language", "zh")
+					c.Request.Header.Set("X-Language", "zh_CN")
 				} else if strings.HasPrefix(lang, "en") {
 					c.Request.Header.Set("X-Language", "en")
 				} else {
 					c.Request.Header.Set("X-Language", lang)
 				}
 			} else {
-				c.Request.Header.Set("X-Language", "en")
+				c.Request.Header.Set("X-Language", "zh_CN")
 			}
 		}
 		c.Next()

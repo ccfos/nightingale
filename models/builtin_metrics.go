@@ -16,7 +16,7 @@ type BuiltinMetric struct {
 	Typ        string `json:"typ" gorm:"type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`                // Type of metric (e.g., 'host', 'mysql', 'redis')
 	Name       string `json:"name" gorm:"type:varchar(191);not null;index:idx_name,sort:asc;comment:'name of metric'"`
 	Unit       string `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`
-	Desc       string `json:"desc" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
+	Note       string `json:"note" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
 	Lang       string `json:"lang" gorm:"type:varchar(191);not null;default:'zh';index:idx_lang,sort:asc;comment:'language'"`
 	Expression string `json:"expression" gorm:"type:varchar(4096);not null;comment:'expression of metric'"`
 	CreatedAt  int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
@@ -139,7 +139,7 @@ func builtinMetricQueryBuild(lang, collector string, session *gorm.DB, typ strin
 
 	if query != "" {
 		queryPattern := "%" + query + "%"
-		session = session.Where("name LIKE ? OR desc LIKE ?", queryPattern, queryPattern)
+		session = session.Where("name LIKE ? OR note LIKE ?", queryPattern, queryPattern)
 	}
 	return session
 }
