@@ -79,6 +79,21 @@ func (rt *Router) builtinMetricsDel(c *gin.Context) {
 	ginx.NewRender(c).Message(models.BuiltinMetricDels(rt.Ctx, req.Ids))
 }
 
+func (rt *Router) builtinMetricsDefaultTypes(c *gin.Context) {
+	lst := []string{
+		"Host",
+		"Container",
+		"MySQL",
+		"PostgreSQL",
+		"MongoDB",
+		"Redis",
+		"Memcached",
+		"Kafka",
+		"Elasticsearch",
+	}
+	ginx.NewRender(c).Data(lst, nil)
+}
+
 func (rt *Router) builtinMetricsTypes(c *gin.Context) {
 	collector := ginx.QueryStr(c, "collector", "")
 	query := ginx.QueryStr(c, "query", "")
