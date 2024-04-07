@@ -1,26 +1,30 @@
 CREATE TABLE users (
     id bigserial,
-    username varchar(64) not null ,
-    nickname varchar(64) not null ,
+    username varchar(64) not null,
+    nickname varchar(64) not null,
     password varchar(128) not null default '',
     phone varchar(16) not null default '',
     email varchar(64) not null default '',
-    portrait varchar(255) not null default '' ,
-    roles varchar(255) not null ,
-    contacts varchar(1024) ,
-    maintainer smallint not null default 0,
+    portrait varchar(255) not null default '',
+    roles varchar(255) not null,
+    contacts varchar(1024),
+    maintainer boolean not null default false,
+    belong varchar(16) not null default '',
     create_at bigint not null default 0,
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
     update_by varchar(64) not null default '',
     PRIMARY KEY (id),
     UNIQUE (username)
-) ;
-COMMENT ON COLUMN users.username IS 'login name, cannot rename';
+);
+
+COMMENT ON COLUMN users.id IS 'id';
+COMMENT ON COLUMN users.username IS 'login name, cannot rename';  
 COMMENT ON COLUMN users.nickname IS 'display name, chinese name';
 COMMENT ON COLUMN users.portrait IS 'portrait image url';
 COMMENT ON COLUMN users.roles IS 'Admin | Standard | Guest, split by space';
 COMMENT ON COLUMN users.contacts IS 'json e.g. {wecom:xx, dingtalk_robot_token:yy}';
+COMMENT ON COLUMN users.belong IS 'belong';
 
 insert into users(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', date_part('epoch',current_timestamp)::int, 'system', date_part('epoch',current_timestamp)::int, 'system');
 
@@ -54,9 +58,16 @@ CREATE TABLE configs (
     id bigserial,
     ckey varchar(191) not null,
     cval text not null default '',
+    note varchar(1024) not null default '',
+    external boolean not null default false,
+    encrypted boolean not null default false,
+    create_at bigint not null default 0,
+    create_by varchar(64) not null default '',
+    update_at bigint not null default 0,
+    update_by varchar(64) not null default '',
     PRIMARY KEY (id),
     UNIQUE (ckey)
-) ;
+);
 
 CREATE TABLE role (
     id bigserial,
@@ -366,32 +377,37 @@ COMMENT ON COLUMN alert_mute.disabled IS '0:enabled 1:disabled';
 CREATE TABLE alert_subscribe (
     id bigserial,
     name varchar(255) not null default '',
-    disabled smallint not null default 0 ,
-    group_id bigint not null default 0 ,
+    disabled boolean not null default false,
+    group_id bigint not null default 0,
     prod varchar(255) not null default '',
     cate varchar(128) not null,
-    datasource_ids varchar(255) not null default '' ,
+    datasource_ids varchar(255) not null default '',
     cluster varchar(128) not null,
     rule_id bigint not null default 0,
     severities varchar(32) not null default '',
     tags varchar(4096) not null default '[]',
     redefine_severity smallint default 0 ,
-    new_severity smallint not null ,
+    new_severity smallint not null,
     redefine_channels smallint default 0 ,
-    new_channels varchar(255) not null default '' ,
-    user_group_ids varchar(250) not null ,
+    new_channels varchar(255) not null default '',
+    user_group_ids varchar(250) not null,
+    busi_groups VARCHAR(4096) NOT NULL DEFAULT '[]',
+    note VARCHAR(1024) DEFAULT '',
+    rule_ids VARCHAR(1024) DEFAULT '',
     webhooks text not null,
     extra_config text not null,
-    redefine_webhooks smallint default 0,
+    redefine_webhooks boolean default false,
     for_duration bigint not null default 0,
     create_at bigint not null default 0,
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
     update_by varchar(64) not null default '',
     PRIMARY KEY (id)
-) ;
-CREATE INDEX alert_subscribe_group_id_idx ON alert_subscribe (group_id);
-CREATE INDEX alert_subscribe_update_at_idx ON alert_subscribe (update_at);
+);
+
+CREATE INDEX ON alert_subscribe (update_at);
+CREATE INDEX ON alert_subscribe (group_id);
+
 COMMENT ON COLUMN alert_subscribe.disabled IS '0:enabled 1:disabled';
 COMMENT ON COLUMN alert_subscribe.group_id IS 'busi group id';
 COMMENT ON COLUMN alert_subscribe.datasource_ids IS 'datasource ids';
@@ -401,25 +417,34 @@ COMMENT ON COLUMN alert_subscribe.new_severity IS '0:Emergency 1:Warning 2:Notic
 COMMENT ON COLUMN alert_subscribe.redefine_channels IS 'is redefine channels?';
 COMMENT ON COLUMN alert_subscribe.new_channels IS 'split by space: sms voice email dingtalk wecom';
 COMMENT ON COLUMN alert_subscribe.user_group_ids IS 'split by space 1 34 5, notify cc to user_group_ids';
+COMMENT ON COLUMN alert_subscribe.note IS 'note';
+COMMENT ON COLUMN alert_subscribe.rule_ids IS 'rule_ids';
 COMMENT ON COLUMN alert_subscribe.extra_config IS 'extra_config';
 
 
 CREATE TABLE target (
     id bigserial,
-    group_id bigint not null default 0 ,
-    ident varchar(191) not null ,
-    note varchar(255) not null default '' ,
-    tags varchar(512) not null default '' ,
+    group_id bigint not null default 0,
+    ident varchar(191) not null,
+    note varchar(255) not null default '',
+    tags varchar(512) not null default '',
+    host_ip varchar(15) default '',
+    agent_version varchar(255) default '',
+    engine_name varchar(255) default '',
     update_at bigint not null default 0,
     PRIMARY KEY (id),
     UNIQUE (ident)
-) ;
-CREATE INDEX target_group_id_idx ON target (group_id);
+);
+
+CREATE INDEX ON target (group_id);
+
 COMMENT ON COLUMN target.group_id IS 'busi group id';
 COMMENT ON COLUMN target.ident IS 'target id';
 COMMENT ON COLUMN target.note IS 'append to alert event as field';
 COMMENT ON COLUMN target.tags IS 'append to series data as tags, split by space, append external space at suffix';
-
+COMMENT ON COLUMN target.host_ip IS 'IPv4 string';
+COMMENT ON COLUMN target.agent_version IS 'agent version';
+COMMENT ON COLUMN target.engine_name IS 'engine_name';
 -- case1: target_idents; case2: target_tags
 -- CREATE TABLE collect_rule (
 --     id bigserial,
@@ -606,6 +631,7 @@ CREATE TABLE alert_his_event (
 CREATE INDEX alert_his_event_hash_idx ON alert_his_event (hash);
 CREATE INDEX alert_his_event_rule_id_idx ON alert_his_event (rule_id);
 CREATE INDEX alert_his_event_tg_idx ON alert_his_event (trigger_time, group_id);
+CREATE INDEX alert_his_event_nrn_idx ON alert_his_event (last_eval_time);
 COMMENT ON COLUMN alert_his_event.group_id IS 'busi group id of rule';
 COMMENT ON COLUMN alert_his_event.datasource_id IS 'datasource id';
 COMMENT ON COLUMN alert_his_event.group_name IS 'busi group name';
@@ -717,6 +743,7 @@ CREATE TABLE datasource
     status varchar(255) not null default '',
     http varchar(4096) not null default '',
     auth varchar(8192) not null default '',
+    is_default smallint not null default 0,
     created_at bigint not null default 0,
     created_by varchar(64) not null default '',
     updated_at bigint not null default 0,
@@ -737,17 +764,22 @@ CREATE TABLE notify_tpl (
     channel varchar(32) not null,
     name varchar(255) not null,
     content text not null,
+    create_at bigint not null default 0,
+    create_by varchar(64) not null default '',
+    update_at bigint not null default 0,
+    update_by varchar(64) not null default '',
     PRIMARY KEY (id),
     UNIQUE (channel)
-) ;
+);
 
 CREATE TABLE sso_config (
     id bigserial,
     name varchar(191) not null,
     content text not null,
+    update_at bigint not null default 0,
     PRIMARY KEY (id),
     UNIQUE (name)
-) ;
+);
 
 
 CREATE TABLE es_index_pattern (
@@ -765,3 +797,38 @@ CREATE TABLE es_index_pattern (
     UNIQUE (datasource_id, name)
 ) ;
 COMMENT ON COLUMN es_index_pattern.datasource_id IS 'datasource id';
+
+CREATE TABLE builtin_metrics (
+  id bigserial,
+  collector varchar(191) NOT NULL,
+  typ varchar(191) NOT NULL,
+  name varchar(191) NOT NULL,
+  unit varchar(191) NOT NULL,
+  lang varchar(191) NOT NULL DEFAULT '',
+  note varchar(4096) NOT NULL,
+  expression varchar(4096) NOT NULL,
+  created_at bigint NOT NULL DEFAULT 0,
+  created_by varchar(191) NOT NULL DEFAULT '',
+  updated_at bigint NOT NULL DEFAULT 0,
+  updated_by varchar(191) NOT NULL DEFAULT '',
+  PRIMARY KEY (id),
+  UNIQUE (lang, collector, typ, name)
+);
+
+CREATE INDEX idx_collector ON builtin_metrics (collector);
+CREATE INDEX idx_typ ON builtin_metrics (typ);
+CREATE INDEX idx_name ON builtin_metrics (name);
+CREATE INDEX idx_lang ON builtin_metrics (lang);
+
+COMMENT ON COLUMN builtin_metrics.id IS 'unique identifier';
+COMMENT ON COLUMN builtin_metrics.collector IS 'type of collector';
+COMMENT ON COLUMN builtin_metrics.typ IS 'type of metric';
+COMMENT ON COLUMN builtin_metrics.name IS 'name of metric';
+COMMENT ON COLUMN builtin_metrics.unit IS 'unit of metric';
+COMMENT ON COLUMN builtin_metrics.lang IS 'language of metric';
+COMMENT ON COLUMN builtin_metrics.note IS 'description of metric in Chinese';
+COMMENT ON COLUMN builtin_metrics.expression IS 'expression of metric';
+COMMENT ON COLUMN builtin_metrics.created_at IS 'create time';
+COMMENT ON COLUMN builtin_metrics.created_by IS 'creator';
+COMMENT ON COLUMN builtin_metrics.updated_at IS 'update time';
+COMMENT ON COLUMN builtin_metrics.updated_by IS 'updater';
