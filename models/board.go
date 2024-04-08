@@ -40,10 +40,6 @@ func (b *Board) TableName() string {
 	return "board"
 }
 
-func (b *Board) DB2FE() error {
-	return nil
-}
-
 func (b *Board) Verify() error {
 	if b.Name == "" {
 		return errors.New("Name is blank")

@@ -37,10 +37,6 @@ func (t *TaskTpl) TableName() string {
 	return "task_tpl"
 }
 
-func (t *TaskTpl) DB2FE() error {
-	return nil
-}
-
 func TaskTplTotal(ctx *ctx.Context, bgids []int64, query string) (int64, error) {
 	session := DB(ctx).Model(&TaskTpl{})
 	if len(bgids) > 0 {

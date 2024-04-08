@@ -41,10 +41,6 @@ func (t *Target) TableName() string {
 	return "target"
 }
 
-func (t *Target) DB2FE() error {
-	return nil
-}
-
 func (t *Target) FillGroup(ctx *ctx.Context, cache map[int64]*BusiGroup) error {
 	if t.GroupId <= 0 {
 		return nil

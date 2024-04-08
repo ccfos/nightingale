@@ -26,9 +26,6 @@ func (ug *UserGroup) TableName() string {
 	return "user_group"
 }
 
-func (ug *UserGroup) DB2FE() error {
-	return nil
-}
 func (ug *UserGroup) Verify() error {
 	if str.Dangerous(ug.Name) {
 		return errors.New("Name has invalid characters")

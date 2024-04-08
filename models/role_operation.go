@@ -14,10 +14,6 @@ func (RoleOperation) TableName() string {
 	return "role_operation"
 }
 
-func (r *RoleOperation) DB2FE() error {
-	return nil
-}
-
 func RoleHasOperation(ctx *ctx.Context, roles []string, operation string) (bool, error) {
 	if len(roles) == 0 {
 		return false, nil
