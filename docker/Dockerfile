@@ -3,6 +3,8 @@ FROM python:3-slim
 
 WORKDIR /app
 ADD n9e /app
+ADD etc /app/etc/
+ADD integrations /app/integrations/
 ADD http://download.flashcat.cloud/wait /wait
 RUN chmod +x /wait
 RUN chmod +x n9e
