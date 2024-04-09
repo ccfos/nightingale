@@ -17,16 +17,7 @@
         ],
         "panels": [
             {
-                "custom": {
-                    "calc": "lastNotNull",
-                    "colorRange": [
-                        "thresholds"
-                    ],
-                    "detailUrl": "/dashboards/linux-host-by-categraf?ident=${__field.labels.ident}",
-                    "textMode": "valueAndName"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}",
+                "type": "hexbin",
                 "id": "21b8b3ab-26aa-47cb-b814-f310f2d143aa",
                 "layout": {
                     "h": 5,
@@ -36,18 +27,42 @@
                     "x": 0,
                     "y": 0
                 },
-                "maxPerRow": 4,
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "cpu_usage_active{cpu=\"cpu-total\", ident=~\"$ident\"}",
+                        "instant": true,
+                        "legend": "{{ident}}",
+                        "refId": "A",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
                 "name": "CPU利用率",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colorRange": [
+                        "thresholds"
+                    ],
+                    "detailUrl": "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Host%20by%20Categraf%20v2&ident=${__field.labels.ident}"
+                },
                 "options": {
-                    "standardOptions": {
-                        "util": "percent"
-                    },
                     "thresholds": {
                         "steps": [
                             {
                                 "color": "#ef3c3c",
-                                "type": "",
-                                "value": 95
+                                "value": 95,
+                                "type": ""
                             },
                             {
                                 "color": "#ff656b",
@@ -65,36 +80,14 @@
                                 "value": null
                             }
                         ]
+                    },
+                    "standardOptions": {
+                        "util": "percent"
                     }
-                },
-                "targets": [
-                    {
-                        "expr": "cpu_usage_active{cpu=\"cpu-total\", ident=~\"$ident\"}",
-                        "instant": true,
-                        "legend": "{{ident}}",
-                        "refId": "A"
-                    }
-                ],
-                "transformations": [
-                    {
-                        "id": "organize",
-                        "options": {}
-                    }
-                ],
-                "type": "hexbin",
-                "version": "3.0.0"
+                }
             },
             {
-                "custom": {
-                    "calc": "lastNotNull",
-                    "colorRange": [
-                        "thresholds"
-                    ],
-                    "detailUrl": "/dashboards/linux-host-by-categraf?ident=${__field.labels.ident}",
-                    "textMode": "valueAndName"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}",
+                "type": "hexbin",
                 "id": "86d4a502-21f7-4981-9b38-ed8e696b6f49",
                 "layout": {
                     "h": 5,
@@ -104,18 +97,42 @@
                     "x": 12,
                     "y": 0
                 },
-                "maxPerRow": 4,
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "mem_used_percent{ident=~\"$ident\"}",
+                        "instant": true,
+                        "legend": "{{ident}}",
+                        "refId": "A",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
                 "name": "内存利用率",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colorRange": [
+                        "thresholds"
+                    ],
+                    "detailUrl": "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Host%20by%20Categraf%20v2&ident=${__field.labels.ident}"
+                },
                 "options": {
-                    "standardOptions": {
-                        "util": "percent"
-                    },
                     "thresholds": {
                         "steps": [
                             {
                                 "color": "#ef3c3c",
-                                "type": "",
-                                "value": 95
+                                "value": 95,
+                                "type": ""
                             },
                             {
                                 "color": "#ff656b",
@@ -133,24 +150,11 @@
                                 "value": null
                             }
                         ]
+                    },
+                    "standardOptions": {
+                        "util": "percent"
                     }
-                },
-                "targets": [
-                    {
-                        "expr": "mem_used_percent{ident=~\"$ident\"}",
-                        "instant": true,
-                        "legend": "{{ident}}",
-                        "refId": "A"
-                    }
-                ],
-                "transformations": [
-                    {
-                        "id": "organize",
-                        "options": {}
-                    }
-                ],
-                "type": "hexbin",
-                "version": "3.0.0"
+                }
             },
             {
                 "type": "table",
@@ -170,22 +174,26 @@
                     {
                         "expr": "avg(cpu_usage_active{cpu=\"cpu-total\", ident=~\"$ident\"}) by (ident)",
                         "legend": "CPU使用率",
-                        "refId": "A"
+                        "refId": "A",
+                        "maxDataPoints": 240
                     },
                     {
                         "expr": "avg(mem_used_percent{ident=~\"$ident\"}) by (ident)",
                         "legend": "内存使用率",
-                        "refId": "B"
+                        "refId": "B",
+                        "maxDataPoints": 240
                     },
                     {
                         "expr": "avg(mem_total{ident=~\"$ident\"}) by (ident)",
                         "legend": "总内存",
-                        "refId": "C"
+                        "refId": "C",
+                        "maxDataPoints": 240
                     },
                     {
                         "expr": "avg(disk_used_percent{ident=~\"$ident\",path=\"/\"}) by (ident)",
                         "legend": "根分区使用率",
-                        "refId": "D"
+                        "refId": "D",
+                        "maxDataPoints": 240
                     }
                 ],
                 "transformations": [
@@ -212,7 +220,7 @@
                     "links": [
                         {
                             "title": "详情",
-                            "url": "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Host%20by%20Categraf&ident=${__field.labels.ident}&prom=1"
+                            "url": "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Host%20by%20Categraf%20v2&ident=${__field.labels.ident}"
                         }
                     ]
                 },
@@ -222,8 +230,8 @@
                 "overrides": [
                     {
                         "matcher": {
-                            "value": "A",
-                            "id": "byFrameRefID"
+                            "id": "byFrameRefID",
+                            "value": "A"
                         },
                         "properties": {
                             "standardOptions": {
@@ -262,8 +270,8 @@
                     },
                     {
                         "matcher": {
-                            "value": "B",
-                            "id": "byFrameRefID"
+                            "id": "byFrameRefID",
+                            "value": "B"
                         },
                         "properties": {
                             "standardOptions": {
@@ -303,8 +311,8 @@
                     },
                     {
                         "matcher": {
-                            "value": "C",
-                            "id": "byFrameRefID"
+                            "id": "byFrameRefID",
+                            "value": "C"
                         },
                         "properties": {
                             "standardOptions": {
@@ -317,8 +325,8 @@
                     },
                     {
                         "matcher": {
-                            "value": "D",
-                            "id": "byFrameRefID"
+                            "id": "byFrameRefID",
+                            "value": "D"
                         },
                         "properties": {
                             "standardOptions": {
