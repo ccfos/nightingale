@@ -255,7 +255,7 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, l
 
 	if user != nil {
 		if user.Id > 0 && coverAttributes {
-			updatedFields := user.UpdateSsoFields("ldap", nickname, email, phone)
+			updatedFields := user.UpdateSsoFields("ldap", nickname, phone, email)
 			if err := user.Update(ctx, "update_at", updatedFields...); err != nil {
 				return nil, errors.WithMessage(err, "failed to update user")
 			}
