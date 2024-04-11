@@ -1357,9 +1357,9 @@
             {
                 "custom": {
                     "drawStyle": "bars",
-                    "fillOpacity": 0.8,
-                    "gradientMode": "none",
-                    "lineWidth": 1,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "ecb15e88-9f9b-4e58-b56e-280a77c30c12",
@@ -1412,10 +1412,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "0b70e6aa-bdff-488c-b60e-586baa8b5626",
@@ -1463,10 +1463,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "1b4adc0a-19d8-463d-a47c-0051cf7113f6",
@@ -1855,9 +1855,9 @@
             {
                 "custom": {
                     "drawStyle": "bars",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
-                    "lineWidth": 1,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "b3265d25-c15d-41cb-8c8b-25417e655caa",
@@ -1899,10 +1899,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "25fd6cd6-be54-420f-b3ee-002a9579eb1d",
@@ -1944,10 +1944,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "868fca2d-df6e-487c-8c8d-e307d82c28ce",
@@ -1989,10 +1989,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "aee98a26-c7dd-43d6-9195-72bdf1fc0b47",
@@ -2048,10 +2048,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "182d718e-83af-449b-9492-7af701a16569",
@@ -2092,10 +2092,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "43fe023c-8c3a-47f5-9c69-225189622d36",
@@ -2136,10 +2136,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "d8a40ecc-d125-4272-b60f-543e6018ca05",
@@ -2180,10 +2180,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "1a48a82c-19b4-4b73-8093-b2c9c87ded20",
@@ -2224,10 +2224,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "15147aa2-3c7d-490b-b53b-4c3e3f9731d5",
@@ -2268,10 +2268,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "1870bf34-d019-484f-a462-411629ca78fe",
@@ -2312,9 +2312,9 @@
             {
                 "custom": {
                     "drawStyle": "bars",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
-                    "lineWidth": 1,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "e2751b2b-3b1f-469e-abd6-f6e843efd16a",
@@ -2356,10 +2356,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "1af92e8e-4163-475b-a3e4-ccdca9a74cdf",
@@ -2401,10 +2401,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "380ea87f-9b4f-41dc-9117-579295a1a5de",
@@ -2446,10 +2446,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "stack": "off"
                 },
                 "id": "8d2bf7e4-eb86-4d24-96da-e45b1eef68f5",

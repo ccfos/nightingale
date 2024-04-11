@@ -302,10 +302,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -355,10 +355,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -409,10 +409,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -462,10 +462,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
