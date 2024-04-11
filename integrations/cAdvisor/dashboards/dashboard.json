@@ -8,10 +8,12 @@
       {
         "custom": {
           "drawStyle": "lines",
-          "fillOpacity": 0.5,
+          "fillOpacity": 0.3,
           "lineInterpolation": "linear",
           "stack": "off",
-          "version": "2.0.0"
+          "version": "2.0.0",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "id": "eeb56afe-8a3e-46d6-8923-aeb3d0f124ea",
         "layout": {
@@ -58,10 +60,12 @@
       {
         "custom": {
           "drawStyle": "lines",
-          "fillOpacity": 0.5,
+          "fillOpacity": 0.3,
           "lineInterpolation": "linear",
           "stack": "off",
-          "version": "2.0.0"
+          "version": "2.0.0",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "id": "6690fff4-c159-40e5-b340-65a3ba85e37e",
         "layout": {
@@ -108,10 +112,12 @@
       {
         "custom": {
           "drawStyle": "lines",
-          "fillOpacity": 0.5,
+          "fillOpacity": 0.3,
           "lineInterpolation": "linear",
           "stack": "off",
-          "version": "2.0.0"
+          "version": "2.0.0",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "id": "3c798af5-cfae-4962-9b70-85736df44bb1",
         "layout": {
@@ -158,10 +164,12 @@
       {
         "custom": {
           "drawStyle": "lines",
-          "fillOpacity": 0.5,
+          "fillOpacity": 0.3,
           "lineInterpolation": "linear",
           "stack": "off",
-          "version": "2.0.0"
+          "version": "2.0.0",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "id": "111835e1-cfb5-40db-bb52-1aca74cf1a00",
         "layout": {
@@ -208,10 +216,12 @@
       {
         "custom": {
           "drawStyle": "lines",
-          "fillOpacity": 0.5,
+          "fillOpacity": 0.3,
           "lineInterpolation": "linear",
           "stack": "off",
-          "version": "2.0.0"
+          "version": "2.0.0",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "id": "b8050f8f-aee7-4fa5-888d-b6025df14aa1",
         "layout": {
