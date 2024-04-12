@@ -110,9 +110,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
@@ -192,9 +194,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",

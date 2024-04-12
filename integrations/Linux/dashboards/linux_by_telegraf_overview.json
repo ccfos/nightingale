@@ -67,9 +67,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "29a3e6ae-d278-49b3-972b-f12a6c7c091c",
                 "layout": {
@@ -106,9 +108,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "9f2a24d5-d19f-4651-b76d-add6b9011821",
                 "layout": {
@@ -145,9 +149,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "dcd60296-db84-4562-99f3-2829c2f064a4",
                 "layout": {
@@ -185,9 +191,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "ef7df29d-7dce-4788-ae42-d21d842c67d6",
                 "layout": {

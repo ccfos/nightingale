@@ -222,9 +222,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "description": "**Max Connections** \n\nMax Connections is the maximum permitted number of simultaneous client connections. By default, this is 151. Increasing this value increases the number of file descriptors that mysqld requires. If the required number of descriptors are not available, the server reduces the value of Max Connections.\n\nmysqld actually permits Max Connections + 1 clients to connect. The extra connection is reserved for use by accounts that have the SUPER privilege, such as root.\n\nMax Used Connections is the maximum number of connections that have been in use simultaneously since the server started.\n\nConnections is the number of connection attempts (successful or not) to the MySQL server.",
                 "id": "bb31cf5e-1a80-478c-b300-ee9975d14963",
@@ -273,9 +275,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "description": "Threads Connected is the number of open connections, while Threads Running is the number of threads not sleeping.",
                 "id": "c1083f59-1e46-442e-a7c3-f5d1fbb78751",
@@ -329,9 +333,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.64,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "80f94d89-babe-4e38-a220-2490af80e091",
                 "layout": {
@@ -375,9 +381,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.41,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "description": "**MySQL Select Types**\n\nAs with most relational databases, selecting based on indexes is more efficient than scanning an entire table's data. Here we see the counters for selects not done with indexes.\n\n* ***Select Scan*** is how many queries caused full table scans, in which all the data in the table had to be read and either discarded or returned.\n* ***Select Range*** is how many queries used a range scan, which means MySQL scanned all rows in a given range.\n* ***Select Full Join*** is the number of joins that are not joined on an index, this is usually a huge performance hit.",
                 "id": "a03b6272-cd60-430c-8128-6bfc8da2938f",
@@ -430,9 +438,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "description": "**MySQL Sorts**\n\nDue to a query's structure, order, or other requirements, MySQL sorts the rows before returning them. For example, if a table is ordered 1 to 10 but you want the results reversed, MySQL then has to sort the rows to return 10 to 1.\n\nThis graph also shows when sorts had to scan a whole table or a given range of a table in order to return the results and which could not have been sorted via an index.",
                 "id": "d5fbfe0e-fc90-4f2a-b016-7a24a19c73d7",
@@ -481,8 +491,10 @@
             {
                 "custom": {
                     "drawStyle": "bars",
-                    "fillOpacity": 0.81,
-                    "stack": "off"
+                    "fillOpacity": 0.3,
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "description": "**MySQL Slow Queries**\n\nSlow queries are defined as queries being slower than the long_query_time setting. For example, if you have long_query_time set to 3, all queries that take longer than 3 seconds to complete will show on this graph.",
                 "id": "51306ae6-e11a-4c08-a55c-3678676d5d8e",
@@ -532,9 +544,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "description": "**MySQL Network Traffic**\n\nHere we can see how much network traffic is generated by MySQL. Outbound is network traffic sent from MySQL and Inbound is network traffic MySQL has received.",
                 "id": "392c15b2-d413-4201-9692-5277f7863c05",
@@ -632,9 +646,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "description": "**MySQL Handlers**\n\nHandler statistics are internal statistics on how MySQL is selecting, updating, inserting, and modifying rows, tables, and indexes.\n\nThis is in fact the layer between the Storage Engine and MySQL.\n\n* `read_rnd_next` is incremented when the server performs a full table scan and this is a counter you don't really want to see with a high value.\n* `read_key` is incremented when a read is done with an index.\n* `read_next` is incremented when the storage engine is asked to 'read the next index entry'. A high value means a lot of index scans are being done.",
                 "id": "34ba0da1-d6f0-4c35-8418-56a7506035c5",
@@ -673,9 +689,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "9e37aa84-a6b6-4730-9fa7-0dab9e596e36",
                 "layout": {
@@ -724,9 +742,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "ac797cf1-56f6-4cf7-a472-8a2facd84588",
                 "layout": {
@@ -779,9 +799,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "description": "**MySQL Table Open Cache Status**\n\nThe recommendation is to set the `table_open_cache_instances` to a loose correlation to virtual CPUs, keeping in mind that more instances means the cache is split more times. If you have a cache set to 500 but it has 10 instances, each cache will only have 50 cached.\n\nThe `table_definition_cache` and `table_open_cache` can be left as default as they are auto-sized MySQL 5.6 and above (ie: do not set them to any value).",
                 "id": "0139a750-1a56-45ee-9004-7a8ef15d34dd",
@@ -820,9 +842,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "description": "**MySQL Open Tables**\n\nThe recommendation is to set the `table_open_cache_instances` to a loose correlation to virtual CPUs, keeping in mind that more instances means the cache is split more times. If you have a cache set to 500 but it has 10 instances, each cache will only have 50 cached.\n\nThe `table_definition_cache` and `table_open_cache` can be left as default as they are auto-sized MySQL 5.6 and above (ie: do not set them to any value).",
                 "id": "fba77c7e-9e40-4829-89b6-ed8bb2a7add7",

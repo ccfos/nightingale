@@ -8,10 +8,12 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "linear",
                     "stack": "off",
-                    "version": "2.0.0"
+                    "version": "2.0.0",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "2bed0dff-e7c7-4d8b-bf22-e7e4452300d8",
                 "layout": {
@@ -167,10 +169,12 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "linear",
                     "stack": "off",
-                    "version": "2.0.0"
+                    "version": "2.0.0",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "97381677-fb79-473e-b2b1-cd7d21452546",
                 "layout": {
@@ -206,10 +210,12 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "linear",
                     "stack": "off",
-                    "version": "2.0.0"
+                    "version": "2.0.0",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "description": "This one is providing aggregated error codes, but it's still possible to graph these per upstream.",
                 "id": "6139b81f-d2de-4ecf-8ec3-41b94713ec48",
@@ -246,10 +252,12 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "linear",
                     "stack": "off",
-                    "version": "2.0.0"
+                    "version": "2.0.0",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "2d09b8b7-dc80-455e-b809-5a46d64a6263",
                 "layout": {
@@ -285,10 +293,12 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "linear",
                     "stack": "off",
-                    "version": "2.0.0"
+                    "version": "2.0.0",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "3447df45-823c-4a52-bebf-7003736ca138",
                 "layout": {
@@ -324,10 +334,12 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "linear",
                     "stack": "off",
-                    "version": "2.0.0"
+                    "version": "2.0.0",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "9c830846-110c-49df-8fa7-0662899c5804",
                 "layout": {
@@ -363,10 +375,12 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "linear",
                     "stack": "off",
-                    "version": "2.0.0"
+                    "version": "2.0.0",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "9785673c-0343-4796-9091-4f1f0df10cd7",
                 "layout": {
@@ -402,10 +416,12 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "linear",
                     "stack": "off",
-                    "version": "2.0.0"
+                    "version": "2.0.0",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "56bae540-1e16-49e0-82df-33d0b0602c5f",
                 "layout": {
@@ -441,10 +457,12 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "linear",
                     "stack": "off",
-                    "version": "2.0.0"
+                    "version": "2.0.0",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "9124e32c-7c06-4f2d-ba35-390a1274b289",
                 "layout": {
@@ -480,10 +498,12 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "linear",
                     "stack": "off",
-                    "version": "2.0.0"
+                    "version": "2.0.0",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "ed58e88d-4130-4d96-8e73-62be1d13909a",
                 "layout": {
@@ -519,10 +539,12 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "linear",
                     "stack": "off",
-                    "version": "2.0.0"
+                    "version": "2.0.0",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "id": "75d3533d-156a-41ec-ae72-d12ca6a5f900",
                 "layout": {

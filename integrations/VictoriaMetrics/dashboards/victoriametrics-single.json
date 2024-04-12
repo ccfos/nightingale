@@ -748,8 +748,10 @@
                     "version": "3.0.0",
                     "drawStyle": "lines",
                     "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
+                    "fillOpacity": 0.3,
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "maxPerRow": 4,
                 "datasourceCate": "prometheus",
@@ -1011,8 +1013,10 @@
                     "version": "3.0.0",
                     "drawStyle": "lines",
                     "lineInterpolation": "linear",
-                    "fillOpacity": 1,
-                    "stack": "off"
+                    "fillOpacity": 0.3,
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "maxPerRow": 4,
                 "datasourceCate": "prometheus",
@@ -2705,9 +2709,9 @@
                     "drawStyle": "lines",
                     "lineInterpolation": "smooth",
                     "spanNulls": false,
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "stack": "off",
                     "scaleDistribution": {
                         "type": "linear"
@@ -2768,9 +2772,9 @@
                     "drawStyle": "lines",
                     "lineInterpolation": "smooth",
                     "spanNulls": false,
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "stack": "off",
                     "scaleDistribution": {
                         "type": "linear"
@@ -2831,9 +2835,9 @@
                     "drawStyle": "lines",
                     "lineInterpolation": "smooth",
                     "spanNulls": false,
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "stack": "off",
                     "scaleDistribution": {
                         "type": "linear"
@@ -2894,9 +2898,9 @@
                     "drawStyle": "lines",
                     "lineInterpolation": "smooth",
                     "spanNulls": false,
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "stack": "off",
                     "scaleDistribution": {
                         "type": "linear"
@@ -2959,9 +2963,9 @@
                     "drawStyle": "lines",
                     "lineInterpolation": "smooth",
                     "spanNulls": false,
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "stack": "off",
                     "scaleDistribution": {
                         "type": "linear"
@@ -3024,9 +3028,9 @@
                     "drawStyle": "lines",
                     "lineInterpolation": "smooth",
                     "spanNulls": false,
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "stack": "off",
                     "scaleDistribution": {
                         "type": "linear"
@@ -3130,9 +3134,9 @@
                     "drawStyle": "lines",
                     "lineInterpolation": "smooth",
                     "spanNulls": false,
-                    "lineWidth": 1,
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "stack": "off",
                     "scaleDistribution": {
                         "type": "linear"
