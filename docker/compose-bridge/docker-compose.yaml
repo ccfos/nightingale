@@ -84,6 +84,7 @@ services:
       - nightingale
     ports:
       - "17000:17000"
+      - "20090:20090"
     depends_on:
       - mysql
       - redis
