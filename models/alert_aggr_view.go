@@ -26,10 +26,6 @@ func (v *AlertAggrView) TableName() string {
 	return "alert_aggr_view"
 }
 
-func (v *AlertAggrView) DB2FE() error {
-	return nil
-}
-
 func (v *AlertAggrView) Verify() error {
 	v.Name = strings.TrimSpace(v.Name)
 	if v.Name == "" {

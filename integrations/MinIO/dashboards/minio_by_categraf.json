@@ -754,8 +754,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -804,8 +806,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -1178,8 +1182,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -1350,8 +1356,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -1400,8 +1408,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -1460,8 +1470,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -1516,8 +1528,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -1566,8 +1580,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -1616,8 +1632,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -1666,8 +1684,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -1716,8 +1736,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -1767,8 +1789,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -1823,8 +1847,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",
@@ -1878,8 +1904,10 @@
           "version": "3.0.0",
           "drawStyle": "lines",
           "lineInterpolation": "linear",
-          "fillOpacity": 0.5,
-          "stack": "off"
+          "fillOpacity": 0.3,
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "maxPerRow": 4,
         "datasourceCate": "prometheus",

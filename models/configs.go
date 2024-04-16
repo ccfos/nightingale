@@ -39,10 +39,6 @@ var (
 	ConfigEncrypted = 1 //ciphertext
 )
 
-func (c *Configs) DB2FE() error {
-	return nil
-}
-
 const (
 	SALT            = "salt"
 	RSA_PRIVATE_KEY = "rsa_private_key"

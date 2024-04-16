@@ -46,13 +46,6 @@ type RedisPub struct {
 	ChannelKey    string
 }
 
-type Ibex struct {
-	Address       string
-	BasicAuthUser string
-	BasicAuthPass string
-	Timeout       int64
-}
-
 func (a *Alert) PreCheck(configDir string) {
 	if a.Alerting.TemplatesDir == "" {
 		a.Alerting.TemplatesDir = path.Join(configDir, "template")

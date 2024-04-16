@@ -1,43 +1,33 @@
-# Read metrics from the bare metal servers via IPMI
+# Read metrics from the bare metal servers via freeipmi
 [[instances]]
-  ## optionally specify the path to the ipmitool executable
-  # path = "/usr/bin/ipmitool"
-  ##
-  ## Setting 'use_sudo' to true will make use of sudo to run ipmitool.
-  ## Sudo must be configured to allow the telegraf user to run ipmitool
-  ## without a password.
-  # use_sudo = false
-  ##
-  ## optionally force session privilege level. Can be CALLBACK, USER, OPERATOR, ADMINISTRATOR
-  # privilege = "ADMINISTRATOR"
-  ##
-  ## optionally specify one or more servers via a url matching
-  ##  [username[:password]@][protocol[(address)]]
-  ##  e.g.
-  ##    root:passwd@lan(127.0.0.1)
-  ##
-  ## if no servers are specified, local machine sensor stats will be queried
-  ##
-  # servers = ["USERID:PASSW0RD@lan(192.168.1.1)"]
+# target指定是本地采集还是远程采集
+#target="localhost"
+# 指定采集的用户名和密码，这里务必保证ipmi命令能获取正确输出，不是网上查到一个用户名 密码就可以。
+#user = "user"
+#pass = "1234"
 
-  ## Recommended: use metric 'interval' that is a multiple of 'timeout' to avoid
-  ## gaps or overlap in pulled data
-  interval = "30s"
+# ipmi协议版本，支持1.5 和 2.0
+#driver = "LAN_2_0"
 
-  ## Timeout for the ipmitool command to complete. Default is 20 seconds.
-  timeout = "20s"
+# 指定特权用户名
+#privilege = "user"
 
-  ## Schema Version: (Optional, defaults to version 1)
-  metric_version = 2
+## session-timeout, ms
+#timeout = 100000
 
-  ## Optionally provide the hex key for the IMPI connection.
-  # hex_key = ""
+# 支持的采集器  bmc, bmc-watchdog, ipmi, chassis, dcmi, sel，sm-lan-mode
+# 默认使用 bmc, ipmi, chassis和dcmi，建议保持下列配置便于仪表盘更好的展示
+collectors = [ "bmc", "ipmi", "chassis", "sel", "dcmi"]
 
-  ## If ipmitool should use a cache
-  ## for me ipmitool runs about 2 to 10 times faster with cache enabled on HP G10 servers (when using ubuntu20.04)
-  ## the cache file may not work well for you if some sensors come up late
-  # use_cache = false
+# 不关注的传感器，指定id 排除掉
+#exclude_sensor_ids = [ 2, 29, 32, 50, 52, 55 ]
 
-  ## Path to the ipmitools cache file (defaults to OS temp dir)
-  ## The provided path must exist and must be writable
-  # cache_path = ""
+# 如果你想使用定制化的参数覆盖内置的命令，可以修改以下内容； 建议保持注释
+#[instances.collector_cmd]
+#ipmi = "sudo"
+#sel = "sudo"
+#[instances.default_args]
+#ipmi = [ "--bridge-sensors" ]
+#[instances.custom_args]
+#ipmi = [ "--bridge-sensors" ]
+#sel = [ "ipmi-sel" ]

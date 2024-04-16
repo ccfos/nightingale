@@ -3,7 +3,7 @@ FROM --platform=$TARGETPLATFORM python:3-slim
 
 WORKDIR /app
 ADD n9e /app/
-ADD etc /app/
+ADD etc /app/etc/
 ADD integrations /app/integrations/
 RUN pip install requests
 

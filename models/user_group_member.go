@@ -14,10 +14,6 @@ func (UserGroupMember) TableName() string {
 	return "user_group_member"
 }
 
-func (UserGroupMember) DB2FE() error {
-	return nil
-}
-
 func MyGroupIds(ctx *ctx.Context, userId int64) ([]int64, error) {
 	var ids []int64
 	err := DB(ctx).Model(&UserGroupMember{}).Where("user_id=?", userId).Pluck("group_id", &ids).Error

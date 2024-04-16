@@ -15,10 +15,6 @@ func (Role) TableName() string {
 	return "role"
 }
 
-func (r *Role) DB2FE() error {
-	return nil
-}
-
 func RoleGets(ctx *ctx.Context, where string, args ...interface{}) ([]Role, error) {
 	var objs []Role
 	err := DB(ctx).Where(where, args...).Find(&objs).Error

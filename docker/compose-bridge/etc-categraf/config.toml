@@ -78,6 +78,6 @@ enable = true
 ## ibex flush interval
 interval = "1000ms"
 ## n9e ibex server rpc address
-servers = ["ibex:20090"]
+servers = ["nightingale:20090"]
 ## temp script dir
 meta_dir = "./meta"

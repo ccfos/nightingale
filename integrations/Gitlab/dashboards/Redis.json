@@ -583,9 +583,9 @@
           "drawStyle": "lines",
           "lineInterpolation": "linear",
           "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.8,
-          "gradientMode": "none",
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
           "stack": "normal",
           "scaleDistribution": {
             "type": "linear"
@@ -656,9 +656,9 @@
           "drawStyle": "lines",
           "lineInterpolation": "linear",
           "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.7,
-          "gradientMode": "none",
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
           "stack": "normal",
           "scaleDistribution": {
             "type": "linear"
@@ -724,9 +724,9 @@
           "drawStyle": "lines",
           "lineInterpolation": "linear",
           "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.7,
-          "gradientMode": "none",
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
           "stack": "normal",
           "scaleDistribution": {
             "type": "linear"

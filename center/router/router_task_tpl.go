@@ -91,6 +91,14 @@ func (rt *Router) taskTplGetByService(c *gin.Context) {
 	ginx.NewRender(c).Data(tpl, err)
 }
 
+func (rt *Router) taskTplGetsByService(c *gin.Context) {
+	ginx.NewRender(c).Data(models.TaskTplGetAll(rt.Ctx))
+}
+
+func (rt *Router) taskTplStatistics(c *gin.Context) {
+	ginx.NewRender(c).Data(models.TaskTplStatistics(rt.Ctx))
+}
+
 type taskTplForm struct {
 	Title     string   `json:"title" binding:"required"`
 	Batch     int      `json:"batch"`

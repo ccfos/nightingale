@@ -22,9 +22,11 @@
       {
         "custom": {
           "drawStyle": "lines",
-          "fillOpacity": 0.5,
+          "fillOpacity": 0.3,
           "lineInterpolation": "smooth",
-          "stack": "off"
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "id": "a8c3db4a-708d-405f-b788-150537e2c2e4",
         "layout": {
@@ -62,9 +64,11 @@
       {
         "custom": {
           "drawStyle": "lines",
-          "fillOpacity": 0.5,
+          "fillOpacity": 0.3,
           "lineInterpolation": "smooth",
-          "stack": "off"
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "id": "34fbd572-c71a-475b-91a9-168df988cec3",
         "layout": {
@@ -102,9 +106,11 @@
       {
         "custom": {
           "drawStyle": "lines",
-          "fillOpacity": 0.5,
+          "fillOpacity": 0.3,
           "lineInterpolation": "smooth",
-          "stack": "off"
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "id": "1bb9f546-bd57-48fd-8221-b8b43687a12a",
         "layout": {
@@ -142,9 +148,11 @@
       {
         "custom": {
           "drawStyle": "lines",
-          "fillOpacity": 0.5,
+          "fillOpacity": 0.3,
           "lineInterpolation": "smooth",
-          "stack": "off"
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "id": "99f557e3-d368-4de1-b065-44e2006f1d21",
         "layout": {
@@ -197,9 +205,11 @@
       {
         "custom": {
           "drawStyle": "lines",
-          "fillOpacity": 0.5,
+          "fillOpacity": 0.3,
           "lineInterpolation": "smooth",
-          "stack": "off"
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "id": "57867483-a372-45c9-9cd0-53aa160b57fb",
         "layout": {
@@ -242,9 +252,11 @@
       {
         "custom": {
           "drawStyle": "lines",
-          "fillOpacity": 0.5,
+          "fillOpacity": 0.3,
           "lineInterpolation": "smooth",
-          "stack": "off"
+          "stack": "off",
+          "lineWidth": 2,
+          "gradientMode": "opacity"
         },
         "id": "e61be63c-81d6-4aab-a4de-d23ea444d802",
         "layout": {

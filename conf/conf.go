@@ -27,6 +27,7 @@ type ConfigType struct {
 	Pushgw pconf.Pushgw
 	Alert  aconf.Alert
 	Center cconf.Center
+	Ibex   Ibex
 }
 
 type CenterApi struct {
@@ -38,6 +39,17 @@ type CenterApi struct {
 
 type GlobalConfig struct {
 	RunMode string
+}
+
+type Ibex struct {
+	Enable    bool
+	RPCListen string
+	Output    Output
+}
+
+type Output struct {
+	ComeFrom string
+	AgtdPort int
 }
 
 func InitConfig(configDir, cryptoKey string) (*ConfigType, error) {

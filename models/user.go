@@ -63,10 +63,6 @@ func (u *User) TableName() string {
 	return "users"
 }
 
-func (u *User) DB2FE() error {
-	return nil
-}
-
 func (u *User) String() string {
 	bs, err := u.Contacts.MarshalJSON()
 	if err != nil {
@@ -636,4 +632,16 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	default:
 		return "", false
 	}
+}
+
+func (u *User) FindSameContact(email, phone string) string {
+	if u.Email != "" && u.Email == email {
+		return "email"
+	}
+
+	if u.Phone != "" && u.Phone == phone {
+		return "phone"
+	}
+
+	return ""
 }

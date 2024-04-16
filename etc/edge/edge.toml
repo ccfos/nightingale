@@ -116,6 +116,10 @@ MaxIdleConnsPerHost = 100
 # Replacement = "$1:80"
 # TargetLabel = "__address__"
 
+[Ibex]
+Enable = false
+RPCListen = "0.0.0.0:20090"
+
 [Redis]
 # address, ip:port or ip1:port,ip2:port for cluster and sentinel(SentinelAddrs)
 Address = "127.0.0.1:6379"

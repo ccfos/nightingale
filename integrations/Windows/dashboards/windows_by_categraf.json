@@ -267,10 +267,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -345,10 +345,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -410,10 +410,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -506,9 +506,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
@@ -567,10 +569,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -631,10 +633,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -709,9 +711,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
@@ -759,10 +763,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -827,10 +831,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -892,10 +896,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -966,10 +970,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -1034,10 +1038,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -1101,10 +1105,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -1168,10 +1172,10 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
-                    "gradientMode": "none",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "lineWidth": 1,
+                    "lineWidth": 2,
                     "scaleDistribution": {
                         "type": "linear"
                     },
@@ -1235,9 +1239,11 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
                     "lineInterpolation": "smooth",
-                    "stack": "off"
+                    "stack": "off",
+                    "lineWidth": 2,
+                    "gradientMode": "opacity"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
