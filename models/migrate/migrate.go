@@ -8,6 +8,8 @@ import (
 
 	imodels "github.com/flashcatcloud/ibex/src/models"
 	"github.com/toolkits/pkg/logger"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -35,6 +37,17 @@ func MigrateIbexTables(db *gorm.DB) {
 }
 
 func MigrateTables(db *gorm.DB) error {
+	var tableOptions string
+	switch db.Dialector.(type) {
+	case *mysql.Dialector:
+		tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+	case *postgres.Dialector:
+		tableOptions = "ENCODING='UTF8'"
+	}
+	if tableOptions != "" {
+		db = db.Set("gorm:table_options", tableOptions)
+	}
+
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{}}
