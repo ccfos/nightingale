@@ -175,7 +175,7 @@ ops:
 - name: builtin-metrics
   cname: 内置指标
   ops:
-    - "/builtin-metrics"
+    - "/metrics-built-in"
     - "/builtin-metrics/add"
     - "/builtin-metrics/put"
     - "/builtin-metrics/del"
