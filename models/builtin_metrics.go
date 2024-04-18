@@ -29,6 +29,10 @@ func (bm *BuiltinMetric) TableName() string {
 	return "builtin_metrics"
 }
 
+func (bm *BuiltinMetric) TableOptions() string {
+	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+}
+
 func (bm *BuiltinMetric) Verify() error {
 	bm.Collector = strings.TrimSpace(bm.Collector)
 	if bm.Collector == "" {

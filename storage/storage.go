@@ -12,9 +12,5 @@ func New(cfg ormx.DBConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	if cfg.DBType == "mysql" {
-		db.Set("gorm:table_options", "CHARSET=utf8mb4")
-	}
-
 	return db, nil
 }
