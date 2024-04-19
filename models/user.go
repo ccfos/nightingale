@@ -62,12 +62,12 @@ type User struct {
 }
 
 type UserGroupRes struct {
-	Id   int64  `json:"id" gorm:"primaryKey"`
+	Id   int64  `json:"id"`
 	Name string `json:"name"`
 }
 
 type BusiGroupRes struct {
-	Id   int64  `json:"id" gorm:"primaryKey"`
+	Id   int64  `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -343,7 +343,8 @@ func UserGets(ctx *ctx.Context, query string, limit, offset int) ([]User, error)
 
 		// query for user group information
 		var userGroupIDs []int64
-		if err = DB(ctx).Table("user_group_member").Where("user_id = ?", users[i].Id).Pluck("group_id", &userGroupIDs).Error; err != nil {
+		userGroupIDs, err = MyGroupIds(ctx, users[i].Id)
+		if err != nil {
 			return users, errors.WithMessage(err, "failed to query group_ids")
 		}
 
@@ -354,8 +355,8 @@ func UserGets(ctx *ctx.Context, query string, limit, offset int) ([]User, error)
 
 		// query business group information
 		var busiGroupIDs []int64
-		if err = DB(ctx).Table("busi_group_member").Where("user_group_id IN (?)", userGroupIDs).
-			Pluck("busi_group_id", &busiGroupIDs).Error; err != nil {
+		busiGroupIDs, err = BusiGroupIds(ctx, userGroupIDs)
+		if err != nil {
 			return users, errors.WithMessage(err, "failed to query busi_group_id")
 		}
 
