@@ -428,6 +428,16 @@ func (rt *Router) Config(r *gin.Engine) {
 		// for admin api
 		pages.GET("/user/busi-groups", rt.auth(), rt.admin(), rt.userBusiGroupsGets)
 
+		pages.POST("/builtin-components", rt.auth(), rt.user(), rt.perm("/builtin-components/add"), rt.builtinComponentsAdd)
+		pages.GET("/builtin-components", rt.auth(), rt.user(), rt.perm("/builtin-components"), rt.builtinComponentsGets)
+		pages.PUT("/builtin-components", rt.auth(), rt.user(), rt.perm("/builtin-components/put"), rt.builtinComponentsPut)
+		pages.DELETE("/builtin-components", rt.auth(), rt.user(), rt.perm("/builtin-components/del"), rt.builtinComponentsDel)
+
+		pages.POST("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads/add"), rt.builtinPayloadsAdd)
+		pages.GET("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads"), rt.builtinPayloadsGets)
+		pages.GET("/builtin-payloads/:id", rt.auth(), rt.user(), rt.perm("/builtin-payloads"), rt.builtinPayloadGet)
+		pages.PUT("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads/put"), rt.builtinPayloadsPut)
+		pages.DELETE("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads/del"), rt.builtinPayloadsDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
