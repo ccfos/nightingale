@@ -27,7 +27,7 @@ KeyFile = ""
 # whether print access log
 PrintAccessLog = false
 # whether enable pprof
-PProf = false
+PProf = true
 # expose prometheus /metrics?
 ExposeMetrics = true
 # http graceful shutdown timeout, unit: s
