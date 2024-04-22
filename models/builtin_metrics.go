@@ -143,7 +143,7 @@ func builtinMetricQueryBuild(lang, collector string, session *gorm.DB, typ strin
 
 	if query != "" {
 		queryPattern := "%" + query + "%"
-		session = session.Where("name LIKE ? OR note LIKE ?", queryPattern, queryPattern)
+		session = session.Where("name LIKE ? OR note LIKE ? OR expression LIKE ?", queryPattern, queryPattern, queryPattern)
 	}
 	return session
 }
