@@ -1,4 +1,4 @@
-package integrations
+package integration
 
 import (
 	"encoding/json"
@@ -31,9 +31,10 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 		}
 
 		// get logo name
+		// /api/n9e/integrations/icon/AliYun/aliyun.png
 		files, err := file.FilesUnder(componentDir + "/icon")
 		if err == nil && len(files) > 0 {
-			component.Logo = files[0]
+			component.Logo = "/api/n9e/integrations/icon/" + component.Ident + "/" + files[0]
 		} else {
 			logger.Warning("no logo found for builtin component", component.Ident)
 		}
@@ -63,11 +64,6 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 			}
 		}
 
-		// dashboards
-
-		// ginx.Dangerous(err)
-		// fileList = append(fileList, files...)
-
 		// alerts
 		files, err = file.FilesUnder(componentDir + "/alerts")
 		if err == nil && len(files) > 0 {
@@ -78,7 +74,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					continue
 				}
 
-				alerts := []models.BuiltinPayload{}
+				alerts := []models.AlertRule{}
 				err = json.Unmarshal(bs, &alerts)
 				if err != nil {
 					logger.Warning("parse builtin component alerts file fail", f, err)
@@ -86,18 +82,32 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				}
 
 				for _, alert := range alerts {
-
-					exists, err := models.BuiltinPayloadExists(ctx, &alert)
+					content, err := json.Marshal(alert)
 					if err != nil {
-						logger.Warning("check builtin alert exists fail", alert, err)
+						logger.Warning("marshal builtin alert fail", alert, err)
+						continue
+					}
+
+					builtinAlert := models.BuiltinPayload{
+						Component: component.Ident,
+						Type:      "alert",
+						Cate:      f,
+						Name:      alert.Name,
+						Content:   string(content),
+					}
+
+					exists, err := models.BuiltinPayloadExists(ctx, &builtinAlert)
+					if err != nil {
+						logger.Warning("check builtin alert exists fail", builtinAlert, err)
 						continue
 					}
 					if exists {
 						continue
 					}
-					err = alert.Add(ctx, "system")
+
+					err = builtinAlert.Add(ctx, "system")
 					if err != nil {
-						logger.Warning("add builtin alert fail", alert, err)
+						logger.Warning("add builtin alert fail", builtinAlert, err)
 						continue
 					}
 				}
@@ -106,7 +116,58 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 			logger.Warning("no alerts found for builtin component", component.Ident)
 		}
 
-		// collects
+		// dashboards
+		files, err = file.FilesUnder(componentDir + "/dashboards")
+		if err == nil && len(files) > 0 {
+			for _, f := range files {
+				bs, err := file.ReadBytes(f)
+				if err != nil {
+					logger.Warning("read builtin component dashboards file fail", f, err)
+					continue
+				}
+
+				dashboards := []models.Dashboard{}
+				err = json.Unmarshal(bs, &dashboards)
+				if err != nil {
+					logger.Warning("parse builtin component dashboards file fail", f, err)
+					continue
+				}
+
+				for _, dashboard := range dashboards {
+					content, err := json.Marshal(dashboard)
+					if err != nil {
+						logger.Warning("marshal builtin dashboard fail", dashboard, err)
+						continue
+					}
+
+					builtinDashboard := models.BuiltinPayload{
+						Component: component.Ident,
+						Type:      "dashboard",
+						Cate:      "",
+						Name:      dashboard.Name,
+						Content:   string(content),
+					}
+
+					exists, err := models.BuiltinPayloadExists(ctx, &builtinDashboard)
+					if err != nil {
+						logger.Warning("check builtin dashboard exists fail", builtinDashboard, err)
+						continue
+					}
+
+					if exists {
+						continue
+					}
+
+					err = builtinDashboard.Add(ctx, "system")
+					if err != nil {
+						logger.Warning("add builtin dashboard fail", builtinDashboard, err)
+						continue
+					}
+				}
+			}
+		} else {
+			logger.Warning("no dashboards found for builtin component", component.Ident)
+		}
 
 		// metrics
 		files, err = file.FilesUnder(componentDir + "/metrics")
