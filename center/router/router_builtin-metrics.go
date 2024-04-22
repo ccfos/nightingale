@@ -81,7 +81,7 @@ func (rt *Router) builtinMetricsDel(c *gin.Context) {
 
 func (rt *Router) builtinMetricsDefaultTypes(c *gin.Context) {
 	lst := []string{
-		"Host",
+		"Linux",
 		"Container",
 		"MySQL",
 		"PostgreSQL",
