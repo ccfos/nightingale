@@ -114,7 +114,7 @@ func BuiltinMetricGets(ctx *ctx.Context, lang, collector, typ, query string, lim
 	session := DB(ctx)
 	session = builtinMetricQueryBuild(lang, collector, session, typ, query)
 	var lst []*BuiltinMetric
-	err := session.Limit(limit).Offset(offset).Find(&lst).Error
+	err := session.Limit(limit).Offset(offset).Order("collector asc, typ asc, name asc").Find(&lst).Error
 	return lst, err
 }
 
