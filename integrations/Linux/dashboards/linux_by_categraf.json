@@ -1091,7 +1091,7 @@
                     }
                 ],
                 "name": "用户态内存使用",
-                "description": "内存指标可参考链接 [/PROC/MEMINFO之谜](http://linuxperf.com/?p=142) ",
+                "description": "",
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
