@@ -38,8 +38,15 @@ func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 
 	lst, err := models.BuiltinPayloadGets(rt.Ctx, typ, component, cate, name, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
+	m := make(map[string][]*models.BuiltinPayload)
+	for _, v := range lst {
+		if _, ok := m[v.Cate]; !ok {
+			m[v.Cate] = make([]*models.BuiltinPayload, 0)
+		}
+		m[v.Cate] = append(m[v.Cate], v)
+	}
 
-	ginx.NewRender(c).Data(lst, nil)
+	ginx.NewRender(c).Data(m, nil)
 }
 
 func (rt *Router) builtinPayloadGet(c *gin.Context) {
