@@ -89,10 +89,11 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 						continue
 					}
 
+					cate := strings.Replace(f, ".json", "", -1)
 					builtinAlert := models.BuiltinPayload{
 						Component: component.Ident,
 						Type:      "alert",
-						Cate:      f,
+						Cate:      cate,
 						Name:      alert.Name,
 						Content:   string(content),
 					}
