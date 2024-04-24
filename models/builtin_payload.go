@@ -14,7 +14,7 @@ type BuiltinPayload struct {
 	Component string `json:"component" gorm:"type:varchar(191);not null;index:idx_component,sort:asc;comment:'component of payload'"` // Host MySQL Redis
 	Cate      string `json:"cate" gorm:"type:varchar(191);not null;comment:'category of payload'"`                                    // categraf_v1 telegraf_v1
 	Name      string `json:"name" gorm:"type:varchar(191);not null;index:idx_name,sort:asc;comment:'name of payload'"`                //
-	Content   string `json:"content" gorm:"type:text;not null;comment:'content of payload'"`
+	Content   string `json:"content" gorm:"type:longtext;not null;comment:'content of payload'"`
 	CreatedAt int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
 	CreatedBy string `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
 	UpdatedAt int64  `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
@@ -36,7 +36,6 @@ func (bp *BuiltinPayload) Verify() error {
 		return errors.New("component is blank")
 	}
 
-	bp.Name = strings.TrimSpace(bp.Name)
 	if bp.Name == "" {
 		return errors.New("name is blank")
 	}
@@ -46,7 +45,7 @@ func (bp *BuiltinPayload) Verify() error {
 
 func BuiltinPayloadExists(ctx *ctx.Context, bp *BuiltinPayload) (bool, error) {
 	var count int64
-	err := DB(ctx).Model(bp).Where("type = ? AND component = ? AND name = ?", bp.Type, bp.Component, bp.Name).Count(&count).Error
+	err := DB(ctx).Model(bp).Where("type = ? AND component = ? AND name = ? AND cate = ?", bp.Type, bp.Component, bp.Name, bp.Cate).Count(&count).Error
 	if err != nil {
 		return false, err
 	}
