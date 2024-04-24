@@ -435,7 +435,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.POST("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads/add"), rt.builtinPayloadsAdd)
 		pages.GET("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads"), rt.builtinPayloadsGets)
-		pages.GET("/builtin-payloads/:id", rt.auth(), rt.user(), rt.perm("/builtin-payloads"), rt.builtinPayloadGet)
+		pages.GET("/builtin-payload/:id", rt.auth(), rt.user(), rt.perm("/builtin-payloads"), rt.builtinPayloadGet)
 		pages.PUT("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads/put"), rt.builtinPayloadsPut)
 		pages.DELETE("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads/del"), rt.builtinPayloadsDel)
 	}
