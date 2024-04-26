@@ -960,7 +960,7 @@
                     "lineWidth": 2,
                     "gradientMode": "opacity"
                 },
-                "description": "内存指标可参考链接 [/PROC/MEMINFO之谜](http://linuxperf.com/?p=142) ",
+                "description": "",
                 "id": "6b084867-c1a4-4e7f-a0d7-5dd24524f82d",
                 "layout": {
                     "h": 7,
@@ -1072,7 +1072,7 @@
                     "lineWidth": 2,
                     "gradientMode": "opacity"
                 },
-                "description": "内存指标可参考链接 [/PROC/MEMINFO之谜](http://linuxperf.com/?p=142) ",
+                "description": "",
                 "id": "10b1dde7-7cad-4992-be3f-7e8c8aac8c03",
                 "layout": {
                     "h": 7,

@@ -40,23 +40,35 @@ var (
 )
 
 type User struct {
-	Id         int64        `json:"id" gorm:"primaryKey"`
-	Username   string       `json:"username"`
-	Nickname   string       `json:"nickname"`
-	Password   string       `json:"-"`
-	Phone      string       `json:"phone"`
-	Email      string       `json:"email"`
-	Portrait   string       `json:"portrait"`
-	Roles      string       `json:"-"`              // 这个字段写入数据库
-	RolesLst   []string     `json:"roles" gorm:"-"` // 这个字段和前端交互
-	Contacts   ormx.JSONObj `json:"contacts"`       // 内容为 map[string]string 结构
-	Maintainer int          `json:"maintainer"`     // 是否给管理员发消息 0:not send 1:send
-	CreateAt   int64        `json:"create_at"`
-	CreateBy   string       `json:"create_by"`
-	UpdateAt   int64        `json:"update_at"`
-	UpdateBy   string       `json:"update_by"`
-	Belong     string       `json:"belong"`
-	Admin      bool         `json:"admin" gorm:"-"` // 方便前端使用
+	Id            int64           `json:"id" gorm:"primaryKey"`
+	Username      string          `json:"username"`
+	Nickname      string          `json:"nickname"`
+	Password      string          `json:"-"`
+	Phone         string          `json:"phone"`
+	Email         string          `json:"email"`
+	Portrait      string          `json:"portrait"`
+	Roles         string          `json:"-"`              // 这个字段写入数据库
+	RolesLst      []string        `json:"roles" gorm:"-"` // 这个字段和前端交互
+	Contacts      ormx.JSONObj    `json:"contacts"`       // 内容为 map[string]string 结构
+	Maintainer    int             `json:"maintainer"`     // 是否给管理员发消息 0:not send 1:send
+	CreateAt      int64           `json:"create_at"`
+	CreateBy      string          `json:"create_by"`
+	UpdateAt      int64           `json:"update_at"`
+	UpdateBy      string          `json:"update_by"`
+	Belong        string          `json:"belong"`
+	Admin         bool            `json:"admin" gorm:"-"` // 方便前端使用
+	UserGroupsRes []*UserGroupRes `json:"user_groups" gorm:"-"`
+	BusiGroupsRes []*BusiGroupRes `json:"busi_groups" gorm:"-"`
+}
+
+type UserGroupRes struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type BusiGroupRes struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 func (u *User) TableName() string {
@@ -324,10 +336,34 @@ func UserGets(ctx *ctx.Context, query string, limit, offset int) ([]User, error)
 		return users, errors.WithMessage(err, "failed to query user")
 	}
 
-	for i := 0; i < len(users); i++ {
+	for i := range users {
 		users[i].RolesLst = strings.Fields(users[i].Roles)
 		users[i].Admin = users[i].IsAdmin()
 		users[i].Password = ""
+
+		// query for user group information
+		var userGroupIDs []int64
+		userGroupIDs, err = MyGroupIds(ctx, users[i].Id)
+		if err != nil {
+			return users, errors.WithMessage(err, "failed to query group_ids")
+		}
+
+		if err = DB(ctx).Table("user_group").Where("id IN (?)", userGroupIDs).
+			Find(&users[i].UserGroupsRes).Error; err != nil {
+			return users, errors.WithMessage(err, "failed to query user_groups")
+		}
+
+		// query business group information
+		var busiGroupIDs []int64
+		busiGroupIDs, err = BusiGroupIds(ctx, userGroupIDs)
+		if err != nil {
+			return users, errors.WithMessage(err, "failed to query busi_group_id")
+		}
+
+		if err = DB(ctx).Table("busi_group").Where("id IN (?)", busiGroupIDs).
+			Find(&users[i].BusiGroupsRes).Error; err != nil {
+			return users, errors.WithMessage(err, "failed to query busi_groups")
+		}
 	}
 
 	return users, nil
@@ -550,7 +586,7 @@ func (u *User) BusiGroups(ctx *ctx.Context, limit int, query string, all ...bool
 			return lst, err
 		}
 
-		if slice.ContainsInt64(busiGroupIds, t.GroupId) {
+		if t != nil && slice.ContainsInt64(busiGroupIds, t.GroupId) {
 			err = DB(ctx).Order("name").Limit(limit).Where("id=?", t.GroupId).Find(&lst).Error
 		}
 	}

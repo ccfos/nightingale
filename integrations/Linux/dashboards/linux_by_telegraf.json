@@ -972,7 +972,7 @@
                     "lineWidth": 2,
                     "gradientMode": "opacity"
                 },
-                "description": "内存指标可参考链接 [/PROC/MEMINFO之谜](http://linuxperf.com/?p=142) ",
+                "description": "",
                 "id": "655608d2-0d6d-46ed-9e6a-c482edaeacec",
                 "layout": {
                     "h": 7,
