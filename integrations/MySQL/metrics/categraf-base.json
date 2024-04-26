@@ -1,0 +1,281 @@
+[
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status InnoDB 缓冲池 data 大小",
+      "unit": "bytesIEC",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_status_buffer_pool_bytes_data"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status InnoDB 缓冲池 dirty 大小",
+      "unit": "bytesIEC",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_status_buffer_pool_bytes_dirty"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status InnoDB 缓冲池 free 大小",
+      "unit": "bytesIEC",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_status_buffer_pool_bytes_free"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status InnoDB 缓冲池 page 使用率",
+      "unit": "percent",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_status_buffer_pool_pages_utilization"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status InnoDB 缓冲池 used 大小",
+      "unit": "bytesIEC",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_status_buffer_pool_bytes_used"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status InnoDB 缓冲池总大小",
+      "unit": "bytesIEC",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_status_buffer_pool_bytes_total"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 启动时长",
+      "unit": "seconds",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_status_uptime"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 当前 running 的 threads 数量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_status_threads_running"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 当前打开的文件句柄数",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_status_open_files"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 当前连接数",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_status_threads_connected"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 最大曾用连接数",
+      "unit": "none",
+      "note": "曾经达到过的最大连接数",
+      "lang": "zh_CN",
+      "expression": "mysql_global_status_max_used_connections"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 每秒 Command 数量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "irate(mysql_global_status_commands_total[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 每秒 query 数量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "irate(mysql_global_status_queries[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 每秒 question 数量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "irate(mysql_global_status_questions[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 每秒 slow query 数量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "irate(mysql_global_status_slow_queries[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 每秒事务操作数量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "sum(irate(mysql_global_status_commands_total{command=~\"commit|rollback\"}[3m])) without (command)"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 每秒写操作数量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "sum(irate(mysql_global_status_commands_total{command=~\"insert|update|delete|replace\"}[3m])) without (command)"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 每秒发送流量",
+      "unit": "bytesSecIEC",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "irate(mysql_global_status_bytes_sent[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 每秒接收流量",
+      "unit": "bytesSecIEC",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "irate(mysql_global_status_bytes_received[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 每秒读操作数量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "sum(irate(mysql_global_status_commands_total{command=\"select\"}[3m])) without (command)"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 近 3 分钟 abort 的客户端",
+      "unit": "none",
+      "note": "原始指标 mysql_global_status_aborted_clients 表示由于客户端未正确关闭连接而终止的连接数，Counter 类型，单调递增。",
+      "lang": "zh_CN",
+      "expression": "increase(mysql_global_status_aborted_clients[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 近 3 分钟 abort 的连接数",
+      "unit": "none",
+      "note": "原始指标 mysql_global_status_aborted_connects 表示尝试连接到 MySQL 服务器失败的次数，Counter 类型，单调递增。",
+      "lang": "zh_CN",
+      "expression": "increase(mysql_global_status_aborted_connects[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Status 近 3 分钟 table lock 等待次数",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "increase(mysql_global_status_table_locks_waited[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Variables InnoDB 缓冲池配置大小",
+      "unit": "bytesIEC",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_variables_innodb_buffer_pool_size"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Variables read_only 开关值",
+      "unit": "none",
+      "note": "0 就是 OFF，1 是 ON",
+      "lang": "zh_CN",
+      "expression": "mysql_global_variables_read_only"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Variables 允许打开的文件句柄数",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_variables_open_files_limit"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Variables 最大连接数限制",
+      "unit": "none",
+      "note": "允许的最大连接数，默认值是 151，过小了。\n\n- 通过 `SHOW VARIABLES LIKE 'max_connections'` 命令查看当前设置\n- 通过 `SET GLOBAL max_connections = 2048` 重新设置最大连接数\n- 通过修改 MySQL 配置文件，在 `[mysqld]` 下面添加 `max_connections = 2048` 使其重启依旧生效",
+      "lang": "zh_CN",
+      "expression": "mysql_global_variables_max_connections"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "Global Variables 查询缓存大小",
+      "unit": "bytesIEC",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_global_variables_query_cache_size"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "MySQL 实例是否 UP",
+      "unit": "none",
+      "note": "1 表示 UP，说明能正常连到 MySQL 采集数据；0 表示无法连通 MySQL 实例，可能是网络问题、认证问题，或者 MySQL 本身就是挂了",
+      "lang": "zh_CN",
+      "expression": "mysql_up"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "MySQL 指标抓取耗时",
+      "unit": "seconds",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_scrape_use_seconds"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "MySQL",
+      "name": "MySQL 版本信息",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "mysql_version_info"
+    }
+  ]
