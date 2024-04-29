@@ -1,0 +1,65 @@
+[
+    {
+      "collector": "Categraf",
+      "typ": "Nginx",
+      "name": "Nginx stub_status 当前空闲连接数",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)",
+      "lang": "zh_CN",
+      "expression": "nginx_waiting"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Nginx",
+      "name": "Nginx stub_status 正在回写 response 的连接数",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)",
+      "lang": "zh_CN",
+      "expression": "nginx_writing"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Nginx",
+      "name": "Nginx stub_status 正在处理的活动连接数",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)\n\nReading + Writing + Waiting 的总和",
+      "lang": "zh_CN",
+      "expression": "nginx_active"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Nginx",
+      "name": "Nginx stub_status 正在读取 request header 的连接数",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)",
+      "lang": "zh_CN",
+      "expression": "nginx_reading"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Nginx",
+      "name": "Nginx stub_status 每秒 accept 的新连接数",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)",
+      "lang": "zh_CN",
+      "expression": "irate(nginx_accepts[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Nginx",
+      "name": "Nginx stub_status 每秒 handle 的新连接数",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)",
+      "lang": "zh_CN",
+      "expression": "irate(nginx_handled[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Nginx",
+      "name": "Nginx stub_status 每秒处理的请求数",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)\n\n如果有 keep-alive 连接的情况，一个连接上会处理多个请求。",
+      "lang": "zh_CN",
+      "expression": "irate(nginx_requests[3m])"
+    }
+  ]
