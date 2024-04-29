@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-ldap/ldap/v3"
 	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/container/set"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -32,6 +33,7 @@ type Config struct {
 	TLS             bool
 	StartTLS        bool
 	DefaultRoles    []string
+	RoleTeamMapping []RoleTeamMapping
 }
 
 type SsoClient struct {
@@ -51,16 +53,24 @@ type SsoClient struct {
 	TLS             bool
 	StartTLS        bool
 	DefaultRoles    []string
+	RoleTeamMapping map[string]RoleTeamMapping
 
 	Ticker *time.Ticker
 	sync.RWMutex
 }
 
 type LdapAttributes struct {
-	Username string `yaml:"username"`
-	Nickname string `yaml:"nickname"`
-	Phone    string `yaml:"phone"`
-	Email    string `yaml:"email"`
+	Username string
+	Nickname string
+	Phone    string
+	Email    string
+	Group    string // User support is “memberOf” by default
+}
+
+type RoleTeamMapping struct {
+	DN    string
+	Roles []string
+	Teams []int64
 }
 
 func New(cf Config) *SsoClient {
@@ -101,6 +111,16 @@ func (s *SsoClient) Reload(cf Config) {
 	s.SyncInterval = cf.SyncInterval
 	s.SyncDel = cf.SyncDelUsers
 	s.UserFilter = cf.UserFilter
+
+	// Needs to be used to pull the group of LDAP to which the user belongs, that is,
+	// the memberOf property of the user needs to be pulled by default
+	s.Attributes.Group = "memberOf"
+
+	// Role Mapping and team mapping are configured
+	s.RoleTeamMapping = make(map[string]RoleTeamMapping, len(cf.RoleTeamMapping))
+	for _, mapping := range cf.RoleTeamMapping {
+		s.RoleTeamMapping[mapping.DN] = mapping
+	}
 
 	if s.SyncInterval > 0 {
 		s.Ticker.Reset(s.SyncInterval * time.Second)
@@ -203,6 +223,33 @@ func (s *SsoClient) ldapReq(conn *ldap.Conn, filter string, values ...interface{
 	return sr, nil
 }
 
+// GetUserRolesAndTeams Gets the roles and teams of the user
+func (s *SsoClient) GetUserRolesAndTeams(entry *ldap.Entry) *RoleTeamMapping {
+	lc := s.Copy()
+
+	groups := entry.GetAttributeValues(lc.Attributes.Group)
+	rolesSet := set.NewStringSet()
+	mapping := lc.RoleTeamMapping
+
+	// Collect DNs and Groups
+	dns := append(groups, entry.DN)
+	for _, dn := range dns {
+		// adds roles to the given set from the specified dn entry.
+		if rt, exists := mapping[dn]; exists {
+			for _, role := range rt.Roles {
+				rolesSet.Add(role)
+			}
+		}
+		// TODO：完成 team
+	}
+
+	// Convert sets to slices
+	return &RoleTeamMapping{
+		DN:    entry.DN,
+		Roles: rolesSet.ToSlice(),
+	}
+}
+
 func (s *SsoClient) genLdapAttributeSearchList() []string {
 	var ldapAttributes []string
 
@@ -223,6 +270,11 @@ func (s *SsoClient) genLdapAttributeSearchList() []string {
 	if attrs.Phone != "" {
 		ldapAttributes = append(ldapAttributes, attrs.Phone)
 	}
+
+	if attrs.Group != "" {
+		ldapAttributes = append(ldapAttributes, attrs.Group)
+	}
+
 	return ldapAttributes
 }
 
@@ -248,6 +300,9 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, l
 		phone = strings.Replace(sr.Entries[0].GetAttributeValue(attrs.Phone), " ", "", -1)
 	}
 
+	// Gets the roles and teams for this entry
+	roleTeamMapping := ldap.GetUserRolesAndTeams(sr.Entries[0])
+
 	user, err := models.UserGetByUsername(ctx, username)
 	if err != nil {
 		return nil, err
@@ -255,14 +310,18 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, l
 
 	if user != nil {
 		if user.Id > 0 && coverAttributes {
-			updatedFields := user.UpdateSsoFields("ldap", nickname, phone, email)
-			if err := user.Update(ctx, "update_at", updatedFields...); err != nil {
+			updatedFields := user.UpdateSsoFieldsWithRoles("ldap", nickname, phone, email, roleTeamMapping.Roles)
+			if err = user.Update(ctx, "update_at", updatedFields...); err != nil {
 				return nil, errors.WithMessage(err, "failed to update user")
 			}
 		}
 	} else {
 		user = new(models.User)
-		user.FullSsoFields("ldap", username, nickname, phone, email, defaultRoles)
+		if len(roleTeamMapping.Roles) == 0 {
+			// No role mapping is configured, the configured default role is used
+			roleTeamMapping.Roles = defaultRoles
+		}
+		user.FullSsoFields("ldap", username, nickname, phone, email, roleTeamMapping.Roles)
 		if err = models.DB(ctx).Create(user).Error; err != nil {
 			return nil, errors.WithMessage(err, "failed to add user")
 		}
