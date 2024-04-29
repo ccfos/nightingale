@@ -56,5 +56,6 @@ func init() {
 		CounterWirteTotal,
 		CounterWirteErrorTotal,
 		CounterPushQueueErrorTotal,
+		GaugeSampleQueueSize,
 	)
 }
