@@ -67,15 +67,3 @@ func MetricFilterGets(ctx *ctx.Context, where string, args ...interface{}) ([]Me
 	err := DB(ctx).Where(where, args...).Find(&lst).Error
 	return lst, err
 }
-
-func MetricFilterGet(ctx *ctx.Context, where string, args ...interface{}) (*MetricFilter, error) {
-	var lst []*MetricFilter
-	err := DB(ctx).Where(where, args...).Find(&lst).Error
-	if err != nil {
-		return nil, err
-	}
-	if len(lst) == 0 {
-		return nil, nil
-	}
-	return lst[0], nil
-}
