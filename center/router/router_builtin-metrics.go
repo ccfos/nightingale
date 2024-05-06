@@ -82,14 +82,15 @@ func (rt *Router) builtinMetricsDel(c *gin.Context) {
 func (rt *Router) builtinMetricsDefaultTypes(c *gin.Context) {
 	lst := []string{
 		"Linux",
-		"Container",
+		"cAdvisor",
+		"Ping",
 		"MySQL",
-		"PostgreSQL",
-		"MongoDB",
 		"Redis",
-		"Memcached",
 		"Kafka",
 		"Elasticsearch",
+		"PostgreSQL",
+		"MongoDB",
+		"Memcached",
 	}
 	ginx.NewRender(c).Data(lst, nil)
 }
