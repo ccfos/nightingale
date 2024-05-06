@@ -87,8 +87,14 @@ func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
 		email := entry.GetAttributeValue(attrs.Email)
 		phone := entry.GetAttributeValue(attrs.Phone)
 
+		// Gets the roles and teams for this entry
+		roleTeamMapping := lc.GetUserRolesAndTeams(entry)
+		if len(roleTeamMapping.Roles) == 0 {
+			// No role mapping is configured, the configured default role is used
+			roleTeamMapping.Roles = lc.DefaultRoles
+		}
 		user := new(models.User)
-		user.FullSsoFields("ldap", username, nickname, phone, email, lc.DefaultRoles)
+		user.FullSsoFields("ldap", username, nickname, phone, email, roleTeamMapping.Roles)
 
 		res[entry.GetAttributeValue(attrs.Username)] = user
 	}

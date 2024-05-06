@@ -138,6 +138,19 @@ func (u *User) UpdateSsoFields(sso string, nickname, phone, email string) []inte
 	return updatedFields
 }
 
+func (u *User) UpdateSsoFieldsWithRoles(sso string, nickname, phone, email string, roles []string) []interface{} {
+	updatedFields := u.UpdateSsoFields(sso, nickname, phone, email)
+
+	if len(roles) == 0 {
+		return updatedFields
+	}
+
+	u.Roles = strings.Join(roles, " ")
+	u.RolesLst = roles
+
+	return append(updatedFields, "roles")
+}
+
 func (u *User) FullSsoFields(sso, username, nickname, phone, email string, defaultRoles []string) {
 	now := time.Now().Unix()
 
