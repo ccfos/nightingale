@@ -229,10 +229,11 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/metric-views", rt.auth(), rt.user(), rt.metricViewAdd)
 		pages.PUT("/metric-views", rt.auth(), rt.user(), rt.metricViewPut)
 
-		pages.GET("/builtin-metric-filters", rt.auth(), rt.metricFilterGets)
+		pages.GET("/builtin-metric-filters", rt.auth(), rt.user(), rt.metricFilterGets)
 		pages.DELETE("/builtin-metric-filters", rt.auth(), rt.user(), rt.metricFilterDel)
 		pages.POST("/builtin-metric-filters", rt.auth(), rt.user(), rt.metricFilterAdd)
 		pages.PUT("/builtin-metric-filters", rt.auth(), rt.user(), rt.metricFilterPut)
+		pages.POST("/builtin-metric-promql", rt.auth(), rt.user(), rt.getMetricPromql)
 
 		pages.POST("/builtin-metrics", rt.auth(), rt.user(), rt.perm("/builtin-metrics/add"), rt.builtinMetricsAdd)
 		pages.PUT("/builtin-metrics", rt.auth(), rt.user(), rt.perm("/builtin-metrics/put"), rt.builtinMetricsPut)

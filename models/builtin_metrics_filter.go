@@ -9,15 +9,19 @@ import (
 )
 
 type MetricFilter struct {
-	ID       uint64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
-	Name     string  `json:"name" gorm:"type:varchar(191);not null;index:idx_name,sort:asc;comment:'name of metric filter'"`
-	Configs  string  `json:"configs" gorm:"type:varchar(4096);not null;comment:'configuration of metric filter'"`
-	Bgids    []int64 `json:"bgids" gorm:"type:json;comment:'associated bgids'"`
-	Gids     []int64 `json:"gids" gorm:"type:json;comment:'associated gids'"`
-	CreateAt int64   `json:"create_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
-	CreateBy string  `json:"create_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
-	UpdateAt int64   `json:"update_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
-	UpdateBy string  `json:"update_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+	ID         int64       `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	Name       string      `json:"name" gorm:"type:varchar(191);not null;index:idx_name,sort:asc;comment:'name of metric filter'"`
+	Configs    string      `json:"configs" gorm:"type:varchar(4096);not null;comment:'configuration of metric filter'"`
+	GroupsPerm []GroupPerm `json:"groups_perm" gorm:"type:text;serializer:json;"`
+	CreateAt   int64       `json:"create_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
+	CreateBy   string      `json:"create_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
+	UpdateAt   int64       `json:"update_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
+	UpdateBy   string      `json:"update_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+}
+
+type GroupPerm struct {
+	Gid   int64 `json:"gid"`
+	Write bool  `json:"write"` // write permission
 }
 
 func (f *MetricFilter) TableName() string {
@@ -51,7 +55,7 @@ func (f *MetricFilter) Update(ctx *ctx.Context) error {
 		return err
 	}
 	f.UpdateAt = time.Now().Unix()
-	return DB(ctx).Model(f).Select("name", "configs", "bgids", "gids", "update_at", "update_by").Updates(f).Error
+	return DB(ctx).Model(f).Select("name", "configs", "groups_perm", "update_at", "update_by").Updates(f).Error
 }
 
 func MetricFilterDel(ctx *ctx.Context, ids []int64) error {
@@ -66,4 +70,11 @@ func MetricFilterGets(ctx *ctx.Context, where string, args ...interface{}) ([]Me
 	var lst []MetricFilter
 	err := DB(ctx).Where(where, args...).Find(&lst).Error
 	return lst, err
+}
+
+// get by id
+func MetricFilterGet(ctx *ctx.Context, id int64) (*MetricFilter, error) {
+	var f MetricFilter
+	err := DB(ctx).Where("id = ?", id).First(&f).Error
+	return &f, err
 }
