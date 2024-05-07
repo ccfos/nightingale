@@ -19,12 +19,13 @@ import (
 )
 
 type SsoClient struct {
-	OIDC           *oidcx.SsoClient
-	LDAP           *ldapx.SsoClient
-	CAS            *cas.SsoClient
-	OAuth2         *oauth2x.SsoClient
-	LastUpdateTime int64
-	configCache    *memsto.ConfigCache
+	OIDC                 *oidcx.SsoClient
+	LDAP                 *ldapx.SsoClient
+	CAS                  *cas.SsoClient
+	OAuth2               *oauth2x.SsoClient
+	LastUpdateTime       int64
+	configCache          *memsto.ConfigCache
+	configLastUpdateTime int64
 }
 
 const LDAP = `
@@ -206,7 +207,8 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 		return err
 	}
 
-	if lastUpdateTime == s.LastUpdateTime {
+	tempTime := s.configCache.GetLastUpdateTime()
+	if lastUpdateTime == s.LastUpdateTime && tempTime == s.configLastUpdateTime {
 		return nil
 	}
 
@@ -260,6 +262,7 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 	}
 
 	s.LastUpdateTime = lastUpdateTime
+	s.configLastUpdateTime = tempTime
 	return nil
 }
 
