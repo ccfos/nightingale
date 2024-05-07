@@ -204,7 +204,7 @@
     "unit": "percent",
     "note": "交换空间使用率。计算原子取自 `/proc/meminfo`。",
     "lang": "zh_CN",
-    "expression": "(mem_swap_total - mem_swap_free)/mem_swap_total * 100"
+    "expression": "(mem_swap_total - mem_swap_free)/mem_swap_total * 100 and mem_swap_total > 0"
   },
   {
     "collector": "Categraf",

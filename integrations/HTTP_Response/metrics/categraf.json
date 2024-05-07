@@ -1,38 +1,38 @@
 [
-    {
-      "collector": "Categraf",
-      "typ": "HTTP_Response",
-      "name": "HTTP 探测响应码",
-      "unit": "none",
-      "note": "如果没有拿到 response，这个指标就没有值了",
-      "lang": "zh_CN",
-      "expression": "http_response_response_code"
-    },
-    {
-      "collector": "Categraf",
-      "typ": "HTTP_Response",
-      "name": "HTTP 探测结果状态码",
-      "unit": "none",
-      "note": "0 值表示正常，大于 0 就是异常，各个值的含义如下：\n\n```\nSuccess          = 0\nConnectionFailed = 1\nTimeout          = 2\nDNSError         = 3\nAddressError     = 4\nBodyMismatch     = 5\nCodeMismatch     = 6\n```",
-      "lang": "zh_CN",
-      "expression": "http_response_result_code"
-    },
-    {
-      "collector": "Categraf",
-      "typ": "HTTP_Response",
-      "name": "HTTP 探测耗时",
-      "unit": "seconds",
-      "note": "",
-      "lang": "zh_CN",
-      "expression": "http_response_response_time"
-    },
-    {
-      "collector": "Categraf",
-      "typ": "HTTP_Response",
-      "name": "HTTP 证书过期时间",
-      "unit": "seconds",
-      "note": "",
-      "lang": "zh_CN",
-      "expression": "http_response_cert_expire_timestamp"
-    }
-  ]
+  {
+    "collector": "Categraf",
+    "typ": "HTTP_Response",
+    "name": "HTTP 探测响应码",
+    "unit": "none",
+    "note": "如果没有拿到 response，这个指标就没有值了",
+    "lang": "zh_CN",
+    "expression": "http_response_response_code"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "HTTP_Response",
+    "name": "HTTP 探测结果状态码",
+    "unit": "none",
+    "note": "0 值表示正常，大于 0 就是异常，各个值的含义如下：\n\n```\nSuccess          = 0\nConnectionFailed = 1\nTimeout          = 2\nDNSError         = 3\nAddressError     = 4\nBodyMismatch     = 5\nCodeMismatch     = 6\n```",
+    "lang": "zh_CN",
+    "expression": "http_response_result_code"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "HTTP_Response",
+    "name": "HTTP 探测耗时",
+    "unit": "seconds",
+    "note": "",
+    "lang": "zh_CN",
+    "expression": "http_response_response_time"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "HTTP_Response",
+    "name": "HTTP 证书过期时间",
+    "unit": "datetimeSeconds",
+    "note": "",
+    "lang": "zh_CN",
+    "expression": "http_response_cert_expire_timestamp"
+  }
+]

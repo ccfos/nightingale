@@ -69,7 +69,7 @@
     "unit": "percent",
     "note": "交换空间使用率。计算原子取自 `/proc/meminfo`。",
     "lang": "zh_CN",
-    "expression": "(node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes)/node_memory_SwapTotal_bytes * 100"
+    "expression": "(node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes)/node_memory_SwapTotal_bytes * 100 and node_memory_SwapTotal_bytes > 0"
   },
   {
     "collector": "Exporter",
