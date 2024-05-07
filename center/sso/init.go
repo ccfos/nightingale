@@ -5,12 +5,14 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/center/cconf"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/cas"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
 	"github.com/BurntSushi/toml"
 	"github.com/toolkits/pkg/logger"
@@ -22,6 +24,7 @@ type SsoClient struct {
 	CAS            *cas.SsoClient
 	OAuth2         *oauth2x.SsoClient
 	LastUpdateTime int64
+	configCache    *memsto.ConfigCache
 }
 
 const LDAP = `
@@ -111,7 +114,7 @@ Phone = 'phone_number'
 Email = 'email'
 `
 
-func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
+func Init(center cconf.Center, ctx *ctx.Context, configCache *memsto.ConfigCache) *SsoClient {
 	ssoClient := new(SsoClient)
 	m := make(map[string]string)
 	m["LDAP"] = LDAP
@@ -140,6 +143,11 @@ func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
 			log.Fatalln(err)
 		}
 	}
+	if configCache == nil {
+		logger.Error("configCache is nil, sso initialization failed")
+	}
+	ssoClient.configCache = configCache
+	userVariableMap := configCache.Get()
 
 	configs, err := models.SsoConfigGets(ctx)
 	if err != nil {
@@ -147,6 +155,7 @@ func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
 	}
 
 	for _, cfg := range configs {
+		cfg.Content = tplx.ReplaceTemplateUseText(cfg.Name, cfg.Content, userVariableMap)
 		switch cfg.Name {
 		case "LDAP":
 			var config ldapx.Config
@@ -205,8 +214,9 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 	if err != nil {
 		return err
 	}
-
+	userVariableMap := s.configCache.Get()
 	for _, cfg := range configs {
+		cfg.Content = tplx.ReplaceTemplateUseText(cfg.Name, cfg.Content, userVariableMap)
 		switch cfg.Name {
 		case "LDAP":
 			var config ldapx.Config
