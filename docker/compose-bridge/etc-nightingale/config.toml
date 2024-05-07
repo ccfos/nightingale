@@ -96,8 +96,6 @@ MaxLifetime = 7200
 MaxOpenConns = 150
 # max idle connections
 MaxIdleConns = 50
-# table prefix
-TablePrefix = ""
 # enable auto migrate or not
 # EnableAutoMigrate = false
 
