@@ -1,0 +1,92 @@
+[
+    {
+      "collector": "Categraf",
+      "typ": "Netstat",
+      "name": "ESTABLISHED 状态的网络链接数",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "netstat_tcp_established"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Netstat",
+      "name": "FIN_WAIT1 状态的网络链接数",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "netstat_tcp_fin_wait1"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Netstat",
+      "name": "FIN_WAIT2 状态的网络链接数",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "netstat_tcp_fin_wait2"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Netstat",
+      "name": "LAST_ACK 状态的网络链接数",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "netstat_tcp_last_ack"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Netstat",
+      "name": "LISTEN 状态的网络链接数",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "netstat_tcp_listen"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Netstat",
+      "name": "SYN_RECV 状态的网络链接数",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "netstat_tcp_syn_recv"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Netstat",
+      "name": "SYN_SENT 状态的网络链接数",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "netstat_tcp_syn_sent"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Netstat",
+      "name": "TIME_WAIT 状态的网络链接数",
+      "unit": "none",
+      "note": "categraf 配置文件 `conf/input.netstat/netstat.toml` 中 `disable_connection_stats` 默认配置为 true，是因为在网络连接比较多的机器上，获取各个状态的连接数会耗费较多 CPU，所以默认 disable 掉了。",
+      "lang": "zh_CN",
+      "expression": "netstat_tcp_time_wait"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Netstat",
+      "name": "TIME_WAIT 状态的网络链接数（推荐）",
+      "unit": "none",
+      "note": "读取自 `/proc/net/sockstat`。",
+      "lang": "zh_CN",
+      "expression": "netstat_tcp_tw"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Netstat",
+      "name": "当前 UDP 连接数",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "netstat_udp_socket"
+    }
+  ]

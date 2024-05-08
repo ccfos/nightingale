@@ -586,7 +586,7 @@ func (u *User) BusiGroups(ctx *ctx.Context, limit int, query string, all ...bool
 			return lst, err
 		}
 
-		if slice.ContainsInt64(busiGroupIds, t.GroupId) {
+		if t != nil && slice.ContainsInt64(busiGroupIds, t.GroupId) {
 			err = DB(ctx).Order("name").Limit(limit).Where("id=?", t.GroupId).Find(&lst).Error
 		}
 	}

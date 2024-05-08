@@ -269,6 +269,11 @@ func (rt *Router) boardGetsByGids(c *gin.Context) {
 			var err error
 			gids, err = models.MyBusiGroupIds(rt.Ctx, me.Id)
 			ginx.Dangerous(err)
+
+			if len(gids) == 0 {
+				ginx.Bomb(http.StatusForbidden, "forbidden")
+				return
+			}
 		}
 	}
 

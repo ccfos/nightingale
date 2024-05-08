@@ -1,0 +1,191 @@
+[
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 CPU 利用率（单进程）",
+      "unit": "percent",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)\n\nCPU 利用率有两个模式，一个是 solaris，一个是 irix，默认是 irix，irix 模式下，CPU 利用率可能会超过 100%，solaris 会考虑 CPU 核数，solaris 模式的 CPU 利用率不会超过 100%。",
+      "lang": "zh_CN",
+      "expression": "procstat_cpu_usage"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 CPU 总利用率（匹配到的所有进程加和）",
+      "unit": "percent",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)\n\nCPU 利用率有两个模式，一个是 solaris，一个是 irix，默认是 irix，irix 模式下，CPU 利用率可能会超过 100%，solaris 会考虑 CPU 核数，solaris 模式的 CPU 利用率不会超过 100%。",
+      "lang": "zh_CN",
+      "expression": "procstat_cpu_usage_total"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 IO 每秒写入字节总数（匹配到的所有进程加和）",
+      "unit": "bytesSecIEC",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "irate(procstat_write_bytes_total[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 IO 每秒写入字节数（单进程）",
+      "unit": "bytesSecIEC",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "irate(procstat_write_bytes[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 IO 每秒写入次数总数（匹配到的所有进程加和）",
+      "unit": "sishort",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "irate(procstat_write_count_total[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 IO 每秒写入次数（单进程）",
+      "unit": "sishort",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "irate(procstat_write_count[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 IO 每秒读取字节总数（匹配到的所有进程加和）",
+      "unit": "bytesSecIEC",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "irate(procstat_read_bytes_total[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 IO 每秒读取字节数（单进程）",
+      "unit": "bytesSecIEC",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "irate(procstat_read_bytes[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 IO 每秒读取次数总数（匹配到的所有进程加和）",
+      "unit": "sishort",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "irate(procstat_read_count_total[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 IO 每秒读取次数（单进程）",
+      "unit": "sishort",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "irate(procstat_read_count[3m])"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 Memory 利用率（单进程）",
+      "unit": "percent",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "procstat_mem_usage"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 Memory 总利用率（匹配到的所有进程加和）",
+      "unit": "percent",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "procstat_mem_usage_total"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 rlimit fd 软限制数量（匹配到的所有进程中的最小值）",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "procstat_rlimit_num_fds_soft_minimum"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程 rlimit fd 软限制数量（单进程）",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "procstat_rlimit_num_fds_soft"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程启动时长（匹配到的所有进程的最小值）",
+      "unit": "seconds",
+      "note": "启动了多久",
+      "lang": "zh_CN",
+      "expression": "procstat_uptime_minimum"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程启动时长（单进程）",
+      "unit": "seconds",
+      "note": "启动了多久",
+      "lang": "zh_CN",
+      "expression": "procstat_uptime"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程数量（根据匹配条件查到的进程数量）",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "procstat_lookup_count"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程文件句柄总打开数（匹配到的所有进程加和）",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "procstat_num_fds_total"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程文件句柄打开数（单进程）",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "procstat_num_fds"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程线程总数（匹配到的所有进程加和）",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "procstat_num_threads_total"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Procstat",
+      "name": "进程线程数（单进程）",
+      "unit": "none",
+      "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
+      "lang": "zh_CN",
+      "expression": "procstat_num_threads"
+    }
+  ]

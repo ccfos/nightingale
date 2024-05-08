@@ -1,0 +1,56 @@
+[
+    {
+      "collector": "Categraf",
+      "typ": "Kafka",
+      "name": "Broker 数量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "kafka_brokers"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Kafka",
+      "name": "Partition 副本不同步的数量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "kafka_topic_partition_under_replicated_partition"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Kafka",
+      "name": "Partition 副本数量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "kafka_topic_partition_replicas"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Kafka",
+      "name": "各个 Topic 每秒消费消息量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "sum(irate(kafka_consumergroup_current_offset[3m])) without (partition)"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Kafka",
+      "name": "各个 Topic 每秒生产消息量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "sum(irate(kafka_topic_partition_current_offset[3m])) without (partition)"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Kafka",
+      "name": "各个 Topic 的 Partition 数量",
+      "unit": "none",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "kafka_topic_partitions"
+    }
+  ]

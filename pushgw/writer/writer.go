@@ -33,6 +33,7 @@ func (w WriterType) writeRelabel(items []prompb.TimeSeries) []prompb.TimeSeries 
 		if len(lbls) == 0 {
 			continue
 		}
+		item.Labels = lbls
 		ritems = append(ritems, item)
 	}
 	return ritems

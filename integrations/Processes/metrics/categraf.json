@@ -1,0 +1,101 @@
+[
+    {
+      "collector": "Categraf",
+      "typ": "Processes",
+      "name": "进程数 - “僵死”状态的进程数",
+      "unit": "none",
+      "note": "处于“僵死”状态的进程数，它是由 Linux 上的 X 状态代码表示的。",
+      "lang": "zh_CN",
+      "expression": "processes_dead"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Processes",
+      "name": "进程数 - “分页”状态的进程数",
+      "unit": "none",
+      "note": "处于“分页”状态的进程数，它是由 Linux 上的 W 状态代码表示的。",
+      "lang": "zh_CN",
+      "expression": "processes_paging"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Processes",
+      "name": "进程数 - 停止的进程数",
+      "unit": "none",
+      "note": "停止的进程数，由 T 状态代码表示。",
+      "lang": "zh_CN",
+      "expression": "processes_stopped"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Processes",
+      "name": "进程数 - 僵尸进程数",
+      "unit": "none",
+      "note": "僵尸进程数，由 Z 状态代码表示。",
+      "lang": "zh_CN",
+      "expression": "processes_zombies"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Processes",
+      "name": "进程数 - 总数",
+      "unit": "none",
+      "note": "实例上的总进程数。",
+      "lang": "zh_CN",
+      "expression": "processes_total"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Processes",
+      "name": "进程数 - 未知状态的进程数",
+      "unit": "none",
+      "note": "未知状态的进程数。",
+      "lang": "zh_CN",
+      "expression": "processes_unknown"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Processes",
+      "name": "进程数 - 正在睡眠的进程数",
+      "unit": "none",
+      "note": "睡眠的进程数，由 S 状态代码表示。",
+      "lang": "zh_CN",
+      "expression": "processes_sleeping"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Processes",
+      "name": "进程数 - 正在运行的进程数",
+      "unit": "none",
+      "note": "正在运行的进程数，由 R 状态代码表示。",
+      "lang": "zh_CN",
+      "expression": "processes_running"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Processes",
+      "name": "进程数 - 空闲的数量",
+      "unit": "none",
+      "note": "处于空闲状态 (睡眠超过 20 秒) 的进程数。",
+      "lang": "zh_CN",
+      "expression": "processes_idle"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Processes",
+      "name": "进程数 - 线程总数",
+      "unit": "none",
+      "note": "组成进程的总线程数。该指标仅适用于 Linux 实例。",
+      "lang": "zh_CN",
+      "expression": "processes_total_threads"
+    },
+    {
+      "collector": "Categraf",
+      "typ": "Processes",
+      "name": "进程数 - 被阻止的进程数",
+      "unit": "none",
+      "note": "被阻止的进程数量。",
+      "lang": "zh_CN",
+      "expression": "processes_blocked"
+    }
+  ]
