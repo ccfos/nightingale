@@ -207,8 +207,8 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 		return err
 	}
 
-	tempTime := s.configCache.GetLastUpdateTime()
-	if lastUpdateTime == s.LastUpdateTime && tempTime == s.configLastUpdateTime {
+	lastCacheUpdateTime := s.configCache.GetLastUpdateTime()
+	if lastUpdateTime == s.LastUpdateTime && lastCacheUpdateTime == s.configLastUpdateTime {
 		return nil
 	}
 
@@ -262,7 +262,7 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 	}
 
 	s.LastUpdateTime = lastUpdateTime
-	s.configLastUpdateTime = tempTime
+	s.configLastUpdateTime = lastCacheUpdateTime
 	return nil
 }
 
