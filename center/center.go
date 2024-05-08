@@ -80,8 +80,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
 
-	sso := sso.Init(config.Center, ctx)
-
 	configCache := memsto.NewConfigCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
@@ -93,6 +91,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 	taskTplCache := memsto.NewTaskTplCache(ctx)
 
+	sso := sso.Init(config.Center, ctx, configCache)
 	promClients := prom.NewPromClient(ctx)
 	tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
 
