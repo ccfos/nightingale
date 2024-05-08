@@ -30,6 +30,7 @@ type Config struct {
 	AuthFilter      string
 	Attributes      LdapAttributes
 	CoverAttributes bool
+	CoverTeams      bool
 	TLS             bool
 	StartTLS        bool
 	DefaultRoles    []string
@@ -50,6 +51,7 @@ type SsoClient struct {
 	AuthFilter      string
 	Attributes      LdapAttributes
 	CoverAttributes bool
+	CoverTeams      bool
 	TLS             bool
 	StartTLS        bool
 	DefaultRoles    []string
@@ -103,6 +105,7 @@ func (s *SsoClient) Reload(cf Config) {
 	s.AuthFilter = cf.AuthFilter
 	s.Attributes = cf.Attributes
 	s.CoverAttributes = cf.CoverAttributes
+	s.CoverTeams = cf.CoverTeams
 	s.TLS = cf.TLS
 	s.StartTLS = cf.StartTLS
 	s.DefaultRoles = cf.DefaultRoles
@@ -229,6 +232,7 @@ func (s *SsoClient) GetUserRolesAndTeams(entry *ldap.Entry) *RoleTeamMapping {
 
 	groups := entry.GetAttributeValues(lc.Attributes.Group)
 	rolesSet := set.NewStringSet()
+	teamsSet := set.NewInt64Set()
 	mapping := lc.RoleTeamMapping
 
 	// Collect DNs and Groups
@@ -240,13 +244,19 @@ func (s *SsoClient) GetUserRolesAndTeams(entry *ldap.Entry) *RoleTeamMapping {
 				rolesSet.Add(role)
 			}
 		}
-		// TODO：完成 team
+		// adds teams to the given set from the specified dn entry.
+		if rt, exists := mapping[dn]; exists {
+			for _, team := range rt.Teams {
+				teamsSet.Add(team)
+			}
+		}
 	}
 
 	// Convert sets to slices
 	return &RoleTeamMapping{
 		DN:    entry.DN,
 		Roles: rolesSet.ToSlice(),
+		Teams: teamsSet.ToSlice(),
 	}
 }
 
@@ -287,6 +297,7 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, l
 	ldap.RLock()
 	attrs := ldap.Attributes
 	coverAttributes := ldap.CoverAttributes
+	coverTeams := ldap.CoverTeams
 	ldap.RUnlock()
 
 	var nickname, email, phone string
@@ -308,12 +319,18 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, l
 		return nil, err
 	}
 
-	if user != nil {
-		if user.Id > 0 && coverAttributes {
+	if user != nil && user.Id > 0 {
+		if coverAttributes {
+			// need to override the user's basic properties
 			updatedFields := user.UpdateSsoFieldsWithRoles("ldap", nickname, phone, email, roleTeamMapping.Roles)
 			if err = user.Update(ctx, "update_at", updatedFields...); err != nil {
 				return nil, errors.WithMessage(err, "failed to update user")
 			}
+		}
+
+		// Synchronize group information
+		if err = models.UserGroupMemberSync(ctx, roleTeamMapping.Teams, user.Id, coverTeams); err != nil {
+			logger.Errorf("ldap.error: failed to update user(%s) group member err: %+v", user, err)
 		}
 	} else {
 		user = new(models.User)
@@ -321,9 +338,14 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, l
 			// No role mapping is configured, the configured default role is used
 			roleTeamMapping.Roles = defaultRoles
 		}
+
 		user.FullSsoFields("ldap", username, nickname, phone, email, roleTeamMapping.Roles)
 		if err = models.DB(ctx).Create(user).Error; err != nil {
 			return nil, errors.WithMessage(err, "failed to add user")
+		}
+
+		if err = models.UserGroupMemberSync(ctx, roleTeamMapping.Teams, user.Id, false); err != nil {
+			logger.Errorf("ldap.error: failed to update user(%s) group member err: %+v", user, err)
 		}
 	}
 

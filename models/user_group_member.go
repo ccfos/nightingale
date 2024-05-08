@@ -77,3 +77,75 @@ func UserGroupMemberGetAll(ctx *ctx.Context) ([]*UserGroupMember, error) {
 	err := DB(ctx).Find(&lst).Error
 	return lst, err
 }
+
+// UserGroupMemberSync Sync group information, incrementally adding or overwriting deletes
+func UserGroupMemberSync(ctx *ctx.Context, processGroupIds []int64, userId int64, isDiff bool) error {
+	if len(processGroupIds) == 0 {
+		return nil
+	}
+
+	// queries all the groups that the user is currently in
+	allGrpIds, err := MyGroupIds(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	n := len(allGrpIds)
+	allSet := slice2Set(allGrpIds)            // All the current groups Set
+	toInsert := make([]UserGroupMember, 0, n) // Will be added
+
+	// Prepare data for bulk insertion
+	for _, gid := range processGroupIds {
+		if !allSet[gid] {
+			// Add only groups where the user does not already exist
+			toInsert = append(toInsert, UserGroupMember{GroupId: gid, UserId: userId})
+			allSet[gid] = true
+		}
+	}
+	// Bulk insert data
+	if len(toInsert) == 0 {
+		return nil
+	}
+
+	err = DB(ctx).CreateInBatches(toInsert, 10).Error
+	if err != nil || !isDiff {
+		return err
+	}
+
+	// ------------------------------------------------------
+	// Coming here means that you need to do a diff operation
+	// ------------------------------------------------------
+	processSet := slice2Set(processGroupIds) // The group to be processed Set
+	toDeleteIds := make([]int64, 0, n)       // The group ID to be deleted
+
+	for _, gid := range allGrpIds {
+		if !processSet[gid] {
+			toDeleteIds = append(toDeleteIds, gid)
+			processSet[gid] = true
+		}
+	}
+
+	if len(toDeleteIds) == 0 {
+		return nil
+	}
+	// Deletes multiple groups specified by the user
+	return DB(ctx).Where("user_id = ? AND group_id IN ?", userId, toDeleteIds).
+		Delete(&UserGroupMember{}).Error
+}
+
+func UserGroupMemberSyncByUser(ctx *ctx.Context, user *User, coverTeams bool) error {
+	if user == nil {
+		return nil
+	}
+
+	return UserGroupMemberSync(ctx, user.TeamsLst, user.Id, coverTeams)
+}
+
+func slice2Set[T comparable](s []T) map[T]bool {
+	m := make(map[T]bool, len(s))
+	for _, item := range s {
+		m[item] = true
+	}
+
+	return m
+}
