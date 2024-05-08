@@ -13,6 +13,12 @@ func TestAddLabelToPromQL(t *testing.T) {
 	}{
 		{
 			name:     "Add label to PromQL without existing labels",
+			label:    "",
+			promql:   "avg without (mode,cpu) ( irate(node_cpu_seconds_total{mode=\"idle\"}[2m]) ) * 100",
+			expected: "avg without (mode,cpu) ( irate(node_cpu_seconds_total{mode=\"idle\"}[2m]) ) * 100",
+		},
+		{
+			name:     "Add label to PromQL without existing labels",
 			label:    "{new_label=\"value\"}",
 			promql:   "metric_name",
 			expected: "metric_name{new_label=\"value\"}",

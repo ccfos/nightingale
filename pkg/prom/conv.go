@@ -35,6 +35,10 @@ func ConvertPromQL(ql string, metric Metric) (string, error) {
 }
 
 func AddLabelToPromQL(label, promql string) string {
+	if label == "" {
+		return promql
+	}
+
 	// 移除label字符串中的空格
 	label = strings.ReplaceAll(label, " ", "")
 
