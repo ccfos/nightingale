@@ -117,3 +117,9 @@ func (c *ConfigCache) Get() map[string]string {
 	}
 	return resMap
 }
+
+func (c *ConfigCache) GetLastUpdateTime() int64 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.statLastUpdated
+}
