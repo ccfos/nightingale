@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
@@ -96,7 +97,8 @@ func (rt *Router) getMetricPromql(c *gin.Context) {
 	var req metricPromqlReq
 	ginx.BindJSON(c, &req)
 
-	ginx.NewRender(c).Data(req.Promql, nil)
+	promql := prom.AddLabelToPromQL(req.LabelFilter, req.Promql)
+	ginx.NewRender(c).Data(promql, nil)
 }
 
 func HasPerm(gids []int64, gps []models.GroupPerm, checkWrite bool) bool {
