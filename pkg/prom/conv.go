@@ -49,6 +49,7 @@ func AddLabelToPromQL(label, promql string) string {
 		// 检查指标名称后面是否已经有label
 		if strings.Contains(promql, metricName+"{") {
 			// 如果已经有label，则在最后一个label前面添加新的label
+			label = strings.ReplaceAll(label, "}", "")
 			promql = strings.ReplaceAll(promql, metricName+"{", metricName+label+",")
 		} else {
 			// 如果没有label，则在指标名称后面添加label
