@@ -110,17 +110,17 @@ func BuiltinMetricDels(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinMetric)).Error
 }
 
-func BuiltinMetricGets(ctx *ctx.Context, lang, collector, typ, query string, limit, offset int) ([]*BuiltinMetric, error) {
+func BuiltinMetricGets(ctx *ctx.Context, lang, collector, typ, query, unit string, limit, offset int) ([]*BuiltinMetric, error) {
 	session := DB(ctx)
-	session = builtinMetricQueryBuild(lang, collector, session, typ, query)
+	session = builtinMetricQueryBuild(lang, collector, session, typ, query, unit)
 	var lst []*BuiltinMetric
 	err := session.Limit(limit).Offset(offset).Order("collector asc, typ asc, name asc").Find(&lst).Error
 	return lst, err
 }
 
-func BuiltinMetricCount(ctx *ctx.Context, lang, collector, typ, query string) (int64, error) {
+func BuiltinMetricCount(ctx *ctx.Context, lang, collector, typ, query, unit string) (int64, error) {
 	session := DB(ctx).Model(&BuiltinMetric{})
-	session = builtinMetricQueryBuild(lang, collector, session, typ, query)
+	session = builtinMetricQueryBuild(lang, collector, session, typ, query, unit)
 
 	var cnt int64
 	err := session.Count(&cnt).Error
@@ -128,7 +128,7 @@ func BuiltinMetricCount(ctx *ctx.Context, lang, collector, typ, query string) (i
 	return cnt, err
 }
 
-func builtinMetricQueryBuild(lang, collector string, session *gorm.DB, typ string, query string) *gorm.DB {
+func builtinMetricQueryBuild(lang, collector string, session *gorm.DB, typ string, query, unit string) *gorm.DB {
 	if lang != "" {
 		session = session.Where("lang = ?", lang)
 	}
@@ -141,9 +141,24 @@ func builtinMetricQueryBuild(lang, collector string, session *gorm.DB, typ strin
 		session = session.Where("typ = ?", typ)
 	}
 
+	if unit != "" {
+		us := strings.Split(unit, ",")
+		session = session.Where("unit in (?)", us)
+	}
+
 	if query != "" {
-		queryPattern := "%" + query + "%"
-		session = session.Where("name LIKE ? OR note LIKE ? OR expression LIKE ?", queryPattern, queryPattern, queryPattern)
+		qs := strings.Split(query, " ")
+
+		for _, q := range qs {
+			if strings.HasPrefix(q, "-") {
+				q = strings.TrimPrefix(q, "-")
+				queryPattern := "%" + q + "%"
+				session = session.Where("name NOT LIKE ? AND note NOT LIKE ? AND expression NOT LIKE ?", queryPattern, queryPattern, queryPattern)
+			} else {
+				queryPattern := "%" + q + "%"
+				session = session.Where("name LIKE ? OR note LIKE ? OR expression LIKE ?", queryPattern, queryPattern, queryPattern)
+			}
+		}
 	}
 	return session
 }

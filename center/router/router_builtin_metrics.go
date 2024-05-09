@@ -40,14 +40,15 @@ func (rt *Router) builtinMetricsGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 20)
 	lang := c.GetHeader("X-Language")
+	unit := ginx.QueryStr(c, "unit", "")
 	if lang == "" {
 		lang = "zh_CN"
 	}
 
-	bm, err := models.BuiltinMetricGets(rt.Ctx, lang, collector, typ, query, limit, ginx.Offset(c, limit))
+	bm, err := models.BuiltinMetricGets(rt.Ctx, lang, collector, typ, query, unit, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
-	total, err := models.BuiltinMetricCount(rt.Ctx, lang, collector, typ, query)
+	total, err := models.BuiltinMetricCount(rt.Ctx, lang, collector, typ, query, unit)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(gin.H{
 		"list":  bm,
