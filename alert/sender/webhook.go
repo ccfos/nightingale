@@ -38,7 +38,7 @@ func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent, stats
 
 		if len(conf.Headers) > 0 && len(conf.Headers)%2 == 0 {
 			for i := 0; i < len(conf.Headers); i += 2 {
-				if conf.Headers[i] == "host" {
+				if conf.Headers[i] == "host" || conf.Headers[i] == "Host" {
 					req.Host = conf.Headers[i+1]
 					continue
 				}
