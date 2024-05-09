@@ -357,8 +357,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-group/:id/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks"), rt.bgro(), rt.taskGets)
 		pages.POST("/busi-group/:id/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks/add"), rt.bgrw(), rt.taskAdd)
 
-		pages.GET("/servers", rt.auth(), rt.admin(), rt.serversGet)
-		pages.GET("/server-clusters", rt.auth(), rt.admin(), rt.serverClustersGet)
+		pages.GET("/servers", rt.auth(), rt.perm("/help/servers"), rt.serversGet)
+		pages.GET("/server-clusters", rt.auth(), rt.perm("/help/servers"), rt.serverClustersGet)
 
 		pages.POST("/datasource/list", rt.auth(), rt.user(), rt.datasourceList)
 		pages.POST("/datasource/plugin/list", rt.auth(), rt.pluginList)
