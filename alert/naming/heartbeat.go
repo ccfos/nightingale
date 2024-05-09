@@ -110,7 +110,9 @@ func (n *Naming) heartbeat() error {
 		}
 	}
 
+	newDatasource := make(map[int64]struct{})
 	for i := 0; i < len(datasourceIds); i++ {
+		newDatasource[datasourceIds[i]] = struct{}{}
 		servers, err := n.ActiveServers(datasourceIds[i])
 		if err != nil {
 			logger.Warningf("hearbeat %d get active server err:%v", datasourceIds[i], err)
@@ -128,6 +130,13 @@ func (n *Naming) heartbeat() error {
 
 		RebuildConsistentHashRing(fmt.Sprintf("%d", datasourceIds[i]), servers)
 		localss[datasourceIds[i]] = newss
+	}
+
+	for dsId := range localss {
+		if _, exists := newDatasource[dsId]; !exists {
+			delete(localss, dsId)
+			DatasourceHashRing.Del(fmt.Sprintf("%d", dsId))
+		}
 	}
 
 	// host 告警使用的是 hash ring

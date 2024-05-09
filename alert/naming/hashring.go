@@ -67,6 +67,12 @@ func (chr *DatasourceHashRingType) Set(datasourceId string, r *consistent.Consis
 	chr.Rings[datasourceId] = r
 }
 
+func (chr *DatasourceHashRingType) Del(datasourceId string) {
+	chr.Lock()
+	defer chr.Unlock()
+	delete(chr.Rings, datasourceId)
+}
+
 func (chr *DatasourceHashRingType) Clear(engineName string) {
 	chr.Lock()
 	defer chr.Unlock()
