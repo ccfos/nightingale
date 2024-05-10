@@ -173,7 +173,7 @@ ops:
   - "/busi-groups/del"
 
 - name: builtin-metrics
-  cname: 内置指标
+  cname: 指标视图
   ops:
     - "/metrics-built-in"
     - "/builtin-metrics/add"
