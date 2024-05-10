@@ -654,6 +654,18 @@ CREATE TABLE `builtin_metrics` (
     INDEX `idx_lang` (`lang`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `metric_filter` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'unique identifier',
+  `name` varchar(191) NOT NULL COMMENT 'name of metric filter',
+  `configs` varchar(4096) NOT NULL COMMENT 'configuration of metric filter',
+  `groups_perm` text,
+  `create_at` bigint NOT NULL DEFAULT '0' COMMENT 'create time',
+  `create_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'creator',
+  `update_at` bigint NOT NULL DEFAULT '0' COMMENT 'update time',
+  `update_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'updater',
+  PRIMARY KEY (`id`),
+  KEY `idx_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `task_meta`
 (
