@@ -3,7 +3,6 @@ package integration
 import (
 	"encoding/json"
 	"path"
-	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -32,145 +31,145 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 
 		// get logo name
 		// /api/n9e/integrations/icon/AliYun/aliyun.png
-		files, err := file.FilesUnder(componentDir + "/icon")
-		if err == nil && len(files) > 0 {
-			component.Logo = "/api/n9e/integrations/icon/" + component.Ident + "/" + files[0]
-		} else if err != nil {
-			logger.Warningf("read builtin component icon dir fail %s %v", component.Ident, err)
-		}
+		// files, err := file.FilesUnder(componentDir + "/icon")
+		// if err == nil && len(files) > 0 {
+		// 	component.Logo = "/api/n9e/integrations/icon/" + component.Ident + "/" + files[0]
+		// } else if err != nil {
+		// 	logger.Warningf("read builtin component icon dir fail %s %v", component.Ident, err)
+		// }
 
-		// get description
-		files, err = file.FilesUnder(componentDir + "/markdown")
-		if err == nil && len(files) > 0 {
-			var readmeFile string
-			for _, file := range files {
-				if strings.HasSuffix(strings.ToLower(file), "md") {
-					readmeFile = file
-				}
-			}
-			if readmeFile != "" {
-				component.Readme, _ = file.ReadString(readmeFile)
-			}
-		} else if err != nil {
-			logger.Warningf("read builtin component markdown dir fail %s %v", component.Ident, err)
-		}
+		// // get description
+		// files, err = file.FilesUnder(componentDir + "/markdown")
+		// if err == nil && len(files) > 0 {
+		// 	var readmeFile string
+		// 	for _, file := range files {
+		// 		if strings.HasSuffix(strings.ToLower(file), "md") {
+		// 			readmeFile = file
+		// 		}
+		// 	}
+		// 	if readmeFile != "" {
+		// 		component.Readme, _ = file.ReadString(readmeFile)
+		// 	}
+		// } else if err != nil {
+		// 	logger.Warningf("read builtin component markdown dir fail %s %v", component.Ident, err)
+		// }
 
-		exists, _ := models.BuiltinComponentExists(ctx, &component)
-		if !exists {
-			err = component.Add(ctx, "system")
-			if err != nil {
-				logger.Warning("add builtin component fail ", component, err)
-				continue
-			}
-		}
+		// exists, _ := models.BuiltinComponentExists(ctx, &component)
+		// if !exists {
+		// 	err = component.Add(ctx, "system")
+		// 	if err != nil {
+		// 		logger.Warning("add builtin component fail ", component, err)
+		// 		continue
+		// 	}
+		// }
 
-		// alerts
-		files, err = file.FilesUnder(componentDir + "/alerts")
-		if err == nil && len(files) > 0 {
-			for _, f := range files {
-				fp := componentDir + "/alerts/" + f
-				bs, err := file.ReadBytes(fp)
-				if err != nil {
-					logger.Warning("read builtin component alerts file fail ", f, err)
-					continue
-				}
+		// // alerts
+		// files, err = file.FilesUnder(componentDir + "/alerts")
+		// if err == nil && len(files) > 0 {
+		// 	for _, f := range files {
+		// 		fp := componentDir + "/alerts/" + f
+		// 		bs, err := file.ReadBytes(fp)
+		// 		if err != nil {
+		// 			logger.Warning("read builtin component alerts file fail ", f, err)
+		// 			continue
+		// 		}
 
-				alerts := []models.AlertRule{}
-				err = json.Unmarshal(bs, &alerts)
-				if err != nil {
-					logger.Warning("parse builtin component alerts file fail ", f, err)
-					continue
-				}
+		// 		alerts := []models.AlertRule{}
+		// 		err = json.Unmarshal(bs, &alerts)
+		// 		if err != nil {
+		// 			logger.Warning("parse builtin component alerts file fail ", f, err)
+		// 			continue
+		// 		}
 
-				for _, alert := range alerts {
-					content, err := json.Marshal(alert)
-					if err != nil {
-						logger.Warning("marshal builtin alert fail ", alert, err)
-						continue
-					}
+		// 		for _, alert := range alerts {
+		// 			content, err := json.Marshal(alert)
+		// 			if err != nil {
+		// 				logger.Warning("marshal builtin alert fail ", alert, err)
+		// 				continue
+		// 			}
 
-					cate := strings.Replace(f, ".json", "", -1)
-					builtinAlert := models.BuiltinPayload{
-						Component: component.Ident,
-						Type:      "alert",
-						Cate:      cate,
-						Name:      alert.Name,
-						Content:   string(content),
-					}
+		// 			cate := strings.Replace(f, ".json", "", -1)
+		// 			builtinAlert := models.BuiltinPayload{
+		// 				Component: component.Ident,
+		// 				Type:      "alert",
+		// 				Cate:      cate,
+		// 				Name:      alert.Name,
+		// 				Content:   string(content),
+		// 			}
 
-					exists, err := models.BuiltinPayloadExists(ctx, &builtinAlert)
-					if err != nil {
-						logger.Warning("check builtin alert exists fail ", builtinAlert, err)
-						continue
-					}
+		// 			exists, err := models.BuiltinPayloadExists(ctx, &builtinAlert)
+		// 			if err != nil {
+		// 				logger.Warning("check builtin alert exists fail ", builtinAlert, err)
+		// 				continue
+		// 			}
 
-					if exists {
-						continue
-					}
+		// 			if exists {
+		// 				continue
+		// 			}
 
-					err = builtinAlert.Add(ctx, "system")
-					if err != nil {
-						logger.Warningf("add builtin alert:%+v fail %v", builtinAlert, err)
-						continue
-					}
-				}
-			}
-		}
+		// 			err = builtinAlert.Add(ctx, "system")
+		// 			if err != nil {
+		// 				logger.Warningf("add builtin alert:%+v fail %v", builtinAlert, err)
+		// 				continue
+		// 			}
+		// 		}
+		// 	}
+		// }
 
-		// dashboards
-		files, err = file.FilesUnder(componentDir + "/dashboards")
-		if err == nil && len(files) > 0 {
-			for _, f := range files {
-				fp := componentDir + "/dashboards/" + f
-				bs, err := file.ReadBytes(fp)
-				if err != nil {
-					logger.Warning("read builtin component dashboards file fail ", f, err)
-					continue
-				}
+		// // dashboards
+		// files, err = file.FilesUnder(componentDir + "/dashboards")
+		// if err == nil && len(files) > 0 {
+		// 	for _, f := range files {
+		// 		fp := componentDir + "/dashboards/" + f
+		// 		bs, err := file.ReadBytes(fp)
+		// 		if err != nil {
+		// 			logger.Warning("read builtin component dashboards file fail ", f, err)
+		// 			continue
+		// 		}
 
-				dashboard := BuiltinBoard{}
-				err = json.Unmarshal(bs, &dashboard)
-				if err != nil {
-					logger.Warning("parse builtin component dashboards file fail ", f, err)
-					continue
-				}
+		// 		dashboard := BuiltinBoard{}
+		// 		err = json.Unmarshal(bs, &dashboard)
+		// 		if err != nil {
+		// 			logger.Warning("parse builtin component dashboards file fail ", f, err)
+		// 			continue
+		// 		}
 
-				content, err := json.Marshal(dashboard)
-				if err != nil {
-					logger.Warning("marshal builtin dashboard fail ", dashboard, err)
-					continue
-				}
+		// 		content, err := json.Marshal(dashboard)
+		// 		if err != nil {
+		// 			logger.Warning("marshal builtin dashboard fail ", dashboard, err)
+		// 			continue
+		// 		}
 
-				builtinDashboard := models.BuiltinPayload{
-					Component: component.Ident,
-					Type:      "dashboard",
-					Cate:      "",
-					Name:      dashboard.Name,
-					Content:   string(content),
-				}
+		// 		builtinDashboard := models.BuiltinPayload{
+		// 			Component: component.Ident,
+		// 			Type:      "dashboard",
+		// 			Cate:      "",
+		// 			Name:      dashboard.Name,
+		// 			Content:   string(content),
+		// 		}
 
-				exists, err := models.BuiltinPayloadExists(ctx, &builtinDashboard)
-				if err != nil {
-					logger.Warning("check builtin dashboard exists fail ", builtinDashboard, err)
-					continue
-				}
+		// 		exists, err := models.BuiltinPayloadExists(ctx, &builtinDashboard)
+		// 		if err != nil {
+		// 			logger.Warning("check builtin dashboard exists fail ", builtinDashboard, err)
+		// 			continue
+		// 		}
 
-				if exists {
-					continue
-				}
+		// 		if exists {
+		// 			continue
+		// 		}
 
-				err = builtinDashboard.Add(ctx, "system")
-				if err != nil {
-					logger.Warning("add builtin dashboard fail ", builtinDashboard, err)
-					continue
-				}
-			}
-		} else if err != nil {
-			logger.Warningf("read builtin component dash dir fail %s %v", component.Ident, err)
-		}
+		// 		err = builtinDashboard.Add(ctx, "system")
+		// 		if err != nil {
+		// 			logger.Warning("add builtin dashboard fail ", builtinDashboard, err)
+		// 			continue
+		// 		}
+		// 	}
+		// } else if err != nil {
+		// 	logger.Warningf("read builtin component dash dir fail %s %v", component.Ident, err)
+		// }
 
 		// metrics
-		files, err = file.FilesUnder(componentDir + "/metrics")
+		files, err := file.FilesUnder(componentDir + "/metrics")
 		if err == nil && len(files) > 0 {
 			for _, f := range files {
 				fp := componentDir + "/metrics/" + f
