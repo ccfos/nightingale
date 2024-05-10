@@ -227,8 +227,14 @@ func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64) {
 		if _, has := alertingKeys[hash]; has {
 			continue
 		}
+
+		// todo 对恢复事件进行合并处理
 		p.RecoverSingle(hash, now, nil)
 	}
+}
+
+func (p *Processor) HandleRecoverEvent(anomalyPoints []common.AnomalyPoint, from string, inhibit bool) {
+	// p.RecoverSingle(event.Hash, event.LastEvalTime, &event.TriggerValue, event.TriggerValues)
 }
 
 func (p *Processor) RecoverSingle(hash string, now int64, value *string, values ...string) {

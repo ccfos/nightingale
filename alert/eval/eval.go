@@ -128,7 +128,15 @@ func (arw *AlertRuleWorker) Eval() {
 		return
 	}
 
+	pointsMap := make(map[string][]common.AnomalyPoint)
 	for _, point := range recoverPoints {
+		// 对于恢复的事件，合并处理
+		tagHash := process.TagHash(point)
+		pointsMap[tagHash] = append(pointsMap[tagHash], point)
+	}
+
+	for _, point := range recoverPoints {
+
 		str := fmt.Sprintf("%v", point.Value)
 		arw.processor.RecoverSingle(process.Hash(cachedRule.Id, arw.processor.DatasourceId(), point), point.Timestamp, &str)
 	}
