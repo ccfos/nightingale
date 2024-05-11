@@ -207,6 +207,11 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.ExtraConfig = p.rule.ExtraConfigJSON
 	event.PromQl = anomalyPoint.Query
 
+	if event.TriggerValues != "" && strings.Count(event.TriggerValues, "$") > 1 {
+		// TriggerValues 有多个变量，将多个变量都放到 TriggerValue 中
+		event.TriggerValue = event.TriggerValues
+	}
+
 	if from == "inner" {
 		event.LastEvalTime = now
 	} else {
