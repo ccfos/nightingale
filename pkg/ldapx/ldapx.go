@@ -188,11 +188,12 @@ func (s *SsoClient) newLdapConn() (*ldap.Conn, error) {
 	} else {
 		conn, err = ldap.Dial("tcp", addr)
 	}
-	conn.SetTimeout(time.Second * 10)
 
 	if err != nil {
 		return nil, fmt.Errorf("ldap.error: cannot dial ldap(%s): %v", addr, err)
 	}
+
+	conn.SetTimeout(time.Second * 10)
 
 	if !s.TLS && s.StartTLS {
 		if err := conn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
