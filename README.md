@@ -32,7 +32,7 @@
 
 
 ## 快速开始
-- 👉[文档](https://flashcat.cloud/docs/) | [下载](https://flashcat.cloud/download/nightingale/) | [安装](https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v6/install/intro/)
+- 👉[文档中心](https://flashcat.cloud/docs/) | [下载中心](https://flashcat.cloud/download/nightingale/)
 - ❤️[报告 Bug](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&projects=&template=bug_report.yml)
 - ℹ️为了提供更快速的访问体验，上述文档和下载站点托管于 [FlashcatCloud](https://flashcat.cloud)
 
