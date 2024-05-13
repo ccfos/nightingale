@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/toolkits/pkg/logger"
 )
 
 type UserGroupMember struct {
@@ -90,38 +91,40 @@ func UserGroupMemberSync(ctx *ctx.Context, ldapGids []int64, userId int64, cover
 	}
 
 	// queries all the groups that the user is currently in
-	allGrpIds, err := MyGroupIds(ctx, userId)
+	curGids, err := MyGroupIds(ctx, userId)
 	if err != nil {
 		return err
 	}
 
-	n := len(allGrpIds)
-	allSet := slice2Set(allGrpIds)            // All the current groups Set
-	toInsert := make([]UserGroupMember, 0, n) // Will be added
+	curGidsCount := len(curGids)
+	curGidSet := slice2Set(curGids)                      // All the current groups Set
+	toInsert := make([]UserGroupMember, 0, curGidsCount) // Will be added
 
 	// Prepare data for bulk insertion
 	for _, gid := range ldapGids {
-		if !allSet[gid] {
+		if !curGidSet[gid] {
 			// Add only groups where the user does not already exist
 			toInsert = append(toInsert, UserGroupMember{GroupId: gid, UserId: userId})
-			allSet[gid] = true
+			curGidSet[gid] = true
 		}
 	}
-	// Bulk insert data
-	if len(toInsert) == 0 {
+
+	if len(toInsert) > 0 {
+		err = DB(ctx).CreateInBatches(toInsert, 10).Error
+		if err != nil {
+			logger.Warningf("failed to insert user(%d) group member err: %+v", userId, err)
+		}
+	}
+
+	if !coverTeams || len(curGids) == 0 {
 		return nil
 	}
 
-	err = DB(ctx).CreateInBatches(toInsert, 10).Error
-	if err != nil || !coverTeams {
-		return err
-	}
-
 	// 需要将用户在 ldap 中没有, n9e 中有的团队删除
-	ldapGidSet := slice2Set(ldapGids)  // The group to be processed Set
-	toDeleteIds := make([]int64, 0, n) // The group ID to be deleted
+	ldapGidSet := slice2Set(ldapGids)
+	toDeleteIds := make([]int64, 0, curGidsCount)
 
-	for _, gid := range allGrpIds {
+	for _, gid := range curGids {
 		if !ldapGidSet[gid] {
 			toDeleteIds = append(toDeleteIds, gid)
 			ldapGidSet[gid] = true
