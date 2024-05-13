@@ -185,7 +185,7 @@ func Init(center cconf.Center, ctx *ctx.Context) *SsoClient {
 		}
 	}
 
-	ssoClient.SyncSsoUsers(ctx)
+	go ssoClient.SyncSsoUsers(ctx)
 	go ssoClient.Reload(ctx)
 	return ssoClient
 }

@@ -102,8 +102,7 @@ func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
 			roleTeamMapping.Roles = lc.DefaultRoles
 		}
 		user := new(models.User)
-		user.FullSsoFieldsWithTeams("ldap", username, nickname, phone, email, roleTeamMapping.Roles,
-			roleTeamMapping.Teams, lc.CoverTeams)
+		user.FullSsoFieldsWithTeams("ldap", username, nickname, phone, email, roleTeamMapping.Roles, roleTeamMapping.Teams)
 
 		res[entry.GetAttributeValue(attrs.Username)] = user
 	}

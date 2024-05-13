@@ -172,7 +172,7 @@ func (u *User) FullSsoFields(sso, username, nickname, phone, email string, defau
 }
 
 func (u *User) FullSsoFieldsWithTeams(sso, username, nickname, phone, email string, defaultRoles []string,
-	teams []int64, coverTeams bool) {
+	teams []int64) {
 	u.FullSsoFields(sso, username, nickname, phone, email, defaultRoles)
 	u.TeamsLst = teams
 }
