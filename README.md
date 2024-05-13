@@ -48,8 +48,25 @@
 - 👀无缝搭配 [Flashduty](https://flashcat.cloud/product/flashcat-duty/)：实现告警聚合收敛、认领、升级、排班、IM集成，确保告警处理不遗漏，减少打扰，高效协同。
 
 
-## 功能演示
-![演示](https://fcpub-1301667576.cos.ap-nanjing.myqcloud.com/n9e/n9e-demo.gif)
+## 截图演示
+
+即时查询，类似 Prometheus 内置的查询分析页面，做 ad-hoc 查询，夜莺做了一些 UI 优化，同时提供了一些内置 promql 指标，让不太了解 promql 的用户也可以快速查询。
+
+![即时查询](https://download.flashcat.cloud/ulric/20240513103305.png)
+
+当然，也可以直接通过指标视图查看，有了指标视图，即时查询基本可以不用了，或者只有高端玩家使用即时查询，普通用户直接通过指标视图查询即可。
+
+![指标视图](https://download.flashcat.cloud/ulric/20240513103530.png)
+
+夜莺内置了常用仪表盘，可以直接导入使用。也可以导入 Grafana 仪表盘，不过只能兼容 Grafana 基本图表，如果已经习惯了 Grafana 建议继续使用 Grafana 看图，把夜莺作为一个告警引擎使用。
+
+![内置仪表盘](https://download.flashcat.cloud/ulric/20240513103628.png)
+
+除了内置的仪表盘，也内置了很多告警规则，开箱即用。
+
+![内置告警规则](https://download.flashcat.cloud/ulric/20240513103825.png)
+
+
 
 ## 产品架构
 
