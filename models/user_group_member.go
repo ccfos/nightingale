@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+
 	"github.com/toolkits/pkg/logger"
 )
 

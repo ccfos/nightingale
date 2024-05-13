@@ -24,7 +24,7 @@ func (s *SsoClient) SyncAddAndDelUsers(ctx *ctx.Context) error {
 		return err
 	}
 
-	usersToBeAdd, usersExists := partitionAndUpdateUsers(usersFromDb, usersFromSso)
+	usersToBeAdd, usersExists := diffUsers(usersFromDb, usersFromSso)
 	// Incremental users synchronize both user information and group information
 	for _, user := range usersToBeAdd {
 		if err = user.AddUserAndGroups(ctx, s.CoverTeams); err != nil {
@@ -41,7 +41,7 @@ func (s *SsoClient) SyncAddAndDelUsers(ctx *ctx.Context) error {
 
 	var usersToBeDel []*models.User
 	if s.SyncDel {
-		usersToBeDel, _ = partitionAndUpdateUsers(usersFromSso, usersFromDb)
+		usersToBeDel, _ = diffUsers(usersFromSso, usersFromDb)
 		if len(usersToBeDel) > 0 {
 			delIds := make([]int64, 0, len(usersToBeDel))
 			for _, user := range usersToBeDel {
@@ -112,7 +112,7 @@ func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
 
 // newExtraUsers: in newUsers not in base
 // updatedUsers: in newUsers and in base, update the user.TeamsLst data
-func partitionAndUpdateUsers(base, newUsers map[string]*models.User) (newExtraUsers, updatedUsers []*models.User) {
+func diffUsers(base, newUsers map[string]*models.User) (newExtraUsers, updatedUsers []*models.User) {
 	for username, user := range newUsers {
 		if baseUser, exist := base[username]; !exist {
 			newExtraUsers = append(newExtraUsers, user)
