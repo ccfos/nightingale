@@ -51,14 +51,15 @@
 ## 功能演示
 ![演示](https://fcpub-1301667576.cos.ap-nanjing.myqcloud.com/n9e/n9e-demo.gif)
 
-## 部署架构
-<p align=center>中心化部署</p>
+## 产品架构
 
-![中心化部署](https://fcpub-1301667576.cos.ap-nanjing.myqcloud.com/flashcat/images/blog/n9e-opensource-china/8.png)
+社区使用夜莺最多的场景就是使用夜莺做告警引擎，对接多套时序库，统一告警规则管理。绘图仍然使用 Grafana 居多。作为一个告警引擎，夜莺的产品架构如下：
 
-<p align=center>多机房部署</p>
+![产品架构](https://download.flashcat.cloud/ulric/20240221152601.png)
 
-![多机房部署](https://fcpub-1301667576.cos.ap-nanjing.myqcloud.com/flashcat/images/blog/n9e-opensource-china/9.png)
+对于个别边缘机房，如果和中心夜莺服务端网络链路不好，希望提升告警可用性，我们也提供边缘机房告警引擎下沉部署模式，这个模式下，即便网络割裂，告警功能也不受影响。
+
+![边缘部署模式](https://download.flashcat.cloud/ulric/20240222102119.png)
 
 ## 交流渠道
 - 报告Bug，优先推荐提交[夜莺GitHub Issue](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&projects=&template=bug_report.yml)
