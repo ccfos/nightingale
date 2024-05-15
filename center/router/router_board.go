@@ -300,7 +300,7 @@ func (rt *Router) boardClone(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	bo := rt.Board(ginx.UrlParamInt64(c, "bid"))
 
-	newBoard := bo.Clone(me.Username, bo.GroupId)
+	newBoard := bo.Clone(me.Username, bo.GroupId, " Cloned")
 
 	ginx.Dangerous(newBoard.Add(rt.Ctx))
 
@@ -335,7 +335,7 @@ func (rt *Router) boardBatchClone(c *gin.Context) {
 	for _, bgid := range f.Bgids {
 		for _, bid := range f.BoardIds {
 			bo := rt.Board(bid)
-			newBoard := bo.Clone(me.Username, bgid)
+			newBoard := bo.Clone(me.Username, bgid, "")
 			payload, err := models.BoardPayloadGet(rt.Ctx, bo.Id)
 			if err != nil {
 				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = i18n.Sprintf(lang, err.Error())
