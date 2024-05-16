@@ -416,7 +416,7 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 	}
 
 	var lst []AlertCurEvent
-	err := session.Order("id desc").Limit(limit).Offset(offset).Find(&lst).Error
+	err := session.Order("trigger_time desc").Limit(limit).Offset(offset).Find(&lst).Error
 
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
