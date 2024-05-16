@@ -1,7 +1,7 @@
 {
     "name": "机器常用指标",
     "tags": "",
-    "ident": "host-generic",
+    "ident": "",
     "configs": {
         "links": [
             {
