@@ -528,7 +528,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "procstat_read_bytes_total{ident=~\"$ident\", search_string=~\"$search_string\"}"
+                        "expr": "rate(procstat_read_bytes_total{ident=~\"$ident\", search_string=~\"$search_string\"}[2m])"
                     }
                 ],
                 "transformations": [
@@ -590,7 +590,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "procstat_read_bytes_total{ident=~\"$ident\", search_string=~\"$search_string\"}"
+                        "expr": "rate(procstat_write_bytes_total{ident=~\"$ident\", search_string=~\"$search_string\"}[2m])"
                     }
                 ],
                 "transformations": [
