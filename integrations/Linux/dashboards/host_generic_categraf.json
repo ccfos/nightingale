@@ -571,7 +571,7 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "disk_free{ident=~\"$ident\"}",
+                        "expr": "bottomk(10,disk_free{ident=~\"$ident\"})",
                         "maxDataPoints": 240,
                         "refId": "A",
                         "legend": "{{ident}} {{path}}"
@@ -583,14 +583,14 @@
                         "options": {}
                     }
                 ],
-                "name": "磁盘剩余空间",
+                "name": "磁盘剩余空间（最小的10个）",
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
                         "mode": "single"
                     },
                     "legend": {
-                        "displayMode": "list",
+                        "displayMode": "hidden",
                         "placement": "right",
                         "columns": [
                             "last"
@@ -650,7 +650,7 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "disk_used_percent{ident=~\"$ident\"}",
+                        "expr": "topk(10, disk_used_percent{ident=~\"$ident\"})",
                         "refId": "A",
                         "maxDataPoints": 240,
                         "legend": "{{ident}} {{path}}",
@@ -663,14 +663,14 @@
                         "options": {}
                     }
                 ],
-                "name": "硬盘使用率历史趋势",
+                "name": "硬盘使用率历史趋势（最大的10个）",
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
                         "mode": "single"
                     },
                     "legend": {
-                        "displayMode": "list",
+                        "displayMode": "hidden",
                         "placement": "right",
                         "columns": [
                             "last"
@@ -732,7 +732,7 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "disk_inodes_used{ident=~\"$ident\"} / disk_inodes_total{ident=~\"$ident\"} * 100",
+                        "expr": "topk(10, 100 * disk_inodes_used{ident=~\"$ident\"} / disk_inodes_total{ident=~\"$ident\"})",
                         "legend": "{{ident}} {{path}}",
                         "maxDataPoints": 240,
                         "refId": "A",
@@ -745,14 +745,14 @@
                         "options": {}
                     }
                 ],
-                "name": "INODE 使用率",
+                "name": "INODE 使用率（最大的10个）",
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
                         "mode": "single"
                     },
                     "legend": {
-                        "displayMode": "list",
+                        "displayMode": "hidden",
                         "placement": "right",
                         "columns": [
                             "last"
@@ -1463,13 +1463,8 @@
             },
             {
                 "name": "ident",
-                "label": "机器",
-                "type": "query",
-                "datasource": {
-                    "cate": "prometheus",
-                    "value": "${prom}"
-                },
-                "definition": "label_values(system_load1,ident)",
+                "label": "业务组内机器",
+                "type": "hostIdent",
                 "multi": true,
                 "allOption": true
             }
