@@ -165,7 +165,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		p.handleEvent(events)
 	}
 
-	p.HandleRecover(alertingKeys, now)
+	p.HandleRecover(alertingKeys, now, inhibit)
 }
 
 func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, now int64) *models.AlertCurEvent {
@@ -220,7 +220,7 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	return event
 }
 
-func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64) {
+func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64, inhibit bool) {
 	for _, hash := range p.pendings.Keys() {
 		if _, has := alertingKeys[hash]; has {
 			continue
@@ -228,18 +228,58 @@ func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64) {
 		p.pendings.Delete(hash)
 	}
 
+	hashArr := make([]string, 0, len(alertingKeys))
 	for hash := range p.fires.GetAll() {
 		if _, has := alertingKeys[hash]; has {
 			continue
 		}
 
+		hashArr = append(hashArr, hash)
+
 		// todo 对恢复事件进行合并处理
-		p.RecoverSingle(hash, now, nil)
+		// p.RecoverSingle(hash, now, nil)
 	}
+	p.HandleRecoverEvent(hashArr, now, inhibit)
+
 }
 
-func (p *Processor) HandleRecoverEvent(anomalyPoints []common.AnomalyPoint, from string, inhibit bool) {
-	// p.RecoverSingle(event.Hash, event.LastEvalTime, &event.TriggerValue, event.TriggerValues)
+func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool) {
+	cachedRule := p.rule
+	if cachedRule == nil {
+		return
+	}
+
+	if !inhibit {
+		for _, hash := range hashArr {
+			p.RecoverSingle(hash, now, nil)
+		}
+		return
+	}
+
+	eventMap := make(map[string]models.AlertCurEvent)
+	for _, hash := range hashArr {
+		event, has := p.fires.Get(hash)
+		if !has {
+			continue
+		}
+
+		e, exists := eventMap[event.Tags]
+		if !exists {
+			eventMap[event.Tags] = *event
+			continue
+		}
+
+		if e.Severity < event.Severity {
+			// hash 对应的恢复事件的被抑制了，把之前的事件删除
+			p.fires.Delete(e.Hash)
+			p.pendings.Delete(e.Hash)
+			eventMap[event.Tags] = *event
+		}
+	}
+
+	for _, event := range eventMap {
+		p.RecoverSingle(event.Hash, now, nil)
+	}
 }
 
 func (p *Processor) RecoverSingle(hash string, now int64, value *string, values ...string) {
