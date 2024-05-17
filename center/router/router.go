@@ -92,14 +92,14 @@ func languageDetector(i18NHeaderKey string) gin.HandlerFunc {
 			lang := c.GetHeader(headerKey)
 			if lang != "" {
 				if strings.HasPrefix(lang, "zh") {
-					c.Request.Header.Set("X-Language", "zh")
+					c.Request.Header.Set("X-Language", "zh_CN")
 				} else if strings.HasPrefix(lang, "en") {
 					c.Request.Header.Set("X-Language", "en")
 				} else {
 					c.Request.Header.Set("X-Language", lang)
 				}
 			} else {
-				c.Request.Header.Set("X-Language", "en")
+				c.Request.Header.Set("X-Language", "zh_CN")
 			}
 		}
 		c.Next()
@@ -229,6 +229,20 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/metric-views", rt.auth(), rt.user(), rt.metricViewAdd)
 		pages.PUT("/metric-views", rt.auth(), rt.user(), rt.metricViewPut)
 
+		pages.GET("/builtin-metric-filters", rt.auth(), rt.user(), rt.metricFilterGets)
+		pages.DELETE("/builtin-metric-filters", rt.auth(), rt.user(), rt.metricFilterDel)
+		pages.POST("/builtin-metric-filters", rt.auth(), rt.user(), rt.metricFilterAdd)
+		pages.PUT("/builtin-metric-filters", rt.auth(), rt.user(), rt.metricFilterPut)
+		pages.POST("/builtin-metric-promql", rt.auth(), rt.user(), rt.getMetricPromql)
+
+		pages.POST("/builtin-metrics", rt.auth(), rt.user(), rt.perm("/builtin-metrics/add"), rt.builtinMetricsAdd)
+		pages.PUT("/builtin-metrics", rt.auth(), rt.user(), rt.perm("/builtin-metrics/put"), rt.builtinMetricsPut)
+		pages.DELETE("/builtin-metrics", rt.auth(), rt.user(), rt.perm("/builtin-metrics/del"), rt.builtinMetricsDel)
+		pages.GET("/builtin-metrics", rt.auth(), rt.user(), rt.builtinMetricsGets)
+		pages.GET("/builtin-metrics/types", rt.auth(), rt.user(), rt.builtinMetricsTypes)
+		pages.GET("/builtin-metrics/types/default", rt.auth(), rt.user(), rt.builtinMetricsDefaultTypes)
+		pages.GET("/builtin-metrics/collectors", rt.auth(), rt.user(), rt.builtinMetricsCollectors)
+
 		pages.GET("/user-groups", rt.auth(), rt.user(), rt.userGroupGets)
 		pages.POST("/user-groups", rt.auth(), rt.user(), rt.perm("/user-groups/add"), rt.userGroupAdd)
 		pages.GET("/user-group/:id", rt.auth(), rt.user(), rt.userGroupGet)
@@ -273,7 +287,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.bgro(), rt.boardGets)
 		pages.POST("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards/add"), rt.bgrw(), rt.boardAdd)
 		pages.POST("/busi-group/:id/board/:bid/clone", rt.auth(), rt.user(), rt.perm("/dashboards/add"), rt.bgrw(), rt.boardClone)
-		pages.POST("/busi-group/:id/boards/clones", rt.auth(), rt.user(), rt.perm("/dashboards/add"), rt.boardBatchClone)
+		pages.POST("/busi-groups/boards/clones", rt.auth(), rt.user(), rt.perm("/dashboards/add"), rt.boardBatchClone)
 
 		pages.GET("/board/:bid", rt.boardGet)
 		pages.GET("/board/:bid/pure", rt.boardPureGet)
@@ -357,8 +371,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-group/:id/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks"), rt.bgro(), rt.taskGets)
 		pages.POST("/busi-group/:id/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks/add"), rt.bgrw(), rt.taskAdd)
 
-		pages.GET("/servers", rt.auth(), rt.perm("/help/servers"), rt.serversGet)
-		pages.GET("/server-clusters", rt.auth(), rt.perm("/help/servers"), rt.serverClustersGet)
+		pages.GET("/servers", rt.auth(), rt.user(), rt.perm("/help/servers"), rt.serversGet)
+		pages.GET("/server-clusters", rt.auth(), rt.user(), rt.perm("/help/servers"), rt.serverClustersGet)
 
 		pages.POST("/datasource/list", rt.auth(), rt.user(), rt.datasourceList)
 		pages.POST("/datasource/plugin/list", rt.auth(), rt.pluginList)
@@ -420,6 +434,16 @@ func (rt *Router) Config(r *gin.Engine) {
 		// for admin api
 		pages.GET("/user/busi-groups", rt.auth(), rt.admin(), rt.userBusiGroupsGets)
 
+		pages.POST("/builtin-components", rt.auth(), rt.user(), rt.perm("/builtin-components/add"), rt.builtinComponentsAdd)
+		pages.GET("/builtin-components", rt.auth(), rt.user(), rt.perm("/builtin-components"), rt.builtinComponentsGets)
+		pages.PUT("/builtin-components", rt.auth(), rt.user(), rt.perm("/builtin-components/put"), rt.builtinComponentsPut)
+		pages.DELETE("/builtin-components", rt.auth(), rt.user(), rt.perm("/builtin-components/del"), rt.builtinComponentsDel)
+
+		pages.POST("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads/add"), rt.builtinPayloadsAdd)
+		pages.GET("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads"), rt.builtinPayloadsGets)
+		pages.GET("/builtin-payload/:id", rt.auth(), rt.user(), rt.perm("/builtin-payloads"), rt.builtinPayloadGet)
+		pages.PUT("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads/put"), rt.builtinPayloadsPut)
+		pages.DELETE("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads/del"), rt.builtinPayloadsDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

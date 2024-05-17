@@ -11,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cconf/rsa"
 	"github.com/ccfos/nightingale/v6/center/cstats"
+	"github.com/ccfos/nightingale/v6/center/integration"
 	"github.com/ccfos/nightingale/v6/center/metas"
 	centerrt "github.com/ccfos/nightingale/v6/center/router"
 	"github.com/ccfos/nightingale/v6/center/sso"
@@ -68,6 +69,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
+	integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
 	var redis storage.Redis
 	redis, err = storage.NewRedis(config.Redis)
 	if err != nil {

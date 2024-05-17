@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -299,7 +300,7 @@ func (rt *Router) boardClone(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	bo := rt.Board(ginx.UrlParamInt64(c, "bid"))
 
-	newBoard := bo.Clone(me.Username, bo.GroupId)
+	newBoard := bo.Clone(me.Username, bo.GroupId, " Cloned")
 
 	ginx.Dangerous(newBoard.Add(rt.Ctx))
 
@@ -316,32 +317,34 @@ func (rt *Router) boardClone(c *gin.Context) {
 
 type boardsForm struct {
 	BoardIds []int64 `json:"board_ids"`
+	Bgids    []int64 `json:"bgids"`
 }
 
 func (rt *Router) boardBatchClone(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
-	bgid := ginx.UrlParamInt64(c, "id")
-	rt.bgrwCheck(c, bgid)
-
 	var f boardsForm
 	ginx.BindJSON(c, &f)
 
+	for _, bgid := range f.Bgids {
+		rt.bgrwCheck(c, bgid)
+	}
+
 	reterr := make(map[string]string, len(f.BoardIds))
 	lang := c.GetHeader("X-Language")
-	for _, bid := range f.BoardIds {
-		bo := rt.Board(bid)
 
-		newBoard := bo.Clone(me.Username, bgid)
-		payload, err := models.BoardPayloadGet(rt.Ctx, bo.Id)
-		if err != nil {
-			reterr[newBoard.Name] = i18n.Sprintf(lang, err.Error())
-			continue
-		}
+	for _, bgid := range f.Bgids {
+		for _, bid := range f.BoardIds {
+			bo := rt.Board(bid)
+			newBoard := bo.Clone(me.Username, bgid, "")
+			payload, err := models.BoardPayloadGet(rt.Ctx, bo.Id)
+			if err != nil {
+				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = i18n.Sprintf(lang, err.Error())
+				continue
+			}
 
-		if err = newBoard.AtomicAdd(rt.Ctx, payload); err != nil {
-			reterr[newBoard.Name] = i18n.Sprintf(lang, err.Error())
-		} else {
-			reterr[newBoard.Name] = ""
+			if err = newBoard.AtomicAdd(rt.Ctx, payload); err != nil {
+				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = i18n.Sprintf(lang, err.Error())
+			}
 		}
 	}
 

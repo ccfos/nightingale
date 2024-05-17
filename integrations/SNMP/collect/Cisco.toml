@@ -1,0 +1,106 @@
+[[instances]]
+
+agents = ["udp://127.0.0.1"]
+
+timeout = "5s"
+
+version = 2
+
+## Path to mib files
+## Used by the gosmi translator.
+## To add paths when translating with netsnmp, use the MIBDIRS environment variable
+##path = ["/usr/share/snmp/DCN"]
+##translator = "gosmi"
+
+community = "public"
+
+agent_host_tag = "DCN"
+
+retries = 3
+
+max_repetitions = 100
+
+##运行时间
+[[instances.field]]
+oid = "1.3.6.1.2.1.1.3.0"
+name = "sys_uptime"
+conversion = "float(2)"
+
+[[instances.field]]
+oid = "1.3.6.1.4.1.6339.100.1.11.10.0"
+name = "cpu_usage"
+
+[[instances.field]]
+oid = "1.3.6.1.4.1.6339.100.1.11.6.0"
+name = "mem_max"
+
+[[instances.field]]
+oid = "1.3.6.1.4.1.6339.100.1.11.7.0"
+name = "mem_use"
+
+#端口总和
+[[instances.field]]
+name = "TotalPorts"
+oid = "1.3.6.1.4.1.6339.100.3.1.0"
+
+##设备名称
+[[instances.field]]
+oid = "1.3.6.1.2.1.1.5.0"
+name = "sys_name"
+is_tag = true
+
+##产品型号
+[[instances.field]]
+name = "sys_pm"
+oid = "1.3.6.1.4.1.6339.100.25.1.1.1.0"
+is_tag = true
+
+#本机IP
+[[instances.field]]
+name = "LocalIP"
+oid = "1.3.6.1.2.1.4.20.1.1"
+is_tag = true
+
+#接口表信息
+[[instances.table]]
+name = "interface"
+inherit_tags = ["sys_name","sys_pm","LocalIP"]
+
+#各个端口
+[[instances.table.field]]
+name = "ifDescr"
+oid = "1.3.6.1.2.1.2.2.1.2"
+is_tag = true
+
+[[instances.table.field]]
+name = "ifSpeed"
+oid = "1.3.6.1.2.1.2.2.1.5"
+conversion = "float(6)"
+#is_tag = true
+
+[[instances.table.field]]
+name = "ifOperStatus"
+oid = "1.3.6.1.2.1.2.2.1.8"
+#is_tag = true
+
+[[instances.table.field]]
+name = "ifOutOctets"
+oid = "1.3.6.1.2.1.2.2.1.16"
+
+[[instances.table.field]]
+name = "ifInOctets"
+oid = "1.3.6.1.2.1.2.2.1.10"
+
+
+#聚合状态
+#oid = "1.3.6.1.4.1.6339.100.14.2.1.4.1.1.*"
+
+#聚合端口
+#oid = "1.3.6.1.4.1.6339.100.14.3.1.2"
+
+
+
+
+
+
+

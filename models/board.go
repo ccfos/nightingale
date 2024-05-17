@@ -52,13 +52,17 @@ func (b *Board) Verify() error {
 	return nil
 }
 
-func (b *Board) Clone(operatorName string, newBgid int64) *Board {
+func (b *Board) Clone(operatorName string, newBgid int64, suffix string) *Board {
 	clone := &Board{
-		Name:     b.Name + " Cloned",
+		Name:     b.Name,
 		Tags:     b.Tags,
 		GroupId:  newBgid,
 		CreateBy: operatorName,
 		UpdateBy: operatorName,
+	}
+
+	if suffix != "" {
+		clone.Name = clone.Name + " " + suffix
 	}
 
 	if b.Ident != "" {

@@ -195,7 +195,7 @@ func Init(center cconf.Center, ctx *ctx.Context, configCache *memsto.ConfigCache
 		}
 	}
 
-	ssoClient.SyncSsoUsers(ctx)
+	go ssoClient.SyncSsoUsers(ctx)
 	go ssoClient.Reload(ctx)
 	return ssoClient
 }

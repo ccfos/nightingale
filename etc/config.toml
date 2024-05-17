@@ -165,7 +165,7 @@ MaxIdleConnsPerHost = 100
 # TLSCert = "/etc/n9e/cert.pem"
 # TLSKey = "/etc/n9e/key.pem"
 # InsecureSkipVerify = false
-# [[Writers.WriteRelabels]]
+# [[Pushgw.Writers.WriteRelabels]]
 # Action = "replace"
 # SourceLabels = ["__address__"]
 # Regex = "([^:]+)(?::\\d+)?"

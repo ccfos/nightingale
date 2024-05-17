@@ -49,6 +49,7 @@ type User struct {
 	Portrait      string          `json:"portrait"`
 	Roles         string          `json:"-"`              // 这个字段写入数据库
 	RolesLst      []string        `json:"roles" gorm:"-"` // 这个字段和前端交互
+	TeamsLst      []int64         `json:"-" gorm:"-"`     // 这个字段方便映射团队，前端和数据库都不用到
 	Contacts      ormx.JSONObj    `json:"contacts"`       // 内容为 map[string]string 结构
 	Maintainer    int             `json:"maintainer"`     // 是否给管理员发消息 0:not send 1:send
 	CreateAt      int64           `json:"create_at"`
@@ -138,6 +139,19 @@ func (u *User) UpdateSsoFields(sso string, nickname, phone, email string) []inte
 	return updatedFields
 }
 
+func (u *User) UpdateSsoFieldsWithRoles(sso string, nickname, phone, email string, roles []string) []interface{} {
+	updatedFields := u.UpdateSsoFields(sso, nickname, phone, email)
+
+	if len(roles) == 0 {
+		return updatedFields
+	}
+
+	u.Roles = strings.Join(roles, " ")
+	u.RolesLst = roles
+
+	return append(updatedFields, "roles")
+}
+
 func (u *User) FullSsoFields(sso, username, nickname, phone, email string, defaultRoles []string) {
 	now := time.Now().Unix()
 
@@ -155,6 +169,12 @@ func (u *User) FullSsoFields(sso, username, nickname, phone, email string, defau
 	u.CreateBy = sso
 	u.UpdateBy = sso
 	u.Belong = sso
+}
+
+func (u *User) FullSsoFieldsWithTeams(sso, username, nickname, phone, email string, defaultRoles []string,
+	teams []int64) {
+	u.FullSsoFields(sso, username, nickname, phone, email, defaultRoles)
+	u.TeamsLst = teams
 }
 
 func (u *User) Add(ctx *ctx.Context) error {
@@ -680,4 +700,20 @@ func (u *User) FindSameContact(email, phone string) string {
 	}
 
 	return ""
+}
+
+// AddUserAndGroups Add a user and add it to multiple groups in a single transaction
+func (u *User) AddUserAndGroups(ctx *ctx.Context, coverTeams bool) error {
+
+	// Try to add a user
+	if err := u.Add(ctx); err != nil {
+		return errors.WithMessage(err, "failed to add user")
+	}
+
+	// Try to add a group for the user
+	if err := UserGroupMemberSyncByUser(ctx, u, coverTeams); err != nil {
+		return errors.WithMessage(err, "failed to add user to groups")
+	}
+
+	return nil
 }

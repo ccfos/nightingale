@@ -28,35 +28,55 @@
 [English](./README_en.md) | [中文](./README.md)
 
 ## 夜莺 Nightingale 是什么
-夜莺 Nightingale 是中国计算机学会接受捐赠并托管的第一个开源项目，是一个 All-in-One 的云原生监控工具，集合了 Prometheus 和 Grafana 的优点，你可以在 WebUI 上管理和配置告警策略，也可以对分布在多个 Region 的指标、日志、链路追踪数据进行统一的可视化和分析。夜莺融入了一线互联网公司可观测性最佳实践，沉淀了众多社区专家经验，开箱即用。[了解更多...](https://flashcat.cloud/product/nightingale/)
+
+夜莺监控是一款开源云原生观测分析工具，采用 All-in-One 的设计理念，集数据采集、可视化、监控告警、数据分析于一体，与云原生生态紧密集成，提供开箱即用的企业级监控分析和告警能力。夜莺于 2020 年 3 月 20 日，在 github 上发布 v1 版本，已累计迭代 100 多个版本。
+
+夜莺最初由滴滴开发和开源，并于 2022 年 5 月 11 日，捐赠予中国计算机学会开源发展委员会（CCF ODC），为 CCF ODC 成立后接受捐赠的第一个开源项目。夜莺的核心研发团队，也是 Open-Falcon 项目原核心研发人员，从 2014 年（Open-Falcon 是 2014 年开源）算起来，也有 10 年了，只为把监控这个事情做好。
 
 
 ## 快速开始
-- 👉[文档](https://flashcat.cloud/docs/) | [提问](https://answer.flashcat.cloud/) | [下载](https://flashcat.cloud/download/nightingale/) | [安装](https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v6/install/intro/)
+- 👉[文档中心](https://flashcat.cloud/docs/) | [下载中心](https://flashcat.cloud/download/nightingale/)
 - ❤️[报告 Bug](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&projects=&template=bug_report.yml)
 - ℹ️为了提供更快速的访问体验，上述文档和下载站点托管于 [FlashcatCloud](https://flashcat.cloud)
 
 ## 功能特点
 
 - 对接多种时序库：支持对接 Prometheus、VictoriaMetrics、Thanos、Mimir、M3DB、TDengine 等多种时序库，实现统一告警管理。
-- 专业告警能力：内置支持多种告警规则，可以扩展支持常见通知媒介，支持告警屏蔽/抑制/聚合/自愈、告警事件管理。
+- 专业告警能力：内置支持多种告警规则，可以扩展支持常见通知媒介，支持告警屏蔽/抑制/订阅/自愈、告警事件管理。
 - 高性能可视化引擎：支持多种图表样式，内置众多 Dashboard 模版，也可导入 Grafana 模版，开箱即用，开源协议商业友好。
 - 支持常见采集器：支持 [Categraf](https://flashcat.cloud/product/categraf)、Telegraf、Grafana-agent、Datadog-agent、各种 Exporter 作为采集器，没有什么数据是不能监控的。
-- 一体化观测平台：从 V6 版本开始，支持对接 ElasticSearch、Jaeger 数据源，实现日志、链路、指标多维度的统一可观测。
 - 👀无缝搭配 [Flashduty](https://flashcat.cloud/product/flashcat-duty/)：实现告警聚合收敛、认领、升级、排班、IM集成，确保告警处理不遗漏，减少打扰，高效协同。
 
 
-## 功能演示
-![演示](https://fcpub-1301667576.cos.ap-nanjing.myqcloud.com/n9e/n9e-demo.gif)
+## 截图演示
 
-## 部署架构
-<p align=center>中心化部署</p>
+即时查询，类似 Prometheus 内置的查询分析页面，做 ad-hoc 查询，夜莺做了一些 UI 优化，同时提供了一些内置 promql 指标，让不太了解 promql 的用户也可以快速查询。
 
-![中心化部署](https://fcpub-1301667576.cos.ap-nanjing.myqcloud.com/flashcat/images/blog/n9e-opensource-china/8.png)
+![即时查询](https://download.flashcat.cloud/ulric/20240513103305.png)
 
-<p align=center>多机房部署</p>
+当然，也可以直接通过指标视图查看，有了指标视图，即时查询基本可以不用了，或者只有高端玩家使用即时查询，普通用户直接通过指标视图查询即可。
 
-![多机房部署](https://fcpub-1301667576.cos.ap-nanjing.myqcloud.com/flashcat/images/blog/n9e-opensource-china/9.png)
+![指标视图](https://download.flashcat.cloud/ulric/20240513103530.png)
+
+夜莺内置了常用仪表盘，可以直接导入使用。也可以导入 Grafana 仪表盘，不过只能兼容 Grafana 基本图表，如果已经习惯了 Grafana 建议继续使用 Grafana 看图，把夜莺作为一个告警引擎使用。
+
+![内置仪表盘](https://download.flashcat.cloud/ulric/20240513103628.png)
+
+除了内置的仪表盘，也内置了很多告警规则，开箱即用。
+
+![内置告警规则](https://download.flashcat.cloud/ulric/20240513103825.png)
+
+
+
+## 产品架构
+
+社区使用夜莺最多的场景就是使用夜莺做告警引擎，对接多套时序库，统一告警规则管理。绘图仍然使用 Grafana 居多。作为一个告警引擎，夜莺的产品架构如下：
+
+![产品架构](https://download.flashcat.cloud/ulric/20240221152601.png)
+
+对于个别边缘机房，如果和中心夜莺服务端网络链路不好，希望提升告警可用性，我们也提供边缘机房告警引擎下沉部署模式，这个模式下，即便网络割裂，告警功能也不受影响。
+
+![边缘部署模式](https://download.flashcat.cloud/ulric/20240222102119.png)
 
 ## 交流渠道
 - 报告Bug，优先推荐提交[夜莺GitHub Issue](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&projects=&template=bug_report.yml)
