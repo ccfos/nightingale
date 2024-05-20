@@ -165,7 +165,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		p.handleEvent(events)
 	}
 
-	p.HandleRecover(alertingKeys, now)
+	p.HandleRecover(alertingKeys, now, inhibit)
 }
 
 func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, now int64) *models.AlertCurEvent {
@@ -220,7 +220,7 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	return event
 }
 
-func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64) {
+func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64, inhibit bool) {
 	for _, hash := range p.pendings.Keys() {
 		if _, has := alertingKeys[hash]; has {
 			continue
@@ -228,11 +228,54 @@ func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64) {
 		p.pendings.Delete(hash)
 	}
 
+	hashArr := make([]string, 0, len(alertingKeys))
 	for hash := range p.fires.GetAll() {
 		if _, has := alertingKeys[hash]; has {
 			continue
 		}
-		p.RecoverSingle(hash, now, nil)
+
+		hashArr = append(hashArr, hash)
+	}
+	p.HandleRecoverEvent(hashArr, now, inhibit)
+
+}
+
+func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool) {
+	cachedRule := p.rule
+	if cachedRule == nil {
+		return
+	}
+
+	if !inhibit {
+		for _, hash := range hashArr {
+			p.RecoverSingle(hash, now, nil)
+		}
+		return
+	}
+
+	eventMap := make(map[string]models.AlertCurEvent)
+	for _, hash := range hashArr {
+		event, has := p.fires.Get(hash)
+		if !has {
+			continue
+		}
+
+		e, exists := eventMap[event.Tags]
+		if !exists {
+			eventMap[event.Tags] = *event
+			continue
+		}
+
+		if e.Severity > event.Severity {
+			// hash 对应的恢复事件的被抑制了，把之前的事件删除
+			p.fires.Delete(e.Hash)
+			p.pendings.Delete(e.Hash)
+			eventMap[event.Tags] = *event
+		}
+	}
+
+	for _, event := range eventMap {
+		p.RecoverSingle(event.Hash, now, nil)
 	}
 }
 
@@ -475,6 +518,11 @@ func (p *Processor) mayHandleGroup() {
 	if bg != nil {
 		p.groupName = bg.Name
 	}
+}
+
+func (p *Processor) DeleteProcessEvent(hash string) {
+	p.fires.Delete(hash)
+	p.pendings.Delete(hash)
 }
 
 func labelMapToArr(m map[string]string) []string {
