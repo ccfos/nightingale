@@ -269,7 +269,7 @@ func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool
 			continue
 		}
 
-		if e.Severity < event.Severity {
+		if e.Severity > event.Severity {
 			// hash 对应的恢复事件的被抑制了，把之前的事件删除
 			p.fires.Delete(e.Hash)
 			p.pendings.Delete(e.Hash)
