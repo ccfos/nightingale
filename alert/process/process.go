@@ -235,9 +235,6 @@ func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64, i
 		}
 
 		hashArr = append(hashArr, hash)
-
-		// todo 对恢复事件进行合并处理
-		// p.RecoverSingle(hash, now, nil)
 	}
 	p.HandleRecoverEvent(hashArr, now, inhibit)
 
