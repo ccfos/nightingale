@@ -140,7 +140,10 @@ func (arw *AlertRuleWorker) Eval() {
 				continue
 			}
 
-			if p.Severity < point.Severity {
+			if p.Severity > point.Severity {
+				hash := process.Hash(cachedRule.Id, arw.processor.DatasourceId(), point)
+				arw.processor.DeleteProcessEvent(hash)
+
 				pointsMap[tagHash] = point
 			}
 		}

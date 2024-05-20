@@ -523,6 +523,11 @@ func (p *Processor) mayHandleGroup() {
 	}
 }
 
+func (p *Processor) DeleteProcessEvent(hash string) {
+	p.fires.Delete(hash)
+	p.pendings.Delete(hash)
+}
+
 func labelMapToArr(m map[string]string) []string {
 	numLabels := len(m)
 
