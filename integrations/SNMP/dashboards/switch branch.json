@@ -56,7 +56,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "snmp_sys_uptime{LocalIP=\"$ipadd\"}",
+                        "expr": "snmp_sys_uptime",
                         "maxDataPoints": 240,
                         "legend": "设备在线",
                         "instant": false
@@ -160,7 +160,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "snmp_TotalPorts{LocalIP=~\"$ipadd\"}",
+                        "expr": "snmp_TotalPorts",
                         "maxDataPoints": 240,
                         "legend": "设备端口数"
                     }
@@ -216,12 +216,12 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "snmp_cpu_usage{LocalIP=~\"$ipadd\"}",
+                        "expr": "snmp_cpu_usage",
                         "maxDataPoints": 240,
                         "legend": "CPU使用率"
                     },
                     {
-                        "expr": "snmp_mem_use{LocalIP=\"$ipadd\"} / snmp_mem_max{LocalIP=\"$ipadd\"}*100",
+                        "expr": "snmp_mem_use / snmp_mem_max*100",
                         "refId": "B",
                         "maxDataPoints": 240,
                         "legend": "内存使用率"
@@ -279,13 +279,13 @@
                 "datasourceValue": "${jieru}",
                 "targets": [
                     {
-                        "expr": "snmp_interface_ifSpeed{LocalIP=~\"$ipadd\"}",
+                        "expr": "snmp_interface_ifSpeed",
                         "refId": "B",
                         "maxDataPoints": 240,
                         "legend": "端口速率"
                     },
                     {
-                        "expr": "snmp_interface_ifOperStatus{LocalIP=~\"$ipadd\"}",
+                        "expr": "snmp_interface_ifOperStatus",
                         "refId": "C",
                         "maxDataPoints": 240,
                         "legend": "端口状态"
@@ -436,7 +436,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "snmp_interface_ifOperStatus{LocalIP=~\"$ipadd\"}",
+                        "expr": "snmp_interface_ifOperStatus",
                         "maxDataPoints": 240,
                         "legend": "{{LocalIP}}"
                     }
@@ -492,12 +492,12 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "snmp_interface_ifInOctets{LocalIP=~\"$ipadd\"}",
+                        "expr": "snmp_interface_ifInOctets",
                         "maxDataPoints": 240,
                         "legend": "端口IN流量"
                     },
                     {
-                        "expr": "snmp_interface_ifOutOctets{LocalIP=~\"$ipadd\"}",
+                        "expr": "snmp_interface_ifOutOctets",
                         "refId": "B",
                         "maxDataPoints": 240,
                         "legend": "端口OUT流量"
@@ -541,7 +541,7 @@
                 "targets": [
                     {
                         "refId": "A",
-                        "expr": "irate(snmp_interface_ifInOctets{LocalIP=~\"$ipadd\",ifDescr=~\"Vlan256\"}[5m])",
+                        "expr": "irate(snmp_interface_ifInOctets{ifDescr=~\"Vlan256\"}[5m])",
                         "maxDataPoints": 240,
                         "time": {
                             "start": "now-6h",
@@ -550,7 +550,7 @@
                         "legend": "INT"
                     },
                     {
-                        "expr": "-irate(snmp_interface_ifOutOctets{LocalIP=~\"$ipadd\", ifDescr=~\"Vlan256\"}[5m])",
+                        "expr": "-irate(snmp_interface_ifOutOctets{ ifDescr=~\"Vlan256\"}[5m])",
                         "refId": "B",
                         "maxDataPoints": 240,
                         "time": {
@@ -620,12 +620,6 @@
         "version": "3.0.0",
         "graphTooltip": "default",
         "graphZoom": "default",
-        "links": [
-            {
-                "title": "网络交换机监控大盘",
-                "url": "http://182.182.61.13:17000/dashboards/6",
-                "targetBlank": false
-            }
-        ]
+        "links": []
     }
 }

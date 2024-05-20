@@ -95,6 +95,7 @@ func (rt *Router) userAddPost(c *gin.Context) {
 		UpdateBy: username,
 	}
 
+	ginx.Dangerous(u.Verify())
 	ginx.NewRender(c).Message(u.Add(rt.Ctx))
 }
 

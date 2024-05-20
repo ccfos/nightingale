@@ -24,16 +24,24 @@ func (s *SsoClient) SyncAddAndDelUsers(ctx *ctx.Context) error {
 		return err
 	}
 
-	usersToBeAdd := getExtraUsers(usersFromDb, usersFromSso)
+	usersToBeAdd, usersExists := diffUsers(usersFromDb, usersFromSso)
+	// Incremental users synchronize both user information and group information
 	for _, user := range usersToBeAdd {
-		if err := user.Add(ctx); err != nil {
+		if err = user.AddUserAndGroups(ctx, s.CoverTeams); err != nil {
+			logger.Warningf("failed to sync add user[%v] to db, err: %v", *user, err)
+		}
+	}
+
+	// Existing users synchronize group information only
+	for _, user := range usersExists {
+		if err = models.UserGroupMemberSyncByUser(ctx, user, s.CoverTeams); err != nil {
 			logger.Warningf("failed to sync add user[%v] to db, err: %v", *user, err)
 		}
 	}
 
 	var usersToBeDel []*models.User
 	if s.SyncDel {
-		usersToBeDel = getExtraUsers(usersFromSso, usersFromDb)
+		usersToBeDel, _ = diffUsers(usersFromSso, usersFromDb)
 		if len(usersToBeDel) > 0 {
 			delIds := make([]int64, 0, len(usersToBeDel))
 			for _, user := range usersToBeDel {
@@ -87,8 +95,14 @@ func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
 		email := entry.GetAttributeValue(attrs.Email)
 		phone := entry.GetAttributeValue(attrs.Phone)
 
+		// Gets the roles and teams for this entry
+		roleTeamMapping := lc.GetUserRolesAndTeams(entry)
+		if len(roleTeamMapping.Roles) == 0 {
+			// No role mapping is configured, the configured default role is used
+			roleTeamMapping.Roles = lc.DefaultRoles
+		}
 		user := new(models.User)
-		user.FullSsoFields("ldap", username, nickname, phone, email, lc.DefaultRoles)
+		user.FullSsoFieldsWithTeams("ldap", username, nickname, phone, email, roleTeamMapping.Roles, roleTeamMapping.Teams)
 
 		res[entry.GetAttributeValue(attrs.Username)] = user
 	}
@@ -96,11 +110,18 @@ func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
 	return res, nil
 }
 
-// in m not in base
-func getExtraUsers(base, m map[string]*models.User) (extraUsers []*models.User) {
-	for username, user := range m {
-		if _, exist := base[username]; !exist {
-			extraUsers = append(extraUsers, user)
+// newExtraUsers: in newUsers not in base
+// updatedUsers: in newUsers and in base, update the user.TeamsLst data
+func diffUsers(base, newUsers map[string]*models.User) (newExtraUsers, updatedUsers []*models.User) {
+	for username, user := range newUsers {
+		if baseUser, exist := base[username]; !exist {
+			newExtraUsers = append(newExtraUsers, user)
+		} else {
+			if len(baseUser.TeamsLst) == 0 {
+				// Need to pass on the team message
+				baseUser.TeamsLst = user.TeamsLst
+			}
+			updatedUsers = append(updatedUsers, baseUser)
 		}
 	}
 	return
