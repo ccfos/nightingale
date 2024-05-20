@@ -1,38 +1,56 @@
 [
-    {
-      "collector": "Categraf",
-      "typ": "Ping",
-      "name": "Ping ttl 时间",
-      "unit": "seconds",
-      "note": "Time To Live，指的是报文在网络中能够“存活”的限制时间",
-      "lang": "zh_CN",
-      "expression": "ping_ttl"
-    },
-    {
-      "collector": "Categraf",
-      "typ": "Ping",
-      "name": "Ping 丢包率",
-      "unit": "percent",
-      "note": "",
-      "lang": "zh_CN",
-      "expression": "ping_percent_packet_loss"
-    },
-    {
-      "collector": "Categraf",
-      "typ": "Ping",
-      "name": "Ping 平均耗时",
-      "unit": "milliseconds",
-      "note": "",
-      "lang": "zh_CN",
-      "expression": "ping_average_response_ms"
-    },
-    {
-      "collector": "Categraf",
-      "typ": "Ping",
-      "name": "Ping 探测结果状态码",
-      "unit": "none",
-      "note": "值为 0 就是正常，非 0 值就是异常。如果 Ping 失败，Categraf 日志中理应会有异常日志",
-      "lang": "zh_CN",
-      "expression": "ping_result_code"
-    }
-  ]
+  {
+    "collector": "Categraf",
+    "typ": "Ping",
+    "name": "Ping ttl 时间",
+    "unit": "seconds",
+    "note": "Time To Live，指的是报文在网络中能够“存活”的限制时间",
+    "lang": "zh_CN",
+    "expression": "ping_ttl"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "Ping",
+    "name": "Ping 丢包率",
+    "unit": "percent",
+    "note": "",
+    "lang": "zh_CN",
+    "expression": "ping_percent_packet_loss"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "Ping",
+    "name": "Ping 平均耗时",
+    "unit": "milliseconds",
+    "note": "",
+    "lang": "zh_CN",
+    "expression": "ping_average_response_ms"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "Ping",
+    "name": "Ping 探测结果状态码",
+    "unit": "none",
+    "note": "值为 0 就是正常，非 0 值就是异常。如果 Ping 失败，Categraf 日志中理应会有异常日志",
+    "lang": "zh_CN",
+    "expression": "ping_result_code"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "Ping",
+    "name": "Ping 最大耗时",
+    "unit": "milliseconds",
+    "note": "",
+    "lang": "zh_CN",
+    "expression": "ping_maximum_response_ms"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "Ping",
+    "name": "Ping 最小耗时",
+    "unit": "milliseconds",
+    "note": "",
+    "lang": "zh_CN",
+    "expression": "ping_minimum_response_ms"
+  }
+]

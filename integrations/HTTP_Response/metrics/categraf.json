@@ -34,5 +34,68 @@
     "note": "",
     "lang": "zh_CN",
     "expression": "http_response_cert_expire_timestamp"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "HTTP_Response",
+    "name": "拨测 - DNS 请求耗时",
+    "unit": "milliseconds",
+    "note": "",
+    "lang": "zh_CN",
+    "expression": "cdn_dns_request"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "HTTP_Response",
+    "name": "拨测 - TCP建连耗时",
+    "unit": "milliseconds",
+    "note": "",
+    "lang": "zh_CN",
+    "expression": "cdn_tcp_connect"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "HTTP_Response",
+    "name": "拨测 - TLS握手耗时",
+    "unit": "milliseconds",
+    "note": "",
+    "lang": "zh_CN",
+    "expression": "cdn_tls_handshake"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "HTTP_Response",
+    "name": "拨测 - 探测结果状态码",
+    "unit": "none",
+    "note": "探测结果，0 是正常，其他数字有不同含义\n- 0：成功\n- 1：连接失败\n- 2：监测超时\n- 3：DNS解析失败\n- 4：地址格式错误\n- 5：返回内容不匹配\n- 6：返回码不匹配\n- 其他数字为未知错误",
+    "lang": "zh_CN",
+    "expression": "cdn_probe_result_code"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "HTTP_Response",
+    "name": "拨测 - 整体耗时",
+    "unit": "milliseconds",
+    "note": "",
+    "lang": "zh_CN",
+    "expression": "cdn_total_cost"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "HTTP_Response",
+    "name": "拨测 - 返回状态码",
+    "unit": "none",
+    "note": "",
+    "lang": "zh_CN",
+    "expression": "cdn_response_status_code"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "HTTP_Response",
+    "name": "拨测 - 首包耗时",
+    "unit": "milliseconds",
+    "note": "",
+    "lang": "zh_CN",
+    "expression": "cdn_first_byte"
   }
 ]

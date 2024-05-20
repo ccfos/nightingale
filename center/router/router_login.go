@@ -92,7 +92,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 }
 
 func (rt *Router) logoutPost(c *gin.Context) {
-	logger.Infof("username:%s login from:%s", c.GetString("username"), c.ClientIP())
+	logger.Infof("username:%s logout from:%s", c.GetString("username"), c.ClientIP())
 	metadata, err := rt.extractTokenMetadata(c.Request)
 	if err != nil {
 		ginx.NewRender(c, http.StatusBadRequest).Message("failed to parse jwt token")
