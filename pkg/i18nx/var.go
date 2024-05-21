@@ -42,7 +42,7 @@ var I18N = `
       "arg(batch) should be nonnegative":"batch 不能为负数",
       "arg(tolerance) should be nonnegative":"tolerance 不能为负数",
       "arg(timeout) should be nonnegative":"timeout 不能为负数",
-      "arg(timeout) longer than one day":"timeout 时间不能超过1天",
+      "arg(timeout) longer than five days":"timeout 时间不能超过5天",
       "arg(title) is required":"title 为必填项",
       "created task.id is zero":"任务id为零",
       "invalid ibex address: %s":"ibex %s 地址无效",
