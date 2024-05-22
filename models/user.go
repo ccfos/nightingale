@@ -541,13 +541,13 @@ func (u *User) NopriIdents(ctx *ctx.Context, idents []string) ([]string, error) 
 		return idents, nil
 	}
 
-	var arr []string
-	err = DB(ctx).Model(&Target{}).Where("group_id in ?", bgids).Pluck("ident", &arr).Error
+	var allowedIdents []string
+	err = DB(ctx).Model(&Target{}).Where("group_id in ?", bgids).Pluck("ident", &allowedIdents).Error
 	if err != nil {
 		return []string{}, err
 	}
 
-	return slice.SubString(idents, arr), nil
+	return slice.SubString(idents, allowedIdents), nil
 }
 
 // 我是管理员，返回所有

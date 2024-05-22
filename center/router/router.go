@@ -477,10 +477,14 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/user-group-members", rt.userGroupMemberGetsByService)
 
 			service.GET("/targets", rt.targetGetsByService)
+			service.GET("/target/extra-meta", rt.targetExtendInfoByIdent)
+			service.POST("/target/list", rt.targetGetsByHostFilter)
+			service.DELETE("/targets", rt.targetDelByService)
 			service.GET("/targets/tags", rt.targetGetTags)
 			service.POST("/targets/tags", rt.targetBindTagsByService)
 			service.DELETE("/targets/tags", rt.targetUnbindTagsByService)
 			service.PUT("/targets/note", rt.targetUpdateNoteByService)
+			service.PUT("/targets/bgid", rt.targetUpdateBgidByService)
 
 			service.POST("/alert-rules", rt.alertRuleAddByService)
 			service.POST("/alert-rule-add", rt.alertRuleAddOneByService)
