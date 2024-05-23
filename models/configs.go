@@ -44,7 +44,28 @@ const (
 	RSA_PRIVATE_KEY = "rsa_private_key"
 	RSA_PUBLIC_KEY  = "rsa_public_key"
 	RSA_PASSWORD    = "rsa_password"
+	JWT_SIGNING_KEY = "jwt_signing_key"
 )
+
+func InitJWTSigningKey(ctx *ctx.Context) string {
+	val, err := ConfigsGet(ctx, JWT_SIGNING_KEY)
+	if err != nil {
+		log.Fatalln("init jwt signing key in mysql", err)
+	}
+
+	if val != "" {
+		return val
+	}
+
+	content := fmt.Sprintf("%s%d%d%s", runner.Hostname, os.Getpid(), time.Now().UnixNano(), str.RandLetters(6))
+	key := str.MD5(content)
+	err = ConfigsSet(ctx, JWT_SIGNING_KEY, key)
+	if err != nil {
+		log.Fatalln("init jwt signing key in mysql", err)
+	}
+
+	return key
+}
 
 // InitSalt generate random salt
 func InitSalt(ctx *ctx.Context) {
