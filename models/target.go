@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/toolkits/pkg/container/set"
 	"sort"
 	"strings"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/container/set"
 	"gorm.io/gorm"
 )
 
