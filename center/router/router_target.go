@@ -492,8 +492,6 @@ func (rt *Router) targetDelByService(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
-	rt.checkTargetPerm(c, f.Idents)
-
 	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents))
 }
 
