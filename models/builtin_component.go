@@ -95,7 +95,7 @@ func BuiltinComponentGets(ctx *ctx.Context, query string) ([]*BuiltinComponent, 
 
 	var lst []*BuiltinComponent
 
-	err := session.Order("ident DESC").Find(&lst).Error
+	err := session.Order("ident ASC").Find(&lst).Error
 
 	return lst, err
 }
