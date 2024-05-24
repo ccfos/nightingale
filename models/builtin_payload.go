@@ -131,3 +131,10 @@ func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, query string, li
 	err := session.Limit(limit).Offset(offset).Find(&lst).Error
 	return lst, err
 }
+
+// get cates of BuiltinPayload by type and component, return []string
+func BuiltinPayloadCates(ctx *ctx.Context, typ, component string) ([]string, error) {
+	var cates []string
+	err := DB(ctx).Model(new(BuiltinPayload)).Where("type = ? and component = ?", typ, component).Distinct("cate").Pluck("cate", &cates).Error
+	return cates, err
+}

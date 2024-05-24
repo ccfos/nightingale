@@ -49,6 +49,14 @@ func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	ginx.NewRender(c).Data(m, nil)
 }
 
+func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
+	typ := ginx.QueryStr(c, "type", "")
+	component := ginx.QueryStr(c, "component", "")
+
+	cates, err := models.BuiltinPayloadCates(rt.Ctx, typ, component)
+	ginx.NewRender(c).Data(cates, err)
+}
+
 func (rt *Router) builtinPayloadGet(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
 
