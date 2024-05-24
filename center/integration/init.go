@@ -45,7 +45,8 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 			var readmeFile string
 			for _, file := range files {
 				if strings.HasSuffix(strings.ToLower(file), "md") {
-					readmeFile = file
+					readmeFile = componentDir + "/markdown/" + file
+					break
 				}
 			}
 			if readmeFile != "" {
