@@ -37,16 +37,7 @@ func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
 
 	lst, err := models.BuiltinPayloadGets(rt.Ctx, typ, component, cate, query, limit, ginx.Offset(c, limit))
-	ginx.Dangerous(err)
-	m := make(map[string][]*models.BuiltinPayload)
-	for _, v := range lst {
-		if _, ok := m[v.Cate]; !ok {
-			m[v.Cate] = make([]*models.BuiltinPayload, 0)
-		}
-		m[v.Cate] = append(m[v.Cate], v)
-	}
-
-	ginx.NewRender(c).Data(m, nil)
+	ginx.NewRender(c).Data(lst, err)
 }
 
 func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
