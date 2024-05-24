@@ -79,25 +79,48 @@ func (n *Naming) loopHeartbeat() {
 
 func (n *Naming) heartbeat() error {
 	var datasourceIds []int64
+	var myDatasourceIds []int64
 	var err error
 
-	// 在页面上维护实例和集群的对应关系
-	datasourceIds, err = models.GetDatasourceIdsByEngineName(n.ctx, n.heartbeatConfig.EngineName)
-	if err != nil {
-		return err
+	// 如果是中心机房的 leader 机器，沟通全量的数据源的 hash ring，给智能告警模块使用
+
+	if n.IamLeader() {
+		datasources, err := models.GetDatasources(n.ctx)
+		if err != nil {
+			logger.Warningf("get datasources err:%v", err)
+			return err
+		}
+		for i := 0; i < len(datasources); i++ {
+			datasourceIds = append(datasourceIds, datasources[i].Id)
+		}
+
+		myDatasourceIds, err = models.GetDatasourceIdsByEngineName(n.ctx, n.heartbeatConfig.EngineName)
+		if err != nil {
+			logger.Warningf("get datasource ids by engine name err:%v", err)
+			return err
+		}
+	} else {
+		// 在页面上维护实例和集群的对应关系
+		datasourceIds, err = models.GetDatasourceIdsByEngineName(n.ctx, n.heartbeatConfig.EngineName)
+		if err != nil {
+			return err
+		}
+
+		myDatasourceIds = datasourceIds
 	}
 
-	if len(datasourceIds) == 0 {
+	// 上报心跳
+	if len(myDatasourceIds) == 0 {
 		err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.EngineName, 0)
 		if err != nil {
 			logger.Warningf("heartbeat with cluster %s err:%v", "", err)
 			n.astats.CounterHeartbeatErrorTotal.WithLabelValues().Inc()
 		}
 	} else {
-		for i := 0; i < len(datasourceIds); i++ {
-			err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.EngineName, datasourceIds[i])
+		for i := 0; i < len(myDatasourceIds); i++ {
+			err := models.AlertingEngineHeartbeatWithCluster(n.ctx, n.heartbeatConfig.Endpoint, n.heartbeatConfig.EngineName, myDatasourceIds[i])
 			if err != nil {
-				logger.Warningf("heartbeat with cluster %d err:%v", datasourceIds[i], err)
+				logger.Warningf("heartbeat with cluster %d err:%v", myDatasourceIds[i], err)
 				n.astats.CounterHeartbeatErrorTotal.WithLabelValues().Inc()
 			}
 		}
