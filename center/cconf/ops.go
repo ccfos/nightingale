@@ -180,6 +180,14 @@ ops:
     - "/builtin-metrics/put"
     - "/builtin-metrics/del"
 
+- name: built-in-components
+    cname: 模版中心
+    ops:
+      - "/built-in-components"
+      - "/built-in-components/add"
+      - "/built-in-components/put"
+      - "/built-in-components/del"
+
 - name: system
   cname: 系统信息
   ops:
