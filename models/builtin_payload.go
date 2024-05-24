@@ -14,6 +14,7 @@ type BuiltinPayload struct {
 	Component string `json:"component" gorm:"type:varchar(191);not null;index:idx_component,sort:asc;comment:'component of payload'"` // Host MySQL Redis
 	Cate      string `json:"cate" gorm:"type:varchar(191);not null;comment:'category of payload'"`                                    // categraf_v1 telegraf_v1
 	Name      string `json:"name" gorm:"type:varchar(191);not null;index:idx_name,sort:asc;comment:'name of payload'"`                //
+	Tags      string `json:"tags" gorm:"type:varchar(191);not null;default:'';comment:'tags of payload'"`                             // {"host":"
 	Content   string `json:"content" gorm:"type:longtext;not null;comment:'content of payload'"`
 	CreatedAt int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
 	CreatedBy string `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
@@ -105,7 +106,7 @@ func BuiltinPayloadGet(ctx *ctx.Context, where string, args ...interface{}) (*Bu
 	return &bp, nil
 }
 
-func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, name string, limit, offset int) ([]*BuiltinPayload, error) {
+func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, query string, limit, offset int) ([]*BuiltinPayload, error) {
 	session := DB(ctx)
 	if typ != "" {
 		session = session.Where("type = ?", typ)
@@ -118,8 +119,12 @@ func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, name string, lim
 		session = session.Where("cate = ?", cate)
 	}
 
-	if name != "" {
-		session = session.Where("name like ?", "%"+name+"%")
+	if query != "" {
+		arr := strings.Fields(query)
+		for i := 0; i < len(arr); i++ {
+			qarg := "%" + arr[i] + "%"
+			session = session.Where("name like ? or tags like ?", qarg, qarg)
+		}
 	}
 
 	var lst []*BuiltinPayload

@@ -33,10 +33,10 @@ func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	typ := ginx.QueryStr(c, "type", "")
 	component := ginx.QueryStr(c, "component", "")
 	cate := ginx.QueryStr(c, "cate", "")
-	name := ginx.QueryStr(c, "name", "")
+	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 20)
 
-	lst, err := models.BuiltinPayloadGets(rt.Ctx, typ, component, cate, name, limit, ginx.Offset(c, limit))
+	lst, err := models.BuiltinPayloadGets(rt.Ctx, typ, component, cate, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 	m := make(map[string][]*models.BuiltinPayload)
 	for _, v := range lst {

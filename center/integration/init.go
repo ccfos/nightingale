@@ -95,6 +95,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 						Type:      "alert",
 						Cate:      cate,
 						Name:      alert.Name,
+						Tags:      alert.AppendTags,
 						Content:   string(content),
 					}
 
@@ -146,6 +147,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					Type:      "dashboard",
 					Cate:      "",
 					Name:      dashboard.Name,
+					Tags:      dashboard.Tags,
 					Content:   string(content),
 				}
 
