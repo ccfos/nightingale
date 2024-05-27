@@ -336,12 +336,18 @@ func PassLogin(ctx *ctx.Context, username, pass string) (*User, error) {
 	return user, nil
 }
 
-func UserTotal(ctx *ctx.Context, query string) (num int64, err error) {
+func UserTotal(ctx *ctx.Context, query string, stime, etime int64) (num int64, err error) {
+	db := DB(ctx).Model(&User{})
+
+	if stime != 0 && etime != 0 {
+		db = db.Where("last_active_time between ? and ?", stime, etime)
+	}
+
 	if query != "" {
 		q := "%" + query + "%"
-		num, err = Count(DB(ctx).Model(&User{}).Where("username like ? or nickname like ? or phone like ? or email like ?", q, q, q, q))
+		num, err = Count(db.Where("username like ? or nickname like ? or phone like ? or email like ?", q, q, q, q))
 	} else {
-		num, err = Count(DB(ctx).Model(&User{}))
+		num, err = Count(db)
 	}
 
 	if err != nil {
@@ -351,15 +357,30 @@ func UserTotal(ctx *ctx.Context, query string) (num int64, err error) {
 	return num, nil
 }
 
-func UserGets(ctx *ctx.Context, query string, limit, offset int) ([]User, error) {
-	session := DB(ctx).Limit(limit).Offset(offset).Order("username")
+func UserGets(ctx *ctx.Context, query string, limit, offset int, stime, etime int64,
+	order string, desc bool) ([]User, error) {
+
+	session := DB(ctx)
+
+	if stime != 0 && etime != 0 {
+		session = session.Where("last_active_time between ? and ?", stime, etime)
+	}
+
+	if desc {
+		order = order + " desc"
+	} else {
+		order = order + " asc"
+	}
+
+	session = session.Order(order)
+
 	if query != "" {
 		q := "%" + query + "%"
 		session = session.Where("username like ? or nickname like ? or phone like ? or email like ?", q, q, q, q)
 	}
 
 	var users []User
-	err := session.Find(&users).Error
+	err := session.Limit(limit).Offset(offset).Find(&users).Error
 	if err != nil {
 		return users, errors.WithMessage(err, "failed to query user")
 	}
