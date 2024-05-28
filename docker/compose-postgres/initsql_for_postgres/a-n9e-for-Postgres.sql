@@ -832,3 +832,22 @@ COMMENT ON COLUMN builtin_metrics.created_at IS 'create time';
 COMMENT ON COLUMN builtin_metrics.created_by IS 'creator';
 COMMENT ON COLUMN builtin_metrics.updated_at IS 'update time';
 COMMENT ON COLUMN builtin_metrics.updated_by IS 'updater';
+
+CREATE TABLE metric_filter (
+  id BIGSERIAL PRIMARY KEY,
+  name VARCHAR(191) NOT NULL,
+  configs VARCHAR(4096) NOT NULL,
+  groups_perm TEXT,
+  create_at BIGINT NOT NULL DEFAULT 0,
+  create_by VARCHAR(191) NOT NULL DEFAULT '',
+  update_at BIGINT NOT NULL DEFAULT 0,
+  update_by VARCHAR(191) NOT NULL DEFAULT ''
+);
+
+CREATE INDEX idx_name ON metric_filter (name);
+
+CREATE TABLE board_busigroup (
+  busi_group_id BIGINT NOT NULL DEFAULT 0,
+  board_id BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (busi_group_id, board_id)
+);
