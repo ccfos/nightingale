@@ -43,3 +43,7 @@ labels = { instance="n9e-10.23.25.3:6379" }
 如果一个 redis 集群有 3 个实例，对于业务应用来讲，发起一个请求，可能随机请求到某一个实例上去了，这个是没问题的，但是对于监控 client 而言，显然是希望到所有实例上获取数据的。
 
 当然，如果多个 redis 实例组成了集群，我们希望有个标识来标识这个集群，这个时候，可以通过 labels 来实现，比如给每个实例增加一个 redis_clus 的标签，值为集群名字即可。
+
+
+# redis_sentinel
+forked from [telegraf/redis_sentinel](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/redis_sentinel)
