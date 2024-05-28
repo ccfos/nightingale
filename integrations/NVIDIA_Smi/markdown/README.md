@@ -1,6 +1,8 @@
 # nvidia_smi
 
-该采集插件的原理，就是读取 nvidia-smi 的内容输出，转换为监控数据上报。是把 [nvidia_gpu_exporter](https://github.com/utkuozdemir/nvidia_gpu_exporter) 的代码给集成过来了。
+该采集插件的原理，就是读取 nvidia-smi 命令的内容输出，转换为Prometheus格式的监控数据上报给Nightingale夜莺。
+
+是对 [nvidia_gpu_exporter](https://github.com/utkuozdemir/nvidia_gpu_exporter) 代码的集成。
 
 ## Configuration
 

@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/container/set"
 	"gorm.io/gorm"
 )
 
@@ -238,6 +239,62 @@ func TargetGetByIdent(ctx *ctx.Context, ident string) (*Target, error) {
 	return TargetGet(ctx, "ident = ?", ident)
 }
 
+func TargetsGetByIdents(ctx *ctx.Context, idents []string) ([]*Target, error) {
+	var targets []*Target
+	err := DB(ctx).Where("ident IN ?", idents).Find(&targets).Error
+	return targets, err
+}
+
+func TargetsGetIdentsByIdentsAndHostIps(ctx *ctx.Context, idents, hostIps []string) (map[string]string, []string, error) {
+	inexistence := make(map[string]string)
+	identSet := set.NewStringSet()
+
+	// Query the ident corresponding to idents
+	if len(idents) > 0 {
+		var identsFromIdents []string
+		err := DB(ctx).Model(&Target{}).Where("ident IN ?", idents).Pluck("ident", &identsFromIdents).Error
+		if err != nil {
+			return nil, nil, err
+		}
+
+		for _, ident := range identsFromIdents {
+			identSet.Add(ident)
+		}
+
+		for _, ident := range idents {
+			if !identSet.Exists(ident) {
+				inexistence[ident] = "Ident not found"
+			}
+		}
+	}
+
+	// Query the hostIp corresponding to idents
+	if len(hostIps) > 0 {
+		var hostIpToIdentMap []struct {
+			HostIp string
+			Ident  string
+		}
+		err := DB(ctx).Model(&Target{}).Select("host_ip, ident").Where("host_ip IN ?", hostIps).Scan(&hostIpToIdentMap).Error
+		if err != nil {
+			return nil, nil, err
+		}
+
+		hostIpToIdent := set.NewStringSet()
+		for _, entry := range hostIpToIdentMap {
+			hostIpToIdent.Add(entry.HostIp)
+			identSet.Add(entry.Ident)
+		}
+
+		for _, hostIp := range hostIps {
+			if !hostIpToIdent.Exists(hostIp) {
+				inexistence[hostIp] = "HostIp not found"
+			}
+		}
+	}
+
+	return inexistence, identSet.ToSlice(), nil
+}
+
 func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
 	session := DB(ctx).Model(new(Target))
 
@@ -292,8 +349,8 @@ func (t *Target) AddTags(ctx *ctx.Context, tags []string) error {
 }
 
 func (t *Target) DelTags(ctx *ctx.Context, tags []string) error {
-	for i := 0; i < len(tags); i++ {
-		t.Tags = strings.ReplaceAll(t.Tags, tags[i]+" ", "")
+	for _, tag := range tags {
+		t.Tags = strings.ReplaceAll(t.Tags, tag+" ", "")
 	}
 
 	return DB(ctx).Model(t).Updates(map[string]interface{}{

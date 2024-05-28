@@ -55,8 +55,6 @@ Enable = true
 user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
 [HTTP.JWTAuth]
-# signing key
-SigningKey = "5b94a0fd640fe2765af826acfe42d151"
 # unit: min
 AccessExpired = 1500
 # unit: min
