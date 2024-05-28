@@ -1,7 +1,9 @@
 package router
 
 import (
+	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
@@ -21,6 +23,38 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 
 	reterr := make(map[string]string)
 	for i := 0; i < count; i++ {
+		if lst[i].Type == "alert" && strings.HasPrefix(strings.TrimSpace(lst[i].Content), "[") {
+			// 处理多个告警规则模板的情况
+			alertRules := []models.AlertRule{}
+			if err := json.Unmarshal([]byte(lst[i].Content), &alertRules); err != nil {
+				reterr[lst[i].Name] = err.Error()
+			}
+
+			for _, rule := range alertRules {
+				contentBytes, err := json.Marshal(rule)
+				if err != nil {
+					reterr[rule.Name] = err.Error()
+					continue
+				}
+
+				bp := models.BuiltinPayload{
+					Type:      lst[i].Type,
+					Component: lst[i].Component,
+					Cate:      lst[i].Cate,
+					Name:      rule.Name,
+					Tags:      lst[i].Tags,
+					Content:   string(contentBytes),
+					CreatedBy: username,
+					UpdatedBy: username,
+				}
+
+				if err := bp.Add(rt.Ctx, username); err != nil {
+					reterr[bp.Name] = err.Error()
+				}
+			}
+			continue
+		}
+
 		if err := lst[i].Add(rt.Ctx, username); err != nil {
 			reterr[lst[i].Name] = err.Error()
 		}
