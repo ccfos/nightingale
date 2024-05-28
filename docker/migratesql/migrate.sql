@@ -32,3 +32,10 @@ CREATE TABLE `metric_filter` (
   PRIMARY KEY (`id`),
   KEY `idx_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE `board_busigroup` (
+  `busi_group_id` bigint(20) NOT NULL DEFAULT '0' COMMENT 'busi group id',
+  `board_id` bigint(20) NOT NULL DEFAULT '0' COMMENT 'board id',
+  PRIMARY KEY (`busi_group_id`, `board_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

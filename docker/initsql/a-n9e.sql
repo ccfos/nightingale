@@ -502,6 +502,12 @@ CREATE TABLE `alert_his_event` (
     KEY (`trigger_time`, `group_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
+CREATE TABLE `board_busigroup` (
+  `busi_group_id` bigint(20) NOT NULL DEFAULT '0' COMMENT 'busi group id',
+  `board_id` bigint(20) NOT NULL DEFAULT '0' COMMENT 'board id',
+  PRIMARY KEY (`busi_group_id`, `board_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `task_tpl`
 (
     `id`        int unsigned NOT NULL AUTO_INCREMENT,
