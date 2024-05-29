@@ -138,3 +138,17 @@ func BuiltinPayloadCates(ctx *ctx.Context, typ, component string) ([]string, err
 	err := DB(ctx).Model(new(BuiltinPayload)).Where("type = ? and component = ?", typ, component).Distinct("cate").Pluck("cate", &cates).Error
 	return cates, err
 }
+
+// get components of BuiltinPayload by type and cate, return string
+func BuiltinPayloadComponents(ctx *ctx.Context, typ, cate string) (string, error) {
+	var components []string
+	err := DB(ctx).Model(new(BuiltinPayload)).Where("type = ? and cate = ?", typ, cate).Distinct("component").Pluck("component", &components).Error
+	if err != nil {
+		return "", err
+	}
+
+	if len(components) == 0 {
+		return "", nil
+	}
+	return components[0], nil
+}
