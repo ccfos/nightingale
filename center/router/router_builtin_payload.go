@@ -23,41 +23,118 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 
 	reterr := make(map[string]string)
 	for i := 0; i < count; i++ {
-		if lst[i].Type == "alert" && strings.HasPrefix(strings.TrimSpace(lst[i].Content), "[") {
-			// 处理多个告警规则模板的情况
-			alertRules := []models.AlertRule{}
-			if err := json.Unmarshal([]byte(lst[i].Content), &alertRules); err != nil {
+		if lst[i].Type == "alert" {
+			if strings.HasPrefix(strings.TrimSpace(lst[i].Content), "[") {
+				// 处理多个告警规则模板的情况
+				alertRules := []models.AlertRule{}
+				if err := json.Unmarshal([]byte(lst[i].Content), &alertRules); err != nil {
+					reterr[lst[i].Name] = err.Error()
+				}
+
+				for _, rule := range alertRules {
+					contentBytes, err := json.Marshal(rule)
+					if err != nil {
+						reterr[rule.Name] = err.Error()
+						continue
+					}
+
+					bp := models.BuiltinPayload{
+						Type:      lst[i].Type,
+						Component: lst[i].Component,
+						Cate:      lst[i].Cate,
+						Name:      rule.Name,
+						Tags:      rule.AppendTags,
+						Content:   string(contentBytes),
+						CreatedBy: username,
+						UpdatedBy: username,
+					}
+
+					if err := bp.Add(rt.Ctx, username); err != nil {
+						reterr[bp.Name] = err.Error()
+					}
+				}
+				continue
+			}
+
+			alertRule := models.AlertRule{}
+			if err := json.Unmarshal([]byte(lst[i].Content), &alertRule); err != nil {
+				reterr[lst[i].Name] = err.Error()
+				continue
+			}
+
+			bp := models.BuiltinPayload{
+				Type:      lst[i].Type,
+				Component: lst[i].Component,
+				Cate:      lst[i].Cate,
+				Name:      alertRule.Name,
+				Tags:      alertRule.AppendTags,
+				Content:   lst[i].Content,
+				CreatedBy: username,
+				UpdatedBy: username,
+			}
+
+			if err := bp.Add(rt.Ctx, username); err != nil {
+				reterr[bp.Name] = err.Error()
+			}
+		} else if lst[i].Type == "dashboard" {
+			if strings.HasPrefix(strings.TrimSpace(lst[i].Content), "[") {
+				// 处理多个告警规则模板的情况
+				dashboards := []models.Board{}
+				if err := json.Unmarshal([]byte(lst[i].Content), &dashboards); err != nil {
+					reterr[lst[i].Name] = err.Error()
+				}
+
+				for _, dashboard := range dashboards {
+					contentBytes, err := json.Marshal(dashboard)
+					if err != nil {
+						reterr[dashboard.Name] = err.Error()
+						continue
+					}
+
+					bp := models.BuiltinPayload{
+						Type:      lst[i].Type,
+						Component: lst[i].Component,
+						Cate:      lst[i].Cate,
+						Name:      dashboard.Name,
+						Tags:      dashboard.Tags,
+						Content:   string(contentBytes),
+						CreatedBy: username,
+						UpdatedBy: username,
+					}
+
+					if err := bp.Add(rt.Ctx, username); err != nil {
+						reterr[bp.Name] = err.Error()
+					}
+				}
+				continue
+			}
+
+			dashboard := models.Board{}
+			if err := json.Unmarshal([]byte(lst[i].Content), &dashboard); err != nil {
+				reterr[lst[i].Name] = err.Error()
+				continue
+			}
+
+			bp := models.BuiltinPayload{
+				Type:      lst[i].Type,
+				Component: lst[i].Component,
+				Cate:      lst[i].Cate,
+				Name:      dashboard.Name,
+				Tags:      dashboard.Tags,
+				Content:   lst[i].Content,
+				CreatedBy: username,
+				UpdatedBy: username,
+			}
+
+			if err := bp.Add(rt.Ctx, username); err != nil {
+				reterr[bp.Name] = err.Error()
+			}
+		} else {
+			if err := lst[i].Add(rt.Ctx, username); err != nil {
 				reterr[lst[i].Name] = err.Error()
 			}
-
-			for _, rule := range alertRules {
-				contentBytes, err := json.Marshal(rule)
-				if err != nil {
-					reterr[rule.Name] = err.Error()
-					continue
-				}
-
-				bp := models.BuiltinPayload{
-					Type:      lst[i].Type,
-					Component: lst[i].Component,
-					Cate:      lst[i].Cate,
-					Name:      rule.Name,
-					Tags:      lst[i].Tags,
-					Content:   string(contentBytes),
-					CreatedBy: username,
-					UpdatedBy: username,
-				}
-
-				if err := bp.Add(rt.Ctx, username); err != nil {
-					reterr[bp.Name] = err.Error()
-				}
-			}
-			continue
 		}
 
-		if err := lst[i].Add(rt.Ctx, username); err != nil {
-			reterr[lst[i].Name] = err.Error()
-		}
 	}
 
 	ginx.NewRender(c).Data(reterr, nil)
