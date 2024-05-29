@@ -150,9 +150,8 @@ func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	component := ginx.QueryStr(c, "component", "")
 	cate := ginx.QueryStr(c, "cate", "")
 	query := ginx.QueryStr(c, "query", "")
-	limit := ginx.QueryInt(c, "limit", 20)
 
-	lst, err := models.BuiltinPayloadGets(rt.Ctx, typ, component, cate, query, limit, ginx.Offset(c, limit))
+	lst, err := models.BuiltinPayloadGets(rt.Ctx, typ, component, cate, query)
 	ginx.NewRender(c).Data(lst, err)
 }
 

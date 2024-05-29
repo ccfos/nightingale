@@ -106,7 +106,7 @@ func BuiltinPayloadGet(ctx *ctx.Context, where string, args ...interface{}) (*Bu
 	return &bp, nil
 }
 
-func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, query string, limit, offset int) ([]*BuiltinPayload, error) {
+func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, query string) ([]*BuiltinPayload, error) {
 	session := DB(ctx)
 	if typ != "" {
 		session = session.Where("type = ?", typ)
@@ -128,7 +128,7 @@ func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, query string, li
 	}
 
 	var lst []*BuiltinPayload
-	err := session.Limit(limit).Offset(offset).Find(&lst).Error
+	err := session.Find(&lst).Error
 	return lst, err
 }
 
