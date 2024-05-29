@@ -11,8 +11,9 @@ import (
 )
 
 type Board struct {
-	Name string `json:"name"`
-	Tags string `json:"tags"`
+	Name    string      `json:"name"`
+	Tags    string      `json:"tags"`
+	Configs interface{} `json:"configs"`
 }
 
 func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
