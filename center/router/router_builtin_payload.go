@@ -190,22 +190,22 @@ func (rt *Router) builtinPayloadsPut(c *gin.Context) {
 		return
 	}
 
-	if bp.Type == "alert" {
+	if req.Type == "alert" {
 		alertRule := models.AlertRule{}
 		if err := json.Unmarshal([]byte(req.Content), &alertRule); err != nil {
 			ginx.Bomb(http.StatusBadRequest, err.Error())
 		}
 
-		bp.Name = alertRule.Name
-		bp.Tags = alertRule.AppendTags
-	} else if bp.Type == "dashboard" {
+		req.Name = alertRule.Name
+		req.Tags = alertRule.AppendTags
+	} else if req.Type == "dashboard" {
 		dashboard := Board{}
 		if err := json.Unmarshal([]byte(req.Content), &dashboard); err != nil {
 			ginx.Bomb(http.StatusBadRequest, err.Error())
 		}
 
-		bp.Name = dashboard.Name
-		bp.Tags = dashboard.Tags
+		req.Name = dashboard.Name
+		req.Tags = dashboard.Tags
 	}
 
 	username := Username(c)
