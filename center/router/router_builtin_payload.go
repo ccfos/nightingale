@@ -10,6 +10,11 @@ import (
 	"github.com/toolkits/pkg/ginx"
 )
 
+type Board struct {
+	Name string `json:"name"`
+	Tags string `json:"tags"`
+}
+
 func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 	var lst []models.BuiltinPayload
 	ginx.BindJSON(c, &lst)
@@ -79,7 +84,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 		} else if lst[i].Type == "dashboard" {
 			if strings.HasPrefix(strings.TrimSpace(lst[i].Content), "[") {
 				// 处理多个告警规则模板的情况
-				dashboards := []models.Board{}
+				dashboards := []Board{}
 				if err := json.Unmarshal([]byte(lst[i].Content), &dashboards); err != nil {
 					reterr[lst[i].Name] = err.Error()
 				}
@@ -109,7 +114,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				continue
 			}
 
-			dashboard := models.Board{}
+			dashboard := Board{}
 			if err := json.Unmarshal([]byte(lst[i].Content), &dashboard); err != nil {
 				reterr[lst[i].Name] = err.Error()
 				continue
