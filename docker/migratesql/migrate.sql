@@ -40,9 +40,8 @@ CREATE TABLE `board_busigroup` (
   PRIMARY KEY (`busi_group_id`, `board_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-/* beta.5 */
-
-Create Table: CREATE TABLE `builtin_components` (
+/* v7.0.0-beta.6 */
+CREATE TABLE `builtin_components` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
   `ident` varchar(191) NOT NULL COMMENT '''identifier of component''',
   `logo` varchar(191) NOT NULL COMMENT '''logo of component''',
@@ -53,9 +52,9 @@ Create Table: CREATE TABLE `builtin_components` (
   `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''updater''',
   PRIMARY KEY (`id`),
   KEY `idx_ident` (`ident`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-Create Table: CREATE TABLE `builtin_payloads` (
+CREATE TABLE `builtin_payloads` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
   `type` varchar(191) NOT NULL COMMENT '''type of payload''',
   `component` varchar(191) NOT NULL COMMENT '''component of payload''',
@@ -72,4 +71,7 @@ Create Table: CREATE TABLE `builtin_payloads` (
   KEY `idx_name` (`name`),
   KEY `idx_cate` (`cate`),
   KEY `idx_type` (`type`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/* v7.0.0-beta.7 */
+ALTER TABLE users ADD COLUMN last_active_time BIGINT NOT NULL DEFAULT 0;

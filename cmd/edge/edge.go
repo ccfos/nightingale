@@ -50,7 +50,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	syncStats := memsto.NewSyncStats()
 
-	targetCache := memsto.NewTargetCache(ctx, syncStats, nil)
+	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	idents := idents.New(ctx, redis)
 	metas := metas.New(redis)

@@ -53,7 +53,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertStats := astats.NewSyncStats()
 
 	configCache := memsto.NewConfigCache(ctx, syncStats, nil, "")
-	targetCache := memsto.NewTargetCache(ctx, syncStats, nil)
+	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)

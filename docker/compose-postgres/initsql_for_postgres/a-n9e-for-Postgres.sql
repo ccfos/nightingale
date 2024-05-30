@@ -10,6 +10,7 @@ CREATE TABLE users (
     contacts varchar(1024),
     maintainer boolean not null default false,
     belong varchar(16) not null default '',
+    last_active_time bigint not null default 0,
     create_at bigint not null default 0,
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
@@ -851,3 +852,36 @@ CREATE TABLE board_busigroup (
   board_id BIGINT NOT NULL DEFAULT 0,
   PRIMARY KEY (busi_group_id, board_id)
 );
+
+
+CREATE TABLE builtin_components (
+  id BIGSERIAL PRIMARY KEY,
+  ident VARCHAR(191) NOT NULL,
+  logo VARCHAR(191) NOT NULL,
+  readme TEXT NOT NULL,
+  created_at BIGINT NOT NULL DEFAULT 0,
+  created_by VARCHAR(191) NOT NULL DEFAULT '',
+  updated_at BIGINT NOT NULL DEFAULT 0,
+  updated_by VARCHAR(191) NOT NULL DEFAULT ''
+);
+
+CREATE INDEX idx_ident ON builtin_components (ident);
+
+CREATE TABLE builtin_payloads (
+  id BIGSERIAL PRIMARY KEY,
+  type VARCHAR(191) NOT NULL,
+  component VARCHAR(191) NOT NULL,
+  cate VARCHAR(191) NOT NULL,
+  name VARCHAR(191) NOT NULL,
+  tags VARCHAR(191) NOT NULL DEFAULT '',
+  content TEXT NOT NULL,
+  created_at BIGINT NOT NULL DEFAULT 0,
+  created_by VARCHAR(191) NOT NULL DEFAULT '',
+  updated_at BIGINT NOT NULL DEFAULT 0,
+  updated_by VARCHAR(191) NOT NULL DEFAULT ''
+);
+
+CREATE INDEX idx_component ON builtin_payloads (component);
+CREATE INDEX idx_name ON builtin_payloads (name);
+CREATE INDEX idx_cate ON builtin_payloads (cate);
+CREATE INDEX idx_type ON builtin_payloads (type);

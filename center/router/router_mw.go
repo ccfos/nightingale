@@ -143,6 +143,8 @@ func (rt *Router) user() gin.HandlerFunc {
 
 		c.Set("user", user)
 		c.Set("isadmin", user.IsAdmin())
+		// Update user.LastActiveTime
+		rt.UserCache.SetLastActiveTime(user.Id, time.Now().Unix())
 		c.Next()
 	}
 }
