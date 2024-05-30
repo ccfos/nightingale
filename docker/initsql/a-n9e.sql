@@ -16,6 +16,7 @@ CREATE TABLE `users` (
     `contacts` varchar(1024) comment 'json e.g. {wecom:xx, dingtalk_robot_token:yy}',
     `maintainer` tinyint(1) not null default 0,
     `belong` varchar(16) not null default '' comment 'belong',
+    `last_active_time` bigint not null default 0,
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,

@@ -40,8 +40,7 @@ CREATE TABLE `board_busigroup` (
   PRIMARY KEY (`busi_group_id`, `board_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-/* beta.5 */
-
+/* v7.0.0-beta.6 */
 CREATE TABLE `builtin_components` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
   `ident` varchar(191) NOT NULL COMMENT '''identifier of component''',
@@ -73,3 +72,6 @@ CREATE TABLE `builtin_payloads` (
   KEY `idx_cate` (`cate`),
   KEY `idx_type` (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/* v7.0.0-beta.7 */
+ALTER TABLE users ADD COLUMN last_active_time BIGINT NOT NULL DEFAULT 0;
