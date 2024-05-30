@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -53,7 +54,7 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 		cates = strings.Split(cate, ",")
 	}
 
-	bgids, err := rt.getBusinessGroupIds(c)
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
 	ginx.Dangerous(err)
 
 	total, err := models.AlertHisEventTotal(rt.Ctx, prods, bgids, stime, etime, severity, recovered, dsIds, cates, query)
@@ -85,25 +86,25 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 	ginx.NewRender(c).Data(event, err)
 }
 
-func (rt *Router) getBusinessGroupIds(c *gin.Context) ([]int64, error) {
+func GetBusinessGroupIds(c *gin.Context, ctx *ctx.Context, eventHistoryGroupView bool) ([]int64, error) {
 	bgid := ginx.QueryInt64(c, "bgid", 0)
 	var bgids []int64
-	if !rt.Center.EventHistoryGroupView {
+	if !eventHistoryGroupView {
 		if bgid > 0 {
 			return []int64{bgid}, nil
 		}
 		return bgids, nil
 	}
-	// Description opens events that are only allowed to view user business groups ↓
 
+	// Description opens events that are only allowed to view user business groups ↓
 	userid := c.MustGet("userid").(int64)
-	bussGroupIds, err := models.MyBusiGroupIds(rt.Ctx, userid)
+	bussGroupIds, err := models.MyBusiGroupIds(ctx, userid)
 	if err != nil {
 		return nil, err
 	}
 
 	if bgid > 0 && !slices.Contains(bussGroupIds, bgid) {
-		return nil, fmt.Errorf("Business group ID not allowed")
+		return nil, fmt.Errorf("business group ID not allowed")
 	}
 
 	if bgid > 0 {
