@@ -129,6 +129,7 @@ func (uc *UserCacheType) SyncUsers() {
 	}
 
 	go uc.loopSyncUsers()
+	go uc.loopUpdateLastActiveTime()
 }
 
 func (uc *UserCacheType) loopSyncUsers() {
@@ -191,6 +192,59 @@ func (uc *UserCacheType) syncUsers() error {
 
 	logger.Infof("timer: sync users done, cost: %dms, number: %d", ms, len(m))
 	dumper.PutSyncRecord("users", start.Unix(), ms, len(m), "success")
+
+	return nil
+}
+
+func (uc *UserCacheType) SetLastActiveTime(userId int64, lastActiveTime int64) {
+	uc.Lock()
+	defer uc.Unlock()
+	if user, exists := uc.users[userId]; exists {
+		user.LastActiveTime = lastActiveTime
+	}
+}
+
+func (uc *UserCacheType) loopUpdateLastActiveTime() {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Errorf("panic to loopUpdateLastActiveTime(), err: %v", r)
+		}
+	}()
+
+	// Sync every five minutes
+	duration := 5 * time.Minute
+	for {
+		time.Sleep(duration)
+		if err := uc.updateUsersLastActiveTime(); err != nil {
+			logger.Warningf("failed to update users' last active time: %v", err)
+		}
+	}
+}
+
+func (uc *UserCacheType) updateUsersLastActiveTime() error {
+	// read the full list of users from the database
+	users, err := models.UserGetAll(uc.ctx)
+	if err != nil {
+		return errors.WithMessage(err, "failed to get all users from database")
+	}
+
+	for _, dbUser := range users {
+		cacheUser := uc.GetByUserId(dbUser.Id)
+
+		if cacheUser == nil {
+			continue
+		}
+
+		if dbUser.LastActiveTime >= cacheUser.LastActiveTime {
+			continue
+		}
+
+		err = models.UpdateUserLastActiveTime(uc.ctx, cacheUser.Id, cacheUser.LastActiveTime)
+		if err != nil {
+			logger.Warningf("failed to update last active time for user %d: %v", cacheUser.Id, err)
+			return err
+		}
+	}
 
 	return nil
 }

@@ -40,13 +40,16 @@ func (rt *Router) userFindAll(c *gin.Context) {
 }
 
 func (rt *Router) userGets(c *gin.Context) {
+	stime, etime := getTimeRange(c)
 	limit := ginx.QueryInt(c, "limit", 20)
 	query := ginx.QueryStr(c, "query", "")
+	order := ginx.QueryStr(c, "order", "username")
+	desc := ginx.QueryBool(c, "desc", false)
 
-	total, err := models.UserTotal(rt.Ctx, query)
+	total, err := models.UserTotal(rt.Ctx, query, stime, etime)
 	ginx.Dangerous(err)
 
-	list, err := models.UserGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+	list, err := models.UserGets(rt.Ctx, query, limit, ginx.Offset(c, limit), stime, etime, order, desc)
 	ginx.Dangerous(err)
 
 	user := c.MustGet("user").(*models.User)
