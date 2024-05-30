@@ -346,7 +346,7 @@ func (e *AlertCurEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 	return nil
 }
 
-func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
+func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
 	if stime != 0 && etime != 0 {
 		session = session.Where("trigger_time between ? and ?", stime, etime)
@@ -355,8 +355,8 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 		session = session.Where("rule_prod in ?", prods)
 	}
 
-	if bgid > 0 {
-		session = session.Where("group_id = ?", bgid)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in ?", bgids)
 	}
 
 	if severity >= 0 {
@@ -382,7 +382,7 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 	return Count(session)
 }
 
-func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
+func AlertCurEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
 	if stime != 0 && etime != 0 {
 		session = session.Where("trigger_time between ? and ?", stime, etime)
@@ -391,8 +391,8 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 		session = session.Where("rule_prod in ?", prods)
 	}
 
-	if bgid > 0 {
-		session = session.Where("group_id = ?", bgid)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in ?", bgids)
 	}
 
 	if severity >= 0 {
