@@ -86,7 +86,7 @@ func BuiltinComponentDels(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinComponent)).Error
 }
 
-func BuiltinComponentGets(ctx *ctx.Context, query string, limit, offset int) ([]*BuiltinComponent, error) {
+func BuiltinComponentGets(ctx *ctx.Context, query string) ([]*BuiltinComponent, error) {
 	session := DB(ctx)
 	if query != "" {
 		queryPattern := "%" + query + "%"
@@ -95,22 +95,9 @@ func BuiltinComponentGets(ctx *ctx.Context, query string, limit, offset int) ([]
 
 	var lst []*BuiltinComponent
 
-	err := session.Limit(limit).Offset(offset).Find(&lst).Error
+	err := session.Order("ident ASC").Find(&lst).Error
 
 	return lst, err
-}
-
-func BuiltinComponentCount(ctx *ctx.Context, query string) (int64, error) {
-	session := DB(ctx).Model(&BuiltinComponent{})
-	if query != "" {
-		queryPattern := "%" + query + "%"
-		session = session.Where("ident LIKE ?", queryPattern)
-	}
-
-	var cnt int64
-	err := session.Count(&cnt).Error
-
-	return cnt, err
 }
 
 func BuiltinComponentGet(ctx *ctx.Context, where string, args ...interface{}) (*BuiltinComponent, error) {

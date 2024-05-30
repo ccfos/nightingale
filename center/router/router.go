@@ -274,13 +274,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/builtin-cate-favorite", rt.auth(), rt.user(), rt.builtinCateFavoriteAdd)
 		pages.DELETE("/builtin-cate-favorite/:name", rt.auth(), rt.user(), rt.builtinCateFavoriteDel)
 
-		pages.GET("/builtin-boards", rt.builtinBoardGets)
-		pages.GET("/builtin-board/:name", rt.builtinBoardGet)
-		pages.GET("/dashboards/builtin/list", rt.builtinBoardGets)
-		pages.GET("/builtin-boards-cates", rt.auth(), rt.user(), rt.builtinBoardCateGets)
-		pages.POST("/builtin-boards-detail", rt.auth(), rt.user(), rt.builtinBoardDetailGets)
 		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
-		pages.GET("/integrations/makedown/:cate", rt.builtinMarkdown)
+
+		// pages.GET("/builtin-boards", rt.builtinBoardGets)
+		// pages.GET("/builtin-board/:name", rt.builtinBoardGet)
+		// pages.GET("/dashboards/builtin/list", rt.builtinBoardGets)
+		// pages.GET("/builtin-boards-cates", rt.auth(), rt.user(), rt.builtinBoardCateGets)
+		// pages.POST("/builtin-boards-detail", rt.auth(), rt.user(), rt.builtinBoardDetailGets)
+		// pages.GET("/integrations/makedown/:cate", rt.builtinMarkdown)
 
 		pages.GET("/busi-groups/public-boards", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.publicBoardGets)
 		pages.GET("/busi-groups/boards", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.boardGetsByGids)
@@ -299,8 +300,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/share-charts", rt.chartShareGets)
 		pages.POST("/share-charts", rt.auth(), rt.chartShareAdd)
 
-		pages.GET("/alert-rules/builtin/alerts-cates", rt.auth(), rt.user(), rt.builtinAlertCateGets)
-		pages.GET("/alert-rules/builtin/list", rt.auth(), rt.user(), rt.builtinAlertRules)
+		// pages.GET("/alert-rules/builtin/alerts-cates", rt.auth(), rt.user(), rt.builtinAlertCateGets)
+		// pages.GET("/alert-rules/builtin/list", rt.auth(), rt.user(), rt.builtinAlertRules)
 		pages.GET("/alert-rules/callbacks", rt.auth(), rt.user(), rt.alertRuleCallbacks)
 
 		pages.GET("/busi-groups/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleGetsByGids)
@@ -434,16 +435,17 @@ func (rt *Router) Config(r *gin.Engine) {
 		// for admin api
 		pages.GET("/user/busi-groups", rt.auth(), rt.admin(), rt.userBusiGroupsGets)
 
-		pages.POST("/builtin-components", rt.auth(), rt.user(), rt.perm("/builtin-components/add"), rt.builtinComponentsAdd)
-		pages.GET("/builtin-components", rt.auth(), rt.user(), rt.perm("/builtin-components"), rt.builtinComponentsGets)
-		pages.PUT("/builtin-components", rt.auth(), rt.user(), rt.perm("/builtin-components/put"), rt.builtinComponentsPut)
-		pages.DELETE("/builtin-components", rt.auth(), rt.user(), rt.perm("/builtin-components/del"), rt.builtinComponentsDel)
+		pages.GET("/builtin-components", rt.auth(), rt.user(), rt.builtinComponentsGets)
+		pages.POST("/builtin-components", rt.auth(), rt.user(), rt.perm("/built-in-components/add"), rt.builtinComponentsAdd)
+		pages.PUT("/builtin-components", rt.auth(), rt.user(), rt.perm("/built-in-components/put"), rt.builtinComponentsPut)
+		pages.DELETE("/builtin-components", rt.auth(), rt.user(), rt.perm("/built-in-components/del"), rt.builtinComponentsDel)
 
-		pages.POST("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads/add"), rt.builtinPayloadsAdd)
-		pages.GET("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads"), rt.builtinPayloadsGets)
-		pages.GET("/builtin-payload/:id", rt.auth(), rt.user(), rt.perm("/builtin-payloads"), rt.builtinPayloadGet)
-		pages.PUT("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads/put"), rt.builtinPayloadsPut)
-		pages.DELETE("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/builtin-payloads/del"), rt.builtinPayloadsDel)
+		pages.GET("/builtin-payloads", rt.auth(), rt.user(), rt.builtinPayloadsGets)
+		pages.GET("/builtin-payloads/cates", rt.auth(), rt.user(), rt.builtinPayloadcatesGet)
+		pages.POST("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/built-in-components/add"), rt.builtinPayloadsAdd)
+		pages.GET("/builtin-payload/:id", rt.auth(), rt.user(), rt.perm("/built-in-components"), rt.builtinPayloadGet)
+		pages.PUT("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/built-in-components/put"), rt.builtinPayloadsPut)
+		pages.DELETE("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/built-in-components/del"), rt.builtinPayloadsDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

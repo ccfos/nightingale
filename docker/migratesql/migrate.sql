@@ -39,3 +39,37 @@ CREATE TABLE `board_busigroup` (
   `board_id` bigint(20) NOT NULL DEFAULT '0' COMMENT 'board id',
   PRIMARY KEY (`busi_group_id`, `board_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/* beta.5 */
+
+Create Table: CREATE TABLE `builtin_components` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
+  `ident` varchar(191) NOT NULL COMMENT '''identifier of component''',
+  `logo` varchar(191) NOT NULL COMMENT '''logo of component''',
+  `readme` text NOT NULL COMMENT '''readme of component''',
+  `created_at` bigint(20) NOT NULL DEFAULT 0 COMMENT '''create time''',
+  `created_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''creator''',
+  `updated_at` bigint(20) NOT NULL DEFAULT 0 COMMENT '''update time''',
+  `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''updater''',
+  PRIMARY KEY (`id`),
+  KEY `idx_ident` (`ident`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+
+Create Table: CREATE TABLE `builtin_payloads` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
+  `type` varchar(191) NOT NULL COMMENT '''type of payload''',
+  `component` varchar(191) NOT NULL COMMENT '''component of payload''',
+  `cate` varchar(191) NOT NULL COMMENT '''category of payload''',
+  `name` varchar(191) NOT NULL COMMENT '''name of payload''',
+  `tags` varchar(191) NOT NULL DEFAULT '' COMMENT '''tags of payload''',
+  `content` longtext NOT NULL COMMENT '''content of payload''',
+  `created_at` bigint(20) NOT NULL DEFAULT 0 COMMENT '''create time''',
+  `created_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''creator''',
+  `updated_at` bigint(20) NOT NULL DEFAULT 0 COMMENT '''update time''',
+  `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''updater''',
+  PRIMARY KEY (`id`),
+  KEY `idx_component` (`component`),
+  KEY `idx_name` (`name`),
+  KEY `idx_cate` (`cate`),
+  KEY `idx_type` (`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
