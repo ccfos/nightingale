@@ -61,7 +61,7 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 		cates = strings.Split(cate, ",")
 	}
 
-	bgids, err := rt.getBusinessGroupIds(c)
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
 	ginx.Dangerous(err)
 
 	// 最多获取50000个，获取太多也没啥意义
@@ -162,7 +162,7 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 		cates = strings.Split(cate, ",")
 	}
 
-	bgids, err := rt.getBusinessGroupIds(c)
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
 	ginx.Dangerous(err)
 
 	total, err := models.AlertCurEventTotal(rt.Ctx, prods, bgids, stime, etime, severity, dsIds, cates, query)
