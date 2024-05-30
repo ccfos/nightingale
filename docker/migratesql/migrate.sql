@@ -55,7 +55,7 @@ CREATE TABLE `builtin_components` (
   KEY `idx_ident` (`ident`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `builtin_payloads2` (
+CREATE TABLE `builtin_payloads` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
   `type` varchar(191) NOT NULL COMMENT '''type of payload''',
   `component` varchar(191) NOT NULL COMMENT '''component of payload''',
