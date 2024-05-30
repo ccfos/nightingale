@@ -10,6 +10,7 @@ CREATE TABLE users (
     contacts varchar(1024),
     maintainer boolean not null default false,
     belong varchar(16) not null default '',
+    last_active_time bigint not null default 0,
     create_at bigint not null default 0,
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
