@@ -1,7 +1,7 @@
 {
     "name": "Broker Metrics",
     "tags": "",
-    "ident": "",
+    "ident": "automq-broker-metrics",
     "configs": {
         "version": "3.0.0",
         "links": [],

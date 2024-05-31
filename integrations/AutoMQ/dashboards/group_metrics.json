@@ -1,7 +1,7 @@
 {
     "name": "Group Metrics",
     "tags": "",
-    "ident": "",
+    "ident": "automq-group-metrics",
     "configs": {
         "version": "3.0.0",
         "links": [],

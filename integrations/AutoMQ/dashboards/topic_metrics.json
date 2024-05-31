@@ -1,7 +1,7 @@
 {
     "name": "Topic Metrics",
     "tags": "",
-    "ident": "",
+    "ident": "automq-topic-metrics",
     "configs": {
         "version": "3.0.0",
         "links": [],

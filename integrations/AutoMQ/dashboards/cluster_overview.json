@@ -642,7 +642,13 @@
                     "calc": "lastNotNull",
                     "displayMode": "labelsOfSeriesToRows",
                     "columns": [],
-                    "linkMode": "appendLinkColumn"
+                    "linkMode": "appendLinkColumn",
+                    "links": [
+                        {
+                            "title": "下钻",
+                            "url": "/dashboards/automq-group-metrics?TSDB=${DS_PROMETHEUS}&cluster_id=${cluster_id}&group_id=${__field.labels.consumer_group}&partition=all&topic=${__field.labels.topic}"
+                        }
+                    ]
                 },
                 "options": {
                     "valueMappings": [
@@ -735,7 +741,13 @@
                     "aggrDimension": [
                         "topic"
                     ],
-                    "linkMode": "appendLinkColumn"
+                    "linkMode": "appendLinkColumn",
+                    "links": [
+                        {
+                            "title": "下钻",
+                            "url": "/dashboards/automq-topic-metrics?TSDB=${DS_PROMETHEUS}&cluster_id=${cluster_id}&topic=${__field.labels.topic}"
+                        }
+                    ]
                 },
                 "options": {
                     "standardOptions": {
@@ -893,7 +905,13 @@
                     "aggrDimension": [
                         "instance"
                     ],
-                    "linkMode": "appendLinkColumn"
+                    "linkMode": "appendLinkColumn",
+                    "links": [
+                        {
+                            "title": "下钻",
+                            "url": "/dashboards/automq-broker-metrics?DS_PROMETHEUS=${DS_PROMETHEUS}&cluster_id=${cluster_id}&node_id=${__field.labels.instance}"
+                        }
+                    ]
                 },
                 "options": {
                     "standardOptions": {}
