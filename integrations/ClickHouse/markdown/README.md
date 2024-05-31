@@ -11,6 +11,8 @@ modify metrics, tags, and field or create aliases and configure ordering, etc.
 See the [CONFIGURATION.md][CONFIGURATION.md] for more details.
 
 ## Configuration
+路径 categraf/conf/input.clickhouse
+
 
 ```toml
 # # collect interval
