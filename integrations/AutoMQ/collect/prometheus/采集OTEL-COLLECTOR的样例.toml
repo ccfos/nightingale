@@ -1,0 +1,9 @@
+interval = 15
+
+[[instances]]
+urls = [
+     "http://<otel-collector-ip>:<otel-collector-port>/metrics"
+]
+
+url_label_key = "otel_collector"
+url_label_value = "{{.Host}}"
