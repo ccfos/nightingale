@@ -120,7 +120,7 @@
       "collector": "Exporter",
       "typ": "AutoMQ",
       "name": "Fetch请求失败速率（每个实例）",
-      "unit": "packetsSec",
+      "unit": "reqps",
       "note": "",
       "lang": "zh_CN",
       "expression": "sum by(job, instance) (rate(kafka_topic_request_failed_total[1m]))"
@@ -183,7 +183,7 @@
       "collector": "Exporter",
       "typ": "AutoMQ",
       "name": "Produce请求失败速率（每个实例）",
-      "unit": "packetsSec",
+      "unit": "reqps",
       "note": "",
       "lang": "zh_CN",
       "expression": "sum by(job, instance) (rate(kafka_topic_request_failed_total[1m]))"
@@ -210,7 +210,7 @@
       "collector": "Exporter",
       "typ": "AutoMQ",
       "name": "实例的Fetch请求速率",
-      "unit": "packetsSec",
+      "unit": "reqps",
       "note": "",
       "lang": "zh_CN",
       "expression": "sum by(job, instance, topic) (rate(kafka_request_count_total[1m]))"
@@ -219,7 +219,7 @@
       "collector": "Exporter",
       "typ": "AutoMQ",
       "name": "实例的Produce请求速率",
-      "unit": "packetsSec",
+      "unit": "reqps",
       "note": "",
       "lang": "zh_CN",
       "expression": "sum by(job, instance, topic) (rate(kafka_request_count_total[1m]))"
@@ -290,6 +290,15 @@
     {
       "collector": "Exporter",
       "typ": "AutoMQ",
+      "name": "每个Topic的Broker节点入站网络IO速率sum by(topic)",
+      "unit": "bytesSecSI",
+      "note": "",
+      "lang": "zh_CN",
+      "expression": "sum by(job, topic) (rate(kafka_network_io_bytes_total{direction=\"in\"}[1m]))"
+    },
+    {
+      "collector": "Exporter",
+      "typ": "AutoMQ",
       "name": "每个Topic的Broker节点入站网络IO速率sum by(topic, instance)",
       "unit": "bytesSecSI",
       "note": "",
@@ -299,11 +308,11 @@
     {
       "collector": "Exporter",
       "typ": "AutoMQ",
-      "name": "每个Topic的Broker节点入站网络IO速率sum by(topic)",
+      "name": "每个Topic的Broker节点出站网络IO速率sum by(topic)",
       "unit": "bytesSecSI",
       "note": "",
       "lang": "zh_CN",
-      "expression": "sum by(job, topic) (rate(kafka_network_io_bytes_total{direction=\"in\"}[1m]))"
+      "expression": "sum by(job, topic) (rate(kafka_network_io_bytes_total{direction=\"out\"}[1m]))"
     },
     {
       "collector": "Exporter",
@@ -326,29 +335,20 @@
     {
       "collector": "Exporter",
       "typ": "AutoMQ",
-      "name": "每个Topic的Broker节点出站网络IO速率sum by(topic)",
-      "unit": "bytesSecSI",
+      "name": "每个Topic的Broker节点消息吞吐量（入站）sum by(topic)",
+      "unit": "mps",
       "note": "",
       "lang": "zh_CN",
-      "expression": "sum by(job, topic) (rate(kafka_network_io_bytes_total{direction=\"out\"}[1m]))"
+      "expression": "sum by(job, topic) (rate(kafka_message_count_total{direction=\"in\"}[1m]))"
     },
     {
       "collector": "Exporter",
       "typ": "AutoMQ",
       "name": "每个Topic的Broker节点消息吞吐量（入站）sum by(topic, instance)",
-      "unit": "packetsSec",
+      "unit": "mps",
       "note": "",
       "lang": "zh_CN",
       "expression": "sum by(job, topic, instance) (rate(kafka_message_count_total{direction=\"in\"}[1m]))"
-    },
-    {
-      "collector": "Exporter",
-      "typ": "AutoMQ",
-      "name": "每个Topic的Broker节点消息吞吐量（入站）sum by(topic)",
-      "unit": "packetsSec",
-      "note": "",
-      "lang": "zh_CN",
-      "expression": "sum by(job, topic) (rate(kafka_message_count_total{direction=\"in\"}[1m]))"
     },
     {
       "collector": "Exporter",
@@ -372,7 +372,7 @@
       "collector": "Exporter",
       "typ": "AutoMQ",
       "name": "每个Topic的消息吞吐量sum by(topic, type)",
-      "unit": "packetsSec",
+      "unit": "mps",
       "note": "",
       "lang": "zh_CN",
       "expression": "sum by(job, topic, type) (rate(kafka_message_count_total[1m]))"
@@ -381,7 +381,7 @@
       "collector": "Exporter",
       "typ": "AutoMQ",
       "name": "每个Topic的请求计数sum by(topic, type)",
-      "unit": "packetsSec",
+      "unit": "reqps",
       "note": "",
       "lang": "zh_CN",
       "expression": "sum by(job, topic, type) (rate(kafka_topic_request_count_total[1m]))"
@@ -408,7 +408,7 @@
       "collector": "Exporter",
       "typ": "AutoMQ",
       "name": "每个实例的Broker节点消息吞吐量（入站）",
-      "unit": "packetsSec",
+      "unit": "mps",
       "note": "",
       "lang": "zh_CN",
       "expression": "sum by(job, instance) (rate(kafka_message_count_total{direction=\"in\"}[1m]))"
@@ -417,7 +417,7 @@
       "collector": "Exporter",
       "typ": "AutoMQ",
       "name": "每个实例的Fetch请求速率",
-      "unit": "packetsSec",
+      "unit": "reqps",
       "note": "",
       "lang": "zh_CN",
       "expression": "sum by(job, instance) (rate(kafka_request_count_total{type=\"Fetch\"}[1m]))"
@@ -426,7 +426,7 @@
       "collector": "Exporter",
       "typ": "AutoMQ",
       "name": "每个实例的Produce请求速率",
-      "unit": "packetsSec",
+      "unit": "reqps",
       "note": "",
       "lang": "zh_CN",
       "expression": "sum by(job, instance) (rate(kafka_request_count_total{type=\"Produce\"}[1m]))"
@@ -507,7 +507,7 @@
       "collector": "Exporter",
       "typ": "AutoMQ",
       "name": "请求错误计数率（每个实例）",
-      "unit": "packetsSec",
+      "unit": "reqps",
       "note": "",
       "lang": "zh_CN",
       "expression": "sum by(job, instance) (rate(kafka_request_error_count_total[1m]))"
