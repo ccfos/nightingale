@@ -107,6 +107,11 @@ func GetBusinessGroupIds(c *gin.Context, ctx *ctx.Context, eventHistoryGroupView
 		return nil, err
 	}
 
+	if len(bussGroupIds) == 0 {
+		// 如果没查到用户属于任何业务组，需要返回一个0，否则会导致查询到全部告警历史
+		return []int64{0}, nil
+	}
+
 	if bgid > 0 && !slices.Contains(bussGroupIds, bgid) {
 		return nil, fmt.Errorf("business group ID not allowed")
 	}
