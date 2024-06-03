@@ -218,6 +218,10 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 		ginx.Bomb(404, "No such active event")
 	}
 
+	if !rt.Center.AnonymousAccess.AlertDetail && rt.Center.EventHistoryGroupView {
+		rt.bgroCheck(c, event.GroupId)
+	}
+
 	ginx.NewRender(c).Data(event, nil)
 }
 

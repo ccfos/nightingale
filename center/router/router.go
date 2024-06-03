@@ -342,8 +342,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
 			pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
 		} else {
-			pages.GET("/alert-cur-event/:eid", rt.auth(), rt.alertCurEventGet)
-			pages.GET("/alert-his-event/:eid", rt.auth(), rt.alertHisEventGet)
+			pages.GET("/alert-cur-event/:eid", rt.auth(), rt.user(), rt.alertCurEventGet)
+			pages.GET("/alert-his-event/:eid", rt.auth(), rt.user(), rt.alertHisEventGet)
 		}
 
 		// card logic

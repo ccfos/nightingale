@@ -83,6 +83,10 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 		ginx.Bomb(404, "No such alert event")
 	}
 
+	if !rt.Center.AnonymousAccess.AlertDetail && rt.Center.EventHistoryGroupView {
+		rt.bgroCheck(c, event.GroupId)
+	}
+
 	ginx.NewRender(c).Data(event, err)
 }
 
