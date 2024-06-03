@@ -1,0 +1,934 @@
+{
+  "name": "ClickHouse",
+  "tags": "",
+  "ident": "",
+  "configs": {
+    "var": [],
+    "panels": [
+      {
+        "type": "row",
+        "id": "a29e6667-beb8-4b2c-ad5f-a348a237143c",
+        "name": "Basic Info",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "a29e6667-beb8-4b2c-ad5f-a348a237143c",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "stat",
+        "id": "7d34dddf-b786-4d92-be78-63b90dea542d",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 1,
+          "i": "7d34dddf-b786-4d92-be78-63b90dea542d",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "clickhouse_asynchronous_metrics_uptime",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "ClickHouse Uptime",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "seconds"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "b8d57f81-e4e2-4d0b-882d-85ba4aca3693",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 1,
+          "i": "013c6c57-4dab-4e30-8278-dac134a709d4",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "clickhouse_metrics_memory_tracking",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "ClickHouse Memory",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "bytesSI"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "eb7c644c-ebab-4b6c-9486-fa481d5503df",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 1,
+          "i": "322e4c87-90f2-45f3-b9bd-3015b476d886",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "clickhouse_asynchronous_metrics_number_of_databases",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "ClickHouse Databases",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          }
+        }
+      },
+      {
+        "type": "stat",
+        "id": "157180ad-e9b9-4527-a0a0-63d40ba6d70d",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 1,
+          "i": "50c362f6-a4fc-428a-8995-08d5bdd98aab",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "clickhouse_asynchronous_metrics_number_of_tables",
+            "maxDataPoints": 240,
+            "legend": "表数量"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "ClickHouse Tables",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {}
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          }
+        }
+      },
+      {
+        "type": "row",
+        "id": "bfcbee14-71d7-477f-9663-a98102e301c5",
+        "name": "Connections",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 5,
+          "i": "bfcbee14-71d7-477f-9663-a98102e301c5",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "1e5cacaa-c184-4bae-8700-b7a9b2cabfe7",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 0,
+          "y": 6,
+          "i": "1e5cacaa-c184-4bae-8700-b7a9b2cabfe7",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "clickhouse_metrics_tcp_connection",
+            "maxDataPoints": 240,
+            "legend": "tcp连接数"
+          },
+          {
+            "expr": "clickhouse_metrics_http_connection",
+            "__mode__": "__query__",
+            "refId": "B",
+            "maxDataPoints": 240,
+            "legend": "http连接数"
+          },
+          {
+            "expr": "clickhouse_metrics_distributed_send",
+            "__mode__": "__query__",
+            "refId": "C",
+            "maxDataPoints": 240,
+            "legend": "分布式表连接数"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "ClickHouse Connections",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "standardOptions": {
+                "util": "none"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "a35cab3d-8ab8-4d4e-bca2-e5a547f70a68",
+        "name": "Query Performance",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 10,
+          "i": "a35cab3d-8ab8-4d4e-bca2-e5a547f70a68",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "e28f8147-519d-43c1-90c5-e8b3bcd1cdf6",
+        "layout": {
+          "h": 5,
+          "w": 9,
+          "x": 0,
+          "y": 11,
+          "i": "e28f8147-519d-43c1-90c5-e8b3bcd1cdf6",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "clickhouse_metrics_parts_temporary",
+            "maxDataPoints": 240,
+            "legend": "临时数据量"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "ClickHouse Temporary Objects",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "bytesIEC"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "standardOptions": {
+                "util": "bytesSI"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "aa8782e4-d232-4541-a16a-00b973391f10",
+        "layout": {
+          "h": 5,
+          "w": 9,
+          "x": 9,
+          "y": 11,
+          "i": "960d9c59-ae62-4636-8341-4209778102bc",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "clickhouse_events_select_query_time_microseconds/clickhouse_events_select_query/10",
+            "maxDataPoints": 240,
+            "legend": "select查询平均耗时"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "ClickHouse Select Types",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "standardOptions": {
+                "util": "seconds"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "65c9b9a8-e081-49e5-89aa-e37b967959f6",
+        "layout": {
+          "h": 6,
+          "w": 9,
+          "x": 0,
+          "y": 16,
+          "i": "e27f21ca-52f6-4a14-919a-69015886228c",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "expr": "clickhouse_events_query_time_microseconds/clickhouse_events_query/10",
+            "__mode__": "__query__",
+            "refId": "B",
+            "maxDataPoints": 240,
+            "legend": "query查询"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "ClickHouse Query Types",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "lineInterpolation": "smooth"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "standardOptions": {
+                "util": "milliseconds"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "b207ebf0-a322-4750-b42d-87e1d7db4ba2",
+        "layout": {
+          "h": 6,
+          "w": 9,
+          "x": 9,
+          "y": 16,
+          "i": "31d4d49b-7a24-4dcf-b660-580718c0b19e",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "expr": "clickhouse_metrics_parts_deleting",
+            "__mode__": "__query__",
+            "refId": "B",
+            "maxDataPoints": 240,
+            "legend": "正删除数量"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "ClickHouse Deleting Types",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "standardOptions": {
+                "util": "bytesSecSI"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "6c88d0e1-8d20-48e2-8755-9dac26fdd10f",
+        "name": "Open Files",
+        "collapsed": false,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 22,
+          "i": "6c88d0e1-8d20-48e2-8755-9dac26fdd10f",
+          "isResizable": false
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "1b8f4897-cd3e-4417-bb35-2e99abf652b3",
+        "layout": {
+          "h": 4,
+          "w": 12,
+          "x": 0,
+          "y": 23,
+          "i": "1b8f4897-cd3e-4417-bb35-2e99abf652b3",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "clickhouse_metrics_parts_pre_committed",
+            "maxDataPoints": 240,
+            "legend": "提交前数据量"
+          },
+          {
+            "expr": "clickhouse_metrics_parts_committed",
+            "__mode__": "__query__",
+            "refId": "B",
+            "maxDataPoints": 240,
+            "legend": "提交后数据量"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "执行中间数据变化",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "40e649f9-f37d-4b1a-8ba1-1c2eaa8cb31e",
+        "name": "Distributed Table Openings\n",
+        "collapsed": false,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 27,
+          "i": "40e649f9-f37d-4b1a-8ba1-1c2eaa8cb31e",
+          "isResizable": false
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "a960d382-a11e-44f6-a55b-843dece3ebb7",
+        "layout": {
+          "h": 6,
+          "w": 10,
+          "x": 0,
+          "y": 28,
+          "i": "a960d382-a11e-44f6-a55b-843dece3ebb7",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "clickhouse_metrics_distributed_send",
+            "maxDataPoints": 240,
+            "legend": "分布式表连接数"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "连接\n",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "standardOptions": {
+                "util": "none"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "4222dd9f-1aa7-45dc-8324-6fe9845d1e43",
+        "layout": {
+          "h": 6,
+          "w": 10,
+          "x": 10,
+          "y": 28,
+          "i": "3430dc83-36e5-43b8-9d59-8cf6c7f2c512",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": 3,
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "clickhouse_metrics_distributed_files_to_insert",
+            "maxDataPoints": 240,
+            "legend": "待插入分布式表数"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "执行\n",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 1,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "standardOptions": {
+                "util": "none"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "version": "3.0.0",
+    "graphTooltip": "default",
+    "graphZoom": "default"
+  }
+}
