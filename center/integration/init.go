@@ -107,7 +107,23 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					}
 
 					if exists {
-						continue
+						old, err := models.BuiltinPayloadGet(ctx, "type = ? AND component = ? AND name = ? AND cate = ?", builtinAlert.Type, builtinAlert.Component, builtinAlert.Name, builtinAlert.Cate)
+						if err != nil {
+							logger.Warning("get builtin alert fail ", builtinAlert, err)
+							continue
+						}
+
+						if old.CreatedAt != old.UpdatedAt {
+							// 模板已经被修改过，不再更新
+							continue
+						}
+
+						// 先删除旧的 再添加新的
+						err = models.BuiltinPayloadDels(ctx, []int64{old.ID})
+						if err != nil {
+							logger.Warning("delete old builtin alert fail ", old, err)
+							continue
+						}
 					}
 
 					err = builtinAlert.Add(ctx, "system")
@@ -159,7 +175,23 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				}
 
 				if exists {
-					continue
+					old, err := models.BuiltinPayloadGet(ctx, "type = ? AND component = ? AND name = ? AND cate = ?", builtinDashboard.Type, builtinDashboard.Component, builtinDashboard.Name, builtinDashboard.Cate)
+					if err != nil {
+						logger.Warning("get builtin dashboard fail ", builtinDashboard, err)
+						continue
+					}
+
+					if old.CreatedAt != old.UpdatedAt {
+						// 模板已经被修改过，不再更新
+						continue
+					}
+
+					// delete old
+					err = models.BuiltinPayloadDels(ctx, []int64{old.ID})
+					if err != nil {
+						logger.Warning("delete old builtin dashboard fail ", old, err)
+						continue
+					}
 				}
 
 				err = builtinDashboard.Add(ctx, "system")
@@ -196,9 +228,22 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 						logger.Warning("check builtin metric exists fail", metric, err)
 						continue
 					}
+
 					if exists {
-						continue
+						old, err := models.BuiltinMetricGet(ctx, "lang = ? and collector = ? and typ = ? and name = ?", metric.Lang, metric.Collector, metric.Typ, metric.Name)
+						if err != nil {
+							logger.Warning("get builtin metric fail", metric, err)
+							continue
+						}
+
+						// delete old
+						err = models.BuiltinMetricDels(ctx, []int64{old.ID})
+						if err != nil {
+							logger.Warningf("delete old builtin metric fail %v %v", old, err)
+							continue
+						}
 					}
+
 					err = metric.Add(ctx, "system")
 					if err != nil {
 						logger.Warning("add builtin metric fail", metric, err)

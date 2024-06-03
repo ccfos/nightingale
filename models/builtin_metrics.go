@@ -11,7 +11,7 @@ import (
 
 // BuiltinMetric represents a metric along with its metadata.
 type BuiltinMetric struct {
-	ID         uint64 `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	ID         int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
 	Collector  string `json:"collector" gorm:"type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"` // Type of collector (e.g., 'categraf', 'telegraf')
 	Typ        string `json:"typ" gorm:"type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`                // Type of metric (e.g., 'host', 'mysql', 'redis')
 	Name       string `json:"name" gorm:"type:varchar(191);not null;index:idx_name,sort:asc;comment:'name of metric'"`

@@ -9,7 +9,7 @@ import (
 )
 
 type BuiltinPayload struct {
-	ID        uint64 `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	ID        int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
 	Type      string `json:"type" gorm:"type:varchar(191);not null;index:idx_type,sort:asc;comment:'type of payload'"`                // Alert Dashboard Collet
 	Component string `json:"component" gorm:"type:varchar(191);not null;index:idx_component,sort:asc;comment:'component of payload'"` // Host MySQL Redis
 	Cate      string `json:"cate" gorm:"type:varchar(191);not null;comment:'category of payload'"`                                    // categraf_v1 telegraf_v1
