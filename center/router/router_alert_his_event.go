@@ -93,16 +93,16 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 func GetBusinessGroupIds(c *gin.Context, ctx *ctx.Context, eventHistoryGroupView bool) ([]int64, error) {
 	bgid := ginx.QueryInt64(c, "bgid", 0)
 	var bgids []int64
-	if !eventHistoryGroupView {
+	user := c.MustGet("user").(*models.User)
+
+	if !eventHistoryGroupView || user.IsAdmin() {
 		if bgid > 0 {
 			return []int64{bgid}, nil
 		}
 		return bgids, nil
 	}
 
-	// Description opens events that are only allowed to view user business groups ↓
-	userid := c.MustGet("userid").(int64)
-	bussGroupIds, err := models.MyBusiGroupIds(ctx, userid)
+	bussGroupIds, err := models.MyBusiGroupIds(ctx, user.Id)
 	if err != nil {
 		return nil, err
 	}
