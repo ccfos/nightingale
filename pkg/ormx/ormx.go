@@ -9,6 +9,7 @@ import (
 	tklog "github.com/toolkits/pkg/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
@@ -72,12 +73,16 @@ func (l *TKitLogger) Printf(s string, i ...interface{}) {
 // New Create gorm.DB instance
 func New(c DBConfig) (*gorm.DB, error) {
 	var dialector gorm.Dialector
+	sqliteUsed := false
 
 	switch strings.ToLower(c.DBType) {
 	case "mysql":
 		dialector = mysql.Open(c.DSN)
 	case "postgres":
 		dialector = postgres.Open(c.DSN)
+	case "sqlite":
+		dialector = sqlite.Open(c.DSN)
+		sqliteUsed = true
 	default:
 		return nil, fmt.Errorf("dialector(%s) not supported", c.DBType)
 	}
@@ -104,9 +109,11 @@ func New(c DBConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	sqlDB.SetMaxIdleConns(c.MaxIdleConns)
-	sqlDB.SetMaxOpenConns(c.MaxOpenConns)
-	sqlDB.SetConnMaxLifetime(time.Duration(c.MaxLifetime) * time.Second)
+	if !sqliteUsed {
+		sqlDB.SetMaxIdleConns(c.MaxIdleConns)
+		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
+		sqlDB.SetConnMaxLifetime(time.Duration(c.MaxLifetime) * time.Second)
+	}
 
 	return db, nil
 }
