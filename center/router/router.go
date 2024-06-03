@@ -347,10 +347,10 @@ func (rt *Router) Config(r *gin.Engine) {
 		}
 
 		// card logic
-		pages.GET("/alert-cur-events/list", rt.auth(), rt.alertCurEventsList)
-		pages.GET("/alert-cur-events/card", rt.auth(), rt.alertCurEventsCard)
+		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)
+		pages.GET("/alert-cur-events/card", rt.auth(), rt.user(), rt.alertCurEventsCard)
 		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
-		pages.GET("/alert-his-events/list", rt.auth(), rt.alertHisEventsList)
+		pages.GET("/alert-his-events/list", rt.auth(), rt.user(), rt.alertHisEventsList)
 		pages.DELETE("/alert-cur-events", rt.auth(), rt.user(), rt.perm("/alert-cur-events/del"), rt.alertCurEventDel)
 		pages.GET("/alert-cur-events/stats", rt.auth(), rt.alertCurEventsStatistics)
 
