@@ -16,6 +16,7 @@ type BuiltinPayload struct {
 	Name      string `json:"name" gorm:"type:varchar(191);not null;index:idx_name,sort:asc;comment:'name of payload'"`                //
 	Tags      string `json:"tags" gorm:"type:varchar(191);not null;default:'';comment:'tags of payload'"`                             // {"host":"
 	Content   string `json:"content" gorm:"type:longtext;not null;comment:'content of payload'"`
+	UUID      int64  `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
 	CreatedAt int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
 	CreatedBy string `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
 	UpdatedAt int64  `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
@@ -66,8 +67,9 @@ func (bp *BuiltinPayload) Add(ctx *ctx.Context, username string) error {
 	}
 	now := time.Now().Unix()
 	bp.CreatedAt = now
-	bp.UpdatedAt = now
 	bp.CreatedBy = username
+	bp.UpdatedAt = now
+	bp.UpdatedBy = username
 	return Insert(ctx, bp)
 }
 
