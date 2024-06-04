@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 
@@ -27,6 +28,7 @@ func (rt *Router) builtinMetricsAdd(c *gin.Context) {
 	reterr := make(map[string]string)
 	for i := 0; i < count; i++ {
 		lst[i].Lang = lang
+		lst[i].UUID = time.Now().UnixNano()
 		if err := lst[i].Add(rt.Ctx, username); err != nil {
 			reterr[lst[i].Name] = err.Error()
 		}
