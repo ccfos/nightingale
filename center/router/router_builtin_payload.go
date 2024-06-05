@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 )
 
 type Board struct {
@@ -63,7 +64,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 					}
 
 					if err := bp.Add(rt.Ctx, username); err != nil {
-						reterr[bp.Name] = err.Error()
+						reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 					}
 				}
 				continue
@@ -92,7 +93,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 			}
 
 			if err := bp.Add(rt.Ctx, username); err != nil {
-				reterr[bp.Name] = err.Error()
+				reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 			}
 		} else if lst[i].Type == "dashboard" {
 			if strings.HasPrefix(strings.TrimSpace(lst[i].Content), "[") {
@@ -126,7 +127,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 					}
 
 					if err := bp.Add(rt.Ctx, username); err != nil {
-						reterr[bp.Name] = err.Error()
+						reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 					}
 				}
 				continue
@@ -134,7 +135,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 
 			dashboard := Board{}
 			if err := json.Unmarshal([]byte(lst[i].Content), &dashboard); err != nil {
-				reterr[lst[i].Name] = err.Error()
+				reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 				continue
 			}
 
@@ -155,11 +156,11 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 			}
 
 			if err := bp.Add(rt.Ctx, username); err != nil {
-				reterr[bp.Name] = err.Error()
+				reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 			}
 		} else {
 			if err := lst[i].Add(rt.Ctx, username); err != nil {
-				reterr[lst[i].Name] = err.Error()
+				reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 			}
 		}
 
