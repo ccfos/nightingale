@@ -80,11 +80,6 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 		event.RuleName = fmt.Sprintf("failed to parse rule name: %v", err)
 	}
 
-	if err := event.ParseRule("rule_note"); err != nil {
-		logger.Warningf("ruleid:%d failed to parse rule note: %v", event.RuleId, err)
-		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
-	}
-
 	if err := event.ParseRule("annotations"); err != nil {
 		logger.Warningf("ruleid:%d failed to parse annotations: %v", event.RuleId, err)
 		event.Annotations = fmt.Sprintf("failed to parse annotations: %v", err)
@@ -92,6 +87,11 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 	}
 
 	e.queryRecoveryVal(event)
+
+	if err := event.ParseRule("rule_note"); err != nil {
+		logger.Warningf("ruleid:%d failed to parse rule note: %v", event.RuleId, err)
+		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
+	}
 
 	e.persist(event)
 

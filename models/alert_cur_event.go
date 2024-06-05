@@ -134,6 +134,7 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 	var defs = []string{
 		"{{$labels := .TagsMap}}",
 		"{{$value := .TriggerValue}}",
+		"{{$annotation := .AnnotationsJSON}}",
 	}
 
 	text := strings.Join(append(defs, f), "")
