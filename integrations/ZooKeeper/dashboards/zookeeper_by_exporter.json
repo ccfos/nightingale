@@ -1,7 +1,13 @@
 {
+    "id": 0,
+    "group_id": 0,
     "name": "Zookeeper - exporter",
-    "tags": "",
     "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
     "configs": {
         "panels": [
             {
@@ -27,6 +33,8 @@
                         "value": 40
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "4474ec3c-360b-4b3c-ab16-978305ecc438",
                 "layout": {
                     "h": 3,
@@ -69,9 +77,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -83,6 +89,8 @@
                         "value": 50
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "5ef1653d-ca20-47b9-9604-f3a0dfffbdd6",
                 "layout": {
                     "h": 3,
@@ -103,9 +111,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -117,6 +123,8 @@
                         "value": 50
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "fef22c82-540a-4662-9913-26b6b38e8aa3",
                 "layout": {
                     "h": 3,
@@ -137,9 +145,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -151,6 +157,8 @@
                         "value": 50
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "12510246-7469-4868-9dad-8d761f574ad3",
                 "layout": {
                     "h": 3,
@@ -171,19 +179,19 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "0f7b7057-8446-49b8-ab45-beb9fb2a6af3",
                 "layout": {
                     "h": 7,
@@ -217,19 +225,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "3e2d6853-4e2b-4b71-8601-fd2ececceb30",
                 "layout": {
                     "h": 7,
@@ -258,19 +266,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "83205acd-35b8-404b-9883-cf3f656b022b",
                 "layout": {
                     "h": 7,
@@ -304,19 +312,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "ea71f66f-690f-4e4e-95bc-b835f0d6027e",
                 "layout": {
                     "h": 7,
@@ -355,19 +363,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "906d651b-234b-4e38-b90f-7ac31b267eb8",
                 "layout": {
                     "h": 7,
@@ -396,19 +404,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "83bb38e0-0074-4a80-ae2a-ea242db0da7b",
                 "layout": {
                     "h": 7,
@@ -437,36 +445,40 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             }
         ],
         "var": [
             {
+                "definition": "prometheus",
                 "name": "prom",
-                "type": "datasource",
-                "definition": "prometheus"
+                "type": "datasource"
             },
             {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
                 "definition": "label_values(zk_up,job)",
                 "name": "job",
-                "type": "query",
-                "datasource": {
-                    "cate": "prometheus",
-                    "value": "${prom}"
-                }
+                "type": "query"
             },
             {
-                "definition": "label_values(zk_up,instance)",
-                "name": "instance",
-                "type": "query",
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${prom}"
-                }
+                },
+                "definition": "label_values(zk_up,instance)",
+                "name": "instance",
+                "type": "query"
             }
         ],
         "version": "3.0.0"
-    }
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328493590000
 }

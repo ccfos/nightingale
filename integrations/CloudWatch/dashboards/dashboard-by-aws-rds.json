@@ -1,7 +1,13 @@
 {
+    "id": 0,
+    "group_id": 0,
     "name": "AWS RDS Telegraf",
-    "tags": "AWS Cloudwatch Telegraf",
     "ident": "",
+    "tags": "AWS Cloudwatch Telegraf",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
     "configs": {
         "panels": [
             {
@@ -26,6 +32,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds cpu 利用率平均值",
                 "id": "2002c9f5-6177-4239-a0c6-2981edacae5a",
                 "layout": {
@@ -63,9 +71,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -74,6 +80,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 数据库连接平均值",
                 "id": "c54b9dca-88ce-425a-bf75-6d8b363f6ebb",
                 "layout": {
@@ -111,9 +119,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -122,6 +128,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 可用存储空间平均值",
                 "id": "997a6214-2ac0-46c6-a0b9-046810b2b8cf",
                 "layout": {
@@ -159,9 +167,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -170,6 +176,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 可用内存平均值",
                 "id": "6c00311c-e931-487f-b088-3a3bfafc84ef",
                 "layout": {
@@ -207,9 +215,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -218,6 +224,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds lvm 写入 iops 平均值",
                 "id": "990ab5a1-4aa5-47c3-b7b7-a65f63459119",
                 "layout": {
@@ -250,9 +258,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -261,6 +267,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 读取 iops 平均值",
                 "id": "a61a80da-7d0a-45a5-a868-bd442b3aa4cf",
                 "layout": {
@@ -293,9 +301,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -304,6 +310,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 写入吞吐量平均值",
                 "id": "2e605342-3413-4004-9fcf-3dbbfa7e7be3",
                 "layout": {
@@ -336,9 +344,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -347,6 +353,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 读取吞吐量平均值",
                 "id": "1ef3f98d-1b54-408a-8cc2-4570c327d705",
                 "layout": {
@@ -379,9 +387,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -405,6 +411,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 网络接收吞吐量平均",
                 "id": "4ba500c9-e87e-41e4-bbc1-82fec507da9d",
                 "layout": {
@@ -437,9 +445,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -448,6 +454,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 网络传输吞吐量平均值",
                 "id": "edee8285-1274-4ddc-b166-fb773c764c2b",
                 "layout": {
@@ -480,9 +488,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -491,6 +497,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 写入延迟平均值",
                 "id": "ecb9b8a5-b168-4a65-b7f6-7912ab6c6b22",
                 "layout": {
@@ -523,9 +531,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -534,6 +540,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 读取延迟平均值",
                 "id": "60d009fa-e547-45be-a862-9b156c15b675",
                 "layout": {
@@ -566,9 +574,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -592,6 +598,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 磁盘队列深度平均值",
                 "id": "7edcf2a8-16f3-49ef-9026-e53dc5e72c69",
                 "layout": {
@@ -624,9 +632,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -635,6 +641,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 二进制日志磁盘使用情况 (MB)",
                 "id": "42143731-22a9-45b4-bb1e-ddb8f2c11a70",
                 "layout": {
@@ -667,9 +675,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -678,6 +684,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 交换分区使用平均值",
                 "id": "51c6f9d9-30db-4514-a54d-712e1a570b23",
                 "layout": {
@@ -710,9 +718,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -721,6 +727,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "* Telegraf Gather AWS Cloudwatch RDS\n* cloudwatch aws rds 突发余额平均值",
                 "id": "767bcc71-3f71-443a-9713-03f587ccc350",
                 "layout": {
@@ -755,37 +763,41 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             }
         ],
         "var": [
             {
+                "definition": "prometheus",
                 "name": "datasource",
-                "type": "datasource",
-                "definition": "prometheus"
+                "type": "datasource"
             },
             {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
                 "definition": "label_values(cloudwatch_aws_rds_cpu_utilization_average, region)",
                 "multi": false,
                 "name": "region",
-                "type": "query",
-                "datasource": {
-                    "cate": "prometheus",
-                    "value": "${datasource}"
-                }
+                "type": "query"
             },
             {
-                "definition": "label_values(cloudwatch_aws_rds_cpu_utilization_average{region=\"$region\"}, db_instance_identifier)",
-                "name": "instance",
-                "type": "query",
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${datasource}"
-                }
+                },
+                "definition": "label_values(cloudwatch_aws_rds_cpu_utilization_average{region=\"$region\"}, db_instance_identifier)",
+                "name": "instance",
+                "type": "query"
             }
         ],
         "version": "3.0.0"
-    }
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327336057000
 }

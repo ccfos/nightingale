@@ -1,712 +1,812 @@
 [
-  {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
-    "name": "[RabbitMQ] Cluster Operator Unavailable Replicas",
-    "note": "There are kube_pod_names that are either running but not yet available or kube_pod_names that still have not been created.",
-    "prod": "metric",
-    "algorithm": "",
-    "algo_params": null,
-    "delay": 0,
-    "severity": 2,
-    "severities": [
-      2
-    ],
-    "disabled": 1,
-    "prom_for_duration": 300,
-    "prom_ql": "",
-    "rule_config": {
-      "algo_params": null,
-      "inhibit": false,
-      "prom_ql": "",
-      "queries": [
-        {
-          "prom_ql": "kube_deployment_status_replicas_unavailable > 0\n",
-          "severity": 2
-        }
-      ],
-      "severity": 0
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "[RabbitMQ] Cluster Operator Unavailable Replicas",
+        "note": "There are kube_pod_names that are either running but not yet available or kube_pod_names that still have not been created.",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 300,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "kube_deployment_status_replicas_unavailable \u003e 0\n",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": null,
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717556328314217000
     },
-    "prom_eval_interval": 15,
-    "enable_stime": "00:00",
-    "enable_stimes": [
-      "00:00"
-    ],
-    "enable_etime": "23:59",
-    "enable_etimes": [
-      "23:59"
-    ],
-    "enable_days_of_week": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "0"
-    ],
-    "enable_days_of_weeks": [
-      [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "0"
-      ]
-    ],
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_channels": [],
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "runbook_url": "",
-    "append_tags": [],
-    "annotations": null,
-    "extra_config": null
-  },
-  {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
-    "name": "[RabbitMQ] Container Restarts",
-    "note": "Over the last 10 minutes a rabbitmq container was restarted",
-    "prod": "metric",
-    "algorithm": "",
-    "algo_params": null,
-    "delay": 0,
-    "severity": 2,
-    "severities": [
-      2
-    ],
-    "disabled": 1,
-    "prom_for_duration": 300,
-    "prom_ql": "",
-    "rule_config": {
-      "algo_params": null,
-      "inhibit": false,
-      "prom_ql": "",
-      "queries": [
-        {
-          "prom_ql": "increase(kube__container_status_restarts_total[10m]) >= 1\n",
-          "severity": 2
-        }
-      ],
-      "severity": 0
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "[RabbitMQ] Container Restarts",
+        "note": "Over the last 10 minutes a rabbitmq container was restarted",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 300,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "increase(kube__container_status_restarts_total[10m]) \u003e= 1\n",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": null,
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717556328315028000
     },
-    "prom_eval_interval": 15,
-    "enable_stime": "00:00",
-    "enable_stimes": [
-      "00:00"
-    ],
-    "enable_etime": "23:59",
-    "enable_etimes": [
-      "23:59"
-    ],
-    "enable_days_of_week": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "0"
-    ],
-    "enable_days_of_weeks": [
-      [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "0"
-      ]
-    ],
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_channels": [],
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "runbook_url": "",
-    "append_tags": [],
-    "annotations": null,
-    "extra_config": null
-  },
-  {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
-    "name": "[RabbitMQ] File Descriptors Near Limit",
-    "note": "The file descriptors are near to the limit",
-    "prod": "metric",
-    "algorithm": "",
-    "algo_params": null,
-    "delay": 0,
-    "severity": 2,
-    "severities": [
-      2
-    ],
-    "disabled": 1,
-    "prom_for_duration": 600,
-    "prom_ql": "",
-    "rule_config": {
-      "algo_params": null,
-      "inhibit": false,
-      "prom_ql": "",
-      "queries": [
-        {
-          "prom_ql": "sum (max_over_time(rabbitmq_process_open_fds[5m]))/sum (rabbitmq_process_max_tcp_sockets)> 0.8\n",
-          "severity": 2
-        }
-      ],
-      "severity": 0
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "[RabbitMQ] File Descriptors Near Limit",
+        "note": "The file descriptors are near to the limit",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 600,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "sum (max_over_time(rabbitmq_process_open_fds[5m]))/sum (rabbitmq_process_max_tcp_sockets)\u003e 0.8\n",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": null,
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717556328315753000
     },
-    "prom_eval_interval": 15,
-    "enable_stime": "00:00",
-    "enable_stimes": [
-      "00:00"
-    ],
-    "enable_etime": "23:59",
-    "enable_etimes": [
-      "23:59"
-    ],
-    "enable_days_of_week": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "0"
-    ],
-    "enable_days_of_weeks": [
-      [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "0"
-      ]
-    ],
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_channels": [],
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "runbook_url": "",
-    "append_tags": [],
-    "annotations": null,
-    "extra_config": null
-  },
-  {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
-    "name": "[RabbitMQ] High Connection Churn",
-    "note": "There are a high connection churn",
-    "prod": "metric",
-    "algorithm": "",
-    "algo_params": null,
-    "delay": 0,
-    "severity": 2,
-    "severities": [
-      2
-    ],
-    "disabled": 1,
-    "prom_for_duration": 600,
-    "prom_ql": "",
-    "rule_config": {
-      "algo_params": null,
-      "inhibit": false,
-      "prom_ql": "",
-      "queries": [
-        {
-          "prom_ql": "( sum(rate(rabbitmq_connections_closed_total[5m]) )  + sum(rate(rabbitmq_connections_opened_total[5m]) ) )/sum (rabbitmq_connections) > 0.1 unless sum (rabbitmq_connections) < 100\n",
-          "severity": 2
-        }
-      ],
-      "severity": 0
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "[RabbitMQ] High Connection Churn",
+        "note": "There are a high connection churn",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 600,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "( sum(rate(rabbitmq_connections_closed_total[5m]) )  + sum(rate(rabbitmq_connections_opened_total[5m]) ) )/sum (rabbitmq_connections) \u003e 0.1 unless sum (rabbitmq_connections) \u003c 100\n",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": null,
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717556328316400000
     },
-    "prom_eval_interval": 15,
-    "enable_stime": "00:00",
-    "enable_stimes": [
-      "00:00"
-    ],
-    "enable_etime": "23:59",
-    "enable_etimes": [
-      "23:59"
-    ],
-    "enable_days_of_week": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "0"
-    ],
-    "enable_days_of_weeks": [
-      [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "0"
-      ]
-    ],
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_channels": [],
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "runbook_url": "",
-    "append_tags": [],
-    "annotations": null,
-    "extra_config": null
-  },
-  {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
-    "name": "[RabbitMQ] Insufficient Established Erlang Distribution Links",
-    "note": "Insuffient establised erland distribution links",
-    "prod": "metric",
-    "algorithm": "",
-    "algo_params": null,
-    "delay": 0,
-    "severity": 2,
-    "severities": [
-      2
-    ],
-    "disabled": 1,
-    "prom_for_duration": 600,
-    "prom_ql": "",
-    "rule_config": {
-      "algo_params": null,
-      "inhibit": false,
-      "prom_ql": "",
-      "queries": [
-        {
-          "prom_ql": "count (erlang_vm_dist_node_state) == 3< count (rabbitmq_build_info ) *(count (rabbitmq_build_info - 1 ))\n",
-          "severity": 2
-        }
-      ],
-      "severity": 0
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "[RabbitMQ] Insufficient Established Erlang Distribution Links",
+        "note": "Insuffient establised erland distribution links",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 600,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "count (erlang_vm_dist_node_state) == 3\u003c count (rabbitmq_build_info ) *(count (rabbitmq_build_info - 1 ))\n",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": null,
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717556328316947000
     },
-    "prom_eval_interval": 15,
-    "enable_stime": "00:00",
-    "enable_stimes": [
-      "00:00"
-    ],
-    "enable_etime": "23:59",
-    "enable_etimes": [
-      "23:59"
-    ],
-    "enable_days_of_week": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "0"
-    ],
-    "enable_days_of_weeks": [
-      [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "0"
-      ]
-    ],
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_channels": [],
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "runbook_url": "",
-    "append_tags": [],
-    "annotations": null,
-    "extra_config": null
-  },
-  {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
-    "name": "[RabbitMQ] Low Disk Watermark Predicted",
-    "note": "The predicted free disk space in 24 hours from now is low",
-    "prod": "metric",
-    "algorithm": "",
-    "algo_params": null,
-    "delay": 0,
-    "severity": 2,
-    "severities": [
-      2
-    ],
-    "disabled": 1,
-    "prom_for_duration": 3600,
-    "prom_ql": "",
-    "rule_config": {
-      "algo_params": null,
-      "inhibit": false,
-      "prom_ql": "",
-      "queries": [
-        {
-          "prom_ql": "( predict_linear(rabbitmq_disk_space_available_bytes[24h], 60*60*24) < rabbitmq_disk_space_available_limit_bytes )and( count_over_time(rabbitmq_disk_space_available_limit_bytes[2h] offset 22h) > 0)\n",
-          "severity": 2
-        }
-      ],
-      "severity": 0
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "[RabbitMQ] Low Disk Watermark Predicted",
+        "note": "The predicted free disk space in 24 hours from now is low",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 3600,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "( predict_linear(rabbitmq_disk_space_available_bytes[24h], 60*60*24) \u003c rabbitmq_disk_space_available_limit_bytes )and( count_over_time(rabbitmq_disk_space_available_limit_bytes[2h] offset 22h) \u003e 0)\n",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": null,
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717556328317379000
     },
-    "prom_eval_interval": 15,
-    "enable_stime": "00:00",
-    "enable_stimes": [
-      "00:00"
-    ],
-    "enable_etime": "23:59",
-    "enable_etimes": [
-      "23:59"
-    ],
-    "enable_days_of_week": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "0"
-    ],
-    "enable_days_of_weeks": [
-      [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "0"
-      ]
-    ],
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_channels": [],
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "runbook_url": "",
-    "append_tags": [],
-    "annotations": null,
-    "extra_config": null
-  },
-  {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
-    "name": "[RabbitMQ] No MajorityOfNodesReady",
-    "note": "There are so many nodes not ready",
-    "prod": "metric",
-    "algorithm": "",
-    "algo_params": null,
-    "delay": 0,
-    "severity": 2,
-    "severities": [
-      2
-    ],
-    "disabled": 1,
-    "prom_for_duration": 300,
-    "prom_ql": "",
-    "rule_config": {
-      "algo_params": null,
-      "inhibit": false,
-      "prom_ql": "",
-      "queries": [
-        {
-          "prom_ql": "kube_statefulset_status_replicas_ready<=kube_statefulset_replicas/ 2 unless kube_statefulset_replicas== 0\n",
-          "severity": 2
-        }
-      ],
-      "severity": 0
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "[RabbitMQ] No MajorityOfNodesReady",
+        "note": "There are so many nodes not ready",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 300,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "kube_statefulset_status_replicas_ready\u003c=kube_statefulset_replicas/ 2 unless kube_statefulset_replicas== 0\n",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": null,
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717556328317808000
     },
-    "prom_eval_interval": 15,
-    "enable_stime": "00:00",
-    "enable_stimes": [
-      "00:00"
-    ],
-    "enable_etime": "23:59",
-    "enable_etimes": [
-      "23:59"
-    ],
-    "enable_days_of_week": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "0"
-    ],
-    "enable_days_of_weeks": [
-      [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "0"
-      ]
-    ],
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_channels": [],
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "runbook_url": "",
-    "append_tags": [],
-    "annotations": null,
-    "extra_config": null
-  },
-  {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
-    "name": "[RabbitMQ] Persistent Volume Missing",
-    "note": "There is at least one pvc not bound",
-    "prod": "metric",
-    "algorithm": "",
-    "algo_params": null,
-    "delay": 0,
-    "severity": 1,
-    "severities": [
-      1
-    ],
-    "disabled": 1,
-    "prom_for_duration": 600,
-    "prom_ql": "",
-    "rule_config": {
-      "algo_params": null,
-      "inhibit": false,
-      "prom_ql": "",
-      "queries": [
-        {
-          "prom_ql": "kube_persistentvolumeclaim_status_phase{phase=\"Bound\"} == 0\n",
-          "severity": 1
-        }
-      ],
-      "severity": 0
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "[RabbitMQ] Persistent Volume Missing",
+        "note": "There is at least one pvc not bound",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 1,
+        "severities": [
+            1
+        ],
+        "disabled": 1,
+        "prom_for_duration": 600,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "kube_persistentvolumeclaim_status_phase{phase=\"Bound\"} == 0\n",
+                    "severity": 1
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": null,
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717556328318244000
     },
-    "prom_eval_interval": 15,
-    "enable_stime": "00:00",
-    "enable_stimes": [
-      "00:00"
-    ],
-    "enable_etime": "23:59",
-    "enable_etimes": [
-      "23:59"
-    ],
-    "enable_days_of_week": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "0"
-    ],
-    "enable_days_of_weeks": [
-      [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "0"
-      ]
-    ],
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_channels": [],
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "runbook_url": "",
-    "append_tags": [],
-    "annotations": null,
-    "extra_config": null
-  },
-  {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
-    "name": "[RabbitMQ] TCP Sockets Near Limit",
-    "note": "The TCP sockets are near to the limit",
-    "prod": "metric",
-    "algorithm": "",
-    "algo_params": null,
-    "delay": 0,
-    "severity": 2,
-    "severities": [
-      2
-    ],
-    "disabled": 1,
-    "prom_for_duration": 600,
-    "prom_ql": "",
-    "rule_config": {
-      "algo_params": null,
-      "inhibit": false,
-      "prom_ql": "",
-      "queries": [
-        {
-          "prom_ql": "sum (max_over_time(rabbitmq_process_open_tcp_sockets[5m]))/sum (rabbitmq_process_max_tcp_sockets)> 0.8\n",
-          "severity": 2
-        }
-      ],
-      "severity": 0
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "[RabbitMQ] TCP Sockets Near Limit",
+        "note": "The TCP sockets are near to the limit",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 600,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "sum (max_over_time(rabbitmq_process_open_tcp_sockets[5m]))/sum (rabbitmq_process_max_tcp_sockets)\u003e 0.8\n",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": null,
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717556328318775000
     },
-    "prom_eval_interval": 15,
-    "enable_stime": "00:00",
-    "enable_stimes": [
-      "00:00"
-    ],
-    "enable_etime": "23:59",
-    "enable_etimes": [
-      "23:59"
-    ],
-    "enable_days_of_week": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "0"
-    ],
-    "enable_days_of_weeks": [
-      [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "0"
-      ]
-    ],
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_channels": [],
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "runbook_url": "",
-    "append_tags": [],
-    "annotations": null,
-    "extra_config": null
-  },
-  {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
-    "name": "[RabbitMQ] Unroutable Messages",
-    "note": "There were unroutable message within the last 5 minutes in RabbitMQ cluster",
-    "prod": "metric",
-    "algorithm": "",
-    "algo_params": null,
-    "delay": 0,
-    "severity": 2,
-    "severities": [
-      2
-    ],
-    "disabled": 1,
-    "prom_for_duration": 300,
-    "prom_ql": "",
-    "rule_config": {
-      "algo_params": null,
-      "inhibit": false,
-      "prom_ql": "",
-      "queries": [
-        {
-          "prom_ql": "sum (increase(rabbitmq_channel_messages_unroutable_dropped_total[5m])) >= 1 or sum (increase(rabbitmq_channel_messages_unroutable_returned_total[5m])) >= 1\n",
-          "severity": 2
-        }
-      ],
-      "severity": 0
-    },
-    "prom_eval_interval": 15,
-    "enable_stime": "00:00",
-    "enable_stimes": [
-      "00:00"
-    ],
-    "enable_etime": "23:59",
-    "enable_etimes": [
-      "23:59"
-    ],
-    "enable_days_of_week": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "0"
-    ],
-    "enable_days_of_weeks": [
-      [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "0"
-      ]
-    ],
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_channels": [],
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "runbook_url": "",
-    "append_tags": [],
-    "annotations": null,
-    "extra_config": null
-  }
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "[RabbitMQ] Unroutable Messages",
+        "note": "There were unroutable message within the last 5 minutes in RabbitMQ cluster",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 300,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "sum (increase(rabbitmq_channel_messages_unroutable_dropped_total[5m])) \u003e= 1 or sum (increase(rabbitmq_channel_messages_unroutable_returned_total[5m])) \u003e= 1\n",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": null,
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717556328321515000
+    }
 ]

@@ -102,10 +102,16 @@ func BuiltinPayloadDels(ctx *ctx.Context, ids []int64) error {
 
 func BuiltinPayloadGet(ctx *ctx.Context, where string, args ...interface{}) (*BuiltinPayload, error) {
 	var bp BuiltinPayload
-	err := DB(ctx).Where(where, args...).First(&bp).Error
-	if err != nil {
-		return nil, err
+	result := DB(ctx).Where(where, args...).Find(&bp)
+	if result.Error != nil {
+		return nil, result.Error
 	}
+
+	// 检查是否找到记录
+	if result.RowsAffected == 0 {
+		return nil, nil
+	}
+
 	return &bp, nil
 }
 

@@ -1,7 +1,13 @@
 {
+    "id": 0,
+    "group_id": 0,
     "name": "VMware by vSphere-monitor",
-    "tags": "VMware vSphere-monitor",
     "ident": "",
+    "tags": "VMware vSphere-monitor",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
     "configs": {
         "panels": [
             {
@@ -28,6 +34,8 @@
                     "textColor": "#ff9919",
                     "textSize": 22
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "",
                 "id": "597e7302-ea67-4690-a8d0-0ef4db233825",
                 "layout": {
@@ -47,9 +55,7 @@
                 ],
                 "name": "",
                 "type": "text",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -59,6 +65,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有Datacenter数量",
                 "id": "65429acb-0817-4e45-a396-157ad73a77a2",
                 "layout": {
@@ -96,9 +104,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -108,6 +114,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有Datastore存储数量",
                 "id": "20001d28-d0f6-400d-b0ac-340160dd8bdc",
                 "layout": {
@@ -145,9 +153,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -157,6 +163,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有ESXI主机的数量",
                 "id": "40fb3098-f205-432b-b38e-5defb98b1da0",
                 "layout": {
@@ -194,9 +202,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -206,6 +212,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "开启的虚拟机数量",
                 "id": "906403b1-4bc3-41e3-a5a4-3563ad335724",
                 "layout": {
@@ -243,9 +251,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -255,6 +261,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "关闭的虚拟机数量",
                 "id": "8b452644-5cf2-45fb-8bb9-eb9bf1dcfd43",
                 "layout": {
@@ -307,9 +315,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -319,6 +325,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "Datastore总空间",
                 "id": "aeacca5e-063d-4abf-9b05-80b8ca33ea02",
                 "layout": {
@@ -358,9 +366,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -370,6 +376,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "Datastore总使用率",
                 "id": "4c51137d-9403-473a-b0d7-bda0410546e3",
                 "layout": {
@@ -429,9 +437,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -442,6 +448,8 @@
                     "sortColumn": "value",
                     "sortOrder": "ascend"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "ESXI列表",
                 "id": "2fc78fbf-9238-42d8-8934-b5c5c0ea72c4",
                 "layout": {
@@ -500,9 +508,7 @@
                     }
                 ],
                 "type": "table",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -511,6 +517,8 @@
                     "serieWidth": 40,
                     "sortOrder": "desc"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "2027eb16-0b3f-493d-b5fc-7627d9427377",
                 "layout": {
                     "h": 9,
@@ -566,9 +574,7 @@
                     }
                 ],
                 "type": "barGauge",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -578,6 +584,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "ESXI内存总量",
                 "id": "c06e345f-f174-48a1-9cf6-cca48ef61289",
                 "layout": {
@@ -617,9 +625,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -629,6 +635,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "ESXI内存总使用率",
                 "id": "ba9c54ef-d538-4063-b917-398c231db726",
                 "layout": {
@@ -688,9 +696,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -700,6 +706,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "ESXI存活数量",
                 "id": "9ea6f568-c803-4890-aff1-4074a4d6309f",
                 "layout": {
@@ -737,9 +745,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -749,6 +755,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "ESXI宕机数量",
                 "id": "6bc0cb3a-71fb-4306-a150-8462a0e4c053",
                 "layout": {
@@ -795,9 +803,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -821,6 +827,8 @@
                     "serieWidth": 40,
                     "sortOrder": "desc"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "ae61d444-e137-4467-ae4a-541976a0cb75",
                 "layout": {
                     "h": 9,
@@ -876,9 +884,7 @@
                     }
                 ],
                 "type": "barGauge",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -887,6 +893,8 @@
                     "serieWidth": 40,
                     "sortOrder": "desc"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "bffb1e95-6ee8-47d8-9f65-ef584c335d8b",
                 "layout": {
                     "h": 9,
@@ -942,9 +950,7 @@
                     }
                 ],
                 "type": "barGauge",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -953,6 +959,8 @@
                     "serieWidth": 40,
                     "sortOrder": "desc"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "b36c69c2-6cb0-4b89-a4a0-7225140c271f",
                 "layout": {
                     "h": 9,
@@ -1008,9 +1016,7 @@
                     }
                 ],
                 "type": "barGauge",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1020,6 +1026,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有ESXI主机的数量",
                 "id": "acc6adf8-ad83-4f59-b8c9-f9937e10c20e",
                 "layout": {
@@ -1057,9 +1065,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1069,6 +1075,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有Datastore存储数量",
                 "id": "813109ee-42bd-4150-88e4-4e3e16d0bae7",
                 "layout": {
@@ -1106,9 +1114,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1118,6 +1124,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "Datastore总空间",
                 "id": "d672145f-1b8e-40b5-9ae9-a72bd76d98fe",
                 "layout": {
@@ -1157,9 +1165,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1169,6 +1175,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "Datastore总使用率",
                 "id": "40c1c5ef-69e4-4054-93cf-3f3c29a14b95",
                 "layout": {
@@ -1228,9 +1236,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1240,6 +1246,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "ESXI内存总量",
                 "id": "e07d16cc-a7b1-4f26-b900-aa7a4c515954",
                 "layout": {
@@ -1279,9 +1287,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1291,6 +1297,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "ESXI内存总使用率",
                 "id": "22a23007-9c6f-4c30-b684-381e5ff88c5b",
                 "layout": {
@@ -1350,9 +1358,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1362,6 +1368,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "ecb15e88-9f9b-4e58-b56e-280a77c30c12",
                 "layout": {
                     "h": 6,
@@ -1405,9 +1413,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1418,6 +1424,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "0b70e6aa-bdff-488c-b60e-586baa8b5626",
                 "layout": {
                     "h": 6,
@@ -1456,9 +1464,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1469,6 +1475,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "1b4adc0a-19d8-463d-a47c-0051cf7113f6",
                 "layout": {
                     "h": 6,
@@ -1506,9 +1514,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1532,6 +1538,8 @@
                     "displayMode": "seriesToRows",
                     "showHeader": false
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "e46c5596-5f99-4cd5-8761-dfa861df318c",
                 "layout": {
                     "h": 7,
@@ -1583,9 +1591,7 @@
                     }
                 ],
                 "type": "table",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1596,6 +1602,8 @@
                     "sortColumn": "value",
                     "sortOrder": "ascend"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "64683543-70ea-447b-8667-c66642f66d39",
                 "layout": {
                     "h": 7,
@@ -1634,9 +1642,7 @@
                     }
                 ],
                 "type": "table",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1645,6 +1651,8 @@
                     "displayMode": "seriesToRows",
                     "showHeader": false
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "6ec3bd61-cf30-45c3-9118-28c6dfd3c2bd",
                 "layout": {
                     "h": 7,
@@ -1683,9 +1691,7 @@
                     }
                 ],
                 "type": "table",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1695,6 +1701,8 @@
                     "showHeader": false,
                     "sortOrder": "ascend"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "46a4eea7-6577-430d-8fb2-2a371c1c8c64",
                 "layout": {
                     "h": 7,
@@ -1738,9 +1746,7 @@
                     }
                 ],
                 "type": "table",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1750,6 +1756,8 @@
                     "showHeader": false,
                     "sortOrder": "ascend"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "e631e9e9-7d25-4bab-916b-e11da4bcb6b4",
                 "layout": {
                     "h": 7,
@@ -1793,9 +1801,7 @@
                     }
                 ],
                 "type": "table",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1805,6 +1811,8 @@
                     "showHeader": false,
                     "sortOrder": "ascend"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "cbe91b45-d4de-4218-9f07-28848fb05202",
                 "layout": {
                     "h": 7,
@@ -1848,9 +1856,7 @@
                     }
                 ],
                 "type": "table",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1860,6 +1866,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "b3265d25-c15d-41cb-8c8b-25417e655caa",
                 "layout": {
                     "h": 6,
@@ -1892,9 +1900,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1905,6 +1911,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "25fd6cd6-be54-420f-b3ee-002a9579eb1d",
                 "layout": {
                     "h": 6,
@@ -1937,9 +1945,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1950,6 +1956,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "868fca2d-df6e-487c-8c8d-e307d82c28ce",
                 "layout": {
                     "h": 7,
@@ -1982,9 +1990,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1995,6 +2001,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "aee98a26-c7dd-43d6-9195-72bdf1fc0b47",
                 "layout": {
                     "h": 7,
@@ -2027,9 +2035,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -2054,6 +2060,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "182d718e-83af-449b-9492-7af701a16569",
                 "layout": {
                     "h": 5,
@@ -2085,9 +2093,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -2098,6 +2104,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "43fe023c-8c3a-47f5-9c69-225189622d36",
                 "layout": {
                     "h": 5,
@@ -2129,9 +2137,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -2142,6 +2148,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "d8a40ecc-d125-4272-b60f-543e6018ca05",
                 "layout": {
                     "h": 5,
@@ -2173,9 +2181,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -2186,6 +2192,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "1a48a82c-19b4-4b73-8093-b2c9c87ded20",
                 "layout": {
                     "h": 5,
@@ -2217,9 +2225,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -2230,6 +2236,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "15147aa2-3c7d-490b-b53b-4c3e3f9731d5",
                 "layout": {
                     "h": 5,
@@ -2261,9 +2269,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -2274,6 +2280,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "1870bf34-d019-484f-a462-411629ca78fe",
                 "layout": {
                     "h": 5,
@@ -2305,9 +2313,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -2317,6 +2323,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "e2751b2b-3b1f-469e-abd6-f6e843efd16a",
                 "layout": {
                     "h": 6,
@@ -2349,9 +2357,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -2362,6 +2368,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "1af92e8e-4163-475b-a3e4-ccdca9a74cdf",
                 "layout": {
                     "h": 6,
@@ -2394,9 +2402,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -2407,6 +2413,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "380ea87f-9b4f-41dc-9117-579295a1a5de",
                 "layout": {
                     "h": 7,
@@ -2439,9 +2447,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -2452,6 +2458,8 @@
                     "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "8d2bf7e4-eb86-4d24-96da-e45b1eef68f5",
                 "layout": {
                     "h": 7,
@@ -2484,61 +2492,65 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             }
         ],
         "var": [
             {
+                "definition": "prometheus",
                 "name": "prom",
-                "type": "datasource",
-                "definition": "prometheus"
+                "type": "datasource"
             },
             {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
                 "definition": "label_values(esxi_alive,ident)",
                 "multi": false,
                 "name": "vcenter",
-                "type": "query",
-                "datasource": {
-                    "cate": "prometheus",
-                    "value": "${prom}"
-                }
+                "type": "query"
             },
             {
                 "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
                 "definition": "label_values(esxi_alive{ident=\"$vcenter\"},datacenter)",
                 "multi": true,
                 "name": "datacenter",
-                "type": "query",
-                "datasource": {
-                    "cate": "prometheus",
-                    "value": "${prom}"
-                }
+                "type": "query"
             },
             {
                 "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
                 "definition": "label_values(esxi_alive{ident=\"$vcenter\",datacenter=~\"$datacenter\"},host)",
                 "multi": true,
                 "name": "esxi",
-                "type": "query",
-                "datasource": {
-                    "cate": "prometheus",
-                    "value": "${prom}"
-                }
+                "type": "query"
             },
             {
                 "allOption": true,
-                "definition": "label_values(vm_power{ident=\"$vcenter\"},vm)",
-                "multi": true,
-                "name": "vm",
-                "type": "query",
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${prom}"
-                }
+                },
+                "definition": "label_values(vm_power{ident=\"$vcenter\"},vm)",
+                "multi": true,
+                "name": "vm",
+                "type": "query"
             }
         ],
         "version": "3.0.0"
-    }
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328599672000
 }

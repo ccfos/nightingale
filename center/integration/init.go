@@ -9,7 +9,6 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 )
@@ -24,9 +23,13 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 
 	// var fileList []string
 	dirList, err := file.DirsUnder(fp)
-	ginx.Dangerous(err)
+	if err != nil {
+		logger.Warning("read builtin component dir fail ", err)
+		return
+	}
 
 	for _, dir := range dirList {
+		logger.Debugf("read builtin component dir %s", dir)
 		// components icon
 		componentDir := fp + "/" + dir
 		component := models.BuiltinComponent{
@@ -78,25 +81,34 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				continue
 			}
 
-			if old.UpdatedBy != SYSTEM {
-				// 模板已经被修改过，不再更新
-				continue
-			}
-			now := time.Now().Unix()
-			old.CreatedAt = now
-			old.UpdatedAt = now
-			old.Readme = component.Readme
+			if old.UpdatedBy == SYSTEM {
+				now := time.Now().Unix()
+				old.CreatedAt = now
+				old.UpdatedAt = now
+				old.Readme = component.Readme
+				old.UpdatedBy = SYSTEM
 
-			err = models.DB(ctx).Model(&models.BuiltinComponent{}).Select("*").Updates(old).Error
-			if err != nil {
-				logger.Warning("update builtin component fail ", old, err)
-				continue
+				err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
+				if err != nil {
+					logger.Warning("update builtin component fail ", old, err)
+				}
 			}
 		}
 
-		// delete alert and dashboard tpl if hash is empty
+		// delete uuid is emtpy
+		err = models.DB(ctx).Exec("delete from builtin_payloads where uuid = 0").Error
+		if err != nil {
+			logger.Warning("delete builtin payloads fail ", err)
+		}
+
+		// delete builtin metrics uuid is emtpy
+		err = models.DB(ctx).Exec("delete from builtin_metrics where uuid = 0").Error
+		if err != nil {
+			logger.Warning("delete builtin metrics fail ", err)
+		}
 
 		// alerts
+		logger.Debugf("read builtin component alerts dir %s", componentDir+"/alerts")
 		files, err = file.FilesUnder(componentDir + "/alerts")
 		if err == nil && len(files) > 0 {
 			for _, f := range files {
@@ -114,12 +126,13 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					continue
 				}
 
+				newAlerts := []models.AlertRule{}
 				for _, alert := range alerts {
 					// if alert.UUID == 0 {
-					// 	logger.Warning("builtin alert uuid is 0 ", alert.Name)
-					// 	continue
+					// 	alert.UUID = time.Now().UnixNano()
 					// }
 
+					newAlerts = append(newAlerts, alert)
 					content, err := json.Marshal(alert)
 					if err != nil {
 						logger.Warning("marshal builtin alert fail ", alert, err)
@@ -154,10 +167,23 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					old.Content = string(content)
 					old.Name = alert.Name
 					old.Tags = alert.AppendTags
-					err = models.DB(ctx).Model(&models.BuiltinPayload{}).Select("*").Updates(old).Error
+					err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
 					if err != nil {
 						logger.Warningf("update builtin alert:%+v fail %v", builtinAlert, err)
 					}
+				}
+
+				// write back newAlerts to file
+				bs, err = json.MarshalIndent(newAlerts, "", "    ")
+				if err != nil {
+					logger.Warning("marshal builtin alerts fail ", newAlerts, err)
+					continue
+				}
+
+				logger.Debugf("write back newAlerts to file %s", fp)
+				_, err = file.WriteBytes(fp, bs)
+				if err != nil {
+					logger.Warning("write builtin alerts file fail ", f, err)
 				}
 			}
 		}
@@ -181,9 +207,20 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				}
 
 				// if dashboard.UUID == 0 {
-				// 	logger.Warning("builtin dashboard uuid is 0 ", dashboard.Name)
-				// 	continue
+				// 	dashboard.UUID = time.Now().UnixNano()
 				// }
+
+				// write back dashboard to file
+				bs, err = json.MarshalIndent(dashboard, "", "    ")
+				if err != nil {
+					logger.Warning("marshal builtin dashboard fail ", dashboard, err)
+					continue
+				}
+
+				_, err = file.WriteBytes(fp, bs)
+				if err != nil {
+					logger.Warning("write builtin dashboard file fail ", f, err)
+				}
 
 				content, err := json.Marshal(dashboard)
 				if err != nil {
@@ -218,7 +255,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				old.Content = string(content)
 				old.Name = dashboard.Name
 				old.Tags = dashboard.Tags
-				err = models.DB(ctx).Model(&models.BuiltinPayload{}).Select("*").Updates(old).Error
+				err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
 				if err != nil {
 					logger.Warningf("update builtin alert:%+v fail %v", builtinDashboard, err)
 				}
@@ -239,6 +276,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				}
 
 				metrics := []models.BuiltinMetric{}
+				newMetrics := []models.BuiltinMetric{}
 				err = json.Unmarshal(bs, &metrics)
 				if err != nil {
 					logger.Warning("parse builtin component metrics file fail", f, err)
@@ -247,9 +285,9 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 
 				for _, metric := range metrics {
 					// if metric.UUID == 0 {
-					// 	logger.Warning("builtin metrics uuid is 0 ", metric.Name)
-					// 	continue
+					// 	metric.UUID = time.Now().UnixNano()
 					// }
+					newMetrics = append(newMetrics, metric)
 
 					old, err := models.BuiltinMetricGet(ctx, "uuid = ?", metric.UUID)
 					if err != nil {
@@ -277,6 +315,18 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					if err != nil {
 						logger.Warningf("update builtin metric:%+v fail %v", metric, err)
 					}
+				}
+
+				// write back newMetrics to file
+				bs, err = json.MarshalIndent(newMetrics, "", "    ")
+				if err != nil {
+					logger.Warning("marshal builtin metrics fail ", newMetrics, err)
+					continue
+				}
+
+				_, err = file.WriteBytes(fp, bs)
+				if err != nil {
+					logger.Warning("write builtin metrics file fail ", f, err)
 				}
 			}
 		} else if err != nil {

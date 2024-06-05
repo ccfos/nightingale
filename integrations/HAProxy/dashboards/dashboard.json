@@ -1,7 +1,13 @@
 {
+    "id": 0,
+    "group_id": 0,
     "name": "HAProxy By Categraf",
-    "tags": "",
     "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
     "configs": {
         "links": [
             {
@@ -26,6 +32,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "3895acd5-4825-4ea6-b120-383b9b96d8de",
                 "layout": {
                     "h": 6,
@@ -78,8 +85,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -93,6 +99,7 @@
                     "showHeader": true
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "f98cd0f9-9979-4f4d-807f-757241d72d06",
                 "layout": {
                     "h": 6,
@@ -139,8 +146,7 @@
                     }
                 ],
                 "type": "table",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -155,6 +161,7 @@
                     "showHeader": true
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "fb61f168-1f3e-4385-93e8-2bb168e01945",
                 "layout": {
                     "h": 6,
@@ -202,8 +209,7 @@
                     }
                 ],
                 "type": "table",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -219,6 +225,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "aeeb951c-a4d6-4b0e-918e-2f81c2f3b3be",
                 "layout": {
@@ -266,8 +273,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -283,6 +289,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "96ca72c3-745e-458a-902f-fd3841b5453d",
                 "layout": {
@@ -325,8 +332,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -342,6 +348,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "cbadd1e1-25e2-41bd-9fe2-f5e932753c02",
                 "layout": {
@@ -384,8 +391,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -401,6 +407,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "bb9db80d-7f9c-4b6b-8434-24e3ec480d5b",
                 "layout": {
@@ -448,8 +455,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -465,6 +471,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "6ab18da8-c354-4349-b25b-a50cdb02aae8",
                 "layout": {
@@ -512,8 +519,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -529,6 +535,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "5805c4b5-66c9-40d2-846d-4acc8a434ecd",
                 "layout": {
@@ -581,8 +588,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -598,6 +604,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "d1d2d177-eab6-43f5-a778-7999c6cd646c",
                 "layout": {
@@ -660,15 +667,14 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             }
         ],
         "var": [
             {
+                "definition": "prometheus",
                 "name": "datasource",
-                "type": "datasource",
-                "definition": "prometheus"
+                "type": "datasource"
             },
             {
                 "datasource": {
@@ -731,5 +737,11 @@
             }
         ],
         "version": "3.0.0"
-    }
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327492256000
 }

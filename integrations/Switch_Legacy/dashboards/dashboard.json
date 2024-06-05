@@ -1,7 +1,13 @@
 {
+    "id": 0,
+    "group_id": 0,
     "name": "网络交换机",
-    "tags": "",
     "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
     "configs": {
         "panels": [
             {
@@ -29,6 +35,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "6c851c33-4ea4-4b76-be59-d4c19c5b2844",
                 "layout": {
                     "h": 4,
@@ -58,8 +65,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -69,6 +75,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "23220dc3-ab9a-40f9-b1d3-135bb3bbb734",
                 "layout": {
                     "h": 4,
@@ -90,8 +97,7 @@
                     }
                 ],
                 "type": "barGauge",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -101,6 +107,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "5bf72a5b-8273-4a40-94f9-8d671b01f16e",
                 "layout": {
                     "h": 4,
@@ -116,14 +123,13 @@
                 },
                 "targets": [
                     {
-                        "expr": "max(switch_legacy_if_in) by(ip)>300000000",
+                        "expr": "max(switch_legacy_if_in) by(ip)\u003e300000000",
                         "legend": "{{ip}}",
                         "refId": "A"
                     }
                 ],
                 "type": "barGauge",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -133,6 +139,7 @@
                     "legengPosition": "hidden"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "bb0b07f1-e193-46ed-bc6e-c40d42e4eb4a",
                 "layout": {
                     "h": 4,
@@ -151,8 +158,7 @@
                     }
                 ],
                 "type": "pie",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -162,6 +168,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "7f36ea1c-fd51-43bf-93ab-2787d630c530",
                 "layout": {
                     "h": 4,
@@ -183,8 +190,7 @@
                     }
                 ],
                 "type": "barGauge",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -194,6 +200,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "6f9ce40e-7927-43b3-a34f-16772bf88b7f",
                 "layout": {
                     "h": 4,
@@ -209,14 +216,13 @@
                 },
                 "targets": [
                     {
-                        "expr": "max(switch_legacy_if_out) by(ip)>300000000",
+                        "expr": "max(switch_legacy_if_out) by(ip)\u003e300000000",
                         "legend": "{{ip}}",
                         "refId": "A"
                     }
                 ],
                 "type": "barGauge",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -226,6 +232,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "356fe265-4a02-411d-9b3f-1578146c49a1",
                 "layout": {
                     "h": 4,
@@ -249,8 +256,7 @@
                     }
                 ],
                 "type": "barGauge",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -260,6 +266,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "eec57d38-9a9f-4530-a0b5-e524d867759d",
                 "layout": {
                     "h": 4,
@@ -281,8 +288,7 @@
                     }
                 ],
                 "type": "barGauge",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -313,6 +319,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "69a26105-9170-4f00-a3c2-0fa866f9d5b8",
                 "layout": {
                     "h": 5,
@@ -349,8 +356,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -366,6 +372,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "cc38fed9-f224-4684-9541-6a57e543062d",
                 "layout": {
                     "h": 5,
@@ -397,14 +404,13 @@
                 },
                 "targets": [
                     {
-                        "expr": "switch_legacy_if_in{ip=\"$IP\"}>0",
+                        "expr": "switch_legacy_if_in{ip=\"$IP\"}\u003e0",
                         "legend": "{{ip}}-{{ifname}}",
                         "refId": "A"
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -420,6 +426,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "1b84f22c-2535-4e16-b884-86e95bed444f",
                 "layout": {
                     "h": 5,
@@ -456,8 +463,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -473,6 +479,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "2e08574d-0378-45c1-9384-a80559e1df99",
                 "layout": {
                     "h": 5,
@@ -504,31 +511,30 @@
                 },
                 "targets": [
                     {
-                        "expr": "switch_legacy_if_out{ip=\"$IP\"}>0",
+                        "expr": "switch_legacy_if_out{ip=\"$IP\"}\u003e0",
                         "legend": "{{ip}}-{{ifname}}",
                         "refId": "A"
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             }
         ],
         "var": [
             {
+                "definition": "prometheus",
                 "name": "datasource",
-                "type": "datasource",
-                "definition": "prometheus"
+                "type": "datasource"
             },
             {
-                "definition": "label_values(switch_legacy_if_in,ip)",
-                "multi": false,
-                "name": "IP",
-                "type": "query",
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${datasource}"
-                }
+                },
+                "definition": "label_values(switch_legacy_if_in,ip)",
+                "multi": false,
+                "name": "IP",
+                "type": "query"
             },
             {
                 "datasource": {
@@ -541,5 +547,11 @@
             }
         ],
         "version": "3.0.0"
-    }
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328402091000
 }

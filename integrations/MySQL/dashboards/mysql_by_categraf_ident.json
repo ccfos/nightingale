@@ -1,7 +1,13 @@
 {
+    "id": 0,
+    "group_id": 0,
     "name": "MySQL Overview by categraf, group by ident",
-    "tags": "",
     "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
     "configs": {
         "panels": [
             {
@@ -30,6 +36,8 @@
                         "value": 24
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "74a5cd8c-f870-442d-bda6-48b5ce4e87ea",
                 "layout": {
                     "h": 3,
@@ -73,9 +81,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -88,6 +94,8 @@
                         "value": 24
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "mysql_global_status_queries",
                 "id": "1763bcc6-d058-4a2b-a099-3d590debd01a",
                 "layout": {
@@ -131,9 +139,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -146,6 +152,8 @@
                         "value": 24
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**InnoDB Buffer Pool Size**\n\nInnoDB maintains a storage area called the buffer pool for caching data and indexes in memory.  Knowing how the InnoDB buffer pool works, and taking advantage of it to keep frequently accessed data in memory, is one of the most important aspects of MySQL tuning. The goal is to keep the working set in memory. In most cases, this should be between 60%-90% of available memory on a dedicated database host, but depends on many factors.",
                 "id": "28d16171-9e36-4f5d-87be-95bcb2aeb643",
                 "layout": {
@@ -169,9 +177,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -184,6 +190,8 @@
                         "value": 24
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**Table Locks**\n\nMySQL takes a number of different locks for varying reasons. In this graph we see how many Table level locks MySQL has requested from the storage engine. In the case of InnoDB, many times the locks could actually be row locks as it only takes table level locks in a few specific cases.\n\nIt is most useful to compare Locks Immediate and Locks Waited. If Locks waited is rising, it means you have lock contention. Otherwise, Locks Immediate rising and falling is normal activity.",
                 "id": "5fe39015-bf33-4f02-b79e-a8977e56d7ca",
                 "layout": {
@@ -225,19 +233,19 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "70ee692b-24d9-4807-81b4-81582b5526c2",
                 "layout": {
                     "h": 3,
@@ -267,9 +275,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -293,6 +299,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**Max Connections** \n\nMax Connections is the maximum permitted number of simultaneous client connections. By default, this is 151. Increasing this value increases the number of file descriptors that mysqld requires. If the required number of descriptors are not available, the server reduces the value of Max Connections.\n\nmysqld actually permits Max Connections + 1 clients to connect. The extra connection is reserved for use by accounts that have the SUPER privilege, such as root.\n\nMax Used Connections is the maximum number of connections that have been in use simultaneously since the server started.\n\nConnections is the number of connection attempts (successful or not) to the MySQL server.",
                 "id": "458753cc-a6d0-4afc-bf5e-54585dc5990c",
                 "layout": {
@@ -322,9 +330,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -340,6 +346,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**Max Connections** \n\nMax Connections is the maximum permitted number of simultaneous client connections. By default, this is 151. Increasing this value increases the number of file descriptors that mysqld requires. If the required number of descriptors are not available, the server reduces the value of Max Connections.\n\nmysqld actually permits Max Connections + 1 clients to connect. The extra connection is reserved for use by accounts that have the SUPER privilege, such as root.\n\nMax Used Connections is the maximum number of connections that have been in use simultaneously since the server started.\n\nConnections is the number of connection attempts (successful or not) to the MySQL server.",
                 "id": "ebf01aad-c07b-4541-9891-bb3d5a7175a6",
                 "layout": {
@@ -379,18 +386,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "Threads Connected is the number of open connections, while Threads Running is the number of threads not sleeping.",
                 "id": "f18e13bf-5495-492f-95c5-4a590e38c58e",
                 "layout": {
@@ -420,9 +428,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -431,6 +437,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**Max Connections** \n\nMax Connections is the maximum permitted number of simultaneous client connections. By default, this is 151. Increasing this value increases the number of file descriptors that mysqld requires. If the required number of descriptors are not available, the server reduces the value of Max Connections.\n\nmysqld actually permits Max Connections + 1 clients to connect. The extra connection is reserved for use by accounts that have the SUPER privilege, such as root.\n\nMax Used Connections is the maximum number of connections that have been in use simultaneously since the server started.\n\nConnections is the number of connection attempts (successful or not) to the MySQL server.",
                 "id": "86251111-3a14-4c52-b1f2-a5cbe009bc0f",
                 "layout": {
@@ -464,9 +472,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -487,11 +493,13 @@
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "0428fde5-3fbf-45dd-b1a9-1a498d6c2de4",
                 "layout": {
                     "h": 4,
@@ -528,19 +536,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**MySQL Select Types**\n\nAs with most relational databases, selecting based on indexes is more efficient than scanning an entire table's data. Here we see the counters for selects not done with indexes.\n\n* ***Select Scan*** is how many queries caused full table scans, in which all the data in the table had to be read and either discarded or returned.\n* ***Select Range*** is how many queries used a range scan, which means MySQL scanned all rows in a given range.\n* ***Select Full Join*** is the number of joins that are not joined on an index, this is usually a huge performance hit.",
                 "id": "7333267f-e76e-495a-b3d8-08b100ab1330",
                 "layout": {
@@ -586,19 +594,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**MySQL Sorts**\n\nDue to a query's structure, order, or other requirements, MySQL sorts the rows before returning them. For example, if a table is ordered 1 to 10 but you want the results reversed, MySQL then has to sort the rows to return 10 to 1.\n\nThis graph also shows when sorts had to scan a whole table or a given range of a table in order to return the results and which could not have been sorted via an index.",
                 "id": "033652d8-8918-4eee-80bd-625cb0cf8d05",
                 "layout": {
@@ -640,18 +648,18 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "bars",
                     "fillOpacity": 0.3,
-                    "stack": "off",
+                    "gradientMode": "opacity",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**MySQL Slow Queries**\n\nSlow queries are defined as queries being slower than the long_query_time setting. For example, if you have long_query_time set to 3, all queries that take longer than 3 seconds to complete will show on this graph.",
                 "id": "08c7c660-5dbb-4fce-9037-3680b9e807d6",
                 "layout": {
@@ -681,9 +689,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -704,11 +710,13 @@
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**MySQL Network Traffic**\n\nHere we can see how much network traffic is generated by MySQL. Outbound is network traffic sent from MySQL and Inbound is network traffic MySQL has received.",
                 "id": "6d50c653-a256-461d-80f1-69e3db613dbc",
                 "layout": {
@@ -745,9 +753,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -771,6 +777,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**Top Command Counters**\n\nThe Com_{{xxx}} statement counter variables indicate the number of times each xxx statement has been executed. There is one status variable for each type of statement. For example, Com_delete and Com_update count [``DELETE``](https://dev.mysql.com/doc/refman/5.7/en/delete.html) and [``UPDATE``](https://dev.mysql.com/doc/refman/5.7/en/update.html) statements, respectively. Com_delete_multi and Com_update_multi are similar but apply to [``DELETE``](https://dev.mysql.com/doc/refman/5.7/en/delete.html) and [``UPDATE``](https://dev.mysql.com/doc/refman/5.7/en/update.html) statements that use multiple-table syntax.",
                 "id": "ffa708e1-2132-4dca-9cda-2dd73fad16da",
                 "layout": {
@@ -797,14 +805,12 @@
                 },
                 "targets": [
                     {
-                        "expr": "topk(10, rate(mysql_global_status_commands_total{ident=~\"$ident\"}[5m])>0)",
+                        "expr": "topk(10, rate(mysql_global_status_commands_total{ident=~\"$ident\"}[5m])\u003e0)",
                         "legend": "{{ident}} {{address}} {{command}}"
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -813,6 +819,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "49a40cdf-4715-4d5c-90f9-944479296d8b",
                 "layout": {
@@ -844,9 +852,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -855,6 +861,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "noraml"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "01970b88-417a-4c75-9bd0-33eb017a7264",
                 "layout": {
@@ -886,9 +894,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -904,6 +910,7 @@
                     "stack": "noraml"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "958eae25-8c2a-4886-962f-eb12d57bd594",
                 "layout": {
@@ -943,18 +950,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**MySQL Handlers**\n\nHandler statistics are internal statistics on how MySQL is selecting, updating, inserting, and modifying rows, tables, and indexes.\n\nThis is in fact the layer between the Storage Engine and MySQL.\n\n* `read_rnd_next` is incremented when the server performs a full table scan and this is a counter you don't really want to see with a high value.\n* `read_key` is incremented when a read is done with an index.\n* `read_next` is incremented when the storage engine is asked to 'read the next index entry'. A high value means a lot of index scans are being done.",
                 "id": "d9623f6a-64f4-4520-b7b5-01abfc76144d",
                 "layout": {
@@ -986,19 +994,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "3a5ad3a4-5877-46e6-bb3d-bd71174c693e",
                 "layout": {
                     "h": 4,
@@ -1027,9 +1035,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1050,11 +1056,13 @@
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "ac66ac2b-e48b-4ba7-95e5-4846d616449a",
                 "layout": {
                     "h": 4,
@@ -1087,9 +1095,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1110,11 +1116,13 @@
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**MySQL Table Open Cache Status**\n\nThe recommendation is to set the `table_open_cache_instances` to a loose correlation to virtual CPUs, keeping in mind that more instances means the cache is split more times. If you have a cache set to 500 but it has 10 instances, each cache will only have 50 cached.\n\nThe `table_definition_cache` and `table_open_cache` can be left as default as they are auto-sized MySQL 5.6 and above (ie: do not set them to any value).",
                 "id": "c215348c-ecdf-4480-8371-bc6a8d72da10",
                 "layout": {
@@ -1146,19 +1154,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "**MySQL Open Tables**\n\nThe recommendation is to set the `table_open_cache_instances` to a loose correlation to virtual CPUs, keeping in mind that more instances means the cache is split more times. If you have a cache set to 500 but it has 10 instances, each cache will only have 50 cached.\n\nThe `table_definition_cache` and `table_open_cache` can be left as default as they are auto-sized MySQL 5.6 and above (ie: do not set them to any value).",
                 "id": "a8fde020-a904-4eaf-84e3-7dbc9f4febf5",
                 "layout": {
@@ -1192,9 +1200,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1215,11 +1221,13 @@
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "2bce3a5c-1ec3-4789-9ce5-897a3e40de30",
                 "layout": {
                     "h": 4,
@@ -1249,19 +1257,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "6bded8a5-383e-49ad-b61b-1b0c72a8a911",
                 "layout": {
                     "h": 4,
@@ -1291,19 +1299,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "08e60f4e-f7fd-4513-bf08-f9514371fa94",
                 "layout": {
                     "h": 4,
@@ -1333,19 +1341,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "768306ee-2092-42f6-8b92-7edaf09fdab0",
                 "layout": {
                     "h": 4,
@@ -1375,19 +1383,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "722ff93d-630f-4921-a1f4-8240af974fd3",
                 "layout": {
                     "h": 4,
@@ -1417,19 +1425,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
-                    "stack": "off",
                     "lineWidth": 2,
-                    "gradientMode": "opacity"
+                    "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "3f8ba45a-a9bc-4420-980d-382c2638cda0",
                 "layout": {
                     "h": 4,
@@ -1459,9 +1467,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1477,6 +1483,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "c98ff938-5076-4217-bb0f-e082f34cc6bb",
                 "layout": {
                     "h": 4,
@@ -1514,26 +1521,31 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceValue": "${datasource}"
+                "version": "2.0.0"
             }
         ],
         "var": [
             {
+                "definition": "prometheus",
                 "name": "datasource",
-                "type": "datasource",
-                "definition": "prometheus"
+                "type": "datasource"
             },
             {
-                "definition": "label_values(mysql_global_status_uptime, ident)",
-                "name": "ident",
-                "type": "query",
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${datasource}"
-                }
+                },
+                "definition": "label_values(mysql_global_status_uptime, ident)",
+                "name": "ident",
+                "type": "query"
             }
         ],
         "version": "3.0.0"
-    }
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328087990000
 }
