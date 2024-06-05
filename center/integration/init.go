@@ -125,10 +125,12 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				}
 
 				newAlerts := []models.AlertRule{}
+				writeAlertFileFlag := false
 				for _, alert := range alerts {
-					// if alert.UUID == 0 {
-					// 	alert.UUID = time.Now().UnixNano()
-					// }
+					if alert.UUID == 0 {
+						writeAlertFileFlag = true
+						alert.UUID = time.Now().UnixNano()
+					}
 
 					newAlerts = append(newAlerts, alert)
 					content, err := json.Marshal(alert)
@@ -173,17 +175,19 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					}
 				}
 
-				// write back newAlerts to file
-				bs, err = json.MarshalIndent(newAlerts, "", "    ")
-				if err != nil {
-					logger.Warning("marshal builtin alerts fail ", newAlerts, err)
-					continue
+				if writeAlertFileFlag {
+					bs, err = json.MarshalIndent(newAlerts, "", "    ")
+					if err != nil {
+						logger.Warning("marshal builtin alerts fail ", newAlerts, err)
+						continue
+					}
+
+					_, err = file.WriteBytes(fp, bs)
+					if err != nil {
+						logger.Warning("write builtin alerts file fail ", f, err)
+					}
 				}
 
-				_, err = file.WriteBytes(fp, bs)
-				if err != nil {
-					logger.Warning("write builtin alerts file fail ", f, err)
-				}
 			}
 		}
 
@@ -205,20 +209,19 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					continue
 				}
 
-				// if dashboard.UUID == 0 {
-				// 	dashboard.UUID = time.Now().UnixNano()
-				// }
+				if dashboard.UUID == 0 {
+					dashboard.UUID = time.Now().UnixNano()
+					// 补全文件中的 uuid
+					bs, err = json.MarshalIndent(dashboard, "", "    ")
+					if err != nil {
+						logger.Warning("marshal builtin dashboard fail ", dashboard, err)
+						continue
+					}
 
-				// write back dashboard to file
-				bs, err = json.MarshalIndent(dashboard, "", "    ")
-				if err != nil {
-					logger.Warning("marshal builtin dashboard fail ", dashboard, err)
-					continue
-				}
-
-				_, err = file.WriteBytes(fp, bs)
-				if err != nil {
-					logger.Warning("write builtin dashboard file fail ", f, err)
+					_, err = file.WriteBytes(fp, bs)
+					if err != nil {
+						logger.Warning("write builtin dashboard file fail ", f, err)
+					}
 				}
 
 				content, err := json.Marshal(dashboard)
@@ -284,10 +287,12 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					continue
 				}
 
+				writeMetricFileFlag := false
 				for _, metric := range metrics {
-					// if metric.UUID == 0 {
-					// 	metric.UUID = time.Now().UnixNano()
-					// }
+					if metric.UUID == 0 {
+						writeMetricFileFlag = true
+						metric.UUID = time.Now().UnixNano()
+					}
 					newMetrics = append(newMetrics, metric)
 
 					old, err := models.BuiltinMetricGet(ctx, "uuid = ?", metric.UUID)
@@ -320,17 +325,19 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					}
 				}
 
-				// write back newMetrics to file
-				bs, err = json.MarshalIndent(newMetrics, "", "    ")
-				if err != nil {
-					logger.Warning("marshal builtin metrics fail ", newMetrics, err)
-					continue
+				if writeMetricFileFlag {
+					bs, err = json.MarshalIndent(newMetrics, "", "    ")
+					if err != nil {
+						logger.Warning("marshal builtin metrics fail ", newMetrics, err)
+						continue
+					}
+
+					_, err = file.WriteBytes(fp, bs)
+					if err != nil {
+						logger.Warning("write builtin metrics file fail ", f, err)
+					}
 				}
 
-				_, err = file.WriteBytes(fp, bs)
-				if err != nil {
-					logger.Warning("write builtin metrics file fail ", f, err)
-				}
 			}
 		} else if err != nil {
 			logger.Warningf("read builtin component metrics dir fail %s %v", component.Ident, err)
