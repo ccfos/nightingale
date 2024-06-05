@@ -31,18 +31,11 @@ func (rt *Router) builtinComponentsAdd(c *gin.Context) {
 
 func (rt *Router) builtinComponentsGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
-	limit := ginx.QueryInt(c, "limit", 20)
 
-	bc, err := models.BuiltinComponentGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+	bc, err := models.BuiltinComponentGets(rt.Ctx, query)
 	ginx.Dangerous(err)
 
-	total, err := models.BuiltinComponentCount(rt.Ctx, query)
-	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Data(gin.H{
-		"list":  bc,
-		"total": total,
-	}, nil)
+	ginx.NewRender(c).Data(bc, nil)
 }
 
 func (rt *Router) builtinComponentsPut(c *gin.Context) {

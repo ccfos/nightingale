@@ -153,173 +153,242 @@ func (rt *Router) targetGetTags(c *gin.Context) {
 }
 
 type targetTagsForm struct {
-	Idents []string `json:"idents" binding:"required"`
-	Tags   []string `json:"tags" binding:"required"`
+	Idents  []string `json:"idents" binding:"required_without=HostIps"`
+	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
+	Tags    []string `json:"tags" binding:"required"`
 }
 
 func (rt *Router) targetBindTagsByFE(c *gin.Context) {
 	var f targetTagsForm
+	var err error
+	var failedResults = make(map[string]string)
 	ginx.BindJSON(c, &f)
 
-	if len(f.Idents) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "idents empty")
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
+	}
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
 	rt.checkTargetPerm(c, f.Idents)
 
-	ginx.NewRender(c).Message(rt.targetBindTags(f))
+	ginx.NewRender(c).Data(rt.targetBindTags(f, failedResults))
 }
 
 func (rt *Router) targetBindTagsByService(c *gin.Context) {
 	var f targetTagsForm
+	var err error
+	var failedResults = make(map[string]string)
 	ginx.BindJSON(c, &f)
 
-	if len(f.Idents) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "idents empty")
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
+	}
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
-	ginx.NewRender(c).Message(rt.targetBindTags(f))
+	ginx.NewRender(c).Data(rt.targetBindTags(f, failedResults))
 }
 
-func (rt *Router) targetBindTags(f targetTagsForm) error {
-	for i := 0; i < len(f.Tags); i++ {
-		arr := strings.Split(f.Tags[i], "=")
+func (rt *Router) targetBindTags(f targetTagsForm, failedIdents map[string]string) (map[string]string, error) {
+	// 1. Check tags
+	if err := rt.validateTags(f.Tags); err != nil {
+		return nil, err
+	}
+
+	// 2. Acquire targets by idents
+	targets, err := models.TargetsGetByIdents(rt.Ctx, f.Idents)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Add tags to targets
+	for _, target := range targets {
+		if err = rt.addTagsToTarget(target, f.Tags); err != nil {
+			failedIdents[target.Ident] = err.Error()
+		}
+	}
+
+	return failedIdents, nil
+}
+
+func (rt *Router) validateTags(tags []string) error {
+	for _, tag := range tags {
+		arr := strings.Split(tag, "=")
 		if len(arr) != 2 {
-			return fmt.Errorf("invalid tag(%s)", f.Tags[i])
+			return fmt.Errorf("invalid tag format: %s (expected format: key=value)", tag)
 		}
 
-		if strings.TrimSpace(arr[0]) == "" || strings.TrimSpace(arr[1]) == "" {
-			return fmt.Errorf("invalid tag(%s)", f.Tags[i])
+		key, value := strings.TrimSpace(arr[0]), strings.TrimSpace(arr[1])
+		if key == "" {
+			return fmt.Errorf("invalid tag: key is empty in tag %s", tag)
+		}
+		if value == "" {
+			return fmt.Errorf("invalid tag: value is empty in tag %s", tag)
 		}
 
-		if strings.IndexByte(arr[0], '.') != -1 {
-			return fmt.Errorf("invalid tagkey(%s): cannot contains . ", arr[0])
+		if strings.Contains(key, ".") {
+			return fmt.Errorf("invalid tag key: %s (key cannot contain '.')", key)
 		}
 
-		if strings.IndexByte(arr[0], '-') != -1 {
-			return fmt.Errorf("invalid tagkey(%s): cannot contains -", arr[0])
+		if strings.Contains(key, "-") {
+			return fmt.Errorf("invalid tag key: %s (key cannot contain '-')", key)
 		}
 
-		if !model.LabelNameRE.MatchString(arr[0]) {
-			return fmt.Errorf("invalid tagkey(%s)", arr[0])
+		if !model.LabelNameRE.MatchString(key) {
+			return fmt.Errorf("invalid tag key: %s "+
+				"(key must start with a letter or underscore, followed by letters, digits, or underscores)", key)
 		}
 	}
 
-	for i := 0; i < len(f.Idents); i++ {
-		target, err := models.TargetGetByIdent(rt.Ctx, f.Idents[i])
-		if err != nil {
-			return err
-		}
-
-		if target == nil {
-			continue
-		}
-
-		// 不能有同key的标签，否则附到时序数据上会产生覆盖，让人困惑
-		for j := 0; j < len(f.Tags); j++ {
-			tagkey := strings.Split(f.Tags[j], "=")[0]
-			tagkeyPrefix := tagkey + "="
-			if strings.HasPrefix(target.Tags, tagkeyPrefix) {
-				return fmt.Errorf("duplicate tagkey(%s)", tagkey)
-			}
-		}
-
-		err = target.AddTags(rt.Ctx, f.Tags)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
+}
+
+func (rt *Router) addTagsToTarget(target *models.Target, tags []string) error {
+	for _, tag := range tags {
+		tagKey := strings.Split(tag, "=")[0]
+		if strings.Contains(target.Tags, tagKey+"=") {
+			return fmt.Errorf("duplicate tagkey(%s)", tagKey)
+		}
+	}
+
+	return target.AddTags(rt.Ctx, tags)
 }
 
 func (rt *Router) targetUnbindTagsByFE(c *gin.Context) {
 	var f targetTagsForm
+	var err error
+	var failedResults = make(map[string]string)
 	ginx.BindJSON(c, &f)
 
-	if len(f.Idents) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "idents empty")
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
+	}
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
 	rt.checkTargetPerm(c, f.Idents)
 
-	ginx.NewRender(c).Message(rt.targetUnbindTags(f))
+	ginx.NewRender(c).Data(rt.targetUnbindTags(f, failedResults))
 }
 
 func (rt *Router) targetUnbindTagsByService(c *gin.Context) {
 	var f targetTagsForm
+	var err error
+	var failedResults = make(map[string]string)
 	ginx.BindJSON(c, &f)
 
-	if len(f.Idents) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "idents empty")
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
+	}
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
-	ginx.NewRender(c).Message(rt.targetUnbindTags(f))
+	ginx.NewRender(c).Data(rt.targetUnbindTags(f, failedResults))
 }
 
-func (rt *Router) targetUnbindTags(f targetTagsForm) error {
-	for i := 0; i < len(f.Idents); i++ {
-		target, err := models.TargetGetByIdent(rt.Ctx, f.Idents[i])
-		if err != nil {
-			return err
-		}
+func (rt *Router) targetUnbindTags(f targetTagsForm, failedIdents map[string]string) (map[string]string, error) {
+	// 1. Acquire targets by idents
+	targets, err := models.TargetsGetByIdents(rt.Ctx, f.Idents)
+	if err != nil {
+		return nil, err
+	}
 
-		if target == nil {
-			continue
-		}
-
+	// 2. Remove tags from targets
+	for _, target := range targets {
 		err = target.DelTags(rt.Ctx, f.Tags)
 		if err != nil {
-			return err
+			failedIdents[target.Ident] = err.Error()
+			continue
 		}
 	}
-	return nil
+
+	return failedIdents, nil
 }
 
 type targetNoteForm struct {
-	Idents []string `json:"idents" binding:"required"`
-	Note   string   `json:"note"`
+	Idents  []string `json:"idents" binding:"required_without=HostIps"`
+	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
+	Note    string   `json:"note"`
 }
 
 func (rt *Router) targetUpdateNote(c *gin.Context) {
 	var f targetNoteForm
+	var err error
+	var failedResults = make(map[string]string)
 	ginx.BindJSON(c, &f)
 
-	if len(f.Idents) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "idents empty")
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
+	}
+
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
 	rt.checkTargetPerm(c, f.Idents)
 
-	ginx.NewRender(c).Message(models.TargetUpdateNote(rt.Ctx, f.Idents, f.Note))
+	ginx.NewRender(c).Data(failedResults, models.TargetUpdateNote(rt.Ctx, f.Idents, f.Note))
 }
 
 func (rt *Router) targetUpdateNoteByService(c *gin.Context) {
 	var f targetNoteForm
+	var err error
+	var failedResults = make(map[string]string)
 	ginx.BindJSON(c, &f)
 
-	if len(f.Idents) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "idents empty")
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
 	}
 
-	ginx.NewRender(c).Message(models.TargetUpdateNote(rt.Ctx, f.Idents, f.Note))
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
+	}
+
+	ginx.NewRender(c).Data(failedResults, models.TargetUpdateNote(rt.Ctx, f.Idents, f.Note))
 }
 
 type targetBgidForm struct {
-	Idents []string `json:"idents" binding:"required"`
-	Bgid   int64    `json:"bgid"`
+	Idents  []string `json:"idents" binding:"required_without=HostIps"`
+	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
+	Bgid    int64    `json:"bgid"`
 }
 
 func (rt *Router) targetUpdateBgid(c *gin.Context) {
 	var f targetBgidForm
+	var err error
+	var failedResults = make(map[string]string)
 	ginx.BindJSON(c, &f)
 
-	if len(f.Idents) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "idents empty")
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
+	}
+
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
 	user := c.MustGet("user").(*models.User)
 	if user.IsAdmin() {
-		ginx.NewRender(c).Message(models.TargetUpdateBgid(rt.Ctx, f.Idents, f.Bgid, false))
+		ginx.NewRender(c).Data(failedResults, models.TargetUpdateBgid(rt.Ctx, f.Idents, f.Bgid, false))
 		return
 	}
 
@@ -361,24 +430,69 @@ func (rt *Router) targetUpdateBgid(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "invalid bgid")
 	}
 
-	ginx.NewRender(c).Message(models.TargetUpdateBgid(rt.Ctx, f.Idents, f.Bgid, false))
+	ginx.NewRender(c).Data(failedResults, models.TargetUpdateBgid(rt.Ctx, f.Idents, f.Bgid, false))
+}
+
+func (rt *Router) targetUpdateBgidByService(c *gin.Context) {
+	var f targetBgidForm
+	var err error
+	var failedResults = make(map[string]string)
+	ginx.BindJSON(c, &f)
+
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
+	}
+
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
+	}
+
+	ginx.NewRender(c).Data(failedResults, models.TargetUpdateBgid(rt.Ctx, f.Idents, f.Bgid, false))
 }
 
 type identsForm struct {
-	Idents []string `json:"idents" binding:"required"`
+	Idents  []string `json:"idents" binding:"required_without=HostIps"`
+	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
 }
 
 func (rt *Router) targetDel(c *gin.Context) {
 	var f identsForm
+	var err error
+	var failedResults = make(map[string]string)
 	ginx.BindJSON(c, &f)
 
-	if len(f.Idents) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "idents empty")
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
 	}
 
-	rt.checkTargetPerm(c, f.Idents)
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
+	}
 
-	ginx.NewRender(c).Message(models.TargetDel(rt.Ctx, f.Idents))
+	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents))
+}
+
+func (rt *Router) targetDelByService(c *gin.Context) {
+	var f identsForm
+	var err error
+	var failedResults = make(map[string]string)
+	ginx.BindJSON(c, &f)
+
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
+	}
+
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
+	}
+
+	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents))
 }
 
 func (rt *Router) checkTargetPerm(c *gin.Context, idents []string) {

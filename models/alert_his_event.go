@@ -114,15 +114,15 @@ func (e *AlertHisEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 	return nil
 }
 
-func AlertHisEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, recovered int, dsIds []int64, cates []string, query string) (int64, error) {
+func AlertHisEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int, recovered int, dsIds []int64, cates []string, query string) (int64, error) {
 	session := DB(ctx).Model(&AlertHisEvent{}).Where("last_eval_time between ? and ?", stime, etime)
 
 	if len(prods) > 0 {
 		session = session.Where("rule_prod in ?", prods)
 	}
 
-	if bgid > 0 {
-		session = session.Where("group_id = ?", bgid)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in ?", bgids)
 	}
 
 	if severity >= 0 {
@@ -152,15 +152,15 @@ func AlertHisEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 	return Count(session)
 }
 
-func AlertHisEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, recovered int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertHisEvent, error) {
+func AlertHisEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int, recovered int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertHisEvent, error) {
 	session := DB(ctx).Where("last_eval_time between ? and ?", stime, etime)
 
 	if len(prods) != 0 {
 		session = session.Where("rule_prod in ?", prods)
 	}
 
-	if bgid > 0 {
-		session = session.Where("group_id = ?", bgid)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in ?", bgids)
 	}
 
 	if severity >= 0 {

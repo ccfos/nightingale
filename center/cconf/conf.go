@@ -12,6 +12,7 @@ type Center struct {
 	AnonymousAccess        AnonymousAccess
 	UseFileAssets          bool
 	FlashDuty              FlashDuty
+	EventHistoryGroupView  bool
 }
 
 type Plugin struct {

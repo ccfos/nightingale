@@ -40,26 +40,27 @@ var (
 )
 
 type User struct {
-	Id            int64           `json:"id" gorm:"primaryKey"`
-	Username      string          `json:"username"`
-	Nickname      string          `json:"nickname"`
-	Password      string          `json:"-"`
-	Phone         string          `json:"phone"`
-	Email         string          `json:"email"`
-	Portrait      string          `json:"portrait"`
-	Roles         string          `json:"-"`              // 这个字段写入数据库
-	RolesLst      []string        `json:"roles" gorm:"-"` // 这个字段和前端交互
-	TeamsLst      []int64         `json:"-" gorm:"-"`     // 这个字段方便映射团队，前端和数据库都不用到
-	Contacts      ormx.JSONObj    `json:"contacts"`       // 内容为 map[string]string 结构
-	Maintainer    int             `json:"maintainer"`     // 是否给管理员发消息 0:not send 1:send
-	CreateAt      int64           `json:"create_at"`
-	CreateBy      string          `json:"create_by"`
-	UpdateAt      int64           `json:"update_at"`
-	UpdateBy      string          `json:"update_by"`
-	Belong        string          `json:"belong"`
-	Admin         bool            `json:"admin" gorm:"-"` // 方便前端使用
-	UserGroupsRes []*UserGroupRes `json:"user_groups" gorm:"-"`
-	BusiGroupsRes []*BusiGroupRes `json:"busi_groups" gorm:"-"`
+	Id             int64           `json:"id" gorm:"primaryKey"`
+	Username       string          `json:"username"`
+	Nickname       string          `json:"nickname"`
+	Password       string          `json:"-"`
+	Phone          string          `json:"phone"`
+	Email          string          `json:"email"`
+	Portrait       string          `json:"portrait"`
+	Roles          string          `json:"-"`              // 这个字段写入数据库
+	RolesLst       []string        `json:"roles" gorm:"-"` // 这个字段和前端交互
+	TeamsLst       []int64         `json:"-" gorm:"-"`     // 这个字段方便映射团队，前端和数据库都不用到
+	Contacts       ormx.JSONObj    `json:"contacts"`       // 内容为 map[string]string 结构
+	Maintainer     int             `json:"maintainer"`     // 是否给管理员发消息 0:not send 1:send
+	CreateAt       int64           `json:"create_at"`
+	CreateBy       string          `json:"create_by"`
+	UpdateAt       int64           `json:"update_at"`
+	UpdateBy       string          `json:"update_by"`
+	Belong         string          `json:"belong"`
+	Admin          bool            `json:"admin" gorm:"-"` // 方便前端使用
+	UserGroupsRes  []*UserGroupRes `json:"user_groups" gorm:"-"`
+	BusiGroupsRes  []*BusiGroupRes `json:"busi_groups" gorm:"-"`
+	LastActiveTime int64           `json:"last_active_time"`
 }
 
 type UserGroupRes struct {
@@ -218,6 +219,13 @@ func (u *User) UpdatePassword(ctx *ctx.Context, password, updateBy string) error
 	}).Error
 }
 
+func UpdateUserLastActiveTime(ctx *ctx.Context, userId int64, lastActiveTime int64) error {
+	return DB(ctx).Model(&User{}).Where("id = ?", userId).Updates(map[string]interface{}{
+		"last_active_time": lastActiveTime,
+		"update_at":        time.Now().Unix(),
+	}).Error
+}
+
 func (u *User) Del(ctx *ctx.Context) error {
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("user_id=?", u.Id).Delete(&UserGroupMember{}).Error; err != nil {
@@ -328,12 +336,18 @@ func PassLogin(ctx *ctx.Context, username, pass string) (*User, error) {
 	return user, nil
 }
 
-func UserTotal(ctx *ctx.Context, query string) (num int64, err error) {
+func UserTotal(ctx *ctx.Context, query string, stime, etime int64) (num int64, err error) {
+	db := DB(ctx).Model(&User{})
+
+	if stime != 0 && etime != 0 {
+		db = db.Where("last_active_time between ? and ?", stime, etime)
+	}
+
 	if query != "" {
 		q := "%" + query + "%"
-		num, err = Count(DB(ctx).Model(&User{}).Where("username like ? or nickname like ? or phone like ? or email like ?", q, q, q, q))
+		num, err = Count(db.Where("username like ? or nickname like ? or phone like ? or email like ?", q, q, q, q))
 	} else {
-		num, err = Count(DB(ctx).Model(&User{}))
+		num, err = Count(db)
 	}
 
 	if err != nil {
@@ -343,15 +357,30 @@ func UserTotal(ctx *ctx.Context, query string) (num int64, err error) {
 	return num, nil
 }
 
-func UserGets(ctx *ctx.Context, query string, limit, offset int) ([]User, error) {
-	session := DB(ctx).Limit(limit).Offset(offset).Order("username")
+func UserGets(ctx *ctx.Context, query string, limit, offset int, stime, etime int64,
+	order string, desc bool) ([]User, error) {
+
+	session := DB(ctx)
+
+	if stime != 0 && etime != 0 {
+		session = session.Where("last_active_time between ? and ?", stime, etime)
+	}
+
+	if desc {
+		order = order + " desc"
+	} else {
+		order = order + " asc"
+	}
+
+	session = session.Order(order)
+
 	if query != "" {
 		q := "%" + query + "%"
 		session = session.Where("username like ? or nickname like ? or phone like ? or email like ?", q, q, q, q)
 	}
 
 	var users []User
-	err := session.Find(&users).Error
+	err := session.Limit(limit).Offset(offset).Find(&users).Error
 	if err != nil {
 		return users, errors.WithMessage(err, "failed to query user")
 	}
@@ -541,13 +570,13 @@ func (u *User) NopriIdents(ctx *ctx.Context, idents []string) ([]string, error) 
 		return idents, nil
 	}
 
-	var arr []string
-	err = DB(ctx).Model(&Target{}).Where("group_id in ?", bgids).Pluck("ident", &arr).Error
+	var allowedIdents []string
+	err = DB(ctx).Model(&Target{}).Where("group_id in ?", bgids).Pluck("ident", &allowedIdents).Error
 	if err != nil {
 		return []string{}, err
 	}
 
-	return slice.SubString(idents, arr), nil
+	return slice.SubString(idents, allowedIdents), nil
 }
 
 // 我是管理员，返回所有

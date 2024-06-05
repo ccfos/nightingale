@@ -78,6 +78,17 @@
 
 ![边缘部署模式](https://download.flashcat.cloud/ulric/20240222102119.png)
 
+## 近期计划
+
+- [ ] 仪表盘：支持内嵌 Grafana
+- [ ] 告警规则：通知时支持配置过滤标签，避免告警事件中一堆不重要的标签
+- [ ] 告警规则：支持配置恢复时的 Promql，告警恢复通知也可以带上恢复时的值了
+- [ ] 机器管理：自定义标签拆分管理，agent 自动上报的标签和用户在页面自定义的标签分开管理，对于 agent 自动上报的标签，以 agent 为准，直接覆盖服务端 DB 中的数据
+- [ ] 机器管理：机器支持角色字段，即无头标签，用于描述混部场景
+- [ ] 机器管理：把业务组的 busigroup 标签迁移到机器的属性里，让机器支持挂到多个业务组
+- [ ] 告警规则：增加 Host Metrics 类别，支持按照业务组、角色、标签等筛选机器，规则 promql 支持变量，支持在机器颗粒度配置变量值
+- [ ] 告警通知：重构整个通知逻辑，引入事件处理的 pipeline，支持对告警事件做自定义处理和灵活分派
+
 ## 交流渠道
 - 报告Bug，优先推荐提交[夜莺GitHub Issue](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&projects=&template=bug_report.yml)
 - 推荐完整浏览[夜莺文档站点](https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v7/introduction/)，了解更多信息

@@ -43,7 +43,6 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 	stime, etime := getTimeRange(c)
 	severity := ginx.QueryInt(c, "severity", -1)
 	query := ginx.QueryStr(c, "query", "")
-	busiGroupId := ginx.QueryInt64(c, "bgid", 0)
 	dsIds := queryDatasourceIds(c)
 	rules := parseAggrRules(c)
 
@@ -62,8 +61,11 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 		cates = strings.Split(cate, ",")
 	}
 
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
+	ginx.Dangerous(err)
+
 	// 最多获取50000个，获取太多也没啥意义
-	list, err := models.AlertCurEventGets(rt.Ctx, prods, busiGroupId, stime, etime, severity, dsIds, cates, query, 50000, 0)
+	list, err := models.AlertCurEventGets(rt.Ctx, prods, bgids, stime, etime, severity, dsIds, cates, query, 50000, 0)
 	ginx.Dangerous(err)
 
 	cardmap := make(map[string]*AlertCard)
@@ -142,7 +144,6 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 	severity := ginx.QueryInt(c, "severity", -1)
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 20)
-	busiGroupId := ginx.QueryInt64(c, "bgid", 0)
 	dsIds := queryDatasourceIds(c)
 
 	prod := ginx.QueryStr(c, "prods", "")
@@ -161,10 +162,13 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 		cates = strings.Split(cate, ",")
 	}
 
-	total, err := models.AlertCurEventTotal(rt.Ctx, prods, busiGroupId, stime, etime, severity, dsIds, cates, query)
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
 	ginx.Dangerous(err)
 
-	list, err := models.AlertCurEventGets(rt.Ctx, prods, busiGroupId, stime, etime, severity, dsIds, cates, query, limit, ginx.Offset(c, limit))
+	total, err := models.AlertCurEventTotal(rt.Ctx, prods, bgids, stime, etime, severity, dsIds, cates, query)
+	ginx.Dangerous(err)
+
+	list, err := models.AlertCurEventGets(rt.Ctx, prods, bgids, stime, etime, severity, dsIds, cates, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)
@@ -212,6 +216,10 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 
 	if event == nil {
 		ginx.Bomb(404, "No such active event")
+	}
+
+	if !rt.Center.AnonymousAccess.AlertDetail && rt.Center.EventHistoryGroupView {
+		rt.bgroCheck(c, event.GroupId)
 	}
 
 	ginx.NewRender(c).Data(event, nil)

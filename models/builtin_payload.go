@@ -9,11 +9,12 @@ import (
 )
 
 type BuiltinPayload struct {
-	ID        uint64 `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	ID        int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
 	Type      string `json:"type" gorm:"type:varchar(191);not null;index:idx_type,sort:asc;comment:'type of payload'"`                // Alert Dashboard Collet
 	Component string `json:"component" gorm:"type:varchar(191);not null;index:idx_component,sort:asc;comment:'component of payload'"` // Host MySQL Redis
 	Cate      string `json:"cate" gorm:"type:varchar(191);not null;comment:'category of payload'"`                                    // categraf_v1 telegraf_v1
 	Name      string `json:"name" gorm:"type:varchar(191);not null;index:idx_name,sort:asc;comment:'name of payload'"`                //
+	Tags      string `json:"tags" gorm:"type:varchar(191);not null;default:'';comment:'tags of payload'"`                             // {"host":"
 	Content   string `json:"content" gorm:"type:longtext;not null;comment:'content of payload'"`
 	CreatedAt int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
 	CreatedBy string `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
@@ -105,7 +106,7 @@ func BuiltinPayloadGet(ctx *ctx.Context, where string, args ...interface{}) (*Bu
 	return &bp, nil
 }
 
-func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, name string, limit, offset int) ([]*BuiltinPayload, error) {
+func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, query string) ([]*BuiltinPayload, error) {
 	session := DB(ctx)
 	if typ != "" {
 		session = session.Where("type = ?", typ)
@@ -118,11 +119,36 @@ func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, name string, lim
 		session = session.Where("cate = ?", cate)
 	}
 
-	if name != "" {
-		session = session.Where("name like ?", "%"+name+"%")
+	if query != "" {
+		arr := strings.Fields(query)
+		for i := 0; i < len(arr); i++ {
+			qarg := "%" + arr[i] + "%"
+			session = session.Where("name like ? or tags like ?", qarg, qarg)
+		}
 	}
 
 	var lst []*BuiltinPayload
-	err := session.Limit(limit).Offset(offset).Find(&lst).Error
+	err := session.Find(&lst).Error
 	return lst, err
+}
+
+// get cates of BuiltinPayload by type and component, return []string
+func BuiltinPayloadCates(ctx *ctx.Context, typ, component string) ([]string, error) {
+	var cates []string
+	err := DB(ctx).Model(new(BuiltinPayload)).Where("type = ? and component = ?", typ, component).Distinct("cate").Pluck("cate", &cates).Error
+	return cates, err
+}
+
+// get components of BuiltinPayload by type and cate, return string
+func BuiltinPayloadComponents(ctx *ctx.Context, typ, cate string) (string, error) {
+	var components []string
+	err := DB(ctx).Model(new(BuiltinPayload)).Where("type = ? and cate = ?", typ, cate).Distinct("component").Pluck("component", &components).Error
+	if err != nil {
+		return "", err
+	}
+
+	if len(components) == 0 {
+		return "", nil
+	}
+	return components[0], nil
 }

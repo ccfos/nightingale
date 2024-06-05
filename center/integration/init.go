@@ -3,6 +3,7 @@ package integration
 import (
 	"encoding/json"
 	"path"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -31,145 +32,180 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 
 		// get logo name
 		// /api/n9e/integrations/icon/AliYun/aliyun.png
-		// files, err := file.FilesUnder(componentDir + "/icon")
-		// if err == nil && len(files) > 0 {
-		// 	component.Logo = "/api/n9e/integrations/icon/" + component.Ident + "/" + files[0]
-		// } else if err != nil {
-		// 	logger.Warningf("read builtin component icon dir fail %s %v", component.Ident, err)
-		// }
+		files, err := file.FilesUnder(componentDir + "/icon")
+		if err == nil && len(files) > 0 {
+			component.Logo = "/api/n9e/integrations/icon/" + component.Ident + "/" + files[0]
+		} else if err != nil {
+			logger.Warningf("read builtin component icon dir fail %s %v", component.Ident, err)
+		}
 
-		// // get description
-		// files, err = file.FilesUnder(componentDir + "/markdown")
-		// if err == nil && len(files) > 0 {
-		// 	var readmeFile string
-		// 	for _, file := range files {
-		// 		if strings.HasSuffix(strings.ToLower(file), "md") {
-		// 			readmeFile = file
-		// 		}
-		// 	}
-		// 	if readmeFile != "" {
-		// 		component.Readme, _ = file.ReadString(readmeFile)
-		// 	}
-		// } else if err != nil {
-		// 	logger.Warningf("read builtin component markdown dir fail %s %v", component.Ident, err)
-		// }
+		// get description
+		files, err = file.FilesUnder(componentDir + "/markdown")
+		if err == nil && len(files) > 0 {
+			var readmeFile string
+			for _, file := range files {
+				if strings.HasSuffix(strings.ToLower(file), "md") {
+					readmeFile = componentDir + "/markdown/" + file
+					break
+				}
+			}
+			if readmeFile != "" {
+				component.Readme, _ = file.ReadString(readmeFile)
+			}
+		} else if err != nil {
+			logger.Warningf("read builtin component markdown dir fail %s %v", component.Ident, err)
+		}
 
-		// exists, _ := models.BuiltinComponentExists(ctx, &component)
-		// if !exists {
-		// 	err = component.Add(ctx, "system")
-		// 	if err != nil {
-		// 		logger.Warning("add builtin component fail ", component, err)
-		// 		continue
-		// 	}
-		// }
+		exists, _ := models.BuiltinComponentExists(ctx, &component)
+		if !exists {
+			err = component.Add(ctx, "system")
+			if err != nil {
+				logger.Warning("add builtin component fail ", component, err)
+				continue
+			}
+		}
 
-		// // alerts
-		// files, err = file.FilesUnder(componentDir + "/alerts")
-		// if err == nil && len(files) > 0 {
-		// 	for _, f := range files {
-		// 		fp := componentDir + "/alerts/" + f
-		// 		bs, err := file.ReadBytes(fp)
-		// 		if err != nil {
-		// 			logger.Warning("read builtin component alerts file fail ", f, err)
-		// 			continue
-		// 		}
+		// alerts
+		files, err = file.FilesUnder(componentDir + "/alerts")
+		if err == nil && len(files) > 0 {
+			for _, f := range files {
+				fp := componentDir + "/alerts/" + f
+				bs, err := file.ReadBytes(fp)
+				if err != nil {
+					logger.Warning("read builtin component alerts file fail ", f, err)
+					continue
+				}
 
-		// 		alerts := []models.AlertRule{}
-		// 		err = json.Unmarshal(bs, &alerts)
-		// 		if err != nil {
-		// 			logger.Warning("parse builtin component alerts file fail ", f, err)
-		// 			continue
-		// 		}
+				alerts := []models.AlertRule{}
+				err = json.Unmarshal(bs, &alerts)
+				if err != nil {
+					logger.Warning("parse builtin component alerts file fail ", f, err)
+					continue
+				}
 
-		// 		for _, alert := range alerts {
-		// 			content, err := json.Marshal(alert)
-		// 			if err != nil {
-		// 				logger.Warning("marshal builtin alert fail ", alert, err)
-		// 				continue
-		// 			}
+				for _, alert := range alerts {
+					content, err := json.Marshal(alert)
+					if err != nil {
+						logger.Warning("marshal builtin alert fail ", alert, err)
+						continue
+					}
 
-		// 			cate := strings.Replace(f, ".json", "", -1)
-		// 			builtinAlert := models.BuiltinPayload{
-		// 				Component: component.Ident,
-		// 				Type:      "alert",
-		// 				Cate:      cate,
-		// 				Name:      alert.Name,
-		// 				Content:   string(content),
-		// 			}
+					cate := strings.Replace(f, ".json", "", -1)
+					builtinAlert := models.BuiltinPayload{
+						Component: component.Ident,
+						Type:      "alert",
+						Cate:      cate,
+						Name:      alert.Name,
+						Tags:      alert.AppendTags,
+						Content:   string(content),
+					}
 
-		// 			exists, err := models.BuiltinPayloadExists(ctx, &builtinAlert)
-		// 			if err != nil {
-		// 				logger.Warning("check builtin alert exists fail ", builtinAlert, err)
-		// 				continue
-		// 			}
+					exists, err := models.BuiltinPayloadExists(ctx, &builtinAlert)
+					if err != nil {
+						logger.Warning("check builtin alert exists fail ", builtinAlert, err)
+						continue
+					}
 
-		// 			if exists {
-		// 				continue
-		// 			}
+					if exists {
+						old, err := models.BuiltinPayloadGet(ctx, "type = ? AND component = ? AND name = ? AND cate = ?", builtinAlert.Type, builtinAlert.Component, builtinAlert.Name, builtinAlert.Cate)
+						if err != nil {
+							logger.Warning("get builtin alert fail ", builtinAlert, err)
+							continue
+						}
 
-		// 			err = builtinAlert.Add(ctx, "system")
-		// 			if err != nil {
-		// 				logger.Warningf("add builtin alert:%+v fail %v", builtinAlert, err)
-		// 				continue
-		// 			}
-		// 		}
-		// 	}
-		// }
+						if old.CreatedAt != old.UpdatedAt {
+							// 模板已经被修改过，不再更新
+							continue
+						}
 
-		// // dashboards
-		// files, err = file.FilesUnder(componentDir + "/dashboards")
-		// if err == nil && len(files) > 0 {
-		// 	for _, f := range files {
-		// 		fp := componentDir + "/dashboards/" + f
-		// 		bs, err := file.ReadBytes(fp)
-		// 		if err != nil {
-		// 			logger.Warning("read builtin component dashboards file fail ", f, err)
-		// 			continue
-		// 		}
+						// 先删除旧的 再添加新的
+						err = models.BuiltinPayloadDels(ctx, []int64{old.ID})
+						if err != nil {
+							logger.Warning("delete old builtin alert fail ", old, err)
+							continue
+						}
+					}
 
-		// 		dashboard := BuiltinBoard{}
-		// 		err = json.Unmarshal(bs, &dashboard)
-		// 		if err != nil {
-		// 			logger.Warning("parse builtin component dashboards file fail ", f, err)
-		// 			continue
-		// 		}
+					err = builtinAlert.Add(ctx, "system")
+					if err != nil {
+						logger.Warningf("add builtin alert:%+v fail %v", builtinAlert, err)
+						continue
+					}
+				}
+			}
+		}
 
-		// 		content, err := json.Marshal(dashboard)
-		// 		if err != nil {
-		// 			logger.Warning("marshal builtin dashboard fail ", dashboard, err)
-		// 			continue
-		// 		}
+		// dashboards
+		files, err = file.FilesUnder(componentDir + "/dashboards")
+		if err == nil && len(files) > 0 {
+			for _, f := range files {
+				fp := componentDir + "/dashboards/" + f
+				bs, err := file.ReadBytes(fp)
+				if err != nil {
+					logger.Warning("read builtin component dashboards file fail ", f, err)
+					continue
+				}
 
-		// 		builtinDashboard := models.BuiltinPayload{
-		// 			Component: component.Ident,
-		// 			Type:      "dashboard",
-		// 			Cate:      "",
-		// 			Name:      dashboard.Name,
-		// 			Content:   string(content),
-		// 		}
+				dashboard := BuiltinBoard{}
+				err = json.Unmarshal(bs, &dashboard)
+				if err != nil {
+					logger.Warning("parse builtin component dashboards file fail ", f, err)
+					continue
+				}
 
-		// 		exists, err := models.BuiltinPayloadExists(ctx, &builtinDashboard)
-		// 		if err != nil {
-		// 			logger.Warning("check builtin dashboard exists fail ", builtinDashboard, err)
-		// 			continue
-		// 		}
+				content, err := json.Marshal(dashboard)
+				if err != nil {
+					logger.Warning("marshal builtin dashboard fail ", dashboard, err)
+					continue
+				}
 
-		// 		if exists {
-		// 			continue
-		// 		}
+				builtinDashboard := models.BuiltinPayload{
+					Component: component.Ident,
+					Type:      "dashboard",
+					Cate:      "",
+					Name:      dashboard.Name,
+					Tags:      dashboard.Tags,
+					Content:   string(content),
+				}
 
-		// 		err = builtinDashboard.Add(ctx, "system")
-		// 		if err != nil {
-		// 			logger.Warning("add builtin dashboard fail ", builtinDashboard, err)
-		// 			continue
-		// 		}
-		// 	}
-		// } else if err != nil {
-		// 	logger.Warningf("read builtin component dash dir fail %s %v", component.Ident, err)
-		// }
+				exists, err := models.BuiltinPayloadExists(ctx, &builtinDashboard)
+				if err != nil {
+					logger.Warning("check builtin dashboard exists fail ", builtinDashboard, err)
+					continue
+				}
+
+				if exists {
+					old, err := models.BuiltinPayloadGet(ctx, "type = ? AND component = ? AND name = ? AND cate = ?", builtinDashboard.Type, builtinDashboard.Component, builtinDashboard.Name, builtinDashboard.Cate)
+					if err != nil {
+						logger.Warning("get builtin dashboard fail ", builtinDashboard, err)
+						continue
+					}
+
+					if old.CreatedAt != old.UpdatedAt {
+						// 模板已经被修改过，不再更新
+						continue
+					}
+
+					// delete old
+					err = models.BuiltinPayloadDels(ctx, []int64{old.ID})
+					if err != nil {
+						logger.Warning("delete old builtin dashboard fail ", old, err)
+						continue
+					}
+				}
+
+				err = builtinDashboard.Add(ctx, "system")
+				if err != nil {
+					logger.Warning("add builtin dashboard fail ", builtinDashboard, err)
+					continue
+				}
+			}
+		} else if err != nil {
+			logger.Warningf("read builtin component dash dir fail %s %v", component.Ident, err)
+		}
 
 		// metrics
-		files, err := file.FilesUnder(componentDir + "/metrics")
+		files, err = file.FilesUnder(componentDir + "/metrics")
 		if err == nil && len(files) > 0 {
 			for _, f := range files {
 				fp := componentDir + "/metrics/" + f
@@ -192,9 +228,22 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 						logger.Warning("check builtin metric exists fail", metric, err)
 						continue
 					}
+
 					if exists {
-						continue
+						old, err := models.BuiltinMetricGet(ctx, "lang = ? and collector = ? and typ = ? and name = ?", metric.Lang, metric.Collector, metric.Typ, metric.Name)
+						if err != nil {
+							logger.Warning("get builtin metric fail", metric, err)
+							continue
+						}
+
+						// delete old
+						err = models.BuiltinMetricDels(ctx, []int64{old.ID})
+						if err != nil {
+							logger.Warningf("delete old builtin metric fail %v %v", old, err)
+							continue
+						}
 					}
+
 					err = metric.Add(ctx, "system")
 					if err != nil {
 						logger.Warning("add builtin metric fail", metric, err)

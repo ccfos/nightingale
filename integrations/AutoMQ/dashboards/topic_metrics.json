@@ -1,0 +1,717 @@
+{
+    "name": "Topic Metrics",
+    "tags": "",
+    "ident": "automq-topic-metrics",
+    "configs": {
+        "version": "3.0.0",
+        "links": [],
+        "var": [
+            {
+                "name": "TSDB",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus"
+            },
+            {
+                "name": "cluster_id",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${TSDB}"
+                },
+                "definition": "label_values(process_runtime_jvm_cpu_utilization_ratio,job)",
+                "reg": "",
+                "multi": false
+            },
+            {
+                "name": "topic",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${TSDB}"
+                },
+                "definition": "label_values(kafka_log_size,topic)",
+                "reg": "",
+                "multi": true,
+                "allOption": true
+            },
+            {
+                "name": "partition",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${TSDB}"
+                },
+                "definition": "label_values(kafka_log_size{topic=\"$topic\"},partition)",
+                "reg": "",
+                "multi": true,
+                "allOption": true,
+                "allValue": ".*"
+            }
+        ],
+        "panels": [
+            {
+                "type": "stat",
+                "id": "d4df5a68-ae8b-40e9-8f88-cd2e3f88e783",
+                "layout": {
+                    "h": 3,
+                    "w": 5,
+                    "x": 0,
+                    "y": 0,
+                    "i": "d4df5a68-ae8b-40e9-8f88-cd2e3f88e783",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${TSDB}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum by(job) (rate(kafka_network_io_bytes_total{job=\"$cluster_id\", topic=~\"$topic\", partition=~\"$partition\", direction=\"in\"}[$__rate_interval]))",
+                        "legend": "Bytes In Total",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(44, 157, 61, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "52e25ff6-5ef8-4237-a49d-85473f9f90af",
+                "layout": {
+                    "h": 3,
+                    "w": 3,
+                    "x": 5,
+                    "y": 0,
+                    "i": "52e25ff6-5ef8-4237-a49d-85473f9f90af",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${TSDB}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum by(topic) (kafka_log_size{job=\"$cluster_id\", topic=~\"$topic\"})",
+                        "legend": "Size",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(148, 112, 255, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 2
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "75a6d933-f8d8-46f8-8cf0-9ef9dcc4e86b",
+                "layout": {
+                    "h": 6,
+                    "w": 8,
+                    "x": 8,
+                    "y": 0,
+                    "i": "75a6d933-f8d8-46f8-8cf0-9ef9dcc4e86b",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${TSDB}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum by(topic) (rate(kafka_message_count_total{job=\"$cluster_id\", topic=~\"$topic\", direction=\"in\"}[$__rate_interval]))",
+                        "legend": "{{topic}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Messages In",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.15,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "f1bbfda3-0fd8-4b85-b725-222f992fbbc9",
+                "layout": {
+                    "h": 6,
+                    "w": 8,
+                    "x": 16,
+                    "y": 0,
+                    "i": "f1bbfda3-0fd8-4b85-b725-222f992fbbc9",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${TSDB}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum by(topic, type) (rate(kafka_topic_request_count_total{job=\"$cluster_id\", topic=~\"$topic\"}[$__rate_interval]))",
+                        "legend": "{{type}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Request Throughput",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.15,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "56a85016-ca99-4495-be6a-53de1366a396",
+                "layout": {
+                    "h": 3,
+                    "w": 5,
+                    "x": 0,
+                    "y": 3,
+                    "i": "56a85016-ca99-4495-be6a-53de1366a396",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${TSDB}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum by(job) (rate(kafka_network_io_bytes_total{job=\"$cluster_id\", topic=~\"$topic\", partition=~\"$partition\", direction=\"out\"}[$__rate_interval]))",
+                        "legend": "Bytes Out Total",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(44, 157, 61, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "6efe4439-00ab-41d8-a4f0-b2117ad13648",
+                "layout": {
+                    "h": 3,
+                    "w": 3,
+                    "x": 5,
+                    "y": 3,
+                    "i": "6efe4439-00ab-41d8-a4f0-b2117ad13648",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${TSDB}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "count by(topic) (kafka_log_size{job=\"$cluster_id\", topic=~\"$topic\"})",
+                        "legend": "Partition Count",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(148, 112, 255, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "f3da44a7-bcb6-4b92-a5f9-b7e6856ced1a",
+                "layout": {
+                    "h": 6,
+                    "w": 8,
+                    "x": 0,
+                    "y": 6,
+                    "i": "f3da44a7-bcb6-4b92-a5f9-b7e6856ced1a",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${TSDB}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum by(topic) (kafka_log_size{job=\"$cluster_id\", topic=~\"$topic\"})",
+                        "legend": "{{topic}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Size",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "1354e591-5030-42f0-a3c3-eeb1e7c0a537",
+                "layout": {
+                    "h": 6,
+                    "w": 8,
+                    "x": 8,
+                    "y": 6,
+                    "i": "1354e591-5030-42f0-a3c3-eeb1e7c0a537",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${TSDB}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum by(topic, partition) (rate(kafka_network_io_bytes_total{job=\"$cluster_id\", topic=~\"$topic\", direction=\"in\", partition=~\"$partition\"}[$__rate_interval]))",
+                        "legend": "{{topic}}-{{partition}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Bytes In",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesSecIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.15,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "a91a656b-e5b1-4265-ba88-f1881b324137",
+                "layout": {
+                    "h": 6,
+                    "w": 8,
+                    "x": 16,
+                    "y": 6,
+                    "i": "a91a656b-e5b1-4265-ba88-f1881b324137",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${TSDB}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum by(topic, partition) (rate(kafka_network_io_bytes_total{job=\"$cluster_id\", topic=~\"$topic\", direction=\"out\", partition=~\"$partition\"}[$__rate_interval]))",
+                        "legend": "{{topic}}-{{partition}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Bytes Out",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesSecIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.15,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "table",
+                "id": "5c3e188e-3d7c-4bc9-b8c7-c19c39a8d396",
+                "layout": {
+                    "h": 4,
+                    "w": 24,
+                    "x": 0,
+                    "y": 12,
+                    "i": "5c3e188e-3d7c-4bc9-b8c7-c19c39a8d396",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${TSDB}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum by(topic) (max by(topic, partition) (kafka_log_end_offset{job=\"$cluster_id\", topic=~\"$topic\", partition=~\"$partition\"}))\n- on(topic) group_left(consumer_group)\nsum by(consumer_group, topic) (max by(consumer_group, topic, partition) (kafka_group_commit_offset{job=\"$cluster_id\", topic=~\"$topic\", partition=~\"$partition\"}))",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Consume group lag",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "columns": [],
+                    "linkMode": "appendLinkColumn"
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}
