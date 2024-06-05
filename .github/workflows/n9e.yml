@@ -24,9 +24,9 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v3
+        uses: goreleaser/goreleaser-action@v6
         with:
+          distribution: goreleaser
           version: latest
-          args: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
