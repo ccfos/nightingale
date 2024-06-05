@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
@@ -14,6 +15,7 @@ type Board struct {
 	Name    string      `json:"name"`
 	Tags    string      `json:"tags"`
 	Configs interface{} `json:"configs"`
+	UUID    int64       `json:"uuid"`
 }
 
 func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
@@ -38,6 +40,10 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				}
 
 				for _, rule := range alertRules {
+					if rule.UUID == 0 {
+						rule.UUID = time.Now().UnixNano()
+					}
+
 					contentBytes, err := json.Marshal(rule)
 					if err != nil {
 						reterr[rule.Name] = err.Error()
@@ -50,6 +56,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 						Cate:      lst[i].Cate,
 						Name:      rule.Name,
 						Tags:      rule.AppendTags,
+						UUID:      rule.UUID,
 						Content:   string(contentBytes),
 						CreatedBy: username,
 						UpdatedBy: username,
@@ -68,12 +75,17 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				continue
 			}
 
+			if alertRule.UUID == 0 {
+				alertRule.UUID = time.Now().UnixNano()
+			}
+
 			bp := models.BuiltinPayload{
 				Type:      lst[i].Type,
 				Component: lst[i].Component,
 				Cate:      lst[i].Cate,
 				Name:      alertRule.Name,
 				Tags:      alertRule.AppendTags,
+				UUID:      alertRule.UUID,
 				Content:   lst[i].Content,
 				CreatedBy: username,
 				UpdatedBy: username,
@@ -91,6 +103,10 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				}
 
 				for _, dashboard := range dashboards {
+					if dashboard.UUID == 0 {
+						dashboard.UUID = time.Now().UnixNano()
+					}
+
 					contentBytes, err := json.Marshal(dashboard)
 					if err != nil {
 						reterr[dashboard.Name] = err.Error()
@@ -103,6 +119,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 						Cate:      lst[i].Cate,
 						Name:      dashboard.Name,
 						Tags:      dashboard.Tags,
+						UUID:      dashboard.UUID,
 						Content:   string(contentBytes),
 						CreatedBy: username,
 						UpdatedBy: username,
@@ -121,12 +138,17 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				continue
 			}
 
+			if dashboard.UUID == 0 {
+				dashboard.UUID = time.Now().UnixNano()
+			}
+
 			bp := models.BuiltinPayload{
 				Type:      lst[i].Type,
 				Component: lst[i].Component,
 				Cate:      lst[i].Cate,
 				Name:      dashboard.Name,
 				Tags:      dashboard.Tags,
+				UUID:      dashboard.UUID,
 				Content:   lst[i].Content,
 				CreatedBy: username,
 				UpdatedBy: username,

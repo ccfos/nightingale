@@ -29,7 +29,6 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 	}
 
 	for _, dir := range dirList {
-		logger.Debugf("read builtin component dir %s", dir)
 		// components icon
 		componentDir := fp + "/" + dir
 		component := models.BuiltinComponent{
@@ -96,7 +95,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 		}
 
 		// delete uuid is emtpy
-		err = models.DB(ctx).Exec("delete from builtin_payloads where uuid = 0").Error
+		err = models.DB(ctx).Exec("delete from builtin_payloads where uuid = 0 and type != 'collect'").Error
 		if err != nil {
 			logger.Warning("delete builtin payloads fail ", err)
 		}
@@ -108,7 +107,6 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 		}
 
 		// alerts
-		logger.Debugf("read builtin component alerts dir %s", componentDir+"/alerts")
 		files, err = file.FilesUnder(componentDir + "/alerts")
 		if err == nil && len(files) > 0 {
 			for _, f := range files {
@@ -182,7 +180,6 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					continue
 				}
 
-				logger.Debugf("write back newAlerts to file %s", fp)
 				_, err = file.WriteBytes(fp, bs)
 				if err != nil {
 					logger.Warning("write builtin alerts file fail ", f, err)
