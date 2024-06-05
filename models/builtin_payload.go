@@ -88,6 +88,7 @@ func (bp *BuiltinPayload) Update(ctx *ctx.Context, req BuiltinPayload) error {
 		}
 	}
 	req.UpdatedAt = time.Now().Unix()
+	req.UUID = bp.UUID
 
 	return DB(ctx).Model(bp).Select("*").Updates(req).Error
 }

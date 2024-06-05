@@ -99,6 +99,7 @@ func (bm *BuiltinMetric) Update(ctx *ctx.Context, req BuiltinMetric) error {
 	req.CreatedAt = bm.CreatedAt
 	req.CreatedBy = bm.CreatedBy
 	req.Lang = bm.Lang
+	req.UUID = bm.UUID
 
 	return DB(ctx).Model(bm).Select("*").Updates(req).Error
 }

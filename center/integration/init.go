@@ -115,10 +115,10 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				}
 
 				for _, alert := range alerts {
-					if alert.UUID == 0 {
-						logger.Warning("builtin alert uuid is 0 ", alert.Name)
-						continue
-					}
+					// if alert.UUID == 0 {
+					// 	logger.Warning("builtin alert uuid is 0 ", alert.Name)
+					// 	continue
+					// }
 
 					content, err := json.Marshal(alert)
 					if err != nil {
@@ -180,10 +180,10 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					continue
 				}
 
-				if dashboard.UUID == 0 {
-					logger.Warning("builtin dashboard uuid is 0 ", dashboard.Name)
-					continue
-				}
+				// if dashboard.UUID == 0 {
+				// 	logger.Warning("builtin dashboard uuid is 0 ", dashboard.Name)
+				// 	continue
+				// }
 
 				content, err := json.Marshal(dashboard)
 				if err != nil {
@@ -246,10 +246,10 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				}
 
 				for _, metric := range metrics {
-					if metric.UUID == 0 {
-						logger.Warning("builtin metrics uuid is 0 ", metric.Name)
-						continue
-					}
+					// if metric.UUID == 0 {
+					// 	logger.Warning("builtin metrics uuid is 0 ", metric.Name)
+					// 	continue
+					// }
 
 					old, err := models.BuiltinMetricGet(ctx, "uuid = ?", metric.UUID)
 					if err != nil {
