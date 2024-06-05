@@ -95,13 +95,13 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 		}
 
 		// delete uuid is emtpy
-		err = models.DB(ctx).Exec("delete from builtin_payloads where uuid = 0 and type != 'collect'").Error
+		err = models.DB(ctx).Exec("delete from builtin_payloads where uuid = 0 and type != 'collect' and created_by = 'system'").Error
 		if err != nil {
 			logger.Warning("delete builtin payloads fail ", err)
 		}
 
 		// delete builtin metrics uuid is emtpy
-		err = models.DB(ctx).Exec("delete from builtin_metrics where uuid = 0").Error
+		err = models.DB(ctx).Exec("delete from builtin_metrics where uuid = 0 and created_by = 'system'").Error
 		if err != nil {
 			logger.Warning("delete builtin metrics fail ", err)
 		}
