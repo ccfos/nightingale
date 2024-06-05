@@ -1,1051 +1,1063 @@
 {
-  "name": "Kubernetes / Scheduler",
-  "tags": "Categraf",
-  "ident": "",
-  "configs": {
-    "links": [],
-    "panels": [
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colorMode": "value",
-          "displayMode": "seriesToRows",
-          "showHeader": true
-        },
-        "description": "scheduler健康状态",
-        "id": "5d6560c5-6137-4632-bb88-ff8c9cf42e9d",
-        "layout": {
-          "h": 6,
-          "i": "5d6560c5-6137-4632-bb88-ff8c9cf42e9d",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 0
-        },
+    "id": 0,
+    "group_id": 0,
+    "name": "Kubernetes / Scheduler",
+    "ident": "",
+    "tags": "Categraf",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
         "links": [],
-        "name": "Scheduler - Health Status",
-        "options": {
-          "standardOptions": {
-            "util": "none"
-          },
-          "valueMappings": [
+        "panels": [
             {
-              "options": {
-                "0": {
-                  "text": "DOWN"
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "showHeader": true
                 },
-                "1": {
-                  "text": "UP"
-                }
-              },
-              "type": "value"
-            },
-            {
-              "match": {
-                "special": 1
-              },
-              "result": {
-                "color": "#3fc453",
-                "text": "UP"
-              },
-              "type": "special"
-            },
-            {
-              "match": {
-                "special": 0
-              },
-              "result": {
-                "color": "#f80202",
-                "text": "DOWN"
-              },
-              "type": "special"
-            }
-          ]
-        },
-        "overrides": [
-          {}
-        ],
-        "targets": [
-          {
-            "expr": "up{job=\"scheduler\"}",
-            "legend": "{{ instance }}",
-            "refId": "A"
-          }
-        ],
-        "type": "table",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colorMode": "value",
-          "displayMode": "seriesToRows",
-          "showHeader": true
-        },
-        "description": "scheduler 主从状态",
-        "id": "62e3b249-fefe-4f32-8baf-394eac053f2a",
-        "layout": {
-          "h": 6,
-          "i": "a5d1ef0c-83e3-4194-b242-d5c51ba4bdd2",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 0
-        },
-        "links": [],
-        "name": "Scheduler - Member Status",
-        "options": {
-          "standardOptions": {
-            "util": "none"
-          },
-          "valueMappings": [
-            {
-              "options": {
-                "0": {
-                  "text": "DOWN"
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler健康状态",
+                "id": "5d6560c5-6137-4632-bb88-ff8c9cf42e9d",
+                "layout": {
+                    "h": 6,
+                    "i": "5d6560c5-6137-4632-bb88-ff8c9cf42e9d",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0
                 },
-                "1": {
-                  "text": "UP"
-                }
-              },
-              "result": {
-                "text": "val2"
-              },
-              "type": "value"
+                "links": [],
+                "name": "Scheduler - Health Status",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "DOWN"
+                                },
+                                "1": {
+                                    "text": "UP"
+                                }
+                            },
+                            "type": "value"
+                        },
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#3fc453",
+                                "text": "UP"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "#f80202",
+                                "text": "DOWN"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "overrides": [
+                    {}
+                ],
+                "targets": [
+                    {
+                        "expr": "up{job=\"scheduler\"}",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0"
             },
             {
-              "match": {
-                "special": 1
-              },
-              "result": {
-                "color": "#3fc453",
-                "text": "MASTER"
-              },
-              "type": "special"
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler 主从状态",
+                "id": "62e3b249-fefe-4f32-8baf-394eac053f2a",
+                "layout": {
+                    "h": 6,
+                    "i": "a5d1ef0c-83e3-4194-b242-d5c51ba4bdd2",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0
+                },
+                "links": [],
+                "name": "Scheduler - Member Status",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "DOWN"
+                                },
+                                "1": {
+                                    "text": "UP"
+                                }
+                            },
+                            "result": {
+                                "text": "val2"
+                            },
+                            "type": "value"
+                        },
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#3fc453",
+                                "text": "MASTER"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "#9470ff",
+                                "text": "BACKUP"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "overrides": [
+                    {
+                        "properties": {
+                            "valueMappings": []
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "leader_election_master_status{job=\"scheduler\"}",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0"
             },
             {
-              "match": {
-                "special": 0
-              },
-              "result": {
-                "color": "#9470ff",
-                "text": "BACKUP"
-              },
-              "type": "special"
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler 请求量 按返回码统计",
+                "id": "94713dc3-acb7-43b5-ae2f-399b2da61763",
+                "layout": {
+                    "h": 8,
+                    "i": "94713dc3-acb7-43b5-ae2f-399b2da61763",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 6
+                },
+                "links": [],
+                "name": "Scheduler - Requests by code",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rest_client_requests_total{job=\"scheduler\"}[5m])) by (instance,code)",
+                        "legend": "{{ instance }} {{ code }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler请求量，按请求类型统计",
+                "id": "a6928b49-cf0a-443e-a8fd-b999685df0be",
+                "layout": {
+                    "h": 8,
+                    "i": "a6928b49-cf0a-443e-a8fd-b999685df0be",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 6
+                },
+                "links": [],
+                "name": "Scheduler - Requests by verb",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rest_client_requests_total{job=\"scheduler\"}[5m])) by (instance,method)",
+                        "legend": "{{ instance }} {{ method }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler请求(apiserver)量",
+                "id": "69690063-d044-4547-9f5f-126e5f8bf55a",
+                "layout": {
+                    "h": 8,
+                    "i": "69690063-d044-4547-9f5f-126e5f8bf55a",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 14
+                },
+                "links": [],
+                "name": "Scheduler -Requests by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rest_client_requests_total{job=\"scheduler\"}[5m])) by (instance)",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler 90分位请求延迟，按请求类型统计",
+                "id": "053d10f3-1113-40e0-85aa-dfbabb706995",
+                "layout": {
+                    "h": 8,
+                    "i": "d5a67103-9930-46e0-97e1-296e0d71e30e",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 14
+                },
+                "links": [],
+                "name": "Scheduler - Requests Latancy by verb",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.9, sum(rate(rest_client_request_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,verb,le))*1000",
+                        "legend": "{{ instance }} {{ verb }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler 90分位请求延迟，按请求类型统计",
+                "id": "c86ed101-a91c-4478-b67a-7182a5e856d1",
+                "layout": {
+                    "h": 8,
+                    "i": "2924bb3f-20c3-4f56-96ff-76d473743d8b",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 22
+                },
+                "links": [],
+                "name": "Scheduler - Requests Latancy by url",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.9, sum(rate(rest_client_request_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,url,verb,le))*1000",
+                        "legend": "{{ instance }} {{ verb }}  {{ url }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler 90分位请求延迟，按实例统计",
+                "id": "80bd434e-21dc-4864-97c6-bfd1e2e27bbe",
+                "layout": {
+                    "h": 8,
+                    "i": "75671720-bca1-449f-9c68-bf562f105b66",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 22
+                },
+                "links": [],
+                "name": "Scheduler - Requests Latancy by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.9, sum(rate(rest_client_request_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,le))*1000",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler请求5xx，按请求类型统计",
+                "id": "32a09298-d0f8-4d54-808e-d223d0a428ff",
+                "layout": {
+                    "h": 8,
+                    "i": "cfc389ad-5648-4107-a5bd-1680f6ede2ed",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 30
+                },
+                "links": [],
+                "name": "Scheduler - Errors by verb",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum by(instance,method) (rate(rest_client_requests_total{code=~\"5..\",job=\"scheduler\"}[5m]))\n / sum by(instance,method) (rate(rest_client_requests_total{job=\"scheduler\"}[5m]))",
+                        "legend": "{{ instance }} {{ method }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler请求5xx，按实例统计",
+                "id": "b6931f1f-6c43-478e-bcc7-26d1b121bceb",
+                "layout": {
+                    "h": 8,
+                    "i": "152b5817-ad87-44d0-a71f-5fbd0fc10ca3",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 30
+                },
+                "links": [],
+                "name": "Scheduler - Errors by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum by(instance) (rate(rest_client_requests_total{code=~\"5..\",job=\"scheduler\"}[5m]))\n / sum by(instance) (rate(rest_client_requests_total{job=\"scheduler\"}[5m]))",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "pod进入调度队列的平均速率",
+                "id": "0c8ac9ee-2a3e-4e7e-b338-748d79f6cbb6",
+                "layout": {
+                    "h": 8,
+                    "i": "0c8ac9ee-2a3e-4e7e-b338-748d79f6cbb6",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 38
+                },
+                "links": [],
+                "name": "Scheduler - Average Enqueue Rate by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "avg(rate(scheduler_queue_incoming_pods_total{job=\"scheduler\"}[5m])) by (instance)",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "调度器驱逐容器的次数",
+                "id": "ed72c89c-9732-4fb0-9187-0cabe9a4a81c",
+                "layout": {
+                    "h": 8,
+                    "i": "730be715-cfdd-4f2a-b878-1b2fb9a9be45",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 38
+                },
+                "links": [],
+                "name": "Scheduler - Preemption Attempts Total by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "avg(rate(scheduler_preemption_attempts_total{job=\"scheduler\"}[5m])) by (instance)",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "调度器cache中pod node和已绑定pod的数量",
+                "id": "dd189a18-704b-44c0-8a8b-186ccc591c81",
+                "layout": {
+                    "h": 8,
+                    "i": "668362fe-211a-4286-861c-eeb90907b2fb",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 46
+                },
+                "links": [],
+                "name": "Scheduler - Cache Size",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": " scheduler_scheduler_cache_size{job=\"scheduler\"}",
+                        "legend": "{{ instance }} {{ type }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "调度队列中pending pod的数目",
+                "id": "0e231e69-4651-4728-abcb-46fafd1a7d61",
+                "layout": {
+                    "h": 8,
+                    "i": "f20223e4-199a-4b08-b5f0-470ac1974afc",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 46
+                },
+                "links": [],
+                "name": "Scheduler - Pending Pod",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "scheduler_pending_pods{job=\"scheduler\"}",
+                        "legend": "{{ instance }} {{ queue }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "调度插件在每个扩展点的执行时间,90分位",
+                "id": "51cb0215-0827-4543-bb58-64eaec6cdc77",
+                "layout": {
+                    "h": 8,
+                    "i": "ec0db15d-fa63-4448-a961-0b8a7b977dd0",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 54
+                },
+                "links": [],
+                "name": "Scheduler - Plugin Execution Duration by plugin",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.9, sum(rate(scheduler_plugin_execution_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,extension_point,plugin,status,le))*1000",
+                        "legend": "{{ instance }} {{ plugin }} {{ extension_point }} {{ status }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "调度算法90分位耗时",
+                "id": "bf41347e-c307-4ae1-84d8-6202b563837f",
+                "layout": {
+                    "h": 8,
+                    "i": "c5c557a6-0f48-4154-91f7-30a300f00813",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 54
+                },
+                "links": [],
+                "name": "Scheduler - Scheduling Algorithm Duration by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.9, sum (rate(scheduler_scheduling_algorithm_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,le))*1000",
+                        "legend": "{{ instance }} ",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "调度算法+绑定 90分位耗时",
+                "id": "4f2de85b-7fa7-4e06-bcbf-7362fa71f010",
+                "layout": {
+                    "h": 8,
+                    "i": "68585816-6a08-422d-a7d3-c414ae427380",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 62
+                },
+                "links": [],
+                "name": "Scheduler - Scheduling Duration by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.9, sum(rate(scheduler_scheduling_attempt_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,le,profile,result))*1000",
+                        "legend": "{{ instance }} {{ profile }} {{ result }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler cpu使用率",
+                "id": "9c187c1c-f5cd-4aab-af81-09169948ab82",
+                "layout": {
+                    "h": 8,
+                    "i": "9c187c1c-f5cd-4aab-af81-09169948ab82",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 62
+                },
+                "links": [],
+                "name": "Scheduler - CPU Usage by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(process_cpu_seconds_total{job=\"scheduler\"}[5m])",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler 内存使用量",
+                "id": "8cff2618-b2d4-4fb4-bfc2-d1d4c4f1b35c",
+                "layout": {
+                    "h": 8,
+                    "i": "8cff2618-b2d4-4fb4-bfc2-d1d4c4f1b35c",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 70
+                },
+                "links": [],
+                "name": "Scheduler - Memory Usage by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "process_resident_memory_bytes{job=\"scheduler\"}",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "scheduler打开的fd数量",
+                "id": "94bb09a7-dbf7-41d8-b6a4-16b262365474",
+                "layout": {
+                    "h": 8,
+                    "i": "e438aed2-6d4a-4254-a8ec-26752385dc74",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 70
+                },
+                "links": [],
+                "name": "Scheduler - Open fds by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "process_open_fds{job=\"scheduler\"}",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
             }
-          ]
-        },
-        "overrides": [
-          {
-            "properties": {
-              "valueMappings": []
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
             }
-          }
         ],
-        "targets": [
-          {
-            "expr": "leader_election_master_status{job=\"scheduler\"}",
-            "legend": "{{ instance }}",
-            "refId": "A"
-          }
-        ],
-        "type": "table",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "scheduler 请求量 按返回码统计",
-        "id": "94713dc3-acb7-43b5-ae2f-399b2da61763",
-        "layout": {
-          "h": 8,
-          "i": "94713dc3-acb7-43b5-ae2f-399b2da61763",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 6
-        },
-        "links": [],
-        "name": "Scheduler - Requests by code",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(rate(rest_client_requests_total{job=\"scheduler\"}[5m])) by (instance,code)",
-            "legend": "{{ instance }} {{ code }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "scheduler请求量，按请求类型统计",
-        "id": "a6928b49-cf0a-443e-a8fd-b999685df0be",
-        "layout": {
-          "h": 8,
-          "i": "a6928b49-cf0a-443e-a8fd-b999685df0be",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 6
-        },
-        "links": [],
-        "name": "Scheduler - Requests by verb",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(rate(rest_client_requests_total{job=\"scheduler\"}[5m])) by (instance,method)",
-            "legend": "{{ instance }} {{ method }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "scheduler请求(apiserver)量",
-        "id": "69690063-d044-4547-9f5f-126e5f8bf55a",
-        "layout": {
-          "h": 8,
-          "i": "69690063-d044-4547-9f5f-126e5f8bf55a",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 14
-        },
-        "links": [],
-        "name": "Scheduler -Requests by instance",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(rate(rest_client_requests_total{job=\"scheduler\"}[5m])) by (instance)",
-            "legend": "{{ instance }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "scheduler 90分位请求延迟，按请求类型统计",
-        "id": "053d10f3-1113-40e0-85aa-dfbabb706995",
-        "layout": {
-          "h": 8,
-          "i": "d5a67103-9930-46e0-97e1-296e0d71e30e",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 14
-        },
-        "links": [],
-        "name": "Scheduler - Requests Latancy by verb",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "milliseconds"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.9, sum(rate(rest_client_request_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,verb,le))*1000",
-            "legend": "{{ instance }} {{ verb }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "scheduler 90分位请求延迟，按请求类型统计",
-        "id": "c86ed101-a91c-4478-b67a-7182a5e856d1",
-        "layout": {
-          "h": 8,
-          "i": "2924bb3f-20c3-4f56-96ff-76d473743d8b",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 22
-        },
-        "links": [],
-        "name": "Scheduler - Requests Latancy by url",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "milliseconds"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.9, sum(rate(rest_client_request_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,url,verb,le))*1000",
-            "legend": "{{ instance }} {{ verb }}  {{ url }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "scheduler 90分位请求延迟，按实例统计",
-        "id": "80bd434e-21dc-4864-97c6-bfd1e2e27bbe",
-        "layout": {
-          "h": 8,
-          "i": "75671720-bca1-449f-9c68-bf562f105b66",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 22
-        },
-        "links": [],
-        "name": "Scheduler - Requests Latancy by instance",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "milliseconds"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.9, sum(rate(rest_client_request_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,le))*1000",
-            "legend": "{{ instance }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "scheduler请求5xx，按请求类型统计",
-        "id": "32a09298-d0f8-4d54-808e-d223d0a428ff",
-        "layout": {
-          "h": 8,
-          "i": "cfc389ad-5648-4107-a5bd-1680f6ede2ed",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 30
-        },
-        "links": [],
-        "name": "Scheduler - Errors by verb",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "milliseconds"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum by(instance,method) (rate(rest_client_requests_total{code=~\"5..\",job=\"scheduler\"}[5m]))\n / sum by(instance,method) (rate(rest_client_requests_total{job=\"scheduler\"}[5m]))",
-            "legend": "{{ instance }} {{ method }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "scheduler请求5xx，按实例统计",
-        "id": "b6931f1f-6c43-478e-bcc7-26d1b121bceb",
-        "layout": {
-          "h": 8,
-          "i": "152b5817-ad87-44d0-a71f-5fbd0fc10ca3",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 30
-        },
-        "links": [],
-        "name": "Scheduler - Errors by instance",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "milliseconds"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum by(instance) (rate(rest_client_requests_total{code=~\"5..\",job=\"scheduler\"}[5m]))\n / sum by(instance) (rate(rest_client_requests_total{job=\"scheduler\"}[5m]))",
-            "legend": "{{ instance }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "pod进入调度队列的平均速率",
-        "id": "0c8ac9ee-2a3e-4e7e-b338-748d79f6cbb6",
-        "layout": {
-          "h": 8,
-          "i": "0c8ac9ee-2a3e-4e7e-b338-748d79f6cbb6",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 38
-        },
-        "links": [],
-        "name": "Scheduler - Average Enqueue Rate by instance",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "avg(rate(scheduler_queue_incoming_pods_total{job=\"scheduler\"}[5m])) by (instance)",
-            "legend": "{{ instance }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "调度器驱逐容器的次数",
-        "id": "ed72c89c-9732-4fb0-9187-0cabe9a4a81c",
-        "layout": {
-          "h": 8,
-          "i": "730be715-cfdd-4f2a-b878-1b2fb9a9be45",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 38
-        },
-        "links": [],
-        "name": "Scheduler - Preemption Attempts Total by instance",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "avg(rate(scheduler_preemption_attempts_total{job=\"scheduler\"}[5m])) by (instance)",
-            "legend": "{{ instance }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "调度器cache中pod node和已绑定pod的数量",
-        "id": "dd189a18-704b-44c0-8a8b-186ccc591c81",
-        "layout": {
-          "h": 8,
-          "i": "668362fe-211a-4286-861c-eeb90907b2fb",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 46
-        },
-        "links": [],
-        "name": "Scheduler - Cache Size",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": " scheduler_scheduler_cache_size{job=\"scheduler\"}",
-            "legend": "{{ instance }} {{ type }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "调度队列中pending pod的数目",
-        "id": "0e231e69-4651-4728-abcb-46fafd1a7d61",
-        "layout": {
-          "h": 8,
-          "i": "f20223e4-199a-4b08-b5f0-470ac1974afc",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 46
-        },
-        "links": [],
-        "name": "Scheduler - Pending Pod",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "scheduler_pending_pods{job=\"scheduler\"}",
-            "legend": "{{ instance }} {{ queue }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "调度插件在每个扩展点的执行时间,90分位",
-        "id": "51cb0215-0827-4543-bb58-64eaec6cdc77",
-        "layout": {
-          "h": 8,
-          "i": "ec0db15d-fa63-4448-a961-0b8a7b977dd0",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 54
-        },
-        "links": [],
-        "name": "Scheduler - Plugin Execution Duration by plugin",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "milliseconds"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.9, sum(rate(scheduler_plugin_execution_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,extension_point,plugin,status,le))*1000",
-            "legend": "{{ instance }} {{ plugin }} {{ extension_point }} {{ status }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "调度算法90分位耗时",
-        "id": "bf41347e-c307-4ae1-84d8-6202b563837f",
-        "layout": {
-          "h": 8,
-          "i": "c5c557a6-0f48-4154-91f7-30a300f00813",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 54
-        },
-        "links": [],
-        "name": "Scheduler - Scheduling Algorithm Duration by instance",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "milliseconds"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.9, sum (rate(scheduler_scheduling_algorithm_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,le))*1000",
-            "legend": "{{ instance }} ",
-            "refId": "B"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "调度算法+绑定 90分位耗时",
-        "id": "4f2de85b-7fa7-4e06-bcbf-7362fa71f010",
-        "layout": {
-          "h": 8,
-          "i": "68585816-6a08-422d-a7d3-c414ae427380",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 62
-        },
-        "links": [],
-        "name": "Scheduler - Scheduling Duration by instance",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "milliseconds"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.9, sum(rate(scheduler_scheduling_attempt_duration_seconds_bucket{job=\"scheduler\"}[5m])) by (instance,le,profile,result))*1000",
-            "legend": "{{ instance }} {{ profile }} {{ result }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "scheduler cpu使用率",
-        "id": "9c187c1c-f5cd-4aab-af81-09169948ab82",
-        "layout": {
-          "h": 8,
-          "i": "9c187c1c-f5cd-4aab-af81-09169948ab82",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 62
-        },
-        "links": [],
-        "name": "Scheduler - CPU Usage by instance",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "decimals": 2,
-            "util": "percentUnit"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "rate(process_cpu_seconds_total{job=\"scheduler\"}[5m])",
-            "legend": "{{ instance }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "scheduler 内存使用量",
-        "id": "8cff2618-b2d4-4fb4-bfc2-d1d4c4f1b35c",
-        "layout": {
-          "h": 8,
-          "i": "8cff2618-b2d4-4fb4-bfc2-d1d4c4f1b35c",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 70
-        },
-        "links": [],
-        "name": "Scheduler - Memory Usage by instance",
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "bytesIEC"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "process_resident_memory_bytes{job=\"scheduler\"}",
-            "legend": "{{ instance }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.25,
-          "gradientMode": "none",
-          "lineInterpolation": "smooth",
-          "lineWidth": 1,
-          "stack": "off"
-        },
-        "description": "scheduler打开的fd数量",
-        "id": "94bb09a7-dbf7-41d8-b6a4-16b262365474",
-        "layout": {
-          "h": 8,
-          "i": "e438aed2-6d4a-4254-a8ec-26752385dc74",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 70
-        },
-        "links": [],
-        "name": "Scheduler - Open fds by instance",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": []
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "desc"
-          }
-        },
-        "targets": [
-          {
-            "expr": "process_open_fds{job=\"scheduler\"}",
-            "legend": "{{ instance }}",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      }
-    ],
-    "var": [
-      {
-        "name": "datasource",
-        "type": "datasource",
-        "definition": "prometheus"
-      }
-    ],
-    "version": "3.0.0"
-  }
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327691577000
 }

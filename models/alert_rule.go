@@ -79,6 +79,7 @@ type AlertRule struct {
 	CreateBy              string            `json:"create_by"`
 	UpdateAt              int64             `json:"update_at"`
 	UpdateBy              string            `json:"update_by"`
+	UUID                  int64             `json:"uuid" gorm:"-"` // tpl identifier
 }
 
 type PromRuleConfig struct {

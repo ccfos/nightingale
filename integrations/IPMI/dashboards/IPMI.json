@@ -1,77 +1,49 @@
 {
+    "id": 0,
+    "group_id": 0,
     "name": "IPMI",
-    "tags": "Categraf latest",
     "ident": "",
+    "tags": "Categraf latest",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
     "configs": {
-        "version": "3.0.0",
         "links": [],
-        "var": [
-            {
-                "name": "datasource",
-                "type": "datasource",
-                "definition": "prometheus",
-                "defaultValue": 1
-            },
-            {
-                "name": "instance",
-                "type": "query",
-                "hide": false,
-                "datasource": {
-                    "cate": "prometheus",
-                    "value": "${datasource}"
-                },
-                "definition": "label_values(ipmi_bmc_info,  target)",
-                "reg": "/.*/",
-                "multi": false
-            }
-        ],
         "panels": [
             {
-                "type": "stat",
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "a9c9b473-8182-4f84-9083-e96d656ac4fe",
                 "layout": {
                     "h": 4,
+                    "i": "a9c9b473-8182-4f84-9083-e96d656ac4fe",
                     "w": 4,
                     "x": 0,
-                    "y": 0,
-                    "i": "a9c9b473-8182-4f84-9083-e96d656ac4fe"
+                    "y": 0
                 },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "ipmi_chassis_power_state{target=\"$instance\"}",
-                        "legend": "{{target}}",
-                        "maxDataPoints": 240
-                    }
-                ],
-                "transformations": [
-                    {
-                        "id": "organize",
-                        "options": {}
-                    }
-                ],
-                "name": "Power Status",
                 "links": [],
                 "maxPerRow": 4,
-                "custom": {
-                    "textMode": "value",
-                    "graphMode": "none",
-                    "colorMode": "value",
-                    "calc": "lastNotNull",
-                    "valueField": "Value",
-                    "colSpan": 1,
-                    "textSize": {}
-                },
+                "name": "Power Status",
                 "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
                     "thresholds": {
                         "steps": [
                             {
                                 "color": "#73BF69",
-                                "value": null,
-                                "type": "base"
+                                "type": "base",
+                                "value": null
                             }
                         ]
                     },
@@ -91,31 +63,14 @@
                             },
                             "type": "value"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "none"
-                    }
-                }
-            },
-            {
-                "type": "table",
-                "id": "47c94f54-43a2-46d1-b549-d199b30736a3",
-                "layout": {
-                    "h": 4,
-                    "w": 12,
-                    "x": 4,
-                    "y": 0,
-                    "i": "47c94f54-43a2-46d1-b549-d199b30736a3"
+                    ]
                 },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "ipmi_bmc_info{target=\"$instance\"}",
-                        "legend": "",
-                        "maxDataPoints": 240
+                        "expr": "ipmi_chassis_power_state{target=\"$instance\"}",
+                        "legend": "{{target}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -124,14 +79,13 @@
                         "options": {}
                     }
                 ],
-                "name": "Machine Info",
-                "links": [],
-                "maxPerRow": 4,
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
                 "custom": {
-                    "showHeader": true,
-                    "colorMode": "value",
                     "calc": "lastNotNull",
-                    "displayMode": "labelsOfSeriesToRows",
+                    "colorMode": "value",
                     "columns": [
                         "data_center",
                         "dept",
@@ -140,8 +94,23 @@
                         "manufacturer_id",
                         "target"
                     ],
-                    "linkMode": "appendLinkColumn"
+                    "displayMode": "labelsOfSeriesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "showHeader": true
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "47c94f54-43a2-46d1-b549-d199b30736a3",
+                "layout": {
+                    "h": 4,
+                    "i": "47c94f54-43a2-46d1-b549-d199b30736a3",
+                    "w": 12,
+                    "x": 4,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Machine Info",
                 "options": {
                     "standardOptions": {}
                 },
@@ -151,45 +120,45 @@
                             "id": "byFrameRefID"
                         }
                     }
-                ]
+                ],
+                "targets": [
+                    {
+                        "expr": "ipmi_bmc_info{target=\"$instance\"}",
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
             },
             {
-                "type": "table",
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "c782803d-a0b5-4d13-a6ed-ae6dcceb6049",
                 "layout": {
                     "h": 9,
+                    "i": "c782803d-a0b5-4d13-a6ed-ae6dcceb6049",
                     "w": 8,
                     "x": 16,
-                    "y": 0,
-                    "i": "c782803d-a0b5-4d13-a6ed-ae6dcceb6049"
+                    "y": 0
                 },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "ipmi_fan_speed_state{target=\"$instance\"}",
-                        "legend": "{{name}}",
-                        "maxDataPoints": 240
-                    }
-                ],
-                "transformations": [
-                    {
-                        "id": "organize",
-                        "options": {}
-                    }
-                ],
-                "name": "Fan Speed State",
                 "links": [],
                 "maxPerRow": 4,
-                "custom": {
-                    "showHeader": true,
-                    "colorMode": "value",
-                    "calc": "lastNotNull",
-                    "displayMode": "seriesToRows",
-                    "linkMode": "appendLinkColumn"
-                },
+                "name": "Fan Speed State",
                 "options": {
                     "standardOptions": {}
                 },
@@ -199,78 +168,64 @@
                             "id": "byFrameRefID"
                         }
                     }
-                ]
+                ],
+                "targets": [
+                    {
+                        "expr": "ipmi_fan_speed_state{target=\"$instance\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
             },
             {
-                "type": "gauge",
+                "custom": {
+                    "calc": "lastNotNull",
+                    "textMode": "value",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "99586558-1e82-48f0-8bc4-132e54369872",
                 "layout": {
                     "h": 5,
+                    "i": "99586558-1e82-48f0-8bc4-132e54369872",
                     "w": 16,
                     "x": 0,
-                    "y": 4,
-                    "i": "99586558-1e82-48f0-8bc4-132e54369872"
+                    "y": 4
                 },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "ipmi_fan_speed_rpm{target=\"$instance\"}",
-                        "legend": "{{name}}",
-                        "maxDataPoints": 240
-                    }
-                ],
-                "transformations": [
-                    {
-                        "id": "organize",
-                        "options": {}
-                    }
-                ],
-                "name": "Fan speed in rotations per minute",
                 "links": [],
                 "maxPerRow": 4,
-                "custom": {
-                    "textMode": "value",
-                    "calc": "lastNotNull",
-                    "valueField": "Value"
-                },
+                "name": "Fan speed in rotations per minute",
                 "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
                     "thresholds": {
                         "steps": [
                             {
                                 "color": "#73BF69",
-                                "value": null,
-                                "type": "base"
+                                "type": "base",
+                                "value": null
                             }
                         ]
                     },
-                    "valueMappings": [],
-                    "standardOptions": {
-                        "util": "none"
-                    }
-                }
-            },
-            {
-                "type": "timeseries",
-                "id": "53982e93-520d-41f2-bac4-cfed93fea2aa",
-                "layout": {
-                    "h": 8,
-                    "w": 12,
-                    "x": 0,
-                    "y": 9,
-                    "i": "53982e93-520d-41f2-bac4-cfed93fea2aa"
+                    "valueMappings": []
                 },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "ipmi_dcmi_power_consumption_watts{target=\"$instance\"}",
-                        "legend": "{{target}}",
-                        "maxDataPoints": 240
+                        "expr": "ipmi_fan_speed_rpm{target=\"$instance\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -279,20 +234,42 @@
                         "options": {}
                     }
                 ],
-                "name": "Power Consumption watts",
-                "links": [],
+                "type": "gauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "description": "",
+                "id": "53982e93-520d-41f2-bac4-cfed93fea2aa",
+                "layout": {
+                    "h": 8,
+                    "i": "53982e93-520d-41f2-bac4-cfed93fea2aa",
+                    "w": 12,
+                    "x": 0,
+                    "y": 9
+                },
+                "links": [],
                 "maxPerRow": 4,
+                "name": "Power Consumption watts",
                 "options": {
-                    "tooltip": {
-                        "mode": "single"
-                    },
                     "legend": {
+                        "behaviour": "showItem",
                         "displayMode": "list",
-                        "placement": "bottom",
-                        "behaviour": "showItem"
+                        "placement": "bottom"
                     },
-                    "valueMappings": [],
                     "standardOptions": {
                         "util": "none"
                     },
@@ -300,27 +277,19 @@
                         "steps": [
                             {
                                 "color": "#73BF69",
-                                "value": null,
-                                "type": "base"
+                                "type": "base",
+                                "value": null
                             },
                             {
                                 "color": "#F2495C",
                                 "value": 80
                             }
                         ]
-                    }
-                },
-                "custom": {
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "spanNulls": false,
-                    "lineWidth": 1,
-                    "fillOpacity": 0,
-                    "gradientMode": "none",
-                    "stack": "off",
-                    "scaleDistribution": {
-                        "type": "linear"
-                    }
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
                 },
                 "overrides": [
                     {
@@ -331,27 +300,13 @@
                             "rightYAxisDisplay": "off"
                         }
                     }
-                ]
-            },
-            {
-                "type": "table",
-                "id": "6c73328d-c927-4329-8a54-19cdc9c1f056",
-                "layout": {
-                    "h": 8,
-                    "w": 4,
-                    "x": 12,
-                    "y": 9,
-                    "i": "6c73328d-c927-4329-8a54-19cdc9c1f056"
-                },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
+                ],
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "ipmi_power_state{target=\"$instance\"}",
-                        "legend": "{{name}}",
-                        "maxDataPoints": 240
+                        "expr": "ipmi_dcmi_power_consumption_watts{target=\"$instance\"}",
+                        "legend": "{{target}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -360,16 +315,30 @@
                         "options": {}
                     }
                 ],
-                "name": "Power State",
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "6c73328d-c927-4329-8a54-19cdc9c1f056",
+                "layout": {
+                    "h": 8,
+                    "i": "6c73328d-c927-4329-8a54-19cdc9c1f056",
+                    "w": 4,
+                    "x": 12,
+                    "y": 9
+                },
                 "links": [],
                 "maxPerRow": 4,
-                "custom": {
-                    "showHeader": true,
-                    "colorMode": "value",
-                    "calc": "lastNotNull",
-                    "displayMode": "seriesToRows",
-                    "linkMode": "appendLinkColumn"
-                },
+                "name": "Power State",
                 "options": {
                     "standardOptions": {}
                 },
@@ -379,27 +348,13 @@
                             "id": "byFrameRefID"
                         }
                     }
-                ]
-            },
-            {
-                "type": "gauge",
-                "id": "3e7ac15e-4cf6-4472-9b99-f686e337a2c5",
-                "layout": {
-                    "h": 8,
-                    "w": 8,
-                    "x": 16,
-                    "y": 9,
-                    "i": "3e7ac15e-4cf6-4472-9b99-f686e337a2c5"
-                },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
+                ],
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "ipmi_power_watts{target=\"$instance\"}",
+                        "expr": "ipmi_power_state{target=\"$instance\"}",
                         "legend": "{{name}}",
-                        "maxDataPoints": 240
+                        "maxDataPoints": 240,
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -408,49 +363,49 @@
                         "options": {}
                     }
                 ],
-                "name": "Power reading in Watts",
-                "links": [],
-                "maxPerRow": 4,
+                "type": "table",
+                "version": "3.0.0"
+            },
+            {
                 "custom": {
-                    "textMode": "value",
                     "calc": "lastNotNull",
+                    "textMode": "value",
                     "valueField": "Value"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "3e7ac15e-4cf6-4472-9b99-f686e337a2c5",
+                "layout": {
+                    "h": 8,
+                    "i": "3e7ac15e-4cf6-4472-9b99-f686e337a2c5",
+                    "w": 8,
+                    "x": 16,
+                    "y": 9
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Power reading in Watts",
                 "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
                     "thresholds": {
                         "steps": [
                             {
                                 "color": "#73BF69",
-                                "value": null,
-                                "type": "base"
+                                "type": "base",
+                                "value": null
                             }
                         ]
                     },
-                    "valueMappings": [],
-                    "standardOptions": {
-                        "util": "none"
-                    }
-                }
-            },
-            {
-                "type": "table",
-                "id": "605380bb-763e-4fbd-af57-ad329ba2ac71",
-                "layout": {
-                    "h": 8,
-                    "w": 12,
-                    "x": 0,
-                    "y": 17,
-                    "i": "605380bb-763e-4fbd-af57-ad329ba2ac71"
+                    "valueMappings": []
                 },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "ipmi_sensor_state{target=\"$instance\"}",
-                        "legend": "",
-                        "maxDataPoints": 240
+                        "expr": "ipmi_power_watts{target=\"$instance\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -459,14 +414,13 @@
                         "options": {}
                     }
                 ],
-                "name": "IPMI Sensors State",
-                "links": [],
-                "maxPerRow": 4,
+                "type": "gauge",
+                "version": "3.0.0"
+            },
+            {
                 "custom": {
-                    "showHeader": true,
-                    "colorMode": "value",
                     "calc": "lastNotNull",
-                    "displayMode": "labelsOfSeriesToRows",
+                    "colorMode": "value",
                     "columns": [
                         "data_center",
                         "dept",
@@ -476,8 +430,23 @@
                         "type",
                         "value"
                     ],
-                    "linkMode": "appendLinkColumn"
+                    "displayMode": "labelsOfSeriesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "showHeader": true
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "605380bb-763e-4fbd-af57-ad329ba2ac71",
+                "layout": {
+                    "h": 8,
+                    "i": "605380bb-763e-4fbd-af57-ad329ba2ac71",
+                    "w": 12,
+                    "x": 0,
+                    "y": 17
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "IPMI Sensors State",
                 "options": {
                     "standardOptions": {}
                 },
@@ -487,45 +456,45 @@
                             "id": "byFrameRefID"
                         }
                     }
-                ]
+                ],
+                "targets": [
+                    {
+                        "expr": "ipmi_sensor_state{target=\"$instance\"}",
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
             },
             {
-                "type": "table",
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "id": "68e23440-dc48-4a05-bb59-441349b02afd",
                 "layout": {
                     "h": 8,
+                    "i": "68e23440-dc48-4a05-bb59-441349b02afd",
                     "w": 6,
                     "x": 12,
-                    "y": 17,
-                    "i": "68e23440-dc48-4a05-bb59-441349b02afd"
+                    "y": 17
                 },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "ipmi_temperature_state{target=\"$instance\"}",
-                        "legend": "{{name}}",
-                        "maxDataPoints": 240
-                    }
-                ],
-                "transformations": [
-                    {
-                        "id": "organize",
-                        "options": {}
-                    }
-                ],
-                "name": "Temperature State",
                 "links": [],
                 "maxPerRow": 4,
-                "custom": {
-                    "showHeader": true,
-                    "colorMode": "value",
-                    "calc": "lastNotNull",
-                    "displayMode": "seriesToRows",
-                    "linkMode": "appendLinkColumn"
-                },
+                "name": "Temperature State",
                 "options": {
                     "standardOptions": {}
                 },
@@ -535,27 +504,13 @@
                             "id": "byFrameRefID"
                         }
                     }
-                ]
-            },
-            {
-                "type": "gauge",
-                "id": "663a5ef9-b735-4187-8793-074a3d78dd39",
-                "layout": {
-                    "h": 8,
-                    "w": 6,
-                    "x": 18,
-                    "y": 17,
-                    "i": "663a5ef9-b735-4187-8793-074a3d78dd39"
-                },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
+                ],
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "ipmi_temperature_celsius{target=\"$instance\"}",
+                        "expr": "ipmi_temperature_state{target=\"$instance\"}",
                         "legend": "{{name}}",
-                        "maxDataPoints": 240
+                        "maxDataPoints": 240,
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -564,21 +519,38 @@
                         "options": {}
                     }
                 ],
-                "name": "Temperatures",
-                "links": [],
-                "maxPerRow": 4,
+                "type": "table",
+                "version": "3.0.0"
+            },
+            {
                 "custom": {
-                    "textMode": "value",
                     "calc": "lastNotNull",
+                    "textMode": "value",
                     "valueField": "Value"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "663a5ef9-b735-4187-8793-074a3d78dd39",
+                "layout": {
+                    "h": 8,
+                    "i": "663a5ef9-b735-4187-8793-074a3d78dd39",
+                    "w": 6,
+                    "x": 18,
+                    "y": 17
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Temperatures",
                 "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
                     "thresholds": {
                         "steps": [
                             {
                                 "color": "#8AB8FF",
-                                "value": null,
-                                "type": "base"
+                                "type": "base",
+                                "value": null
                             },
                             {
                                 "color": "#F2495C",
@@ -586,31 +558,14 @@
                             }
                         ]
                     },
-                    "valueMappings": [],
-                    "standardOptions": {
-                        "util": "none"
-                    }
-                }
-            },
-            {
-                "type": "hexbin",
-                "id": "e7027cd8-1ccb-4238-9b91-5a18a3ccd29c",
-                "layout": {
-                    "h": 3,
-                    "w": 24,
-                    "x": 0,
-                    "y": 25,
-                    "i": "e7027cd8-1ccb-4238-9b91-5a18a3ccd29c"
+                    "valueMappings": []
                 },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "ipmi_voltage_state{target=\"$instance\"}",
+                        "expr": "ipmi_temperature_celsius{target=\"$instance\"}",
                         "legend": "{{name}}",
-                        "maxDataPoints": 240
+                        "maxDataPoints": 240,
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -619,49 +574,49 @@
                         "options": {}
                     }
                 ],
-                "name": "Reported state of a voltage sensor",
-                "links": [],
-                "maxPerRow": 4,
+                "type": "gauge",
+                "version": "3.0.0"
+            },
+            {
                 "custom": {
-                    "textMode": "valueAndName",
                     "calc": "lastNotNull",
-                    "valueField": "Value",
                     "colorRange": [
                         "thresholds"
-                    ]
+                    ],
+                    "textMode": "valueAndName",
+                    "valueField": "Value"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "e7027cd8-1ccb-4238-9b91-5a18a3ccd29c",
+                "layout": {
+                    "h": 3,
+                    "i": "e7027cd8-1ccb-4238-9b91-5a18a3ccd29c",
+                    "w": 24,
+                    "x": 0,
+                    "y": 25
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Reported state of a voltage sensor",
                 "options": {
+                    "standardOptions": {},
                     "thresholds": {
                         "steps": [
                             {
                                 "color": "#634CD9",
-                                "value": null,
-                                "type": "base"
+                                "type": "base",
+                                "value": null
                             }
                         ]
-                    },
-                    "standardOptions": {}
-                }
-            },
-            {
-                "type": "gauge",
-                "id": "38437e8e-5c8c-4fc2-a274-515e8cc38ea0",
-                "layout": {
-                    "h": 5,
-                    "w": 24,
-                    "x": 0,
-                    "y": 28,
-                    "i": "38437e8e-5c8c-4fc2-a274-515e8cc38ea0"
+                    }
                 },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
                 "targets": [
                     {
-                        "refId": "A",
-                        "expr": "ipmi_voltage_volts{target=\"$instance\"}",
+                        "expr": "ipmi_voltage_state{target=\"$instance\"}",
                         "legend": "{{name}}",
-                        "maxDataPoints": 240
+                        "maxDataPoints": 240,
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -670,30 +625,87 @@
                         "options": {}
                     }
                 ],
-                "name": "Voltage reading in Volts",
-                "links": [],
-                "maxPerRow": 4,
+                "type": "hexbin",
+                "version": "3.0.0"
+            },
+            {
                 "custom": {
-                    "textMode": "value",
                     "calc": "lastNotNull",
+                    "textMode": "value",
                     "valueField": "Value"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "38437e8e-5c8c-4fc2-a274-515e8cc38ea0",
+                "layout": {
+                    "h": 5,
+                    "i": "38437e8e-5c8c-4fc2-a274-515e8cc38ea0",
+                    "w": 24,
+                    "x": 0,
+                    "y": 28
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Voltage reading in Volts",
                 "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
                     "thresholds": {
                         "steps": [
                             {
                                 "color": "#73BF69",
-                                "value": null,
-                                "type": "base"
+                                "type": "base",
+                                "value": null
                             }
                         ]
                     },
-                    "valueMappings": [],
-                    "standardOptions": {
-                        "util": "none"
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "ipmi_voltage_volts{target=\"$instance\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
                     }
-                }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "gauge",
+                "version": "3.0.0"
             }
-        ]
-    }
+        ],
+        "var": [
+            {
+                "defaultValue": 1,
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(ipmi_bmc_info,  target)",
+                "hide": false,
+                "multi": false,
+                "name": "instance",
+                "reg": "/.*/",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327540521000
 }
