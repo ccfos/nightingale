@@ -164,12 +164,14 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 						continue
 					}
 
-					old.Content = string(content)
-					old.Name = alert.Name
-					old.Tags = alert.AppendTags
-					err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
-					if err != nil {
-						logger.Warningf("update builtin alert:%+v fail %v", builtinAlert, err)
+					if old.UpdatedBy == SYSTEM {
+						old.Content = string(content)
+						old.Name = alert.Name
+						old.Tags = alert.AppendTags
+						err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
+						if err != nil {
+							logger.Warningf("update builtin alert:%+v fail %v", builtinAlert, err)
+						}
 					}
 				}
 
@@ -252,12 +254,14 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					continue
 				}
 
-				old.Content = string(content)
-				old.Name = dashboard.Name
-				old.Tags = dashboard.Tags
-				err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
-				if err != nil {
-					logger.Warningf("update builtin alert:%+v fail %v", builtinDashboard, err)
+				if old.UpdatedBy == SYSTEM {
+					old.Content = string(content)
+					old.Name = dashboard.Name
+					old.Tags = dashboard.Tags
+					err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
+					if err != nil {
+						logger.Warningf("update builtin alert:%+v fail %v", builtinDashboard, err)
+					}
 				}
 			}
 		} else if err != nil {
@@ -303,17 +307,19 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 						continue
 					}
 
-					old.Collector = metric.Collector
-					old.Typ = metric.Typ
-					old.Name = metric.Name
-					old.Unit = metric.Unit
-					old.Note = metric.Note
-					old.Lang = metric.Lang
-					old.Expression = metric.Expression
+					if old.UpdatedBy == SYSTEM {
+						old.Collector = metric.Collector
+						old.Typ = metric.Typ
+						old.Name = metric.Name
+						old.Unit = metric.Unit
+						old.Note = metric.Note
+						old.Lang = metric.Lang
+						old.Expression = metric.Expression
 
-					err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
-					if err != nil {
-						logger.Warningf("update builtin metric:%+v fail %v", metric, err)
+						err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
+						if err != nil {
+							logger.Warningf("update builtin metric:%+v fail %v", metric, err)
+						}
 					}
 				}
 
