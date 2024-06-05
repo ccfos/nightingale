@@ -77,6 +77,7 @@ func (bm *BuiltinMetric) Add(ctx *ctx.Context, username string) error {
 	now := time.Now().Unix()
 	bm.CreatedAt = now
 	bm.UpdatedAt = now
+	bm.UpdatedBy = username
 	bm.CreatedBy = username
 	return Insert(ctx, bm)
 }
