@@ -54,7 +54,7 @@ type TaskCreateReply struct {
 
 func handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType,
 	taskTplCache *memsto.TaskTplCache) {
-	if imodels.DB() == nil {
+	if imodels.DB() == nil && ctx.IsCenter {
 		logger.Warning("event_callback_ibex: db is nil")
 		return
 	}
