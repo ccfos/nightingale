@@ -153,6 +153,7 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 	value, warnings, err := readerClient.Query(e.ctx.Ctx, promql, time.Now())
 	if err != nil {
 		logger.Errorf("rule_eval:%s promql:%s, error:%v", getKey(event), promql, err)
+		event.AnnotationsJSON["recovery_promql_error"] = fmt.Sprintf("promql:%s error:%v", promql, err)
 		return
 	}
 
@@ -163,6 +164,7 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 	anomalyPoints := common.ConvertAnomalyPoints(value)
 	if len(anomalyPoints) == 0 {
 		logger.Warningf("rule_eval:%s promql:%s, result is empty", getKey(event), promql)
+		event.AnnotationsJSON["recovery_promql_error"] = fmt.Sprintf("promql:%s error:%s", promql, "result is empty")
 		return
 	}
 
