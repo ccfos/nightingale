@@ -154,6 +154,14 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 	if err != nil {
 		logger.Errorf("rule_eval:%s promql:%s, error:%v", getKey(event), promql, err)
 		event.AnnotationsJSON["recovery_promql_error"] = fmt.Sprintf("promql:%s error:%v", promql, err)
+
+		b, err := json.Marshal(event.AnnotationsJSON)
+		if err != nil {
+			event.AnnotationsJSON = make(map[string]string)
+			event.AnnotationsJSON["error"] = fmt.Sprintf("failed to parse annotations: %v", err)
+		} else {
+			event.Annotations = string(b)
+		}
 		return
 	}
 
@@ -165,11 +173,9 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 	if len(anomalyPoints) == 0 {
 		logger.Warningf("rule_eval:%s promql:%s, result is empty", getKey(event), promql)
 		event.AnnotationsJSON["recovery_promql_error"] = fmt.Sprintf("promql:%s error:%s", promql, "result is empty")
-		return
+	} else {
+		event.AnnotationsJSON["recovery_value"] = fmt.Sprintf("%v", anomalyPoints[0].Value)
 	}
-
-	// Put the query results into AnnotationsJSON
-	event.AnnotationsJSON["recovery_value"] = fmt.Sprintf("%v", anomalyPoints[0].Value)
 
 	b, err := json.Marshal(event.AnnotationsJSON)
 	if err != nil {
