@@ -34,7 +34,7 @@ func (rt *Router) recordingRuleGetsByGids(c *gin.Context) {
 			ginx.Dangerous(err)
 
 			if len(gids) == 0 {
-				ginx.Bomb(http.StatusForbidden, "forbidden")
+				ginx.NewRender(c).Data([]int{}, nil)
 				return
 			}
 		}
