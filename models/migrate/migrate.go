@@ -19,6 +19,17 @@ func Migrate(db *gorm.DB) {
 }
 
 func MigrateIbexTables(db *gorm.DB) {
+	var tableOptions string
+	switch db.Dialector.(type) {
+	case *mysql.Dialector:
+		tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+	case *postgres.Dialector:
+		tableOptions = "ENCODING='UTF8'"
+	}
+	if tableOptions != "" {
+		db = db.Set("gorm:table_options", tableOptions)
+	}
+
 	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &imodels.TaskSchedulerHealth{}, &imodels.TaskHostDoing{}, &imodels.TaskAction{}}
 	for _, dt := range dts {
 		err := db.AutoMigrate(dt)
