@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/str"
 )
 
 func (rt *Router) checkBusiGroupPerm(c *gin.Context) {
@@ -31,8 +32,36 @@ func (rt *Router) userGroupGets(c *gin.Context) {
 }
 
 func (rt *Router) userGroupGetsByService(c *gin.Context) {
-	lst, err := models.UserGroupGetAll(rt.Ctx)
-	ginx.NewRender(c).Data(lst, err)
+	ids := str.IdsInt64(ginx.QueryStr(c, "ids", ""))
+
+	if len(ids) == 0 {
+		lst, err := models.UserGroupGetAll(rt.Ctx)
+		ginx.Dangerous(err)
+		for i := 0; i < len(lst); i++ {
+			ids, err := models.MemberIds(rt.Ctx, lst[i].Id)
+			ginx.Dangerous(err)
+
+			lst[i].Users, err = models.UserGetsByIds(rt.Ctx, ids)
+			ginx.Dangerous(err)
+		}
+		ginx.NewRender(c).Data(lst, err)
+		return
+	}
+
+	lst := make([]models.UserGroup, 0)
+	for _, id := range ids {
+		ug := UserGroup(rt.Ctx, id)
+
+		ids, err := models.MemberIds(rt.Ctx, ug.Id)
+		ginx.Dangerous(err)
+
+		ug.Users, err = models.UserGetsByIds(rt.Ctx, ids)
+		ginx.Dangerous(err)
+
+		lst = append(lst, *ug)
+	}
+
+	ginx.NewRender(c).Data(lst, nil)
 }
 
 // user group member get by service
