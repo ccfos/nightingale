@@ -76,6 +76,8 @@ ops:
     - "/dashboards/add"
     - "/dashboards/put"
     - "/dashboards/del"
+    - "/embedded-dashboards/put"
+    - "/embedded-dashboards"
 
 - name: alert
   cname: 告警规则
