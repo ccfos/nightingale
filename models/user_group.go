@@ -20,6 +20,7 @@ type UserGroup struct {
 	UpdateAt int64   `json:"update_at"`
 	UpdateBy string  `json:"update_by"`
 	UserIds  []int64 `json:"-" gorm:"-"`
+	Users    []User  `json:"users" gorm:"-"`
 }
 
 func (ug *UserGroup) TableName() string {
