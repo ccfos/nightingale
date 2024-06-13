@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         The more detailed the form is filled in, the easier the problem will be solved.
-        提供的信息越详细，问题解决的可能性就越大。
+        提供的信息越详细，问题解决的可能性就越大。另外, 提问之前请先搜索历史 issue (包括 close 的), 以免重复提问。
   - type: textarea
     id: question
     attributes:
