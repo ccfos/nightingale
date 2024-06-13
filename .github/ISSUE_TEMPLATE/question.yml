@@ -19,7 +19,7 @@ body:
     id: logs
     attributes:
       label: Relevant logs and configurations
-      description: Relevant logs and configurations. 报错日志以及各个相关组件的配置信息
+      description: Relevant logs and configurations. 报错日志（[查看方法](https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v6/faq/how-to-check-logs/)）以及各个相关组件的配置信息
       render: text
     validations:
       required: true
