@@ -21,8 +21,27 @@ type telegram struct {
 	Text      string `json:"text"`
 }
 
+var (
+	_ CallBacker = (*TelegramSender)(nil)
+)
+
 type TelegramSender struct {
 	tpl *template.Template
+}
+
+func (ts *TelegramSender) CallBack(ctx CallBackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+		return
+	}
+
+	message := BuildTplMessage(models.Telegram, ts.tpl, ctx.Events)
+	SendTelegram(TelegramMessage{
+		Text:   message,
+		Tokens: []string{ctx.CallBackURL},
+		Stats:  ctx.Stats,
+	})
+
+	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }
 
 func (ts *TelegramSender) Send(ctx MessageContext) {
