@@ -1,0 +1,74 @@
+[
+  {
+    "collector": "Categraf",
+    "typ": "ClickHouse",
+    "name": "ClickHouse版本号",
+    "unit": "none",
+    "note": "ClickHouse服务器的版本号，以整数形式表示。",
+    "lang": "zh_CN",
+    "expression": "clickhouse_metrics_version_integer"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "ClickHouse",
+    "name": "ClickHouse服务器运行时间",
+    "unit": "sishort",
+    "note": "ClickHouse服务器自启动以来的运行时间。",
+    "lang": "zh_CN",
+    "expression": "clickhouse_asynchronous_metrics_uptime"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "ClickHouse",
+    "name": "ClickHouse修订",
+    "unit": "none",
+    "note": "ClickHouse服务器的修订号，通常是一个用于标识特定构建的数字。",
+    "lang": "zh_CN",
+    "expression": "clickhouse_metrics_revision"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "ClickHouse",
+    "name": "ClickHouse中表的数量",
+    "unit": "none",
+    "note": "ClickHouse表数量",
+    "lang": "zh_CN",
+    "expression": "clickhouse_asynchronous_metrics_number_of_tables"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "ClickHouse",
+    "name": "ClickHouse中数据库数量",
+    "unit": "none",
+    "note": "ClickHouse数据库数量",
+    "lang": "zh_CN",
+    "expression": "clickhouse_asynchronous_metrics_number_of_databases"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "ClickHouse",
+    "name": "ClickHouse中内存使用情况",
+    "unit": "sishort",
+    "note": "ClickHouse服务器使用的总内存量。",
+    "lang": "zh_CN",
+    "expression": "clickhouse_metrics_memory_tracking"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "ClickHouse",
+    "name": "ClickHouse 过时数据量",
+    "unit": "sishort",
+    "note": " 过时的数据部分数量，这些部分不是活动数据部分，但当前SELECT查询可能使用它们。",
+    "lang": "zh_CN",
+    "expression": "clickhouse_metrics_parts_outdated"
+  },
+  {
+    "collector": "Categraf",
+    "typ": "ClickHouse",
+    "name": "ClickHouse 跨磁盘量",
+    "unit": "sishort",
+    "note": "移动到另一个磁盘并应在析构函数中删除的数据部分数量。",
+    "lang": "zh_CN",
+    "expression": "clickhouse_metrics_parts_delete_on_destroy"
+  }
+]
