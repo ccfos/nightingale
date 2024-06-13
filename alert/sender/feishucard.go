@@ -3,6 +3,7 @@ package sender
 import (
 	"fmt"
 	"html/template"
+	"net/url"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -90,6 +91,37 @@ var (
 		},
 	}
 )
+
+func (fs *FeishuCardSender) CallBack(ctx CallBackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+		return
+	}
+
+	message := BuildTplMessage(models.FeishuCard, fs.tpl, ctx.Events)
+	color := "red"
+	lowerUnicode := strings.ToLower(message)
+	if strings.Count(lowerUnicode, Recovered) > 0 && strings.Count(lowerUnicode, Triggered) > 0 {
+		color = "orange"
+	} else if strings.Count(lowerUnicode, Recovered) > 0 {
+		color = "green"
+	}
+
+	SendTitle := fmt.Sprintf("🔔 %s", ctx.Events[0].RuleName)
+	body.Card.Header.Title.Content = SendTitle
+	body.Card.Header.Template = color
+	body.Card.Elements[0].Text.Content = message
+	body.Card.Elements[2].Elements[0].Content = SendTitle
+
+	// This is to be compatible with the feishucard interface, if with query string parameters, the request will fail
+	// Remove query parameters from the URL,
+	parsedURL, err := url.Parse(ctx.CallBackURL)
+	if err != nil {
+		return
+	}
+	parsedURL.RawQuery = ""
+
+	doSend(parsedURL.String(), body, models.FeishuCard, ctx.Stats)
+}
 
 func (fs *FeishuCardSender) Send(ctx MessageContext) {
 	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
