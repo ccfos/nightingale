@@ -32,7 +32,7 @@ type SsoClient struct {
 		Email    string
 	}
 	DefaultRoles []string
-	DefaultTeam  []int64
+	DefaultTeams []int64
 
 	Ctx      context.Context
 	Provider *oidc.Provider
@@ -56,7 +56,7 @@ type Config struct {
 		Email    string
 	}
 	DefaultRoles []string
-	DefaultTeam  []int64
+	DefaultTeams []int64
 	Scopes       []string
 }
 
@@ -92,7 +92,7 @@ func (s *SsoClient) Reload(cf Config) error {
 	s.Attributes.Email = cf.Attributes.Email
 	s.DisplayName = cf.DisplayName
 	s.DefaultRoles = cf.DefaultRoles
-	s.DefaultTeam = cf.DefaultTeam
+	s.DefaultTeams = cf.DefaultTeams
 	s.Ctx = context.Background()
 
 	if cf.SkipTlsVerify {
