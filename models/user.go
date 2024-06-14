@@ -33,6 +33,16 @@ const (
 	FeishuKey   = "feishu_robot_token"
 	MmKey       = "mm_webhook_url"
 	TelegramKey = "telegram_robot_token"
+
+	DingtalkDomain = "oapi.dingtalk.com"
+	WecomDomain    = "qyapi.weixin.qq.com"
+	FeishuDomain   = "open.feishu.cn"
+
+	// FeishuCardDomain The domain name of the feishu card is the same as the feishu,distinguished by the parameter
+	FeishuCardDomain = "open.feishu.cn?card=1"
+	TelegramDomain   = "api.telegram.org"
+	IbexDomain       = "ibex"
+	DefaultDomain    = "default"
 )
 
 var (
