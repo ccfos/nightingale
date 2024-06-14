@@ -262,6 +262,15 @@ func (rt *Router) loginCallback(c *gin.Context) {
 		user.FullSsoFields("oidc", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.OIDC.DefaultRoles)
 		// create user from oidc
 		ginx.Dangerous(user.Add(rt.Ctx))
+
+		if len(rt.Sso.OIDC.DefaultTeam) > 0 {
+			for _, gid := range rt.Sso.OIDC.DefaultTeam {
+				err = models.UserGroupMemberAdd(rt.Ctx, user.Id, gid)
+				if err != nil {
+					logger.Errorf("user:%v UserGroupMemberAdd: %s", user, err)
+				}
+			}
+		}
 	}
 
 	// set user login state
