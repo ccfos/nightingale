@@ -145,9 +145,10 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		// 如果 event 被 mute 了,本质也是 fire 的状态,这里无论如何都添加到 alertingKeys 中,防止 fire 的事件自动恢复了
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
-		if mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache) {
+		isMuted, detail := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
+		if isMuted {
 			p.Stats.CounterMuteTotal.WithLabelValues(event.GroupName).Inc()
-			logger.Debugf("rule_eval:%s event:%v is muted", p.Key(), event)
+			logger.Debugf("rule_eval:%s event:%v is muted, detail:%s", p.Key(), event, detail)
 			continue
 		}
 
