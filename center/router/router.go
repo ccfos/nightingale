@@ -252,6 +252,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/user-group/:id/members", rt.auth(), rt.user(), rt.perm("/user-groups/put"), rt.userGroupWrite(), rt.userGroupMemberDel)
 
 		pages.GET("/busi-groups", rt.auth(), rt.user(), rt.busiGroupGets)
+		pages.GET("/busi-allgroups", rt.auth(), rt.user(), rt.busiAllGroupGets)
 		pages.POST("/busi-groups", rt.auth(), rt.user(), rt.perm("/busi-groups/add"), rt.busiGroupAdd)
 		pages.GET("/busi-groups/alertings", rt.auth(), rt.busiGroupAlertingsGets)
 		pages.GET("/busi-group/:id", rt.auth(), rt.user(), rt.bgro(), rt.busiGroupGet)

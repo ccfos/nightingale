@@ -140,3 +140,21 @@ func (rt *Router) busiGroupGet(c *gin.Context) {
 	ginx.Dangerous(bg.FillUserGroups(rt.Ctx))
 	ginx.NewRender(c).Data(bg, nil)
 }
+
+// 任意成员，获得所有业务组
+func (rt *Router) busiAllGroupGets(c *gin.Context) {
+	limit := ginx.QueryInt(c, "limit", defaultLimit)
+	query := ginx.QueryStr(c, "query", "")
+	all := ginx.QueryBool(c, "all", false)
+
+	me := c.MustGet("user").(*models.User)
+	if !me.IsAdmin() {
+		me.RolesLst = append(me.RolesLst, "Admin")
+	}
+	lst, err := me.BusiGroups(rt.Ctx, limit, query, all)
+	if len(lst) == 0 {
+		lst = []models.BusiGroup{}
+	}
+
+	ginx.NewRender(c).Data(lst, err)
+}
