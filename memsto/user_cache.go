@@ -215,13 +215,13 @@ func (uc *UserCacheType) loopUpdateLastActiveTime() {
 	duration := 5 * time.Minute
 	for {
 		time.Sleep(duration)
-		if err := uc.updateUsersLastActiveTime(); err != nil {
+		if err := uc.UpdateUsersLastActiveTime(); err != nil {
 			logger.Warningf("failed to update users' last active time: %v", err)
 		}
 	}
 }
 
-func (uc *UserCacheType) updateUsersLastActiveTime() error {
+func (uc *UserCacheType) UpdateUsersLastActiveTime() error {
 	// read the full list of users from the database
 	users, err := models.UserGetAll(uc.ctx)
 	if err != nil {
