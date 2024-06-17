@@ -46,6 +46,7 @@ func (rt *Router) userGets(c *gin.Context) {
 	order := ginx.QueryStr(c, "order", "username")
 	desc := ginx.QueryBool(c, "desc", false)
 
+	rt.UserCache.UpdateUsersLastActiveTime()
 	total, err := models.UserTotal(rt.Ctx, query, stime, etime)
 	ginx.Dangerous(err)
 
