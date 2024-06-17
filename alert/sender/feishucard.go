@@ -97,7 +97,21 @@ func (fs *FeishuCardSender) CallBack(ctx CallBackContext) {
 		return
 	}
 
+	ats := ExtractAtsParams(ctx.CallBackURL)
 	message := BuildTplMessage(models.FeishuCard, fs.tpl, ctx.Events)
+
+	if len(ats) > 0 {
+		atTags := ""
+		for _, at := range ats {
+			if strings.Contains(at, "@") {
+				atTags += fmt.Sprintf("<at email=\"%s\" ></at>", at)
+			} else {
+				atTags += fmt.Sprintf("<at id=\"%s\" ></at>", at)
+			}
+		}
+		message = atTags + message
+	}
+
 	color := "red"
 	lowerUnicode := strings.ToLower(message)
 	if strings.Count(lowerUnicode, Recovered) > 0 && strings.Count(lowerUnicode, Triggered) > 0 {
