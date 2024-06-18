@@ -60,6 +60,10 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
 	}
 
+	if err := event.ParseRule("callbacks"); err != nil {
+		event.RuleNote = fmt.Sprintf("failed to parse callbacks: %v", err)
+	}
+
 	// 如果 rule_note 中有 ; 前缀，则使用 rule_note 替换 tags 中的内容
 	if strings.HasPrefix(event.RuleNote, ";") {
 		event.RuleNote = strings.TrimPrefix(event.RuleNote, ";")

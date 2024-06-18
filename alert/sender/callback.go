@@ -38,10 +38,9 @@ func BuildCallBackContext(ctx *ctx.Context, callBackURL string, rule *models.Ale
 	uids []int64, userCache *memsto.UserCacheType, stats *astats.Stats) CallBackContext {
 	users := userCache.GetByUserIds(uids)
 
-	newCallBackUrl, _ := events[0].ParseURL(callBackURL)
 	return CallBackContext{
 		Ctx:         ctx,
-		CallBackURL: newCallBackUrl,
+		CallBackURL: callBackURL,
 		Rule:        rule,
 		Events:      events,
 		Users:       users,

@@ -157,36 +157,11 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 		e.RuleNote = body.String()
 	}
 
+	if field == "callbacks" {
+		e.Callbacks = body.String()
+	}
+
 	return nil
-}
-
-func (e *AlertCurEvent) ParseURL(url string) (string, error) {
-
-	f := strings.TrimSpace(url)
-
-	if f == "" {
-		return url, nil
-	}
-
-	var defs = []string{
-		"{{$labels := .TagsMap}}",
-		"{{$value := .TriggerValue}}",
-		"{{$annotations := .AnnotationsJSON}}",
-	}
-
-	text := strings.Join(append(defs, f), "")
-	t, err := template.New("callbackUrl" + fmt.Sprint(e.RuleId)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
-	if err != nil {
-		return url, nil
-	}
-
-	var body bytes.Buffer
-	err = t.Execute(&body, e)
-	if err != nil {
-		return url, nil
-	}
-
-	return body.String(), nil
 }
 
 func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule) string {
