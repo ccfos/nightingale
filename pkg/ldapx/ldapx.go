@@ -338,6 +338,10 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, d
 			}
 		}
 
+		if len(roleTeamMapping.Teams) == 0 {
+			roleTeamMapping.Teams = defaultTeams
+		}
+
 		// Synchronize group information
 		if err = models.UserGroupMemberSync(ctx, roleTeamMapping.Teams, user.Id, coverTeams); err != nil {
 			logger.Errorf("ldap.error: failed to update user(%s) group member err: %+v", user, err)
