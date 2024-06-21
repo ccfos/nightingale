@@ -187,6 +187,11 @@ func (t *TaskTpl) CleanFields() error {
 	return nil
 }
 
+type TaskTplHost struct {
+	Id   int64  `json:"id"`
+	Host string `json:"host"`
+}
+
 func (t *TaskTpl) Save(ctx *ctx.Context, hosts []string) error {
 	if err := t.CleanFields(); err != nil {
 		return err
@@ -212,10 +217,12 @@ func (t *TaskTpl) Save(ctx *ctx.Context, hosts []string) error {
 				continue
 			}
 
-			err := tx.Table("task_tpl_host").Create(map[string]interface{}{
-				"id":   t.Id,
-				"host": host,
-			}).Error
+			taskTplHost := TaskTplHost{
+				Id:   t.Id,
+				Host: host,
+			}
+
+			err := tx.Table("task_tpl_host").Create(&taskTplHost).Error
 
 			if err != nil {
 				return err
