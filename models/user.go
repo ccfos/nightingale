@@ -205,8 +205,10 @@ func (u *User) Add(ctx *ctx.Context) error {
 }
 
 func (u *User) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
-	if err := u.Verify(); err != nil {
-		return err
+	if u.Belong == "" {
+		if err := u.Verify(); err != nil {
+			return err
+		}
 	}
 
 	return DB(ctx).Model(u).Select(selectField, selectFields...).Updates(u).Error
