@@ -9,7 +9,6 @@ import (
 	imodels "github.com/flashcatcloud/ibex/src/models"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -23,9 +22,8 @@ func MigrateIbexTables(db *gorm.DB) {
 	switch db.Dialector.(type) {
 	case *mysql.Dialector:
 		tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-	case *postgres.Dialector:
-		tableOptions = "ENCODING='UTF8'"
 	}
+
 	if tableOptions != "" {
 		db = db.Set("gorm:table_options", tableOptions)
 	}
@@ -52,8 +50,6 @@ func MigrateTables(db *gorm.DB) error {
 	switch db.Dialector.(type) {
 	case *mysql.Dialector:
 		tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-	case *postgres.Dialector:
-		tableOptions = "ENCODING='UTF8'"
 	}
 	if tableOptions != "" {
 		db = db.Set("gorm:table_options", tableOptions)
@@ -62,10 +58,14 @@ func MigrateTables(db *gorm.DB) error {
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
-		&models.MetricFilter{}, &models.BuiltinComponent{}, &models.BuiltinPayload{}}
+		&models.MetricFilter{}, &models.BuiltinComponent{}}
 
 	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
 		dts = append(dts, &AlertHisEvent{})
+	}
+
+	if !db.Migrator().HasTable(&models.BuiltinPayload{}) {
+		dts = append(dts, &models.BuiltinPayload{})
 	}
 
 	for _, dt := range dts {
@@ -209,7 +209,7 @@ type Target struct {
 }
 
 type Datasource struct {
-	IsDefault bool `gorm:"column:is_default;int;not null;default:0;comment:is default datasource"`
+	IsDefault bool `gorm:"column:is_default;type:boolean;not null;comment:is default datasource"`
 }
 
 type Configs struct {
