@@ -22,7 +22,8 @@ services:
     volumes:
       - ./pgdata:/var/lib/postgresql/data
       - ./initsql_for_postgres:/docker-entrypoint-initdb.d/
-    network_mode: host
+    networks:
+      - nightingale
 
   redis:
     image: "redis:7.0-alpine"
