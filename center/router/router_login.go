@@ -354,6 +354,15 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 		user.FullSsoFields("cas", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.CAS.DefaultRoles)
 		// create user from cas
 		ginx.Dangerous(user.Add(rt.Ctx))
+
+		if len(rt.Sso.CAS.DefaultTeams) > 0 {
+			for _, gid := range rt.Sso.CAS.DefaultTeams {
+				err = models.UserGroupMemberAdd(rt.Ctx, gid, user.Id)
+				if err != nil {
+					logger.Errorf("user:%v UserGroupMemberAdd: %s", user, err)
+				}
+			}
+		}
 	}
 
 	// set user login state
@@ -430,6 +439,15 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 		user.FullSsoFields("oauth2", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.OAuth2.DefaultRoles)
 		// create user from oidc
 		ginx.Dangerous(user.Add(rt.Ctx))
+
+		if len(rt.Sso.OAuth2.DefaultTeams) > 0 {
+			for _, gid := range rt.Sso.OAuth2.DefaultTeams {
+				err = models.UserGroupMemberAdd(rt.Ctx, gid, user.Id)
+				if err != nil {
+					logger.Errorf("user:%v UserGroupMemberAdd: %s", user, err)
+				}
+			}
+		}
 	}
 
 	// set user login state
