@@ -39,7 +39,7 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMet
 		ident = s.Labels[idx].Value
 	}
 
-	if !ignoreIdent && ident == "" {
+	if ident == "" {
 		// telegraf, output plugin: http, format: prometheusremotewrite
 		if idx, ok := labelMap["host"]; ok {
 			s.Labels[idx].Name = "ident"
@@ -47,6 +47,7 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMet
 		}
 	}
 
+	// ident in labels
 	if idx, ok := labelMap["ident"]; ok {
 		ident = s.Labels[idx].Value
 	}
@@ -64,6 +65,10 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMet
 		if !metricFound {
 			heartbeatIdent = ""
 		}
+	}
+
+	if ignoreIdent {
+		return ident, ""
 	}
 
 	return ident, heartbeatIdent
