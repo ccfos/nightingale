@@ -66,6 +66,8 @@ func MigrateTables(db *gorm.DB) error {
 
 	if !db.Migrator().HasTable(&models.BuiltinPayload{}) {
 		dts = append(dts, &models.BuiltinPayload{})
+	} else {
+		dts = append(dts, &BuiltinPayloads{})
 	}
 
 	for _, dt := range dts {
@@ -247,4 +249,8 @@ type Users struct {
 
 type SsoConfig struct {
 	UpdateAt int64 `gorm:"column:update_at;type:int;default:0;comment:update_at"`
+}
+
+type BuiltinPayloads struct {
+	UUID int64 `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
 }

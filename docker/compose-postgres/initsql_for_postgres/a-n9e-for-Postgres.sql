@@ -870,6 +870,7 @@ CREATE INDEX idx_ident ON builtin_components (ident);
 CREATE TABLE builtin_payloads (
   id BIGSERIAL PRIMARY KEY,
   type VARCHAR(191) NOT NULL,
+  uuid BIGINT NOT NULL DEFAULT 0,
   component VARCHAR(191) NOT NULL,
   cate VARCHAR(191) NOT NULL,
   name VARCHAR(191) NOT NULL,
