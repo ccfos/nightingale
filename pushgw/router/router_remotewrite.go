@@ -21,9 +21,10 @@ func extractMetricFromTimeSeries(s *prompb.TimeSeries) string {
 	return ""
 }
 
-func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent, ignoreHost bool, identMetrics []string) (string, string) {
+// 返回的第二个参数，bool，表示是否需要把 ident 写入 target 表
+func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent, ignoreHost bool, identMetrics []string) (string, bool) {
 	if s == nil {
-		return "", ""
+		return "", false
 	}
 
 	labelMap := make(map[string]int)
@@ -32,7 +33,6 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent, ignoreHost bo
 	}
 
 	var ident string
-	var heartbeatIdent string
 
 	// 如果标签中有ident，则直接使用
 	if idx, ok := labelMap["ident"]; ok {
@@ -58,7 +58,11 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent, ignoreHost bo
 		}
 	}
 
-	heartbeatIdent = ident
+	if ident == "" {
+		// 上报的监控数据中并没有 ident 信息
+		return "", false
+	}
+
 	if len(identMetrics) > 0 {
 		metricFound := false
 		for _, identMetric := range identMetrics {
@@ -69,15 +73,11 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent, ignoreHost bo
 		}
 
 		if !metricFound {
-			heartbeatIdent = ""
+			return ident, false
 		}
 	}
 
-	if ignoreIdent {
-		return ident, ""
-	}
-
-	return ident, heartbeatIdent
+	return ident, !ignoreIdent
 }
 
 func duplicateLabelKey(series *prompb.TimeSeries) bool {
@@ -112,14 +112,18 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		return
 	}
 
-	var ids = make(map[string]struct{})
+	var (
+		ignoreIdent = ginx.QueryBool(c, "ignore_ident", false)
+		ignoreHost  = ginx.QueryBool(c, "ignore_host", false)
+		ids         = make(map[string]struct{})
+	)
 
 	for i := 0; i < count; i++ {
 		if duplicateLabelKey(&req.Timeseries[i]) {
 			continue
 		}
 
-		ident, heartbeatIdent := extractIdentFromTimeSeries(&req.Timeseries[i], ginx.QueryBool(c, "ignore_ident", false), ginx.QueryBool(c, "ignore_host", false), rt.Pushgw.IdentMetrics)
+		ident, insertTarget := extractIdentFromTimeSeries(&req.Timeseries[i], ignoreIdent, ignoreHost, rt.Pushgw.IdentMetrics)
 		if len(ident) > 0 {
 			// enrich host labels
 			target, has := rt.TargetCache.Get(ident)
@@ -128,7 +132,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 			}
 		}
 
-		if len(heartbeatIdent) > 0 {
+		if insertTarget {
 			// has ident tag or agent_hostname tag
 			// register host in table target
 			ids[ident] = struct{}{}
