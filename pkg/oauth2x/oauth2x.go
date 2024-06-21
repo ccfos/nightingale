@@ -38,6 +38,7 @@ type SsoClient struct {
 	UserinfoIsArray bool
 	UserinfoPrefix  string
 	DefaultRoles    []string
+	DefaultTeams    []int64
 
 	Ctx context.Context
 	sync.RWMutex
@@ -62,7 +63,9 @@ type Config struct {
 		Phone    string
 		Email    string
 	}
-	DefaultRoles    []string
+	DefaultRoles []string
+	DefaultTeams []int64
+
 	UserinfoIsArray bool
 	UserinfoPrefix  string
 	Scopes          []string
@@ -100,6 +103,7 @@ func (s *SsoClient) Reload(cf Config) {
 	s.UserinfoIsArray = cf.UserinfoIsArray
 	s.UserinfoPrefix = cf.UserinfoPrefix
 	s.DefaultRoles = cf.DefaultRoles
+	s.DefaultTeams = cf.DefaultTeams
 
 	s.Ctx = context.Background()
 

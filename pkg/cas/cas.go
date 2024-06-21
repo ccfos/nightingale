@@ -33,6 +33,7 @@ type Config struct {
 		Email    string
 	}
 	DefaultRoles []string
+	DefaultTeams []int64
 }
 
 type SsoClient struct {
@@ -49,6 +50,7 @@ type SsoClient struct {
 		Email    string
 	}
 	DefaultRoles    []string
+	DefaultTeams    []int64
 	CoverAttributes bool
 	HTTPClient      *http.Client
 	sync.RWMutex
@@ -103,6 +105,7 @@ func (s *SsoClient) Reload(cf Config) {
 	s.Attributes.Phone = cf.Attributes.Phone
 	s.Attributes.Email = cf.Attributes.Email
 	s.DefaultRoles = cf.DefaultRoles
+	s.DefaultTeams = cf.DefaultTeams
 	s.CoverAttributes = cf.CoverAttributes
 
 	if cf.SkipTlsVerify {
