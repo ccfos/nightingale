@@ -56,6 +56,8 @@ type RelabelConfig struct {
 	Separator     string
 	Regex         string
 	RegexCompiled *regexp.Regexp
+	If            string
+	IfRegex       *regexp.Regexp
 	Modulus       uint64
 	TargetLabel   string
 	Replacement   string

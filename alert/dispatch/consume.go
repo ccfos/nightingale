@@ -93,6 +93,7 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
 	}
 
+	// TODO：源标签须保留
 	e.persist(event)
 
 	if event.IsRecovered && event.NotifyRecovered == 0 {
