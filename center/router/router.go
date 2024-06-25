@@ -423,6 +423,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternPut)
 		pages.DELETE("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternDel)
 
+		pages.GET("/embedded-dashboards", rt.auth(), rt.user(), rt.perm("/embedded-dashboards"), rt.embeddedDashboardsGet)
+		pages.PUT("/embedded-dashboards", rt.auth(), rt.user(), rt.perm("/embedded-dashboards/put"), rt.embeddedDashboardsPut)
+
 		pages.GET("/user-variable-configs", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigGets)
 		pages.POST("/user-variable-config", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigAdd)
 		pages.PUT("/user-variable-config/:id", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigPut)
