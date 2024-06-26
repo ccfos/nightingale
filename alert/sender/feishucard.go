@@ -114,13 +114,16 @@ func (fs *FeishuCardSender) CallBack(ctx CallBackContext) {
 
 	color := "red"
 	lowerUnicode := strings.ToLower(message)
+	SendTitle := fmt.Sprintf("🔔 告警:%s", ctx.Events[0].RuleName)
 	if strings.Count(lowerUnicode, Recovered) > 0 && strings.Count(lowerUnicode, Triggered) > 0 {
 		color = "orange"
+		SendTitle = fmt.Sprintf("🔔 告警:%s", ctx.Events[0].RuleName)
 	} else if strings.Count(lowerUnicode, Recovered) > 0 {
 		color = "green"
+		SendTitle = fmt.Sprintf("🔔 恢复:%s", ctx.Events[0].RuleName)
 	}
 
-	SendTitle := fmt.Sprintf("🔔 %s", ctx.Events[0].RuleName)
+	//SendTitle := fmt.Sprintf("🔔 %s", ctx.Events[0].RuleName)
 	body.Card.Header.Title.Content = SendTitle
 	body.Card.Header.Template = color
 	body.Card.Elements[0].Text.Content = message
