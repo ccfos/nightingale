@@ -14,7 +14,9 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
+	"github.com/ccfos/nightingale/v6/pushgw/writer"
 
+	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/logger"
 )
@@ -93,7 +95,8 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
 	}
 
-	// TODO：源标签须保留
+	e.relabel(event)
+
 	e.persist(event)
 
 	if event.IsRecovered && event.NotifyRecovered == 0 {
@@ -185,6 +188,37 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 	} else {
 		event.Annotations = string(b)
 	}
+}
+
+func (e *Consumer) relabel(event *models.AlertCurEvent) {
+	rule := e.dispatch.alertRuleCache.Get(event.RuleId)
+	if rule == nil {
+		return
+	}
+
+	// need to keep the original label
+	event.OriginalTags = event.Tags
+	event.OriginalTagsJSON = make([]string, len(event.TagsJSON))
+
+	labels := make([]prompb.Label, len(event.TagsJSON))
+	for i, tag := range event.TagsJSON {
+		label := strings.Split(tag, "=")
+		if len(label) != 2 {
+			logger.Errorf("event%+v relabel: the label length is not 2:%v", event, label)
+			continue
+		}
+		event.OriginalTagsJSON[i] = tag
+		labels[i] = prompb.Label{Name: label[0], Value: label[1]}
+	}
+
+	// relabel process
+	relabels := writer.Process(labels, rule.EventRelabelConfig...)
+	event.TagsJSON = make([]string, len(relabels))
+	for i, label := range relabels {
+		event.TagsJSON[i] = fmt.Sprintf("%s=%s", label.Name, label.Value)
+		event.TagsMap[label.Name] = label.Value
+	}
+	event.Tags = strings.Join(event.TagsJSON, ",,")
 }
 
 func getKey(event *models.AlertCurEvent) string {
