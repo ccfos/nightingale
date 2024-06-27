@@ -48,6 +48,8 @@ type AlertHisEvent struct {
 	LastEvalTime       int64             `json:"last_eval_time"`
 	Tags               string            `json:"-"`
 	TagsJSON           []string          `json:"tags" gorm:"-"`
+	OriginalTags       string            `json:"-"`                       // for db
+	OriginalTagsJSON   []string          `json:"original_tags"  gorm:"-"` // for fe
 	Annotations        string            `json:"-"`
 	AnnotationsJSON    map[string]string `json:"annotations" gorm:"-"` // for fe
 	NotifyCurNumber    int               `json:"notify_cur_number"`    // notify: current number
@@ -68,6 +70,7 @@ func (e *AlertHisEvent) DB2FE() {
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
 	e.CallbacksJSON = strings.Fields(e.Callbacks)
 	e.TagsJSON = strings.Split(e.Tags, ",,")
+	e.OriginalTagsJSON = strings.Split(e.OriginalTags, ",,")
 
 	if len(e.Annotations) > 0 {
 		err := json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)

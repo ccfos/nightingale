@@ -52,14 +52,16 @@ type WriterOptions struct {
 }
 
 type RelabelConfig struct {
-	SourceLabels  model.LabelNames
-	Separator     string
-	Regex         string
+	SourceLabels  model.LabelNames `json:"source_labels"`
+	Separator     string           `json:"separator"`
+	Regex         string           `json:"regex"`
 	RegexCompiled *regexp.Regexp
-	Modulus       uint64
-	TargetLabel   string
-	Replacement   string
-	Action        string
+	If            string `json:"if"`
+	IfRegex       *regexp.Regexp
+	Modulus       uint64 `json:"modulus"`
+	TargetLabel   string `json:"target_label"`
+	Replacement   string `json:"replacement"`
+	Action        string `json:"action"`
 }
 
 func (p *Pushgw) PreCheck() {
