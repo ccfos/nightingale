@@ -425,6 +425,10 @@ func PassLogin(ctx *ctx.Context, redis storage.Redis, username, pass string) (*U
 	}
 
 	if user == nil {
+		if needCheck {
+			incrLoginFailCount(ctx, redis, username, seconds)
+		}
+
 		return nil, fmt.Errorf("Username or password invalid")
 	}
 
