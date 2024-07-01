@@ -111,12 +111,12 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 	resp, code, err := poster.PostJSON(ctx.CallBackURL, 5*time.Second, event, 3)
 	if err != nil {
-		logger.Errorf("event_callback_fail(rule_id=%d url=%s), resp: %s, err: %v, code: %d",
-			event.RuleId, ctx.CallBackURL, string(resp), err, code)
+		logger.Errorf("event_callback_fail(rule_id=%d url=%s), event:%+v, resp: %s, err: %v, code: %d",
+			event.RuleId, ctx.CallBackURL, event, string(resp), err, code)
 		ctx.Stats.AlertNotifyErrorTotal.WithLabelValues("rule_callback").Inc()
 	} else {
-		logger.Infof("event_callback_succ(rule_id=%d url=%s), resp: %s, code: %d",
-			event.RuleId, ctx.CallBackURL, string(resp), code)
+		logger.Infof("event_callback_succ(rule_id=%d url=%s), event:%+v, resp: %s, code: %d",
+			event.RuleId, ctx.CallBackURL, event, string(resp), code)
 	}
 }
 
