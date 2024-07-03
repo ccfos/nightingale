@@ -1,0 +1,971 @@
+{
+  "name": "阿里云MySQL",
+  "tags": "阿里云 mysql",
+  "ident": "",
+  "configs": {
+    "panels": [
+      {
+        "type": "row",
+        "id": "1cb8caf3-ef35-4572-9ecc-71b9f063a685",
+        "name": "关键指标",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "1cb8caf3-ef35-4572-9ecc-71b9f063a685",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "5aad17df-354e-40de-a643-61da6668939b",
+        "layout": {
+          "h": 5,
+          "w": 24,
+          "x": 0,
+          "y": 1,
+          "i": "fcf9515d-3a56-4596-8b3a-d7d8631aa218",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "expr": "AliyunRds_MySQL_SlowQueries{instanceName=\"$instance\"}",
+            "legend": "{{instanceName}}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "每秒慢查询数量(countS)",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "2b3a816e-94e2-4c9d-9bb8-770c458033db",
+        "name": "基础指标",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 6,
+          "i": "2b3a816e-94e2-4c9d-9bb8-770c458033db",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "12d4a674-6d09-4b02-aa4f-d767531bd368",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 0,
+          "y": 7,
+          "i": "baba4778-b950-4224-9dac-9ecda041f93b",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "expr": "AliyunRds_CpuUsage{instanceName=\"$instance\"}",
+            "legend": "",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "CPU使用率",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "percent"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "55b17951-a4ae-46a7-a2d7-57db1414f6ff",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 8,
+          "y": 7,
+          "i": "c4c248bd-21fb-4485-8235-f50640116e65",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "expr": "AliyunRds_MemoryUsage{instanceName=\"$instance\"}",
+            "legend": "",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "内存使用率",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "percent"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "02c6af68-0e59-4f62-b0e8-80a9a9d0df82",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 16,
+          "y": 7,
+          "i": "51cf9211-5e76-4176-b1ec-42929ccc6803",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "expr": "AliyunRds_DiskUsage{instanceName=\"$instance\"}",
+            "legend": "",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "磁盘使用率",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "percent"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "b72c5032-1ea0-4c87-9cfd-d21b374680f1",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 0,
+          "y": 11,
+          "i": "b72c5032-1ea0-4c87-9cfd-d21b374680f1",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "expr": "AliyunRds_MySQL_ActiveSessions{instanceName=\"$instance\"}",
+            "legend": "",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "活跃连接数",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "b518c9c4-f0e8-4712-ab67-be4521eeff0c",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 8,
+          "y": 11,
+          "i": "ff589719-6072-488d-819d-6e080a6f3c60",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "expr": "AliyunRds_ConnectionUsage{instanceName=\"$instance\"}",
+            "legend": "",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "连接数使用率",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "86c1f728-ac1e-402b-bea6-2e3979f472c3",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 16,
+          "y": 11,
+          "i": "5d673c5d-1fbb-4df4-9ece-c991d053ca34",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "expr": "AliyunRds_IOPSUsage{instanceName=\"$instance\"} ",
+            "legend": "",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "IOPS使用率",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "percent"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "standardOptions": {
+                "util": "percent"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "dc874418-8d11-409c-96e8-e48fac2f6e20",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 0,
+          "y": 15,
+          "i": "86915dd4-990c-41ba-b048-3da301d97327",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "expr": "AliyunRds_MySQL_NetworkInNew{instanceName=\"$instance\"}/ 8",
+            "legend": "",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "网络流入带宽",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "bytesSecIEC"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "b979878a-81a6-4c0d-960d-22a736d00655",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 8,
+          "y": 15,
+          "i": "86f9e07f-85dc-44e0-8245-ca0a9b0dfa81",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "expr": "AliyunRds_MySQL_NetworkOutNew{instanceName=\"$instance\"}/ 8",
+            "legend": "",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "网络流出带宽",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "bytesSecIEC"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "6d896a20-bf04-4dc7-94da-1394ef109848",
+        "name": "性能指标",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 19,
+          "i": "6d896a20-bf04-4dc7-94da-1394ef109848",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "2e545b2b-130b-4829-a2d2-ee5305c302aa",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 0,
+          "y": 20,
+          "i": "13dceb72-9e9d-483d-86d2-b192debdcece",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "expr": "AliyunRds_MySQL_QPS{instanceName=\"$instance\"}",
+            "legend": "",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "QPS",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "reqps"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "0299da4b-d779-4ed7-9cd5-096f43181b2e",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 8,
+          "y": 20,
+          "i": "2b23c24e-b6f9-44f5-8151-2d5a7585c31a",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "expr": "AliyunRds_MySQL_TPS{instanceName=\"$instance\"}",
+            "legend": "",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "TPS",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {
+            "util": "reqps"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "56a0e345-1d4d-4051-a3cf-738bea220f96",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 16,
+          "y": 20,
+          "i": "d1752ed4-f4a1-4c4b-854f-1c2ef01b34a4",
+          "isResizable": true
+        },
+        "version": "3.0.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "expr": "AliyunRds_MySQL_IbufUseRatio{instanceName=\"$instance\"}",
+            "legend": "",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "BP利用率",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "behaviour": "showItem"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#634CD9",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      }
+    ],
+    "var": [
+      {
+        "name": "datasource",
+        "label": "datasource",
+        "type": "datasource",
+        "hide": false,
+        "definition": "prometheus"
+      },
+      {
+        "name": "instance",
+        "label": "",
+        "type": "query",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        },
+        "definition": "label_values(AliyunRds_MySQL_SlowQueries, instanceName)"
+      }
+    ],
+    "version": "3.0.0"
+  },
+  "uuid": 1717556327098444000
+}
