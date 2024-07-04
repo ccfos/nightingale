@@ -77,3 +77,6 @@ CREATE TABLE `builtin_payloads` (
 
 /* v7.0.0-beta.7 */
 ALTER TABLE users ADD COLUMN last_active_time BIGINT NOT NULL DEFAULT 0;
+
+/* v7.0.0-beta.13 */
+ALTER TABLE recording_rule ADD COLUMN cron_pattern VARCHAR(255) DEFAULT '' COMMENT 'cron pattern';
