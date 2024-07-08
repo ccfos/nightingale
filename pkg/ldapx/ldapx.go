@@ -34,6 +34,7 @@ type Config struct {
 	TLS             bool
 	StartTLS        bool
 	DefaultRoles    []string
+	DefaultTeams    []int64
 	RoleTeamMapping []RoleTeamMapping
 }
 
@@ -55,6 +56,7 @@ type SsoClient struct {
 	TLS             bool
 	StartTLS        bool
 	DefaultRoles    []string
+	DefaultTeams    []int64
 	RoleTeamMapping map[string]RoleTeamMapping
 
 	Ticker *time.Ticker
@@ -109,6 +111,7 @@ func (s *SsoClient) Reload(cf Config) {
 	s.TLS = cf.TLS
 	s.StartTLS = cf.StartTLS
 	s.DefaultRoles = cf.DefaultRoles
+	s.DefaultTeams = cf.DefaultTeams
 	s.SyncAdd = cf.SyncAddUsers
 	s.SyncDel = cf.SyncDelUsers
 	s.SyncInterval = cf.SyncInterval
@@ -135,8 +138,11 @@ func (s *SsoClient) Copy() *SsoClient {
 
 	newRoles := make([]string, len(s.DefaultRoles))
 	copy(newRoles, s.DefaultRoles)
+	newTeams := make([]int64, len(s.DefaultTeams))
+	copy(newTeams, s.DefaultTeams)
 	lc := *s
 	lc.DefaultRoles = newRoles
+	lc.DefaultTeams = newTeams
 
 	s.RUnlock()
 
@@ -291,7 +297,7 @@ func (s *SsoClient) genLdapAttributeSearchList() []string {
 	return ldapAttributes
 }
 
-func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, ldap *SsoClient) (*models.User, error) {
+func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, defaultTeams []int64, ldap *SsoClient) (*models.User, error) {
 	sr, err := ldap.LoginCheck(username, pass)
 	if err != nil {
 		return nil, err
@@ -331,6 +337,10 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, l
 			}
 		}
 
+		if len(roleTeamMapping.Teams) == 0 {
+			roleTeamMapping.Teams = defaultTeams
+		}
+
 		// Synchronize group information
 		if err = models.UserGroupMemberSync(ctx, roleTeamMapping.Teams, user.Id, coverTeams); err != nil {
 			logger.Errorf("ldap.error: failed to update user(%s) group member err: %+v", user, err)
@@ -345,6 +355,15 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, l
 		user.FullSsoFields("ldap", username, nickname, phone, email, roleTeamMapping.Roles)
 		if err = models.DB(ctx).Create(user).Error; err != nil {
 			return nil, errors.WithMessage(err, "failed to add user")
+		}
+
+		if len(roleTeamMapping.Teams) == 0 {
+			for _, gid := range defaultTeams {
+				err = models.UserGroupMemberAdd(ctx, gid, user.Id)
+				if err != nil {
+					logger.Errorf("user:%v gid:%d UserGroupMemberAdd: %s", user, gid, err)
+				}
+			}
 		}
 
 		if err = models.UserGroupMemberSync(ctx, roleTeamMapping.Teams, user.Id, false); err != nil {

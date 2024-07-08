@@ -55,7 +55,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 	var err error
 	lc := rt.Sso.LDAP.Copy()
 	if lc.Enable {
-		user, err = ldapx.LdapLogin(rt.Ctx, f.Username, authPassWord, lc.DefaultRoles, lc)
+		user, err = ldapx.LdapLogin(rt.Ctx, f.Username, authPassWord, lc.DefaultRoles, lc.DefaultTeams, lc)
 		if err != nil {
 			logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
 			var errLoginInN9e error
