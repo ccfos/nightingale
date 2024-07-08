@@ -70,7 +70,11 @@ func (ugs *UserGroupSyncer) syncTeamMember() error {
 	if err != nil {
 		return err
 	}
-	err = ugs.addMemberToFDTeam(users)
+
+	toDutyErr := ugs.addMemberToFDTeam(users)
+	if toDutyErr != nil {
+		logger.Warningf("failed to sync user group %s %v to flashduty's team: %v", ugs.ug.Name, users, toDutyErr)
+	}
 
 	return err
 }
