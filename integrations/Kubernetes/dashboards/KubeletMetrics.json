@@ -1,485 +1,497 @@
 {
-  "name": "Kubernetes / Kubelet Metrics",
-  "tags": "Categraf",
-  "ident": "",
-  "configs": {
-    "panels": [
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colSpan": 1,
-          "colorMode": "background",
-          "textMode": "value",
-          "textSize": {}
-        },
-        "id": "d3caf396-b3a1-449b-acec-f550967889e6",
-        "layout": {
-          "h": 3,
-          "i": "d3caf396-b3a1-449b-acec-f550967889e6",
-          "isResizable": true,
-          "w": 4,
-          "x": 0,
-          "y": 0
-        },
-        "name": "Kubelet UP",
-        "options": {
-          "standardOptions": {}
-        },
-        "targets": [
-          {
-            "expr": "sum(up{source=\"kubelet\", cluster=~\"$cluster\"})",
-            "refId": "A"
-          }
-        ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colSpan": 1,
-          "colorMode": "value",
-          "textMode": "valueAndName",
-          "textSize": {}
-        },
-        "id": "38c38b23-a7e3-4177-8c41-3ce955ea0434",
-        "layout": {
-          "h": 3,
-          "i": "38c38b23-a7e3-4177-8c41-3ce955ea0434",
-          "isResizable": true,
-          "w": 4,
-          "x": 4,
-          "y": 0
-        },
-        "name": "Running Pods",
-        "options": {
-          "standardOptions": {}
-        },
-        "targets": [
-          {
-            "expr": "sum(kubelet_running_pods{cluster=~\"$cluster\", instance=~\"$instance\"})",
-            "refId": "A"
-          }
-        ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colSpan": 1,
-          "colorMode": "value",
-          "textMode": "valueAndName",
-          "textSize": {}
-        },
-        "id": "525859b9-91d7-4180-b363-bf8ceec977d8",
-        "layout": {
-          "h": 3,
-          "i": "26bf2320-fcff-48f8-a6fc-aa9076bb9329",
-          "isResizable": true,
-          "w": 4,
-          "x": 8,
-          "y": 0
-        },
-        "name": "Running Containers",
-        "options": {
-          "standardOptions": {}
-        },
-        "targets": [
-          {
-            "expr": "sum(kubelet_running_containers{cluster=~\"$cluster\", instance=~\"$instance\", container_state=\"running\"})",
-            "refId": "A"
-          }
-        ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colSpan": 1,
-          "colorMode": "value",
-          "textMode": "valueAndName",
-          "textSize": {}
-        },
-        "id": "84af4617-2ae0-4b30-a82a-6e8586342224",
-        "layout": {
-          "h": 3,
-          "i": "54ae4ab3-e932-418c-a637-f2f515cce1b9",
-          "isResizable": true,
-          "w": 4,
-          "x": 12,
-          "y": 0
-        },
-        "name": "Desired Volumes",
-        "options": {
-          "standardOptions": {}
-        },
-        "targets": [
-          {
-            "expr": "sum(volume_manager_total_volumes{cluster=~\"$cluster\", instance=~\"$instance\", state=\"desired_state_of_world\"})",
-            "refId": "A"
-          }
-        ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colSpan": 1,
-          "colorMode": "value",
-          "textMode": "valueAndName",
-          "textSize": {}
-        },
-        "id": "d431f4bd-9115-41d2-a494-1d680bdd1e0f",
-        "layout": {
-          "h": 3,
-          "i": "d9de76d7-2203-40e7-a792-9888ec869e82",
-          "isResizable": true,
-          "w": 4,
-          "x": 16,
-          "y": 0
-        },
-        "name": "Actual Volumes",
-        "options": {
-          "standardOptions": {}
-        },
-        "targets": [
-          {
-            "expr": "sum(volume_manager_total_volumes{cluster=~\"$cluster\", instance=~\"$instance\", state=\"actual_state_of_world\"})",
-            "refId": "A"
-          }
-        ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colSpan": 1,
-          "colorMode": "value",
-          "textMode": "value",
-          "textSize": {}
-        },
-        "id": "54de62bc-8af3-4c27-8b8e-1af567b363fc",
-        "layout": {
-          "h": 3,
-          "i": "bf2bbd15-347d-404c-9b8f-e524875befe2",
-          "isResizable": true,
-          "w": 4,
-          "x": 20,
-          "y": 0
-        },
-        "name": "OP Errors in 5min",
-        "options": {
-          "standardOptions": {},
-          "valueMappings": [
+    "id": 0,
+    "group_id": 0,
+    "name": "Kubernetes / Kubelet Metrics",
+    "ident": "",
+    "tags": "Categraf",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "panels": [
             {
-              "match": {
-                "from": 1
-              },
-              "result": {
-                "color": "#d0021b"
-              },
-              "type": "range"
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "d3caf396-b3a1-449b-acec-f550967889e6",
+                "layout": {
+                    "h": 3,
+                    "i": "d3caf396-b3a1-449b-acec-f550967889e6",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Kubelet UP",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "sum(up{source=\"kubelet\", cluster=~\"$cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
             },
             {
-              "match": {
-                "to": 1
-              },
-              "result": {
-                "color": "#417505"
-              },
-              "type": "range"
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "38c38b23-a7e3-4177-8c41-3ce955ea0434",
+                "layout": {
+                    "h": 3,
+                    "i": "38c38b23-a7e3-4177-8c41-3ce955ea0434",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 0
+                },
+                "name": "Running Pods",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "sum(kubelet_running_pods{cluster=~\"$cluster\", instance=~\"$instance\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "525859b9-91d7-4180-b363-bf8ceec977d8",
+                "layout": {
+                    "h": 3,
+                    "i": "26bf2320-fcff-48f8-a6fc-aa9076bb9329",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 0
+                },
+                "name": "Running Containers",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "sum(kubelet_running_containers{cluster=~\"$cluster\", instance=~\"$instance\", container_state=\"running\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "84af4617-2ae0-4b30-a82a-6e8586342224",
+                "layout": {
+                    "h": 3,
+                    "i": "54ae4ab3-e932-418c-a637-f2f515cce1b9",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 12,
+                    "y": 0
+                },
+                "name": "Desired Volumes",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "sum(volume_manager_total_volumes{cluster=~\"$cluster\", instance=~\"$instance\", state=\"desired_state_of_world\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "d431f4bd-9115-41d2-a494-1d680bdd1e0f",
+                "layout": {
+                    "h": 3,
+                    "i": "d9de76d7-2203-40e7-a792-9888ec869e82",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 0
+                },
+                "name": "Actual Volumes",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "sum(volume_manager_total_volumes{cluster=~\"$cluster\", instance=~\"$instance\", state=\"actual_state_of_world\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "54de62bc-8af3-4c27-8b8e-1af567b363fc",
+                "layout": {
+                    "h": 3,
+                    "i": "bf2bbd15-347d-404c-9b8f-e524875befe2",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 0
+                },
+                "name": "OP Errors in 5min",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 1
+                            },
+                            "result": {
+                                "color": "#d0021b"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "to": 1
+                            },
+                            "result": {
+                                "color": "#417505"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(kubelet_runtime_operations_errors_total{cluster=~\"$cluster\", instance=~\"$instance\"}[5m]))",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "730d4a9b-791f-4aaf-a042-668f66e73814",
+                "layout": {
+                    "h": 1,
+                    "i": "730d4a9b-791f-4aaf-a042-668f66e73814",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 3
+                },
+                "name": "Operations",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "d26e6818-6704-492a-8cbf-58473dd85716",
+                "layout": {
+                    "h": 4,
+                    "i": "d26e6818-6704-492a-8cbf-58473dd85716",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 4
+                },
+                "name": "Operations in 5min",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "increase(kubelet_runtime_operations_total{cluster=~\"$cluster\", instance=~\"$instance\"}[5m])",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "09a6ad5b-8c0e-4f17-b17f-3ebc514f7d20",
+                "layout": {
+                    "h": 4,
+                    "i": "4e585d2f-c61c-4350-86ec-dca7ddc34ceb",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 4
+                },
+                "name": "Operation Errors in 5min",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "increase(kubelet_runtime_operations_errors_total{cluster=~\"$cluster\", instance=~\"$instance\"}[5m])",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "b5e56f3e-fa20-4c19-8578-c0610fa0a7e7",
+                "layout": {
+                    "h": 4,
+                    "i": "b5e56f3e-fa20-4c19-8578-c0610fa0a7e7",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 8
+                },
+                "name": "Average Operation duration in 1 hour (Unit: Second)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "increase(kubelet_runtime_operations_duration_seconds_sum{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])/increase(kubelet_runtime_operations_duration_seconds_count{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "dd7e84c5-03ce-467c-871a-aa110fe051f4",
+                "layout": {
+                    "h": 1,
+                    "i": "dd7e84c5-03ce-467c-871a-aa110fe051f4",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 12
+                },
+                "name": "PLEG relist",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "f3822da8-a9c9-4db1-ba12-465d3ece823e",
+                "layout": {
+                    "h": 4,
+                    "i": "f3822da8-a9c9-4db1-ba12-465d3ece823e",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 13
+                },
+                "name": "relist rate",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(kubelet_pleg_relist_duration_seconds_count{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "a6e4c914-bfca-4419-a264-f5b1cbab261a",
+                "layout": {
+                    "h": 4,
+                    "i": "2b4ada76-6c30-42cd-9bd3-c939b4c0139c",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 13
+                },
+                "name": "relist duration (Unit: Second)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "increase(kubelet_pleg_relist_duration_seconds_sum{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])/increase(kubelet_pleg_relist_duration_seconds_count{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
             }
-          ]
-        },
-        "targets": [
-          {
-            "expr": "sum(increase(kubelet_runtime_operations_errors_total{cluster=~\"$cluster\", instance=~\"$instance\"}[5m]))",
-            "refId": "A"
-          }
         ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "collapsed": true,
-        "id": "730d4a9b-791f-4aaf-a042-668f66e73814",
-        "layout": {
-          "h": 1,
-          "i": "730d4a9b-791f-4aaf-a042-668f66e73814",
-          "isResizable": false,
-          "w": 24,
-          "x": 0,
-          "y": 3
-        },
-        "name": "Operations",
-        "panels": [],
-        "type": "row"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "smooth",
-          "stack": "off",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "d26e6818-6704-492a-8cbf-58473dd85716",
-        "layout": {
-          "h": 4,
-          "i": "d26e6818-6704-492a-8cbf-58473dd85716",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 4
-        },
-        "name": "Operations in 5min",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {},
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "increase(kubelet_runtime_operations_total{cluster=~\"$cluster\", instance=~\"$instance\"}[5m])",
-            "refId": "A"
-          }
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(kubelet_running_pods, cluster)",
+                "multi": true,
+                "name": "cluster",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(kubelet_running_pods{cluster=~\"$cluster\"}, instance)",
+                "multi": true,
+                "name": "instance",
+                "type": "query"
+            }
         ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "smooth",
-          "stack": "off",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "09a6ad5b-8c0e-4f17-b17f-3ebc514f7d20",
-        "layout": {
-          "h": 4,
-          "i": "4e585d2f-c61c-4350-86ec-dca7ddc34ceb",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 4
-        },
-        "name": "Operation Errors in 5min",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {},
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "increase(kubelet_runtime_operations_errors_total{cluster=~\"$cluster\", instance=~\"$instance\"}[5m])",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "smooth",
-          "stack": "off",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "b5e56f3e-fa20-4c19-8578-c0610fa0a7e7",
-        "layout": {
-          "h": 4,
-          "i": "b5e56f3e-fa20-4c19-8578-c0610fa0a7e7",
-          "isResizable": true,
-          "w": 24,
-          "x": 0,
-          "y": 8
-        },
-        "name": "Average Operation duration in 1 hour (Unit: Second)",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {},
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "increase(kubelet_runtime_operations_duration_seconds_sum{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])/increase(kubelet_runtime_operations_duration_seconds_count{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "collapsed": true,
-        "id": "dd7e84c5-03ce-467c-871a-aa110fe051f4",
-        "layout": {
-          "h": 1,
-          "i": "dd7e84c5-03ce-467c-871a-aa110fe051f4",
-          "isResizable": false,
-          "w": 24,
-          "x": 0,
-          "y": 12
-        },
-        "name": "PLEG relist",
-        "type": "row"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "smooth",
-          "stack": "off",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "f3822da8-a9c9-4db1-ba12-465d3ece823e",
-        "layout": {
-          "h": 4,
-          "i": "f3822da8-a9c9-4db1-ba12-465d3ece823e",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 13
-        },
-        "name": "relist rate",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {},
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "rate(kubelet_pleg_relist_duration_seconds_count{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "smooth",
-          "stack": "off",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "a6e4c914-bfca-4419-a264-f5b1cbab261a",
-        "layout": {
-          "h": 4,
-          "i": "2b4ada76-6c30-42cd-9bd3-c939b4c0139c",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 13
-        },
-        "name": "relist duration (Unit: Second)",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {},
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "increase(kubelet_pleg_relist_duration_seconds_sum{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])/increase(kubelet_pleg_relist_duration_seconds_count{cluster=~\"$cluster\", instance=~\"$instance\"}[1h])",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      }
-    ],
-    "var": [
-      {
-        "name": "datasource",
-        "type": "datasource",
-        "definition": "prometheus"
-      },
-      {
-        "allOption": true,
-        "definition": "label_values(kubelet_running_pods, cluster)",
-        "multi": true,
-        "name": "cluster",
-        "type": "query",
-        "datasource": {
-          "cate": "prometheus",
-          "value": "${datasource}"
-        }
-      },
-      {
-        "allOption": true,
-        "definition": "label_values(kubelet_running_pods{cluster=~\"$cluster\"}, instance)",
-        "multi": true,
-        "name": "instance",
-        "type": "query",
-        "datasource": {
-          "cate": "prometheus",
-          "value": "${datasource}"
-        }
-      }
-    ],
-    "version": "3.0.0"
-  }
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327690164000
 }

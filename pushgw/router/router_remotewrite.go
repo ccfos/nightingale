@@ -21,9 +21,10 @@ func extractMetricFromTimeSeries(s *prompb.TimeSeries) string {
 	return ""
 }
 
-func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMetrics []string) (string, string) {
+// 返回的第二个参数，bool，表示是否需要把 ident 写入 target 表
+func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent, ignoreHost bool, identMetrics []string) (string, bool) {
 	if s == nil {
-		return "", ""
+		return "", false
 	}
 
 	labelMap := make(map[string]int)
@@ -32,14 +33,24 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMet
 	}
 
 	var ident string
-	var heartbeatIdent string
-	// agent_hostname for grafana-agent and categraf
-	if idx, ok := labelMap["agent_hostname"]; ok {
-		s.Labels[idx].Name = "ident"
+
+	// 如果标签中有ident，则直接使用
+	if idx, ok := labelMap["ident"]; ok {
 		ident = s.Labels[idx].Value
 	}
 
-	if !ignoreIdent && ident == "" {
+	if ident == "" {
+		// 没有 ident 标签，尝试使用 agent_hostname 作为 ident
+		// agent_hostname for grafana-agent and categraf
+		if idx, ok := labelMap["agent_hostname"]; ok {
+			s.Labels[idx].Name = "ident"
+			ident = s.Labels[idx].Value
+		}
+	}
+
+	if !ignoreHost && ident == "" {
+		// agent_hostname 没有，那就使用 host 作为 ident，用于 telegraf 的场景
+		// 但是，有的时候 nginx 采集的指标中带有 host 标签表示域名，这个时候就不能用 host 作为 ident，此时需要在 url 中设置 ignore_host=true
 		// telegraf, output plugin: http, format: prometheusremotewrite
 		if idx, ok := labelMap["host"]; ok {
 			s.Labels[idx].Name = "ident"
@@ -47,11 +58,11 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMet
 		}
 	}
 
-	if idx, ok := labelMap["ident"]; ok {
-		ident = s.Labels[idx].Value
+	if ident == "" {
+		// 上报的监控数据中并没有 ident 信息
+		return "", false
 	}
 
-	heartbeatIdent = ident
 	if len(identMetrics) > 0 {
 		metricFound := false
 		for _, identMetric := range identMetrics {
@@ -62,11 +73,11 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent bool, identMet
 		}
 
 		if !metricFound {
-			heartbeatIdent = ""
+			return ident, false
 		}
 	}
 
-	return ident, heartbeatIdent
+	return ident, !ignoreIdent
 }
 
 func duplicateLabelKey(series *prompb.TimeSeries) bool {
@@ -101,14 +112,18 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		return
 	}
 
-	var ids = make(map[string]struct{})
+	var (
+		ignoreIdent = ginx.QueryBool(c, "ignore_ident", false)
+		ignoreHost  = ginx.QueryBool(c, "ignore_host", false)
+		ids         = make(map[string]struct{})
+	)
 
 	for i := 0; i < count; i++ {
 		if duplicateLabelKey(&req.Timeseries[i]) {
 			continue
 		}
 
-		ident, heartbeatIdent := extractIdentFromTimeSeries(&req.Timeseries[i], ginx.QueryBool(c, "ignore_ident", false), rt.Pushgw.IdentMetrics)
+		ident, insertTarget := extractIdentFromTimeSeries(&req.Timeseries[i], ignoreIdent, ignoreHost, rt.Pushgw.IdentMetrics)
 		if len(ident) > 0 {
 			// enrich host labels
 			target, has := rt.TargetCache.Get(ident)
@@ -117,7 +132,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 			}
 		}
 
-		if len(heartbeatIdent) > 0 {
+		if insertTarget {
 			// has ident tag or agent_hostname tag
 			// register host in table target
 			ids[ident] = struct{}{}

@@ -9,7 +9,6 @@ import (
 	imodels "github.com/flashcatcloud/ibex/src/models"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -19,6 +18,16 @@ func Migrate(db *gorm.DB) {
 }
 
 func MigrateIbexTables(db *gorm.DB) {
+	var tableOptions string
+	switch db.Dialector.(type) {
+	case *mysql.Dialector:
+		tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+	}
+
+	if tableOptions != "" {
+		db = db.Set("gorm:table_options", tableOptions)
+	}
+
 	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &imodels.TaskSchedulerHealth{}, &imodels.TaskHostDoing{}, &imodels.TaskAction{}}
 	for _, dt := range dts {
 		err := db.AutoMigrate(dt)
@@ -41,8 +50,6 @@ func MigrateTables(db *gorm.DB) error {
 	switch db.Dialector.(type) {
 	case *mysql.Dialector:
 		tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-	case *postgres.Dialector:
-		tableOptions = "ENCODING='UTF8'"
 	}
 	if tableOptions != "" {
 		db = db.Set("gorm:table_options", tableOptions)
@@ -51,10 +58,16 @@ func MigrateTables(db *gorm.DB) error {
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
-		&models.MetricFilter{}, &models.BuiltinComponent{}, &models.BuiltinPayload{}}
+		&models.MetricFilter{}, &models.BuiltinComponent{}}
 
 	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
 		dts = append(dts, &AlertHisEvent{})
+	}
+
+	if !db.Migrator().HasTable(&models.BuiltinPayload{}) {
+		dts = append(dts, &models.BuiltinPayload{})
+	} else {
+		dts = append(dts, &BuiltinPayloads{})
 	}
 
 	for _, dt := range dts {
@@ -176,6 +189,7 @@ type AlertMute struct {
 type RecordingRule struct {
 	QueryConfigs  string `gorm:"type:text;not null;column:query_configs"` // query_configs
 	DatasourceIds string `gorm:"column:datasource_ids;type:varchar(255);default:'';comment:datasource ids"`
+	CronPattern   string `gorm:"column:cron_pattern;type:varchar(255);default:'';comment:cron pattern"`
 }
 
 type AlertingEngines struct {
@@ -198,7 +212,7 @@ type Target struct {
 }
 
 type Datasource struct {
-	IsDefault bool `gorm:"column:is_default;int;not null;default:0;comment:is default datasource"`
+	IsDefault bool `gorm:"column:is_default;type:boolean;not null;comment:is default datasource"`
 }
 
 type Configs struct {
@@ -236,4 +250,8 @@ type Users struct {
 
 type SsoConfig struct {
 	UpdateAt int64 `gorm:"column:update_at;type:int;default:0;comment:update_at"`
+}
+
+type BuiltinPayloads struct {
+	UUID int64 `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
 }

@@ -1,1204 +1,1216 @@
 {
-  "name": "TaosKeeper 3.x Prometheus Dashboard",
-  "tags": "",
-  "ident": "",
-  "configs": {
-    "links": [],
-    "panels": [
-      {
-        "custom": {
-          "calc": "last",
-          "colorMode": "value",
-          "textMode": "value",
-          "version": "2.0.0"
-        },
-        "id": "85aad21e-601f-4279-b1da-5b2675a17c58",
-        "layout": {
-          "h": 4,
-          "i": "85aad21e-601f-4279-b1da-5b2675a17c58",
-          "w": 3,
-          "x": 0,
-          "y": 4
-        },
+    "id": 0,
+    "group_id": 0,
+    "name": "TaosKeeper 3.x Prometheus Dashboard",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
         "links": [],
-        "maxPerRow": 4,
-        "name": "First EP",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "type": "base",
-                "value": null
-              }
-            ],
-            "style": "line"
-          },
-          "tooltip": {
-            "mode": "multi"
-          },
-          "valueMappings": []
-        },
-        "targets": [
-          {
-            "expr": "taos_cluster_info_first_ep{cluster=\"$cluster\"}",
-            "legend": "",
-            "refId": "A"
-          }
+        "panels": [
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "85aad21e-601f-4279-b1da-5b2675a17c58",
+                "layout": {
+                    "h": 4,
+                    "i": "85aad21e-601f-4279-b1da-5b2675a17c58",
+                    "w": 3,
+                    "x": 0,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "First EP",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "taos_cluster_info_first_ep{cluster=\"$cluster\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "2f75b3a1-4105-42fd-a060-dfc88b871e6e",
+                "layout": {
+                    "h": 4,
+                    "i": "2f75b3a1-4105-42fd-a060-dfc88b871e6e",
+                    "w": 3,
+                    "x": 3,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Version",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "taos_cluster_info_version{cluster=\"$cluster\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "MNode 被选举后经过的时长",
+                "id": "a1f5853b-ee1a-44a8-aaa5-a432204eaaa2",
+                "layout": {
+                    "h": 4,
+                    "i": "a1f5853b-ee1a-44a8-aaa5-a432204eaaa2",
+                    "w": 3,
+                    "x": 6,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Master Uptime",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "taos_cluster_info_master_uptime{cluster=\"$cluster\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "企业版授权到期时间",
+                "id": "d40bdb61-9c8e-4646-8632-9048e339b009",
+                "layout": {
+                    "h": 4,
+                    "i": "d40bdb61-9c8e-4646-8632-9048e339b009",
+                    "w": 3,
+                    "x": 9,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Expire Time",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "taos_grants_info_expire_time{cluster=\"$cluster\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "企业版授权已用测点数",
+                "id": "f91206a8-8a02-4bd9-84f1-683a4b6eee7a",
+                "layout": {
+                    "h": 4,
+                    "i": "f91206a8-8a02-4bd9-84f1-683a4b6eee7a",
+                    "w": 4,
+                    "x": 12,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Used Meassuring Points",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "taos_dnodes_info_disk_engine",
+                        "legend": "used",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "taos_dnodes_info_disk_total",
+                        "legend": "total",
+                        "refId": "B"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "数据库个数",
+                "id": "db696656-c586-42b1-a38d-030b187ef338",
+                "layout": {
+                    "h": 4,
+                    "i": "db696656-c586-42b1-a38d-030b187ef338",
+                    "w": 2,
+                    "x": 16,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Databases",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "count(taos_vgroups_info_status{cluster=\"$cluster\"})",
+                        "legend": "databases",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "所有数据库的表数量之和",
+                "id": "9080b0e0-6f30-4d3b-b675-535664804635",
+                "layout": {
+                    "h": 4,
+                    "i": "9080b0e0-6f30-4d3b-b675-535664804635",
+                    "w": 3,
+                    "x": 18,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Tables",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "sum(taos_tables_per_database{cluster=\"$cluster\"})",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "当前TDengine集群DNode数量，Alive 为存活，Total 为所有",
+                "id": "7148c52d-a2a8-4cc5-9bb5-b598041cf500",
+                "layout": {
+                    "h": 4,
+                    "i": "7148c52d-a2a8-4cc5-9bb5-b598041cf500",
+                    "w": 6,
+                    "x": 0,
+                    "y": 8
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNodes",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "taos_cluster_info_dnodes_total",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "当前TDengine集群MNode数量，Alive 为存活，Total 为所有",
+                "id": "bd41d367-c7e0-4f2c-a178-4f6af23965d0",
+                "layout": {
+                    "h": 4,
+                    "i": "bd41d367-c7e0-4f2c-a178-4f6af23965d0",
+                    "w": 6,
+                    "x": 6,
+                    "y": 8
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "MNodes",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "taos_cluster_info_mnodes_total{cluster=\"$cluster\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "当前TDengine集群 VGroups 数量，Alive 为存活，Total 为所有",
+                "id": "2fea6c74-2963-4815-a584-d2fb5cffe2ba",
+                "layout": {
+                    "h": 4,
+                    "i": "2fea6c74-2963-4815-a584-d2fb5cffe2ba",
+                    "w": 6,
+                    "x": 12,
+                    "y": 8
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "VGroups",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "count(count(taos_vgroups_info_status{cluster=\"$cluster\"}) by (vgroup_id))",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "当前TDengine集群 VNodes 数量，Alive 为存活，Total 为所有",
+                "id": "537931bd-6979-4eba-a5d4-9958109ff81f",
+                "layout": {
+                    "h": 4,
+                    "i": "537931bd-6979-4eba-a5d4-9958109ff81f",
+                    "w": 6,
+                    "x": 18,
+                    "y": 8
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "VNodes",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "sum(taos_vgroups_info_online_vnodes{cluster=\"$cluster\"})",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "37d26059-acdd-4d15-a135-266d0155ff81",
+                "layout": {
+                    "h": 6,
+                    "i": "37d26059-acdd-4d15-a135-266d0155ff81",
+                    "w": 6,
+                    "x": 0,
+                    "y": 12
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNodes Alive Percent",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "taos_cluster_info_dnodes_alive / taos_cluster_info_dnodes_total",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "c109ddac-bb23-406a-b1a9-30ebf13b0c8c",
+                "layout": {
+                    "h": 6,
+                    "i": "c109ddac-bb23-406a-b1a9-30ebf13b0c8c",
+                    "w": 6,
+                    "x": 6,
+                    "y": 12
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "MNodes Alive Percent",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "taos_cluster_info_mnodes_alive / taos_cluster_info_mnodes_total",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "d6837203-415f-4f58-8892-79a3eff8ce8b",
+                "layout": {
+                    "h": 6,
+                    "i": "d6837203-415f-4f58-8892-79a3eff8ce8b",
+                    "w": 6,
+                    "x": 12,
+                    "y": 12
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "VGroups Alive Percent",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "taos_cluster_info_vgroups_alive / taos_cluster_info_vgroups_total",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "a54710e4-73b4-49c4-99d4-6a50a411823d",
+                "layout": {
+                    "h": 6,
+                    "i": "a54710e4-73b4-49c4-99d4-6a50a411823d",
+                    "w": 6,
+                    "x": 18,
+                    "y": 12
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "VNodes Alive Percent",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "taos_cluster_info_vnodes_alive / taos_cluster_info_vnodes_total",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "59ec36a1-b3ac-4db1-9c54-0e63e5ecb2c1",
+                "layout": {
+                    "h": 6,
+                    "i": "59ec36a1-b3ac-4db1-9c54-0e63e5ecb2c1",
+                    "w": 6,
+                    "x": 0,
+                    "y": 18
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Messuring Points Used Percent Alert",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "taos_grants_info_timeseries_used / taos_grants_info_timeseries_total {cluster=\"$cluster\"}",
+                        "legend": "percent",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "57d3394a-9382-413f-9d25-7693e7090989",
+                "layout": {
+                    "h": 6,
+                    "i": "57d3394a-9382-413f-9d25-7693e7090989",
+                    "w": 6,
+                    "x": 6,
+                    "y": 18
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Grants Expire Time",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "taos_grants_info_expire_time",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "错误率（每秒错误数）",
+                "id": "63a3dcea-93d8-435e-a207-653ee4502c20",
+                "layout": {
+                    "h": 6,
+                    "i": "63a3dcea-93d8-435e-a207-653ee4502c20",
+                    "w": 6,
+                    "x": 12,
+                    "y": 18
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Error Rate",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "deriv(taos_dnodes_info_errors{cluster=\"$cluster\"}[1m])",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "0010cd3a-1a0f-4f9c-9b21-438adf761750",
+                "layout": {
+                    "h": 6,
+                    "i": "0010cd3a-1a0f-4f9c-9b21-438adf761750",
+                    "w": 4,
+                    "x": 0,
+                    "y": 25
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNodes Lifetime",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "taos_dnodes_info_uptime{cluster=\"$cluster\"}",
+                        "legend": "{{dnode_ep}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "29d21947-4661-4893-b907-5e7363787a10",
+                "layout": {
+                    "h": 6,
+                    "i": "29d21947-4661-4893-b907-5e7363787a10",
+                    "w": 10,
+                    "x": 4,
+                    "y": 25
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNodes Number",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "taos_cluster_info_dnodes_total{cluster=\"$cluster\"}",
+                        "legend": "total",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "taos_cluster_info_dnodes_alive{cluster=\"$cluster\"}",
+                        "legend": "alive",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "eb3dbe22-6550-4937-9848-897bd7c8ff22",
+                "layout": {
+                    "h": 6,
+                    "i": "eb3dbe22-6550-4937-9848-897bd7c8ff22",
+                    "w": 10,
+                    "x": 14,
+                    "y": 25
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "MNodes Number",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "taos_cluster_info_mnodes_total{cluster=\"$cluster\"}",
+                        "legend": "total",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "taos_cluster_info_mnodes_alive{cluster=\"$cluster\"}",
+                        "legend": "alive",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            }
         ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colorMode": "value",
-          "textMode": "value",
-          "version": "2.0.0"
-        },
-        "id": "2f75b3a1-4105-42fd-a060-dfc88b871e6e",
-        "layout": {
-          "h": 4,
-          "i": "2f75b3a1-4105-42fd-a060-dfc88b871e6e",
-          "w": 3,
-          "x": 3,
-          "y": 4
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "Version",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "seconds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "type": "base",
-                "value": null
-              }
-            ],
-            "style": "line"
-          },
-          "tooltip": {
-            "mode": "multi"
-          },
-          "valueMappings": []
-        },
-        "targets": [
-          {
-            "expr": "taos_cluster_info_version{cluster=\"$cluster\"}",
-            "legend": "",
-            "refId": "A"
-          }
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(taos_dn_cpu_taosd, cluster)",
+                "multi": false,
+                "name": "cluster",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(taos_dn_cpu_taosd{cluster=\"$cluster\"}, fqdn)",
+                "multi": false,
+                "name": "fqdn",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(taos_dn_cpu_taosd{cluster=\"$cluster\"}, dnodeid)",
+                "multi": false,
+                "name": "dnodeid",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(taos_vgroups_info_status{cluster=\"$cluster\"}, database_name)",
+                "multi": true,
+                "name": "database",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(taos_cluster_info_first_ep{cluster=\"$cluster\"}, value)",
+                "multi": false,
+                "name": "firstEp",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(taos_cluster_info_version{cluster=\"$cluster\"}, value)",
+                "multi": false,
+                "name": "version",
+                "reg": "",
+                "type": "query"
+            }
         ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colorMode": "value",
-          "textMode": "value",
-          "version": "2.0.0"
-        },
-        "description": "MNode 被选举后经过的时长",
-        "id": "a1f5853b-ee1a-44a8-aaa5-a432204eaaa2",
-        "layout": {
-          "h": 4,
-          "i": "a1f5853b-ee1a-44a8-aaa5-a432204eaaa2",
-          "w": 3,
-          "x": 6,
-          "y": 4
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "Master Uptime",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "seconds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "type": "base",
-                "value": null
-              }
-            ],
-            "style": "line"
-          },
-          "tooltip": {
-            "mode": "multi"
-          },
-          "valueMappings": []
-        },
-        "targets": [
-          {
-            "expr": "taos_cluster_info_master_uptime{cluster=\"$cluster\"}",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colorMode": "value",
-          "textMode": "value",
-          "version": "2.0.0"
-        },
-        "description": "企业版授权到期时间",
-        "id": "d40bdb61-9c8e-4646-8632-9048e339b009",
-        "layout": {
-          "h": 4,
-          "i": "d40bdb61-9c8e-4646-8632-9048e339b009",
-          "w": 3,
-          "x": 9,
-          "y": 4
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "Expire Time",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "seconds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "type": "base",
-                "value": null
-              }
-            ],
-            "style": "line"
-          },
-          "tooltip": {
-            "mode": "multi"
-          },
-          "valueMappings": []
-        },
-        "targets": [
-          {
-            "expr": "taos_grants_info_expire_time{cluster=\"$cluster\"}",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "last",
-          "version": "2.0.0"
-        },
-        "description": "企业版授权已用测点数",
-        "id": "f91206a8-8a02-4bd9-84f1-683a4b6eee7a",
-        "layout": {
-          "h": 4,
-          "i": "f91206a8-8a02-4bd9-84f1-683a4b6eee7a",
-          "w": 4,
-          "x": 12,
-          "y": 4
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "Used Meassuring Points",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "type": "base",
-                "value": null
-              }
-            ],
-            "style": "line"
-          },
-          "tooltip": {
-            "mode": "multi"
-          },
-          "valueMappings": []
-        },
-        "targets": [
-          {
-            "expr": "taos_dnodes_info_disk_engine",
-            "legend": "used",
-            "refId": "A"
-          },
-          {
-            "expr": "taos_dnodes_info_disk_total",
-            "legend": "total",
-            "refId": "B"
-          }
-        ],
-        "type": "barGauge",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colorMode": "value",
-          "textMode": "value",
-          "version": "2.0.0"
-        },
-        "description": "数据库个数",
-        "id": "db696656-c586-42b1-a38d-030b187ef338",
-        "layout": {
-          "h": 4,
-          "i": "db696656-c586-42b1-a38d-030b187ef338",
-          "w": 2,
-          "x": 16,
-          "y": 4
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "Databases",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "type": "base",
-                "value": null
-              },
-              {
-                "color": "#F2495C",
-                "value": 80
-              }
-            ],
-            "style": "line"
-          },
-          "tooltip": {
-            "mode": "multi"
-          },
-          "valueMappings": []
-        },
-        "targets": [
-          {
-            "expr": "count(taos_vgroups_info_status{cluster=\"$cluster\"})",
-            "legend": "databases",
-            "refId": "A"
-          }
-        ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colorMode": "value",
-          "textMode": "value",
-          "version": "2.0.0"
-        },
-        "description": "所有数据库的表数量之和",
-        "id": "9080b0e0-6f30-4d3b-b675-535664804635",
-        "layout": {
-          "h": 4,
-          "i": "9080b0e0-6f30-4d3b-b675-535664804635",
-          "w": 3,
-          "x": 18,
-          "y": 4
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "Tables",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "type": "base",
-                "value": null
-              }
-            ],
-            "style": "line"
-          },
-          "tooltip": {
-            "mode": "multi"
-          },
-          "valueMappings": []
-        },
-        "targets": [
-          {
-            "expr": "sum(taos_tables_per_database{cluster=\"$cluster\"})",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "version": "2.0.0"
-        },
-        "description": "当前TDengine集群DNode数量，Alive 为存活，Total 为所有",
-        "id": "7148c52d-a2a8-4cc5-9bb5-b598041cf500",
-        "layout": {
-          "h": 4,
-          "i": "7148c52d-a2a8-4cc5-9bb5-b598041cf500",
-          "w": 6,
-          "x": 0,
-          "y": 8
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "DNodes",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "type": "base",
-                "value": null
-              }
-            ],
-            "style": "line"
-          },
-          "tooltip": {
-            "mode": "multi"
-          },
-          "valueMappings": []
-        },
-        "targets": [
-          {
-            "expr": "taos_cluster_info_dnodes_total",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "barGauge",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "version": "2.0.0"
-        },
-        "description": "当前TDengine集群MNode数量，Alive 为存活，Total 为所有",
-        "id": "bd41d367-c7e0-4f2c-a178-4f6af23965d0",
-        "layout": {
-          "h": 4,
-          "i": "bd41d367-c7e0-4f2c-a178-4f6af23965d0",
-          "w": 6,
-          "x": 6,
-          "y": 8
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "MNodes",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "type": "base",
-                "value": null
-              }
-            ],
-            "style": "line"
-          },
-          "tooltip": {
-            "mode": "multi"
-          },
-          "valueMappings": []
-        },
-        "targets": [
-          {
-            "expr": "taos_cluster_info_mnodes_total{cluster=\"$cluster\"}",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "barGauge",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "version": "2.0.0"
-        },
-        "description": "当前TDengine集群 VGroups 数量，Alive 为存活，Total 为所有",
-        "id": "2fea6c74-2963-4815-a584-d2fb5cffe2ba",
-        "layout": {
-          "h": 4,
-          "i": "2fea6c74-2963-4815-a584-d2fb5cffe2ba",
-          "w": 6,
-          "x": 12,
-          "y": 8
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "VGroups",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "type": "base",
-                "value": null
-              }
-            ],
-            "style": "line"
-          },
-          "tooltip": {
-            "mode": "multi"
-          },
-          "valueMappings": []
-        },
-        "targets": [
-          {
-            "expr": "count(count(taos_vgroups_info_status{cluster=\"$cluster\"}) by (vgroup_id))",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "barGauge",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "version": "2.0.0"
-        },
-        "description": "当前TDengine集群 VNodes 数量，Alive 为存活，Total 为所有",
-        "id": "537931bd-6979-4eba-a5d4-9958109ff81f",
-        "layout": {
-          "h": 4,
-          "i": "537931bd-6979-4eba-a5d4-9958109ff81f",
-          "w": 6,
-          "x": 18,
-          "y": 8
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "VNodes",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "type": "base",
-                "value": null
-              }
-            ],
-            "style": "line"
-          },
-          "tooltip": {
-            "mode": "multi"
-          },
-          "valueMappings": []
-        },
-        "targets": [
-          {
-            "expr": "sum(taos_vgroups_info_online_vnodes{cluster=\"$cluster\"})",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "barGauge",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "linear",
-          "stack": "off",
-          "version": "2.0.0",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "37d26059-acdd-4d15-a135-266d0155ff81",
-        "layout": {
-          "h": 6,
-          "i": "37d26059-acdd-4d15-a135-266d0155ff81",
-          "w": 6,
-          "x": 0,
-          "y": 12
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "DNodes Alive Percent",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "taos_cluster_info_dnodes_alive / taos_cluster_info_dnodes_total",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "linear",
-          "stack": "off",
-          "version": "2.0.0",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "c109ddac-bb23-406a-b1a9-30ebf13b0c8c",
-        "layout": {
-          "h": 6,
-          "i": "c109ddac-bb23-406a-b1a9-30ebf13b0c8c",
-          "w": 6,
-          "x": 6,
-          "y": 12
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "MNodes Alive Percent",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "taos_cluster_info_mnodes_alive / taos_cluster_info_mnodes_total",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "linear",
-          "stack": "off",
-          "version": "2.0.0",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "d6837203-415f-4f58-8892-79a3eff8ce8b",
-        "layout": {
-          "h": 6,
-          "i": "d6837203-415f-4f58-8892-79a3eff8ce8b",
-          "w": 6,
-          "x": 12,
-          "y": 12
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "VGroups Alive Percent",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "taos_cluster_info_vgroups_alive / taos_cluster_info_vgroups_total",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "linear",
-          "stack": "off",
-          "version": "2.0.0",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "a54710e4-73b4-49c4-99d4-6a50a411823d",
-        "layout": {
-          "h": 6,
-          "i": "a54710e4-73b4-49c4-99d4-6a50a411823d",
-          "w": 6,
-          "x": 18,
-          "y": 12
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "VNodes Alive Percent",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "taos_cluster_info_vnodes_alive / taos_cluster_info_vnodes_total",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "linear",
-          "stack": "off",
-          "version": "2.0.0",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "59ec36a1-b3ac-4db1-9c54-0e63e5ecb2c1",
-        "layout": {
-          "h": 6,
-          "i": "59ec36a1-b3ac-4db1-9c54-0e63e5ecb2c1",
-          "w": 6,
-          "x": 0,
-          "y": 18
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "Messuring Points Used Percent Alert",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "taos_grants_info_timeseries_used / taos_grants_info_timeseries_total {cluster=\"$cluster\"}",
-            "legend": "percent",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "linear",
-          "stack": "off",
-          "version": "2.0.0",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "57d3394a-9382-413f-9d25-7693e7090989",
-        "layout": {
-          "h": 6,
-          "i": "57d3394a-9382-413f-9d25-7693e7090989",
-          "w": 6,
-          "x": 6,
-          "y": 18
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "Grants Expire Time",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "taos_grants_info_expire_time",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "linear",
-          "stack": "off",
-          "version": "2.0.0",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "description": "错误率（每秒错误数）",
-        "id": "63a3dcea-93d8-435e-a207-653ee4502c20",
-        "layout": {
-          "h": 6,
-          "i": "63a3dcea-93d8-435e-a207-653ee4502c20",
-          "w": 6,
-          "x": 12,
-          "y": 18
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "Error Rate",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "deriv(taos_dnodes_info_errors{cluster=\"$cluster\"}[1m])",
-            "legend": "",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "calc": "lastNotNull",
-          "colorMode": "value",
-          "textMode": "value",
-          "version": "2.0.0"
-        },
-        "id": "0010cd3a-1a0f-4f9c-9b21-438adf761750",
-        "layout": {
-          "h": 6,
-          "i": "0010cd3a-1a0f-4f9c-9b21-438adf761750",
-          "w": 4,
-          "x": 0,
-          "y": 25
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "DNodes Lifetime",
-        "options": {
-          "legend": {
-            "displayMode": "list"
-          },
-          "standardOptions": {
-            "util": "seconds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#73BF69",
-                "type": "base",
-                "value": null
-              }
-            ],
-            "style": "line"
-          },
-          "tooltip": {
-            "mode": "multi"
-          },
-          "valueMappings": []
-        },
-        "targets": [
-          {
-            "expr": "taos_dnodes_info_uptime{cluster=\"$cluster\"}",
-            "legend": "{{dnode_ep}}",
-            "refId": "A"
-          }
-        ],
-        "type": "stat",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "linear",
-          "stack": "off",
-          "version": "2.0.0",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "29d21947-4661-4893-b907-5e7363787a10",
-        "layout": {
-          "h": 6,
-          "i": "29d21947-4661-4893-b907-5e7363787a10",
-          "w": 10,
-          "x": 4,
-          "y": 25
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "DNodes Number",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "taos_cluster_info_dnodes_total{cluster=\"$cluster\"}",
-            "legend": "total",
-            "refId": "A"
-          },
-          {
-            "expr": "taos_cluster_info_dnodes_alive{cluster=\"$cluster\"}",
-            "legend": "alive",
-            "refId": "B"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "lineInterpolation": "linear",
-          "stack": "off",
-          "version": "2.0.0",
-          "lineWidth": 2,
-          "gradientMode": "opacity"
-        },
-        "id": "eb3dbe22-6550-4937-9848-897bd7c8ff22",
-        "layout": {
-          "h": 6,
-          "i": "eb3dbe22-6550-4937-9848-897bd7c8ff22",
-          "w": 10,
-          "x": 14,
-          "y": 25
-        },
-        "links": [],
-        "maxPerRow": 4,
-        "name": "MNodes Number",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "taos_cluster_info_mnodes_total{cluster=\"$cluster\"}",
-            "legend": "total",
-            "refId": "A"
-          },
-          {
-            "expr": "taos_cluster_info_mnodes_alive{cluster=\"$cluster\"}",
-            "legend": "alive",
-            "refId": "B"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${datasource}"
-      }
-    ],
-    "var": [
-      {
-        "name": "datasource",
-        "type": "datasource",
-        "definition": "prometheus"
-      },
-      {
-        "allOption": false,
-        "definition": "label_values(taos_dn_cpu_taosd, cluster)",
-        "multi": false,
-        "name": "cluster",
-        "reg": "",
-        "type": "query",
-        "datasource": {
-          "cate": "prometheus",
-          "value": "${datasource}"
-        }
-      },
-      {
-        "allOption": false,
-        "definition": "label_values(taos_dn_cpu_taosd{cluster=\"$cluster\"}, fqdn)",
-        "multi": false,
-        "name": "fqdn",
-        "reg": "",
-        "type": "query",
-        "datasource": {
-          "cate": "prometheus",
-          "value": "${datasource}"
-        }
-      },
-      {
-        "allOption": false,
-        "definition": "label_values(taos_dn_cpu_taosd{cluster=\"$cluster\"}, dnodeid)",
-        "multi": false,
-        "name": "dnodeid",
-        "reg": "",
-        "type": "query",
-        "datasource": {
-          "cate": "prometheus",
-          "value": "${datasource}"
-        }
-      },
-      {
-        "allOption": true,
-        "definition": "label_values(taos_vgroups_info_status{cluster=\"$cluster\"}, database_name)",
-        "multi": true,
-        "name": "database",
-        "reg": "",
-        "type": "query",
-        "datasource": {
-          "cate": "prometheus",
-          "value": "${datasource}"
-        }
-      },
-      {
-        "allOption": false,
-        "definition": "label_values(taos_cluster_info_first_ep{cluster=\"$cluster\"}, value)",
-        "multi": false,
-        "name": "firstEp",
-        "reg": "",
-        "type": "query",
-        "datasource": {
-          "cate": "prometheus",
-          "value": "${datasource}"
-        }
-      },
-      {
-        "allOption": false,
-        "definition": "label_values(taos_cluster_info_version{cluster=\"$cluster\"}, value)",
-        "multi": false,
-        "name": "version",
-        "reg": "",
-        "type": "query",
-        "datasource": {
-          "cate": "prometheus",
-          "value": "${datasource}"
-        }
-      }
-    ],
-    "version": "3.0.0"
-  }
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328408805000
 }

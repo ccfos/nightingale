@@ -45,6 +45,21 @@ func (ms *MmSender) Send(ctx MessageContext) {
 	})
 }
 
+func (ms *MmSender) CallBack(ctx CallBackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+		return
+	}
+	message := BuildTplMessage(models.Mm, ms.tpl, ctx.Events)
+
+	SendMM(MatterMostMessage{
+		Text:   message,
+		Tokens: []string{ctx.CallBackURL},
+		Stats:  ctx.Stats,
+	})
+
+	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
+}
+
 func (ms *MmSender) extract(users []*models.User) []string {
 	tokens := make([]string, 0, len(users))
 	for _, user := range users {

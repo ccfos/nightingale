@@ -12,28 +12,28 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, alertMuteCache *memsto.AlertMuteCacheType) bool {
+func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, alertMuteCache *memsto.AlertMuteCacheType) (bool, string) {
 	if rule.Disabled == 1 {
-		return true
+		return true, "rule disabled"
 	}
 
 	if TimeSpanMuteStrategy(rule, event) {
-		return true
+		return true, "rule is not effective for period of time"
 	}
 
 	if IdentNotExistsMuteStrategy(rule, event, targetCache) {
-		return true
+		return true, "ident not exists mute"
 	}
 
 	if BgNotMatchMuteStrategy(rule, event, targetCache) {
-		return true
+		return true, "bg not match mute"
 	}
 
 	if EventMuteStrategy(event, alertMuteCache) {
-		return true
+		return true, "match mute rule"
 	}
 
-	return false
+	return false, ""
 }
 
 // TimeSpanMuteStrategy 根据规则配置的告警生效时间段过滤,如果产生的告警不在规则配置的告警生效时间段内,则不告警,即被mute

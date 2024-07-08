@@ -1,0 +1,33 @@
+name: Bug Report & Usage Question
+description: Reporting a bug or asking a question about how to use Nightingale 
+labels: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The more detailed the form is filled in, the easier the problem will be solved.
+        提供的信息越详细，问题解决的可能性就越大。另外, 提问之前请先搜索历史 issue (包括 close 的), 以免重复提问。
+  - type: textarea
+    id: question
+    attributes:
+      label: Question and Steps to reproduce
+      description: Describe your question and steps to reproduce the bug. 描述问题以及复现步骤
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs and configurations
+      description: Relevant logs and configurations. 报错日志（[查看方法](https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v6/faq/how-to-check-logs/)）以及各个相关组件的配置信息
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: system-info
+    attributes:
+      label: Version
+      description: Include nightingale version, operating system, and other relevant details. 请告知夜莺的版本、操作系统的版本、CPU架构等信息
+    validations:
+      required: true
+ 

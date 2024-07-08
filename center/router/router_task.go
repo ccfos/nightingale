@@ -1,7 +1,6 @@
 package router
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/sender"
@@ -53,7 +52,7 @@ func (rt *Router) taskGetsByGids(c *gin.Context) {
 			ginx.Dangerous(err)
 
 			if len(gids) == 0 {
-				ginx.Bomb(http.StatusForbidden, "forbidden")
+				ginx.NewRender(c).Data([]int{}, nil)
 				return
 			}
 		}

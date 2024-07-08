@@ -394,6 +394,10 @@ func (s *AlertSubscribe) ModifyEvent(event *AlertCurEvent) {
 	if s.RedefineWebhooks == 1 {
 		event.Callbacks = s.Webhooks
 		event.CallbacksJSON = s.WebhooksJson
+	} else {
+		// 将 callback 重置为空，防止事件被订阅之后，再次将事件发送给回调地址
+		event.Callbacks = ""
+		event.CallbacksJSON = []string{}
 	}
 
 	event.NotifyGroups = s.UserGroupIds

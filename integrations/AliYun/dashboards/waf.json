@@ -1,358 +1,370 @@
 {
-  "name": "阿里云WAF",
-  "tags": "",
-  "ident": "",
-  "configs": {
-    "panels": [
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "gradientMode": "opacity",
-          "lineInterpolation": "smooth",
-          "lineWidth": 2,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "spanNulls": false,
-          "stack": "off"
-        },
-        "datasourceCate": "prometheus",
-        "id": "ec46b990-faf5-4ed7-a791-bbac5df91636",
-        "layout": {
-          "h": 4,
-          "i": "ec46b990-faf5-4ed7-a791-bbac5df91636",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 0
-        },
-        "maxPerRow": 4,
-        "name": "4xx 环比率V3",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(aliyun_waf_4xx_ratio_wafv3_maximum{instance_id=~\"$instance_id\"}) by (instance_id)",
-            "legend": "4xx 环比率V3",
-            "refId": "A"
-          }
+    "id": 0,
+    "group_id": 0,
+    "name": "阿里云WAF",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "panels": [
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "ec46b990-faf5-4ed7-a791-bbac5df91636",
+                "layout": {
+                    "h": 4,
+                    "i": "ec46b990-faf5-4ed7-a791-bbac5df91636",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "4xx 环比率V3",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(aliyun_waf_4xx_ratio_wafv3_maximum{instance_id=~\"$instance_id\"}) by (instance_id)",
+                        "legend": "4xx 环比率V3",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "efc75e62-5e75-470d-b12b-a98ca44b268a",
+                "layout": {
+                    "h": 4,
+                    "i": "584b5a3c-2b7a-4e11-bee5-c2ed8661933e",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "5xx 环比率V3",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(aliyun_waf_5xx_ratio_wafv3_maximum{instance_id=~\"$instance_id\"}) by (instance_id)",
+                        "legend": "5xx 环比率V3",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "79aefa1b-5e50-4c0c-980d-e5523b859509",
+                "layout": {
+                    "h": 4,
+                    "i": "fc875397-c1a4-4713-b564-09abf852bcf3",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 4
+                },
+                "maxPerRow": 4,
+                "name": "4xx 环比率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(aliyun_waf_4xx_ratio_maximum{instance_id=~\"$instance_id\"}) by (instance_id)",
+                        "legend": "4xx 环比率",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "60c211d4-d51a-4681-b23b-ec8cc5dce7fe",
+                "layout": {
+                    "h": 4,
+                    "i": "946be0db-32a3-48ea-9473-88fdfa77201d",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 4
+                },
+                "maxPerRow": 4,
+                "name": "5xx 环比率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(aliyun_waf_5xx_ratio_maximum{instance_id=~\"$instance_id\"}) by (instance_id)",
+                        "legend": "5xx 环比率",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "0de9271c-7b19-4003-ae56-2e273b4b99c4",
+                "layout": {
+                    "h": 4,
+                    "i": "0de9271c-7b19-4003-ae56-2e273b4b99c4",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 8
+                },
+                "maxPerRow": 4,
+                "name": "QPS环比增长率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(aliyun_waf_qps_ratio_maximum{instance_id=~\"$instance_id\"}) by (instance_id)",
+                        "legend": "{{instance_id}}QPS 环比增长率",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "ccf2ffc1-6f22-4a13-b795-68072c077e1f",
+                "layout": {
+                    "h": 4,
+                    "i": "d0320716-f704-4b6e-8671-b58fb77a5d7c",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 8
+                },
+                "maxPerRow": 4,
+                "name": "QPS环比下降率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(aliyun_waf_qps_ratio_down_maximum{instance_id=~\"$instance_id\"}) by (instance_id)",
+                        "legend": "{{instance_id}}QPS 环比下降率",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            }
         ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "gradientMode": "opacity",
-          "lineInterpolation": "smooth",
-          "lineWidth": 2,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "spanNulls": false,
-          "stack": "off"
-        },
-        "datasourceCate": "prometheus",
-        "id": "efc75e62-5e75-470d-b12b-a98ca44b268a",
-        "layout": {
-          "h": 4,
-          "i": "584b5a3c-2b7a-4e11-bee5-c2ed8661933e",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 0
-        },
-        "maxPerRow": 4,
-        "name": "5xx 环比率V3",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(aliyun_waf_5xx_ratio_wafv3_maximum{instance_id=~\"$instance_id\"}) by (instance_id)",
-            "legend": "5xx 环比率V3",
-            "refId": "A"
-          }
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(aliyun_waf_qps_ratio_maximum,instance_id)",
+                "multi": true,
+                "name": "instance_id",
+                "type": "query"
+            }
         ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "gradientMode": "opacity",
-          "lineInterpolation": "smooth",
-          "lineWidth": 2,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "spanNulls": false,
-          "stack": "off"
-        },
-        "datasourceCate": "prometheus",
-        "id": "79aefa1b-5e50-4c0c-980d-e5523b859509",
-        "layout": {
-          "h": 4,
-          "i": "fc875397-c1a4-4713-b564-09abf852bcf3",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 4
-        },
-        "maxPerRow": 4,
-        "name": "4xx 环比率",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(aliyun_waf_4xx_ratio_maximum{instance_id=~\"$instance_id\"}) by (instance_id)",
-            "legend": "4xx 环比率",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "gradientMode": "opacity",
-          "lineInterpolation": "smooth",
-          "lineWidth": 2,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "spanNulls": false,
-          "stack": "off"
-        },
-        "datasourceCate": "prometheus",
-        "id": "60c211d4-d51a-4681-b23b-ec8cc5dce7fe",
-        "layout": {
-          "h": 4,
-          "i": "946be0db-32a3-48ea-9473-88fdfa77201d",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 4
-        },
-        "maxPerRow": 4,
-        "name": "5xx 环比率",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(aliyun_waf_5xx_ratio_maximum{instance_id=~\"$instance_id\"}) by (instance_id)",
-            "legend": "5xx 环比率",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "gradientMode": "opacity",
-          "lineInterpolation": "smooth",
-          "lineWidth": 2,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "spanNulls": false,
-          "stack": "off"
-        },
-        "datasourceCate": "prometheus",
-        "id": "0de9271c-7b19-4003-ae56-2e273b4b99c4",
-        "layout": {
-          "h": 4,
-          "i": "0de9271c-7b19-4003-ae56-2e273b4b99c4",
-          "isResizable": true,
-          "w": 12,
-          "x": 0,
-          "y": 8
-        },
-        "maxPerRow": 4,
-        "name": "QPS环比增长率",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(aliyun_waf_qps_ratio_maximum{instance_id=~\"$instance_id\"}) by (instance_id)",
-            "legend": "{{instance_id}}QPS 环比增长率",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
-      },
-      {
-        "custom": {
-          "drawStyle": "lines",
-          "fillOpacity": 0.3,
-          "gradientMode": "opacity",
-          "lineInterpolation": "smooth",
-          "lineWidth": 2,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "spanNulls": false,
-          "stack": "off"
-        },
-        "datasourceCate": "prometheus",
-        "id": "ccf2ffc1-6f22-4a13-b795-68072c077e1f",
-        "layout": {
-          "h": 4,
-          "i": "d0320716-f704-4b6e-8671-b58fb77a5d7c",
-          "isResizable": true,
-          "w": 12,
-          "x": 12,
-          "y": 8
-        },
-        "maxPerRow": 4,
-        "name": "QPS环比下降率",
-        "options": {
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "type": "base",
-                "value": null
-              }
-            ]
-          },
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "sum(aliyun_waf_qps_ratio_down_maximum{instance_id=~\"$instance_id\"}) by (instance_id)",
-            "legend": "{{instance_id}}QPS 环比下降率",
-            "refId": "A"
-          }
-        ],
-        "type": "timeseries",
-        "version": "2.0.0",
-        "datasourceValue": "${datasource}"
-      }
-    ],
-    "var": [
-      {
-        "name": "datasource",
-        "type": "datasource",
-        "definition": "prometheus"
-      },
-      {
-        "allOption": true,
-        "datasource": {
-          "cate": "prometheus",
-          "value": "${datasource}"
-        },
-        "definition": "label_values(aliyun_waf_qps_ratio_maximum,instance_id)",
-        "multi": true,
-        "name": "instance_id",
-        "type": "query"
-      }
-    ],
-    "version": "3.0.0"
-  }
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327142143000
 }

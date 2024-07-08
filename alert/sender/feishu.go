@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"fmt"
 	"html/template"
 	"strings"
 
@@ -22,8 +23,39 @@ type feishu struct {
 	At      feishuAt      `json:"at"`
 }
 
+var (
+	_ CallBacker = (*FeishuSender)(nil)
+)
+
 type FeishuSender struct {
 	tpl *template.Template
+}
+
+func (fs *FeishuSender) CallBack(ctx CallBackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+		return
+	}
+
+	ats := ExtractAtsParams(ctx.CallBackURL)
+	message := BuildTplMessage(models.Feishu, fs.tpl, ctx.Events)
+
+	if len(ats) > 0 {
+		atTags := ""
+		for _, at := range ats {
+			atTags += fmt.Sprintf("<at user_id=\"%s\"></at> ", at)
+		}
+		message = atTags + message
+	}
+
+	body := feishu{
+		Msgtype: "text",
+		Content: feishuContent{
+			Text: message,
+		},
+	}
+
+	doSend(ctx.CallBackURL, body, models.Feishu, ctx.Stats)
+	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }
 
 func (fs *FeishuSender) Send(ctx MessageContext) {

@@ -8,7 +8,7 @@ CREATE TABLE users (
     portrait varchar(255) not null default '',
     roles varchar(255) not null,
     contacts varchar(1024),
-    maintainer boolean not null default false,
+    maintainer int not null default 0,
     belong varchar(16) not null default '',
     last_active_time bigint not null default 0,
     create_at bigint not null default 0,
@@ -60,8 +60,8 @@ CREATE TABLE configs (
     ckey varchar(191) not null,
     cval text not null default '',
     note varchar(1024) not null default '',
-    external boolean not null default false,
-    encrypted boolean not null default false,
+    external int not null default 0,
+    encrypted int not null default 0,
     create_at bigint not null default 0,
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
@@ -378,7 +378,7 @@ COMMENT ON COLUMN alert_mute.disabled IS '0:enabled 1:disabled';
 CREATE TABLE alert_subscribe (
     id bigserial,
     name varchar(255) not null default '',
-    disabled boolean not null default false,
+    disabled int not null default 0,
     group_id bigint not null default 0,
     prod varchar(255) not null default '',
     cate varchar(128) not null,
@@ -397,7 +397,7 @@ CREATE TABLE alert_subscribe (
     rule_ids VARCHAR(1024) DEFAULT '',
     webhooks text not null,
     extra_config text not null,
-    redefine_webhooks boolean default false,
+    redefine_webhooks int default 0,
     for_duration bigint not null default 0,
     create_at bigint not null default 0,
     create_by varchar(64) not null default '',
@@ -744,7 +744,7 @@ CREATE TABLE datasource
     status varchar(255) not null default '',
     http varchar(4096) not null default '',
     auth varchar(8192) not null default '',
-    is_default smallint not null default 0,
+    is_default boolean not null default false,
     created_at bigint not null default 0,
     created_by varchar(64) not null default '',
     updated_at bigint not null default 0,
@@ -845,7 +845,7 @@ CREATE TABLE metric_filter (
   update_by VARCHAR(191) NOT NULL DEFAULT ''
 );
 
-CREATE INDEX idx_name ON metric_filter (name);
+CREATE INDEX idx_metric_filter_name ON metric_filter (name);
 
 CREATE TABLE board_busigroup (
   busi_group_id BIGINT NOT NULL DEFAULT 0,
@@ -870,6 +870,7 @@ CREATE INDEX idx_ident ON builtin_components (ident);
 CREATE TABLE builtin_payloads (
   id BIGSERIAL PRIMARY KEY,
   type VARCHAR(191) NOT NULL,
+  uuid BIGINT NOT NULL DEFAULT 0,
   component VARCHAR(191) NOT NULL,
   cate VARCHAR(191) NOT NULL,
   name VARCHAR(191) NOT NULL,
@@ -882,6 +883,6 @@ CREATE TABLE builtin_payloads (
 );
 
 CREATE INDEX idx_component ON builtin_payloads (component);
-CREATE INDEX idx_name ON builtin_payloads (name);
+CREATE INDEX idx_builtin_payloads_name ON builtin_payloads (name);
 CREATE INDEX idx_cate ON builtin_payloads (cate);
 CREATE INDEX idx_type ON builtin_payloads (type);

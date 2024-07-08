@@ -13,9 +13,10 @@ type BuiltinPayload struct {
 	Type      string `json:"type" gorm:"type:varchar(191);not null;index:idx_type,sort:asc;comment:'type of payload'"`                // Alert Dashboard Collet
 	Component string `json:"component" gorm:"type:varchar(191);not null;index:idx_component,sort:asc;comment:'component of payload'"` // Host MySQL Redis
 	Cate      string `json:"cate" gorm:"type:varchar(191);not null;comment:'category of payload'"`                                    // categraf_v1 telegraf_v1
-	Name      string `json:"name" gorm:"type:varchar(191);not null;index:idx_name,sort:asc;comment:'name of payload'"`                //
+	Name      string `json:"name" gorm:"type:varchar(191);not null;index:idx_buildinpayload_name,sort:asc;comment:'name of payload'"`                //
 	Tags      string `json:"tags" gorm:"type:varchar(191);not null;default:'';comment:'tags of payload'"`                             // {"host":"
 	Content   string `json:"content" gorm:"type:longtext;not null;comment:'content of payload'"`
+	UUID      int64  `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
 	CreatedAt int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
 	CreatedBy string `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
 	UpdatedAt int64  `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
@@ -66,8 +67,9 @@ func (bp *BuiltinPayload) Add(ctx *ctx.Context, username string) error {
 	}
 	now := time.Now().Unix()
 	bp.CreatedAt = now
-	bp.UpdatedAt = now
 	bp.CreatedBy = username
+	bp.UpdatedAt = now
+	bp.UpdatedBy = username
 	return Insert(ctx, bp)
 }
 
@@ -86,6 +88,9 @@ func (bp *BuiltinPayload) Update(ctx *ctx.Context, req BuiltinPayload) error {
 		}
 	}
 	req.UpdatedAt = time.Now().Unix()
+	req.UUID = bp.UUID
+	req.CreatedBy = bp.CreatedBy
+	req.CreatedAt = bp.CreatedAt
 
 	return DB(ctx).Model(bp).Select("*").Updates(req).Error
 }
@@ -99,10 +104,16 @@ func BuiltinPayloadDels(ctx *ctx.Context, ids []int64) error {
 
 func BuiltinPayloadGet(ctx *ctx.Context, where string, args ...interface{}) (*BuiltinPayload, error) {
 	var bp BuiltinPayload
-	err := DB(ctx).Where(where, args...).First(&bp).Error
-	if err != nil {
-		return nil, err
+	result := DB(ctx).Where(where, args...).Find(&bp)
+	if result.Error != nil {
+		return nil, result.Error
 	}
+
+	// 检查是否找到记录
+	if result.RowsAffected == 0 {
+		return nil, nil
+	}
+
 	return &bp, nil
 }
 

@@ -1,31 +1,66 @@
 {
+    "id": 0,
+    "group_id": 0,
     "name": "网络交换机监控大盘",
-    "tags": "",
     "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
     "configs": {
-        "var": [],
+        "graphTooltip": "default",
+        "graphZoom": "default",
+        "links": [],
         "panels": [
             {
-                "type": "stat",
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 8,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {
+                        "title": 20,
+                        "value": 20
+                    },
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 1,
                 "id": "190d574b-502d-482f-8b6f-981730dba70e",
                 "layout": {
                     "h": 4,
+                    "i": "190d574b-502d-482f-8b6f-981730dba70e",
+                    "isResizable": true,
                     "w": 4,
                     "x": 0,
-                    "y": 0,
-                    "i": "190d574b-502d-482f-8b6f-981730dba70e",
-                    "isResizable": true
+                    "y": 0
                 },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": 1,
+                "maxPerRow": 4,
+                "name": "设备数量",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(99, 76, 217, 1)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
                 "targets": [
                     {
-                        "refId": "A",
                         "expr": "count(snmp_sys_uptime)",
-                        "maxDataPoints": 20,
+                        "instant": false,
                         "legend": "设备在线",
-                        "instant": false
+                        "maxDataPoints": 20,
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -34,107 +69,44 @@
                         "options": {}
                     }
                 ],
-                "name": "设备数量",
-                "maxPerRow": 4,
-                "custom": {
-                    "textMode": "valueAndName",
-                    "graphMode": "none",
-                    "colorMode": "value",
-                    "calc": "lastNotNull",
-                    "valueField": "Value",
-                    "colSpan": 8,
-                    "textSize": {
-                        "title": 20,
-                        "value": 20
-                    }
-                },
-                "options": {
-                    "thresholds": {
-                        "steps": [
-                            {
-                                "color": "rgba(99, 76, 217, 1)",
-                                "value": null,
-                                "type": "base"
-                            }
-                        ]
-                    },
-                    "valueMappings": [],
-                    "standardOptions": {
-                        "util": "none"
-                    }
-                }
+                "type": "stat",
+                "version": "3.0.0"
             },
             {
-                "type": "table",
-                "id": "8b107213-6d65-4877-b3e2-31435bb8758c",
-                "layout": {
-                    "h": 14,
-                    "w": 24,
-                    "x": 0,
-                    "y": 4,
-                    "i": "8b107213-6d65-4877-b3e2-31435bb8758c",
-                    "isResizable": true
-                },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": 1,
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "snmp_cpu_usage",
-                        "maxDataPoints": 240,
-                        "legend": "CPU使用率"
-                    },
-                    {
-                        "expr": "snmp_mem_use/snmp_mem_max",
-                        "refId": "B",
-                        "maxDataPoints": 240,
-                        "legend": "内存使用率"
-                    },
-                    {
-                        "expr": "snmp_sys_uptime",
-                        "refId": "C",
-                        "maxDataPoints": 240,
-                        "legend": "开机时间"
-                    }
-                ],
-                "transformations": [
-                    {
-                        "id": "organize",
-                        "options": {
-                            "renameByName": {
-                                "DCN": "IP地址",
-                                "sysname": "设备名称",
-                                "sys_name": "设备名称",
-                                "LocalIP": "IP地址",
-                                "sys_pm": "设备型号"
-                            }
-                        }
-                    }
-                ],
-                "name": "设备概览",
-                "maxPerRow": 4,
                 "custom": {
-                    "showHeader": true,
-                    "colorMode": "background",
-                    "calc": "lastNotNull",
-                    "displayMode": "labelValuesToRows",
                     "aggrDimension": [
                         "sys_name",
                         "LocalIP",
                         "sys_pm"
                     ],
+                    "calc": "lastNotNull",
+                    "colorMode": "background",
+                    "displayMode": "labelValuesToRows",
                     "linkMode": "appendLinkColumn",
                     "links": [
                         {
                             "title": "详情",
-                            "url": "http://182.182.61.13:17000/dashboards/h?ipadd=${__field.labels.LocalIP}&jieru=1"
+                            "url": "http://182.182.61.13:17000/dashboards/h?ipadd=${__field.labels.LocalIP}\u0026jieru=1"
                         }
-                    ]
+                    ],
+                    "showHeader": true
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 1,
+                "id": "8b107213-6d65-4877-b3e2-31435bb8758c",
+                "layout": {
+                    "h": 14,
+                    "i": "8b107213-6d65-4877-b3e2-31435bb8758c",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 4
+                },
+                "maxPerRow": 4,
+                "name": "设备概览",
                 "options": {
-                    "valueMappings": [],
-                    "standardOptions": {}
+                    "standardOptions": {},
+                    "valueMappings": []
                 },
                 "overrides": [
                     {
@@ -143,130 +115,170 @@
                             "value": "A"
                         },
                         "properties": {
+                            "standardOptions": {
+                                "util": "percent"
+                            },
                             "valueMappings": [
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "to": 20
+                                    },
                                     "result": {
                                         "color": "rgba(63, 196, 83, 1)"
                                     },
-                                    "match": {
-                                        "to": 20
-                                    }
+                                    "type": "range"
                                 },
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "to": 50
+                                    },
                                     "result": {
                                         "color": "rgba(230, 198, 39, 1)"
                                     },
-                                    "match": {
-                                        "to": 50
-                                    }
+                                    "type": "range"
                                 },
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "to": 100
+                                    },
                                     "result": {
                                         "color": "rgba(252, 4, 4, 1)"
                                     },
-                                    "match": {
-                                        "to": 100
-                                    }
+                                    "type": "range"
                                 }
-                            ],
-                            "standardOptions": {
-                                "util": "percent"
-                            }
+                            ]
                         }
                     },
                     {
-                        "type": "special",
                         "matcher": {
                             "id": "byFrameRefID",
                             "value": "B"
                         },
                         "properties": {
                             "standardOptions": {
-                                "util": "percentUnit",
-                                "decimals": 0
+                                "decimals": 0,
+                                "util": "percentUnit"
                             },
                             "valueMappings": [
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "to": 0.6
+                                    },
                                     "result": {
                                         "color": "rgba(63, 196, 83, 1)"
                                     },
-                                    "match": {
-                                        "to": 0.6
-                                    }
+                                    "type": "range"
                                 },
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "to": 0.8
+                                    },
                                     "result": {
                                         "color": "rgba(230, 198, 39, 1)"
                                     },
-                                    "match": {
-                                        "to": 0.8
-                                    }
+                                    "type": "range"
                                 },
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "from": 0.8,
+                                        "to": 1
+                                    },
                                     "result": {
                                         "color": "rgba(253, 0, 0, 1)"
                                     },
-                                    "match": {
-                                        "to": 1,
-                                        "from": 0.8
-                                    }
+                                    "type": "range"
                                 }
                             ]
-                        }
+                        },
+                        "type": "special"
                     },
                     {
-                        "type": "special",
                         "matcher": {
                             "id": "byFrameRefID",
                             "value": "C"
                         },
                         "properties": {
+                            "standardOptions": {
+                                "util": "humantimeSeconds"
+                            },
                             "valueMappings": [
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "to": 86400
+                                    },
                                     "result": {
                                         "color": "rgba(250, 4, 4, 1)"
                                     },
-                                    "match": {
-                                        "to": 86400
-                                    }
+                                    "type": "range"
                                 },
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "to": 2592000
+                                    },
                                     "result": {
                                         "color": "rgba(230, 198, 39, 1)"
                                     },
-                                    "match": {
-                                        "to": 2592000
-                                    }
+                                    "type": "range"
                                 },
                                 {
-                                    "type": "range",
+                                    "match": {
+                                        "from": 2592000
+                                    },
                                     "result": {
                                         "color": "rgba(63, 196, 83, 1)"
                                     },
-                                    "match": {
-                                        "from": 2592000
-                                    }
+                                    "type": "range"
                                 }
-                            ],
-                            "standardOptions": {
-                                "util": "humantimeSeconds"
+                            ]
+                        },
+                        "type": "special"
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "snmp_cpu_usage",
+                        "legend": "CPU使用率",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "snmp_mem_use/snmp_mem_max",
+                        "legend": "内存使用率",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "snmp_sys_uptime",
+                        "legend": "开机时间",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "DCN": "IP地址",
+                                "LocalIP": "IP地址",
+                                "sys_name": "设备名称",
+                                "sys_pm": "设备型号",
+                                "sysname": "设备名称"
                             }
                         }
                     }
-                ]
+                ],
+                "type": "table",
+                "version": "3.0.0"
             }
         ],
-        "version": "3.0.0",
-        "graphTooltip": "default",
-        "graphZoom": "default",
-        "links": []
-    }
+        "var": [],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328376415000
 }

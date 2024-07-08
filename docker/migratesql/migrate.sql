@@ -56,6 +56,7 @@ CREATE TABLE `builtin_components` (
 
 CREATE TABLE `builtin_payloads` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
+  `uuid` bigint(20) NOT NULL COMMENT '''uuid of payload''',
   `type` varchar(191) NOT NULL COMMENT '''type of payload''',
   `component` varchar(191) NOT NULL COMMENT '''component of payload''',
   `cate` varchar(191) NOT NULL COMMENT '''category of payload''',
@@ -70,8 +71,12 @@ CREATE TABLE `builtin_payloads` (
   KEY `idx_component` (`component`),
   KEY `idx_name` (`name`),
   KEY `idx_cate` (`cate`),
+  KEY `idx_uuid` (`uuid`),
   KEY `idx_type` (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 /* v7.0.0-beta.7 */
 ALTER TABLE users ADD COLUMN last_active_time BIGINT NOT NULL DEFAULT 0;
+
+/* v7.0.0-beta.13 */
+ALTER TABLE recording_rule ADD COLUMN cron_pattern VARCHAR(255) DEFAULT '' COMMENT 'cron pattern';

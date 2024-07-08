@@ -1,0 +1,3878 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "ClickHouse_Categraf",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "graphTooltip": "default",
+        "graphZoom": "default",
+        "panels": [
+            {
+                "collapsed": false,
+                "id": "be21493f-8eb4-4947-9e34-0109fcda9a51",
+                "layout": {
+                    "h": 1,
+                    "i": "be21493f-8eb4-4947-9e34-0109fcda9a51",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "General",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "内存占用",
+                        "id": "8687b3a6-c7f2-4af6-8509-29c99969a55d",
+                        "layout": {
+                            "h": 7,
+                            "i": "8687b3a6-c7f2-4af6-8509-29c99969a55d",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 1
+                        },
+                        "maxPerRow": 4,
+                        "name": "Memory",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_memory_tracking",
+                                "legend": "分配的内存总量",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "tcp连接数",
+                        "id": "af8f29d3-8992-450e-8caa-749518669da1",
+                        "layout": {
+                            "h": 7,
+                            "i": "af8f29d3-8992-450e-8caa-749518669da1",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 12,
+                            "y": 1
+                        },
+                        "maxPerRow": 4,
+                        "name": "Connections",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_tcp_connection",
+                                "legend": "与 TCP 服务器（带本地接口的客户端）的连接数，也包括服务器-服务器连接",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "cd6bd256-20d0-4892-9c99-7b9976fd9013",
+                "layout": {
+                    "h": 1,
+                    "i": "cd6bd256-20d0-4892-9c99-7b9976fd9013",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 15
+                },
+                "name": "Queries",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "需要解释和可能执行的查询数量，不包括失败的查询",
+                        "id": "0524900d-99fd-42b8-a647-d4da462fc309",
+                        "layout": {
+                            "h": 8,
+                            "i": "0524900d-99fd-42b8-a647-d4da462fc309",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 0,
+                            "y": 16
+                        },
+                        "maxPerRow": 4,
+                        "name": "查询总数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_query[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_query[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "SELECT查询的数量",
+                        "id": "9e288fcd-4513-46bb-bcb5-b2f4e0b4edde",
+                        "layout": {
+                            "h": 8,
+                            "i": "d5701b8e-6926-4349-934d-0999de4666a5",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 11,
+                            "y": 16
+                        },
+                        "maxPerRow": 4,
+                        "name": "SELECT 查询数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_select_query[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_select_query[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "",
+                        "id": "6a95c841-5ac7-4cd9-9597-21b0f41441e4",
+                        "layout": {
+                            "h": 9,
+                            "i": "c14878d8-c197-45ab-802e-f328b84deeff",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 0,
+                            "y": 24
+                        },
+                        "maxPerRow": 4,
+                        "name": "查询平均延迟",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "increase(clickhouse_events_query_time_microseconds[1m]) / (increase(clickhouse_events_query_time_microseconds[1m]) + 0.001)",
+                                "legend": "{{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "",
+                        "id": "4584d584-054b-4d42-b2f9-215a71fca118",
+                        "layout": {
+                            "h": 9,
+                            "i": "050414c6-8e31-49d1-8ddd-1916bf2101f5",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 11,
+                            "y": 24
+                        },
+                        "maxPerRow": 4,
+                        "name": "SELECT查询平均延迟",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "increase(clickhouse_events_select_query_time_microseconds[1m] )/ (increase(clickhouse_events_select_query_time_microseconds[1m]) + 0.001)",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "9da4b0b9-6843-4225-b3ba-dec31b2ca7c0",
+                "layout": {
+                    "h": 1,
+                    "i": "9da4b0b9-6843-4225-b3ba-dec31b2ca7c0",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 50
+                },
+                "name": "Insert",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "所有表INSERT的行数",
+                        "id": "6ea9312d-2334-4912-864c-4cea25bf65f9",
+                        "layout": {
+                            "h": 8,
+                            "i": "6ea9312d-2334-4912-864c-4cea25bf65f9",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 51
+                        },
+                        "maxPerRow": 4,
+                        "name": "Inserted 插入行数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_inserted_rows[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_inserted_rows[1m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "所有表INSERT的字节数（未压缩列以它们在内存中存储的形式）",
+                        "id": "8a4987ad-c10f-419c-b2e9-107502e4bc20",
+                        "layout": {
+                            "h": 8,
+                            "i": "993c68cb-fabe-4742-b1a3-b9bd317d9725",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 12,
+                            "y": 51
+                        },
+                        "maxPerRow": 4,
+                        "name": "Inserted 插入字节数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_inserted_bytes[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_inserted_bytes[1m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "由于分区的活动数据部分数量过多，INSERT到MergeTree表的块被限制的次数",
+                        "id": "dd6d8098-1cab-483d-9462-3436678cbbb8",
+                        "layout": {
+                            "h": 8,
+                            "i": "ecfdbaee-44bb-47ad-a871-e1448a7eac25",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 59
+                        },
+                        "maxPerRow": 4,
+                        "name": "延迟插入次数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_metrics_delayed_inserts[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_metrics_delayed_inserts[1m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "681645ab-ef95-4875-9f97-2bf3d0981bf9",
+                "layout": {
+                    "h": 1,
+                    "i": "681645ab-ef95-4875-9f97-2bf3d0981bf9",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 83
+                },
+                "name": "Select",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "从所有表SELECT的字节数（未压缩列以它们在内存中存储的形式）",
+                        "id": "244865f5-c78a-4b21-8068-462612b8730c",
+                        "layout": {
+                            "h": 10,
+                            "i": "628a3845-fc7d-400c-b16c-6181faddd7b9",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 0,
+                            "y": 84
+                        },
+                        "maxPerRow": 4,
+                        "name": "SELECT查询的字节数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_selected_bytes[2m]) [1h:1m]) * $peeks\n\n",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_selected_bytes[1m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "从所有表SELECT的行数",
+                        "id": "a7e4857b-cf88-4ed7-8cf6-adadeb521e78",
+                        "layout": {
+                            "h": 10,
+                            "i": "2b63803d-ef02-49bc-aba9-41ac7e85bb9d",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 11,
+                            "y": 84
+                        },
+                        "maxPerRow": 4,
+                        "name": "SELECT查询的行数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_selected_rows[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_selected_rows[1m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "1d95c7da-85e1-4a6b-a6a9-68eb19ca821e",
+                "layout": {
+                    "h": 1,
+                    "i": "1d95c7da-85e1-4a6b-a6a9-68eb19ca821e",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 104
+                },
+                "name": "IO",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "",
+                        "id": "6be5bfc5-8d91-414f-9781-e4b390307961",
+                        "layout": {
+                            "h": 8,
+                            "i": "6be5bfc5-8d91-414f-9781-e4b390307961",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 0,
+                            "y": 5
+                        },
+                        "maxPerRow": 4,
+                        "name": "iseek函数调用次数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_seek[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_seek[1m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "",
+                        "id": "df47ce32-e3b6-4d5b-8bc9-4a640ec9c75c",
+                        "layout": {
+                            "h": 8,
+                            "i": "4b6a7bf4-e91a-41fb-b2a1-61d79805f2c5",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 11,
+                            "y": 5
+                        },
+                        "maxPerRow": 4,
+                        "name": "打开的文件数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_file_open[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_file_open[1m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "从文件描述符进行读取（read/pread）的次数，不包括套接字",
+                        "id": "26318204-5e2c-43dd-93b1-2d0ff34c3c9b",
+                        "layout": {
+                            "h": 8,
+                            "i": "e4f66145-d9c6-48df-a9f5-a98ec26cf1e2",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 0,
+                            "y": 13
+                        },
+                        "maxPerRow": 4,
+                        "name": "从FD文件描述符读取次数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_read_buffer_from_file_descriptor_read[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_read_buffer_from_file_descriptor_read[1m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "向FD写入的次数，不包括套接字",
+                        "id": "222a5968-672b-4f4f-ba1a-c823c4be1116",
+                        "layout": {
+                            "h": 8,
+                            "i": "3a378a00-6b9f-4098-8a2d-ed32628cc182",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 11,
+                            "y": 13
+                        },
+                        "maxPerRow": 4,
+                        "name": "向FD写入的次数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_write_buffer_from_file_descriptor_write[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_write_buffer_from_file_descriptor_write[1m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "",
+                        "id": "fc2a63e9-aec2-4755-b4a2-8b0f54868bc6",
+                        "layout": {
+                            "h": 8,
+                            "i": "7b9965c5-b341-4713-88f1-e5a48183ef94",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 0,
+                            "y": 21
+                        },
+                        "maxPerRow": 4,
+                        "name": "向FD写入的字节数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_write_buffer_from_file_descriptor_write_bytes[2m]) [1h:1m]) * $peeks\n\n",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_write_buffer_from_file_descriptor_write_bytes[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "从文件描述符读取的字节数。如果文件是压缩的，这将显示压缩后的数据大小",
+                        "id": "b5546ead-ef3d-406c-acfc-33759f9d5ad9",
+                        "layout": {
+                            "h": 8,
+                            "i": "7e16e52b-7c39-409b-b2f0-1e9f1feaa451",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 11,
+                            "y": 21
+                        },
+                        "maxPerRow": 4,
+                        "name": "从FD读取的字节数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "irate(clickhouse_events_read_buffer_from_file_descriptor_read_bytes[2m]) * $trends",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_read_buffer_from_file_descriptor_read_bytes[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "从压缩源（文件，网络）读取的压缩块数（独立压缩的数据块）",
+                        "id": "dc75e7de-7728-4f12-91fc-789cdc2610dd",
+                        "layout": {
+                            "h": 9,
+                            "i": "ccfe64c6-a0b2-4179-abce-49a772d43a94",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 0,
+                            "y": 29
+                        },
+                        "maxPerRow": 4,
+                        "name": "读取的压缩块数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_compressed_read_buffer_blocks[2m]) [1h:1m]) * $peeks\n\n",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_compressed_read_buffer_blocks[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_events_compressed_read_buffer_blocks",
+                                "maxDataPoints": 240,
+                                "refId": "C"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "从压缩源（文件，网络）读取的未压缩字节数（解压后的字节数）",
+                        "id": "44c6e097-4114-4ef5-89d3-96da2c11ccf3",
+                        "layout": {
+                            "h": 9,
+                            "i": "f3dfd2fc-a656-4ef0-a326-1977908ffd90",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 11,
+                            "y": 29
+                        },
+                        "maxPerRow": 4,
+                        "name": "读取的未压缩字节数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_compressed_read_buffer_bytes[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_compressed_read_buffer_bytes[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "f358d0ce-ab09-4f5d-8477-c6c47341f185",
+                "layout": {
+                    "h": 1,
+                    "i": "f358d0ce-ab09-4f5d-8477-c6c47341f185",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 138
+                },
+                "name": "Replicas\n",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "在ClickHouse集群中，由于特定情况而暂时处于只读状态的复制表数量。这种情况通常发生在以下两种情形下：\n\nZooKeeper会话丢失后重新初始化：ClickHouse使用ZooKeeper来维护集群间的协调和一致性。如果与ZooKeeper的会话丢失，为了防止数据不一致，相关的复制表可能会被自动设置为只读模式，直到与ZooKeeper的连接恢复并且数据同步完成为止。\n\n未配置ZooKeeper启动：如果ClickHouse实例在没有正确配置ZooKeeper的情况下启动，它可能无法确定其在复制集群中的准确状态，从而为了安全起见，将涉及复制的表设置为只读，以避免潜在的数据冲突或不一致性问题。",
+                        "id": "24f224bb-3f8c-4dae-9485-d2015e238ba4",
+                        "layout": {
+                            "h": 10,
+                            "i": "24f224bb-3f8c-4dae-9485-d2015e238ba4",
+                            "isResizable": true,
+                            "w": 15,
+                            "x": 0,
+                            "y": 6
+                        },
+                        "maxPerRow": 4,
+                        "name": "只读状态的复制表数量",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "clickhouse_metrics_readonly_replica",
+                                "legend": "{{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "9bdb151e-adfb-4985-ad38-50f83a4b13e1",
+                "layout": {
+                    "h": 1,
+                    "i": "9bdb151e-adfb-4985-ad38-50f83a4b13e1",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 149
+                },
+                "name": "Merge",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "启动的后台合并次数",
+                        "id": "505ab54d-1897-45d6-a087-db2c2570f8f7",
+                        "layout": {
+                            "h": 8,
+                            "i": "505ab54d-1897-45d6-a087-db2c2570f8f7",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 150
+                        },
+                        "maxPerRow": 4,
+                        "name": "后台合并次数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_merge[2m]) [1h:1m]) * $peeks\n\n",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_merge[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "后台合并读取的行数。这是合并前的行数",
+                        "id": "cf1cbd45-4762-4b57-b674-91520ee63ff4",
+                        "layout": {
+                            "h": 8,
+                            "i": "019fba59-0df6-45d8-a7d0-3adbf32b44f5",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 12,
+                            "y": 150
+                        },
+                        "maxPerRow": 4,
+                        "name": "合并读取的行数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_merged_rows[2m]) [1h:1m]) * $peeks\n\n",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_merged_rows[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "后台合并读取的未压缩字节数（列以它们在内存中存储的形式）。这是合并前的字节数",
+                        "id": "bee87dc6-ace1-47c2-8676-3a7a4c33d2bd",
+                        "layout": {
+                            "h": 9,
+                            "i": "2a43db17-8490-4f9c-a165-a547b112c31b",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 158
+                        },
+                        "maxPerRow": 4,
+                        "name": "合并读取的未压缩字节数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_merged_uncompressed_bytes[2m]) [1h:1m]) * $peeks\n\n",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_merged_uncompressed_bytes[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "",
+                        "id": "63c16da6-f138-4f8f-9a36-a0f71454ba5d",
+                        "layout": {
+                            "h": 9,
+                            "i": "972b412f-af69-4709-858d-cdae2a1ab35f",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 12,
+                            "y": 158
+                        },
+                        "maxPerRow": 4,
+                        "name": "合并平均持续时间",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "increase(clickhouse_events_merges_time_milliseconds[2m]) / (increase(clickhouse_events_merges_time_milliseconds[2m]) + 0.001)",
+                                "legend": "{{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "",
+                        "id": "a01d3de2-a79d-49d9-b238-e5db403d8259",
+                        "layout": {
+                            "h": 8,
+                            "i": "8b2138af-31bb-4c88-b983-08eead1da3ba",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 167
+                        },
+                        "maxPerRow": 4,
+                        "name": "MergeTree表插入的行数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_merge_tree_data_writer_rows[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_merge_tree_data_writer_rows[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "向MergeTree系列表（包括ReplicatedMergeTree等变种）中插入数据时所用的数据块数量",
+                        "id": "87a118d2-305d-4eb9-921a-39bbf11b56b5",
+                        "layout": {
+                            "h": 8,
+                            "i": "ea833f12-d5fa-419f-9825-5fd105a709df",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 12,
+                            "y": 167
+                        },
+                        "maxPerRow": 4,
+                        "name": "MergeTree插入块数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_merge_tree_data_writer_blocks[2m]) [1h:1m]) * $peeks",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_merge_tree_data_writer_blocks[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "插入到MergeTree表的未压缩字节数（列以它们在内存中存储的形式）",
+                        "id": "3dca4a05-b0cc-4e63-ae32-ee5261b6b7b3",
+                        "layout": {
+                            "h": 8,
+                            "i": "84893385-fa2f-4016-b820-df600797b4a9",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 175
+                        },
+                        "maxPerRow": 4,
+                        "name": "MergeTree 表插入的未压缩字节数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_merge_tree_data_writer_uncompressed_bytes[2m]) [1h:1m]) * $peeks\n\n",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_merge_tree_data_writer_uncompressed_bytes[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "插入到MergeTree表的数据写入到文件系统的字节数",
+                        "id": "6777102c-5efe-4082-9a86-d58f76d751ba",
+                        "layout": {
+                            "h": 8,
+                            "i": "96a43967-afda-4c33-80f2-ce1237afeb35",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 12,
+                            "y": 175
+                        },
+                        "maxPerRow": 4,
+                        "name": "MergeTree 表写入的压缩字节数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "max_over_time(irate(clickhouse_events_merge_tree_data_writer_compressed_bytes[2m]) [1h:1m]) * $peeks\n\n",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_merge_tree_data_writer_compressed_bytes[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "为当前运行的后台合并保留的磁盘空间。它略大于当前合并部分的总大小",
+                        "id": "2b70d3a1-f9e2-4b35-b181-809091fe0aa0",
+                        "layout": {
+                            "h": 8,
+                            "i": "8612a9c6-bdbd-4eea-837e-84bf93205446",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 183
+                        },
+                        "maxPerRow": 4,
+                        "name": "保留空间",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "clickhouse_metrics_disk_space_reserved_for_merge",
+                                "legend": "{{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "13a904ce-b661-4abb-bce6-d3f91cd09a05",
+                "layout": {
+                    "h": 1,
+                    "i": "13a904ce-b661-4abb-bce6-d3f91cd09a05",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 232
+                },
+                "name": "Cache",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "从文件缓存中打开文件时没有命中缓存的次数",
+                        "id": "6423431d-916e-4a79-9db1-d0146e0c83fd",
+                        "layout": {
+                            "h": 11,
+                            "i": "443329a2-56bf-4632-8491-ca581b88b93b",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 233
+                        },
+                        "maxPerRow": 4,
+                        "name": "文件缓存未命中次数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "rate(clickhouse_events_opened_file_cache_misses[2m]) * $trends",
+                                "legend": "peaks - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "rate(clickhouse_events_opened_file_cache_misses[2m]) * $trends",
+                                "legend": "trend - {{instance}}",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "b408fca8-4054-4ea6-a131-c3c76439d036",
+                "layout": {
+                    "h": 1,
+                    "i": "b408fca8-4054-4ea6-a131-c3c76439d036",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 255
+                },
+                "name": "Parts",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "目前正在生成的部分，不在数据部分列表中",
+                        "id": "3a06dade-4969-40bf-aab1-1a5f3950a75f",
+                        "layout": {
+                            "h": 8,
+                            "i": "3a06dade-4969-40bf-aab1-1a5f3950a75f",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 256
+                        },
+                        "maxPerRow": 4,
+                        "name": "临时部分数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_parts_temporary",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "在数据部分中，但不用于SELECT查询的部分\t\n",
+                        "id": "fd497233-3f93-4f73-9dc7-4045d1454eef",
+                        "layout": {
+                            "h": 8,
+                            "i": "cd29ec5b-f032-4464-a1b5-ed987e7d5cd3",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 12,
+                            "y": 256
+                        },
+                        "maxPerRow": 4,
+                        "name": "预提交部分数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_parts_pre_committed",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "已经提交的数据部分的数量",
+                        "id": "b688234f-b66a-440f-8a95-20e2a45df833",
+                        "layout": {
+                            "h": 7,
+                            "i": "d12a6546-3f67-4c25-90ed-16ec3d13ec94",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 264
+                        },
+                        "maxPerRow": 4,
+                        "name": "提交部分数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_parts_committed",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "暂时保留、等待相关查询结束即可清理的数据分区的数量。",
+                        "id": "85faac0b-b923-4f38-b10a-9a38b98f89ee",
+                        "layout": {
+                            "h": 7,
+                            "i": "ee8c8080-9a96-445e-a45a-164b735ae0fa",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 12,
+                            "y": 264
+                        },
+                        "maxPerRow": 4,
+                        "name": "过时分区",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_parts_outdated",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "",
+                        "id": "1e45da14-63a6-4adb-be34-a83f9469af84",
+                        "layout": {
+                            "h": 7,
+                            "i": "fca8edbe-2eb2-45a0-8886-ba554aa98100",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 271
+                        },
+                        "maxPerRow": 4,
+                        "name": "正删除数据",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_parts_deleting",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "记录了当前有多少个数据分区正处于这样一种待删除的状态——即这些分区已经被逻辑上标记为“待清理”，并且它们的物理删除操作将在资源被正式释放时由系统自动执行。",
+                        "id": "0fb33f4e-2392-4fb7-bbdb-486c8520e957",
+                        "layout": {
+                            "h": 7,
+                            "i": "c09e1b70-3d5c-4d1d-9bac-9c7d0957ff22",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 12,
+                            "y": 271
+                        },
+                        "maxPerRow": 4,
+                        "name": "待清理",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_parts_delete_on_destroy",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "包含了大量列或者说是字段广泛的数据。一个宽数据分区意味着单个数据块或行包含很多列，这可能会影响到数据处理和查询的效率，尤其是在涉及大量列的选择或聚合操作时。",
+                        "id": "75a6156e-66c8-4b05-a7f3-303d6babe521",
+                        "layout": {
+                            "h": 7,
+                            "i": "cd3637a2-e1af-4c1d-ab12-b5e85caf6835",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 278
+                        },
+                        "maxPerRow": 4,
+                        "name": "宽数据分区",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_parts_wide",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "当前数据库中经过压缩处理的数据分区的数量。这些分区通过算法减少了数据占用的空间，同时保持了数据的完整性和查询的可行性。",
+                        "id": "bb287913-7ef7-408f-9feb-d875b3683157",
+                        "layout": {
+                            "h": 7,
+                            "i": "a40b9909-1cc3-47bd-b28e-aca03bd777bd",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 12,
+                            "y": 278
+                        },
+                        "maxPerRow": 4,
+                        "name": "压缩数据分区 ",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_parts_compact",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "5aa89429-c4b8-4733-a7b9-2abfc45fb836",
+                "layout": {
+                    "h": 1,
+                    "i": "5aa89429-c4b8-4733-a7b9-2abfc45fb836",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 314
+                },
+                "name": "Distributed",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "衡量的是向远程服务器发送数据的连接数量，这些数据最初是插入到 Distributed 表中的。Distributed 表是 ClickHouse 中用于分布式存储和处理数据的一种特殊表类型，它实际上不存储数据，而是将数据操作（如 INSERT 查询）转发到表所定义的远程节点上。通过监控这个指标，您可以了解到数据分布的活跃程度，即 ClickHouse 集群内部数据流动的频繁程度，以及分布式查询或数据加载操作的负载情况。高数值可能意味着大量的数据正在被分布式地处理或存储，这可能是系统繁忙或数据管道高效运行的迹象。然而，如果发现该指标异常高且伴随性能问题，可能需要进一步调查网络状况、远程服务器的处理能力或分布式表的配置，以优化数据传输效率和系统整体性能。",
+                        "id": "b9dde172-3e02-4e71-891f-5fb97c9c0571",
+                        "layout": {
+                            "h": 11,
+                            "i": "b9dde172-3e02-4e71-891f-5fb97c9c0571",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 0,
+                            "y": 315
+                        },
+                        "maxPerRow": 4,
+                        "name": "向远程服务器发送数据的连接数量",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_distributed_send",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "等待异步插入到 Distributed 表中的文件数量\n这个指标对于监控数据导入或异步处理流程的效率至关重要。如果数值较大，可能意味着有大量数据正在排队等待写入 Distributed 表，这可能会影响数据的实时性或处理速度。高数值还可能指示了数据导入作业的积压、网络瓶颈、远程节点处理能力不足或其他与分布式系统相关的性能问题。\n\n监控 ClickHouseMetrics_DistributedFilesToInsert 可以帮助识别和诊断数据流中的瓶颈，进而采取相应的优化措施，比如调整插入作业的并发度、优化网络配置、增加目标表的处理能力或调整分布式表的配置参数，以确保数据能够高效、及时地被分布式存储和处理。",
+                        "id": "4f1782d0-5572-4a75-ba90-c74914246557",
+                        "layout": {
+                            "h": 11,
+                            "i": "dd975296-d2cd-42fe-b23b-bb8c8dfa1c17",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 11,
+                            "y": 315
+                        },
+                        "maxPerRow": 4,
+                        "name": "插入文件数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_distributed_files_to_insert",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "2ab85aaf-f0af-41b1-9760-34b9177ae600",
+                "layout": {
+                    "h": 1,
+                    "i": "2ab85aaf-f0af-41b1-9760-34b9177ae600",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 348
+                },
+                "name": "Background pool",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "后台任务池中的活跃任务数",
+                        "id": "f329dc5d-6276-4652-855f-b26153d9155a",
+                        "layout": {
+                            "h": 9,
+                            "i": "f329dc5d-6276-4652-855f-b26153d9155a",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 22
+                        },
+                        "maxPerRow": 4,
+                        "name": "后台任务池任务数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_background_common_pool_task",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "ClickHouse 中后台获取任务池（BackgroundFetchesPool）当前活跃任务的数量。",
+                        "id": "71ba46cc-be89-400f-ab7a-27189c309e25",
+                        "layout": {
+                            "h": 9,
+                            "i": "ebdfc65c-3b5e-4fa9-8165-6dd47ebab38d",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 12,
+                            "y": 22
+                        },
+                        "maxPerRow": 4,
+                        "name": " 后台获取任务池任务数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_background_fetches_pool_task",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "ClickHouse中后台移动任务池（BackgroundMovePool）当前激活的任务数量",
+                        "id": "47096333-948c-4010-bb0e-ced6581ea2c5",
+                        "layout": {
+                            "h": 8,
+                            "i": "b942ad7d-9119-4eaf-9971-c8453257b1b8",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 31
+                        },
+                        "maxPerRow": 4,
+                        "name": "后台移动任务池任务数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_background_move_pool_task",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "ClickHouse 中后台调度任务池（BackgroundSchedulePool）当前激活的任务数量",
+                        "id": "d8d3c10b-236d-408f-b20c-012d7444b71e",
+                        "layout": {
+                            "h": 8,
+                            "i": "9d862255-175f-4e4a-89d1-ebac3ca82e8f",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 12,
+                            "y": 31
+                        },
+                        "maxPerRow": 4,
+                        "name": "后台调度任务池任务数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_background_schedule_pool_task",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "ClickHouse 中后台缓冲区刷新调度任务池（BackgroundBufferFlushSchedulePool）当前激活的任务数量。这个任务池专注于处理与缓冲区数据定期刷新相关的后台任务",
+                        "id": "b16eff73-78d4-4554-946c-8e36dcee3678",
+                        "layout": {
+                            "h": 8,
+                            "i": "76625404-ebc4-492b-800c-fa8756154ada",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 39
+                        },
+                        "maxPerRow": 4,
+                        "name": "后台缓冲区刷新调度任务池任务数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_background_buffer_flush_schedule_pool_task",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": " ClickHouse 中后台分布式调度任务池（BackgroundDistributedSchedulePool）当前激活的任务数量。这个任务池专门负责处理异步执行的分布式数据发送任务",
+                        "id": "9d3dece1-0765-4e25-a21e-e71f6ac57848",
+                        "layout": {
+                            "h": 8,
+                            "i": "b7d2e412-b86a-4b15-9fb8-6a50e676e5e1",
+                            "isResizable": true,
+                            "w": 11,
+                            "x": 12,
+                            "y": 39
+                        },
+                        "maxPerRow": 4,
+                        "name": "后台分布式调度任务池任务数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_background_distributed_schedule_pool_task",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": 1,
+                        "description": "ClickHouse 中后台处理池（针对消息流处理的部分）当前激活的任务数量，专注于消息代理相关的后台任务",
+                        "id": "4f590117-7281-443a-8713-5ea9696bd3c1",
+                        "layout": {
+                            "h": 9,
+                            "i": "45ffe751-fb27-45e7-8d22-39820c539149",
+                            "isResizable": true,
+                            "w": 12,
+                            "x": 0,
+                            "y": 47
+                        },
+                        "maxPerRow": 4,
+                        "name": "后台消息代理调度任务池任务数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "ClickHouseMetrics_BackgroundMessageBrokerSchedulePoolTask",
+                                "maxDataPoints": 240,
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "clickhouse_metrics_background_message_broker_schedule_pool_task",
+                                "maxDataPoints": 240,
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    }
+                ],
+                "type": "row"
+            }
+        ],
+        "var": [
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": 1
+                },
+                "definition": "label_values(ClickHouseMetrics_Move,instance)",
+                "hide": false,
+                "name": "instance",
+                "type": "query"
+            },
+            {
+                "definition": "1,null",
+                "hide": false,
+                "label": "",
+                "multi": false,
+                "name": "peeks",
+                "type": "custom"
+            },
+            {
+                "definition": "1,null",
+                "hide": false,
+                "name": "trends",
+                "type": "custom"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1719305153872258000
+}

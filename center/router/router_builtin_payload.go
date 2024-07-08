@@ -4,16 +4,19 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 )
 
 type Board struct {
 	Name    string      `json:"name"`
 	Tags    string      `json:"tags"`
 	Configs interface{} `json:"configs"`
+	UUID    int64       `json:"uuid"`
 }
 
 func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
@@ -38,6 +41,10 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				}
 
 				for _, rule := range alertRules {
+					if rule.UUID == 0 {
+						rule.UUID = time.Now().UnixNano()
+					}
+
 					contentBytes, err := json.Marshal(rule)
 					if err != nil {
 						reterr[rule.Name] = err.Error()
@@ -50,13 +57,14 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 						Cate:      lst[i].Cate,
 						Name:      rule.Name,
 						Tags:      rule.AppendTags,
+						UUID:      rule.UUID,
 						Content:   string(contentBytes),
 						CreatedBy: username,
 						UpdatedBy: username,
 					}
 
 					if err := bp.Add(rt.Ctx, username); err != nil {
-						reterr[bp.Name] = err.Error()
+						reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 					}
 				}
 				continue
@@ -68,19 +76,24 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				continue
 			}
 
+			if alertRule.UUID == 0 {
+				alertRule.UUID = time.Now().UnixNano()
+			}
+
 			bp := models.BuiltinPayload{
 				Type:      lst[i].Type,
 				Component: lst[i].Component,
 				Cate:      lst[i].Cate,
 				Name:      alertRule.Name,
 				Tags:      alertRule.AppendTags,
+				UUID:      alertRule.UUID,
 				Content:   lst[i].Content,
 				CreatedBy: username,
 				UpdatedBy: username,
 			}
 
 			if err := bp.Add(rt.Ctx, username); err != nil {
-				reterr[bp.Name] = err.Error()
+				reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 			}
 		} else if lst[i].Type == "dashboard" {
 			if strings.HasPrefix(strings.TrimSpace(lst[i].Content), "[") {
@@ -91,6 +104,10 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				}
 
 				for _, dashboard := range dashboards {
+					if dashboard.UUID == 0 {
+						dashboard.UUID = time.Now().UnixNano()
+					}
+
 					contentBytes, err := json.Marshal(dashboard)
 					if err != nil {
 						reterr[dashboard.Name] = err.Error()
@@ -103,13 +120,14 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 						Cate:      lst[i].Cate,
 						Name:      dashboard.Name,
 						Tags:      dashboard.Tags,
+						UUID:      dashboard.UUID,
 						Content:   string(contentBytes),
 						CreatedBy: username,
 						UpdatedBy: username,
 					}
 
 					if err := bp.Add(rt.Ctx, username); err != nil {
-						reterr[bp.Name] = err.Error()
+						reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 					}
 				}
 				continue
@@ -117,8 +135,12 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 
 			dashboard := Board{}
 			if err := json.Unmarshal([]byte(lst[i].Content), &dashboard); err != nil {
-				reterr[lst[i].Name] = err.Error()
+				reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 				continue
+			}
+
+			if dashboard.UUID == 0 {
+				dashboard.UUID = time.Now().UnixNano()
 			}
 
 			bp := models.BuiltinPayload{
@@ -127,17 +149,18 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				Cate:      lst[i].Cate,
 				Name:      dashboard.Name,
 				Tags:      dashboard.Tags,
+				UUID:      dashboard.UUID,
 				Content:   lst[i].Content,
 				CreatedBy: username,
 				UpdatedBy: username,
 			}
 
 			if err := bp.Add(rt.Ctx, username); err != nil {
-				reterr[bp.Name] = err.Error()
+				reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 			}
 		} else {
 			if err := lst[i].Add(rt.Ctx, username); err != nil {
-				reterr[lst[i].Name] = err.Error()
+				reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 			}
 		}
 

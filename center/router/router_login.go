@@ -60,7 +60,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 			logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
 			var errLoginInN9e error
 			// to use n9e as the minimum guarantee for login
-			if user, errLoginInN9e = models.PassLogin(rt.Ctx, f.Username, authPassWord); errLoginInN9e != nil {
+			if user, errLoginInN9e = models.PassLogin(rt.Ctx, rt.Redis, f.Username, authPassWord); errLoginInN9e != nil {
 				ginx.NewRender(c).Message("ldap login failed: %v; n9e login failed: %v", err, errLoginInN9e)
 				return
 			}
@@ -68,7 +68,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 			user.RolesLst = strings.Fields(user.Roles)
 		}
 	} else {
-		user, err = models.PassLogin(rt.Ctx, f.Username, authPassWord)
+		user, err = models.PassLogin(rt.Ctx, rt.Redis, f.Username, authPassWord)
 		ginx.Dangerous(err)
 	}
 
@@ -262,6 +262,15 @@ func (rt *Router) loginCallback(c *gin.Context) {
 		user.FullSsoFields("oidc", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.OIDC.DefaultRoles)
 		// create user from oidc
 		ginx.Dangerous(user.Add(rt.Ctx))
+
+		if len(rt.Sso.OIDC.DefaultTeams) > 0 {
+			for _, gid := range rt.Sso.OIDC.DefaultTeams {
+				err = models.UserGroupMemberAdd(rt.Ctx, gid, user.Id)
+				if err != nil {
+					logger.Errorf("user:%v UserGroupMemberAdd: %s", user, err)
+				}
+			}
+		}
 	}
 
 	// set user login state

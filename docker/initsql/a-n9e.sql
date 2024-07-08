@@ -397,6 +397,7 @@ CREATE TABLE `recording_rule` (
     `disabled` tinyint(1) not null default 0 comment '0:enabled 1:disabled',
     `prom_ql` varchar(8192) not null comment 'promql',
     `prom_eval_interval` int not null comment 'evaluate interval',
+    `cron_pattern` varchar(255) default '' comment 'cron pattern',
     `append_tags` varchar(255) default '' comment 'split by space: service=n9e mod=api',
     `query_configs` text not null comment 'query configs',
     `create_at` bigint default '0',
@@ -524,6 +525,7 @@ CREATE TABLE `builtin_components` (
 
 CREATE TABLE `builtin_payloads` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
+  `uuid` bigint(20) NOT NULL COMMENT '''uuid of payload''',
   `type` varchar(191) NOT NULL COMMENT '''type of payload''',
   `component` varchar(191) NOT NULL COMMENT '''component of payload''',
   `cate` varchar(191) NOT NULL COMMENT '''category of payload''',
@@ -538,6 +540,7 @@ CREATE TABLE `builtin_payloads` (
   KEY `idx_component` (`component`),
   KEY `idx_name` (`name`),
   KEY `idx_cate` (`cate`),
+  KEY `idx_uuid` (`uuid`),
   KEY `idx_type` (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

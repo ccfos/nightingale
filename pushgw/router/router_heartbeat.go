@@ -36,6 +36,10 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	err = json.Unmarshal(bs, &req)
 	ginx.Dangerous(err)
 
+	if req.Hostname == "" {
+		ginx.Dangerous("hostname is required", 400)
+	}
+
 	req.Offset = (time.Now().UnixMilli() - req.UnixTime)
 	req.RemoteAddr = c.ClientIP()
 	gid := ginx.QueryStr(c, "gid", "")

@@ -84,6 +84,14 @@ func (s *NotifyTarget) ToWebhookList() []*models.Webhook {
 	return webhooks
 }
 
+func (s *NotifyTarget) ToUidList() []int64 {
+	uids := make([]int64, len(s.userMap))
+	for uid, _ := range s.userMap {
+		uids = append(uids, uid)
+	}
+	return uids
+}
+
 // Dispatch 抽象由告警事件到信息接收者的路由策略
 // rule: 告警规则
 // event: 告警事件

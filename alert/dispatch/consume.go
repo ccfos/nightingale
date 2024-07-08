@@ -1,14 +1,19 @@
 package dispatch
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
+	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/queue"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
+	"github.com/ccfos/nightingale/v6/prom"
 
 	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/logger"
@@ -18,15 +23,17 @@ type Consumer struct {
 	alerting aconf.Alerting
 	ctx      *ctx.Context
 
-	dispatch *Dispatch
+	dispatch    *Dispatch
+	promClients *prom.PromClientMap
 }
 
 // 创建一个 Consumer 实例
-func NewConsumer(alerting aconf.Alerting, ctx *ctx.Context, dispatch *Dispatch) *Consumer {
+func NewConsumer(alerting aconf.Alerting, ctx *ctx.Context, dispatch *Dispatch, promClients *prom.PromClientMap) *Consumer {
 	return &Consumer{
-		alerting: alerting,
-		ctx:      ctx,
-		dispatch: dispatch,
+		alerting:    alerting,
+		ctx:         ctx,
+		dispatch:    dispatch,
+		promClients: promClients,
 	}
 }
 
@@ -73,15 +80,17 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 		event.RuleName = fmt.Sprintf("failed to parse rule name: %v", err)
 	}
 
-	if err := event.ParseRule("rule_note"); err != nil {
-		logger.Warningf("ruleid:%d failed to parse rule note: %v", event.RuleId, err)
-		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
-	}
-
 	if err := event.ParseRule("annotations"); err != nil {
 		logger.Warningf("ruleid:%d failed to parse annotations: %v", event.RuleId, err)
 		event.Annotations = fmt.Sprintf("failed to parse annotations: %v", err)
 		event.AnnotationsJSON["error"] = event.Annotations
+	}
+
+	e.queryRecoveryVal(event)
+
+	if err := event.ParseRule("rule_note"); err != nil {
+		logger.Warningf("ruleid:%d failed to parse rule note: %v", event.RuleId, err)
+		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
 	}
 
 	e.persist(event)
@@ -114,4 +123,69 @@ func (e *Consumer) persist(event *models.AlertCurEvent) {
 		logger.Errorf("event%+v persist err:%v", event, err)
 		e.dispatch.Astats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", event.DatasourceId), "persist_event").Inc()
 	}
+}
+
+func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
+	if !event.IsRecovered {
+		return
+	}
+
+	// If the event is a recovery event, execute the recovery_promql query
+	promql, ok := event.AnnotationsJSON["recovery_promql"]
+	if !ok {
+		return
+	}
+
+	promql = strings.TrimSpace(promql)
+	if promql == "" {
+		logger.Warningf("rule_eval:%s promql is blank", getKey(event))
+		return
+	}
+
+	if e.promClients.IsNil(event.DatasourceId) {
+		logger.Warningf("rule_eval:%s error reader client is nil", getKey(event))
+		return
+	}
+
+	readerClient := e.promClients.GetCli(event.DatasourceId)
+
+	var warnings promsdk.Warnings
+	value, warnings, err := readerClient.Query(e.ctx.Ctx, promql, time.Now())
+	if err != nil {
+		logger.Errorf("rule_eval:%s promql:%s, error:%v", getKey(event), promql, err)
+		event.AnnotationsJSON["recovery_promql_error"] = fmt.Sprintf("promql:%s error:%v", promql, err)
+
+		b, err := json.Marshal(event.AnnotationsJSON)
+		if err != nil {
+			event.AnnotationsJSON = make(map[string]string)
+			event.AnnotationsJSON["error"] = fmt.Sprintf("failed to parse annotations: %v", err)
+		} else {
+			event.Annotations = string(b)
+		}
+		return
+	}
+
+	if len(warnings) > 0 {
+		logger.Errorf("rule_eval:%s promql:%s, warnings:%v", getKey(event), promql, warnings)
+	}
+
+	anomalyPoints := common.ConvertAnomalyPoints(value)
+	if len(anomalyPoints) == 0 {
+		logger.Warningf("rule_eval:%s promql:%s, result is empty", getKey(event), promql)
+		event.AnnotationsJSON["recovery_promql_error"] = fmt.Sprintf("promql:%s error:%s", promql, "result is empty")
+	} else {
+		event.AnnotationsJSON["recovery_value"] = fmt.Sprintf("%v", anomalyPoints[0].Value)
+	}
+
+	b, err := json.Marshal(event.AnnotationsJSON)
+	if err != nil {
+		event.AnnotationsJSON = make(map[string]string)
+		event.AnnotationsJSON["error"] = fmt.Sprintf("failed to parse annotations: %v", err)
+	} else {
+		event.Annotations = string(b)
+	}
+}
+
+func getKey(event *models.AlertCurEvent) string {
+	return common.RuleKey(event.DatasourceId, event.RuleId)
 }

@@ -2,11 +2,13 @@ package router
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 )
 
 // single or import
@@ -27,8 +29,9 @@ func (rt *Router) builtinMetricsAdd(c *gin.Context) {
 	reterr := make(map[string]string)
 	for i := 0; i < count; i++ {
 		lst[i].Lang = lang
+		lst[i].UUID = time.Now().UnixNano()
 		if err := lst[i].Add(rt.Ctx, username); err != nil {
-			reterr[lst[i].Name] = err.Error()
+			reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 		}
 	}
 	ginx.NewRender(c).Data(reterr, nil)

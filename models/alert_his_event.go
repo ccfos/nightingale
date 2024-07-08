@@ -301,6 +301,8 @@ func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
 			}
 		}
 
+		// use his id as cur id
+		event.Id = his.Id
 		return nil
 	}
 

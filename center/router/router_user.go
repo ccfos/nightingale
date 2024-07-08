@@ -7,9 +7,11 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
+	"github.com/ccfos/nightingale/v6/pkg/secu"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 func (rt *Router) userBusiGroupsGets(c *gin.Context) {
@@ -46,6 +48,7 @@ func (rt *Router) userGets(c *gin.Context) {
 	order := ginx.QueryStr(c, "order", "username")
 	desc := ginx.QueryBool(c, "desc", false)
 
+	rt.UserCache.UpdateUsersLastActiveTime()
 	total, err := models.UserTotal(rt.Ctx, query, stime, etime)
 	ginx.Dangerous(err)
 
@@ -76,7 +79,18 @@ func (rt *Router) userAddPost(c *gin.Context) {
 	var f userAddForm
 	ginx.BindJSON(c, &f)
 
-	password, err := models.CryptoPass(rt.Ctx, f.Password)
+	authPassWord := f.Password
+	if rt.HTTP.RSA.OpenRSA {
+		decPassWord, err := secu.Decrypt(f.Password, rt.HTTP.RSA.RSAPrivateKey, rt.HTTP.RSA.RSAPassWord)
+		if err != nil {
+			logger.Errorf("RSA Decrypt failed: %v username: %s", err, f.Username)
+			ginx.NewRender(c).Message(err)
+			return
+		}
+		authPassWord = decPassWord
+	}
+
+	password, err := models.CryptoPass(rt.Ctx, authPassWord)
 	ginx.Dangerous(err)
 
 	if len(f.Roles) == 0 {
@@ -177,7 +191,18 @@ func (rt *Router) userPasswordPut(c *gin.Context) {
 
 	target := User(rt.Ctx, ginx.UrlParamInt64(c, "id"))
 
-	cryptoPass, err := models.CryptoPass(rt.Ctx, f.Password)
+	authPassWord := f.Password
+	if rt.HTTP.RSA.OpenRSA {
+		decPassWord, err := secu.Decrypt(f.Password, rt.HTTP.RSA.RSAPrivateKey, rt.HTTP.RSA.RSAPassWord)
+		if err != nil {
+			logger.Errorf("RSA Decrypt failed: %v username: %s", err, target.Username)
+			ginx.NewRender(c).Message(err)
+			return
+		}
+		authPassWord = decPassWord
+	}
+
+	cryptoPass, err := models.CryptoPass(rt.Ctx, authPassWord)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Message(target.UpdatePassword(rt.Ctx, cryptoPass, c.MustGet("username").(string)))

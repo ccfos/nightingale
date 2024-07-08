@@ -102,6 +102,15 @@ func (b *Board) Add(ctx *ctx.Context) error {
 		}
 	}
 
+	cnt, err := Count(DB(ctx).Model(b).Where("name = ? and group_id = ?", b.Name, b.GroupId))
+	if err != nil {
+		return err
+	}
+
+	if cnt > 0 {
+		return errors.New("Name duplicate")
+	}
+
 	now := time.Now().Unix()
 	b.CreateAt = now
 	b.UpdateAt = now

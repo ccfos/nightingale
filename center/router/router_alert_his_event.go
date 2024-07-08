@@ -93,9 +93,16 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 func GetBusinessGroupIds(c *gin.Context, ctx *ctx.Context, eventHistoryGroupView bool) ([]int64, error) {
 	bgid := ginx.QueryInt64(c, "bgid", 0)
 	var bgids []int64
-	user := c.MustGet("user").(*models.User)
 
-	if !eventHistoryGroupView || user.IsAdmin() {
+	if !eventHistoryGroupView || strings.HasPrefix(c.Request.URL.Path, "/v1") {
+		if bgid > 0 {
+			return []int64{bgid}, nil
+		}
+		return bgids, nil
+	}
+
+	user := c.MustGet("user").(*models.User)
+	if user.IsAdmin() {
 		if bgid > 0 {
 			return []int64{bgid}, nil
 		}

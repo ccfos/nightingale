@@ -12,9 +12,10 @@ import (
 // BuiltinMetric represents a metric along with its metadata.
 type BuiltinMetric struct {
 	ID         int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	UUID       int64  `json:"uuid" gorm:"type:bigint;not null;default:0;comment:'uuid'"`
 	Collector  string `json:"collector" gorm:"type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"` // Type of collector (e.g., 'categraf', 'telegraf')
 	Typ        string `json:"typ" gorm:"type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`                // Type of metric (e.g., 'host', 'mysql', 'redis')
-	Name       string `json:"name" gorm:"type:varchar(191);not null;index:idx_name,sort:asc;comment:'name of metric'"`
+	Name       string `json:"name" gorm:"type:varchar(191);not null;index:idx_builtinmetric_name,sort:asc;comment:'name of metric'"`
 	Unit       string `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`
 	Note       string `json:"note" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
 	Lang       string `json:"lang" gorm:"type:varchar(191);not null;default:'zh';index:idx_lang,sort:asc;comment:'language'"`
@@ -76,6 +77,7 @@ func (bm *BuiltinMetric) Add(ctx *ctx.Context, username string) error {
 	now := time.Now().Unix()
 	bm.CreatedAt = now
 	bm.UpdatedAt = now
+	bm.UpdatedBy = username
 	bm.CreatedBy = username
 	return Insert(ctx, bm)
 }
@@ -98,6 +100,7 @@ func (bm *BuiltinMetric) Update(ctx *ctx.Context, req BuiltinMetric) error {
 	req.CreatedAt = bm.CreatedAt
 	req.CreatedBy = bm.CreatedBy
 	req.Lang = bm.Lang
+	req.UUID = bm.UUID
 
 	return DB(ctx).Model(bm).Select("*").Updates(req).Error
 }
