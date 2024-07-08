@@ -773,8 +773,8 @@ CREATE TABLE task_host_0
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -786,8 +786,8 @@ CREATE TABLE task_host_1
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -799,8 +799,8 @@ CREATE TABLE task_host_2
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -812,8 +812,8 @@ CREATE TABLE task_host_3
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -825,8 +825,8 @@ CREATE TABLE task_host_4
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -838,8 +838,8 @@ CREATE TABLE task_host_5
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -851,8 +851,8 @@ CREATE TABLE task_host_6
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -864,8 +864,8 @@ CREATE TABLE task_host_7
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -877,8 +877,8 @@ CREATE TABLE task_host_8
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -890,8 +890,8 @@ CREATE TABLE task_host_9
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -903,8 +903,8 @@ CREATE TABLE task_host_10
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -916,8 +916,8 @@ CREATE TABLE task_host_11
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -929,8 +929,8 @@ CREATE TABLE task_host_12
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -942,8 +942,8 @@ CREATE TABLE task_host_13
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -955,8 +955,8 @@ CREATE TABLE task_host_14
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -968,8 +968,8 @@ CREATE TABLE task_host_15
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -981,8 +981,8 @@ CREATE TABLE task_host_16
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -994,8 +994,8 @@ CREATE TABLE task_host_17
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1007,8 +1007,8 @@ CREATE TABLE task_host_18
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1020,8 +1020,8 @@ CREATE TABLE task_host_19
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1033,8 +1033,8 @@ CREATE TABLE task_host_20
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1046,8 +1046,8 @@ CREATE TABLE task_host_21
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1059,8 +1059,8 @@ CREATE TABLE task_host_22
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1072,8 +1072,8 @@ CREATE TABLE task_host_23
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1085,8 +1085,8 @@ CREATE TABLE task_host_24
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1098,8 +1098,8 @@ CREATE TABLE task_host_25
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1111,8 +1111,8 @@ CREATE TABLE task_host_26
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1124,8 +1124,8 @@ CREATE TABLE task_host_27
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1137,8 +1137,8 @@ CREATE TABLE task_host_28
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1150,8 +1150,8 @@ CREATE TABLE task_host_29
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1163,8 +1163,8 @@ CREATE TABLE task_host_30
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1176,8 +1176,8 @@ CREATE TABLE task_host_31
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1189,8 +1189,8 @@ CREATE TABLE task_host_32
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1202,8 +1202,8 @@ CREATE TABLE task_host_33
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1215,8 +1215,8 @@ CREATE TABLE task_host_34
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1228,8 +1228,8 @@ CREATE TABLE task_host_35
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1241,8 +1241,8 @@ CREATE TABLE task_host_36
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1254,8 +1254,8 @@ CREATE TABLE task_host_37
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1267,8 +1267,8 @@ CREATE TABLE task_host_38
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1280,8 +1280,8 @@ CREATE TABLE task_host_39
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1293,8 +1293,8 @@ CREATE TABLE task_host_40
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1306,8 +1306,8 @@ CREATE TABLE task_host_41
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1319,8 +1319,8 @@ CREATE TABLE task_host_42
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1332,8 +1332,8 @@ CREATE TABLE task_host_43
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1345,8 +1345,8 @@ CREATE TABLE task_host_44
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1358,8 +1358,8 @@ CREATE TABLE task_host_45
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1371,8 +1371,8 @@ CREATE TABLE task_host_46
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1384,8 +1384,8 @@ CREATE TABLE task_host_47
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1397,8 +1397,8 @@ CREATE TABLE task_host_48
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1410,8 +1410,8 @@ CREATE TABLE task_host_49
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1423,8 +1423,8 @@ CREATE TABLE task_host_50
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1436,8 +1436,8 @@ CREATE TABLE task_host_51
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1449,8 +1449,8 @@ CREATE TABLE task_host_52
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1462,8 +1462,8 @@ CREATE TABLE task_host_53
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1475,8 +1475,8 @@ CREATE TABLE task_host_54
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1488,8 +1488,8 @@ CREATE TABLE task_host_55
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1501,8 +1501,8 @@ CREATE TABLE task_host_56
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1514,8 +1514,8 @@ CREATE TABLE task_host_57
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1527,8 +1527,8 @@ CREATE TABLE task_host_58
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1540,8 +1540,8 @@ CREATE TABLE task_host_59
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1553,8 +1553,8 @@ CREATE TABLE task_host_60
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1566,8 +1566,8 @@ CREATE TABLE task_host_61
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1579,8 +1579,8 @@ CREATE TABLE task_host_62
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1592,8 +1592,8 @@ CREATE TABLE task_host_63
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1605,8 +1605,8 @@ CREATE TABLE task_host_64
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1618,8 +1618,8 @@ CREATE TABLE task_host_65
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1631,8 +1631,8 @@ CREATE TABLE task_host_66
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1644,8 +1644,8 @@ CREATE TABLE task_host_67
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1657,8 +1657,8 @@ CREATE TABLE task_host_68
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1670,8 +1670,8 @@ CREATE TABLE task_host_69
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1683,8 +1683,8 @@ CREATE TABLE task_host_70
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1696,8 +1696,8 @@ CREATE TABLE task_host_71
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1709,8 +1709,8 @@ CREATE TABLE task_host_72
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1722,8 +1722,8 @@ CREATE TABLE task_host_73
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1735,8 +1735,8 @@ CREATE TABLE task_host_74
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1748,8 +1748,8 @@ CREATE TABLE task_host_75
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1761,8 +1761,8 @@ CREATE TABLE task_host_76
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1774,8 +1774,8 @@ CREATE TABLE task_host_77
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1787,8 +1787,8 @@ CREATE TABLE task_host_78
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1800,8 +1800,8 @@ CREATE TABLE task_host_79
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1813,8 +1813,8 @@ CREATE TABLE task_host_80
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1826,8 +1826,8 @@ CREATE TABLE task_host_81
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1839,8 +1839,8 @@ CREATE TABLE task_host_82
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1852,8 +1852,8 @@ CREATE TABLE task_host_83
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1865,8 +1865,8 @@ CREATE TABLE task_host_84
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1878,8 +1878,8 @@ CREATE TABLE task_host_85
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1891,8 +1891,8 @@ CREATE TABLE task_host_86
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1904,8 +1904,8 @@ CREATE TABLE task_host_87
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1917,8 +1917,8 @@ CREATE TABLE task_host_88
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1930,8 +1930,8 @@ CREATE TABLE task_host_89
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1943,8 +1943,8 @@ CREATE TABLE task_host_90
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1956,8 +1956,8 @@ CREATE TABLE task_host_91
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1969,8 +1969,8 @@ CREATE TABLE task_host_92
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1982,8 +1982,8 @@ CREATE TABLE task_host_93
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -1995,8 +1995,8 @@ CREATE TABLE task_host_94
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -2008,8 +2008,8 @@ CREATE TABLE task_host_95
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -2021,8 +2021,8 @@ CREATE TABLE task_host_96
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -2034,8 +2034,8 @@ CREATE TABLE task_host_97
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -2047,8 +2047,8 @@ CREATE TABLE task_host_98
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
@@ -2060,8 +2060,8 @@ CREATE TABLE task_host_99
     `id`     bigint unsigned not null,
     `host`   varchar(128)    not null,
     `status` varchar(32)     not null,
-    `stdout` text,
-    `stderr` text,
+    `stdout` mediumtext,
+    `stderr` mediumtext,
     UNIQUE KEY (`id`, `host`),
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
