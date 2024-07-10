@@ -52,7 +52,7 @@ func sendWebhook(webhook *models.Webhook, event *models.AlertCurEvent, stats *as
 	client := http.Client{
 		Timeout: time.Duration(conf.Timeout) * time.Second,
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: webhook.SkipVerify},
 		},
 	}
 
