@@ -47,12 +47,14 @@ func sendWebhook(webhook *models.Webhook, event *models.AlertCurEvent, stats *as
 			req.Header.Set(conf.Headers[i], conf.Headers[i+1])
 		}
 	}
-
-	// todo add skip verify
+	insecureSkipVerify := false
+	if webhook != nil {
+		insecureSkipVerify = webhook.SkipVerify
+	}
 	client := http.Client{
 		Timeout: time.Duration(conf.Timeout) * time.Second,
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: webhook.SkipVerify},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
 		},
 	}
 
