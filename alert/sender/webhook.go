@@ -2,6 +2,7 @@ package sender
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -50,6 +51,9 @@ func sendWebhook(webhook *models.Webhook, event *models.AlertCurEvent, stats *as
 	// todo add skip verify
 	client := http.Client{
 		Timeout: time.Duration(conf.Timeout) * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
 	}
 
 	stats.AlertNotifyTotal.WithLabelValues("webhook").Inc()
